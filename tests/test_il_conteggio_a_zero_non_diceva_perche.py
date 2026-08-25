@@ -57,6 +57,53 @@ def test_un_conteggio_a_zero_dice_quale_termine_lo_ha_azzerato(magazzino):
     assert per_termine.get("parlano") == 0, per_termine
 
 
+def test_il_totale_non_si_azzera_per_una_parola_che_non_esiste(magazzino):
+    """LA CURA DEL 2026-08-25: mostrare il `per_term` non bastava, perche' chi
+    legge il numero PROGRAMMATICAMENTE non lo vede.
+
+    `per_term` e' prodotto da `client.py` e consumato da `cli.py` — e da
+    nessun altro: `benchmark/competitor_probe_verimem.py:30` fa
+    `mem.ask(...)["count"]`, cioe' il nostro stesso benchmark competitivo
+    legge il campo che si azzerava. Un umano alla CLI vedeva la diagnosi, un
+    programma prendeva lo zero.
+
+    Un termine con conteggio individuale ZERO non compare in NESSUN fatto:
+    non e' un criterio, e' rumore, e toglierlo dall'AND non inventa niente.
+    """
+    rep = magazzino.ask("Quanti fatti parlano di zinco?")
+    # `count` NON cambia: e' il totale dell'AND, vero per definizione.
+    assert rep.get("count") == 0, rep
+    assert rep.get("per_term", {}).get("zinco") == 12, rep
+    # Cio' che cambia e' che la lettura alternativa ESISTE come campo, invece
+    # di stare solo dentro una tabella che il chiamante deve saper leggere.
+    assert rep.get("count_without_absent_terms") == 12, (
+        "la ricevuta non porta la lettura alternativa: chi legge `count` "
+        f"programmaticamente non ha modo di sapere che esiste. {rep}")
+    assert set(rep.get("absent_terms") or []) == {"fatti", "parlano"}, rep
+
+
+def test_CONTROLLO_uno_zero_VERO_resta_zero(magazzino):
+    """LA DIFESA, e senza di lei la cura sopra inventa numeri.
+
+    Se i termini esistono TUTTI ma non compaiono insieme, lo zero e' la
+    risposta giusta e va lasciata: «zinco» c'e' (12) e «K-77» c'e' (1), ma
+    nessun fatto parla di zinco per il K-77 in quantita' 999. Degradare qui
+    vorrebbe dire rispondere col conteggio di un ALTRO insieme di fatti.
+    """
+    rep = magazzino.ask("Quanti fatti parlano di zinco e di alluminio?")
+    assert rep.get("count") == 0, (
+        "un AND legittimo che non trova nulla e' stato degradato: la cura "
+        f"sta inventando un numero. {rep}")
+    # ⚠️ E QUI STA IL LIMITE, scritto perche' non si scopra per caso: la
+    # lettura alternativa vale **12** anche in questo caso, dove la risposta
+    # giusta e' zero. `count` non mente; `count_without_absent_terms` non e'
+    # un totale piu' furbo, e' «cosa risponderebbe l'AND senza i termini che
+    # non compaiono in nessun fatto» — e fra quelli c'e' «alluminio», che e'
+    # contenuto e non rumore. Chi usa quel campo deve leggere `absent_terms`.
+    assert rep.get("count_without_absent_terms") == 12, rep
+    assert "alluminio" in (rep.get("absent_terms") or []), rep
+
+
 def test_un_conteggio_che_torna_non_porta_la_diagnosi(magazzino):
     """IL PRESIDIO: la diagnosi costa una query per termine, quindi si paga
     SOLO quando serve. Un conteggio che risponde non la porta."""

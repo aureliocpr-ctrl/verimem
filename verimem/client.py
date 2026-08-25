@@ -1602,6 +1602,66 @@ class Memory:
                 out["per_term"] = {
                     t: self.count(query=t, topic_prefix=topic_prefix)
                     for t in pezzi}
+                # ⚠️ MOSTRARE NON BASTA — misurato il 2026-08-25. `per_term` è
+                # prodotto qui e consumato da `cli.py` soltanto: chi legge il
+                # numero PROGRAMMATICAMENTE non lo vede mai. Il consumatore che
+                # lo dimostra è in casa nostra:
+                #
+                #     benchmark/competitor_probe_verimem.py:30
+                #         ask = mem.ask("how many times ...")["count"]
+                #
+                # cioè il nostro benchmark competitivo legge il campo che si
+                # azzera. Un umano alla CLI vedeva «zinco: 12 · parlano: 0» e
+                # capiva; un programma prendeva 0 e ci costruiva sopra.
+                #
+                # IL CRITERIO, e perché non inventa numeri: un termine il cui
+                # conteggio INDIVIDUALE è zero non compare in nessun fatto —
+                # non è un filtro, è rumore, e toglierlo dall'AND non cambia
+                # l'insieme che l'AND avrebbe selezionato. Restano fuori i
+                # termini che esistono ma non co-occorrono: lì lo zero è VERO
+                # e va lasciato, o si risponderebbe col conteggio di un ALTRO
+                # insieme di fatti (presidiato da `test_CONTROLLO_uno_zero_
+                # VERO_resta_zero`).
+                #
+                # ⛔ E NON si cura la stoplist: «curare tutte le stoplist» è
+                # già una strada falsificata in questa casa — la lista è
+                # infinita («parlano» oggi, «citano» domani) e monolingue,
+                # mentre questo criterio non nomina nessuna parola.
+                # 🛑 IL DEGRADO AUTOMATICO È STATO PROVATO E RITIRATO nella
+                # stessa ora, il 2026-08-25. La prima stesura sostituiva il
+                # totale con il conteggio dei soli termini «vivi». Cade su un
+                # caso che il suo stesso presidio ha trovato::
+                #
+                #     «Quanti fatti parlano di zinco e di alluminio?»
+                #        per_term: fatti 0 · parlano 0 · zinco 12 · alluminio 0
+                #        degradato -> 12,  vero -> 0
+                #
+                # «alluminio» ha conteggio zero perché NON ESISTE, esattamente
+                # come «parlano»: nel conteggio individuale una parola
+                # funzionale assente e un termine di contenuto assente sono
+                # LO STESSO NUMERO. Distinguerli chiede di sapere che
+                # «parlano» è funzionale — cioè la stoplist, che è la strada
+                # già falsificata da cui questo codice parte.
+                #
+                # Quindi `count` NON si tocca: resta il totale dell'AND, che
+                # è vero per definizione. Quello che si aggiunge è la risposta
+                # ALTERNATIVA, esplicita e separata, perché il consumatore
+                # programmatico (`benchmark/competitor_probe_verimem.py:30`
+                # legge `["count"]`) possa vedere che una lettura diversa
+                # esiste, senza che nessuno gliela imponga.
+                #
+                # ⚖️ È un limite che SOSPENDE la cura, non che l'accompagna:
+                # chi legge solo `count` prende ancora lo zero. Dichiararlo
+                # qui è tutto ciò che si può fare senza un dizionario.
+                assenti = [t for t in pezzi if out["per_term"][t] == 0]
+                presenti = [t for t in pezzi if out["per_term"][t] > 0]
+                if presenti and assenti:
+                    alternativo = self.count(query=" ".join(presenti),
+                                             topic_prefix=topic_prefix)
+                    if alternativo > 0:
+                        out["count_without_absent_terms"] = alternativo
+                        out["absent_terms"] = assenti
+                        out["counted_terms"] = presenti
             return out
         if intent == LIST_ALL:
             terms = content_terms(query)
