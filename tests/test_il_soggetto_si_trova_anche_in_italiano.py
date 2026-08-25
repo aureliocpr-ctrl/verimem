@@ -63,3 +63,20 @@ def test_CONTROLLO_una_frase_senza_soggetto_resta_vuota():
     """E non deve inventare un soggetto dove non c'e'."""
     assert subject_head("Piove.") == ""
     assert subject_head("It rains.") == ""
+
+
+@pytest.mark.parametrize("frase,atteso", [
+    ("Il bilancio e stato approvato dal consiglio.", "bilancio"),
+    ("Il bilancio è stato approvato dal consiglio.", "bilancio"),
+    ("I contratti sono stati firmati dal direttore.", "contratti"),
+])
+def test_il_passivo_italiano_non_scambia_il_verbo_per_soggetto(frase, atteso):
+    """Il passivo, e l'accento che chi scrive spesso non mette.
+
+    Con i soli marcatori accentati, «Il bilancio e stato approvato» faceva
+    scattare `stato` — un PARTICIPIO — e il soggetto veniva tagliato un token
+    troppo tardi: `subject_head` tornava 'e'. Difetto introdotto dalla cura dei
+    marcatori italiani e trovato controllando le forme verbali di quella cura,
+    non da un test esistente: i 55 di `test_subject_domain_classify` passavano.
+    """
+    assert subject_head(frase) == atteso
