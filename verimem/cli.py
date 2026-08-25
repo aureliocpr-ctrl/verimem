@@ -4803,8 +4803,18 @@ def save_cmd(
         _passa = (float(_gs) >= float(_cut)) if isinstance(
             _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
         if _passa:
-            console.print(f"  grounded {float(_gs):.1f} [dim]— the source "
-                          f"entails this checkpoint[/dim]")
+            # 25/08 — LA SECONDA PORTA. `76d5dc1c` cura il ramo BOCCIATO qui e
+            # `mcp_server` ha avuto la stessa cura sul suo canale; il ramo degli
+            # AMMESSI asseriva ancora l'implicazione in entrambe. Misurato alla
+            # porta MCP: una fonte che NEGA il fatto prende 99.98 e si sente
+            # rispondere che la fonte lo implica (identico in EN). Il gate non
+            # ha verificato nulla — ha dato un punteggio e non ha trovato
+            # contraddizioni — e su una citazione letterale il punteggio e' lo
+            # stesso: indistinguibili. Qui la formulazione e' allineata a
+            # quella di `mcp_server`, cosi' le due porte dicono la stessa cosa.
+            console.print(f"  grounded {float(_gs):.1f} [dim]— scored as "
+                          f"supported by the source (the judge's score, not a "
+                          f"check that it follows)[/dim]")
         else:
             _soglia = (f" (cut {float(_cut):.0f})"
                        if isinstance(_cut, (int, float)) else "")

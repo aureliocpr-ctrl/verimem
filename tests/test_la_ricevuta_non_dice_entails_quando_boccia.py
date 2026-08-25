@@ -93,12 +93,26 @@ def test_un_fatto_BOCCIATO_dice_perche_e_contro_quale_soglia(runner, salva):
     assert "40" in out, f"la soglia non compare:\n{out}"
 
 
-def test_un_fatto_AMMESSO_continua_a_dirlo(runner, salva):
+def test_un_fatto_AMMESSO_non_riceve_il_messaggio_del_bocciato(runner, salva):
+    """Stesso INTENTO di prima — l'ammesso non deve sentirsi dire cio' che si
+    dice a un bocciato — senza legarlo alla parola «entails».
+
+    25/08, @ws1: la ricevuta asseriva l'implicazione anche su una fonte che
+    NEGA il fatto (misurato alla porta MCP: 99.98, «the source entails this
+    fact»; identico in EN). Il gate non verifica l'implicazione, calcola un
+    punteggio — e su una citazione letterale quel punteggio e' alto uguale,
+    quindi non esiste una condizione che dica «entails» solo quando e' vero.
+    Il ramo degli ammessi ora riporta il punteggio; qui si verifica cio' che
+    conta: il numero resta leggibile e il messaggio del bocciato non compare.
+    Gemello di `tests/test_il_campo_moat_dice_anche_i_no.py`, altra porta.
+    """
     salva(99.8)
     out = _stampa(runner)
     assert "99.8" in out, out
-    assert "entails" in out, (
-        f"il caso che funzionava non deve smettere di funzionare:\n{out}")
+    assert "not grounded" not in out, (
+        f"a un fatto AMMESSO e' arrivato il messaggio del bocciato:\n{out}")
+    assert "grounded" in out, (
+        f"il punteggio deve restare leggibile sulla ricevuta:\n{out}")
 
 
 def test_senza_source_il_moat_non_gira_e_la_ricevuta_lo_dice(runner, monkeypatch):

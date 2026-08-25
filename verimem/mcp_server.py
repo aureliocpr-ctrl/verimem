@@ -13330,10 +13330,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # punteggio alto, la frase attribuirebbe al moat la decisione
                 # di un altro; il punteggio accanto la smentisce, e resta
                 # meglio di una riga che afferma SEMPRE l'implicazione.
+                #
+                # 25/08 — E IL RAMO DEGLI AMMESSI ASSERIVA ANCORA IL MONDO.
+                # Misurato alla porta: una fonte che NEGA il fatto («…Nessun
+                # altro tag esiste» contro «…il tag v0.7.6 e' gia' stato
+                # pubblicato») prende 99.98 e questa riga rispondeva «the
+                # source entails this fact». Identico in inglese (99.98168,
+                # stessa stringa): non e' un difetto di lingua.
+                # Il gate NON ha verificato l'implicazione — ha calcolato un
+                # punteggio e non ha trovato contraddizioni. Su una citazione
+                # letterale (il caso di `test_il_campo_moat_dice_anche_i_no`)
+                # il punteggio e' altrettanto alto: le due situazioni gli sono
+                # INDISTINGUIBILI, quindi non esiste una condizione che dica
+                # «entails» solo quando e' vero. L'unica frase vera in
+                # entrambe riporta CIO' CHE IL GATE HA FATTO.
                 _passato = getattr(fact, "status", "") != "quarantined"
                 _moat = (
                     f"judged {float(_gs_out):.1f} — the source "
-                    + ("entails this fact" if _passato else
+                    + ("SCORES as supporting this fact: that is the judge's "
+                       "score, not a check that the fact follows from it"
+                       if _passato else
                        "does NOT entail this fact: that is why it is "
                        "quarantined"))
             elif not _source:

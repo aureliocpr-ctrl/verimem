@@ -74,8 +74,22 @@ def test_un_fatto_respinto_non_si_sente_dire_che_la_source_lo_implica(store):
         f"il campo afferma l'implicazione mentre il fatto e' respinto: {moat!r}")
 
 
-def test_un_fatto_ammesso_continua_a_dirlo(store):
-    """Il caso che gia' funzionava non deve rompersi."""
+def test_un_fatto_ammesso_non_riceve_il_messaggio_del_respinto(store):
+    """L'INTENTO di questo test resta quello di prima — un ammesso non deve
+    sentirsi dire cio' che si dice a un respinto — ma l'assert non lega piu'
+    l'intento a UNA stringa.
+
+    25/08, @ws1: la frase che questo test fissava («entails this fact») e' stata
+    misurata FALSA su un ammesso. Fonte «…Nessun altro tag esiste» + claim «…il
+    tag v0.7.6 e' gia' stato pubblicato» -> 99.98 e «the source entails this
+    fact» (identico in EN, 99.98168). Qui sotto il caso e' una citazione
+    letterale, quindi l'implicazione c'e' davvero e il punteggio e' alto
+    ESATTAMENTE COME LA': il gate non distingue i due, e nessuna condizione puo'
+    dire «entails» solo quando e' vero. ⇒ il ramo degli ammessi ora riporta il
+    punteggio invece di asserire il mondo, e questo test verifica la proprieta'
+    che conta (non confondere ammesso con respinto) senza fissare il testo.
+    Cfr. `tests/test_la_riga_che_mente.py`.
+    """
     out = _remember({
         "proposition": "Il piano annuale costa 100 euro.",
         "topic": "t",
@@ -86,7 +100,10 @@ def test_un_fatto_ammesso_continua_a_dirlo(store):
         pytest.skip(f"il moat non ha giudicato: {moat!r}")
     if str(out.get("status", "")) == "quarantined":
         pytest.skip("respinto: non e' questo il caso")
-    assert "entails this fact" in moat and "NOT" not in moat, moat
+    assert "does NOT entail" not in moat, (
+        f"a un fatto AMMESSO e' arrivato il messaggio del respinto: {moat!r}")
+    assert "judged" in moat, (
+        f"il punteggio deve restare leggibile sulla ricevuta: {moat!r}")
 
 
 def test_senza_source_il_campo_dice_che_non_ha_girato(store):
