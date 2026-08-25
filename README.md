@@ -43,9 +43,11 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   (admit) — it never blocks a user who has neither, and says so on the write
   with an `L4-skipped` advisory.
   **Honest scope of the CE-only judge** (measured, `benchmark/moat_multilingual_matrix.py`):
-  it reliably catches *value/numeric contradictions* across EN/IT/FR/ES (0 escapes
-  in a 4-domain matrix) and off-topic confabs. Two known gaps close only with an
-  llm judge: a *plausible added inference the source never states* (e.g. "…which
+  it catches *value/numeric contradictions* across EN/IT/FR/ES and off-topic
+  confabs — but **not all of them**: the 2026-07-18 run had 0 numeric escapes in
+  the 4-domain matrix, and re-running the same command on 2026-08-25 reports **4**
+  (one per language) and exits 1. Run it yourself before trusting either number.
+  Two known gaps close only with an llm judge: a *plausible added inference the source never states* (e.g. "…which
   reduced latency") scores high and is admitted; and an *entity-substitution*
   contradiction (swapping one allergen/product for another) can score mid-range
   in some languages — measured ~7% escape in Spanish, concentrated in that shape.
@@ -67,8 +69,9 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   strongest with an llm; the free CE is the no-setup multilingual default.
   **External certification (out-of-distribution, `docs/EVIDENCE-external-2026-07-19.md`):**
   on our own 4-language structured-contradiction matrix the CE scores 0% false-block
-  / 1.8% escape; on **TruthfulQA heldout** — *plausible misconceptions* it never
-  trained on — it scores **AUROC 0.829**, and at the default cut ~24% of true
+  (re-measured 2026-08-25: still 0.0%, 112/112 entailed admitted) / **5.4% escape**
+  (1.8% was the 2026-07-18 run; the same command today reports 5.4%);
+  on **TruthfulQA heldout** — *plausible misconceptions* it never trained on — it scores **AUROC 0.829**, and at the default cut ~24% of true
   paraphrases are declined and ~18% of plausible misconceptions escape (74% of those
   scoring ≥80, the plausible-inference blind spot). Read honestly: the CE-only judge
   is a high-precision **structured-contradiction** filter, not a universal
