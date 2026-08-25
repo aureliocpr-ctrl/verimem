@@ -120,6 +120,55 @@ def test_due_magazzini_diversi_in_inglese(a, b, diverse):
     assert _entita_diverse(b, a) is diverse
 
 
+# ------------------------------------------ le gemelle del secondo presidio
+# Da `test_la_cella_sei_si_chiude_col_grafo_delle_entita.py::
+# test_il_grafo_distingue_dove_i_codici_non_arrivavano`. Stesso metodo: l'atteso
+# viene dalla cella italiana.
+
+@pytest.mark.parametrize("a,b,diverse", [
+    # stesso magazzino, valore nuovo: e' un aggiornamento
+    ("Warehouse K-77 in Rovigo has 4200 square metres.",
+     "Warehouse K-77 in Rovigo has 5100 square metres.", False),
+    # stesso server, valore nuovo
+    ("The production server has 64 GB of RAM.",
+     "The production server has 128 GB of RAM.", False),
+    # soggetto implicito su un lato: «non so» non autorizza il ritiro
+    ("Patient Rossi weighs 70 kilograms.",
+     "The recorded weight is 95 kilograms.", True),
+])
+def test_le_celle_del_grafo_che_reggono_in_inglese(a, b, diverse):
+    assert _entita_diverse(b, a) is diverse
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "2026-08-25: due DATACENTER con codici diversi non risultano diversi in "
+    "inglese, e in italiano si'. Cambia solo la lingua:\n"
+    "    IT «Il datacenter DC-Nord ...» / «Il datacenter DC-Sud ...»   -> True\n"
+    "    EN «Data center DC-North ...»  / «Data center DC-South ...»   -> False\n"
+    "🔑 E QUI L'ESTRATTORE NON C'ENTRA — e' il terzo caso e la terza volta che la "
+    "causa e' diversa da quella che sembrava. Vede le STESSE entita' nelle due "
+    "lingue:\n"
+    "    IT -> ['DC', 'Nord']  /  ['DC', 'Sud']\n"
+    "    EN -> ['DC', 'North'] /  ['DC', 'South']\n"
+    "Quattro insiemi popolati e distinti a due a due, e la guardia risponde True "
+    "in italiano e False in inglese. `DC` cade da entrambe le parti perche' "
+    "`_proper` esclude gli acronimi di proposito (un acronimo e' un TIPO, non "
+    "un'istanza), quindi la decisione resta a Nord/Sud contro North/South: due "
+    "coppie simmetriche, due esiti opposti.\n"
+    "⚠️ MISURA, NON DIAGNOSI. Non ho isolato dove le due coppie divergono e non "
+    "lo suggerisco: la spiegazione ovvia («North e South saranno in una "
+    "stoplist») e' una congettura che non ho verificato, e in questo file ce ne "
+    "sono gia' due morte allo stesso modo.\n"
+    "⛔ Il caso e' un inventario di infrastruttura: 480 rack di un datacenter "
+    "sostituiti dai 512 di un ALTRO datacenter."))
+@pytest.mark.parametrize("a,b,diverse", [
+    ("Data center DC-North has 480 racks installed.",
+     "Data center DC-South has 512 racks installed.", True),
+])
+def test_due_datacenter_diversi_in_inglese(a, b, diverse):
+    assert _entita_diverse(b, a) is diverse
+
+
 def test_la_parita_si_misura_sulle_STESSE_frasi():
     """La guardia di questo file, ed e' la cosa che lo tiene onesto.
 
