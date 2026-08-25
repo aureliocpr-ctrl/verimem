@@ -31,13 +31,19 @@ from dataclasses import dataclass
 # Censite 12 coppie IT/EN: le altre 10 erano gia' allineate (entrambe
 # presenti o entrambe assenti); resta scoperta `benedetto` contro `blessed`,
 # e NON la colmo — «il bilancio e' benedetto» non e' un'attestazione reale.
+# I PLURALI italiani (2026-08-25): `approvato` portava tutte e quattro le forme,
+# gli altri tre verbi solo le due singolari — quindi «i contratti sono stati
+# firmati» non faceva scattare nulla. L'inglese non ha il problema perche' NON
+# FLETTE il participio: `signed` copre «the document is signed» e «the documents
+# are signed». Non era un lessico mancante: era il pattern scritto contando le
+# PAROLE invece delle FORME, su una lingua che flette contro una che non flette.
 _APPROVAL_PATTERN = re.compile(
     r"\b(?:approved|sign[- ]off|signed[- ]off|signed|"
     r"authorized|authorised|blessed|ratified|"
     r"approvato|approvata|approvati|approvate|"
-    r"autorizzato|autorizzata|"
-    r"ratificato|ratificata|"
-    r"firmato|firmata)\b",
+    r"autorizzato|autorizzata|autorizzati|autorizzate|"
+    r"ratificato|ratificata|ratificati|ratificate|"
+    r"firmato|firmata|firmati|firmate)\b",
     re.IGNORECASE,
 )
 

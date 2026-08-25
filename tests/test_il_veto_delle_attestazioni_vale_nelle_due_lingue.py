@@ -60,3 +60,38 @@ def test_CONTROLLO_un_verbo_che_non_e_attestazione_non_scatta_in_nessuna_lingua(
                   "Il team ha completato la migrazione.",
                   "The team completed the migration."):
         assert not _riconosce(frase), f"«{frase}» non e' un'attestazione"
+
+
+@pytest.mark.parametrize("verbo", ["autorizzato", "ratificato", "firmato"])
+def test_il_plurale_italiano_e_riconosciuto_come_il_singolare(verbo):
+    """Il PLURALE, che in inglese non esiste come forma distinta.
+
+    `approvato` porta tutte e quattro le forme (`approvato|approvata|approvati|
+    approvate`), gli altri tre verbi solo le due singolari. Ma l'inglese non
+    flette il participio — `signed` copre «the document is signed» e «the
+    documents are signed» — quindi il pattern e' completo per l'inglese e monco
+    per l'italiano su una forma che in italiano e' comunissima:
+    «i contratti sono stati firmati» non fa scattare nulla.
+
+    Non e' un lessico che manca: e' una lingua che flette contro una che non
+    flette, e il pattern e' stato scritto contando le parole invece delle forme.
+    """
+    plurale = verbo[:-1] + "i"       # firmato -> firmati
+    femm_pl = verbo[:-1] + "e"       # firmato -> firmate
+    for forma in (plurale, femm_pl):
+        assert _riconosce(f"i documenti sono stati {forma}"), (
+            f"«{forma}» non fa scattare il veto mentre «{verbo}» si': in italiano "
+            f"il plurale e' una forma normale, non un caso limite")
+
+
+def test_CENSITO_e_non_colmato_le_forme_composte_inglesi_senza_gemello():
+    """Registrato perche' il censimento sia completo, NON perche' vada curato.
+
+    `sign off` / `signed off` / `blessed` non hanno un gemello italiano nel
+    pattern. I candidati sarebbero «controfirmato» e «benedetto»: il primo e' un
+    atto diverso dalla firma (non un sinonimo), il secondo non e' un'attestazione
+    che qualcuno scriva in un verbale. Colmarli allargherebbe il veto senza
+    coprire un caso reale.
+    """
+    assert _riconosce("the document is signed off")
+    assert not _riconosce("il documento e' controfirmato")
