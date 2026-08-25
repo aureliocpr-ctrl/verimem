@@ -529,7 +529,14 @@ integrity, provenance honesty, sycophancy resistance) — Verimem scores 60/60;
 the bench is offline and seeded, run it yourself in one command.
 
 Scale: recall latency stays ~flat with the optional ANN index
-(`pip install "verimem[ann]"`): 1.3 ms at 1M facts vs 81 ms brute-force. With
+(`pip install "verimem[ann]"`): 1.3 ms at 1M facts vs 81 ms brute-force
+([`ann_scale_bench_repro.json`](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/results/ann_scale_bench_repro.json),
+which is also where the recall figures below come from). Two caveats a reader
+should have: the bench's own docstring points at `ann_scale_bench.json` instead,
+and that file covers only 100k/500k and carries no recall column — so following
+the pointer does not lead to these numbers; and for the same 100k three tracked
+runs report 8.0x, 9.5x and 7.8x, so read the multiplier as machine-dependent
+rather than as a constant. With
 faiss installed it auto-enables above 100k facts (`VERIMEM_ANN_RECALL=0` opts
 out); the default install ships no faiss, so recall is exact brute-force. See
 [SCALE.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/SCALE.md) for the table + the honest caveats: the ANN is
