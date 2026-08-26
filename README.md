@@ -5,7 +5,11 @@ read carries provenance, and a claim the source **contradicts** does not come
 back as truth (measured: 0/10, 1/10 and 2/10 admitted across three falsehood
 classes, IT and EN — `docs/stato-reale/banchi/`). A claim the source merely
 does not mention is a different case, and today it is **admitted**: 8/10 in IT
-and 9/10 in EN. Outside IT/EN neither guarantee holds.
+and 9/10 in EN. Beyond IT/EN the first guarantee **degrades with the
+script rather than stopping at a border** — measured on entity
+substitution: ZH and JA hold as well as EN (1–2 in 10 admitted), KO 3,
+AR 5, HI 7, and Thai fails outright at 10/10. The other classes are
+unmeasured outside IT/EN except in Thai, where none of them holds.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
