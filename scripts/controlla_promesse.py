@@ -106,7 +106,23 @@ def controlla(percorso: pathlib.Path, frasi: tuple[str, ...]) -> int:
             print(f"  «{frase}» — assente")
             continue
         tot = sum(n for _, n in righe)
-        marchio = "SU PIÙ SUPERFICI" if len(righe) > 1 else "in un posto solo"
+        # ⚠️ «FORMULA», non «promessa» — corretto il 2026-08-26, perché la
+        # parola sbagliata faceva contare un debito che non c'era. Questo
+        # script cerca una STRINGA: lo dice il commento di `FRASI` più sopra
+        # («FORMULAZIONI di promessa»), e il messaggio invece diceva
+        # «promesse», che è cosa diversa.
+        #
+        # Misurato sul wheel 0.7.6: «never silently» → 12 occorrenze in 8
+        # file, marcate SU PIÙ SUPERFICI. Aperte le occorrenze, sono promesse
+        # DIVERSE che condividono la formula: «a caught hallucination is
+        # reported, never silently dropped» (client), «never silently
+        # admitted» (composer), «a hit never silently disappears from the
+        # result» (semantic), «who ASKED for signing must never silently not
+        # get it» (tamper_evidence). Chi legge questo avviso prima di un
+        # rilascio contava otto superfici da riconciliare e ne trovava UNA
+        # vera. Il conteggio era esatto; la parola no.
+        marchio = ("la stessa FORMULA su più superfici" if len(righe) > 1
+                   else "in un posto solo")
         print(f"  «{frase}» — {tot} occorrenze in {len(righe)} file · {marchio}")
         for nome, n in righe:
             print(f"       {n:>3d}  {nome}   [{_superficie(nome)}]")
@@ -114,8 +130,11 @@ def controlla(percorso: pathlib.Path, frasi: tuple[str, ...]) -> int:
 
     sparse = [f for f in frasi if len(dove.get(f, [])) > 1]
     if sparse:
-        print("Queste promesse vivono su più superfici: precisarne una lascia le altre\n"
-              "com'erano. Prima di pubblicare, verificare che dicano ancora la stessa cosa.")
+        print("Queste FORMULE vivono su più superfici. Dove le occorrenze sono la\n"
+              "STESSA promessa, precisarne una lascia le altre com'erano: prima di\n"
+              "pubblicare, verificare che dicano ancora la stessa cosa.\n"
+              "Ma una formula condivisa può coprire promesse DIVERSE — aprire le\n"
+              "occorrenze prima di contarle come un debito.")
     return 0
 
 
