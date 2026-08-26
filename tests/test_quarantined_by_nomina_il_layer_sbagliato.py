@@ -28,6 +28,26 @@ va a leggere il messaggio di quel layer, e trova scritto che il fatto **resta
 servibile** — l'opposto di cio' che e' successo. La diagnosi diventa impossibile,
 o peggio si conclude che il fatto e' servito quando non lo e'.
 
+CONSEGUENZA MISURATA il 2026-08-27 alle 00:08, e vale piu' del difetto stesso:
+il campo SOTTOSTIMA SISTEMATICAMENTE i layer bassi in priorita'. Sul corpus
+
+    281x moat · 51x L4.1 · 49x gate · 26x L4-review · 7x L3-coexistence · 2x L1
+
+`L1` risulta 2 su 417 e sembra irrilevante. Alla porta, su otto vanti canonici:
+
+    trattenuti senza source 8/8 · con source 8/8
+    casi in cui L1 e' l'UNICO bloccante (con source, nessun layer L4): 3/8
+
+L1 li ferma tutti e otto, ed e' l'unico che parla in tre. Ma `L1` e' TERZO in
+`_BLOCK_LAYER_PRIORITY` (dopo `L3` e `L4-grounding`), quindi ogni volta che uno
+dei due parla insieme a lui l'etichetta va a loro — e nei due casi con
+`L4-grounding` succede esattamente questo.
+
+⇒ Chi conta il contributo di un layer da `quarantined_by` misura l'ETICHETTA e
+non il layer. Il numero e' basso per costruzione, non per merito. Segnalato da
+ws3 partendo da un caso ZH dove `L1.20` era l'unico bloccante utile: non era
+un'anomalia.
+
 Si aggancia a due cose gia' in casa: l'aperto «il perche' di un rifiuto non e'
 persistito» (`quarantined_by` popolato nel 3,8% dei casi) — non e' solo poco
 popolato, quando c'e' puo' nominare il layer sbagliato — e la riga del 20/08
