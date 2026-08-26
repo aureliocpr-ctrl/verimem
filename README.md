@@ -1,9 +1,11 @@
 # Verimem
 
 **Verified memory for AI agents.** Every write passes an admission gate, every
-read carries provenance, and a claim the source **contradicts** does not come
-back as truth (measured: 0/10, 1/10 and 2/10 admitted across three falsehood
-classes, IT and EN — `docs/stato-reale/banchi/`). A claim the source merely
+read carries provenance, and a claim the source **openly contradicts** does not
+come back as truth (measured: 0/10, 1/10 and 2/10 admitted across three
+falsehood classes, IT and EN — `docs/stato-reale/banchi/`). When the
+contradiction takes an inference — «the patient died» versus «the patient was
+discharged» — that holds in EN (0/10) but **not in IT (3/10 admitted)**. A claim the source merely
 does not mention is a different case, and today it is **admitted**: 8/10 in IT
 and 9/10 in EN. Beyond IT/EN the first guarantee **degrades with the
 script rather than stopping at a border** — measured on entity
