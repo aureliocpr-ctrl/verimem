@@ -15,6 +15,8 @@ way that claim could still be wrong: cutting a LIST into fake assertions.
 """
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from verimem.unsupported_span import split_claim_clauses
@@ -80,7 +82,38 @@ def test_the_gate_says_how_many_assertions_it_judged_as_one(monkeypatch):
     l4 = [w for w in (r.warnings or []) if w.get("layer") == "L4-grounding"]
     assert l4, f"no L4 warning on a rejected write: {r.warnings}"
     advice = l4[0].get("advice", "")
-    assert "3 separate assertions" in advice, advice
+    # QUESTO PRESIDIO CHIEDE IL FATTO, NON LA FORMULAZIONE — riscritto il
+    # 2026-08-26 dopo che ha tenuto la CI rossa per una notte intera.
+    #
+    # Chiedeva la stringa letterale «3 separate assertions». `f48a45b9` ha
+    # riscritto l advice in «This proposition splits into 3 clauses and the
+    # moat judges them as ONE», che e la STESSA promessa detta meglio: il
+    # difetto curato la dentro era proprio che il messaggio prometteva
+    # ASSERZIONI e mostrava CLAUSOLE. Il presidio e diventato rosso su un
+    # MIGLIORAMENTO, e un rosso cosi non distingue le due diagnosi opposte
+    # («la promessa e caduta» / «qualcuno ha scelto una parola migliore»).
+    #
+    # In queste settimane i messaggi del gate li stiamo riscrivendo tutti,
+    # perche e il mandato: un test che pinna la frase e garantito rompersi.
+    # Quindi si asserisce cio che il docstring qui sopra promette davvero —
+    # che l advice DICA QUANTE parti ha giudicato come una, e che inviti a
+    # dividerle.
+    #
+    # E il numero non e scritto a mano: viene da `split_claim_clauses`, la
+    # stessa funzione che il gate usa. Cosi il test verifica la COERENZA fra
+    # cio che il gate CONTA e cio che DICE all utente — che e la promessa —
+    # e resta rosso se l advice smette di dire il numero o ne dice un altro.
+    atteso = len(split_claim_clauses(CASO_3))
+    assert atteso == 3, (
+        "il banco presuppone 3 clausole in CASO_3, ne conta "
+        + str(atteso) + ": se il conteggio e cambiato aggiorna il CASO, "
+        "non questo assert")
+    # lookaround invece di una word-boundary: «3» non deve combaciare dentro
+    # «13» o «30», e questa forma non ha escape che si perdano riscrivendo.
+    assert re.search("(?<![0-9])" + str(atteso) + "(?![0-9])", advice), (
+        "l advice non dice QUANTE parti ha giudicato come una: e il fatto "
+        "che rende ovvio il passo successivo, ed e la ragione per cui "
+        "questo test esiste (vedi il docstring). advice: " + advice)
     assert "split" in advice.lower(), advice
 
 
