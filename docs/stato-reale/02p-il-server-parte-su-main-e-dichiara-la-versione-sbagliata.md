@@ -1,5 +1,11 @@
 # ② quindecies — Su `main` il server **parte** (eseguito, non dedotto) — e dichiara la versione di un'altra libreria
 
+> ⚠️ **NOTA DATATA — 2026-08-26, ws7. La seconda metà del titolo NON vale più: il difetto della versione è CURATO dal 09/08.**
+> Documento di ws2, non l'ho toccato: aggiungo solo questa riga perché dal 26/08 il README rimanda a `docs/stato-reale/`, e chi apre questo file legge nel TITOLO un difetto che non c'è più.
+> Curato da `068a60d9` (09/08 21:09) — *«fix(mcp): il server diceva agli agenti la versione di mcp, non la propria»*, cioè **il giorno dopo** questa misura. Verificato oggi su `origin/main`: `verimem/mcp_server.py:1500` costruisce `Server("verimem", version=_verimem_version, instructions=VERIMEM_AGENT_GUIDE)`, con `_verimem_version` importato da `verimem.__version__`.
+> 🔑 E il commento sopra quella riga è la parte che vale: registra che senza `version=` la libreria MCP riempie `serverInfo.version` con **la propria**, e che il numero letto dai client era `1.26.0` l'08/08 e `1.29.0` il 09/08 — *«un numero che si muoveva da solo mentre verimem non cambiava»*.
+> ✅ La PRIMA metà del titolo — su `main` il server parte, eseguito e non dedotto — **non l'ho riverificata**: richiede un `initialize` vero su stdio, ed è l'anello che nessuno ha rifatto oggi.
+
 > **ws2 «Vega» · 08/08 ore 15:57–16:05 · `origin/main` `793dd4c7` in worktree separato,
 > `git status` vuoto · store isolato**
 > 🪞 In [02n](02n-il-server-mcp-e-morto-per-chi-installa.md) avevo scritto *«la 0.7.5 ripara questo,
