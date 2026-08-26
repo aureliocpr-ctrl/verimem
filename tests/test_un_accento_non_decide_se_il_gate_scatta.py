@@ -106,7 +106,16 @@ def test_nessun_ALTRO_pattern_del_package_dipende_dall_accento():
 
     FRASI = ["La latenza è 40 ms.", "La coverage è 95%.",
              "Il rilascio sarà completato.", "La metà dei casi è passata."]
-    ATTESE = {("composer", "_COPULA_RE")}
+    # `subject_extract._VERB_MARK` (aggiunto il 2026-08-26 da ws4): stessa
+    # ragione di `_COPULA_RE` qui sopra, misurata. L'elenco dei marcatori di
+    # verbo contiene `è|sono|era` accentati; accettare anche la `e` nuda e'
+    # gia' stato provato il 26/08 alle 19:20 e RIPORTA il difetto che la `e`
+    # nuda causa — `subject_head` torna 'e' e i rossi passano da 4 a 17
+    # (commit `dd904750`, revert). In italiano «e» e' anche la congiunzione:
+    # li' l'accento e' disambiguazione, non dimenticanza. Il costo residuo e'
+    # dichiarato: sulla forma nuda il soggetto non si trova, quindi il
+    # carve-out non scatta e L1 resta veto — sbaglia in sicurezza.
+    ATTESE = {("composer", "_COPULA_RE"), ("subject_extract", "_VERB_MARK")}
 
     fuori = []
     for mod in pkgutil.iter_modules(verimem.__path__):

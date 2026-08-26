@@ -71,6 +71,16 @@ SOFTWARE_HEADS = frozenset({
     # `_is_domain_professional_fact` torna True, L1 viene DECLASSATO e la
     # self-claim entra. E' successo il 25/08 (`1900b83b`), 17 test rossi,
     # revertito il 26/08 (`dd904750`).
+    # LE TESTE METRICHE (2026-08-26 22:24) — sono la seconda meta' dello stesso
+    # difetto, e stamattina ne avevo fatta una sola. Con i verbi accentati
+    # `subject_head` trova «latenza» in «La latenza è 40 ms.»; se «latenza» non
+    # e' qui, il classificatore la legge come FATTO PROFESSIONALE DI TERZI,
+    # `_is_domain_professional_fact` torna True, L1 viene DECLASSATO e la
+    # metrica senza evidenza ENTRA. Rosso misurato in
+    # `test_un_accento_non_decide_se_il_gate_scatta` (2 failed, 22:23).
+    # Una metrica non e' un terzo professionista: e' una grandezza tecnica.
+    "latenza", "latenze", "copertura", "coperture",
+    "memoria", "precisione", "prestazione", "prestazioni", "velocita",
     "migrazione", "migrazioni", "modulo", "moduli", "servizio", "servizi",
     "verifica", "verifiche", "modifica", "modifiche", "libreria", "librerie",
     "flusso", "flussi", "classe", "classi", "analisi",
