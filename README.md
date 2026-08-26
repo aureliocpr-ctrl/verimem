@@ -265,9 +265,15 @@ pip install verimem
 >   upper bound, so pip resolves it to `mcp 2.1.1`, which removed `list_tools`,
 >   `call_tool` and `list_resources` -- the low-level API this server calls in 11
 >   places. The ceiling (`mcp>=1.0.0,<2`) has been in the repo since 29 July
->   (`bd4ff5ba`) and is not in the published package. Installing `mcp<2` alongside
->   restores the API the published server expects; that follows from the version
->   constraints and the two wheels' contents, and was not verified end to end.
+>   (`bd4ff5ba`) and is not in the published package -- `bd4ff5ba` is not an ancestor
+>   of `v0.7.0`. This is observed, not inferred: `pip install --dry-run
+>   verimem==0.7.0` in a clean venv reports *"Would install ... mcp-2.1.1 ...
+>   verimem-0.7.0"*, and on that installed `mcp`, `hasattr(Server, "list_tools")` is
+>   False -- likewise `call_tool`, `list_resources`, `read_resource`. What is *not*
+>   observed is the traceback itself: nobody has run `verimem mcp` against
+>   `mcp 2.1.1`, because that needs the full ~2 GB install. Installing `mcp<2`
+>   alongside should restore the API the published server calls; that follows from
+>   the constraints and was not executed either.
 > - **18 commands exist here and not in the package**, `save` among them -- the
 >   canonical write of the project's own protocol. Measured 2026-08-26 by reading the
 >   published wheel's CLI against `main`: 40 commands in the wheel, 58 here, and the
