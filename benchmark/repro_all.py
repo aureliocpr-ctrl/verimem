@@ -35,14 +35,16 @@ REGISTRY: dict[str, dict] = {
     "moat-downstream": {
         "claim": "downstream hallucination 95.9% -> 12.2% with gate ON (seed 7)",
         "artifact": "halumem_moat_fixedpair.json",
-        "value_at": [],
+        # the gate-ON rate, i.e. the half of the claim the moat is judged on
+        # (off.hallucination 0.9592 is the other, the 95.9% it starts from)
+        "value_at": ["on", "hallucination"],
         "command": "python -m benchmark.halumem_writepath_moat --noise-mode same-topic --seed 7 --out benchmark/results/halumem_moat_fixedpair.json",
         "cost": "claude-p",
     },
     "lme-recall": {
         "claim": "LongMemEval-S recall@5 0.8745 fusion ON (full 500)",
         "artifact": "lme_s_fusionON_n500_clean.json",
-        "value_at": [],
+        "value_at": ["overall", "recall_at_k"],
         "command": "python -m benchmark.lme_retrieval_bench --fusion on --n 500 --out benchmark/results/lme_s_fusionON_n500_clean.json",
         "cost": "local",
     },
@@ -136,10 +138,16 @@ def cmd_verify() -> int:
     """
     missing = []
     unrunnable = []
+    unchecked = []
     for k, e in REGISTRY.items():
         absent = _module_missing(e["command"])
         if absent:
             unrunnable.append((k, absent))
+        if not e["value_at"]:
+            # Contato QUI e non nel ramo di stampa: lme-recall ha il value_at
+            # vuoto E il modulo assente, e finendo nel ramo PART sfuggiva a
+            # questo conteggio -- che diceva 7/8 dove i confrontati sono 6.
+            unchecked.append(k)
         p = _R / e["artifact"]
         if not p.exists():
             missing.append((k, e["artifact"]))
@@ -156,10 +164,19 @@ def cmd_verify() -> int:
                 continue
         if absent:
             print(f"PART {k}{note} -- artifact OK, command module MISSING -> {absent}")
+        elif not e["value_at"]:
+            # Astensione DICHIARATA, non un veto: senza `value_at` the promised
+            # number is compared against nothing and the check degrades to "the
+            # file is on disk". Printing a plain `ok` would make an unchecked
+            # value look checked.
+            print(f"ok   {k} (value NOT checked: no value_at -- only the file's presence)")
         else:
             print(f"ok   {k}{note}")
     print(f"\n{len(REGISTRY) - len(missing)}/{len(REGISTRY)} claims backed by artifacts")
     print(f"{len(REGISTRY) - len(unrunnable)}/{len(REGISTRY)} claims regenerable by their command")
+    print(f"{len(REGISTRY) - len(unchecked)}/{len(REGISTRY)} claims whose value is actually compared")
+    if unchecked:
+        print("NOTE  value not compared (no value_at, presence only): " + ", ".join(unchecked))
     for k, mod in unrunnable:
         print(f"FAIL {k}: published but NOT regenerable -- no module {mod}")
     return 1 if (missing or unrunnable) else 0

@@ -26,6 +26,14 @@ _DET = {"the", "a", "an", "this", "that", "these", "those", "il", "lo", "la",
 _FIRST_PERSON = re.compile(r"\b(?:I|we|We|my|My|our|Our|us|me)\b")
 
 # Finite verbs / copulas that terminate the leading subject NP.
+# ⚠️ `e` SENZA ACCENTO accanto a `è` (stesso giorno, mezz'ora dopo): senza,
+# «Il bilancio e stato approvato» — come lo scrive chi non mette l'accento —
+# faceva scattare il marcatore su `stato`, che e' un PARTICIPIO e non un verbo
+# finito: il soggetto veniva spezzato un token troppo tardi e `subject_head`
+# tornava 'e'. Un difetto che ho introdotto io con la cura qui sotto e trovato
+# controllando le forme verbali della mia stessa cura.
+# Costo noto: con due soggetti coordinati («Il consiglio e il comitato hanno...»)
+# `e` fa da confine e si prende il PRIMO — scelta legittima, non un errore.
 # I MARCATORI DI VERBO ITALIANI (2026-08-25) piu' due inglesi che mancavano.
 # `_VERB_MARK` aveva 65 voci e nessuna italiana: senza un marcatore la funzione
 # non sa dove finisce il soggetto e torna stringa vuota, quindi in italiano
@@ -39,7 +47,7 @@ _FIRST_PERSON = re.compile(r"\b(?:I|we|We|my|My|our|Our|us|me)\b")
 # `rejected` e `signed` mancavano anche all'INGLESE: «The committee rejected
 # the appeal» tornava vuoto benche' `committee` fosse gia' fra le teste note.
 _VERB_MARK = re.compile(
-    r"\b(?:ha|hanno|è|sono|era|erano|stato|stati|stata|state|viene|vengono|risulta|risultano|rejected|signed|is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
+    r"\b(?:ha|hanno|è|e|sono|era|erano|stato|stati|stata|state|viene|vengono|risulta|risultano|rejected|signed|is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
     r"reports?|reported|leads?|led|runs?|ran|opened|closed|migrated|reached|"
     r"spans?|monitors?|monitored|documented|confirmed|tested|deployed|added|"
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
