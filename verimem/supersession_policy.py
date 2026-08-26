@@ -232,6 +232,30 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
     any ambiguity → conflict, so a fact is never auto-retired unless it is the same source
     superseding itself with a later valid-time.
 
+    ⚠️ WHERE THAT CONSERVATISM DOES NOT HOLD (measured 2026-08-26, ws3, pure functions,
+    no writes). When NEITHER fact carries ``asserted_at``, ``_when_true`` falls back to
+    ``created_at`` — and a candidate's write-time is always *now*, so the order is not
+    ambiguous-then-resolved-to-conflict: it is INVENTED, and the verdict is
+    ``"evolution"``::
+
+        both facts unsourced, no asserted_at   → "evolution"   ← the real-world case
+        same asserted_at on both               → "conflict"
+        candidate's asserted_at is earlier     → "conflict"
+
+    The first row is the common one: no write path fills ``asserted_at`` and no extractor
+    derives it from the text (ws2 measured 2026-08-26 that L4.1 recognises 6 numeric
+    forms out of 12 and that DATES — «3 aprile», «2019-04-03» — are not among them). With
+    ``canonical_source_of`` collapsing unsourced writes to the ``"user"`` bucket, BOTH
+    conditions are then satisfied by construction, and a genuine contradiction is filed as
+    an update: «the patient died on 30 July» coexists with «the patient was discharged on
+    30 July» (`docs/stato-reale/banchi/ws3-la-causa-radice-e-un-fallback-che-inventa-un-
+    ordine.py`, and the class measured in `ws3-la-contraddizione-implicita.py`).
+
+    ⛔ Do NOT "fix" this by dropping the fallback: that would route almost every pair to
+    conflict, and TRUE facts pay for it — two were already rejected with no change at all
+    in `ws3-antonimi-si-ferma-il-resto-no.py`. Whoever touches it must measure BOTH
+    populations.
+
     SECURITY — the enforce wiring (``ENGRAM_SUPERSEDE_SAME_SOURCE``, task #48) has NO
     source authentication, and this function provides NONE. ``verified_by`` is
     caller-controlled and spoofable (even the ``actor:`` self-provenance prefix is a bare
