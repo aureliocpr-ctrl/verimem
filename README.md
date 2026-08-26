@@ -1,8 +1,11 @@
 # Verimem
 
 **Verified memory for AI agents.** Every write passes an admission gate, every
-read carries provenance, and when the evidence isn't there the system abstains
-instead of guessing.
+read carries provenance, and a claim the source **contradicts** does not come
+back as truth (measured: 0/10, 1/10 and 2/10 admitted across three falsehood
+classes, IT and EN — `docs/stato-reale/banchi/`). A claim the source merely
+does not mention is a different case, and today it is **admitted**: 8/10 in IT
+and 9/10 in EN. Outside IT/EN neither guarantee holds.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
@@ -667,7 +670,7 @@ key. Do not rely on `forget()` alone for that guarantee: it does not make it.
 conversations / documents / tool results
         │  atomic extraction (subject-named, date-attached)
         ▼
-  admission gate  ── quarantines unsupported claims (contradictions: strict mode)
+  admission gate  ── quarantines claims the source CONTRADICTS (unsupported ones are admitted: 8/10 IT, 9/10 EN)
         ▼
   bi-temporal store (SQLite) ── facts + provenance + supersession chains
         │
