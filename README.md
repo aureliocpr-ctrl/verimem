@@ -313,10 +313,14 @@ pip install verimem
 > For what this page claims, install from source (`pip install -e ".[dev]"`, see
 > Development below). `docs/stato-reale/` is where the gap between this README and
 > the published artifact is measured, document by document. Most of those notes are
-> dated 2026-08-08 and that does *not* make them stale: they describe the *published*
-> package, and the published package has not moved since -- 0.7.0 is still the latest
-> on PyPI. Re-measured on 2026-08-26, one of them had drifted only in our favour:
-> `02e` counted 16 commands missing from the package, today it is 18.
+> dated 2026-08-08, and whether that makes them stale depends on what each one
+> measures. Most describe the *published* package, and that has not moved since --
+> 0.7.0 is still the latest on PyPI -- so they hold by construction; re-measured on
+> 2026-08-26, `02e` had drifted only against us (16 missing commands then, 18 today).
+> But a few measure `main` instead -- `02m-le-promesse-su-origin-main.md` and
+> `02p-il-server-parte-su-main-...md` say so in their filename -- and `main` has moved
+> by hundreds of commits since. Those are snapshots of a moving target: read the SHA
+> in their header, not the claim.
 
 **What it costs on disk.** Verimem ships a local judge, so the footprint is larger than a
 typical library and it is worth knowing before you start:
