@@ -268,8 +268,12 @@ pip install verimem
 >   (`bd4ff5ba`) and is not in the published package. Installing `mcp<2` alongside
 >   restores the API the published server expects; that follows from the version
 >   constraints and the two wheels' contents, and was not verified end to end.
-> - **16 commands exist here and not in the package**, `save` among them. Measured
->   2026-08-08 in `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`.
+> - **18 commands exist here and not in the package**, `save` among them -- the
+>   canonical write of the project's own protocol. Measured 2026-08-26 by reading the
+>   published wheel's CLI against `main`: 40 commands in the wheel, 58 here, and the
+>   40 are a strict subset. `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`
+>   counted 16 on 2026-08-08 with a different ruler (what `verimem --help` prints);
+>   both are true, and the gap has not narrowed.
 >
 > For what this page claims, install from source (`pip install -e ".[dev]"`, see
 > Development below). `docs/stato-reale/` is where the gap between this README and
