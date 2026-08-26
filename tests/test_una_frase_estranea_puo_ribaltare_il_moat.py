@@ -116,8 +116,29 @@ def test_E_NON_E_UNIVERSALE_dove_la_smentita_ripete_la_parola_del_claim_regge():
 # ⚠️ TRE SPIEGAZIONI ESCLUSE CON LA MISURA, perche' nessuno le riprovi:
 #  · «e' il MAX su finestre»: g(A+B)=99.9 con max(g(A),g(B))=1.6 — il punteggio
 #    del tutto non e' derivabile dalle parti.
-#  · «e' la LUNGHEZZA in caratteri»: riempimento senza senso («xxxx yyyy zzzz»,
-#    83 char) lascia 0.7; serve testo linguisticamente pieno.
+#  · «e' la LUNGHEZZA in caratteri» — 🪞 ESCLUSIONE RITIRATA il 26/08 alle 23:53.
+#    L'avevo dichiarata su UN SOLO PUNTO (riempimento «xxxx yyyy zzzz», 83 char,
+#    lascia 0.7). Rifatta a lunghezza crescente con lo STESSO riempimento non
+#    linguistico, la smentita sempre in coda e mai modificata:
+#
+#        copie   char   esito  grounding
+#            1     74   TRATT    0.5
+#            4    137   TRATT    0.5
+#           10    263   TRATT    1.2
+#           20    473   passa   85.4
+#           40    893   passa   99.9
+#           80   1733   TRATT    1.0
+#
+#    Passa in una FINESTRA (473-893 char) e torna a reggere sopra e sotto. Quindi
+#    la lunghezza conta, ma NON in modo monotono — e un'esclusione basata su un
+#    punto solo non era un'esclusione. Stessa forma della curva sulla fonte vera:
+#    0.4 · 0.1 · 88.7 · 2.4 · 2.4 · 99.5 · 99.8.
+#  · E non e' nemmeno la NATURA del contorno (misurato 23:52, 20 frasi ciascuno):
+#        italiano prosa   98.4      pseudo-parole IT   99.3
+#        tedesco prosa    84.2      soli numeri        99.9
+#        inglese prosa    25.2  <- l'unico che regge
+#    Un contorno di soli numeri porta il falso a 99.9. L'inglese e' il piu'
+#    robusto, coerente con la batteria di ws3 (implicite EN 0/10).
 #  · «e' il TRONCAMENTO a 512 token» (transformers avvisa «607 > 512» sulla
 #    fonte vera): gli ultimi 1500 char, che stanno sotto la finestra E
 #    contengono la smentita, passano lo stesso a 99.0.
