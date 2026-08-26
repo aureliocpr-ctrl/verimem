@@ -158,6 +158,38 @@ La differenza fra le prime due non è sfumatura: è la differenza fra «la memor
 non ti restituisce una falsità come vera» e «la memoria verifica ciò che scrivi».
 Solo la prima regge alla misura.
 
+### ⚠️ Il punto che un analista ostile colpirebbe per primo
+
+Aggiunto il 27/08 dopo la matrice del commit «banco: la seconda garanzia non
+degrada con la scrittura, si spezza sulla CIFRA». **Quell'8/10 è una media su
+due popolazioni opposte**, e finché resta un numero solo è criticabile — non
+come promessa falsa, ma come *media su popolazioni disomogenee*:
+
+    lingua   dettaglio NUMERICO   dettaglio non numerico   veri rifiutati
+    EN            0/3                    3/3                    0/1
+    ZH            0/3                    2/3                    0/1
+    JA            0/3                    3/3                    0/1
+    KO            0/3                    2/3                    0/1
+    AR            0/3                    3/3                    0/1
+    HI            0/3                    3/3                    0/1
+    ───────────────────────────────────────────────────────────────────
+    totale       **0/18**              **16/18**
+
+⇒ Il non sostenuto **non passa un po' dappertutto**: passa **quasi sempre**
+quando il dettaglio aggiunto non porta una cifra, e **non passa mai** quando la
+porta. Chi legge «8/10» conclude «ne ferma due su dieci»; il vero è «tutti o
+quasi nessuno, a seconda che ci sia un numero».
+
+📌 La riga di vetrina **regge**: `README.md:707` dichiara già, per iscritto,
+«unsupported ones are admitted: 8/10 IT, 9/10 EN» — nessuno può dire «afferma
+cose che non fa» su questo punto, ed è una cosa buona che sia scritta. Il rischio
+è di *lettura*, non di promessa, e si chiude con una riga sola: separare le due
+popolazioni. Chi tiene la vetrina decide se metterla.
+
+⚖️ E vale anche per questo documento: la riga qui sopra («ammesso 8/10 in IT e
+9/10 in EN») l'avevo scritta io poche ore prima **senza la separazione**. Un
+registro che riporta una media ingannevole è peggio di nessun registro.
+
 ---
 
 ## Il tag
