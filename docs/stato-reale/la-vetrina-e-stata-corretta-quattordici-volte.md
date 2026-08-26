@@ -76,6 +76,60 @@ preciso: tredici difetti su tredici sono stati trovati e corretti da noi, in
 giornata, quasi sempre dall'istanza che li aveva introdotti. Nessuno è stato
 trovato da fuori. La pagina di adesso è più vera di quella di stamattina.
 
+## La quindicesima, trovata mezz'ora dopo — e dice PERCHÉ succede
+
+Rileggendo la tabella di apertura ho trovato un terzo difetto, sempre mio,
+sempre nella pagina che un lettore vede per prima:
+
+> `| contradiction stated outright (**three falsehood classes**, IT and EN) | 0/10, 1/10, 2/10 |`
+
+Il banco che produce quei numeri (`ws3-l-entita-a-batteria-l-ultima-delle-tre.py`)
+li tiene in una tabella di **tre righe e tre colonne**:
+
+    negazione            la fonte CONTRADDICE      0/10    0/10
+    entita' sostituita   la fonte CONTRADDICE      1/10    2/10
+    dettaglio aggiunto   la fonte TACE             8/10    9/10
+
+Le classi sono tre, ma **solo due sono contraddizioni**: la terza *tace*, vale
+8/10 e 9/10, e sta due righe più sotto nella stessa tabella di vetrina. La riga
+annuncia tre classi e mostra i numeri di due. E quei tre numeri sono i valori
+distinti di **quattro celle** — un lettore che vede tre classi e tre cifre le
+mappa una a una, e conclude che esiste una terza classe di contraddizione con
+esito 2/10.
+
+⚖️ Ho verificato l'ipotesi che salverebbe la riga — che «entità sostituita»
+conti come due classi, attributo e nome proprio, dato che il banco le tratta
+come due forme. **È falsa, e la falsificano i numeri stessi**: quelle due forme
+valgono 0/5 e 0/5, 1/5 e 2/5. Se fossero classi a sé, le cifre in vetrina
+sarebbero su cinque, non su dieci.
+
+✂️ Testo pronto, che **sostituisce** una riga con due e non aggiunge caveat:
+
+    | outright contradiction — a negation        | **0/10 IT, 0/10 EN** |
+    | outright contradiction — a swapped entity  | **1/10 IT, 2/10 EN** |
+
+### 🔑 La causa, e vale oltre questa riga
+
+Nel commit di quella riscrittura avevo scritto, in buona fede:
+
+> «Verificato dopo la riscrittura che tutte e **sei le cifre** siano ancora nel
+> file.»
+
+Ho verificato che le **cifre** ci fossero. Non che l'**etichetta** sopra di esse
+fosse ancora vera. Comprimendo tre righe in una ho tenuto i numeri e ho perso
+la **colonna di mezzo** — *contraddice* contro *tace* — che è precisamente ciò
+che rende quei numeri interpretabili.
+
+> **Quando si comprime una tabella in una riga, sopravvivono i numeri e muoiono
+> le colonne che li qualificano. E il controllo naturale — "ci sono ancora
+> tutte le cifre?" — è cieco esattamente su ciò che è morto.**
+
+È la stessa forma degli altri due difetti trovati stanotte: il tasso «8/10 IT,
+9/10 EN» che aggrega due popolazioni opposte, e «unmeasured» rimasto su classi
+ormai misurate. **Tre difetti diversi, una causa sola.** ⇒ Il presidio giusto
+non è contare le cifre: è **rileggere la riga accanto alla tabella del banco
+da cui viene**, colonne comprese.
+
 ## La domanda che resta aperta, ed è di Aurelio
 
 Il criterio dato è «macchina appena uscita dal concessionario». Il conteggio
