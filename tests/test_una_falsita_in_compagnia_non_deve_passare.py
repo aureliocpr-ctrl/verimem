@@ -88,3 +88,22 @@ def test_una_sostituzione_di_entita_non_deve_passare_in_compagnia():
     assert _bloccato(
         "Il responsabile e' Mancini e il magazzino di Bologna misura 2600 mq.",
         SRC_MAG)
+
+
+def test_presidio_un_token_NUOVO_nei_magazzini_e_bloccato():
+    """La controparte della ricombinazione: nello stesso dominio, con una parola
+    che nella fonte non c'e', il gate si ferma (misurato g=1.1). Senza questa
+    riga «la ricombinazione passa» non si distingue da «i magazzini passano»."""
+    assert _bloccato(
+        "Il responsabile e' Mancini e il magazzino e' a Bologna.", SRC_MAG)
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "ricombinare i token della fonte da' 100.0: «il responsabile e' Ancona e il "
+    "magazzino di Mancini misura 2600 mq» — citta' e persona SCAMBIATE, due "
+    "falsita', nessuna verita', punteggio pieno. Piu' puro del 92.3: li' una "
+    "verita' presa dalla fonte faceva da traino, qui bastano i TOKEN"))
+def test_ricombinare_i_token_della_fonte_non_deve_dare_il_punteggio_pieno():
+    assert _bloccato(
+        "Il responsabile e' Ancona e il magazzino di Mancini misura 2600 mq.",
+        SRC_MAG)
