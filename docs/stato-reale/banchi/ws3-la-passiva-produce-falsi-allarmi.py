@@ -41,9 +41,29 @@ scritto sbagliava LINGUA::
     VERI rifiutati  EN  PASSIVA  0/10      EN  attiva  0/10
     chi li ha rifiutati:  L1.16  (2 su 2)
 
-① E' LA FORMA, a contenuto invariato: gli stessi dieci fatti scritti in attiva
-non producono un solo falso allarme, scritti in passiva ne producono due. Non
-e' il contenuto, non e' la fonte, non e' il dominio: e' la struttura.
+① CORRETTO IL 26/08 DOPO LA MISURA DI @ws1 — «E' LA FORMA» E' IMPRECISO.
+I due casi caduti sono `contratto` («e' stato FIRMATO») e `bilancio` («e' stato
+APPROVATO»); gli otto che passano hanno spedito, collaudato, respinta,
+pubblicata, dimesso, consegnata, archiviata, ripristinato. `firmato` e
+`approvato` sono i due verbi su cui stasera sono stati fatti commit di lista
+(f48a45b9, 5c3d341b). ⇒ **A scegliere i casi e' la PAROLA, non la forma.**
+🪞 E il dato era GIA' in questo output senza che lo leggessi — guardavo la
+colonna dei RIFIUTATI e non i layer degli AMMESSI::
+
+    contratto  IT attiva  admitted  layer = L1+L1.16    <- scatta anche in attiva
+    bilancio   IT attiva  admitted  layer = L1+L1.16
+    lotto      IT attiva  admitted  layer = -
+
+⇒ MA LA FORMA DECIDE L'ESITO: su quelle stesse due parole, in PASSIVA L1.16
+VETA (quarantined), in ATTIVA resta AVVISO (admitted). Stesso contenuto, stessa
+parola, stesso claim che cita la sua fonte: cambia la voce del verbo e cambia
+il verdetto.
+🔑 La formulazione che regge a entrambe le misure — la mia alla porta e quella
+di @ws1 su `_carve_out` come funzione pura: **la parola sceglie CHI guarda, la
+forma decide SE veta.** Nessuna delle due da sola descrive il comportamento.
+⚠️ Limite dichiarato: `git grep` su `"firmato"`/`"approvato"` nelle liste non li
+trova — saranno derivati o generati. Qui si afferma il COMPORTAMENTO misurato,
+non la loro presenza in una lista che non ho letto.
 ② MA E' ITALIANO, NON INGLESE. L'aperto che avevo lasciato scritto diceva «in
 EN due VERI rifiutati sulla forma positiva»: qui l'inglese e' 0/10 in entrambe
 le forme. I due casi EN che avevo visto venivano da due banchi diversi e non si
