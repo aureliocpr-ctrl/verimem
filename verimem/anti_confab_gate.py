@@ -2387,6 +2387,28 @@ def run_validation_gate(
             # fornitore inesistente, inventa la durata e l'importo — ed entra
             # col punteggio più alto del sistema.
             #
+            # 📌 AGGIORNAMENTO 26/08 — LA CURA HA CHIUSO LA METÀ CHE SAPEVA
+            # CONTARE, e senza questa nota il blocco qui sopra manda chi legge
+            # nella direzione sbagliata. I tre esempi del «5/5» sono TUTTI E TRE
+            # NUMERICI («40 pezzi», «45 minuti», «1200 euro»), ed è esattamente
+            # ciò che L4.1 — la cura introdotta qui — ha chiuso: misurato a
+            # batteria su otto lingue, il dettaglio numerico aggiunto è fermato
+            # 8/8. Ma la CLASSE B non è chiusa: su un dettaglio NON numerico
+            # («…con corriere espresso», «…in sala riunioni», «…all'unanimità»)
+            # un layer deterministico non può arrivare per costruzione, e il
+            # giudice non lo vede::
+            #
+            #     dettaglio NON numerico aggiunto   IT 8/10   EN 9/10 ammessi
+            #     (10 tipi diversi, 10 fonti, IT/EN appaiati, VERI 19/20 ammessi)
+            #     docs/stato-reale/banchi/ws3-la-batteria-italiana-caso-o-classe.py
+            #
+            # ⇒ Il «5/5» qui sopra NON descrive lo stato di oggi per i numeri e
+            # LO DESCRIVE ANCORA per il resto. E la diagnosi che segue — il
+            # 91,8% dei verdetti agli estremi, nessuna soglia può separare —
+            # regge e spiega proprio il residuo: misurata la stessa cosa su tre
+            # classi, il gate trattiene ciò che la fonte CONTRADDICE (0/10,
+            # 1/10, 2/10) e ammette ciò di cui la fonte TACE (8/10, 9/10).
+            #
             # 🔑 La diagnosi: «nessun rilevatore L1 riceve la fonte, il
             # confronto claim↔fonte esiste in UN SOLO posto, dentro il
             # cross-encoder, che è esattamente quello che sbaglia su questa
