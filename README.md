@@ -2,19 +2,25 @@
 
 **Verified memory for AI agents.** Every write passes an admission gate, every
 read carries provenance, and a claim the source **openly contradicts** does not
-come back as truth (measured: 0/10, 1/10 and 2/10 admitted across three
-falsehood classes, IT and EN — `docs/stato-reale/banchi/`). When the
-contradiction takes an inference — «the patient died» versus «the patient was
-discharged» — that holds in EN (0/10) but **not in IT (3/10 admitted)**, and
-**both figures are measured on short sources**: adding unrelated sentences
-raises the judge's score sharply (one case went 9.6 → 35.9 against a cut of
-40), and on other phrasings it flips the verdict outright. A claim the source merely
-does not mention is a different case, and today it is **admitted**: 8/10 in IT
-and 9/10 in EN. Beyond IT/EN the first guarantee **degrades with the
-script rather than stopping at a border** — measured on entity
-substitution: ZH and JA hold as well as EN (1–2 in 10 admitted), KO 3,
-AR 5, HI 7, and Thai fails outright at 10/10. The other classes are
-unmeasured outside IT/EN except in Thai, where none of them holds.
+come back as truth.
+
+That guarantee is measured, and so are its edges — every figure below comes from
+a bench in `docs/stato-reale/banchi/`, on short sources through the public
+`remember --source` port:
+
+| | admitted as truth |
+|---|---|
+| contradiction stated outright (three falsehood classes, IT and EN) | **0/10, 1/10, 2/10** |
+| contradiction that takes an inference — «the patient died» vs «the patient was discharged» | 0/10 in EN, **3/10 in IT** |
+| a claim the source simply **does not mention** | **8/10 IT, 9/10 EN** |
+
+Two limits belong next to those numbers. **Length**: they are measured on short
+sources — adding unrelated sentences raises the judge's score sharply (one case
+went 9.6 → 35.9 against a cut of 40) and on some phrasings flips the verdict.
+**Script**: beyond IT/EN the first guarantee degrades rather than stopping at a
+border — on entity substitution ZH and JA hold as well as EN (1–2 in 10), KO 3,
+AR 5, HI 7, and Thai fails outright at 10/10; the other classes are unmeasured
+outside IT/EN except in Thai, where none of them holds.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
