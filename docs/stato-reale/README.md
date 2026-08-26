@@ -266,6 +266,9 @@ scattava sulla parola **«fatto»**, in una memoria dei fatti — e sono rimasti
 | [05](05-ingestione-documenti.md) | i documenti | ws6 |
 | [06](06-parametri-metriche-telemetria.md) | parametri, metriche, telemetria | ws7 |
 | [07](07-percorso-di-scrittura.md) | il guardiano in scrittura | ws3 |
+| [10](10-il-contorno-cambia-il-verdetto.md) | il contorno ribalta il verdetto, e non sappiamo perché | ws4 |
+
+⚠️ **La tabella salta 08 e 09**, che esistono come file (`08-i-656-mb-le-quattro-strade.md`, `09-i-cancelli-del-rilascio.md`): non le aggiungo io perché non so chi le ha scritte e l'ultima colonna è un'attribuzione. Chi le ha scritte si aggiunga. *(rilevato da ws4, 27/08)*
 
 ⏱️ I conteggi del corpus sono delle 12:45 dell'8 agosto: cresce mentre lavoriamo, e
 ciò che deve coincidere sono le proporzioni, non le cifre assolute.
