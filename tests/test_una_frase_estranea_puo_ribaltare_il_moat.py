@@ -95,3 +95,91 @@ def test_E_NON_E_UNIVERSALE_dove_la_smentita_ripete_la_parola_del_claim_regge():
         f"anche il caso «vicino» ora ribalta (g={g_con} contro {g_solo}): l'effetto "
         "e' piu' esteso di quanto il banco dichiari, allargare la misura"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-26, 23:10 — la forma DETERMINISTICA e piu' nuda dello stesso fenomeno,
+# trovata partendo da una fonte vera (l'output di `pytest` di un altro file).
+#
+# La smentita e' SEMPRE l'ultima frase e non cambia mai; l'unica variabile e'
+# quanto testo NEUTRO la precede:
+#
+#     riempimento x1     191 char   TRATT   1.2   avvisi=1
+#     riempimento x10   1433 char   passa  99.2   avvisi=0
+#     riempimento x30   4193 char   passa  99.2   avvisi=0
+#     riempimento x60   8333 char   passa  99.2   avvisi=0
+#
+# Il riempimento e' italiano corretto e completamente neutro — parla di presenze
+# a una riunione — e non nomina ne' il direttore ne' le dimissioni. Il punteggio
+# SATURA a 99.2 e non si muove piu' fra 1433 e 8333 char.
+#
+# ⚠️ TRE SPIEGAZIONI ESCLUSE CON LA MISURA, perche' nessuno le riprovi:
+#  · «e' il MAX su finestre»: g(A+B)=99.9 con max(g(A),g(B))=1.6 — il punteggio
+#    del tutto non e' derivabile dalle parti.
+#  · «e' la LUNGHEZZA in caratteri»: riempimento senza senso («xxxx yyyy zzzz»,
+#    83 char) lascia 0.7; serve testo linguisticamente pieno.
+#  · «e' il TRONCAMENTO a 512 token» (transformers avvisa «607 > 512» sulla
+#    fonte vera): gli ultimi 1500 char, che stanno sotto la finestra E
+#    contengono la smentita, passano lo stesso a 99.0.
+# Il meccanismo non lo so. Il fenomeno e' deterministico.
+#
+# 🔑 E SU UNA FONTE VERA NON E' NEMMENO MONOTONO: con l'output di pytest, al
+# crescere del contorno l'esito fa TRATT 0.4 · TRATT 0.1 · passa 88.7 · TRATT
+# 2.4 · TRATT 2.4 · passa 99.5 · passa 99.8 — si ribalta tre volte su sette.
+# Non e' una soglia da alzare: e' instabile.
+
+RIEMPIMENTO_NEUTRO = (
+    "Il verbale riporta le presenze dei partecipanti alla riunione mensile "
+    "del comitato tecnico, con i relativi orari di ingresso e di uscita. "
+)
+SMENTITA_SECCA = "Il direttore ha rassegnato le dimissioni il 4 maggio."
+CLAIM_FALSO = "Il direttore e ancora in carica il 4 maggio."
+
+
+def _con_contorno(copie: int) -> tuple[str, float | None, int]:
+    mem = Memory(str(Path(tempfile.mkdtemp()) / "n.db"))
+    fonte = (RIEMPIMENTO_NEUTRO * copie) + SMENTITA_SECCA
+    ric = mem.add(CLAIM_FALSO, topic="t/neutro", source=fonte, validate="full")
+    return (
+        str(ric.get("status")),
+        ric.get("grounding_score"),
+        len(ric.get("warnings") or []),
+    )
+
+
+def test_CONTROLLO_senza_contorno_la_falsita_e_fermata():
+    """Il righello della sezione: la smentita da sola basta."""
+    stato, punteggio, _ = _con_contorno(1)
+    assert stato == "quarantined", (
+        f"la falsita' entra gia' senza contorno ({stato}, g={punteggio}): "
+        "questa sezione non misura piu' l'effetto del riempimento"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="basta 1433 char di testo NEUTRO davanti alla smentita perche' il "
+    "claim falso entri a 99.2, e satura li' fino a 8333 char (26/08)",
+)
+@pytest.mark.parametrize("copie", [10, 30, 60])
+def test_il_contorno_neutro_non_dovrebbe_far_entrare_la_falsita(copie):
+    stato, punteggio, _ = _con_contorno(copie)
+    assert stato == "quarantined", f"ammessa con g={punteggio} dopo {copie} copie di contorno"
+
+
+def test_E_LA_RICEVUTA_NON_DICE_CHE_LA_FONTE_E_TROPPO_LUNGA():
+    """Difetto separato e piu' facile da curare: propagare un avviso che esiste.
+
+    Su una fonte che eccede la finestra del giudice, `transformers` avvisa su
+    stderr («Token indices sequence length is longer … 607 > 512») ma la
+    ricevuta non riporta nulla: chi scrive vede `moat: passed` e un punteggio
+    alto, e non ha modo di sapere che il giudice ha letto un pezzo.
+    Se un giorno l'avviso compare, questo test diventa rosso — ed e' una buona
+    notizia: aggiornarlo.
+    """
+    stato, punteggio, n_avvisi = _con_contorno(60)
+    assert stato != "quarantined", f"ora e' trattenuta ({punteggio}): rimisurare la sezione"
+    assert n_avvisi == 0, (
+        f"la ricevuta ora porta {n_avvisi} avvisi su una fonte da 8333 char: se uno "
+        "di questi dichiara il troncamento, il difetto e' curato e il banco va aggiornato"
+    )
