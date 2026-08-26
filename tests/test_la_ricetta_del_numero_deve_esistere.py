@@ -28,8 +28,22 @@ from benchmark import repro_all
 from benchmark.repro_all import REGISTRY, cmd_verify, command_module
 
 
+@pytest.mark.xfail(strict=True, reason="benchmark/lme_retrieval_bench.py non esiste nel repo: il numero di README:22 e' pubblicato e non rigenerabile. OWNER: chiunque ripristini il banco (@ws5 ha indicato longmemeval_runner.py, non verificato). APERTO dal 2026-08-25 (ws7). Diventa XPASS(strict) da se' quando il banco torna, e allora questa riga va TOLTA: e' il lavoro per cui e' qui.")
 def test_ogni_ricetta_del_registro_e_un_modulo_che_esiste() -> None:
-    """Il presidio del DIFETTO: nasce rosso finche' una ricetta manca."""
+    """Il presidio del DIFETTO: rosso finche' una ricetta manca.
+
+    ⚠️ ``xfail(strict=True)``, non spento, e la differenza e' tutta qui. Un rosso
+    NUDO su un difetto che chi lo trova non puo' chiudere blocca il gate (a) del
+    rilascio per tutti (@ws8, 26/08 20:07: «i tuoi due presidi-debito sono rossi
+    NUDI»). Uno ``xfail`` NON strict sarebbe muto in entrambe le direzioni;
+    questo invece FALLISCE il giorno in cui il banco torna, e costringe a
+    togliere il marcatore.
+
+    E il difetto non sparisce dalla vista: ``repro_all --verify`` continua a
+    stampare «7/8 claims regenerable by their command» ed EXIT=1 comunque, che
+    era la ragione per cui il 25/08 avevo rifiutato l'xfail. Quell'obiezione
+    valeva contro lo SPEGNIMENTO, non contro un sensore che resta collegato.
+    """
     assenti = []
     for k, e in REGISTRY.items():
         mod = command_module(e["command"])
