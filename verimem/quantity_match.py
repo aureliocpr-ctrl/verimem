@@ -787,6 +787,16 @@ _VIRGOLA_AMBIGUA = re.compile(r"(?!0,)\d{1,3},\d{3}$")
 #: 0.250, 0.125, 2607.26760.
 _MIGLIAIA_MULTIPLE = re.compile(r"(?<![\d.])(?!0\.)\d{1,3}(?:\.\d{3})+(?!\d)")
 
+#: Il gemello con la VIRGOLA, per la convenzione inglese: «1,234 facts»,
+#: «1,250,000». Stessa forma e stessa ragione di `_MIGLIAIA_MULTIPLE` — sono
+#: numeri che `_QUANT_RE` non vede affatto, quindi senza questa riga non
+#: ricevono nemmeno l'avviso e il fatto entra come se non ci fosse niente da
+#: verificare. Misurato: `numeri_ambigui("The store holds 1,234 facts.")`
+#: restituiva `[]`.
+#: ⚠️ NON copre «176,6»: la parte decimale ha 1-2 cifre e `_QUANT_RE` la cattura
+#: e la confronta (vedi la nota sul pattern). Qui entrano SOLO i gruppi da tre.
+_MIGLIAIA_VIRGOLA = re.compile(r"(?<![\d,])(?!0,)\d{1,3}(?:,\d{3})+(?!\d)")
+
 
 def numeri_ambigui(text: str) -> list[str]:
     """I numeri del claim che NON abbiamo potuto misurare, come sono scritti.
@@ -811,7 +821,14 @@ def numeri_ambigui(text: str) -> list[str]:
     """
     span = claim_span(text)
     fuori: list[str] = []
-    # ① quelli che l'estrattore VEDE e che il gate ha smesso di valutare
+    # ① quelli che l'estrattore VEDE e che il gate ha smesso di valutare.
+    # ⚠️ `_VIRGOLA_AMBIGUA` qui dentro OGGI NON SCATTA MAI, e lo scrivo invece di
+    # lasciarlo credere: i numeri che matcha (`1,234`) non sono catturati da
+    # `_QUANT_RE`, quindi non arrivano a questo giro — ci arrivano dal ② qui
+    # sotto. Misurato: `_QUANT_RE.search("1,234")` -> False,
+    # `_VIRGOLA_AMBIGUA.match("1,234")` -> True. Resta come guardia simmetrica a
+    # `_PUNTO_AMBIGUO` per il giorno in cui il pattern cambiasse; non e' una
+    # copertura su cui contare oggi.
     for m in _QUANT_RE.finditer(span):
         num_s = m.group(1)
         if (_PUNTO_AMBIGUO.match(num_s) or _VIRGOLA_AMBIGUA.match(num_s))                 and num_s not in fuori:
@@ -819,9 +836,10 @@ def numeri_ambigui(text: str) -> list[str]:
     # ② quelli che l'estrattore NON VEDE AFFATTO — vedi `_MIGLIAIA_MULTIPLE`.
     # Senza questo giro «122.057.313 byte» non riceveva nemmeno l'avviso: il
     # fatto entrava come se non ci fosse niente da verificare.
-    for m in _MIGLIAIA_MULTIPLE.finditer(span):
-        if m.group(0) not in fuori:
-            fuori.append(m.group(0))
+    for rx in (_MIGLIAIA_MULTIPLE, _MIGLIAIA_VIRGOLA):
+        for m in rx.finditer(span):
+            if m.group(0) not in fuori:
+                fuori.append(m.group(0))
     return fuori
 
 

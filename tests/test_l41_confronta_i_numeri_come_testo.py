@@ -85,8 +85,55 @@ def test_la_virgola_decimale_italiana_non_spezza_il_numero():
                                  "committed=176.6 MB  per_thread=32.2 MB")
 
 
+def test_la_virgola_delle_migliaia_inglese_e_DICHIARATA_ambigua():
+    """CURATO, ma non nel modo del caso italiano — ed e' la distinzione che conta.
+
+    «176,6» NON e' ambiguo (le migliaia hanno tre cifre): va CONFRONTATO, e il
+    test sopra pretende che il valore ci sia. «1,234» invece e' genuinamente
+    ambiguo — milleduecentotrentaquattro in inglese, uno-virgola-duecento... in
+    italiano, mille volte di differenza — quindi la risposta giusta non e'
+    confrontarlo ma DICHIARARLO, come `_PUNTO_AMBIGUO` fa da sempre con
+    «45.000».
+
+    ⚠️ Prima della cura non succedeva ne' l'una ne' l'altra cosa::
+
+        numeri_ambigui("The store holds 1,234 facts.")  ->  []
+
+    cioe' il numero non era confrontato E non era dichiarato: il fatto entrava
+    come se non ci fosse niente da verificare. `_QUANT_RE` non lo vede affatto,
+    esattamente come i gruppi che `_MIGLIAIA_MULTIPLE` esiste per recuperare —
+    la cura e' il suo gemello con la virgola.
+
+    ⚖️ NON basta asserire che «L4.1 non accusa»: e' vero anche quando il numero
+    non viene guardato, ed e' il modo in cui l'altro test di questo file restava
+    verde col pattern vecchio. Qui si asserisce la cosa positiva: il numero
+    compare fra quelli DICHIARATI.
+    """
+    from verimem.quantity_match import numeri_ambigui
+    assert "1,234" in numeri_ambigui("The store holds 1,234 facts."), (
+        "«1,234» deve essere DICHIARATO ambiguo: non confrontato va bene, "
+        "ma taciuto no")
+    assert "1,250,000" in numeri_ambigui("Il costo e 1,250,000 dollari."), (
+        "anche i gruppi multipli, come per _MIGLIAIA_MULTIPLE col punto")
+
+
 @pytest.mark.xfail(strict=True, reason=(
-    "specularmente in inglese: la virgola delle MIGLIAIA nella fonte non si "
-    "riconcilia con la stessa quantita' scritta senza separatore nel claim"))
-def test_la_virgola_delle_migliaia_inglese_non_cambia_il_valore():
+    "difetto DIVERSO e non curato: qui il separatore sta nella SOURCE e il claim "
+    "scrive lo stesso valore senza. `numeri_ambigui` guarda il CLAIM, quindi "
+    "'1234' non e' ambiguo, viene confrontato, e nella fonte l'estrattore non "
+    "vede '1,234' -> L4.1 accusa"))
+def test_il_separatore_nella_SOURCE_non_falsifica_il_claim():
+    """La stessa quantita', il separatore da una parte sola.
+
+    Misurato dopo la cura dei numeri ambigui, che NON copre questo caso::
+
+        source «total=1,234 facts» · claim «The store holds 1234 facts.»
+        -> layers ['L4.1', 'L4-grounding']
+
+    ⚖️ Lo tengo SEPARATO invece di mescolarlo al test sopra: quello verifica che
+    un numero ambiguo nel CLAIM venga dichiarato — e lo fa. Questo verifica che
+    la fonte scritta con i separatori non renda falso un claim scritto senza, ed
+    e' un'altra cosa: la lettura della SOURCE, non del claim. Metterli insieme
+    avrebbe fatto sembrare non curato anche cio' che lo e'.
+    """
     assert "L4.1" not in _layers("The store holds 1234 facts.", "total=1,234 facts")
