@@ -66,6 +66,30 @@ sulle scritture, questa e' troppo generosa sull'italiano. Le due correzioni
 vanno in direzioni opposte, il che dice che il problema non era la prudenza ma
 la POPOLAZIONE su cui avevo misurato.
 
+═══ E NON E' UN PRESIDIO MANCANTE: E' UN PRESIDIO CHE SBAGLIA ═══
+Nel banco i tre casi che passano hanno `layer = -`, cioe' nessun avviso. Sembra
+«nessuno guarda». La ricevuta piena dice altro::
+
+    flow.write  grounding_score=95.92434692382812  judged=True  layers=[]
+                status=model_claim  withheld_despite_judge=False
+
+⇒ Il giudice HA giudicato e ha dato **95,9** a «il paziente e' stato dimesso»
+avendo come fonte «il paziente e' deceduto». Non manca un controllo: il
+controllo c'e', ha girato, e ha risposto «la fonte lo sostiene».
+🔑 Nessuna SOGLIA lo salverebbe — 95,9 sta sopra qualunque cut ragionevole, e
+il moat opera a 40. E' un'istanza esatta della diagnosi che il gate porta
+scritta da mesi (`anti_confab_gate.py`, aggiornata stasera in ef5dd2de): «il
+91,8% dei verdetti sta agli estremi, NESSUNA SOGLIA PUO' SEPARARE».
+⇒ Chi volesse curare questa classe non ha da tarare un numero: ha da aggiungere
+un giudizio che oggi non esiste.
+
+📌 E UNA LEZIONE DI METODO, la settima di oggi: il grounding degli AMMESSI non
+compare nella ricevuta della CLI, solo nel flow-log. Il mio primo tentativo di
+leggerlo dava «-» su tutti e quattro i casi — **compreso il CONTROLLO che deve
+fermare**, ed e' cosi' che ho visto in un secondo che il rotto era il
+misuratore e non il gate. Senza quella riga di controllo avrei scritto «il
+giudice non li vede», che e' l'opposto del vero.
+
 Regime: porta pubblica `verimem remember --source`, store temporaneo, FUORI
 pytest.
 """
