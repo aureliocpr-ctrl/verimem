@@ -257,6 +257,15 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
 pip install verimem
 ```
 
+<!-- ⛔ RILASCIO — LEGGERE PRIMA DI PUBBLICARE.
+     La nota qui sotto vale FINCHE' il pacchetto pubblicato e' vecchio. Nel momento in cui
+     si pubblica diventa FALSA, e non resta un dettaglio interno: `pyproject.toml:16` dice
+     `readme = "README.md"`, quindi QUESTO FILE E' LA PAGINA DI PyPI. Pubblicare senza
+     toccarla spedisce al mondo una vetrina che dice «cio' che PyPI vi serve non e' cio'
+     che questa pagina descrive» -- riferito a se stessa.
+     Chi pubblica: aggiornare i numeri (release, distanza in commit) o togliere il blocco.
+     Aggiunta il 2026-08-26 da ws7 insieme alla nota stessa, per non lasciare una mina a
+     chi fara' il rilascio. -->
 > **What PyPI serves you today is not what this page describes.** The latest release
 > is **0.7.0 (22 July)**; `main` is **994 commits** ahead of it. Two consequences you
 > should know before you start, both measured on 2026-08-26:
