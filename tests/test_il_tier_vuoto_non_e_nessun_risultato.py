@@ -1,6 +1,6 @@
 """«Non ho trovato niente» e «non c'è niente da cercare» sono due risposte.
 
-ws2«Vega», sonda del 2026-08-07 su store isolato, zero ingestione:
+Sonda del 2026-08-07 su uno store isolato, zero ingestione:
 
     TranscriptIndex().count()  ->  0
     recall('qual è il piano per il rilascio?')  ->  []  in 0.03s
