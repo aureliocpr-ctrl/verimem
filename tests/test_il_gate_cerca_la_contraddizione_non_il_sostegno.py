@@ -102,3 +102,104 @@ def test_CONTROLLO_un_claim_che_la_fonte_sostiene_passa():
     stato, punteggio = _grounding("Il file test_pagamenti.py ha 12 test passati.")
     assert stato != "quarantined", (
         f"un claim che la fonte sostiene viene ora rifiutato: {stato} g={punteggio}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-26, 20:28 (`8713d66c`): la stessa proprieta' vista dove fa piu' danno.
+# Sopra si cambia l'ENTITA' e la fonte tace su di lei. Qui si cambia la FORMA di
+# una self-claim, e la fonte dice il contrario:
+#
+#   fonte: «Il modulo di pagamento e' stato scritto il 3 marzo.
+#           Restano aperte due segnalazioni.»
+#
+#     caso                     status        grounding  moat
+#     canonica  SENZA source   quarantined   None       not_run:no_source
+#     riformul. SENZA source   model_claim   None       not_run:no_source   🔴
+#     canonica  CON source     quarantined   85.2       passed              ⚠️
+#     riformul. CON source     model_claim   95.3       passed              🔴🔴
+#     controllo: fatto VERO    model_claim   99.8       passed
+#
+# Due cose che nessuna delle due meta' dice da sola:
+#  · la canonica CON source e' quarantined MA il moat dice `passed` a 85.2 —
+#    a fermarla e' L1, il moat l'avrebbe ammessa;
+#  · fra il fatto VERO (99.8) e il vanto infondato (95.3) ci sono 4,5 punti:
+#    nessuna soglia li separa.
+# ⇒ le due difese non sono complementari. Il moat e' fortissimo contro la
+#   CONTRADDIZIONE (misurato da ws3: 0/10 falsita' ammesse nei due versi) e non
+#   e' una seconda linea contro il VANTO: e' una linea contro un'altra cosa.
+#
+# ⚠️ Ho ritirato, prima di scrivere questo, la conclusione opposta: avevo trovato
+# che i 9 candidati a self-claim elusa nel corpus (su 9416 fatti di 60 giorni)
+# erano 8 su 8 con grounding 98-99,98, e ne stavo deducendo «il moat copre cio'
+# che L1 elude». Sono sostenuti perche' scriviamo fatti veri con fonti vere.
+# Era inferenza da un'assenza.
+
+FONTE_VANTO = (
+    "Il modulo di pagamento e stato scritto il 3 marzo. "
+    "Restano aperte due segnalazioni."
+)
+CANONICA = "Il modulo e stato testato."
+RIFORMULATA = "Il modulo ha superato i test."
+
+
+def _esito(proposizione: str, con_fonte: bool) -> tuple[str, float | None, str]:
+    mem = Memory(str(Path(tempfile.mkdtemp()) / "v.db"))
+    extra = {"source": FONTE_VANTO, "validate": "full"} if con_fonte else {}
+    ric = mem.add(proposizione, topic="t/vanto", **extra)
+    return str(ric.get("status")), ric.get("grounding_score"), str(ric.get("moat"))
+
+
+def test_CONTROLLO_la_forma_canonica_del_vanto_e_fermata():
+    """Il righello. Senza questo, gli xfail qui sotto non si sanno leggere."""
+    stato, _, _ = _esito(CANONICA, con_fonte=False)
+    assert stato == "quarantined", (
+        f"il gate non ferma nemmeno {CANONICA!r}: questo banco non misura piu' nulla "
+        f"({stato})"
+    )
+
+
+def test_CONTROLLO_un_fatto_che_la_fonte_sostiene_resta_ammesso():
+    """L'altra popolazione: la cura non deve rendere il gate cieco ai fatti veri."""
+    stato, punteggio, _ = _esito(
+        "Il modulo di pagamento e stato scritto il 3 marzo.", con_fonte=True
+    )
+    assert stato != "quarantined", (
+        f"un fatto che la fonte sostiene viene rifiutato: {stato} g={punteggio}"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="riformulare elude L1: la self-claim entra come model_claim (26/08)",
+)
+def test_la_stessa_self_claim_riformulata_dovrebbe_essere_fermata():
+    stato, _, _ = _esito(RIFORMULATA, con_fonte=False)
+    assert stato == "quarantined"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="il caso grave: CON una fonte che dice il contrario, la riformulata "
+    "entra con grounding ~95 e moat passed — il moat non e' una seconda linea "
+    "contro il vanto (26/08)",
+)
+def test_e_nemmeno_con_una_fonte_che_dice_il_contrario():
+    stato, punteggio, moat = _esito(RIFORMULATA, con_fonte=True)
+    assert stato == "quarantined", f"entrata con g={punteggio}, moat={moat}"
+
+
+def test_a_fermare_il_vanto_canonico_e_L1_non_il_moat():
+    """Lo stato attuale, e se un giorno diventa rosso e' una BUONA notizia.
+
+    La canonica con fonte esce `quarantined`, ma il moat su quella stessa
+    scrittura dice `passed`: il verdetto viene dal lexical screen. Se questo
+    test fallisce perche' il moat ha smesso di dire `passed`, vuol dire che ha
+    imparato a vedere il vanto — aggiornare il banco, non il prodotto.
+    """
+    stato, punteggio, moat = _esito(CANONICA, con_fonte=True)
+    assert stato == "quarantined", f"atteso quarantined, ottenuto {stato}"
+    assert moat == "passed", (
+        "il moat non dice piu' `passed` sul vanto canonico: se ora lo giudica, "
+        f"questa e' una buona notizia e il banco va aggiornato (moat={moat}, "
+        f"g={punteggio})"
+    )
