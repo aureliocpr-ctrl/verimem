@@ -257,6 +257,24 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
 pip install verimem
 ```
 
+> **What PyPI serves you today is not what this page describes.** The latest release
+> is **0.7.0 (22 July)**; `main` is **994 commits** ahead of it. Two consequences you
+> should know before you start, both measured on 2026-08-26:
+>
+> - **The MCP server does not start.** `verimem 0.7.0` declares `mcp>=1.0.0` with no
+>   upper bound, so pip resolves it to `mcp 2.1.1`, which removed `list_tools`,
+>   `call_tool` and `list_resources` -- the low-level API this server calls in 11
+>   places. The ceiling (`mcp>=1.0.0,<2`) has been in the repo since 29 July
+>   (`bd4ff5ba`) and is not in the published package. Installing `mcp<2` alongside
+>   restores the API the published server expects; that follows from the version
+>   constraints and the two wheels' contents, and was not verified end to end.
+> - **16 commands exist here and not in the package**, `save` among them. Measured
+>   2026-08-08 in `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`.
+>
+> For what this page claims, install from source (`pip install -e ".[dev]"`, see
+> Development below). `docs/stato-reale/` is where the gap between this README and
+> the published artifact is measured, document by document.
+
 **What it costs on disk.** Verimem ships a local judge, so the footprint is larger than a
 typical library and it is worth knowing before you start:
 
