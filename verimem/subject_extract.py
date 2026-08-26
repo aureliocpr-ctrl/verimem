@@ -27,7 +27,7 @@ _FIRST_PERSON = re.compile(r"\b(?:I|we|We|my|My|our|Our|us|me)\b")
 
 # Finite verbs / copulas that terminate the leading subject NP.
 _VERB_MARK = re.compile(
-    r"\b(?:is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
+    r"\b(?:ha|hanno|è|sono|era|erano|viene|vengono|rejected|signed|is|are|was|were|has|have|had|expires?|expired|remains?|resolved|"
     r"reports?|reported|leads?|led|runs?|ran|opened|closed|migrated|reached|"
     r"spans?|monitors?|monitored|documented|confirmed|tested|deployed|added|"
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
@@ -65,6 +65,16 @@ _HONORIFIC = re.compile(
 #: domain fact (it escalates). Kept deliberately software/work-scoped; ordinary
 #: physical/legal/medical/financial nouns are absent on purpose.
 SOFTWARE_HEADS = frozenset({
+    # LE TESTE SOFTWARE ITALIANE (2026-08-26) — vanno INSIEME ai marcatori di
+    # verbo qui sopra, mai da sole: con i soli verbi `subject_head` trova
+    # «migrazioni» ma il classificatore non la riconosce come software, quindi
+    # `_is_domain_professional_fact` torna True, L1 viene DECLASSATO e la
+    # self-claim entra. E' successo il 25/08 (`1900b83b`), 17 test rossi,
+    # revertito il 26/08 (`dd904750`).
+    "migrazione", "migrazioni", "modulo", "moduli", "servizio", "servizi",
+    "verifica", "verifiche", "modifica", "modifiche", "libreria", "librerie",
+    "flusso", "flussi", "classe", "classi", "analisi",
+
     "service", "services", "migration", "migrations", "build", "builds",
     "deployment", "deployments", "feature", "features", "endpoint", "endpoints",
     "api", "apis", "app", "apps", "application", "applications", "codebase",
