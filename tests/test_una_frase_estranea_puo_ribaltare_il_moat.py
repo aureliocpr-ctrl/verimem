@@ -121,7 +121,22 @@ def test_E_NON_E_UNIVERSALE_dove_la_smentita_ripete_la_parola_del_claim_regge():
 #  · «e' il TRONCAMENTO a 512 token» (transformers avvisa «607 > 512» sulla
 #    fonte vera): gli ultimi 1500 char, che stanno sotto la finestra E
 #    contengono la smentita, passano lo stesso a 99.0.
-# Il meccanismo non lo so. Il fenomeno e' deterministico.
+#  · «e' la SOVRAPPOSIZIONE LESSICALE col claim» — la tesi di ws5, che sulle sue
+#    leve (ricombinare i token della fonte, il traino di una verita' accanto alla
+#    falsita') e' esatta. Sul contorno neutro NON regge, misurato il 26/08 alle
+#    23:37 con tre grandezze diverse per non falsificarla su una sola lettura:
+#
+#      prova           presenza  freq.ASS  freq.REL  token  grounding
+#      nucleo solo        0.500       2      0.500      4       0.7
+#      ripetuto x2        0.500       4      0.500      8      97.6
+#      + neutro x10       0.500       2      0.018    114      84.5
+#      + neutro x30       0.500       2      0.006    334      98.4
+#
+#    La presenza e' COSTANTE a 0.500 in tutte le righe; nel contorno neutro la
+#    frequenza relativa CROLLA di ottanta volte e il punteggio sale a 98.4.
+#    ⇒ il claim attinge MENO dalla fonte, in proporzione, ed e' giudicato PIU'
+#    sostenuto. Sono due meccanismi distinti, non uno.
+# Il meccanismo di QUESTO caso non lo so. Il fenomeno e' deterministico.
 #
 # 🔑 E SU UNA FONTE VERA NON E' NEMMENO MONOTONO: con l'output di pytest, al
 # crescere del contorno l'esito fa TRATT 0.4 · TRATT 0.1 · passa 88.7 · TRATT
