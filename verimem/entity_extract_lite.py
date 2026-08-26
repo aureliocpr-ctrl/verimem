@@ -213,8 +213,8 @@ def extract_entities_lite(text: str) -> list[dict[str, str]]:
                     # ⚠️ NON si scarta il match: si scarta il DETERMINANTE.
                     # Fino al 2026-08-25 qui c'era `continue`, e con la parola
                     # funzionale se ne andava il nome proprio attaccato:
-                    # «The Rovigo warehouse» -> NESSUNA entita' (8 casi su 8,
-                    # misurati da @ws6). In verimem un fatto senza entita' non
+                    # «The Rovigo warehouse» -> NESSUNA entita', misurato su
+                    # otto frasi su otto. In verimem un fatto senza entita' non
                     # ha con che essere distinto da un altro, e due fatti EN su
                     # magazzini DIVERSI finivano per supersedersi a vicenda.
                     #
