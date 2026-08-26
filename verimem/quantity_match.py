@@ -99,8 +99,19 @@ YEAR_RE = re.compile(r"\b(?:1[5-9]\d{2}|20\d{2})\b")
 # da punto». Misurato: 7/7 recuperati, 7/7 protetti (v1.2, 3.4.0, 2.1.3,
 # 65.61.137.117, 127.0.0.1, SKU300, abc300), 160 proposizioni su 8951 (1,79%).
 _QUANT_RE = re.compile(
-    r"(?<![A-Za-z0-9_])(?<!\d\.)(\d+(?:\.\d+)?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
-    r"(?![A-Za-z0-9_])(?!\.\d)",
+    # LA VIRGOLA DECIMALE ITALIANA, con lo STESSO criterio del punto ambiguo.
+    # Il gate leggeva «176,6 MB» come DUE valori (176 e 6) e accusava la fonte di
+    # non contenerli: misurato alla porta, `source «committed=176.6 MB»` +
+    # `claim «176,6 MB»` -> downgrade con grounding 100.0 e
+    # «...non contiene: 6 mb, 176». Firma sul corpus: 5 quarantinati su 71 con un
+    # decimale a virgola contro 1 ammesso su 600 (35x).
+    # ⚖️ SI ACCETTANO SOLO 1-2 CIFRE dopo la virgola, ed e' la riga che rende la
+    # cura sicura in inglese: un separatore di MIGLIAIA ne ha sempre TRE
+    # (`1,234`), quindi non entra qui e resta all'ambiguita' dichiarata —
+    # esattamente come `_PUNTO_AMBIGUO` fa con `45.000`. Allargare a `[.,]\d+`
+    # avrebbe letto «1,234 facts» come milleduecentotrentaquattro virgola.
+    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    r"(?![A-Za-z0-9_])(?!\.\d)(?!,\d)",
     re.UNICODE,
 )
 
@@ -740,6 +751,13 @@ def _introdotto_da_una_parola_temporale(testo: str, inizio_numero: int) -> bool:
 #: il costo e' zero: nelle righe del campione nessuna era un decimale legittimo.
 _PUNTO_AMBIGUO = re.compile(r"(?!0\.)\d{1,3}\.\d{3}$")
 
+#: Il gemello per la VIRGOLA. «1,234» e' milleduecentotrentaquattro in inglese e
+#: uno-virgola-duecentotrentaquattro in italiano: le due letture differiscono di
+#: mille volte, esattamente come per `_PUNTO_AMBIGUO`. Tre cifre esatte, perche'
+#: con una o due (`176,6`) il separatore di migliaia e' escluso e il numero e' un
+#: decimale che `_QUANT_RE` ora cattura e confronta.
+_VIRGOLA_AMBIGUA = re.compile(r"(?!0,)\d{1,3},\d{3}$")
+
 
 #: I gruppi di migliaia che `_QUANT_RE` NON VEDE AFFATTO, e che quindi non
 #: potevano nemmeno essere dichiarati.
@@ -796,7 +814,7 @@ def numeri_ambigui(text: str) -> list[str]:
     # ① quelli che l'estrattore VEDE e che il gate ha smesso di valutare
     for m in _QUANT_RE.finditer(span):
         num_s = m.group(1)
-        if _PUNTO_AMBIGUO.match(num_s) and num_s not in fuori:
+        if (_PUNTO_AMBIGUO.match(num_s) or _VIRGOLA_AMBIGUA.match(num_s))                 and num_s not in fuori:
             fuori.append(num_s)
     # ② quelli che l'estrattore NON VEDE AFFATTO — vedi `_MIGLIAIA_MULTIPLE`.
     # Senza questo giro «122.057.313 byte» non riceveva nemmeno l'avviso: il
@@ -1070,10 +1088,21 @@ def extract_quantities(text: str, *,
         if (not unit_s and YEAR_RE.fullmatch(num_s)
                 and _introdotto_da_una_parola_temporale(claim, m.start(1))):
             continue  # bare year → year path, not a quantity
-        if _PUNTO_AMBIGUO.match(num_s):
+        if _PUNTO_AMBIGUO.match(num_s) or _VIRGOLA_AMBIGUA.match(num_s):
             continue  # vedi _PUNTO_AMBIGUO: meglio nessun valore che quello falso
         try:
-            val = float(num_s)
+            # LA VIRGOLA DECIMALE DIVENTA UN VALORE, NON NESSUN VALORE. Senza
+            # questa riga il pattern nuovo cattura «176,6» ma `float` solleva
+            # ValueError e il numero finisce nel `continue` qui sotto: il claim
+            # smetterebbe di essere accusato, e passerebbe per NON ESSERE STATO
+            # CONFRONTATO. E' il difetto che il docstring di `numeri_ambigui`
+            # denuncia con parole sue — «i falsi negativi nascono convertendo i
+            # veri positivi in silenzio» — e sarebbe stato spostare il difetto,
+            # non chiuderlo.
+            # ⚖️ Qui arrivano solo le forme con 1-2 cifre: quelle con TRE sono
+            # gia' uscite come ambigue alla riga sopra, quindi questo `replace`
+            # non puo' leggere un separatore di MIGLIAIA inglese come decimale.
+            val = float(num_s.replace(",", "."))
         except ValueError:  # pragma: no cover — regex guarantees numeric
             continue
         out.add((norm_unit(unit_s), val))

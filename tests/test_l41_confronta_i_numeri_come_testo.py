@@ -54,10 +54,33 @@ def test_presidio_stesso_separatore_passa():
                                  "committed=176.6 MB  per_thread=32.2 MB")
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "L4.1 legge la virgola decimale italiana come separatore di valori: "
-    "'176,6' diventa '176' e '6 mb'. quantity_match.py:102 accetta solo il punto"))
 def test_la_virgola_decimale_italiana_non_spezza_il_numero():
+    """CURATO. Era xfail(strict) e l'ha tolto la cura, non una mano: il pattern
+    di `_QUANT_RE` accetta la virgola con 1-2 cifre e il valore viene
+    normalizzato prima del confronto.
+
+    ⚠️ NON BASTAVA IL PATTERN. Col solo pattern il test passava per la ragione
+    sbagliata: `float("176,6")` solleva ValueError e il numero finiva nel
+    `continue`, cioe' il claim smetteva di essere accusato perche' NON VENIVA
+    PIU' CONFRONTATO. E' il difetto che il docstring di `numeri_ambigui`
+    denuncia — «i falsi negativi nascono convertendo i veri positivi in
+    silenzio». Verificato che adesso il valore c'e' davvero::
+
+        extract_quantities("...176,6 MB.")  ->  [('mb', 176.6)]
+        extract_quantities("...176.6 MB.")  ->  [('mb', 176.6)]
+    """
+    # ⚠️ NON BASTA «L4.1 non compare»: quell'asserzione e' vera anche quando il
+    # numero non viene confrontato AFFATTO — ed e' il modo in cui questo stesso
+    # test passava col pattern vecchio, misurato falsificando la cura. Si
+    # asserisce quindi che il VALORE ci sia, ed e' uno solo.
+    from verimem.quantity_match import extract_quantities
+    virgola = extract_quantities("Con il tetto attivo il committed e 176,6 MB.")
+    punto = extract_quantities("Con il tetto attivo il committed e 176.6 MB.")
+    assert virgola == punto, (
+        f"la stessa quantita' scritta con virgola e con punto deve dare lo "
+        f"stesso valore: virgola={sorted(virgola)} punto={sorted(punto)}")
+    assert ("mb", 176.6) in virgola, (
+        f"«176,6 MB» deve dare UN valore 176.6, non nessuno e non due: {sorted(virgola)}")
     assert "L4.1" not in _layers("Con il tetto attivo il committed e 176,6 MB.",
                                  "committed=176.6 MB  per_thread=32.2 MB")
 
