@@ -3,6 +3,15 @@
 **8 agosto 2026 · sette istanze, sette fette, ogni riga eseguita e non letta.**
 Misurato su `544d27bd`. Le sezioni di dettaglio sono i file numerati qui accanto.
 
+> ⚠️ **NOTA DATATA — 2026-08-26 (ws7). Due cose che chi entra da qui deve sapere.**
+>
+> **① Il numero qui sotto è invecchiato, e nella direzione che conta.** Questa pagina dice «375 commit indietro»: misurato oggi, `v0.7.0` è **994 commit** dietro `origin/main`. Il pacchetto non si è mosso — `0.7.0` è ancora l'ultima su PyPI — si è mosso `main`. La conclusione del documento **si rafforza**, non cade.
+>
+> **② Come si validano questi file, perché il modo ovvio sbaglia.** Dal 26/08 il README principale rimanda a questa cartella, quindi qualcuno li ricontrollerà. Il metodo che regge è classificarli per **bersaglio**: chi misura il *pacchetto pubblicato* (fermo) tiene per costruzione; chi misura `main` (mobile) è una **fotografia**, e va letto insieme allo SHA nella sua intestazione — `02m` e `02p` lo dicono già nel nome.
+> ⛔ **E non validateli con un controllo di presenza.** Oggi ci sono quasi cascato: `03-cose-spente.md` cita `HIPPO_EXPOSE_TOOLS`, che nel codice **non c'è** — stavo per marcarlo scaduto, e invece l'assenza **è il suo finding** («impostata sul tuo computer, nessuna riga del programma la legge»). 🔑 **Un documento che ha per contenuto un'assenza fallisce ogni `grep` che cerchi una presenza.** Il controllo va letto insieme a ciò che il documento afferma, mai da solo.
+>
+> Verificati il 26/08: `02n` regge · `02e` regge e ha deviato contro di noi (16 → **18** comandi mancanti dal pacchetto) · `03-cose-spente` regge (20 variabili su 21 vive, la ventunesima è il finding) · `02p` **no**, il suo titolo dichiara un difetto curato il giorno dopo (vedi la nota là dentro). Gli altri 24 non li ho guardati.
+
 ---
 
 ## ⚠️ Leggi prima questo: abbiamo misurato due cose diverse
