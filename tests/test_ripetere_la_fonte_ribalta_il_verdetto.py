@@ -20,6 +20,25 @@ QUATTRO DOMINI — 3 su 4 ribaltano con UNA ripetizione, il quarto sale in scala
     deceduto    TRATT 61.4   passa 98.6
     demolito    TRATT  0.8   TRATT 40.4   TRATT 94.9   TRATT 98.3   (x1..x4)
 
+⚠️ IL TASSO, misurato il 26/08 alle 23:17 su una popolazione NON SCELTA DA ME —
+la batteria di dieci casi di ws3, IT ed EN appaiati:
+
+    ribaltamenti per ripetizione   italiano 1/10   inglese 1/10
+
+I quattro casi qui sopra erano SELEZIONATI: li avevo trovati proprio perche'
+ribaltavano, quindi il «3 su 4» descrive la mia selezione e non il prodotto. Il
+numero onesto e' 1/10 per lingua. Il fenomeno resta, e resta in DUE lingue —
+non e' un difetto italiano — ma non e' la regola: e' la coda.
+
+E in altri due casi il punteggio ESPLODE senza ribaltare, perche' un layer
+lessicale tiene il fatto mentre il giudice ha gia' ceduto:
+
+    IT «dimissioni»  TRATT 1.8 -> TRATT 99.3
+    EN «fallimento»  TRATT 0.4 -> TRATT 79.1
+
+⇒ Contare i soli ribaltamenti SOTTOSTIMA il fenomeno: il giudizio si muove di
+90 punti anche dove l'esito non cambia.
+
 DUE SPIEGAZIONI GIA' FALSIFICATE, e stanno qui perche' nessuno le riprovi:
 
   · «e' il MAX su finestre»: g(A+B)=99.9 con max(g(A),g(B))=1.6. Il punteggio
