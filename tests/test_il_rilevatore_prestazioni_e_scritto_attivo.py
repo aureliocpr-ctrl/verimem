@@ -27,6 +27,15 @@ usava una sola forma verbale, e per caso proprio l'unica immune al difetto.
 Il presidio che gia' esisteva (`test_anti_confab_gate_l19_wire.py`) prova
 «12s->1s game changer» e «10x faster baseline»: nessuna forma passiva.
 
+⚠️ PRECISAZIONE del 2026-08-26 ore 21:50, dopo la misura di ws1 (sei forme
+dello stesso contenuto, il carve-out scatta 1/6): **il gate non «ragiona sulla
+diatesi»**. L'elenco contiene la stringa `dimezza` e non contiene `dimezzata` —
+la diatesi cambia la STRINGA, e la stringa e' cio' che il pattern confronta. La
+formulazione grande era mia: i numeri qui sotto (attiva 4/4, passiva 1/4) sono
+quelli misurati e non si muovono, ma la ragione e' un elenco incompleto, non una
+proprieta' grammaticale del gate. Se la parola chiave RESTA nella frase, la forma
+non cambia nulla — ed e' esattamente cio' che ws1 ha misurato sul carve-out.
+
 Il controllo positivo — che la forma ATTIVA sia davvero trattenuta — sta DENTRO
 questo banco e non e' xfail: se cade lui, questa misura non vale niente e gli
 xfail qui sotto non misurano il prodotto ma il mio righello.

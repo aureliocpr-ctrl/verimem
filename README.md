@@ -266,6 +266,15 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
 pip install verimem
 ```
 
+<!-- ⛔ RILASCIO — LEGGERE PRIMA DI PUBBLICARE.
+     La nota qui sotto vale FINCHE' il pacchetto pubblicato e' vecchio. Nel momento in cui
+     si pubblica diventa FALSA, e non resta un dettaglio interno: `pyproject.toml:16` dice
+     `readme = "README.md"`, quindi QUESTO FILE E' LA PAGINA DI PyPI. Pubblicare senza
+     toccarla spedisce al mondo una vetrina che dice «cio' che PyPI vi serve non e' cio'
+     che questa pagina descrive» -- riferito a se stessa.
+     Chi pubblica: aggiornare i numeri (release, distanza in commit) o togliere il blocco.
+     Aggiunta il 2026-08-26 da ws7 insieme alla nota stessa, per non lasciare una mina a
+     chi fara' il rilascio. -->
 > **What PyPI serves you today is not what this page describes.** The latest release
 > is **0.7.0 (22 July)**; `main` is **994 commits** ahead of it. Two consequences you
 > should know before you start, both measured on 2026-08-26:
@@ -278,14 +287,13 @@ pip install verimem
 >   of `v0.7.0`. This is observed, not inferred: `pip install --dry-run
 >   verimem==0.7.0` in a clean venv reports *"Would install ... mcp-2.1.1 ...
 >   verimem-0.7.0"*, and on that installed `mcp` the API is gone at runtime:
->   `list_tools`, `call_tool` and `list_resources` are absent from both the class
->   and an instance, against an `mcp 1.26.0` control where all three are present on
->   both. The failing line itself has been executed: `@server.list_tools()` -- the
->   decorator at `mcp_server.py:6804` in `v0.7.0` -- raises `AttributeError:
->   'Server' object has no attribute 'list_tools'` under `mcp 2.1.1`, and succeeds
->   under `mcp 1.26.0`. So `mcp<2` does restore that line. What is still *not*
->   observed is the whole `verimem mcp` process starting, which needs the full
->   ~2 GB install.
+>   `list_tools`, `call_tool` and `list_resources` are absent from both the class and
+>   an instance, against an `mcp 1.26.0` control where all three are present on both.
+>   The failing line itself has been executed: `@server.list_tools()` -- the decorator
+>   at `mcp_server.py:6804` in `v0.7.0` -- raises `AttributeError: 'Server' object has
+>   no attribute 'list_tools'` under `mcp 2.1.1`, and succeeds under `mcp 1.26.0`. So
+>   `mcp<2` does restore that line. What is still *not* observed is the whole
+>   `verimem mcp` process starting, which needs the full ~2 GB install.
 > - **18 commands exist here and not in the package**, `save` among them -- the
 >   canonical write of the project's own protocol. Measured 2026-08-26 by reading the
 >   published wheel's CLI against `main`: 40 commands in the wheel, 58 here, and the
@@ -295,7 +303,11 @@ pip install verimem
 >
 > For what this page claims, install from source (`pip install -e ".[dev]"`, see
 > Development below). `docs/stato-reale/` is where the gap between this README and
-> the published artifact is measured, document by document.
+> the published artifact is measured, document by document. Most of those notes are
+> dated 2026-08-08 and that does *not* make them stale: they describe the *published*
+> package, and the published package has not moved since -- 0.7.0 is still the latest
+> on PyPI. Re-measured on 2026-08-26, one of them had drifted only in our favour:
+> `02e` counted 16 commands missing from the package, today it is 18.
 
 **What it costs on disk.** Verimem ships a local judge, so the footprint is larger than a
 typical library and it is worth knowing before you start:

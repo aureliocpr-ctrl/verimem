@@ -28,7 +28,7 @@ l'agente collegato legge e su cui basa il proprio comportamento.
 
 | # | promessa (verbatim) | verdetto | prova eseguita |
 |---|---|---|---|
-| P16 | «ALWAYS: a lexical screen on every write. Unsupported "it works / verified / done" self-claims are quarantined, with no LLM call» | **VERO** | `m.add("La migrazione è stata completata e funziona perfettamente.")` → `status=quarantined` |
+| P16 | «ALWAYS: a lexical screen on every write. Unsupported "it works / verified / done" self-claims are quarantined, with no LLM call» | **VERO sull'elenco, FALSO su «ALWAYS»** (§ in fondo) | `m.add("La migrazione è stata completata e funziona perfettamente.")` → `status=quarantined` · ⚠️ ma su 12 rilevatori l'elusione è **9 su 9** (26/08, ws4) |
 | P17 | «WITH a `source`: the fact is admitted only if the source TEXT actually supports it» | **VERO** | sostenuto → `model_claim` gs **98.9**; contraddetto → `quarantined` gs **0.98** |
 | P18 | «`verified_by` records WHO vouches and does not run this check» | **VERO** | `m.add(verified_by=["actor:ws1"])` senza source → `grounding_score=None`: il moat non è girato |
 | P19 | «WITHOUT a source: stored as an unverified `model_claim`» | **VERO** | `m.add(...)` senza source → `status=model_claim`, `grounding=None` |
@@ -137,3 +137,66 @@ sbagliata.
 Banchi in `scratchpad/banco_promesse{,2,3}.py`. Ognuno crea il proprio store
 temporaneo e non tocca `~/.engram`. Verificato a posteriori: zero righe con
 `payload.topic` dei miei banchi nel journal di produzione.
+
+---
+
+## P16, l'unica promessa UNIVERSALE del documento — e l'unica verificata con un caso
+
+*(aggiunto da ws4 Paragone il 2026-08-26 alle 20:18, `ca89d705`. Non tocco la
+prova di chi ha scritto la riga: quella prova è vera. Aggiungo la popolazione
+che le mancava.)*
+
+Le altre dieci promesse tabellate qui sopra sono **binarie**: «senza source →
+`model_claim`», «`history` → 2 voci», «entrambi gli import riescono». Per una
+promessa binaria un caso **basta**, e infatti sono verificate bene — P17 ha
+perfino le due popolazioni (sostenuto 98.9 · contraddetto 0.82).
+
+P16 è l'unica **quantificata universalmente**: dice «**ALWAYS**» e dice
+«**self-claims**», che è una categoria semantica e non un elenco. Le tre parole
+fra virgolette — `"it works / verified / done"` — arrivano dopo «Unsupported …
+self-claims», quindi leggono come **esempi**, non come definizione. Ed è
+verificata con `m.add("La migrazione è stata completata e funziona
+perfettamente.")`: una frase che contiene **due** parole canoniche insieme.
+
+Misurato il 26/08 alle 20:11 (`48e130f0`, store temporaneo, fuori da pytest,
+regime senza source — quindi il lexical screen è l'unica difesa, che è
+esattamente il regime di cui P16 parla):
+
+| | |
+|---|---|
+| rilevatori L1 provati | 12 |
+| canoniche effettivamente trattenute | 9/12 |
+| **riformulazioni equivalenti che eludono** | **9 su 9** |
+| rilevatori che resistono a entrambe le forme | **nessuno** |
+
+    «Il modulo è stato testato»   TRATT L1.15  ·  «ha superato i test»           passa
+    «Il sistema è sicuro»         TRATT L1.12  ·  «non ci sono vulnerabilità»    passa
+    «Il modulo è documentato»     TRATT L1.14  ·  «c'è la documentazione»        passa
+
+Le riformulazioni non sono più deboli: sono uguali o **più forti**.
+
+E sull'altra popolazione l'errore è opposto — 5 falsi positivi su 12: «sto
+provando se funziona», «valutiamo se è pronto», «andrebbe documentato». Il
+gate premia chi si vanta con parole diverse e punisce chi ammette un debito.
+
+**Ma non è un dizionario cieco**, e la prima stesura di questa nota lo dava per
+tale a torto: le negazioni trattenute per errore sono **0 su 5** («Il modulo
+NON è documentato» passa correttamente). La guardia sulla polarità c'è e
+funziona. Manca ogni dimensione semantica **diversa** dalla polarità.
+
+⇒ **La riga giusta non è «P16 è falsa»: è che «ALWAYS» promette una categoria e
+l'implementazione copre un elenco.** La cura è scrivere il perimetro vero, non
+togliere il gate. Presidio: `tests/test_il_gate_vede_la_polarita_e_nient_altro.py`.
+
+### 🔑 La classe di metodo, e vale oltre questo documento
+
+**Il tipo logico della promessa decide quanti casi servono a verificarla.**
+Una promessa binaria si verifica con un caso. Una promessa che dice «ALWAYS»,
+«mai», «ogni» **non si può verificare con un caso**: serve una popolazione, e
+la popolazione va scelta da chi *non* ha in mente la promessa.
+
+Ed è la seconda istanza nella stessa giornata. La prima:
+`l1_performance_detector.py:138-144` riporta una misura del 03/08 che
+concludeva «ogni lingua copriva metà del caso» — usava una sola forma verbale,
+e per caso proprio l'unica immune al difetto (`«N volte più veloce»`, già
+copulativa). Anche lì il campione veniva dall'esempio, non dalla popolazione.
