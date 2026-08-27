@@ -128,6 +128,49 @@ il numero **scritto a parole** («trecentoquaranta») per `L4.1` **non è più u
 numero**. ⇒ **vaghezza, omissione e numerali a parole sono una classe sola**:
 in nessuna il claim porta ciò che il gate sa cercare.
 
+## La forma unificata — tre falle, un difetto solo (aggiunto 22:00)
+
+Nell'ultima mezz'ora il laboratorio ha trovato il **terzo volto** dello stesso
+meccanismo, e ora la forma si chiude:
+
+| | chi | cosa entra | perché |
+|---|---|---|---|
+| **omissione** | ws3 | 12/12, zero layer | il claim **tace** → nulla da cercare |
+| **vaghezza / numero a parole** | ws4, ws5 | «pochi pazienti» a 98,1 · parole 3/4 | nessun **glifo 0-9** → nulla da cercare |
+| **attribuzione scambiata** | ws4 | **5/5 a 99,7-100** | il valore **c'è** → la ricerca **riesce**, ma su un'altra entità |
+
+> **`L4.1` confronta insiemi di valori, non proposizioni.** Chiede «*questo
+> numero c'è nella fonte?*» e non «*questo numero è predicato di questo
+> soggetto?*». Se il numero manca non cerca; se c'è ma è di un altro, lo trova e
+> tace.
+> E `select_relevant_span` ordina i pezzi della fonte per **sovrapposizione di
+> token** — anche lui ragiona per insiemi di parole. **Due componenti diversi, la
+> stessa cecità: il gate non modella chi dice cosa di chi.**
+
+⇒ **Chi cura il legame soggetto-valore cura una cosa e ne chiude tre.** È il
+miglior rapporto costo/beneficio emerso stasera.
+
+### E un limite del mio banco che non avevo dichiarato
+
+In matrice ho «entità sostituita: IT 1/10, EN 2/10» — che sembra contraddire il
+5/5 di ws4. **Non lo contraddice: sono due sotto-classi.** Io sostituivo
+l'entità con una che nella fonte **non c'è** («magazzino nord» → «magazzino
+sud»), e il giudice ferma perché vede una parola assente. ws4 tiene **entrambe
+le entità nella fonte** e ne scambia il legame: tutte le parole ci sono, solo
+appaiate male → 99,7.
+
+📌 **Quella riga del registro va spezzata**, altrimenti il verde della prima
+copre il rosso della seconda.
+
+### Il collegamento con la causa radice
+
+La seconda metà del finding di ws4 è peggiore della prima: nello **stesso
+topic**, il falso non solo entra — **cancella il vero**
+(`flow.supersession branch='same-source evolution'`). È la dimostrazione pratica,
+sulla porta vera, del difetto documentato il 26/08: senza `asserted_at` il
+routing classifica **evoluzione** invece di **conflitto**, perché il `created_at`
+del candidato è sempre «adesso». **Teoria e caso riproducibile ora coincidono.**
+
 ## Il metodo che ha prodotto tutto questo
 
 L'anello di falsificazione — ognuna attacca una sola altra, nessuna sé stessa —
