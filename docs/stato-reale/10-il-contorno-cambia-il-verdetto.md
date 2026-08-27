@@ -114,3 +114,40 @@ chiede di propagare un avviso che esiste già.
   scende di 12,8 — ma come **avviso** è un'altra cosa.
 
 Tutti con `--runxfail` verificato.
+
+---
+
+## 8. ⚠️ Il fenomeno è più largo di quanto dice questo documento (27/08, 22:15)
+
+Questo dossier descriveva il contorno come qualcosa che ribalta **il claim che
+la fonte non menziona**. Misurato il 27/08: ribalta anche una classe diversa,
+lo **scambio di attribuzione** — una cifra vera della fonte attribuita alla cosa
+sbagliata, dove `L4.1` tace per costruzione perché il valore c'è.
+
+```
+  contorno           car.        VERO     cauzione=148000    importo=22000
+  nessuno             453     OK  99.9      ferm    4.9        ferm    0.9
+  prosa IT            696     OK 100.0        OK   99.4        ferm   62.4
+  numeri              575     OK 100.0      ferm   15.4          OK   99.8
+  pseudo-parole       584     OK 100.0        OK   93.4        ferm    1.6
+```
+
+⇒ **Tre ribaltamenti su sei.** Uno scambio fermato a **4.9** entra a **99.4**
+con della prosa neutra; un altro fermato a **0.9** entra a **99.8** con del
+contorno numerico. **Il claim VERO resta ammesso con tutti e quattro i
+contorni** (99.9–100.0), quindi il contorno non rompe la fonte: sposta il
+giudizio **solo sui falsi**.
+
+E come nella §2, la natura del contorno **non predice** l'esito: prosa e
+pseudo-parole ribaltano il primo claim, i numeri il secondo. Le sei spiegazioni
+escluse qui e le quattro escluse sullo scambio (specie, verso, rapporto fra i
+valori, struttura sintattica) sono **dieci** su una superficie sola.
+
+🔑 **La conseguenza pratica riguarda ogni numero di copertura che pubblichiamo**:
+una misura fatta su fonti *nude* è un **limite inferiore**, perché un documento
+vero — un contratto con le sue premesse, un referto con le sue formule — porta
+contorno per costruzione.
+
+Banco: `banchi/il-contorno-ribalta-anche-lo-scambio.py`, con il controllo che
+poteva fallire (il VERO ammesso con ogni contorno) retto. Fonte costruita, due
+claim, quattro contorni: la **direzione** è netta, la **quota 3/6** no.
