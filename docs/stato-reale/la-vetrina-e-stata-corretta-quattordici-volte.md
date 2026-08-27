@@ -130,6 +130,69 @@ ormai misurate. **Tre difetti diversi, una causa sola.** ⇒ Il presidio giusto
 non è contare le cifre: è **rileggere la riga accanto alla tabella del banco
 da cui viene**, colonne comprese.
 
+## La sedicesima — stesso numero, due popolazioni diverse (27/08)
+
+Il giorno dopo, applicando lo stesso presidio alle cifre più in basso nella
+pagina, ne è uscita una quarta. Non è mia — la riga è di *Varco* (commit
+«readme: la gap piu' grande era l'unica senza un numero», 25/08) — quindi la
+consegno e non la tocco. Ma è **esattamente la stessa forma**, il che la rende
+più interessante di un errore singolo.
+
+`README.md:73-76`:
+
+> «**25 of 48** such unsupported claims were admitted — IT 54.2%, EN 50.0%, and
+> **8 of the 48 cases** get the OPPOSITE verdict in the two languages»
+
+Il numero **48 compare due volte nella stessa frase con due significati
+diversi**, e l'articolo determinativo di «the 48» dice al lettore che sono gli
+stessi.
+
+**Primo 48** — i claim non sostenuti. L'aritmetica lo conferma: 54,2% di 24 = 13,
+50,0% di 24 = 12, totale **25 su 48** ✓. Sono 24 coppie IT/EN di falsi.
+
+**Secondo 48** — le coppie totali del banco. Si legge nel codice, senza eseguirlo
+(`banco-osservatore-il-tasso.py:239-247`):
+
+    n_dis = 0
+    for i in range(0, len(righe), 2):      # tutte le righe, a passo 2
+        it, en = righe[i], righe[i + 1]
+        if it[4] != en[4]:
+            n_dis += 1
+    print(f"totale casi con esito DIVERSO fra le due lingue: {n_dis}/{len(righe)//2}")
+
+Il ciclo scorre **tutte** le righe e **non filtra i falsi**: con `len(righe)` = 96
+(la riga 200 lo stampa: «n=96 casi»), il denominatore `len(righe)//2` vale 48 e
+sono **le coppie totali, veri compresi**.
+
+⇒ Due insiemi diversi con lo stesso cardinale. Il lettore conclude che 8 dei
+claim *non sostenuti* divergono; il banco misura la divergenza su **tutta** la
+popolazione, e quante delle 8 cadano sui falsi **non è scritto da nessuna
+parte**. Se cadessero tutte lì il tasso sui falsi sarebbe 8/24 = 33%.
+
+✂️ Testo pronto, sostituisce:
+
+    «…and **8 of the 48 IT/EN pairs** — true and false alike — get the OPPOSITE
+     verdict in the two languages, in both directions.»
+
+⚠️ **Limite dichiarato**: non ho eseguito il banco, quindi **non so** come le 8
+si distribuiscano fra veri e falsi. Ciò che è certo per lettura è solo questo:
+la frase attribuisce le 8 a una popolazione che il banco non usa come
+denominatore.
+
+### Il presidio ha ora quattro casi, e uno era di un'altra istanza
+
+Le prime tre erano mie e potevano essere una mia abitudine. La quarta è di
+un'altra mano, sullo stesso file, con la stessa forma: **un numero corretto
+sotto un'etichetta che nomina la popolazione sbagliata**. ⇒ Non è
+disattenzione individuale, è ciò che succede quando **una tabella diventa una
+frase**: la frase conserva la cifra e perde la definizione del denominatore.
+
+📌 E un limite del metodo, trovato usandolo: `git grep` su una **cifra nuda**
+trova omonimi. `54.2` compare anche in `benchmark/results/exp7b_concurrency_light.json`,
+dove però è `"wall_s": 54.2` — secondi di wall-clock. **La cifra da sola non è
+evidenza: serve il contesto.** L'avevo dato per scontato ieri; oggi mi ha
+prodotto un falso allarme, ritirato prima di consegnarlo.
+
 ## La domanda che resta aperta, ed è di Aurelio
 
 Il criterio dato è «macchina appena uscita dal concessionario». Il conteggio
