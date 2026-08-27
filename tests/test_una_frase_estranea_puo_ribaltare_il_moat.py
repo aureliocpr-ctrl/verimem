@@ -206,6 +206,24 @@ def test_il_contorno_neutro_non_dovrebbe_far_entrare_la_falsita(copie):
 def test_E_LA_RICEVUTA_NON_DICE_CHE_LA_FONTE_E_TROPPO_LUNGA():
     """Difetto separato e piu' facile da curare: propagare un avviso che esiste.
 
+    ⚠️ E LA GUARDIA ESISTE GIA', SOLO CHE PROTEGGE UN'ALTRA COSA (misurato
+    27/08 19:14). `semantic.py:1916` definisce `_rerank_max_doc_chars()` — 2000
+    char, «~512 tokens» per suo stesso docstring — e il prodotto la usa in DUE
+    punti, entrambi in LETTURA:
+
+        semantic.py:4559        salta il CE se la MEDIANA delle `proposition`
+                                del pool supera il cap (stage-2 rerank fatti)
+        document_index.py:199   stessa guardia sul rerank dei documenti
+
+    Nessuno dei due e' il MOAT. La guardia protegge il RANKING dal troncamento e
+    lascia il GIUDIZIO scoperto: in scrittura una `source` piu' lunga della
+    finestra viene giudicata comunque, e la ricevuta tace.
+
+    ⇒ La cura e' a portata: la funzione c'e', il valore e' gia' tarato su una
+    misura (LongMemEval 2026-06-10, recall@5 0.723 contro 0.800 sui documenti
+    lunghi), e basterebbe chiamarla sul percorso di scrittura — o almeno
+    emettere l'avviso invece di tacere.
+
     Su una fonte che eccede la finestra del giudice, `transformers` avvisa su
     stderr («Token indices sequence length is longer … 607 > 512») ma la
     ricevuta non riporta nulla: chi scrive vede `moat: passed` e un punteggio
