@@ -32,6 +32,20 @@
         "list_resources": true
       },
       "riga_6804": "funziona"
+    },
+    "1.0.0": {
+      "mcp": "1.0.0",
+      "classe": {
+        "list_tools": true,
+        "call_tool": true,
+        "list_resources": true
+      },
+      "istanza": {
+        "list_tools": true,
+        "call_tool": true,
+        "list_resources": true
+      },
+      "riga_6804": "funziona"
     }
   },
   "verdetto": {
@@ -46,6 +60,8 @@
       "list_tools"
     ],
     "riga_6804_su_2_1_1": "AttributeError: 'Server' object has no attribute 'list_tools'",
-    "riga_6804_su_1_26_0": "funziona"
+    "riga_6804_su_1_26_0": "funziona",
+    "riga_6804_su_1_0_0": "funziona",
+    "pavimento_mcp_1_0_0_regge": true
   }
 }

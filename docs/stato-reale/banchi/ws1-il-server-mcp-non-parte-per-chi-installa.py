@@ -13,6 +13,12 @@ COSA MISURA, a tre livelli crescenti:
      `list_tools`/`call_tool`/`list_resources` sulla CLASSE e su un'ISTANZA.
      La cella `mcp 1.26.0` e' il CONTROLLO POSITIVO: senza, un «assente» non
      significherebbe nulla.
+  0. L'IMPORT DEL PRODOTTO: `from mcp.server import Server`, che e' la riga 53
+     di `verimem/mcp_server.py` al tag v0.7.0 — NON `mcp.server.lowlevel`.
+     Prima stesura (27/08 18:49) sondava `lowlevel`: su mcp 1.0.0 dava
+     ModuleNotFoundError e sembrava una conferma clamorosa della tesi che
+     il PAVIMENTO fosse falso. Era un artefatto del percorso scelto da me.
+     Con l'import vero, 1.0.0 funziona. Si sonda dove il prodotto chiama.
   3. LA RIGA VERA  `@server.list_tools()` — il decoratore a
      `verimem/mcp_server.py:6804` nel tag `v0.7.0` — eseguito in entrambe.
 
@@ -34,13 +40,13 @@ import tempfile
 import sys
 import venv
 
-VERSIONI = ("2.1.1", "1.26.0")
+VERSIONI = ("2.1.1", "1.26.0", "1.0.0")
 ATTRIBUTI = ("list_tools", "call_tool", "list_resources")
 
 SONDA = r'''
 import json
 from importlib.metadata import version
-from mcp.server.lowlevel import Server
+from mcp.server import Server
 s = Server("banco")
 out = {"mcp": version("mcp"), "classe": {}, "istanza": {}}
 for n in %(attributi)r:
@@ -97,6 +103,12 @@ def main() -> int:
                                      if a126["classe"][n] and a126["istanza"][n]),
         "riga_6804_su_2_1_1": a211["riga_6804"],
         "riga_6804_su_1_26_0": a126["riga_6804"],
+        # Il PAVIMENTO dichiarato da pyproject al tag v0.7.0 e' `mcp>=1.0.0`
+        # (tre volte: righe 72, 84, 141 — conta di ws3). Questa cella misura se
+        # quella dichiarazione e' vera. Se la riga funziona in 1.0.0, il vincolo
+        # e' onesto e il difetto e' SOLO il tetto mancante.
+        "riga_6804_su_1_0_0": referto["per_versione"]["1.0.0"]["riga_6804"],
+        "pavimento_mcp_1_0_0_regge": referto["per_versione"]["1.0.0"]["riga_6804"] == "funziona",
     }
     print(json.dumps(referto, indent=2, ensure_ascii=False))
 
