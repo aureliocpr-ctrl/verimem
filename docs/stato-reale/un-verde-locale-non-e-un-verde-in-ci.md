@@ -76,6 +76,58 @@ dato per scegliere ce l'ha chi legge i run:
 ⚠️ **Limite grosso e dichiarato**: io misuro su **Windows**, la CI su **Linux**.
 Ho escluso *queste* variabili, non l'ambiente.
 
+## Otto dei nove bloccanti sono UNA causa sola
+
+Continuando a leggere — sempre a RAM zero — i nove si riducono. La fixture del
+file dei sei errori fa questo (`tests/test_quanti_fatti_ho.py:45-52`):
+
+    r = m.add("La latenza è 40 ms.", topic="conta/prova")
+    assert r.get("status") == "quarantined", (
+        f"il banco presuppone che questo venga quarantinato, invece: {r}")
+
+⇒ Se quel fatto **non** viene quarantinato, l'assert fallisce **dentro la
+fixture**, e tutti e sei i test del file danno «error at setup of» — esattamente
+il sintomo riportato.
+
+E quella frase non è solo lì:
+
+    tests/test_quanti_fatti_ho.py                          1 occorrenza
+    tests/test_un_accento_non_decide_se_il_gate_scatta.py   7 occorrenze
+    verimem/l1_quantitative_detector.py                     1
+    verimem/subject_extract.py                              1
+
+⇒ **I 6 errors e i 2 failed dell'accento dipendono dalla stessa frase e dallo
+stesso comportamento: che «La latenza è 40 ms.» venga quarantinata.** Otto
+bloccanti su nove, una causa. Solo il nono (`test_unsupported_span`, che
+verifica l'advice) è indipendente. **Chi cura quel punto ne chiude otto.**
+
+### Tre ipotesi mie, tutte falsificate con misura
+
+Le scrivo perché servano a non rincorrerle:
+
+1. **La codifica** — la più naturale, visto il nome del test e il rosso del
+   20/08. `PYTHONUTF8=0` → **10 passed**. Cade.
+2. **Le sette variabili di comportamento** (gate compreso) — `env -u` su tutte
+   → **16 passed**. Cade. E il commento della fixture spiega perché: quel caso
+   «è quello che **L1.19** prende sempre», cioè uno screen lessicale che gira a
+   prescindere dal gate.
+3. **La normalizzazione Unicode** — se il pattern avesse `è` precomposto e il
+   claim la forma decomposta, il regex non combacerebbe. Misurato sui quattro
+   file: **NFC 4/10/22/2, NFD zero ovunque**. Nessuna discrepanza. Cade.
+
+### E una mia deduzione ritirata nello stesso minuto
+
+Avevo notato che l'ultima modifica al file dell'accento è del **26/08 22:30** e
+stavo per concludere: «se il run ha concluso alle 02:02Z del 26, quel file non
+esisteva ancora, quindi il run **deve** essere del 27». Verificato prima di
+scriverlo: `git log --diff-filter=A` dice che il file è nato il **03/08 14:17**
+(`ab4fc782`), **insieme alla cura del pattern nel rilevatore L1**. Quel commit
+del 26/08 era solo l'ultima modifica.
+
+⇒ La deduzione cade e **la domanda del 26-o-27 resta aperta**. È la differenza
+fra una data letta e una data dedotta — e il pattern accetta `e` nudo da
+**ventiquattro giorni**, non da ieri.
+
 ## Il presidio, e costa tre secondi
 
 > **Prima di riportare un verde, dichiara il regime:**
