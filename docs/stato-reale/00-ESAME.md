@@ -131,9 +131,16 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 
 ### Il conto, aggiornato a mano quando cambia
 
-    🔴 rossi 25 · 🟢 verdi 16 · 🟡 parziali 4   (su 46 celle, 27/08 ore 21:50)
+    🔴 rossi 25 · 🟢 verdi 16 · 🟡 parziali 4   (su 46 celle, 27/08 ore 21:52)
 
 > 📌 **Serve perché senza di esso ogni frase sullo stato del prodotto è un'impressione.**
+> ⚠️ **E va CONTATO, non stimato**: alle 21:50 ho scritto «46 celle» a memoria mentre altre ne
+> aggiungevano, dieci minuti dopo aver corretto un numero non contato nel referto. **Il comando
+> che lo conta sta qui sotto — usatelo invece di fidarvi di me.**
+>
+> ```
+> grep -cE '^\| [\w-]+ \|.*\|.*\|.*\|.*\|.*\|.*\|.*\|' docs/stato-reale/00-ESAME.md
+> ```
 > Il 27/08 il referto del laboratorio ha scritto «la maggior parte dei rossi si è rivelata
 > nostra»: **questo conto lo ha falsificato in dieci secondi**, ed è stato corretto.
 
