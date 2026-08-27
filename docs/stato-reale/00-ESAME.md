@@ -46,7 +46,14 @@
    direzioni**.
 5. **Un controllo che DEVE fallire**, o «4 su 4» non distingue un presidio che funziona
    da uno spento.
-6. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
+6. **Un metadato non è il contenuto.** Un orario, un nome, una versione sono indizi; la prova
+   è il **diff dell'artefatto**. *(Il 27/08 «il tag è posteriore all'upload di 1h27» — fatto vero —
+   ha quasi invalidato tutte le misure sul tag; il confronto file per file ha dato 397 su 397
+   identici.)*
+7. **Se le colonne non sommano al totale, il difetto è nel misuratore.** *(ws1 se n'è accorta
+   dall'aritmetica, non dal codice: «366 identici + 9 diversi + 22 assenti» su 397 file — gli
+   identici superavano gli esistenti perché il confronto andava per nome base.)*
+8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
 
 ## Le celle misurate
@@ -56,7 +63,7 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 
 | # | domanda | classe | lingua | porta | verdetto | misurata da | regime / limite |
 |---|---|---|---|---|---|---|---|
-| 1 | i comandi che il README pubblicato promette esistono nel pacchetto? | — | EN | CLI | 🟢 **14 su 14** | ws7 | `git show v0.7.0:` — **il codice *etichettato* 0.7.0, non il wheel su PyPI**; il tag è posteriore di 1h27 all'upload (ws6) |
+| 1 | i comandi che il README pubblicato promette esistono nel pacchetto? | — | EN | CLI | 🟢 **14 su 14** | ws7 | `git show v0.7.0:`. ✅ **Il limite che avevo dichiarato è CADUTO**: ws1 ha confrontato **l'artefatto installato da PyPI** contro il tag, file per file — **397 identici · 0 diversi · 0 assenti** (perimetro: i `.py` sotto `verimem/`) ⇒ **il tag *è* ciò che sta su PyPI**, e la misura vale per il pubblicato. ⚠️ Il timestamp anomalo di ws6 (tag posteriore di 1h27) **resta un fatto vero**: cade l'inferenza «orario diverso ⇒ contenuto diverso» |
 | 2 | il server MCP parte, per chi installa da PyPI? | — | — | MCP | 🔴 **no** | ws1 | venv pulito, `pip install verimem==0.7.0` → `mcp 2.1.1` → `verimem mcp` **exit 1**, `AttributeError`. **Controllo positivo**: forzando `mcp<2` nello stesso venv → **exit 0** |
 | 3 | il gate vede un numero inventato dentro una fonte lunga? | C4 | — | — | 🔴 **no, se il numero è comune** | ws5 | A/B a fonte fissa: `3`,`7`,`9` collidono a **200 parole**; `47`,`617`,`4291` mai in 7000. **Non è la lunghezza: è la rarità** |
 | 4 | il gate ferma un numero **inventato** scritto all'italiana? | C4 | IT | SDK | 🟢 **sì** | ws8 | A/B end-to-end, source fissa, cambia solo il separatore: vero-punto e vero-virgola **admitted**, inventato-punto e inventato-virgola **quarantined**. ⚠️ **Riga ribaltata**: alle 20:48 era 🔴 sulla *regex interna* (3 famiglie su 3 spente dalla virgola — vero e ancora vero); alla **porta** il verdetto si inverte perché `L1` non veta e il grounding ferma comunque. **La difesa non è a punto singolo** |
@@ -75,6 +82,9 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 | 17 | il prodotto mantiene, **all'agente dell'utente**, la quarantena che gli promette? | — | EN | SDK | 🔴 **no** | ws8 | `agent_guide.py:31` promette che «*It works, verified, all tests pass, done*» viene quarantinato: alla porta è **`admitted`, `layers=[]`**. Il detector **vede** la stringa e il verdetto non ne tiene conto. ⚠️ L'autrice ha corretto il proprio numero: **una** superficie che lo promette, non quattro (le altre 9 occorrenze descrivono il meccanismo) |
 | 18 | su un testo normativo reale il gate ferma un valore inventato? | C4 | EN | — | 🟢 **sì, 3 su 3** | ws5 | GDPR art. 33: protegge i valori **affermati** («72 ore») e non i **riferimenti** («articolo 10»). ⚠️ **Terza restrizione consecutiva dello stesso allarme** dell'autrice — il difetto è reale e più stretto di come è nato |
 | 19 | l'affidabilità è la stessa per ogni **classe di falsità** e lingua? | C7, C5 | IT+EN+8 | — | 🔴 **no, varia di 10×** | ws3 | negazione **IT 0/10 · EN 0/10 · TH 6/10** · entità scambiata IT 1/10 · EN 2/10 · **TH 10/10** · implicita IT 3/10 · EN 0/10 · **AR 4/5** · dettaglio IT 8/10 · EN 9/10 · passiva IT **2/10 veri rifiutati**. 🔑 Omissione, vaghezza e numerali-a-parole sono **una classe sola**: in nessuno il claim porta una cifra |
+| 20 | quanto ci mette un utente **nuovo** alla prima scrittura+lettura? | — | EN | SDK | 🟡 **8 s, ma con ZERO byte scaricati** | ws1 | 0.7.0 installata, `HF_HOME` e `HF_HUB_CACHE` su cartella **vuota**, store nuovo: `remember` 6 s + `recall` 2 s, fatto ritrovato. 🔑 **Zero byte scaricati spiega la riga 11**: il giudice non c'è e non viene preso ⇒ il moat non può giudicare |
+| 21 | l'attestazione è onorata **su tutte le porte**? | C4 | IT | SDK vs MCP | 🔴 **no: sì su SDK, no su MCP** | ws2 | la cura della cella 14 vale, e il controllo ha trovato una **divergenza nuova**. **Causa non trovata**, due ipotesi dell'autrice già escluse — dichiarata aperta |
+| 22 | è la **lunghezza** della fonte a spostare il verdetto? | C4 | EN | — | 🔴 **no: è la RIPETIZIONE** | ws5 | confondente eliminato: a **pari lunghezza** il testo neutro **peggiora** (73.3). Otto banchi, **cinque predizioni dell'autrice sbagliate**, sei debiti dichiarati e pagati |
 
 ### Verdetti che sono cambiati
 
