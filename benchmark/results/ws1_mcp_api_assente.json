@@ -1,0 +1,51 @@
+{
+  "attributi_sondati": [
+    "list_tools",
+    "call_tool",
+    "list_resources"
+  ],
+  "per_versione": {
+    "2.1.1": {
+      "mcp": "2.1.1",
+      "classe": {
+        "list_tools": false,
+        "call_tool": false,
+        "list_resources": false
+      },
+      "istanza": {
+        "list_tools": false,
+        "call_tool": false,
+        "list_resources": false
+      },
+      "riga_6804": "AttributeError: 'Server' object has no attribute 'list_tools'"
+    },
+    "1.26.0": {
+      "mcp": "1.26.0",
+      "classe": {
+        "list_tools": true,
+        "call_tool": true,
+        "list_resources": true
+      },
+      "istanza": {
+        "list_tools": true,
+        "call_tool": true,
+        "list_resources": true
+      },
+      "riga_6804": "funziona"
+    }
+  },
+  "verdetto": {
+    "assenti_su_2_1_1": [
+      "call_tool",
+      "list_resources",
+      "list_tools"
+    ],
+    "presenti_su_1_26_0": [
+      "call_tool",
+      "list_resources",
+      "list_tools"
+    ],
+    "riga_6804_su_2_1_1": "AttributeError: 'Server' object has no attribute 'list_tools'",
+    "riga_6804_su_1_26_0": "funziona"
+  }
+}
