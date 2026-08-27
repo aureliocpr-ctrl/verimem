@@ -68,6 +68,40 @@ falsita' passa anche con un valore ASSENTE dalla fonte, nei magazzini no). Che s
 lo stesso veto e' un'IPOTESI: qui il veto e' stato osservato solo sui negatori
 espliciti.
 
+IN QUALE REGIME VALGONO QUESTI NUMERI — e perche' la domanda non e' pedanteria.
+@ws3 ha misurato che togliere una guardia dalla RIGA DI COMANDO non e' toglierla
+dall'AMBIENTE: credeva di misurare senza `PYTHONUTF8=1` e rimisurava lo stesso
+regime, perche' la variabile e' esportata a livello di macchina. Questo banco gira
+su una macchina che ha DIECI variabili che la CI non ha::
+
+    ENGRAM_ADMISSION_GATE=1        ENGRAM_DATA_DIR=~\.engram
+    ENGRAM_BRIEFING_MIN_MATCHED=4  ENGRAM_BRIEFING_THRESHOLD=0.40
+    ENGRAM_DECAY_ENABLED=1         ENGRAM_TELEMETRY_PREFIXES=builtin
+    HIPPO_DATA_DIR=~\.engram       HIPPO_ENCODE_DELEGATE_ONLY=1
+    HIPPO_EXPOSE_TOOLS=...         PYTHONUTF8=1
+
+✅ NESSUNA di queste e' letta da `anti_confab_gate.py`, che e' la porta chiamata
+qui. Verificato guardando DA QUALE FILE ognuna e' letta, non a intuito::
+
+    ENGRAM_ADMISSION_GATE      -> admission_gate.py, semantic.py
+    HIPPO_ENCODE_DELEGATE_ONLY -> _compat.py, embedding.py
+    ENGRAM_DECAY_ENABLED       -> daemon_runner.py
+    ENGRAM_BRIEFING_*          -> briefing.py, mcp_server.py
+    ENGRAM_TELEMETRY_PREFIXES  -> admission_cleanup.py, admission_gate.py
+
+⚠️ Per un attimo questo e' sembrato un GUAIO invece di una rassicurazione: se
+`ENGRAM_ADMISSION_GATE` vive in un modulo diverso, il sospetto e' che qui si stia
+misurando UNO STRATO SOTTO la porta vera — l'errore che in questo repo e' costato
+cinque ritiri in un giorno.
+✅ NON lo e': `verimem/cli.py:1867` chiama `run_validation_gate`, e cosi'
+`client.py:529` (SDK) e `mcp_server.py`. **La CLI usa esattamente questa porta.**
+⇒ Il controllo utile non e' «togli la variabile e rimisura»: e' **«da quale file e'
+letta, e quel file sta sulla strada del prodotto?»**. Due grep, e rispondono a
+entrambe le domande — il regime E il livello.
+⛔ Le due variabili di percorso (`*_DATA_DIR`) sono comunque sovrascritte in testa
+a questo file con la dir temporanea passata da riga di comando: lo store
+principale non viene mai toccato.
+
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-il-traino-raddoppia-l-implicita.py <dir-temp>
 ⚠️ Vuole una dir TEMPORANEA: scrive in HIPPO_DATA_DIR, mai lo store principale.
 """

@@ -1,10 +1,54 @@
 # -*- coding: utf-8 -*-
-"""Estende il banco cifra-vs-lettere: decimali, forme miste, AR/HI/KO.
+r"""Dove finisce la vista di `L4.1`: la frontiera e' TIPOGRAFICA, non linguistica.
 
-Limite dichiarato nel banco precedente: sei casi, interi tondi (340, 27, 12),
-niente decimali a parole, niente forme miste, niente AR/HI/KO. Un limite
-dichiarato e' un debito: qui lo pago.
-⚠️ Cella di controllo obbligatoria in ogni riga: la forma CIFRA deve bloccare.
+    AR interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    HI interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    KO interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    IT decimale  CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1      «tre virgola cinque»
+    EN decimale  CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1      «three point five»
+    IT mista     CIFRA=bloc      ALTRA=bloc                    «340 mila»
+    EN mista     CIFRA=bloc      ALTRA=bloc                    «340 thousand»
+
+    CIFRA  ammessi 0/7   L4.1 ha parlato su 7/7
+    ALTRA  ammessi 5/7   L4.1 ha parlato su 2/7
+
+Paga il limite dichiarato in `ws5-la-cifra-si-aggira-scrivendola-a-parole.py`
+(«sei casi, interi tondi, niente decimali ne' AR/HI/KO»).
+
+🔑 LE DUE RIGHE CHE VALGONO SONO QUELLE BLOCCATE. «340 mila» ha lo stesso valore,
+la stessa lingua e la stessa struttura di «trecentoquarantamila», e viene fermato
+CON `L4.1`. L'unica differenza e' che contiene il glifo `340`.
+⇒ `L4.1` vede il numero **se e solo se compare almeno un carattere 0-9**. Non e' la
+lingua, non e' l'alfabeto, non e' il significato: e' la presenza di un glifo
+decimale ASCII. La forma mista e' la prova per contrasto — isola la variabile senza
+cambiare nient'altro.
+
+⚖️ E RIBALTA LA LETTURA DEL BANCO PRECEDENTE, che diceva «ideogrammi compresi» e
+suonava come «le scritture non latine sono scoperte». FALSO: il cinese con `340箱`
+e' bloccato esattamente come l'inglese, e l'inglese con «three hundred forty» passa
+esattamente come il cinese con `三百四十`. **La lingua non c'entra: c'entra come
+scrivi il numero.** Fermandosi alle quattro scritture si consegnava una diagnosi
+che dava la colpa alla lingua sbagliata.
+
+IN QUALE REGIME VALGONO QUESTI NUMERI. La macchina ha dieci variabili che la CI non
+ha (`ENGRAM_ADMISSION_GATE=1`, `HIPPO_ENCODE_DELEGATE_ONLY=1`, `PYTHONUTF8=1`,
+`ENGRAM_DECAY_ENABLED=1`, `ENGRAM_BRIEFING_*`, `ENGRAM_TELEMETRY_PREFIXES`,
+`*_DATA_DIR`, `HIPPO_EXPOSE_TOOLS`). ✅ NESSUNA e' letta da `anti_confab_gate.py`,
+che e' la porta chiamata qui — verificato guardando da quale file ognuna e' letta,
+non a intuito (`admission_gate.py`, `embedding.py`, `daemon_runner.py`,
+`briefing.py`). ✅ E questa e' la porta VERA: `verimem/cli.py:1867`,
+`client.py:529` e `mcp_server.py` chiamano tutti `run_validation_gate`.
+⇒ Il controllo utile non e' «togli la variabile e rimisura», e' **«da quale file e'
+letta, e quel file sta sulla strada del prodotto?»**: due grep, e rispondono al
+regime E al livello.
+
+⚠️ LIMITE RESIDUO: dodici casi in tutto fra i due banchi, un valore per forma. Non
+provate le frazioni («un terzo»), i numeri romani, ne' le forme parlate («un paio
+di centinaia»). ⛔ NESSUNA CURA: riconoscere i numeri a parole in N lingue non e'
+una regex, e una cura che non so misurare non si consegna.
+
+RIPRODUCI:  python docs/stato-reale/banchi/ws5-dove-finisce-la-vista-di-L41.py <dir-temp>
+⚠️ Vuole una dir TEMPORANEA: scrive in HIPPO_DATA_DIR, mai lo store principale.
 """
 import os, sys
 os.environ["HIPPO_DATA_DIR"] = sys.argv[1]
