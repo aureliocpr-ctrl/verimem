@@ -153,6 +153,27 @@ def test_CONTROLLO_dove_parla_un_gruppo_solo_l_etichetta_e_giusta():
 # non vuol dire vivo, vuol dire non ritirato». Un campo di stato che non viene
 # ripulito quando lo stato cambia.
 #
+# 🔑 E L'ASIMMETRIA E' MISURATA (27/08 19:33): il prodotto SA registrare i
+# motivi — lo fa dall'altra parte, al 100%.
+#
+#     fatti RITIRATI (superseded_by non nullo) ....... 2088
+#     di cui col PERCHE' (superseded_reason) ......... 2087  (100.0%)
+#     di cui col QUANDO (superseded_at) .............. 2088  (100.0%)
+#
+#     e i motivi sono informativi, non segnaposto:
+#       1463x  autohook-snapshot daily collapse (kept the day's last …)
+#        342x  same-source evolution
+#        202x  exact-text dedup (corpus truth scan 2026-07-02; byte-identic…)
+#         92x  heal_contradictions: numeric_clash clash on shared topic
+#
+# Per il RITIRO ci sono tre colonne — `superseded_by`, `superseded_at`,
+# `superseded_reason`: chi, quando, perche'. Per il RIPESCAGGIO nessuna.
+# ⇒ Non e' che il prodotto non sappia tracciare una decisione: la traccia in un
+#   verso e non nell'altro. E il parametro `reason` di `restore()` ha lo STESSO
+#   NOME di quello che nei ritiri funziona — quindi chi lo passa ha ogni motivo
+#   di crederlo persistito.
+# ⇒ La cura ha gia' il suo schema in casa: il gemello di `superseded_reason`.
+#
 # ⚠️ E il `reason` passato a `restore()` non viene persistito da nessuna parte:
 # cercato in ogni colonna di tutte e 6 le tabelle del db, zero occorrenze. Il
 # parametro esiste nella firma (`reason: str = ""`), chi lo passa crede di
