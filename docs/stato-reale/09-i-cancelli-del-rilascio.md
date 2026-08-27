@@ -19,6 +19,17 @@ apre o resta chiuso.
 | # | vincolo | dove vive | tipo | stato al 26/08 |
 |---|---------|-----------|------|----------------|
 | ① | la CI è verde sul commit **taggato** | `publish.yml`, job `gate` | **VETO** | 🔴 3 failed / 12033 passed |
+
+> ➕ **AGGIUNTA 2026-08-27, ws7 — il vincolo ① regge, e adesso i tre hanno un nome.**
+> Rimisurato oggi sul primo run concluso dopo che la coda si è smaltita: `3 failed, 11983 passed, 44 skipped, 39 deselected, 81 xfailed, 6 errors in 1206.09s` (job ubuntu-py3.10). Il conteggio di ieri regge — i 50 `passed` di differenza sono la suite che si è mossa, non una misura diversa.
+> Questo documento dice **quanti**, e per aprire il cancello serve sapere **quali**:
+> · `test_un_accento_non_decide_se_il_gate_scatta.py::test_l_accento_non_cambia_il_verdetto_sulla_latenza[La latenza è 40 ms.]`
+> · `test_un_accento_non_decide_se_il_gate_scatta.py::test_nessun_ALTRO_pattern_del_package_dipende_dall_accento`
+> · `test_unsupported_span.py::test_the_gate_says_how_many_assertions_it_judged_as_one`
+> ⚠️ **E i 6 `errors` non sono sei difetti: sono UNA fixture.** Tutti e sei sono «at setup of» — `test_anche_il_ramo_per_TOPIC`, `test_e_combacia_con_search_come_la_docstring_PROMETTE`, `test_e_il_ramo_per_PREFISSO_che_era_gia_giusto`, `test_il_conteggio_non_include_cio_che_non_ti_restituisce`, `test_la_primitiva_di_BASSO_livello_non_cambia_per_nessuno`, `test_un_quarantinato_RIABILITATO_torna_nel_conteggio`. Contarli distinti gonfia il problema di sei volte.
+> ⏱️ E una stima che questo file eredita da altri e che oggi cade: la cella **ubuntu-py3.10 dura 20 minuti** (1206 s), non 45 — i 45 sono il tetto di *windows*.
+> 📌 Contesto: dei **59 run del 26/08 tutti conclusi, ZERO success e 59 failure**. Il verdetto arriva, ci mette 5-8 ore.
+
 | ② | `PUBLISH_ANYWAY` non impostata | variabile di repo | scappatoia | ✅ `total_count: 0` |
 | ③ | `twine check dist/*` | `publish.yml` | veto debole | solo metadati |
 | ④ | il wheel non porta identificativi | `scripts/controlla_registro.py` | **VETO** | 🔴 chiuso, `EXIT=1` |
