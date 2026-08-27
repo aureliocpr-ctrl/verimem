@@ -38,6 +38,22 @@ parole) e il contorno neutro porta 1.1 → 100.0.
 banchi descrive cosa succede FUORI da quel perimetro.** In un contratto: penali,
 termini e importi sono dentro; rimandi, allegati e sfumature sono fuori.
 
+✅ DEBITO CHIUSO SENZA UN NUOVO BANCO — il dato su testo OMOGENEO c'era gia'.
+Il punto debole qui sotto («due testi eterogenei incollati») e' gia' coperto da
+`ws5-Q2-chiusura-la-congiunzione-su-testo-legale.py`, dove la fonte e' la `LICENSE`
+INTERA — 5535 parole, un solo testo legale omogeneo::
+
+    «version 3»  VERO verbatim              persist   100.0   <- controllo +
+    «version 2»  ricalco su AFFERMATO       downgrade   0.2   <- difeso
+    «section 7»  ricalco su RIFERIMENTO     persist    99.1   <- esposto, zero layer
+
+⇒ **Stessi numeri del banco eterogeneo (0.2 sul valore affermato).** L'eterogeneita'
+NON era un confondente: la regola «afferma = difeso, riferimento = esposto» vale
+identica su un testo omogeneo e lungo.
+🔑 Terza volta in una serata che **il dato o lo strumento esisteva gia'** (dopo
+`doctor` e `valori_scritti_a_parole`): la regola «prima di costruire un banco chiedi
+se ce l'hai gia'» vale anche sui **propri** banchi di due ore prima.
+
 ⚖️ PUNTO DEBOLE: la fonte lunga e' `art.6 + LICENSE`, cioe' **due testi eterogenei
 incollati** — un contratto vero e' omogeneo, e un giudice semantico potrebbe
 comportarsi diversamente su un testo coerente. **Il verso dell'effetto e' misurato,
