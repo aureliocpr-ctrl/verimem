@@ -306,9 +306,12 @@ pip install verimem
 >   `mcp<2` does restore that line. What is still *not* observed is the whole
 >   `verimem mcp` process starting, which needs the full ~2 GB install.
 > - **18 commands exist here and not in the package**, `save` among them -- the
->   canonical write of the project's own protocol. Measured 2026-08-26 by reading the
->   published wheel's CLI against `main`: 40 commands in the wheel, 58 here, and the
->   40 are a strict subset. `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`
+>   canonical write of the project's own protocol. Counted 2026-08-26 over one
+>   perimeter, stated so you can redo it: the `@…command("name")` decorators in
+>   **`verimem/cli.py` alone**, published wheel against `main` -- 40 there, 58 here,
+>   the 40 a strict subset. A wider or narrower perimeter gives a different figure
+>   (top level only: 9; adding `swarm/cli.py` and `teams/cli.py`: 21), which is why
+>   the perimeter is written here and not left to the reader. `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`
 >   counted 16 on 2026-08-08 with a different ruler (what `verimem --help` prints);
 >   both are true, and the gap has not narrowed.
 >
