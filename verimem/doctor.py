@@ -338,6 +338,19 @@ def _provenienza_del_codice() -> str:
     return f"{radice}" + (f" [{testa}]" if testa else "")
 
 
+def _versione_di_mcp() -> str | None:
+    """La versione di `mcp` installata, o ``None`` se non c'e'.
+
+    Isolata in una funzione perche' e' l'unico punto che il banco sostituisce:
+    fingere una libreria assente o di un'altra major, senza installarla.
+    """
+    try:
+        from importlib.metadata import version
+        return version("mcp")
+    except Exception:  # noqa: BLE001 — a doctor never crashes on a check
+        return None
+
+
 def run_doctor() -> list[dict[str, Any]]:
     """Run all checks; each returns ``{name, status, detail, fix?}``.
 
@@ -368,6 +381,37 @@ def run_doctor() -> list[dict[str, Any]]:
             f"code from {_provenienza_del_codice()}")
     except Exception as e:  # noqa: BLE001 — a doctor never crashes on a check
         add("version", WARN, f"unreadable: {e}")
+
+    # -- mcp -------------------------------------------------------------------
+    # `mcp` 2.0 ha rimosso `list_tools`, `call_tool`, `list_resources` e
+    # `read_resource` dal server di basso livello, che e' l'API su cui
+    # `verimem/mcp_server.py` e' costruito: sotto la 2.x il decoratore solleva
+    # `AttributeError` e il server non parte. Misurato ESEGUENDO la riga il
+    # 2026-08-26, con `mcp 1.26.0` come controllo positivo.
+    #
+    # `pyproject` porta il tetto `<2` dal 29/07, ma un tetto protegge solo chi
+    # installa da zero: non chi aggiorna `mcp` a mano, ne' chi installa dove la
+    # 2.x c'e' gia'. Senza questa riga quel caso si presenta come un traceback.
+    #
+    # Il confronto e' sulla MAJOR come NUMERO: `"2" in v` direbbe rotta anche
+    # `1.2.0`, e un confronto lessicale direbbe sana `10.0.0`.
+    _v_mcp = _versione_di_mcp()
+    if _v_mcp is None:
+        add("mcp", OK, "not installed — the MCP server is an extra, nothing to check")
+    else:
+        try:
+            _major = int(_v_mcp.split(".")[0])
+        except ValueError:
+            _major = -1
+        if _major >= 2:
+            add("mcp", FAIL,
+                f"mcp {_v_mcp} — 2.x removed the low-level API this server is "
+                f"built on, so `verimem mcp` will not start",
+                fix='pip install "mcp<2"')
+        elif _major < 0:
+            add("mcp", WARN, f"mcp {_v_mcp} — cannot read its major version")
+        else:
+            add("mcp", OK, f"mcp {_v_mcp} — below the 2.0 break")
 
     # -- data dir --------------------------------------------------------------
     try:
