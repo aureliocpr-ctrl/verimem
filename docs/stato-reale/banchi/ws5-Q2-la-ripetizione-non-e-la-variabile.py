@@ -33,6 +33,22 @@ contratto che afferma i suoi numeri una volta sola i ricalchi restano bloccati, 
 giudice e' molto meno sicuro, e la difesa poggia sul layer lessicale — quello che
 oggi ho misurato cieco in tre modi diversi.
 
+✅ DEBITO PAGATO LO STESSO GIORNO — terza cella, confondente ELIMINATO::
+
+    A: CON ripetizione       161 parole  «72»x2   ricalco24 g=0.2   CONTROLLO61 g= 2.8
+    B: SENZA (piu' corta)    139 parole  «72»x1   ricalco24 g=0.2   CONTROLLO61 g=64.9
+    C: NEUTRO (stessa len)   163 parole  «72»x1   ricalco24 g=0.2   CONTROLLO61 g=73.3
+
+La cella C ha la lunghezza di A (163 contro 161) e una frase di pari registro
+giuridico SENZA numeri al posto della ripetizione. **Si comporta come B — anzi
+peggio: 73.3 contro 64.9.**
+⇒ **E' LA RIPETIZIONE, NON LA LUNGHEZZA.** Il confondente che avevo dichiarato non
+c'era: aggiungere contesto neutro non recupera nulla, lo **peggiora** — coerente con
+il contorno neutro misurato in `ws5-ricombinare-i-token-della-fonte-da-100.py`
+(1.1 -> 100.0 con cinque frasi estranee).
+⇒ Quello che tiene basso il punteggio del falso e' **la ripetizione del valore VERO**,
+non la quantita' di testo attorno.
+
 ⚖️ PUNTO DEBOLE: due fonti, quattro claim, **un solo articolo**. E la differenza fra
 le due versioni non e' solo la ripetizione: togliendo quella frase spariscono anche
 22 parole di contesto. **Non ho isolato la ripetizione dalla lunghezza** — servirebbe
