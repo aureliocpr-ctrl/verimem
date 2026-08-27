@@ -1,5 +1,10 @@
 # ⑥ Parametri, metriche, telemetria — stato reale
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Misura `main` a `5edc0dfe`, cioè 768 commit fa.**
+> Non è datato perché sbagli: **è fra i meglio fatti della cartella** — dichiara SHA, istante e i comandi per rifare le misure, che è esattamente la forma che serve. È datato perché il **bersaglio è mobile**: `git rev-list --count 5edc0dfe..origin/main` dà **768**. **Questo l'ho scritto io** (`AUTORE: ws7`), e lo dato come gli altri: la firma non esenta dalla data.
+> ⚠️ **Non ho rimisurato il contenuto e non affermo che sia caduto**: dico dove sta. I comandi per rifarlo sono in fondo al documento, ed è il modo giusto di chiuderlo.
+> 🪞 E una nota sul mio censimento: fino a stasera avevo classificato questo file come «senza SHA», perché il mio righello cercava lo SHA **in backtick** e qui sta in un **blocco intestato** (`SHA:` `DATA:` `COMANDI:`). Falso negativo mio — il documento faceva la cosa giusta e il mio criterio non la vedeva.
+
     SHA:      5edc0dfe  (ramo ws6/control-room, worktree ~/Code/HippoAgent-ws6)
     DATA:     2026-08-08, misure prese fra le 12:40 e le 13:10
     AUTORE:   ws7

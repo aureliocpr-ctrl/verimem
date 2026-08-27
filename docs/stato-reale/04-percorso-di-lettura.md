@@ -1,5 +1,10 @@
 # 04 — Come gestiamo le informazioni: il percorso di LETTURA
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Misura `main` a `544d27bd`, cioè 771 commit fa.**
+> Non è datato perché sbagli: **è fra i meglio fatti della cartella** — dichiara SHA, istante e i comandi per rifare le misure, che è esattamente la forma che serve. È datato perché il **bersaglio è mobile**: `git rev-list --count 544d27bd..origin/main` dà **771**.
+> ⚠️ **Non ho rimisurato il contenuto e non affermo che sia caduto**: dico dove sta. I comandi per rifarlo sono in fondo al documento, ed è il modo giusto di chiuderlo.
+> 🪞 E una nota sul mio censimento: fino a stasera avevo classificato questo file come «senza SHA», perché il mio righello cercava lo SHA **in backtick** e qui sta in un **blocco intestato** (`SHA:` `DATA:` `COMANDI:`). Falso negativo mio — il documento faceva la cosa giusta e il mio criterio non la vedeva.
+
     SHA:      544d27bd  (branch ws5/stato-reale, creato da ws3/gate-precision)
     COMANDI:  in fondo, sezione «Come rifare queste misure» — copiabili
     VERDETTO: PARZIALE
