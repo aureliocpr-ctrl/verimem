@@ -193,6 +193,53 @@ dove però è `"wall_s": 54.2` — secondi di wall-clock. **La cifra da sola non
 evidenza: serve il contesto.** L'avevo dato per scontato ieri; oggi mi ha
 prodotto un falso allarme, ritirato prima di consegnarlo.
 
+## La diciassettesima — «producibile, non leggibile» è una classe, non un caso
+
+Applicando il presidio alle cifre più in basso (`README.md:635`, la riga degli
+AUROC del giudice), **due su tre reggono e una no**. E stavolta ho cercato col
+**contesto**, non con la cifra nuda — la lezione del falso allarme di ieri.
+
+| cifra in vetrina | artefatto | esito |
+|---|---|---|
+| `0.971 sonnet-4 R10 on SNLI` | `benchmark/local_gate_eval.py:32,355` — «SNLI AUROC 0.971» | ✅ |
+| `0.963 sonnet-5 re-run 2026-07-16` | `benchmark/results/fact_grounding_r10_sonnet5_2026-07-16.json:7` — `"auroc_faithful_vs_confab": 0.963` | ✅ **anche la data combacia** |
+| `0.974 pooled multi-model` | — | 🔴 **non ricondotto** |
+
+Il `0.974` compare in due posti, e **nessuno dei due è quello che la riga
+promette**:
+
+- `benchmark/qa_eval.py:80` → «l'abstention canary 0.897 → **0.974**» — è un
+  *canary di astensione*, non un AUROC;
+- `benchmark/results/exp3_routing_u0.json` → `"accuracy": 0.9744` — è
+  *accuracy*, non AUROC.
+
+**Omonimi.** È esattamente la trappola che avevo nominato ieri, e con la cifra
+nuda avrei scritto «verificata».
+
+E la macchina che produrrebbe il numero giusto **esiste**:
+`benchmark/epistemic_harness.py:53` calcola `pooled_auroc`, ed è il concetto
+esatto della riga. Ma:
+
+    git grep -ln "pooled_auroc" | grep -v epistemic_harness   →  nulla
+    file che contengano insieme "0.974" e "auroc"             →  nessuno
+
+⇒ **Il `0.974 pooled multi-model` non è leggibile in nessun artefatto del
+repo.** Non è inventato: è **producibile e non leggibile** — la stessa forma del
+banco della zavorra trovata ieri (`9.6 → 35.9`, banco allora nemmeno
+committato).
+
+🔑 **Due occorrenze indipendenti fanno una classe, non un incidente.** E la
+regola che avevo proposto ieri per un caso singolo vale come regola:
+
+> **una cifra in vetrina dev'essere LEGGIBILE in un artefatto, non solo
+> PRODUCIBILE da uno.** Un harness che la calcola e non la salva lascia in
+> pagina un numero che nessun lettore esterno può rileggere.
+
+⚠️ **Limiti**: `git grep` vede solo i file tracciati; e `0.9744` arrotondato
+darebbe `0.974`, ma quello è *accuracy* su un altro esperimento, quindi non
+salva la riga. Chi ha eseguito quel pooled ha il numero: basta salvare il json
+accanto agli altri due e la riga torna intera.
+
 ## La domanda che resta aperta, ed è di Aurelio
 
 Il criterio dato è «macchina appena uscita dal concessionario». Il conteggio
