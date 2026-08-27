@@ -44,12 +44,37 @@ Il gate NON ha un punto debole e un punto forte. Ha un punto forte **con una por
 accanto**, e dietro la porta non c'e' un secondo strato: c'e' il punteggio, che si
 compra.
 
-⚠️ LIMITE DICHIARATO: sei casi, quattro scritture, numeri interi «tondi» (340, 27,
-12). NON ho provato decimali a parole («tre virgola cinque»), ne' forme miste
-(«340 mila»), ne' AR/HI/KO. Il numero 6/6 e' netto ma la popolazione e' piccola:
-serve estenderlo prima di scriverlo in vetrina.
-⛔ NESSUNA CURA PROPOSTA. Riconoscere i numeri a parole in N lingue e' un problema
-aperto, non una riga di regex, e una cura che non so misurare non si consegna.
+✅ LIMITE PAGATO LO STESSO GIORNO, e ha dato il criterio ESATTO. Il primo giro
+diceva «sei casi, quattro scritture, interi tondi; non provati decimali a parole,
+forme miste, AR/HI/KO». Estensione (`ws5-dove-finisce-la-vista-di-L41.py`)::
+
+    AR interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    HI interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    KO interi    CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1
+    IT decimale  CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1      «tre virgola cinque»
+    EN decimale  CIFRA=bloc      ALTRA=AMMESSO  senzaL4.1      «three point five»
+    IT mista     CIFRA=bloc      ALTRA=bloc                    «340 mila»
+    EN mista     CIFRA=bloc      ALTRA=bloc                    «340 thousand»
+
+    CIFRA  ammessi 0/7   L4.1 ha parlato su 7/7
+    ALTRA  ammessi 5/7   L4.1 ha parlato su 2/7
+
+⇒ SETTE SCRITTURE IN TUTTO (EN IT ZH JA AR HI KO) e anche i DECIMALI a parole.
+⇒ MA LA FORMA MISTA E' BLOCCATA, ed e' la riga che vale piu' di tutte: «340 mila»
+ha lo stesso valore, la stessa lingua e la stessa struttura di
+«trecentoquarantamila», e viene fermata CON `L4.1`. L'unica differenza e' che
+contiene il glifo `340`.
+🔑 ⇒ LA FRONTIERA NON E' «i numeri scritti in cifra» in senso vago: `L4.1` vede il
+numero **se e solo se compare almeno un carattere 0-9**. La forma mista e' la prova
+per contrasto — isola la variabile senza cambiare nient'altro.
+⚖️ E ribalta la lettura del limite: non e' «il gate e' debole sulle lingue esotiche».
+E' **una condizione puramente tipografica**, identica in sette scritture, che non
+ha niente a che vedere con la lingua ne' col significato.
+
+⚠️ LIMITE RESIDUO: dodici casi in tutto, un valore per forma. Non provate le
+frazioni («un terzo»), i numeri romani, ne' le forme parlate («un paio di
+centinaia»). ⛔ NESSUNA CURA PROPOSTA: riconoscere i numeri a parole in N lingue
+non e' una regex, e una cura che non so misurare non si consegna.
 
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-la-cifra-si-aggira-scrivendola-a-parole.py <dir-temp>
 ⚠️ Vuole una dir TEMPORANEA: scrive in HIPPO_DATA_DIR, mai lo store principale.
