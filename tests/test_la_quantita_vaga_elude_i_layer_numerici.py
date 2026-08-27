@@ -303,3 +303,110 @@ def test_CONTROLLO_dalla_porta_documenti_la_CONTRADDIZIONE_e_fermata():
 def test_dalla_porta_documenti_la_vaghezza_dovrebbe_essere_fermata(vago):
     stato, punteggio = _promuovi(vago)
     assert stato == "quarantined", f"ammessa con g={punteggio} e la citazione del file"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 19:06 — LA RICEVUTA DELLA PROMOZIONE OMETTE UN VERDETTO CHE ESISTE.
+#
+# `promote_chunk_to_fact` non mette `grounding_score` nel dict che restituisce
+# (ha `grounding_note`, sempre None). La scelta è DELIBERATA e ben motivata nel
+# modulo: «un punteggio tautologico non è un verdetto» — senza `claim` la
+# proposizione È il chunk, il moat verifica «X implica X» e risponde ~100 per
+# costruzione (99.95, 99.96, 99.98 misurati il 04/08). Lì `None` è la
+# descrizione esatta, e il modulo azzera il punteggio anche nello store.
+#
+# ⚠️ Ma quel ragionamento vale SENZA claim, e l'omissione vale SEMPRE. Con un
+# `claim` distillato il punteggio non è tautologico affatto — si separa:
+#
+#     SENZA claim (chunk grezzo)         model_claim    None
+#     CON claim: vero «3 su 40»          model_claim    99.94
+#     CON claim: vago «gran parte»       model_claim    99.60
+#     CON claim: contraddetto «non ha»   quarantined     0.79
+#     CON claim: estraneo «la mensa»     quarantined     0.11
+#
+# ⇒ 99.94 / 99.60 / 0.79 / 0.11 non è una tautologia: è un verdetto, e lo store
+#   lo conserva. Il dict di ritorno lo butta lo stesso.
+# ⇒ Chi promuove con un claim distillato NON può sapere dal ritorno se il moat
+#   l'ha giudicato 99.6 o 0.79 — deve andare a leggere lo store. E il caso con
+#   claim è il caso d'uso principale del modulo, per suo stesso docstring.
+#
+# La cura sarebbe esporre `grounding_score` nel dict SOLO quando `claim` è
+# passato — dove il numero è un verdetto e non una tautologia. Non la faccio:
+# il modulo non è il mio fronte e la scelta attuale è argomentata.
+
+def _promuovi_grezzo() -> tuple[str, float | None]:
+    """Promuove SENZA claim: la proposizione è il chunk stesso."""
+    import sqlite3
+
+    from verimem.document_promote import promote_chunk_to_fact
+    from verimem.semantic import SemanticMemory
+
+    db = Path(tempfile.mkdtemp()) / "grezzo.db"
+    mem = SemanticMemory(db_path=db)
+    hit = {
+        "text": CHUNK_COLLAUDO,
+        "source_id": "verbale-b12.md",
+        "start": 0,
+        "end": len(CHUNK_COLLAUDO),
+    }
+    ric = promote_chunk_to_fact(mem, hit, topic="t/grezzo")
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    riga = con.execute(
+        "SELECT status, grounding_score FROM facts WHERE id=?", (ric.get("fact_id"),)
+    ).fetchone()
+    con.close()
+    if not riga:
+        pytest.fail(f"il chunk grezzo non e' nello store: {ric}")
+    return str(riga[0]), riga[1]
+
+
+def test_SENZA_claim_il_punteggio_e_azzerato_ed_e_GIUSTO_cosi():
+    """La metà che il modulo fa bene, e sta qui perché il banco non esageri.
+
+    Senza `claim` la proposizione è il chunk: il moat verificherebbe «X implica
+    X» e risponderebbe ~100 per costruzione. Il modulo azzera il punteggio, e
+    `None` è la descrizione esatta di «mai giudicato».
+    """
+    stato, punteggio = _promuovi_grezzo()
+    assert stato != "quarantined", f"il chunk grezzo viene rifiutato ({stato})"
+    assert punteggio is None, (
+        f"il punteggio tautologico ora e' pubblicato ({punteggio}): se il modulo ha "
+        "imparato a distinguerlo, questo banco va rimisurato"
+    )
+
+
+def test_CON_claim_il_punteggio_NON_e_tautologico_e_si_separa():
+    """Il righello del test sotto: senza separazione, l'omissione non toglie nulla."""
+    _, g_vero = _promuovi("Il collaudo ha rilevato 3 pezzi difformi su 40.")
+    _, g_estraneo = _promuovi("La mensa aziendale resta chiusa il primo maggio.")
+    assert isinstance(g_vero, (int, float)) and isinstance(g_estraneo, (int, float)), (
+        f"un punteggio manca: vero={g_vero} estraneo={g_estraneo}"
+    )
+    assert g_vero - g_estraneo > 50, (
+        f"i punteggi non si separano piu' ({g_vero} contro {g_estraneo}): se sono "
+        "diventati tautologici anche con claim, l'omissione dal dict e' giusta e "
+        "questo banco va rimisurato"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="con un claim distillato il punteggio e' un verdetto vero (99.94 · 99.60 "
+    "· 0.79 · 0.11) ma il dict di ritorno non lo espone: chi promuove deve andare "
+    "a leggere lo store (27/08)",
+)
+def test_con_claim_la_ricevuta_dovrebbe_portare_il_punteggio():
+    from verimem.document_promote import promote_chunk_to_fact
+    from verimem.semantic import SemanticMemory
+
+    mem = SemanticMemory(db_path=Path(tempfile.mkdtemp()) / "ric.db")
+    hit = {
+        "text": CHUNK_COLLAUDO,
+        "source_id": "verbale-b12.md",
+        "start": 0,
+        "end": len(CHUNK_COLLAUDO),
+    }
+    ric = promote_chunk_to_fact(
+        mem, hit, claim="Il collaudo ha rilevato 3 pezzi difformi su 40.", topic="t/ric"
+    )
+    assert ric.get("grounding_score") is not None, f"chiavi restituite: {sorted(ric)}"
