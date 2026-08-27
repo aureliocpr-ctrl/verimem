@@ -123,3 +123,95 @@ def test_CONTROLLO_dove_parla_un_gruppo_solo_l_etichetta_e_giusta():
         f"({ric.get('quarantined_by')!r}): il difetto e' piu' esteso di quanto "
         "questo banco dichiari"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 19:24 — IL SECONDO MODO in cui lo stesso campo inganna: NON VIENE
+# RIPULITO AL RESTORE.
+#
+# `restore_fact` riporta un fatto quarantinato a `model_claim` e lo rimette
+# nella recall — verificato end-to-end: prima del restore la query non lo trova
+# (0 risultati), dopo sì (1). Quella parte funziona.
+#
+# Ma `quarantined_by` resta popolato sul fatto tornato vivo:
+#
+#     il fatto dopo il restore:
+#       status=model_claim   grounding=1.16   quarantined_by='moat'
+#
+# Sul corpus reale (27/08, sola lettura):
+#
+#     fatti totali ............................. 14417
+#     con quarantined_by popolato .............. 577
+#     di questi, NON quarantinati (cioè VIVI) .. 154      <- il 26,7%
+#
+# ⇒ Chi filtra `WHERE quarantined_by IS NOT NULL` per contare le quarantene ne
+#   prende 577 e 154 sono vivi. Sommato al difetto della sezione precedente —
+#   il campo nomina il primo layer che parla, non il decisore — lo stesso campo
+#   è inaffidabile in DUE modi indipendenti: sbaglia CHI, e sbaglia SE.
+#
+# 📖 È la stessa classe già in casa per un altro campo: «`superseded_by IS NULL`
+# non vuol dire vivo, vuol dire non ritirato». Un campo di stato che non viene
+# ripulito quando lo stato cambia.
+#
+# ⚠️ E il `reason` passato a `restore()` non viene persistito da nessuna parte:
+# cercato in ogni colonna di tutte e 6 le tabelle del db, zero occorrenze. Il
+# parametro esiste nella firma (`reason: str = ""`), chi lo passa crede di
+# lasciare una traccia, e non ne resta niente — il che rende il ripescaggio non
+# ricostruibile: né chi, né quando, né perché.
+
+
+def test_il_restore_rimette_davvero_il_fatto_nella_recall():
+    """La metà che funziona, e sta qui perché il banco non esageri."""
+    import tempfile
+    from pathlib import Path
+
+    from verimem.client import Memory
+
+    fonte = "Il collaudo del lotto B12 ha rilevato 3 pezzi difformi su 40 controllati."
+    falso = "Il collaudo non ha rilevato pezzi difformi."
+    mem = Memory(str(Path(tempfile.mkdtemp()) / "rest.db"))
+    ric = mem.add(falso, topic="t/restore", source=fonte, validate="full")
+    fid = ric.get("id") or ric.get("fact_id")
+    assert str(ric.get("status")) == "quarantined", (
+        f"il banco presuppone che questo venga quarantinato, invece: {ric.get('status')}"
+    )
+
+    def _nella_recall() -> bool:
+        return any(
+            str(h.get("text")) == falso
+            for h in (mem.search("Il collaudo ha rilevato difformita?", k=6) or [])
+        )
+
+    assert not _nella_recall(), "un quarantinato è nella recall: la promessa base è caduta"
+    assert mem.restore(fid, reason="prova del presidio") is True, "restore() ha reso False"
+    assert _nella_recall(), (
+        "dopo il restore il fatto non torna nella recall: il backlog non sarebbe drenabile"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="quarantined_by resta popolato sul fatto tornato vivo: 154 fatti VIVI "
+    "su 577 col campo popolato, nel corpus reale del 27/08",
+)
+def test_il_restore_dovrebbe_ripulire_quarantined_by():
+    import sqlite3
+    import tempfile
+    from pathlib import Path
+
+    from verimem.client import Memory
+
+    fonte = "Il collaudo del lotto B12 ha rilevato 3 pezzi difformi su 40 controllati."
+    falso = "Il collaudo non ha rilevato pezzi difformi."
+    db = Path(tempfile.mkdtemp()) / "rest2.db"
+    mem = Memory(str(db))
+    ric = mem.add(falso, topic="t/restore2", source=fonte, validate="full")
+    fid = ric.get("id") or ric.get("fact_id")
+    mem.restore(fid, reason="prova del presidio")
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    riga = con.execute(
+        "SELECT status, quarantined_by FROM facts WHERE id=?", (fid,)
+    ).fetchone()
+    con.close()
+    assert riga and str(riga[0]) != "quarantined", f"il restore non ha cambiato lo stato: {riga}"
+    assert riga[1] is None, f"il fatto e' vivo ma porta ancora quarantined_by={riga[1]!r}"
