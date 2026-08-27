@@ -240,6 +240,44 @@ darebbe `0.974`, ma quello è *accuracy* su un altro esperimento, quindi non
 salva la riga. Chi ha eseguito quel pooled ha il numero: basta salvare il json
 accanto agli altri due e la riga torna intera.
 
+## La diciottesima — «18 comandi» è vero, ma non dice come si conta
+
+`README.md:308,321`: «**18 commands exist here and not in the package**, `save`
+among them» e «16 missing commands then, 18 today».
+
+L'ho verificata **contando**, non grepando la cifra — è l'unico modo per una
+claim di cardinalità. La CLI è Typer, i comandi si dichiarano con
+`@app.command()`; confronto `HEAD` contro il tag `v0.7.0`, entrambi da `git
+show`, senza installare nulla:
+
+| perimetro | HEAD | v0.7.0 | solo su HEAD |
+|---|---|---|---|
+| primo livello di `verimem/cli.py` | 37 | 28 | **9** |
+| + le 6 sub-app + `swarm/cli.py` + `teams/cli.py` | 98 | 77 | **21** |
+
+**Tre righelli, tre numeri: 9 · 18 · 21.** Il 18 della vetrina sta *fra* i miei
+due, quindi è perfettamente plausibile con un terzo perimetro — per esempio
+contando le sub-app ma non gli altri due file, o escludendo comandi interni.
+
+⇒ **Non dico che la riga sbagli.** Dico che **non è riproducibile**: un lettore
+che rifà il conto ottiene 9 o 21 a seconda di dove guarda, e conclude che il
+numero è sbagliato quando invece è solo **non specificato**.
+
+✅ **Quello che regge, e va detto**: il **verso** della claim è confermato in
+pieno — il divario **esiste**, **non si è ristretto** (zero comandi spariti da
+HEAD: `v0.7.0 - HEAD` = ∅), e **`save` è davvero fra i mancanti**, che è
+l'esempio che la riga porta.
+
+🔑 È **la stessa classe** delle altre cinque: un numero corretto sotto
+un'etichetta che non definisce la popolazione. La cura è mezza riga — dire
+**come si conta** («comandi di primo livello», oppure «comandi e sottocomandi
+Typer»).
+
+⚠️ **Limiti, dichiarati**: confronto col **tag locale**, non col wheel
+effettivamente su PyPI; l'estrattore è un regex sui decoratori e perderebbe un
+comando registrato dinamicamente; e non ho eseguito `verimem --help`, che
+sarebbe **la porta vera** — per farlo servirebbe installare v0.7.0 in un venv.
+
 ## La domanda che resta aperta, ed è di Aurelio
 
 Il criterio dato è «macchina appena uscita dal concessionario». Il conteggio
