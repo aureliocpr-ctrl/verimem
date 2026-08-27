@@ -10,9 +10,14 @@ l'embedder è uno stub su SHA-256 (`tests/conftest.py:121`).
 ## In una riga
 
 Il gate **isola bene** il proprio caso difficile e **ha un rimedio dichiarato**
-per quel caso; il rimedio **parte a ogni scrittura incerta, costa 20–52
-secondi, non sostituisce il verdetto, e nessun campo della ricevuta dice che ci
-ha provato**.
+per quel caso; il rimedio **parte a ogni scrittura incerta, invoca davvero il
+giudice, costa 20–52 secondi, e il verdetto si perde prima di tornare** — e
+nessun campo della ricevuta dice che ci ha provato.
+
+> ⚠️ **Il titolo di questo documento dice «non arriva» ed è impreciso**: misurato
+> alle 21:17, la CLI c'è (`shutil.which('claude')` la trova), ollama no, e il
+> percorso `_score_via_claude` **viene preso**. Il nome del file resta perché è
+> già citato altrove; la formulazione giusta è nella §5-bis.
 
 ---
 
@@ -92,7 +97,7 @@ Soglie **lette a runtime**, non dedotte: `tau_hi = 80.0`, `band_enforced = True`
 
 ## 5. 🔴 Quello che non fa
 
-1. **Il rimedio del caso difficile non arriva** e non lo dichiara. I **533**
+1. **Il rimedio del caso difficile parte e non consegna** (§5-bis) e non lo dichiara. I **533**
    quarantinati della banda sono rimasti tali **senza il secondo parere che il
    prodotto promette loro**.
 2. **`moat: "passed"` su un fatto che esce `quarantined`** (a fermarlo è
@@ -100,6 +105,56 @@ Soglie **lette a runtime**, non dedotte: `tau_hi = 80.0`, `band_enforced = True`
    `quarantined_by` che nomina il primo layer invece del decisore (⑩).
 3. **Il costo non è visibile da nessuna parte**: 20–52 secondi per scrittura
    incerta, a worker singolo.
+
+---
+
+## 5-bis. Dove si perde il verdetto (misurato alle 21:17)
+
+Le funzioni di lookup rispondono, e nessuna di queste righe esegue un LLM — il
+comando è **letto** dal sorgente:
+
+```
+  shutil.which('claude') : un percorso valido, la CLI e' installata
+  _mode()                : auto        _timeout_s() : 90.0
+  ollama locale          : False
+```
+
+⇒ il percorso preso è `_score_via_claude`: **la CLI esiste e viene invocata**, e i
+20–52 secondi sono coerenti con una risposta reale. Il verdetto si perde **dopo**:
+o `returncode != 0`, o `_parse_score` non legge la risposta. Le due non si
+distinguono senza eseguire il comando come lo esegue il prodotto.
+
+**Il parser, su dieci risposte plausibili:**
+
+| risposta | esito | |
+|---|---|---|
+| `87` · `Score: 55` · ` 92.5 ` · `Based on… Score: 12` | letti | ✔ |
+| `**55**` | `None` | ✗ grassetto markdown |
+| `The score is 55.` | `None` | ✗ «score is» non «score:» |
+| `I would rate this 55 out of 100.` | `None` | ✗ prosa inglese |
+| `Il punteggio e' 55.` | `None` | ✗ prosa italiana |
+| `Sorry, I cannot help…` · vuoto | `None` | ✔ giustamente |
+
+⇒ **4 verdetti legittimi persi su 8 risposte che contenevano un punteggio.**
+⚠️ Il banco stampa «persi 6» e **sei è il numero sbagliato da citare**: due di quei
+`None` sono corretti.
+
+✅ **La strettezza non è sciatteria**: `band_escalation.py:41` la documenta — «*A
+digit embedded in prose ("the 100 words…") is NOT a verdict: parsing it once
+ADMITTED a fact the judge had scored 5*». È la cura di un incidente vero. Quello
+che non era misurato è il suo **costo**: un verdetto **illeggibile** e un giudice
+**irraggiungibile** tornano entrambi `None`, e a valle diventano «tenuto per
+revisione», che è il nome di una terza cosa ancora.
+
+## 5-ter. ⚠️ Il giudice non è riproducibile
+
+`band_escalation.py:153-157` costruisce il comando con `-p`, `--output-format
+text` e `--append-system-prompt`, e **nessun `--model`**. ⇒ il giudice che decide
+l'ammissione dipende da come è configurata la CLI **sulla macchina di chi
+scrive**, e la ricevuta registra solo `claude-band`: il modello non compare da
+nessuna parte. Due utenti con la stessa fonte e lo stesso claim possono ottenere
+ammissioni diverse e non poter sapere perché. **Un verdetto non riproducibile è
+un verdetto che non si può citare.**
 
 ---
 
