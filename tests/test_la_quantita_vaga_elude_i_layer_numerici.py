@@ -410,3 +410,69 @@ def test_con_claim_la_ricevuta_dovrebbe_portare_il_punteggio():
         mem, hit, claim="Il collaudo ha rilevato 3 pezzi difformi su 40.", topic="t/ric"
     )
     assert ric.get("grounding_score") is not None, f"chiavi restituite: {sorted(ric)}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 20:05 — TROVATO IL PUNTO ESATTO: il layer che dovrebbe coglierla
+# esiste, funziona, e guarda le CIFRE anche lui.
+#
+# `relation_claim.unverified_relation(source, fact)` alimenta il layer
+# `L4-relazione` — l'avviso «the claim announces a derived-quantity the source
+# never states». I tipi che conosce sono quattro, e `derived-quantity` c'è:
+#
+#     RELATION_KINDS : ('causal', 'modality', 'completion', 'derived-quantity')
+#     _PATTERNS keys : ('causal', 'completion', 'modality', 'derived-quantity')
+#     tipi dichiarati senza pattern: nessuno
+#
+# Ma sullo stesso chunk («3 pezzi difformi su 40 controllati»):
+#
+#     «difformità in gran parte dei pezzi»          -> None                🔴
+#     «qualche pezzo difforme»                      -> None                🔴
+#     «difformità nel diciassette per cento»        -> 'derived-quantity'  ✅
+#     «un tasso di difformità del 7,5 per cento»    -> 'derived-quantity'  ✅
+#     «difformità a causa di un errore di taratura» -> 'causal'            ✅
+#
+# ⇒ Il layer coglie le quantità derivate NUMERICHE — percentuali, tassi — e non
+#   quelle VAGHE, che sono derivate esattamente allo stesso modo: «gran parte»
+#   dice qualcosa su 3/40 tanto quanto «il 17%».
+# ⇒ È lo stesso difetto del resto di questo file, un piano più in su: anche il
+#   layer che esiste per le DERIVAZIONI guarda le cifre.
+#
+# 🔧 La cura è a portata e non richiede un layer nuovo: il pattern
+# `derived-quantity` esiste già e va esteso ai quantificatori relativi. Non la
+# faccio — `relation_claim.py` non è il mio fronte — ma il punto è nominato.
+#
+# 📌 E `L4-relazione` è il layer MENO presidiato del sistema: 1 file su 21 layer
+# (mappa in `docs/stato-reale/banchi/quanti-presidi-ha-ogni-layer.py`). Non è un
+# caso che il buco sia lì.
+
+
+def test_CONTROLLO_il_layer_delle_relazioni_riconosce_una_derivata_NUMERICA():
+    """Il righello: se non riconosce nemmeno una percentuale, l'xfail sotto non
+    misura la vaghezza ma un layer spento."""
+    from verimem.relation_claim import unverified_relation
+
+    fonte = "Il collaudo del lotto B12 ha rilevato 3 pezzi difformi su 40 controllati."
+    assert unverified_relation(
+        fonte, "Il collaudo ha rilevato difformita nel diciassette per cento dei pezzi."
+    ) == "derived-quantity", "il layer non riconosce piu' nemmeno una percentuale derivata"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="unverified_relation coglie le quantita' derivate NUMERICHE e non "
+    "quelle VAGHE: «gran parte» torna None dove «il diciassette per cento» "
+    "torna derived-quantity (27/08)",
+)
+@pytest.mark.parametrize(
+    "vago",
+    [
+        "Il collaudo ha rilevato difformita in gran parte dei pezzi.",
+        "Il collaudo ha rilevato qualche pezzo difforme.",
+    ],
+)
+def test_anche_la_quantita_VAGA_e_una_derivata_che_la_fonte_non_enuncia(vago):
+    from verimem.relation_claim import unverified_relation
+
+    fonte = "Il collaudo del lotto B12 ha rilevato 3 pezzi difformi su 40 controllati."
+    assert unverified_relation(fonte, vago) == "derived-quantity"
