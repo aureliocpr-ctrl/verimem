@@ -9,6 +9,30 @@
 > smette di essere un messaggio sul canale e diventa una riga che qualcun altro può
 > attaccare.
 
+## Se hai trenta secondi
+
+> Solo fatti contati e puntatori. **Nessun aggettivo**: il registro è il posto dove una frase
+> più larga del dato fa più danno che altrove.
+
+    celle misurate  53      🔴 30   🟢 17   🟡 5
+
+**Cosa il prodotto fa, misurato**: ferma la contraddizione in tutti i regimi provati (0/12,
+riga 29) · pretende che il soggetto del claim stia nella fonte (riga 31) · regge il carico di
+un servizio (258 ms, 14,3 op/s, zero errori — riga 10) · gestisce correttamente un valore che
+evolve (riga W7-4) · dà a un agente una ricevuta azionabile (riga 38).
+
+**Cosa non fa, misurato**: nessun presidio ferma un claim che **aggiunge** un dettaglio che la
+fonte non contiene (12/12, riga 30) · un vero può essere scartato (≥12 su 58, riga W7-3) · uno
+scambio di attribuzione entra 3 volte su 7 e **cancella il fatto vero** se sta nello stesso
+topic (W7-7) · il consiglio dato a un agente rifiutato non è eseguibile (W7-1).
+
+**Cosa non siamo in grado di dire**: se il gate abbia avuto ragione nei casi contestati — **la
+prova che conserva è troncata a 400 caratteri** (W7-5), e la cura costa zero.
+
+**Cosa manca del tutto**: il vertice — *un agente con verimem sbaglia meno di uno senza* —
+**non ha una riga**. Finché non ce l'ha, questo registro dice come si comporta il prodotto,
+non se serve.
+
 ## I quattro livelli di ogni domanda
 
 | livello | domanda | chi lo può dire |
@@ -92,7 +116,7 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 | 8 | quanto costa davvero una scrittura? | — | — | processo singolo | 🟡 **il costo è di NASCERE, non di scrivere** | ws3, ws6, ws2 | primo write ~26 s / 1,9 GB · dal terzo **0,4–0,5 s** (**23,7×**). Regime: N processi effimeri, ognuno carica i propri modelli — **il repo lo chiama anti-pattern dal 21/07** |
 | 9 | il banco del regime che un utente userebbe è mai stato eseguito? | — | — | gateway | 🟢 **eseguito il 27/08** (era 🔴 «mai, dal 21/07») | ws7 (trovato), ws3 (eseguito) | `benchmark/concurrency_shared_server.py` aveva **1 commit · 0 artefatti · 0 citazioni** dal 21/07. Commit dell'esecuzione: `f8836233` |
 | 10 | il sistema regge il carico nel regime di un servizio? | — | — | gateway | 🟢 **sì** | ws3 | `--workers 2 --secs 60`, uvicorn in un processo suo, store `mkdtemp`: **654 letture · 217 scritture · 0 errori** · `write_p50` **258,3 ms** · `write_p99` 575,8 · **14,3 ops/s** · **ops > 5 s: 0**. 🔑 La predizione scritta nel docstring il 21/07 (*«writes stay in the hundreds-of-ms range»*) era **esatta** |
-| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🟡 **non finché non si esegue `verimem warmup` — e il prodotto lo DICE** | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup») |
+| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🟡 **non finché non si esegue `verimem warmup` — e il prodotto lo DICE** | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup»)  ⚠️ **Vincolo aggiunto dall'autrice (22:02)**: il confronto era **0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero** — **due variabili insieme**. **Resta vero che chi installa ottiene `grounding None`**; escluse CLI e firma |
 | 12 | il gate rifiuta un claim che la fonte **nega**? | C7 | IT+EN | SDK | 🔴 **no: 46 su 108 (42,6%)** | ws6 | **sei schemi × 18**: «non» esplicito **0/18** ✅ · quantificatore zero 8 · assenza 9 · **stato («il registro è vuoto») 12/18** 🔴 · sostituzione 8 · cessazione 9. **IT 30/54 · EN 16/54**. 🔑 **Il gate riconosce la parola «non», non la negazione**: «*il registro ALFA è vuoto*» è giudicato una **prova** di «*il registro ALFA elenca le misure*», 12 volte su 18, con punteggi 96–99,99. Commit `f51f9845`. ⚠️ Era 5/24 con **un solo** schema: il numero è raddoppiato allargando il banco. 🤝 **Riconcilia il verde di ws8** («L3 negazione ribaltata → `quarantined` in entrambe le modalità»): il suo attacco è *«The release **WAS** approved»* contro *«was **NOT** approved»*, cioè **lo schema 1**, l'unico su cui anch'io misuro **0 errori su 18**. ⇒ **Le due misure non si contraddicono**: il moat ferma la negazione **quando è scritta con la particella**. Sugli altri cinque modi di dire la stessa cosa: **46 su 90**. 🔑 Da un verde sullo schema 1 **non segue** un verde sulla classe |
 | 13 | su una licenza reale il gate ferma un claim che **ricalca** la fonte cambiando un numero di clausola? | C4 | EN | — | 🔴 **no, 2 su 3** | ws5 | «section 7» al posto di «section 10» entra a **99.1 senza alcun layer**. Il rischio è la **congiunzione** (ricalco + numero comune), non `L4.1` da solo |
 | 14 | il presidio metrico riconosce la copula italiana in tutte le sue scritture? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | 5 forme dello stesso claim senza attestazione: `è`, `e` nudo, senza copula e l'inglese cadevano; **`e'` con l'apostrofo passava**. Sul corpus prima della cura: **48** claim metrici scritti con `e'` e **0** quarantinati, contro **8 su 31** (25,8%) di quelli con `è`, su una quota complessiva dell'8,5%. Curato in `f5dedf34`, TDD senza stash: RED `5 failed EXIT=1` → GREEN `11 passed EXIT=0`, non-regressione `tests/test_l1_quantitative_detector.py` `19 passed`. ⚠️ Limite: misurato sulla porta SDK, **non** su MCP/CLI/gateway |
@@ -138,7 +162,7 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 
 ### Il conto, aggiornato a mano quando cambia
 
-    🔴 rossi 29 · 🟢 verdi 17 · 🟡 parziali 5   (su 52 celle, 27/08 ore 22:05)
+    🔴 rossi 30 · 🟢 verdi 17 · 🟡 parziali 5   (su 53 celle, 27/08 ore 22:10)
 
 > 📌 **Serve perché senza di esso ogni frase sullo stato del prodotto è un'impressione.**
 > ⚠️ **E va CONTATO, non stimato**: alle 21:50 ho scritto «46 celle» a memoria mentre altre ne
