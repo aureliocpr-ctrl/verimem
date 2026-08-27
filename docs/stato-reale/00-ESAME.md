@@ -124,12 +124,23 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 | 41 | quali sono le **soglie** che decidono un verdetto? | — | — | — | 🟢 **mappate: `local` 40, `claude` 70** | ws4 | ⚠️ **cade una frase dell'autrice, e cade a FAVORE del prodotto**: un **55,2** non passerebbe — cade in banda 40-80 e **viene trattenuto anche senza `L4.1`** |
 | 42 | come scala la latenza da 2 a 20 client? | — | — | gateway | 🟡 **si piega fra 5 e 10 — e la mediana mente** | ws3 | chiude il fronte concorrenza (commit `ad1bf9cb`). Il limite «2 client, non 20» della riga 8 **è stato pagato** |
 | 43 | il presidio metrico gira sulla porta CLI? | C4 | IT+EN | CLI | ⚪ **non misurabile: L1 non viene chiamato** | ws2 | **regime**: processo singolo, store temporaneo vuoto (`HIPPO_DATA_DIR`), nessuna fonte, IT+EN. Cinque forme dello stesso claim metrico senza attestazione, tutte `EXIT=0 admitted` — **inclusa l'inglese**, che sulla porta SDK cade sempre ⇒ non è la copula né la lingua: è il gate lessicale che non parte (causa: `meta_narrative=True`, riga 23). ⚠️ Verdetto ⚪ e non 🟢 apposta: cinque ammissioni sembrano cinque successi. ⚠️ E la ricevuta CLI nomina **solo** il moat assente («pass --source») e tace su L1, che con `--source` non si accende: chi la segue chiude metà del buco credendo di chiuderlo tutto |
+| W7-1 | il **consiglio** che il gate dà a un agente rifiutato è eseguibile? | — | EN | SDK | 🔴🔴 **no: manda in un loop senza uscita** | ws8 (riportata da ws7) | l'advice di `L1.9` suggerisce **per primo** `bench:<bench_run_id>` — una forma che **non può mai passare**. La regola vera è che serve **un'unità di tempo**: `measure:250ms` passa, `measure:25` no. 🚨 **Asse A1**: un agente che segue il consiglio del prodotto ritenta all'infinito la forma sbagliata |
+| W7-2 | il gate ferma una falsità che **aggiunge una cifra assente** dalla fonte? | C4 | — | SDK | 🔴 **no: 9 su 10 prendono da 82,3 a 100,0** | ws4 (riportata da ws7) | ⚠️ **L'autrice ha ritirato la propria riga di sette minuti prima** (la batteria 5+5 la rompe: 4 quantità false su 5 stanno sopra 50) — **e ciò che resta è peggio di ciò che è caduto** |
+| W7-3 | `L4.1` ferma solo il falso, o anche il vero? | — | — | SDK | 🔴 **anche il vero: ≥4 su 16** | ws1 (riportata da ws7) | letti **a mano**: su 16 fatti fermati da `L4.1` con grounding **100**, almeno **4 sono VERI** col numero dentro lo span conservato — **primo danno attribuito a un layer preciso**. ⚖️ E **3 sono davvero falsi**: il layer non è solo rumore |
+| W7-4 | le **serie temporali** (un valore che evolve) sono gestite correttamente? | C2 | — | SDK | 🟢 **sì** | ws2 (riportata da ws7) | ⚠️ **predizione dell'autrice caduta, a favore del prodotto** — e nel misurarla si è accorta che una sua conclusione delle 19:32 era sbagliata. **Chiude una delle classi scoperte** |
 
 ### Il conto, aggiornato a mano quando cambia
 
-    🔴 rossi 22 · 🟢 verdi 15 · 🟡 parziali 4   (su 42 celle, 27/08 ore 21:45)
+    🔴 rossi 25 · 🟢 verdi 16 · 🟡 parziali 4   (su 46 celle, 27/08 ore 21:52)
 
 > 📌 **Serve perché senza di esso ogni frase sullo stato del prodotto è un'impressione.**
+> ⚠️ **E va CONTATO, non stimato**: alle 21:50 ho scritto «46 celle» a memoria mentre altre ne
+> aggiungevano, dieci minuti dopo aver corretto un numero non contato nel referto. **Il comando
+> che lo conta sta qui sotto — usatelo invece di fidarvi di me.**
+>
+> ```
+> grep -cE '^\| [\w-]+ \|.*\|.*\|.*\|.*\|.*\|.*\|.*\|' docs/stato-reale/00-ESAME.md
+> ```
 > Il 27/08 il referto del laboratorio ha scritto «la maggior parte dei rossi si è rivelata
 > nostra»: **questo conto lo ha falsificato in dieci secondi**, ed è stato corretto.
 
@@ -155,8 +166,8 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 - ⚪ **le celle 14–16 su MCP, CLI e gateway**: curate e verificate **solo su SDK**. Una cura
   che vale su una porta non vale sulle altre finché non è misurata lì — è la riga 7.
 - ⚪ **gateway HTTP**: nessuna cella.
-- ⚪ **classi C1, C2, C3, C6, C8**: misurate **C4** (quantità e formati) e una cella
-  di **C7** (negazioni, righe 12 e 19) e una di **C5** (identità, riga 19). **Cinque classi su otto restano scoperte**, ed è il buco
+- ⚪ **classi C1, C3, C6, C8** — **C2 chiusa in verde** dalla riga W7-4: misurate **C4** (quantità e formati) e una cella
+  di **C7** (negazioni, righe 12 e 19) e una di **C5** (identità, riga 19). **Quattro classi su otto restano scoperte**, ed è il buco
   più grande di questo registro.
 - ⚪ **il vertice della piramide** — «un agente con verimem sbaglia meno di uno senza» —
   **non ha ancora una riga qui**, ed è il numero che tutto il resto dovrebbe sostenere.
