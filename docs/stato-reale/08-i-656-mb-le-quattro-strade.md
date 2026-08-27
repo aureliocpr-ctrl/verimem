@@ -1,5 +1,12 @@
 # I 656 MB — le quattro strade, misurate
 
+> ⚠️ **NOTA DATATA — 2026-08-27, ws7. Il numero nel titolo è superato di 90 MB, e questo documento lo dichiara «ESATTO».**
+> Non ho toccato il testo: aggiungo questa riga perché dal 26/08 il README rimanda a `docs/stato-reale/`, e chi entra qui legge **656** nel titolo.
+> Misurato oggi su `origin/main`, `verimem/cli.py:441`: *«il gate misura **746 058 368 byte = 746.1 MB**»*, e `cli.py:413` registra il difetto per esteso — *«L'help dichiarava «~656 MB» cablato nel testo: **90 MB in meno del vero**»*. La differenza torna: 746 − 656 = 90.
+> Curato in `7a3b09cb` (22/08) — *«cli: la taglia del giudice diceva 656 in un posto e 746 negli altri due»*, dove il 656 era la **terza copia** rimasta indietro, non una grandezza diversa.
+> 🔑 **Le due cifre che questo documento tiene distinte restano giuste, ed è la parte che regge**: «scaricato» e «su disco» sono davvero due grandezze (`cli.py:409` dà `model.safetensors` a **737.7 MB** estratti). A cadere è solo il valore dello scaricato: **746**, non 656.
+> ⚖️ E la tesi del documento **non cambia**: se il giudice pesa 90 MB più di quanto diceva, «curare i 656 MB risolve il terzo più piccolo del problema» resta vero a maggior ragione.
+
     SHA:      63eab6f4 (ramo ws6/control-room)
     DATA:     2026-08-09, misure fra le 17:40 e le 18:05
     AUTORE:   ws7
