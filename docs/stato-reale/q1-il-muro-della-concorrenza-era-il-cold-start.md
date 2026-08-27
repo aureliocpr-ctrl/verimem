@@ -68,6 +68,45 @@ Il muro non è dove lo avevo messo, ma non è che non ci sia niente: c'è un cos
 di embedding per fatto che nessuno ha mai provato a ridurre o a rendere
 asincrono.
 
+## Il regime dell'utente vero: **nessun muro. 14,3 operazioni al secondo.**
+
+La cella che avevo lasciato aperta l'ho poi misurata:
+`benchmark/concurrency_shared_server.py --workers 2 --secs 60` — **un** server
+che possiede i modelli e il db una volta sola, due client sottili in processi
+loro, server uvicorn in un processo suo.
+
+    2 client · 60 secondi · 654 letture · 217 scritture · ERRORI 0
+
+    read_p50      101,7 ms       write_p50     258,3 ms
+    read_p99      185,5 ms       write_p99     575,8 ms
+    read_max    1.416,8 ms       write_max   1.188,0 ms
+
+    throughput 14,3 ops/s · ops sopra 5 s: 0 · ops sopra 10 s: 0
+
+### Il confronto
+
+| | N processi (anti-pattern) | **server condiviso** | fattore |
+|---|---|---|---|
+| write p50 | 1.213 ms · *(23.914 nel test di luglio)* | **258 ms** | 4,7× · *93×* |
+| write max | 26.084 ms | **1.188 ms** | **22×** |
+| read p50 | 179,6 ms | **101,7 ms** | 1,8× |
+| throughput | 1,5 ops/s | **14,3 ops/s** | **9,5×** |
+| ops sopra 10 s | 1 | **0** | — |
+| operazioni totali | 140 | **871** | 6,2× |
+
+**La predizione del docstring era esatta**: «*if the architecture is the cure,
+writes stay in the hundreds-of-ms range instead of tens of seconds*» → **258 ms**.
+
+⇒ **Il muro non esiste.** Lo «0,2 ops/s» con cui ho allarmato tutti era la
+misura di un **anti-pattern che il repo dichiara tale**. Nel regime che userebbe
+davvero un cliente — un servizio che tiene i modelli caricati — il sistema fa
+**14,3 operazioni al secondo, zero errori, e nessuna operazione sopra i cinque
+secondi**.
+
+⚠️ **Il limite che conta**: sono **2 client**, non venti. Fra 2 e 20 c'è una
+curva che nessuno ha misurato, ed è lì che vive la domanda «uso massivo». Questo
+risultato sposta l'onere della prova, non lo chiude.
+
 ## Limiti, dichiarati
 
 ⚠️ **Un solo worker**, una sola macchina, Windows, con otto istanze Claude
