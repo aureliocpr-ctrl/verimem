@@ -116,6 +116,45 @@ oltrepassato il limite che si era dato. Si chiude in due modi soli — si
 pubblica, oppure si dichiara la distanza — e nessuno dei due è una decisione
 tecnica.
 
+#### ⚠️ Rischio dichiarato: in CI il NLI non si carica
+
+Gli altri due rossi hanno una causa **provata end-to-end**, e non è una
+regressione del prodotto. A/B locale a variabile singola, stesso caso del banco:
+
+    NLI intatto   layer = ['L3-coexistence', 'L4-review']   qb=L3-coexistence   g=43,59
+    NLI rotto     layer = **['L4-review']**                  qb=L4-review        g=43,59
+    in CI         layer = **['L4-review']**
+
+`ENGRAM_LOCAL_NLI_MODEL` puntato a un path inesistente riproduce **esattamente**
+il comportamento della CI, e il grounding resta identico: il CE lavora uguale,
+**cade solo il layer semantico**. La catena, tutta misurata:
+
+1. in CI **nessun caricamento del NLI avviene** — zero righe nel log, con
+   controllo positivo: lo stesso righello trova `multilingual-e5` **47** volte,
+   `local_gate_ce` **9**, `mmarco` **1**;
+2. senza NLI, L3-semantic non produce il suo layer (A/B sopra);
+3. con un layer solo, `assert len(layer) >= 2` cade — ed è un `test_CONTROLLO`,
+   cioè il pezzo che verifica che la trappola sia **armata**;
+4. con lui cade il test che presidia.
+
+⇒ **Il difetto che quel banco presidia non si presenta in CI**, perché in CI
+parla un layer solo. Un banco che non riesce ad armare la trappola non misura
+il prodotto: misura l'ambiente.
+
+🔑 **E il rischio da tenere a registro è più largo del singolo test:** finché il
+NLI non gira in CI, **ogni verde che passa da L3-semantic non contiene quella
+verifica**. È la stessa forma del referto dell'11/08 su
+`docs/stato-reale/il-verde-della-ci-non-contiene-la-promessa.md` — allora il
+componente assente era il moat CE, oggi è il NLI. Il modo di sbagliare si
+ripete; cambia il pezzo.
+
+⚖️ Due vie, e nessuna è migliore dell'altra — la scelta non è di chi tiene
+questo registro: **scaricare il NLI anche in CI** rimette a verificare quel
+pezzo di prodotto, al prezzo di un modello grande su sei celle e di una coda
+che impiega già 5-8 ore per un verdetto; **dare al banco una guardia esplicita**
+(skip o `xfail(strict)` con owner e data, come per i due G4) costa una riga e
+non tocca la coda, ma lascia la verifica scoperta e va scritto che è scoperta.
+
 ### ② `PUBLISH_ANYWAY` — la scappatoia dichiarata
 
 `build-and-publish` parte anche con la CI rossa se la variabile vale `1`. Non è
