@@ -107,6 +107,44 @@ secondi**.
 curva che nessuno ha misurato, ed è lì che vive la domanda «uso massivo». Questo
 risultato sposta l'onere della prova, non lo chiude.
 
+## La curva 2→20 client: **si piega fra 5 e 10, e la mediana mente**
+
+L'ultima cella aperta, misurata: `--workers 2 5 10 20 --secs 30`, stesso
+regime servizio.
+
+| client | letture | scritture | errori | read p50 | **read p99** | write p50 | **ops/s** | >5 s | >10 s |
+|---|---|---|---|---|---|---|---|---|---|
+| 2 | 311 | 102 | 0 | 103,3 | 590,5 | 245,6 | **13,4** | 0 | 0 |
+| 5 | 440 | 145 | 0 | 96,1 | **3.364,2** | 587,6 | **18,7** | 0 | 0 |
+| 10 | 417 | 136 | 0 | 156,6 | **8.378,2** | 1.115,1 | 17,5 | **10** | 0 |
+| 20 | 255 | 83 | 0 | 368,5 | **17.618,4** | 2.291,4 | **10,4** | **20** | **20** |
+
+**① Il throughput ha un picco a 5 client (18,7 ops/s) e poi cala.** A 20 client
+il sistema fa **meno** di quanto facesse con 2. Il punto di saturazione sta
+**fra 5 e 10**.
+
+**② La coda esplode molto prima del throughput, e la mediana lo nasconde.** A 5
+client `read_p50` è **96 ms** — sembra perfetto — ma `read_p99` è già **3,4
+secondi**. Chi guardasse solo la mediana concluderebbe «regge fino a 20», e
+sbaglierebbe: a 10 client dieci operazioni superano i 5 s, a 20 client **venti
+operazioni superano i 10 s**.
+
+**③ Zero errori in tutte e quattro le configurazioni.** Il sistema non si
+rompe: **rallenta**. Nessun lock timeout, nessun deadlock, nemmeno a 20 client.
+
+### La risposta alla domanda «uno studio legale, uso massivo»
+
+    fino a 5 persone contemporanee ....... sì (mediana ~100 ms, nulla sopra 5 s)
+    a 10 ................................. la mediana regge, la coda no
+    a 20 ................................. degrada sotto il livello di 2 client
+
+⚠️ **E il limite che potrebbe spiegare metà del calo**: questa macchina ha
+**otto istanze Claude attive** che consumano CPU mentre il benchmark gira. Il
+crollo a 20 client è **verosimilmente pessimistico**, e su una macchina dedicata
+la curva si piegherebbe più tardi. **Non so di quanto**, e non lo stimo.
+⚠️ 30 secondi per configurazione sono pochi per una coda: il p99 a 20 client è
+calcolato su 338 operazioni, non su decine di migliaia.
+
 ## Limiti, dichiarati
 
 ⚠️ **Un solo worker**, una sola macchina, Windows, con otto istanze Claude
