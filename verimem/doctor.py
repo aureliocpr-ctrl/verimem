@@ -393,6 +393,12 @@ def run_doctor() -> list[dict[str, Any]]:
     # installa da zero: non chi aggiorna `mcp` a mano, ne' chi installa dove la
     # 2.x c'e' gia'. Senza questa riga quel caso si presenta come un traceback.
     #
+    # Il confine 2.0 non e' una scelta prudenziale: e' MISURATO. ws1 il 27/08 ha
+    # eseguito le due versioni ai lati — `1.29.1` funziona, `2.0.0` solleva
+    # `AttributeError` — quindi il tetto `<2` di pyproject e' esatto e il
+    # pavimento `1.0.0` regge. Il banco di questo controllo parametrizza proprio
+    # quelle due, piu' `10.0.0` per il confronto lessicale.
+    #
     # Il confronto e' sulla MAJOR come NUMERO: `"2" in v` direbbe rotta anche
     # `1.2.0`, e un confronto lessicale direbbe sana `10.0.0`.
     _v_mcp = _versione_di_mcp()
