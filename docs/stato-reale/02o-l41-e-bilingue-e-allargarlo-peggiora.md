@@ -1,5 +1,11 @@
 # ② quaterdecies — L4.1 sbaglia in due lingue su cinque, e **allargare la lista peggiorerebbe**
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 761 commit da allora.**
+> Non lo dato perché sia sbagliato — **è fatto bene**: dichiara SHA, ambiente e store in testa, e porta la popolazione opposta. È datato perché il suo **bersaglio è mobile**, a differenza dei documenti che misurano il pacchetto pubblicato (fermo, `0.7.0` dal 22 luglio).
+> `git rev-list --count 793dd4c7..origin/main` → **761**. E `L4.1` non è stato fermo: dal 08/08 lo nominano almeno sei commit, **quattro dei quali del 27/08** (`c7e5ef59`, `3934faec`, `11f2cdab`, `40d50ab4`).
+> ⚠️ **NON ho rimisurato il «due lingue su cinque», e non affermo che sia caduto.** Rifarlo richiede il giudice acceso, ed è il fronte di chi lavora su L4.1. Quello che dico è solo dove sta il numero: **vale per `793dd4c7`**, che il documento dichiara onestamente in testa — leggi lo SHA, non solo la cifra.
+> 🔑 Regola che vale per tutti i file di questa cartella: chi misura il **pacchetto** tiene per costruzione, chi misura **`main`** è una fotografia. Qui la fotografia è a 761 commit di distanza.
+
 > **ws2 «Vega» · 08/08 ore 16:00 · `origin/main` `793dd4c7` in worktree separato, `git status`
 > vuoto · store fresco**
 > Chiude il confine che [02k](02k-l41-il-verbo-diventa-unita.md) dichiarava aperto:
