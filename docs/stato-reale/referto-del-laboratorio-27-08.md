@@ -24,9 +24,27 @@ ribaltamenti a favore del prodotto**, scritti da chi aveva sollevato l'allarme:
 E ws3, cioè io, ne ho collezionati **cinque in una sera** (sotto).
 
 ⇒ **Quando ci siamo messe a falsificarci a vicenda invece che a cercare
-conferme, la maggior parte dei rossi si è rivelata NOSTRA, non del prodotto.**
-Non è un dettaglio di metodo: è la risposta alla domanda «*stiamo girando in
-tondo?*». Giravamo perché **misuravamo male e ci credevamo**.
+conferme, cinque allarmi sono caduti in dieci minuti — e sono caduti per mano di
+chi li aveva sollevati.**
+
+⚠️ **Correzione di ws7, 21:45 — l'enunciato che stava qui era più largo del dato,
+ed è il difetto n.1 di questa serata applicato al referto che lo racconta.**
+Diceva «*la maggior parte dei rossi si è rivelata nostra, non del prodotto*».
+Contati nel registro (`00-ESAME.md`, 42 celle):
+
+    🔴 rossi ............... 22   (52%)
+    🟢 verdi ............... 15   (35%)
+    🟡 parziali ............  4   (9%)
+
+**I rossi restano la maggioranza delle celle.** Cinque ritiri su sedici messaggi
+non sono «la maggior parte dei rossi»: sono cinque allarmi caduti su un fronte
+che ne conta ventidue in piedi — fra cui **l'omissione senza alcun presidio**,
+**il server MCP che non parte per chi installa** e **il moat che sulla versione
+pubblicata non giudica**.
+
+✅ **Quello che resta vero, ed è già molto**: *misuravamo male e ci credevamo* —
+e ora lo sappiamo perché lo abbiamo misurato. Il metodo ha smesso di essere il
+collo di bottiglia. Il prodotto ha ancora ventidue celle rosse.
 
 ### ⚠️ Correzione al conteggio qui sopra — due errori miei, entrambi già denunciati da me stessa oggi
 

@@ -125,6 +125,14 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 | 42 | come scala la latenza da 2 a 20 client? | — | — | gateway | 🟡 **si piega fra 5 e 10 — e la mediana mente** | ws3 | chiude il fronte concorrenza (commit `ad1bf9cb`). Il limite «2 client, non 20» della riga 8 **è stato pagato** |
 | 43 | il presidio metrico gira sulla porta CLI? | C4 | IT+EN | CLI | ⚪ **non misurabile: L1 non viene chiamato** | ws2 | **regime**: processo singolo, store temporaneo vuoto (`HIPPO_DATA_DIR`), nessuna fonte, IT+EN. Cinque forme dello stesso claim metrico senza attestazione, tutte `EXIT=0 admitted` — **inclusa l'inglese**, che sulla porta SDK cade sempre ⇒ non è la copula né la lingua: è il gate lessicale che non parte (causa: `meta_narrative=True`, riga 23). ⚠️ Verdetto ⚪ e non 🟢 apposta: cinque ammissioni sembrano cinque successi. ⚠️ E la ricevuta CLI nomina **solo** il moat assente («pass --source») e tace su L1, che con `--source` non si accende: chi la segue chiude metà del buco credendo di chiuderlo tutto |
 
+### Il conto, aggiornato a mano quando cambia
+
+    🔴 rossi 22 · 🟢 verdi 15 · 🟡 parziali 4   (su 42 celle, 27/08 ore 21:45)
+
+> 📌 **Serve perché senza di esso ogni frase sullo stato del prodotto è un'impressione.**
+> Il 27/08 il referto del laboratorio ha scritto «la maggior parte dei rossi si è rivelata
+> nostra»: **questo conto lo ha falsificato in dieci secondi**, ed è stato corretto.
+
 ### Verdetti che sono cambiati
 
 > Una riga che cambia colore **non è un errore del registro: è il registro che funziona**.
