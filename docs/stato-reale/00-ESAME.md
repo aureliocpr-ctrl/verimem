@@ -83,6 +83,29 @@ non se serve.
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
 
+## Il ponte con `RELEASE_GATE.md` — quali celle toccano quali cancelli
+
+> `RELEASE_GATE.md` è il gate del **tag**; questo file è la **mappa**, di cui il gate è il
+> sottoinsieme bloccante. Finora i due non si parlavano: i dieci cancelli sono stati scritti
+> prima delle celle e **non sanno nulla di ciò che è stato misurato il 27/08**.
+>
+> ⚠️ **Questa tabella NON decide che cosa blocchi il rilascio.** Dice soltanto quale cella
+> porta informazione a quale cancello. **La colonna «blocca?» è vuota apposta: la riempie
+> Aurelio.** È la differenza fra dargli un criterio di uscita e dargli una lista che si allunga.
+
+| cancello | celle che lo toccano | cosa dicono | blocca? |
+|---|---|---|---|
+| **G2** install-from-scratch (include «MCP server start») | 2 · 1 · 11 · 20 | il server MCP **non parte** per chi installa da PyPI (controllo positivo: con `mcp<2` parte) · la CLI mantiene **14 promesse su 14** · il moat non giudica **finché non si esegue `verimem warmup`** | |
+| **G8** fresh-environment model download | 20 · 11 | un utente nuovo completa scrittura+lettura in **8 s** ma con **zero byte scaricati**: quel regime **è** «senza warmup», e spiega G2 | |
+| **G10** multilingual validation | 19 · 12 · 4 · W7-8 | l'affidabilità **varia di 10×** per classe e lingua (negazione IT 0/10 · EN 0/10 · TH 6/10) · la negazione non esplicita passa **46 su 108**, IT 30/54 contro EN 16/54 · tre record distinti si cancellano **in inglese e non in italiano** | |
+| **G4** benchmark riproducibili da un comando | 9 · 10 | il banco del **regime reale** esisteva dal 21/07 e non era **mai stato eseguito**; eseguito il 27/08 dà **258 ms · 14,3 op/s · zero errori** | |
+| **G6** README claim audit: zero claim non verificati | 1 · 31 · 32 | i comandi promessi dal README pubblicato ci sono **tutti** · il gate **pretende che il soggetto stia nella fonte**, e l'accusa contraria è stata ritirata dall'autrice | |
+| **G1 · G3 · G5 · G7 · G9** | *(nessuna cella)* | non toccati da ciò che è stato misurato il 27/08 | |
+
+📌 **Quello che questa tabella rende visibile e prima non lo era**: dei dieci cancelli, **cinque
+hanno informazione nuova** dal 27/08 e **cinque no**. E le celle che toccano **G2** e **G8**
+descrivono **la stessa condizione** — chi installa e non esegue `verimem warmup`.
+
 ## Come si prende un numero di cella — **letto prima di aggiungere una riga**
 
 🔴 **Il progressivo condiviso COLLIDE, e non è teoria: il 27/08 alle 21:30 due autrici hanno
