@@ -207,3 +207,99 @@ def test_E_NON_E_UN_DIFETTO_ITALIANO_la_vaghezza_elude_anche_in_inglese():
     _, fonte, vago, _vero = EN
     stato, punteggio = _esito(vago, fonte)
     assert stato == "quarantined", f"«few patients» contro 30 out of 40 ammessa con g={punteggio}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 18:59 — E NON È TEORICO: passa dalla PORTA UFFICIALE dei documenti.
+#
+# `promote_chunk_to_fact` è la via per cui un chunk recuperato diventa un fatto,
+# e il suo docstring dice: «The caller may pass a distilled `claim` (one clean
+# sentence) instead of the raw chunk text». Cioè: un LLM legge il chunk e ne
+# scrive una frase — esattamente il caso di questo banco.
+#
+# Il modulo è cablato BENE: passa il chunk come `source` e chiede
+# `ground_write=True` (document_promote.py:89-91), e il commento sopra quella
+# riga dice già la cosa giusta — «il caso d'uso principale del modulo È il caso
+# d'uso principale del moat». Il moat gira davvero:
+#
+#     chunk: «…il collaudo del lotto B12 ha rilevato 3 pezzi difformi su 40…»
+#
+#     claim distillato        status         grounding NELLO STORE
+#     VERO («3 su 40»)        model_claim    99.9
+#     VAGO («gran parte»)     model_claim    99.6      <- 3 decimi dal vero
+#     MINIMIZZA («qualche»)   model_claim    99.7
+#     CONTRADDICE («non ha»)  quarantined     0.8
+#
+# ⇒ La contraddizione esplicita è fermata. Le due vaghe entrano con un punteggio
+#   indistinguibile da quello del claim vero — e con la citazione esatta del file
+#   in `verified_by`.
+# 🔑 Il commento del modulo aveva già nominato il rischio: «il fatto esce con
+#   l'aria di essere verificato DAL DOCUMENTO mentre il documento può dire il
+#   contrario. La provenienza diventa una decorazione». Qui la decorazione è
+#   misurata su una quantità.
+#
+# ⚠️ Il dict che `promote_chunk_to_fact` restituisce NON ha `grounding_score`:
+# ha `grounding_note` (None). Chi legge il punteggio da lì trova sempre None e
+# può concludere che il moat non sia girato. Il punteggio sta NELLO STORE.
+
+CHUNK_COLLAUDO = (
+    "Verbale di collaudo del 3 marzo. Il collaudo del lotto B12 ha rilevato "
+    "3 pezzi difformi su 40 controllati. Il lotto e stato accettato con riserva."
+)
+
+
+def _promuovi(claim: str) -> tuple[str, float | None]:
+    """Promuove un chunk con un claim distillato e legge il verdetto NELLO STORE."""
+    import sqlite3
+
+    from verimem.document_promote import promote_chunk_to_fact
+    from verimem.semantic import SemanticMemory
+
+    db = Path(tempfile.mkdtemp()) / "promo.db"
+    mem = SemanticMemory(db_path=db)
+    hit = {
+        "text": CHUNK_COLLAUDO,
+        "source_id": "verbale-b12.md",
+        "start": 0,
+        "end": len(CHUNK_COLLAUDO),
+    }
+    ric = promote_chunk_to_fact(mem, hit, claim=claim, topic="t/promo")
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    riga = con.execute(
+        "SELECT status, grounding_score FROM facts WHERE id=?", (ric.get("fact_id"),)
+    ).fetchone()
+    con.close()
+    if not riga:
+        pytest.fail(f"il fatto promosso non e' nello store: {ric}")
+    return str(riga[0]), riga[1]
+
+
+def test_CONTROLLO_dalla_porta_documenti_il_claim_VERO_e_ammesso():
+    stato, punteggio = _promuovi("Il collaudo ha rilevato 3 pezzi difformi su 40.")
+    assert stato != "quarantined", f"il claim vero e' rifiutato ({stato}, g={punteggio})"
+
+
+def test_CONTROLLO_dalla_porta_documenti_la_CONTRADDIZIONE_e_fermata():
+    """Il righello: se non ferma nemmeno questa, la promozione non giudica."""
+    stato, punteggio = _promuovi("Il collaudo non ha rilevato pezzi difformi.")
+    assert stato == "quarantined", (
+        f"la contraddizione esplicita passa dalla promozione ({stato}, g={punteggio}): "
+        "il moat non sta girando su questa porta, rimisurare tutto il blocco"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="dalla porta ufficiale dei documenti il claim vago entra a 99.6 contro "
+    "il 99.9 del claim vero, con la citazione del file in verified_by (27/08)",
+)
+@pytest.mark.parametrize(
+    "vago",
+    [
+        "Il collaudo ha rilevato difformita in gran parte dei pezzi.",
+        "Il collaudo ha rilevato qualche pezzo difforme.",
+    ],
+)
+def test_dalla_porta_documenti_la_vaghezza_dovrebbe_essere_fermata(vago):
+    stato, punteggio = _promuovi(vago)
+    assert stato == "quarantined", f"ammessa con g={punteggio} e la citazione del file"
