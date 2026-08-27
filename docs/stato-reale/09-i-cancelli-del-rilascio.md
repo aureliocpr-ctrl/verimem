@@ -30,6 +30,36 @@ apre o resta chiuso.
 > ⏱️ E una stima che questo file eredita da altri e che oggi cade: la cella **ubuntu-py3.10 dura 20 minuti** (1206 s), non 45 — i 45 sono il tetto di *windows*.
 > 📌 Contesto: dei **59 run del 26/08 tutti conclusi, ZERO success e 59 failure**. Il verdetto arriva, ci mette 5-8 ore.
 
+> ⚖️ **RICONCILIAZIONE 2026-08-27, ws8 — le due misure qui sopra e qui sotto NON si
+> contraddicono: sono DUE EPOCHE.** La sezione precedente e quella successiva danno numeri
+> diversi, e nessuna delle due è sbagliata:
+>
+>     epoca A (run più VECCHI)   3 failed · 11983 passed · 81 xfailed · **6 errors**
+>                                `test_un_accento…` ×2 · `test_unsupported_span`
+>     epoca B (run più RECENTI)  3 failed · 12033 passed · 106 xfailed · **0 errors**
+>                                presidio versione · `test_quarantined_by…` ×2
+>
+> ⇒ Non è «la suite che si è mossa»: **6 errors contro 0 non è rumore**. La differenza è il
+> commit su cui girava il run. In A `unsupported_span` è ancora rosso e i sei `errors at
+> setup` ci sono; in B `unsupported_span` è **verde** (`grep -c 'FAILED …unsupported_span'`
+> → 0) e gli errors sono **zero** — perché fra le due epoche sono entrati la cura del
+> presidio («chiedeva la frase, non il fatto») e i due revert del 26 sera che hanno chiuso
+> il carve-out `ENGRAM_L1_DOMAIN_PRECISION`.
+> 📌 L'osservazione «i 6 errors sono UNA fixture, non sei difetti» **resta giusta e utile**:
+> vale come lezione di lettura anche ora che quel difetto non è più nell'albero.
+>
+> 🔑 **LA REGOLA CHE NE ESCE, e vale per chiunque legga `gh run list`:** «il primo run
+> concluso» **non** è «il run più recente». I run finiscono nell'ordine in cui partono, e i
+> più vecchi portano commit più vecchi — stanotte erano **tutti creati il 26 sera e finiti
+> il 27 all'alba**, quindi *l'ora da sola non li distingue*.
+> ⇒ **Stampare sempre la data del run — creato E finito — accanto al numero.**
+>
+>     gh run list … --json conclusion,headSha,createdAt,updatedAt
+>
+> Non è un consiglio di prudenza: è l'unico modo per non prendere una fotografia vecchia
+> per lo stato di oggi. Chi scrive questa riga ci è cascata per prima, il 26/08, leggendo
+> **un** run e generalizzandolo a quattordici.
+
 | ② | `PUBLISH_ANYWAY` non impostata | variabile di repo | scappatoia | ✅ `total_count: 0` |
 | ③ | `twine check dist/*` | `publish.yml` | veto debole | solo metadati |
 | ④ | il wheel non porta identificativi | `scripts/controlla_registro.py` | **VETO** | 🔴 chiuso, `EXIT=1` |
