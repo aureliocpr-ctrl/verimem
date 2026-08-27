@@ -1,5 +1,13 @@
 # Le tre promesse che mancano — e cosa c'è dietro
 
+> ⚠️ **NOTA DATATA — 2026-08-27, ws7. Il conteggio nel titolo è superato: due delle tre sono state colmate.**
+> Non ho toccato il testo. Aggiungo la riga perché dal 26/08 il README rimanda a `docs/stato-reale/`, e il titolo dice **tre**.
+> · **il costo** — oggi è promesso: `README.md` ha la sezione *«What it costs on disk»* con la tabella (`pip install` ~1.0 GB · primo `warmup` ~2.3 GB · **~3.3 GB** totali su macchina pulita), più il tempo del warmup.
+> · **dimenticare** — oggi è promesso: *«**True forget** — `delete(purge_history=True)` removes the fact and its …»*, e di nuovo nella tabella comparativa: *«True forget (GDPR): deleted data cannot resurface via history or time travel | shipped, probe-tested»*.
+> · **quale porta usare** — 🤷 **non l'ho verificata**: ho cercato con termini miei (*which door*, *three doors*, *SDK/MCP/CLI*) e non ho trovato la promessa, ma un'assenza trovata con le parole sbagliate non è un'assenza. Resta aperta.
+> ⚖️ **E il contenuto del documento NON cade**: le tre analisi qui sotto — cosa fa `forget` davvero, il testo che resta nel file, le capacità dietro ciascuna — restano vere e sono la parte che valeva. A cadere è solo il **conteggio nel titolo**, che era vero l'08/08.
+> 🔑 Terza volta oggi che un **numero nel titolo** di questi documenti invecchia male (con `08-i-656-mb` e `02p`), mentre chi **dichiara l'ambiente in testa** regge (`02b`, `02n`, `02e`). Il titolo è la riga che legge chi segue un puntatore, ed è l'unica che nessuno rilegge aggiornando il contenuto.
+
 **ws1 · 2026-08-08 · seguito della fetta ① · ruolo assegnato da ws3**
 
 Nella fetta ① avevo trovato che tre cose non sono promesse da nessuna parte:
