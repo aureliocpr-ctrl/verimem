@@ -106,3 +106,63 @@ def test_CONTROLLO_le_stesse_cifre_SBAGLIATE_sono_fermate(nome, fonte, vago, _ve
 def test_la_quantita_vaga_e_falsa_dovrebbe_essere_fermata(nome, fonte, vago, _vero):
     stato, punteggio = _esito(vago, fonte)
     assert stato == "quarantined", f"[{nome}] ammessa con g={punteggio}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 18:40 — IL VERSO OPPOSTO, ed è PEGGIORE: 4 su 4.
+#
+# Sopra la fonte dà una quantità piccola e il claim ne afferma una grande
+# («gran parte» contro 3 su 40). Qui la fonte dà una quantità GRANDE e il claim
+# la MINIMIZZA con una vaga piccola:
+#
+#     reazioni  «pochi pazienti»        contro  30 su 40    passa 98.1  []
+#     difetti   «qualche pezzo»         contro  35 su 40    passa 85.6  []
+#     ritardi   «una minoranza»         contro  48 su 55    passa 99.7  []
+#     guasti    «guasti sporadici»      contro  90 su 120   passa 96.1  []
+#
+#     falsità minimizzanti ammesse 4/4 · VERI di controllo ammessi 4/4
+#
+# Tutte e quattro con ZERO layer. E «sporadici» passa qui, mentre nel verso
+# opposto «frequenti» era stato fermato da L4-grounding: non è la parola, è la
+# direzione.
+#
+# 🔑 È il verso più pericoloso in un uso reale. Un referto riassunto male che
+# dice «pochi pazienti hanno avuto reazioni avverse» quando la fonte ne conta 30
+# su 40 NASCONDE un problema che la fonte dichiara — e il prodotto lo certifica
+# a 98.1. Il verso opposto (esagerare) produce un allarme falso, che qualcuno
+# controlla; questo produce un silenzio, che nessuno controlla.
+
+MINIMIZZANTI = [
+    ("reazioni",
+     "Nello studio 30 pazienti su 40 hanno avuto reazioni avverse.",
+     "Nello studio pochi pazienti hanno avuto reazioni avverse.",
+     "Nello studio 30 pazienti su 40 hanno avuto reazioni avverse."),
+    ("ritardi-min",
+     "Nel trimestre 48 consegne su 55 sono arrivate in ritardo.",
+     "Nel trimestre una minoranza delle consegne e arrivata in ritardo.",
+     "Nel trimestre 48 consegne su 55 sono arrivate in ritardo."),
+    ("guasti-min",
+     "L impianto ha registrato 90 guasti su 120 giorni di esercizio.",
+     "L impianto ha registrato guasti sporadici nel periodo.",
+     "L impianto ha registrato 90 guasti su 120 giorni."),
+]
+
+
+@pytest.mark.parametrize("nome,fonte,_vago,vero", MINIMIZZANTI)
+def test_CONTROLLO_anche_qui_il_claim_con_le_cifre_resta_ammesso(nome, fonte, _vago, vero):
+    stato, punteggio = _esito(vero, fonte)
+    assert stato != "quarantined", (
+        f"[{nome}] un claim che ripete le cifre della fonte viene rifiutato "
+        f"({stato}, g={punteggio})"
+    )
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="il verso minimizzante è peggiore: 4 falsità su 4 ammesse, tutte con "
+    "zero layer — «pochi pazienti» contro 30 su 40 entra a 98.1 (27/08)",
+)
+@pytest.mark.parametrize("nome,fonte,vago,_vero", MINIMIZZANTI)
+def test_la_vaghezza_che_MINIMIZZA_dovrebbe_essere_fermata(nome, fonte, vago, _vero):
+    stato, punteggio = _esito(vago, fonte)
+    assert stato == "quarantined", f"[{nome}] ammessa con g={punteggio}: nasconde ciò che la fonte dichiara"
