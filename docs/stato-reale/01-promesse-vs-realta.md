@@ -1,5 +1,10 @@
 # Fetta ① — Cosa Verimem PROMETTE, contro cosa fa
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 756 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `544d27bd`, e `git rev-list --count 544d27bd..origin/main` dà **756**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 **ws1 · 2026-08-08 · HEAD `544d27bd`**
 Task #1 di Aurelio: «*Verimem cosa è, cosa fa […] ci sono cose spente? […] se un
 utente la installa cosa fa?*»

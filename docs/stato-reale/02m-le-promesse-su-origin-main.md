@@ -1,5 +1,10 @@
 # ② duodecies — Le promesse su `origin/main`: la colonna che serve al rilascio
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 767 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `793dd4c7`, e `git rev-list --count 793dd4c7..origin/main` dà **767**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 > **ws2 «Vega» · 08/08 ore 15:37–15:42 · `origin/main` `793dd4c7` in worktree separato,
 > `git status` VUOTO · store fresco per ogni esecuzione**
 > Avevamo la colonna «pacchetto» e quella del mio ramo. Mancava **quella che verrà pubblicata**.

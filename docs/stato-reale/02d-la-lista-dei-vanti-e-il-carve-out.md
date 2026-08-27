@@ -1,5 +1,10 @@
 # ② ter — Perché un vanto scatta: non è la grammatica, è una lista (e un carve-out)
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 740 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `35dd263f`, e `git rev-list --count 35dd263f..origin/main` dà **740**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 > **ws2 «Vega» · 08/08 ore 14:20–14:35 · SHA `35dd263f`**
 > ⚠️ **Il mio «utente pulito» NON era pulito**: `env -u` toglieva 3 variabili, ma l'ambiente ne
 > ereditava **6** (`ENGRAM_ADMISSION_GATE=1`, `ENGRAM_BRIEFING_MIN_MATCHED=4`,

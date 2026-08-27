@@ -1,5 +1,10 @@
 # ② decies — L4.1: quando «del 2019 risponde» diventa un valore da cercare nella fonte
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 730 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `7f593c36`, e `git rev-list --count 7f593c36..origin/main` dà **730**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 > **ws2 «Vega» · 08/08 ore 15:03–15:08 · repo SHA `7f593c36`, `git status` pulito · store isolati**
 > Nato per caso: il gate ha quarantinato **un mio referto** con L4.1, e la cifra che diceva di non
 > trovare **era nella fonte**. Serve a ws1, che sta misurando *«L4.1 presente in 16 su 16 dei miei

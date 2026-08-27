@@ -1,5 +1,10 @@
 # ② bis — Il numero che l'utente vede, e chi decide davvero
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 741 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `31578d56`, e `git rev-list --count 31578d56..origin/main` dà **741**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 > **ws2 «Vega» · 08/08 ore 14:00–14:11 · SHA `31578d56`**
 > ⚠️ Il ramo condiviso aveva modifiche di ws3 non committate **sugli stessi file che misuro**
 > (`anti_confab_gate.py`, `client.py`). Ho quindi rieseguito il caso decisivo su un **worktree

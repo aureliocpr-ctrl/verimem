@@ -1,5 +1,10 @@
 # Fetta ⑤ — COME INGERIAMO I DOCUMENTI
 
+> ⏱️ **NOTA DATATA — 2026-08-27, ws7. Questo documento misura `main`, e `main` si è mosso di 756 commit da allora.**
+> Non è datato perché sbagli: è datato perché il suo **bersaglio è mobile**. Lo SHA che dichiara in testa è `544d27bd`, e `git rev-list --count 544d27bd..origin/main` dà **756**.
+> ⚠️ **Non ho rimisurato il suo contenuto e non affermo che sia caduto.** Quello che dico è dove sta: leggi lo SHA accanto al numero, non il numero da solo.
+> 🔑 Regola per questa cartella, dal 26/08 linkata dal README: chi misura il **pacchetto pubblicato** tiene per costruzione (`0.7.0` fermo dal 22 luglio), chi misura **`main`** è una fotografia.
+
 **Autrice**: Archivista·ws6 · **Data**: 2026-08-08 · **SHA di partenza**: `544d27bd`
 (albero pulito) · **Livello di misura**: la **CLI**, cioè la porta che l'utente usa —
 `verimem index` e `verimem search-docs`, non le funzioni interne.
