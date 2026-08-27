@@ -40,7 +40,17 @@ _QUANT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
             # l'italiano si scrive spesso senza accenti (chi ha trovato questo
             # difetto ci era cascato per primo: tutti i fatti verimem del 2-3
             # agosto sono salvati con «e»).
-            r"(?:è|e|is|of|di|=|:)?\s*"
+            # 2026-08-27: e l'APOSTROFO, che e' l'altro modo in cui un accento
+            # sparisce — il piu' comune di tutti, perche' scrivendo da terminale
+            # gli accenti si perdono fra heredoc, redirezioni e pipe. La cura
+            # sopra copri' la copula NUDA guardando la copula nuda: misurata
+            # sulla popolazione da cui era nata, sembrava sufficiente. Sullo
+            # store: 48 claim metrici scritti con «e'» e ZERO quarantinati,
+            # contro 8 su 31 (25,8%) di quelli con «è», su una quota
+            # complessiva dell'8,5%. Deve precedere `e` nell'alternanza: il
+            # motore e' leftmost-first e `e` da solo consumerebbe la lettera
+            # lasciando l'apostrofo a far fallire il match.
+            r"(?:è|e['’]|e|is|of|di|=|:)?\s*"
             r"\d+(?:\.\d+)?\s*(?:ms|s|sec|seconds?|min|h)\b",
             re.IGNORECASE,
         ),
@@ -49,12 +59,27 @@ _QUANT_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     (
         "percent_metric",
         re.compile(
-            r"\b(?:coverage|uptime|availability|accuracy|precision|recall)\s*"
-            # `e` nudo qui come sopra: stessa forma, stesso motivo.
-            r"(?:è|e|is|at|al|of|del)?\s*\d+(?:\.\d+)?\s*%"
+            # 2026-08-27 — ⚠️ QUI LA COPULA ITALIANA ERA CODICE IRRAGGIUNGIBILE.
+            # I sostantivi erano tutti e sei INGLESI, quindi `è` non poteva mai
+            # essere raggiunta da una frase italiana: il pattern accettava
+            # «coverage è 42.6%», che nessuno scrive, e rifiutava «la copertura
+            # è 42.6%». Misurato: delle cinque scritture dello stesso claim in
+            # percentuale, passava solo l'inglese. Il pattern della latenza qui
+            # sopra invece funzionava, e la differenza e' esattamente questa —
+            # `latenza|durata` stanno accanto a `latency|duration`.
+            # ⇒ Tradurre la congiunzione senza tradurre il SOGGETTO non rende
+            # bilingue un pattern: lo lascia monolingue con dentro una parola
+            # che non serve a niente.
+            r"\b(?:coverage|copertura|uptime|availability|disponibilit[àa]|"
+            r"accuracy|accuratezza|precision|precisione|recall|richiamo)\s*"
+            # `e` nudo qui come sopra: stessa forma, stesso motivo. E l'apostrofo
+            # per la stessa ragione, prima di `e` perche' il motore e'
+            # leftmost-first.
+            r"(?:è|e['’]|e|is|at|al|of|del|della|di)?\s*\d+(?:\.\d+)?\s*%"
             r"|"
             r"\b\d+(?:\.\d+)?\s*%\s+"
-            r"(?:coverage|uptime|availability|accuracy|precision|recall)\b",
+            r"(?:coverage|copertura|uptime|availability|disponibilit[àa]|"
+            r"accuracy|accuratezza|precision|precisione|recall|richiamo)\b",
             re.IGNORECASE,
         ),
     ),
