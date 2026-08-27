@@ -166,3 +166,44 @@ def test_CONTROLLO_anche_qui_il_claim_con_le_cifre_resta_ammesso(nome, fonte, _v
 def test_la_vaghezza_che_MINIMIZZA_dovrebbe_essere_fermata(nome, fonte, vago, _vero):
     stato, punteggio = _esito(vago, fonte)
     assert stato == "quarantined", f"[{nome}] ammessa con g={punteggio}: nasconde ciò che la fonte dichiara"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-27, 18:45 — E NON È UN DIFETTO ITALIANO: 3/3 in entrambe le lingue.
+#
+#     caso       ITALIANO            INGLESE
+#     reazioni   passa 98.1  []      passa 90.5  []
+#     ritardi    passa 99.7  []      passa 87.7  []
+#     collaudo   passa 98.7  []      passa 84.6  []
+#     ⇒ falsità vaghe ammesse: italiano 3/3 · inglese 3/3
+#
+# 🔑 È il PRIMO difetto simmetrico fra le due lingue misurato su questo gate.
+# Tutti gli altri del 26/08 davano l'inglese più robusto — contorno in prosa EN
+# 25.2 contro IT 98.4, contraddizioni implicite EN 0/10 contro IT 3/10. Qui no.
+# I punteggi inglesi sono più bassi (84-90 contro 98-99): il giudice è più
+# prudente, ma non abbastanza per fermarne una.
+#
+# ⇒ Non è una debolezza dell'italiano da curare con una lista: è una lacuna del
+# modello, e va dichiarata come limite in entrambe le lingue.
+
+EN = ("reactions",
+      "In the study 30 patients out of 40 had adverse reactions.",
+      "In the study few patients had adverse reactions.",
+      "In the study 30 patients out of 40 had adverse reactions.")
+
+
+def test_CONTROLLO_in_inglese_il_claim_con_le_cifre_resta_ammesso():
+    _, fonte, _vago, vero = EN
+    stato, punteggio = _esito(vero, fonte)
+    assert stato != "quarantined", f"il claim con le cifre è rifiutato in EN ({stato}, g={punteggio})"
+
+
+@pytest.mark.xfail(
+    strict=True,
+    reason="la vaghezza elude anche in inglese: 3/3 come in italiano, primo "
+    "difetto simmetrico fra le due lingue su questo gate (27/08)",
+)
+def test_E_NON_E_UN_DIFETTO_ITALIANO_la_vaghezza_elude_anche_in_inglese():
+    _, fonte, vago, _vero = EN
+    stato, punteggio = _esito(vago, fonte)
+    assert stato == "quarantined", f"«few patients» contro 30 out of 40 ammessa con g={punteggio}"
