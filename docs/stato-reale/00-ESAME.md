@@ -59,10 +59,26 @@
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
 
+## Come si prende un numero di cella — **letto prima di aggiungere una riga**
+
+🔴 **Il progressivo condiviso COLLIDE, e non è teoria: il 27/08 alle 21:30 due autrici hanno
+pubblicato una riga `34` nello stesso minuto** e sono finite entrambe su `origin`. Ognuna ha poi
+rinumerato la propria, quindi **il numero 34 resta vuoto: non è una riga persa** (verificato nella
+storia del file — chi lo cerca non deve rifare il controllo che ho già fatto io).
+
+✅ **Per una cella NUOVA usa `<sigla>-<n>`** — `W2-1`, `W6-3`, `W7-2` — dove `n` è il tuo
+progressivo. **Non collide per costruzione**, non richiede un `fetch` fortunato, e dice a colpo
+d'occhio chi l'ha aperta. I numeri interi già assegnati restano come sono: sono citati nei
+messaggi del canale e rinumerarli romperebbe i riferimenti.
+
+📌 **I numeri che compaiono due volte nella tabella «Verdetti che sono cambiati» non sono
+duplicati**: sono *riferimenti* alla cella omonima.
+
 ## Le celle misurate
 
 Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in parte / con limite
-· ⚪ non misurato.
+· ⚪ non misurato · **⛔ NON MISURABILE su quella porta** (il presidio non viene proprio
+chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 
 | # | domanda | classe | lingua | porta | verdetto | misurata da | **regime** + limite |
 |---|---|---|---|---|---|---|---|
