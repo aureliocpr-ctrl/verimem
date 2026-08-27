@@ -110,6 +110,24 @@ entrambe le domande — il regime E il livello.
 a questo file con la dir temporanea passata da riga di comando: lo store
 principale non viene mai toccato.
 
+⚠️ CORREZIONE DEL 27/08 SERA — QUESTA RIGA ERA FALSA. Sopra c'era scritto
+«nessuna cura: riconoscere i numeri a parole in N lingue non e' una regex». **Il
+prodotto lo fa gia' dal 16/08**, e l'ho scoperto solo perche' `verimem stats`
+elenca fra i layer un `L4.1-a-parole` che non conoscevo (scattato 1 volta).
+  · commit «gate: la fonte diceva il numero a parole e il fatto vero spariva»
+  · `assenti_che_la_fonte_scrive_a_parole()` chiama `valori_scritti_a_parole(text)`,
+    generica, in `quantity_match.py:2446`
+  · ma e' chiamata SOLO sulla `source`, mai sulla `proposition`
+⇒ Quel layer cura il caso ROVESCIATO (fonte a parole, claim in cifra, fatto VERO
+trattenuto). Il caso di questo banco — claim a parole — non ha nessun controllo.
+⇒ La simmetria mancante ha un nome e una riga. E il vincolo del docstring
+(«non usarla in `extract_quantities`, creerebbe quantita' fantasma») NON la vieta:
+li' si parla del parser, qui resta «un confronto fra due testi».
+⛔ MA NON CHIUDEREBBE QUESTO BANCO: `_NUMERALI_A_PAROLE` conosce **EN e IT**. Delle
+sette scritture misurate qui se ne coprirebbero **due**; ZH JA AR HI KO restano
+scoperte. E il layer esistente DECLASSA, mentre qui il valore falso ENTRA: la
+severita' va decisa, e non la decide un banco.
+
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-la-cifra-si-aggira-scrivendola-a-parole.py <dir-temp>
 ⚠️ Vuole una dir TEMPORANEA: scrive in HIPPO_DATA_DIR, mai lo store principale.
 """
