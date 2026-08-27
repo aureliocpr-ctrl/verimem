@@ -225,12 +225,12 @@ chiamato lì: scriverci 🟢 sarebbe *assenza di misura letta come verde*).
 
 | # | era | è | chi l'ha ribaltata | cosa l'ha ribaltata |
 |---|---|---|---|---|
-| 4 | 🔴 20:48 | 🟢 20:50 | ws8, su se stessa, in **tre minuti** | **regime**: A/B end-to-end nella stessa esecuzione, porta SDK, store di Aurelio, source fissa, 4 claim. il salto da **regex interna** a **porta** — e nella direzione buona |
+| 4 | 🔴 20:48 | 🟢 20:50 | ws8, su se stessa, in **tre minuti** | il salto da **regex interna** a **porta** — e nella direzione buona |
 | 9 | 🔴 «mai eseguito dal 21/07» | 🟢 eseguito | ws3 | l'ha eseguito |
-| 17 | 🔴 20:58 | 🟢 21:09 | ws8, su se stessa | **regime**: SDK, store temporaneo pulito (`HIPPO_DATA_DIR`), un processo, nessuna source, 1 claim. aveva misurato sulla porta **CLI** e sullo store di Aurelio: **due variabili confuse**. Separandole, su SDK la promessa è **mantenuta** — e il difetto vero si sposta sulla riga 23 |
+| 17 | 🔴 20:58 | 🟢 21:09 | ws8, su se stessa | aveva misurato sulla porta **CLI** e sullo store di Aurelio: **due variabili confuse**. Separandole, su SDK la promessa è **mantenuta** — e il difetto vero si sposta sulla riga 23 |
 | 12 | 🔴 5/24 | 🔴 **46/108** | ws6 | stesso verdetto, **numero raddoppiato**: il primo banco provava **un solo** schema di negazione su sei |
 | 31 | 🔴 «premia il ricalco» | 🟢 **«pretende che la fonte nomini il soggetto»** | ws1, su se stessa — **tutte e tre le tesi** | un controllo che DEVE fallire, eseguito invece che dedotto. 🔑 **Il verdetto è passato da difetto del prodotto a comportamento corretto** |
-| 23 | 🔴 «disparità fra porte» | 🔴 **«è il parametro `meta_narrative`»** | ws8, su se stessa | **regime**: A/B nello stesso processo e sullo stesso oggetto `Memory`, store temporaneo, 2 claim (uno neutro di controllo). **due variabili confuse per la seconda volta in dieci minuti** (prima porta+store, poi porta+parametro). Il verdetto resta rosso: **cambia la causa, e con essa la cura** |
+| 23 | 🔴 «disparità fra porte» | 🔴 **«è il parametro `meta_narrative`»** | ws8, su se stessa | **due variabili confuse per la seconda volta in dieci minuti** (prima porta+store, poi porta+parametro). Il verdetto resta rosso: **cambia la causa, e con essa la cura** |
 
 ### Celle dichiarate scoperte
 
@@ -281,3 +281,47 @@ scrittura, due banchi indipendenti danno **0,180 s** (ws2, dal 2º write) e **0,
 righelli differiscono dello **0,6%**) e la lunghezza della fonte (−11%, e la fonte lunga è
 la *più veloce*). **La causa non è nota.** La riga 8 riporta l'ordine di grandezza; questa
 nota esiste perché non venga letto come un numero concordato.
+
+---
+
+## REGIME — le celle di ws1 misurate sul **pacchetto pubblicato** (0.7.0 da PyPI)
+
+Le righe **2, 11, 20, 31, W7-3, W7-5, W7-12** e la caduta del limite alla riga **1** vengono tutte
+dallo stesso banco. Il regime, perché siano rifacibili:
+
+| | |
+|---|---|
+| macchina | Windows, disco C 248 GB liberi; RAM misurata prima di ogni esecuzione pesante |
+| venv | **vergine**, creata in **13 s**, `python -m venv`; host **Python 3.13.12** |
+| installazione | `pip install --no-cache-dir verimem==0.7.0` → **397 s**, **73 pacchetti**, **1146 MB** |
+| versioni tirate | `verimem 0.7.0` · **`mcp 2.1.1`** · `mcp-types 2.1.1` · `torch 2.13.0` · `transformers 5.16.1` · `sentence-transformers 6.0.0` |
+| isolamento | `HIPPO_DATA_DIR` su temp, **verificato chiedendo al prodotto** (`CONFIG.semantic_db`) |
+| istanti | installazione 20:30:55 → 20:37:32; misure 20:45–22:22 del 27/08 |
+
+⚠️ **La venv NON è più nello stato originale**: dopo il controllo positivo della riga 2 ho forzato
+`pip install "mcp<2"`, quindi oggi riporta **`mcp 1.29.1`**. Chi la riusa lo sappia; chi rifà da
+zero deve ottenere **`mcp 2.1.1`**.
+
+### Il pezzo che mancava alla riga 11 — e chiude sei giri di ricerca
+
+ws3 ha corretto la riga spiegando che **il modello del giudice non è nel pacchetto** e lo scarica
+`verimem warmup`. La correzione regge. Ma nei miei dati resta una **tensione misurata**, e spiega
+perché avevo escluso cinque candidati senza trovare la causa:
+
+```
+ local_ce_available()          ->  True    sull'installazione FRESCA 0.7.0 E su HEAD
+ ~/.cache/verimem/models       ->  ASSENTE in entrambe
+ il prodotto, a runtime        ->  «source provided but the grounding judge failed to load»
+```
+
+⇒ 🔑 **Il controllo di disponibilità dice «c'è» mentre il modello non si carica.** Non è un difetto
+di giudizio né una promessa non mantenuta: è **un controllo che mente**, e ha nascosto la causa
+a chi (io) lo interrogava per capire. ⇒ **Chi ragiona su «il giudice è disponibile?» non usi
+`local_ce_available()` come prova**: usa il messaggio della ricevuta, che è onesto.
+
+📌 **Cosa resta non isolato**, dichiarato: escluse con la misura ① corpo di `remember_cmd`
+identico · ② firma di `add` identica · ③ cablaggio del client identico · ④ condizione `_have_judge`
+identica riga per riga · ⑤ suo **valore** True in entrambe · ⑥ l'ipotesi «è l'etichetta `surface`»
+(**morta**: `flow_events.py:213` la legge da `ENGRAM_FLOW_SURFACE`, è telemetria e non governa
+niente). **La domanda residua è una sola**: cosa, a valle di `_have_judge`, impedisce l'aggancio
+del punteggio.
