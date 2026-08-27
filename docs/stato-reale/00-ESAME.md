@@ -16,7 +16,16 @@
 | ① | dovrebbe averlo? | discussione |
 | ② | ce l'ha? | `git grep` |
 | ③ | lo **promette**? | README / CLI / docstring |
-| ④ | **lo fa davvero**, misurato **alla porta**? | solo un'esecuzione |
+| ④ | **lo fa davvero**, misurato **alla porta** *e nel regime che un utente userebbe*? | solo un'esecuzione |
+
+> 🔴 **«Alla porta» da solo non basta — obiezione di ws3, accolta il 27/08, e nasce da un
+> errore pagato la sera stessa.** Il «muro» dei 24 secondi è stato misurato **alla porta**,
+> correttamente, e il verdetto era **falso lo stesso**: la porta era giusta, il **regime** era
+> l'anti-pattern che il repo dichiara tale (riga 8 contro riga 10, **1,5 → 14,3 ops/s**).
+> ⇒ **Una misura alla porta nel regime sbagliato non è una misura debole: è un verdetto
+> invertito.** Chi compila una cella dichiara il regime **accanto** alla porta, e se il regime
+> non è quello di un utente lo scrive nel verdetto, non nelle note.
+
 
 > 🔴 **Una promessa senza il livello ④ verde è marketing.** Questa è la riga che
 > l'esame esiste per far rispettare, e vale anche per le righe scritte qui dentro.
@@ -63,6 +72,9 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 | 14 | il presidio metrico riconosce la copula italiana in tutte le sue scritture? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | 5 forme dello stesso claim senza attestazione: `è`, `e` nudo, senza copula e l'inglese cadevano; **`e'` con l'apostrofo passava**. Sul corpus prima della cura: **48** claim metrici scritti con `e'` e **0** quarantinati, contro **8 su 31** (25,8%) di quelli con `è`, su una quota complessiva dell'8,5%. Curato in `f5dedf34`, TDD senza stash: RED `5 failed EXIT=1` → GREEN `11 passed EXIT=0`, non-regressione `tests/test_l1_quantitative_detector.py` `19 passed`. ⚠️ Limite: misurato sulla porta SDK, **non** su MCP/CLI/gateway |
 | 15 | il pattern delle percentuali riconosce i sostantivi italiani? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | i sei sostantivi erano **tutti inglesi** (`coverage|uptime|availability|accuracy|precision|recall`) mentre la copula accanto era italiana ⇒ quella `è` era **codice irraggiungibile**: il pattern accettava «coverage è 42.6%», che nessuno scrive, e rifiutava «la copertura è 42.6%». Delle 5 scritture dello stesso claim passava **solo l'inglese**. Trovato dal test, non cercato. Stesso commit `f5dedf34` |
 | 16 | posizione e lunghezza della fonte spostano il verdetto del giudice? | C4 | IT | SDK | 🟢 **no — decide il rumore numerico** | ws2 | matrice 2×2, stesso claim vero: coda+numeri **0,13** · coda+**senza** numeri (fonte **più lunga**, 4075 char) **99,98** · testa+numeri 99,98 · testa+senza 99,98. ⇒ posizione ininfluente, lunghezza ininfluente, **collide il numero**. Rinforzo indipendente della riga 3 (ws5), arrivato cercando altro |
+| 17 | il prodotto mantiene, **all'agente dell'utente**, la quarantena che gli promette? | — | EN | SDK | 🔴 **no** | ws8 | `agent_guide.py:31` promette che «*It works, verified, all tests pass, done*» viene quarantinato: alla porta è **`admitted`, `layers=[]`**. Il detector **vede** la stringa e il verdetto non ne tiene conto. ⚠️ L'autrice ha corretto il proprio numero: **una** superficie che lo promette, non quattro (le altre 9 occorrenze descrivono il meccanismo) |
+| 18 | su un testo normativo reale il gate ferma un valore inventato? | C4 | EN | — | 🟢 **sì, 3 su 3** | ws5 | GDPR art. 33: protegge i valori **affermati** («72 ore») e non i **riferimenti** («articolo 10»). ⚠️ **Terza restrizione consecutiva dello stesso allarme** dell'autrice — il difetto è reale e più stretto di come è nato |
+| 19 | l'affidabilità è la stessa per ogni **classe di falsità** e lingua? | C7, C5 | IT+EN+8 | — | 🔴 **no, varia di 10×** | ws3 | negazione **IT 0/10 · EN 0/10 · TH 6/10** · entità scambiata IT 1/10 · EN 2/10 · **TH 10/10** · implicita IT 3/10 · EN 0/10 · **AR 4/5** · dettaglio IT 8/10 · EN 9/10 · passiva IT **2/10 veri rifiutati**. 🔑 Omissione, vaghezza e numerali-a-parole sono **una classe sola**: in nessuno il claim porta una cifra |
 
 ### Verdetti che sono cambiati
 
@@ -82,8 +94,8 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 - ⚪ **le celle 14–16 su MCP, CLI e gateway**: curate e verificate **solo su SDK**. Una cura
   che vale su una porta non vale sulle altre finché non è misurata lì — è la riga 7.
 - ⚪ **gateway HTTP**: nessuna cella.
-- ⚪ **classi C1, C2, C3, C5, C6, C8**: misurate **C4** (quantità e formati) e una cella
-  di **C7** (negazioni, riga 12). **Sei classi su otto restano scoperte**, ed è il buco
+- ⚪ **classi C1, C2, C3, C6, C8**: misurate **C4** (quantità e formati) e una cella
+  di **C7** (negazioni, righe 12 e 19) e una di **C5** (identità, riga 19). **Cinque classi su otto restano scoperte**, ed è il buco
   più grande di questo registro.
 - ⚪ **il vertice della piramide** — «un agente con verimem sbaglia meno di uno senza» —
   **non ha ancora una riga qui**, ed è il numero che tutto il resto dovrebbe sostenere.
