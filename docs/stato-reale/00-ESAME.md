@@ -60,6 +60,9 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 | 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🔴 **no** | ws1 | stessa macchina, stesso minuto, stessa frase e fonte: **0.7.0** → `grounding_score=None`, `source_signature=None` **anche con `--source`**; **HEAD** → **98.39** + firma sha256. **Controllo**: con `ENGRAM_GROUNDING_WRITE=1` il giudice **si carica** e il punteggio resta `None` ⇒ non è un opt-in |
 | 12 | il gate rifiuta un claim che la fonte **nega**? | C7 | — | — | 🔴 **no, 5 su 24** | ws6 | e l'errore ha **il punteggio del successo** (95,8–99,9 contro 99,98). Tre ipotesi dell'autrice cadute: non è il costo, non è il troncamento, **non è la lingua** |
 | 13 | su una licenza reale il gate ferma un claim che **ricalca** la fonte cambiando un numero di clausola? | C4 | EN | — | 🔴 **no, 2 su 3** | ws5 | «section 7» al posto di «section 10» entra a **99.1 senza alcun layer**. Il rischio è la **congiunzione** (ricalco + numero comune), non `L4.1` da solo |
+| 14 | il presidio metrico riconosce la copula italiana in tutte le sue scritture? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | 5 forme dello stesso claim senza attestazione: `è`, `e` nudo, senza copula e l'inglese cadevano; **`e'` con l'apostrofo passava**. Sul corpus prima della cura: **48** claim metrici scritti con `e'` e **0** quarantinati, contro **8 su 31** (25,8%) di quelli con `è`, su una quota complessiva dell'8,5%. Curato in `f5dedf34`, TDD senza stash: RED `5 failed EXIT=1` → GREEN `11 passed EXIT=0`, non-regressione `tests/test_l1_quantitative_detector.py` `19 passed`. ⚠️ Limite: misurato sulla porta SDK, **non** su MCP/CLI/gateway |
+| 15 | il pattern delle percentuali riconosce i sostantivi italiani? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | i sei sostantivi erano **tutti inglesi** (`coverage|uptime|availability|accuracy|precision|recall`) mentre la copula accanto era italiana ⇒ quella `è` era **codice irraggiungibile**: il pattern accettava «coverage è 42.6%», che nessuno scrive, e rifiutava «la copertura è 42.6%». Delle 5 scritture dello stesso claim passava **solo l'inglese**. Trovato dal test, non cercato. Stesso commit `f5dedf34` |
+| 16 | posizione e lunghezza della fonte spostano il verdetto del giudice? | C4 | IT | SDK | 🟢 **no — decide il rumore numerico** | ws2 | matrice 2×2, stesso claim vero: coda+numeri **0,13** · coda+**senza** numeri (fonte **più lunga**, 4075 char) **99,98** · testa+numeri 99,98 · testa+senza 99,98. ⇒ posizione ininfluente, lunghezza ininfluente, **collide il numero**. Rinforzo indipendente della riga 3 (ws5), arrivato cercando altro |
 
 ### Verdetti che sono cambiati
 
@@ -73,7 +76,11 @@ Legenda verdetto: 🟢 fa quello che promette · 🔴 non lo fa · 🟡 lo fa in
 
 ### Celle dichiarate scoperte
 
-- ⚪ **porta SDK**: nessuna misura di conformità alle promesse (il costo sì, ws2).
+- 🟡 **porta SDK**: tre celle di conformità (14, 15, 16) più il costo — tutte in **C4 e in
+  IT**. Le stesse domande sulle altre porte restano scoperte, e la riga 7 dice perché non
+  si possono dare per equivalenti.
+- ⚪ **le celle 14–16 su MCP, CLI e gateway**: curate e verificate **solo su SDK**. Una cura
+  che vale su una porta non vale sulle altre finché non è misurata lì — è la riga 7.
 - ⚪ **gateway HTTP**: nessuna cella.
 - ⚪ **classi C1, C2, C3, C5, C6, C8**: misurate **C4** (quantità e formati) e una cella
   di **C7** (negazioni, riga 12). **Sei classi su otto restano scoperte**, ed è il buco
@@ -89,3 +96,30 @@ che cresce solo dal lato verde racconta una bugia per omissione.
 📌 **Provenienza**: le righe 1 e 9 sono misurate da chi scrive (ws7). Le righe 2–8 sono
 **riportate dai referti A2A della sera del 27/08** — chi scrive non ha eseguito quei
 banchi, e ogni riga nomina l'autore proprio perché la si possa contestare a lui.
+Le righe 14–16 sono aggiunte da chi le ha eseguite (ws2).
+
+---
+
+## Enunciati RITIRATI — perché nessuno li rimetta
+
+> Un registro che raccoglie solo ciò che è sopravvissuto costringe il prossimo a riscoprire
+> gli errori già pagati. Questi sono stati **pubblicati sul canale e poi ritirati dagli
+> autori stessi**: se qualcuno li ritrova, il difetto è nel banco, non nel prodotto.
+
+| enunciato ritirato | perché era falso | chi |
+|---|---|---|
+| «la porta MCP non restituisce gli avvisi al chiamante» | il banco leggeva la chiave `warnings`, che su MCP **non esiste**: si chiama `anti_confab_warnings`. Resta vero solo che i **nomi differiscono** — è la riga 7, molto più piccola | ws2 |
+| «un presidio del gate parla solo inglese» | l'A/B era confuso: il claim italiano era scritto `e'` e non `è`. Con l'accento il presidio **scatta**, e la vera causa era l'apostrofo — riga 10 | ws2 |
+| «la posizione del dato nella fonte decide il verdetto» | il rumore della fonte lunga conteneva **60 numeri** che collidevano col claim. Con rumore senza cifre, una fonte **più lunga** e col dato in coda prende 99,98 — riga 16 | ws2 |
+
+📌 **La classe comune ai tre**: il comportamento osservato era reale ogni volta; era la
+**causa** che ci veniva attaccata sopra a essere più larga del dato. Il presidio che li ha
+fermati non è stato misurare di più — è stato **andare a leggere il codice** e **chiedersi
+quale altra variabile potesse spiegare lo stesso numero**.
+
+📌 **Una divergenza aperta, dichiarata invece che chiusa**: sul costo *warm* di una
+scrittura, due banchi indipendenti danno **0,180 s** (ws2, dal 2º write) e **0,4–0,5 s**
+(ws6, dal 3º). Sono state escluse due spiegazioni — il modo di calcolare la mediana (i due
+righelli differiscono dello **0,6%**) e la lunghezza della fonte (−11%, e la fonte lunga è
+la *più veloce*). **La causa non è nota.** La riga 8 riporta l'ordine di grandezza; questa
+nota esiste perché non venga letto come un numero concordato.
