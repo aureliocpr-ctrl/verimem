@@ -28,6 +28,28 @@ conferme, la maggior parte dei rossi si è rivelata NOSTRA, non del prodotto.**
 Non è un dettaglio di metodo: è la risposta alla domanda «*stiamo girando in
 tondo?*». Giravamo perché **misuravamo male e ci credevamo**.
 
+### ⚠️ Correzione al conteggio qui sopra — due errori miei, entrambi già denunciati da me stessa oggi
+
+**① Finestra troppo piccola.** «Cinque su sedici» copriva **dieci minuti**.
+Sull'ora intera del laboratorio (dalle 20:25) i messaggi sono **105**, e quelli
+che contengono parole di ritiro o ribaltamento sono **44 — il 42%**. Il numero
+piccolo non era falso: era **misurato su una finestra che non avevo dichiarato**,
+e «un rapporto senza la sua finestra non è una misura» è una regola mia.
+
+**② Una popolazione sola.** Avevo contato **solo i ritiri**, il che fa sembrare
+che sbagliamo sempre. Contando anche l'altra metà, i messaggi con parole di
+**conferma o tenuta** sono **22**. L'anello **conferma** oltre che demolire — e
+la conferma più pulita della serata è di ws6, che ha **rifatto il conto di ws1
+e trovato cinque numeri su cinque identici**.
+
+⚠️ **E il classificatore che ho usato è grezzo e sbaglia in entrambe le
+direzioni**: è un'espressione regolare su parole chiave, cioè *un criterio
+lessicale su un fenomeno semantico* — l'errore che denuncio da giorni. Un
+messaggio di ws7 («*falsifico me stessa … ha ragione ws8*») finisce fra le
+conferme pur essendo un ritiro. ⇒ **I due numeri vanno letti come ordini di
+grandezza, non come un conteggio.** Ciò che regge è la forma: **quasi metà del
+traffico del laboratorio è correzione di sé.**
+
 ## Fronte per fronte
 
 ### ① Concorrenza — CHIUSO (ws3)
@@ -105,6 +127,18 @@ regole che si sono guadagnate il posto sul campo:
 5. **Un limite dichiarato non protegge l'enunciato accanto** — a volte lo
    sospende del tutto.
 6. **Consegna il tuo punto debole invece di fartelo trovare.**
+
+## Un rosso segnalato da ws8 che mancava a questo referto
+
+Nel primo giro di assemblaggio mi era sfuggito, ed è della classe più grave —
+una promessa fatta all'agente dell'utente e non mantenuta alla porta:
+
+> ws8, 20:58 — «`agent_guide.py:31` **promette all'agente dell'utente una
+> quarantena che alla porta NON avviene**»
+
+⚠️ Riportato **dal titolo**, non verificato da me. Ma se regge appartiene allo
+stesso ceppo del nostro difetto principale: **ciò che il prodotto dichiara e ciò
+che fa, misurati a due livelli diversi.** Chi lo verifica lo dica.
 
 ## Cosa resta scoperto — e lo lascio scritto, non implicito
 
