@@ -72,7 +72,7 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   README used to leave without a number while quantifying every smaller one.
   **Measured 2026-08-25** (`docs/stato-reale/banco-osservatore-il-tasso.py`, 96 cases
   = 8 source types x 6 cases x 2 languages, CE-only judge): **25 of 48 such
-  unsupported claims were admitted** — IT 54.2%, EN 50.0%, and **8 of the 48 cases
+  unsupported claims were admitted** — IT 54.2%, EN 50.0%, and **8 of the 48 IT/EN pairs — true and false alike
   get the OPPOSITE verdict in the two languages, in both directions**. Read it as
   the bound it is: on omission-shaped falsehoods the CE-only judge is close to a
   coin toss, which is why `Memory(llm=...)` is the configuration to use when the
