@@ -18,7 +18,7 @@ apre o resta chiuso.
 
 | # | vincolo | dove vive | tipo | stato al 26/08 |
 |---|---------|-----------|------|----------------|
-| ① | la CI è verde sul commit **taggato** | `publish.yml`, job `gate` | **VETO** | 🔴 nessun run concluso |
+| ① | la CI è verde sul commit **taggato** | `publish.yml`, job `gate` | **VETO** | 🔴 3 failed / 12033 passed |
 | ② | `PUBLISH_ANYWAY` non impostata | variabile di repo | scappatoia | ✅ `total_count: 0` |
 | ③ | `twine check dist/*` | `publish.yml` | veto debole | solo metadati |
 | ④ | il wheel non porta identificativi | `scripts/controlla_registro.py` | **VETO** | 🔴 chiuso, `EXIT=1` |
@@ -38,6 +38,42 @@ la misura**, non con la lettura.
 ⚠️ **Conta le righe che il comando restituisce** prima di credere all'aggregato:
 il 26/08 tre righelli diversi hanno prodotto tre diagnosi sbagliate, tutte
 perché la finestra guardata era più stretta dei dati.
+
+#### Cosa dice davvero, al 27/08 — e «16 su 16 failure» dice pochissimo
+
+I run hanno ripreso a concludere. L'aggregato è **16 su 16 `failure`**; la riga
+di sintesi, identica su due run e due celle (ubuntu-py3.12 e windows-py3.12), è:
+
+    **3 failed · 12033 passed · 41 skipped · 106 xfailed · 0 errors**
+
+⇒ Un `failure` di run non è una misura dello stato: **contare i run rossi al
+posto dei test rossi sbaglia di tre ordini di grandezza.** I tre sono:
+
+1. **il presidio versione** — e ha *cambiato natura*, vedi sotto;
+2. e 3. `tests/test_quarantined_by_nomina_il_layer_sbagliato.py`, due test.
+   In locale sono **verdi** (2 passed, 1 xfailed). Escluso l'albero (7 commit
+   di distanza, **zero** toccano quel test o `verimem/`) ed escluso l'ordine
+   interno (tre seed di `pytest-randomly`, tutti verdi). L'assert dice:
+   `parla un layer solo (['L4-review']): il difetto non si presenta`,
+   `assert 1 >= 2`. ⇒ **Non è una regressione: è un presidio che in CI non
+   riesce a riprodurre il difetto che presidia.** Windows e ubuntu danno lo
+   *stesso* assert, quindi l'OS è escluso; `L4-review` è la banda di revisione
+   del CE, e la differenza plausibile è che **in CI il gate CE viene scaldato e
+   usato** (`ci.yml:357`, `verimem warmup --no-daemon`, senza `--no-gate`)
+   mentre fino all'11/08 non lo era. Il presidio è stato scritto quando quel
+   giudice, in CI, non girava.
+
+#### 🔴 Il presidio versione ha SFONDATO la soglia
+
+    E  AssertionError: la versione 0.7.6 è ferma da **224 commit** (soglia 150)
+    E  assert 224 <= 150                              (su windows: 222)
+
+`RELEASE_GATE.md` registrava **131/150 → verde**. Ora sono **224**: la soglia è
+stata superata mentre si lavorava. ⇒ Il rosso «atteso» del presidio versione
+**non è più lo stesso rosso**: non è il debito noto, è il debito che ha
+oltrepassato il limite che si era dato. Si chiude in due modi soli — si
+pubblica, oppure si dichiara la distanza — e nessuno dei due è una decisione
+tecnica.
 
 ### ② `PUBLISH_ANYWAY` — la scappatoia dichiarata
 
