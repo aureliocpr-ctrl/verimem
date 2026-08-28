@@ -4394,3 +4394,55 @@ contesto «1.234» è mille o 1,234, e non invento un criterio per deciderlo.
 🔑 **Quarta volta stanotte che il primo righello è mio ed è sbagliato — la prima in cui l'ho
 scoperto PRIMA di pubblicarlo.** Il presidio che ha funzionato è del registro, non mio:
 *stampa le chiavi prima di contarle.*
+
+---
+
+## ws1 — FRONTE ④ CHIUSO: LA PROMESSA È MANTENUTA, E LA CONSEGUENZA VA DECISA DA UN UMANO
+
+**Livello**: `_forma_programmata` + `stessa_frase_altra_data` + porta vera · **Istante**: 29/08
+01:39–01:41 · **Regime**: store nuovo per caso, `source` sul primo, guardia al default · sha
+`7d8d57ea`.
+
+### ✅ Non è un difetto: è esattamente ciò che il docstring dichiara
+`_forma_programmata` promette «*Lingue coperte: italiano, inglese. Altrove torna False — di
+proposito*». Misurato su **nove** formulazioni in tre lingue, con la **popolazione di controllo**:
+```
+CONTROLLO IT/EN (True atteso)   3/3 True
+FR / ES / DE  (False atteso)    0/9 True
+```
+⇒ **Promessa mantenuta, misurata su entrambe le popolazioni. Il fronte si chiude come VERDE.**
+
+### 🔴 Ma la conseguenza, che nessuno aveva misurato, è questa
+`stessa_frase_altra_data` è **l'eccezione** che impedisce al ramo DATE di far coesistere due
+versioni dello **stesso** appuntamento riprogrammato. Se torna `False`, l'eccezione non scatta.
+```
+IT  stessa_frase_altra_data=True   -> entità diverse = False -> il gate CONFRONTA
+FR  stessa_frase_altra_data=False  -> entità diverse = True  -> COESISTONO
+DE  stessa_frase_altra_data=False  -> entità diverse = True  -> COESISTONO
+```
+**Alla porta vera, una sola variabile (la lingua), 3 su 3 come predetto:**
+```
+IT  «Il termine di consegna e' fissato al 12 marzo 2027»  -> «al 20 aprile 2027»
+        QUARANTINATO   ['L3','L3-semantic']
+FR  «La reunion est prevue pour le 12 mars 2027»          -> «pour le 20 avril 2027»
+        ammesso        ['L3-coexistence','L3-coexistence']
+DE  «Das Treffen ist fuer den 12. Maerz 2027 geplant»     -> «für den 20. April 2027»
+        ammesso        ['L3-coexistence']
+```
+⇒ **Uno stesso appuntamento riprogrammato: in italiano il gate lo ferma, in francese e tedesco i
+due fatti restano entrambi vivi.**
+
+### ⚖️ La domanda che lascio a chi decide, senza rispondere io
+Il «**di proposito**» del docstring copre **la funzione** (torna False dove non sa) — e quella
+scelta è difendibile: *l'assenza di una prova non è la prova del contrario*, ed è scritto anche nel
+commento del ramo date. **Non dice nulla sulla conseguenza**, cioè che in FR/ES/DE una data
+riprogrammata produce due record invece di un aggiornamento.
+🔑 **Una promessa mantenuta alla lettera può avere una conseguenza che nessuno ha scelto.**
+📌 **Differenza importante rispetto al caso `est`/`ist`**: qui **l'avviso `L3-coexistence` C'È**. Un
+chiamante attento può accorgersene. Nel caso `est` la ricevuta era **vuota**. ⇒ Dei due, **il caso
+grave resta quello del verbo**, non questo.
+
+### ⚠️ Cosa NON prova
+· Tre lingue, tre formulazioni ciascuna, una struttura di frase. Non è una misura di copertura.
+· **Non ho provato a scrivere le stesse frasi FR/DE con una forma che `_forma_programmata`
+  riconosce**: non esiste, perché la funzione non guarda la lingua ma una lista di pattern IT/EN.
