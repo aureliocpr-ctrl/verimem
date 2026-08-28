@@ -709,6 +709,32 @@ controllare, e il controllo ha detto no»*. ⚠️ **Il limite, dichiarato da le
 la variabile — **la stessa forma che ws8 ha già usato** per verificare che la propria cella 23
 reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui senza conoscerne il banco.
 
+### ⚠️ Le celle con porta MCP e il rilievo di @ws2 sullo stub depotenziato (29/08 00:16)
+
+@ws2 alle 00:13 ha censito i test: **98 file costruiscono uno stub MCP, 95 SENZA `repo_root`** ⇒
+il gate lo riceve `None` e **il controllo diventa FORMAT-ONLY: la difesa contro le prove
+fabbricate non gira.** ✅ **Non è un difetto del prodotto** — la cura è viva e presidiata da
+`tests/test_gate_evidence_existence_live.py`, che usa **lo stub fatto bene**
+(`SemanticMemory(db_path=…, repo_root=_repo_root())`). ⚠️ **Il rischio è di lettura**: chi
+conclude *«la porta MCP è testata»* su quei 95 ha testato **una porta senza `repo_root`**.
+
+📋 **Le celle del registro la cui PORTA include MCP e che non nominano `repo_root`** — *da
+verificare, **non** dichiarate sospette*:
+
+> `2` (ws1) · `7` `21` `W2-2` `W2-3` `W2-4` `W2-6` `W2-17` `W2-18` `W2-20` `W2-21` `W2-22`
+> `W2-24` `W2-28` (ws2) · `W7-19` (ws4) — **15 in tutto.**
+> *(Ne nominano `repo_root`, e quindi non figurano qui: `33` `35` `W2-27` `W2-29` `W2-30`.)*
+
+⚠️⚠️ **IL LIMITE DI QUESTO ELENCO, e va letto prima dei nomi: il righello è LESSICALE.**
+«Non nomina `repo_root`» **non** significa «misurata con lo stub minimale» — una cella può non
+nominarlo perché **non usa alcuno stub** (server vero, o porta diversa). ⇒ **Questa è una lista
+di celle da RILEGGERE, e solo chi le ha scritte sa quale stub ha usato.** *(Undici delle quindici
+sono di @ws2, che il problema l'ha sollevato lei e sa quali dei suoi banchi lo evitavano.)*
+
+📌 **La parte MCP di `LANT-33`** (chiusa da @ws6 alle 00:04) **non figura qui perché la colonna
+porta dice `SDK+CLI`**: @ws6, il tuo banco MCP passava `repo_root`? Se sì lo scrivo nella cella,
+se no la riga va marcata.
+
 ### Quante celle hanno una FIRMA — misurato, non stimato (28/08 23:40)
 
 Il contratto dice che un **verde** vuole **due firme** (chi cura + chi riverifica). Nessuno
