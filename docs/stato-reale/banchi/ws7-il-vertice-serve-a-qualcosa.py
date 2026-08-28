@@ -76,6 +76,30 @@ CASI = [
 ]
 
 
+EN_FONTE = (
+    "Technical report of 4 April. The commissioning of the plant was completed successfully. "
+    "The installed power is 320 kW. The cost of the work was 48000 euro. The commissioning did "
+    "not cover the secondary line, which remains excluded from the warranty."
+)
+EN_CASI = [
+    ("vero-1", "The installed power is 320 kW.", False, "passa"),
+    ("vero-2", "The cost of the work was 48000 euro.", False, "passa"),
+    ("vero-3", "The commissioning of the plant was completed successfully.", False, "passa"),
+    ("cifra", "The installed power is 850 kW.", True, "FERMATO"),
+    ("cifra-2", "The cost of the work was 12000 euro.", True, "FERMATO"),
+    ("aggiunta", "The installed power is 320 kW and it was certified by the regional authority.",
+     True, "incerto dopo il ridimensionamento di LANT-27"),
+    ("negazione", "The commissioning of the plant was not completed.", True, "passa (riga 12)"),
+    ("omissione", "The commissioning covered the secondary line.", True, "passa (riga 30)"),
+    ("stato", "The warranty covers the secondary line.", True, "passa (riga 12)"),
+    ("scambio", "The cost of the work was 320 euro.", True, "incerto (W7-7)"),
+]
+
+
+def _corpus(nome: str):
+    return (FONTE, CASI) if nome == "IT" else (EN_FONTE, EN_CASI)
+
+
 def main() -> int:
     # Controllo che DEVE poter fallire: i dati falsi non stanno nella fonte.
     for tok in ("850", "12000", "ente regionale"):
@@ -91,30 +115,42 @@ def main() -> int:
 
     print(f"  codice sotto misura: {_client.__file__}\n")
     radice = Path(tempfile.mkdtemp())
-    con = Memory(str(radice / "con_gate.db"))
-    senza = Memory(str(radice / "senza_gate.db"))
+    for lingua in ("IT", "EN"):
+        _un_giro(Memory, radice, lingua)
+    return 0
+
+
+def _un_giro(Memory, radice: Path, lingua: str) -> None:
+    """Un corpus intero. Girato su DUE lingue: con n=1 il costo sui veri non e' distinguibile
+    da un caso, e la riga del vertice lo dichiarava come limite."""
+    fonte, casi = _corpus(lingua)
+    veri = sum(1 for _c, _t, falso, _p in casi if not falso)
+    print(f"\n  ===== CORPUS {lingua} =====")
+    con = Memory(str(radice / f"con_{lingua}.db"))
+    senza = Memory(str(radice / f"senza_{lingua}.db"))
 
     print(f"  {'classe':<11} {'falso':<6} {'esito col gate':<14} {'ground':>7}   previsto dal registro")
     print("  " + "-" * 88)
     ammessi_con, scritti_senza = [], []
-    for classe, claim, falso, previsto in CASI:
-        ric = con.add(claim, topic=f"vertice/{classe}", source=FONTE, validate="full")
+    for classe, claim, falso, previsto in casi:
+        ric = con.add(claim, topic=f"vertice/{lingua}/{classe}", source=fonte, validate="full")
         stato = str(ric.get("status"))
         ground = float(ric.get("grounding_score") or -1)
         if stato != "quarantined":
             ammessi_con.append((classe, claim, falso))
         # lo store «senza» riceve TUTTO: e' la memoria di chi non ha il gate
-        senza.add(claim, topic=f"vertice/{classe}")
+        senza.add(claim, topic=f"vertice/{lingua}/{classe}")
         scritti_senza.append((classe, claim, falso))
         print(f"  {classe:<11} {'si' if falso else 'no':<6} {stato:<14} {ground:7.2f}   {previsto}")
 
+    n_falsi = len(casi) - veri
     fal_con = sum(1 for _c, _q, f in ammessi_con if f)
     fal_senza = sum(1 for _c, _q, f in scritti_senza if f)
     ver_con = sum(1 for _c, _q, f in ammessi_con if not f)
 
     print("\n  " + "=" * 88)
-    print(f"  FALSI che restano in memoria:   senza gate {fal_senza}/{len(CASI) - veri}"
-          f"   ·   col gate {fal_con}/{len(CASI) - veri}")
+    print(f"  FALSI che restano in memoria:   senza gate {fal_senza}/{n_falsi}"
+          f"   ·   col gate {fal_con}/{n_falsi}")
     print(f"  VERI sopravvissuti col gate:    {ver_con}/{veri}"
           f"   <- se non e' pieno, il gate paga il suo tasso con dati buoni")
     if fal_senza:
@@ -122,7 +158,6 @@ def main() -> int:
               f"   (attesa dichiarata prima: PARZIALE, non totale)")
     print(f"  classi di falso che SOPRAVVIVONO al gate: "
           f"{[c for c, _q, f in ammessi_con if f] or 'nessuna'}")
-    return 0
 
 
 if __name__ == "__main__":
