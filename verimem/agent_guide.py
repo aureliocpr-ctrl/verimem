@@ -27,8 +27,15 @@ Read the names your client actually lists, not the ones in this text.
 
 Store with verimem_remember. What checks it, and when — the perimeter, so you
 can rely on it:
-- ALWAYS: a lexical screen on every write. Unsupported "it works / verified /
-  done" self-claims are quarantined, with no LLM call.
+- ON EVERY WRITE THROUGH THIS API: a lexical screen. Unsupported "it works /
+  verified / done" self-claims are quarantined, with no LLM call.
+  ONE EXCEPTION, measured 2026-08-28 and stated here because you cannot see it:
+  a write made as a session NOTE — `meta_narrative=True`, which the `save`
+  command uses — skips that screen. It is deliberate: a checkpoint saying "done"
+  is a record of work, not a factual claim about the world. But it means the
+  screen is not literally universal, and a self-claim written that way is stored
+  as `model_claim` with no lexical warning at all. The moat is UNAFFECTED: with
+  a source it runs in both modes, so a source is what protects you either way.
 - WITH a `source`: the entailment moat, the strong check — the fact is admitted
   only if the source TEXT actually supports it. `verified_by` records WHO
   vouches for a fact and does not run this check; pass the source text to get
