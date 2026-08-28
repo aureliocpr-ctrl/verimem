@@ -13,10 +13,20 @@
 
 > Solo fatti contati e puntatori. **Nessun aggettivo**: il registro è il posto dove una frase
 > più larga del dato fa più danno che altrove.
-> ⚠️ **Questa sezione è stata trovata obsoleta il 28/08** — diceva 53 celle quando erano 84.
-> **Chi la legge la ricalcoli**: `python scripts/conta_celle_esame.py`.
-
-    celle misurate  85      🔴 50   🟢 25   🟡 9   ⛔ 1
+> ⚠️ **QUI NON C'È PIÙ IL CONTEGGIO, e il motivo è misurato.** Ci è stato due volte e due volte
+> è invecchiato in poche ore: alle 12 diceva **53** quando erano **84**; l'ho riscritto, e alle
+> **21:00 diceva 85 quando erano 108** (🔴 60 · 🟢 29 · 🟡 17 · ⛔ 1 · 🚫 1). In mezzo c'era
+> già l'avviso *«chi la legge la ricalcoli»*, **e non è bastato**: un avviso chiede a chi legge
+> un lavoro che nessuno fa.
+> 🔑 **In un file che otto mani modificano, un numero scritto a mano nella sintesi inganna più
+> di quanto informi** — e chi legge trenta secondi legge **solo** questo. ⇒ La cura non è
+> riscriverlo meglio: è **non tenerlo qui**.
+>
+> ```bash
+> python scripts/conta_celle_esame.py
+> ```
+> **Un comando, esce da solo, e dice anche gli id duplicati.** *(Falsificabile: se fra tre ore
+> questa sezione contiene di nuovo un numero sbagliato, la cura non ha funzionato.)*
 
 **Cosa il prodotto fa, misurato**: ferma la contraddizione in tutti i regimi provati (0/12,
 riga 29) · pretende che il soggetto del claim stia nella fonte (31) · regge il carico di un
