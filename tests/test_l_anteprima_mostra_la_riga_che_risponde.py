@@ -110,3 +110,51 @@ def test_la_stampa_e_il_recupero_normalizzano_la_query_ALLO_STESSO_MODO():
     assert "bolzano" in curati, "il nome proprio deve sopravvivere alla punteggiatura"
     assert "bolzano?" not in curati
     assert len(curati) == 5, curati
+
+
+RISPOSTA_EN = "The Bolzano site contains 777 pallets."
+
+
+def _documento_inglese(tmp_path):
+    f = tmp_path / "inventory.txt"
+    f.write_text("Neutral filler text of the document. " * 26 + RISPOSTA_EN,
+                 encoding="utf-8")
+    r = runner.invoke(app, ["index", str(f)])
+    assert r.exit_code == 0, r.output
+    return f
+
+
+def test_l_anteprima_mostra_la_riga_anche_in_inglese(tmp_path):
+    """LE DUE LINGUE CHE AURELIO HA NOMINATO. La cura poggia su
+    `_PAROLE_VUOTE`, e una lista di parole vuote e' il posto classico dove un
+    prodotto smette di essere bilingue senza che nessuno se ne accorga —
+    e' successo su `_COPULA_RE` e sulle stoplist di `query_intent`.
+
+    Qui la lista REGGE: 94 voci, e le inglesi ci sono (`the`, `of`, `and`,
+    `to`, `in`, `for`, `how`, `does`, `is`, `are`, `what`, `which`, `with`).
+    Misurato il 2026-08-28 sulla query «How many pallets does the Bolzano site
+    contain?»: con lo split grezzo la finestra partiva da 0 (vinceva `the` a 23)
+    e la risposta non si vedeva; con la cura parte da 876 e si vede.
+
+    Il test non serve a dire che oggi funziona — quello l'ho misurato. Serve a
+    fare RUMORE il giorno in cui qualcuno tocca `_PAROLE_VUOTE` pensando solo
+    all'italiano."""
+    _documento_inglese(tmp_path)
+    r = runner.invoke(app, ["search-docs", "How many pallets does the Bolzano site contain?"])
+    assert r.exit_code == 0, r.output
+    assert "Bolzano" in r.output, (
+        "l'anteprima non mostra la riga che risponde a una domanda INGLESE; "
+        f"output:\n{r.output}")
+
+
+def test_le_parole_vuote_coprono_entrambe_le_lingue():
+    """LA CAUSA, NON IL SINTOMO — gemello del test sulla giuntura. Se un giorno
+    `_PAROLE_VUOTE` perdesse l'inglese, questo lo dice nominando la lista,
+    mentre il test sopra direbbe solo che un'anteprima non mostra una riga."""
+    inglesi = {"the", "and", "of", "in", "to", "a", "for", "how", "does",
+               "is", "are", "what", "which", "with"}
+    mancanti = inglesi - di._PAROLE_VUOTE
+    assert not mancanti, f"parole vuote inglesi assenti: {sorted(mancanti)}"
+    italiane = {"il", "la", "di", "che", "per", "con", "una", "sono"}
+    mancanti_it = italiane - di._PAROLE_VUOTE
+    assert not mancanti_it, f"parole vuote italiane assenti: {sorted(mancanti_it)}"
