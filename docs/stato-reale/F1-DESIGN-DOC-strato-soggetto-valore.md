@@ -240,3 +240,74 @@ non dovrebbe, e questo **gonfia** il numero di frasi (denominatore) mentre
 ⚠️ **Un corpus solo**, quello di Aurelio, in un solo istante.
 ⚠️ **La domanda sui contratti resta aperta**: servirebbe un corpus di documenti
 veri, che non abbiamo.
+
+---
+
+# ⑦ Le verifiche «a mano su carta» ESEGUITE: **erano sbagliate su metà dei casi**, e ne esce il passo 2-bis
+
+*ws3, 28/08 ~20:10. Banco
+`banchi/ws3-F1-simulazione-del-predicato-fuori-dal-prodotto.py`.*
+⚠️ **Simulazione FUORI dal prodotto**: nessun file di `verimem/` toccato, nessun
+layer registrato, nessuna ricevuta cambiata. **La modifica al prodotto resta
+bloccata dalla review doppia.**
+
+Al §5 avevo scritto che le verifiche del meccanismo erano **fatte a mano su
+carta** e che erano **«il primo posto dove guardare in review»**. Le ho eseguite
+invece di far rivedere a due sorelle un ragionamento non controllato.
+
+## Prima esecuzione: **16 su 22, e 6 scambi su 12 assolti**
+
+    SCAMBIO  «penale per il RITARDO ... 5%»   → OK   condivide {penale, importo, contrattuale}
+    SCAMBIO  «termine di CONSEGNA ... 30 apr» → OK   condivide {termine, fissato}
+    SCAMBIO  «acido acetilsalicilico ... 5mg» → OK   condivide {prescritto}
+
+**Il motivo è strutturale, non un dettaglio**: quelle ancore stanno in
+**entrambe** le frasi candidate. Ciò che distingue è `ritardo` contro
+`difformità`, `consegna` contro `contestazione`, il **nome del farmaco** contro
+`prescritto`. Il passo 3 accettava su **una qualsiasi** ancora condivisa.
+
+> 🔑 **Un'ancora presente in più frasi candidate non identifica niente.**
+> Contano solo le ancore **DISCRIMINANTI**: quelle che compaiono in **una sola**
+> delle frasi che portano un valore di quell'unità.
+
+## Il **passo 2-bis**, che nasce da lì
+
+    cand   = le frasi della fonte che portano un valore dell'unita' in esame
+    A_disc = le ancore del claim che compaiono in UNA SOLA frase di cand
+    se A_disc e' vuoto  ->  ASTIENITI (non so distinguere i soggetti)
+    i passi 3 e 4 usano A_disc, non A
+
+## Seconda esecuzione: **22 su 22 · 12 scambi su 12 · 0 falsi positivi**
+
+    SCAMBIO   12/12 segnalati        CIFRA     3/3 → «e' L4.1» (passo 1)
+    PAROLE     2/2 astensione        OMISSIONE 1/1 astensione
+    VERI       3/3 OK                VERO-p5   astensione ✅ (il test del passo 5)
+
+## ⚠️ E ADESSO LA CONDIZIONE, che vale più del numero
+
+**Ho corretto la regola DOPO aver visto quali casi fallivano.** Il 12 su 12 è
+sul **set su cui ho tarato**: è **precisamente il rischio «cucita addosso al
+banco»** che avevo dichiarato al §5, e **non conta come validazione**.
+
+| cosa è | cosa **non** è |
+|---|---|
+| l'**intuizione** (ancore discriminanti) è **generale** e spiega *perché* la versione ingenua falliva — questo regge | il **12/12** è sul set di taratura e **non è evidenza di generalità** |
+| la regola **sa esprimere** la distinzione | non è provato che la **azzecchi** su casi mai visti |
+
+⇒ **La validazione richiede la popolazione B di @ws5 e casi che non ho visto.**
+Il numero qui dice solo che **il meccanismo è esprimibile**, non che funzioni.
+🔑 *Una cura che funziona per una ragione che non sai spiegare non si consegna* —
+qui la ragione **so** spiegarla, ed è il motivo per cui vale la pena continuare.
+Ma *il banco lo scriva chi non ha in mente la cura*, e quel banco non è mio.
+
+## Limiti, dichiarati
+
+⚠️ È una **simulazione del predicato**, non il prodotto: il gate vero ha
+clausole, span **troncati a 400 caratteri**, normalizzazioni che qui non ci sono.
+⚠️ Le **omissioni danno 0 segnalazioni anche solo perché i loro claim non
+contengono numeri** ⇒ **quel test è vuoto** e non prova niente sul passo 5.
+L'unico test vero del passo 5 è `VERO-p5`, ed è **uno solo**.
+⚠️ La lista di **stopword è minima e dichiaratamente incompleta**: è la domanda
+① del §5, **aperta**, e di @ws5.
+⚠️ I veri qui sono **solo quelli già nei miei file**. **Questo banco non può
+approvare niente.**
