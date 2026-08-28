@@ -100,3 +100,44 @@ def test_il_confronto_ignora_le_maiuscole():
         proposition="il lavoro e' stato completato",
         verified_by=[],
         source="Completato il 28 marzo, come da verbale.") is None
+
+
+# ── LA PORTA, non solo il detector ───────────────────────────────────────────
+#
+# I test qui sopra chiamano il detector e gli passano `source` a mano: sono
+# ciechi al modo in cui il difetto e' NATO. La causa non era dentro il
+# detector — era che il gate lo chiamava SENZA `source`, e un presidio che
+# guarda una porta sola e' verde per costruzione (classe nominata il
+# 2026-08-28: «il presidio esiste, e' acceso, e guarda UNA PORTA SOLA»).
+#
+# Questi due passano da `run_validation_gate`, cioe' da dove il prodotto
+# chiama: se qualcuno smettesse di inoltrare `source` lungo la catena
+# `run_validation_gate` -> `_l1_warnings` -> detector, i test sopra
+# resterebbero verdi e questi diventerebbero rossi.
+#
+# Girano senza `ground_write`: la famiglia L1 e' lessicale e non passa dal
+# ramo del moat, quindi nessun modello viene caricato (misurato: stessi layer
+# con e senza).
+
+def _layer_alla_porta(claim: str, source: str | None) -> list[str]:
+    from verimem.anti_confab_gate import run_validation_gate
+    g = run_validation_gate(proposition=claim, verified_by=[], topic=None,
+                            agent=None, source=source)
+    return [str((w or {}).get("layer") or "")
+            for w in (getattr(g, "warnings", None) or [])]
+
+
+@pytest.mark.parametrize("claim,fonte", [
+    (RICALCHI_IT[0], FONTE_IT),
+    (RICALCHI_EN[0], FONTE_EN),
+])
+def test_alla_porta_il_ricalco_non_accende_l1_13(claim, fonte):
+    assert not [x for x in _layer_alla_porta(claim, fonte)
+                if x.startswith("L1.13")]
+
+
+@pytest.mark.parametrize("claim", [SELFCLAIM_SENZA_FONTE[0],
+                                   SELFCLAIM_SENZA_FONTE[1]])
+def test_alla_porta_la_self_claim_accende_ancora_l1_13(claim):
+    assert [x for x in _layer_alla_porta(claim, None)
+            if x.startswith("L1.13")]
