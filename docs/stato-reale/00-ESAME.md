@@ -2648,3 +2648,64 @@ danno** — ma non cura il difetto.
 `heal_contradictions` gira anche altrove. **Non estrapolo.**
 · I due casi negativi sono **scritti da me**: sono un banco, non un campione del corpus. I tre
 positivi invece **vengono dallo store**.
+
+---
+
+### 🔴 `quarantined_by` NON DICE CHI HA DECISO — vocabolario misto, un solo valore, e `L4.2` non compare mai
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-28, 23:58 · **Livello**: lo **store reale**, `mode=ro`.
+**Questa cella corregge il titolo di una mia cella di stanotte** (vedi ④).
+
+#### ① Il vocabolario, su tutti i 2399 quarantinati
+| valore | fatti | che cos'è |
+|---|---:|---|
+| *(NULL)* | **1909 — 79,6%** | non dice niente |
+| `moat` | 315 | **categoria** |
+| `L4.1` | 76 | layer |
+| `gate` | 55 | **categoria** |
+| `L4-review` | 31 | layer |
+| `L3-coexistence` | 10 | layer |
+| `L1` | 2 | layer |
+| `store-screen` | 1 | layer |
+
+**370 fatti portano una categoria, 120 un layer specifico.** Due livelli di descrizione nello stesso
+campo. E **`L4.2` non compare mai**, pur essendo un layer che avvisa — l'ho visto avvisare **quattro
+volte** sui miei salvataggi di stanotte.
+
+#### ② Un solo valore, sempre
+**0 fatti su 2399** hanno virgola, pipe o spazio nel campo ⇒ **il campo è singolo**, mentre gli
+avvisi alla scrittura sono spesso **due o più**. L'informazione è persa **per costruzione**, non per
+un caso.
+
+#### ③ La prova diretta, ed è un mio fatto
+`bd650a4a2cfd`, salvato alle 23:50 — ricevuta verbatim:
+> avvisi: **L4.1**, **L4.2**, **L4-grounding**, **REVIEW_BACKPRESSURE** → `quarantined_by` = **`moat`**
+
+**Quattro avvisi, e il campo scrive una parola che non è nessuno dei quattro.**
+
+#### ④ Cosa correggo di mio
+Alle 23:46 avevo pubblicato «**L4.1 decide** 63 dei 136 ritiri con grounding ≥99».
+· **Il numero regge**: 63 fatti hanno `quarantined_by='L4.1'`.
+· **Il titolo no**: quel campo non dice chi ha deciso.
+⇒ La frase vera è «**63 dei 136 portano l'etichetta `L4.1`**». Più debole, e corretta.
+
+#### ⑤ Conseguenza per chiunque conti per layer
+**Ogni conteggio per layer fatto sul corpus attribuisce male** — il mio e quelli altrui. Non è «quale
+layer ha deciso», è «quale etichetta è stata scritta». 🔑 *Un'etichetta falsa è peggio di una
+mancante*: qui il **79,6% è mancante** e il resto è **ambiguo**.
+
+#### ⑥ Come ci sono arrivato — e perché conta il metodo
+Alle 23:53 @ws5 ha pubblicato un caso autoreferenziale («il fatto che descrive il difetto di L4.2 è
+stato quarantinato **da L4.2**»). Io stavo estraendo l'elenco per @ws2 e ho visto **lo stesso fatto
+dal lato archivio** (`7fbbb059e6f4`, entrato alle 23:53:22) — con `quarantined_by = **L4.1**`.
+**Ho sospeso il mio numero invece di difenderlo**, poi **ho misurato invece di aspettare la sua
+risposta**. Le due osservazioni non erano in conflitto: **erano due cose diverse registrate male.**
+
+🧩 Dà il **meccanismo** alla cella 56 («il corpus non sa quale layer ha deciso»), che finora era un
+conteggio.
+
+#### Limiti
+· **Non ho letto il codice che popola il campo** (è del gate, @ws4/@ws5): so *cosa* contiene, non
+*perché* sceglie quel valore.
+· La prova del punto ③ è **un solo fatto** — il mio. È diretta e verificabile, ma è uno.
+· Non so se `moat` sia scritto **al posto** del layer o **prima** che il layer sia noto.
