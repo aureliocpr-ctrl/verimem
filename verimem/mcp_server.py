@@ -13198,6 +13198,27 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     a.semantic.db_path, str(getattr(fact, "id", "")),
                     _out_qb,
                 )
+            # E IL VERDETTO PER ESTESO, che due promesse scritte davano per
+            # dovuto e che questa porta non consegnava. Il docstring di
+            # `_adjudication` dice «the write verdict, ALWAYS returned to the
+            # caller»; quello di `tests/test_adjudication_receipt.py` dice
+            # «EVERY write returns a VISIBLE verdict». Entrambe presidiate — e
+            # gli otto test di quel file passano tutti da `Memory(...)`, cioe'
+            # dall'SDK. Misurato il 28/08 con claim e fonte identici e la sola
+            # porta a cambiare: SDK restituiva `adjudication` con 8 campi, MCP
+            # restituiva 14 chiavi di primo livello e non quella — le sue in
+            # piu' sono ECO DELL'INGRESSO (proposition, topic, verified_by,
+            # confidence), mentre quelle che dicono PERCHE' stavano di la'.
+            # Una promessa presidiata su una porta sola non e' presidiata: e'
+            # vera dove il test guarda.
+            from .client import _adjudication as _adj_fn
+            _adj_out = _adj_fn(
+                _gate,
+                disposition=("quarantined"
+                             if str(getattr(fact, "status", "")) == "quarantined"
+                             else "admitted"),
+                verified_by=verified_by,
+                warnings=_gate_warnings)
             # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
             # ZERO eventi (2026-08-07; verificato sul log reale: 8247
             # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
@@ -13507,6 +13528,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # una quarantena da spiegare, cosi' una scrittura ordinaria
                 # non cambia forma.
                 **({"quarantined_by": _out_qb} if _out_qb else {}),
+                # Il verdetto per esteso: chi ha deciso, con che punteggio,
+                # contro quale soglia e a che distanza. Non condizionale —
+                # la promessa e' «ogni scrittura», ammesse comprese.
+                "adjudication": _adj_out,
             })
 
         if name == "hippo_facts_recall":

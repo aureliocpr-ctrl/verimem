@@ -245,3 +245,44 @@ def test_source_trust_enforce_gates_low_trust(tmp_path, monkeypatch):
     r = m.add("The sky is a calm blue today.", verified_by=["source:unknown_feed:1"])
     assert r["status"] == "quarantined"        # enforce gates the low-trust source
     assert any(w.get("layer") == "SOURCE_TRUST" for w in r["warnings"])
+
+
+def test_the_promise_holds_on_the_MCP_port_too(tmp_path, monkeypatch):
+    """The file's own promise is «EVERY write returns a VISIBLE verdict», and
+    `_adjudication`'s docstring says the verdict is «ALWAYS returned to the
+    caller». Both are presided over here — and every test above goes through
+    `Memory(...)`, i.e. the SDK.
+
+    In this product the caller is almost always an agent, and an agent writes
+    through MCP. Measured 2026-08-28, same claim and same source on both ports,
+    one process: SDK returned `adjudication` with 8 fields; MCP returned 14
+    top-level keys and NOT that one — its extra keys echo the input
+    (proposition, topic, verified_by, confidence), while the ones that say WHY
+    were on the other side.
+
+    A promise presided over on one port only is not a presided promise: it is a
+    promise that happens to be true where the test looks.
+    """
+    import asyncio
+    import json
+
+    from verimem import mcp_server as srv
+
+    m = Memory(str(tmp_path / "mcp.db"))
+
+    class _Ag:
+        def __init__(self):
+            self.semantic = m.semantic
+    monkeypatch.setattr(srv, "_ag", lambda: _Ag())
+
+    out = json.loads(asyncio.run(srv.call_tool("hippo_remember", {
+        "proposition": "Il modulo di fatturazione ha 12 utenti attivi.",
+        "topic": "adj/port",
+        "source": "Verbale: il modulo ha 12 utenti attivi.",
+    }))[0].text)
+    adj = out.get("adjudication")
+    assert isinstance(adj, dict), (
+        "the MCP receipt carries no `adjudication`, while the SDK returns it "
+        f"on the same write. Keys present: {sorted(out)}")
+    for campo in ("disposition", "judge", "score", "threshold"):
+        assert campo in adj, f"`adjudication` is missing {campo!r}: {sorted(adj)}"
