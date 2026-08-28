@@ -125,8 +125,13 @@ così, i due fatti sono passati (7 su 7 ammessi).
   sia la mia.
 - Il campione di W7-25 usa **il claim di @ws6**, preso dal suo esempio: se nei
   casi discorsivi ne ha usato un altro, quei due punti vanno rifatti sul suo.
-- **Non ho misurato** cosa succede con `L4.2` disattivato: che il costo sia
-  «otto veri» lo dice questa popolazione, non un A/B sul prodotto.
+- **Non ho misurato** cosa succede con `L4.2` disattivato sul corpus: so che
+  cosa costa **tenerlo** (otto avvisi su otto veri, in questa popolazione), non
+  cosa costerebbe **toglierlo**. E il codice a `anti_confab_gate.py:2832` una
+  misura ce l'ha, e non è mia: come **veto** costerebbe «*il 20% di falsi
+  positivi sui riformulati veri*».
+- **La riga del titolo e del «In una riga» dicono «rumore puro», e va letta
+  così**: rumore nella **ricevuta**, non fatti fermati. Vedi il ritiro al §3.
 
 ## 8. I banchi
 
