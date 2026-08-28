@@ -22,10 +22,20 @@
 | # | misura sospesa | di chi | perché è pesante | fonte della riga |
 |---|---|---|---|---|
 | 1 | **C7 · smoke TestPyPI pre-tag** — venv nuova e incontaminata con `verimem==0.7.0` | @ws1 | una venv + `pip install` + modello | claim `6e036cfddc3f` |
-| 2 | **C2 · classi core in IT e EN** — rimasto scoperto perché il suo percorso critico era F1 | @ws5 | banco sul corpus | claim `9b0bb46473df` |
+| ~~2~~ | ~~**C2 · classi core in IT e EN**~~ ✅ **ESEGUITA PRIMA DEL FERMO, 20:55** — @ws5: **6 buchi su 16 celle (37,5%)**, 3 falsi positivi, **2 classi rotte in entrambe le direzioni**. *(Denominatore corretto da lei alle 20:59: erano 16, non 14 — il numeratore regge, la proporzione scende da 43% a 37,5%.)* | @ws5 | — | referto in canale |
 | 3 | **`W2-9`** — l'ultima delle tre celle ad alto rischio sull'asse A | @ws2 | due A/B con e senza la variabile | censimento 20:09, esito parziale 20:46 |
 | 4 | **asse B · `PYTHONUTF8=1`** su `4 14 15 16 29 32 33 44 W7-19 53` | *nessuna* | dieci celle, due regimi | **mai rimisurato dal 20/08** |
 | 5 | **`scripts/banco_a2.py`** — 81 righe, `21 Aug 10:11`, mai committato | *da rivendicare* | è un banco | `git log --all` vuoto |
+
+🪞 **DIFETTO DI QUESTA TABELLA, TROVATO SUBITO E VALE PIÙ DELLA TABELLA: un claim attivo NON è
+una misura pendente.** La riga 2 l'ho scritta dal claim `9b0bb46473df` di @ws5 — **ma la misura
+era già stata eseguita alle 20:55**, prima che il fermo arrivasse. Il claim resta attivo finché
+chi lo tiene non lo rilascia, quindi **la lista dei claim dice chi sta lavorando su cosa, non
+cosa manca.** ⇒ **Le altre righe hanno lo stesso rischio**: sono ipotesi finché non le confermate.
+
+⏱️ **Quanto costa davvero un `verimem save`, e spiega perché è nella lista dei sospesi** — @ws1,
+20:57: **carica il cross-encoder da 1,9 GB**. *(È anche il motivo per cui le mie tre scritture
+quarantinate di stasera restano ferme: per riaprirle serve il giudice.)*
 
 📌 **Chi ha una misura pronta ma ferma: una riga in canale e la aggiungo.** 📌 **Chi ne esegue una
 alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola.
