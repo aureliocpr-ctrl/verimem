@@ -3032,3 +3032,46 @@ non che non esista. Chi vuole chiuderlo deve costruire il caso multi-hop.
 · Cinque fatti, due query, una lingua.
 · **Non tocca la validità dei confronti A/B fra due store**: se la fusione è saltata in entrambi i
 rami, la variabile isolata resta isolata. Tocca le **grandezze assolute**.
+
+---
+
+### 🔴 `L3-coexistence` NON REGISTRA LA CONTROPARTE IN **7 CASI SU 11** — e stanotte ne ho trovato uno vivo che è un falso positivo
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:25 · **Livello**: lo store reale, `mode=ro`,
+nessuna scrittura. **Non ho letto il codice del layer** (è del gate, @ws4/@ws5): misuro **lo stato
+nel corpus**.
+
+#### ① Il numero
+Degli **11** fatti che `L3-coexistence` ha fermato dal 24/08: **7 sono muti** — `superseded_by =
+NULL` **e** hanno ritirato **0 fatti**. Né hanno perso contro qualcuno, né fatto perdere qualcuno.
+🔑 **Il layer il cui nome implica una COPPIA non registra il secondo elemento in due casi su tre.**
+⇒ chi rilegge sa **che** c'è stata una collisione e non **con cosa**: **non può giudicare se il
+ritiro fosse giusto.**
+
+#### ② Il caso vivo, scritto stanotte alle 00:04
+Topic `guardia/loop-wakeup-ricorrente`, quattro fatti:
+| | fatto | esito |
+|---|---|---|
+| 1 | «Il job **0e84166a** era un one-shot programmato per le 11:58 PM» | ✅ **99,9** |
+| 2 | «Il job **04516f02** è ricorrente ogni 5 minuti» | ✅ **100,0** |
+| 3 | **«Il job 0e84166a è stato cancellato.»** | 🔴 **quarantinato**, g=**63,0** |
+| 4 | «**Dopo la cancellazione** `CronList` elenca solo il job 04516f02» | ✅ **99,8** |
+
+🔑 **Il fatto ④, ammesso a 99,8, CONFERMA il fatto ③ che è stato quarantinato.** Non è che manchi la
+controparte: **la controparte è d'accordo.**
+
+#### ③ La ricostruzione — e la dichiaro come ricostruzione
+Il layer avrà letto ① «era un one-shot **programmato**» contro ③ «è stato **cancellato**» come non
+coesistenti. **Ma sono due stati SUCCESSIVI della stessa cosa.** ⇒ variante del nodo noto «*le misure
+ripetute sono serie storiche, non conflitti*», qui su **stati di un oggetto** invece che su misure.
+⚠️ **Questo pezzo è mio ragionamento, non una misura**: ciò che ho misurato è lo **stato nel corpus**.
+
+#### ④ Perché il caso si è potuto giudicare
+**Solo perché gli altri tre fatti erano nello stesso topic e li ho letti a mano.** Per i 7 muti in
+generale **quella fortuna non c'è**: è esattamente il costo del punto ①.
+
+#### Limiti
+· 11 fatti in tutto: **base minuscola**. Il layer pesa poco; la **qualità** dei suoi errori è alta.
+· Non ho letto il codice: **non affermo il meccanismo**, lo ipotizzo.
+· Il fatto ③ è recuperabile (`a2e496add8e2`, contenuto intatto, fuori dal recall di default).
+**Non l'ho toccato**: è di un'altra istanza.
