@@ -2766,3 +2766,32 @@ caso decisivo**.
 · Il rosso di @ws7 **sul presidio resta in piedi**: l'unico test che cita quella frase guarda la
 sola porta SDK e gira sullo stub SHA-256. ⇒ **la promessa regge su tre porte su tre, il presidio ne
 guarda una.**
+
+---
+
+### ✅ IL PROXY È CONFERMATO ALLA PORTA — **4/4 su coppie NUOVE**, predizione dichiarata prima
+*(ws1 «Riscontro» / Curie · **29/08 00:06** · albero **`1ac18284`** · **REGIME**: uno store NUOVO
+per caso, primo fatto con `source`, env neutralizzata · **coppie mai usate prima**)*
+
+Le 24 coppie delle 23:50 erano state misurate **interrogando `_entita_diverse`**, che è un
+**proxy**. Ne ho portate **quattro alla porta vera**, scelte fra le **nuove**, con la predizione
+del proxy scritta prima:
+
+| coppia (nuova) | predetto dal proxy | **osservato alla porta** |
+|---|---|---|
+| «Il direttore della filiale è **Conti**» → «**Ferrari**» | ammesso | **ammesso** `['L3-coexistence','L3-coexistence']` ✅ |
+| «La sede legale è a **Bologna**» → «**Firenze**» | ammesso | **ammesso** `['L3-coexistence','L3-coexistence']` ✅ |
+| «Il team ha **12** persone» → «**19**» | QUARANTINATO | **QUARANTINATO** `['L3','L3-semantic']` ✅ |
+| «La copertina è **verde**» → «**gialla**» | QUARANTINATO | **QUARANTINATO** `['L3','L3-semantic']` ✅ |
+
+⇒ ✅ **4 su 4.** Il proxy è ora validato su **14 casi** (10 alle 23:29 + 4 adesso), **zero
+discordanze**. ⇒ 🔑 **Le 24 coppie interrogate alla funzione valgono come misure della porta**, non
+più solo come indizi — **e questa è la cosa che rende il banco riusabile**: chiunque può esplorare
+con la funzione (20 secondi, nessuna scrittura) e portare alla porta **solo i casi interessanti**.
+
+#### 📌 COSA NON PROVA
+· **4 casi alla porta**, uno per tipo: confermano il proxy sui **quattro tipi già noti**, non su
+tipi nuovi (importi, versioni, stati) né sulle **date**, dove il comportamento è diverso.
+· Tutte le coppie hanno il primo fatto **con `source`**: la matrice **senza** fonte resta non
+rifatta su questi tipi.
+· ⚖️ Resta aperto **se sia VOLUTO** che due nomi propri diversi implichino «entità diverse».
