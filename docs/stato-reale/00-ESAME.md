@@ -1171,3 +1171,63 @@ misurato anche `ovunque` era vuoto.
 la CI non è verde, mentre la verità è che **non ha ancora risposto**. Le vie sono due: **aspettare
 che la coda dreni**, oppure **`PUBLISH_ANYWAY=1`**, che pubblica **dichiarando che il pacchetto
 non è coperto dalla suite**.
+
+---
+
+### 🔎 IL CANCELLO DEL PUBLISH HA **TRE USCITE E OGGI NE USA UNA** — il ramo «non è su main» è cieco
+*(ws1 «Riscontro» / Curie · **28/08 20:45** · **REGIME**: letture pure — `gh run list`, `gh api`,
+`sed` su `ci.yml` — **nessun effetto, nessun PR aperto** · repo `aureliocpr-ctrl/verimem`, chiesto
+a `gh repo view`)*
+
+Il ramo che non avevo mai visto scattare:
+```
+elif [ -z "$su_main" ] && [ -n "$ovunque" ]; then
+  "::error:: … quel commit non e' mai entrato nel ramo principale …"
+```
+**NON si attiva, per due ragioni indipendenti.** ⚠️ **E non lo chiamo «codice morto»: sarebbe falso.**
+
+#### ① Nessuno sha lo attiva — e non è un caso
+| | |
+|---|---|
+| rami remoti nel repo | **238** |
+| run di `ci` esaminati | **300** |
+| run di `ci` **NON su main** | **0** |
+
+**Causa**, letta in `ci.yml` (sola lettura, righe 3-7): `on: push: branches: [main]` /
+`pull_request: branches: [main]`. ⇒ La CI **non parte** su un push a un ramo di lavoro; parte su un
+**PR verso main**, e lì `head_branch` sarebbe il ramo del PR ⇒ **il ramo `elif` sarebbe raggiungibile
+per quella via**. Ma in 300 run **non c'è un solo PR**: si pusha direttamente su main — proprio come
+dice il commento del file, «*otto autori sullo stesso ramo*».
+⇒ **Raggiungibile in teoria, mai esercitato in pratica.** Non è codice morto: **è codice che aspetta
+un modo di lavorare che non usiamo.**
+
+#### ② Più seria: il ramo è CIECO finché la CI non conclude
+Richiede `[ -n "$ovunque" ]`, cioè «esiste una `conclusion`». Ma **0 run su 60 hanno una
+`conclusion` non vuota** (60 su 60 `queued`, `conclusion=null`), e il filtro schiaccia `null` a
+stringa vuota con `// ""`.
+⇒ **Se qualcuno taggasse un commit fuori da main MENTRE la CI è in coda**, `ovunque` sarebbe vuoto
+anche per lui ⇒ si finirebbe nell'`else`, e il messaggio **non** direbbe «non è su main» ma «la CI
+non è verde». ⇒ **La diagnosi giusta arriva solo se la CI ha già concluso. Con la coda di adesso,
+non arriva mai.**
+
+#### 🗺️ LA MAPPA COMPLETA
+| condizione | uscita | stato |
+|---|---|---|
+| `su_main = "success"` | **pubblica** | mai osservato (nessuna `conclusion`) |
+| `su_main` vuoto **e** `ovunque` non vuoto | «non è su main» | **irraggiungibile oggi** (due ragioni) |
+| tutto il resto | «la CI non è verde» | ⬅️ **l'unico che scatta** |
+
+#### 🎯 PERCHÉ CONTA PER C9 (il repo regge il ricercatore ostile)
+Un analista che legge `publish.yml` vede **tre casi distinti** e conclude «il cancello sa distinguere
+un commit fuori da main». **Misurato: non lo distingue**, perché la condizione che glielo direbbe
+dipende da una `conclusion` che oggi non esiste mai. 🔑 **Non è una promessa scritta nel README: è
+una promessa scritta NELLA STRUTTURA del codice, e quelle contano uguale.**
+⇒ **Formulazione difendibile**: «*il cancello ferma il rilascio quando la CI non è verde; la
+distinzione fra «rossa», «non ha risposto» e «non è su main» NON è operativa finché la coda non
+dreni*».
+
+#### 📌 COSA NON PROVA
+· **300 run** è la finestra che `gh` mi ha dato, **non tutta la storia** del repo.
+· **Non ho provocato un PR** per vedere il ramo scattare, e **non lo farò**: aprire un PR su un repo
+in fase di rilascio, con la coda già satura, **sarebbe un intervento e non una misura**.
+· Non so se **prima** di questi 300 run ci siano stati run da PR.
