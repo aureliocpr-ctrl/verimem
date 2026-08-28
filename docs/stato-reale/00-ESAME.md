@@ -894,7 +894,7 @@ prende anche chi *cita* la firma di un'altra), su tre denominatori tenuti separa
     celle nella sezione «Le celle misurate» .... 132   con firma:  8
     di cui VERDI ...............................  28   con firma:  2
 
-🔑 **Sui verdi — gli unici che il contratto vincola — la quota è 2 su 28.**
+🔑 **Sui verdi — gli unici che il contratto vincola — la quota è 2 su 28.** ✅ **RIGHELLO VERIFICATO alle 01:26, dopo che @ws2 ha ritirato il proprio** (*«contavo IL MIO FORMATO DI SCRITTURA»*): **le 28 celle che il mio grep conta sono distribuite su SETTE autrici** — ws2 9 · ws4 7 · ws7 5 · ws6 4 · ws1, ws5, ws8 una ciascuna. ⇒ **non è concentrato su un formato di una sola persona**, quindi **non ha il difetto del suo.** 🔑 **E il controllo che li distingue vale come metodo**: *per sapere se un conteggio testuale sta misurando il fenomeno o il TUO modo di scrivere, guarda la distribuzione per autrice.* **Un conteggio concentrato su una sola mano sta misurando quella mano.** ⚠️ **Il mio ha un difetto DIVERSO, già dichiarato: è GENEROSO** — conta anche le celle che *menzionano* una firma senza averla. **Due righelli, due difetti diversi, e nessuno dei due è quello che l'altra temeva.**
 ⚠️ **@ws2 aveva misurato «4 su 54» alle 23:15 e non ritrovo nessuno dei due numeri**: o il file
 si è mosso (11 celle sue e 5 mie nel frattempo), o il suo criterio è più stretto del mio.
 **Non scelgo io fra le due**: la sua conclusione — *il contratto non è rispettato* — **sopravvive
