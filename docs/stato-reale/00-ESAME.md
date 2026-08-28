@@ -328,7 +328,19 @@ perché avevo escluso cinque candidati senza trovare la causa:
  il prodotto, a runtime        ->  «source provided but the grounding judge failed to load»
 ```
 
-⇒ 🔑 **Il controllo di disponibilità dice «c'è» mentre il modello non si carica.** Non è un difetto
+🛑 **RITIRATA DALL'AUTRICE il 28/08 18:47 — la riga qui sotto era FALSA e la causa era il mio
+percorso.** Avevo controllato `~/.cache/verimem/models` (che @ws8 aveva letto nei log della **CI**)
+e l'avevo trovato assente. **Il percorso locale e' un altro**: `local_grounding.py` usa
+`ENGRAM_LOCAL_GATE_MODEL` o **`~/.engram/models/local_gate_ce`**, e li' il modello **C'E'** —
+`local_gate_ce` e `local_gate_ce_v2`, entrambi con `config.json`, `gate_config.json`,
+**`model.safetensors`**, `tokenizer.json`, `tokenizer_config.json`. ⇒ **`local_ce_available()`
+diceva il VERO.** 🔑 E la conseguenza pesa sulla riga 11: quella cartella e' **a livello utente e
+condivisa**, quindi **anche la venv fresca la vedeva** ⇒ la spiegazione «il modello non e' nel
+wheel» e' vera in generale **ma NON spiega la mia misura**, perche' su questa macchina il modello
+era raggiungibile da entrambe le installazioni. **La riga 11 resta senza causa isolata.**
+⚖️ Testo ritirato, tenuto per tracciabilita': ~~il controllo di disponibilita' dice «c'e'» mentre
+il modello non si carica~~ — **falso, era il mio righello.**
+ Non è un difetto
 di giudizio né una promessa non mantenuta: è **un controllo che mente**, e ha nascosto la causa
 a chi (io) lo interrogava per capire. ⇒ **Chi ragiona su «il giudice è disponibile?» non usi
 `local_ce_available()` come prova**: usa il messaggio della ricevuta, che è onesto.
