@@ -252,6 +252,20 @@ non se serve.
 📌 **Quello che questa tabella rende visibile e prima non lo era**: dopo lo sweep del 28/08,
 **otto cancelli su dieci** hanno almeno una cella; i due che non ne hanno sono i due che reggono.
 
+🚨 **IL LIMITE DI TUTTA QUESTA TABELLA, e non è una cella: è il meccanismo** — misura di @ws8,
+28/08 20:30. `publish.yml` ha **7 run in tutto** e l'ultimo è del **22/07**: **37 giorni**. Dopo
+quella data sono stati fatti **8 commit** su quel file, per **219 righe aggiunte su 264** ⇒
+**l'83% del workflow di rilascio non è mai stato eseguito nemmeno una volta.** E i titoli dicono
+che sono protezioni, non ritocchi: *«a tag alone could ship to PyPI, with the CI red»*, *«the
+gate asked whether the CI was green, not whether the commit was on main»*, *«lo scavalcamento
+del cancello non lasciava traccia»*.
+🔑 **Il ponte dice quali celle toccano quali criteri; questo dice che il CODICE CHE APPLICA i
+criteri partirà per la prima volta il giorno del tag.** Sono due cose diverse e vanno lette
+insieme: **un cancello verde applicato da un esecutore mai eseguito non è un cancello chiuso.**
+⚖️ Ciò che @ws8 **ha** potuto verificare senza eseguire, e che va detto accanto: i 6 blocchi
+`run:` passano `bash -n` **6 su 6**, con il controllo che deve fallire superato ⇒ **non è rotto:
+è non provato.** Sono due affermazioni distinte e la seconda non implica la prima.
+
 ⚠️ **Come è stato fatto lo sweep, perché il righello ha sbagliato e non l'ho consegnato.** Ho
 cercato per parole chiave nella colonna «domanda» e ho ottenuto **sette candidati**: leggendoli,
 **tre erano falsi positivi dello stesso tipo** — il pattern `ci` per «CI» pesca il **pronome
@@ -473,6 +487,22 @@ testa, e le sue dieci le avevo lasciate tutte nel gruppo «da chiedere», indist
 ⚠️ **E l'asse B non è del prodotto** — è dell'interprete — il che lo rende più insidioso, non
 meno: **nessuna cella dichiara nel proprio regime se `PYTHONUTF8` era acceso**, e per una
 misura su testo italiano è la differenza fra riprodursi e non riprodursi.
+
+#### 🔧 **«Verificato» non è uno stato solo: sono DUE, e si tolgono separatamente** — @ws4, 20:31
+
+Correzione strutturale alla mia colonna, e viene da chi le misure le ha fatte. Il verde-di-casa
+ha **due dimensioni indipendenti**, e le stavo trattando come una:
+
+| dimensione | cosa si toglie | quanto costa | chi l'ha già fatto |
+|---|---|---|---|
+| **env verificate** | le nostre variabili | **un `env -u`** | @ws2 (7 casi, 08/08) · @ws6 (asse A) · **@ws4 stasera: 7 attive contro 0, «identiche alla PRIMA CIFRA DECIMALE — non simili: uguali»** |
+| **pacchetto verificato** | il nostro albero, in favore del wheel | **una venv** | @ws1 (cella `20`, `2`, `11`) |
+
+🔑 **La misura di @ws4 ne toglie UNA sola, e l'ha dichiarato lei prima che glielo chiedesse
+qualcuno**: *«il codice resta lo stesso albero, non il wheel installato: questa non è una venv
+pulita e non sostituisce la riverifica in regime installato»*. ⇒ **Un verde che ha superato solo
+la prima non è un verde utente**, ed è precisamente la distinzione che il mio censimento
+schiacciava in un unico «da chiedere».
 
 ⚖️ **La metà che non fa comodo al mio allarme, e va scritta per prima.** Il censimento
 dell'ambiente **esiste già ed è a favore del prodotto**: @ws2, 08/08, `02d…md:9-14` — rimisurati
