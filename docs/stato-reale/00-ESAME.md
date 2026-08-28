@@ -83,6 +83,80 @@ non se serve.
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
 
+## Triage delle rosse — F2, richiesto da `lead-audit` il 28/08
+
+> **Conta contata**: `python scripts/conta_celle_esame.py` → **38 rosse** su 69 celle.
+> ⚠️ *Il numero «36 rosse» dell'ordine del giorno veniva dal conto vecchio, che sbagliava di
+> tre celle: il righello contava rossa ogni cella che **contiene** 🔴, incluse le tre che
+> dicono «🟢 sì, dopo cura (era 🔴)».*
+>
+> **Etichetta = che TIPO di intervento serve, non quanto è grave.** Una `decisione-CEO` può
+> essere il difetto peggiore del registro; una `cura-quick` può restare aperta per mesi.
+> **L'owner è PROPOSTO da chi tiene il registro, non assegnato**: lo conferma chi lo prende.
+
+### 🔵 decisione-CEO — non si curano, si scelgono (3)
+
+| cella | la scelta, in una riga | owner |
+|---|---|---|
+| **2** | la 0.7.0 su PyPI non avvia il server MCP: **yank · avviso sulla pagina · release accelerata**. È la VOCE 0 | **Aurelio** |
+| **27** | il gate lancia `claude -p` **senza `--model`**: fissare il modello del giudice (e scriverlo nella ricevuta) cambia i punteggi già emessi | **Aurelio** |
+| **W7-10** | `backup-all` copre 3 tier su 9: **rinominare** il comando (rompe chi lo invoca) **o estenderlo** (cambia cosa produce) | **Aurelio**, proposta da ws5 |
+
+### 🟢 cura-quick — la cura è nota e il costo è dichiarato (8)
+
+| cella | cura | costo dichiarato da chi ha misurato | owner proposto |
+|---|---|---|---|
+| **W7-1** | l'advice di `L1.9` suggerisce una forma che non passa mai | «**una riga di testo**» | ws8 |
+| **W7-5** | span della prova troncato a 400 | «**una riga**, variabile già esistente; **verdetto identico** con 400 contro 932» | ws1 |
+| **W7-6** | `correct` chiede un id che `recall` non stampa | «**la cura è una riga**» | ws5 |
+| **7** | SDK dice `warnings`, MCP dice `anti_confab_warnings` | allineare **un nome** (o esporre entrambi) | ws2 |
+| **26** | il parser del punteggio rifiuta `**55**` e la prosa | allargare **un pattern** | ws4 |
+| **50** | la ricevuta di `add()` non ha la chiave `layers` | aggiungere **una chiave** già calcolata a monte | ws3 |
+| **W7-15** | `confidence` anti-correlata · `last_seen` = «letto» | rinominare **o** documentare nel punto d'uso | ws5 |
+| **W7-16** | `file:` non è nella lista dei prefissi accettati | aggiungerlo **alla lista** | ws8 |
+
+### 🟠 strutturale · lo strato soggetto-valore (12) — **è F1, la cura che ne chiude tre**
+
+`30` omissione senza presidio · `49` chi decide sullo scambio · `W7-13` `L4.1` tace 0/12 ·
+`W7-7` attribuzione 3/7 · `W7-8` conta il **contorno** · `W7-9` (ws4) l'**unità** ·
+`W7-14` il contorno ribalta in **entrambe** le direzioni · `3` numeri comuni ·
+`5` l'unità non entra nel confronto · `13` il ricalco con clausola cambiata ·
+`22` è la **ripetizione**, non la lunghezza · `W7-2` cifra assente 9/10.
+
+> 🔑 **Dodici rosse su trentotto sono lo stesso buco visto da dodici lati.** È il motivo per cui
+> `lead-audit` mette F1 davanti a tutto, ed è il miglior rapporto costo/beneficio del registro.
+> **Owner: ws3 + ws5 in coppia** (design falsificabile prima, poi review, poi implementazione).
+
+### 🟠 strutturale · architettura del gate (6)
+
+| cella | il nodo | owner proposto |
+|---|---|---|
+| **37** | **nove chiamanti** validano le scritture, nessuna superficie unica | ws2 |
+| **28** | i nove passano **quattro argomenti in comune su diciannove** | ws2 |
+| **23** | `verimem save` passa `meta_narrative=True` e **spegne `L1`** | ws8 |
+| **21** · **35** | l'attestazione è onorata su SDK e non su MCP (causa: `repo_root`) | ws2 |
+| **W7-11** | una quantificazione universale non passa | ws8 |
+
+### 🟠 strutturale · gli altri (9)
+
+`6` grounding non monotono · `12` la negazione non esplicita 46/108 ·
+`19` l'affidabilità varia 10× per classe e lingua · `36` la rete sugli errori ad alto punteggio ·
+`45` · `W7-17` **N record distinti nello stesso topic** · `47` lo stesso fatto cambia verdetto ·
+`W7-3` `L4.1` ferma anche il vero · `W7-12` il gate insegna a chi lo usa.
+
+> ⚠️ **`45` e `W7-17` sono la stessa domanda scritta due volte** («N record distinti nello stesso
+> topic coesistono?» / «tre record distinti…»), da due mani in due momenti. **Non le fondo io**:
+> i regimi vanno confrontati da chi li ha misurati — @ws2, sono entrambe tue.
+
+### Cosa dice il triage, letto tutto insieme
+
+- **3 rosse su 38 non sono difetti**: sono scelte che aspettano una decisione, e **due
+  aspettano Aurelio da ieri**.
+- **8 hanno una cura che chi l'ha misurata ha già scritto** — costo dichiarato, nessuna
+  richiede progettazione. **Sono il lavoro più a portata di mano del registro.**
+- **27 sono strutturali, e 12 di quelle sono la stessa falla.** ⇒ Chiudere F1 non toglie 12
+  righe dal registro: **toglie un buco solo, che si presenta con dodici facce**.
+
 ## Il ponte con `RELEASE_GATE.md` — quali celle toccano quali cancelli
 
 > `RELEASE_GATE.md` è il gate del **tag**; questo file è la **mappa**, di cui il gate è il
