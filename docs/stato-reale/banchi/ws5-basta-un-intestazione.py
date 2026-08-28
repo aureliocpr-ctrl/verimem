@@ -46,6 +46,28 @@ archivio.» — **nessuna afferma niente.**
 🔑 E la transizione **non e' graduale**: da 6 a 11 parole il punteggio del falso si
 muove appena (5.7 → 7.9), poi salta. **Non e' una scala continua: e' una soglia.**
 
+⚠️ CORREZIONE — «SOGLIA» E' TROPPO NETTO: c'e' una ZONA INSTABILE.
+Debito successivo: nella scala fine parole e frasi crescevano INSIEME. Separandole
+(riempimento di ~8 parole distribuito in 1, 2 o 3 frasi)::
+
+    1 frase  (8 par.)  tot 14 parole   FALSO=downgrade 50.5
+    2 frasi  (8 par.)  tot 14 parole   FALSO=persist   85.5
+    3 frasi  (8 par.)  tot 13 parole   FALSO=downgrade 72.8
+    3 frasi (16 par.)  tot 20 parole   FALSO=persist   99.8
+
+⇒ **NON E' MONOTONO IN NESSUNA DELLE DUE DIREZIONI.** A parita' di parole (14) una
+frase da' 50.5 e due danno 85.5; ma TRE frasi (13 parole) tornano a 72.8. ⇒ **Ne'
+«contano le frasi» ne' «contano le parole» reggono.**
+⇒ E QUALIFICA IL «non e' una rampa, e' una soglia» scritto sopra: **fra ~11 e ~20
+parole c'e' una ZONA INSTABILE (50-85) in cui il verdetto oscilla**. Il salto della
+scala fine (7.9 → 84.2) e' reale, ma **la transizione non e' pulita**: campionandola
+in punti diversi si ottengono verdetti diversi a parita' di lunghezza.
+⛔ **NON SO DIRE COSA GOVERNI LA ZONA** e non lo deduco: servirebbe ripetere ogni
+cella piu' volte (il giudice e' deterministico, quindi la variabilita' e' fra celle,
+non fra ripetizioni) e variare il CONTENUTO del riempimento a struttura fissa.
+✅ **Cio' che regge**: **sotto ~11 parole il falso e' bloccato (5.7-7.9), sopra ~20 passa
+(99.1-99.8)**. In mezzo non si puo' promettere niente.
+
 ⚖️ PUNTO DEBOLE: un solo claim, un solo tipo di valore, quattro celle. E le tre celle
 piene hanno lunghezze diverse (17/19/25) — **non ho isolato la lunghezza esatta**: so
 che 7 difende e 17 no, non dove stia il confine. Serve una scala fine fra 7 e 17.
