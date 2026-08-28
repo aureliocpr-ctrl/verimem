@@ -4000,3 +4000,52 @@ contraddizione è stata scavalcata** — perché quando `_entita_diverse` rispon
 il conflitto sparisce **prima** che ci sia qualcosa da dichiarare.
 🔑 **La ricevuta non può dire ciò che il gate non ha deciso.** Il limite è a monte, in
 `_record_numerati_diversi`, non in `1cb62c35`. ⇒ **Firmo la cura. Il buco è mio, non suo.**
+
+---
+
+### 🔴🔴🔴 DUE ANNUALITÀ DELLO STESSO CONTRATTO: il recall risponde con **l'anno sbagliato**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 01:15 · **Banco**:
+`docs/stato-reale/banchi/ws6-due-annualita-dello-stesso-contratto.py` · **Porta SDK**, store
+temporaneo, modello vero. **È il caso d'uso più naturale che esista, e finora era stato misurato
+solo sui nostri referti.**
+
+```
+fonte  : «Contratto di locazione. Il canone annuo era di 12000 EUR nel 2025 ed è di 15000 EUR nel 2026.»
+fatto 1: «Il canone annuo del 2025 è 12000 EUR.»   → ammesso, grounding  99,9
+fatto 2: «Il canone annuo del 2026 è 15000 EUR.»   → ammesso, grounding 100,0
+```
+**Entrambi veri. Entrambi nella STESSA fonte, che li contiene ENTRAMBI.**
+
+| | |
+|---|---|
+| il secondo | **supersede il primo** |
+| «Qual era il canone nel **2025**?» | 🔴 **«Il canone annuo del 2026 è 15000 EUR.»** |
+
+⇒ **Non è una perdita: è una RISPOSTA SBAGLIATA a una domanda precisa**, e **nulla la segnala.**
+🔑 **I due fatti non sono in conflitto**: sono **due anni diversi**, nominati nella proposition **e**
+nella fonte. Il prodotto li tratta come «evoluzione dello stesso valore» perché **il raggruppamento è
+per TOPIC**.
+
+#### ⛔ Il controllo, ed è ciò che rende il difetto azionabile
+| regime | superseduti | risposta a «canone 2025?» |
+|---|---:|---|
+| **stesso topic** (`contratto/canone`) | **1** | 🔴 «canone **2026**» |
+| **topic distinti** (`…/2025`, `…/2026`) | **0** | ✅ **«canone 2025 = 12000»** |
+
+⇒ **Completamente evitabile.** La discriminante è il **topic**, non la fonte né il contenuto.
+
+#### 📌 Per il rilascio è una riga di documentazione, non una patch
+*«dai un topic per entità/periodo, non per argomento».* **Oggi non è scritto da nessuna parte**, e
+chi sbaglia **non riceve un avviso**: riceve una risposta **plausibile e falsa**.
+
+🔗 Si aggancia alla tensione già registrata (**cella 44**, @ws2): «*la cura un-topic-per-misura e la
+serie temporale corretta vogliono cose opposte*». **Qui la serie temporale È il caso d'uso** — un
+contratto con due annualità — **e il topic unico la rompe**. Non è un meccanismo nuovo: è **la sua
+conseguenza sul caso più comune**.
+
+#### Limiti
+Una coppia, italiano, porta SDK, due anni. **Non ho provato altre dimensioni** (due sedi, due
+clienti, due versioni). ⚖️ E la **cella 46** (@ws2) dice già che il comportamento **dipende
+dall'entità** (città e codici si distinguono, i nomi di persona in EN no) ⇒ **questo è una delle sue
+celle, non la regola.**
