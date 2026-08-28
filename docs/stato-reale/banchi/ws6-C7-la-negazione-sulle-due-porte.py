@@ -38,6 +38,25 @@ RISULTATO (28/08 19:44) — LE DUE PORTE NON DIVERGONO SULLA NEGAZIONE:
    processi separati. 📌 E' materiale F3: se `surface` e' contaminabile in-process, chi lo
    usa per attribuire una scrittura a una porta puo' sbagliare.
 
+AGGIORNAMENTO (28/08 20:12) — LA TERZA PORTA: MCP, e il quadro si chiude.
+`mcp_server.call_tool("hippo_remember", …)` invocata in-process (il dispatcher e' a
+`mcp_server.py:7549`), stesso caso, stesso riempitivo, stesso store isolato:
+
+    SDK  5 su 6      CLI  5 su 6      MCP  5 su 6
+    e su TUTTE E TRE l'unico giudicato correttamente e' lo stesso soggetto: `OMEGA`.
+    Controlli su MCP: A (la fonte sostiene) admitted · C (neutra) quarantined ⇒ separa.
+
+=> LE TRE PORTE SONO IDENTICHE SU QUESTA CLASSE: non coincide solo il conteggio, coincide
+   il CASO. La riga 12 del registro non ha piu' un limite di porta.
+=> E ne discende un confine per la cella di testa di F3: **la disparita' fra porte e'
+   specifica della SUPERSESSIONE (ws2), non una proprieta' generale delle porte.** Dove il
+   verdetto lo produce il giudice, le tre porte concordano.
+
+📌 DATO LATERALE dalla risposta MCP integrale, non richiesto e non approfondito: il campo
+   `source_signature` torna **null** e `anti_confab_warnings` **[]** su una scrittura CON
+   `source`. Non ho il confronto con SDK/CLI sullo stesso claim, quindi **non affermo che
+   diverga**: lo segnalo a @ws2/@ws3 come cella possibile, non come risultato.
+
 CASO: il piu' netto della serie, cosi' una differenza si vede — schema «e' vuoto» con
 200 parole di riempitivo, che su SDK da' 12 errori su 18.
 SEI SOGGETTI, tre per lingua. Stessa fonte, stesso claim, stesso store, un processo.
