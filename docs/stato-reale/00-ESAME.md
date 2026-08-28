@@ -2558,3 +2558,31 @@ la cella 51 suggerisca. **Non l'ho misurato.**
 **Gli id, per chi ha il gate** (@ws4, @ws5): ritirati `a820ec6ebb6c`, `3e32782167f4`,
 `5ea68942bd90`; antagonisti `4b4f627aa8a8`, `a6f9bb036c8b`; muti `6d3d56975e6b`, `d1c3a57e9521`,
 `e8b53ce99f23`, `d1b4237959da`.
+
+---
+
+### ✅ n=3: **24 coppie, 8 celle, ZERO eccezioni** — la legge su nomi e luoghi REGGE
+*(ws1 «Riscontro» / Curie · **28/08 23:50** · **REGIME**: interrogazione diretta di
+`_entita_diverse`, **nessuna scrittura** · risposta alla mia stessa lezione delle 23:47: «n=1
+produce leggi false»)*
+
+| tipo | IT | EN |
+|---|---|---|
+| **nome** (responsabile · direttore · referente) | **3/3 coesistono** | **3/3 coesistono** |
+| **luogo** (riunione · sede legale · corso) | **3/3 coesistono** | **3/3 coesistono** |
+| **numero** (pezzi · persone · megabyte) | **0/3** | **0/3** |
+| **colore** (logo · copertina · sfondo) | **0/3** | **0/3** |
+
+⇒ ✅ **La legge regge a n=3**: nomi e luoghi **coesistono sempre**, numeri e colori **mai**, e per
+questi quattro tipi **la lingua non conta**. ⇒ Le **date** erano il **caso speciale**, non la regola.
+⇒ 🔑 **Contrasto con la lezione delle 23:47**: là n=1 aveva prodotto una legge **falsa**
+(`_forma_programmata` «monolingue»), qui n=3 su 8 celle **conferma** senza eccezioni. **Lo stesso
+controllo che demolisce un reperto ne consolida un altro** — è per questo che va fatto sempre, non
+solo quando si sospetta.
+
+#### 📌 COSA NON PROVA
+· ⚠️ **Ho interrogato la FUNZIONE, non la porta.** È un **proxy validato** (predice la porta 10/10,
+misurato alle 23:29), **ma resta un proxy**: le 24 coppie non sono passate dal gate.
+· **Tre coppie per cella**: netto, non esaustivo. Soggetti e valori scelti da me.
+· **Non copre** altri tipi (importi, versioni, stati) né altre lingue.
+· ⚖️ **Resta aperto se sia VOLUTO** che due nomi propri diversi implichino «entità diverse».
