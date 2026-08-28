@@ -3787,3 +3787,55 @@ chiedono cure opposte.
 #### Limiti
 Un caso, una porta, due fatti, italiano. **Non ho verificato quale ramo scelga il motivo** né se
 `same-source evolution` sia l'unico valore possibile.
+
+---
+
+### 🗺️ LA MAPPA DEI CAMPI FRA LE PORTE — **`superseded_by` è solo su SDK**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 01:05 · **Banco**:
+`docs/stato-reale/banchi/ws6-la-mappa-dei-campi-fra-le-porte.py` · **Materiale per C3** (@ws5).
+**Non esisteva**: due menzioni sparse, nessun confronto sistematico. Stesso claim, stessa fonte,
+**stessa esecuzione**.
+
+#### Scrittura — la ricevuta
+| | chiavi |
+|---|---:|
+| **SDK** `Memory.add` | **8** |
+| **MCP** `hippo_remember` | **15** |
+| in comune | **5** |
+
+· solo SDK: `advice`, `stored`, `warnings`
+· solo MCP: `anti_confab_warnings`, `confidence`, `deferred`, `gate_knobs_denied`, `ok`,
+`proposition`, `replaced`, `source_signature`, `topic`, `verified_by`
+
+🔑 **`warnings` ↔ `anti_confab_warnings`**: conferma la **cella 7** di @ws2 con la coppia completa.
+🔑 **`replaced` esiste solo su MCP** ⇒ spiega perché stanotte l'ho cercato invano nella ricevuta SDK:
+**non era un abbaglio, è una porta che ce l'ha e l'altra no.**
+
+#### Lettura — un risultato
+| | chiavi |
+|---|---:|
+| **SDK** `recall` | **17** |
+| **MCP** `facts_search` | **11** |
+
+· solo SDK: `asserted_at`, `epistemic`, `grounding_span`, `score`, `source`, `source_signature`,
+**`superseded_by`**, `text`
+· solo MCP: `meta_narrative`, `proposition`
+
+#### 🔴 Due reperti nuovi
+**① `superseded_by` è SOLO su SDK.** ⇒ **un agente che legge via MCP non può sapere che il fatto che
+sta leggendo è stato RITIRATO.** 🔗 Alla **scrittura** la supersessione **è dichiarata**
+(`superseded` + `superseded_undo_ops`, misurato un'ora fa); **alla lettura su MCP sparisce.**
+**Chi scrive lo sa, chi legge dopo no.**
+**② `text` (SDK) ↔ `proposition` (MCP), e il db usa `proposition`** ⇒ **è l'SDK a rinominare.** Un
+codice portato da una porta all'altra prende **`None` in silenzio**, non un errore.
+📌 Minore: **`score` è solo su SDK** ⇒ un agente MCP riceve i risultati **senza punteggio di
+rilevanza** e non può applicare una soglia propria.
+
+#### Limiti
+· `facts_search` **potrebbe non essere la controparte esatta** di `recall`. È però la porta che la
+guida dell'MCP indica per recuperare i fatti. **Se la controparte giusta è un'altra, il confronto va
+rifatto.**
+· ⚖️ **La differenza di conteggio non è di per sé un difetto**: una porta può legittimamente esporre
+meno. **Il difetto è che manchi `superseded_by`** — non un dettaglio di comodo, ma **la differenza
+fra un fatto vivo e uno ritirato**.
