@@ -2318,3 +2318,55 @@ docstring del giudice («*EN/IT/FR/ES alike*») non descrive il flusso.
 Potrebbe essere una lista di parole italiane, un pattern, o altro. **Non lo affermo.**
 · ⚖️ Resta la domanda di fondo: **è voluto?** Una funzione che si chiama «stessa frase altra data»
 **dovrebbe** essere neutra rispetto alla lingua; ma finché non leggo, è un'aspettativa mia.
+
+---
+
+### 🔴 IL TIER DOCUMENTI DEL CORPUS È FATTO AL **92,1%** DEI NOSTRI SCRATCHPAD — e un debito mio, falsificato
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-28, 23:35 · **Livello**: lo **store reale di Aurelio**,
+letto in `mode=ro` · **Nessuna scrittura, nessuna cancellazione proposta.**
+
+**Da dove nasce**: ieri avevo dichiarato un **debito mio** — `docs/stato-reale/05-ingestione-documenti.md`
+(mio, 08/08) dichiara `ENGRAM_DATA_DIR` come regime di isolamento, e `ENGRAM_DATA_DIR` **non isola**
+(vince `HIPPO_DATA_DIR`, `config.py:26,44-48`). Quindi quel banco poteva aver scritto **nello store
+principale**. Sono andato a verificarlo, e ho trovato due cose: **il mio debito non esiste**, e
+**l'indice contiene tutt'altro**.
+
+#### ① Il debito è falsificato
+Tutti e sei i file di quel banco danno **0 chunk**: `prova.txt` 0 · `prova.pdf` 0 · `prova.docx` 0 ·
+`cinese.txt` 0 · `grande.txt` 0 · `rotto.pdf` 0. **Il banco dell'08/08 non è fuggito nello store
+principale.** Lo dichiaro con lo stesso rilievo con cui avevo aperto il sospetto.
+
+#### ② La composizione dell'indice
+⚠️ **Terza istanza della trappola del percorso**: l'indice **non** sta in `~/.engram/docindex.db`
+(che non esiste) ma in **`~/.engram/documents/document_index.db`**. Chi lo cerca dove sembra
+ovvio conclude che il tier documenti sia vuoto.
+
+| | chunk | documenti |
+|---|---:|---:|
+| **totale** | **683** | **30** |
+| da directory **temporanee** | **629 — 92,1%** | **28 — 93%** |
+| **non** temporanei | **54** | **2** |
+
+I due non temporanei sono `docs\ROADMAP-v0.7.md` (53 chunk) e `contract.txt` (1). I 28 temporanei
+sono **i nostri file di lavoro** di inizio agosto, da **due session-id diversi**: 334 chunk da un
+solo `HANDOFF-dogfooding-2026-08-01.md`, 52 da `PER-WS3-WS6-il-giro-delle-porte-04-08-notte.md`,
+poi una ventina di `PER-WS3-*`.
+
+#### ③ Perché è una misura e non igiene
+Il tier documenti è **ciò che il prodotto offre a un utente per interrogare i PROPRI documenti**. In
+questo store quel tier **non contiene documenti di un utente**: contiene i nostri appunti, per il
+92%. ⇒ **Ogni misura di qualità del retrieval documenti fatta qui misura noi, non un caso d'uso**, e
+chi la legge come «il tier documenti regge sul corpus reale» sta leggendo un'altra cosa.
+🔑 Si aggancia alla lezione «**il PERIMETRO decide il numero**»: qui il perimetro non è stato scelto,
+si è **sedimentato**.
+
+#### Limiti
+· **Non so quale parte sia fuga di banchi e quale indicizzazione voluta.** 334 chunk da un solo
+handoff somigliano a un uso deliberato (qualcuno voleva ritrovarselo), non a una fuga. **Non
+attribuisco, conto.**
+· **Non propongo di cancellare nulla** e non ho toccato lo store: la scelta è di Aurelio.
+· Il conto «temporanee» è `\Temp\` nel `source_id`: un documento vero che stesse in una cartella
+temporanea sarebbe contato lì dentro. **Il criterio è dichiarato, non nascosto.**
+
+Fatti: `9153f3fdb3b9`, `f9c3964d0f21`.
