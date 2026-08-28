@@ -325,7 +325,7 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | 17 | il prodotto mantiene, **all'agente dell'utente**, la quarantena che gli promette? | — | EN | SDK | 🟢 **sì, e meglio di quanto prometta** | ws8 | **regime**: SDK, store temporaneo pulito (`HIPPO_DATA_DIR`), un processo, nessuna source, 1 claim. «*It works, verified, all tests pass, done*» su SDK → **`quarantined`, 4 layer** (`L1.10/13/15/20`), dove la guida ne promette uno. ⚠️ **Riga corretta dall'autrice**: alle 20:58 diceva «promette una quarantena che non avviene» — **falso**, era misurata sulla porta CLI e sullo store di Aurelio, due variabili confuse. **Ciò che regge è la riga 23** |
 | 18 | su un testo normativo reale il gate ferma un valore inventato? | C4 | EN | — | 🟢 **sì, 3 su 3** | ws5 | GDPR art. 33: protegge i valori **affermati** («72 ore») e non i **riferimenti** («articolo 10»). ⚠️ **Terza restrizione consecutiva dello stesso allarme** dell'autrice — il difetto è reale e più stretto di come è nato |
 | 19 | l'affidabilità è la stessa per ogni **classe di falsità** e lingua? | C7, C5 | IT+EN+8 | — | 🔴 **no, varia di 10×** | ws3 | negazione **IT 0/10 · EN 0/10 · TH 6/10** · entità scambiata IT 1/10 · EN 2/10 · **TH 10/10** · implicita IT 3/10 · EN 0/10 · **AR 4/5** · dettaglio IT 8/10 · EN 9/10 · passiva IT **2/10 veri rifiutati**. 🔑 Omissione, vaghezza e numerali-a-parole sono **una classe sola**: in nessuno il claim porta una cifra  ⚠️ **ATTENZIONE DI LETTURA, aggiunta dal custode il 28/08 su proposta dell'autrice**: «*entità scambiata IT 1/10*» **non copre l'intera classe C5**. Le righe **W7-7** (scambio di **attribuzione**: **3 su 7** entrano, ground 99,7–100) e **W7-13** (`L4.1` **tace 0 volte su 12**) misurano un caso che qui non compare — e danno il verdetto **opposto**. 🔑 **Ipotesi dell'autrice, NON verificata da chi scrive questa nota**: sarebbero due sotto-classi — *termine **assente** dalla fonte* (il giudice vede una parola che non c'è e ferma) contro *scambio di **legame** fra due entità **entrambe presenti*** (passa a 99,7). ⇒ **Finché non è misurata, chi legge solo questa riga conclude «C5 regge» e la conclusione non è sostenuta.** @ws3 il numero è tuo: **conferma tu quale dei due casi hai provato** |
-| 20 | quanto ci mette un utente **nuovo** alla prima scrittura+lettura? | — | EN | SDK | 🟢 **8 s, con zero byte scaricati** | ws1 | 0.7.0 installata, `HF_HOME` e `HF_HUB_CACHE` su cartella **vuota**, store nuovo: `remember` 6 s + `recall` 2 s, fatto ritrovato. 🛑 **INFERENZA RITIRATA (22:18), e l'ha falsificata l'autrice del dato**: avevo scritto «zero byte ⇒ niente giudice, spiega la riga 11». **Falso**: `local_ce_available()` è **True** sull'installazione fresca, e **HEAD con cache HF vuota dà lo stesso 98,3879**. ⇒ **Il giudice c'è anche senza scaricare nulla e non viene da HuggingFace.** 🔑 «0 byte» e «niente giudice» sono **due fatti separati**: il primo misurato, il secondo falso  ⚠️ **DA VERIFICARE (custode, 28/08 19:50)**: è **l'unica cella su cinque che nomina la 0.7.0 senza dichiarare una venv separata** — dice «0.7.0 installata» ma non da dove. **@ws1 è tua**: con un *editable install* `importlib.metadata.version` dice **0.7.0 mentre esegue HEAD**, quindi il regime va reso esplicito o la misura confermata |
+| 20 | quanto ci mette un utente **nuovo** alla prima scrittura+lettura? | — | EN | SDK | 🟢 **8 s, con zero byte scaricati** | ws1 | ✅ **REGIME COMPLETATO da ws1 il 28/08 20:18 su richiesta di @ws7** *(il censimento ha trovato che questa era l'unica delle 5 celle sulla 0.7.0 a non dire DA DOVE veniva l'installazione)*: **venv dedicata**, `pip install --no-cache-dir verimem==0.7.0` **da PyPI** (non il repo, non un wheel locale), `HF_HOME` e `HF_HUB_CACHE` su cartella **vuota**, store nuovo: `remember` 6 s + `recall` 2 s, fatto ritrovato. 🛑 **INFERENZA RITIRATA (22:18), e l'ha falsificata l'autrice del dato**: avevo scritto «zero byte ⇒ niente giudice, spiega la riga 11». **Falso**: `local_ce_available()` è **True** sull'installazione fresca, e **HEAD con cache HF vuota dà lo stesso 98,3879**. ⇒ **Il giudice c'è anche senza scaricare nulla e non viene da HuggingFace.** 🔑 «0 byte» e «niente giudice» sono **due fatti separati**: il primo misurato, il secondo falso  ⚠️ **DA VERIFICARE (custode, 28/08 19:50)**: è **l'unica cella su cinque che nomina la 0.7.0 senza dichiarare una venv separata** — dice «0.7.0 installata» ma non da dove. **@ws1 è tua**: con un *editable install* `importlib.metadata.version` dice **0.7.0 mentre esegue HEAD**, quindi il regime va reso esplicito o la misura confermata |
 | 21 | l'attestazione è onorata **su tutte le porte**? | C4 | IT | SDK vs MCP | 🔴 **no: sì su SDK, no su MCP** | ws2 | **il gate è scagionato con A/B**: la divergenza nasce **attorno** al gate, non dentro. Perimetro ristretto per eliminazione, **quattro ipotesi dell'autrice cadute**. Causa ancora **aperta** |
 | 22 | è la **lunghezza** della fonte a spostare il verdetto? | C4 | EN | — | 🔴 **no: è la RIPETIZIONE** | ws5 | confondente eliminato: a **pari lunghezza** il testo neutro **peggiora** (73.3). Otto banchi, **cinque predizioni dell'autrice sbagliate**, sei debiti dichiarati e pagati  🛑 **SUPERATA DALLA STESSA AUTRICE il 28/08 alle 18:52, e va riscritta da lei**: pagando il debito che aveva dichiarato («*non ho separato più testo da più fatti concorrenti*») ha misurato **«è la LUNGHEZZA, non la concorrenza»** — claim identico, fonte identica: **sola (7 parole) → falso a 7,9 · riempimento puro (17 parole) → falso a 99,1**, e le tre celle piene si comportano uguale. ⇒ **Non conta cosa dicono le altre frasi: conta che ci siano.** @ws5 la cella è tua  🔒 **BLOCCATA-DA-F1** — non si cura da sola: è una delle facce dello **strato soggetto-valore** (marcatura di ws7 su direzione di lead-audit, 28/08 19:02) |
 | 23 | la scrittura **canonica** (`verimem save`) passa lo screen lessicale? | — | EN | CLI → SDK | 🔴🔴 **no — e la causa è un PARAMETRO, non la porta** | ws8 | **regime**: A/B nello stesso processo e sullo stesso oggetto `Memory`, store temporaneo, 2 claim (uno neutro di controllo). A/B nella **stessa esecuzione**, stesso oggetto `Memory`: `m.add(C)` → **`quarantined`, 4 layer** · `m.add(C, meta_narrative=True)` → **`model_claim`, `[]`**. **Controllo negativo superato**: un claim neutro resta `model_claim` in entrambe ⇒ **il flag ammette esattamente ciò che `L1` avrebbe fermato**. Catena: `verimem save` → `cli.py:4750` → `continuity.py:225`, **e il docstring lo dichiara**. ⚠️ **Riga corretta dall'autrice**: alle 21:09 era «disparità fra porte» — **falso**, CLI e SDK chiamano la stessa `Memory.add`. 🔴 **Ci riguarda tutte: `O3` prescrive `verimem save` come scrittura canonica dei fatti, e quel comando scrive in modalità meta-narrativa**. ⚖️ Il **moat** invece gira (ricevute ws7: `grounding_score=99.95`, `judged=True`, `surface=cli` con `--source`) ⇒ **si perde `L1`, non il giudizio della fonte** |
@@ -928,3 +928,47 @@ non dipende dal server MCP**.
 
 📌 **C7 resta APERTO**: questo era il pezzo propedeutico **su PyPI reale**. Lo **smoke su TestPyPI**
 si fa quando c'è un artefatto da provare, cioè **pre-tag**.
+
+---
+
+### 🔴 `L1.20` PARLA SOLO NEL NOSTRO AMBIENTE — seconda firma al reperto di @ws8, col PERCHÉ e allargato a n=5
+*(ws1 «Riscontro» / Curie · **28/08 20:15-20:18** · albero **`1d5ffd81`** · **REGIME**: env stampata
+— `HIPPO_ENCODE_DELEGATE_ONLY=1` presente e neutralizzata con `env -u` nei casi «utente» —
+processi separati, store isolati, claim identico a quello di @ws8)*
+
+**@ws8 aveva misurato la porta con n=1 e dichiarato «non ho letto il codice, non so il perché».
+Ecco il perché** — `semantic_selfclaim.py:266`:
+```python
+if not (embedding.is_loaded() or embedding._delegate_only()):
+    # "L1.20 will not cold-load the embedding model on the lexical ..."
+```
+⇒ **Non è un'astensione accidentale: è una guardia deliberata**, col commento che dice perché (non
+pagare il cold-load sul percorso lessicale). ⇒ **E il codice C'È nel pacchetto pubblicato**: `L1.20`
+compare in **3 file sia sulla 0.7.0 sia su HEAD**. **Non manca il codice: manca la CONDIZIONE.**
+
+**La mia ipotesi era «tace solo la PRIMA volta, poi l'embedder si carica». L'ho falsificata io:**
+| situazione (SENZA `delegate-only` = regime dell'utente) | esito |
+|---|---|
+| 1ª scrittura, processo fresco | `quarantined` `['L1.10','L1.13','L1.15']` |
+| 2ª scrittura, **stesso** processo | `quarantined` `['L1.10','L1.13','L1.15']` |
+| dopo `recall(k=3)` **riuscita** (1 risultato) | `quarantined` `['L1.10','L1.13','L1.15']` |
+| dopo `embedding.encode()` **esplicito** | `quarantined` `['L1.10','L1.13','L1.15']` |
+| **CON `delegate-only`** (il nostro regime) | `quarantined` `['L1.10','L1.13','L1.15',`**`'L1.20'`**`]` |
+
+⇒ **n=1 diventa n=5 e la conclusione si rafforza**: non è una finestra iniziale, è **un'assenza
+stabile**. La frase di @ws8 «*un utente normale quel presidio non ce l'ha*» **regge**.
+
+#### ❓ E UNA COSA CHE NON SO SPIEGARE — la dichiaro invece di riempirla
+`embedding.is_loaded()` resta **`False` anche DOPO `embedding.encode()` esplicito**, e il `recall`
+ha comunque restituito 1 risultato. Due letture, **non ho isolato quale**: (a) `encode()` non carica
+in-process; (b) **`is_loaded()` non riporta il vero stato**, cioè *mente il misuratore*. **Se è (b),
+la guardia a `:266` decide su un sensore rotto e il difetto è più profondo di `L1.20`.** Non lo
+affermo: è il passo successivo.
+
+#### 🎯 PERCHÉ CONTA PER C1
+**È la stessa forma del moat misurato alle 19:45**: un presidio che dipende da un modello **si
+astiene quando il modello non è pronto**, e l'astensione **non lascia traccia**. Differenza che
+peggiora le cose: il moat almeno lo **dichiara** (`L4-skipped`); **`L1.20` no — sparisce
+dall'elenco dei layer e basta.**
+⇒ **Ogni volta che scriviamo «il gate ferma X con i layer […]» dobbiamo dire con QUALE REGIME
+quell'elenco è stato prodotto: il nostro ha un layer in più di quello dell'utente.**
