@@ -3569,3 +3569,51 @@ lì il tasso è **70%**. **Un'esposizione misurata su un corpus è una propriet�
 prodotto**, e il corpus di casa è il meno rappresentativo che abbiamo.
 ⚠️ **Cosa NON prova**: le dieci frasi da contratto le ho scritte io. Non ho un corpus di contratti
 veri, e non lo sto stimando: dico solo che **su questa forma il tasso è 70% e sul nostro 0,6%**.
+
+---
+
+### ✅ IL BACKUP DEI FATTI **RIPRISTINA DAVVERO** — la domanda che mancava accanto a LANT-23, e il presidio che non c'era
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:51 · **Regime**: porta **CLI**, store temporaneo
+`HIPPO_DATA_DIR`, modello vero, fuori pytest. **Nessuna scrittura sullo store di Aurelio.**
+
+**Perché esiste**: `LANT-23` (@ws5 via @ws7) misura la **copertura** di `backup-all` — **3 tier su 9**.
+Sappiamo *quanto* copre. **Nessuno aveva chiesto se quello che copre TORNA INDIETRO**, che per un
+prodotto di memoria è la domanda più grave.
+
+#### Il round-trip
+| passo | esito |
+|---|---|
+| 1 ammesso + 1 quarantinato | `{model_claim: 1, quarantined: 1}` |
+| `facts backup --tier manual` | `backup ok`, **`facts: 2`**, hash verificato |
+| **dentro il file di backup** | `{model_claim: 1, **quarantined: 1**}` ✅ |
+| un fatto in più | `{model_claim: 2, quarantined: 1}` |
+| `facts restore <path> --yes` | `restored`, **`facts: 2`** |
+| stato dopo | `{model_claim: 1, quarantined: 1}` ✅ **esatto** |
+| copia pre-restore | ✅ contiene il fatto sostituito — **nulla è irreversibile** |
+
+⇒ **Tre punti che potevano cedere, reggono tutti**: ① i quarantinati **sono nel backup**, ② il
+restore ripristina **esattamente**, ③ **niente è irreversibile**. E il conteggio della ricevuta
+(`facts: 2`) **comprende i quarantinati**.
+
+#### 🔑 Perché ① è il punto che conta
+Un quarantinato è fuori dal recall ma **non cancellato**: è l'**archivio**, ed è ciò che rende la
+quarantena **reversibile** (`facts requalify-quarantined` esiste apposta). **Un backup che salvasse i
+soli ammessi distruggerebbe quella reversibilità senza dirlo**: conteggio plausibile, restore
+riuscito, perdita scoperta solo il giorno in cui qualcuno cerca un fatto trattenuto.
+⇒ **forma perfetta di «una misura che non c'è si legge come una misura perfetta».**
+
+#### 🛡️ Non era presidiato — ora sì
+`git grep quarantin` sui tre test di backup esistenti → **zero**. Coprono «il restore rifiuta un
+backup di un altro store» e «accetta un backup vero», **non cosa c'è dentro**.
+⇒ `tests/test_il_backup_si_porta_dietro_l_archivio.py`, SHA pubblico **`8af86e5e`**.
+· Il **secondo test dimostra che il primo è discriminante**: costruisce un backup che filtra gli
+ammessi e verifica che perda davvero i quarantinati. **Senza, il presidio potrebbe passare senza
+misurare niente.**
+· Lo status è imposto **senza passare dal gate** ⇒ non dipende da come il gate giudica oggi, e **lo
+stub di `conftest` non lo falsa**: non si misura un giudizio, si misura la presenza di una riga.
+
+#### Limiti
+· **Un solo tier** (i fatti), 2-4 fatti, un round-trip.
+· 🔴 **Gli altri 8 tier che LANT-23 dichiara scoperti non li ho toccati**: la domanda «quello che
+copre torna indietro?» **resta aperta per loro**.
