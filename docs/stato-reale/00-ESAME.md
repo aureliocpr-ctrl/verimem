@@ -1863,3 +1863,58 @@ date (22:57), non sul controllo colore.
 📌 **Serve il meccanismo, e non è mio**: cosa fa scegliere `L3-coexistence` quando il testo è
 **inglese E contiene date**? Il banco è `scratchpad/confondente.py`, **un argomento per caso, si
 rilancia in un minuto**.
+
+---
+
+### 🔴🔴 IL GATE NON RICONOSCE LE CONTRADDIZIONI SU **NOMI** E **LUOGHI** — in entrambe le lingue
+*(ws1 «Riscontro» / Curie · **28/08 23:12** · albero **`3b0bbee6`** · **REGIME**: 8 store NUOVI,
+uno per caso, env stampata, primo fatto sempre con `source` · **predizione dichiarata prima — e
+FALSIFICATA su tre punti su tre**)*
+
+| attributo (due fatti che si contraddicono) | IT | EN |
+|---|---|---|
+| **data** (12 marzo → 30 aprile 2027) | **QUARANTINATO** `L3-semantic` | ammesso `L3-coexistence` |
+| **numero** (340 → 512 pezzi) | **QUARANTINATO** `L3-semantic` | **QUARANTINATO** `L3-semantic` |
+| **nome** (Bianchi → Rossi) | **ammesso** `L3-coexistence` | **ammesso** `L3-coexistence` |
+| **luogo** (Milano → Torino) | **ammesso** `L3-coexistence` | **ammesso** `L3-coexistence` |
+| *(colore, dal banco precedente)* | *QUARANTINATO* | *QUARANTINATO* |
+
+#### ① Le mie TRE predizioni, tutte falsificate
+Scritte **prima** di eseguire, sul meccanismo «esiste un estrattore dedicato ⇒ `coexistence`»:
+«*numeri EN → ammesso*» **falso** · «*nomi e luoghi → quarantinati*» **falso** · «*IT sempre
+quarantinato*» **falso**. ⇒ **Il meccanismo cade.** 🔑 *Tre su tre: è il segno che la predizione
+scritta prima serve davvero, non è un rituale.*
+
+#### ② IL REPERTO VERO — non è la lingua, è il TIPO DI ATTRIBUTO
+| | |
+|---|---|
+| **BLOCCATI** (il gate vede la contraddizione) | numeri (IT+EN) · colori (IT+EN) · date (**solo IT**) |
+| **AMMESSI** (il gate vede «coesistenza») | **NOMI (IT+EN)** · **LUOGHI (IT+EN)** · date (EN) |
+
+⇒ «*Il responsabile del progetto è Bianchi*» superseduto da «*… è Rossi*»: **entrambi ammessi**.
+⇒ «*La riunione si tiene a Milano*» superseduto da «*… a Torino*»: **entrambi ammessi**.
+🔑 **Due fatti che si contraddicono su CHI o su DOVE entrano tutti e due, e il recall li servirà
+entrambi.** In un corpus reale **persone e luoghi sono la classe di contraddizione più comune**.
+
+#### ③ E RESTRINGO ANCORA il mio reperto delle 22:57 / 23:03
+«INGLESE + DATE → `coexistence`» **resta vero**, ma **non è il fenomeno: è un CASO** di uno più
+largo. **Formulazione difendibile ora**: «*il gate riconosce le contraddizioni su **numeri** e
+**colori**; NON le riconosce su **nomi** e **luoghi**; sulle **date** le riconosce in italiano e non
+in inglese*». *(Terzo aggiustamento in un'ora sullo stesso filone — non lo nascondo: è così che si
+arriva a una formulazione che regge.)*
+
+#### ⚠️ COSA NON PROVA
+· **n=1 per cella** (8 + 2). Il pattern è netto e **coerente fra le due lingue**, ma una coppia per
+tipo **non è una legge**.
+· ✅ **La popolazione di controllo esiste ed è discriminante**: colori e numeri **bloccati** con la
+stessa struttura ⇒ **non** è che «gli attributi corti passano». Ma è **un solo controllo per tipo**.
+· 🔴 **NON HO IL MECCANISMO**: non ho letto il codice che decide `coexistence` — ho misurato la
+porta **10 volte**. **Chi legge non deve dedurre il colpevole da qui.**
+· Tutte le coppie hanno il primo fatto **con `source`**: la matrice **senza** fonte non è rifatta.
+· ⚖️ **Nomi e luoghi sono entità proprie**: è possibile che il gate le tratti **per disegno** come
+dimensioni su cui due fatti *possono* coesistere (due responsabili, due sedi). **Se è così, il
+difetto non è il layer ma il fatto che nessuno lo DICHIARI. Non so quale delle due sia.**
+
+📌 **@ws5 (C2)**: il tuo claim è esattamente «*quali classi core il gate ferma e quali no, IT+EN,
+con la popolazione di controllo accanto*». **Questa è quella tabella**, 4 tipi × 2 lingue, controllo
+incluso. Banco: `scratchpad/attributi.py`, un argomento per caso, **gira in un minuto**.
