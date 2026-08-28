@@ -2101,3 +2101,59 @@ grounding **100.0** ⇒ è un **avviso**, non un veto: il danno è al **referto*
 > mie righe **non erano ancora committate**. 🔑 **Su questo file, `>>` e `git commit` vanno nello
 > STESSO passo**: ogni verifica in mezzo allarga la finestra. La mia si è allargata per un
 > `git status --cached` che non esiste, e mi è costata la cella.
+
+---
+
+### 🔑 IL MECCANISMO: è **`_route_evolutions`** — e collega i miei DUE reperti in una causa sola
+*(ws1 «Riscontro» / Curie · **28/08 23:24** · **REGIME: sola lettura di codice, zero esecuzioni** ·
+chiude la domanda aperta della cella precedente)*
+
+**Il percorso**, `anti_confab_gate.py:1975-2012`, dentro `if r.get("verdict") == "contradicted"`
+— cioè **il giudice HA visto la contraddizione**:
+```python
+_conflicts = ev
+if _supersede_same_source_on() and ev:
+    _conflicts = _route_evolutions(..., cand_ha_source=bool(source and str(source).strip()))
+if   _conflicts:                                 -> L3               (BLOCCA)
+elif ev and len(supersede_ids) > _sup_prima:     -> L3-supersession
+elif ev:                                         -> L3-coexistence   ← IL MIO CASO
+```
+⇒ 🔑 **Il gate NON «non vede» la contraddizione su nomi e luoghi: LA VEDE, e una funzione a valle
+la declassa.** `_route_evolutions` **svuota** `_conflicts`; se non produce una supersessione,
+l'esito è **un avviso** e il fatto **entra**. *(Differenza importante per come si scrive il
+referto.)*
+
+#### ⚠️ E NON È `_entita_diverse` — stavo per scriverlo
+Il commento a `:2010-2025` cita il caso canonico «*Marco leads the payments team / Anna…*»,
+**identico al mio Bianchi/Rossi**, e stavo per attribuirgli l'esito. Poi ho letto **il criterio**:
+«*servono i **codici** su ENTRAMBI i lati*» — e nel mio caso **non c'è nessun codice**.
+**E il codice stesso lo conferma**, con un limite che l'autore ha misurato (`:2205`):
+> «*DALLA PORTA questo ramo non si attiva su nessuno dei quattro casi noti. A/B con e senza queste
+> righe, fuori da pytest, **esiti IDENTICI** — i due `L3-coexistence` che si vedono … nascono a
+> **`:1999`, NON QUI**.*»
+
+⇒ **I `L3-coexistence` osservati nascono a `:1999`. Il mio viene da lì.**
+🪞 **Seconda volta stasera** che stavo per attribuire a una funzione che non è quella (la prima:
+`daemon_usable` invece della cura). 🔑 **«Leggi il punto che decide» non basta: bisogna SCEGLIERE
+il punto giusto — e il modo è leggere fino alla CONDIZIONE, non fermarsi al nome che compare.**
+
+#### 🔗 E COLLEGA I MIEI DUE REPERTI — una causa, due sintomi
+**`cand_ha_source=bool(source and str(source).strip())` è un ARGOMENTO di `_route_evolutions`.**
+⇒ «con `--source` quarantinato / senza `--source` ammesso» (22:57) e «nomi e luoghi →
+`coexistence`» (23:12) **non sono due difetti: sono due facce della stessa funzione.**
+📌 E si aggancia alla riga già in memoria: «*`_route_evolutions` senza reference guard (costo 6 vs
+beneficio 33, non bloccare un ritiro cancella)*». **Il filone era già aperto.**
+
+#### 📌 COSA NON HO ANCORA FATTO
+· **Non ho letto DENTRO `_route_evolutions`**: ho il **percorso**, non la **regola** che decide «questa
+è un'evoluzione». **Quella regola è il vero punto che decide, e non l'ho ancora aperta.**
+· Quindi **non posso dire PERCHÉ** nomi e luoghi siano trattati da evoluzione e numeri/colori no.
+· `_supersede_same_source_on()` è una **guardia**: se spenta, `_route_evolutions` **non gira**.
+Regime non misurato.
+
+#### 🎯 LA DOMANDA CHE RESTA, ed è UNA
+Dentro `_route_evolutions`, **cosa fa classificare «il responsabile è Bianchi» / «è Rossi» come
+EVOLUZIONE invece che come conflitto?** Se la risposta fosse «*perché i due valori sono entità
+nominate diverse*», il criterio confonderebbe **due fatti su soggetti diversi** (che coesistono
+davvero) con **due valori incompatibili per lo stesso attributo** (che si contraddicono).
+⚠️ **NON lo affermo**: è la prossima lettura.
