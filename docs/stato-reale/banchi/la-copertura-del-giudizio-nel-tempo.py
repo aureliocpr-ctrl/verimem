@@ -36,6 +36,17 @@ import time
 from datetime import datetime, timezone
 
 
+#: La finestra della sezione PER PORTA, in giorni. Sta in UNA riga perché
+#: l’intestazione e la query devono leggerla dalla stessa fonte.
+#: Rilievo del secondo firmatario, 2026-08-28 23:39: la sezione stampava i
+#: tassi per porta SENZA dire su quale finestra, e la si ricavava solo
+#: sommando le righe (1835+13+6+4=1858). Un rapporto senza finestra inganna
+#: — ed è la regola che questo banco applicava alla sezione qui sopra e non
+#: a quella sotto. Scrivere «7 giorni» a mano nel titolo creerebbe la
+#: seconda copia che un domani mente: il titolo la LEGGE, non la ripete.
+_GIORNI_PER_PORTA = 7
+
+
 def _riga(etichetta: str, giudicati: int, totale: int) -> str:
     quota = (100.0 * giudicati / totale) if totale else 0.0
     avviso = "   ⚠️ troppo pochi per un tasso" if 0 < totale < 30 else ""
@@ -83,12 +94,13 @@ def main() -> int:
     ):
         print(_riga(mese or "(senza data)", g or 0, n))
 
-    print("\nPER PORTA  (il tasso di una porta con pochi fatti non è un tasso)")
+    print(f"\nPER PORTA — ULTIMI {_GIORNI_PER_PORTA} GIORNI  "
+          "(il tasso di una porta con pochi fatti non è un tasso)")
     for chi, n, g in con.execute(
         "SELECT COALESCE(writer_principal, '(nessuna provenienza)'), COUNT(*), "
         "SUM(CASE WHEN grounding_score IS NOT NULL THEN 1 ELSE 0 END) "
         "FROM facts WHERE created_at > ? GROUP BY 1 ORDER BY COUNT(*) DESC LIMIT 8",
-        (ora - 7 * 86400,)
+        (ora - _GIORNI_PER_PORTA * 86400,)
     ):
         print(_riga(str(chi)[:22], g or 0, n))
 
