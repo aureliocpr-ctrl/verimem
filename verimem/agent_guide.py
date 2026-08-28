@@ -48,10 +48,19 @@ can rely on it:
   judged, `null` means never judged (Orientation, below).
 
 Orientation (each tool's exact arguments are in its own schema):
-- Retrieve with verimem_recall / verimem_facts_search. These return the closest
-  matches and DO NOT abstain: ask them something the store knows nothing about
-  and you still get the nearest facts back, with high scores. A result is not
-  evidence that the store knows the answer.
+- Retrieve FACTS with verimem_facts_search / verimem_facts_recall. verimem_recall
+  is a DIFFERENT door: it searches past EPISODES, and the two are not
+  interchangeable. Measured 2026-08-29 on a store holding one fact and no
+  episodes: verimem_facts_search returned the fact, verimem_recall returned [].
+  An empty list is an ANSWER, not an abstention — read it as "wrong door", not
+  as "the store knows nothing". The name is not stable across surfaces, either:
+  in the python SDK `Memory.recall` IS `Memory.search` — the same function
+  object — and it searches FACTS. Same word, two surfaces, two meanings, so
+  pick a door by what it searches, not by its name.
+  The fact doors return the closest matches and DO NOT abstain: ask them
+  something the store knows nothing about and you still get the nearest facts
+  back, with high scores. A result is not evidence that the store knows the
+  answer.
 - To learn WHETHER the store can answer at all, ask verimem_trust_report: it
   returns a provenance dossier and, on a question it cannot support, it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
