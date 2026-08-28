@@ -3478,3 +3478,64 @@ dall'INTENZIONE del codice, il conteggio si ferma e si legge.**
 Nel corpus ci sono topic da banco — `test/bug8/pytest-verify` **70**, `test/cap20/system/cap20-test`
 **20**, `adhoc/prova-source` 3 — che **non vengono da questi due banchi**. Non ho cercato da dove
 vengano.
+
+---
+
+## ws1 — IL DIFETTO NON TOCCA NOI: TOCCA IL CLIENTE TIPO. 70% CONTRO 0,6%
+
+**Livello**: porta vera + proxy validato · **Perimetro**: `_record_numerati_diversi`, ramo
+posizionale · **Istante**: 29/08 00:44–00:49 · **Regime**: store nuovo per caso
+(`HIPPO_DATA_DIR=$(mktemp -d)`), guardia al default, `source` presente · sha `31f9ac34`.
+
+### Il conto che mancava — **due popolazioni, misurate entrambe**
+Il limite che avevo dichiarato alle 00:41 («il corpus è il nostro; su contratti sarebbe diverso»)
+non era un'ipotesi da lasciare aperta: costa 20 secondi chiuderla.
+
+| popolazione | esposte (nessun blocco) |
+|---|---|
+| **forma da contratto/listino** (valuta o parola **prima** del numero) | **7/10 = 70%** |
+| **controllo**: le stesse dieci frasi con valuta **dopo** o in parola | **0/10 = 0%** |
+| **il nostro corpus reale**, 2676 coppie | **17 = 0,6%**, e nessuna è un errore |
+
+**Alla porta vera, 4 su 4 come predetto** (proxy ora **24/24**, zero discordanze):
+```
+«Il canone annuo e' EUR 12000»   -> «EUR 15000»   AMMESSO       L3-coexistence
+«Lo sconto applicato e' del 10%» -> «del 15%»     AMMESSO       L3-coexistence
+«Il canone annuo e' 12000 EUR»   -> «15000 EUR»   QUARANTINATO  L3 + L3-semantic
+«Lo sconto applicato e' 10%»     -> «15%»         QUARANTINATO  L3 + L3-semantic
+```
+⇒ **«Lo sconto è *del* 10%» — la forma italiana normale — non viene confrontata. «È 10%» sì.**
+
+### 🔑 IL MECCANISMO, ora esatto: **DUE condizioni congiunte, e la prima è la LUNGHEZZA**
+Isolate cambiando **una sola cosa per volta** nella stessa frase:
+```
+① la parola prima del numero ha >= 3 CARATTERI
+     del · dei · per · con · circa · alle · sono · xyz · zqxw   -> NESSUN BLOCCO
+     a · di · da · in · su · al · e' · xy                       -> confrontabili
+② e il numero NON ha un'unità dopo di sé
+     «sono 10»        -> NESSUN BLOCCO        «sono 10 unita»   -> confrontabili
+     «del 10 %»       -> NESSUN BLOCCO        «del 10 euro»     -> confrontabili
+```
+🛑 **Correggo la mia formulazione delle 00:33** («qualsiasi parola»): è **qualsiasi parola di tre
+o più caratteri**, e **solo se il numero è nudo**. Con `xy` (due lettere) non scatta.
+
+### Perché il NOSTRO corpus è immune — trovata alla terza ipotesi, e le prime due le pubblico
+· ❌ **Ipotesi 1, FALSIFICATA**: «scriviamo l'unità dopo il numero». Falso: sulle **106044**
+  quantità del corpus solo il **42,0%** ha un'unità, il **58,0%** no.
+· ❌ **Ipotesi 2, FALSIFICATA**: «le nostre frasi hanno più numeri». Falso due volte: le coppie
+  candidate hanno **mediana 1 indice**, e aggiungere un secondo numero condiviso alla frase da
+  contratto **non toglie** l'esposizione (esperimento diretto, una sola variabile).
+· ✅ **Ipotesi 3, REGGE (parziale)**: il ramo chiede numeri **disgiunti su ogni etichetta
+  condivisa**. Sulle 2676 coppie: **99,4%** ha un'etichetta condivisa, e **53,3% ha lo STESSO
+  numero su quell'etichetta** («fermati 4 su 4», «sono 0 su 1454») ⇒ il ramo non scatta.
+  ⚠️ **Copre metà, non tutto**: resta un 46% che ha etichetta condivisa e numeri diversi e
+  comunque non scatta. **Quel pezzo non l'ho spiegato e non lo affermo.**
+
+### 🎯 Perché conta per la decisione di Aurelio
+La misura delle 00:41 («esposizione zero») era vera **e fuorviante da sola**: era vera *sul corpus
+di otto istanze che scrivono misure di laboratorio*. Il prodotto si vende a chi archivia
+**contratti, listini, fatture, verbali** — dove «EUR 12000» e «del 10%» sono la forma normale, e
+lì il tasso è **70%**. **Un'esposizione misurata su un corpus è una proprietà del corpus, non del
+prodotto**, e il corpus di casa è il meno rappresentativo che abbiamo.
+⚠️ **Cosa NON prova**: le dieci frasi da contratto le ho scritte io. Non ho un corpus di contratti
+veri, e non lo sto stimando: dico solo che **su questa forma il tasso è 70% e sul nostro 0,6%**.
