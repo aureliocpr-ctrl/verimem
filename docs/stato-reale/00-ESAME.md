@@ -1413,3 +1413,40 @@ discriminerebbe è un fatto con punteggio **fra 40 e 99.64**, e quello richiede 
 **In coda per la finestra macchina.**
 · Il mio unico dato a runtime sulla 0.7.0 (`99.919`) **passa con entrambe le soglie**, quindi non
 distingue.
+
+---
+
+### 🟢 `layers=[]` NEL LOG NON È UN DIFETTO — e correggo me stessa per la seconda volta sulla STESSA classe
+*(ws1 «Riscontro» / Curie · **28/08 21:04** · **REGIME RISPARMIO RAM: sola lettura, zero esecuzioni**)*
+
+Avevo osservato stamattina che il log `flow.write` porta **`layers=[]` in 4 regimi su 4** mentre la
+ricevuta portava eccome i layer (`L4-skipped`, `L4.2`), e ne avevo tratto: «*il campo esiste ma non
+trasporta l'informazione*». **Letto il percorso intero, è falso: il campo trasporta esattamente ciò
+che dichiara.**
+
+**La catena, letta tutta** (e ho dovuto leggerla tutta: le prime due letture mi avrebbero portata a
+una conclusione sbagliata):
+1. `client.py:746` — il percorso delle scritture **ammesse** passa **`_hit_layers`**, non `_layers`.
+2. `client.py:719-724` — **`_hit_layers = []` per costruzione** quando lo stato non è `quarantined`.
+3. Il commento a `:716-718` lo dice: «*only when a layer actually **ACTED**: gate downgrade → its
+   layers; store-screen flip → "store-screen"; **clean admit → none (advisory warnings are in the
+   `add()` response, not in `by_layer`)***».
+
+⇒ **Il campo risponde a «QUALE DIFESA HA AGITO», non a «quali layer hanno parlato».** Su una
+scrittura ammessa **nessuna difesa ha agito**, quindi `[]` è la risposta **giusta**. Gli avvisi
+stanno **nella risposta di `add()`** — che è **esattamente dove li ho letti io**.
+✅ **Coerente con il dato di @ws8**: nel suo banco la scrittura era **`quarantined`** e i layer nel
+log **c'erano** (`['L1.10','L1.13','L1.15','L1.20']`).
+
+#### 🔑 LA CLASSE — ed è la SECONDA volta oggi, sulla stessa forma, e la seconda volta è colpa mia
+Un'ora fa ho nominato io la classe: **«un SENSORE CORRETTO usato come PROXY di una domanda che non
+risponde»** (per `is_loaded()`). ⚠️ **Poi ci sono ricascata dentro**: ho chiamato «difetto» un campo
+corretto perché gli stavo facendo la domanda sbagliata. **Nominare una classe non immunizza dal
+caderci** — il presidio è **leggere il punto che decide fino in fondo**, non ricordarsi la lezione.
+📌 Per **C9**: qui il difetto **non c'era**, e toglierlo dalla lista vale quanto aggiungercene uno.
+
+#### 📌 COSA NON PROVA
+· **Zero esecuzioni** (regime risparmio): questa è **lettura di codice**, non un A/B. Non ho
+verificato a runtime che una scrittura **quarantinata** popoli davvero `layers` — **il dato di @ws8
+lo mostra**, ma è suo, non mio, e va citato come tale.
+· Non ho letto il percorso `routed_telemetry` (riga 697, `layers=["admission-route"]` fisso).
