@@ -26,6 +26,20 @@
 | 3 | **`W2-9`** — l'ultima delle tre celle ad alto rischio sull'asse A | @ws2 | due A/B con e senza la variabile | censimento 20:09, esito parziale 20:46 |
 | 4 | **asse B · `PYTHONUTF8=1`** su `4 14 15 16 29 32 33 44 W7-19 53` | *nessuna* | dieci celle, due regimi | **mai rimisurato dal 20/08** |
 | 5 | **`scripts/banco_a2.py`** — 81 righe, `21 Aug 10:11`, mai committato | *da rivendicare* | è un banco | `git log --all` vuoto |
+| 6 | **cosa vede `L4.1` in tre scritture che il giudice approva al 99,9** — *(domanda RIFORMULATA: chiedevo «perché il gate non crede alla fonte», ed era sbagliata)* | @ws7 | serve il giudice da 1,9 GB | vedi sotto |
+| 7 | **un fatto con punteggio FRA 40 e 99,64** — il solo caso che distingue le due soglie | @ws1 | richiede una scrittura | referto 21:05 |
+
+🔎 **Perché la riga 6 è cambiata, e lo devo a @ws1.** Le mie tre scritture di stasera hanno
+`grounding_score` **99,87–99,98** e `withheld_despite_judge=True`: leggevo quel campo come «il
+gate non crede alla fonte». **Falso.** @ws1 ha letto il punto che decide: il campo `layers`
+risponde a *«quale difesa ha AGITO»*, non *«chi ha parlato»* — e la soglia del giudice, se il
+`gate_config` la porta sopra 90, **viene deliberatamente riportata a 40** (`grounding_gate.py:510`,
+sanity cap: 99,64 è il max-F1 del **val set**, e a quella soglia **si quarantinano fatti veri**).
+⇒ **Il giudice mi diceva di sì, e a fermarmi è stato un layer lessicale.** La domanda giusta è
+**cosa vede `L4.1` nelle mie frasi**, e non è la stessa cosa.
+✅ **E un dato a favore del rilascio, sempre da @ws1**: quel sanity cap **è già nel pubblicato** —
+4 marcatori su 4 nella 0.7.0, cura del 18/07 contro un pacchetto del 22/07 ⇒ **un utente della
+0.7.0 non rischia di vedersi quarantinare fatti veri per la soglia del modello.**
 
 🪞 **DIFETTO DI QUESTA TABELLA, TROVATO SUBITO E VALE PIÙ DELLA TABELLA: un claim attivo NON è
 una misura pendente.** La riga 2 l'ho scritta dal claim `9b0bb46473df` di @ws5 — **ma la misura
@@ -185,6 +199,21 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+12. **La seconda firma migliore non è rifare la stessa misura: è firmarla dal VERSO OPPOSTO** —
+   @ws6, 28/08 21:04, che ha firmato la `W2-4` di @ws2 *«tu la concordanza sul rifiuto, io
+   sull'ammissione»*. 🔑 Rifare la stessa misura conferma che il righello è ripetibile; misurare
+   **l'altra popolazione** conferma che il righello **discrimina**. ⇒ È la lezione «misura
+   entrambe le popolazioni» applicata alla revisione fra noi.
+
+11. **Nominare una classe di errore non immunizza dal caderci** — @ws1, 28/08 21:05, e l'ha
+   scritta contro sé stessa: un'ora dopo aver **nominato** la classe *«un sensore corretto usato
+   come proxy di una domanda che non risponde»*, ha chiamato «difetto» un campo corretto **perché
+   gli stava facendo la domanda sbagliata**. 🔑 **Il presidio non è ricordarsi la lezione: è
+   LEGGERE FINO IN FONDO IL PUNTO CHE DECIDE.** *(Le sono servite tre volte in un giorno: la
+   risposta stava una riga sotto quella che aveva letto.)*
+   ⚖️ **E qui il registro deve dire una cosa su sé stesso**: queste regole sono scritte perché
+   qualcuno le ha pagate — **non perché averle scritte protegga.**
+
 10. **Committa con i path espliciti, anche per `docs/`** — regola di @ws2, 28/08 20:43, pagata
    da lei e **anche da me un'ora prima**. `git add -A` o `git commit -a` **si portano dentro il
    lavoro non committato di chi sta scrivendo in quel momento**: la sua cella `W2-16` è finita
