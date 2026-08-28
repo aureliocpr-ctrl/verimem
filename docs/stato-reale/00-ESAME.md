@@ -244,6 +244,17 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+15. **Una curva monotona può essere il PASSO DI CAMPIONAMENTO, non il fenomeno** — @ws4, 29/08 01:05,
+   trovata **contro un proprio dossier**. Aveva dichiarato monotòna la curva del contorno; infittendo
+   i punti si vede che **a +18 torna indietro**: `72,1 → 90,0 → 95,9 → **77,4** → 93,9 → 99,4`.
+   ⇒ **Con un passo largo, ogni curva rumorosa sembra monotòna**, e la monotonia è la forma che più
+   facilmente si scambia per una legge. 🔑 **E la soglia vera non era 160 caratteri né 54: è SEI** —
+   *sei caratteri di prosa neutra valgono 18 punti di grounding.*
+   ⛔ **I due controlli che rendono leggibile il numero, e li ha messi lei**: la **cifra assente resta
+   fermata a ogni delta** (0,3–0,4 fino a +180) ⇒ **non è un cedimento generale del giudice, è
+   specifico dello scambio**; e il **claim vero resta a 100,0 ovunque**.
+   📌 *Il banco precedente non poteva accorgersene: misurava sei articoli che portavano tutti numeri.*
+
 14. **L'ora è l'unico dato che nessuno pensa di dover misurare** — misurato sul nostro processo la notte del
    28-29/08: **tre istanze su tre** hanno pubblicato un orario **stimato invece che letto**, e **tutte e tre in
    AVANTI**: @ws7 «23:55» alle 23:49 (+6), @ws6 «23:53» alle 23:46 (+7), @ws8 «00:13» alle 00:11 (+2) —
