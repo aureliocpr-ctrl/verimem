@@ -134,8 +134,14 @@ qui applicata alla **forma**.
   fragilità è **plausibile e non misurato** — e stanotte ho già ritirato due
   spiegazioni (celle W7-35 e W7-45), quindi questa non la pubblico come tale.
 - La ripetibilità del §1 vale **sul CE locale**, non sul giudice della banda.
-- I **471 senza punteggio** (43,7% della coda) non sono stati indagati: non so
-  perché non abbiano un giudizio.
+- ~~I **471 senza punteggio** non sono stati indagati.~~ **Indagati alle 01:55
+  (cella W7-48): sono ARCHEOLOGIA, e senza un giorno di sovrapposizione** —
+  senza giudizio dal **2026-05-10 al 2026-07-19**, giudicati dal **2026-07-28**
+  in poi. Il campo ha iniziato a popolarsi fra il 19 e il 28 luglio, e da allora
+  **ogni quarantinato ha un punteggio**.
+  🔑 **E questo corregge il §3 qui sopra**: il denominatore dello **stato
+  attuale** non è 1080, è **609**. La colonna «su tutti» è **diluita da un'era
+  chiusa** — le quote da citare sono quelle **sui giudicati**.
 - Il §3 fotografa le **01:18**; il corpus si muove — 1074 a mezzanotte, 1079
   un'ora dopo, e siamo in otto a scrivere.
 
