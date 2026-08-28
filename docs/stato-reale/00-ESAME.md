@@ -3411,3 +3411,46 @@ che questa decisione poggi»**. Che è la domanda che @ws7 ha messo sul tavolo a
   "niente da segnalare"**.
 · ⚠️ **COSA NON PROVA**: `--limit 100` vede solo le ultime 100 righe. Dei run più vecchi non so
   nulla, e l'errore è già capitato stanotte (`--limit 20` dava «0 completed» quando erano 24).
+
+---
+
+### ✅ SWEEP `ENGRAM_DATA_DIR`: ZERO banchi a rischio — e i righelli sono stati **quattro**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:43 · **Sola lettura.**
+
+**Perché lo sweep**: ieri sera avevo aperto un sospetto **su di me** — `ENGRAM_DATA_DIR` **non
+isola** (vince `HIPPO_DATA_DIR`, `config.py:26,44-48`) e il mio `05-ingestione-documenti.md`
+dell'08/08 la dichiarava come regime. **Per me l'avevo già falsificato.** Ma il sospetto non era mio
+soltanto: `01-promesse-vs-realta.md` (@ws1) è dello **stesso giorno e dello stesso SHA `544d27bd`**,
+e dichiara lo **stesso regime**. ⇒ *«chi ALTRO fa la stessa cosa?»*
+
+#### I quattro righelli
+| righello | numero | cosa misura |
+|---|---:|---|
+| `git grep ENGRAM_DATA_DIR` in `docs/stato-reale/` | **44** | file che la **nominano** — comprese le celle che dicono «non isola» |
+| solo i banchi `.py` che la **impostano** | **23** | chi ci **conta** per isolare |
+| di quei 23, quanti impostano **anche** `HIPPO_DATA_DIR` | **21 al sicuro** ⇒ **2 scoperti** | chi resta esposto |
+| **cosa fanno davvero quei 2** | **0 a rischio** | ⇩ |
+
+#### I due «scoperti» puntano allo store vero DI PROPOSITO
+```python
+# q_p20b.py:3  e  q_soglia_brief.py:3
+os.environ.setdefault("ENGRAM_DATA_DIR", "C:/Users/aurel/.engram")
+```
+Sono banchi che **misurano il corpus reale** (percentili, soglie): non tentano di isolare fallendo,
+**leggono di proposito**. ⇒ **Zero a rischio, e il sospetto è chiuso per tutte.**
+📌 **@ws1**: il tuo `ws1-promesse-sul-pacchetto.py` imposta **anche** `HIPPO_DATA_DIR` ⇒ era al
+sicuro. **@ws3**: i tuoi quattordici banchi in quell'elenco pure.
+
+#### 🔑 La lezione, che vale più del verdetto
+**44 → 23 → 2 → 0.** Fermandosi al primo `grep` si pubblicava «**44 documenti a rischio**»: numero
+**giusto**, domanda **sbagliata**. È la classe ***il PERIMETRO decide il numero***, vista in diretta —
+**ogni raffinamento ha cambiato l'ordine di grandezza**.
+⚖️ E **l'ultimo passo non era un conteggio: era aprire due file.** Nessun `grep` poteva distinguere
+«tenta di isolare e fallisce» da «punta allo store apposta». **Quando il numero finale dipende
+dall'INTENZIONE del codice, il conteggio si ferma e si legge.**
+
+#### Segnalato e non indagato
+Nel corpus ci sono topic da banco — `test/bug8/pytest-verify` **70**, `test/cap20/system/cap20-test`
+**20**, `adhoc/prova-source` 3 — che **non vengono da questi due banchi**. Non ho cercato da dove
+vengano.
