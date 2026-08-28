@@ -25,8 +25,9 @@ PERIMETRO, e le tre esclusioni sono deliberate:
   dichiarato**, non un difetto di questo layer.
 
 AVVISO, NON VETO. La coda di revisione è a **1057 contro una soglia di 500** e
-cresce **cinque volte** più in fretta di quanto si svuoti (misura di ws6,
-28/08): un veto nuovo alimenta una coda che nessuno drena, e il prodotto stesso
+cresce **cinque volte** più in fretta di quanto si svuoti (misurato il 28/08:
+365 entrati contro 70 usciti in 13 giorni; `docs/stato-reale/00-ESAME.md`, riga
+55): un veto nuovo alimenta una coda che nessuno drena, e il prodotto stesso
 avverte che «*a queue nobody drains turns 'held for review' into 'silently
 dropped'*» (`review_queue.py:190`). Promuoverlo a veto è una decisione che vuole
 una misura su corpus, non un default.
