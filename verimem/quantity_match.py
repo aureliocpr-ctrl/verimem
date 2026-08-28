@@ -923,8 +923,24 @@ _DATA_RE = re.compile(
     # stessi caratteri e il costo torna lineare. Le forme riconosciute non
     # cambiano — verificato su «10 agosto», «1° marzo», «31 luglio», «10 August»,
     # «3 settembre», con esito identico prima e dopo.
-    r"|\b\d{1,2}\s*(?:[°º]\s*)?(?:" + _MESI + r")\b"   # 10 agosto · 1° marzo
-    r"|\b(?:" + _MESI + r")\s+\d{1,2}\b",              # August 10
+    # ⚠️ L'ANNO FA PARTE DELLA DATA, e ometterlo lo lasciava una QUANTITA'.
+    # Misurato il 28/08 alla porta, A/B a variabile singola su fonte inglese:
+    # «The contract covers 2027 units of product» — claim INVENTATO, la fonte
+    # non parla di unita' — entrava AMMESSO a 99.9 con L4.1 muto, mentre lo
+    # stesso claim con 2044 era quarantinato e L4.1 parlava. Separazione 2 su 2
+    # contro 0 su 3. Causa: questo pattern catturava «March 12» ma NON l'anno,
+    # quindi 2027 usciva dalla soppressione e finiva fra i numeri NUDI — lo
+    # stesso meccanismo di «Art. 4» -> ('', 4.0), curato poco sopra.
+    # 🔑 IN ITALIANO IL DIFETTO NON SI VEDEVA: in «al 12 marzo 2027» l'anno segue
+    # il MESE e `_introdotto_da_una_parola_temporale` lo escludeva gia'; in
+    # inglese segue «12,» — un numero — e passava. Il difetto era invisibile
+    # nella lingua in cui misuriamo di piu'.
+    # ⚠️ `\s{1,3}` LIMITATO e non `\s*`: due quantificatori illimitati adiacenti
+    # separati da un gruppo opzionale sono esattamente il backtracking quadratico
+    # che questo file ha gia' curato qui sopra (87 s su 16k spazi). Una
+    # ripetizione limitata non puo' averlo, e tre spazi coprono il testo vero.
+    r"|\b\d{1,2}\s*(?:[°º]\s*)?(?:" + _MESI + r")\b(?:,?\s{1,3}\d{4})?"
+    r"|\b(?:" + _MESI + r")\s+\d{1,2}\b(?:,?\s{1,3}\d{4})?",
     re.IGNORECASE)
 
 
