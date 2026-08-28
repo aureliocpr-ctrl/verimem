@@ -13170,6 +13170,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # stesso fail-open dichiarato nel write path, e vale la stessa
             # ragione — un fatto senza causa e' il comportamento di sempre, un
             # fatto non scritto sarebbe un danno nuovo.
+            # 28/08 — LA CAUSA SI CALCOLAVA, SI SCRIVEVA, E NON TORNAVA A CHI
+            # AVEVA SCRITTO. Il valore di `_chi_q` finiva dritto dentro
+            # `_persisti_q` senza passare da una variabile: nel database c'era,
+            # nella risposta no. Il presidio esisteva
+            # (`tests/test_chi_ha_deciso_la_quarantena.py`) e i suoi quattro
+            # test passano tutti da `Memory(...)`, cioe' dall'SDK — mentre chi
+            # scrive in questo prodotto e' quasi sempre un agente, e un agente
+            # passa da qui. Sapere e non dire e' peggio del non sapere, perche'
+            # non si vede.
+            _out_qb = None
             if str(getattr(fact, "status", "")) == "quarantined":
                 from .client import (
                     chi_ha_quarantinato as _chi_q,
@@ -13180,11 +13190,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 from .client import (
                     persisti_chi_ha_quarantinato as _persisti_q,
                 )
+                _out_qb = _chi_q(
+                    _esito_moat(_gate, _gate_warnings,
+                                source=_source or None),
+                    _gate_warnings)
                 _persisti_q(
                     a.semantic.db_path, str(getattr(fact, "id", "")),
-                    _chi_q(_esito_moat(_gate, _gate_warnings,
-                                       source=_source or None),
-                           _gate_warnings),
+                    _out_qb,
                 )
             # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
             # ZERO eventi (2026-08-07; verificato sul log reale: 8247
@@ -13490,6 +13502,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # 0.8 WS1: which requested gate-weakening knobs were
                 # refused (empty when none / operator opted in).
                 "gate_knobs_denied": _knobs_denied,
+                # QUALE STRATO HA DECISO LA QUARANTENA. Condizionale come
+                # nell'SDK (client.py:982): il campo compare solo dove c'e'
+                # una quarantena da spiegare, cosi' una scrittura ordinaria
+                # non cambia forma.
+                **({"quarantined_by": _out_qb} if _out_qb else {}),
             })
 
         if name == "hippo_facts_recall":

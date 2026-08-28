@@ -27,6 +27,9 @@ quarantena per contenuto falso da una per scelta di parole.
 """
 from __future__ import annotations
 
+import asyncio
+import json
+
 import pytest
 
 from verimem.client import Memory
@@ -80,3 +83,54 @@ def test_LA_PRECEDENZA_NON_CAMBIA(mem):
                 "correttamente.", topic="az/q", source=FONTE)
     assert r.get("status") == "quarantined", (
         "la precedenza e' cambiata: L1 non trattiene piu'")
+
+
+def _remember_mcp(args: dict) -> dict:
+    from verimem import mcp_server as srv
+    return json.loads(asyncio.run(srv.call_tool("hippo_remember", args))[0].text)
+
+
+@pytest.fixture()
+def store_mcp(tmp_path, monkeypatch):
+    """La porta MCP puntata allo stesso genere di store dei test qui sopra."""
+    from verimem import mcp_server as srv
+
+    m = Memory(str(tmp_path / "s.db"))
+
+    class _Ag:
+        def __init__(self):
+            self.semantic = m.semantic
+    monkeypatch.setattr(srv, "_ag", lambda: _Ag())
+    return m
+
+
+def test_la_porta_MCP_dichiara_lo_STESSO_decisore(store_mcp):
+    """LA STESSA DOMANDA, DALL'ALTRA PORTA — e cambia un fattore solo.
+
+    I quattro test qui sopra passano tutti da `Memory(...)`, cioe' dall'SDK.
+    Ma il campo esiste per far sapere a CHI SCRIVE quale strato ha deciso, e
+    chi scrive, in questo prodotto, e' quasi sempre un agente: cioe' passa da
+    MCP. Su quella porta la ricevuta NON portava il campo.
+
+    ⚠️ E non perche' il dato mancasse. `mcp_server.py:13183` chiama
+    `chi_ha_quarantinato` e passa il risultato dritto a
+    `persisti_chi_ha_quarantinato`, senza tenerlo: la causa finisce NEL
+    DATABASE e non torna a chi ha appena scritto. Il prodotto sa, lo registra,
+    e non lo dice — che e' peggio del non saperlo, perche' non si vede.
+
+    Claim e fonte sono IDENTICI a `test_una_quarantena_decisa_da_L1_lo_dichiara`
+    apposta: fra i due banchi cambia un fattore solo, la porta.
+    """
+    out = _remember_mcp({
+        "proposition": "Ho verificato che il modulo di fatturazione funziona "
+                       "correttamente.",
+        "topic": "az/q",
+        "source": FONTE,
+    })
+    if out.get("status") != "quarantined":
+        pytest.skip(f"il banco non riproduce la quarantena: {out.get('status')!r}")
+    assert out.get("quarantined_by") == "L1", (
+        "la ricevuta MCP non dice quale strato ha deciso la quarantena "
+        f"(quarantined_by={out.get('quarantined_by')!r}), mentre sulla stessa "
+        "scrittura l'SDK dice 'L1'. Il valore e' gia' calcolato qui: viene "
+        "scritto nel database e non messo nella risposta")
