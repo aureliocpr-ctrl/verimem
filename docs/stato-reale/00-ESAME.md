@@ -2928,3 +2928,45 @@ Due frasi **identiche tranne una cifra**:
 sbagliata, il giudice boccia comunque. Eppure quel caso è **documentato nel commento del 21/08**
 (moat 99.89 + warning L4.1). ⇒ **O il giudice è migliorato, o serve un contesto lungo in cui la cifra
 si perde. Non lo so e non lo affermo.**
+
+---
+
+### 🔴🔑 LA MATRICE COMPLETA: **senza `--source` NESSUNA contraddizione viene bloccata**, di nessun tipo
+*(ws1 «Riscontro» / Curie · **29/08 00:13** · albero **`6bfe9fae`** · **REGIME**: 8 store NUOVI, uno
+per caso, env neutralizzata, RAM 10,65 GB · **entrambe le predizioni dichiarate prima e confermate**)*
+
+| regime | nomi / luoghi | numeri / colori |
+|---|---|---|
+| **con `source`, guardia ACCESA** *(default)* | **ammessi** `L3-coexistence` ❌ | **bloccati** `L3-semantic` ✅ |
+| **SENZA `source`**, guardia accesa | **ammessi** `L3-coexistence` ❌ | **ammessi** `L3-supersession` ❌ |
+| **con `source`, guardia SPENTA** (`ENGRAM_SUPERSEDE_SAME_SOURCE=0`) | **bloccati** `['L3','L3-coexistence']` ✅ | **bloccati** `['L3','L3-semantic']` ✅ |
+
+#### 🔴 ① SENZA FONTE CADE ANCHE L'ULTIMA DIFESA
+Numeri e colori, che **con** la fonte sono **quarantinati**, **senza** fonte passano come
+`L3-supersession` — **un avviso**. ⇒ **Scrivere senza `--source` non toglie solo il moat: toglie
+il blocco su OGNI tipo di contraddizione misurato.**
+🔗 **E si aggancia al numero delle 19:45: 4267 fatti SERVITI dal recall con `grounding None`** —
+sono **esattamente** quelli scritti senza fonte. **Per loro nessuna contraddizione è mai stata
+bloccata.**
+
+#### 🔑 ② LA GUARDIA È L'INTERRUTTORE, ed è il trade-off completo
+Con `ENGRAM_SUPERSEDE_SAME_SOURCE=0` — cioè con `_route_evolutions` **spenta** — **tutti e quattro
+i tipi vengono bloccati**, nomi e luoghi inclusi. **Il difetto nomi/luoghi sparisce.**
+⚠️ **MA NON PROPONGO DI SPEGNERLA**: in memoria abbiamo già il costo misurato — «*
+`ENGRAM_SUPERSEDE_SAME_SOURCE=0` rifiuta gli aggiornamenti: il secondo fatto entra `quarantined`,
+il vecchio resta servito ⇒ **memoria che non si aggiorna più**, l'opposto di ciò che il docstring
+promette*». **Spegnerla scambia un difetto con uno peggiore.**
+📌 **Dettaglio che conferma il meccanismo**: con la guardia spenta, nome e luogo escono con
+`['L3', 'L3-coexistence']` — **l'avviso di coesistenza c'è ancora, ma `L3` blocca**. ⇒ Non è che il
+gate «smetta di vedere la coesistenza»: è che **`_route_evolutions` non svuota più `_conflicts`**.
+Combacia riga per riga con il percorso letto alle 23:23.
+
+#### 🎯 COSA SIGNIFICA PER LA DECISIONE
+**Il default è la configurazione peggiore per nomi e luoghi, e scrivere senza fonte è la peggiore
+in assoluto.** La cura non è la manopola esistente (che ne rompe un'altra): è **distinguere il
+nome-SOGGETTO dal nome-VALORE** dentro `_entita_diverse`.
+
+#### 📌 COSA NON PROVA
+· **Una coppia per cella** (8 casi). Il proxy è validato 14/14, ma **queste 8 sono alla porta**.
+· Non ho provato **senza fonte + guardia spenta** (la quarta casella della matrice).
+· ⚖️ Resta aperto **se la coesistenza su nomi/luoghi sia VOLUTA**.
