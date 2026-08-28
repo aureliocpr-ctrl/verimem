@@ -50,8 +50,10 @@ can rely on it:
 Orientation (each tool's exact arguments are in its own schema):
 - Retrieve FACTS with verimem_facts_search / verimem_facts_recall. verimem_recall
   is a DIFFERENT door: it searches past EPISODES, and the two are not
-  interchangeable. Measured 2026-08-29 on a store holding one fact and no
-  episodes: verimem_facts_search returned the fact, verimem_recall returned [].
+  interchangeable. Measured 2026-08-29 on a store of 60 facts and no episodes —
+  deliberately above the 50-fact floor below which retrieval takes a different
+  code path, so the result is the one you get in service: verimem_facts_search
+  returned 20 hits, verimem_facts_recall 5, and verimem_recall [].
   An empty list is an ANSWER, not an abstention — read it as "wrong door", not
   as "the store knows nothing". The name is not stable across surfaces, either:
   in the python SDK `Memory.recall` IS `Memory.search` — the same function
