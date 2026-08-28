@@ -4530,3 +4530,50 @@ uno peggiore, e la matrice lo rende solo più visibile: la colonna «guardia spe
 **perché blocca tutto**, comprese le correzioni legittime.
 ⇒ **La cura resta quella indicata alle 00:13**: distinguere il nome-SOGGETTO dal nome-VALORE
 dentro `_entita_diverse`. La matrice dice **dove** sta l'interruttore, non che vada girato.
+
+---
+
+## ws1 — 🛑 TENTATIVO FALLITO, DOCUMENTATO: IL FRONTE ⑬ RESTA APERTO
+
+**Livello**: chiamata diretta a `_l3_check` fuori dal flusso · **Istante**: 29/08 01:52–01:54 ·
+**Regime**: store nuovo per caso, primo fatto scritto con `source` · sha `1d33c152`.
+
+### Cosa volevo verificare, e perché era un dubbio serio contro di me
+Il codice (`anti_confab_gate.py:1976-1984`) dice:
+```python
+r = _l3_check(agent, proposition, topic)
+if r is not None and r.get("verdict") == "contradicted":
+    ev = [...]
+```
+Se in FR `est` il verdetto **fosse** `contradicted`, `ev` non sarebbe vuoto e dovrebbe comparire
+`L3-coexistence`. **Alla porta la ricevuta era VUOTA** ⇒ o `ev` è vuoto, o il verdetto non è
+`contradicted` — e in quel secondo caso `_entita_diverse` **non viene mai raggiunta**, e la mia
+attribuzione al ramo posizionale per FR/DE sarebbe **sbagliata**.
+
+### 🛑 Il risultato: LO STRUMENTO NON FUNZIONA, e me l'ha detto il CONTROLLO
+```
+FR-est    verdict=None   evidence_facts=0
+FR-paye   verdict=None   evidence_facts=0     <- ma alla porta e' QUARANTINATO
+IT        verdict=None   evidence_facts=0     <- ma alla porta e' QUARANTINATO ['L3','L3-semantic']
+```
+Chiamare `_l3_check("Curie", frase, topic)` **fuori dal flusso** non trova nulla **nemmeno sui due
+casi che alla porta sono bloccati**. ⇒ **Il mio banco non riproduce la porta**: manca il contesto
+che il flusso costruisce prima di chiamarlo (agente, retrieval, scope). **Non posso concludere
+niente**, né a favore né contro la mia attribuzione.
+
+### 🔑 La lezione, ed è la ragione per cui scrivo questa cella invece di cancellarla
+**Se avessi provato SOLO `FR-est` e visto `None`, avrei concluso «il rilevatore tace in francese»
+— e sarebbe stato falso.** È il **caso di controllo** (IT, che so essere bloccato alla porta) a
+mostrare che lo strumento è rotto.
+⇒ **La popolazione di controllo ha invalidato IL MIO STRUMENTO, non l'ipotesi.** È un uso del
+controllo che non avevo ancora incontrato stanotte: di solito serve a misurare l'altro tasso; qui
+ha fatto da **null-control sul righello**.
+📌 **E chi riprenderà il fronte ⑬ deve saperlo**: `_l3_check` chiamata direttamente **non è la
+superficie giusta**. Serve strumentare il flusso o leggere la ricevuta, non la funzione.
+
+### Cosa resta vero
+· **Il reperto n.9 è alla porta, non qui**: FR e DE `ammesso` con **ricevuta vuota**, IT ed EN
+  `QUARANTINATO ['L3-semantic']` — **4 su 4 con predizione dichiarata prima**, più il controllo
+  `payé`/`beträgt` **3 su 3**. Quello **non dipende** da questo tentativo.
+· **Ciò che NON so, e che questo tentativo non ha chiarito**: **quale** componente produce il
+  silenzio in FR/DE. Il fronte ⑬ resta **APERTO**.
