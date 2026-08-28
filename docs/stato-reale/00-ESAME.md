@@ -2586,3 +2586,64 @@ misurato alle 23:29), **ma resta un proxy**: le 24 coppie non sono passate dal g
 · **Tre coppie per cella**: netto, non esaustivo. Soggetti e valori scelti da me.
 · **Non copre** altri tipi (importi, versioni, stati) né altre lingue.
 · ⚖️ **Resta aperto se sia VOLUTO** che due nomi propri diversi implichino «entità diverse».
+
+---
+
+### 🔴🔴 `_values_clash` CONFRONTA I NUMERI **POSIZIONALMENTE** — un id di run contro un'ora, `11983 passed` contro il `-04` di una data
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-28, 23:51 · **Banco**:
+`docs/stato-reale/banchi/ws6-perche-numeric-clash-appaia-grandezze-diverse.py` (un secondo, nessun
+modello) · **Non ho toccato `contradiction.py`**: è di @ws4/@ws5, io consegno meccanismo e casi.
+
+> 🔄 **QUESTA CELLA CORREGGE LA MIA PRECEDENTE**, che attribuiva le tre coppie alla **cella 51** (il
+> coseno che non filtra). **L'attribuzione era incompleta di uno stadio su tre**, e me n'ero messo in
+> coda la verifica contro me stesso.
+
+#### ① I tre stadi, e quale è il colpevole
+```python
+for _topic, group in _group_by_topic(facts).items():   # ① appaia per TOPIC, non per coseno
+    if not _values_clash(...): continue                 # ② i numeri devono "confliggere"
+    if _cosine(a, b) < 0.75: continue                   # ③ il coseno filtra
+```
+La **cella 51** riguarda **solo ③**: spiega perché il coseno non ha salvato quelle coppie, **non**
+perché siano state appaiate (①) né perché i numeri siano stati giudicati in conflitto (②).
+**Il colpevole è ②.**
+
+#### ② Il meccanismo
+`_values_clash` raggruppa i numeri in `year` / `percent` / `other`, poi **dentro ogni gruppo
+confronta l'i-esimo di A con l'i-esimo di B**. Sulle frasi esatte prese dallo store:
+
+| coppia | cosa confronta davvero |
+|---|---|
+| 1 | **32764736605** (id del run) con **16** (l'ora «16:06») |
+| 2 | **32764736605** con **16**, poi 9 con 6 |
+| 3 | **32998186539** con **2**, e **11983 passed** con **−4** (il «−04» di `2026-07-04`) |
+
+`other` raccoglie **tutto ciò che non è anno né percentuale** — id, durate, conteggi, byte, secondi.
+**Dentro quella categoria la posizione non significa niente.**
+
+#### ③ La cura esisteva già, per metà
+Il docstring dichiara il ciclo #123 (17/05): il raggruppamento per tipo fu introdotto **proprio** per
+uccidere il falso positivo «Tasso 5% nel 2024» vs «2024 tasso 5%». **Funziona per `year` e `percent`
+e lascia `other` posizionale.** ⇒ classe nota: ***la causa non è «manca X»: X c'era, INCOMPLETO***.
+
+#### ④ Le due popolazioni — è qui che il criterio cade
+| | esito |
+|---|---|
+| ✅ «Il run X ha **9** job totali» / «…**14** job totali» | `CLASH=True` ✔ |
+| ✅ «La suite riporta **3** failed» / «…**7** failed» | `CLASH=True` ✔ |
+| 🔴 «Il file pesa **5 MB**» / «Il processo dura **900 secondi**» | **`CLASH=True`** ✘ |
+| 🔴 «Ci sono **3 utenti**» / «Il test dura **1206.09 secondi**» | **`CLASH=True`** ✘ |
+
+⇒ **Il criterio non separa le popolazioni**: dice `True` sui conflitti veri **e** su frasi senza
+nulla in comune. Gemello del reperto di @ws4 su L4.2 («legge la grandezza a destra», e più a fondo:
+**assume che una grandezza ci sia**). **Due layer diversi, stesso difetto concettuale: si confrontano
+numeri senza sapere di che cosa sono la misura.** ⇒ è una **classe**, non due bug.
+
+#### Limiti
+· ① **salva parzialmente**: l'appaiamento è per topic, quindi **«un topic per misura» riduce il
+danno** — ma non cura il difetto.
+· **Non so quante coppie in tutto ne siano colpite**: `L3-coexistence` ne ha fermate 10, ma
+`heal_contradictions` gira anche altrove. **Non estrapolo.**
+· I due casi negativi sono **scritti da me**: sono un banco, non un campione del corpus. I tre
+positivi invece **vengono dallo store**.
