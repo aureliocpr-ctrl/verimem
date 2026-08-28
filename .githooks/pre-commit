@@ -54,4 +54,49 @@ if ! ruff check $TARGETS; then
     exit 1
 fi
 
+# --- il cancello del publish, sulle sole righe che stai AGGIUNGENDO ---------
+#
+# 2026-08-28: il veto di `publish.yml` (scripts/controlla_registro.py) e' un
+# VETO DI RILASCIO — `return 1` ferma il job — e nessuno se ne accorge finche'
+# non si costruisce il pacchetto. Misurato quel giorno: 7 identificativi alle
+# 20:00, 12 alle 22:35 dopo UN file nuovo, 6 alle 22:58 dopo due cure. Il
+# cancello si richiudeva da solo mentre si lavorava, perche' questo hook girava
+# `ruff` e non il veto.
+#
+# ⚠️ GUARDA SOLO LE RIGHE AGGIUNTE, di proposito. Il debito che c'e' gia' non
+# e' colpa di chi commetta adesso, e bloccarlo fermerebbe tutti su un lavoro
+# altrui: e' esattamente il blocco che ha fermato il repo stamattina. Cosi'
+# invece nessuno e' fermato oggi e nessuno puo' PEGGIORARE il conto domani.
+#
+# Il pattern si DERIVA da controlla_registro.py, come i target di ruff si
+# derivano da ci.yml: una lista duplicata divergerebbe alla prima modifica.
+# ⚠️ Limite dichiarato: `\b` non e' ERE POSIX, e' un'estensione GNU. Su un grep
+# non-GNU l'estrazione fallisce e il blocco NON scatta — degrada in silenzio,
+# quindi qui sotto lo dice.
+REG="scripts/controlla_registro.py"
+if [ -f "$REG" ]; then
+    PAT=$(grep -oE '"identificativo di sessione": \(re\.compile\(r"[^"]+"' "$REG" \
+          | grep -oE '\(r"[^"]+"' | sed 's/^(r"//; s/"$//')
+    if [ -z "$PAT" ]; then
+        echo "pre-commit: non riesco a leggere il pattern da $REG — veto NON applicato"
+    else
+        NUOVE=$(git diff --cached -U0 -- 'verimem/*.py' \
+                | grep -E '^\+' | grep -vE '^\+\+\+' | grep -cE "$PAT" || true)
+        if [ "${NUOVE:-0}" -gt 0 ]; then
+            echo ""
+            echo "pre-commit BLOCKED: $NUOVE riga/e che stai aggiungendo a verimem/"
+            echo "contengono un identificativo di sessione ($PAT)."
+            echo "Quel pacchetto e' cio' che si spedisce, e il veto del publish"
+            echo "(publish.yml:218) FERMA il job di rilascio su questo."
+            echo ""
+            git diff --cached -U0 -- 'verimem/*.py' | grep -E '^\+' \
+                | grep -vE '^\+\+\+' | grep -E "$PAT" | head -5 | sed 's/^/    /'
+            echo ""
+            echo "Riscrivi la frase senza la sigla (la misura e la data si tengono),"
+            echo "oppure  git commit --no-verify  se sai perche'."
+            exit 1
+        fi
+    fi
+fi
+
 echo "pre-commit: lint clean ($TARGETS)"
