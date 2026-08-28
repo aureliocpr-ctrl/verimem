@@ -4117,3 +4117,51 @@ celle, non la regola.**
 > ⛔ **Correggo un'implicazione mia**: «una riga di documentazione» **vale solo se la riga dice
 > "usa topic distinti"** — **non** se viene letta come «passa i timestamp», che è la reazione
 > istintiva di chi conosce `asserted_at`. **Quella strada è chiusa, ed è misurata.**
+
+---
+
+## ws1 — IL DANNO È NEL FATTO GIÀ SCRITTO: UNA SECONDA VIA, INDIPENDENTE DALLA PRIMA
+
+**Livello**: porta vera + le funzioni interne · **Istante**: 29/08 01:17–01:21 · **Regime**: store
+nuovo per caso, guardia al default, `source` sul primo · sha `ba536f1b`.
+
+### Il fronte ⑩ (coppie RIFORMULATE), che era il mio limite ① dichiarato alle 00:41
+Il filtro sulle 2676 vedeva solo coppie identiche a meno dei numeri. **Misurato adesso alla porta:**
+```
+identica     «I fatti serviti sono 7975»    -> «…sono 8470»                    ammesso ['L3-coexistence']
+riform-1     «I fatti serviti sono 7975»    -> «Il totale dei fatti serviti e' 8470»  QUARANTINATO ['L3']
+riform-2     «Il canone annuo e' EUR 12000» -> «Il canone annuale ammonta a 15000 euro»  ammesso ['L3-coexistence']
+riform-ctrl  «Il canone annuo e' 12000 euro»-> «Il canone annuale ammonta a 15000 euro»  QUARANTINATO ['L3','L3-semantic']
+```
+🔴 **`riform-2` e `riform-ctrl` hanno LA STESSA SECONDA FRASE**: cambia solo **il fatto già
+memorizzato**, e l'esito è opposto. ⇒ **Il danno non è nella correzione: è nel fatto scritto
+prima.** Un importo archiviato una volta come «EUR 12000» **non viene più aggiornato da nessuna
+correzione**, nemmeno riformulata, nemmeno scritta con l'unità nella forma giusta.
+
+### 🔑 E la causa NON è il ramo posizionale: è una SECONDA VIA
+```
+riform-2      record_numerati=False   entita_diverse=True   <- non e' il ramo di prima
+              quantita' A {('', 12000.0)}       unita' A {''}
+              quantita' B {('euro', 15000.0)}   unita' B {'euro'}    DISGIUNTE -> «due misure diverse»
+riform-ctrl   unita' A {'euro'}  unita' B {'euro'}   non disgiunte -> il gate BLOCCA
+riform-1      unita' A {''}      unita' B {''}       non disgiunte -> il gate BLOCCA
+```
+**Una valuta pre-posta lascia l'unità VUOTA, e un'unità vuota è disgiunta da QUALSIASI unità
+vera.** Il ramo delle unità — documentato per separare «1 failed / 11767 passed» da «8019
+warnings», cioè grandezze davvero diverse — qui legge *lo stesso importo* come due grandezze.
+⇒ **Due vie indipendenti verso lo stesso danno**: ① la parola ≥3 caratteri + numero nudo
+(`_record_numerati_diversi`), ② l'unità vuota contro un'unità vera (ramo unità). **Curare la prima
+non chiude la seconda.**
+
+### Fronte ⑭ — il terzo limite del regex (`\d{1,6}`) sul corpus, e il mio righello sbagliato
+```
+proposizioni con numeri                                   12964
+TUTTI i numeri a >=7 cifre (il ramo non può scattare)        89   (0,7%)
+miste (almeno uno lungo E almeno uno corto)                1825  (14,1%)
+```
+🪞 **Il mio primo contatore diceva 14,8%** perché contava «almeno un numero lungo», mentre il regex
+guarda **ogni** numero: **sovrastimava di 1825 su 1914, il 95%**. Il numero giusto è **0,7%** ⇒ su
+questo asse il nostro corpus **non è esposto**, e il limite `\d{1,6}` resta un difetto di forma.
+⚠️ **È la TERZA volta stanotte** che il mio primo righello sbaglia di un ordine di grandezza
+(76,3%→55,6% · 1437 occorrenze→8 coppie · 14,8%→0,7%). **Tre volte su tre l'errore ha la stessa
+forma: ho contato `any()` dove la condizione era `all()`.** Non è sfortuna, è un difetto di metodo.
