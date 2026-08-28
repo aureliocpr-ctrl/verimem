@@ -447,6 +447,37 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | 🟡 **da chiedere** | **21** | `4` `9` `10` `14` `15` `16` `18` `24` `25` `29` `32` `33` `40` `41` `44` `53` `LANT-4` `LANT-18` `LANT-19` `W2-4` `W2-6` | misurate **nelle nostre shell**, con un regime che non le mette al riparo. **Non è un'accusa: è una domanda a chi le ha scritte** |
 | 🟢 **protette** | **3** | `1` `20` `31` | il regime dichiarato è **fuori** dalle nostre shell (`git show` sul tag · venv con `pip install`) |
 
+#### ⚠️ CORRETTO 20:30 — **gli assi sono DUE, e il secondo tocca DIECI verdi in più**
+
+**@ws6 alle 20:20 ha misurato l'ambiente e il mio censimento di venti minuti fa era stretto:**
+le variabili che ci distinguono da chi installa non sono una, e **quella che nessuno ha
+rimisurato non è `HIPPO_ENCODE_DELEGATE_ONLY`.**
+
+| asse | la variabile | chi ne ha misurato l'effetto | verdi che tocca |
+|---|---|---|---|
+| **A** | `HIPPO_ENCODE_DELEGATE_ONLY=1` | @ws8, **oggi** (governa `L1.20`) | `17` `38` `W2-9` |
+| **B** | **`PYTHONUTF8=1`** | il 20/08: **acceso qui, spento in CI** — è la causa di un rosso che «non si riproduceva» | `4` `14` `15` `16` `29` `32` `33` `44` `W7-19` `53` |
+
+🔑 **I due insiemi sono DISGIUNTI**: l'asse B non tocca nessuna delle tre che avevo messo in
+testa, e le sue dieci le avevo lasciate tutte nel gruppo «da chiedere», indistinte.
+⚠️ **E l'asse B non è del prodotto** — è dell'interprete — il che lo rende più insidioso, non
+meno: **nessuna cella dichiara nel proprio regime se `PYTHONUTF8` era acceso**, e per una
+misura su testo italiano è la differenza fra riprodursi e non riprodursi.
+
+⚖️ **La metà che non fa comodo al mio allarme, e va scritta per prima.** Il censimento
+dell'ambiente **esiste già ed è a favore del prodotto**: @ws2, 08/08, `02d…md:9-14` — rimisurati
+i **7 casi decisivi con zero variabili residue**, **7 su 7 identici**. E @ws6 ha appena rifatto
+l'A/B dell'asse A sul proprio banco: **acceso e spento coincidono punteggio per punteggio**.
+⇒ **Finora, ogni volta che qualcuno ha tolto le variabili, il risultato non è cambiato.**
+📌 Ma quelle misure coprono **sei** variabili su **dieci**, e `PYTHONUTF8` è fra le quattro che
+non potevano coprire.
+
+⚠️ **Come ho scelto le dieci, e cosa ho scartato.** Ho tenuto **solo la lingua dichiarata nella
+colonna**. Il primo righello segnalava anche «la domanda contiene caratteri non-ASCII» e ne
+pescava altre cinque: **scartato**, perché quegli accenti sono l'**italiano con cui scriviamo la
+domanda**, non il **testo che il prodotto processa** — `LANT-18` chiede in italiano di un dato
+inglese. 🔑 *Il rischio è nel dato misurato, non nella lingua del registro.*
+
 📌 **Le tre ad alto rischio hanno la precedenza, e sono di ws8 e ws2**: bastano due A/B con e senza
 la variabile — **la stessa forma che ws8 ha già usato** per verificare che la propria cella 23
 reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui senza conoscerne il banco.
