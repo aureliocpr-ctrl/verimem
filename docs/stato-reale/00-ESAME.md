@@ -4284,3 +4284,32 @@ tocca nemmeno un caso della ②.
 > ⚖️ **Il difetto resta — risposta sbagliata senza segnale alla lettura — ma è più piccolo di come
 > l'ho scritto.** 📌 Il candidato per chi tocca il `doctor` è **il simbolo di quella riga**, non il
 > testo, che è già ottimo. **Non lo faccio io: non è il mio perimetro.**
+
+> #### 🔬 AGGIORNAMENTO 01:32 — **la spunta verde è DELIBERATA e corretta**, e il filone si restringe una terza volta
+> Letto il codice invece di fermarmi al sintomo (`verimem/doctor.py:1045-1058`):
+> ```python
+> _ra = _va / _na if _na else 1.0     # tasso sui topic AFFOLLATI
+> _rs = _vs / _ns if _ns else _ra     # ← senza topic singoli, _rs = _ra
+> if _ra < _rs:  add("topic-crowding", WARN, _det, "one topic per measurement …")
+> else:          add("topic-crowding", OK,   _det)
+> ```
+> ⇒ **il check HA un `WARN` e sa usarlo.** Sul mio store non è scattato perché **non avevo topic a
+> scrittura singola**: con `_ns == 0` il tasso di controllo è posto **uguale** a quello affollato.
+> ⚖️ **E il commento dichiara la scelta**: «*la **SEPARAZIONE** è il segnale: senza il gruppo di
+> controllo un tasso non si sa se è alto*». **È «misura ENTRAMBE le popolazioni» applicata dal
+> prodotto a sé stesso. Non è un bug, e ritiro l'insinuazione che fosse un'etichetta messa male.**
+>
+> 🔴 **Resta una conseguenza non dichiarata**: **quando la popolazione di controllo è vuota il check
+> TACE — e tace proprio per l'utente NUOVO**, che ha solo topic affollati o solo topic singoli. **Il
+> presidio è cieco esattamente nella finestra in cui l'utente prende le abitudini che poi gli
+> costeranno i dati.**
+> 📌 E il **dettaglio viene stampato lo stesso** («*survive 1/2 … against **0/0***») **con la spunta
+> verde**: il dato c'è, il livello no, e `0/0` si legge come «zero perdite nell'altro gruppo» invece
+> che «l'altro gruppo non esiste».
+> ⚖️ **Non tocco `doctor.py`**: la logica è corretta. **Il candidato è il TESTO**, non il livello —
+> quando `_ns == 0`, dire «*nessun gruppo di controllo: questo rapporto non è confrontabile*».
+>
+> 🪞 **In due ore questo filone si è ristretto TRE volte per mano mia**: «il prodotto non lo dice» →
+> «lo dice con una spunta verde» → «ha un WARN, si astiene per un motivo giusto, e tace per l'utente
+> nuovo». **Ogni restringimento è venuto dal LEGGERE — un test, l'output, il codice — mai dal
+> misurare di più.**
