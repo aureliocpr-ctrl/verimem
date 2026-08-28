@@ -56,8 +56,13 @@ parte del referto.
 
 🪞 **RITIRO, 29/08 00:18**: la prima stesura diceva «*costo otto fatti veri su otto*». **Falso.** `L4.2` e' un **avviso, non un veto**: misurato alla porta, un claim che accende **solo** `L4.2` esce con **`action='persist'`** ed entra. ⇒ Il costo non e' in fatti persi: e' **rumore nella ricevuta**, su ogni output di strumento. Il difetto resta, la gravita' no. Cella **W7-35**.
 
-La causa è isolata a variabile singola (cella W7-30): **legge la grandezza a
-DESTRA del numero**.
+La causa, **come l'ho corretta in W7-38 dopo aver riletto il codice**: il
+criterio è posizionale e **guarda ENTRAMBI i lati** — «*un identificativo SEGUE
+il suo sostantivo, una quantità lo PRECEDE*» — e ciò che la ricevuta mostra è
+solo il lato seguente. ⇒ **Il criterio presuppone una FRASE**: in una tabella
+allineata la posizione non porta quell'informazione, e i due lati sbagliano
+insieme. *(La prima stesura diceva «legge la grandezza a destra»: avevo misurato
+il messaggio e l'avevo attribuito alla decisione.)*
 
 ```
   A  tabella allineata (etichetta a SINISTRA)   SEGNALA   → «nella fonte «in»»
