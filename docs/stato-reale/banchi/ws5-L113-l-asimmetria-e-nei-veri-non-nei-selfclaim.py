@@ -41,8 +41,20 @@ REGIME: build corrente · store TEMPORANEO rimosso da un `trap` ·
 ⚖️ PUNTI DEBOLI: **quattro casi per lingua e due self-claim per lingua** - la
 separazione e' netta (1/4 contro 3/4) ma il campione e' piccolo, e le frasi
 italiane e inglesi sono mie traduzioni: una differenza potrebbe venire dalla
-traduzione. **Non ho isolato se a decidere sia `L1.13` o `L1.20`**: in due dei
-tre casi italiani il layer che compare e' `L1.20`.
+traduzione. 🪞 **CORRETTO: avevo scritto questo limite ROVESCIATO.** I tre casi
+italiani che cadono sono attribuiti cosi' dalla ricevuta::
+
+    «Il bilancio si e' chiuso in pareggio.»   downgrade 97.2   L1.13
+    «La consegna e' stata effettuata.»        downgrade 99.6   L1.20
+    «Il collaudo si e' concluso.»             downgrade 95.0   L1.13
+
+⇒ **DUE su tre sono `L1.13`, UNO e' `L1.20`** - non il contrario, come avevo
+scritto a @ws4 nel primo invio. L'errore era **dannoso nella direzione
+peggiore**: diceva a chi cura `L1.13` che il suo layer c'entra in un caso su
+tre, mentre e' la causa in **due**. ⇒ Curare `L1.13` muove due dei tre casi
+italiani; il terzo («la consegna e' stata effettuata») e' di `L1.20` e resta.
+⚠️ E l'attribuzione e' quella che la RICEVUTA dichiara: non ho spento un layer
+per vedere se l'altro basta da solo - **questo resta non misurato**.
 
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-L113-l-asimmetria-e-nei-veri-non-nei-selfclaim.py <dir-temp>
 """
