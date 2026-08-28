@@ -2877,3 +2877,54 @@ MCP-`remember` — eppure il corpus ne ha **76**, dieci solo il 28/08. **Do il *
 chi vuole chiuderlo deve trovare il terzo chiamante, e questo banco è il righello che esclude i primi due.
 · Dodici casi, una lingua (IT), un giudice locale. **Non è la matrice: è la popolazione minima che
 serviva a decidere fra «famiglia» e «altro».**
+
+---
+
+### 🎯 `quarantined_by` È UNA **PRECEDENZA DOCUMENTATA**, non un vocabolario incoerente — e correggo due mie celle di stanotte
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:17 · **Metodo**: ho smesso di misurare dall'esterno
+e **ho letto la funzione** (`verimem/client.py`, `chi_ha_quarantinato`).
+
+```python
+if "store-screen" in set(agito):  return "store-screen"
+if moat == "failed":              return "moat"     # ← USCITA ANTICIPATA
+if any(w.layer.startswith("L1")): return "L1"
+for _p in _BLOCK_LAYER_PRIORITY:  ...               # ← non viene mai raggiunta se il moat ha deciso
+return "gate"
+```
+con `_BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "L4.1", "SOURCE_TRUST", "L4-skipped")`.
+
+#### Quattro cose che spiega insieme
+**① Perché `moat` domina** (7 casi su 9 nel banco, 315 nel corpus): quando il giudice boccia, la
+funzione **esce alla seconda riga**. Nei dodici casi il grounding era 0,6–1,3 su soglia 40.
+**② Perché `L4.2` non compare mai** (la domanda di @ws5): **non è nella lista**, e comunque la lista
+**non si raggiunge** quando il moat ha già deciso. ⇒ **non è che il registro lo perda: L4.2 non è un
+decisore per costruzione.**
+**③ Perché ricevuta e db dicono nomi diversi** (l'osservazione di @ws7): la ricevuta elenca **chi ha
+PARLATO**, il db nomina **chi ha BLOCCATO**. Due domande diverse, due risposte giuste. ⚠️ **Non è
+«detector vs famiglia»**: è **«ha parlato» vs «ha bloccato»** — e **nessuna delle due superfici dice
+quale domanda sta rispondendo**.
+**④ Il limite che avevo dichiarato è chiuso senza trovare un terzo chiamante**: `L4.1` si scrive solo
+**quando il moat approva** e un L4.x blocca. **Non è una porta diversa**: CLI, SDK e MCP scrivono
+tutte `moat` sullo stesso claim.
+
+#### ⛔ Cosa correggo di mio
+Avevo scritto, in due celle, «**vocabolario misto**: categorie + famiglie + detector nello stesso
+campo». **È sbagliato come diagnosi**: la precedenza è **deliberata e documentata**, con i numeri
+della misura che l'ha prodotta (21/08: «*quarantinati 24h 25, di cui `gate` generico 56%*»).
+⇒ La frase giusta: **il campo nomina chi ha bloccato, con precedenza
+`store-screen` > `moat` > `L1` > lista > `gate`.**
+✅ **Resta vero**: chi **conta per layer** conta **etichette di blocco**, non partecipazioni (il mio
+«63 su 136 L4.1» resta mal titolato), e il **79,6% di NULL** resta un buco.
+
+#### 📌 Dato nuovo — il giudice sui numeri è nettissimo, non debole
+Due frasi **identiche tranne una cifra**:
+| claim vs fonte | grounding | esito |
+|---|---:|---|
+| `512.3 MB` vs `512.3 MB` | **99,94** | ammesso |
+| `176.6 MB` vs `512.3 MB` | **1,26** | quarantinato |
+
+⚠️ **Non sono riuscito a costruire il caso «il moat approva e L4.1 blocca»** — appena la cifra è
+sbagliata, il giudice boccia comunque. Eppure quel caso è **documentato nel commento del 21/08**
+(moat 99.89 + warning L4.1). ⇒ **O il giudice è migliorato, o serve un contesto lungo in cui la cifra
+si perde. Non lo so e non lo affermo.**
