@@ -1,0 +1,874 @@
+@@3f961371|F1 sul corpus vero: il 65,7% scende a 5,3% con tre guardie, e meta' dei falsi allarmi era la segmentazione
+
+ 1 file changed, 231 insertions(+)
+@@affd3328|scripts: lo strumento che verifica la legenda deve invecchiare con lei
+
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+@@d173cf8f|esame: mancava un simbolo per le celle RITIRATE, e ws4 ha pagato la mia legenda
+
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+@@1a033c2d|esame: il mio conteggio dei commit era datato senza dirlo - ws4 aveva ragione
+
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+@@00d572f6|registro: W7-16 ritirata per irriproducibilita', W7-17 col dato che resta
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@643f89ee|esame W2-12 (C5): il motivo di una quarantena vive nella ricevuta e non nel fatto
+
+ 1 file changed, 1 insertion(+)
+@@d5329ffb|la mia fonte «reale» cambiava mentre la misuravo, e il claim passa solo citando
+
+ 1 file changed, 139 insertions(+)
+@@e605f402|esame: misuriamo con un presidio in piu' di chi installa, e questo gonfia i VERDI
+
+ 1 file changed, 14 insertions(+), 1 deletion(-)
+@@1031e219|00-ESAME riga 56: il corpus non sa quale layer ha fermato un fatto - 105 su 2378
+
+ 1 file changed, 1 insertion(+)
+@@d0cfd005|registro: W7-16, il gate rifiuta un fatto vero, e W7-15 vale fino a 6000 caratteri
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@cd51a72c|esame W2-11 (C4/C5): la distinzione fra giudicato e mai giudicato c'e', ma non nel campo che sembra portarla
+
+ 1 file changed, 1 insertion(+)
+@@6e99db4e|il gate RIFIUTA un fatto vero su fonte reale, e la mia riga sul log va ristretta
+
+ 1 file changed, 181 insertions(+)
+@@18bf5195|esame: la 0.7.0 ha UN difetto, non due - la sintesi lo dice dove si decide
+
+ 1 file changed, 9 insertions(+), 11 deletions(-)
+@@57634813|esame W2-10 (C5): matched_text cita davvero, sui layer lessicali
+
+ 1 file changed, 1 insertion(+)
+@@a75ced2f|validazione cieca F1: 15/16 scambi colti ma 3 falsi positivi - e il primo lo produce la cura del passo 3
+
+ 1 file changed, 252 insertions(+)
+@@c9380232|La numerazione degli ARTICOLI copre un numero inventato: falso negativo di OGGI
+
+ 1 file changed, 146 insertions(+)
+@@2fc4f739|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@bab600e7|esame: tetto mcp riverificato su venv mai toccata (EXIT=1) e moat confermato buono (99.919/high)
+
+ 1 file changed, 44 insertions(+)
+@@1a0f54d2|esame: il righello della versione mente, e ho censito quali celle tocca
+
+ 1 file changed, 14 insertions(+), 2 deletions(-)
+@@8157a777|F1 BLOCCATO: non dalla regola, dall'ESTRATTORE DI VALORI - tre difetti misurati
+
+ 1 file changed, 206 insertions(+)
+@@e169a008|00-ESAME riga 55: la coda di revisione cresce, entra cinque volte piu' di quanto esce
+
+ 1 file changed, 1 insertion(+)
+@@9bbce92f|esame: il righello della versione mente (0.7.0 sui metadati, HEAD nel codice) e il moat MCP dal 2,2% al 98,6%
+
+ 1 file changed, 75 insertions(+)
+@@a1b8688e|esame: salda davvero il debito n=1 sulla cella delle date — il commit precedente diceva di averlo fatto e non l'aveva fatto
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@f84eb91d|esame W2-9 (C5): l'advice di L4.1 e' eseguibile — e il debito sulle date e' saldato nella cella che lo portava
+
+ 1 file changed, 1 insertion(+)
+@@4f2e0f6f|C7: sulla negazione SDK e CLI NON divergono - 5 su 6 su entrambe, e coincide anche il caso
+
+ 1 file changed, 139 insertions(+)
+@@86867824|banco: L4.2 e' cieco per costruzione dove il numero porta un'unita' di misura - e il vicinato salta riga
+
+ 1 file changed, 100 insertions(+)
+@@f49ea06a|esame: la coda della CI cresce mentre lavoriamo - piu' commit, meno verdetti
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@6f79ce2b|registro: W7-15 ristringe W7-14 — sul log VERO il giudice non sbaglia
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@89446fa3|RITIRO «sul log il giudice sbaglia»: sul log VERO fa il suo lavoro, 0 su 4
+
+ 1 file changed, 116 insertions(+)
+@@919b2c8c|esame W2-7 e W2-8 (F3/C5): avviso e veto sono indistinguibili, e quarantined_by nomina la famiglia sbagliata
+
+ 1 file changed, 2 insertions(+)
+@@d9b39135|review F1: il passo 3 assolve lo scambio canonico (una parola condivisa basta) - popolazione B 0/12 FP, controllo positivo 2/2
+
+ 1 file changed, 187 insertions(+)
+@@96613177|bench: 'fusion ON' esiste ed e' il DEFAULT - il difetto si sposta sull'artefatto
+
+ 2 files changed, 7 insertions(+), 3 deletions(-)
+@@b81966a0|F1: eseguite le verifiche «a mano su carta» - erano sbagliate su meta' dei casi
+
+ 2 files changed, 314 insertions(+)
+@@b1373578|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@021657d0|correggo il ritiro stesso: riverificati sono i 13 comandi, NON il tetto mcp
+
+ 1 file changed, 9 insertions(+), 2 deletions(-)
+@@865b5830|registro: cella W7-14, la separazione e' binaria per genere e il log e' il peggiore
+
+ 1 file changed, 1 insertion(+)
+@@792888d5|esame: RITIRATO dalla sintesi il difetto piu' grave - era la nostra env, non il prodotto
+
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+@@1d901fd1|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@d315f48f|RITIRO il mio rosso sulla 0.7.0: era la NOSTRA env, non il prodotto
+
+ 1 file changed, 77 insertions(+), 1 deletion(-)
+@@601c056a|la separazione e' per GENERE ed e' binaria: sul log il giudice sbaglia 4 su 4
+
+ 1 file changed, 153 insertions(+)
+@@489824a5|F1: la mia predizione sulla finestra e' falsificata (28,7%), ma la popolazione era sbagliata - e ne esce una cura del passo 3
+
+ 2 files changed, 233 insertions(+)
+@@2495d2ca|00-ESAME riga 54: cinque soglie di coseno su sei sotto il pavimento della loro popolazione
+
+ 1 file changed, 1 insertion(+)
+@@5ec3aecf|Cinque soglie di coseno su sei stanno sotto il pavimento della loro popolazione
+
+ 1 file changed, 136 insertions(+)
+@@604a594e|esame W2-6 (F3): quando il moat non gira, tutte e tre le porte lo dicono
+
+ 1 file changed, 1 insertion(+)
+@@2bad80ef|esame: la sintesi in testa era ferma a 53 celle quando erano 84
+
+ 1 file changed, 20 insertions(+), 10 deletions(-)
+@@72fcb004|registro: W7-13, e W7-12 scende da verde a gialla per mano mia
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@cb7cc4cd|esame: i numeri della CI erano tagliati da un limite, e 'aspettare funziona' e' caduto
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@d809a433|F1 DESIGN DOC: la regola sicura NON puo' coprire l'omissione, per costruzione
+
+ 1 file changed, 173 insertions(+)
+@@f6601dc7|esame W2-4 e W2-5 (F3): la quarantena e' uguale su tutte le porte, la lingua della ricevuta no
+
+ 1 file changed, 2 insertions(+)
+@@972cb903|sul documento TECNICO il giudice da' 99.3 a una cifra inventata: salva solo L4.1
+
+ 1 file changed, 150 insertions(+)
+@@5e5b3a27|00-ESAME riga 53 (VERDE): --as-of raggiunge davvero il fatto ritirato, e filtra per tempo
+
+ 1 file changed, 1 insertion(+)
+@@6ff4bafb|banco: la collisione categorica NON e' generale - 1 su 4, il giorno e' un'anomalia e non so perche'
+
+ 1 file changed, 68 insertions(+)
+@@30755bcc|registro: cella W7-12 VERDE, la cifra inventata e' fermata a ogni lunghezza
+
+ 1 file changed, 1 insertion(+)
+@@6da9e029|esame: dopo la quinta collisione cambio la MIA sigla invece di rispiegare la regola
+
+ 1 file changed, 29 insertions(+), 20 deletions(-)
+@@470fd568|esame W2-3 (F3): il conflitto che il prodotto rileva non arriva a nessuno, e il rilevatore sbaglia
+
+ 1 file changed, 1 insertion(+)
+@@51145d01|la cifra ASSENTE e' protetta a OGNI lunghezza: il contorno apre solo lo scambio
+
+ 1 file changed, 141 insertions(+)
+@@483a0d30|esame: la cella 11 e' il caso di studio del registro, e il mio verde ne copre un rosso
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@1e7c79fb|F1: lo strato deterministico e' indipendente dal regime, il giudice no - misurato
+
+ 2 files changed, 452 insertions(+)
+@@8a24407a|banco: RITIRO la lettura sulla pertinenza - la scala non e' monotona (98.1/11.8/57.9/4.1/100.0) e il gradino 4 era rotto da una collisione mia
+
+ 1 file changed, 21 insertions(+)
+@@5aabf3ee|registro: cella W7-11, la natura del contorno non governa ne' il punto ne' la curva
+
+ 1 file changed, 1 insertion(+)
+@@cebaf1c3|registro: nota di provenienza — su albero condiviso il tuo commit puo non esistere
+
+ 1 file changed, 14 insertions(+)
+@@3f4489f7|00-ESAME: la cella che lead-audit ha ordinato - il dogfooding si mangia i propri referti
+
+ 1 file changed, 1 insertion(+)
+@@283bce56|esame W2-2 (F3): la stessa scrittura cancella un record su SDK e li conserva entrambi su MCP
+
+ 1 file changed, 107 insertions(+), 1 deletion(-)
+@@9b384105|esame: la CI non da' verdetti da 22 ore, e il dogfooding si mangia i referti
+
+ 1 file changed, 2 insertions(+)
+@@774d1e83|RITIRO la mia osservazione delle 19:00, e sotto c'e' di peggio: apre QUALSIASI testo
+
+ 1 file changed, 173 insertions(+)
+@@647582d1|esame F2: le dodici facce dello stesso buco marcate BLOCCATA-DA-F1
+
+ 1 file changed, 18 insertions(+), 12 deletions(-)
+@@d58496f4|banco: a struttura fissa il CONTENUTO decide (69.0 vs 99.9) - e il contorno piu' PERTINENTE e' l'unico che difende
+
+ 1 file changed, 67 insertions(+)
+@@3cea5435|esame: quarto duplicato sulla mia sigla - riscrivere la regola non funziona
+
+ 1 file changed, 11 insertions(+), 2 deletions(-)
+@@d0fcc6a2|bench: il claim LongMemEval non era irriproducibile, era registrato col nome sbagliato
+
+ 2 files changed, 14 insertions(+), 1 deletion(-)
+@@72c1f903|registro: cella W7-10, la soglia misurata al posto di «dipende dal contorno»
+
+ 1 file changed, 1 insertion(+)
+@@3ee3a3c5|banco: correggo «soglia» - fra 11 e 20 parole c'e' una zona INSTABILE (50-85), ne' parole ne' frasi la spiegano
+
+ 1 file changed, 22 insertions(+)
+@@df789170|bastano 160 caratteri di clausole di stile perche' lo scambio passi
+
+ 1 file changed, 148 insertions(+)
+@@8fc2139d|00-ESAME riga 51: il filtro di similarita' del rilevatore di contraddizioni sta sotto il pavimento del corpus
+
+ 1 file changed, 1 insertion(+)
+@@6dd135d9|esame: due celle sembrano contraddirsi e non lo fanno - seconda volta in un'ora
+
+ 1 file changed, 15 insertions(+), 2 deletions(-)
+@@65820997|esame W2-1 (F3): la ricevuta nomina il fatto ritirato e sbaglia il motivo
+
+ 1 file changed, 1 insertion(+)
+@@da8197a8|banco: confine trovato - il salto e' fra 11 e 14 parole (7.9 -> 84.2), tre frasi di intestazione, e non e' graduale
+
+ 1 file changed, 17 insertions(+)
+@@e22b9d3a|esame F2: il triage delle 38 rosse - e dodici sono lo stesso buco
+
+ 1 file changed, 74 insertions(+)
+@@f545c3d7|F1 design: il rosso misurato ribalta la priorita', e due mie affermazioni si stringono
+
+ 2 files changed, 325 insertions(+)
+@@b4cec388|banco: basta un'INTESTAZIONE - 17 parole di riempimento puro portano il falso da 7.9 a 99.1, e' la lunghezza non la concorrenza
+
+ 1 file changed, 67 insertions(+)
+@@de0dff9f|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@c1c074bc|Il filtro di similarita' del rilevatore di contraddizioni sta SOTTO il pavimento del corpus
+
+ 1 file changed, 110 insertions(+)
+@@b9bdad5e|esame: il conto era SBAGLIATO e il difetto era nel mio righello - ora lo conta uno script
+
+ 2 files changed, 75 insertions(+), 6 deletions(-)
+@@556faf1d|ESAME: ritiro una mia riga FALSA - il modello del giudice c'e', avevo il percorso sbagliato
+
+ 1 file changed, 13 insertions(+), 1 deletion(-)
+@@703e0884|banco: bastano VENTICINQUE parole - la stessa affermazione diluita in 4 frasi smette di essere difesa (11.4 -> 99.8)
+
+ 1 file changed, 61 insertions(+)
+@@70cefb4b|registro: cella W7-9, il candidato sull'unita' di misura cade sull'A/B
+
+ 1 file changed, 1 insertion(+)
+@@0ceb1207|esame: la riga 19 dice che C5 regge, W7-7 dice il contrario - li collego senza dedurre
+
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+@@e648fa1b|il candidato «quale unita' e' fragile» CADE: misura il contorno, non l'unita'
+
+ 2 files changed, 331 insertions(+)
+@@e74e4b92|RITIRO il mio rosso sul doctor: e' curato - e la risposta era nel registro
+
+ 3 files changed, 262 insertions(+), 1 deletion(-)
+@@a1ace66c|banco: il traino vale anche sui SOGGETTI - scambio nudo bloccato 3/3, accompagnato passa da 1.2 a 99.8, zero numeri
+
+ 1 file changed, 79 insertions(+)
+@@0320b75e|esame W7-18/19: rimisurato il claim di ws3 sul doctor - era del 17/08 ed e' stato curato
+
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+@@f59a1f03|docs(esame): lo schema anti-collisione ha collidito, e la colpa e' di come l'avevo spiegato
+
+ 1 file changed, 10 insertions(+), 4 deletions(-)
+@@aebfa148|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@132374ae|ESAME: il regime delle celle ws1 sul pacchetto pubblicato, e il controllo che mente
+
+ 1 file changed, 47 insertions(+), 3 deletions(-)
+@@3de34e40|ESAME: il regime delle celle ws1 sul pacchetto pubblicato, e il controllo che mente
+
+ 1 file changed, 47 insertions(+), 3 deletions(-)
+@@d0e1e720|esame: le mie due celle diventano 49 e 50 - avevo creato due numeri doppi
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@8ed87b0c|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@d88bd39f|00-ESAME: chiudo le due code che avevo dichiarato aperte (righe 47 e 48), col regime
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@3ca1f97b|registro: la riga 6 col CASO MINIMO e il regime, e la cella W7-8
+
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+@@455f4828|docs(esame): chiusura - le ultime quattro misure entrano col loro regime
+
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+@@eb61297a|esame 47-48: sullo scambio decide il giudice da solo, e la ricevuta non dice chi ha agito
+
+ 1 file changed, 14 insertions(+), 10 deletions(-)
+@@c2c06a02|docs(esame): ritiro una MIA inferenza dal ponte col gate, e due celle diventano verde e gialla
+
+ 1 file changed, 12 insertions(+), 5 deletions(-)
+@@61029a42|esame 45-46: correggo «perdita silenziosa», che avevo scritto due volte ed era falso a meta'
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@07a6f25f|dossier 10: il fenomeno del contorno e' piu' largo di quanto diceva
+
+ 1 file changed, 37 insertions(+)
+@@c568783c|sullo scambio L4.1 non parla MAI (0 su 12): a decidere e' il giudice da solo
+
+ 2 files changed, 382 insertions(+)
+@@4df3f59d|esame 46: la mappa dei tipi di entita' — e le date TESTUALI cancellano i record in tutte e due le lingue
+
+ 1 file changed, 1 insertion(+)
+@@63706b10|docs(esame): backup-all copre tre tier su nove, e la promessa sta nel NOME
+
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+@@16fbc427|i due fronti sono la stessa superficie: il contorno ribalta anche gli scambi
+
+ 1 file changed, 124 insertions(+)
+@@82586e6c|docs(esame): il ponte col release gate - i dieci cancelli non sapevano nulla delle celle
+
+ 1 file changed, 23 insertions(+)
+@@ec969569|docs(esame): 'Se hai trenta secondi' - il registro ha 52 celle e nessun modo di leggerle in fretta
+
+ 1 file changed, 26 insertions(+), 2 deletions(-)
+@@6db5786f|esame 45: in inglese tre record distinti da un NOME DI PERSONA si cancellano fra loro
+
+ 1 file changed, 1 insertion(+)
+@@f80124b3|referto: la forma unificata -- tre falle, un difetto solo (manca il legame soggetto-valore)
+
+ 1 file changed, 43 insertions(+)
+@@5a1fb829|quattro ipotesi provate e cadute: lo scambio non ha una regolarita' semplice
+
+ 1 file changed, 127 insertions(+)
+@@1184b17d|docs(esame): due numeri che avevo riportato io sono gia' stati ristretti dalle autrici
+
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+@@567f00aa|lo scambio entra anche su clausole, termini e posologie: 3 su 7
+
+ 1 file changed, 126 insertions(+)
+@@ccdd3551|docs(esame): eravamo troppo severi con noi stessi - la riga 11 si ammorbidisce a gialla
+
+ 1 file changed, 6 insertions(+), 5 deletions(-)
+@@abc50f04|lo scambio di attribuzione entra 5 su 5, e nello stesso topic CANCELLA il vero
+
+ 2 files changed, 224 insertions(+)
+@@6a39b8e9|esame 44: C2 serie temporali e' verde, e il controllo trova una tensione fra due cure
+
+ 1 file changed, 1 insertion(+)
+@@ad5327c5|docs(esame): il prodotto tronca la propria prova a 400 caratteri
+
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+@@b57f3abf|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@aaea48dd|C7: a fermare la negazione e' L4.1, non il giudice - ed e' un effetto collaterale del controllo sui numeri
+
+ 1 file changed, 140 insertions(+)
+@@bebf28a7|docs(esame): il conto era STIMATO e non contato - dieci minuti dopo che avevo corretto lo stesso difetto
+
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+@@da6e97bc|docs(esame): il consiglio che il gate da' a un agente rifiutato non puo' funzionare
+
+ 1 file changed, 7 insertions(+), 3 deletions(-)
+@@1714c90a|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@a79749a1|referto: correggo DUE errori miei nel conteggio, entrambi regole mie violate
+
+ 1 file changed, 34 insertions(+)
+@@00974450|RITIRO la distinzione attributo/quantita': su 5+5 non regge, e sotto c'e' di peggio
+
+ 1 file changed, 103 insertions(+)
+@@6db01ad8|docs: il referto diceva 'la maggior parte dei rossi era nostra' - sono 22 su 42
+
+ 2 files changed, 29 insertions(+), 3 deletions(-)
+@@96f5e16a|esame 43: sulla CLI il presidio metrico non e' rosso, e' NON MISURABILE — e le mie 35 e 37 prendono il regime
+
+ 1 file changed, 3 insertions(+), 2 deletions(-)
+@@44538af4|referto del laboratorio: una falla vera, due problemi che credevamo di avere
+
+ 1 file changed, 126 insertions(+)
+@@d6e5675e|docs(esame): curo l'attrito del registro invece di chiedere disciplina
+
+ 1 file changed, 17 insertions(+), 1 deletion(-)
+@@72e3f8e7|non e' la lunghezza, e' DOVE sta la cifra: attributo 99.3, quantita' 0.2
+
+ 2 files changed, 218 insertions(+)
+@@4b80136b|banchi: chiuso il debito sull'eterogeneita' collegando il dato omogeneo che avevo gia' (LICENSE intera: affermato 0.2, riferimento 99.1)
+
+ 1 file changed, 16 insertions(+)
+@@3291f979|docs(esame): il gate aveva ragione - la riga 31 si ribalta a verde, e il regime diventa obbligatorio
+
+ 1 file changed, 14 insertions(+), 5 deletions(-)
+@@8d57e27c|esame 37: il gate ha nove chiamanti, e solo quattro argomenti su diciannove sono comuni
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@988a4cfe|banco: l'affermazione vince sulla collisione - il 3 collide 9 volte e resta bloccato, e allungare la fonte ABBASSA il punteggio del falso
+
+ 1 file changed, 84 insertions(+)
+@@1c79cdf1|00-ESAME: la mia riga era in collisione di numero con quella di ws2, la rinumero io
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@ad1bf9cb|curva 2->20 client: si piega fra 5 e 10, e la MEDIANA MENTE
+
+ 1 file changed, 38 insertions(+)
+@@c0314ebf|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@560cf657|00-ESAME: riga 34 (la rete sugli errori ad alto punteggio non copre le due lingue) e riconciliazione della riga 12 col verde di ws8
+
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+@@b0e8e588|la parafrasi NON e' punita: convergo per altra via col ritiro di ws1
+
+ 1 file changed, 98 insertions(+)
+@@73811acb|banco: clausola commerciale vera - non e' affermati vs riferimenti, e' quanto il valore e' RIPETUTO (Article 3 x1 passa, paragraph 1 x2 no)
+
+ 1 file changed, 92 insertions(+)
+@@07c97cd4|docs(esame): il documento lungo NON e' un buco, e quanto costa davvero parafrasare
+
+ 1 file changed, 5 insertions(+)
+@@9edc60f2|CADE la mia frase delle 20:43: il 55.2 non passerebbe, e' nella banda
+
+ 1 file changed, 94 insertions(+)
+@@ecda4655|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@01a12429|Presidio bilingue di unverified_relation: in italiano la preposizione articolata spegne il routing
+
+ 1 file changed, 119 insertions(+)
+@@70962c13|dossier 12: correggo il mio «non arriva», e il titolo del file con esso
+
+ 1 file changed, 59 insertions(+), 4 deletions(-)
+@@02fcfcfa|docs(esame): la causa della riga 23 non e' la porta, e' meta_narrative=True
+
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+@@da9b4fc0|banco: la posizione del dato non sposta il verdetto sui falsi (INIZIO=CENTRO) ma abbassa il punteggio in FINE - due popolazioni opposte con ws2
+
+ 1 file changed, 75 insertions(+)
+@@9375fba5|banco: il documento lungo NON e' il problema -- l'omissione si', in ogni regime
+
+ 1 file changed, 246 insertions(+)
+@@bf408988|«non arriva» era impreciso: la CLI c'e', parte, e il verdetto si perde dopo
+
+ 1 file changed, 93 insertions(+)
+@@ad0c8342|docs(esame): lo screen lessicale non gira sulla CLI - e verimem save E' la CLI
+
+ 1 file changed, 8 insertions(+), 3 deletions(-)
+@@67fb94f8|dossier 12: il rimedio del caso difficile parte, costa e non arriva
+
+ 2 files changed, 147 insertions(+)
+@@002c135f|docs(esame): cade il mio limite sulla riga 1 - il tag E' cio' che sta su PyPI
+
+ 1 file changed, 12 insertions(+), 2 deletions(-)
+@@ced4cf9d|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@f51f9845|C7: il gate riconosce la particella 'non', non la negazione - 46 celle su 108
+
+ 1 file changed, 186 insertions(+)
+@@cdecb504|i venti secondi sono l'escalation della banda: parte, costa, e non decide
+
+ 2 files changed, 180 insertions(+)
+@@fe904099|Q2: confondente eliminato con la terza cella - e' la RIPETIZIONE non la lunghezza (neutro a pari lunghezza: 73.3)
+
+ 1 file changed, 16 insertions(+)
+@@b610c445|docs(esame): il quarto livello non basta 'alla porta' - accolgo l'obiezione di ws3
+
+ 1 file changed, 15 insertions(+), 3 deletions(-)
+@@5effbb0f|Q2: la ripetizione non decide il verdetto ma il MARGINE - il controllo passa da 2.8 a 64.9 togliendo la seconda occorrenza
+
+ 1 file changed, 84 insertions(+)
+@@60dfc950|il confine sta fra 2700 e 2800 caratteri, e la causa NON ce l'ho
+
+ 3 files changed, 246 insertions(+)
+@@996d0e05|esame: le prime celle rosso->verde, e la tabella degli enunciati RITIRATI
+
+ 1 file changed, 35 insertions(+), 1 deletion(-)
+@@a555afa8|docs(esame): 13 celle - due verdetti RIBALTATI in quindici minuti e tre celle nuove
+
+ 1 file changed, 20 insertions(+), 6 deletions(-)
+@@aa9a08db|Q2 ultimo debito: su GDPR art.33 il gate REGGE 3/3 - protegge i valori AFFERMATI (72 hours) e non i RIFERIMENTI (section 10)
+
+ 1 file changed, 100 insertions(+)
+@@f8836233|Q1 completa: nel regime dell'utente vero il muro non esiste -- 14,3 ops/s
+
+ 1 file changed, 39 insertions(+)
+@@33330ef0|Q2 chiusura: su LICENSE vera il ricalco con numero di clausola passa 2/3 - «section 7» al posto di «section 10» entra a 99.1 senza layer
+
+ 1 file changed, 82 insertions(+)
+@@fb7f6dec|Il gate ammette una fonte che NEGA il claim 5 volte su 24, e non e' la lingua (IT 2/12, EN 3/12)
+
+ 4 files changed, 359 insertions(+)
+@@9d2726ef|docs(esame): istituisce 00-ESAME.md, il registro unico delle celle misurate
+
+ 1 file changed, 77 insertions(+)
+@@bbe0305b|CORREGGO me stessa: non e' «piu' debole sul corto», e' NON MONOTONO — 0.2 a 99.3
+
+ 1 file changed, 118 insertions(+)
+@@82a724a4|banco: su LICENSE vera L4.1 e' cieco (assenti=0 sui numeri di clausola) ma il grounding li blocca - il rischio e' la CONGIUNZIONE, non L4.1 da solo
+
+ 1 file changed, 81 insertions(+)
+@@b1442d48|Q1: il muro della concorrenza era il cold start, e il costo vero e' 1,2 s
+
+ 1 file changed, 93 insertions(+)
+@@5d7b2c48|Q2: il gate regge sul documento intero, e il buco e' sulla fonte CORTA
+
+ 2 files changed, 186 insertions(+)
+@@19d7e6ea|banco: l'unita' non entra nel confronto - «penale del 7%» nella fonte valida «7 giorni» nel claim, e bastano due frasi
+
+ 1 file changed, 82 insertions(+)
+@@ee2b9404|Q2bis: non e' la lunghezza, e' la RARITA' del numero - le cifre singole collidono a 200 parole, i numeri a 2+ cifre mai in 7000
+
+ 1 file changed, 75 insertions(+)
+@@e14cd144|Q2: sul regime vero il gate ANNEGA - il numero inventato collide con uno vero altrove e L4.1 tace (4000 parole blocca, 4500 no)
+
+ 1 file changed, 125 insertions(+)
+@@a983c39e|RITIRO l'ampiezza: la vaghezza elude il gate solo se la fonte dice «N su M»
+
+ 1 file changed, 122 insertions(+)
+@@f5dedf34|L1.19: la copula italiana c'era, il SOGGETTO no — e nel pattern percentuale non scattava mai
+
+ 2 files changed, 108 insertions(+), 5 deletions(-)
+@@4fffad43|docs: tre mie affermazioni corrette dall'anello in cinque minuti
+
+ 1 file changed, 102 insertions(+)
+@@fdc16388|la linea del prodotto e' la stessa in sette scritture, e ne separa una sola
+
+ 1 file changed, 238 insertions(+)
+@@3c7a2f5a|doctor: il confine 2.0 non e' una scelta, e' misurato — e non da me
+
+ 1 file changed, 6 insertions(+)
+@@29e9133b|banco: rotto lo 0/18 sul numerico scrivendo il numero a parole (4/4 col traino) - ma la predizione di ws3 sulle cifre REGGE
+
+ 1 file changed, 87 insertions(+)
+@@bb347a23|readme: il «0.974 pooled multi-model» non ha un artefatto, e ora lo dice
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@69ed10b4|il punto esatto: il layer delle relazioni guarda le CIFRE anche lui
+
+ 1 file changed, 66 insertions(+)
+@@d5481cb1|docs: al metodo di validazione mancava la meta' che mi ha morso
+
+ 1 file changed, 1 insertion(+)
+@@8dff355e|banchi: correggo «non e' una regex» — il gate legge i numerali dal 16/08, ma solo nella fonte
+
+ 2 files changed, 36 insertions(+)
+@@d5a1921f|docs: la popolazione che 02i chiedeva era 36 su 14472, e la cura non vale il codice
+
+ 1 file changed, 74 insertions(+)
+@@d4b9ca82|banco: quanti presidi ha ogni layer — L4.1 e' il piu' coperto, non il piu' esposto
+
+ 1 file changed, 107 insertions(+)
+@@86ddb52a|docs: gli ultimi tre fotografano main, e il mio righello non li vedeva
+
+ 3 files changed, 15 insertions(+)
+@@6a180f6d|docs: i due rossi non sono una regressione, e la causa e' provata
+
+ 1 file changed, 39 insertions(+)
+@@054a39ee|docs: «18 comandi» e' vero ma non dice come si conta -- tre righelli, tre numeri
+
+ 1 file changed, 38 insertions(+)
+@@8aa42abc|stato-reale ⑪: la quantita' vaga non viene confrontata con niente
+
+ 2 files changed, 127 insertions(+)
+@@ed3061ec|doctor: la sola rottura che sappiamo riprodurre non aveva un nome
+
+ 2 files changed, 107 insertions(+)
+@@1a721a72|il restore NON resuscita un dato cancellato: la porta che sospettavo e' chiusa
+
+ 1 file changed, 69 insertions(+)
+@@e122998d|readme: il mio «18 comandi» non era sbagliato, era non riproducibile
+
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+@@87063015|il prodotto SA registrare i motivi: lo fa al 100% sui ritiri, zero sui restore
+
+ 1 file changed, 21 insertions(+)
+@@7ec697af|docs: due misure della stessa CI non si contraddicono, sono due EPOCHE
+
+ 1 file changed, 30 insertions(+)
+@@8988f894|lo stesso campo inganna in DUE modi: sbaglia CHI, e sbaglia SE
+
+ 1 file changed, 92 insertions(+)
+@@d09c29ae|docs: due regole per chi scrive il prossimo, ricavate dai 15 esaminati
+
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+@@a30da4c3|docs: «producibile, non leggibile» e' una classe -- seconda occorrenza
+
+ 1 file changed, 47 insertions(+)
+@@ad10b6bc|banchi: dichiarato IL REGIME in cui valgono — 10 variabili d'ambiente, nessuna letta dalla porta che chiamano
+
+ 6 files changed, 219 insertions(+), 5 deletions(-)
+@@f6aa3a95|banco: la frontiera e' TIPOGRAFICA — L4.1 vede il numero se e solo se c'e' un glifo 0-9 (340 mila bloccato, trecentoquaranta no)
+
+ 2 files changed, 89 insertions(+), 6 deletions(-)
+@@242700c6|docs: otto dei nove bloccanti sono UNA causa sola, e tre mie ipotesi cadono
+
+ 1 file changed, 52 insertions(+)
+@@b3376403|docs: i sei documenti che fotografano main portano la loro distanza
+
+ 6 files changed, 30 insertions(+)
+@@6d387698|la guardia sui 512 token ESISTE, ma protegge il ranking e non il giudizio
+
+ 1 file changed, 18 insertions(+)
+@@95968b84|docs: il cancello ① dice quanti sono i rossi, ora dice anche quali
+
+ 1 file changed, 11 insertions(+)
+@@f1a5afde|docs: il vincolo (1) ha cambiato natura, e «16 su 16 failure» dice pochissimo
+
+ 1 file changed, 37 insertions(+), 1 deletion(-)
+@@c3660eab|docs: dieci variabili che abbiamo nell'ambiente e la CI no
+
+ 1 file changed, 86 insertions(+)
+@@736579bc|docs: 02o misura main, e main si e' mosso di 761 commit
+
+ 1 file changed, 6 insertions(+)
+@@8dada603|la ricevuta della promozione omette un verdetto che esiste (solo con claim)
+
+ 1 file changed, 107 insertions(+)
+@@286ae196|docs: «le tre promesse che mancano» sono meno di tre
+
+ 1 file changed, 8 insertions(+)
+@@ed82dd4e|banco: sondavo un import che il prodotto non usa, e confermava una tesi falsa
+
+ 2 files changed, 31 insertions(+), 3 deletions(-)
+@@ba680189|readme: lo stesso «48» significava due insiemi diversi nella stessa frase
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@c92f26eb|banco: l'unico punto forte si aggira scrivendo il numero a PAROLE — 0/6 in cifra contro 6/6 in lettere, ideogrammi compresi
+
+ 1 file changed, 104 insertions(+)
+@@445ffe1c|banco: le mie cifre mcp erano leggibili ma non riproducibili
+
+ 2 files changed, 163 insertions(+)
+@@c7e5ef59|docs: L4.1 guarda in una direzione sola, e questo unifica due misure
+
+ 1 file changed, 102 insertions(+)
+@@21e41a65|docs: lo stesso numero due volte, due popolazioni diverse -- e stavolta non e' mia
+
+ 1 file changed, 63 insertions(+)
+@@8f1d1bef|e non e' teorico: la vaghezza passa dalla PORTA UFFICIALE dei documenti
+
+ 1 file changed, 96 insertions(+)
+@@af6df9b9|docs: 08-i-656-mb porta nel titolo un numero sbagliato di 90 MB
+
+ 1 file changed, 7 insertions(+)
+@@d6d8f343|e non e' un difetto italiano: la vaghezza elude 3/3 anche in inglese
+
+ 1 file changed, 41 insertions(+)
+@@e2c5f403|gate-doc: G1 ha un verdetto, ed e' 59 failure su 59
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@4f0efadd|il verso opposto e' PEGGIORE: la vaghezza che MINIMIZZA passa 4 su 4
+
+ 1 file changed, 60 insertions(+)
+@@3934faec|la quantita' VAGA elude tutti i layer numerici: «quasi tutti» entra a 99.8
+
+ 1 file changed, 108 insertions(+)
+@@11f2cdab|banco: il traino NON scalfisce la cifra — 0/18 con e senza, L4.1 parla su 18/18 in entrambe
+
+ 1 file changed, 119 insertions(+)
+@@78f9aa03|readme: «tre classi» erano due, e «in Thai nessuna regge» non e' vero
+
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+@@83a4bf1f|docs: un mio referto era fuori dal repo da sedici giorni
+
+ 1 file changed, 135 insertions(+)
+@@45fc6698|banco: era NON TRACCIATO, e la vetrina cita la cifra che produce
+
+ 1 file changed, 156 insertions(+)
+@@a290ba82|readme: stanotte ho spezzato in due la frase sui limiti di scrittura
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@641bc381|stato-reale ⑩: il contorno cambia il verdetto, e non sappiamo perche'
+
+ 2 files changed, 119 insertions(+)
+@@40d50ab4|quarantined_by sottostima i layer bassi in priorita': L1 e' 2 su 417 ma ferma 8/8
+
+ 1 file changed, 20 insertions(+)
+@@3849e20d|Merge branch 'main' of https://github.com/aureliocpr-ctrl/verimem
+@@44718f22|docs: la quindicesima correzione dice PERCHE' le altre quattordici accadono
+
+ 1 file changed, 54 insertions(+)
+@@80efc270|readme: «8/10 ammessi» e' una media su due meta' che si comportano al contrario
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@ea71c67e|registro: tolto un identificativo di sessione MIO dal docstring
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@c2225579|docs: la vetrina e' stata corretta 14 volte in 3 ore, e nessuno lo aveva contato
+
+ 1 file changed, 99 insertions(+)
+@@671d151f|ritiro un'esclusione mia: la lunghezza conta, ma non in modo monotono
+
+ 1 file changed, 23 insertions(+), 2 deletions(-)
+@@6733c370|docs: la riga che avevo scritto io e' una media su popolazioni opposte
+
+ 1 file changed, 32 insertions(+)
+@@32ba87f2|banco ARMATO e non eseguito: il giudice llm chiude il buco dell'astensione?
+
+ 1 file changed, 127 insertions(+)
+@@249d3595|banco: la seconda garanzia non degrada con la scrittura, si spezza sulla CIFRA
+
+ 1 file changed, 256 insertions(+)
+@@11a58e6a|banco: l'implicita fuori da IT/EN — la forma regge, i numeri non trasferiscono
+
+ 1 file changed, 232 insertions(+)
+@@57be4ffa|quarta spiegazione esclusa: non e' la sovrapposizione lessicale col claim
+
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+@@251145ac|gate-doc: la popolazione di controllo dice che non e' l'infrastruttura
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@357c32af|docs: la porta d'ingresso di stato-reale diceva 375 commit, sono 994
+
+ 1 file changed, 9 insertions(+)
+@@093527bf|banco: la stabilita' separa dove la soglia no — VERI 2.2, FALSI 15.7
+
+ 1 file changed, 113 insertions(+)
+@@9c0c7ea5|qualificato: il tasso e' 1/10 per lingua, non 3/4 — i miei casi erano selezionati
+
+ 1 file changed, 19 insertions(+)
+@@d8526bfa|banco: il pavimento del dominio test non e' il CE — ENGRAM_L1_DOMAIN_PRECISION=0 blocca cio' che il default ammette
+
+ 1 file changed, 94 insertions(+)
+@@11b39944|la forma deterministica: 1433 char di testo NEUTRO fanno entrare la falsita'
+
+ 1 file changed, 88 insertions(+)
+@@ea609e3a|docs: 02p dichiara nel titolo un difetto curato il giorno dopo
+
+ 1 file changed, 6 insertions(+)
+@@0993ba68|readme: la mia riga di stamattina generalizzava, e per due documenti e' falsa
+
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+@@c3c368c1|readme: quattro correzioni giuste avevano prodotto un muro di caveat
+
+ 1 file changed, 19 insertions(+), 13 deletions(-)
+@@e38166e0|presidio: ricombinare i token della fonte da' 100.0 — xfail(strict) armato, verificato con --runxfail
+
+ 1 file changed, 19 insertions(+)
+@@99e31f1c|banco: quali assenze il gate sa vedere — 12 forme su 23, e le date non ci sono
+
+ 1 file changed, 141 insertions(+)
+@@81555c02|docs: «any ambiguity -> conflict» non vale quando manca asserted_at
+
+ 1 file changed, 24 insertions(+)
+@@e7af564c|gate-doc: G4 diceva «2 reds hold that place», e da stasera sono xfail strict
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@a4d749e5|ripetere la fonte ribalta il verdetto: 0.9 -> 97.2 con la stessa frase due volte
+
+ 1 file changed, 118 insertions(+)
+@@67b98be4|banco: scambiare la citta' con la persona DENTRO la fonte da' 100.0 — due falsita', zero verita', punteggio pieno
+
+ 1 file changed, 94 insertions(+)
+@@b9081188|readme: i numeri erano misurati su fonti brevi, e la riga non lo diceva
+
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+@@81516e31|docs: i vincoli meccanici al rilascio non erano scritti da nessuna parte
+
+ 1 file changed, 171 insertions(+)
+@@3b09a4b8|banco: in inglese il traino non raddoppia, APRE — 0/10 -> 2/10 a 98.7 e 92.6
+
+ 1 file changed, 77 insertions(+), 54 deletions(-)
+@@e216a800|banco: la causa radice e' un fallback che inventa un ordine, e la cura c'e' gia'
+
+ 1 file changed, 110 insertions(+)
+@@191f65d3|una frase estranea fa entrare la contraddizione IMPLICITA: 0/12 -> 4/12
+
+ 1 file changed, 122 insertions(+)
+@@a21192d4|banco: il traino preso dalla fonte RADDOPPIA l'implicita (3/10 -> 6/10), l'esplicita resta 0/10
+
+ 1 file changed, 113 insertions(+)
+@@d3c9b671|presidio: il secondo cancello si chiude da solo e nessuno lo vede
+
+ 1 file changed, 119 insertions(+)
+@@909e2978|banco: il gate non e' cieco al conflitto, lo instrada come SUPERSESSIONE
+
+ 1 file changed, 241 insertions(+)
+@@93f57edc|subject: le teste METRICHE erano la seconda meta' che stamattina ho fatto a meta'
+
+ 2 files changed, 20 insertions(+), 1 deletion(-)
+@@f3b181db|Merge remote-tracking branch 'origin/main'
+@@b5cd6380|banco pronto (NON eseguito): il giudice llm chiude davvero le due lacune?
+
+ 1 file changed, 118 insertions(+)
+@@42237148|readme: i documenti che ho appena linkato sono dell'8 agosto, e va detto perche'
+
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+@@4bdc7dcd|banco: l'implicita non e' un presidio mancante, e' un giudice che da' 95.9
+
+ 1 file changed, 24 insertions(+)
+@@198e49eb|precisato: L1.9 non ragiona sulla diatesi, l'elenco non contiene il participio
+
+ 1 file changed, 9 insertions(+)
+@@ae94fd1a|gate: la contraddizione IMPLICITA passa 3/10 in italiano, e la vetrina lo dice
+
+ 2 files changed, 248 insertions(+), 3 deletions(-)
+@@97f3c590|quarantined_by nomina il PRIMO layer che parla, non quello che ha deciso
+
+ 1 file changed, 105 insertions(+)
+@@6d64f109|banco: il recall separa «fuori tema» da «in tema», non «c'e'» da «non c'e'»
+
+ 1 file changed, 147 insertions(+)
+@@268640e6|banco: «e' la forma» era impreciso — la parola sceglie chi guarda, la forma se veta
+
+ 1 file changed, 23 insertions(+), 3 deletions(-)
+@@ee5a439f|una frase estranea nella fonte puo' ribaltare il moat: 1.8 -> 98.9
+
+ 1 file changed, 97 insertions(+)
+@@b46683fe|gate-doc: G9 non e' falso, e' muto sul presente - e per la CI e' quasi lo stesso
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@1a55a690|banco: la passiva italiana produce falsi allarmi, e l'aperto sbagliava lingua
+
+ 1 file changed, 241 insertions(+)
+@@787298ff|gate-doc: G3 e G5 riverificati, e reggono
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@ab2b51c9|gate-doc: G10 diceva che il rerank e' EN-only, ed e' gia' multilingue
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@aad97bcd|02d §5: il confine dichiarato in §4 e' chiuso — succede anche in SCRITTURA
+
+ 1 file changed, 106 insertions(+)
+@@a741f319|presidio: una falsita' accompagnata da una verita' PRESA DALLA FONTE entra a 100
+
+ 1 file changed, 90 insertions(+)
+@@a8c8ce4a|readme: la riga che avevo scritto io un'ora fa era troppo severa
+
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+@@bfc41036|banco: la riga che ho scritto io in vetrina e' troppo severa, ed e' un gradiente
+
+ 1 file changed, 227 insertions(+)
+@@99349f3a|banco e2e: cio' che il gate ferma non torna mai, il resto torna primo
+
+ 1 file changed, 119 insertions(+)
+@@ef5dd2de|gate: il commento diceva «5/5 ammessi» e i suoi tre esempi sono tutti numerici
+
+ 1 file changed, 22 insertions(+)
+@@cd85b65c|readme: la pagina diceva «nessuno l'ha eseguito», ed era stato eseguito
+
+ 1 file changed, 9 insertions(+), 6 deletions(-)
+@@3865a72e|promesse: l'avviso contava un debito che non c'era
+
+ 2 files changed, 132 insertions(+), 3 deletions(-)
+@@aeb5b0f0|gate-doc: refuso in G1, «slut» per «slot»
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@c62da996|readme: la vetrina prometteva l'astensione, e il gate ammette
+
+ 1 file changed, 6 insertions(+), 3 deletions(-)
+@@047fc041|gate-doc: G1 oggi non ha un verdetto, e non perche' sia rosso
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@6ca78b0e|gate-doc: la mia dichiarazione di limite in G2 e' invecchiata in venti minuti
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@2ee7e8c5|readme: due mie frasi erano false da mezz'ora, e la misura c'era gia'
+
+ 1 file changed, 8 insertions(+), 6 deletions(-)
+@@2af77a4e|nessuna soglia separa il vanto dal fatto vero: min VERO 97.5 < max VANTO 99.3
+
+ 1 file changed, 115 insertions(+)
+@@8acc080f|banco: quali nomi propri cedono, e non e' il ramo _proper da solo
+
+ 1 file changed, 235 insertions(+)
+@@94fe6764|gate-doc: G6 e' aperto, non scaduto - e la forma che chiede esiste gia'
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@cd4dd19a|readme: la mia nota di oggi diventerebbe la vetrina PyPI, e falsa
+
+ 1 file changed, 9 insertions(+)
+@@74e11764|gate-doc: G2 elenca «MCP server starts» fra i suoi passi, e quel passo non passa
+
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+@@15b7cd2e|il moat NON e' una seconda linea contro il vanto: la riformulata entra a 95.3
+
+ 1 file changed, 101 insertions(+)
+@@de1588c6|banco: in thai passano tutte e venti, e la colonna EN replica su fonti nuove
+
+ 1 file changed, 203 insertions(+)
+@@8713d66c|P16 e' l'unica promessa UNIVERSALE del documento, e l'unica verificata con un caso
+
+ 1 file changed, 64 insertions(+), 1 deletion(-)
+@@4a2be695|registro: un mio commento di ieri fermava il veto del publish
+
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+@@ca89d705|presidio: il gate L1 vede la POLARITA' e nient'altro
+
+ 1 file changed, 127 insertions(+)
+@@16599716|presidio: chiedeva la frase, non il fatto — e il gate e' rimasto rosso una notte
+
+ 1 file changed, 34 insertions(+), 1 deletion(-)
