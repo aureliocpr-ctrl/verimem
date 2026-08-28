@@ -372,7 +372,7 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 
 | # | domanda | classe | lingua | porta | verdetto | misurata da | **regime** + limite |
 |---|---|---|---|---|---|---|---|
-| 1 | i comandi che il README pubblicato promette esistono nel pacchetto? | — | EN | CLI | 🟢 **14 su 14** | ws7 | `git show v0.7.0:`. ✅ **Il limite che avevo dichiarato è CADUTO**: ws1 ha confrontato **l'artefatto installato da PyPI** contro il tag, file per file — **397 identici · 0 diversi · 0 assenti** (perimetro: i `.py` sotto `verimem/`) ⇒ **il tag *è* ciò che sta su PyPI**, e la misura vale per il pubblicato. ⚠️ Il timestamp anomalo di ws6 (tag posteriore di 1h27) **resta un fatto vero**: cade l'inferenza «orario diverso ⇒ contenuto diverso»  ⚠️ **ATTENZIONE DI LETTURA (custode, 28/08 19:15) — TERZA istanza del pattern, e stavolta la cella verde è la mia.** ws1 ha annunciato sul canale che **«13 comandi mancano a chi installa»**. **Non è un conflitto col mio 14 su 14**, quasi certamente: io misuro *ciò che il README **pubblicato** promette*, lei *ciò che main ha e il pacchetto no* — **due popolazioni**. 🔑 **Ma chi legge solo questa riga conclude «la CLI pubblicata è completa», e quella conclusione NON è sostenuta.** @ws1 il numero è tuo: **scrivi la tua cella e collegala qui** |
+| 1 | i comandi che il README pubblicato promette esistono nel pacchetto? | — | EN | CLI | 🟢 **14 su 14** | ws7 | `git show v0.7.0:`. ✅ **Il limite che avevo dichiarato è CADUTO**: ws1 ha confrontato **l'artefatto installato da PyPI** contro il tag, file per file — **397 identici · 0 diversi · 0 assenti** (perimetro: i `.py` sotto `verimem/`) ⇒ **il tag *è* ciò che sta su PyPI**, e la misura vale per il pubblicato. ⚠️ Il timestamp anomalo di ws6 (tag posteriore di 1h27) **resta un fatto vero**: cade l'inferenza «orario diverso ⇒ contenuto diverso»  ⚠️ **ATTENZIONE DI LETTURA (custode, 28/08 19:15) — TERZA istanza del pattern, e stavolta la cella verde è la mia.** ws1 ha annunciato sul canale che **«13 comandi mancano a chi installa»**. **Non è un conflitto col mio 14 su 14**, quasi certamente: io misuro *ciò che il README **pubblicato** promette*, lei *ciò che main ha e il pacchetto no* — **due popolazioni**. 🔑 **Ma chi legge solo questa riga conclude «la CLI pubblicata è completa», e quella conclusione NON è sostenuta.** @ws1 il numero è tuo: **scrivi la tua cella e collegala qui** ✅ **FATTO (ws1, 28/08 20:52): vedi la cella «I 13 COMANDI MANCANO PER ETÀ» in fondo al file. E la tua lettura era giusta: due popolazioni, nessun conflitto. In più il mio numero si DECLASSA — non è un difetto del pacchetto, è che quei comandi non erano ancora scritti quando la 0.7.0 è uscita.** |
 | 2 | il server MCP parte, per chi installa da PyPI? | — | — | MCP | 🔴 **no** | ws1 | venv pulito, `pip install verimem==0.7.0` → `mcp 2.1.1` → `verimem mcp` **exit 1**, `AttributeError`. **Controllo positivo**: forzando `mcp<2` nello stesso venv → **exit 0** |
 | 3 | il gate vede un numero inventato dentro una fonte lunga? | C4 | — | — | 🔴 **no, se il numero è comune** | ws5 | A/B a fonte fissa: `3`,`7`,`9` collidono a **200 parole**; `47`,`617`,`4291` mai in 7000. **Non è la lunghezza: è la rarità**  🔒 **BLOCCATA-DA-F1** — non si cura da sola: è una delle facce dello **strato soggetto-valore** (marcatura di ws7 su direzione di lead-audit, 28/08 19:02) |
 | 4 | il gate ferma un numero **inventato** scritto all'italiana? | C4 | IT | SDK | 🟢 **sì** | ws8 | **regime**: A/B end-to-end nella stessa esecuzione, porta SDK, store di Aurelio, source fissa, 4 claim. A/B end-to-end, source fissa, cambia solo il separatore: vero-punto e vero-virgola **admitted**, inventato-punto e inventato-virgola **quarantined**. ⚠️ **Riga ribaltata**: alle 20:48 era 🔴 sulla *regex interna* (3 famiglie su 3 spente dalla virgola — vero e ancora vero); alla **porta** il verdetto si inverte perché `L1` non veta e il grounding ferma comunque. **La difesa non è a punto singolo** |
@@ -796,7 +796,10 @@ e `ground=True`, cosa impedisce l'aggancio.**
 
 ---
 
-### 🔴 REPERTO NUOVO — **13 COMANDI CHE L'UTENTE NON HA, E FRA QUESTI QUELLI DEL NOSTRO PROTOCOLLO**
+### 📋 ~~🔴 REPERTO~~ **DECLASSATO dall'autrice il 28/08 20:52** — 13 COMANDI CHE L'UTENTE NON HA
+> ⚠️ **Il numero regge (29 vs 42, misurato), ma NON è un difetto del pacchetto: mancano per ETÀ.**
+> Vedi la cella in fondo al file. *Lasciato qui com'era, col cartello sopra: si deve vedere il
+> reperto e il suo declassamento, non solo la versione corretta.*
 *(ws1, 28/08 19:01 · `python -m verimem.cli --help` sulle due installazioni, nomi estratti con lo stesso righello)*
 
 **29 comandi nella 0.7.0 · 42 su HEAD · 13 di differenza · ZERO rimossi.**
@@ -1278,3 +1281,41 @@ dreni*».
 · **Non ho provocato un PR** per vedere il ramo scattare, e **non lo farò**: aprire un PR su un repo
 in fase di rilascio, con la coda già satura, **sarebbe un intervento e non una misura**.
 · Non so se **prima** di questi 300 run ci siano stati run da PR.
+
+---
+
+### 📋 I 13 COMANDI MANCANO PER **ETÀ**, NON PER PACKAGING — declasso un mio reperto
+*(ws1 «Riscontro» / Curie · **28/08 20:52** · **cella chiesta da @ws7** nella riga 1 · **REGIME**:
+confronto fra il `cli.py` **installato da PyPI** nella venv incontaminata e il `cli.py` di HEAD,
+**stesso righello** su entrambi)*
+
+**La domanda che mi mancava**: i 13 comandi mancano perché la 0.7.0 è **vecchia**, o perché il
+**packaging li perde**? Sono due cose diverse — **la seconda si ripresenterebbe al prossimo
+rilascio**.
+
+| | `cli.py` 0.7.0 installata | `cli.py` HEAD |
+|---|---|---|
+| righe | **2929** | **5398** |
+| `@app.command` | **28** | **37** |
+| `save`·`tip`·`recent`·`correct`·`ask`·`audit`·`chain`·`digest`·`handoff`·`ignorance`·`telemetry`·`tiers` | **0 occorrenze** ciascuno | presenti |
+| il file è nel wheel? | **sì, intero: 120 733 byte** | — |
+
+⇒ **Non erano ancora scritti quando la 0.7.0 è uscita.** Il packaging imbarca `cli.py` per intero
+(`pyproject`: `include = ["verimem*", …]`) ⇒ **non può perdere singoli comandi: o c'è il file o non
+c'è.** ⇒ **Il prossimo rilascio li avrà tutti.**
+
+#### ⬇️ COSA CAMBIA
+· La riga dei 13 comandi passa da **🔴 difetto** a **📋 conseguenza del non rilasciare**: **non entra
+fra le cose da decidere, sparisce da sola col tag.**
+· **Resta UN SOLO difetto vero nella 0.7.0**: il server MCP non parte.
+· **E il numero si ribalta di segno**: fra pubblicato e HEAD ci sono **2469 righe di CLI in più**
+(5398−2929) che gli utenti **non hanno**. È un argomento **a favore** del rilascio, non contro.
+
+#### 🔑 PERCHÉ LO DECLASSO INVECE DI LASCIARLO ROSSO
+**C1 dice «zero promesse insostenute», e vale anche nell'altra direzione: un difetto gonfiato è una
+promessa insostenibile al contrario.** Un analista che verificasse «*verimem pubblica un CLI
+mutilato*» scoprirebbe in trenta secondi che quei comandi **non esistevano ancora**, e ci farebbe la
+figura di chi **conta due volte lo stesso problema** (non rilasciare) per farlo sembrare due.
+🔑 **CLASSE: prima di chiamare «difetto» una differenza fra due versioni, chiediti se è solo il
+TEMPO.** Gemella della lezione di stasera sull'env: lì l'etichetta era **il regime**, qui è la parola
+**«mancante»**, che suggerisce una *perdita* dove c'è solo un'*assenza per data*.
