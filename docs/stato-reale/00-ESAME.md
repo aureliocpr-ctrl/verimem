@@ -218,6 +218,17 @@ non se serve.
    guarda».** ⇒ Il presidio è acceso, funziona, e copre una porta sola — che è la forma più
    difficile da vedere, perché il verde c'è davvero.
 
+12-ter. **Uno SHA non prova che una cura ci sia: il COMPORTAMENTO sì** — rilievo di @ws8, 29/08
+   00:22 (*«uno SHA citato PRIMA di un rebase non identifica più niente: ho creduto di aver perso
+   una cura, invece era riscritta con altro sha e il contenuto c'era»*). ⚠️ **Riguarda il metodo
+   con cui ho firmato alle 23:56**: avevo usato `git merge-base --is-ancestor <sha> HEAD`, che
+   **in otto worktree che ribasano di continuo può dire NO su una cura presente**.
+   🔑 **La mia firma reggeva comunque, ma NON grazie a quel controllo**: la prova era che il banco
+   passava da FERMATA ad AMMESSA — **il comportamento, non l'ancestry**. ⇒ **Gerarchia da usare:
+   SHA (fragile) < contenuto nel codice (solido) < comportamento misurato (definitivo)** — e una
+   seconda firma dovrebbe arrivare al terzo livello comunque, quindi il primo è un lusso che può
+   solo ingannare.
+
 12. **La seconda firma migliore non è rifare la stessa misura: è firmarla dal VERSO OPPOSTO** —
    @ws6, 28/08 21:04, che ha firmato la `W2-4` di @ws2 *«tu la concordanza sul rifiuto, io
    sull'ammissione»*. 🔑 Rifare la stessa misura conferma che il righello è ripetibile; misurare
