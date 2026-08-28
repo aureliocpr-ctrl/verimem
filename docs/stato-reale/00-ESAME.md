@@ -717,3 +717,78 @@ cui viene caricato**: `99.91928100585938`. **Non è mai stato un problema di mod
 ⚠️ **E una diagnosi intermedia mia, morta in tre minuti**: avevo scritto che `client.py:253` non
 inoltrava `ground`. **Falso**: la chiamata continuava alla riga **254**, `ground_write=ground or None`.
 Avevo letto una riga e concluso su due. *(Letto il punto che decide — ma non tutto il punto.)*
+
+---
+
+### 🔴 IL RIGHELLO DELLA VERSIONE MENTE — e mente proprio sul confronto al centro dell'esame
+*(ws1 «Riscontro» / Curie, 28/08 19:43 · **REGIME**: interprete `miniconda`, quello dei nostri
+server MCP · albero `919b2c8c`)*
+
+Stesso interprete, **tre righelli, tre risposte**:
+```
+importlib.metadata.version("verimem")  ->  0.7.0     <-- FALSO
+verimem.__version__                    ->  0.7.6         giusto
+verimem.__file__                       ->  C:\Users\aurel\Code\HippoAgent\verimem
+direct_url.json  ->  {"dir_info": {"editable": true}, "url": "file:///C:/Users/aurel/Code/HippoAgent"}
+```
+È un **editable install**: i **metadati** sono fermi alla 0.7.0, il **codice eseguito è HEAD**.
+⇒ **Chi verifica «quale versione sto misurando» con `importlib.metadata.version` (o `pip show`)
+legge `0.7.0` ed esegue HEAD.** Un referto «misurato sulla 0.7.0» scritto sull'interprete
+miniconda misura **HEAD**.
+✅ **La verifica che funziona, una riga**:
+`python -c "import verimem,os; print(verimem.__version__, os.path.dirname(verimem.__file__))"`
+— se il percorso finisce in `Code\HippoAgent`, **stai eseguendo il repo, qualunque cosa dica pip**.
+🔑 **Stessa classe dell'errore sull'env che ho pagato alle 19:33**: fidarsi di un'etichetta invece
+della sostanza. **Due volte in un'ora, su due etichette diverse** ⇒ *il righello è un oggetto da
+verificare quanto la cosa misurata.*
+
+✅ **E chiude una domanda che avevo lasciata aperta**: `engram.exe mcp` gira su miniconda ⇒ **i
+nostri server MCP eseguono HEAD, non la 0.7.0** ⇒ il difetto `_delegate_only` **non ci colpisce**,
+perché eseguiamo la versione curata.
+
+---
+
+### 🟡 IL MOAT SUL CANALE MCP: dal **2,2%** del prodotto al **98,6%** — ma il numero vale solo con la finestra
+*(ws1, 28/08 19:45 · store di casa in **sola lettura**, `CONFIG.semantic_db` · **14905 righe**,
+erano **14899 un minuto prima**: siamo in otto a scrivere e il corpus si muove sotto la misura)*
+
+**Il prodotto sa questo di sé**, `encode_service.py:184` (docstring di `_default_gate_fn`), citando
+il proprio `doctor`: «*only 107 of 4827 stored facts entailment-judged (**2.2%**) — on the MCP
+channel the judge loads in the background: writes that arrive while it is warming are admitted
+unjudged*», e «**256 processi su 293 fanno UNA chiamata e muoiono**, quindi ogni respawn ricomincia
+il warm da zero». ⇒ **Il mio «difetto circoscritto al server MCP» NON era circoscritto**: il canale
+MCP è **il** canale degli agenti. Il 2,2% è un numero **del prodotto**, non mio.
+
+**Rimisurato oggi. Tre popolazioni, tre numeri — e il `doctor` usa il secondo:**
+| popolazione | giudicati | totale | % |
+|---|---|---|---|
+| tutte le righe scritte | 8384 | 14905 | **56,2%** |
+| **non superate** ← il righello del `doctor` | 7936 | 12759 | **62,2%** *(doctor: 7931/12754)* |
+| **SERVITE** (né superate né quarantinate) | 7351 | 11703 | **62,8%** |
+
+**La stessa popolazione servita, per epoca — ed è qui che si vede tutto:**
+| epoca | giudicati | totale | % |
+|---|---|---|---|
+| scritte negli **ultimi 30 giorni** | 7333 | 7436 | **98,6%** |
+| scritte **oltre 30 giorni fa** | 18 | 4267 | **0,4%** |
+
+⇒ ✅ **La cura funziona e si misura: 2,2% → 98,6% su ciò che scriviamo oggi.**
+⇒ ⚠️ **La media 62,8% non descrive niente**: è la media fra **98,6%** e **0,4%**, due popolazioni
+senza nulla in comune. **Chi cita il 62% descrive un corpus che non esiste.**
+⇒ 🔴 **E resta il fatto scomodo: 4267 fatti SERVITI dal recall hanno 0,4% di giudizio.** Sono
+anteriori alla cura, **non sono stati rigiudicati**, e il recall li restituisce come gli altri.
+
+📌 **Per C1 (zero promesse insostenute), la formulazione difendibile**:
+> «il moat giudica il **98,6%** di ciò che viene scritto oggi (**7333 su 7436**, ultimi 30 giorni);
+> **4267** fatti anteriori alla cura restano non giudicati e restano nel recall»
+
+«Il moat gira» senza finestra è ingannevole in un senso, «solo il 62%» lo è nell'altro.
+🎯 **Un analista ostile guarda il totale: la separazione dobbiamo darla noi.**
+
+⚠️ **E il `doctor` conta i NON SUPERATI**, quindi i suoi 12759 **includono 2377 quarantinati** che
+non vengono serviti — il righello del prodotto usa proprio il criterio che in memoria abbiamo già
+marcato: *«`superseded_by IS NULL` non vuol dire «vivo» ma «non ritirato»»*.
+
+📌 **Cosa questo NON prova**: non ho un A/B temporale sulla cura — **non attribuisco** il salto a
+`_default_gate_fn` per prova diretta, solo per coincidenza di epoca e di meccanismo descritto. E
+non so **perché** i 18 fatti giudicati oltre i 30 giorni lo siano.
