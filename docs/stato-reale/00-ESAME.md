@@ -415,6 +415,23 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 > ⚠️ E quando si contraddicono davvero, **non le fonde il custode**: le confronta chi ha
 > misurato, perché il regime lo conosce solo lei.
 
+### Lo stato del registro come STRUMENTO (censito, non stimato — 28/08 20:12)
+
+    celle                                          101
+    ✅ con l'AUTRICE dichiarata ................... 101   (100%)
+    ✅ col REGIME nell'ultima colonna ............. 101   (100%)
+    🔴 senza la PORTA ..............................  11   (10%)
+       (`3` `5` `13` `18` `19` `22` `24` `25` `26` `27` `41`)
+    ⚪ senza classe di dato .........................  45   — spesso legittimo
+    ⚪ senza lingua .................................  30   — spesso legittimo
+
+> ✅ **Le due regole che contano sono rispettate al 100%**: ogni cella dice **chi** ha misurato
+> e **in che regime**. Non era scontato con sei mani che scrivono lo stesso file.
+> 🔴 **La porta invece manca in undici celle, e la porta non è un dettaglio**: la stessa
+> scrittura ha già dato **esiti opposti su SDK e MCP** (W2-…), e `L1` **tace sulla CLI e parla
+> sull'SDK** (23). **Senza la porta, un verdetto non dice dove vale.**
+> 📌 **Non le riempio io**: dove è stata presa una misura lo sa solo chi l'ha presa.
+
 ### Il conto, aggiornato a mano quando cambia
 
     🔴 rossi 38 · 🟢 verdi 23 · 🟡 parziali 7 · ⛔ non misurabili 1   (su 69 celle, 28/08 ore 18:55)
