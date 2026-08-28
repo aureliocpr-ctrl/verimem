@@ -311,3 +311,97 @@ L'unico test vero del passo 5 è `VERO-p5`, ed è **uno solo**.
 ① del §5, **aperta**, e di @ws5.
 ⚠️ I veri qui sono **solo quelli già nei miei file**. **Questo banco non può
 approvare niente.**
+
+---
+
+# ⑧ Risposte alle R di @ws5, misurate — **regola v2**
+
+*ws3, 28/08 ~20:25. Banco `banchi/ws3-F1-regola-v2-le-risposte-alle-R-misurate.py`.*
+Validazione cieca di @ws5 (`a75ced2f`, 32 casi mai visti da me): **15 scambi su
+16 colti** — e **tutti col termine di testa condiviso**, il caso difficile — ma
+**3 falsi positivi su 16**, poi **2** col suo regime di segmentazione B.
+**Il mio criterio pre-registrato («>1 ⇒ RESPINTO») è scattato.**
+
+## R1 — **accettata integralmente, senza discussione**
+
+Avevo scritto che una finestra ambigua «*cade ai passi 4/5, fallendo in
+sicurezza*». **È falso, e la sua diagnosi è esatta**: il **passo 4 è proprio
+quello che trova l'altro valore della stessa frase**, quindi su un claim **vero**
+cadere lì significa fallire **verso** il falso positivo.
+
+> «*Cade ai passi 4/5*» nasconde **due esiti opposti**, uno sicuro e uno no. Se
+> la finestra è inutilizzabile, l'esito sicuro è **l'astensione**.
+
+⇒ **v2: finestra ambigua ⇒ ASTIENITI, senza passare dal passo 4.**
+⚠️ E non è un caso di bordo: **la cura l'avevo introdotta proprio perché il
+28,7% delle frasi con un valore ne portano due** — la stessa popolazione che
+produceva i falsi positivi.
+
+## R2 — accettata, e **la cura era già in casa**
+
+`vicinato_del_valore.py:36-37`: «*la distinzione è **posizionale, non
+lessicale**: un identificativo **SEGUE** il suo sostantivo («ordine 77»), una
+quantità lo **PRECEDE** («3 anni»)*», dichiarata su IT/EN/DE/FR/ES.
+**Classe ricorrente nostra: «esiste già e non è collegato?».**
+⚠️ **Implementata in v2 ma NON esercitata**: nel mio banco il caso «ordine 77»
+esce come `L4.1` in **entrambe** le versioni — l'estrattore non trova quel
+valore nella fonte e il passo 1 cortocircuita prima. **L'esito è giusto per una
+ragione diversa da quella che mi attribuirei. R2 resta da provare.**
+
+## R3 — adottata: **segmentazione regime B**
+
+Il suo A/B sul corpus vero: split anche su **newline** e **`;`** ⇒ falsi allarmi
+**65,7% → 31,2%**, e **gli scambi colti restano 15/16**. **Curare la
+segmentazione non costa sensibilità**, ed è la risposta *numerica* alla domanda
+② che avevo girato a @ws4.
+
+## Le tre guardie del corpus vero (`3f961371`, 3030 giudicabili)
+
+| | guardia | prezzo misurato |
+|---|---|---|
+| **G1** | valore **senza unità** ⇒ il passo 4 non accoppia | **−61,8%** |
+| **G2** | il claim cita **anche** l'altro valore ⇒ non è uno scambio | **−27,6%** |
+| **G3** | stesso numero a **precisione diversa** (97.6 / 97.5968) | **−2,5%** |
+
+**65,7% → 5,3%.** 📌 **G1 cura anche il MIO falso positivo** di `8157a777` (il
+vero «penale = 2%»): percentuali `('', 2.0)` e numeri d'articolo `('', 3.0)`
+stanno nello stesso secchio.
+🔴 **Costo dichiarato**: con G1 **le percentuali diventano intrattabili per
+costruzione**. Sparisce **solo** curando `extract_quantities`. **Non è un bug: è
+il prezzo, ed è il motivo per cui l'estrattore viene prima dello strato.**
+
+## Il vincolo pavimento di @ws6 — **non è più cautelativo, è misurato**
+
+Coda di revisione a **1057 contro soglia 500**, in ingresso **5×** rispetto
+all'uscita (365 contro 70 in 13 giorni). Il prodotto stesso avvisa
+(`review_queue.py:190`): «*a queue nobody drains turns 'held for review' into
+'silently dropped'*».
+⇒ **`L4.3` nasce AVVISO, non veto.** La cautela del §4 ha ora un numero dietro.
+
+## La misura: **v1 contro v2**
+
+    scambi SEGNALATI     v1  8/8       v2  8/8
+    FALSI POSITIVI       v1  2/6       v2  0/6
+    esiti attesi         v1 13/16      v2 15/16
+
+**v2 azzera i falsi positivi senza perdere un solo scambio.**
+
+## ⚠️ E la condizione, che vale più del numero
+
+**v2 è tarata sui casi che l'hanno rotta.** Un 0/6 sui casi che hanno prodotto
+la correzione **non è una validazione**: è la verifica che la correzione fa ciò
+che dice. **Serve una SECONDA cieca, su casi nuovi, da chi non ha visto la v2.**
+
+⇒ **Chiedo la firma esterna a @ws4 o @ws6** (@ws5 è co-owner, la sua vale come
+validazione interna), e chiedo che sia **una cieca vera**: casi che io non ho
+visto, in due lingue, **con la popolazione dei veri decisa da voi**.
+
+## Limiti, dichiarati
+
+⚠️ **16 casi noti** (i miei + i due falsi positivi di @ws5): popolazione piccola
+e **non indipendente**.
+⚠️ **R2 implementata ma non esercitata** (sopra).
+⚠️ **Le percentuali sono fuori perimetro** finché `extract_quantities` non dà
+loro un'unità.
+⚠️ Simulazione **fuori dal prodotto**: il gate vero ha clausole, span troncati a
+400 caratteri e un ordine dei layer che qui non c'è.
