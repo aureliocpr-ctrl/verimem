@@ -4217,3 +4217,44 @@ forma: ho contato `any()` dove la condizione era `all()`.** Non è sfortuna, è 
 > l'ammissione**. ⇒ **La scorciatoia non è sicura e non ci si può fondare un censimento.**
 > 📌 Rafforza il «*la classe non ha una direzione*» di @ws2 con una **terza** direzione: qui la taglia
 > non falsifica il verdetto, **falsifica la RICEVUTA**.
+
+---
+
+## ws1 — LA SECONDA VIA: FATTORE DI RISCHIO 26,9%, E LE DUE VIE NON SI SOVRAPPONGONO
+
+**Livello**: corpus reale `mode=ro` + la condizione letta nel sorgente · **Perimetro**: ramo unità
+in `_entita_diverse` (`anti_confab_gate.py`, `if ua and ub and not (ua & ub)`) · **Istante**: 29/08
+01:26–01:28 · **Regime**: sola lettura, nessun modello · sha `8395d2ed`.
+
+### 🪞 Il presidio delle 01:22 applicato PRIMA di contare — e stavolta il righello è giusto
+La condizione del prodotto è `ua and ub and not (ua & ub)`: un'**intersezione vuota**, quindi un
+**`all`** (nessuna unità in comune), non un `any`. ⇒ Il fattore di rischio è avere le unità
+**tutte** vuote, non «almeno una». **È la prima volta stanotte che me lo chiedo prima invece che
+dopo**, ed è costato dieci secondi.
+
+```
+proposizioni con almeno una quantità                            12428
+  unità TUTTE VUOTE (disgiunte da qualsiasi unità vera)          3341   (26,9%)
+  MISTE (vuota + vera → l'intersezione può non essere vuota)     7060   (56,8%)
+  solo unità VERE (popolazione di controllo)                     2027   (16,3%)
+```
+⚠️ **È un FATTORE DI RISCHIO, NON l'esposizione**, e lo dico prima del numero: perché il ramo
+scatti serve **la coppia**, con l'altro lato che porta un'unità vera. Il 26,9% dice quante
+proposizioni stanno *dalla parte esposta* di quella coppia, non quante coppie esistono.
+
+### ✅ Controllo di coerenza: le due vie NON si sovrappongono
+Sulle **2676** coppie candidate «stessa frase, altro numero» (la popolazione della via ①), quelle
+con unità disgiunte sono **0**. **Predetto prima di eseguire**: quelle frasi differiscono solo per
+i numeri, quindi le unità coincidono per costruzione.
+⇒ **Le due vie sono indipendenti anche empiricamente, non solo per costruzione**: la ① vive sulle
+riscritture identiche, la ② sulle **riformulazioni**. Una cura sul regex `_GENERIC_INDEX_RE` non
+tocca nemmeno un caso della ②.
+
+### ⚠️ Cosa NON prova
+· Il 26,9% **non è** la frazione di fatti danneggiati. Non ho contato le coppie riformulate reali
+  del corpus, e **non so definirle senza un criterio arbitrario di somiglianza** — lo dichiaro
+  invece di inventarne uno.
+· Che l'unità vuota sia un difetto: `extract_quantities` restituisce `('', 12000)` per «EUR 12000»
+  perché la valuta pre-posta **non è nella sua grammatica delle unità**. Il ramo unità fa il suo
+  lavoro su un input che gli arriva già impoverito. **La causa è a monte del ramo che ne subisce
+  l'effetto** — ed è lo stesso schema della via ①, dove il regex decide e il gate obbedisce.
