@@ -67,6 +67,13 @@ davvero un artefatto del mio segmentatore: l'avevo dichiarato come sospetto,
 ora e' misurato. **Ne restano 2 su 16, e il criterio «sopra 1 => RESPINTO»
 scatta ancora.**
 
+⏱️ IL CORPUS SI MUOVE MENTRE LO MISURI e i numeri qui NON si riproducono
+identici: siamo in otto a scrivere. Fra due esecuzioni a pochi minuti di
+distanza i giudicabili sono passati da **3030 a 3027** e il regime B da **946 a
+948** (31,2% -> 31,3%). Le proporzioni reggono, le cifre esatte no: chi
+riproduce e trova numeri diversi **non ha trovato un errore**, ha misurato un
+istante diverso. Il righello e' questo file, non il numero.
+
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-F1-i-falsi-positivi-sul-corpus-vero.py
 """
 import sys
