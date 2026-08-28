@@ -2125,7 +2125,11 @@ la declassa.** `_route_evolutions` **svuota** `_conflicts`; se non produce una s
 l'esito è **un avviso** e il fatto **entra**. *(Differenza importante per come si scrive il
 referto.)*
 
-#### ⚠️ E NON È `_entita_diverse` — stavo per scriverlo
+#### ⚠️ ~~E NON È `_entita_diverse` — stavo per scriverlo~~ 🛑 **SBAGLIATO, CORRETTO ALLE 23:29**
+> **È `_entita_diverse`**, chiamata da **dentro `_route_evolutions`** — non dal ramo che avevo
+> escluso. **Da «quel RAMO non si attiva» avevo dedotto «quella FUNZIONE non c'entra»: una
+> funzione può essere chiamata da più punti.** Prova 10/10 nella cella in fondo. *Lascio il
+> testo com'era, col cartello.*
 Il commento a `:2010-2025` cita il caso canonico «*Marco leads the payments team / Anna…*»,
 **identico al mio Bianchi/Rossi**, e stavo per attribuirgli l'esito. Poi ho letto **il criterio**:
 «*servono i **codici** su ENTRAMBI i lati*» — e nel mio caso **non c'è nessun codice**.
@@ -2159,3 +2163,69 @@ EVOLUZIONE invece che come conflitto?** Se la risposta fosse «*perché i due va
 nominate diverse*», il criterio confonderebbe **due fatti su soggetti diversi** (che coesistono
 davvero) con **due valori incompatibili per lo stesso attributo** (che si contraddicono).
 ⚠️ **NON lo affermo**: è la prossima lettura.
+
+---
+
+### 🔑🔴 CAUSA ISOLATA — **`_entita_diverse` predice la porta 10 casi su 10**. E il nome-VALORE è letto come nome-SOGGETTO
+*(ws1 «Riscontro» / Curie · **28/08 23:29** · albero **`099399fe`** · **REGIME**: interrogazione
+diretta della funzione, **nessuna scrittura** · + 2 store nuovi per la predizione sulla maiuscola)*
+
+#### 🛑 PRIMA LA CORREZIONE — l'ho pubblicata io 20 minuti fa
+Alle 23:23 avevo scritto «**NON è `_entita_diverse`**». **Sbagliato.** Due premesse vere e una
+deduzione falsa: vero che il criterio parla di **codici**; vero che il codice dichiara misurato che
+**il ramo a `:2222` non si attiva**; **falso** dedurne che *la funzione* non c'entri.
+🔑 **UNA FUNZIONE PUÒ ESSERE CHIAMATA DA PIÙ PUNTI** — ed è chiamata **dentro `_route_evolutions`**:
+```python
+for cid in ids:
+    if old is not None and _entita_diverse(cand, old):
+        continue          # né conflitto né supersessione ⇒ L3-coexistence
+```
+*(Terza volta stasera che sbaglio bersaglio, e la forma è sempre: **mi fermo al primo punto che
+sembra spiegare**.)*
+
+#### 🔑 LA PROVA: la funzione predice l'esito alla porta **10 su 10**
+| caso | `_entita_diverse` | previsto | osservato alla porta | accordo |
+|---|---|---|---|---|
+| IT-data | `False` | QUARANTINATO | QUARANTINATO | ✅ |
+| EN-data | `True` | ammesso | ammesso | ✅ |
+| IT-numero | `False` | QUARANTINATO | QUARANTINATO | ✅ |
+| EN-numero | `False` | QUARANTINATO | QUARANTINATO | ✅ |
+| IT-nome · EN-nome | `True` | ammesso | ammesso | ✅✅ |
+| IT-luogo · EN-luogo | `True` | ammesso | ammesso | ✅✅ |
+| IT-colore · EN-colore | `False` | QUARANTINATO | QUARANTINATO | ✅✅ |
+
+#### 🔴 IL DIFETTO, ora DIMOSTRATO e non più ipotizzato
+```python
+ea, eb = _proper(pa), _proper(pb)     # nomi propri delle due frasi
+if ea and eb:
+    return not (ea & eb)              # non si intersecano ⇒ «entità diverse»
+```
+«*Il responsabile è **Bianchi***» / «*… è **Rossi***»: `ea={bianchi}`, `eb={rossi}`, intersezione
+vuota ⇒ «entità diverse» ⇒ **coesistono** ⇒ **entrambi ammessi**.
+🔑 **Ma lì i nomi propri sono il VALORE dell'attributo, non il SOGGETTO.** La funzione non distingue:
+| | |
+|---|---|
+| «Bianchi guida i pagamenti» / «Anna guida gli acquisti» | soggetti diversi → **coesistono** ✅ |
+| «Il responsabile è Bianchi» / «Il responsabile è Rossi» | stesso soggetto → **si contraddicono** ❌ |
+
+#### 🪞 E UNA MIA PREDIZIONE FALSIFICATA NELLO STESSO TURNO
+Dal meccanismo avevo predetto: «*in inglese «March» è maiuscolo ⇒ nome proprio; una data italiana
+col mese MAIUSCOLO deve comportarsi come l'inglese*». **Misurato**: «12 marzo 2027» e «12 **M**arzo
+2027» danno **entrambi** `_entita_diverse=False` e **QUARANTINATO**. ⇒ **La maiuscola non c'entra: la
+mia spiegazione del caso date è sbagliata.**
+⇒ **So CHE decide (10/10) e PERCHÉ per nomi e luoghi** (il blocco `_proper`). **NON so perché
+`EN-data` dia `True`**: la funzione ha **nove rami** (codici · date · record numerati · attributi
+contrastanti · unità · celle di matrice · nomi propri) e **non ho isolato quale scatta lì**.
+
+#### 📌 COSA NON PROVA
+· **10 casi, una coppia ciascuno**: corrispondenza forte, campione piccolo.
+· ⚖️ La funzione **predice** la porta — compatibile con «è lei a decidere» **ma anche** con «lei e il
+gate leggono lo stesso segnale a monte». **Per chiuderlo servirebbe spegnerla e rimisurare, cioè
+toccare il codice: non lo faccio.**
+· Regime con `_supersede_same_source_on()` **spenta** (dove `_route_evolutions` non gira): **non
+misurato**.
+· ⚖️ **Resta aperto se sia VOLUTO** — ma ora la domanda è precisa: *è voluto che il criterio non
+distingua il nome-**soggetto** dal nome-**valore**?*
+
+📌 **Riproducibile in 20 secondi, senza scritture**: interrogare `_entita_diverse` con due
+`SimpleNamespace(proposition=…)`. **Chi dà la seconda firma non deve installare nulla.**
