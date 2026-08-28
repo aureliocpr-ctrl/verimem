@@ -30,11 +30,17 @@ attribuzione entra 3 volte su 7 e **cancella il fatto vero** nello stesso topic 
 consiglio dato a un agente rifiutato non è eseguibile (LANT-1) · **bastano 17 parole di
 intestazione** perché un valore sostituito passi da 7,9 a 99,1 (22).
 
-🔴 **Il difetto più grave, e non è che qualcosa manchi — è che il prodotto TACE** (riga 11): sulla
-versione installata da PyPI **il giudice c'è, viene trovato, e il moat non gira lo stesso**.
-L'avviso onesto («*source provided but no grounding judge is available*») scatta **solo quando
-il giudice manca** ⇒ **non scatta mai**. Chi passa una fonte legge «admitted» e non gli viene
-detto nulla. **HEAD con il modello irraggiungibile è più onesto del pubblicato.**
+🛑 **RITIRATO IL 28/08 ALLE 19:31, VENTI MINUTI DOPO ESSERE STATO SCRITTO QUI.** In questo
+punto stava «*sulla 0.7.0 il giudice c'è e il moat non gira lo stesso: il prodotto tace*».
+**L'autrice della misura l'ha falsificata da sé**: quel `grounding_score` nullo veniva da
+**`HIPPO_ENCODE_DELEGATE_ONLY=1`, una variabile presente nelle shell di questo progetto** ed
+ereditata senza accorgersene. Stessa venv, stessa scrittura: **senza quella variabile la 0.7.0
+dà `grounding_score=99,92`, `tier=high`.** ⇒ **Il moat gira, per chi installa.**
+🔑 **Lascio la cicatrice invece di cancellarla** perché è la sezione che qualcuno legge per
+decidere: **una decisione di ritiro presa su questa riga sarebbe stata presa su un difetto che
+non esiste.** ⚠️ **E la lezione è di regime**: *il regime include l'ENV EREDITATA, e va
+stampata, non assunta* — un regime dichiarato al 90% dà un rosso che sembra del prodotto ed è
+della macchina.
 
 **Cosa non siamo in grado di dire**: se il gate abbia avuto ragione nei casi contestati — **la
 prova che conserva è troncata a 400 caratteri** (LANT-5), e la cura costa zero.
@@ -384,7 +390,7 @@ sarebbe *assenza di misura letta come verde*).
 | 4 | 🔴 20:48 | 🟢 20:50 | ws8, su se stessa, in **tre minuti** | il salto da **regex interna** a **porta** — e nella direzione buona |
 | 9 | 🔴 «mai eseguito dal 21/07» | 🟢 eseguito | ws3 | l'ha eseguito |
 | 17 | 🔴 20:58 | 🟢 21:09 | ws8, su se stessa | aveva misurato sulla porta **CLI** e sullo store di Aurelio: **due variabili confuse**. Separandole, su SDK la promessa è **mantenuta** — e il difetto vero si sposta sulla riga 23 |
-| 11 | 🔴 → 🟡 → 🔴🔴 | **due ribaltamenti in 21 ore, il secondo contro il primo** | ws3 (ammorbidì), ws7 (applicò), ws1 (riportò a rosso) | **il caso di studio del registro.** Il 27/08 la cella diceva «il moat non giudica»; ws3 la ristrinse — *il `warmup` è dichiarato in tre punti del README* — e **io la applicai scrivendo «eravamo troppo severi con noi stessi»**. Il 28/08 ws1 ha misurato **a livello DB, non di log**: il `model_dir` è **identico** nelle due installazioni e `local_ce_available()` è **True** ⇒ **il giudice C'È e il moat non gira lo stesso**. 🔑 **Non eravamo troppo severi: eravamo troppo INDULGENTI** — e la lettura indulgente era la più ragionevole coi dati di allora. ⚖️ **Nessuna delle tre ha sbagliato il proprio passo: è il registro che ha fatto il suo mestiere in tre mosse** |
+| 11 | 🔴 → 🟡 → 🔴🔴 → 🟡 | **QUATTRO verdetti in 22 ore** | ws3 · ws7 · ws1 · ws1 | **il caso di studio del registro, e ogni mossa è stata ragionevole.** ① 27/08 «il moat non giudica» 🔴 · ② ws3 la restringe (*il `warmup` è dichiarato in 3 punti del README*) 🟡 **e io la applico scrivendo «eravamo troppo severi»** · ③ 28/08 ws1 misura a livello DB: `model_dir` identico, giudice presente ⇒ 🔴🔴 «*il prodotto tace*» · ④ **19:31, ws1 falsifica se stessa**: quel punteggio nullo veniva da **`HIPPO_ENCODE_DELEGATE_ONLY=1`, variabile presente nelle NOSTRE shell** ed ereditata senza accorgersene ⇒ **senza di essa la 0.7.0 dà `99,92`, `tier=high`: il moat GIRA** 🟡. 🔑 **La lezione finale è di REGIME: l'env ereditata FA PARTE del regime e va stampata, non assunta** — un regime dichiarato al 90% dà un rosso che sembra del prodotto ed è della macchina. ⚠️ **E il rischio era concreto**: `lead-audit` aveva «decisione 0.7.0 su PyPI» fra i pendenti di Aurelio |
 | 12 | 🔴 5/24 | 🔴 **46/108** | ws6 | stesso verdetto, **numero raddoppiato**: il primo banco provava **un solo** schema di negazione su sei |
 | 31 | 🔴 «premia il ricalco» | 🟢 **«pretende che la fonte nomini il soggetto»** | ws1, su se stessa — **tutte e tre le tesi** | un controllo che DEVE fallire, eseguito invece che dedotto. 🔑 **Il verdetto è passato da difetto del prodotto a comportamento corretto** |
 | 23 | 🔴 «disparità fra porte» | 🔴 **«è il parametro `meta_narrative`»** | ws8, su se stessa | **due variabili confuse per la seconda volta in dieci minuti** (prima porta+store, poi porta+parametro). Il verdetto resta rosso: **cambia la causa, e con essa la cura** |
