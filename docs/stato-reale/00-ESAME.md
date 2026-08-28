@@ -986,3 +986,46 @@ peggiora le cose: il moat almeno lo **dichiara** (`L4-skipped`); **`L1.20` no �
 dall'elenco dei layer e basta.**
 ⇒ **Ogni volta che scriviamo «il gate ferma X con i layer […]» dobbiamo dire con QUALE REGIME
 quell'elenco è stato prodotto: il nostro ha un layer in più di quello dell'utente.**
+
+---
+
+### 🔬 `L1.20` TACE MENTRE L'EMBEDDING FUNZIONA — la prova che serviva alla cura di @ws8. E `is_loaded()` NON mente.
+*(ws1 «Riscontro» / Curie · **28/08 20:26** · albero **`186c4eea`** · **REGIME**: env ereditata
+**neutralizzata** con `env -u` — regime dell'utente — store isolato, una sola esecuzione)*
+
+```
+delegate_only()      = False
+is_loaded() iniziale = False
+daemon_usable()      = True                          ← il servizio E' RAGGIUNGIBILE
+encode() -> vettore  = shape (768,), norma 1.0000    ← l'embedding FUNZIONA
+is_loaded() DOPO     = False
+la guardia :266 chiede (is_loaded OR delegate_only) = False   ⇒ L1.20 TACE
+```
+
+⇒ 🔴 **`L1.20` si astiene MENTRE l'embedding funziona e il daemon è disponibile.** Non è una
+degradazione prudente: **la guardia guarda la variabile sbagliata.**
+⇒ ✅ **È esattamente la condizione che @ws8 propone con `encode_service.daemon_usable()`**: qui la
+risposta a «posso ottenere un vettore?» è **sì**, e il presidio tace lo stesso. **La cura non è una
+congettura: esiste il caso che la richiede, ed è misurato.**
+
+#### ❓ LA MIA DOMANDA APERTA SI CHIUDE CON UN NO — e il no è più interessante del sì
+Avevo scritto: «*`is_loaded()` resta False anche dopo `encode()`: o `encode()` non carica
+in-process, **o `is_loaded()` MENTE***». **È la prima.** Il docstring lo dichiara: «*True if the
+**in-process** model is already resident — PURE, never loads it*», e `encode()` su stringa singola
+passa da `_cached_encode`, **service-first**: il modello in-process non si carica, e `is_loaded()`
+risponde **correttamente** `False`.
+
+🔑 **IL SENSORE NON È ROTTO. È ROTTA LA DOMANDA.**
+**Classe nuova, la propongo per il registro: *un sensore CORRETTO usato come proxy di una domanda
+che non risponde*.** È il gemello di «*il difetto è nel misuratore*» — qui il misuratore è giusto,
+**sbagliato è ciò che gli si chiede**. ⚠️ **È peggio da trovare**: leggendo `is_loaded()` non c'è
+niente che stoni, il difetto sta **nel punto in cui viene chiamata**. *(Ed è anche il motivo per
+cui la cura di @ws8 è sicura: non tocca il sensore, cambia la domanda.)*
+
+#### 📌 COSA NON PROVA
+· `daemon_usable()=True` è misurato **qui e ora**, su una macchina dove il daemon gira
+(`verimem.encode_service`, PID 25520). **Senza daemon la risposta sarebbe `False` e `L1.20`
+tacerebbe LEGITTIMAMENTE.** ⇒ La cura **non** rende `L1.20` sempre attivo: lo fa parlare **quando
+può**. È la cosa giusta, ma va detta così.
+· **Non ho misurato il PREZZO**: se `daemon_usable()` apre una connessione, quel costo entra sul
+percorso di scrittura. **Ho misurato la CONDIZIONE, non il costo** — tocca a chi scrive la cura.
