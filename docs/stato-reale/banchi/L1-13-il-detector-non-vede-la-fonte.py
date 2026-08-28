@@ -148,18 +148,32 @@ def main() -> int:
         return 1
     print(f"     retto - {c_fermati} su {len(C_SELFCLAIM)} fermati")
 
-    print("\n  -- CONTROLLO (2): a decidere e' L1.13 o L1.20?")
-    if a13 + b13 == 0:
-        print("     CADUTO - L1.13 non compare MAI su A e B: la cura assegnata")
-        print("     e' sul layer sbagliato. @ws5 aveva ragione a dubitarne.")
+    print("\n  == IL PRESIDIO: i due criteri di @lead-audit, insieme")
+    print(f"     A  i casi di @ws7 fermati da L1.13 : {a13}   (deve essere 0)")
+    print(f"     C  self-claim fermati              : {c_fermati} su"
+          f" {len(C_SELFCLAIM)}   (devono restare TUTTI)")
+    curato = (a13 == 0 and b13 == 0)
+    intatto = (c_fermati == len(C_SELFCLAIM))
+    if curato and intatto:
+        print("\n     🟢 VERDE - i claim veri con la fonte che li sostiene"
+              " passano,")
+        print("     e i self-claim restano fermati. Spegnere il layer avrebbe")
+        print("     rotto il secondo criterio: questo non lo rompe.")
+        return 0
+    if not curato and intatto:
+        print(f"\n     🔴 ROSSO - L1.13 ferma ancora {a13 + b13} claim veri"
+              " su A+B.")
+        print("     E' lo stato PRIMA della cura, o la cura non ha effetto sul")
+        print("     codice che questo processo importa: guarda la riga")
+        print("     «codice sotto misura» in cima — `python <script>` risolve")
+        print("     l'import sulla directory DELLO SCRIPT, non sulla cwd, e")
+        print("     senza PYTHONPATH prende l'installazione editable.")
         return 1
-    if a13 + b13 >= a20 + b20:
-        print(f"     L1.13 DECIDE: {a13 + b13} occorrenze contro"
-              f" {a20 + b20} di L1.20 su A+B.")
-    else:
-        print(f"     ATTENZIONE - L1.20 compare piu' di L1.13"
-              f" ({a20 + b20} contro {a13 + b13}): la cura su L1.13 non")
-        print("     bastera', e va detto PRIMA di scriverla.")
+    print(f"\n     ⛔ ROTTO IL SECONDO CRITERIO - self-claim fermati"
+          f" {c_fermati} su {len(C_SELFCLAIM)}.")
+    print("     Qualunque sia il numero su A, questa NON e' una cura: e' un")
+    print("     layer spento, e @lead-audit lo ha escluso esplicitamente.")
+    return 1
 
     print("\n  -- IL PUNTO, per la cura")
     print("     La firma e': detect_unsupported_completion_claim(proposition,")
