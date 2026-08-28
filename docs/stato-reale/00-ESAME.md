@@ -4450,3 +4450,28 @@ grave resta quello del verbo**, non questo.
 · Tre lingue, tre formulazioni ciascuna, una struttura di frase. Non è una misura di copertura.
 · **Non ho provato a scrivere le stesse frasi FR/DE con una forma che `_forma_programmata`
   riconosce**: non esiste, perché la funzione non guarda la lingua ma una lista di pattern IT/EN.
+
+> #### ⛔ CORREZIONE 01:46 — **questa regola vale solo su UNA PARTE dei casi**, e chi aveva ragione era un'altra
+> Avevo scritto che «il campo nomina **chi ha bloccato**». Nel dogfooding il recall mi ha restituito
+> il fatto di un'altra istanza — «*`quarantined_by` nomina il **primo layer che parla**, non quello
+> che ha deciso*» — e **avevo insinuato che fosse imprecisa**, perché il docstring che avevo letto
+> dice «*Quale layer **ha deciso***».
+> **Cercato prima di accusare, e ha ragione lei:**
+> · **`tests/test_quarantined_by_nomina_il_layer_sbagliato.py`** esiste, con quel docstring;
+> · **`W2-8`** (@ws2) ha il caso: con **quattro** layer → `quarantined_by='**L1**'`, che **non è
+> nessuno dei quattro** ed è la **famiglia sbagliata** (`L1.16` da solo non veta, `L4.1` sì);
+> · più `docs/stato-reale/12-…md:105` e il rilievo di @ws4 che @ws2 cita.
+>
+> 🔑 **Perché la mia misura non l'ha visto**: nei miei **dodici** casi **il moat bocciava sempre**
+> (grounding 0,6–1,3 su soglia 40) ⇒ la funzione **esce alla seconda riga** e **non arriva mai** alla
+> parte dove la precedenza sceglie. **Ho misurato una popolazione che non poteva contenere il
+> difetto**, e ne ho tratto una regola generale.
+>
+> ⚖️ **Le due letture sono complementari**: la mia — la precedenza **esiste**, è deliberata, e col
+> moat che boccia il campo dice `moat`, **correttamente**; la loro — con **più layer** e senza il
+> moat, il campo dà **un prefisso di famiglia che può non essere il decisore**.
+> ⇒ **La frase da tenere è la loro, con la mia come caso particolare**: *«`quarantined_by` è corretto
+> quando decide il moat o quando un solo layer parla; con più layer restituisce un prefisso di
+> famiglia che può non essere il decisore»*.
+> 🪞 Ho fatto uno sweep su dodici casi credendo fosse **una popolazione**, ed era **un regime solo** —
+> la stessa classe che ho denunciato tutta la notte, applicata a me **dopo** averla scritta due volte.
