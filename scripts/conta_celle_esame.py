@@ -29,6 +29,12 @@ REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00
 RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
 #: il verdetto e' il PRIMO simbolo, non uno qualsiasi: vedi il docstring.
 SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫]")
+#: i simboli che NON sono verdetti ma vengono usati come tali: servono a dire
+#: all'autrice cosa ha scritto, non a indovinare cosa intendeva. Il 28/08 cinque
+#: celle usavano ✅ o ⚠️ — la terza volta in un giorno che qualcuno prende il
+#: simbolo piu' naturale invece di uno dei cinque, e ogni volta il difetto era
+#: della legenda, non di chi la usava.
+ALTRI_SIMBOLI = re.compile(r"[✅⚠️❌⚪🆕🔧🚨]")
 
 
 def verdetto(riga: str) -> str:
@@ -54,7 +60,16 @@ def main() -> int:
         + f"   (su {len(celle)} celle)"
     )
     if conto["?"]:
-        print(f"⚠️  {conto['?']} celle senza simbolo nella colonna verdetto")
+        print(f"⚠️  {conto['?']} celle senza simbolo di LEGENDA nella colonna verdetto:")
+        for riga in celle:
+            if verdetto(riga) == "?":
+                ident = RIGA_CELLA.match(riga).group(0).strip("| ")
+                altri = "".join(dict.fromkeys(ALTRI_SIMBOLI.findall(riga.split("|")[6])))
+                autrice = riga.split("|")[7].strip()[:12]
+                print(f"     {ident:9} (di {autrice or '?'}) usa «{altri or '—'}»"
+                      f" — la legenda ha 🔴🟢🟡⛔🚫")
+        print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"
+              " chiedi all'autrice quale dei cinque intendeva, non cambiarlo tu.")
     print(f"id duplicati: {', '.join(doppi) if doppi else 'nessuno'}")
     return 1 if doppi or conto["?"] else 0
 
