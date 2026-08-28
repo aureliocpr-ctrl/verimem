@@ -3285,3 +3285,15 @@ entrambe le direzioni e penalizza il contenuto più tecnico.**
 *quali* forme la difesa copre. Un attaccante vero ne prova cento.
 · Non ho misurato il **costo** del `flagged`: quanti documenti legittimi finiscono nascosti su un
 corpus vero. **Sui miei due controlli zero, ma due non sono una popolazione.**
+
+> #### ✅ AGGIORNAMENTO 00:39 — chiuso il limite «non ho misurato il costo del `flagged`»
+> Misurato sul corpus di Aurelio (`mode=ro`): **683 chunk · 1 flagged · 0,1%**. ⇒ **Il costo della
+> difesa è praticamente nullo**: non è ottenuta rendendo inutilizzabile la ricerca.
+> 🎯 **E l'unico falso positivo è quello che avevo previsto venti minuti prima, trovato senza
+> cercarlo**: `docs/ROADMAP-v0.7.md`, il chunk «*## PHASE 0 — days … **START HERE**. 0.1 Adjudication
+> receipt on every write → …*» — **un documento del progetto stesso**, con imperativi e frecce,
+> scambiato per un payload. Avevo scritto che un pattern lessicale colpirebbe «*i log, la
+> documentazione tecnica, i dump di configurazione*»: **l'unico caso reale del corpus è una roadmap.**
+> ⇒ **Rafforza il «non aggiungere `[SYSTEM]` ai pattern»**: il rilevatore già sbaglia su
+> documentazione tecnica con imperativi, e il nostro corpus è **al 92% appunti tecnici**.
+> ⚠️ **1 su 683 è UN caso**: non ne ricavo un tasso affidabile, e il corpus è il **nostro**. Non lo trasporto.
