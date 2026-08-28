@@ -4074,3 +4074,27 @@ Una coppia, italiano, porta SDK, due anni. **Non ho provato altre dimensioni** (
 clienti, due versioni). ⚖️ E la **cella 46** (@ws2) dice già che il comportamento **dipende
 dall'entità** (città e codici si distinguono, i nomi di persona in EN no) ⇒ **questo è una delle sue
 celle, non la regola.**
+
+> #### 🔬 AGGIORNAMENTO 01:19 — cercata la via d'uscita facile, **non c'è**: `asserted_at` non serve
+> Ho cercato **contro me stesso** una spiegazione che ridimensionasse il difetto, e il codice ne
+> suggeriva una buona: `tests/test_semantic_conflict.py` ha
+> **`test_nli_system_has_temporal_supersession_rule`** («*the judge prompt must instruct temporal
+> reconciliation … else **timestamp-ordered evolution is misread as conflict***») e
+> **`test_timestamp_is_passed_to_judge_when_present`**; e `Memory.add` accetta **`asserted_at`**.
+> ⇒ **Ipotesi**: i due fatti erano scritti a un secondo di distanza; con i timestamp veri il
+> comportamento sarebbe cambiato, e il difetto sarebbe diventato «passa `asserted_at`».
+>
+> | regime | superseduti | «Qual era il canone nel 2025?» |
+> |---|---:|---|
+> | senza `asserted_at` | **1** | 🔴 «canone 2026» |
+> | **con `asserted_at`** (2025-06-01 / 2026-06-01) | **1** | 🔴 «canone 2026» |
+>
+> ⇒ **IDENTICO: `asserted_at` non cambia nulla su questo percorso.** L'ipotesi è morta.
+> 🔑 **Il prodotto HA una regola di riconciliazione temporale — presidiata da due test — ma su questo
+> percorso non protegge.** Lettura che i dati sostengono, **non verificata nel codice**: il ramo che
+> supersede è `L3-supersession` / `same-source evolution`, che **non passa dal giudice NLI**.
+> 🔗 Classe *«la cura esiste e non copre questa porta»*, la stessa della **cella 51**
+> (`_puo_essere_una_evoluzione` vive nel gate di scrittura e `contradiction.py` non la chiama).
+> ⛔ **Correggo un'implicazione mia**: «una riga di documentazione» **vale solo se la riga dice
+> "usa topic distinti"** — **non** se viene letta come «passa i timestamp», che è la reazione
+> istintiva di chi conosce `asserted_at`. **Quella strada è chiusa, ed è misurata.**
