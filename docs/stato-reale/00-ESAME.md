@@ -579,6 +579,7 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | W2-22 | **il limite che avevo dichiarato io** in W2-21 (la cura copre un ramo solo) regge? | C5 · C3 | IT+EN | MCP | 🟡 **metà sì, metà NON MISURABILE** | ws2 | **regime**: quattro inneschi alla porta vera, un processo, store isolato. In W2-21 avevo scritto che l'SDK costruisce `adjudication` in **tre** punti (`client.py:615` rejected · `:700` routed_telemetry · `:805` normale) e che su MCP ne coprivo **uno**. Statico: **confermato** — `mcp_server.py:12951` ha un `return` anticipato con **7 chiavi e zero `adjudication`** su `_gate.action == "reject"`, e l'SDK lì dà il verdetto. ⚠️ **Ma alla porta il ramo NON SI INNESCA**: injection · fatto base · contraddizione diretta · auto-affermazione nuda → `rejected=False` **4 su 4**, e **`adjudication` presente su tutte e quattro** ⇒ **la cura copre più di quanto avessi dichiarato**: injection e auto-affermazione passano dal ramo normale, non dal reject. 🔑 **Conclusione a due facce, e nessuna delle due è un verde**: (a) il ramo `reject` di MCP **è davvero senza verdetto**, letto nel codice; (b) **non sono riuscita a innescarlo** con quattro tentativi ⇒ non so se sia raro, se richieda una configurazione che non ho, o se sia **quasi morto**. Chi lo innesca chiude la cella. ⚠️ **Non curo un ramo che non so far scattare**: una cura senza un rosso che la chiami è una cura che nessuno saprà verificare. 🪞 Nota di metodo: il limite l'avevo dichiarato **io** un'ora prima, e sono andata a misurarlo invece di lasciarlo lì — su cinque limiti dichiarati che ho misurato, **questo è il secondo che regge** (e regge solo a metà) |
 | W2-23 | **la ricaduta**: cosa impedisce che il cancello del publish si richiuda di nuovo? | C7 | — | `.githooks/pre-commit` | ✅ **CURATO — ora il veto gira al commit, sulle sole righe AGGIUNTE** | ws2 | **il buco**: il pre-commit girava `ruff` e **non** il veto ⇒ il cancello si è richiuso **oggi** (7→12 in poche ore, W2-19) senza che nessuno se ne accorgesse, e si sarebbe richiuso ancora. **Cura**: il hook ora esegue il criterio di `controlla_registro.py` **sul `git diff --cached` di `verimem/*.py`**. 🔑 **Solo le righe AGGIUNTE, di proposito**: il debito che c'è già non è di chi commette adesso, e bloccarlo fermerebbe tutte e otto su lavoro altrui — è **esattamente il blocco che ha fermato il repo stamattina**. Così nessuno è fermato oggi e nessuno può **peggiorare** il conto domani. Il pattern si **deriva** da `controlla_registro.py` come i target di `ruff` si derivano da `ci.yml` — la filosofia che il file dichiara già («*a duplicated list drifts the moment one side moves*»). 🔴 **E il banco ha salvato il repo**: la prima versione **non bloccava NIENTE** — `grep -v '^\+\+\+'` senza `-E` è BRE, dove `\+` significa «uno o più», quindi cancellava **ogni** riga che inizia con `+`. Sarebbe entrato **un cancello che non può fallire**, cioè il difetto per cui questo stesso file fu riparato il 30/07 («*a gate that cannot fail is not a gate, it is a green light*»). Preso da **8 casi** (riga aggiunta · righe pulite · sigla RIMOSSA · intestazione col nome · due sigle · `ws9` fuori intervallo · path di banco · due sigle sulla stessa riga): **8 su 8 corretti** dopo la correzione, **0 su 8 prima**. **Verifica finale sul FILE INSTALLATO** (non sulla mia funzione — livelli diversi), con uno shim su `git diff`: caso sporco → `BLOCKED`, mostra la riga colpevole, `EXIT=1` · caso pulito → `EXIT=0`. `sh -n` valido. 🪞 **Un mio falso verde, dichiarato**: il primo `sh -n` diede OK su un file che l'installazione **non aveva modificato** (path POSIX passato a Python su Windows) — una verifica che passa su ciò che non è cambiato. ⚠️ **Limite**: `` è estensione GNU; su un grep non-GNU l'estrazione fallisce e il hook **lo dice** invece di tacere. Uscita: `git commit --no-verify` |
 | W2-24 | **la stessa manopola** produce lo stesso effetto su ogni porta? | C3 · C5 | IT | SDK · MCP · CLI | 🔴 **no: con `ENGRAM_GROUNDING_WRITE=0` una porta smette di giudicare e due no** | ws2 | **regime**: le tre porte **nello stesso processo**, stesse env, stesso claim e stessa fonte ⇒ l'unica variabile è la porta. Con `ENGRAM_GROUNDING_WRITE=0`: **SDK** `grounding_score=98.97…`, `evidence_class='cross_encoder'`, `moat='passed'` · **CLI** identica · **MCP** `grounding_score=None`, `evidence_class='lexical_only'`, `moat='not run — a source WAS given, but write-time grounding is switched off here (ENGRAM_GROUNDING_WRITE=0)'`. ⇒ **la stessa scrittura con la stessa configurazione produce un fatto GIUDICATO su due porte e NON GIUDICATO sulla terza**. 🔑 **Il rischio non è estetico**: chi imposta quella variabile crede di aver configurato *il sistema* e ne configura **un terzo** — e la differenza non si vede in `status`, che resta `model_claim` in tutti e tre i casi; la porta il `grounding_score` (un numero = giudicato · `None` = mai giudicato). ⚖️ **Su questa cella MCP è la porta che si comporta MEGLIO**: il suo `moat` nomina perfino la variabile, mentre SDK e CLI dicono `'passed'` — vero (hanno giudicato) ma in contraddizione con ciò che l'operatore ha chiesto. 📌 **NON è M10-2, e mi ci aggancio**: `docs/AUDIT-LEDGER.md:412` registra già come **decisione di prodotto APERTA** che il moat sia **opt-in out-of-the-box** — ma parla del **default**, non della **disparità fra porte**. Questo è il dato che a quella scheda manca, e va nella stessa decisione. ⛔ **Non curo**: quale porta abbia ragione è una scelta di prodotto (spegnere ovunque o giudicare ovunque), e le scelte le prende Aurelio. 🪞 **Terza volta stasera che stavo per dichiarare nuovo qualcosa di già registrato** — preso leggendo l'AUDIT-LEDGER prima di scrivere, non dopo |
+| W2-25 | quanti quarantinati sono in **discordanza** — col **filtro pubblicato**, stavolta | C5 | — | corpus | ⚠️ **149 su 694 giudicati = 21,5%, e NON riproduco il mio 224 di stamattina** | ws2 | **regime**: `sqlite3` in `mode=ro` sullo store vero (`~/.engram/semantic/semantic.db`, 117 MB), nessun modello caricato, ore **23:18**. **IL FILTRO, per esteso, così chiunque lo rifà**: quarantinati = `status='quarantined'` · giudicati = `grounding_score IS NOT NULL` · **discordanti** = `status='quarantined' AND grounding_score >= 80`. **I numeri**: tutta la storia **2396 quarantinati · 705 giudicati · 149 discordanti** (21,1% dei giudicati) · **agosto 2026** 694 · 694 · **149** (21,5%) · **prima di agosto** 1702 · **11** · 0. 🔑 **Il reperto che non cercavo**: prima di agosto **1702 quarantinati e solo 11 giudicati**; su agosto **694 su 694**. ⇒ **il giudizio è stato acceso ad agosto**, e **1691 fatti stanno in quarantena senza essere mai stati giudicati** — non sono «respinti dal moat», sono **fermati da uno screen lessicale e mai valutati**. E tutti i 149 discordanti sono di agosto, coerente con la mia misura precedente. 🔴 **E la parte scomoda: NON riproduco il mio 224 di stamattina** (né il 218 di @ws1). Non perché il corpus sia cambiato di 75 fatti, ma perché **quel numero l'avevo pubblicato senza il filtro accanto** — e la riconciliazione con @ws1 è fallita per la stessa ragione, da entrambe le parti. ⇒ **un numero senza il suo filtro non è riproducibile nemmeno da chi l'ha misurato**, che è la forma peggiore: sembra un dato e non lo è. Da qui in poi il filtro sta nella cella. 🪞 **Sesto righello mio rotto stasera**: `created_at` è un **float epoch**, non una stringa ISO — confrontarlo con `'2026-08-01'` metteva **tutto** prima di agosto (in SQLite un numero è sempre `<` di una stringa) e dava «agosto: 0 su 0», che sembra un dato e invece è un tipo sbagliato |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
 
@@ -1918,3 +1919,90 @@ difetto non è il layer ma il fatto che nessuno lo DICHIARI. Non so quale delle 
 📌 **@ws5 (C2)**: il tuo claim è esattamente «*quali classi core il gate ferma e quali no, IT+EN,
 con la popolazione di controllo accanto*». **Questa è quella tabella**, 4 tipi × 2 lingue, controllo
 incluso. Banco: `scratchpad/attributi.py`, un argomento per caso, **gira in un minuto**.
+
+---
+
+### 🔴 L'ANTEPRIMA DI `search-docs` SI ÀNCORA ALLA **PAROLA VUOTA** E NASCONDE LA RISPOSTA — e il commento sopra la riga dichiara l'intenzione opposta
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-28, 23:30 · **Livello**: la **CLI**, la porta che l'utente
+usa · **Regime**: store temporaneo `HIPPO_DATA_DIR` + `unset ENGRAM_DATA_DIR VERIMEM_DATA_DIR`,
+**fuori da pytest** · **Banco**: `scratchpad/ab-anteprima.py`, un argomento per caso.
+
+**Come ci sono arrivato — il presidio ha pagato la quinta volta oggi.** Stavo per aprire il tier
+documenti come fronte nuovo. «🔎 Prima di misurare, cerca il documento» →
+`docs/stato-reale/05-ingestione-documenti.md` **esiste già ed è mio, dell'08/08**, con sopra la nota
+di @ws7: «*misura `main`, e `main` si è mosso di 756 commit*». Quindi **non l'ho rifatto: l'ho
+RIMISURATO**.
+
+#### ① Il documento dell'08/08 regge — tre affermazioni su tre
+| affermazione dell'08/08 | rimisurata il 28/08 |
+|---|---|
+| `.csv` rifiutato, exit 1, messaggio che nomina il tipo | ✅ `EXIT=1`, `unsupported file type '.csv'` |
+| chunk ≈970 caratteri | ✅ misurati `0-968` e `3373-4373` |
+| il chunk che contiene la risposta è restituito | ✅ **primo**, score 0.852 |
+
+⚠️ **Svista mia nel primo giro, dichiarata**: avevo scritto `python … \| grep …; EXIT=$?` — l'exit
+era di **`grep`**, non di python, e leggevo `EXIT=0` su un comando che usciva **1**. Rifatto senza
+pipe. Stessa classe di «**mai filtrare l'output quando è la misura**», che oggi mi ha già morso tre volte.
+
+#### ② Il reperto: la risposta c'è, l'utente non la vede
+Chunk di **968 caratteri**, la risposta («La sede di Bolzano contiene 777 pallet.») negli **ultimi 39**.
+Interrogo `search-docs "Quanti pallet contiene la sede di Bolzano?"`:
+- il chunk giusto è restituito, **unico**, score **0.861** ✅
+- l'anteprima mostra **180 caratteri di puro riempimento**
+- **`grep -c "Bolzano"` sull'output intero = `0`** ⇒ **la parola che risponde alla domanda non
+  compare da nessuna parte in ciò che l'utente vede.**
+
+#### ③ La causa, isolata a una riga — `verimem/cli.py:865-868`
+```python
+pos = min((p for p in (low.find(t) for t in terms) if p >= 0), default=0)
+start = max(0, pos - 90)
+```
+`min()` prende la posizione **più piccola**, cioè la prima parola della query che compare nel chunk
+**in ordine di posizione, non di informatività**. Vince **`di` a 13** (dentro «di riempimento»)
+contro **`sede` a 931**.
+
+#### ④ A/B — e ha ribaltato metà della mia congettura
+| variante | `pos` | `start` | risposta visibile? |
+|---|---:|---:|---|
+| A) come oggi | 13 | 0 | **NO** |
+| B) tolta la punteggiatura dai termini | 13 | 0 | **NO** |
+| C) tolte le parole vuote | 931 | 841 | **SÌ** |
+| D) entrambe | 931 | 841 | SÌ |
+
+⇒ **La causa è UNA sola.** Avevo scritto «due difetti»: il secondo — `bolzano?` col punto
+interrogativo attaccato, `find()` = **-1**, cioè **il nome proprio non viene mai cercato** (e con lui
+`quanti`, cioè **2 termini su 7**) — è **reale ma INERTE qui**: togliendolo il verdetto non cambia,
+perché `di` vince comunque. Lo consegno come **osservato, non causale**. È la lezione «*un difetto
+può avere il conteggio esatto e la clausola inerte ⇒ la prova che un criterio conta è che
+togliendolo il numero cambi*».
+
+#### ⑤ Perché conta
+Il commento **immediatamente sopra** quella riga dichiara l'intenzione:
+> *Snippet centered on the first query term present — show WHY it matched, not just how the chunk begins*
+
+**La promessa è scritta nel codice e il codice fa l'opposto.** Con chunk da ~1000 caratteri e
+finestra da 180, la risposta resta invisibile nell'**82%** del chunk ogni volta che la query contiene
+una preposizione — cioè **quasi sempre, in IT e in EN**. Si aggancia al finding centrale del
+documento dell'08/08 («non si ottiene una citazione con la **pagina**»): ora sappiamo che **non si
+ottiene nemmeno la RIGA**. Classe: **promessa operativa rotta**, e per giunta **scritta accanto al
+codice che la rompe** — gemella di «*un docstring dice cosa credeva l'autore*».
+
+#### Limiti — dichiarati, non attenuanti
+· **Un solo chunk, una sola query.** Non ho la distribuzione su un corpus vero: non so **quanto
+spesso** accada, so **perché** accade e che il meccanismo non dipende dal contenuto.
+· 🔴 **Non affermo nulla sull'SDK**: `from verimem.memory import Memory` → `ImportError`, non ho
+ancora il nome giusto. Il livello misurato è **la CLI**, e lo dichiaro.
+· **Non ho toccato `cli.py`.** La riga è di prodotto; consegno banco e A/B. Se nessuno la rivendica
+entro il giro, la prendo io con presidio a **due popolazioni** (query con e senza parole vuote).
+
+#### 📌 Seconda firma a @ws4 — conferma indipendente, arrivata senza cercarla
+Salvando i due fatti di questa cella, **L4.2 ha avvisato su entrambi**:
+> `L4.2 — il claim riusa un numero della fonte riferendolo a un'altra grandezza: 13 qui e' «invece», nella fonte «bolzano no»; 931 qui e' «(nessuna parola accanto)», nella fonte «di si»`
+
+La mia source è la **tabella allineata** qui sopra, dove l'etichetta sta **a sinistra** del numero.
+È esattamente il reperto che @ws4 ha pubblicato alle 23:06 («*L4.2 legge la grandezza a DESTRA del
+numero*»), **confermato da un'altra istanza, su un'altra source, in un altro dominio** (documenti,
+non gate) — e **senza che lo stessi cercando**. Entrambi i fatti sono comunque `admitted`,
+grounding **100.0** ⇒ è un **avviso**, non un veto: il danno è al **referto**, non all'ammissione.
+
