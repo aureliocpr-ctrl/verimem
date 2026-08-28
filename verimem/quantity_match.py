@@ -1035,6 +1035,45 @@ def _senza_identificatori(testo: str) -> str:
         lambda m: " " * (m.end() - m.start()), testo or "")
 
 
+#: Un numero che **nomina** una parte del documento non è una grandezza
+#: misurata: «Art. 3», «comma 2», «Section 5». È la stessa famiglia degli anni
+#: nudi (``YEAR_RE`` qui sopra), e non è teorica — misurato il 28/08 sulla porta
+#: SDK, A/B a variabile singola su un contratto con Art. 3..8::
+#:
+#:     claim «Il numero di rate previste dal contratto e' N»
+#:           (la fonte NON parla di rate: e' inventato in tutti i casi)
+#:     N = 3, 6, 8    -> AMMESSO 100.0 / 100.0 / 96.2   L4.1 muto  0 su 3
+#:     N = 91, 97, 43 -> quarantinato 0.2 ovunque       L4.1 parla 3 su 3
+#:
+#: ⇒ la numerazione **inocula sé stessa** come valore valido della fonte, e
+#: ogni documento a sezioni numerate — contratti, leggi, regolamenti, protocolli
+#: — immunizza i propri numeri. L'intervallo coperto (2..8) è per giunta quello
+#: più usato nei claim ordinari: «3 rate», «6 mesi», «5 giorni».
+#: ⚠️ La potatura vale **solo sul numero nudo**: «comma 2 prevede 5 giorni»
+#: perde il 2 e tiene i 5 giorni. Un riferimento non porta mai un'unità, e
+#: sopprimere una quantità misurata sarebbe un buco più grande di quello curato.
+_RIFERIMENTO_RE = re.compile(
+    r"(?:\b(?:art|artt|articolo|articoli|comma|commi|sez|sezione|sezioni|capo|"
+    r"titolo|punto|lettera|allegato|allegati|all|tab|tabella|fig|figura|"
+    r"pag|pagina|riga|righe|nota|"
+    r"section|sec|clause|paragraph|para|annex|exhibit|schedule|item|chapter|"
+    r"chap|appendix|table|figure|page|line|note|no|nr)\b\.?|§)"
+    r"\s*(\d+)\b",
+    re.IGNORECASE,
+)
+
+
+def _spans_dei_riferimenti(testo: str) -> list[tuple[int, int]]:
+    """Gli intervalli occupati dal NUMERO di un riferimento a una sezione.
+
+    Gemella di `_spans_delle_date`, e per la stessa ragione: si ragiona sugli
+    span invece che sul singolo numero, così «art. 3, comma 2» perde entrambi e
+    non uno solo. Si restituisce lo span del **numero** (gruppo 1), non della
+    parola chiave, perché è il numero che va saltato.
+    """
+    return [(m.start(1), m.end(1)) for m in _RIFERIMENTO_RE.finditer(testo)]
+
+
 def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     """Gli intervalli occupati da una data, per saltarli IN BLOCCO.
 
@@ -1076,6 +1115,7 @@ def extract_quantities(text: str, *,
     # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
+    _riferimenti = _spans_dei_riferimenti(claim)
     for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
         if any(a <= m.start(1) < b for a, b in _date):
@@ -1106,6 +1146,8 @@ def extract_quantities(text: str, *,
         if (not unit_s and YEAR_RE.fullmatch(num_s)
                 and _introdotto_da_una_parola_temporale(claim, m.start(1))):
             continue  # bare year → year path, not a quantity
+        if not unit_s and any(a <= m.start(1) < b for a, b in _riferimenti):
+            continue  # «Art. 3» NOMINA una parte del documento, non misura
         if _PUNTO_AMBIGUO.match(num_s) or _VIRGOLA_AMBIGUA.match(num_s):
             continue  # vedi _PUNTO_AMBIGUO: meglio nessun valore che quello falso
         try:
