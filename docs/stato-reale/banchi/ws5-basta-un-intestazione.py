@@ -29,6 +29,23 @@ era **numerico** e `L4.1` restava in campo; qui e' un giorno della settimana, `L
 partecipa, e l'effetto della lunghezza si **inverte**. **Lo stesso allungamento protegge
 i numeri ed espone tutto il resto.**
 
+✅ DEBITO PAGATO SUBITO — IL CONFINE E' FRA 11 E 14 PAROLE (scala fine)::
+
+    +0 frasi ( 6 parole)  VERO=persist 99.9   FALSO=downgrade  5.7
+    +1 frase ( 8 parole)  VERO=persist 99.7   FALSO=downgrade  7.2
+    +2 frasi (11 parole)  VERO=persist 99.3   FALSO=downgrade  7.9
+    +3 frasi (14 parole)  VERO=persist 99.2   FALSO=persist   84.2   <- il salto
+    +4 frasi (16 parole)  VERO=persist 99.4   FALSO=persist   99.3
+    +6 frasi (20 parole)  VERO=persist 99.7   FALSO=persist   99.8
+
+⇒ **TRE FRASI DI INTESTAZIONE, QUATTORDICI PAROLE.** Il salto vale **dieci volte**
+(7.9 → 84.2) e si completa alla quarta frase (99.3). Il VERO passa in ogni cella
+(99.2-99.9): il banco separa su tutta la scala.
+⇒ Le tre frasi che bastano sono: «Nota interna. Documento di servizio. Copia per
+archivio.» — **nessuna afferma niente.**
+🔑 E la transizione **non e' graduale**: da 6 a 11 parole il punteggio del falso si
+muove appena (5.7 → 7.9), poi salta. **Non e' una scala continua: e' una soglia.**
+
 ⚖️ PUNTO DEBOLE: un solo claim, un solo tipo di valore, quattro celle. E le tre celle
 piene hanno lunghezze diverse (17/19/25) — **non ho isolato la lunghezza esatta**: so
 che 7 difende e 17 no, non dove stia il confine. Serve una scala fine fra 7 e 17.
