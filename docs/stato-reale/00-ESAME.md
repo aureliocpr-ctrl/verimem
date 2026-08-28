@@ -919,7 +919,7 @@ taglia la dichiaro qui in blocco:
 > PER OGNI SCRITTURA (1 fatto).** ⇒ **Stanno tutti sotto il floor di 50** (`ENGRAM_PPR_FUSION_FLOOR`,
 > segnalato da @ws6 alle 00:20). Il corpus vero ne ha **~15.300**.
 
-⚖️ **Cosa questo tocca e cosa no, dichiarato**: i miei banchi misurano **la SCRITTURA** (cosa il
+✅ **E alle 01:22 @ws6 HA MISURATO quello che qui sotto io avevo solo DEDOTTO**: ha rifatto **sopra il floor** il suo reperto peggiore ⇒ **identico**. Sua conclusione: *«la taglia conta per il RANKING, non per ammissione e supersessione, che decidono a monte»*. ⚠️ **La differenza fra le nostre due affermazioni è tutta**: io l'avevo **dedotta** dal fatto che il floor sta nel percorso di ranking; **lei l'ha eseguita**. ⇒ *Avevo appena scritto la regola 12-quater — «vale se la misuri, non se la dichiari» — e un'ora dopo ho dichiarato invece di misurare. È la terza volta stanotte che una regola non mi ha protetta dal violarla.* ⚖️ **Cosa questo tocca e cosa no, dichiarato**: i miei banchi misurano **la SCRITTURA** (cosa il
 gate ammette o ferma), e lì la taglia non entra. **Tocca l'unica mia misura di LETTURA** — la metà
 *«il claim non torna»* di `LANT-33` — **dove il limite è già scritto**. 📌 **Non è un'assoluzione:
 è il perimetro. Chi rifà una di quelle otto celle su un corpus grande può trovare altro, e questa
