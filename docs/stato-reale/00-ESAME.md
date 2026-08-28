@@ -2337,7 +2337,7 @@ cambia ⇒ **non è la DATA che non riconosce, è la FRASE.** La funzione è **m
 | `date_menzionate` *(misurato qui)* | **entrambe** |
 | `stessa_frase_altra_data` *(misurato qui)* | **solo l'italiano** |
 
-⇒ 🔑 **TRE componenti sulle date, TRE coperture linguistiche diverse, in DIREZIONI OPPOSTE.**
+⇒ 🔑 ~~**TRE componenti sulle date, TRE coperture linguistiche diverse, in DIREZIONI OPPOSTE.**~~ ⚠️ **RISTRETTA DALL'AUTRICE alle 23:47** — vedi la cella in fondo: per `_forma_programmata` la lettura «monolingue» è **falsa** (EN 2/9, IT 2/5: **stretta in entrambe**). Resta vera per `extract_dates`.
 **L'incoerenza non è «è monolingue»: è che ogni pezzo è monolingue in una lingua diversa** — ed è
 per questo che il comportamento cambia con la lingua in modi che nessuno prevede leggendo un pezzo
 solo. 📌 **Conferma il «il modulo ne ha DUE» di @ws3 da un terzo lato**, e spiega perché il
@@ -2450,3 +2450,54 @@ al numero.**
 irriproducibili**.
 · Il corpus **si muove** (15156 righe ora): chiunque rifaccia queste query avrà numeri diversi —
 **ed è esattamente il punto**.
+
+---
+
+### 🛑 MI SONO FERMATA UN PASSO PRIMA DI UNA LEGGE FALSA — **EN 2/9 · IT 2/5**: non è monolingue, è una lista corta
+*(ws1 «Riscontro» / Curie · **28/08 23:47** · **REGIME**: interrogazione diretta, nessuna scrittura ·
+il controllo che mi ha salvata è costato **20 secondi**)*
+
+#### Cosa stavo per scrivere, e NON ho scritto
+> «`_forma_programmata` è **monolingue italiana**: torna `False` sull'inglese. E il suo docstring
+> dichiara «*Lingue coperte: italiano, inglese*» ⇒ **promessa scritta e non mantenuta**, tocca C1.»
+
+Avevo **una** frase italiana (`True`) e **una** inglese (`False`). Sembrava chiuso.
+
+#### Il controllo: NOVE formulazioni inglesi, CINQUE italiane
+| inglese | | italiano | |
+|---|---|---|---|
+| «The **meeting is scheduled for**…» | ✅ | «Il termine di consegna **è fissato al**…» | ✅ |
+| «The **appointment is on**…» | ✅ | «La **scadenza è il**…» | ✅ |
+| deadline is · deadline is set for · contract expires on · due by · will take place on · payment is due · release is planned for | ❌ ×7 | riunione è prevista per · contratto scade il · pagamento è dovuto entro | ❌ ×3 |
+| | **2/9** | | **2/5** |
+
+#### 🛑 LA MIA FORMULAZIONE ERA FALSA, E LA RITIRO
+**L'italiano non è coperto meglio dell'inglese**: 40% contro 22%, **entrambi bassi**.
+⇒ **«monolingue italiana» è sbagliato.** Il docstring che dichiara «italiano, inglese» **non è una
+promessa rotta**: riconosce davvero **entrambe**. È **copertura parziale in entrambe le lingue**.
+⇒ 🔑 **E la differenza che avevo misurato ALLA PORTA dipendeva dalle FRASI CHE HO SCELTO IO**: la
+mia italiana era una delle 2 riconosciute, la mia inglese una delle 7 non riconosciute. **Un caso,
+non una legge di lingua.**
+
+#### ⇒ COSA RESTRINGO, esattamente
+· **«Ogni pezzo è monolingue in una lingua diversa»** (23:36, 23:44): **vero per `extract_dates`**
+(misurato su 7 lingue), **NON dimostrato per `_forma_programmata`**. La frase generale **non regge**.
+· ✅ **Resta vero e misurato**: `_UNA_DATA_QUALSIASI` **non maschera** «March 12, 2027» mentre
+maschera la forma italiana **e la ISO** — difetto di **formato**, visto direttamente.
+· ✅ **Resta vero**: il caso **ISO-EN** mostra che **la guardia decide anche quando la mascheratura
+funziona**. Ma la guardia **non è cieca all'inglese: è stretta in entrambe.**
+
+#### 🔑 IL DIFETTO VERO, più piccolo e più onesto
+`_forma_programmata` chiede una **prova positiva** che la data sia un appuntamento, e la sua lista
+riconosce **poche formulazioni**. Chi scrive «*il contratto scade il…*» o «*the contract expires
+on…*» **non è coperto in nessuna delle due lingue**. ⇒ **Non è una questione di lingua: è una lista
+corta.**
+⚖️ **E può essere VOLUTO**: il docstring dice «*True solo con una prova POSITIVA*». Una guardia che
+preferisce tacere è difendibile. **Non so se 2/9 e 2/5 siano il tasso inteso, e non lo affermo.**
+
+#### 🪞 LA LEZIONE — la più cara della serata
+Avevo **una coppia per lingua** e ne stavo traendo una **legge linguistica**. Con nove formulazioni
+la legge cade in **venti secondi**.
+🔑 **PRIMA DI DICHIARARE UNA DIFFERENZA FRA DUE POPOLAZIONI, MISURA IL TASSO DI ENTRAMBE. Un `True`
+e un `False` non sono due tassi: sono due aneddoti.**
+*(Decima volta oggi che restringo o ritiro qualcosa di mio. Preferisco così.)*
