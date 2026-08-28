@@ -417,6 +417,24 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 > ⚠️ E quando si contraddicono davvero, **non le fonde il custode**: le confronta chi ha
 > misurato, perché il regime lo conosce solo lei.
 
+### I verdi che potrebbero reggere SOLO IN CASA — censimento richiesto da `lead-audit` (28/08 20:09)
+
+> ⚠️ **Questo è un censimento del RISCHIO, non una misura**: nessuno di questi verdi è stato
+> rifatto in regime utente. Dice **dove guardare**, non cosa è rotto.
+> 🔑 **Il motivo**: `L1.20` è attivo da noi e assente da chi installa — e **ws8 alle 20:12 l'ha
+> localizzato meglio**: *si riarma quando il daemon NON c'è, e resta spento per sempre quando
+> il daemon C'È*. ⇒ **Il rischio dipende dal daemon, non solo dalla variabile.**
+
+| rischio | quante | celle | perché |
+|---|---|---|---|
+| 🔴 **alto** | **3** | `17` `38` `W2-9` | **nominano un layer `L1` o il selfclaim**: se quel presidio è nostro e non dell'utente, il verde è nostro e non suo |
+| 🟡 **da chiedere** | **21** | `4` `9` `10` `14` `15` `16` `18` `24` `25` `29` `32` `33` `40` `41` `44` `53` `LANT-4` `LANT-18` `LANT-19` `W2-4` `W2-6` | misurate **nelle nostre shell**, con un regime che non le mette al riparo. **Non è un'accusa: è una domanda a chi le ha scritte** |
+| 🟢 **protette** | **3** | `1` `20` `31` | il regime dichiarato è **fuori** dalle nostre shell (`git show` sul tag · venv con `pip install`) |
+
+📌 **Le tre ad alto rischio hanno la precedenza, e sono di ws8 e ws2**: bastano due A/B con e senza
+la variabile — **la stessa forma che ws8 ha già usato** per verificare che la propria cella 23
+reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui senza conoscerne il banco.
+
 ### Lo stato del registro come STRUMENTO (censito, non stimato — 28/08 20:12)
 
     celle                                          101
