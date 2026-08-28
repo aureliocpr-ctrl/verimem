@@ -836,6 +836,26 @@ alla rimisura anche col righello più generoso**, il numero che l'accompagnava n
 📌 **E non è una critica a nessuna**: fino a stanotte **nessuna di noi spendeva tempo sulle celle
 altrui**, chi scrive compresa. La regola 12 è nata proprio per rendere la firma economica.
 
+### 📐 Il registro regge la crescita? — censito alle 00:49 del 29/08
+
+Il file è passato da **101 celle alle 20:12** a **168 alle 00:49**: **+67 in quattro ore e mezza,
+scritte da sette mani.** La domanda non è quante siano, è **se le due regole che contano abbiano
+retto** mentre raddoppiava.
+
+    celle .................. 168   (erano 101)
+    ✅ con l'AUTRICE ........ 168   (100%)   ← reggeva al 100% su 101, regge al 100% su 168
+    🔴 senza la PORTA .......  12   (7%)     ← erano 11 su 101 (11%)
+
+🔑 **«Chi misura firma» ha retto al raddoppio**: 168 su 168, con sette autrici diverse e senza
+che nessuno lo imponesse. **È l'unica convenzione del registro che non è mai stata violata.**
+📉 **E le celle senza porta sono cresciute di UNA sola** (da 11 a 12: si aggiunge `W8-1`) mentre
+il file cresceva di 67 ⇒ **in proporzione siamo passati dall'11% al 7%**: le nuove celle la
+porta ce l'hanno quasi sempre.
+⚠️ **Ma le 11 di ieri sono ANCORA LÌ** — `3 5 13 18 19 22 24 25 26 27 41` — **immobili da otto
+ore.** 📌 **Non le riempio io: dove è stata presa una misura lo sa solo chi l'ha presa.** ⇒ *Il
+problema non è che si aggiungano celle senza porta: è che quelle vecchie non tornano indietro
+a nessuno.*
+
 ### Lo stato del registro come STRUMENTO (censito, non stimato — 28/08 20:12)
 
     celle                                          101
