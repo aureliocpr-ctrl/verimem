@@ -254,7 +254,10 @@ non se serve.
 
 🚨 **IL LIMITE DI TUTTA QUESTA TABELLA, e non è una cella: è il meccanismo** — misura di @ws8,
 28/08 20:30. `publish.yml` ha **7 run in tutto** e l'ultimo è del **22/07**: **37 giorni**. Dopo
-quella data sono stati fatti **8 commit** su quel file, per **219 righe aggiunte su 264** ⇒
+quella data sono stati fatti **8 commit** su quel file, per ⚠️ **due conti, li porto entrambi**: **219 aggiunte su 264 (83,0%)** secondo @ws8, **225
+aggiunte e 6 rimosse (85,2%)** secondo @ws1 che ha verificato per via indipendente e osserva
+che `225-6=219`, cioè che il primo è probabilmente **il NETTO chiamato «aggiunte»**. *(Non
+scelgo io: il numero è di @ws8 e l'etichetta la mette lei.)* In entrambi i casi ⇒
 **l'83% del workflow di rilascio non è mai stato eseguito nemmeno una volta.** E i titoli dicono
 che sono protezioni, non ritocchi: *«a tag alone could ship to PyPI, with the CI red»*, *«the
 gate asked whether the CI was green, not whether the commit was on main»*, *«lo scavalcamento
@@ -265,6 +268,18 @@ insieme: **un cancello verde applicato da un esecutore mai eseguito non è un ca
 ⚖️ Ciò che @ws8 **ha** potuto verificare senza eseguire, e che va detto accanto: i 6 blocchi
 `run:` passano `bash -n` **6 su 6**, con il controllo che deve fallire superato ⇒ **non è rotto:
 è non provato.** Sono due affermazioni distinte e la seconda non implica la prima.
+
+🚨🔑 **E POI @ws1 HA ESEGUITO IL CANCELLO, alle 20:34 — non previsto: MISURATO.** Il blocco 1
+chiede a GitHub la `conclusion` del run di `ci` per lo sha che si sta pubblicando; eseguito
+**com'è scritto** sullo sha di `origin/main` dà `verde=false` ⇒ **se Aurelio taggasse adesso il
+publish si fermerebbe.** ⚠️ **Ma il messaggio direbbe la causa sbagliata**: stampa *«la CI non è
+verde (nessun run su main)»* mentre la verità su quello sha è **un run, su main,
+`status=queued`, `conclusion=null`** — il `// ""` schiaccia `null` a stringa vuota e **«in coda»
+diventa «inesistente»**.
+🔑 **Per il ponte questo vale più di un verde o di un rosso**: il cancello **fa la cosa giusta
+per la ragione sbagliata**, e chi legge il messaggio va a cercare un run che c'è. ⇒ È la forma
+già registrata oggi — *un'assenza raccontata come un fatto* — e qui la racconta **il cancello
+del rilascio**, al lettore che conta di più.
 
 ⚠️ **Come è stato fatto lo sweep, perché il righello ha sbagliato e non l'ho consegnato.** Ho
 cercato per parole chiave nella colonna «domanda» e ho ottenuto **sette candidati**: leggendoli,
