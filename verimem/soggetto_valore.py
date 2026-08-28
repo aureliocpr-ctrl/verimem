@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """`L4.3` — il legame SOGGETTO-VALORE: il valore c'è nella fonte, ma è di un altro.
 
 Copre lo **scambio di attribuzione**: un claim che riporta un valore che la
@@ -61,7 +60,7 @@ _FUNZIONALI = frozenset({
     "essere", "sono", "era", "erano", "stato", "stata", "risulta", "risultano",
     "art", "articolo", "comma", "pari", "ogni", "come", "piu", "meno",
     "presente", "presenti", "questo", "questa", "quello", "quella",
-    "the", "of", "a", "an", "and", "or", "for", "to", "in", "on", "at", "by",
+    "the", "of", "an", "and", "or", "for", "to", "on", "at", "by",
     "is", "are", "was", "were", "be", "been", "this", "that", "these", "those",
     "with", "from", "as", "it", "its",
 })
@@ -108,7 +107,8 @@ def _e_identificativo(testo: str, valore: float) -> bool:
     """
     testo_n = _norm(testo)
     ago = str(int(valore)) if float(valore).is_integer() else str(valore)
-    for m in re.finditer(r"(?<![\d.,])%s(?![\d.,])" % re.escape(ago), testo_n):
+    ago_re = r"(?<![\d.,])" + re.escape(ago) + r"(?![\d.,])"
+    for m in re.finditer(ago_re, testo_n):
         prima = testo_n[max(0, m.start() - 40):m.start()].split()
         dopo = testo_n[m.end():m.end() + 40].split()
         d = dopo[0] if dopo else ""

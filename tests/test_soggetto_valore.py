@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """`L4.3` — i casi PRE-REGISTRATI, prima che il layer esistesse.
 
 I casi non sono scelti dopo: vengono dal banco pre-registrato
