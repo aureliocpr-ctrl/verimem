@@ -405,3 +405,64 @@ e **non indipendente**.
 loro un'unità.
 ⚠️ Simulazione **fuori dal prodotto**: il gate vero ha clausole, span troncati a
 400 caratteri e un ordine dei layer che qui non c'è.
+
+---
+
+# ⑨ Correzione: **la «disgiunzione per costruzione» che avevo promesso non è quella che ho scritto**
+
+*ws3, 28/08 ~22:05. Banco `banchi/ws3-due-nomi-per-la-stessa-unita-nascondono-una-contraddizione.py`, commit `07194829`.*
+
+Al §1 e al §4 avevo scritto, due volte:
+
+> «**Non tocca `L4.1`.** Il passo 1 rende i due **disgiunti per costruzione**: se
+> il valore non è nella fonte, `L4.3` si ferma e parla `L4.1`. **Nessun doppio
+> referto sulla stessa ricevuta.**»
+
+**È imprecisa, e la correggo.**
+
+## Il fatto
+
+`L4.1` confronta **i valori**, non le coppie `(unità, valore)` — e non è una
+svista: è **dichiarato** in `valore_non_nella_fonte.py:244`:
+
+> «*Si confrontano i **VALORI** e non le coppie (unità, valore): «l'ordine 77» e
+> «77 pezzi» portano lo stesso numero con unità diverse, e l'unità in un testo
+> libero è la parola che segue — **troppo fragile per farci poggiare un veto**.*»
+
+Il mio passo ① confronta invece le **coppie**:
+
+    if (unita, num) not in v_fonte:   continue
+
+⇒ **i due criteri non sono complementari: sono DIVERSI**, e fra loro resta una
+banda in cui **nessuno dei due parla** — *valore presente nella fonte, unità
+diversa*.
+
+## Misurato
+
+    claim  «Il file wake.py pesa 100 kb»
+    fonte  «Il file wake.py conta 100 righe di codice.»
+
+    L4.1   TACE   (il 100 c'e' nella fonte)
+    L4.3   TACE   (la coppia ('kb', 100) no)
+    esito  QUARANTINATO lo stesso — da L4.2, ground 31.2
+
+⇒ **La banda esiste. Non è un buco del prodotto: `L4.2` la copre.** Ma la mia
+frase prometteva una proprietà — *complementarità* — che il codice non ha.
+
+## La formulazione corretta
+
+> `L4.3` **non produce un doppio referto con `L4.1`** sui casi in cui `L4.1`
+> parla: quando il valore è **assente** dalla fonte, `L4.1` parla e `L4.3` si
+> ferma al passo ①. **Ma i due criteri non coprono insieme tutto lo spazio**:
+> dove il valore è **presente con un'unità diversa**, tacciono entrambi, e a
+> rispondere è `L4.2`. **La copertura è dei TRE strati insieme, non dei due.**
+
+🔑 **La lezione, e vale oltre questo doc**: avevo dedotto la complementarità
+**dalla forma del mio codice**, non dalla lettura di quello dell'altro layer.
+*«Disgiunti per costruzione» è un'affermazione su DUE componenti, e per
+sostenerla bisogna aver letto entrambi.*
+
+## Limiti
+
+⚠️ La banda l'ho provata su **un caso solo**. Che `L4.2` la copra **sempre** non
+è misurato — è misurato **lì**.
