@@ -3096,3 +3096,45 @@ generale **quella fortuna non c'è**: è esattamente il costo del punto ①.
 · Non ho letto il codice: **non affermo il meccanismo**, lo ipotizzo.
 · Il fatto ③ è recuperabile (`a2e496add8e2`, contenuto intatto, fuori dal recall di default).
 **Non l'ho toccato**: è di un'altra istanza.
+
+---
+
+### 🔴 IL TIER DOCUMENTI DALLA CLI È MONCO: **2 comandi contro i 7 di MCP** — e il db conserva versioni che la CLI non sa mostrare
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:28 · **Livello**: la **CLI**, provata **da utente**
+· **Regime**: store temporaneo `HIPPO_DATA_DIR`, fuori pytest.
+
+#### ① Il versionamento funziona — verde, con controllo
+| passo | esito |
+|---|---|
+| indicizzo «il prezzo del modello A è **100** euro» | `-> v1` |
+| cerco | «**100** euro» (0,920) |
+| **cambio il file** in «**250** euro», reindicizzo | `-> v2` |
+| cerco | «**250** euro» (0,910), e **`grep -c 100` = 0** |
+| la v1 è ancora nel db? | ✅ **sì** — `v1` e `v2` coesistono in `chunks` |
+
+⇒ **Non è sovrascrittura: è versionamento vero.** La vecchia versione **esiste e non viene servita.**
+
+#### ② Ma dalla CLI la v1 non è raggiungibile
+| porta | comandi sui documenti |
+|---|---|
+| **CLI** | `index`, `search-docs` — **due** |
+| **MCP** | `document_get` · `document_list` · `document_versions` · `document_search` · `document_semantic_search` · `document_index_file` · `document_promote_chunk` — **sette** |
+
+Il confronto interno rende la lacuna evidente: **`verimem facts` ha 23 sottocomandi**
+(`list`, `get`, `forget`, `quarantine-log`, `retirement-log`…). **I documenti ne hanno ZERO** —
+nessun sottogruppo, verificato su `tiers`, `facts`, `flow` e sull'`--help` principale.
+
+⇒ **Un utente CLI indicizza documenti e poi non può sapere quali ha indicizzato**, né vedere le
+versioni, né recuperare un documento, né promuovere un chunk a fatto.
+🔑 **Non è «manca una funzione»: la funzione esiste, è esposta su MCP, e il dato è già nel db.**
+Classe ***esiste già e non è collegato*** — la stessa del difetto dell'anteprima curato stanotte
+(`a5ddd705`), dove la CLI ricalcolava a mano ciò che il recupero aveva già.
+
+#### Limiti e cosa non affermo
+· **Non è un bug: è una lacuna di superficie.** Non so se sia **deliberata** (una CLI volutamente
+minimale) o dimenticata. **Non l'ho trovato scritto da nessuna parte**, ed è questo che la rende un
+problema: se il tier documenti è «per agenti via MCP», va dichiarato.
+· **Non l'ho curata**: aggiungere comandi alla CLI non è una riga e non è una decisione da prendere
+senza mandato. **Il costo di colmarla è però basso, perché la logica esiste già.**
+· Provato su un file, due versioni, una lingua.
