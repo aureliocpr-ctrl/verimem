@@ -2972,3 +2972,51 @@ nome-SOGGETTO dal nome-VALORE** dentro `_entita_diverse`.
 · **Una coppia per cella** (8 casi). Il proxy è validato 14/14, ma **queste 8 sono alla porta**.
 · Non ho provato **senza fonte + guardia spenta** (la quarta casella della matrice).
 · ⚖️ Resta aperto **se la coesistenza su nomi/luoghi sia VOLUTA**.
+
+---
+
+### ⚠️ I NOSTRI BANCHI SALTANO LA **FUSIONE PPR+BM25**: sotto 50 fatti il recall prende un'altra strada
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:21 · **Banco**:
+`docs/stato-reale/banchi/ws6-i-banchi-piccoli-saltano-la-fusione.py` · **Riguarda il METODO di
+tutte, non un difetto del prodotto.**
+
+`semantic.py:4849` — `ENGRAM_PPR_FUSION_FLOOR`, default **50**:
+```python
+if len(self._get_corpus_cache()[0]) < _floor:
+    _ranking_note("fusion", "skipped_small_corpus")
+    return hits
+```
+Il commento lo dichiara: «*su corpus PICCOLI il bi-encoder + CE bastano e i 2 DB-open + il
+graph-build del PPR sono puro overhead*». **È un progetto, non un difetto.**
+
+🔑 **Ma i nostri store temporanei stanno tutti sotto 50** — i miei di stanotte avevano 12, 5 e 2
+fatti; **il corpus vero ne ha 15.154**. ⇒ **Quando misuriamo il recall su uno store di prova, il
+ranking prende una strada che in esercizio non prende.** L'ho notato per caso in una ricevuta:
+`"fusion": "skipped_small_corpus"` accanto a `"rerank": "skipped_single_hit"`.
+
+#### L'A/B, invece della sola segnalazione
+Stesso store, stessa query, `FLOOR=50` (saltata) contro `FLOOR=0` (forzata):
+| query | ordine dei primi 3 |
+|---|---|
+| «Qual è il codice K-77?» | **identico** |
+| «Quando è previsto il collaudo?» | **identico** |
+
+⛔ **Il controllo che rende interpretabile lo zero**: `_ppr_fusion_enabled()` → **`True`** senza
+variabile in ambiente ⇒ **con `FLOOR=0` la fusione è girata davvero**. Senza questo controllo,
+«ordine identico» poteva voler dire «non è mai partita» — la classe *«una misura che non c'è si legge
+come una misura perfetta»*.
+
+#### La conclusione, stretta
+· **Casi facili** (il coseno trova già il fatto giusto): **la fusione non cambia l'ordine** ⇒ quelle
+misure **si trasferiscono**.
+· **Casi difficili** (multi-hop, token esatto in un testo lontano dalla query — **ciò per cui PPR e
+BM25 esistono**): un banco sotto 50 fatti **non li esercita affatto** ⇒ **un verde lì non dice nulla
+sull'esercizio.**
+
+#### Limiti
+· 🔴 **Il banco non contiene un caso difficile**: ho provato che **sui facili la differenza è zero**,
+non che non esista. Chi vuole chiuderlo deve costruire il caso multi-hop.
+· Cinque fatti, due query, una lingua.
+· **Non tocca la validità dei confronti A/B fra due store**: se la fusione è saltata in entrambi i
+rami, la variabile isolata resta isolata. Tocca le **grandezze assolute**.
