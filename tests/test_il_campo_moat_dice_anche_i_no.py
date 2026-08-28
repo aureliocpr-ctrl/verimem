@@ -112,3 +112,57 @@ def test_senza_source_il_campo_dice_che_non_ha_girato(store):
     out = _remember({"proposition": "Una nota qualunque.", "topic": "t"})
     moat = str(out.get("moat", ""))
     assert "not run" in moat, moat
+
+
+def test_una_quarantena_LESSICALE_non_si_attribuisce_al_moat(store):
+    """IL QUARTO STATO, che mancava: il moat PASSA e il fatto e' trattenuto
+    lo stesso, da uno screen lessicale.
+
+    I tre test sopra coprono respinto-dal-moat, ammesso, e senza-source. In
+    tutti e tre `status == "quarantined"` coincide con «il moat ha detto no»,
+    e su quella popolazione la riga del ramo negativo e' VERA. Ma la condizione
+    che la sceglie e' `status != "quarantined"` (mcp_server.py:13347), e lo
+    status lo decide QUALUNQUE layer: L1.19 chiede un'attestazione di misura e
+    trattiene il fatto mentre il giudice ha dato 100.0.
+
+    MISURATO, stesso claim e stessa fonte, un processo, store condiviso:
+        SDK  status=quarantined  score=100.0  layer=['L1.19']  moat='passed'
+        MCP  status=quarantined  score=100.0  layer=['L1.19']
+             moat='judged 100.0 — the source does NOT entail this fact:
+                   that is why it is quarantined'
+    La stessa decisione, spiegata in due modi opposti a seconda della porta.
+
+    ⚠️ E il danno non e' estetico: chi legge quella frase conclude che la sua
+    FONTE e' cattiva e la riscrive, mentre la cura e' aggiungere un `bench:` a
+    `verified_by`. Una motivazione falsa manda a fare la cosa sbagliata.
+
+    L'SDK non ha il difetto perche' DERIVA il campo da cio' che il gate ha
+    detto (`esito_del_moat(gate, warnings, source=source)`, client.py:942) e un
+    suo commento registra proprio questo caso: «moat passa + parola L1 :
+    moat=passed gs=96.810 QUARANTINED». Qui invece lo status viene ricalcolato,
+    e ricalcolare e' cio' che permette alle due porte di divergere.
+
+    ⛔ IL CLAIM E' IN INGLESE DI PROPOSITO: la forma italiana con l'apostrofo
+    cade su L1.19 solo grazie a una cura del 27/08, e un presidio che dipende
+    da un'altra cura diventa muto se quella viene ritirata. In inglese L1.19
+    scatta da sempre.
+    """
+    out = _remember({
+        "proposition": "Latency is 240 ms.",
+        "topic": "t",
+        "source": "  latency p50 ......... 240 ms\n  campioni ............ 1000",
+    })
+    moat = str(out.get("moat", ""))
+    if "judged" not in moat:
+        pytest.skip(f"il moat non ha giudicato su questo ambiente: {moat!r}")
+    if str(out.get("status", "")) != "quarantined":
+        pytest.skip(f"L1.19 non ha trattenuto qui: status={out.get('status')!r}")
+    layer = [w.get("layer") for w in (out.get("anti_confab_warnings") or [])
+             if isinstance(w, dict)]
+    if not any(str(x).startswith("L1") for x in layer):
+        pytest.skip(f"la quarantena non viene da uno screen lessicale: {layer}")
+    assert "does NOT entail" not in moat, (
+        f"la quarantena viene da {layer} e il giudice ha dato "
+        f"{out.get('grounding_score')}, ma il campo che spiega il PERCHE' "
+        f"attribuisce il rifiuto al moat: {moat!r}. Sulla stessa scrittura "
+        "l'SDK dice 'passed'")

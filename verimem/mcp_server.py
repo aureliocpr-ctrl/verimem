@@ -13344,14 +13344,66 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # INDISTINGUIBILI, quindi non esiste una condizione che dica
                 # «entails» solo quando e' vero. L'unica frase vera in
                 # entrambe riporta CIO' CHE IL GATE HA FATTO.
-                _passato = getattr(fact, "status", "") != "quarantined"
-                _moat = (
-                    f"judged {float(_gs_out):.1f} — the source "
-                    + ("SCORES as supporting this fact: that is the judge's "
-                       "score, not a check that the fact follows from it"
-                       if _passato else
-                       "does NOT entail this fact: that is why it is "
-                       "quarantined"))
+                # 28/08 — IL LIMITE QUI SOPRA NON REGGEVA, ed era il ramo
+                # NEGATIVO a pagarlo. La cura del 25/08 ha reso onesto il ramo
+                # degli ammessi e ha lasciato l'altro con `status !=
+                # "quarantined"` come condizione: ma lo status lo decide
+                # QUALUNQUE strato, e L1.19 trattiene un fatto che il giudice
+                # ha appena valutato 100.0. MISURATO alla porta, stesso claim e
+                # stessa fonte, un processo:
+                #     SDK  quarantined  score 100.0  layer L1.19  moat 'passed'
+                #     MCP  quarantined  score 100.0  layer L1.19
+                #          moat 'judged 100.0 — the source does NOT entail…'
+                # La difesa dichiarata era «il punteggio accanto la smentisce».
+                # Non la smentisce: «judged 100.0» e «does NOT entail» nella
+                # stessa riga non si leggono come «ha deciso un altro strato»,
+                # si leggono come un sistema che si contraddice — e chi la
+                # legge va a riscrivere la FONTE, mentre la cura e' aggiungere
+                # un `bench:` a verified_by. Una motivazione falsa manda a fare
+                # la cosa sbagliata.
+                #
+                # E la premessa del limite («c'e' solo `fact` — niente
+                # verdetto, niente soglia») e' vera ma non pertinente:
+                # `esito_del_moat` non usa ne' il verdetto ne' la soglia. Usa i
+                # layer, la source e il punteggio — `_gate_warnings`, `_source`
+                # e `_gs_out`, tutti e tre vivi qui. Per questo ora si DERIVA
+                # dalla stessa funzione dell'SDK invece di ricalcolare: due
+                # calcoli della stessa cosa sono cio' che ha permesso alle due
+                # porte di divergere.
+                from types import SimpleNamespace as _SN
+
+                from verimem.client import esito_del_moat as _esito_moat_fn
+                _esito_moat = _esito_moat_fn(
+                    _SN(grounding_score=_gs_out),
+                    [w for w in (_gate_warnings or []) if isinstance(w, dict)],
+                    source=_source)
+                if _esito_moat == "failed":
+                    _moat = (
+                        f"judged {float(_gs_out):.1f} — the source does NOT "
+                        "entail this fact: that is why it is quarantined")
+                elif _esito_moat == "passed":
+                    # CHI ha trattenuto, se non e' stato il moat. Senza questo
+                    # la riga direbbe il vero e lascerebbe comunque il lettore
+                    # senza la cosa che gli serve: quale strato chiede cosa.
+                    _altri = sorted({
+                        str(w.get("layer", "")) for w in (_gate_warnings or [])
+                        if isinstance(w, dict)
+                        and str(w.get("layer", "")).startswith("L1")})
+                    _trattenuto = getattr(fact, "status", "") == "quarantined"
+                    _moat = (
+                        f"judged {float(_gs_out):.1f} — the source SCORES as "
+                        "supporting this fact: that is the judge's score, not "
+                        "a check that the fact follows from it"
+                        + (f"; the moat PASSED — this fact is quarantined by "
+                           f"{', '.join(_altri)}, not by the moat"
+                           if _trattenuto and _altri else
+                           "; the moat passed, and the fact is quarantined by "
+                           "another screen" if _trattenuto else ""))
+                else:
+                    _moat = (
+                        f"{_esito_moat} — the entailment moat did not run on "
+                        f"this write; the {float(_gs_out):.1f} next to it is "
+                        "not a verdict on the source")
             elif not _source:
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "
