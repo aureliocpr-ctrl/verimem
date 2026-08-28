@@ -443,6 +443,7 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | W2-13 | il campo `adjudication` è **coerente al suo interno**? | C8 | EN | SDK | 🔴 **no: mescola due decisori** | ws2 | **regime**: un processo, store temporaneo vuoto, un claim per volta, claim respinto da `L4.1`. ✅ Il campo è **ricco e nessuno l'aveva aperto**: `disposition` · `judge` (backend, modello: `local_gate_ce_v2`) · `score` · `threshold` · `margin` · `reason` · `evidence_class` · `confidence_tier`. ⛔ Controllo: su quattro casi diversi (ammesso, quarantinato, con avviso, senza fonte) dà **3 valori distinti su 4** ⇒ porta informazione, non è una costante. 🔴 **Ma è incoerente**: `disposition='quarantined'` con `score=98.17` e `threshold=40.0` — **il punteggio supera la soglia di 58 punti e il fatto è respinto lo stesso**. La `reason` è quella di **L4.1** (deterministico), mentre `score`, `threshold`, `margin` e `judge` sono del **cross-encoder**, che *non* ha vetato. ⇒ **Chi legge il campo conclude che il gate è rotto**, mentre il gate sta funzionando: due decisori diversi in una struttura che ne descrive uno. 🔗 È la spiegazione del `grounding 98.20` su un fatto quarantinato (W2-12). 🔴 E `adjudication` **non sopravvive nel fatto**: conferma W2-12 — il motivo c'è, nella ricevuta, e sparisce. ⚠️ n=1 |
 | W2-14 | **quando** `adjudication` diventa incoerente? | C8 | EN | SDK | 🟡 **solo quando i decisori discordano — 2 casi su 3 coerenti** | ws2 | **regime**: un processo, store temporaneo vuoto, un claim per volta, stessa fonte per tutti e tre. Criterio di coerenza fissato prima: `score ≥ threshold` ⇔ `disposition='admitted'`. **Fermato dal GIUDICE** (claim falso): `quarantined`, `score=0.53`, `thr=40` ✅ coerente · **fermato da `L4.1`**: `quarantined`, `score=98.17`, `thr=40` 🔴 **incoerente** · **ammesso** (⛔ controllo): `admitted`, `score=99.02` ✅ coerente. ⇒ **Il campo è corretto in 2 casi su 3**, e l'incoerenza compare **solo quando il giudice e il layer deterministico discordano**: allora mostra i **numeri del giudice** con la **disposizione del layer**. 📌 Precisazione rispetto a W2-13: non è «un decisore contro due» — nel caso verde parlano **due** layer (`L4.1` + `L4-grounding`) e sono **concordi** (0.53). È la **discordanza** a rompere il campo. 🔑 E la discordanza è esattamente il caso in cui chi legge ha **più** bisogno di capire. ⚠️ n=1 per cella |
 | W2-15 | quanti quarantinati **reali** sono in discordanza? | C8 | — | corpus | 🔴 **224 su 2378 (9,4%), e 127 con grounding ≥ 99** | ws2 | **regime**: corpus reale `~/.engram/semantic/semantic.db` in **sola lettura**, sqlite puro, 14.975 fatti · soglia `40.0` presa da `adjudication.threshold` misurato oggi (W2-13/W2-14). Dei **2378** quarantinati: **1691 (71,1%) mai giudicati** (`grounding_score` NULL) · **463 (19,5%) concordi** (giudicati, sotto soglia) · **224 (9,4%) DISCORDANTI** — giudicati **sopra** soglia e respinti lo stesso. ⛔ Controllo: le tre classi sono **tutte popolate** e la somma fa esattamente 2378 ⇒ il filtro discrimina, non sta etichettando tutto allo stesso modo. 🔑 Fra i discordanti: **≥80 → 140 · ≥90 → 140 · ≥95 → 137 · ≥99 → 127** — **nessun fatto fra 80 e 90**, la distribuzione è **bimodale**: quando il giudice e una regola discordano, il giudice non è incerto, è **quasi certo**. ⇒ Sono i 224 fatti su cui la ricevuta mente (W2-13/W2-14) e su cui il motivo non è persistito (W2-12). 🔴 **CORRETTO SUBITO DOPO — il 9,4% è una media che DILUISCE**: rifatta la ripartizione **per era**, i discordanti sono **tutti di agosto** (221 su 224) e lì la quota è **32,7%** — `2026-05: 1579 quarantinati → 0 discordanti` · `06: 47 → 0` · `07: 77 → 3 (3,9%)` · `08: 675 → 221 (32,7%)`. I 1579 di maggio sono **di prima del giudice** (mai giudicati) e abbassano la media. ⇒ **Il numero da usare è: nell'era attuale un quarantinato su tre è respinto contro il parere quasi certo del giudice.** Il «9,4%» sull'intero corpus è vero e fuorviante. ⚠️ Il limite dichiarato (soglia `40.0` misurata oggi) resta e **è servito**: è proprio guardando le ere che il numero è cambiato di segno |
+| W2-16 | `quarantined_by` parla **un vocabolario solo**? | C8 | — | corpus | 🔴 **no: quattro livelli di specificità in sette valori** | ws2 | **regime**: corpus reale in **sola lettura**, sqlite puro, i **473** quarantinati che hanno il campo popolato (agosto, unica era in cui esiste). Valori: `moat` **308** · `L4.1` 68 · `gate` 55 · `L4-review` 29 · `L3-coexistence` 10 · `L1` **2** · `store-screen` 1. ⇒ Il campo mescola un **meccanismo** (`moat`, `gate`), un **layer** (`L4.1`, `L3-coexistence`), un **prefisso di famiglia** (`L1`) e una **superficie** (`store-screen`): **chi legge non sa a quale livello sta guardando**. 🪞 **Due mie ipotesi cadute qui**: (a) «il campo registra i layer e non il giudice» — **falso**, `moat` è il valore **più frequente** (65%); (b) e **ridimensiona W2-8**: il prefisso `L1` al posto di un layer esiste ma è **2 casi su 473 (0,4%)**, non la regola — nel mio banco l'avevo incontrato al primo colpo e ne avevo tratto il caso generale. ⇒ **Il difetto non è che sbagli il nome: è che non esiste un vocabolario.** ⚠️ Limite: solo agosto (altrove il campo è vuoto), e non ho letto nel codice chi scrive ciascun valore |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
 
@@ -1100,3 +1101,73 @@ tacerebbe LEGITTIMAMENTE.** ⇒ La cura **non** rende `L1.20` sempre attivo: lo 
 può**. È la cosa giusta, ma va detta così.
 · **Non ho misurato il PREZZO**: se `daemon_usable()` apre una connessione, quel costo entra sul
 percorso di scrittura. **Ho misurato la CONDIZIONE, non il costo** — tocca a chi scrive la cura.
+
+---
+
+### 🚨 IL CANCELLO DEL PUBLISH, **ESEGUITO**: col tag di adesso il rilascio si ferma — e il messaggio dà la causa sbagliata
+*(ws1 «Riscontro» / Curie · **28/08 20:34:20** · **REGIME**: comando del cancello eseguito **in
+lettura** su `origin/main` `dbc666136f28`, repo **chiesto** a `gh repo view` e non indovinato ·
+⛔ **il workflow NON è stato eseguito** — solo il suo comando · **seconda firma** al reperto di @ws8)*
+
+#### ① La misura di @ws8 REGGE, verificata da un'altra strada (API GitHub + `git log`)
+| | @ws8 | ws1 (indipendente) |
+|---|---|---|
+| run di `publish.yml` | 7 | **7** ✅ |
+| ultimo run | 22/07, 37 giorni fa | **22/07, 37 giorni** ✅ |
+| commit dopo il 22/07 | 8 | **8** ✅ (tutti 15/08 e 17/08) |
+| righe | «219 aggiunte» su 264 | **225 aggiunte, 6 rimosse**, file di 264 |
+⚠️ **Da riconciliare**: `225-6 = 219` ⇒ probabilmente @ws8 ha dato il **netto** chiamandolo
+«aggiunte». Sostanza invariata (**85,2%** o **83,0%** del file è posteriore all'ultima
+esecuzione), ma l'etichetta va detta giusta. **Non riscrivo il suo numero: lo dichiara lei.**
+
+#### ② Coperto il buco che @ws8 dichiarava: le DIPENDENZE (`bash -n` non le vede)
+Letti i **6 blocchi `run:`** (47 righe vive). Comandi esterni realmente invocati: **`gh`,
+`python`, `ls`, `head`, `echo`** — tutti standard su `ubuntu-latest` ⇒ **nessuna dipendenza
+mancante**. E i due script invocati **esistono e compilano**: `scripts/controlla_registro.py`
+(330 righe, 15/08) · `scripts/controlla_promesse.py` (147 righe, 26/08).
+🪞 **Il mio primo estrattore automatico dava 8 «comandi assenti»** (`quel`, `stato`, `La`,
+`variabile`…): erano **parole italiane dei commenti**. **Quinta volta oggi che il difetto sta nel
+mio misuratore.** Ho buttato l'estrattore e **letto** le 47 righe. 🔑 *Su un corpus piccolo,
+leggere batte parsare.*
+
+#### ③ IL PEZZO NUOVO, e non è una previsione: **ho eseguito il cancello**
+```
+su_main  = ''          ovunque  = ''
+ramo che scatta: else  ⇒  verde=false  ⇒  PUBLISH FERMO
+messaggio: "La CI su $sha non e' verde (nessun run su main)"
+
+la VERITA' sullo stesso sha, senza il  // ""  che schiaccia null a vuoto:
+    run di ci su questo sha: 1     branch=main   status=queued   conclusion=null
+```
+⇒ 🔴 **Il run ESISTE, è su main, ed è in coda. Il cancello dice che non esiste e che la CI non è
+verde.** L'**esito** (fermo) è la direzione **sicura** e va bene. **Il messaggio no: manda a
+cercare un guasto che non c'è.**
+⇒ E con **40 run su 40 in stato `queued`** (misurato adesso), **questo è lo scenario del giorno
+del tag, non un caso di bordo.**
+
+#### ④ TRE STATI COLLASSATI IN UNO — e il terzo l'ho scoperto sbagliando io
+| stato reale | cosa legge il cancello | esito | messaggio |
+|---|---|---|---|
+| la CI è **rossa** | `conclusion="failure"` | `verde=false` | **giusto** |
+| la CI **non ha risposto** | `conclusion=null` → `""` | `verde=false` | **sbagliato** |
+| **non ho potuto chiedere** | `gh api` fallisce | `verde=false` | **sbagliato** |
+Il terzo: ho indovinato male il nome del repo e **`gh` ha stampato il JSON di errore su
+STDOUT**, che è finito **dentro la variabile** (`su_main` conteneva `{"message":"Not Found"…}`);
+il `2>/dev/null` non lo cattura perché **non è su stderr**.
+🔑 **CLASSE: un cancello che confonde NEGATIVO, NON ANCORA NOTO e NON HO POTUTO CHIEDERE.**
+Gemello della riga già in casa «*una misura che non c'è si legge come una misura perfetta*»:
+**qui si legge come una misura NEGATIVA.**
+
+#### 📌 COSA NON PROVA
+· **Non ho eseguito il workflow** e non lo farò: ho eseguito **il comando** del cancello, in
+lettura. So cosa risponde l'API e quale ramo prende il bash; **non so** se il job intero si
+comporti come il mio bash locale (runner e versione di `gh` diversi).
+· Non ho verificato le 225 righe una per una: ho letto **i 6 blocchi `run`**, non i passi YAML.
+· **Il ramo `elif`** («esiste un run ma non su main») **non l'ho visto scattare**: nel caso
+misurato anche `ovunque` era vuoto.
+
+#### 🎯 PER AURELIO, in una riga
+**Con la coda com'è adesso, mettere il tag NON pubblicherebbe**: il cancello si ferma dicendo che
+la CI non è verde, mentre la verità è che **non ha ancora risposto**. Le vie sono due: **aspettare
+che la coda dreni**, oppure **`PUBLISH_ANYWAY=1`**, che pubblica **dichiarando che il pacchetto
+non è coperto dalla suite**.
