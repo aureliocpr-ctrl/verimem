@@ -44,6 +44,9 @@ def _nudo_re(n: str) -> re.Pattern[str]:
     return re.compile(r"(?<![\d.,])" + re.escape(n) + r"(?![\d.,])(?!\s*%)")
 
 
+_UNA_RIGA = re.compile(r"\s+")
+
+
 def _perc(t: str) -> set[str]:
     return {m.group(1).replace(",", ".") for m in _PERC.finditer(t)}
 
@@ -113,8 +116,13 @@ def main() -> int:
     if a_rischio:
         print("\n  I CASI A RISCHIO (tutti, se sono pochi — vanno LETTI, non contati):")
         for n, prop, span in a_rischio[:12]:
-            print(f"     · {n}%  claim: {re.sub(r'.s+', ' ', prop)[:78]}")
-            print(f"            span : {re.sub(r'.s+', ' ', span)[:78]}")
+            # ⚠️ Stesso bug del banco delle date, altra forma: la regex era
+            # `.s+` — un carattere QUALSIASI seguito da `s` — invece di `\s+`.
+            # Non tocca i conteggi, solo la stampa.
+            c1 = _UNA_RIGA.sub(" ", prop)
+            s1 = _UNA_RIGA.sub(" ", span)
+            print(f"     · {n}%  claim: {c1[:78]}")
+            print(f"            span : {s1[:78]}")
         if len(a_rischio) > 12:
             print(f"     … e altri {len(a_rischio) - 12} non stampati")
 

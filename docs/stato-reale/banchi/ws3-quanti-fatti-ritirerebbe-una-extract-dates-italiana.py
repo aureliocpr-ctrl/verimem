@@ -54,6 +54,7 @@ _IT_TESTUALE = re.compile(
     re.IGNORECASE)
 _IT_NUMERICA = re.compile(r"\b(\d{1,2})[/-](\d{1,2})[/-](\d{2,4})\b")
 _MESE_N = {m: i + 1 for i, m in enumerate(_MESI_IT.split("|"))}
+_UNA_RIGA = re.compile(r"\s+")
 
 
 def _date_it(testo: str) -> set[tuple[int | None, int, int | None]]:
@@ -156,10 +157,19 @@ def main() -> int:
 
     if esempi:
         print("\n  ESEMPI (vanno LETTI: una coppia candidata non e' un errore):")
+        # ⚠️ DUE BUG MIEI, dallo stesso episodio di escaping: la regex era
+        # `\\s+` — un BACKSLASH LETTERALE seguito da `s`, non uno spazio — quindi
+        # la normalizzazione non ha mai funzionato; e un backslash dentro una
+        # f-string e' SINTASSI NON VALIDA su Python 3.10, cioe' questo banco non
+        # si sarebbe nemmeno PARSATO su una versione della matrice CI. Non tocca
+        # i conteggi, solo la stampa — ma un banco che non gira da altri non e'
+        # un banco. Sostituzione fuori dalla f-string.
         for topic, pa, pb in esempi:  # TUTTE: si leggono, non si contano
+            a1 = _UNA_RIGA.sub(" ", pa)
+            b1 = _UNA_RIGA.sub(" ", pb)
             print(f"     · topic {topic[:40]}")
-            print(f"       A: {re.sub(r'\\s+', ' ', pa)[:76]}")
-            print(f"       B: {re.sub(r'\\s+', ' ', pb)[:76]}")
+            print(f"       A: {a1[:76]}")
+            print(f"       B: {b1[:76]}")
 
     print("\n  ══ VERDETTO sulla PREDIZIONE ══")
     print(f"     previsto: SOTTO 30 coppie   ·   misurato: {coppie}")
