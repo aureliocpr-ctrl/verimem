@@ -243,7 +243,7 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
         candidate's asserted_at is earlier     → "conflict"
 
     The first row is the common one: no write path fills ``asserted_at`` and no extractor
-    derives it from the text (ws2 measured 2026-08-26 that L4.1 recognises 6 numeric
+    derives it from the text (measured 2026-08-26: L4.1 recognises 6 numeric
     forms out of 12 and that DATES — «3 aprile», «2019-04-03» — are not among them). With
     ``canonical_source_of`` collapsing unsourced writes to the ``"user"`` bucket, BOTH
     conditions are then satisfied by construction, and a genuine contradiction is filed as
