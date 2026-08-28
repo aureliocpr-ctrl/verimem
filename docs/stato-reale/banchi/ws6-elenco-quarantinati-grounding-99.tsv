@@ -1,0 +1,142 @@
+# I 136 fatti con status='quarantined' e grounding_score >= 99
+# estratti da ws6 il 2026-08-28 alle 23:55 da CONFIG.semantic_db (mode=ro)
+# ⚠️ il corpus si muove: erano 131 il 27/08. Rifai la query, non fidarti di questo file domani.
+# colonne: id	grounding	quarantined_by	topic
+6c7d276b8f2d	99.9854	L4.1	project/verimem/ws4-soglia-di-sopravvivenza
+dc2015c355d5	99.9852	L4.1	project/teclast-tbook11/pacchetto-consegnato-23-08
+fcc760e09a40	99.9852	L4.1	project/verimem/approvati-trattenuti-w34-67
+f72209bc802c	99.9849	L4.1	guardia/a1-costo-ricevuta
+9b748609249d	99.9848	gate	project/verimem/ws1-migrazione-senza-destinazione
+db75b5bf67e8	99.9847	L4.1	project/verimem/tag-posteriore-allupload
+0bbf755f4adf	99.9846	gate	project/verimem/ws4-commit-al-96
+cf0517c6ef72	99.9845	L4.1	project/verimem/ws4-diciassette-copie
+8ab2419f2aab	99.9841	L4.1	project/verimem/clustering-un-solo-cluster
+c471818a7e60	99.9840	gate	project/banco-l41-data
+cd5cca46d82e	99.9837	L4.1	project/verimem/gate-c-registro-22-08
+ab9799f8b2e5	99.9834	L4.1	project/verimem/registro-celle-22-08
+f310c63ff613	99.9830		project/verimem/dogfooding-ws1/detector-injection-formule-fisse
+6e55cff04705	99.9828	gate	project/banco-l41-data
+256ffa6dd4d1	99.9827		project/verimem/l113-elenca-il-sostantivo-del-dominio
+5980a16b0a9b	99.9827	L4.1	guardia/verdi-asse-pythonutf8
+d5fa20bc2ff6	99.9826	L4.1	project/verimem/tag-solo-locali-quattro
+5e4e5381820b	99.9825	L4.1	project/verimem/il-veto-del-publish-e-una-serie-temporale-28-08
+89ce5d512423	99.9825	L4.1	brainstorming/25-08
+56a172e749f4	99.9824		project/verimem/l1-ammissione-omissione-punita
+6fa8eb222690	99.9821	gate	project/lingue-ar-ru
+8e6122830c4a	99.9820		project/verimem/l1-termini-tecnici-composti
+8b9cc3660de3	99.9817	gate	project/verimem/gate-c-sintesi-cella
+3e32782167f4	99.9814	L3-coexistence	project/verimem/ci-latenza-22-08
+6cd0f5abb4d9	99.9812	store-screen	project/verimem/screen-iniezione-riconosce
+283d353b5ed9	99.9810	L4.1	project/verimem/ws1-audit-riga-quarantined-layers
+a84e47d5715c	99.9800		project/verimem/ramo-due-parole-conteggio-coppie
+1c2966ddc359	99.9798	gate	project/verimem/ws5-arricchimento-sulla-where
+aafdce41a336	99.9794	L4.1	project/verimem/ritmo-supersessioni-80-al-giorno
+7fbbb059e6f4	99.9792	L4.1	project/verimem/l42-altra-riga
+45f4f5587947	99.9791	L4.1	project/verimem/ws5-primo-verde
+f37421e22777	99.9786	L4.1	project/teclast-tbook11/initrd-trixie-13.6-contenuto
+bdb4b3b5e695	99.9781	L4.1	project/verimem/gate-c-raggiungibilita
+5c3d6cd4d7b3	99.9780	gate	project/verimem/baseline-coseno-corpus
+a34a755372e6	99.9780	L4.1	guardia/verdi-asse-pythonutf8
+27812fdb9beb	99.9773	gate	project/verimem/ws2-1d-non-dipende-dalla-supersessione
+fedf56862bc0	99.9771	gate	lab/ws1/isolo-l41
+a820ec6ebb6c	99.9770	L3-coexistence	project/verimem/ci-latenza-22-08
+d1c3a57e9521	99.9766	L3-coexistence	project/verimem/registro-celle-22-08
+96d6bc0efcb7	99.9766		project/verimem/dogfooding-ws1/cura-sonno-verificata
+29885f10ee04	99.9764	L4.1	project/teclast-tbook11/initrd-misure-23-08
+100c7c0d0ff1	99.9762	gate	project/banco-l41-data
+825d04099f86	99.9760	L4.1	project/verimem/gate-c-raggiungibilita
+e1eca1756aae	99.9756	gate	project/lingue-ar-ru
+d93d1a9d39a8	99.9755	L4.1	project/verimem/cella-morta-sigsegv
+4635e06696e6	99.9750	L4.1	project/verimem/la-distinzione-attributo-quantita-non-regge
+3c07f99f7528	99.9749	L4.1	project/verimem/ws5-primo-verde
+84ed30128bcd	99.9747	L4.1	project/verimem/registro-celle-22-08
+4a08f9c974bd	99.9746	L4.1	guardia/26-08
+434aa2bfd60f	99.9743		project/verimem/ramo-due-parole-nome-prodotto
+5aef09712585	99.9730	L4.1	project/verimem/ws1-la-riga-si-e-spostata-da-2170-a-2198
+cc6f75f0f56d	99.9726	L4.1	project/verimem/presidi-lenti-verde
+e8b53ce99f23	99.9725	L3-coexistence	guardia/26-08
+1c20e8e552a8	99.9711		project/verimem/l1-16-approvate-participio-del-gate
+8e252e95d244	99.9709		project/verimem/l113-parola-piu-frequente-e-il-dominio
+c995920e7a47	99.9702	gate	lessons/errors/ws3-source-non-contiene-cio-che-affermo
+4bf7614b57c5	99.9698		project/verimem/dogfooding-ws5/il-rilevatore-di-injection-funziona-in-due-lingue
+0d9bc389ae91	99.9698	gate	project/verimem/ws1-presidio-versione
+a4243d611895	99.9694	gate	project/livello-di-misura
+d120f6f63155	99.9690	gate	project/verimem/ws4-run-tornati-in-coda
+5f50d3c99aa3	99.9684	gate	project/verimem/ws7/lo-span-cresce-con-la-fonte
+9592651bffd5	99.9680	gate	q4/mcp0
+b8b7b36406d7	99.9674	gate	project/verimem/cifra-contro-lettera-fa-crollare-il-giudice
+d4014ed391d0	99.9673	gate	project/verimem/promessa-centrale-sul-pacchetto
+cbbdf6af11a8	99.9673	L4.1	project/verimem/cella-morta-sigsegv
+94d6ad3ef282	99.9669	L4.1	guardia/sigla-w7-collide
+c04629f40ccf	99.9665	gate	project/verimem/gate-c-un-solo-failed
+32381e8409cd	99.9645	gate	banco/ricevuta-muta
+5265acbbf923	99.9644	L4.1	banco/ws1-src-una
+d9b564e19635	99.9638	L4.1	guardia/26-08
+d7752bff25c2	99.9620	L4.1	project/verimem/ws2-cron-su-sha-fermo
+1512d6b6ab2c	99.9613	L4.1	project/verimem/pubblicato-vs-repo
+fb7d62094338	99.9609	gate	project/verimem/ws1-ci-sha
+aaf7b34580a8	99.9585	L4.1	project/verimem/scambio-di-attribuzione-entra
+8fcc892092e9	99.9561	L4.1	project/verimem/ram-macchina-libera
+d886abcc1b83	99.9555	gate	project/verimem/ws7/tetto/quarantacinque-minuti-esatti
+9d811afade33	99.9551	L4.1	project/verimem-site/deploy-28-08
+54c63d65375d	99.9529		project/verimem/l1-13-portata-quarantena
+6d3d56975e6b	99.9497	L3-coexistence	project/verimem/ws4-quarantene-per-finestra
+fd046c24a5ed	99.9490	L4.1	project/verimem/cella-morta-sigsegv
+9a54afbbb05d	99.9453	L4.1	project/verimem/ci-latenza-22-08
+4320aad9b505	99.9436	L4.1	project/verimem/giro-ws4-26-08
+53df2b7e3b6a	99.9436	L4.1	project/verimem/giro-ws4-26-08
+34073a48e1e2	99.9429	gate	project/verimem/ws1/riesame-quarantena-09-08
+54d5024153b4	99.9417	L4.1	project/verimem/pubblicato-vs-repo
+2bdea74c5d8b	99.9417	L4.1	project/verimem/pubblicato-vs-repo
+3b457d579855	99.9390	L4.1	project/verimem/il-veto-del-publish-e-una-serie-temporale-28-08
+72df1542a10f	99.9381		project/claude-md-audit
+d20c17e7edd6	99.9354	L4.1	project/verimem/giro-ws4-26-08
+782c3103904f	99.9354	L4.1	project/verimem/giro-ws4-26-08
+a6810862273c	99.9340	gate	project/verimem/ws1-ab-identificatore
+48e3762a6b42	99.9322	L4.1	project/verimem/vaghezza-solo-col-rapporto
+d1b4237959da	99.9322	L3-coexistence	project/verimem/vaghezza-solo-col-rapporto
+c5c715919853	99.9322	L4.1	project/verimem/vaghezza-solo-col-rapporto
+f69b677da9e8	99.9287	L1	project/verimem/ci-durata-mediana-49-minuti
+a42d1d703812	99.9272	gate	project/verimem/guardia-cache-muore-non-dice-no
+482a7cd0d0f1	99.9248	gate	lessons/errors/ws4-cron-spento-1208
+167b63817a71	99.9224	gate	project/verimem/ws3-runner-saturi-1324
+57e29447b182	99.9123	gate	project/verimem/ws1-la-terza-colonna-sull-artefatto-vecchio
+075b2e46224b	99.9105	gate	project/verimem/ws1-windows-timeout
+9ae534a37f65	99.9056	gate	q4/mcp1
+5e6cc22b4a1c	99.9005	gate	project/verimem/ws3-gt-non-costruibile-da-episodi
+cea3eb03f856	99.9005	gate	project/verimem/ws3-dogfood-1
+8252b62c5042	99.8982	gate	q4/mcp2
+ae1136d75e2b	99.8949	L1	project/verimem/ci-durata-mediana-49-minuti
+cd7b2fcc2639	99.8895	L4.1	project/verimem/swarm-mcp-10-processi
+6ccc24f5f136	99.8887	L4.1	project/verimem/ws1-marco-curato-dalle-aperture
+bf1b2481c551	99.8887	L4.1	project/verimem/ws1-ab-l4punto1-a
+b8460ba2ea5d	99.8798	gate	project/verimem/ws7-wheel-install-windows-success-2
+bfaf6a7e6128	99.8778	L4.1	guardia/26-08
+54628b3a0d6d	99.8768	gate	project/bilancio-giornata
+ae86bb81ba8a	99.8670	L4.1	guardia/sigla-w7-collide
+62c640210e41	99.8582	L4.1	project/verimem/registro-esame-22-celle
+5c77b65862ad	99.8548	gate	project/verimem/cinquantasette-processi-python
+090ba52d106c	99.8431		lab/ws1/prova-l41
+3547be464a4d	99.8417	gate	q4/mcp5
+12cc073d32c4	99.8384	gate	q4/mcp3
+78117d73acc7	99.8341	gate	project/verimem/ws1-ci-sha
+5ea68942bd90	99.8297	L3-coexistence	project/verimem/pubblicato-vs-repo
+6c5916363ae4	99.8278	gate	q4/mcp4
+55a8d410f619	99.7965	L4.1	guardia/26-08
+12fa9cc4642b	99.7809	gate	project/verimem/ws7-mcp-tetto-spento
+ae9d4f2f636b	99.7714	gate	project/verimem/ws3-ci-zero-verdi
+dfe61ecc3f1e	99.7611	gate	project/verimem/il-verso-opposto-non-crolla
+d196586dfe10	99.7098	L4.1	project/teclast-tbook11/driver-winusb
+4785000d96bf	99.6894	L4.1	project/verimem/pubblicato-vs-repo
+db0c2a9a627c	99.5967	gate	project/verimem/ws3-coda-svuotata-dal-fermo
+d7efab7d0ee9	99.5872	gate	project/verimem/ws7-mcp-tetto-attivo
+3e3516a4748b	99.5872	gate	project/verimem/ws7-ab-virgola
+6661824304cc	99.5694	L4.1	project/verimem/audit-lettura-25-08
+0888bb4a22d2	99.4505	L4.1	guardia/26-08
+d310c0d3d8b4	99.4287	gate	project/verimem/cache-hf-riga-del-log
+7e2e714a8e63	99.3872	L4.1	project/verimem/scambio-di-attribuzione-entra
+0281226cd727	99.3800	L4.1	project/verimem/audit-lettura-25-08
+3a41534377f2	99.3143	L4.1	project/verimem/nessun-tag-23-24
+ea717048769d	99.2915	L4.1	project/verimem/ws1-audit-spia-accesa
+9f12b5e63317	99.0700		project/claude-md-audit
+# totale: 137
