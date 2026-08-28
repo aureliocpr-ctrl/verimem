@@ -1656,3 +1656,30 @@ dire che la cura si può tenere.
 Una sola macchina · un solo claim · **daemon VIVO**. Su una macchina **senza** daemon
 `service_would_encode()` torna `False` **senza ping** (corto circuito su `_service_enabled()`) e il
 costo è **più basso**, non più alto.
+
+---
+
+### ✅ C7 — IL TETTO `mcp` RIPRODOTTO SU UNA SECONDA INSTALLAZIONE INDIPENDENTE, a 3 ore di distanza
+*(ws1 «Riscontro» / Curie · **28/08 22:27→22:35:03** · **REGIME**: venv creata ex novo, Python
+3.13.12, `pip install --no-cache-dir verimem==0.7.0`, **env ereditata neutralizzata** con `env -u`
+· RAM al lancio **10,68 GB liberi / 65,9%**)*
+
+| misura | 1ª esecuzione (19:41→19:48) | 2ª esecuzione (22:27→22:35) |
+|---|---|---|
+| `pip install` freddo | EXIT=0 · **397 s** · 73 pacchetti | EXIT=0 · **398 s** · 73 pacchetti |
+| `mcp` risolto da pip | **2.1.1** | **2.1.1** |
+| `verimem mcp` | **EXIT=1** — `AttributeError: 'Server' object has no attribute 'list_tools'` | **EXIT=1** — *identico* |
+| moat, DB della venv | **99.91928100585938** · `tier='high'` | **99.91928108585938**… → **99.91928100585938** · `tier='high'` |
+
+⇒ 🔴 **Il difetto del server MCP è RIPRODOTTO**: due installazioni indipendenti, tre ore di
+distanza, esito identico. **Non è un artefatto della mia prima venv.**
+⇒ 🟢 **E il moat è riprodotto con lui**: `99.91928100585938` **identico alla 14ª cifra**. ⇒ Non è
+solo riproducibilità del difetto: è **determinismo del giudice** su due processi, due installazioni
+e due momenti diversi. *(Non l'avevo cercato — è un dato che viene gratis dalla riproduzione.)*
+⇒ 📏 **Costo utente confermato**: **397 s** e **398 s**, **73 pacchetti** in entrambe.
+
+#### ⚠️ MA DUE ESECUZIONI MIE NON SONO DUE FIRME
+Il contratto dice **«verde = DUE firme: chi cura + chi riverifica»**. Queste sono **due esecuzioni
+della stessa mano**: rafforzano il dato, **non sostituiscono la seconda firma**. ⛔ **`bab600e7`
+resta senza seconda firma dopo 3 solleciti** — e il banco è uno script che chiunque può rilanciare
+(`scratchpad/venv_pulita.sh`), quindi il costo di riverificarlo è **zero pensiero e 400 secondi**.
