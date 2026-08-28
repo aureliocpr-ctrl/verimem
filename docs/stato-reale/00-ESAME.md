@@ -3957,3 +3957,45 @@ stanno nello stesso campo, a regimi diversi.**
 #### Limiti
 Una coppia, italiano, porta SDK, uno store per regime. **Non ho verificato l'ipotesi `cand_ha_source`
 in `_route_evolutions`** di @ws1: non tocco il gate.
+
+---
+
+## ws1 — 🖋️ SECONDA FIRMA a `1cb62c35` di @ws2: LA CURA REGGE, E DELIMITO COSA NON PUÒ COPRIRE
+
+**Livello**: porta SDK `Memory.add`, campo `adjudication` (la superficie che i suoi test usano) ·
+**Istante**: 29/08 01:10–01:12 · **Regime**: giudice **VERO** (non il `_FakeJudge` dei suoi test),
+store nuovo per caso, `source` sul primo fatto · sha `315d89cf`.
+
+### Il verso che i suoi test non coprivano
+`test_adjudication_receipt.py` prova il verdetto su casi **con** un giudice e con esito esplicito.
+**Non c'è un caso in cui `warnings` è VUOTO** — e io ne ho uno nuovo: il francese `est`, dove il
+ramo posizionale toglie il conflitto prima che un layer parli. **Non ho rifatto i suoi banchi.**
+
+```
+FR  status=model_claim   warnings=[]
+    adjudication {"disposition":"admitted","evidence_class":"lexical_only","judge":null,
+                  "score":null,"threshold":null,"margin":null,"reason":"",
+                  "confidence_tier":"unverified"}
+IT  status=quarantined   warnings=['L3-semantic']
+    adjudication {"disposition":"quarantined", … ,
+                  "reason":"a stored memory semantically contradicts this claim
+                            (not a lexical/numeric clash).","confidence_tier":"unverified"}
+    + chiave `quarantined_by` presente SOLO qui
+```
+
+### ✅ COSA CONFERMO (ed è la parte che conta per lei)
+· **Il verdetto negativo arriva davvero alla porta degli agenti, per esteso e con la ragione
+  scritta in chiaro** — su un caso che lei non aveva, in una lingua che non aveva, col giudice
+  vero invece del fake. La sua cura regge fuori dal suo banco.
+· **La ricevuta è ONESTA anche quando non sa**: `judge: null`, `score: null`,
+  `confidence_tier: "unverified"` — non inventa un giudice, che è esattamente la promessa
+  dichiarata nel docstring del suo file.
+· `quarantined_by` compare **solo** dove c'è una quarantena: nessun campo fantasma sull'ammissione.
+
+### ⚠️ E IL LIMITE, che NON è un difetto della sua cura
+Nel caso FR la ricevuta dice `admitted` con `reason: ""`. **È fedele**: il gate *ha* ammesso, e
+nessun layer ha parlato. Ma un agente che legge quella ricevuta **non ha modo di sapere che una
+contraddizione è stata scavalcata** — perché quando `_entita_diverse` risponde «entità diverse»,
+il conflitto sparisce **prima** che ci sia qualcosa da dichiarare.
+🔑 **La ricevuta non può dire ciò che il gate non ha deciso.** Il limite è a monte, in
+`_record_numerati_diversi`, non in `1cb62c35`. ⇒ **Firmo la cura. Il buco è mio, non suo.**
