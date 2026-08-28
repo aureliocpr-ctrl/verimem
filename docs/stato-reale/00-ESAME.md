@@ -3839,3 +3839,43 @@ rifatto.**
 · ⚖️ **La differenza di conteggio non è di per sé un difetto**: una porta può legittimamente esporre
 meno. **Il difetto è che manchi `superseded_by`** — non un dettaglio di comodo, ma **la differenza
 fra un fatto vivo e uno ritirato**.
+
+---
+
+## ws1 — DUE CONTROLLI: LA MIA ATTRIBUZIONE REGGE, E LA DIVERGENZA CON @ws6 È LA `source`
+
+**Livello**: porta vera `Memory.add` + lettura del DB nello stesso processo · **Istante**: 29/08
+01:01–01:05 · **Regime**: store nuovo per caso (`HIPPO_DATA_DIR=$(mktemp -d)`), guardia al default.
+
+### ① Il controllo falsificante contro me stessa — SUPERATO
+In FR/DE la ricevuta era **vuota**. Se `ev` era vuoto perché il gate non aveva nemmeno
+**recuperato** il fatto precedente, la mia attribuzione al ramo posizionale sarebbe una
+coincidenza. **Predizione scritta prima**: con una parola accentata (che il ramo NON indicizza) il
+francese dev'essere quarantinato. **3 su 3:**
+```
+FR «Le prix payé 500»      -> «payé 800»       QUARANTINATO   ['L3','L3-semantic']
+DE «Der Preis beträgt 500» -> «beträgt 800»    QUARANTINATO   ['L3','L3-semantic']
+FR «Le prix est 500»       -> «est 800»        ammesso        []
+```
+⇒ **Il gate recupera e confronta il francese senza problemi.** Stessa lingua, stessa struttura,
+stessi numeri: cambia **solo la parola prima del numero**. L'attribuzione al ramo **regge**.
+
+### ② La divergenza con @ws6, riprodotta dal mio lato invece che discussa
+Lei: «alla porta SDK escono entrambi `model_claim`, la protezione è una **supersessione**».
+Io riportavo `QUARANTINATO`. **Una sola variabile — la `source` — e la riproduco:**
+```
+source=SI   ricevuta#2 quarantined  ['L3','L3-semantic']
+            DB: 12000 model_claim superseded_by=None | 15000 QUARANTINED superseded_by=None
+source=NO   ricevuta#2 model_claim  ['L3-supersession','L3-supersession']
+            DB: 12000 model_claim superseded_by=6c313c66fd79 | 15000 model_claim
+```
+✅ **Nessuno dei due ha sbagliato: misuravamo due REGIMI.** Il suo banco non passava `source`, il
+mio sì — ed è **la stessa causa già in matrice dalle 00:13** (senza `source`, `cand_ha_source=False`
+in `_route_evolutions`), non un difetto nuovo.
+🔑 **E il pezzo NUOVO che la riconciliazione fa emergere**: senza `source` la protezione esiste ma
+**RITIRA IL VECCHIO** (`superseded_by` valorizzato sul fatto da 12000); con `source` **trattiene il
+NUOVO** (quarantena del 15000). **Due comportamenti opposti sullo stesso dato**, decisi da un
+argomento che il chiamante può omettere. Il recall di @ws6 serviva un valore solo perché l'altro
+era **ritirato**, non perché quarantinato — e la ricevuta del secondo `add` non lo dice.
+⚠️ **Cosa NON prova**: che il banco di @ws6 fosse davvero senza `source` — **è la mia ipotesi, e la
+riproduzione la rende plausibile, non certa**. Glielo chiedo sul canale invece di darlo per fatto.
