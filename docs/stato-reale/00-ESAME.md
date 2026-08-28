@@ -3740,3 +3740,48 @@ risultati si mescolavano (il terzo recall rendeva 5 fatti). Rifatto con store se
 🔗 Si aggancia alla mia cella su `L3-coexistence` (7 ritiri su 11 non registrano contro cosa): là il
 conflitto è **rilevato e non tracciato**, qui **non è nemmeno rilevato**. ⇒ **due modi diversi di
 perdere l'informazione del conflitto, e nessuno dei due lo dice a chi legge.**
+
+---
+
+### 🔍 IL MOTIVO DELLA SUPERSESSIONE È **PERSISTITO** — e dice `same-source evolution` su **fonti diverse**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 01:00 · **Porta SDK**, store temporaneo, modello vero.
+**Chiude il limite dichiarato nella mia cella precedente** («non ho attribuito il meccanismo»).
+
+#### ① Il meccanismo: una supersessione, e il db la registra
+```
+[20b71345] «Il canone annuo e' 12000 EUR.»  superseded_by='e4ac9b7a'  reason='same-source evolution'
+[e4ac9b7a] «Il canone annuo e' 15000 EUR.»  superseded_by=None
+```
+
+#### ② ⛔ Correggo me stesso: **non è silenziosa**
+Avevo scritto «reversibile e **silenziosa**». La ricevuta del secondo `add` porta:
+```
+superseded          = ['20b713450762']
+superseded_undo_ops = {'20b713450762': 'd692c437504c40a9'}
+```
+⇒ **id del ritirato e operazione di annullamento, alla scrittura**: chi scrive lo sa e può tornare
+indietro. ⚠️ Resta vero che **`replaced` non è fra le chiavi** della ricevuta SDK (`adjudication`,
+`advice`, `grounding_score`, `id`, `moat`, `status`, `stored`, `superseded`, `superseded_undo_ops`,
+`warnings`): è un campo di un'altra porta, e cercarlo lì era un errore mio.
+
+#### ③ 🔴 Conferma di **W2-1** (@ws2) da un'altra superficie — e peggiore
+@ws2 ha misurato che la **ricevuta** dice «*a newer **same-source** value*» mentre le fonti sono
+diverse. Qui lo stesso difetto è **persistito nell'archivio**: `superseded_reason` =
+**`'same-source evolution'`**, e le due fonti sono «*…12000 EUR.*» e «*…15000 EUR.*», **diverse**.
+🔑 **Il suo era «la ricevuta mente». Questo aggiunge: la bugia NON vive tre secondi — è scritta nel
+db.** Chi rilegge domani trova un motivo **falso**, non un motivo **assente**. Terza superficie con
+la stessa stringa, dopo la ricevuta e il log `flow.supersession`.
+
+#### ④ ⚠️ Un dato che contraddice una riga di W2-1
+Lì è scritto: «*`superseded_reason` = **None**: il perché del ritiro non è persistito*».
+**Nel mio caso è POPOLATO.** ⇒ **il campo non è sempre vuoto.** Letture possibili, e **non so quale**:
+(a) percorsi diversi lo popolano diversamente (tre record EN distinti da un nome di persona contro
+due valori italiani sullo stesso soggetto); (b) è cambiato nel frattempo; (c) dipende dal ramo di
+supersessione.
+📌 **Per F3**: il perché del ritiro **a volte c'è ed è falso, a volte manca**. «Manca» e «mente»
+chiedono cure opposte.
+
+#### Limiti
+Un caso, una porta, due fatti, italiano. **Non ho verificato quale ramo scelga il motivo** né se
+`same-source evolution` sia l'unico valore possibile.
