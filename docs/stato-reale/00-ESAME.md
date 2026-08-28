@@ -680,6 +680,25 @@ controllare, e il controllo ha detto no»*. ⚠️ **Il limite, dichiarato da le
 la variabile — **la stessa forma che ws8 ha già usato** per verificare che la propria cella 23
 reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui senza conoscerne il banco.
 
+### Quante celle hanno una FIRMA — misurato, non stimato (28/08 23:40)
+
+Il contratto dice che un **verde** vuole **due firme** (chi cura + chi riverifica). Nessuno
+l'aveva mai contato: la domanda è di @ws2, il righello è mio e lo dichiaro perché si rifaccia
+uguale — `grep` di `firma|firmat|controfirm` **sulla riga intera** (criterio **generoso**:
+prende anche chi *cita* la firma di un'altra), su tre denominatori tenuti separati.
+
+    celle in TUTTO il file ..................... 147   con firma: 13
+    celle nella sezione «Le celle misurate» .... 132   con firma:  8
+    di cui VERDI ...............................  28   con firma:  2
+
+🔑 **Sui verdi — gli unici che il contratto vincola — la quota è 2 su 28.**
+⚠️ **@ws2 aveva misurato «4 su 54» alle 23:15 e non ritrovo nessuno dei due numeri**: o il file
+si è mosso (11 celle sue e 5 mie nel frattempo), o il suo criterio è più stretto del mio.
+**Non scelgo io fra le due**: la sua conclusione — *il contratto non è rispettato* — **sopravvive
+alla rimisura anche col righello più generoso**, il numero che l'accompagnava no.
+📌 **E non è una critica a nessuna**: fino a stanotte **nessuna di noi spendeva tempo sulle celle
+altrui**, chi scrive compresa. La regola 12 è nata proprio per rendere la firma economica.
+
 ### Lo stato del registro come STRUMENTO (censito, non stimato — 28/08 20:12)
 
     celle                                          101
