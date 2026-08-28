@@ -13,21 +13,31 @@
 
 > Solo fatti contati e puntatori. **Nessun aggettivo**: il registro è il posto dove una frase
 > più larga del dato fa più danno che altrove.
+> ⚠️ **Questa sezione è stata trovata obsoleta il 28/08** — diceva 53 celle quando erano 84.
+> **Chi la legge la ricalcoli**: `python scripts/conta_celle_esame.py`.
 
-    celle misurate  53      🔴 30   🟢 17   🟡 5
+    celle misurate  85      🔴 50   🟢 25   🟡 9   ⛔ 1
 
 **Cosa il prodotto fa, misurato**: ferma la contraddizione in tutti i regimi provati (0/12,
-riga 29) · pretende che il soggetto del claim stia nella fonte (riga 31) · regge il carico di
-un servizio (258 ms, 14,3 op/s, zero errori — riga 10) · gestisce correttamente un valore che
-evolve (riga W7-4) · dà a un agente una ricevuta azionabile (riga 38).
+riga 29) · pretende che il soggetto del claim stia nella fonte (31) · regge il carico di un
+servizio — 258 ms, 14,3 op/s, zero errori (10) · gestisce un valore che evolve (LANT-4) · dà
+a un agente una ricevuta su cui può agire (38) · **protegge la cifra assente a ogni lunghezza
+provata, fino a 3.516 caratteri** (ws4).
 
-**Cosa non fa, misurato**: nessun presidio ferma un claim che **aggiunge** un dettaglio che la
-fonte non contiene (12/12, riga 30) · un vero può essere scartato (≥12 su 58, riga W7-3) · uno
-scambio di attribuzione entra 3 volte su 7 e **cancella il fatto vero** se sta nello stesso
-topic (W7-7) · il consiglio dato a un agente rifiutato non è eseguibile (W7-1).
+**Cosa non fa, misurato**: nessun presidio ferma un claim che **aggiunge** un dettaglio assente
+dalla fonte (12/12, riga 30) · un vero può essere scartato (≥12 su 58, LANT-3) · uno scambio di
+attribuzione entra 3 volte su 7 e **cancella il fatto vero** nello stesso topic (LANT-7) · il
+consiglio dato a un agente rifiutato non è eseguibile (LANT-1) · **bastano 17 parole di
+intestazione** perché un valore sostituito passi da 7,9 a 99,1 (22).
+
+🔴 **Il difetto più grave, e non è che qualcosa manchi — è che il prodotto TACE** (riga 11): sulla
+versione installata da PyPI **il giudice c'è, viene trovato, e il moat non gira lo stesso**.
+L'avviso onesto («*source provided but no grounding judge is available*») scatta **solo quando
+il giudice manca** ⇒ **non scatta mai**. Chi passa una fonte legge «admitted» e non gli viene
+detto nulla. **HEAD con il modello irraggiungibile è più onesto del pubblicato.**
 
 **Cosa non siamo in grado di dire**: se il gate abbia avuto ragione nei casi contestati — **la
-prova che conserva è troncata a 400 caratteri** (W7-5), e la cura costa zero.
+prova che conserva è troncata a 400 caratteri** (LANT-5), e la cura costa zero.
 
 **Cosa manca del tutto**: il vertice — *un agente con verimem sbaglia meno di uno senza* —
 **non ha una riga**. Finché non ce l'ha, questo registro dice come si comporta il prodotto,
