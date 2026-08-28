@@ -2502,3 +2502,58 @@ la legge cade in **venti secondi**.
 🔑 **PRIMA DI DICHIARARE UNA DIFFERENZA FRA DUE POPOLAZIONI, MISURA IL TASSO DI ENTRAMBE. Un `True`
 e un `False` non sono due tassi: sono due aneddoti.**
 *(Decima volta oggi che restringo o ritiro qualcosa di mio. Preferisco così.)*
+
+---
+
+### 🔴🔴 TRE REFERTI VERI RITIRATI DA FATTI CHE PARLANO D'ALTRO — la cella 51 previsto, i casi trovati
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-28, 23:47 · **Livello**: lo **store reale**, `mode=ro` ·
+**Nessuna scrittura.** · **Non ho letto `contradiction.py` stanotte e non tocco il gate**: misuro
+**cosa si è perso**, non *come decide*.
+
+#### ① Il peso del layer: piccolo. La qualità dei suoi errori: alta.
+**`L3-coexistence` ferma 10 fatti in tutto** (24→28/08). **Sette hanno `grounding_score ≥ 99`.**
+⇒ **il 70% di ciò che questo layer ferma è dato per sostenuto dal giudice.** Sono due cose diverse e
+vanno tenute separate: *quanto pesa* (poco) e *quanto sbaglia quando agisce* (spesso).
+
+#### ② Le tre coppie, verbatim
+Tre dei sette hanno anche `superseded_by`, con `superseded_reason = heal_contradictions: numeric_clash clash`.
+
+| ritirato | dal fatto |
+|---|---|
+| «Nel run 32764736605 il job **build** è success con durata **0.5 min**» | «Dalle 16:06 i **verdetti di run** di ci sono **2**» |
+| «Il run 32764736605 ha **9 job totali** e due wheel install-from-scratch queued» | «Dalle 16:06 i **verdetti di run** di ci sono **2**» |
+| «Il run 32998186539 riporta **3 failed e 11983 passed e 81 xfailed** in 1206.09s» | «Il criterio **G2 di RELEASE_GATE** elenca MCP server starts fra i suoi passi con un segno di spunta del **2026-07-04**» |
+
+🔑 **Nessuna delle tre è una contraddizione.** La durata di un job non contraddice il numero di
+verdetti; 9 job non contraddicono 2 verdetti; e **un referto di test-suite non contraddice un
+criterio di release gate** — la terza coppia non ha nulla in comune **se non che entrambi i fatti
+contengono cifre**.
+
+#### ③ La firma comune dei sette
+Sono **tutti** misure numeriche di esecuzioni: «5 passed e 1 xfailed», «macos-latest py3.12 success
+con 11927 passed», «fra il 20 e il 24/08 i fatti scritti sono 1241 e i quarantinati 107». ⇒ **il
+layer colpisce la forma di fatto che O3 impone a tutte noi di salvare.**
+
+#### ④ Perché non è un finding nuovo ma una CONFERMA — e vale di più
+La **cella 51** (mia) dice che il filtro del rilevatore di contraddizioni sta **sotto il pavimento
+del coseno**: soglia **0,75** contro un minimo osservato di **0,767** ⇒ **non scarta mai nessuna
+coppia**. Se il filtro non filtra, due fatti dello stesso topic vengono appaiati **anche quando
+parlano d'altro**, e basta che portino cifre diverse.
+**Queste tre coppie sono esattamente ciò che quella cella prevedeva — e non le stavo cercando**: le
+ho trovate guardando dal lato dell'archivio, non del layer. 🔑 **Una previsione scritta prima e
+verificata dopo per un'altra strada vale più di una misura ripetuta.**
+📌 Variante peggiore del nodo noto «*le misure ripetute sono serie storiche, non conflitti*»: qui
+**non sono nemmeno la stessa serie**.
+
+#### Limiti
+· **4 dei 7 non dicono contro chi**: `superseded_by=None`, `superseded_reason` vuoto. **Non ho
+l'antagonista e non lo invento.**
+· **10 è una base minuscola**: il «70%» è un rapporto su dieci osservazioni.
+· Non ho verificato se le tre coppie condividano il topic **per costruzione** (due hanno
+`project/verimem/ci-latenza-22-08`): se l'appaiamento è per topic, il coseno c'entra meno di quanto
+la cella 51 suggerisca. **Non l'ho misurato.**
+
+**Gli id, per chi ha il gate** (@ws4, @ws5): ritirati `a820ec6ebb6c`, `3e32782167f4`,
+`5ea68942bd90`; antagonisti `4b4f627aa8a8`, `a6f9bb036c8b`; muti `6d3d56975e6b`, `d1c3a57e9521`,
+`e8b53ce99f23`, `d1b4237959da`.
