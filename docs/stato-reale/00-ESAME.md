@@ -246,7 +246,7 @@ sarebbe *assenza di misura letta come verde*).
 | 8 | quanto costa davvero una scrittura? | — | — | processo singolo | 🟡 **il costo è di NASCERE, non di scrivere** | ws3, ws6, ws2 | primo write ~26 s / 1,9 GB · dal terzo **0,4–0,5 s** (**23,7×**). Regime: N processi effimeri, ognuno carica i propri modelli — **il repo lo chiama anti-pattern dal 21/07** |
 | 9 | il banco del regime che un utente userebbe è mai stato eseguito? | — | — | gateway | 🟢 **eseguito il 27/08** (era 🔴 «mai, dal 21/07») | ws7 (trovato), ws3 (eseguito) | `benchmark/concurrency_shared_server.py` aveva **1 commit · 0 artefatti · 0 citazioni** dal 21/07. Commit dell'esecuzione: `f8836233` |
 | 10 | il sistema regge il carico nel regime di un servizio? | — | — | gateway | 🟢 **sì** | ws3 | `--workers 2 --secs 60`, uvicorn in un processo suo, store `mkdtemp`: **654 letture · 217 scritture · 0 errori** · `write_p50` **258,3 ms** · `write_p99` 575,8 · **14,3 ops/s** · **ops > 5 s: 0**. 🔑 La predizione scritta nel docstring il 21/07 (*«writes stay in the hundreds-of-ms range»*) era **esatta** |
-| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🟡 **non finché non si esegue `verimem warmup` — e il prodotto lo DICE** | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup»)  ⚠️ **Vincolo aggiunto dall'autrice (22:02)**: il confronto era **0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero** — **due variabili insieme**. **Resta vero che chi installa ottiene `grounding None`**; escluse CLI e firma |
+| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🔴 **il moat NON gira — e NON è il `warmup`** *(era 🟡; corretta da ws1 il 28/08 19:07, causa isolata a variabile singola)* | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup»)  ⚠️ **Vincolo aggiunto dall'autrice (22:02)**: il confronto era **0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero** — **due variabili insieme**. **Resta vero che chi installa ottiene `grounding None`**; escluse CLI e firma. ⚠️ **RITIRATA LA TESI «è il warmup» (ws1, 28/08 19:07)**: `model_dir` **identico** nelle due installazioni e `local_ce_available()` è **`True`** anche sulla 0.7.0 ⇒ **il giudice c'è e il moat non gira lo stesso**; provato a variabile singola (stessa superficie `remember`, store isolati) → DB: 0.7.0 `grounding_score=None`/`tier=unverified` vs HEAD `99.91928100585938`/`tier=high`. **Il vincolo «due variabili» che avevo messo il 27/08 alle 22:02 è PAGATO.** Dettaglio, le tre leve morte e ciò che il dato NON prova: blocco in fondo al file |
 | 12 | il gate rifiuta un claim che la fonte **nega**? | C7 | IT+EN | SDK | 🔴 **no: 46 su 108 (42,6%)** | ws6 | **sei schemi × 18**: «non» esplicito **0/18** ✅ · quantificatore zero 8 · assenza 9 · **stato («il registro è vuoto») 12/18** 🔴 · sostituzione 8 · cessazione 9. **IT 30/54 · EN 16/54**. 🔑 **Il gate riconosce la parola «non», non la negazione**: «*il registro ALFA è vuoto*» è giudicato una **prova** di «*il registro ALFA elenca le misure*», 12 volte su 18, con punteggi 96–99,99. Commit `f51f9845`. ⚠️ Era 5/24 con **un solo** schema: il numero è raddoppiato allargando il banco. 🤝 **Riconcilia il verde di ws8** («L3 negazione ribaltata → `quarantined` in entrambe le modalità»): il suo attacco è *«The release **WAS** approved»* contro *«was **NOT** approved»*, cioè **lo schema 1**, l'unico su cui anch'io misuro **0 errori su 18**. ⇒ **Le due misure non si contraddicono**: il moat ferma la negazione **quando è scritta con la particella**. Sugli altri cinque modi di dire la stessa cosa: **46 su 90**. 🔑 Da un verde sullo schema 1 **non segue** un verde sulla classe |
 | 13 | su una licenza reale il gate ferma un claim che **ricalca** la fonte cambiando un numero di clausola? | C4 | EN | — | 🔴 **no, 2 su 3** | ws5 | «section 7» al posto di «section 10» entra a **99.1 senza alcun layer**. Il rischio è la **congiunzione** (ricalco + numero comune), non `L4.1` da solo  🔒 **BLOCCATA-DA-F1** — non si cura da sola: è una delle facce dello **strato soggetto-valore** (marcatura di ws7 su direzione di lead-audit, 28/08 19:02) |
 | 14 | il presidio metrico riconosce la copula italiana in tutte le sue scritture? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | 5 forme dello stesso claim senza attestazione: `è`, `e` nudo, senza copula e l'inglese cadevano; **`e'` con l'apostrofo passava**. Sul corpus prima della cura: **48** claim metrici scritti con `e'` e **0** quarantinati, contro **8 su 31** (25,8%) di quelli con `è`, su una quota complessiva dell'8,5%. Curato in `f5dedf34`, TDD senza stash: RED `5 failed EXIT=1` → GREEN `11 passed EXIT=0`, non-regressione `tests/test_l1_quantitative_detector.py` `19 passed`. ⚠️ Limite: misurato sulla porta SDK, **non** su MCP/CLI/gateway |
@@ -311,6 +311,7 @@ sarebbe *assenza di misura letta come verde*).
 | 49 | sullo **scambio di attribuzione**, CHI decide: uno strato deterministico o il giudice? | C7 | IT | SDK | 🔴 **il giudice, da SOLO: `L4.1` non parla MAI, 0 su 12** | ws3 | **regime**: i **12 casi esatti di ws4** (`lo-scambio-e-simmetrico-o-no.py`) copiati alla lettera · `PYTHONUTF8=1`, `utf8mode=1` misurato · python 3.13.12 · store temporaneo vuoto (`Memory(path=…)`) · **un solo processo** · `validate="full"` · build `ec969569`. **AMMESSI 7/12 con zero strati · FERMATI 5/12, tutti e cinque solo `L4-grounding`** — che **non è deterministico**: è l'etichetta del **giudice** (`anti_confab_gate.py:2630`, «*source does not entail the proposition, grounding N below threshold*» — letto nel sorgente, non dedotto dal nome). ⇒ **la separazione 7/5 la produce interamente il modello: nessuno strato deterministico contribuisce** ⇒ **la cura non è «aggiustare `L4.1`»** — non partecipa — ma **costruire uno strato soggetto-valore che oggi non esiste** ⇒ e se decide il solo modello, **una regolarità nella FORMA del claim può non esistere**: le 4 ipotesi cadute di ws4 cercavano forse una cosa che non è lì. ✅ **Controllo positivo che rende leggibile lo zero** (stesse fonti, cifra del tutto assente): `391000 euro` 0.4 **L4.1**+L4-grounding · `73 mg` 0.7 **L4.1**+L4-grounding · `7%` 92.1 L4.2 **ed ENTRA** ⇒ **3 su 3 parlano, lo strumento vede**. ✅ **I 12 esiti di ws4 riprodotti UNO PER UNO**, punteggi compresi, in processo indipendente ⇒ **il suo 3-su-7 non è un artefatto di esecuzione**. ⚠️ **Limiti**: due fonti sole, corte (≈450 e ≈230 char), **solo italiano** — le sue, per rendere i banchi confrontabili: la scelta compra il confronto e costa la generalità · n=12 · una esecuzione per caso · il `7%` che prende **L4.2** e non L4.1 **non so spiegarlo**, è un caso solo. 📌 **Candidato dichiarato NON provato** (n=2 per cella): per **unità di misura**, percentuali 2/2 ENTRA · date 2/2 · dosaggi 3/6 · **importi in euro 0/2**. Se reggesse toccherebbe **la penale e il termine**. **NON è l'ipotesi «specie» di ws4**: la sua chiedeva se lo scambio avviene *dentro* una specie, questa **quale specie è fragile**. Commit `c568783c`  🔒 **BLOCCATA-DA-F1** — non si cura da sola: è una delle facce dello **strato soggetto-valore** (marcatura di ws7 su direzione di lead-audit, 28/08 19:02) |
 | 50 | la ricevuta consegnata al chiamante dice **quale difesa ha agito**? | — | — | SDK | 🔴 **no: la chiave `layers` NON esiste nella ricevuta** | ws3 | **regime**: come la 47. Le chiavi vere di `add()` sono `adjudication · advice · grounding_score · id · moat · quarantined_by · status · stored · warnings`; gli strati stanno **dentro `warnings`**, sotto `layer`. ⇒ **chi legge `receipt["layers"]` ottiene `[]` per QUALUNQUE scrittura e crede di aver misurato** — è la quinta forma di «*una misura che non c'è si legge come una misura perfetta*». **Tre superfici lo dicono, la quarta no**: log ✅ (`client.py:725`, riporta chi ha AGITO) · registro di fiducia ✅ · righe di quarantena ✅ · **ricevuta SDK ❌**. 🪞 **L'autrice ci è cascata nella prima stesura del banco 47** (il log diceva `['L4-grounding','L4.1']`, il banco stampava vuoto) e il **controllo positivo** l'ha fermata **prima** del verdetto. ✅ **Verificate le righe che potevano dipenderne**: la **30** (omissione, «sempre `layers: -`») **REGGE** — quel banco scrapa i nomi degli strati con una regex su **tutto l'output**, riga di log compresa (`ws3-il-documento-lungo…py:195`), cioè la superficie buona; e il «zero layer» di **ws4 REGGE** — legge `warnings` (`lo-scambio-di-attribuzione-elude-la-regex.py:85`). 🔑 **Non è un difetto di giudizio, è di OSSERVABILITÀ** — famiglia del reperto di ws7 sulla prova troncata a 400. Commit `c568783c` |
 | W2-1 | la ricevuta spiega **perché** un fatto è stato ritirato? | C1 | EN | SDK | 🔴 **no: nomina il fatto, sbaglia il motivo** | ws2 | **regime**: processo singolo, store temporaneo vuoto, tre record EN distinti da un nome di persona, **fonti diverse** (`File A/B/C`), porta SDK. ✅ Il **cosa** c'è ed è ricco: `warnings` con `L3-supersession`, più i campi **`superseded`** e **`superseded_undo_ops`** che portano l'**id del ritirato** e l'undo. 🔴 Il **perché** è falso: `reason` = «a newer **same-source** value» e `advice` = «updates an earlier value **from the same source**» — mentre le tre fonti sono diverse. È la **stessa stringa** già misurata nel log (`flow.supersession branch='same-source evolution'`): due superfici indipendenti, stessa bugia. E l'`advice` è azionabile **al contrario** — rassicura («stai aggiornando un valore precedente») mentre ha cancellato il record di un'altra persona. 🔴 Dopo: `superseded_reason` = **None**, `recall` **1 su 3**, ritirato raggiungibile **solo per id** ⇒ reversibile in teoria, irrecuperabile per chi non era alla scrittura. ⚠️ Limiti: un solo caso (supersessione), una sola porta, n=1 — regge di più il fatto che la bugia **coincida** con quella del log, misurata ieri e in un'altra superficie |
+| W2-2 | la stessa scrittura ha lo **stesso esito** su tutte le porte? | C1 | EN | SDK · MCP · CLI | 🔴 **no: su SDK un record viene cancellato, su MCP i due coesistono** | ws2 | **regime**: un processo, store temporaneo vuoto, due record EN distinti da un nome di persona, fonti **diverse** (`File A/B`), stesso topic. **MCP** → 2 serviti su 2, `superseded_by=None` su entrambi, `replaced=False`, nessun avviso · **SDK** → **1 su 2**, `L3-supersession` + `superseded`/`superseded_undo_ops` · **CLI** → annuncia come SDK. ⛔ Controllo: la cella SDK **riproduce W2-1**, quindi il banco è confrontabile. ⇒ **Il difetto delle celle 45/46 è della porta SDK, non del prodotto** — e resta grave perché l'SDK è la porta che un'applicazione usa: la stessa app che scrive tre pazienti ne conserva uno, lo stesso codice via MCP li conserva tutti. 🪞 Stavo per scrivere «MCP tace»: falso, verificato prima di pubblicare — non tace, non succede niente da annunciare, e `replaced=False` era **un'informazione corretta**. 🔗 La cella 37 (nove chiamanti, 4 argomenti su 19 comuni) lo prediceva: questa è la prima istanza misurata sul **comportamento**, non sulla ricevuta. ⚠️ Limiti: due record, una lingua, n=1; e **la causa NON è stata letta nel codice** — quale dei 15 argomenti non comuni la produca resta un'ipotesi con un indirizzo, non un risultato |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
 
@@ -472,3 +473,108 @@ identica riga per riga · ⑤ suo **valore** True in entrambe · ⑥ l'ipotesi �
 (**morta**: `flow_events.py:213` la legge da `ENGRAM_FLOW_SURFACE`, è telemetria e non governa
 niente). **La domanda residua è una sola**: cosa, a valle di `_have_judge`, impedisce l'aggancio
 del punteggio.
+
+---
+
+### 🔴 RIGA 11 — CAUSA ISOLATA AL LIVELLO DELL'ARTEFATTO, e non è il `warmup`
+*(ws1 «Riscontro» / Curie, 28/08 19:02-19:07 · albero **HEAD=65820997**, poi `d58496f4` · A/B **nella stessa esecuzione** ⇒ immune alla deriva dell'albero condiviso)*
+
+**Il vincolo che io stessa avevo messo alla riga 11 il 27/08 alle 22:02 — «il confronto era
+0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero, DUE variabili insieme» — è PAGATO.** Rifatto a
+**variabile singola**: stessa superficie (`remember`, l'unica che esiste in entrambe), stesso testo,
+stessa fonte, store isolato con `HIPPO_DATA_DIR` per ciascuna, **unica differenza l'ARTEFATTO**.
+
+| livello letto | 0.7.0 da PyPI | HEAD |
+|---|---|---|
+| `grounding_score` **nel DB** | **`None`** | **`99.91928100585938`** |
+| `confidence_tier` **nel DB** | **`unverified`** | **`high`** |
+| `grounding_span` | **colonna ASSENTE dallo schema** | `'HEAD=65820997 28/08 18:55'` |
+| `quarantined_by` | **colonna ASSENTE dallo schema** | `None` |
+| ricevuta a video | `admitted id=… topic=…` **e basta** | `admitted` + warning `L4.2` + la spiegazione |
+| `moat` nella ricevuta SDK | **`None`** | `"passed"` |
+
+🔑 **Il livello conta e l'ho dichiarato**: la misura precedente stava sul **log**; questa sta sul
+**DB e sullo schema**. Sono d'accordo, ed è la prima volta che la riga 11 ha una prova persistita.
+
+#### 🛑 LA SPIEGAZIONE CORRENTE DELLA RIGA 11 È FALSIFICATA
+La riga 234 dice: «*il modello del giudice non è nel pacchetto ⇒ senza `warmup` `grounding_score=None`;
+è un passo d'installazione dichiarato, non una promessa non mantenuta*». **Misurato oggi, è falso:**
+- `model_dir` **identico** nelle due installazioni — `C:\Users\aurel\.engram\models\local_gate_ce_v2`,
+  `esiste? True`, contenuto `['config.json','gate_config.json','model.safetensors','tokenizer.json','tokenizer_config.json']`;
+- **`local_ce_available()` nella 0.7.0 restituisce `True`** — il giudice è disponibile e trovato;
+- eppure il DB della 0.7.0 dà `None`. ⇒ **Il moat non gira pur AVENDO il giudice.**
+
+⚖️ **Conseguenza sulla gravità, e va nella direzione scomoda**: il warning onesto `L4-skipped`
+(«*source provided but no grounding judge is available — entailment NOT verified*») **scatta solo
+quando il giudice MANCA**. Nella 0.7.0 il giudice **c'è**, quindi l'avviso **non scatta mai**:
+l'utente passa `--source`, legge `admitted`, e **non gli viene detto nulla**. È la classe ④ del
+metodo — *la giuntura*: due componenti corretti che combinati ingannano. **Il regime «modello
+irraggiungibile» su HEAD è più ONESTO del pubblicato**: lì l'avviso arriva.
+
+#### ⚙️ TRE LEVE PROVATE, TRE VOLTE NESSUN MOVIMENTO (falsificazioni mie, nello stesso turno)
+| leva | esito nel DB |
+|---|---|
+| `ENGRAM_GROUNDING_WRITE=1` (l'env che `_grounding_write_on()` legge, `:327`) | `None` — **invariato** |
+| `Memory.add(..., ground=True)` (il per-call override) | `None` — **invariato** |
+| `ground_write=True` (il nome che il commento `:1182` promette) | **`TypeError: unexpected keyword argument`** |
+
+⇒ **Nessuna delle leve documentate accende il moat sulla 0.7.0.** Ho proposto il meccanismo
+«è l'env spenta» e **l'ho ucciso io con il test successivo**: la leva non ha mosso.
+
+#### 📌 COSA QUESTO DATO NON PROVA
+Non ho provato `gate_mode`, né `Memory(llm=…)` con un llm iniettato: **non affermo «è impossibile»,
+affermo «le tre vie documentate non lo accendono»**. E **non ho il meccanismo interno**: il ramo
+ESISTE nel pacchetto (`grounding_score` 62 occorrenze nella 0.7.0 contro 182 su HEAD;
+`anti_confab_gate.py` **1479 righe contro 3047**) ⇒ non è «manca il codice». La domanda residua
+della coda precedente resta aperta e ora è più stretta: **a valle di `_have_judge`, con l'env accesa
+e `ground=True`, cosa impedisce l'aggancio.**
+
+---
+
+### 🔴 REPERTO NUOVO — **13 COMANDI CHE L'UTENTE NON HA, E FRA QUESTI QUELLI DEL NOSTRO PROTOCOLLO**
+*(ws1, 28/08 19:01 · `python -m verimem.cli --help` sulle due installazioni, nomi estratti con lo stesso righello)*
+
+**29 comandi nella 0.7.0 · 42 su HEAD · 13 di differenza · ZERO rimossi.**
+Mancano all'utente: `ask · audit · chain · correct · digest · handoff · ignorance · recent ·
+save · telemetry · tiers · tip · version`.
+
+🔑 **Il peso non è il numero, è QUALI**: `save`, `tip`, `recent`, `correct` sono **i comandi che il
+nostro protocollo di memoria prescrive ogni giorno** — `verimem save` è la *scrittura canonica*,
+`verimem tip` è il presidio E-STUCK dopo un save fallito. ⇒ **Noi otto lavoriamo su una superficie
+che chi installa non ha.** `verimem save` sulla 0.7.0 dà `No such command 'save'`, **EXIT=2**.
+⚠️ E manca anche `version`: l'utente non può chiedere al CLI quale versione sta usando.
+
+---
+
+### ✅ F4 PAGATO — il limite che @ws3 dichiara di sé
+> «*ho misurato ciò che `doctor` DICE, non ciò che il gate FA*»
+
+Misurato **ciò che il gate FA**, con una **scrittura vera** su HEAD, regime «modello irraggiungibile»
+(`ENGRAM_LOCAL_GATE_MODEL` su cartella vuota — leva verificata al punto che decide:
+`local_ce_available()` **False** con la variabile, **True** senza):
+
+```
+A  modello irraggiungibile : moat="not_run:no_judge"  grounding=None  judged=False  EXIT=0
+                             disposition="admitted"   evidence_class="ungated"     stored=true
+B  controllo positivo      : moat="passed"  grounding=99.91928100585938  judged=True  EXIT=0
+                             threshold=40.0  margin=59.9193  judge=local_gate_ce_v2  tier="high"
+```
+
+🔑 **Il `doctor` a `EXIT=2` SEGNALA; il gate AMMETTE.** Sono due fatti diversi e W7-18 misura il
+primo: in regime spento la scrittura **entra lo stesso**, marcata `ungated`, con un avviso che **non
+è un veto**. ⇒ La cella W7-18 resta verde per ciò che dichiara, e questa riga dice ciò che le manca.
+
+#### 🔎 due cose viste di passaggio, DATI e non verdetti (non le ho inseguite)
+- `anti_confab_gate.py:2376` a runtime: «*local grounding judge ships an unusable cut (99.6 > 90, a
+  val-set F1 artifact) — using the validated local CE moat cut 40*» ⇒ **la soglia che il modello
+  dichiara è scavalcata in esecuzione**. Non l'ho indagata.
+- `layers=[]` nella riga di log `flow.write` **in tutti e quattro i regimi**, mentre la ricevuta JSON
+  porta eccome i layer (`L4-skipped` in A, `L4.2` in B). ⚠️ **Correggo la mia delimitazione di
+  stamattina**: avevo scritto «il campo `layers` ESISTE nel log ⇒ mente il dizionario, non il log».
+  Il campo esiste, sì, **ma è vuoto quando i warning ci sono** ⇒ esistere e trasportare
+  l'informazione sono due cose diverse, e sul log vale la seconda.
+
+🪞 **E un difetto nel mio misuratore, il terzo in due giorni**: la guardia RAM ha detto «STOP, sotto
+soglia» con **4,51 GB liberi**, perché PowerShell stampa `4,51` con la virgola e `float()` non la
+converte — `ValueError`. Stessa classe dei decimali italiani quarantinati, in forma nuova: non un
+gate, una **guardia di sicurezza**, che sbagliando nella direzione prudente **non si fa notare**.
