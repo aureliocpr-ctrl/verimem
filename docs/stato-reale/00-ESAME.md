@@ -4475,3 +4475,48 @@ grave resta quello del verbo**, non questo.
 > famiglia che può non essere il decisore»*.
 > 🪞 Ho fatto uno sweep su dodici casi credendo fosse **una popolazione**, ed era **un regime solo** —
 > la stessa classe che ho denunciato tutta la notte, applicata a me **dopo** averla scritta due volte.
+
+---
+
+## ws1 — LA MATRICE È COMPLETA: 4 CASELLE SU 4, E **LA GUARDIA DOMINA LA `source`**
+
+**Livello**: porta vera `Memory.add` · **Perimetro**: `_route_evolutions` / `ENGRAM_SUPERSEDE_SAME_SOURCE`
+· **Istante**: 29/08 01:46–01:47 · **Regime**: store nuovo per caso; guardia spenta **con una ENV
+in un banco isolato, MAI nel codice** · sha `92827f60`.
+
+### La quarta casella, mai misurata prima — predizione dichiarata, 2 su 2
+```
+SENZA source + guardia SPENTA
+    nome   «Il direttore della filiale e' Conti» -> «Ferrari»   QUARANTINATO ['L3','L3-coexistence']
+    numero «Il team ha 12 persone»               -> «19»        QUARANTINATO ['L3','L3-semantic']
+```
+
+### 🔑 LA MATRICE COMPLETA
+| regime | nomi/luoghi | numeri/colori |
+|---|---|---|
+| con `source`, guardia **ACCESA** (default) | ammessi `L3-coexistence` ❌ | **BLOCCATI** `L3-semantic` ✅ |
+| **SENZA** `source`, guardia accesa | ammessi `L3-coexistence` ❌ | ammessi `L3-supersession` ❌ |
+| con `source`, guardia **SPENTA** | **BLOCCATI** ✅ | **BLOCCATI** ✅ |
+| **SENZA** `source`, guardia **SPENTA** | **BLOCCATI** ✅ | **BLOCCATI** ✅ |
+
+🔑 **LA GUARDIA DOMINA LA `source`.** Le due righe con la guardia spenta sono **identiche**: la
+presenza o assenza della fonte **non cambia nulla**. La `source` conta **solo** quando la guardia è
+accesa — ed è esattamente ciò che il codice dice: con la guardia spenta `_route_evolutions` **non
+viene chiamato**, quindi il suo argomento `cand_ha_source` non ha alcun effetto.
+⇒ **Terza conferma indipendente dello stesso meccanismo**, dopo la lettura del codice (23:23) e la
+matrice a tre caselle (00:13). **Questa è la prima che lo verifica dal lato in cui il parametro
+dovrebbe essere INERTE — ed è inerte.**
+
+### 📌 E un dettaglio che si ripete e conferma
+Nella riga `nome` compare `['L3', 'L3-coexistence']`: **l'avviso di coesistenza è calcolato lo
+stesso, ma `L3` blocca.** ⇒ Il ramo non «spegne» l'avviso: `_route_evolutions` **svuota
+`_conflicts`**, e senza quella chiamata l'avviso resta e il blocco vince. Identico a quanto visto
+alle 00:13 sulla terza casella.
+
+### ⚠️ Cosa NON prova, e la ripeto perché è la parte che conta per la decisione
+⛔ **Questo NON è un argomento per spegnere la guardia.** In memoria c'è il costo misurato:
+«*rifiuta gli aggiornamenti … memoria che non si aggiorna più*». Spegnerla scambia un difetto con
+uno peggiore, e la matrice lo rende solo più visibile: la colonna «guardia spenta» è tutta verde
+**perché blocca tutto**, comprese le correzioni legittime.
+⇒ **La cura resta quella indicata alle 00:13**: distinguere il nome-SOGGETTO dal nome-VALORE
+dentro `_entita_diverse`. La matrice dice **dove** sta l'interruttore, non che vada girato.
