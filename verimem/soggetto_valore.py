@@ -38,7 +38,7 @@ import re
 import unicodedata
 
 #: Segmentazione: punteggiatura **e** a-capo **e** punto e virgola. Il regime a
-#: sola punteggiatura dimezza il segnale: A/B di ws5 sul corpus vero, 3030
+#: sola punteggiatura dimezza il segnale: A/B misurato sul corpus vero, 3030
 #: giudicabili — falsi allarmi 65,7% con `.!?` contro 31,2% aggiungendo newline
 #: e `;`, **con gli scambi colti invariati a 15/16**. Curare la segmentazione
 #: non costa sensibilità.
@@ -145,7 +145,7 @@ def avviso_soggetto_valore(proposition: str, source: str) -> dict | None:
         # G1 — senza unità non si accoppia. `extract_quantities` restituisce
         #    `('', 5.0)` sia per «5%» sia per il «5» di «Art. 5»: accoppiarli
         #    segnala claim VERI. Vale il 61,8% dei falsi allarmi sul corpus
-        #    reale (ws5). Le percentuali rientrano quando l'estrattore darà
+        #    reale. Le percentuali rientrano quando l'estrattore darà
         #    loro un'unità.
         if not unita:
             continue
@@ -170,7 +170,7 @@ def avviso_soggetto_valore(proposition: str, source: str) -> dict | None:
         #    attribuito al soggetto giusto. Se però quella frase porta DUE
         #    valori della stessa unità la finestra è ambigua: si ASTIENE, e
         #    non si prosegue — proseguire troverebbe l'altro valore della
-        #    stessa frase e segnalerebbe un VERO (diagnosi di ws5, misurata).
+        #    stessa frase e segnalerebbe un VERO (diagnosi misurata in review).
         ambigua = False
         attribuito = False
         for f in frasi:
@@ -191,7 +191,7 @@ def avviso_soggetto_valore(proposition: str, source: str) -> dict | None:
             if not altri:
                 continue
             # G2 — se il claim cita ANCHE l'altro valore non sta scambiando:
-            #      sta riportando entrambi. 27,6% dei falsi allarmi (ws5).
+            #      sta riportando entrambi. 27,6% dei falsi allarmi misurati.
             if any((unita, n) in v_claim for n in altri):
                 continue
             # G3 — stesso numero a precisione diversa (97.6 / 97.5968).
