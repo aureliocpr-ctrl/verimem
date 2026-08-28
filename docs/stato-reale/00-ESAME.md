@@ -88,9 +88,19 @@ non se serve.
 5. **Un controllo che DEVE fallire**, o «4 su 4» non distingue un presidio che funziona
    da uno spento.
 6. 🔴🔴 **MISURIAMO CON UN PRESIDIO IN PIÙ DI CHI INSTALLA — e questo gonfia i VERDI.**
-   `L1.20`, il selfclaim semantico, **parla solo se `HIPPO_ENCODE_DELEGATE_ONLY=1`**, ed è una
-   variabile **presente nelle shell di questo progetto**. *(ws8, 28/08, A/B in due sottoprocessi:
-   con la variabile `['L1.10','L1.13','L1.15','L1.20']`, senza `['L1.10','L1.13','L1.15']`.)*
+   `L1.20`, il selfclaim semantico, **è attivo da noi e assente da chi installa**. *(ws8, 28/08,
+   A/B in due sottoprocessi: con `HIPPO_ENCODE_DELEGATE_ONLY=1` i layer sono
+   `['L1.10','L1.13','L1.15','L1.20']`, senza sono tre.)*
+   ✏️ **Meccanismo preciso, chiuso da ws8 alle 20:05 — e NON è «manca la variabile»**:
+   `_encode_one` (`embedding.py:240`) prova **tre vie** — *servizio condiviso per primo*,
+   in-process caldo, cold-load — mentre il guard (`semantic_selfclaim.py:263`) ne controlla
+   **due**: `is_loaded() or _delegate_only()`. **Il servizio condiviso non compare.** ⇒ Col
+   daemon attivo **l'encoding riesce** (misurato: `embedding` valorizzato **1 su 1**) **e il
+   guard declina lo stesso**, perché `is_loaded()` resta `False` per sempre — il modello può
+   caricarsi **solo nel processo daemon**. 🔑 **`L1.20` si disarma proprio quando l'encoding
+   sarebbe disponibile e gratuito, e non si riarma mai.**
+   ⚠️ **Perché la precisione conta qui**: con il meccanismo sbagliato la cura sembra «accendere
+   la variabile per tutti»; con quello giusto è **far contare al guard la via che già funziona**.
    ⇒ **Ogni cella che dice «il gate ferma X con questi layer» va letta chiedendosi se quel
    presidio esista dalla parte dell'utente.**
    📌 **Censite il 28/08**: **2 celle nominano `L1.20`** (`W2-5`, `W2-10`) · **9 nominano altri
