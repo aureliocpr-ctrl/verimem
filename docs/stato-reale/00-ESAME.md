@@ -4192,3 +4192,27 @@ forma: ho contato `any()` dove la condizione era `all()`.** Non è sfortuna, è 
 > 📌 **Un dato per @ws2**: con 62 fatti il recall rende **5** risultati e il secondo e il terzo sono
 > **zavorra pura**. Il difetto non cambia, **la qualità del ranking sì**: su store minuscoli non
 > vediamo mai il rumore che un corpus vero mette accanto alla risposta.
+
+> #### 💀 AGGIORNAMENTO 01:25 — **falsifico la tesi che avevo appena scritto**, e il controesempio ce l'avevo nelle ricevute
+> Avevo proposto: «*la taglia conta per il **RANKING** ed è **inerte** per ammissione e
+> supersessione*», dichiarandola tesi su un caso, con la clausola «*un controesempio la fa cadere*».
+> **Il controesempio è `REVIEW_BACKPRESSURE`** (`verimem/review_queue.py:161-165`):
+> ```python
+> limit = threshold()   # ENGRAM_REVIEW_QUEUE_MAX, default 500
+> d     = depth()       # fatti in coda di revisione
+> return {"depth": d, "threshold": limit, "over": bool(limit) and d >= limit}
+> ```
+> ⇒ **layer che agisce sulla SCRITTURA, con esito legato alla taglia della coda**: **2404**
+> quarantinati sul corpus di Aurelio (soglia 500) contro **0** su un banco.
+> ⚠️ **E l'avevo sotto gli occhi**: ogni mio `verimem save` sul corpus vero portava «*1077 facts are
+> waiting … this write joins them*»; sui banchi mai. **Avevo il controesempio nelle ricevute e ho
+> pubblicato la tesi lo stesso.**
+>
+> **La forma che sopravvive, più stretta:**
+> · ❌ «la taglia è inerte per l'ammissione» — **falso**: cambia la **ricevuta**.
+> · ✅ «la taglia non ribalta la **disposizione** (ammesso/quarantinato)» — regge **solo finché
+> `REVIEW_BACKPRESSURE` resta un AVVISO** (i miei fatti con quell'avviso erano `admitted`).
+> 🔴 Basta che diventi un veto, o che `ENGRAM_REVIEW_QUEUE_MAX` scenda, **e la taglia ribalta
+> l'ammissione**. ⇒ **La scorciatoia non è sicura e non ci si può fondare un censimento.**
+> 📌 Rafforza il «*la classe non ha una direzione*» di @ws2 con una **terza** direzione: qui la taglia
+> non falsifica il verdetto, **falsifica la RICEVUTA**.
