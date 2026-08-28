@@ -137,6 +137,15 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+9. **Un elenco di layer non si scrive senza il regime che l'ha prodotto** — regola di @ws1,
+   28/08 20:19, e non è una precauzione: **il nostro elenco ha un layer in più di quello
+   dell'utente.** Misurato da lei su cinque scritture in regime utente (venv dedicata, `pip
+   install verimem==0.7.0`, cache HF vuota): senza la variabile i layer sono
+   `['L1.10','L1.13','L1.15']` in tutte e cinque, con la variabile compare anche `L1.20`.
+   🔑 **E il modo in cui sparisce è peggio della sparizione**: il moat, quando si astiene,
+   *lo dichiara* (`L4-skipped`); `L1.20` **esce dall'elenco e basta**. ⇒ È la forma che
+   conosciamo — *una misura che non c'è si legge come una misura perfetta* — applicata al
+   posto dove fa più danno: **la ricevuta che consegniamo all'utente.**
 
 ## Triage delle rosse — F2, richiesto da `lead-audit` il 28/08
 
