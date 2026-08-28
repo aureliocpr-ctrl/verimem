@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 r"""F1 - misuro il PASSO 0 che ho proposto: astenersi sulle fonti TABELLARI.
 
 Avevo concluso (`ws5-F1-i-residui-letti-a-mano.py`) che `L4.3` su fonti
@@ -36,12 +35,12 @@ cui esiste**. E' li' che questa cura puo' fallire.
 
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-F1-il-passo-zero-sulle-fonti-tabellari.py
 """
-import sys
+import contextlib
+import importlib.util
 import io
 import re
 import sqlite3
-import contextlib
-import importlib.util
+import sys
 from pathlib import Path
 
 sys.path.insert(0, r"C:\Users\aurel\Code\HippoAgent")
