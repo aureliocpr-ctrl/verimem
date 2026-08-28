@@ -43,15 +43,21 @@ ESITO - il numero nudo INGANNA, e la sua scomposizione e' il vero risultato.
       («I quarantinati con un motivo sono 623 su 2378»: cita entrambi)
   (3) stesso numero a precisione diversa (97.6 contro 97.5968)       -> -2,5%
 
-⚠️ E I 161 RESIDUI NON SONO 161 ERRORI. Letti a mano i primi sei:
-  · `8b95d3c3f9cd` e' una **CATTURA GIUSTA**: il claim dice «exact citation: 24
-    occorrenze in 12 file» mentre la fonte dice «exact citation - 1 occorrenze
-    in 1 file» e «never silently - 12 occorrenze in 8 file». **E' uno scambio
-    vero, e il gate l'ha AMMESSO a 99.9.** ⇒ prova che il layer serve.
-  · quattro sono falsi positivi con una causa comune: lo span porta una SERIE
-    di misure (`--as-of` prima/dopo, `ricalco 24 ore`/`3 ore`) e il claim ne
-    cita una sola.
-  · uno resta ambiguo (420 contro 422 file, due perimetri diversi).
+🔴 I RESIDUI, LETTI A MANO: **20 su 20 sono FALSI POSITIVI. Zero catture.**
+    Dettaglio caso per caso in `ws5-F1-i-residui-letti-a-mano.py`.
+
+🪞 **E QUI RITIRO UNA MIA AFFERMAZIONE PUBBLICATA.** In una prima lettura avevo
+    dato `8b95d3c3f9cd` come **CATTURA GIUSTA** — «exact citation: 24 occorrenze
+    in 12 file» mentre la fonte sembrava attribuire quei numeri a «never
+    silently». **E' FALSO: il claim e' sostenuto.** Lo span, piu' avanti,
+    dice testualmente «sul sorgente: "exact citation" - 24 occorrenze in 12
+    file».
+    ⚠️ **LA CAUSA E' IL MIO MISURATORE**: stampavo lo span troncato a 150
+    caratteri e la riga che sostiene il claim cadeva fuori. Ho concluso su
+    meta' della fonte — lo stesso difetto che questo banco misura, commesso
+    dal banco. Con la stampa a 420 caratteri il caso si legge in un secondo.
+    ⇒ **Non ho nessuna prova sul campo che il layer catturi qualcosa su questo
+    corpus.** Se ne serve una, va cercata altrove.
 
 🔑 A/B SULLA SEGMENTAZIONE - la variabile piu' grossa, e risponde con un numero
 alla domanda che @ws3 aveva girato a @ws4:
