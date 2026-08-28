@@ -32,8 +32,17 @@ caratteri il gate **non distingue più il vero dal falso** su questa famiglia �
 claim vero `100.0`, i due scambi `99.5–100.0`.
 
 ⇒ **Non serve nemmeno un contorno pertinente.** Quattro nature (clausole vere,
-prosa estranea, pseudo-parole, cifre senza sintassi): **tutte e quattro
-monotone**, tutte aprono a +160 caratteri. `72.1 → 99.7–100.0` e ci resta.
+prosa estranea, pseudo-parole, cifre senza sintassi): tutte aprono a +160
+caratteri. `72.1 → 99.7–100.0`.
+
+🔴 **CORREZIONE del 29/08 01:00 (cella W7-41): «tutte e quattro monotone» era
+un artefatto del campionamento.** Rimisurato a passi di **6 caratteri** invece
+che di 160: il punto di ribaltamento è **+6**, non +160 — e a **+18 la curva
+TORNA INDIETRO** (`downgrade`, 77.4), per ripartire a +24. ⇒ **Non c'è una
+soglia: c'è un regime instabile** in cui il punteggio oscilla fra 77 e 99 al
+variare di pochi caratteri. Con passi di 160 quel rientro non era visibile.
+⇒ E **i numeri non servono**: una coda senza una sola cifra ribalta come una
+con le cifre.
 
 ## 2. Il verso che fa uscire il vero
 
