@@ -304,10 +304,30 @@ def encode(text: str | Iterable[str]) -> np.ndarray:
     ``_model()`` directly, cold-loading the model under ``_MODEL_LOCK`` (~33s)
     even when ``HIPPO_ENCODE_DELEGATE_ONLY=1`` forbids it — the exact hang the
     single-text path guards against, reached via ``record_episodes_batch`` on an
-    MCP server. It now mirrors the single-text contract: with no warm model in
-    delegate-only mode it encodes per-text through the shared service (LRU-
-    cached) and raises ``EncodeDelegateUnavailable`` if the daemon is down, so
-    the caller DEGRADES instead of wedging every concurrent recall/save.
+    MCP server. It now mirrors the single-text contract: with no warm model it
+    encodes per-text through the shared service (LRU-cached) and raises
+    ``EncodeDelegateUnavailable`` if the daemon is down, so the caller DEGRADES
+    instead of wedging every concurrent recall/save.
+
+    ⚠️ THAT FIX WAS SCOPED TO DELEGATION AND NOT SWEPT (2026-08-28). The
+    condition was ``_delegate_only() and not is_loaded()``, so a process that
+    merely HAS a usable daemon — no delegation set, i.e. any plain SDK user —
+    still took the cold-load branch. MEASURED, daemon up and answering::
+
+        one string through the guarded encoder    117 ms    is_loaded stays False
+        five strings, one at a time               268 ms    is_loaded stays False
+        **a list of ten, through this function**  **34.564 ms**  **is_loaded True**
+
+    Same shape as the `L1.20` guard cured in the same commit: a predicate asking
+    «am I delegating?» where the question is «is a vector obtainable without a
+    cold-load?». ``service_would_encode()`` answers the second, and the two call
+    sites now agree — which is what made the batch path cost 28 s inside a
+    detector whose whole purpose is not to pay it.
+
+    The batch branch below is still the fast one and still runs whenever the
+    model is warm or a cold-load is actually permitted (the daemon's own
+    process, the CLI): nothing is lost, the ~10x SIMD win is kept where it is
+    free.
     """
     if isinstance(text, str):
         return np.frombuffer(_cached_encode(text), dtype=np.float32)
@@ -315,7 +335,7 @@ def encode(text: str | Iterable[str]) -> np.ndarray:
     if not texts:
         # Nothing to encode — never cold-load just to return an empty matrix.
         return np.empty((0, CONFIG.embedding_dim), dtype=np.float32)
-    if _delegate_only() and not is_loaded():
+    if not is_loaded() and (_delegate_only() or service_would_encode()):
         # No in-process cold-load here. Route each text through the cached
         # single-text path (service-first; raises EncodeDelegateUnavailable if
         # the daemon is unavailable — same DEGRADE contract as the str branch).
