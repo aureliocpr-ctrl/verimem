@@ -175,13 +175,43 @@ def _has_completion_evidence(verified_by: Iterable[str] | None) -> bool:
     return False
 
 
+def _il_participio_e_nella_fonte(matched_text: str, source: str | None) -> bool:
+    """La fonte contiene lo STESSO participio che ha fatto scattare il match?
+
+    Se si', il claim non e' una self-claim: e' un RICALCO della fonte, e questo
+    detector — che guarda solo la proposizione — non ha modo di distinguere i
+    due casi senza questa domanda.
+
+    ⚖️ IL CRITERIO E' TESTUALE E CONSERVATIVO, ed e' lo stesso gia' adottato in
+    `valore_non_nella_fonte._valori_da_token_che_la_fonte_contiene`: «*si perdona
+    un valore solo se il TOKEN che l'ha prodotto compare verbatim nella fonte*».
+    Qui vale la stessa cosa per la parola di completamento. ⇒ Una self-claim
+    SENZA fonte non ha nulla da perdonare e resta fermata: questa non e' una
+    disattivazione del layer, e' la domanda che gli mancava.
+
+    Misurato il 2026-08-28 sulle tre popolazioni del banco
+    `docs/stato-reale/banchi/L1-13-il-detector-non-vede-la-fonte.py`: su un
+    verbale di cantiere 6 frasi su 7 erano fermate da L1.13 con la fonte che le
+    sostiene alla lettera, 2 su 4 in una batteria bilingue, e 6 self-claim su 6
+    restano fermate.
+    """
+    if not source or not matched_text:
+        return False
+    return matched_text.casefold() in source.casefold()
+
+
 def detect_unsupported_completion_claim(
     *,
     proposition: str,
     verified_by: Iterable[str] | None,
+    source: str | None = None,
 ) -> CompletionClaimWarning | None:
     """Return Warning if proposition contains completion claim AND
     verified_by lacks closing criteria evidence. Else None.
+
+    ``source`` e' opzionale e il default ``None`` lascia invariato ogni
+    chiamante che non lo passa: senza fonte non c'e' niente da confrontare e il
+    comportamento e' quello di prima.
     """
     if not proposition:
         return None
@@ -196,6 +226,14 @@ def detect_unsupported_completion_claim(
     else:
         return None
     if _has_completion_evidence(verified_by):
+        return None
+    # LA DOMANDA CHE MANCAVA: la fonte contiene lo stesso participio?
+    # Fino al 2026-08-28 questa funzione riceveva solo `proposition` e
+    # `verified_by`, quindi non poteva distinguere una self-claim da un fatto
+    # che RICALCA la fonte — e su un verbale d'ufficio («la consegna e' stata
+    # fatta», «la pratica e' stata chiusa») fermava il secondo credendolo il
+    # primo. Reperto dell'esame del 2026-08-28; l'assegnazione sta nel registro.
+    if _il_participio_e_nella_fonte(matched_text, source):
         return None
     # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
     # del corpus (2026-07-30): 1 affermazione 9%, 2-3 16%, 4-9 30%, 10+ 45% —
