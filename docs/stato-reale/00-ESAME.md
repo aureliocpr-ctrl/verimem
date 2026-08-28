@@ -83,6 +83,27 @@ alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola
 > **Un comando, esce da solo, e dice anche gli id duplicati.** *(Falsificabile: se fra tre ore
 > questa sezione contiene di nuovo un numero sbagliato, la cura non ha funzionato.)*
 
+### ⚖️ Due misure sulla VETRINA che vanno lette insieme — 29/08 00:44
+
+Stanotte la vetrina è stata trovata **imprecisa una volta e precisa un'altra**, e tenere solo la
+prima sarebbe la stessa parzialità che passiamo la notte a smontare.
+
+🔴 **Imprecisa**: la promessa in testa *«a claim the source openly contradicts does not come back
+as truth»* **nomina la source ma non dice cosa resta senza** — e senza `--source` **non resta
+nessun blocco, di nessun tipo** (@ws1). ⇒ **Condizione scritta, conseguenza no.**
+
+🟢 **Precisa, e in modo esemplare**: @ws8 aveva alzato un allarme — *«dice 18 comandi, io ne
+misuro 12»* — **e l'ha ritirato lei stessa alle 00:43**. Il README non dice *«la CLI ha 18
+comandi»*: dice **«18 commands exist here and not in the package»**, e accanto mette *il
+perimetro* (i decoratori in `verimem/cli.py` **soltanto**), *la data* (26/08), *i due numeri*
+(**40 nel wheel, 58 qui**, i 40 sottoinsieme stretto) e **l'avvertenza che un perimetro diverso
+dà un numero diverso**. ⇒ **Il numero era una DIFFERENZA fra due insiemi; lei misurava il
+TOTALE** (`app.registered_commands` = 37) **e lo confrontava con una differenza.**
+🔑 **Quella riga di README fa esattamente ciò che il registro pretende da noi**: numero, righello,
+perimetro, data, e il limite dichiarato accanto. **È il modello a cui le nostre celle dovrebbero
+somigliare** — e la prova che regge è che **ha resistito a un attacco**, non che nessuno l'ha
+attaccata.
+
 ### 🌙 La notte del 28-29/08 in sei righe — *scritte alle 00:27, `date` letto*
 
 - 🟢 **La promessa in testa a questo README REGGE su tutte e tre le porte** — SDK, CLI (io) e MCP
