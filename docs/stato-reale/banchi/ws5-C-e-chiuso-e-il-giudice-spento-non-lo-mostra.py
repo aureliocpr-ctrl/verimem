@@ -21,13 +21,35 @@ stesso SHA `e6ebabd8`::
 
 ⇒ 🟢 **[C] NON SI RIPRODUCE PIU'.** Col giudice acceso il claim senza source
 viene **quarantinato** e il fatto vero **resta**.
-⇒ ⚠️ **E per la nostra regola «un rosso che non si riproduce non e' instabile:
-dipende da cio' che e' cambiato», questo NON e' «era instabile» - e' «e' stato
-curato».** Fra il referto e questa riesecuzione ci sono **283 commit**. La cura:
-`aeee8305` (21/08, «*una scrittura senza source non supersede un fatto
-groundato*») **non bastava** - il mio referto del 28/08 e' la prova che il
-difetto passava ancora - e **@ws6 l'ha completata il 28/08 alle 23:23**
-(`956844f4`, `_route_evolutions` con `cand_ha_source`).
+🪞🔴 **RITIRO: LA CURA E' DEL 21/08 E IL MIO REFERTO DEL 28/08 ERA SBAGLIATO.**
+Avevo scritto qui che la cura era di @ws6 (`956844f4`, 28/08 23:23) e che
+`aeee8305` del 21/08 «non bastava». **Falso su entrambi i punti**, e l'ho
+scoperto facendo l'A/B che avevo dichiarato non fatto - in un **worktree
+separato**, senza toccare l'albero condiviso::
+
+    42bb3839  (20/08 18:56, PRIMA di `aeee8305`)
+        A confab (no source)  VERO **superseded_by=a1acc92c91ce**   <== IL DIFETTO C'E'
+    b5af2ba0  (`956844f4^`, ieri sera, PRIMA della cura di @ws6)
+        A confab (no source)  VERO superseded_by=None, NUOVO quarantined   <== GIA' CURATO
+    HEAD (oggi)
+        identico a b5af2ba0
+
+⇒ **La cura e' `aeee8305`** (21/08 10:02, «*una scrittura senza source non
+supersede un fatto groundato*»), che porta con se' anche la guardia
+`tests/test_guardia_C_senza_source_non_supersede.py`. La cura di @ws6 su
+`_route_evolutions` e' un'altra cosa e **non c'entra con [C]**: l'avevo
+attribuita a lei per aver seguito `git log -S` fino al commit piu' RECENTE
+invece di al piu' VECCHIO.
+⇒ 🔴 **E QUINDI IL MIO REFERTO DEL 28/08 (`07ce9cad5e2b42bf`) ERA FALSO**: dicevo
+di aver riprodotto [C] col giudice acceso, ma quel giorno la cura c'era da una
+settimana **e con un presidio**. Non so con certezza cosa misurai; l'ipotesi
+piu' probabile e' che l'albero fosse vecchio - quel giorno mi era gia'
+successo di lavorare **21 commit indietro** e di trarne una conclusione
+sbagliata.
+🔑 **La lezione: «un rosso che non si riproduce» ha una TERZA lettura** oltre a
+«instabile» e «curato dopo» - **«non era mai stato vero»**. E si distinguono
+solo con l'A/B sul commit, che e' precisamente il debito che avevo dichiarato
+e stavo per lasciare aperto.
 
 🔑 **E IL REGIME SPENTO NON AVREBBE MOSTRATO NIENTE**, che e' il motivo per cui
 valeva la pena pagarlo: senza giudice il primo fatto **non e' mai «verificato»**
