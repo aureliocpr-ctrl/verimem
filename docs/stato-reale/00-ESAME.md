@@ -4314,3 +4314,58 @@ tocca nemmeno un caso della ②.
 > «lo dice con una spunta verde» → «ha un WARN, si astiene per un motivo giusto, e tace per l'utente
 > nuovo». **Ogni restringimento è venuto dal LEGGERE — un test, l'output, il codice — mai dal
 > misurare di più.**
+
+---
+
+## ws1 — LA GRAMMATICA DELLE VALUTE: TRE DIFETTI DI ESTRAZIONE, **ZERO DANNO ALLA PORTA**
+
+**Livello**: `quantity_match.extract_quantities` + porta vera · **Istante**: 29/08 01:32–01:35 ·
+**Regime**: store nuovo per caso, `source` sul primo, guardia al default · sha `277cf284`.
+
+### Quali forme di valuta entrano nella grammatica delle unità (20 provate)
+```
+riconosciute (unità piena, NON esposte alla via ②)
+    100 euro · 100 EUR · 100 USD · 100 dollari · 100 sterline · 100EUR
+    100 dollars (EN) · 100 euros (FR) · 100 Euro (DE) · 100,50 euro
+esposte alla via ② (unità VUOTA)
+    EUR 100 · USD 100 (pre-poste)      ·      $100 · 100$ · 100 $  (ogni simbolo)
+```
+⇒ **Nessun simbolo di valuta è mai un'unità**, in nessuna posizione. Solo la sigla o la parola
+**post-posta** lo è. La forma `$100` — la più comune al mondo — sta dalla parte esposta.
+
+### 🔴 E tre sorprese che non avevo previsto
+```
+«EUR100»          -> []                    NESSUNA quantità: il numero sparisce del tutto
+«100.000 euro»    -> []                    NESSUNA quantità: il separatore delle migliaia
+                                            italiano/europeo non è letto («100,50» invece sì)
+«100 mila euro»   -> [('mila', 100.0)]     legge «mila» come UNITÀ e il valore 100 invece di
+                                            100000: un errore di TRE ordini di grandezza
+```
+
+### 🛑 MA ALLA PORTA VERA IL DANNO È ZERO, e lo dico prima che qualcuno ci costruisca sopra
+```
+«Il canone e' 100.000 euro»  -> «200.000 euro»   QUARANTINATO  ['L3','L3-semantic']
+«Il canone e' 100 mila euro» -> «200 mila euro»  QUARANTINATO  ['L3','L3-semantic']
+«Il canone e' 100000 euro»   -> «200000 euro»    QUARANTINATO  ['L3','L3-semantic']  (controllo)
+```
+**Tre su tre bloccate.** Nonostante `extract_quantities` perda la quantità o le assegni un valore
+mille volte sbagliato, **i layer lessicale e semantico fermano la contraddizione lo stesso**.
+⇒ **Difetto di estrazione REALE come funzione, conseguenza alla porta NON DIMOSTRATA.** È un
+allarme che rientra, e lo ritiro io prima di averlo suonato.
+📌 Il che raffina anche la **via ②**: colpisce quando le unità sono **disgiunte** (una vuota e una
+piena), **non** quando la quantità manca del tutto — lì restano gli altri layer.
+
+### 🪞 IL MIO RIGHELLO SBAGLIATO — LA QUARTA VOLTA, MA STAVOLTA BECCATA **PRIMA** DI PUBBLICARE
+Avevo contato «825 proposizioni (5,38%) col separatore delle migliaia». **Ho stampato i match
+invece delle righe** — il presidio del registro — e i più frequenti erano `0.672`, `0.971`,
+`0.000`: **decimali inglesi a tre cifre, non migliaia.**
+```
+migliaia INEQUIVOCABILI (1.234.567)      19   (0,12%)
+AMBIGUE (1.234 = mille o 1,234?)        188   (1,23%)
+decimali 0.xxx (il rumore del mio conto) 671
+```
+🛑 **Il 5,38% è RITIRATO**: mescolava tre classi. ⚠️ E le 188 ambigue **non le disambiguo**: senza
+contesto «1.234» è mille o 1,234, e non invento un criterio per deciderlo.
+🔑 **Quarta volta stanotte che il primo righello è mio ed è sbagliato — la prima in cui l'ho
+scoperto PRIMA di pubblicarlo.** Il presidio che ha funzionato è del registro, non mio:
+*stampa le chiavi prima di contarle.*
