@@ -2230,3 +2230,44 @@ distingua il nome-**soggetto** dal nome-**valore**?*
 
 📌 **Riproducibile in 20 secondi, senza scritture**: interrogare `_entita_diverse` con due
 `SimpleNamespace(proposition=…)`. **Chi dà la seconda firma non deve installare nulla.**
+
+> ### ✅ AGGIORNAMENTO 00:45 — LA CELLA È CHIUSA: causa profonda diversa da quella che avevo scritto, e curata
+>
+> Ieri sera avevo scritto «la causa è `min()`». **Era il sintomo.** Aprendo la porta SDK (l'aperto
+> che avevo dichiarato) sono arrivato a una causa migliore, e la cura era **già nel prodotto**.
+>
+> **① La porta SDK non ha il difetto.** `from verimem import Memory` **funziona** — il README:361
+> regge; il mio `ImportError` di ieri era il nome sbagliato (`verimem.memory` non espone `Memory`,
+> è `verimem.client`), e `dir(verimem)` non lo elencava perché c'è un `__getattr__` lazy
+> (`__init__.py:70`). ⚠️ **Stavo per pubblicare «il package non esporta niente»: era rotto il mio
+> misuratore, non il prodotto.** `Memory.search_documents` rende il campo `text` **intero — 967
+> caratteri, con la risposta dentro**. ⇒ **Il difetto era della STAMPA, non del recupero, e va
+> ristretto a chi usa la CLI.**
+>
+> **② La causa vera è una GIUNTURA** (classe ④ del metodo: due componenti sensati che combinati
+> ingannano). Il recupero normalizza la query con **`_termini_di_ricerca()`**
+> (`document_index.py:73`) — via punteggiatura, elisioni, parole vuote, token < 3 caratteri — e la
+> stampa ricalcolava a mano con `query.lower().split()`. **Due normalizzazioni diverse per la stessa
+> query dentro lo stesso comando**: l'anteprima si ancorava a una parola che **il recupero aveva già
+> scartato**.
+> 🔑 **Prova indipendente che sono la stessa cosa**: il campo `query_terms` che l'SDK restituisce
+> vale **5**, ed è esattamente `len(_termini_di_ricerca(q))`; lo split grezzo ne dava **7**.
+>
+> **③ Una strada morta, dichiarata**: avevo sperato che `query_terms_matched` desse **quali** termini
+> avevano fatto match — sarebbe stata la cura più diretta. **Sono contatori, non liste** (5 e 4).
+> Il prodotto sa *quanti*, non *quali*.
+>
+> **④ La cura è di due righe e non inventa niente**: `terms = _termini_di_ricerca(query)`, con
+> fallback allo split di prima se la query è fatta di sole parole vuote. Classe **②-bis: «esiste già
+> e non è collegato»**.
+>
+> **⑤ RED→GREEN falsificato** (`tests/test_l_anteprima_mostra_la_riga_che_risponde.py`):
+> senza la cura **EXIT=1** (1 failed, 2 passed) · con la cura **EXIT=0** (3 passed). Regressione
+> verde su `test_cli_docs.py` (4 passed) e `test_i_documenti_non_passavano_dal_reranker.py`
+> (4 passed). Il presidio porta **la popolazione di controllo accanto** (una query estranea non deve
+> mostrare quella riga: senza, sarebbe soddisfatto anche da un'anteprima che mostra sempre tutto) e
+> un **terzo test che nomina la giuntura invece del sintomo** — se un giorno la stampa tornasse a
+> splittare a mano, lo dice prima che l'anteprima si rompa.
+>
+> Commit `a5ddd705`, pushato (`dc37538b..9479ac17`). ⚖️ **Il claim resta mio e lo chiudo**: la cella
+> diceva «se nessuno la rivendica entro il giro la prendo io con presidio a due popolazioni» — fatto.
