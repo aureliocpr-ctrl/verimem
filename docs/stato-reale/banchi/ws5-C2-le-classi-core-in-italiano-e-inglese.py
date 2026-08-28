@@ -42,8 +42,12 @@ sono traduzioni mie della stessa situazione, quindi misurano il gate, non la
 qualita' del mio inglese - ma una differenza IT/EN potrebbe venire dalla
 traduzione e non dal prodotto, e dove capita lo dico.
 
-ESITO - 14 celle (7 classi x 2 lingue; la 8a e' attestazione-nuda, difesa in
-entrambe). **6 BUCHI e 3 FALSI POSITIVI.**
+ESITO - **16 celle** (8 classi x 2 lingue). **6 BUCHI e 3 FALSI POSITIVI.**
+⚠️ In un primo referto sul canale avevo scritto «14 celle»: avevo escluso a mente
+l'ottava classe perche' difesa in entrambe le lingue. Il numeratore era giusto,
+il denominatore no, e la proporzione cambia (6/16 = 37,5%, non 6/14 = 43%).
+Il fatto salvato in memoria ha il denominatore giusto perche' l'ho costruito
+DAI numeri della source invece che dalla mia testa - la regola ha pagato qui.
 
     classe             IT                        EN
     cifra-inventata    difesa / vero passa       difesa / vero passa
