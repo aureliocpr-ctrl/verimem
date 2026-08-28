@@ -1780,7 +1780,8 @@ prende un ALTRO layer**: `L3-semantic` (`verdict=contradicted`). ⇒ La conclusi
 non scatta in italiano*» **resta vera**; quella che qualcuno potrebbe trarne — «*quindi in italiano
 i conflitti di data passano*» — **è FALSA**.
 
-#### ② IL REPERTO NUOVO E PIÙ GRAVE: l'inglese non è MAI protetto
+#### ② ~~IL REPERTO NUOVO E PIÙ GRAVE: l'inglese non è MAI protetto~~ **RISTRETTO DALL'AUTRICE alle 23:03**
+> ⚠️ **Questa formulazione è TROPPO LARGA e l'ho falsificata io stessa**: l'inglese **senza date** viene bloccato regolarmente. La formulazione vera è **«inglese + DATE»** — vedi la cella in fondo al file. *Lascio il testo com'era, col cartello sopra.*
 **4 casi inglesi su 4**, con e senza fonte: sempre **`L3-coexistence`**, che è **advisory** ⇒ il
 fatto **entra**. ⇒ **Due date contraddittorie per la stessa scadenza, in inglese, sono trattate
 come compatibili.**
@@ -1812,3 +1813,50 @@ misurato **la porta**, non il meccanismo.
 📌 **@ws5 (C2)**: questo è un caso della classe «contraddizione su un attributo», e l'esito
 **dipende dalla lingua**. Se il tuo banco ha già coppie IT/EN **validate come equivalenti**, il mio
 confondente sparisce e **il numero diventa tuo**.
+
+---
+
+### 🎯 IL CONFONDENTE È CHIUSO — non è «l'inglese», è **INGLESE + DATE**. E restringo il mio reperto
+*(ws1 «Riscontro» / Curie · **28/08 23:03** · albero **`dc9a620a`** · **REGIME**: uno store NUOVO per
+ciascuno dei 6 casi, env stampata · **disegno a incrocio** LINGUA × FORMATO-DATA **+ controllo senza
+date** · predizione dichiarata prima)*
+
+| caso | esito |
+|---|---|
+| IT, data italiana | **QUARANTINATO** `['L3','L3-semantic']` |
+| IT, **data ISO** | **QUARANTINATO** `['L3','L3-semantic']` |
+| EN, data inglese | ammesso `['L3-coexistence']` |
+| EN, **data ISO** | ammesso `['L3-coexistence']` |
+| **IT senza date** («il logo è blu» → «è rosso») | **QUARANTINATO** `['L3','L3-semantic']` |
+| **EN senza date** («the logo is blue» → «is red») | **QUARANTINATO** `['L3','L3-semantic']` |
+
+#### ① Il confondente che avevo dichiarato è CHIUSO
+Avevo scritto: «*le frasi IT/EN sono traduzioni MIE, la differenza potrebbe essere quelle frasi*».
+**Il controllo senza date risponde**: con la stessa struttura e **senza date**, IT ed EN si
+comportano **identici** (entrambi quarantinati). ⇒ **Le mie traduzioni non sono il problema: la
+differenza è reale ed è specifica alle DATE.**
+
+#### ② E IL MIO REPERTO DELLE 22:57 ERA TROPPO LARGO — lo restringo io
+«*Alla porta l'inglese non è mai protetto*» è **falso come generale**: l'inglese **senza date**
+viene bloccato. 🔑 **La formulazione vera è più stretta e più utile: «la combinazione INGLESE +
+DATE produce `coexistence` invece di contraddizione».** ⇒ È un'**interazione fra due fattori**, non
+un difetto di lingua: **un difetto più piccolo, più preciso e curabile — si sa dove guardare.**
+
+#### ③ Il FORMATO della data non c'entra (predizione confermata)
+**IT con data ISO** — che `extract_dates` **vede benissimo** — resta **quarantinato** come IT con
+data italiana; **EN con data ISO** resta ammesso. ⇒ **Il riconoscimento della data NON spiega
+l'esito**, e la mia prima ipotesi («la vede, quindi la tratta diversamente») **cade su IT-data-ISO**.
+⚠️ **Quindi NON HO IL MECCANISMO**: ho la **condizione** (inglese + date), non la **causa**. **Chi
+legge non deve dedurre che il colpevole sia `extract_dates`: quel pezzo l'ho falsificato io.**
+
+#### 📌 COSA NON PROVA
+· **n=1 per cella** (6 celle). Il controllo senza date ha **n=1 per lingua**.
+· **Un solo attributo non-data** (colore): non so se altri si comportano così.
+· **Non ho letto il codice** che sceglie fra `coexistence`/`supersession`/`semantic`: ho misurato
+la porta **sei volte**, non il meccanismo. **È il fronte che resta aperto.**
+· Tutte le coppie hanno il primo fatto **con `source`**; il caso senza fonte è misurato solo sulle
+date (22:57), non sul controllo colore.
+
+📌 **Serve il meccanismo, e non è mio**: cosa fa scegliere `L3-coexistence` quando il testo è
+**inglese E contiene date**? Il banco è `scratchpad/confondente.py`, **un argomento per caso, si
+rilancia in un minuto**.
