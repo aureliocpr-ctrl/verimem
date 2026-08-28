@@ -8,6 +8,11 @@ classificate cosi', e il conto pubblicato nel registro era sbagliato.
 Il verdetto di una cella e' il PRIMO simbolo della sua colonna verdetto,
 non un simbolo qualsiasi nel testo.
 
+Quando la legenda del registro guadagna uno stato, va aggiunto QUI: il 28/08
+e' stato introdotto `RITIRATA` e per qualche minuto lo script ha continuato a
+segnalare quelle celle come «senza verdetto» — lo strumento che verifica una
+convenzione invecchia insieme a lei.
+
     python scripts/conta_celle_esame.py
 """
 
@@ -23,7 +28,7 @@ REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00
 #: una riga-cella: `| <id> | <domanda> | ... |` con almeno le nove colonne.
 RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
 #: il verdetto e' il PRIMO simbolo, non uno qualsiasi: vedi il docstring.
-SIMBOLO = re.compile(r"[🔴🟢🟡⛔]")
+SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫]")
 
 
 def verdetto(riga: str) -> str:
@@ -45,6 +50,7 @@ def main() -> int:
         f"🔴 rossi {conto['🔴']} · 🟢 verdi {conto['🟢']} · "
         f"🟡 parziali {conto['🟡']}"
         + (f" · ⛔ non misurabili {conto['⛔']}" if conto["⛔"] else "")
+        + (f" · 🚫 ritirate {conto['🚫']}" if conto["🚫"] else "")
         + f"   (su {len(celle)} celle)"
     )
     if conto["?"]:
