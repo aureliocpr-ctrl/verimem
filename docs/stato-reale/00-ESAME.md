@@ -4258,3 +4258,29 @@ tocca nemmeno un caso della ②.
   perché la valuta pre-posta **non è nella sua grammatica delle unità**. Il ramo unità fa il suo
   lavoro su un input che gli arriva già impoverito. **La causa è a monte del ramo che ne subisce
   l'effetto** — ed è lo stesso schema della via ①, dove il regex decide e il gate obbedisce.
+
+> #### ⛔ AGGIORNAMENTO 01:29 — **ritiro il «non è scritto da nessuna parte»: il `doctor` lo dice, e nomina il topic**
+> Il presidio *cerca prima* ha trovato **`tests/test_il_doctor_dice_che_i_topic_affollati_perdono.py`**,
+> scritto il **09/08** dopo che **quattro istanze** avevano misurato lo stesso fenomeno. Eseguito
+> `verimem doctor` sullo store con le due annualità:
+> ```
+> topic-crowding  facts written in the last 7 days survive 1/2 on topics that already had
+> another write, against 0/0 on topics used once. Worst: contratto/canone (1 of 2). A retired
+> fact stays in the DB and leaves only the recall, so this loss is silent unless someone counts
+> ```
+> ⇒ **il prodotto dice la perdita, NOMINA il topic peggiore e spiega perché è silenziosa.**
+> **Ritiro la mia frase**: è meglio di come l'avevo descritto.
+>
+> **Restano tre cose, e la prima è un difetto:**
+> **①** L'avviso è marcato **`✓`**, accanto a `✓ trust-rank-coverage` e `✓ gateway`. ⇒ **una perdita
+> di dati segnalata con la stessa spunta verde di un controllo superato**: chi scorre cercando i
+> problemi **non si ferma su una riga verde**. Classe *«un'etichetta che porta fuori strada è peggio
+> di una mancante»*.
+> **②** La popolazione di controllo è **`0/0`**: il messaggio mostra **due** popolazioni — come deve —
+> ma sul caso minimo la seconda **non esiste**, e **`0/0` non separa nulla**.
+> **③** Vive **solo** in `verimem doctor`: **non** nella ricevuta della scrittura né nel risultato del
+> recall. **Chi riceve la risposta sbagliata non ha nessun segnale in quel momento.**
+>
+> ⚖️ **Il difetto resta — risposta sbagliata senza segnale alla lettura — ma è più piccolo di come
+> l'ho scritto.** 📌 Il candidato per chi tocca il `doctor` è **il simbolo di quella riga**, non il
+> testo, che è già ottimo. **Non lo faccio io: non è il mio perimetro.**
