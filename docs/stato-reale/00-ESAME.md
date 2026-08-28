@@ -1669,7 +1669,7 @@ costo è **più basso**, non più alto.
 | `pip install` freddo | EXIT=0 · **397 s** · 73 pacchetti | EXIT=0 · **398 s** · 73 pacchetti |
 | `mcp` risolto da pip | **2.1.1** | **2.1.1** |
 | `verimem mcp` | **EXIT=1** — `AttributeError: 'Server' object has no attribute 'list_tools'` | **EXIT=1** — *identico* |
-| moat, DB della venv | **99.91928100585938** · `tier='high'` | **99.91928108585938**… → **99.91928100585938** · `tier='high'` |
+| moat, DB della venv | **99.91928100585938** · `tier='high'` | **99.91928100585938** · `tier='high'` *(⚠️ refuso mio corretto alle 22:36: avevo digitato una cifra sbagliata in questa cella — il valore misurato in ENTRAMBE le esecuzioni è **99.91928100585938**, identico)* |
 
 ⇒ 🔴 **Il difetto del server MCP è RIPRODOTTO**: due installazioni indipendenti, tre ore di
 distanza, esito identico. **Non è un artefatto della mia prima venv.**
