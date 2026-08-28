@@ -28,6 +28,27 @@ appigli, quello estraneo li toglie.**
 verificato in settimana») e' fra i peggiori (99.9) pur parlando di TEMPO come il
 claim: **la dimensione condivisa non basta, serve la pertinenza al FATTO.**
 
+❌ RITIRO LA LETTURA ③ — la scala graduata la FALSIFICA. Debito pagato subito::
+
+    0 estraneo        (20 parole)  FALSO=persist    98.1
+    1 ufficio         (16 parole)  FALSO=downgrade  11.8
+    2 logistica       (18 parole)  FALSO=downgrade  57.9
+    3 consegna        (19 parole)  FALSO=downgrade   4.1
+    4 quasi-identico  (18 parole)  FALSO=persist   100.0
+
+⇒ **NON E' MONOTONO**: 98.1 → 11.8 → 57.9 → 4.1 → 100.0. **«Piu' pertinente = piu'
+difende» non regge come scala**, e il 57.9 in mezzo a 11.8 e 4.1 non lo spiego.
+⚠️ **E IL GRADINO 4 E' ROTTO DA UN ERRORE MIO**: «La spedizione parte mercoledi'. Il
+ritiro avviene venerdi'. **Il reso e' lunedi'.**» — **contiene «lunedi'»**, il valore
+che il claim inventa. Non e' «quasi identico»: e' **COLLISIONE**, la stessa misurata
+sui numeri (`ws5-Q2bis-la-rarita-del-numero-decide.py`) ma su un valore NON numerico.
+⇒ **Salva meta' della lettura e ne uccide meta'**: il gradino 0 copre per **estraneita'**,
+il 4 copre per **collisione**. Sono due meccanismi diversi, e io li avevo messi sulla
+stessa scala.
+✅ **CIO' CHE RESTA MISURATO**: a struttura e lunghezza simili il punteggio del falso va
+da **4.1 a 100.0** ⇒ **il contenuto del contorno decide, e di molto**. Il **come** non lo
+so, e non lo scrivo.
+
 ⚖️ PUNTO DEBOLE: cinque contenuti, un claim, un tipo di valore. **La lettura del ③ e'
 un'INTERPRETAZIONE, non una misura**: per provarla servirebbe una scala di pertinenza
 graduata (dal totalmente estraneo al quasi-identico) e verificare che il punteggio
