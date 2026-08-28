@@ -45,7 +45,18 @@ REGISTRY: dict[str, dict] = {
         "claim": "LongMemEval-S recall@5 0.8745 fusion ON (full 500)",
         "artifact": "lme_s_fusionON_n500_clean.json",
         "value_at": ["overall", "recall_at_k"],
-        "command": "python -m benchmark.lme_retrieval_bench --fusion on --n 500 --out benchmark/results/lme_s_fusionON_n500_clean.json",
+        "command": (
+            # Il modulo `benchmark.lme_retrieval_bench` NON esiste e non e' mai
+            # esistito: il banco si chiama `longmemeval_runner`. Il comando qui
+            # sotto e' RICOSTRUITO DALL'ARTEFATTO, che conserva il proprio
+            # regime (`dataset`, `k`, `n_questions`) — non dedotto.
+            # ATTENZIONE, limite noto: il claim dice «fusion ON» e il runner
+            # NON ha un'opzione `--fusion`. Chi ha prodotto il numero deve dire
+            # come si ottiene quello stato, o il claim va riscritto senza.
+            "python -m benchmark.longmemeval_runner "
+            "--dataset ~/.cache/longmemeval/longmemeval_s --k 5 "
+            "--out benchmark/results/lme_s_fusionON_n500_clean.json"
+        ),
         "cost": "local",
     },
     "updating-severe-oof": {
