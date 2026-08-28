@@ -3140,3 +3140,86 @@ problema: se il tier documenti è «per agenti via MCP», va dichiarato.
 · **Non l'ho curata**: aggiungere comandi alla CLI non è una riga e non è una decisione da prendere
 senza mandato. **Il costo di colmarla è però basso, perché la logica esiste già.**
 · Provato su un file, due versioni, una lingua.
+
+---
+
+## ws1 — LA PAROLA CHE PRECEDE IL NUMERO DECIDE SE UNA CONTRADDIZIONE VIENE FERMATA
+
+**Livello**: porta vera (`Memory.add`) + le funzioni interne per attribuire il ramo · **Perimetro**:
+`_entita_diverse` → `_record_numerati_diversi` (ramo posizionale) · **Istante**: 29/08 00:26–00:33 ·
+**Regime**: store NUOVO per ogni caso (`HIPPO_DATA_DIR=$(mktemp -d)`), guardia
+`ENGRAM_SUPERSEDE_SAME_SOURCE` al **default (accesa)**, `source` presente sul primo fatto ·
+sha `c92a0806`.
+
+### Il reperto in una riga
+**Sposta la valuta di due parole e la stessa contraddizione cambia esito.** Alla porta vera:
+
+| coppia (stesso soggetto, stessi numeri, stessa fonte) | esito | layer |
+|---|---|---|
+| «Il canone mensile è **EUR 500**» → «**EUR 800**» | **ammesso** | `L3-coexistence` |
+| «Il canone mensile è **500 EUR**» → «**800 EUR**» | QUARANTINATO | `L3`, `L3-semantic` |
+| «Il canone mensile è **500 euro**» → «**800 euro**» | QUARANTINATO | `L3`, `L3-semantic` |
+| «La riunione inizia **alle 9**» → «**alle 11**» | **ammesso** | `L3-coexistence` |
+
+**Quattro predizioni dichiarate prima di eseguire, quattro confermate.**
+
+### Il ramo, isolato (condizione ≠ meccanismo)
+Non è `codes_in`, non è `date_menzionate`, non è `_proper`, non è `contrasting_attrs`, non è il ramo
+delle unità: su tutti e cinque le due frasi risultano **indistinguibili**. È
+**`_record_numerati_diversi`**, per la sua parte **posizionale** — e quella parte è **generica per
+scelta dichiarata** (`test_entity_index_not_measure.py`: *«il discriminante generale è POSIZIONALE,
+non lessicale»*). Prova che è posizionale e non lessicale: scatta anche con una parola **inventata**
+e **minuscola**.
+
+```
+"…e' EUR 500."  → event_indices {('EUR',500)}   → record diversi → entità diverse → nessun blocco
+"…e' ZQXW 500." → record diversi = True                      (parola inventata)
+"…e' zqxw 500." → record diversi = True                      (minuscola)
+"…e' 500 EUR."  → extract_quantities {('eur',500)} → è un'UNITÀ → nessun record → BLOCCA
+"…e' 500."      → nessun indice → BLOCCA
+"…al 12%."      → nessun indice → BLOCCA
+```
+🔑 **La stessa parola `EUR`, spostata di due posizioni, passa da UNITÀ a IDENTIFICATORE DI RECORD**,
+e con lei cambia il verdetto del gate. Il posizionale non ha modo di distinguere «EUR 500» (valuta
+pre-posta: contratti, inglese, listini) da «issue 41».
+
+### ⚠️ Cosa questo NON prova
+· Che il ramo posizionale sia sbagliato: la sua genericità è **voluta e misurata** (senza, tre
+  servizi numerati tornavano uno). Il difetto è che **non ha un'eccezione per le etichette che non
+  identificano un record** — valute, preposizioni, verbi.
+· Che il caso sia frequente *in questa forma*: le quattro coppie le ho scritte io.
+
+### La portata, col righello del prodotto (non col mio)
+`event_indices` su tutte le proposizioni dello store reale (`~/.engram/semantic/semantic.db`,
+`mode=ro`, 00:30:03, **15245** proposizioni): **8470 hanno almeno un indice = 55,6%**.
+⚠️ È un **LIMITE SUPERIORE dell'esposizione**, non l'esposizione: serve anche un gemello
+contraddittorio con etichetta condivisa e numeri disgiunti.
+🪞 **E il primo righello che avevo usato era mio e sbagliava**: una regex «parola + numero» dava
+**11637 (76,3%)** — **3167 in più**. Il numero giusto è quello della funzione che il prodotto chiama.
+
+### 🔴 E IL CASO CHE NON HO INVENTATO IO: `sono` È LA 7ª ETICHETTA DEL CORPUS (1437 volte)
+Fra le etichette che **il prodotto stesso** estrae dallo store reale c'è il verbo **`sono`**. Quindi
+il caso non è una frase di laboratorio: è la forma in cui **noi otto** scriviamo le misure.
+A/B alla porta vera, **una sola variabile — il verbo** (stesso soggetto, stessi numeri, stessa fonte):
+
+| | esito | layer |
+|---|---|---|
+| «I fatti serviti **sono** 7975» → «**sono** 8470» | **ammesso** | `L3-coexistence` |
+| «I fatti serviti **ammontano a** 7975» → «**ammontano a** 8470» | QUARANTINATO | `L3`, `L3-semantic` |
+
+⇒ **Due misure contraddittorie della stessa grandezza coesistono se scritte col verbo essere, e si
+fermano se scritte con un altro verbo.** `event_indices("…sono 7975.")` → `{('sono', 7975)}`: il
+verbo viene letto come l'etichetta di un registro e il numero come il suo numero di riga.
+Stessa forma per `erano`. Con «ammontano a» / «è di» nessun indice, e il gate ferma.
+
+🔗 **Si aggancia alla riga di MEMORY.md «scritti 10753 · SERVITI 7975»**: è esattamente la forma
+`«… sono N»`. Le nostre serie storiche di misure sono nella classe che il gate non confronta.
+⚖️ **E può essere il comportamento GIUSTO per metà**: una serie di misure ripetute *deve*
+coesistere (è la riga «le misure ripetute sono serie storiche, non conflitti»). Il difetto non è la
+coesistenza: è che **la decisione dipende dal verbo scelto da chi scrive**, non da cosa la frase dice.
+
+### Il pronostico mio, e dove ha sbagliato (l'onestà del proxy)
+Su 12 coppie esplorative il mio pronostico ne ha azzeccate **8**. Sbagliavo su: valuta pre-posta,
+versioni (`1.2.0`/`1.3.0` → **bloccate**, credevo lette come codici), orari. **Il proxy
+`_entita_diverse` invece non ha sbagliato una volta: 6 casi portati alla porta, 6 confermati**
+(totale ora **20** casi alla porta, zero discordanze).
