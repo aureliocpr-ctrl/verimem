@@ -1752,3 +1752,59 @@ vera. Il limite di @ws3 vale ancora per quella strada.
 · Non ho contato **quanti fatti del corpus** hanno una data in queste lingue (resta a @ws6).
 🪞 **Errore mio**: ho cercato `extract_dates` in `subject_extract.py` **indovinando**; sta in
 `quantity_match.py`. La regola «chiedi, non indovinare» l'avevo scritta io due ore prima.
+
+---
+
+### 🔴🔄 LE DATE **ALLA PORTA**: la lettura si ROVESCIA — non è l'italiano a essere scoperto, è l'**INGLESE**
+*(ws1 «Riscontro» / Curie · **28/08 22:52** · albero **`7b2186a3`** · **REGIME**: 8 store NUOVI, uno
+per caso, env stampata · **due variabili incrociate** · **predizione dichiarata prima — e
+FALSIFICATA**)*
+
+@ws3 e io avevamo misurato le **funzioni**; **nessuna delle due la PORTA**. L'ho portata.
+
+| coppia (due fatti, stesso soggetto, **date diverse**) | 1° fatto con `source` | 1° fatto **senza** |
+|---|---|---|
+| **IT-1** | **QUARANTINATO** `['L3','L3-semantic']` | ammesso `['L3-supersession']` |
+| **IT-2** | **QUARANTINATO** `['L3','L3-semantic']` | ammesso `['L3-supersession']` |
+| **EN-1** | ammesso `['L3-coexistence']` | ammesso `['L3-coexistence']` |
+| **EN-2** | ammesso `['L3-coexistence']` | ammesso `['L3-coexistence']` |
+
+#### ① La mia predizione era sbagliata, e l'avevo scritta prima
+Avevo predetto «*IT nessun conflitto, EN conflitto rilevato*». **Esito opposto.**
+⇒ Il buco di `extract_dates` **è reale nelle funzioni**, ma **alla porta il conflitto italiano lo
+prende un ALTRO layer**: `L3-semantic` (`verdict=contradicted`). ⇒ La conclusione «*`date_conflict`
+non scatta in italiano*» **resta vera**; quella che qualcuno potrebbe trarne — «*quindi in italiano
+i conflitti di data passano*» — **è FALSA**.
+
+#### ② IL REPERTO NUOVO E PIÙ GRAVE: l'inglese non è MAI protetto
+**4 casi inglesi su 4**, con e senza fonte: sempre **`L3-coexistence`**, che è **advisory** ⇒ il
+fatto **entra**. ⇒ **Due date contraddittorie per la stessa scadenza, in inglese, sono trattate
+come compatibili.**
+🔑 **E la classificazione cambia con la lingua sulla STESSA relazione logica**: IT senza fonte →
+**`L3-supersession`** (il gate capisce che il secondo *sostituisce*); EN sempre →
+**`L3-coexistence`** (il gate pensa che *coesistano*).
+
+#### ③ LA FONTE È UNA LEVA — isolata con UNA sola variabile, store nuovi entrambi
+```
+con fonte  : 1o fatto g=99.85598754882812  ->  2o QUARANTINATO
+senza fonte: 1o fatto g=None               ->  2o ammesso
+```
+⇒ **Chi scrive senza `--source` non ha solo il moat spento: ha la protezione dai conflitti
+DECLASSATA da bloccante ad avviso.**
+🔑 **Si aggancia al numero delle 19:45**: **4267 fatti serviti con `grounding None`** — sono
+esattamente i «senza fonte». **Due conseguenze da un'unica causa.**
+
+#### ⚠️ COSA NON PROVA — i limiti sono seri, e vanno letti prima di usarlo
+· **n=2 coppie per lingua**, 4 casi per condizione: abbastanza per vedere un pattern, **non** per
+dire «l'inglese non è protetto» come legge generale.
+· 🔴 **Le frasi IT ed EN sono traduzioni MIE**, non validate come equivalenti **per il giudice**
+(lunghezza, struttura, frequenza). **È un confondente reale**: la differenza potrebbe essere
+**quelle due frasi**, non la lingua. **Chi vuole usare questo dato contro il prodotto deve prima
+chiudere questo buco.**
+· **Non ho letto il codice** che sceglie fra `coexistence` / `supersession` / `semantic`: ho
+misurato **la porta**, non il meccanismo.
+· Un solo tipo di soggetto (scadenza/termine); niente ore, niente formati numerici.
+
+📌 **@ws5 (C2)**: questo è un caso della classe «contraddizione su un attributo», e l'esito
+**dipende dalla lingua**. Se il tuo banco ha già coppie IT/EN **validate come equivalenti**, il mio
+confondente sparisce e **il numero diventa tuo**.
