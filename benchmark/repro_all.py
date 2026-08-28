@@ -50,9 +50,12 @@ REGISTRY: dict[str, dict] = {
             # esistito: il banco si chiama `longmemeval_runner`. Il comando qui
             # sotto e' RICOSTRUITO DALL'ARTEFATTO, che conserva il proprio
             # regime (`dataset`, `k`, `n_questions`) — non dedotto.
-            # ATTENZIONE, limite noto: il claim dice «fusion ON» e il runner
-            # NON ha un'opzione `--fusion`. Chi ha prodotto il numero deve dire
-            # come si ottiene quello stato, o il claim va riscritto senza.
+            # «fusion ON»: RISOLTO il 28/08. Non e' un'opzione del runner ma
+            # l'env `ENGRAM_PPR_FUSION` (semantic.py:2534), il cui DEFAULT e'
+            # «on» -> il comando qui sotto riproduce gia' lo stato del claim.
+            # Resta un difetto, ed e' dell'ARTEFATTO: il json non registra
+            # nessuna env, quindi chi avesse ENGRAM_PPR_FUSION=0 nell'ambiente
+            # otterrebbe un altro numero senza accorgersene.
             "python -m benchmark.longmemeval_runner "
             "--dataset ~/.cache/longmemeval/longmemeval_s --k 5 "
             "--out benchmark/results/lme_s_fusionON_n500_clean.json"
