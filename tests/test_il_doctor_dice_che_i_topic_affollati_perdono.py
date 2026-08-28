@@ -143,3 +143,69 @@ class TestNonPretendeDiSapereCioCheNonSa:
         ch = _check(monkeypatch, uno_per_topic)
         assert ch is not None and ch["status"] == doctor.OK, ch
         assert "%" not in ch["detail"], ch["detail"]
+
+
+@pytest.fixture
+def solo_affollati(tmp_path):
+    """IL CORPUS DELL'UTENTE NUOVO: due scritture, un topic solo, una ritirata.
+
+    Non e' un caso di laboratorio: e' cio' che ha chiunque abbia appena
+    cominciato — o chi estrae due fatti da un solo documento (misurato il
+    29/08: due annualita' dello stesso contratto, e alla domanda sul 2025 il
+    recall risponde col 2026). Qui il gruppo di controllo NON ESISTE."""
+    d = tmp_path / "utente_nuovo"
+    _store(d, [("a1", "t/canone", "a2"), ("a2", "t/canone", None)])
+    return d
+
+
+class TestSenzaGruppoDiControlloIlCheckTACE:
+    """LA CECITA' E' DELIBERATA E GIUSTA — ma nessuno la dichiarava.
+
+    `doctor.py` pone il tasso di controllo UGUALE a quello dei topic affollati
+    quando i topic a scrittura singola sono assenti (`_rs = _vs / _ns if _ns
+    else _ra`), quindi `_ra < _rs` e' falso e il livello resta OK. Il commento
+    accanto ne da' la ragione, ed e' la disciplina che il registro predica:
+    «la SEPARAZIONE e' il segnale: senza il gruppo di controllo un tasso non si
+    sa se e' alto».
+
+    ⚖️ Questa classe NON presidia un difetto: presidia una SCELTA, e la rende
+    visibile. Le due fixture che c'erano coprivano «affollati PIU' singoli» e
+    «solo singoli»; il terzo caso — SOLO affollati — non era presidiato, ed e'
+    proprio quello in cui il check non puo' parlare.
+
+    🔑 Perche' scriverlo: la cecita' cade sull'utente NUOVO, cioe' nella
+    finestra in cui prende le abitudini che poi gli costeranno i fatti. Se un
+    giorno qualcuno decide di far parlare il check anche senza controllo,
+    questo test diventa rosso e chiede di aggiornare la scelta invece di
+    lasciarla cambiare di nascosto."""
+
+    def test_il_check_esiste_anche_qui(self, monkeypatch, solo_affollati):
+        assert _check(monkeypatch, solo_affollati) is not None
+
+    def test_NON_avvisa_perche_manca_la_popolazione_opposta(
+            self, monkeypatch, solo_affollati):
+        ch = _check(monkeypatch, solo_affollati)
+        assert ch["status"] == doctor.OK, (
+            "il check ha avvisato senza gruppo di controllo: o la scelta e' "
+            f"cambiata, e allora aggiorna questa classe, oppure e' un difetto. {ch}")
+
+    def test_il_dettaglio_dice_comunque_la_perdita(self, monkeypatch,
+                                                  solo_affollati):
+        """Il dato c'e' anche quando il livello tace: e' l'unica cosa che
+        l'utente nuovo puo' leggere, e va conservata."""
+        ch = _check(monkeypatch, solo_affollati)
+        assert "1/2" in ch["detail"], ch["detail"]
+        assert "t/canone" in ch["detail"], ch["detail"]
+
+    def test_il_gruppo_di_controllo_e_dichiarato_vuoto(self, monkeypatch,
+                                                      solo_affollati):
+        """⚠️ QUI IL PRESIDIO E' DEBOLE DI PROPOSITO, e lo dichiaro.
+
+        Oggi il testo stampa «against 0/0 on topics used once», che si legge
+        come «zero perdite nell'altro gruppo» invece che «l'altro gruppo non
+        esiste». Il test accetta ENTRAMBE le forme: quella di oggi e una frase
+        che dica l'assenza. Cosi' non blocca chi vuole migliorare la
+        formulazione, ma si accorge se il conteggio dell'altro gruppo sparisce
+        del tutto."""
+        det = _check(monkeypatch, solo_affollati)["detail"].lower()
+        assert ("0/0" in det or "no control" in det or "nessun" in det), det
