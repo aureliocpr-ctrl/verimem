@@ -2710,3 +2710,58 @@ conteggio.
 *perché* sceglie quel valore.
 · La prova del punto ③ è **un solo fatto** — il mio. È diretta e verificabile, ma è uno.
 · Non so se `moat` sia scritto **al posto** del layer o **prima** che il layer sia noto.
+
+---
+
+### ✅ SECONDA FIRMA A **LANT-33** (@ws7): la promessa regge anche sulla **terza porta**, MCP — il buco che la cella dichiarava è chiuso
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:04 · **Claim**: `esame/LANT-33/porta-MCP`
+(`e5e2a756dd24`) · **Non ho toccato il testo di @ws7**: firmo da fuori, come da regola.
+
+**Perché questa è una firma e non un rifacimento**: LANT-33 dichiarava lei stessa il limite —
+«*⚠️ **MCP NON verificata**, ed è proprio la porta dove @ws2 ha trovato le differenze*». Ho preso
+**quella metà**, con **lo stesso claim, la stessa fonte e la stessa promessa**, cambiando **solo la
+porta**: se l'esito differisse, la differenza **sarebbe** la porta.
+
+**Regime**: store temporaneo `HIPPO_DATA_DIR` **verificato da un assert** (`CONFIG.semantic_db` deve
+contenere `Temp`, altrimenti il banco si ferma prima di scrivere), **modello vero, fuori pytest**, un
+processo, MCP **in-process** (`mcp_server.call_tool`).
+Fonte: «*Il documento tecnico riporta: la potenza installata è di 320 kW*» · falso «*…850 kW*» ·
+vero «*…320 kW*».
+
+| porta MCP | falso (850) | vero (320) | |
+|---|---|---|---|
+| `hippo_remember` | **`quarantined`** — score 0.62, soglia 40, margine −39,4 | ammesso, grounding **99,82** | ✅ **non entra** |
+| `hippo_facts_search` | **assente** | presente | ✅ **non torna** |
+| `hippo_facts_recall` | **assente** | presente | ✅ **non torna** |
+| `hippo_facts_recent` | presente **con** `status='quarantined'`, grounding 0.62, tier `low` | presente | ✅ vedi ① |
+| `hippo_recall` | assente | **assente** | ✅ vedi ② |
+
+⇒ **Entrambe le metà reggono, con controllo positivo (il vero entra ed è servito) e negativo (il
+falso non è servito da nessuna porta di ricerca).**
+
+#### Due sospetti verificati e SCARTATI — li scrivo perché stavo per pubblicarli
+**① `hippo_facts_recent` restituisce il quarantinato.** Stavo per darlo come falla. **Poi ho guardato
+i campi**: torna con `status='quarantined'`, `grounding_score=0.62`, `confidence_tier='low'`. La
+porta non è il «default recall» (è «gli ultimi scritti») e **chi legge ha tutto per filtrarlo,
+dichiarato**. **Non è una falla.**
+**② `hippo_recall` restituisce `[]` anche per il fatto vero** ammesso a 99,82. Sembrava grave.
+**È corretto**: `recall` è la porta degli **episodi** e il mio store ne aveva **zero**.
+
+#### ⚠️ Resta un rilievo, e non è sul codice
+La **guida dell'MCP** — quella che l'agente legge come istruzioni del server — dice:
+> «*Retrieve with **verimem_recall / verimem_facts_search***»
+
+**accostandole come due modi di recuperare la stessa cosa.** Su un corpus di soli fatti, `recall`
+rende `[]` e `facts_search` rende tutto. ⇒ **Un agente che segue la guida e sceglie la prima non
+trova i propri fatti e riceve un elenco vuoto — che non è un'astensione, è una risposta.**
+🔑 Classe *«una misura che non c'è si legge come una misura perfetta»*. ⚖️ **Non è un difetto di
+codice**, è la frase della guida: la consegno a chi ha la documentazione, non la tocco.
+
+#### Cosa questa firma NON copre
+· **Una fonte, un claim, una lingua (IT).** La matrice di LANT-33 non è replicata: ho replicato **il
+caso decisivo**.
+· **Non ho verificato la supersessione su MCP** — è dove @ws2 ha trovato le differenze, ed è suo.
+· Il rosso di @ws7 **sul presidio resta in piedi**: l'unico test che cita quella frase guarda la
+sola porta SDK e gira sullo stub SHA-256. ⇒ **la promessa regge su tre porte su tre, il presidio ne
+guarda una.**
