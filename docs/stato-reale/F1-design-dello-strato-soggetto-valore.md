@@ -101,3 +101,88 @@ hanno **n=3** e il loro ordine di priorità è **fragile**.
 che è una seconda esecuzione indipendente; le altre 9 no.
 ⚠️ **Popolazione A soltanto.** Questo file **non ha voce** su quanti veri una
 cura romperebbe, e da solo **non può approvare niente**.
+
+---
+
+# ⑤ Aggiunta un'ora dopo: **il mio «fonti corte» non era un limite, era un confondente** — e il risultato che decide il design
+
+*ws3, 28/08 ~19:30. Banco `banchi/ws3-F1-la-baseline-regge-su-una-fonte-vera.py`.*
+
+Nella stessa ora in cui pubblicavo la priorità qui sopra, due sorelle hanno
+misurato che la lunghezza della fonte muove i verdetti: **@ws4** (`b047ebb7`),
+sulla **mia stessa fonte contrattuale**, trova che a 453 caratteri lo scambio
+sugli importi è fermato a 0.9 — *è esattamente la mia cella* — e che **a 935 il
+gate non distingue più il vero dal falso**; **@ws5** trova che bastano **tre
+frasi di riempimento** e che **non è una rampa, è una soglia**.
+
+⇒ Il mio «fonti corte» **non accompagnava** l'enunciato: lo **sospendeva**.
+*Un limite dichiarato è un debito, non un'assicurazione.* Rimisurato, unica
+variabile la lunghezza, riempimento di clausole di stile **senza alcuna cifra**
+(controllo automatico: 0 clausole con un glifo 0-9).
+
+    famiglia         453ch    695ch    930ch   1424ch
+    SCAMBIO           7/12    10/12    10/12    10/12
+    NUMERALE           1/3      1/3      2/3      2/3
+    OMISSIONE          3/3      3/3      3/3      2/3
+    (cifra → ctrl)     0/3      0/3      0/3      0/3
+    totale falsi     11/18                      14/18
+
+## Il risultato che decide il design, ed è il più pulito della serata
+
+**I falsi in cifra — gli unici che `L4.1` ferma — restano fermati a *ogni*
+lunghezza (0/3 → 0/3), mentre la protezione del giudice sugli scambi si
+sgretola (7/12 → 10/12).**
+
+> 🔑 **Lo strato deterministico è indipendente dal regime; il giudice neurale
+> no.** Finora era una preferenza architetturale; adesso è **misurata**. E la
+> conseguenza per F1 è diretta: **il valore dello strato soggetto-valore
+> *cresce* con la lunghezza della fonte** — cioè cresce esattamente dove vivono
+> i documenti di un cliente vero, che non sono da 450 caratteri.
+
+**E la protezione che cade, cade subito**: bastano **due frasi di stile
+(+242 caratteri)**. Non è una rampa: è una **soglia**, come in @ws5.
+
+## La pagella della mia predizione, cella per cella
+
+    SCAMBIO     previsto 7→12    misurato 7→10    direzione giusta, taglia sbagliata
+    NUMERALE    previsto 1→3     misurato 1→2     direzione giusta, taglia sbagliata
+    OMISSIONE   previsto 3→3     misurato 3→2     DIREZIONE SBAGLIATA (migliora)
+    CONTROLLI   previsto 0→0     misurato 0→0     ESATTA
+
+**Una esatta su quattro.** E l'unica esatta è quella che conta per il design.
+
+⚠️ **E la mia prima stesura del verdetto diceva «fallisce tutto, non c'è niente
+da ordinare».** I numeri **non la sostengono**: 14 su 18, non 18 su 18; **due
+scambi reggono a ogni lunghezza**; l'**omissione migliora**. **La priorità si
+SPOSTA, non si dissolve** — `SCAMBIO` resta la famiglia più grossa. Ho riscritto
+il blocco lasciando l'originale nel commento: **è la terza volta in due giorni
+che scrivo un verdetto più grossolano del dato**, e le tre volte sono
+`L4-grounding` trattato come strato deterministico (ieri), il controllo sui veri
+(oggi, qui sotto), e questa.
+
+## 📌 Un reperto a parte: **il gate boccia una parafrasi fedele**
+
+Il controllo sui veri è scattato, e va letto bene. Il claim
+«*L'affidamento al fornitore Bertani **richiede il via libera dei revisori***»
+contro la fonte «*…è **subordinato all'approvazione preventiva del collegio dei
+revisori***» è **quarantinato a 0.37–1.60 in tutti e quattro i regimi**.
+
+È una **parafrasi fedele** — e nota *cosa* omette: «preventiva» e «collegio».
+⇒ **Il pavimento dei falsi positivi non parte da zero**, e questo rinforza il
+rischio pre-registrato al §④: se già oggi una parafrasi vera viene vetata,
+**un controllo di omissione ingenuo la moltiplicherebbe**.
+
+⚠️ **Ho riscritto il controllo (b)** da «nessun vero quarantinato» a «**nessun
+vero cambia esito con la lunghezza**», perché un vero rifiutato *uniformemente*
+è **costante** e non può spiegare una variazione dovuta alla lunghezza. La
+riscrittura è dichiarata nel file col testo originale accanto. **Il reperto non
+è nascosto: è stampato a ogni esecuzione.**
+
+## Limiti, dichiarati
+
+⚠️ **Riempimento di UN solo tipo** (clausole di stile pertinenti, senza cifre).
+Un riempimento *impertinente*, o con cifre, è un'altra cella.
+⚠️ Quattro lunghezze, **una esecuzione per cella**, italiano, due domini.
+⚠️ **1424 caratteri sono ancora poco**: un fascicolo vero sta sulle decine di
+migliaia. La curva oltre i 1424 **non l'ho misurata** — @ws4 l'ha spinta a
+6933 sulla sua famiglia, io no sulla mia.
