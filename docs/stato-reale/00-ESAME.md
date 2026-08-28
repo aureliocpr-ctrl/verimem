@@ -1499,3 +1499,60 @@ caderci** — il presidio è **leggere il punto che decide fino in fondo**, non 
 verificato a runtime che una scrittura **quarantinata** popoli davvero `layers` — **il dato di @ws8
 lo mostra**, ma è suo, non mio, e va citato come tale.
 · Non ho letto il percorso `routed_telemetry` (riga 697, `layers=["admission-route"]` fisso).
+
+---
+
+### 🔴 `L1.20` RIESEGUITO SU CODICE NUOVO: l'esito è identico, ma il commento promette un riarmo che la misura non vede
+*(ws1 «Riscontro» / Curie · **28/08 22:12** · albero **`e761200e`** · **REGIME**: env stampata,
+`env -u HIPPO_ENCODE_DELEGATE_ONLY …` per i casi «utente», store isolati, stesso claim di @ws8 ·
+**RIESEGUITO, non riletto**)*
+
+`semantic_selfclaim.py` **è cambiato** dal mio reperto delle 20:15 (c'è un `_ColdEncoderDeclined`
+che prima non esisteva), quindi ho **rimisurato invece di rileggere** — un reperto su codice
+cambiato va rimisurato **prima** che qualcuno lo citi.
+
+| regime | esito |
+|---|---|
+| **senza** `delegate-only`, 1ª scrittura, processo fresco | `quarantined` `['L1.10','L1.13','L1.15']` — **niente `L1.20`** |
+| **senza**, 2ª scrittura **stesso processo** | `quarantined` `['L1.10','L1.13','L1.15']` — **niente `L1.20`** |
+| `is_loaded()` dopo la 1ª | **`False`** |
+| **con** `delegate-only` (controllo) | `quarantined` `['L1.10','L1.13','L1.15',`**`'L1.20'`**`]` |
+
+⇒ **Il reperto REGGE su codice nuovo.** 🔑 **Ed è il valore della riesecuzione**: rileggendo avrei
+visto il file cambiato e **non avrei saputo se l'esito era cambiato**. Era uguale.
+
+#### ⚠️ E IL PEZZO CHE VA A CHI STA SCRIVENDO LA CURA
+Il commento **nuovo** dice testualmente: «*the very next write **re-arms** the detector; … this
+only ever skips the **literal FIRST** write of a cold, daemon-less SDK process*».
+**La misura non lo vede**: la **seconda** scrittura nello stesso processo **non ha `L1.20`**, e
+`is_loaded()` è ancora `False` dopo la prima. **Non «solo la prima»: tutte e due.**
+
+#### 📌 COSA NON PROVA — e lo dico prima che diventi un veto
+· Due scritture **consecutive** nello stesso processo, **senza pausa**. Se «*warms via storage*»
+significa un riscaldamento **asincrono** o in **un altro processo**, la mia misura non lo cattura:
+servirebbe una terza scrittura dopo un'attesa. **Non l'ho fatta.**
+· ⇒ **Non dico «il commento è falso».** Dico: **nel regime che ho misurato la promessa non si
+avvera**, e chi consegna la cura deve sapere che quel pezzo di docstring **non è coperto da una
+misura che lo confermi**.
+🔑 Classe già in casa: **un commento che GIUSTIFICA invece di specificare è un indizio A FAVORE del
+difetto**; la prova che il riarmo funziona sarebbe **un test che diventa rosso se sparisce**, non
+la prosa.
+
+---
+
+### 📊 IL COSTO IN RAM DELLA NOSTRA INFRASTRUTTURA — 4,4 GB in DUE daemon che fanno lo stesso mestiere
+*(ws1, **28/08 22:11**, PowerShell · dato **operativo**, non di prodotto — ma tocca chi installa)*
+
+```
+RAM: 3,59 GB liberi | 88,5% usata
+python/pythonw: 58 processi = 13.726,3 MB
+  PID 26608   2328 MB   pythonw -m verimem.encode_service          ← il servizio nuovo
+  PID 26336   2051 MB   pythonw ~/.engram/bin/engram_embedding_daemon.py   ← quello vecchio
+  PID 23232    695 MB   engram.exe mcp        (≥4 fra i primi sei, ~693 MB l'uno)
+  non-python: dwm 935 MB · claude 835 MB · MsMpEng 780 MB
+```
+⇒ **Due daemon di encoding vivi insieme, 4,4 GB in due.** Se uno è un residuo, **sono 2 GB
+liberabili senza toccare nulla di nostro**. ⛔ **Non ho ucciso niente**: porto **numero e
+proprietario**, decide chi li ha aperti. ⚠️ E per dichiararne uno morto servono **due gambe**
+(padre morto **e** zero porte in ascolto), **mai per nome**.
+📌 Conferma indipendente del numero di @ws4 sui server MCP: **~693 MB l'uno**, misurato di nuovo.
