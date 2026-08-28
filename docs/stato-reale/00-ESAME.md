@@ -3698,3 +3698,44 @@ EN  «The price is 500»  -> «The price is 800»   QUARANTINATO   ['L3-semantic
 `EUR 500`/`del 10%` almeno l'avviso di coesistenza c'era e un chiamante attento poteva vederlo.
 Qui il fatto entra **senza un solo segnale** che una contraddizione sia stata scavalcata.
 ⇒ **Il proxy `_entita_diverse` è ora 28/28 alla porta, zero discordanze.**
+
+---
+
+### 🔴🔴 IL REPERTO DI @ws1 FINO ALLA PORTA: sulla forma da contratto **il recall restituisce ENTRAMBI i valori all'agente**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 00:57 · **Regime**: **uno store separato per ogni
+coppia** (`HIPPO_DATA_DIR`), porta **SDK**, modello vero, fuori pytest.
+**Completa la misura di @ws1, non la duplica**: lei misura l'**ammissione**, io **cosa riceve chi legge**.
+
+| coppia | scrittura | **il recall restituisce** |
+|---|---|---|
+| «Il canone annuo è **EUR 12000**» vs «**EUR 15000**» | entrambi `model_claim` | 🔴 **ENTRAMBI** |
+| «Lo sconto applicato è **del 10%**» vs «**del 15%**» | entrambi `model_claim` | 🔴 **ENTRAMBI** |
+| ⛔ **CONTROLLO** «**12000 EUR**» vs «**15000 EUR**» (numero nudo) | entrambi `model_claim` | ✅ **UNO SOLO** |
+
+⇒ **Un agente che chiede «qual è il canone annuo?» si sente rispondere 12000 E 15000**, senza che
+nulla segnali il conflitto. Sulla forma italiana più comune che esista — «*lo sconto è **del** 10%*»
+— riceve **10% e 15%** insieme.
+🔑 **Il 70% di @ws1 non è un difetto di archivio: è quello che l'agente legge.**
+
+⛔ **Il controllo separa fino alla lettura**: sulla forma a numero nudo il recall serve **un solo
+valore**. ⇒ il meccanismo che @ws1 ha isolato (parola ≥3 caratteri prima del numero **e** numero
+senza unità dopo) **si conserva end-to-end**, il che lo rende **più solido**.
+
+#### 📌 Una differenza fra le due misure — dichiarata, non risolta
+@ws1 riporta **`QUARANTINATO`** per il caso a numero nudo. **Alla porta SDK a me escono entrambi
+`model_claim`**, e la protezione arriva **dopo**, da una **supersessione**. ⇒ **Due livelli diversi**:
+il verdetto del gate contro l'esito end-to-end sulla porta pubblica. **Non la contraddico.** Ma se la
+sua misura passa per `run_validation_gate` diretto e la mia per `Memory.add`, allora **sulla porta
+reale il meccanismo protettivo non è la quarantena ma la supersessione** — e la differenza pesa,
+perché **la supersessione è reversibile e silenziosa, la quarantena no**.
+
+#### Limiti
+· Tre coppie, una lingua, **una porta**. · **Non ho attribuito** il meccanismo che produce l'unico
+risultato nel caso controllo: l'ho **osservato**.
+· ⚠️ **Primo tentativo scartato**: avevo accumulato le tre coppie nello **stesso** store e i
+risultati si mescolavano (il terzo recall rendeva 5 fatti). Rifatto con store separati.
+
+🔗 Si aggancia alla mia cella su `L3-coexistence` (7 ritiri su 11 non registrano contro cosa): là il
+conflitto è **rilevato e non tracciato**, qui **non è nemmeno rilevato**. ⇒ **due modi diversi di
+perdere l'informazione del conflitto, e nessuno dei due lo dice a chi legge.**
