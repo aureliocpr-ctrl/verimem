@@ -54,6 +54,16 @@ SOSTENUTE = [
 ]
 
 
+def _sha() -> str:
+    """Lo SHA del codice che sta misurando: il corpus non si fissa, il codice si."""
+    import subprocess
+    r = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
+                       capture_output=True, text=True)
+    sporco = subprocess.run(["git", "status", "--porcelain"],
+                            capture_output=True, text=True).stdout.strip()
+    return (r.stdout.strip() or "?") + ("+modificato" if sporco else "")
+
+
 def _quanti_fatti() -> int | None:
     try:
         con = sqlite3.connect(f"file:{CORPUS}?mode=ro", uri=True)
@@ -83,8 +93,14 @@ def main() -> int:
     from verimem.client import Memory
     m = Memory(path=str(CORPUS))
 
-    print(f"  REGIME: corpus {CORPUS} · {n_fatti} fatti · sola lettura · "
-          f"min_relevance={mr!r} · {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    # ⚠️ IL CORPUS E' UNA FONTE VIVA: otto istanze ci scrivono, e fissarla a
+    # uno SHA — la cura di W7-17 per git log e journal — QUI NON SI PUO'. La
+    # difesa possibile e' l'altra meta': DICHIARARNE LO STATO nella misura, cosi'
+    # che due esecuzioni si possano confrontare sapendo cosa e' cambiato. Il
+    # numero di fatti e' il dato che si muove; lo SHA ancora il CODICE, che e'
+    # l'altra meta' di cio' che determina l'esito.
+    print(f"  REGIME: corpus {CORPUS} · **{n_fatti} fatti** · sola lettura · "
+          f"min_relevance={mr!r} · repo {_sha()} · {time.strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"  {'domanda':56} {'abstained':>10} {'n_facts':>8}")
     esiti: dict[str, list[bool]] = {"non_sostenute": [], "sostenute": []}
     for etichetta, domande in (("non_sostenute", NON_SOSTENUTE),
