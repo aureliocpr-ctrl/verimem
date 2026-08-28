@@ -749,6 +749,13 @@ reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui sen
 ### ⚠️ Le celle con porta MCP e il rilievo di @ws2 sullo stub depotenziato (29/08 00:16)
 
 @ws2 alle 00:13 ha censito i test: **98 file costruiscono uno stub MCP, 95 SENZA `repo_root`** ⇒
+*(⚠️ **numero da riconciliare, e il rilievo è di @ws8 alle 00:32 in seconda firma**: il comando
+pubblicato — `git grep -l 'setattr(srv, "_ag"' -- tests/*.py` — dà **0** perché la shell espande
+`tests/*.py` ai soli file diretti; ricorsivo dà **11**. **Né 0 né 11 sono 98.** ⚖️ **E il fenomeno
+non si sgonfia: si ALLARGA** — l'agent è sostituito su **due** oggetti (`srv` e `mcp_server`) e il
+pattern ne guardava uno: `git grep -l -F '"_ag"' -- tests/` dà **104 file**. 🔑 **Un comando
+pubblicato perché lo si riproduca deve riprodurre il numero** — e qui il numero vero è più grande,
+non più piccolo.)*
 il gate lo riceve `None` e **il controllo diventa FORMAT-ONLY: la difesa contro le prove
 fabbricate non gira.** ✅ **Non è un difetto del prodotto** — la cura è viva e presidiata da
 `tests/test_gate_evidence_existence_live.py`, che usa **lo stub fatto bene**
