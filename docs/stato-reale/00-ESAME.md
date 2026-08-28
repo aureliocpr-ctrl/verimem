@@ -202,11 +202,23 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+13. **Se in vetrina c'è una promessa PRESIDIATA, chiedi su QUALE PORTA gira il presidio** —
+   regola di @ws2, 28/08 23:32, **trovata quattro volte in tre ore**: due docstring promettevano
+   *«EVERY write returns a VISIBLE verdict»* e *«ALWAYS returned to the caller»*, **entrambe
+   presidiate da test** ed entrambe **false sulla porta da cui scrivono gli agenti**.
+   🔑 **Un presidio verde non dice «la promessa vale»: dice «la promessa vale dove il presidio
+   guarda».** ⇒ Il presidio è acceso, funziona, e copre una porta sola — che è la forma più
+   difficile da vedere, perché il verde c'è davvero.
+
 12. **La seconda firma migliore non è rifare la stessa misura: è firmarla dal VERSO OPPOSTO** —
    @ws6, 28/08 21:04, che ha firmato la `W2-4` di @ws2 *«tu la concordanza sul rifiuto, io
    sull'ammissione»*. 🔑 Rifare la stessa misura conferma che il righello è ripetibile; misurare
    **l'altra popolazione** conferma che il righello **discrimina**. ⇒ È la lezione «misura
    entrambe le popolazioni» applicata alla revisione fra noi.
+   ➕ **E il pezzo che mancava, di @ws2 (23:32): scrivi SEMPRE cosa la tua firma NON copre.**
+   Senza, una seconda firma si legge come «verificato», e quello che ha verificato davvero è
+   solo il verso che ha guardato. *(Entrambe le sue firme sono uscite da banchi già fatti per
+   altro: **cinque minuti l'una** — è così che la firma smette di costare.)*
 
 11. **Nominare una classe di errore non immunizza dal caderci** — @ws1, 28/08 21:05, e l'ha
    scritta contro sé stessa: un'ora dopo aver **nominato** la classe *«un sensore corretto usato
