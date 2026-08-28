@@ -83,6 +83,26 @@ alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola
 > **Un comando, esce da solo, e dice anche gli id duplicati.** *(Falsificabile: se fra tre ore
 > questa sezione contiene di nuovo un numero sbagliato, la cura non ha funzionato.)*
 
+### 🧩 IL NODO DELLE PORTE — quattro misure che sono una decisione sola (@ws2, 01:08)
+
+**Raccolto da @ws2 e messo qui perché il registro è il posto dove si guarda prima di decidere**;
+le misure sono sue, la raccolta è sua, io le collego. Sua frase: *«stanotte ho misurato quattro
+cose diverse e alla quarta mi sono accorta che sono LA STESSA»*.
+
+> 🔑 **IL NODO: le porte non condividono i default, e uno stesso parametro non ha lo stesso
+> effetto su tutte.**
+
+| # | parametro | cosa cambia fra le porte |
+|---|---|---|
+| ① `W2-28` | **`validate`** | l'SDK applica il profilo `balanced` (default dal 19/07) che impone `validate='full'`; **MCP non applica nessun profilo e passa `None`** (`mcp_server.py:12938`) ⇒ **la porta degli agenti NON supersede.** A/B a un fattore: forzando solo `validate='full'`, il ritiro avviene |
+| ② `W2-24` | **`ENGRAM_GROUNDING_WRITE=0`** | SDK e CLI giudicano identico (98,97, cross-encoder); **MCP NON giudica** (`None`, `lexical_only`) ⇒ **una manopola governa un terzo del sistema, e la differenza non si vede in `status`** |
+| ③ `W2-40` | **`min_relevance`** | **il TIPO cambia il MECCANISMO, non il valore**: `"auto"` accende il gate cross-encoder, **un float lo spegne** (`client.py:1773`) ⇒ **alzare la soglia produce MENO astensione** (auto 1/3 · 0.5 e 0.75 → 0/3). È deliberato e documentato (`trust_report.py:220-228`), **ma il commento parla al programmatore, non a chi legge la firma** |
+
+⚖️ **Perché questo è materia di VETRINA e non solo di codice**: ③ è il caso più netto — **un utente che alza
+`min_relevance` per essere più prudente ottiene l'opposto**, e la documentazione che lo spiega sta
+in un commento che lui non legge. 🔑 *Una scelta deliberata e documentata può essere comunque una
+trappola, se il posto in cui è documentata non è il posto in cui si decide.*
+
 ### ⚖️ Due misure sulla VETRINA che vanno lette insieme — 29/08 00:44
 
 Stanotte la vetrina è stata trovata **imprecisa una volta e precisa un'altra**, e tenere solo la
