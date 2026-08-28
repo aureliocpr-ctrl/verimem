@@ -15,9 +15,31 @@ testo appiattito*. **La frequenza non l'aveva misurata nessuno.**
        L4.2 AVVISA                      1990   49,8%
        L4.2 avvisa SU span tabellare    1839   50,9% dei tabellari
 
-⇒ **Un avviso su metà delle scritture.** E leggendo gli esempi il difetto e'
-**peggiore** della descrizione: non e' «la colonna sbagliata», e' che la
-«grandezza» agganciata spesso **non e' una grandezza affatto**::
+⇒ **Un avviso su metà delle scritture.**
+
+🪞 **RIDIMENSIONATO alle 23:45, e in favore del prodotto.** Avevo scritto che la
+grandezza citata e' «**spesso**» una lettera o una preposizione, sulla base di
+**quattro esempi - i primi quattro incontrati, non un campione**. Classificati
+**tutti e 3339** gli avvisi (uno per valore, non per fatto)::
+
+    parola di contenuto (dopo)                   2227   66,7%
+    parola VUOTA: articolo/preposizione (dopo)    473   14,2%
+    una LETTERA sola (dopo)                       302    9,0%
+    parola di contenuto (prima)                   272    8,1%
+    una LETTERA sola (prima)                       34    1,0%
+    parola VUOTA (prima)                           31    0,9%
+    ---- parola di contenuto: 2499 su 3339 = 74,8%
+
+⇒ **La spazzatura e' un QUARTO (25,2%), non «spesso»**: tre avvisi su quattro
+nominano una parola di contenuto.
+⚠️ **MA «parola di contenuto» NON vuol dire «grandezza giusta»**, e il caso di
+@ws2 lo dimostra: in «*25 qui e' inserzioni, nella fonte files*» la parola
+`files` **e' di contenuto** ed e' comunque **la grandezza di un'altra riga**.
+⇒ Quindi il 74,8% **non e' un tasso di correttezza**: e' il tasso di «*almeno
+sembra una grandezza*». Il tasso vero richiede di leggere se la colonna e'
+quella giusta, e **non l'ho misurato**.
+
+I quattro esempi che mi avevano fuorviato restano veri e sono la coda del 25%::
 
     99.6    -> 'l'                        una lettera singola
     15134   -> 'prima del numero: su'     una preposizione
