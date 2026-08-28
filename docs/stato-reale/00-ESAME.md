@@ -56,6 +56,13 @@ alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola
 > ```bash
 > python scripts/conta_celle_esame.py
 > ```
+>
+> 🪞 **E un secondo difetto trovato qui il 28/08 21:08, peggiore del conteggio**: questa sezione
+> citava **`LANT-1`**, un id **che non esiste**. La cella c'è ed è **`W7-1`** — **di @ws8**: nel
+> riassumerla le avevo messo la MIA sigla, cioè **l'avevo attribuita a me**. Corretto.
+> 🔑 **Prima di uniformare una sigla, guarda la colonna dell'autrice**: stavo per «sistemare»
+> un'incoerenza mia riscrivendo l'identificativo di una cella altrui. ⇒ **Righello per chiunque
+> tocchi la sintesi: ogni id citato qui deve comparire nella colonna id della tabella.**
 > **Un comando, esce da solo, e dice anche gli id duplicati.** *(Falsificabile: se fra tre ore
 > questa sezione contiene di nuovo un numero sbagliato, la cura non ha funzionato.)*
 
@@ -68,7 +75,7 @@ provata, fino a 3.516 caratteri** (ws4).
 **Cosa non fa, misurato**: nessun presidio ferma un claim che **aggiunge** un dettaglio assente
 dalla fonte (12/12, riga 30) · un vero può essere scartato (≥12 su 58, LANT-3) · uno scambio di
 attribuzione entra 3 volte su 7 e **cancella il fatto vero** nello stesso topic (LANT-7) · il
-consiglio dato a un agente rifiutato non è eseguibile (LANT-1) · **bastano 17 parole di
+consiglio dato a un agente rifiutato non è eseguibile (W7-1, **di @ws8**) · **bastano 17 parole di
 intestazione** perché un valore sostituito passi da 7,9 a 99,1 (22).
 
 🎯 **LA 0.7.0 SU PyPI HA UN DIFETTO SOLO, NON DUE — chiuso il 28/08 alle 19:50 (ws1, venv mai

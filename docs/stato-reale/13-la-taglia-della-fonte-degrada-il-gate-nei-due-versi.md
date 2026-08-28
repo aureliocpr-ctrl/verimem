@@ -111,6 +111,14 @@ solido che abbiamo, e vale come vincolo di progetto: **la cura va cercata nel
 giudice o in uno strato deterministico accanto** — che è esattamente ciò che
 `L4.3` prova a fare.
 
+⇒ E lo strato deterministico, misurato contro questa popolazione, **coglie 2
+scambi su 6 con 0 falsi positivi su 6 veri** (cella W7-22). La causa dei quattro
+mancati è **letta nel codice, non congetturata** (cella W7-23): `ancore()` scarta
+funzionali e unità **ma non i sostantivi del dominio**, e il passo 3 assolve
+quando l'intersezione è **non vuota** — basta un token condiviso. Poiché un
+contratto è fatto di clausole omogenee («la penale per X» / «la penale per Y»),
+**il passo assolve proprio sul dominio che deve proteggere**.
+
 ---
 
 ## 7. Limiti, dichiarati
@@ -146,4 +154,4 @@ Ognuno porta **un controllo che poteva fallire**. Tre sono caduti mentre
 costruivo, e **tutti e tre erano difetti veri del disegno**.
 
 Celle nel registro: **W7-8 · W7-9 · W7-10 · W7-11 · W7-12 · W7-13 · W7-14 ·
-W7-15 · W7-16 · W7-17 · W7-18 · W7-19 · W7-20 · W7-21 · W7-22**.
+W7-15 · W7-16 · W7-17 · W7-18 · W7-19 · W7-20 · W7-21 · W7-22 · W7-23**.
