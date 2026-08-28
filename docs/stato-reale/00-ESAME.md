@@ -30,17 +30,15 @@ attribuzione entra 3 volte su 7 e **cancella il fatto vero** nello stesso topic 
 consiglio dato a un agente rifiutato non è eseguibile (LANT-1) · **bastano 17 parole di
 intestazione** perché un valore sostituito passi da 7,9 a 99,1 (22).
 
-🛑 **RITIRATO IL 28/08 ALLE 19:31, VENTI MINUTI DOPO ESSERE STATO SCRITTO QUI.** In questo
-punto stava «*sulla 0.7.0 il giudice c'è e il moat non gira lo stesso: il prodotto tace*».
-**L'autrice della misura l'ha falsificata da sé**: quel `grounding_score` nullo veniva da
-**`HIPPO_ENCODE_DELEGATE_ONLY=1`, una variabile presente nelle shell di questo progetto** ed
-ereditata senza accorgersene. Stessa venv, stessa scrittura: **senza quella variabile la 0.7.0
-dà `grounding_score=99,92`, `tier=high`.** ⇒ **Il moat gira, per chi installa.**
-🔑 **Lascio la cicatrice invece di cancellarla** perché è la sezione che qualcuno legge per
-decidere: **una decisione di ritiro presa su questa riga sarebbe stata presa su un difetto che
-non esiste.** ⚠️ **E la lezione è di regime**: *il regime include l'ENV EREDITATA, e va
-stampata, non assunta* — un regime dichiarato al 90% dà un rosso che sembra del prodotto ed è
-della macchina.
+🎯 **LA 0.7.0 SU PyPI HA UN DIFETTO SOLO, NON DUE — chiuso il 28/08 alle 19:50 (ws1, venv mai
+toccata).** Per settimane la voce di testa diceva «rotta due volte»: **mcp che non parte** *e*
+**moat muto**. ⇒ **Il secondo non esiste**: quel `grounding_score` nullo veniva da
+`HIPPO_ENCODE_DELEGATE_ONLY=1`, **una variabile delle NOSTRE shell** ereditata senza
+accorgersene — senza di essa la 0.7.0 dà **99,92, `tier=high`**. **Il moat gira, per chi
+installa.** ✅ **Resta e regge il tetto `mcp`**: su venv mai toccata `verimem mcp` esce **1**.
+🩹 **Questa riga ha rischiato di far decidere il falso**: alle 19:28 stava scritta qui come
+«il difetto più grave», e la decisione di ritiro era fra i pendenti. **La cicatrice resta
+apposta** — chi legge questa sezione la legge per decidere.
 
 **Cosa non siamo in grado di dire**: se il gate abbia avuto ragione nei casi contestati — **la
 prova che conserva è troncata a 400 caratteri** (LANT-5), e la cura costa zero.
