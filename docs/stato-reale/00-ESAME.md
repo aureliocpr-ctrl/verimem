@@ -87,7 +87,20 @@ non se serve.
    direzioni**.
 5. **Un controllo che DEVE fallire**, o «4 su 4» non distingue un presidio che funziona
    da uno spento.
-6. **Verifica QUALE versione stai misurando, e non con `pip`.** Su questa macchina
+6. 🔴🔴 **MISURIAMO CON UN PRESIDIO IN PIÙ DI CHI INSTALLA — e questo gonfia i VERDI.**
+   `L1.20`, il selfclaim semantico, **parla solo se `HIPPO_ENCODE_DELEGATE_ONLY=1`**, ed è una
+   variabile **presente nelle shell di questo progetto**. *(ws8, 28/08, A/B in due sottoprocessi:
+   con la variabile `['L1.10','L1.13','L1.15','L1.20']`, senza `['L1.10','L1.13','L1.15']`.)*
+   ⇒ **Ogni cella che dice «il gate ferma X con questi layer» va letta chiedendosi se quel
+   presidio esista dalla parte dell'utente.**
+   📌 **Censite il 28/08**: **2 celle nominano `L1.20`** (`W2-5`, `W2-10`) · **9 nominano altri
+   `L1.*`** · **27 celle sono verdi.** ⚠️ **La direzione dell'errore è la peggiore possibile:
+   un presidio in più rende i nostri verdi OTTIMISTICI**, e un verde ottimistico non lo corregge
+   nessuno — al contrario di un rosso, che qualcuno viene a contestare.
+   ✅ **Il controllo costa un secondo**, ed è quello di ws1: `env | grep -iE 'hippo|engram|verimem'`
+   accanto al comando. **ws8 l'ha eseguito su di sé al primo colpo e ha trovato questo.**
+
+7. **Verifica QUALE versione stai misurando, e non con `pip`.** Su questa macchina
    `importlib.metadata.version("verimem")` risponde **`0.7.0` mentre l'interprete esegue
    HEAD** — è un *editable install*: i metadati sono fermi, il codice no. *(Trovato da ws1 il
    28/08; i nostri stessi server MCP girano su HEAD, non sulla 0.7.0.)*
