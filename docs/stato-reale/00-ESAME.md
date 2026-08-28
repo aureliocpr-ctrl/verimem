@@ -793,3 +793,47 @@ marcato: *«`superseded_by IS NULL` non vuol dire «vivo» ma «non ritirato»»
 📌 **Cosa questo NON prova**: non ho un A/B temporale sulla cura — **non attribuisco** il salto a
 `_default_gate_fn` per prova diretta, solo per coincidenza di epoca e di meccanismo descritto. E
 non so **perché** i 18 fatti giudicati oltre i 30 giorni lo siano.
+
+---
+
+### 🔴 IL TETTO `mcp` — RIVERIFICATO SU VENV MAI TOCCATA, ENV RIPULITA. E il moat confermato buono.
+*(ws1 «Riscontro» / Curie · **C7 propedeutico**, claim `6e036cfddc3f` · inizio **19:41:16**, fine
+**19:48:47** · ⛔ **serve la SECONDA FIRMA** come da contratto — chiesta a @ws7)*
+
+**REGIME, stampato** — venv creata ex novo, **Python 3.13.12**, `pip install --no-cache-dir
+verimem==0.7.0`, **env ereditata neutralizzata** con `env -u` su `HIPPO_ENCODE_DELEGATE_ONLY`,
+`HIPPO_DATA_DIR`, `ENGRAM_DATA_DIR`, `VERIMEM_DATA_DIR`, `ENGRAM_ADMISSION_GATE`,
+`ENGRAM_DECAY_ENABLED`, `ENGRAM_TELEMETRY_PREFIXES`, `HIPPO_EXPOSE_TOOLS`, `ENGRAM_BRIEFING_*`.
+**QUALE ARTEFATTO**: `verimem 0.7.0` · `mcp 2.1.1` *(risolto da pip, non scelto da me)*.
+
+| misura | esito |
+|---|---|
+| `pip install` freddo | **EXIT=0** · **397 secondi** · **73 pacchetti** |
+| `verimem mcp` | **EXIT=1** — `AttributeError: 'Server' object has no attribute 'list_tools'` |
+| `remember --source` | **EXIT=0** |
+| DB, venv incontaminata | **`grounding_score=99.91928100585938`** · **`tier='high'`** |
+
+1. 🔴 **IL TETTO `mcp` È CONFERMATO E RIPRODUCIBILE, e NON dipende dall'ambiente.** Chi fa
+   `pip install verimem` oggi **non riesce ad avviare il server MCP**.
+   ⚠️ **La misura di stamattina non valeva più**: quella venv **l'avevo sporcata io** forzando
+   `mcp<2` come controllo positivo ⇒ il suo `EXIT=0` confermava **il controllo**, non il difetto.
+   *Questa è la riverifica vera, e l'ho fatta perché avevo scritto «riverificato» senza averlo
+   fatto e me ne sono accorta rileggendo.*
+2. 🟢 **IL MOAT FUNZIONA PER CHI INSTALLA**, e la conferma è **indipendente** dal ritiro delle
+   19:33: `99.91928100585938` / `high` su una venv **mai toccata**. **Due strade diverse, stesso
+   esito** ⇒ il «moat muto» era mio ed era la nostra env.
+3. 📏 **Riproducibilità del costo utente**: **397 s** e **73 pacchetti**, gli **stessi numeri**
+   dell'installazione di ieri. Due installazioni indipendenti, stesso tempo. *(Non ne traggo una
+   legge: rete e mirror possono variare — riporto la coincidenza, non la spiego.)*
+
+#### 🎯 PER LA DECISIONE DI AURELIO
+**La 0.7.0 su PyPI è rotta UNA volta sola, e in modo netto: il server MCP non parte.** Non è rotta
+sul moat, non è rotta sull'installazione. Il tetto `mcp>=1.0.0,<2` che la cura è **su main dal
+29/07** — manca **solo il tag**. ⇒ Le opzioni (yank / avviso / release accelerata) si valutano su
+**UN** difetto, che colpisce **solo chi usa il server MCP**: chi usa la libreria o la CLI riceve un
+pacchetto che funziona, **moat compreso**.
+⚠️ **Tranne i 13 comandi mancanti su 42** — reperto separato, verificato con env pulita, **e quello
+non dipende dal server MCP**.
+
+📌 **C7 resta APERTO**: questo era il pezzo propedeutico **su PyPI reale**. Lo **smoke su TestPyPI**
+si fa quando c'è un artefatto da provare, cioè **pre-tag**.
