@@ -1352,3 +1352,54 @@ figura di chi **conta due volte lo stesso problema** (non rilasciare) per farlo 
 🔑 **CLASSE: prima di chiamare «difetto» una differenza fra due versioni, chiediti se è solo il
 TEMPO.** Gemella della lezione di stasera sull'env: lì l'etichetta era **il regime**, qui è la parola
 **«mancante»**, che suggerisce una *perdita* dove c'è solo un'*assenza per data*.
+
+---
+
+### 🟢 LA SOGLIA «SCAVALCATA A RUNTIME» NON È UN DIFETTO — ed è già nel pacchetto pubblicato
+*(ws1 «Riscontro» / Curie · **28/08 21:02** · **REGIME RISPARMIO RAM**: **sola lettura di codice e
+di un file JSON, zero esecuzioni**)*
+
+Avevo aperto un fronte su questo avviso, visto due volte oggi a runtime:
+> `RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact)
+> — using the validated local CE moat cut 40`
+
+**Letto il punto che decide** (`grounding_gate.py:510`, `resolve_write_threshold_for`): **non è uno
+scavalcamento nascosto, è una protezione deliberata e motivata.**
+1. L'**env override** vince sempre (`ENGRAM_GROUNDING_WRITE_THRESHOLD` / `ENGRAM_GROUNDING_THRESHOLD`).
+2. Per il backend `local` si prende la soglia calibrata dal `gate_config.json` **del modello**.
+3. **SANITY CAP (2026-07-18)**: se quella soglia è **> 90**, viene ignorata e si usa **40**, con un
+   avviso **una volta per processo** — il commento dice testualmente «*visible, not silent*».
+4. **Motivazione misurata, nel codice**: il modello dichiara il max-F1 del proprio *val set*
+   (HaluMem, punteggi compressi vicino a 1.0), **non un punto d'esercizio**; a 99.64 si
+   quarantinerebbero **fatti VERI** — l'esempio nel commento è «*Postgres 99.57 rifiutato per
+   0.07*».
+
+**Verificato il numero alla fonte** (lettura del file del modello):
+`~/.engram/models/local_gate_ce_v2/gate_config.json` → **`threshold = 99.64130401611328`**.
+
+#### ✅ E LA DOMANDA CHE ERA DAVVERO MIA: la cura c'è nel PUBBLICATO?
+| | 0.7.0 da PyPI | HEAD |
+|---|---|---|
+| `SANITY CAP` | **1** | 1 |
+| `90.0` | **1** | 1 |
+| `calibration artifact` | **1** | 1 |
+| `unusable cut` | **1** | 1 |
+
+⇒ 🟢 **La protezione è presente e identica nel pacchetto che un utente installa** (la cura è del
+**18/07**, la 0.7.0 è uscita il **22/07**: ci sta per date). **Un utente della 0.7.0 non rischia di
+vedersi quarantinare fatti veri per la soglia del modello.**
+⇒ **Fronte chiuso senza difetto** — e in vista del rilascio è **una cosa in meno da temere**.
+
+#### 📌 Cosa resta da dire, e non è un difetto
+L'avviso è un **`RuntimeWarning`**: un'applicazione che filtra i warning **non lo vede**. Ma
+**l'informazione operativa è nel canale che conta**: la ricevuta riporta `"threshold": 40.0` (e
+`"margin"` coerente), cioè **la soglia realmente applicata, non quella dichiarata dal modello**.
+⇒ **Nessuna promessa insostenuta**: il numero che il prodotto dice all'utente è quello che usa.
+
+#### 📌 COSA NON PROVA
+· **Non ho eseguito nulla** (regime risparmio): ho confrontato i **sorgenti** e letto il JSON del
+modello. Non ho verificato **a runtime** che la 0.7.0 applichi davvero 40 — il caso che
+discriminerebbe è un fatto con punteggio **fra 40 e 99.64**, e quello richiede una scrittura.
+**In coda per la finestra macchina.**
+· Il mio unico dato a runtime sulla 0.7.0 (`99.919`) **passa con entrambe le soglie**, quindi non
+distingue.
