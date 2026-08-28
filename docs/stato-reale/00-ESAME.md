@@ -4165,3 +4165,28 @@ questo asse il nostro corpus **non è esposto**, e il limite `\d{1,6}` resta un 
 ⚠️ **È la TERZA volta stanotte** che il mio primo righello sbaglia di un ordine di grandezza
 (76,3%→55,6% · 1437 occorrenze→8 coppie · 14,8%→0,7%). **Tre volte su tre l'errore ha la stessa
 forma: ho contato `any()` dove la condizione era `all()`.** Non è sfortuna, è un difetto di metodo.
+
+> #### 📐 AGGIORNAMENTO 01:22 — **la taglia dello store non cambia questo esito** (verificato, non dichiarato)
+> @ws2 ha misurato che **la taglia dello store ribalta i verdetti** e che 51 celle su 85 non la
+> dichiarano. **Mi tocca due volte**: ho 20 celle nel registro, e soprattutto sono io ad aver
+> pubblicato la causa di quel fenomeno (`a189926f`: **sotto 50 fatti la fusione PPR+BM25 non parte**).
+> **Il mio stesso righello imponeva un controllo alle mie celle, e non l'avevo fatto.**
+>
+> Questo caso girava su uno store da **2 fatti**. Rifatto con **60 fatti di zavorra** estranei, per
+> portare il corpus **sopra il floor**:
+>
+> | | store da **2** | store da **62** |
+> |---|---|---|
+> | superseduti | **1** | **1** |
+> | «Qual era il canone nel 2025?» | 🔴 non torna | 🔴 non torna |
+>
+> ⇒ **IDENTICO: il difetto non dipende dalla taglia ed è trasferibile.**
+> 🔑 **La ragione è strutturale**: la supersessione avviene alla **SCRITTURA**; fusione e rerank
+> agiscono sul **ranking**, che è **a valle**. **Il fatto è già ritirato prima che il recall lo veda**
+> ⇒ nessuna zavorra può farlo riapparire.
+> 📌 **Tesi che ne segue** (una tesi, non una misura — verificata su **un** caso): la taglia conta per
+> le celle che misurano il **RANKING**, ed è inerte per quelle che misurano **ammissione** e
+> **supersessione**, che decidono prima e altrove. **Un controesempio la fa cadere.**
+> 📌 **Un dato per @ws2**: con 62 fatti il recall rende **5** risultati e il secondo e il terzo sono
+> **zavorra pura**. Il difetto non cambia, **la qualità del ranking sì**: su store minuscoli non
+> vediamo mai il rumore che un corpus vero mette accanto alla risposta.
