@@ -235,10 +235,24 @@ non se serve.
 | **G10** multilingual validation | 19 · 12 · 4 · W7-8 | l'affidabilità **varia di 10×** per classe e lingua (negazione IT 0/10 · EN 0/10 · TH 6/10) · la negazione non esplicita passa **46 su 108**, IT 30/54 contro EN 16/54 · tre record distinti si cancellano **in inglese e non in italiano** | |
 | **G4** benchmark riproducibili da un comando | 9 · 10 | il banco del **regime reale** esisteva dal 21/07 e non era **mai stato eseguito**; eseguito il 27/08 dà **258 ms · 14,3 op/s · zero errori** | |
 | **G6** README claim audit: zero claim non verificati | 1 · 31 · 32 | i comandi promessi dal README pubblicato ci sono **tutti** · il gate **pretende che il soggetto stia nella fonte**, e l'accusa contraria è stata ritirata dall'autrice | |
-| **G1 · G3 · G5 · G7 · G9** | *(nessuna cella)* | non toccati da ciò che è stato misurato il 27/08 | |
+| **G1** suite intera verde su un run pulito | LANT-24 | *(sweep del 28/08 20:20)* la CI **non produce verdetti da 22 ore e mezza**, e chi aspetta troppo viene **cancellato** ⇒ questo cancello non è rosso: **è muto**, e non per causa sua | |
+| **G9** CI cross-platform | LANT-24 | stessa cella, altro cancello: senza run conclusi non esiste né una matrice verde né una rossa | |
+| **G7** identità PyPI + install da venv pulita | 2 · 11 | *(già usate per G2/G8 — una cella può servire più cancelli)* la clausola «install verified from a clean venv» oggi **non regge sul server MCP**, mentre il moat per chi installa **gira** | |
+| **G3** crash durability · **G5** invarianti hypothesis | *(nessuna cella)* | **e qui l'assenza non è un buco**: sono i due che alla riverifica del 26/08 **reggevano**, e da allora nessuno li ha rimessi in discussione | |
 
-📌 **Quello che questa tabella rende visibile e prima non lo era**: dei dieci cancelli, **cinque
-hanno informazione nuova** dal 27/08 e **cinque no**.
+📌 **Quello che questa tabella rende visibile e prima non lo era**: dopo lo sweep del 28/08,
+**otto cancelli su dieci** hanno almeno una cella; i due che non ne hanno sono i due che reggono.
+
+⚠️ **Come è stato fatto lo sweep, perché il righello ha sbagliato e non l'ho consegnato.** Ho
+cercato per parole chiave nella colonna «domanda» e ho ottenuto **sette candidati**: leggendoli,
+**tre erano falsi positivi dello stesso tipo** — il pattern `ci` per «CI» pesca il **pronome
+italiano** («quanto **ci** mette», «quando **ci** sono i metadati», «quello che **ci** scrivono»)
+— e uno lo era per un'altra ragione (la cella `13` nomina una **licenza come fonte di prova**,
+G7 nomina le **licenze dei modelli inclusi**: stessa parola, due cose). ⚠️ **E il righello ha
+anche MANCATO** il collegamento più importante: `LANT-24` → **G1**, che ho visto leggendo e non
+contando, perché il pattern di G1 cercava «suite» e la cella dice «la CI produce verdetti?».
+🔑 **Un righello che sbaglia in entrambe le direzioni non si consegna: si usa per fare la lista
+da leggere.** ⇒ Questa tabella riporta ciò che ho **letto**, non ciò che ha **contato**.
 
 🛑 **RITIRO UNA MIA INFERENZA (ws7, 22:22).** Avevo scritto qui che «*le celle che toccano G2 e
 G8 descrivono la stessa condizione — chi installa e non esegue `verimem warmup`*». **Si
