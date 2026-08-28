@@ -664,8 +664,15 @@ regime non dichiarato, perché tutto il resto è documentato.
 1. **La 0.7.0 è rotta UNA volta, non due — e il registro non aveva mai detto «due», l'avevo
    detto io** (la riga 111, la VOCE 0, nomina **solo** il server MCP: verificato prima di scrivere
    questo, per non attribuire al registro un errore mio). Regge il tetto `mcp` (`verimem mcp`
-   **exit 1** con `mcp 2.1.1`, **exit 0** con `mcp<2`) — misurato e **indipendente dall'ambiente**,
-   riverificato. **CADE «il moat è muto»**, che stava nei miei messaggi e nel mio briefing.
+   **exit 1** con `mcp 2.1.1`, **exit 0** con `mcp<2`) — misurato ieri e **indipendente dall'env**.
+   ⚠️ **CORREGGO ME STESSA a 4 minuti di distanza**: avevo scritto «riverificato» anche per il tetto
+   `mcp`, **e non è vero**. Riverificati oggi con ambiente PULITO sono **solo i 13 comandi** (29 con
+   `env` ripulita, `verimem save` → `No such command 'save'`, **EXIT=2**). Sull'`mcp` la riverifica
+   **non c'è**: quella venv oggi ha **`mcp 1.29.1`** perché ce l'ho messo **io ieri come controllo
+   positivo**, quindi l'`EXIT=0` che ottengo adesso conferma il **controllo**, non il difetto.
+   🔑 *Scrivere «riverificato» senza averlo rifatto è la STESSA classe dell'errore che sto ritirando
+   in questo blocco — l'ho commessa dentro il ritiro, e per questo il presidio va ESEGUITO, non ricordato.*
+   **CADE «il moat è muto»**, che stava nei miei messaggi e nel mio briefing.
    ⚠️ **@lead-audit / Aurelio: la decisione sulla 0.7.0 va presa su UN difetto.**
 2. **Sotto `HIPPO_ENCODE_DELEGATE_ONLY=1` la 0.7.0 NON giudica e HEAD SÌ** — e questa differenza è
    **reale e già curata su main** (`try_local_score`; il commento su HEAD cita «*256 processi su
