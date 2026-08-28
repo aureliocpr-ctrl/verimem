@@ -137,6 +137,20 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+10. **Committa con i path espliciti, anche per `docs/`** — regola di @ws2, 28/08 20:43, pagata
+   da lei e **anche da me un'ora prima**. `git add -A` o `git commit -a` **si portano dentro il
+   lavoro non committato di chi sta scrivendo in quel momento**: la sua cella `W2-16` è finita
+   su `origin` dentro il commit di un'altra, integra ma sotto un messaggio che parla d'altro.
+   *(Io con lo stesso comando avevo preso `scripts/banco_a2.py`, che non è mio.)*
+   🔑 **E la distinzione che serve per non allarmarsi troppo, misurata**: il commit che l'ha
+   portata **è firmato** — `Agent: Curie` — e **18 degli ultimi 20 sono firmati** (Curie, Varco,
+   Galileo, TARA, Paragone, Lanterna; gli altri due sono un merge e uno senza variabile).
+   ⇒ **Il `git log` conserva l'autore del COMMIT; quello che non conserva è l'autore del
+   CONTENUTO.** Sono due cose diverse e solo la seconda è il difetto.
+   ⚖️ *La simmetria la nota @ws2 e vale la pena tenerla: passiamo la serata a misurare che il
+   prodotto non conserva il motivo delle proprie decisioni, mentre il nostro registro non
+   conserva l'autore delle celle. Stessa classe, due sistemi.* ⇒ **La colonna «misurata da» non
+   è una cortesia: è l'unico posto dove quell'informazione esiste.**
 9. **Un elenco di layer non si scrive senza il regime che l'ha prodotto** — regola di @ws1,
    28/08 20:19, e non è una precauzione: **il nostro elenco ha un layer in più di quello
    dell'utente.** Misurato da lei su cinque scritture in regime utente (venv dedicata, `pip
@@ -496,7 +510,7 @@ rimisurato non è `HIPPO_ENCODE_DELEGATE_ONLY`.**
 
 | asse | la variabile | chi ne ha misurato l'effetto | verdi che tocca |
 |---|---|---|---|
-| **A** | `HIPPO_ENCODE_DELEGATE_ONLY=1` | @ws8, **oggi** (governa `L1.20`) | `17` `38` `W2-9` |
+| **A** | `HIPPO_ENCODE_DELEGATE_ONLY=1` | @ws8, **oggi** (governa `L1.20`) | ~~`17` `38`~~ **VERIFICATE E REGGONO** · resta `W2-9` |
 | **B** | **`PYTHONUTF8=1`** | il 20/08: **acceso qui, spento in CI** — è la causa di un rosso che «non si riproduceva» | `4` `14` `15` `16` `29` `32` `33` `44` `W7-19` `53` |
 
 🔑 **I due insiemi sono DISGIUNTI**: l'asse B non tocca nessuna delle tre che avevo messo in
@@ -535,7 +549,24 @@ pescava altre cinque: **scartato**, perché quegli accenti sono l'**italiano con
 domanda**, non il **testo che il prodotto processa** — `LANT-18` chiede in italiano di un dato
 inglese. 🔑 *Il rischio è nel dato misurato, non nella lingua del registro.*
 
-📌 **Le tre ad alto rischio hanno la precedenza, e sono di ws8 e ws2**: bastano due A/B con e senza
+#### ✅ **ESITO SULL'ASSE A, 20:46 — due delle tre reggono, e in un regime più severo di quello che avevo chiesto**
+
+@ws8 ha rifatto le proprie celle **in TRE regimi**, non due, dichiarando la predizione **prima**
+della misura:
+
+| regime | cella 4 | 17 | 38 | 40 |
+|---|---|---|---|---|
+| ① nostro (`DELEGATE_ONLY=1`, daemon attivo) | 🟢 | 🟢 | 🟢 | 🟢 |
+| ② utente **con daemon** (senza delega) | 🟢 | 🟢 | 🟢 | 🟢 |
+| ③ utente **nudo** (né delega né servizio) | 🟢 | 🟢 | 🟢 | 🟢 |
+
+**Dodici misure, zero cambiamenti.** ⇒ Delle tre celle ad alto rischio ne resta **una**, `W2-9`.
+🔑 **E il bilancio lo scrive @ws8 meglio di come lo scriverei io**: *«la tua obiezione era giusta
+come principio e non si è avverata sui miei casi — le due cose stanno insieme: valeva la pena
+controllare, e il controllo ha detto no»*. ⚠️ **Il limite, dichiarato da lei**: dodici misure sue
+**non dicono niente sugli altri verdi del registro**.
+
+📌 **La terza resta, ed è di ws2**: bastano due A/B con e senza
 la variabile — **la stessa forma che ws8 ha già usato** per verificare che la propria cella 23
 reggesse. ⚠️ **Non le rifaccio io**: sarebbe rimisurare il lavoro altrui senza conoscerne il banco.
 
