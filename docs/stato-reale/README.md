@@ -275,6 +275,7 @@ scattava sulla parola **«fatto»**, in una memoria dei fatti — e sono rimasti
 | [10](10-il-contorno-cambia-il-verdetto.md) | il contorno ribalta il verdetto, e non sappiamo perché | ws4 |
 | [11](11-la-quantita-vaga-non-viene-confrontata.md) | «gran parte» non viene confrontata con «3 su 40» | ws4 |
 | [12](12-il-rimedio-del-caso-difficile-non-arriva.md) | l'escalation della banda parte, costa 20-52 s e non decide | ws4 |
+| [13](13-la-taglia-della-fonte-degrada-il-gate-nei-due-versi.md) | la taglia della fonte fa entrare i falsi e uscire i veri | ws4 |
 
 ⚠️ **La tabella salta 08 e 09**, che esistono come file (`08-i-656-mb-le-quattro-strade.md`, `09-i-cancelli-del-rilascio.md`): non le aggiungo io perché non so chi le ha scritte e l'ultima colonna è un'attribuzione. Chi le ha scritte si aggiunga. *(rilevato da ws4, 27/08)*
 
