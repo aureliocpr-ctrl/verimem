@@ -265,7 +265,7 @@ sarebbe *assenza di misura letta come verde*).
 | 8 | quanto costa davvero una scrittura? | — | — | processo singolo | 🟡 **il costo è di NASCERE, non di scrivere** | ws3, ws6, ws2 | primo write ~26 s / 1,9 GB · dal terzo **0,4–0,5 s** (**23,7×**). Regime: N processi effimeri, ognuno carica i propri modelli — **il repo lo chiama anti-pattern dal 21/07** |
 | 9 | il banco del regime che un utente userebbe è mai stato eseguito? | — | — | gateway | 🟢 **eseguito il 27/08** (era 🔴 «mai, dal 21/07») | ws7 (trovato), ws3 (eseguito) | `benchmark/concurrency_shared_server.py` aveva **1 commit · 0 artefatti · 0 citazioni** dal 21/07. Commit dell'esecuzione: `f8836233` |
 | 10 | il sistema regge il carico nel regime di un servizio? | — | — | gateway | 🟢 **sì** | ws3 | `--workers 2 --secs 60`, uvicorn in un processo suo, store `mkdtemp`: **654 letture · 217 scritture · 0 errori** · `write_p50` **258,3 ms** · `write_p99` 575,8 · **14,3 ops/s** · **ops > 5 s: 0**. 🔑 La predizione scritta nel docstring il 21/07 (*«writes stay in the hundreds-of-ms range»*) era **esatta** |
-| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🔴 **il moat NON gira — e NON è il `warmup`** *(era 🟡; corretta da ws1 il 28/08 19:07, causa isolata a variabile singola)* | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup»)  ⚠️ **Vincolo aggiunto dall'autrice (22:02)**: il confronto era **0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero** — **due variabili insieme**. **Resta vero che chi installa ottiene `grounding None`**; escluse CLI e firma. ⚠️ **RITIRATA LA TESI «è il warmup» (ws1, 28/08 19:07)**: `model_dir` **identico** nelle due installazioni e `local_ce_available()` è **`True`** anche sulla 0.7.0 ⇒ **il giudice c'è e il moat non gira lo stesso**; provato a variabile singola (stessa superficie `remember`, store isolati) → DB: 0.7.0 `grounding_score=None`/`tier=unverified` vs HEAD `99.91928100585938`/`tier=high`. **Il vincolo «due variabili» che avevo messo il 27/08 alle 22:02 è PAGATO.** Dettaglio, le tre leve morte e ciò che il dato NON prova: blocco in fondo al file |
+| 11 | sulla versione **installata da PyPI** il moat giudica la fonte? | — | EN | SDK | 🟡 **per chi installa il moat GIRA — `99.91928100585938`, `tier=high`. NON gira SOLO sotto `HIPPO_ENCODE_DELEGATE_ONLY=1`, ed è già curato su main** *(ws1: 🟡→🔴 alle 19:07 su un regime contaminato, 🔴→🟡 alle 19:33 col regime STAMPATO — ritiro in fondo al file)* | ws1 (misura), ws3 (correzione) | ⚠️ **Riga corretta il 27/08 e resa MENO grave: eravamo troppo severi con noi stessi.** Il modello del giudice non è nel pacchetto (`local_grounding.py:48` → cache in `~/.cache/verimem/models/`, **~2,3 GB**, scaricati da `verimem warmup`) ⇒ senza warmup `judged=False`, `grounding_score=None` — **la misura di ws1 regge**. **Ma è dichiarato in tre punti del README** (righe 57, 120, 336) **e a runtime nella ricevuta** (`anti_confab_gate.py:1806`: «*source provided but the grounding judge failed to load*»). 🔑 **È un passo d'installazione dichiarato, non una promessa non mantenuta.** ⇒ Scriverlo «il moat non giudica sul pubblicato» **darebbe a un analista un'arma che i fatti non gli danno**. 📌 Spiega la riga 20 (8 s con **zero byte scaricati**: quel regime *è* «senza warmup»)  ⚠️ **Vincolo aggiunto dall'autrice (22:02)**: il confronto era **0.7.0-in-venv-nuovo contro HEAD-nel-suo-albero** — **due variabili insieme**. **Resta vero che chi installa ottiene `grounding None`**; escluse CLI e firma. ⚠️ **RITIRATA LA TESI «è il warmup» (ws1, 28/08 19:07)**: `model_dir` **identico** nelle due installazioni e `local_ce_available()` è **`True`** anche sulla 0.7.0 ⇒ **il giudice c'è e il moat non gira lo stesso**; provato a variabile singola (stessa superficie `remember`, store isolati) → DB: 0.7.0 `grounding_score=None`/`tier=unverified` vs HEAD `99.91928100585938`/`tier=high`. **Il vincolo «due variabili» che avevo messo il 27/08 alle 22:02 è PAGATO.** Dettaglio, le tre leve morte e ciò che il dato NON prova: blocco in fondo al file |
 | 12 | il gate rifiuta un claim che la fonte **nega**? | C7 | IT+EN | SDK | 🔴 **no: 46 su 108 (42,6%)** | ws6 | **sei schemi × 18**: «non» esplicito **0/18** ✅ · quantificatore zero 8 · assenza 9 · **stato («il registro è vuoto») 12/18** 🔴 · sostituzione 8 · cessazione 9. **IT 30/54 · EN 16/54**. 🔑 **Il gate riconosce la parola «non», non la negazione**: «*il registro ALFA è vuoto*» è giudicato una **prova** di «*il registro ALFA elenca le misure*», 12 volte su 18, con punteggi 96–99,99. Commit `f51f9845`. ⚠️ Era 5/24 con **un solo** schema: il numero è raddoppiato allargando il banco. 🤝 **Riconcilia il verde di ws8** («L3 negazione ribaltata → `quarantined` in entrambe le modalità»): il suo attacco è *«The release **WAS** approved»* contro *«was **NOT** approved»*, cioè **lo schema 1**, l'unico su cui anch'io misuro **0 errori su 18**. ⇒ **Le due misure non si contraddicono**: il moat ferma la negazione **quando è scritta con la particella**. Sugli altri cinque modi di dire la stessa cosa: **46 su 90**. 🔑 Da un verde sullo schema 1 **non segue** un verde sulla classe |
 | 13 | su una licenza reale il gate ferma un claim che **ricalca** la fonte cambiando un numero di clausola? | C4 | EN | — | 🔴 **no, 2 su 3** | ws5 | «section 7» al posto di «section 10» entra a **99.1 senza alcun layer**. Il rischio è la **congiunzione** (ricalco + numero comune), non `L4.1` da solo  🔒 **BLOCCATA-DA-F1** — non si cura da sola: è una delle facce dello **strato soggetto-valore** (marcatura di ws7 su direzione di lead-audit, 28/08 19:02) |
 | 14 | il presidio metrico riconosce la copula italiana in tutte le sue scritture? | C4 | IT | SDK | 🟢 **sì, dopo cura** (era 🔴) | ws2 | 5 forme dello stesso claim senza attestazione: `è`, `e` nudo, senza copula e l'inglese cadevano; **`e'` con l'apostrofo passava**. Sul corpus prima della cura: **48** claim metrici scritti con `e'` e **0** quarantinati, contro **8 su 31** (25,8%) di quelli con `è`, su una quota complessiva dell'8,5%. Curato in `f5dedf34`, TDD senza stash: RED `5 failed EXIT=1` → GREEN `11 passed EXIT=0`, non-regressione `tests/test_l1_quantitative_detector.py` `19 passed`. ⚠️ Limite: misurato sulla porta SDK, **non** su MCP/CLI/gateway |
@@ -622,3 +622,79 @@ gate, una **guardia di sicurezza**, che sbagliando nella direzione prudente **no
 > 🔑 **La domanda «il MIO commit è passato?» si chiede con `git log --all --grep '<il mio messaggio>'`,
 > mai con `--contains HEAD` e mai con «il file è pulito»** — su albero condiviso *pulito* significa
 > «qualcuno l'ha committato», non «l'ho committato io».
+
+---
+
+## 🛑🛑 RITIRO DALL'AUTRICE — il blocco «RIGA 11, CAUSA ISOLATA» qui sopra è SBAGLIATO
+*(ws1 «Riscontro» / Curie, scritto 19:07, **ritirato 19:33**, cioè 26 minuti dopo. Il ritiro sta
+QUI e non cancella il blocco: si deve poter vedere l'errore, non solo la correzione.)*
+
+**Avevo scritto: «sulla 0.7.0 pubblicata il moat non gira, `grounding_score=None`».
+È FALSO per chi installa.** Misurato nella stessa venv, stessa scrittura, stesso fatto:
+
+| regime | `grounding_score` | `tier` |
+|---|---|---|
+| 0.7.0 **con** `HIPPO_ENCODE_DELEGATE_ONLY=1` | `None` | `unverified` |
+| 0.7.0 **senza** quella variabile | **`99.91928100585938`** | **`high`** |
+
+⇒ **Quella variabile è nell'ambiente delle NOSTRE shell** (la configurazione MCP di Aurelio), io
+l'ho **ereditata senza accorgermene**, e `_delegate_only()` ha **codice identico** nelle due
+versioni. Il mio «confronto a variabile singola» era pulito su tutto — venv, Python, pacchetti,
+store isolato, istante — **tranne che sull'env ereditata, che non ho stampato perché non ho
+pensato a guardarla.**
+
+### 🔑 LA LEZIONE, ed era già scritta in casa
+> «*UN ROSSO CHE NON SI RIPRODUCE NON È INSTABILE: dipende da ciò che la TUA macchina ha e la loro no*»
+
+Ce l'avevo, e ci sono cascata comunque. **La forma nuova, che quella riga non copre:**
+**IL REGIME INCLUDE L'ENV EREDITATA, E VA STAMPATA, NON ASSUNTA.** Un regime dichiarato al 90%
+produce un rosso che *sembra* del prodotto ed è della macchina — e sembra **più** solido di un
+regime non dichiarato, perché tutto il resto è documentato.
+✅ **Contromisura, un secondo**: accanto al comando, nel referto, la riga
+`env | grep -iE 'hippo|engram|verimem'`.
+
+### 📌 LE MIE TRE POSIZIONI IN 24 ORE, perché si veda dove è entrato l'errore
+| quando | cosa ho affermato | regime |
+|---|---|---|
+| 27/08 22:02 | «chi installa ottiene `grounding None`» | **non dichiarato** |
+| 28/08 19:07 | «causa isolata, e non è il `warmup`» | **dichiarato al 90%** |
+| 28/08 19:33 | «è la nostra env; per l'utente il moat **GIRA**» | **stampato** |
+
+### ✅ COSA RESTA VERO — e va tenuto separato da ciò che cade
+1. **La 0.7.0 è rotta UNA volta, non due — e il registro non aveva mai detto «due», l'avevo
+   detto io** (la riga 111, la VOCE 0, nomina **solo** il server MCP: verificato prima di scrivere
+   questo, per non attribuire al registro un errore mio). Regge il tetto `mcp` (`verimem mcp`
+   **exit 1** con `mcp 2.1.1`, **exit 0** con `mcp<2`) — misurato e **indipendente dall'ambiente**,
+   riverificato. **CADE «il moat è muto»**, che stava nei miei messaggi e nel mio briefing.
+   ⚠️ **@lead-audit / Aurelio: la decisione sulla 0.7.0 va presa su UN difetto.**
+2. **Sotto `HIPPO_ENCODE_DELEGATE_ONLY=1` la 0.7.0 NON giudica e HEAD SÌ** — e questa differenza è
+   **reale e già curata su main** (`try_local_score`; il commento su HEAD cita «*256 processi su
+   293 fanno una chiamata sola*»). **Chi è colpito: chi usa verimem COME SERVER MCP con quella
+   variabile accesa.** Regime **opt-in e stretto**, non l'utente che fa `pip install`.
+   ⇒ **Da riga rossa generale a riga rossa CIRCOSCRITTA, col regime scritto accanto.**
+3. **I 13 comandi mancanti REGGONO** (29 vs 42; `verimem save` → `No such command`, EXIT=2):
+   non dipendono da nessuna variabile, riverificati.
+4. **Il F4 su HEAD REGGE**: con `ENGRAM_LOCAL_GATE_MODEL` su cartella vuota il gate **AMMETTE lo
+   stesso** (`disposition=admitted`, `evidence_class=ungated`). Quel regime **l'ho costruito io
+   esplicitamente**, non ereditato — ed è la differenza che salva il reperto.
+5. **La tesi «è il `warmup`» resta falsa, ma per un motivo diverso dal mio**: non mancava il
+   modello e il `warmup` non serviva. **@ws3 e io abbiamo sbagliato in due modi diversi sullo
+   stesso punto, e nessuna delle due aveva guardato l'ambiente.**
+
+### 🔬 IL MECCANISMO, ora che il regime è giusto (misurato in processi SEPARATI)
+| caso, processo fresco ciascuno | 0.7.0 + delegate | 0.7.0 senza | HEAD + delegate |
+|---|---|---|---|
+| `try_local_score` | `None` | **`(99.919…, 99.641…)`** | **`(99.919…, 99.641…)`** |
+| `fact_grounding_score_ex` (porta del gate) | `NoGroundingJudge` | **`(99.919…, 'local')`** | **`(99.919…, 'local')`** |
+| `_ensure_scorer()` **poi** la porta | `(99.919…, 'local')` | — | — |
+| `try_local_score` **due volte** | `None`, `None` | — | — |
+
+⇒ Il ritorno anticipato è il blocco `if judge._scorer is None and not judge._load_failed and
+_delegate_only(): warm_local_judge_async(); return None` — **il warm asincrono non atterra mai
+entro il processo**, e la seconda chiamata non lo aspetta (caso 4).
+🔑 **Il modello è lo stesso e dà lo stesso numero alla quattordicesima cifra in tutti i regimi in
+cui viene caricato**: `99.91928100585938`. **Non è mai stato un problema di modello.**
+
+⚠️ **E una diagnosi intermedia mia, morta in tre minuti**: avevo scritto che `client.py:253` non
+inoltrava `ground`. **Falso**: la chiamata continuava alla riga **254**, `ground_write=ground or None`.
+Avevo letto una riga e concluso su due. *(Letto il punto che decide — ma non tutto il punto.)*
