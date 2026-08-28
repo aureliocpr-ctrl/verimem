@@ -187,6 +187,38 @@ def _delegate_only() -> bool:
     )
 
 
+_SERVICE_FALSY = {"0", "false", "no", "off"}
+
+
+def _service_enabled() -> bool:
+    """True unless ``ENGRAM_ENCODE_SERVICE`` switches the shared service off.
+
+    Extracted 2026-08-28 so the flag has ONE reading. It was inlined in
+    ``_encode_via_service`` only, which made ``encode_service.daemon_usable()``
+    disagree with what encode actually does: that predicate is model-aware but
+    **flag-blind**, so with the service switched off it still answers True while
+    every encode falls back in-process. A caller asking «can I get a vector
+    without a cold-load?» through ``daemon_usable`` alone would get a yes and
+    pay ~20-32s — the exact cost such a caller is trying to avoid.
+    """
+    return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _SERVICE_FALSY
+
+
+def service_would_encode() -> bool:
+    """True iff a vector is obtainable from the shared daemon WITHOUT a
+    cold-load here: the service is enabled AND a daemon of the right model
+    answers. This is the question ``_encode_one`` settles first, made askable.
+
+    Use this — not ``daemon_usable()`` alone — to decide whether skipping work
+    is free. ``daemon_usable`` says «a usable daemon exists»; this says «encode
+    will actually go there».
+    """
+    if not _service_enabled():
+        return False
+    from . import encode_service
+    return bool(encode_service.daemon_usable())
+
+
 def _encode_local(text: str) -> np.ndarray:
     """In-process encode (loads the model once). Never touches the service —
     the encode service itself calls this, so it must not recurse."""
@@ -198,9 +230,7 @@ def _encode_local(text: str) -> np.ndarray:
 def _encode_via_service(text: str) -> np.ndarray | None:
     """Encode via the shared service. Returns None if unavailable so the
     caller falls back to in-process encoding."""
-    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
-        "0", "false", "no", "off",
-    ):
+    if not _service_enabled():
         return None
     try:
         import socket as _socket

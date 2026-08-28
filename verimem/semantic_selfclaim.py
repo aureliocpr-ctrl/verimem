@@ -253,17 +253,52 @@ def _default_encode():
     """Production encoder for L1.20 — ``verimem.embedding.encode``, GUARDED so the
     L1 lexical screen never triggers a blocking in-process model cold-load
     (~32s on a cold process's first write; find_torch_trigger 2026-07-17). When
-    encoding HERE would cold-load (model not warm AND encoding not delegated to
-    the shared daemon) the guarded encoder declines, and the detector fail-opens
-    and disarms — the SAME contract as any encoder-unavailable case. The model
-    warms through the storage path (a stored fact is embedded anyway), so the
-    very next write re-arms the detector; production servers pre-warm at boot or
-    delegate, so this only ever skips the literal first write of a cold, daemon-
-    less SDK process. Warm or delegate-only: plain ``encode()``."""
+    encoding HERE would cold-load the guarded encoder declines, and the detector
+    fail-opens and disarms — the SAME contract as any encoder-unavailable case.
+
+    ⚠️ THE GUARD ASKS «is a vector obtainable WITHOUT a cold-load?», not «is the
+    model loaded HERE?» — and those are not the same question. ``_encode_one``
+    tries the *shared service first* and only then falls back in-process, so with
+    a usable daemon the vector costs milliseconds and no cold-load ever happens.
+
+    Before 2026-08-28 the guard checked only ``is_loaded() or _delegate_only()``
+    — two of the three ways — and MEASURED CONSEQUENCE, daemon up, no delegation,
+    three writes in a row::
+
+        storage encodes via the service  ->  in-process load never happens
+        is_loaded() stays False FOREVER  ->  the guard keeps declining
+        L1.20 absent 1/1, 2/2, 3/3       ->  the "temporary" disarm is PERMANENT
+
+    and it stayed absent even after a fact was admitted and stored, because the
+    storage path warms the *daemon*, not this process. The docstring used to list
+    delegation among the things that make the disarm harmless («production
+    servers pre-warm at boot or delegate, so this only ever skips the literal
+    first write»): it is the opposite — **with a daemon the disarm never lifts**.
+    A daemon-less cold SDK process behaves as described: absent on write 1,
+    present from write 2, because there the storage path really does load
+    in-process.
+
+    ``embedding.service_would_encode()`` is the third way. NOT
+    ``encode_service.daemon_usable()``, which was the first attempt and is
+    WRONG here: that predicate is model-aware but **flag-blind**, so with
+    ``ENGRAM_ENCODE_SERVICE=0`` it still answers True while every encode falls
+    back in-process — the guard would stop declining and pay the very cold-load
+    it exists to avoid. Measured before shipping: daemon up, service switched
+    off, `daemon_usable()` still True. ``service_would_encode()`` asks both
+    halves, and is the question ``_encode_one`` settles first.
+
+    The product already answers this same question elsewhere — in
+    ``hippo_warmup_status``: ``"cold_load_estimate_s": 0 if (in_proc or
+    daemon_ok) else 20``. Nothing new is being decided here; an existing answer
+    is being asked for. Warm, delegate-only or service-would-encode: plain
+    ``encode()``.
+    """
     from . import embedding
 
     def _guarded(text):
-        if not (embedding.is_loaded() or embedding._delegate_only()):
+        if not (embedding.is_loaded()
+                or embedding._delegate_only()
+                or embedding.service_would_encode()):
             raise _ColdEncoderDeclined(
                 "L1.20 will not cold-load the embedding model on the lexical "
                 "write path — it warms via storage and re-arms next write")
