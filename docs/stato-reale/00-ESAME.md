@@ -3893,3 +3893,45 @@ argomento che il chiamante può omettere. Il recall di @ws6 serviva un valore so
 era **ritirato**, non perché quarantinato — e la ricevuta del secondo `add` non lo dice.
 ⚠️ **Cosa NON prova**: che il banco di @ws6 fosse davvero senza `source` — **è la mia ipotesi, e la
 riproduzione la rende plausibile, non certa**. Glielo chiedo sul canale invece di darlo per fatto.
+
+---
+
+### 🔬 TRE REGIMI DI `source`, TRE ESITI — e con la fonte **condivisa** il recall rende **zero**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 01:10 · **Porta SDK**, **uno store nuovo per ogni
+regime**, modello vero, fuori pytest. **Riconcilia la mia misura con quella di @ws1 e ne corregge
+l'ipotesi.**
+
+**La domanda di @ws1**: «*che il tuo banco fosse senza `source` è la mia ipotesi. Confermi?*»
+**Il mio banco la passava** — `m.add(a, source=a)` e `m.add(b, source=b)` — ma con **due source
+DIVERSE**. ⇒ **la dicotomia `source SI`/`source NO` non conteneva il mio caso.**
+
+| regime | ricevuta #2 | nel db | il **recall** rende |
+|---|---|---|---|
+| **source DIVERSE** | `model_claim` · `L3-supersession` | 12000 **superseduto**, reason `same-source evolution` | **1** — «15000» |
+| **source STESSA** | 🔴 `quarantined` · `L4.1` | **entrambi quarantined** | **0** — *nulla* |
+| **source ASSENTE** | `model_claim` · `L3-supersession` | 12000 **superseduto** | **1** — «15000» |
+
+🔑 **La variabile non è «source sì/no»**: **diverse** e **assente** danno lo **stesso** esito. ⇒ **la
+discriminante è se la source è CONDIVISA.** Con una fonte comune **nessuno dei due numeri è dentro
+quella fonte** ⇒ **L4.1 li quarantina entrambi, ed è corretto.**
+⇒ Il `QUARANTINATO` di @ws1 si spiega così: passava (con ogni probabilità) **la stessa** source.
+**Nessuno dei due aveva sbagliato — ma il regime che ci separava era un altro da quello ipotizzato.**
+
+#### 🔴 Il terzo regime, che nessuno dei due aveva guardato
+Con la source **condivisa** il recall rende **ZERO**: **l'agente non riceve né 12000 né 15000.**
+⚖️ **Non lo chiamo difetto** — il gate fa esattamente ciò che deve. **Lo segnalo come esito da
+conoscere**: «il gate protegge» e «l'agente resta senza risposta» sono **la stessa riga letta da due
+lati**, e in un caso in cui *uno dei due numeri è vero*.
+
+#### 📌 Chiude il cerchio sul motivo persistito
+`superseded_reason = 'same-source evolution'` compare **proprio nel regime a source DIVERSE**.
+⇒ **l'etichetta non è imprecisa: è esattamente rovesciata.** Conferma definitiva del **W2-1** di
+@ws2, **con la variabile isolata**.
+📌 Per la colonna di @ws7: qui **un campo pieno e falso** (`same-source evolution` su fonti diverse)
+convive con **un campo vuoto** (`superseded_reason=None` nel regime quarantena). **Le due patologie
+stanno nello stesso campo, a regimi diversi.**
+
+#### Limiti
+Una coppia, italiano, porta SDK, uno store per regime. **Non ho verificato l'ipotesi `cand_ha_source`
+in `_route_evolutions`** di @ws1: non tocco il gate.
