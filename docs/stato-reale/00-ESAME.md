@@ -3618,3 +3618,79 @@ stub di `conftest` non lo falsa**: non si misura un giudizio, si misura la prese
 · **Un solo tier** (i fatti), 2-4 fatti, un round-trip.
 · 🔴 **Gli altri 8 tier che LANT-23 dichiara scoperti non li ho toccati**: la domanda «quello che
 copre torna indietro?» **resta aperta per loro**.
+
+---
+
+## ws1 — UN REGEX DI DUE RIGHE GOVERNA IL CONFRONTO, E OGNUNO DEI SUOI TRE LIMITI È UNA DISPARITÀ
+
+**Livello**: porta vera + `event_indices` + il sorgente · **Perimetro**:
+`quantity_match._GENERIC_INDEX_RE` (`:2350`) · **Istante**: 29/08 00:53–00:58 · **Regime**: store
+nuovo per caso, guardia al default, `source` presente · sha `fdb65214`.
+
+### Il righello è una riga sola, e l'ho letta dopo averla misurata
+```python
+_GENERIC_INDEX_RE = re.compile(
+    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b")     # quantity_match.py:2350
+```
+La docstring di `event_indices` la descrive come «*the positional rule — **any word** followed by a
+bare number*». **«Any word» non è quello che il regex fa.** Tre vincoli, tre disparità, tutte
+misurate con la loro popolazione di controllo:
+
+### ① `{2,}` ⇒ almeno TRE caratteri ⇒ **il verbo essere decide per lingua**
+```
+FR  «Le prix est 500»    -> «est 800»    NESSUN BLOCCO     est = 3 lettere
+DE  «Der Preis ist 500»  -> «ist 800»    NESSUN BLOCCO     ist = 3 lettere
+IT  «Il prezzo è 500»    -> «è 800»      confrontabili     è   = 1
+EN  «The price is 500»   -> «is 800»     confrontabili     is  = 2
+ES  «El precio es 500»   ·  PT «eh»  ·  NL «is»            confrontabili
+```
+🔴 **La frase più elementare che esista — «il prezzo è N» — non viene confrontata in francese e
+tedesco, e viene confrontata in italiano, inglese, spagnolo, portoghese e olandese.** Otto lingue
+provate, otto come predetto.
+
+### ② `[A-Za-z]` ⇒ SOLO ASCII ⇒ **scrivere l'accento cambia il verdetto**
+```
+«Le montant paye 500»    -> «paye 800»       NESSUN BLOCCO
+«Le montant payé 500»    -> «payé 800»       confrontabili      <- stessa parola, con accento
+«Der Preis betraegt 500» -> «betraegt 800»   NESSUN BLOCCO
+«Der Preis beträgt 500»  -> «beträgt 800»    confrontabili      <- stessa parola, con umlaut
+```
+⇒ Chi scrive correttamente il francese o il tedesco ottiene **un comportamento diverso** da chi
+traslittera. Nessuna delle due grafie è sbagliata.
+
+### ③ `\d{1,6}` ⇒ AL MASSIMO SEI CIFRE ⇒ **il contratto da un milione è protetto, quello da 999.999 no**
+```
+«Il canone annuo e' EUR 999999»  -> «EUR 888888»    NESSUN BLOCCO
+«Il canone annuo e' EUR 1000000» -> «EUR 2000000»   confrontabili
+«… EUR 99999» -> «88888»          NESSUN BLOCCO
+«… EUR 12345678» -> «87654321»    confrontabili
+```
+⇒ La protezione **si accende sopra il milione**. Nessuna ragione di dominio lo spiega, e il valore
+`6` non è commentato nel sorgente.
+
+### ④ E la quarta condizione, già misurata alle 00:49: **il numero dev'essere NUDO**
+`_bare_numbers` (`:2354`) — «`sono 10`» indicizza, «`sono 10 unità`» no. **Questa è documentata e
+motivata** («*"conta 7883 test" measures and must stay a measure*»): l'unica delle quattro che il
+codice spiega.
+
+### ⚠️ Cosa questo NON prova
+· Che i tre limiti siano sbagliati: `{2,}` e `\d{1,6}` sono probabilmente **guardie contro il
+  rumore** (una sigla di due lettere, un timestamp). **Non ho trovato un commento che li motivi**,
+  e non affermo che siano involontari.
+· **Non ho misurato quanti fatti reali cadono su ①②③**: sul nostro corpus il ramo produce 17
+  coesistenze e nessun errore (cella precedente). Questi sono difetti **di forma**, dimostrati.
+· L'unica cosa che li rende gravi è **dove si vende il prodotto**: FR e DE sono due dei mercati
+  ovvi, e «payé»/«beträgt» sono ortografia normale, non casi limite.
+
+### 🔴 ALLA PORTA VERA, 4 SU 4 — e in FR/DE il gate NON DICE NIENTE
+Stessa struttura, stessi numeri, stessa fonte, **una sola variabile: la lingua del verbo**.
+```
+FR  «Le prix est 500»   -> «Le prix est 800»    ammesso        warnings []      <- silenzio
+DE  «Der Preis ist 500» -> «Der Preis ist 800»  ammesso        warnings []      <- silenzio
+IT  «Il prezzo e' 500»  -> «Il prezzo e' 800»   QUARANTINATO   ['L3-semantic']
+EN  «The price is 500»  -> «The price is 800»   QUARANTINATO   ['L3-semantic']
+```
+⚠️ **In FR e DE non compare nemmeno `L3-coexistence`**: la ricevuta è VUOTA. Nei casi
+`EUR 500`/`del 10%` almeno l'avviso di coesistenza c'era e un chiamante attento poteva vederlo.
+Qui il fatto entra **senza un solo segnale** che una contraddizione sia stata scavalcata.
+⇒ **Il proxy `_entita_diverse` è ora 28/28 alla porta, zero discordanze.**
