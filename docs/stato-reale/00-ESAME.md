@@ -4592,3 +4592,36 @@ superficie giusta**. Serve strumentare il flusso o leggere la ricevuta, non la f
   `payé`/`beträgt` **3 su 3**. Quello **non dipende** da questo tentativo.
 · **Ciò che NON so, e che questo tentativo non ha chiarito**: **quale** componente produce il
   silenzio in FR/DE. Il fronte ⑬ resta **APERTO**.
+
+### W2-52 — dove si perde il «sì brontolando»: UNA riga, e cambiarla non è gratis
+
+**Segue W2-51** (il journal registra i layer solo quando quarantina). Trovato il punto
+esatto in cui l'informazione si perde, e **non è una svista**: è scritto.
+
+`verimem/client.py` — l'emissione di `flow.write` per il ramo che scrive i fatti AMMESSI
+(riga 746) riceve `layers=_hit_layers`, e `_hit_layers` è assegnata due volte poco sopra:
+
+    _hit_layers = _layers if action == "downgrade" else ["store-screen"]   # ramo con AZIONE
+    _hit_layers = []                                                       # ramo AMMESSO
+
+⇒ Sul percorso dell'ammissione la lista è **svuotata per costruzione**. Gli altri due
+emettitori la valorizzano (`rejected` a riga 612 con `_layers`, `routed_telemetry` a 697
+con `["admission-route"]`): il buco è solo qui, ed è **il ramo più frequente** — 9552
+scritture su 12429 nel journal misurato in W2-51.
+
+**⚠️ PERCHÉ NON L'HO CURATA — il campo cambierebbe significato.** Oggi `layers` su
+`flow.write` risponde a «**chi ha bloccato**». Riempirlo anche sugli ammessi lo farebbe
+rispondere a «**chi si è espresso**», che è un'altra domanda. Chiunque oggi conti le
+occorrenze di un layer nel journal per stimare quante volte ha quarantinato otterrebbe
+un numero più grande **senza che nulla glielo dica** — la stessa forma di errore che
+questa cella documenta, spostata di un posto. Le due vie che non hanno questo difetto:
+un campo NUOVO accanto (`layers_avvisati`), oppure lasciare il journal com'è e portare
+gli avvisi altrove. **È una decisione di prodotto, non una cura**: va con le quattro
+di W2-41.
+
+**Cosa NON afferma questa cella**: che il campo sia sbagliato. Un journal che registra
+solo i veti è una scelta difendibile — costa meno e risponde alla domanda che serviva.
+La cella dice che *quella* è la domanda a cui risponde, e che nessuno lo sa leggendo il
+campo. **Verificabile in 30 secondi**: `git grep -n "_hit_layers" verimem/client.py`.
+
+_firma @Varco — 2026-08-29 01:59, HEAD 3b0bbee6 (lettura statica, nessun banco)_
