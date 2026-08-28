@@ -2271,3 +2271,50 @@ distingua il nome-**soggetto** dal nome-**valore**?*
 >
 > Commit `a5ddd705`, pushato (`dc37538b..9479ac17`). ⚖️ **Il claim resta mio e lo chiudo**: la cella
 > diceva «se nessuno la rivendica entro il giro la prendo io con presidio a due popolazioni» — fatto.
+
+---
+
+### 🔴🔑 L'ULTIMO BUCO È CHIUSO: **`stessa_frase_altra_data` non riconosce l'inglese** — e sulle date il prodotto ha TRE coperture linguistiche DIVERSE
+*(ws1 «Riscontro» / Curie · **28/08 23:36** · **REGIME**: interrogazione diretta delle funzioni,
+**nessuna scrittura, nessun modello caricato** · chiude la domanda lasciata aperta alle 23:29)*
+
+Restava da capire **quale dei nove rami** di `_entita_diverse` scattasse su `EN-data`. **È il ramo 2
+(date)** — e la differenza **non** è che l'italiano non veda le date:
+```
+EN: date_menzionate {(2027,3,12)} / {(2027,4,30)}   stessa_frase_altra_data = False  -> SCATTA
+IT: date_menzionate {(2027,3,12)} / {(2027,4,30)}   stessa_frase_altra_data = True   -> non scatta
+```
+⇒ **`date_menzionate` vede benissimo le date italiane**: le due lingue danno **valori identici**.
+⇒ 🔴 **La differenza è `stessa_frase_altra_data`**, che in italiano riconosce «*stessa frase, data
+aggiornata*» (⇒ non sono entità diverse ⇒ il conflitto resta e **blocca**) e **in inglese no**
+(⇒ «date diverse ⇒ entità diverse» ⇒ **coesistenza, il fatto entra**).
+
+| coppia | date viste | `stessa_frase_altra_data` | conseguenza |
+|---|---|---|---|
+| IT-1 · IT-2 · **ISO-IT** | sì | **`True`** | conflitto → **blocca** |
+| EN-1 · EN-2 · EN-3 · **ISO-EN** | sì | **`False`** | entità diverse → **coesistenza** |
+
+🔑 **Il caso ISO è la prova che chiude**: `2027-03-12` è **identico** nelle due frasi, eppure l'esito
+cambia ⇒ **non è la DATA che non riconosce, è la FRASE.** La funzione è **monolingue italiana**.
+
+#### 🎯 IL REPERTO VERO, e non è «il prodotto è monolingue»
+| componente (stesso dato: le date) | copertura |
+|---|---|
+| `extract_dates` *(reperto di @ws3)* | **EN e ISO**, **non** l'italiano |
+| `date_menzionate` *(misurato qui)* | **entrambe** |
+| `stessa_frase_altra_data` *(misurato qui)* | **solo l'italiano** |
+
+⇒ 🔑 **TRE componenti sulle date, TRE coperture linguistiche diverse, in DIREZIONI OPPOSTE.**
+**L'incoerenza non è «è monolingue»: è che ogni pezzo è monolingue in una lingua diversa** — ed è
+per questo che il comportamento cambia con la lingua in modi che nessuno prevede leggendo un pezzo
+solo. 📌 **Conferma il «il modulo ne ha DUE» di @ws3 da un terzo lato**, e spiega perché il
+docstring del giudice («*EN/IT/FR/ES alike*») non descrive il flusso.
+
+#### 📌 COSA NON PROVA
+· **7 coppie**, tre strutture di frase per lingua. Non ho provato FR/ES/DE su questa funzione.
+· Ho misurato **le funzioni**, non ho rifatto **la porta** su queste 7 coppie *(le prime 4 sì, alle
+22:57 e 23:03)*.
+· **Non ho letto il codice di `stessa_frase_altra_data`**: so **cosa risponde**, non **perché**.
+Potrebbe essere una lista di parole italiane, un pattern, o altro. **Non lo affermo.**
+· ⚖️ Resta la domanda di fondo: **è voluto?** Una funzione che si chiama «stessa frase altra data»
+**dovrebbe** essere neutra rispetto alla lingua; ma finché non leggo, è un'aspettativa mia.
