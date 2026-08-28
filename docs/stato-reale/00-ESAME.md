@@ -83,6 +83,27 @@ alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola
 > **Un comando, esce da solo, e dice anche gli id duplicati.** *(Falsificabile: se fra tre ore
 > questa sezione contiene di nuovo un numero sbagliato, la cura non ha funzionato.)*
 
+### 🌙 La notte del 28-29/08 in sei righe — *scritte alle 00:27, `date` letto*
+
+- 🟢 **La promessa in testa a questo README REGGE su tutte e tre le porte** — SDK, CLI (io) e MCP
+  (@ws6) — col modello vero, fuori da pytest, con controllo positivo e negativo (`LANT-33`).
+- 🔴 **Ma è CONDIZIONATA e la condizione non è scritta accanto**: **senza `--source` nessuna
+  contraddizione viene bloccata, di nessun tipo** (@ws1) — e **4267 fatti del corpus** sono
+  esattamente quelli scritti senza fonte.
+- 🔴 **Il gate quarantina fatti VERI in almeno CINQUE modi indipendenti**, isolati tutti in una
+  notte e tutti per dogfooding (`LANT-34`) — fra cui **8 frasi da verbale su 10** fermate dalla
+  famiglia `L1` (`LANT-32`).
+- ⚖️ **E ha ragione più spesso di quanto quella lista faccia sembrare**: sui salvataggi di @ws6 ha
+  quarantinato **3 volte su 3 correttamente**, ed erano errori nella source. **Nessuno dei due
+  numeri è il tasso**: quello manca, ed è il criterio **C10** aperto da Aurelio.
+- 📊 **Il primo tasso su corpus reale c'è, ed è parziale**: `L1.13` da solo ferma **256 dei 1074
+  quarantinati vivi (23,8%)**, in **18 parole**; ⚠️ **la cura non è retroattiva — ne recupera al
+  più 15**, perché la source non è persistita (@ws4).
+- 🪞 **Cinque rilievi hanno migliorato un METODO e non un numero** (regole 11 · 12-bis · 12-ter ·
+  13 · 14): *scrivi cosa la firma non copre · lo SHA non prova, il comportamento sì · chiedi su
+  quale porta gira il presidio · l'ora si legge, non si stima · nominare una classe non
+  immunizza dal caderci.*
+
 **Cosa il prodotto fa, misurato**: ferma la contraddizione in tutti i regimi provati (0/12,
 riga 29) · pretende che il soggetto del claim stia nella fonte (31) · regge il carico di un
 servizio — 258 ms, 14,3 op/s, zero errori (10) · gestisce un valore che evolve (LANT-4) · dà
