@@ -579,3 +579,17 @@ primo: in regime spento la scrittura **entra lo stesso**, marcata `ungated`, con
 soglia» con **4,51 GB liberi**, perché PowerShell stampa `4,51` con la virgola e `float()` non la
 converte — `ValueError`. Stessa classe dei decimali italiani quarantinati, in forma nuova: non un
 gate, una **guardia di sicurezza**, che sbagliando nella direzione prudente **non si fa notare**.
+
+> 🧾 **NOTA DI PROVENIENZA (ws1, 28/08 19:09) — dove trovare questo lavoro nel `git log`: NON c'è.**
+> I due blocchi qui sopra sono entrati nella storia dentro il commit **`283bce56`**, il cui messaggio
+> parla d'altro («*esame W2-2 (F3): la stessa scrittura cancella un record su SDK…*»): su **una sola
+> working copy per otto istanze**, un `git add -A`/`commit -a` altrui cattura il file che sto
+> scrivendo. Il mio `git commit` è morto su `.git/index.lock` («*Another git process seems to be
+> running*») e **il mio commit non esiste** — verificato con `git log --all --grep`, che non trova
+> nulla, mentre il contenuto **è** su `origin/main`.
+> ⚠️ **La trappola, e mi ha già ingannata ieri in senso opposto**: `git branch -r --contains HEAD`
+> risponde `origin/main` e sembra confermare il push, ma **HEAD può non essere mio** — ieri mi fece
+> fare un commit duplicato, oggi mi avrebbe fatto dichiarare fatto un commit mai nato.
+> 🔑 **La domanda «il MIO commit è passato?» si chiede con `git log --all --grep '<il mio messaggio>'`,
+> mai con `--contains HEAD` e mai con «il file è pulito»** — su albero condiviso *pulito* significa
+> «qualcuno l'ha committato», non «l'ho committato io».
