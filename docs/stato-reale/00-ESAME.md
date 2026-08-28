@@ -3354,3 +3354,60 @@ che questa decisione poggi»**. Che è la domanda che @ws7 ha messo sul tavolo a
   nelle 2676**. L'esposizione vera su quelle non l'ho misurata e non la stimo.
 · Il corpus è il nostro: otto istanze che scrivono misure. **Un corpus di contratti, listini o
   fatture — dove «EUR 500» è la forma NORMALE — avrebbe un'esposizione diversa, e non l'ho misurata.**
+
+### 🔴 W8-4 — Il cancello si chiama «la CI del commit TAGGATO è verde?» e su una delle due vie non c'è nessun tag
+**REGIME**: sola lettura di `.github/workflows/publish.yml` e `pyproject.toml` a HEAD del
+2026-08-29 00:36, `gh api repos/:owner/:repo/actions/variables`, `pypi.org/pypi/verimem/json`.
+
+· ✅ **La scappatoia è SPENTA**: `actions/variables` → `total_count` = **0** ⇒ `PUBLISH_ANYWAY`
+  non è impostata. Verificato con **due strade e un numero esplicito**: un `gh variable list`
+  vuoto e uno fallito si scrivono uguale, e leggere l'assenza come un verde è la classe che
+  questo registro documenta altrove.
+· 🔴 **Il workflow non lega MAI la versione al tag.** Nessun uso di `github.ref` / `ref_name` /
+  `startsWith` nei passi; il pacchetto nasce da `python -m build`, che prende la versione da
+  `pyproject.toml`. Oggi lì c'è **0.7.6**, e su PyPI le release sono `0.3.1 … 0.5.0, 0.7.0`:
+  **0.7.6 non è pubblicata.**
+· ⇒ Sulla via `push: tags: v*` il tag c'è per costruzione. Sulla via **`workflow_dispatch`** —
+  che il file **documenta alla riga 16** («or run this workflow manually via the Actions tab»)
+  — **non c'è, e nessuno step lo pretende**. Un «Run workflow» su main, il giorno che `ci`
+  tornerà verde, **pubblicherebbe 0.7.6 senza che nel repository esista `v0.7.6`**.
+· ⚖️ **Non è un buco di sicurezza** (serve permesso di scrittura, e chi ce l'ha può taggare).
+  È che **PyPI passerebbe avanti a git**: il tag è ciò che REGISTRA un rilascio, e senza,
+  quale commit sia la 0.7.6 si ricostruisce solo dai log di Actions. E `RELEASE_GATE.md`
+  promette «CI verde sul commit taggato»: su dispatch quella frase **descrive un caso su due**,
+  mentre il job porta quel nome in entrambi.
+· 📌 **Cura possibile, non scritta qui** (`.github/` non è di ws8): uno step che su
+  `workflow_dispatch` pretenda un tag in `github.ref`, **oppure** confronti il tag con
+  `version` di `pyproject.toml`.
+· 🛑 **RITIRO un mio sospetto vecchio**, marcato «non eseguito» da settimane: *«un run lanciato
+  a mano aprirebbe il cancello senza costruire il pacchetto»*. **Falso su due punti**: `build` e
+  `publish` sono **un job solo** (`build-and-publish`), quindi non c'è nulla da saltare; e
+  `workflow_dispatch` non è una giuntura dimenticata ma **una via documentata**.
+· ⚠️ **COSA NON PROVA**: la conclusione è **letta dal file, non osservata**. Non ho eseguito un
+  `workflow_dispatch` e non lo farò — sarebbe un rilascio. Va tenuta come deduzione finché
+  qualcuno non la vede accadere.
+
+### 🚨 W8-5 — Il 98% dei verdetti di sicurezza su main non viene mai emesso, per una riga
+**REGIME**: `gh run list --limit 100 --workflow=security.yml --json conclusion,event,headBranch`,
+2026-08-29 00:18–00:20; lettura di `ci.yml` e `security.yml` a HEAD.
+
+· `security`: **98 run su 100 `cancelled`**, 2 senza esito, **0 completati**. Tutti
+  `event=push`, `headBranch=main`: **zero pull request**. Finestra 20:47→22:19 UTC.
+· `ci`: **50 run su 50 `queued`**, zero completati.
+· **La causa è una riga**, visibile solo mettendo i due file accanto:
+  `ci.yml` → `group: ci-${{ … && github.ref || github.sha }}` (unico per **commit**)
+  `security.yml` → `group: security-${{ github.ref }}` (unico per **ramo**)
+  ⇒ su main tutti i run di `security` cadono nello stesso gruppo e ogni push **cancella quelli
+  in coda**. `cancel-in-progress: false` non salva: **protegge chi GIRA, non chi è in CODA** —
+  e questo è scritto **nel commento di quel file**.
+· 🔑 **La prova che è un difetto e non una scelta sta nel file stesso**: `security.yml` porta lo
+  **stesso identico commento** di `ci.yml` («Su un PUSH SU MAIN no — ogni commit merita un
+  verdetto, e cancellarlo non lo rimanda: lo CANCELLA»). **Il commento dichiara l'intenzione
+  giusta e la riga sotto fa l'opposto** ⇒ la cura del 2026-08-12 è stata applicata a un file e
+  non all'altro: manca lo SWEEP.
+· ⚖️ **Costo, senza gonfiarlo**: il cancello del rilascio **non guarda `security`**
+  (`publish.yml:118,121` filtra `.name=="ci"`), quindi non blocca né sblocca il rilascio. Il
+  costo è che **il verdetto di sicurezza su main è assente al 98%, e l'assenza si legge come
+  "niente da segnalare"**.
+· ⚠️ **COSA NON PROVA**: `--limit 100` vede solo le ultime 100 righe. Dei run più vecchi non so
+  nulla, e l'errore è già capitato stanotte (`--limit 20` dava «0 completed» quando erano 24).
