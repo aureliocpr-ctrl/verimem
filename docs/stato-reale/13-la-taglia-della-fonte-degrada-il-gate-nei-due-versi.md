@@ -115,10 +115,24 @@ grandezza · verso dello scambio · rapporto fra i valori · struttura sintattic
 la popolazione · il ricalco (n=1, cade su batteria) · la lingua · l'unità di
 misura (candidato di @ws3, cade sull'A/B).
 
-🔑 **Nessuna regola sui testi predice il verdetto.** È il risultato negativo più
-solido che abbiamo, e vale come vincolo di progetto: **la cura va cercata nel
-giudice o in uno strato deterministico accanto** — che è esattamente ciò che
-`L4.3` prova a fare.
+🔑 **Nessuna regola sui testi predice il verdetto.**
+
+🎯 **E il 29/08 all'01:10 si è capito PERCHÉ (cella W7-42), con una predizione
+dichiarata prima e verificata su 24 casi mai visti: non c'è nessuna variabile
+del testo da trovare.** Il gate ha `band_enforced=True`, `cut=40`, **`tau_hi=80`**
+⇒ la banda è **[40, 80]**. Il punteggio di questa famiglia sta **a cavallo di
+80**, e il testo lo sposta di **10–20 punti per pochi caratteri**: la banda
+trasforma quello spostamento in un verdetto binario.
+
+⇒ **Le quattordici ipotesi cercavano una regola sul TESTO per un fenomeno che è
+una soglia sul PUNTEGGIO**, ed è per questo che cadevano tutte. La regola vera è
+`persist ⇔ score ≥ 80`, e **non usa nessuna informazione sul testo**: 24 su 24
+su delta nuovi, su entrambe le popolazioni.
+
+🔴 **E la conseguenza salda questo dossier alla cella W7-26**: la *band
+escalation* esiste **esattamente** per decidere i casi che cadono in banda — e
+gira con `claude -p` **senza `--model`**. **Il meccanismo che dovrebbe salvare
+questa famiglia è quello misurato non riproducibile.**
 
 ⇒ E lo strato deterministico, misurato contro questa popolazione, **coglie 2
 scambi su 6 con 0 falsi positivi su 6 veri** (cella W7-22). La causa dei quattro
