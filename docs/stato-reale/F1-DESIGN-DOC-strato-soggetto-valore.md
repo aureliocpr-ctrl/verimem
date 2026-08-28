@@ -171,3 +171,72 @@ guardare in review.
 ⚠️ **Zona C = 1424 caratteri**, ancora lontana da un fascicolo vero.
 ⚠️ Il passo 4 confronta valori **con la stessa unità**: due date, due
 percentuali. **Su unità diverse o assenti non ho una regola**, e non la invento.
+
+---
+
+# ⑥ Aggiornamento: **la domanda ② misurata, la predizione caduta, e una cura del passo 3**
+
+*ws3, 28/08 ~20:00. Banco `banchi/ws3-F1-la-finestra-e-la-frase-o-l-articolo.py`.*
+
+Il §5 dichiarava non misurata la domanda ②: *la finestra giusta per il passo 3 è
+la frase o l'articolo?* Misurata sui `grounding_span` dello store reale, in
+**sola lettura** (`mode=ro`), percorso chiesto al prodotto
+(`CONFIG.semantic_db` → `~/.engram/semantic/semantic.db`).
+
+    frammenti con span non nullo ......... 5576
+    frasi totali ......................... 20118
+    frasi con almeno un valore ...........   891   (4,4%)
+    ► con ≥2 valori della STESSA unità ...   256   (28,7% di quelle con valore)
+      con ≥2 valori di unità diverse .....     5   (0,6%)
+    unità: %=1366, g=173, giorni=59, valuta=49, data=33, kg=8
+
+**Predizione falsificata**: avevo scritto «sotto il 10%», misurato **28,7%**.
+
+## ⚠️ Ma la popolazione non risponde alla domanda che avevo posto
+
+Gli esempi che il banco stampa sono **i nostri stessi output di benchmark**:
+
+    === flow.* CON store / SENZA store ===  flow.write con= 1839 senza= 1961 → 51,6%
+    08/08 14:06 ← inizio della finestra …  399 con fonte, 237 con span = 59,4%
+
+E **l'81% dei valori del corpus sono percentuali** (1366 su 1694). **Il corpus
+che verimem possiede oggi non è fatto di documenti: è fatto di otto istanze che
+salvano tabelle di misure tutto il giorno.**
+
+⇒ La domanda era «*su un **contratto** vero le frasi sono articoli?*», e **questo
+corpus non contiene contratti**. Il numero è vero, la domanda **resta aperta**:
+**non dico di averla misurata.** *(È la lezione «la popolazione a cui misuri
+decide il verdetto», e stavolta l'ho presa io.)*
+
+## Cosa il numero dice davvero, ed è utile lo stesso
+
+Sul corpus che verimem possiede oggi, **una frase su 3,5 fra quelle che portano
+un valore ne porta due della stessa unità**. Le **fonti a tabella** esistono e
+non sono rare — e uno studio legale ne ha: piani di pagamento, scadenzari,
+prospetti. **Il caso patologico non è teorico.**
+
+## 🔧 La cura del passo 3, che nasce dalla predizione caduta
+
+> **Se la frase che contiene il valore porta ≥2 valori della STESSA unità, quella
+> frase NON è una finestra utilizzabile: non si restituisce `OK`, si cade nei
+> passi 4/5.**
+
+Il caso patologico passa da **falso-OK** ad **astensione-o-segnalazione**:
+**fallisce in sicurezza**. È una riga di *regola*, non di codice, e sostituisce
+il passo 3 del §1.
+
+| | prima | dopo |
+|---|---|---|
+| frase con un solo valore | OK | OK |
+| frase con ≥2 valori stessa unità | **OK — e assolve lo scambio** | **cade ai passi 4/5** |
+
+## Limiti, dichiarati
+
+⚠️ Lo span è **troncato a 400 caratteri** dal prodotto ⇒ le frasi lunghe sono
+tagliate e **la quota è verosimilmente una sottostima**.
+⚠️ La segmentazione è una **regex su punteggiatura**: un «Art. 3» la spezza dove
+non dovrebbe, e questo **gonfia** il numero di frasi (denominatore) mentre
+**spezza** le finestre lunghe.
+⚠️ **Un corpus solo**, quello di Aurelio, in un solo istante.
+⚠️ **La domanda sui contratti resta aperta**: servirebbe un corpus di documenti
+veri, che non abbiamo.
