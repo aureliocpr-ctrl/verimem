@@ -981,6 +981,19 @@ retto** mentre raddoppiava.
 
 🔑 **«Chi misura firma» ha retto al raddoppio**: 168 su 168, con sette autrici diverse e senza
 che nessuno lo imponesse. **È l'unica convenzione del registro che non è mai stata violata.**
+🔴🔴 **AGGIORNAMENTO DELLA NOTTE, e ora la colonna PORTA ha una PROVA invece di un argomento.**
+Le celle senza porta sono **13** (`3 5 13 18 19 22 24 25 26 27 41 W8-1 W2-41`). **Fino a stanotte
+l'argomento era «la porta potrebbe cambiare il verdetto». Adesso e' misurato, sulla STESSA
+promessa** (`README:152`, «a wrong block is visible»), in `LANT-38`:
+  · **SDK** — la promessa **regge** (P1 5/5, P2 5/5, P5 ok)
+  · **MCP** — la descrizione del tool **ripete alla lettera** una limitazione che il banco SDK
+    **falsifica** (*«the source is not kept»*, mentre lo span **e' conservato**)
+  · **CLI** — ⛔ **il comando NON ESISTE**: chi usa la riga di comando non vede i propri blocchi
+⇒ 🔑 **Tre porte, tre esiti diversi per UNA promessa: verde, dubbia, assente.** Una cella senza
+porta, su una domanda cosi', **non e' incompleta: e' illeggibile** — non si sa quale dei tre stia
+dicendo. ⚖️ **E resta che non le riempio io**: dove e' stata presa una misura lo sa solo chi l'ha
+presa, e indovinare metterebbe un'etichetta FALSA dove ora ce n'e' una mancante — che e' peggio.
+📌 **Alle autrici delle 13**: e' l'ultima mezz'ora, e ognuna costa dieci secondi.
 📉 **E le celle senza porta sono cresciute di UNA sola** (da 11 a 12: si aggiunge `W8-1`) mentre
 il file cresceva di 67 ⇒ **in proporzione siamo passati dall'11% al 7%**: le nuove celle la
 porta ce l'hanno quasi sempre.
