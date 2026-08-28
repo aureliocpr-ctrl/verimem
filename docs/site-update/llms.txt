@@ -1,0 +1,40 @@
+# Verimem
+
+> Verimem is a persistent memory layer for AI agents whose `add()` routes every write through an anti-confabulation **admission gate** (does the cited source actually entail the fact?), and whose `search()` returns **provenance on every read**. Open source (AGPL-3.0), self-hosted, local-first: no account, no API key. Brand-new: 0 adoption yet. Every number below is self-run and reproducible from the repository — not third-party audited — and stated with its caveats and its measurement regime.
+
+## What Verimem is
+- A memory layer with the same `add / search / update / delete` ergonomics as mem0, Zep and Letta — but with a **write-admission gate**: each candidate fact is **admitted, downgraded, or refused** depending on whether its cited source entails it. A structured review of mem0, Zep, Letta, Cognee and MemOS found none of them ship a write-admission gate; they store what the extractor emits.
+- Every read returns each fact's `status` and write-time `grounding_score` (provenance). `update()` supersedes the old fact instead of destroying it, leaving an auditable `history()`; `explain()` returns a full TrustReport with honest abstention ("I don't know") when the store cannot support an answer.
+- Bi-temporal (when-learned vs when-true), `as_of` time-travel, answer-with-history, and a GDPR delete that collapses the whole chain so erased data does not resurface.
+
+## Memory poisoning — the attack class this gate answers
+- OWASP's Top 10 for Agentic Applications (2026) formally recognizes **Memory and Context Poisoning**: a single adversarial entry injected into an agent's memory can persist indefinitely and trigger on every semantically related query.
+- Verimem's defense is layered and shipped: the **write-admission gate** (a poisoned claim without a supporting source is quarantined, not stored as truth), an always-on **prompt-injection screen** at ingest (detected payloads are quarantined, never served), **provenance signing** (an HMAC of WHO is speaking rides inside each write, opt-in), and **supersession with lineage** (no silent overwrites — an attacker cannot quietly replace a true fact without leaving an auditable trail).
+
+## Honest numbers (self-run, reproducible; regime stated)
+- Write-gate entailment: **AUROC 0.971** (SNLI, judge-independent) — the write-path moat. Out-of-distribution honesty: on TruthfulQA-style plausible misconceptions the CE-only judge is weaker (~0.83 AUROC); plausible-falsehood workloads should configure an LLM judge.
+- End-to-end QA (HaluMem, own extraction → gated store → answer): **0.66–0.68** across seven consecutive full runs vs MemOS self-reported 0.672 — parity, not a win, and we say it that way. Judge is Claude, not GPT-4.
+- Cross-user generalization: **0.716** on a never-seen user (n=169).
+- Memory-boundary abstention: **1.000 across seven consecutive runs** — refuses to invent when the store can't support an answer.
+- Retrieval recall@5 (LongMemEval-s, full 500, judge-free): **0.8745**. This is recall@k, not end-to-end QA accuracy.
+- Latency, regime stated: **38 ms p50 write** with the full gate (warm single process); **~258 ms write / ~102 ms read at 14.3 ops/s, zero errors** in shared-service mode (the recommended deployment); first-call cold start in a fresh throwaway process is ~26 s (model load) — an anti-pattern the docs tell you to avoid.
+- Test suite: **7,761 passing**, reproducible from the repo.
+- Known issue (0.7.0 on PyPI): the MCP entrypoint crashes with `mcp>=2` — install with `pip install verimem "mcp<2"` until the pinned release ships.
+
+## The public exam
+- Verimem publishes its own examination: a living registry of measured cells — green AND red — with the regime beside every number (`docs/stato-reale/00-ESAME.md` in the repository). We state what does not work yet in the same table as what does. No other memory layer publishes its own exam.
+
+## What Verimem is NOT
+- 0 adoption (brand-new). Single-node SQLite. Benchmarks are self-run and reproducible, not certified. Non-Latin-script languages are not yet covered by the deterministic screens (roadmap, stated).
+
+## Install
+- `pip install verimem "mcp<2"` (PyPI, AGPL-3.0) — see known issue above.
+- Python SDK: `from verimem import Memory` — `add()` / `search()` / `history()` / `explain()`. Local SQLite, offline, gate on by default.
+- MCP server: memory tools callable with zero API key — the host LLM does the work (Claude Code, Cursor, Cline, Zed).
+- Self-host team gateway: `verimem gateway serve` — multi-tenant HTTP API, hashed keys, per-tenant isolated stores.
+
+## Key links
+- Repository: https://github.com/aureliocpr-ctrl/verimem
+- Benchmarks & methodology: https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md
+- The public exam (living registry): https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/stato-reale/00-ESAME.md
+- License & commercial: https://github.com/aureliocpr-ctrl/verimem/blob/main/LICENSING.md

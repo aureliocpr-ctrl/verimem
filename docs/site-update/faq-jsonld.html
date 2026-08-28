@@ -1,0 +1,68 @@
+<!-- FAQPage JSON-LD — da inserire nell'<head> di verimem.com accanto al blocco
+     Organization/WebSite/SoftwareApplication esistente. Ogni risposta usa SOLO
+     numeri gia' in vetrina o misurati a registro; niente claim nuovi. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "@id": "https://verimem.com/#faq",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is memory poisoning in AI agents, and how does Verimem prevent it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Memory poisoning — formally recognized in OWASP's Top 10 for Agentic Applications (2026) — is when an adversarial entry injected into an agent's persistent memory keeps triggering on every related query across future sessions. Verimem defends in layers: a write-admission gate quarantines any claim its cited source does not entail, an always-on prompt-injection screen quarantines detected payloads at ingest, provenance signing (opt-in HMAC) certifies WHO wrote each fact, and supersession with lineage means nothing is silently overwritten — every change leaves an auditable trail."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Verimem verify facts before storing them?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes — that is the core design. On write, each candidate fact is admitted, downgraded, or refused depending on whether its cited source actually entails it (source ⊢ fact). The entailment check measures AUROC 0.971 on SNLI, judge-independent. A claim without a supporting source is stored as an unverified model claim or quarantined — never served back as truth."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is Verimem different from mem0, Zep, or Letta?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A structured review of mem0, Zep, Letta, Cognee and MemOS found that none of them ship a write-admission gate — they store whatever their extractor emits, true or not. Verimem gates every write by source entailment and returns provenance (status + grounding score) on every read, with the same add/search/update/delete ergonomics. It is also brand-new with 0 adoption, and says so."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can an AI agent's memory be trusted not to hallucinate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Only if the memory abstains when it doesn't know. Verimem's memory-boundary abstention measures 1.000 across seven consecutive end-to-end runs: when the store cannot support an answer, it says 'I don't know' instead of returning the nearest plausible text. Reads also carry each fact's verification status so the calling agent can trust-condition."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Verimem work offline, without API keys?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Verimem is local-first: SQLite storage, a local embedder and a local entailment judge, no account and no API key. In MCP mode the host LLM (Claude Code, Cursor, Cline, Zed) does the reasoning on your existing subscription; verimem airgap verifies zero egress."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is Verimem's benchmark data independently verified?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — and Verimem states this plainly: every figure is self-run and reproducible from the repository, not a third-party leaderboard placement. Uniquely, the project publishes its own living examination — a registry of measured cells, red ones included, with the measurement regime beside every number — so anyone can see what does not work yet in the same table as what does."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What license does Verimem use, and is it free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Verimem is 100% open source under AGPL-3.0, free and self-hosted, with a commercial license available for closed-source use. Install from PyPI with: pip install verimem \"mcp<2\" (the mcp pin is a documented known issue of 0.7.0, fixed in the next release)."
+      }
+    }
+  ]
+}
+</script>
