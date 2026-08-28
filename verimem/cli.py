@@ -844,7 +844,23 @@ def search_docs(
         console.print(
             f"[yellow]note:[/yellow] {nascosti} chunk(s) hidden (injection "
             "signals) — results below are PARTIAL")
-    terms = [t for t in query.lower().split() if t.strip()]
+    # LA STESSA NORMALIZZAZIONE DEL RECUPERO, non una seconda scritta a mano.
+    # Qui c'era `query.lower().split()`, e la differenza non era cosmetica:
+    # l'anteprima si ancorava a una parola che il recupero aveva GIA' scartato.
+    # Misurato il 2026-08-28 su un chunk di 968 caratteri con la risposta negli
+    # ultimi 39: con lo split grezzo vinceva `di` a posizione 13 (dentro «di
+    # riempimento») contro `sede` a 931, la finestra partiva da 0 e la parola
+    # cercata non compariva NEMMENO UNA VOLTA nell'output — mentre il chunk
+    # giusto era li', restituito per primo. `_termini_di_ricerca` toglie
+    # punteggiatura (`bolzano?` non si trova mai), elisioni, parole vuote e
+    # token sotto i tre caratteri. Prova che sono la stessa cosa: il campo
+    # `query_terms` che l'SDK rende vale 5, ed e' `len(_termini_di_ricerca(q))`;
+    # lo split grezzo ne dava 7. Presidio:
+    # tests/test_l_anteprima_mostra_la_riga_che_risponde.py, con la popolazione
+    # di controllo accanto (una query estranea non deve mostrare quella riga).
+    from .document_index import _termini_di_ricerca
+    terms = _termini_di_ricerca(query) or [
+        t for t in query.lower().split() if t.strip()]
     for i, h in enumerate(hits, 1):
         # LA CITAZIONE CANONICA, non una seconda forma della stessa cosa.
         # Qui veniva ricostruita a mano come «listino.md v1 [0:80]» mentre
