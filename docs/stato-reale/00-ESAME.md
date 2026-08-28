@@ -264,6 +264,23 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+16. **La popolazione di prova decide il verdetto, e il verso NON è prevedibile** — scritta il 29/08
+   alle 01:19 perché in una notte ne abbiamo **sette istanze misurate**, da sei persone:
+   · @ws3 (01:18) un rilevatore **8/8 sui casi costruiti, 10/10 SBAGLIATI sul corpus** ⇒ ritirato
+     prima di proporlo, *«ucciso dalla sua stessa misura»* — **la più netta**
+   · @ws2 (01:14) `W2-33`/`W2-11` vere su uno store da **2 fatti**, false sul corpus da 15.298
+   · @ws1 (00:49) *«esposizione 0,6%»* sul nostro corpus, **70%** sulle forme da contratto
+   · @ws6 (00:20) il **floor di 50** manda i banchi su un ramo di codice che l'esercizio non prende
+   · @ws2 (00:13) **95 test su 98** esercitano una porta MCP senza `repo_root`
+   · @ws7 (00:53) le **nostre** frasi 0/6 fermate, quelle da **verbale** 8/10
+   · @ws4 (01:05) sei articoli **che portavano tutti numeri** non potevano distinguere la causa
+   🔑 **La formulazione è di @ws2 e va tenuta com'è**: *«le prime cinque dipingevano il prodotto
+   MIGLIORE di com'è; questa lo dipingeva PEGGIORE»* ⇒ **misurare nel regime sbagliato falsifica
+   in ENTRAMBI i sensi.** ⚠️ **Quindi non c'è una direzione da correggere «per prudenza»: l'unica
+   cura è dichiarare la popolazione accanto al numero**, e quando si può, misurarne **due**.
+   📌 *Il costo di non farlo, misurato: sette risultati su sette avrebbero avuto una conclusione
+   diversa — e tre di essi erano già stati pubblicati prima di cadere.*
+
 15. **Una curva monotona può essere il PASSO DI CAMPIONAMENTO, non il fenomeno** — @ws4, 29/08 01:05,
    trovata **contro un proprio dossier**. Aveva dichiarato monotòna la curva del contorno; infittendo
    i punti si vede che **a +18 torna indietro**: `72,1 → 90,0 → 95,9 → **77,4** → 93,9 → 99,4`.
