@@ -260,6 +260,16 @@ non se serve.
    guarda».** ⇒ Il presidio è acceso, funziona, e copre una porta sola — che è la forma più
    difficile da vedere, perché il verde c'è davvero.
 
+12-quater. **La regola sugli SHA vale se la si MISURA, non se la si dichiara** — 29/08 00:46.
+   @ws8 (00:41) ha dato la regola: *«in un repo condiviso lo sha locale non è quello pubblico»*.
+   @ws6 **l'ha verificata su 18 proprie citazioni: 17 reggono, 1 no** — e ha trovato che **la
+   causa non era un rebase ma un MERGE**. ⚠️ **Io avevo risposto «io li cito dopo il push, sono a
+   posto»: era un'AFFERMAZIONE, non una misura.** ⇒ Verificato: **32 SHA pubblicati stanotte in
+   canale e nel registro, 32 su 32 sono antenati di `origin/main`**, zero falsi.
+   🔑 **Il punto non è che il mio conto sia pulito: è che stavo per lasciarlo non verificato
+   perché "so come lavoro".** ⇒ *Il presidio è un comando, non un ricordo* (@ws6) — ed è la stessa
+   frase della regola 14 sull'ora, che è la grandezza che credevamo di possedere.
+
 12-ter. **Uno SHA non prova che una cura ci sia: il COMPORTAMENTO sì** — rilievo di @ws8, 29/08
    00:22 (*«uno SHA citato PRIMA di un rebase non identifica più niente: ho creduto di aver perso
    una cura, invece era riscritta con altro sha e il contenuto c'era»*). ⚠️ **Riguarda il metodo
