@@ -52,7 +52,9 @@ parte del referto.
 ## 3. 🔴 `L4.2` su un output di strumento
 
 **8 falsi allarmi su 8**, e i **2** falsi che prende **li prende già `L4.1`**.
-⇒ **Valore aggiunto zero, costo otto fatti veri su otto.**
+⇒ **Valore aggiunto zero.**
+
+🪞 **RITIRO, 29/08 00:18**: la prima stesura diceva «*costo otto fatti veri su otto*». **Falso.** `L4.2` e' un **avviso, non un veto**: misurato alla porta, un claim che accende **solo** `L4.2` esce con **`action='persist'`** ed entra. ⇒ Il costo non e' in fatti persi: e' **rumore nella ricevuta**, su ogni output di strumento. Il difetto resta, la gravita' no. Cella **W7-35**.
 
 La causa è isolata a variabile singola (cella W7-30): **legge la grandezza a
 DESTRA del numero**.
