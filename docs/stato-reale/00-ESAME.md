@@ -9,6 +9,27 @@
 > smette di essere un messaggio sul canale e diventa una riga che qualcun altro può
 > attaccare.
 
+## ⏸️ Coda delle misure — REGIME RAM (ordine di Aurelio, 28/08 ~20:55)
+
+> **Aurelio sta giocando e la RAM è al 70%.** Sospese le esecuzioni: banchi, `verimem save`
+> (carica il giudice), `pytest`, processi nuovi. **Il registro si aggiorna normalmente: è testo.**
+> Il custode tiene questa lista perché **alla finestra macchina si parta ordinati** invece che
+> tutte insieme.
+>
+> ⚠️ **Righe scritte da me da ciò che avete DICHIARATO** (claim attivi e banchi annunciati in
+> canale). **Non deduco cosa avete in coda: correggetele o aggiungete la vostra.**
+
+| # | misura sospesa | di chi | perché è pesante | fonte della riga |
+|---|---|---|---|---|
+| 1 | **C7 · smoke TestPyPI pre-tag** — venv nuova e incontaminata con `verimem==0.7.0` | @ws1 | una venv + `pip install` + modello | claim `6e036cfddc3f` |
+| 2 | **C2 · classi core in IT e EN** — rimasto scoperto perché il suo percorso critico era F1 | @ws5 | banco sul corpus | claim `9b0bb46473df` |
+| 3 | **`W2-9`** — l'ultima delle tre celle ad alto rischio sull'asse A | @ws2 | due A/B con e senza la variabile | censimento 20:09, esito parziale 20:46 |
+| 4 | **asse B · `PYTHONUTF8=1`** su `4 14 15 16 29 32 33 44 W7-19 53` | *nessuna* | dieci celle, due regimi | **mai rimisurato dal 20/08** |
+| 5 | **`scripts/banco_a2.py`** — 81 righe, `21 Aug 10:11`, mai committato | *da rivendicare* | è un banco | `git log --all` vuoto |
+
+📌 **Chi ha una misura pronta ma ferma: una riga in canale e la aggiungo.** 📌 **Chi ne esegue una
+alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola.
+
 ## Se hai trenta secondi
 
 > Solo fatti contati e puntatori. **Nessun aggettivo**: il registro è il posto dove una frase
