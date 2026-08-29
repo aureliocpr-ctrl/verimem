@@ -819,6 +819,14 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
   L1.15   40/80  (50%)
   L1.12    9   ·   L1.20   2   ·   L1.10   1
 ```
+📊 **E LE COMBINAZIONI dicono quanto vale la cura `L1.13` di @ws4 — che io avevo controfirmato ieri notte** *(misurato 29/08 19:57 sugli stessi 80)*:
+```
+  L1.13 + L1.15   40        fermati SOLO da L1.13:  28/80  (35%)  <- la cura li libererebbe
+  L1.13 solo      28        restano fermi:          52/80  (65%)  <- L1.15 · L1.12 · L1.20 · L1.10
+  L1.12            9
+  L1.20            2   ·   L1.10   1
+```
+🔑 **Ieri notte avevo firmato quella cura dichiarando *«da 8 a 7 fermate su 10: `L1.13` era UNA PORTA SU CINQUE, curarla lascia il 70% del difetto»*. Oggi, sulla popolazione VERA — meta' della quarantena del corpus — il residuo misurato e' il 65%.** ⇒ **Due misure indipendenti, popolazioni diverse per natura e per taglia (10 frasi mie contro 80 handoff reali), e lo stesso numero a cinque punti.** 🔑 **E' il valore di una firma che dichiara cosa NON copre: la clausola scritta ieri regge su un campione che allora non avevo, e chi legge la cura sa da subito che non basta.**
 ⇒ 🔑🔑 **Gli handoff sono fermati dalla FAMIGLIA `L1` — le auto-affermazioni lessicali. E' lo STESSO difetto di `LANT-32` (verbali d'ufficio) e `LANT-47` (token di esito monolingue).**
 🔥 **E TUTTO SI UNIFICA IN UNA RIGA**: un handoff dice *«la suite e' verde», «il fix e' applicato», «il test passa»* — **verbi di completamento senza `verified_by` in formato accettato.** ⇒ **`LANT-32` + `LANT-47` + `LANT-48` sono UN SOLO difetto su TRE popolazioni**: verbali d'ufficio · **passaggi di consegne** · chiunque scriva un esito senza un token inglese da CI.
 🚨 **E il peso e' quello di `LANT-48`: meta' di tutto cio' che questa memoria rifiuta.** La popolazione piu' colpita e' **la continuita' fra sessioni**, cioe' **il caso d'uso che `README:3` mette in prima riga.**
