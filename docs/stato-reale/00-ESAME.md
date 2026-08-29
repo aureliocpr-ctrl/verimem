@@ -6040,3 +6040,39 @@ esattamente ciò che dichiara**.
 · Il bench è **sintetico e auto-generato** (`generate_dataset` è del progetto): misura ciò che il
   progetto ha deciso di misurare. **Non è di terzi, e la vetrina non lo dice.**
 · **«mem0: 40/60» NON verificato** (serve mem0 installato): è l'altra metà della riga sulla vetrina.
+
+---
+
+### 🗄️ L'ARCHIVIO NON PUÒ REGISTRARE I SILENZI — «questo layer TACE» non è un fatto salvabile
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 20:27 · **Come è emerso**: saldando `O3` sui pezzi di
+stasera, **il gate ha quarantinato due miei fatti — e aveva ragione due volte.**
+
+> `L4-negazione` — «*il claim afferma un'**ASSENZA** e il giudice non sa verificarla: un modello di
+> entailment **non assume mondo chiuso***»
+> `L4-grounding` — «*this proposition **splits into 2 clauses** and the moat judges them as ONE*»
+
+**I miei claim contenevano un «quindi»** (un'inferenza che la source non enuncia) **e due
+affermazioni in una frase** — **le due cose che `O3` avverte**. Colpa mia, e la ricevuta l'ha detto
+con precisione.
+
+#### Rifatti spezzando e togliendo l'inferenza
+| claim | prima | dopo |
+|---|---:|---:|
+| «con la tabella senza la data il layer è **L4.2**» — afferma una **presenza** | 0,8 | **71,9** · `L4-review` |
+| «con la grandezza dopo il numero il layer è **nessuno**» — afferma un'**assenza** | 0,2 | **27,9** · `L4-grounding` |
+
+⇒ **La cura vale +71 e +27 punti.** Ma i due **non risalgono allo stesso modo**, e la differenza è
+che **il primo dice che qualcosa c'è, il secondo che qualcosa non c'è.**
+
+#### 🔑 Il reperto
+**Metà delle misure su un gate ha la forma «il layer TACE»** — è così che ho mostrato che `L4.2` non
+parla sulla prosa e non parla con la grandezza dopo il numero. ⇒ **quella metà non è archiviabile
+come fatto.** **Posso salvare «L4.2 ha parlato», non «L4.2 ha taciuto».**
+⚖️ **Non è un difetto del gate**: la ricevuta lo spiega e **propone la cura** («*passa una fonte che
+ENUNCI l'assenza invece di lasciarla dedurre*»). **È una proprietà dell'archivio che non era scritta
+da nessuna parte**, e colpisce **proprio le misure di silenzio**.
+
+#### Limiti
+**n=2.** È un'**osservazione con un meccanismo plausibile**, non una legge. **Per chiuderla bastano
+quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
