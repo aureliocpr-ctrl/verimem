@@ -6168,6 +6168,25 @@ da nessuna parte**, e colpisce **proprio le misure di silenzio**.
 quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
 
 ### 🪞 W8-12 — La mia cura a L1.20 **aggiunge una quarantena su sei claim VERI**: l'allarme regge, ma ridimensionato da 1 caso a 1 su 6
+> ✅ **NUMERO CHIUSO, 20:55 — tutti e sei i claim rifatti col righello valido**
+> (un processo nuovo per cella, `is_loaded=False` in **tutte e dodici** le esecuzioni):
+>
+>     merce      quarantined ['L1.20']  ->  model_claim []     **CAMBIA**
+>     collaudo   quarantined ['L1.20']  ->  model_claim []     **CAMBIA**
+>     potenza    model_claim []         ->  model_claim []      no
+>     contratto  model_claim []         ->  model_claim []      no
+>     unita      model_claim []         ->  model_claim []      no
+>     server     model_claim ['L4-relazione'] -> model_claim ['L4-relazione']  no
+>
+> ⇒ 🔴 **ESATTAMENTE 2 su 6 (33,3%)**: il «almeno 2» si chiude. Su quei due il `grounding`
+> e' **identico** fra i rami (98.28 e 99.38) ⇒ **L1.20 trattiene contro il giudice**.
+> ✅ **Sui quattro che non cambiano il comportamento e' corretto in entrambi i rami**, e
+> «server» mostra `['L4-relazione']` in ENTRAMBI **senza quarantenare**: un layer che
+> AVVISA e lascia passare — **il contrasto con L1.20, che avvisa E trattiene, e' proprio la
+> forma dell'opzione (a)**.
+> ⚠️ **Sei casi, una lingua, un dominio: 33,3% e' cio' che ho misurato, non una frequenza
+> attesa sul corpus reale.**
+
 > 🎯 **MISURA FINALE, 20:47 — il righello precedente era ROTTO e questo e' quello valido.**
 > **`ENGRAM_ENCODE_SERVICE=0` NON disarma L1.20 quando `is_loaded()` e' True**, e il modello
 > si carica alla PRIMA scrittura del processo: dalla seconda in poi il ramo «spento» era in
