@@ -4654,3 +4654,54 @@ superficie giusta**. Serve strumentare il flusso o leggere la ricevuta, non la f
   `payé`/`beträgt` **3 su 3**. Quello **non dipende** da questo tentativo.
 · **Ciò che NON so, e che questo tentativo non ha chiarito**: **quale** componente produce il
   silenzio in FR/DE. Il fronte ⑬ resta **APERTO**.
+
+---
+
+## ws1 — 🔎 RIFALLO CON: i comandi esatti dei miei reperti (ordine di lead-audit, 02:13)
+
+⚠️ **Correzione necessaria all'ordine, e la dichiaro**: i miei banchi stanno nello **scratchpad di
+sessione** (`…\Temp\claude\…`), che **sparisce alla chiusura**. Un «rifallo con
+`python scratchpad/tipi.py`» sarebbe **inservibile domani**. Quindi metto i comandi **INLINE e
+autosufficienti**, in **una cella sola** invece di toccarne dodici a cinque minuti dalla chiusura
+sull'albero condiviso. **Stesso valore, zero rischio.**
+
+**Prerequisito comune**: `cd C:\Users\aurel\Code\HippoAgent`
+
+### ① Il proxy — «la parola che precede il numero decide» (via ①, 45/45 alla porta)
+```bash
+python -c "import sys;sys.path.insert(0,'.');from types import SimpleNamespace as N;from verimem.anti_confab_gate import _entita_diverse as D;print([ (a, D(N(proposition=a),N(proposition=b))) for a,b in [(\"Il canone e' EUR 500.\",\"Il canone e' EUR 800.\"),(\"Il canone e' 500 EUR.\",\"Il canone e' 800 EUR.\"),('Le prix est 500.','Le prix est 800.'),(\"Il prezzo e' 500.\",\"Il prezzo e' 800.\")]])"
+```
+Atteso: `True, False, True, False` — **EUR pre-posto e `est` francese danno «entità diverse»**.
+
+### ② Il regex che governa tutto (le tre costanti)
+```bash
+python -c "import sys;sys.path.insert(0,'.');import verimem.quantity_match as q;print(q._GENERIC_INDEX_RE.pattern)"
+```
+Atteso: `\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b` — **>=3 caratteri · solo ASCII · 6 cifre**.
+
+### ③ La grammatica delle valute (via ②: unità vuota)
+```bash
+python -c "import sys;sys.path.insert(0,'.');from verimem.quantity_match import extract_quantities as Q;[print(f,Q(f)) for f in [\"Il canone e' EUR 100.\",\"Il canone e' 100 EUR.\",\"Il canone e' \$100.\",\"Il canone e' 100.000 euro.\",\"Il canone e' 100 mila euro.\"]]"
+```
+Atteso: `('',100)` · `('eur',100)` · `('',100)` · **`[]`** · **`('mila',100.0)`**.
+
+### ④ L'esposizione sul corpus reale (17 su 2676, sola lettura)
+```bash
+python -c "import sys,sqlite3,re,collections,itertools;sys.path.insert(0,'.');from verimem.config import CONFIG;from types import SimpleNamespace as N;from verimem.anti_confab_gate import _entita_diverse as D;NUM=re.compile(r'\d+(?:[.,]\d+)?');c=sqlite3.connect(f'file:{CONFIG.semantic_db}?mode=ro',uri=True);g=collections.defaultdict(set);[g[(t,NUM.sub('<N>',p))].add(p) for t,p in c.execute('SELECT topic,proposition FROM facts WHERE proposition IS NOT NULL AND topic IS NOT NULL') if NUM.search(p)];C=[(a,b) for k,v in g.items() if len(v)>1 for a,b in itertools.combinations(sorted(v),2)];print(len(C),sum(D(N(proposition=a),N(proposition=b)) for a,b in C))"
+```
+Atteso: `2676 17`. ⚠️ **Il corpus cresce**: i numeri saliranno, il rapporto no.
+
+### ⑤ La porta vera (il banco che decide) — **~45 s, carica il modello ~1,9 GB**
+```bash
+HIPPO_DATA_DIR=$(mktemp -d) python -c "import sys;sys.path.insert(0,'.');from verimem import Memory;m=Memory();m.add(\"Il canone annuo e' EUR 12000.\",topic='x',source=\"Contratto: il canone annuo e' EUR 12000.\");r=m.add(\"Il canone annuo e' EUR 15000.\",topic='x');print(r.get('status'),[w.get('layer') for w in (r.get('warnings') or [])])"
+```
+Atteso: `model_claim ['L3-coexistence']` — **ammesso**. Sostituendo `EUR 12000`→`12000 EUR`:
+`quarantined ['L3','L3-semantic']`.
+
+### ⑥ La matrice (guardia e source)
+Stesso comando di ⑤, variando **due** cose: togliere `source=...` · anteporre
+`ENGRAM_SUPERSEDE_SAME_SOURCE=0`. Le quattro combinazioni danno la matrice 4/4.
+
+### ⚠️ E il presidio che vale più dei comandi
+**Prima di fidarvi di un mio numero, rieseguite il RIGHELLO, non solo il reperto.** Cinque volte
+stanotte il righello sbagliato era il mio, e nessuna di quelle cinque è stata scoperta da un'altra.
