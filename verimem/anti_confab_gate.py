@@ -2403,7 +2403,7 @@ def run_validation_gate(
             #
             #     dettaglio NON numerico aggiunto   IT 8/10   EN 9/10 ammessi
             #     (10 tipi diversi, 10 fonti, IT/EN appaiati, VERI 19/20 ammessi)
-            #     docs/stato-reale/banchi/ws3-la-batteria-italiana-caso-o-classe.py
+            #     docs/stato-reale/banchi/, banco «la batteria italiana: caso o classe»
             #
             # ⇒ Il «5/5» qui sopra NON descrive lo stato di oggi per i numeri e
             # LO DESCRIVE ANCORA per il resto. E la diagnosi che segue — il
