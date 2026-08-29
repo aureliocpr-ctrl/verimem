@@ -5218,3 +5218,57 @@ che ho misurato invece di dedurre, si è ridotta.
   non misurato su testo reale**, e resta **non misurabile** con ciò che abbiamo.
 · La classificazione delle etichette è **mia**, per liste chiuse: `version`/`section` come
   identificatori, `EUR`/`USD` come valute. Una lista chiusa sbaglia sui casi che non prevede.
+
+### 🔴 W8-7 — I tre rossi che bloccano il rilascio sono DUE fronti, e il secondo è **un solo difetto che si presenta come due**
+**REGIME**: `gh run view --log-failed` sul run **33113209971** (`ci` #1121, creato 2026-08-27
+20:25 — l'ultimo `failure` **chiuso** disponibile); `git` e `pytest` locali su HEAD `35e4df65`;
+2026-08-29 19:27–19:36. Assegnazione atomica di lead-audit: **un run, non venti**.
+
+    3 failed · 12085 passed · 41 skipped · 39 deselected · 128 xfailed
+    falliscono 6 job `test` su 6 (ubuntu 3.10/3.11/3.12/3.13, macos, windows), sempre allo step 13 «Tests»
+    ✅ build (sdist + wheel): success · wheel install-from-scratch (windows, ubuntu): success
+
+· **① `test_il_pacchetto_ha_cio_che_promettiamo.py::test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice`
+  — rosso ONESTO, ed è un DEADLOCK.** `pyproject` dichiara `0.7.6`, il commit che l'ha
+  introdotta è `f859aad0` (21/08), e da lì a HEAD ci sono **885 commit** contro una
+  **SOGLIA = 150**. Il repo **non è shallow**, quindi non è il falso-zero da clone
+  superficiale che quel test stesso documenta. ⇒ Il presidio dice il vero.
+  🚨 **Ma la conseguenza è circolare**: test rosso → `ci` rosso → **C9 chiuso** → non si
+  rilascia → la versione non si aggiorna → **la distanza cresce**. **Il presidio che chiede
+  di rilasciare impedisce di rilasciare.** E il suo docstring dice «è un avviso, non un
+  veto»: dentro `ci`, che è il cancello #1, **è un veto di fatto**.
+  ✅ **La via d'uscita non è spegnere nulla: il bump azzera la distanza**, ed è esattamente
+  ciò che il presidio chiede. `0.7.6` **su PyPI non esiste** (release: `0.3.1 … 0.5.0,
+  0.7.0`), quindi il bump non calpesta nulla di pubblicato.
+  ⚠️ **MA il bump va letto insieme a W8-4**: `publish.yml` non lega mai la versione al tag e
+  `workflow_dispatch` non ne pretende uno ⇒ **dal momento del verde, `pyproject.toml` è la
+  lista di spedizione**. Il bump non arma il rilascio da solo: **lo arma insieme al verde**.
+· **②+③ `test_quarantined_by_nomina_il_layer_sbagliato.py` — UN SOLO difetto, due righe
+  rosse, e di REGIME, non di codice.** `test_quarantined_by_dovrebbe_nominare_chi_ha_deciso`
+  è `@pytest.mark.xfail(strict=True)`; il `CONTROLLO` accanto dichiara di sé: *«se non è
+  trattenuta, o parla un layer solo, il test sotto non misura il difetto: lo dice **fallendo,
+  non saltando**»*. ⇒ In CI la seconda scrittura **non viene trattenuta**: il CONTROLLO cade
+  **e**, non presentandosi il difetto, l'`xfail` passa ⇒ **XPASS strict** ⇒ rosso.
+  ✅ **In locale, HEAD di adesso, un file solo**: `EXIT` di pytest **0**, **3 passed, 2
+  xfailed**. E **il file non è cambiato dal run**: ultimo commit `87063015` del **27/08
+  19:35**, il run è delle **20:25**. **Stesso codice, esito opposto** ⇒ è la differenza di
+  regime, non una regressione.
+  ⛔ **La cura NON è togliere l'`xfail`**: sarebbe un verde ottenuto spegnendo qualcosa, e il
+  test lo dice da sé. È una decisione sul banco: *deve girare anche dove il modello non c'è,
+  o deve dichiarare di non poterlo fare?* **File di ws6.**
+· ⇒ **Per il rilascio**: il bump sblocca **①**. **C9 resta rosso finché ②+③ non sono decisi.**
+  Chi si aspettasse il verde subito dopo il bump aspetterebbe la cosa sbagliata.
+· ⚠️ **COSA NON PROVA**: «in CI il caso non si riproduce» è **la spiegazione più semplice di
+  due esiti opposti**, non una misura fatta là dentro — **in locale il modello c'è**. E la
+  lista dei tre rossi viene da un run del **27/08**: da allora `ci` non ha più chiuso nulla,
+  quindi è **l'ultima nota disponibile, non la fotografia di oggi**.
+
+**RIFALLO CON**:
+```bash
+gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=failure&per_page=1" --jq '.workflow_runs[0].id'
+gh run view <id> --log-failed | grep -oE "FAILED tests/[^ ]+" | sort -u
+python -m pytest tests/test_quarantined_by_nomina_il_layer_sbagliato.py -q --no-header -rxX > out.txt 2>&1; echo "EXIT=$?"
+git log --format="%h %ci" -1 -- tests/test_quarantined_by_nomina_il_layer_sbagliato.py
+```
+⚠️ **Nel «rifallo con» NON mettere una pipe prima di leggere `$?`**: un `pytest … | tail` fa
+leggere l'exit code di `tail`, e una suite rossa si legge verde. Misurato su me stessa, oggi.
