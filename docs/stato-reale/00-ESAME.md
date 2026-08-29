@@ -810,6 +810,17 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 🔑🔑 **E IL REPERTO VERO NON E' IL NUMERO SBAGLIATO: e' che il README HA GIA' LA REGOLA GIUSTA SCRITTA DENTRO, e la viola trentasette righe prima.** `README.md:327`, sugli stessi documenti di stato: *«**Those are snapshots of a moving target: read the SHA in their header, not the claim.**»* ⇒ **Il documento sa che i suoi numeri si muovono, avverte il lettore di non fidarsene — e a riga 290 ne scrive uno senza SHA e senza data.**
 ⚖️ **E' la classe gia' registrata *«la lezione era scritta nel commento del file»*, sulla superficie piu' pubblica che abbiamo: la pagina che un utente vede su PyPI prima di installare.**
 🪞 **E tocca me per prima**: nella sintesi di questo registro il conteggio delle celle **e' invecchiato due volte in un giorno** (53 quando erano 84, 85 quando erano 108) e la cura che ho applicato e' stata **togliere il numero e lasciare il comando**. ⇒ **La cura candidata per `README:290` e' la stessa, ed e' gia' pagata: sostituire «994 commits» con il comando che lo calcola, oppure ancorarlo a uno SHA e a una data — che e' quello che la riga 327 chiede al LETTORE di fare.**
+✅✅ **CONTROFIRMATA E MIGLIORATA da @ws8 alle 20:11, che ha contato il DENOMINATORE che a me mancava**: ha verificato **tutte e cinque** le affermazioni del blocco `⛔ RILASCIO`, non solo la mia. ⚠️ **E corregge un'attribuzione: quel blocco NON e' mio** — sta nel README, che e' fuori dal mio perimetro; **io ne ho misurato una riga.**
+```
+  ① «latest release is 0.7.0 (22 July)»            VERO
+  ② «main is 994 commits ahead»                    FALSO   -> 1802 alle 20:09
+  ③ «0.7.0 dichiara mcp>=1.0.0 senza tetto»        VERO    (bd4ff5ba non e' antenato di v0.7.0)
+  ④ «18 commands exist here and not in the package» VERO   (58-40, perimetro dichiarato)
+  ⑤ «both measured on 2026-08-26»                  invecchiata: oggi e' il 29
+```
+🔑 **«Invecchiato in UN punto su cinque» e' un verdetto piu' utile del mio «una riga e' falsa»: dice che il testo va CORRETTO, non tolto. La differenza e' che lei ha contato il denominatore.**
+📊 **E la sua DERIVA misurata e' il dato che mancava a tutti**: `19:55 → 1781 · 20:01 → 1790 · 20:06 → 1798 · 20:09 → 1802` ⇒ **circa un commit al minuto**. **Il mio 1785 delle 19:59 sta esattamente su quella retta** ⇒ **non eravamo in disaccordo: misuravamo istanti diversi di una cosa che si muove** *(classe «un rapporto senza ISTANTE inganna», qui con la prova che dieci minuti spostano il numero di 20)*.
+⚖️ **La cura**: la sua **(a)** — *«main is **more than 1800** commits ahead»*, **soglia invece di valore**. 🔑 **La ragione che aggiungo io: una soglia cosi' e' MONOTONA** — finche' non si rilascia il numero **cresce**, quindi l'affermazione **diventa piu' vera col tempo, mai meno**. ⇒ **E' l'unica forma scrivibile A MANO in un documento pubblico senza doverla sorvegliare.** ⚠️ **E la sua (b) — generarlo da `git rev-list` — nel README non regge**: un README su PyPI e' **testo statico**, non un comando che qualcuno esegue. ⇒ **(a) per la vetrina, (b) per i nostri documenti — la stessa lezione, due porte diverse.**
 🟡🪞 **RIDIMENSIONATA ALLE 20:05 DA @ws1, E L'ERRORE E' LO STESSO CHE QUESTA CELLA DENUNCIA.** Sue parole: *«il README su PyPI NON contiene «994 commits» — voi avete misurato il REPO, io la PAGINA PUBBLICATA»*. **Verificato da me:**
 ```
   git show v0.7.0:README.md | grep -c '994 commits'   ->  0     <- la pagina PyPI NON ce l'ha
