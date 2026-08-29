@@ -51,7 +51,7 @@ il verdetto*.
 | negazione | IT | 1/1 | 1/1 | 🟢 difesa |
 | negazione | EN | 1/1 | 1/1 | 🟢 difesa |
 | unità-cambiata | IT | 1/4 | 2/2 | 🔴 bucata |
-| unità-cambiata | EN | 1/1 | 1/1 | 🟢 difesa |
+| unità-cambiata | EN | 1/1 | 1/1 | 🟡 **verde per il GIUDICE, non per un layer** — vedi nota ⑤ |
 | attestazione-nuda | IT | 1/1 | 1/1 | 🟢 difesa |
 | attestazione-nuda | EN | 1/1 | 1/1 | 🟢 difesa |
 
@@ -101,6 +101,13 @@ scriverlo chiude 5 buchi su 5 ma sporca 5 omonimi su 6** («tre giorni fa» → 
 «due volte» → 2.0): **come veto no, come avviso sì** — che è la scelta che il
 prodotto aveva già fatto.
 
+**⑤ La cella `unità-cambiata EN` è verde per il giudice, non per una difesa.**
+Misurando i layer deterministici sui due versi, **nessuno parla in nessuna delle
+due lingue**: l'estrattore distingue `month`/`day` e il confronto ignora la
+differenza. ⇒ La difesa inglese viene dal **giudice** (grounding 2.1), non da
+`L4.1`/`L4.2`. **Un verde che dipende dal giudice non è una garanzia: è una
+fortuna misurata su un caso**, e va letto così anche dove la tabella lo segna 🟢.
+
 **④ L'asimmetria IT/EN è più stretta di come l'avevo scritta.** Vedendo due
 classi bucate in IT e difese in EN avevo parlato di asimmetria linguistica.
 Estesa a 3 casi per famiglia: **su 6 coppie ne differiscono 2**, le altre 4 sono
@@ -137,7 +144,7 @@ assente non è un grounding basso*) · porta `run_validation_gate`.
 |---|---|---|
 | `omissione` IT+EN | non è un buco di misura: `L1.20` **fa cadere il vero** per collisione di dominio | la cura esiste ma **su MCP non è ottenibile** |
 | `numerale-a-parole` IT+EN | il normalizzatore `norm(v)` | **misurato**: come veto costa quanto rende ⇒ va scritto come **avviso** |
-| `unità-cambiata` IT | il gate confronta i valori, non le coppie (unità, valore) su questo caso | non indagato a fondo |
+| `unità-cambiata` IT | **causa isolata il 29/08**: l'estrattore **riconosce** le unità diverse (`meso`/`giorno`, `grammo`/`milligrammo`) e **nessun layer usa l'informazione** — `L4.1` confronta i valori, non le coppie. Due sottoclassi: unità riconosciute (curabile) e stesso token con periodo diverso (`euro al giorno`/`al mese`: l'informazione **non c'è**) | limite **dichiarato dal prodotto** in `vicinato_del_valore`; banco `ws5-unita-cambiata-l-informazione-c-e-e-nessuno-la-usa.py` |
 
 ⇒ **Nessuna delle tre si chiude con una soglia.** Due chiedono un pezzo che non
 c'è, una chiede di non far cadere i veri.
