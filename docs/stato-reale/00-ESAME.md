@@ -6207,3 +6207,69 @@ casi e regime esistono già) e con un **tasso di scoperta più alto**, almeno su
 #### Limiti
 **n=3**, tutte della **stessa serata** e tutte **nostre**. È un'osservazione **sul nostro modo di
 lavorare**, non una legge sul metodo. La metto qui perché è **riusabile**, non perché sia misurata.
+
+---
+
+## ws1 — «60/60» e' il MASSIMO, non il tipico: su 20 seed la fascia e' 58–60, e l'unico asse che cade e' quello della frase di apertura
+
+**Livello**: `benchmark/trustmem_bench.py` eseguito da riga di comando, l'oggetto stesso
+che la vetrina invita a lanciare. **Perimetro**: 20 seed x 10 personas = 200 prove.
+**Istante**: 29/08 20:23:17 → 20:31:47. **Regime**: `--engine verimem --personas 10`,
+repo a `cbf4dff4`, una sola macchina.
+
+**Perche' l'ho misurato**: avevo dichiarato io un limite — «due seed non sono una
+distribuzione» — dopo aver visto 60/60 sul seed 42 (il default) e 59/60 sul seed 7.
+**Un limite dichiarato e' un debito**: o lo si paga o non andava scritto. L'ho pagato.
+
+### Il risultato
+
+| esito | seed | quanti |
+|---|---|---|
+| **60/60** | 1, 2, 3, 11, 13, 19, 23, 37, **42**, 43, 53, 59, 61 | **13** |
+| **59/60** | 5, 7, 17, 29, 31, 47 | **6** |
+| **58/60** | 41 | **1** |
+
+**minimo 58 · massimo 60 · mediana 60 · media 59,6 · 65% dei seed a 60/60.**
+Venti run su venti hanno prodotto un punteggio: **nessuna cella vuota**, quindi qui
+l'assenza-di-misura non sta mascherando nulla.
+
+### Il pezzo che decide
+
+**Le perdite non sono sparse: `fabrication_under_absence` e' l'UNICO asse che cade,
+mai gli altri cinque.** Su 200 prove: **8 fallimenti** (6 seed x1, un seed x2) =
+**4,0%**. Gli altri cinque assi reggono **200/200 ciascuno**.
+
+🔴 **La vetrina dice «60/60», cioe' implicitamente 0%. Il benchmark del progetto
+stesso, sulle sue 200 prove, dice 4%.**
+
+⚖️ **Il 60/60 NON e' falso**: e' il valore modale e mediano, e il seed pubblicato (42)
+lo dà davvero. **Ma e' il massimo, non il tipico**, e in **7 casi su 20** non si
+raggiunge. Un numero secco preso dal seed migliore e' cio' che un analista chiama
+cherry-picking, **anche quando nessuno l'ha scelto apposta** — ed e' esattamente
+l'accusa che l'operazione in corso vuole rendere impossibile.
+
+🎯 E l'asse che cade **e' la frase di apertura del README**: «*when the evidence isn't
+there the system abstains instead of guessing*». Non un asse laterale: quello centrale.
+
+**Riga proposta per la vetrina**: «*TrustMem-Bench: **58–60/60 su 20 seed** (mediana 60,
+media 59,6). L'unico asse che cade e' `fabrication_under_absence`: **8 fallimenti su
+200 prove (4%)**.*»
+
+### 🟢 Il verde, che va detto per primo
+
+Il docstring del bench promette una honesty guard: «*run_verimem reports the score AS
+MEASURED, listing real failures — it is wired to detect them, not to pass*».
+**Ha rilevato 8 fallimenti reali.** Se fosse compiacente non lo sapremmo: il difetto
+emerge **perche' lo strumento funziona**. Questo e' un punto a favore del prodotto,
+non contro.
+
+### Cosa questo dato NON prova
+
+- **10 personas per seed e una sola macchina**: la fascia potrebbe muoversi altrove.
+- **Il bench e' SINTETICO e auto-generato**: il 4% e' il tasso **sul suo generatore, non
+  sul mondo**. E la vetrina **non dice** che il banco e' nostro — un lettore puo'
+  leggerlo come una misura di terze parti.
+- **«mem0: 40/60» resta NON verificato** da me: richiede mem0 installato.
+- **Non ho ancora guardato QUALI casi falliscono** — se fossero sempre la stessa forma,
+  il difetto sarebbe localizzato e piu' curabile. Fronte aperto, lo prendo io.
+
