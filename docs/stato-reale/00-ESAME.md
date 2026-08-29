@@ -786,7 +786,18 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
   claim  5039 char   🟢 ammesso   g=99.98
   claim  7559 char   🟢 ammesso   g=99.98
 ```
-⇒ 🔑 **La lunghezza NON quarantina: un fatto vero passa fino a 7559 caratteri.** **Perche' gli handoff siano fermati resta APERTO**, e `quarantined_by` e' vuoto su tutti e 1215 ⇒ **il database non lo dice e il ricalcolo di `LANT-44` va rifatto proprio su loro.**
+⇒ 🔑 **La lunghezza NON quarantina: un fatto vero passa fino a 7559 caratteri.** ✅✅ **E LA CAUSA VERA E' STATA TROVATA ALLE 19:51, rieseguendo gli schermi sui LORO testi** *(80 handoff quarantinati piu' recenti, `run_validation_gate` come fa `_spiega_le_quarantene`)*:
+```
+  MUTI (nessuno schermo si riaccende):  0/80      <- si riaccendono TUTTI
+  L1.13   68/80  (85%)
+  L1.15   40/80  (50%)
+  L1.12    9   ·   L1.20   2   ·   L1.10   1
+```
+⇒ 🔑🔑 **Gli handoff sono fermati dalla FAMIGLIA `L1` — le auto-affermazioni lessicali. E' lo STESSO difetto di `LANT-32` (verbali d'ufficio) e `LANT-47` (token di esito monolingue).**
+🔥 **E TUTTO SI UNIFICA IN UNA RIGA**: un handoff dice *«la suite e' verde», «il fix e' applicato», «il test passa»* — **verbi di completamento senza `verified_by` in formato accettato.** ⇒ **`LANT-32` + `LANT-47` + `LANT-48` sono UN SOLO difetto su TRE popolazioni**: verbali d'ufficio · **passaggi di consegne** · chiunque scriva un esito senza un token inglese da CI.
+🚨 **E il peso e' quello di `LANT-48`: meta' di tutto cio' che questa memoria rifiuta.** La popolazione piu' colpita e' **la continuita' fra sessioni**, cioe' **il caso d'uso che `README:3` mette in prima riga.**
+❓ **E resta una CONTRADDIZIONE che non diagnostico** *(regola 17)*: la documentazione MCP dice che una scrittura come **session NOTE** (`meta_narrative=True`, **che il comando `save` usa**) **salta lo screen lessicale**. **Gli handoff sono note di sessione — eppure sono quarantinati proprio dagli L1.** ⇒ **O gli handoff non passano da quella via, o l'esenzione non copre questa strada.** **Consegno la domanda, non la risposta: e' una riga di codice da leggere, e non e' il mio perimetro.**
+⚠️ **LIMITE**: 80 su 1215 *(i piu' recenti, non un campione casuale — e ho gia' pagato un `LIMIT` senza `ORDER BY` in `LANT-44`, quindi qui l'ordinamento e' dichiarato)*; e il ricalcolo gira **senza source**, quindi **vede solo gli L1**: se anche altri layer li avessero fermati, questo banco non puo' saperlo. **Perche' gli handoff siano fermati resta APERTO**, e `quarantined_by` e' vuoto su tutti e 1215 ⇒ **il database non lo dice e il ricalcolo di `LANT-44` va rifatto proprio su loro.**
 🟢 **E il banco ha trovato un COMPORTAMENTO BUONO che nessuno aveva registrato**: sopra la finestra dell'embedder il prodotto **stampa un avviso preciso e azionabile** — *«long fact: id=… is 3149 chars — beyond the embedder window (~512 tokens); **recall will only see the head**. For whole documents use DocumentIndex/index_file (chunked + cited)»* — **e nomina l'id, la soglia, la conseguenza e la cura.** ⚠️ **MA il fatto viene AMMESSO lo stesso** ⇒ **entra un fatto che il recall potra' servire solo per la testa**: l'avviso c'e', il blocco no. *(Si aggancia alla lezione gia' in memoria — «fatti oltre ~2000 char eccedono la finestra» — che nasceva da un incidente nostro, non dal prodotto: **il prodotto lo diceva gia'**.)*
 🔎 **rifallo con**: `mode=ro` → `SELECT topic, COUNT(*) ... WHERE status='quarantined' GROUP BY prefisso`, poi `LENGTH(proposition)` mediana sui due gruppi. |
 ```
