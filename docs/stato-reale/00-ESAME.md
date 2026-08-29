@@ -6295,3 +6295,96 @@ non contro.
 - **Non ho ancora guardato QUALI casi falliscono** — se fossero sempre la stessa forma,
   il difetto sarebbe localizzato e piu' curabile. Fronte aperto, lo prendo io.
 
+
+---
+
+## ws1 — Il banco e l'utente danno due punteggi diversi, e sul seed che la vetrina pubblica e' l'utente a prendere MENO
+
+**Livello**: `Memory.explain()`, l'API pubblica, chiamata con **una sola variabile
+cambiata**: `min_relevance`. **Perimetro**: 5 seed x 10 personas = 50 prove per regime
+sull'asse `fabrication_under_absence`. **Istante**: 29/08 20:43-20:51. **Regime**:
+`HIPPO_DATA_DIR` temporaneo, `ENGRAM_MIN_RELEVANCE` **non impostata** (il regime di
+chi installa e non configura niente), repo `2a3ebd69`.
+
+### Da dove parte
+
+`benchmark/trustmem_bench.py:230` chiama `mem.explain(query, k=5,
+min_relevance=_ABSENCE_FLOOR)` con `_ABSENCE_FLOOR = 0.835`, e il commento accanto
+dice che il valore **e' tarato sul banco stesso**: «*0.835 sits in the measured gap
+(relevant top-1 >=0.842 vs absent <=0.828 **on this synthetic set**)*» — un margine di
+**14 millesimi**. La domanda ovvia: **quel numero e' quello che riceve l'utente?**
+
+### L'A/B
+
+| seed | R1 = 0.835 (il banco) | chi cade | R2 = default utente | chi cade | delta |
+|---:|---:|---|---:|---|---:|
+| 5 | 9/10 | p6/EN | 9/10 | p1/IT | 0 |
+| 7 | 9/10 | p2/EN | **10/10** | — | +1 |
+| 17 | 9/10 | p0/EN | **10/10** | — | +1 |
+| 41 | 8/10 | p0/EN, p8/EN | **9/10** | p3/IT | +1 |
+| **42** | **10/10** | — | **8/10** | p1/IT, p5/IT | **−2** |
+| **totale** | **45/50** | **5 EN, 0 IT** | **46/50** | **0 EN, 4 IT** | |
+
+### 🔴 I due fatti che decidono
+
+**① Sul seed 42 — quello che la vetrina pubblica, il default di `--seed` — il banco
+prende 10/10 e l'utente 8/10.** E' l'**unico** dei cinque seed in cui il regime del
+banco batte quello dell'utente. Non affermo che sia stato scelto per questo: 42 e' il
+default ovvio, e sugli altri quattro seed il default dell'utente e' **migliore**. Ma il
+fatto e' che **il 60/60 pubblicato non e' cio' che ottiene chi installa il pacchetto e
+non configura niente** — su quell'asse ne ottiene 8 su 10.
+
+**② L'inversione e' totale: 5 fallimenti su 5 sono INGLESI nel regime del banco, 4 su 4
+sono ITALIANI nel regime dell'utente.** Il banco, col suo pavimento fisso, **non puo'
+vedere** i casi italiani che l'utente rompe: nel suo regime non falliscono mai.
+
+### Perche' i due regimi non sono due tarature, ma due GIUDICI
+
+Non e' che `auto` sia «0.835 piu' alto». `verimem/client.py:1785` passa
+`ce_gate=want_ce_floor`, e `want_ce_floor` e' vero **solo** con `auto`: un float
+esplicito resta sul **bi-encoder**, `auto` **delega la decisione al cross-encoder**. Il
+commento a `client.py:1787` lo dice, e descrive esattamente cio' che ho misurato:
+
+> «*con `auto` quel numero NON e' la soglia che ha filtrato: la decisione passa al
+> cross-encoder e il float resta un riferimento sulla scala del coseno […] copiare il
+> numero che il prodotto ti ha appena dato cambia la risposta*»
+
+E' per questo che alzando il pavimento da 0.835 a ~0.89 un caso che si asteneva
+**inizia a rispondere** — cosa impossibile se fosse la stessa soglia piu' alta.
+
+⇒ **Il benchmark della vetrina attraversa un percorso che l'utente di default non
+prende.** Se domani il CE gate regredisse, **il banco non se ne accorgerebbe.**
+
+### 🟢 Tre verdi, e vanno detti
+
+1. **Avevo predetto che il default crollasse verso 0/10. Falsificata**: 46/50 contro
+   45/50 del banco. **L'astensione non e' comprata dal parametro del banco: c'e'.**
+2. **`env_floor` con variabile non impostata restituisce `"auto"`, non 0.0**
+   (`relevance_floor.py:78-80`) ⇒ chi non configura nulla ha gia' il pavimento
+   auto-calibrato, che si muove col corpus: 0.888 · 0.8895 · 0.8933 · 0.8958 · 0.8976
+   sui cinque store. **Fa esattamente cio' che la docstring prometteva.**
+3. Sull'altro asse che usa la stessa porta, **`provenance_honesty` chiama
+   `mem.explain(query, k=5)` SENZA pavimento** — cioe' col default — e regge
+   **200/200**. Il CE gate non e' rotto: e' **non misurato** su questo asse.
+
+### 🔴 Il reperto minore: una docstring che descrive il default di un'altra funzione
+
+`client.py:1764` dichiara «*min_recall=None (the default) … **unset → 0.0
+(permissive, backward-compat)***». Codice e misura dicono `auto`. L'origine e'
+leggibile: **`env_floor_if_set` torna `None` su variabile non impostata, `env_floor`
+torna `"auto"`** — `explain` chiama la seconda e la sua docstring descrive la prima.
+Stanno nello stesso file a 12 righe di distanza. **Qui la documentazione e' piu'
+pessimista del prodotto**: dichiara spenta una guardia che e' accesa.
+
+### Cosa questo NON prova
+
+- **Un asse su sei.** Gli altri cinque non passano `min_relevance` (verificato: usano
+  `semantic.get`, `recall_as_of`, `delete`+`recall`, `classify_conflict`), quindi il
+  «8/10» del seed 42 diventa «58/60» **solo assumendo** che gli altri non cambino: non
+  li ho ri-misurati nel regime utente.
+- **Cinque seed, non venti.** L'A/B costa ~20 s a seed; il −2 sul 42 e' **un** dato.
+- **Non ho la causa** dell'inversione EN/IT. Ho la correlazione (9 fallimenti, 9 su 9
+  coerenti col regime) e il meccanismo dei due giudici; **il perche' il CE gate sbagli
+  proprio sugli italiani non l'ho misurato.**
+- **Non ho toccato nulla**: misuro, non curo.
+
