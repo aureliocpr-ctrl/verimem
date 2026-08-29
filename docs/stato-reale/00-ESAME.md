@@ -746,6 +746,27 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | LANT-44 | **P3 CHIUSA** — «*the explanation is recomputed on the spot, so it works on claims held long before you asked*» (`README:152`): regge? | C1 | IT | corpus in **sola lettura** + `run_validation_gate` (la funzione che l'explain riesegue) | 🟡 **regge al 99,3% sui VECCHI e CADE al 10,7% su una fascia di 210 — e la causa e' misurata** | ws7 | **Misurato 29/08 19:25-19:27.** Era **l'ultima delle cinque promesse di `README:152` rimasta aperta** *(`LANT-38`: il tool MCP mi era andato in timeout)*. Chiusa **senza aprire `Memory`**: letto il corpus in `mode=ro` e richiamata **la stessa funzione che `_spiega_le_quarantene` usa** (`run_validation_gate(proposition, verified_by=[], topic, agent=None)`).
 | LANT-45 | **le tre popolazioni sullo STESSO asse** — chiude la tensione che ho aperto io citando @ws1 | C1 | IT+EN | SDK, store temporaneo, modello vero | 🔴 **separazione TOTALE: prosa umana 0/8 · nostri referti 0/3 · verbali d'ufficio 3/3** — e **raffina la MIA formulazione, non solo la sua** | ws7 | **Misurato 29/08 19:31-19:32**, banco `ws7-tre-popolazioni-un-asse-solo.py`. **Nasce da un debito mio**: alle 19:24 @ws1 ha ristretto «70% contro 0,6%» *(unita' diverse: frasi contro coppie)* e la mia citazione come conferma e' caduta. **Ho aperto una tensione e la chiudo dalla mia parte.**
 | LANT-46 | **la variabile ISOLATA al terzo tentativo: non e' la parola, non e' il dominio — e' il FORMATO di `verified_by`** | C1 | IT | SDK, store temporaneo, modello vero + corpus in sola lettura | 🔴🔴 **il gate accetta evidenza SOLO nei formati dei coding agent: un numero di protocollo — evidenza VERA — e' rifiutato identicamente all'ASSENZA di evidenza** | ws7 | **Misurato 29/08 19:36.** 🧭 **Nasce da @ws1 (19:30)**: *«il mio 70% era una proprieta' delle DIECI FRASI CHE HO SCRITTO IO: su prosa legale VERA di terzi e' 12,5%»* ⇒ **la sua lezione colpisce me piu' di lei: anche i miei verbali li ho scritti io.** Applicata al mio reperto, l'ha ridotto e poi l'ha rifatto piu' forte.
+| LANT-47 | **QUINTA e ultima formulazione: non e' il formato dell'evidenza — e' il TOKEN DI ESITO, e il vocabolario e' MONOLINGUE INGLESE** | C1 · C3 | IT/EN | SDK, store temporaneo, modello vero | 🔴🔴 **`review:consiglio_approved` passa · `review:consiglio_approvato` NO. UNA LETTERA.** | ws7 | **Misurato 29/08 19:39-19:41**, a variabile singola. In `LANT-46` avevo isolato «il formato di `verified_by`». **Anche quella era incompleta**, e il codice mi ha dato il passo: `L1.15` ha **sei prefissi** (`pytest: test: ci: qa: review: validation:`) chiamati **`_OUTCOME_REQUIRED_PREFIXES`** — *«richiedono un token di esito verificabile»*. ⇒ **Il prefisso non basta: serve l'ESITO.**
+```
+  validation:protocollo_2214_registrato   (IT)   🔴 FERMATO
+  validation:protocollo_2214_PASS         (EN)   🟢 AMMESSO
+  validation:protocollo_2214_approved     (EN)   🟢 AMMESSO
+  test:collaudo_2214_superato             (IT)   🔴 FERMATO
+  test:collaudo_2214_PASS                 (EN)   🟢 AMMESSO
+```
+🔑 **Stesso prefisso, stessa evidenza, cambia SOLO la parola finale.** ⇒ **La variabile e' il TOKEN DI ESITO.**
+🚨 **E LA COPPIA MINIMA lo mostra in una lettera**:
+```
+  review:consiglio_approved    🟢 AMMESSO
+  review:consiglio_approvato   🔴 FERMATO      <- UNA LETTERA
+  review:consiglio_ok          🔴 FERMATO      <- eppure «ok» E' NELLA LISTA del codice
+```
+📖 **Il vocabolario, letto nel codice** (`l1_tested_detector.py:88`): **`_OUTCOME_TOKENS` = `pass · passed · passing · green · approved · ok · exit0`** — **sette, tutti INGLESI**; e `_RUNNER_TOKENS` = **quindici framework di test** *(pytest, jest, rspec, junit…)*, tutti di sviluppo software.
+⇒ 🔑 **E' la classe ③ gia' registrata nel metodo — LISTE MONOLINGUE — sulla superficie piu' esposta che abbiamo: il campo in cui l'utente mette la PROPRIA evidenza.** Un verbale italiano «approvato» non ha nessuna forma accettata; **lo stesso verbale con `_approved` passa.**
+❓ **E un'anomalia che NON diagnostico** *(regola 17)*: **`ok` e' dentro `_OUTCOME_TOKENS` e viene comunque rifiutato** in `review:consiglio_ok`. **Lista dichiarata e comportamento non coincidono**, e non so perche' — forse il match vuole un confine di token che l'underscore non da'. **Consegno l'osservazione, non la causa.**
+🪞 **Cinque formulazioni in due giorni, e le prime quattro erano mie**: ① «tarato su chi lo ha scritto» · ② «e' il dominio» · ③ «e' la parola» · ④ «e' il formato dell'evidenza» · **⑤ «e' il token di esito, e il vocabolario e' monolingue»**. ⇒ **Ogni passo avanti l'ha dato qualcosa di esterno**: @ws1 col restringimento, il corpus col tasso base, **il CODICE con la parola `_OUTCOME_REQUIRED_`**. **Da sola mi sarei fermata alla prima, che suonava gia' benissimo.**
+⚠️ **LIMITI**: una sola lingua provata contro l'inglese (l'italiano); non ho cercato se esista una manopola per estendere i token; le frasi restano scritte da me — **ma qui non conta**, perche' la variabile e' isolata **dentro `verified_by`**, non nel testo del claim.
+🔎 **rifallo con**: `mem.add(claim, source=fonte, validate='full', verified_by=[X])` variando **solo X** fra `review:consiglio_approved` e `review:consiglio_approvato`. La lista: `sed -n '88,96p' verimem/l1_tested_detector.py`. |
 📊 **PRIMA il corpus VERO, che non ho scritto per l'occasione** *(15405 fatti, **tasso base di quarantena 15,7%**)*:
 ```
   verbo         fatti   quarant.   tasso    rapporto sul base
