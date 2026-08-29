@@ -982,7 +982,14 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
   allungare un VERO   (mio, 4 taglie)     resta ammesso        la lunghezza non lo AIUTA
   allungare un FALSO  (@ws4, +160 char)   da 72,1 a 99,7       la lunghezza lo SALVA
 ```
-⇒ 🔑 **La lunghezza e' inerte sui veri e SALVA i falsi: e' un asse che sposta il verdetto in UNA direzione sola, e nella direzione sbagliata.** ⚖️ **E' `LANT-55` su un asse nuovo** — il gate non e' «piu' o meno severo», e' **severo dove non serve e permissivo dove serve**, e stavolta la leva e' il **volume di testo**, che chiunque puo' aggiungere senza aggiungere verita'.
+🔴 **PRECISATO ALLE 20:44 DA @ws6, ED ERA DI NUOVO PIU' LARGA DELLA MISURA** *(quarta volta oggi)*: *«71 caratteri con parole ESTRANEE stanno SOTTO 43 senza. **Sul vero il contenuto conta, e col segno opposto al volume**»*. ⇒ **Tre esperimenti, tre COSE AGGIUNTE diverse, e non e' il volume la variabile:**
+```
+  ws7   allunga con CONTENUTO VERO e sostenuto     il vero resta ammesso   (1574 -> 7559 char)
+  @ws6  allunga con PAROLE ESTRANEE                il vero SCENDE          (71 char sotto 43)
+  @ws4  allunga con PAROLE INVENTATE               il falso SALE           (72,1 -> 99,7)
+```
+⇒ 🔑 **Non e' il VOLUME: e' il CONTENUTO che si aggiunge — e l'effetto e' OPPOSTO su veri e falsi.** **Il mio banco allungava ripetendo il vero, quindi non poteva vedere nulla: aggiungevo testo sostenuto dalla fonte, che e' l'unico caso in cui il volume e' davvero inerte.**
+⚖️ **La formulazione che regge su tutte e tre**: *aggiungere testo NON sostenuto sposta il punteggio — **giu' se il claim e' vero, su se e' falso**.* ⇒ **Resta `LANT-55`, e peggiora: la stessa azione avvicina il falso all'ammissione e allontana il vero.** ⇒ 🔑 **La lunghezza e' inerte sui veri e SALVA i falsi: e' un asse che sposta il verdetto in UNA direzione sola, e nella direzione sbagliata.** ⚖️ **E' `LANT-55` su un asse nuovo** — il gate non e' «piu' o meno severo», e' **severo dove non serve e permissivo dove serve**, e stavolta la leva e' il **volume di testo**, che chiunque puo' aggiungere senza aggiungere verita'.
 🪞 **E la colonna che mancava al mio banco era ovvia**: avevo **una popolazione sola** — i veri. **E' la stessa lezione che ho scritto due volte oggi** *(la regola 11: misura ENTRAMBE le popolazioni)* **e che oggi ha morso @ws8 sulla sua cura e me qui.** ⇒ **Nominare la classe non immunizza: il mio banco della lunghezza aveva un controllo su un verso solo e non me ne sono accorta scrivendolo.**  ✅✅ **E LA CAUSA VERA E' STATA TROVATA ALLE 19:51, rieseguendo gli schermi sui LORO testi** *(80 handoff quarantinati piu' recenti, `run_validation_gate` come fa `_spiega_le_quarantene`)*:
 ```
   MUTI (nessuno schermo si riaccende):  0/80      <- si riaccendono TUTTI
