@@ -6120,21 +6120,25 @@ da nessuna parte**, e colpisce **proprio le misure di silenzio**.
 quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
 
 ### 🪞 W8-12 — La mia cura a L1.20 **aggiunge una quarantena su sei claim VERI**: l'allarme regge, ma ridimensionato da 1 caso a 1 su 6
-> 🛑 **CORREZIONE 2026-08-29 20:34, PRIMA DI LEGGERE IL RESTO.** Due righe di questa cella
-> sono **RITIRATE**: il claim «il collaudo si è concluso senza rilievi», dato per
-> quarantinato in entrambi i rami, **da solo in uno store VUOTO passa** (`model_claim`,
-> grounding 99.38, `layers` vuoto, `quarantined_by` None). ⇒ **La sua quarantena era un
-> ARTEFATTO del banco**: i sei claim erano scritti **nello stesso store, in sequenza**, e
-> gli altri fatti già dentro hanno pesato. **Cade quindi anche «esiste un problema di veri
-> fermati che non dipende da questa cura»** — non è dimostrato.
-> ✅ **Cosa REGGE**: «La merce è arrivata integra» era il **primo** claim scritto, quindi su
-> store vuoto, e l'A/B singolo delle 20:23 lo conferma indipendentemente. **Il delta di 1 su
-> 6 resta; il livello assoluto (2 su 6) NO.**
-> 🔑 **La lezione vale per ogni nostro banco**: N claim scritti nello stesso store **non sono
-> N esperimenti indipendenti** — sono UN esperimento con N passi, e i passi si influenzano.
-> È la stessa famiglia del **floor di 50 fatti**: **lo stato dello store è una variabile
-> nascosta**. ⇒ Store nuovo per claim quando la domanda è «questo passa?»; store condiviso
-> solo quando la domanda è «cosa succede in sequenza?».
+> 🔄 **DUE CORREZIONI IN SEQUENZA, 20:34 e 20:39. Leggere prima del resto.**
+> **(1) alle 20:34** ho ritirato la riga «il collaudo… è quarantinato in entrambi i rami»
+> attribuendola a un **artefatto dello store condiviso**, perché lo stesso claim, scritto da
+> solo, passava (`model_claim`, 99.38, `layers` vuoto).
+> **(2) alle 20:39 quel ritiro è caduto**: rifatto l'A/B con **uno store NUOVO per ogni
+> claim**, i numeri sono **IDENTICI** — 1 su 6 cambia, 2/6 acceso contro 1/6 spento, e quel
+> claim resta quarantinato in entrambi i rami. ⇒ **NON era lo store.**
+> 🔑 **La differenza vera è la POSIZIONE DELLA SCRITTURA NEL PROCESSO**: alle 20:33 quel
+> claim era l'**unica** scrittura del processo; nel banco è la **terza di sei**. Qualcosa si
+> arma dopo le prime scritture — **e non è L1.20**, perché col ramo spento è quarantinato lo
+> stesso. **Quale detector sia, NON l'ho isolato.**
+> ✅ **Cosa regge**: tutti i numeri della tabella qui sotto, verificati due volte con store
+> condivisi e con store isolati; e il caso «La merce è arrivata integra», confermato anche
+> dall'A/B singolo delle 20:23.
+> 🪞 **Tre spiegazioni in venti minuti per un dato che non è mai cambiato.** Ogni volta la
+> spiegazione sembrava chiudere il caso. **A separarle è stato cambiare una variabile alla
+> volta**: prima lo store (non sposta nulla), poi il numero di scritture (sposta tutto).
+> ⚠️ **Chi legge una correzione la creda meno del dato**: qui la prima correzione era
+> sbagliata e il dato originale era giusto.
 
 **REGIME**: due sottoprocessi, **unica variabile** `ENGRAM_ENCODE_SERVICE` (disarma L1.20 senza
 toccare il codice, riproducendo il comportamento **precedente a `54bb9d73`**); modello vero
