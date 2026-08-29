@@ -5613,3 +5613,30 @@ si legge verde**.
 > · **il controllo in INGLESE**, che nessuno dei due dossier aveva.
 > ⇒ **Il mio caso singolo serve come base del confronto con la prosa, NON come misura del fenomeno.**
 > Chi cita un numero su «quanto sbaglia L4.2 sulla tabellare» **citi il ⑭, non questa cella.**
+
+> #### 🔗 COLLEGAMENTO 19:59 — **questa cella e il ⑩ misurano la STESSA LEVA su popolazioni opposte**
+> Il censimento dei titoli ha trovato anche **`10-il-contorno-cambia-il-verdetto.md`** (@ws4) —
+> **terzo** documento che il mio `git grep` non vedeva.
+>
+> | popolazione | il dato | esito |
+> |---|---|---|
+> | claim **FALSO** (⑩) | la **stessa fonte scritta due volte** → da **TRATT 0,9** a **97,2**; riempimento **neutro** da TRATT 1,2 (191 char) a **99,2** (1433 char) | **difetto centrale** |
+> | claim **VERO** (qui) | il **claim ripetuto** (175 char) → **99,9**, il massimo | sembra **desiderabile** |
+>
+> ⇒ **È la stessa leva**: allungare il contorno **alza** il punteggio. **La mia frase «ripetere il
+> claim alza il punteggio» descriveva il lato innocuo di un meccanismo che sull'altra popolazione è
+> grave.**
+>
+> 🔴 **E c'è un punto in cui i due numeri vanno in DIREZIONI OPPOSTE:**
+> · **⑩**: riempimento **privo di significato** → il punteggio **SALE**;
+> · **qui**: parole estranee ma **semanticamente correlate** («verbale», «attesta», «censiti») → il
+> punteggio **SCENDE** (98,9 → 96,9).
+> ⇒ **Non è «il contorno alza» né «il contorno abbassa»: dipende da CHE COSA è il contorno.** ⚠️ E
+> **la relazione semantica fra testo aggiunto e claim NON compare** fra le **sei** spiegazioni che il
+> ⑩ ha provato ed escluso.
+> ⚠️ **Regimi diversi** (⑩: `validate="full"`, CE locale, claim falso · qui: claim vero, porta SDK)
+> ⇒ **è un indizio, non un confronto pulito.**
+> ⚖️ **Non riapro il fronte**: il ⑩ ha già sei spiegazioni chiuse, e rifarle sarebbe duplicare.
+> **Se l'indizio serve**, la coppia `lunga_pulita` / `corta_extra` del banco
+> `ws6-il-grounding-e-il-vocabolario-estraneo.py` isola «neutro contro correlato» a parità di claim
+> vero, e gira in un minuto.
