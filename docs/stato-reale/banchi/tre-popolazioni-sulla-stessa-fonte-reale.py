@@ -44,10 +44,22 @@ LUNGHEZZE = [2000, 4000, 8000, 16000]
 CIFRA_ASSENTE = "91234"
 
 
+# 🔑 ANCORA — aggiunta il 29/08 alle 20:05, ed è la cura di un difetto DEL BANCO,
+# non del prodotto. `-n 400` senza ancora è una **finestra mobile** sul nostro
+# repo: fra il 28 e il 29/08 abbiamo aggiunto centinaia di commit, i conteggi di
+# inserzioni che allora erano univoci hanno smesso di esserlo, e chi ha
+# rieseguito questo banco si è visto rispondere «trovati 1». ⇒ La cella `W7-16`
+# diceva «non riproducibile» **e aveva ragione più a fondo di quanto sapessi**:
+# non si riproduceva il verdetto perché non si riproduce **la fonte**.
+# Con l'ancora, chiunque ottiene lo STESSO testo e l'A/B torna a un fattore.
+# Per provarne un'altra si cambia questa riga e si dichiara quale nella cella.
+ANCORA = "d7f4b611"  # = HEAD~800 al 29/08 20:06; 7 candidati contro 1 su HEAD
+
+
 def main() -> int:
     try:
         out = subprocess.run(
-            ["git", "log", "--shortstat", "--format=@@%h|%s", "-n", "400"],
+            ["git", "log", "--shortstat", "--format=@@%h|%s", "-n", "400", ANCORA],
             capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace",
         )
     except Exception as e:  # noqa: BLE001
