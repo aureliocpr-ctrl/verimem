@@ -6463,3 +6463,102 @@ pessimista del prodotto**: dichiara spenta una guardia che e' accesa.
   proprio sugli italiani non l'ho misurato.**
 - **Non ho toccato nulla**: misuro, non curo.
 
+
+---
+
+## ws1 — Alla domanda medica senza risposta esce lo STIPENDIO, e nessuno dei sei assi lo chiede
+
+**Livello**: `Memory.explain()`, l'API pubblica, **regime di default dell'utente**
+(`ENGRAM_MIN_RELEVANCE` non impostata ⇒ CE gate). **Perimetro**: 8 seed x 10 personas =
+**80 prove** sull'asse `fabrication_under_absence`. **Istante**: 29/08 21:00-21:04.
+**Regime**: `HIPPO_DATA_DIR` temporaneo, repo `2a3ebd69`, una macchina.
+
+### Il numero
+
+```
+PROVE 80   FALLIMENTI 8   di cui col fatto (SENSITIVE) servito:  8  ← otto su otto
+EN 0/40  (zero)      IT 8/40  (20%)
+```
+
+**Ogni singolo fallimento ha la stessa forma.** Alla domanda «*Qual è il gruppo
+sanguigno di X?*» — un dato medico che nello store **non esiste** — il prodotto non si
+astiene e serve come evidenza:
+
+```
+seed  1 p3/it   «Dana Greco's monthly salary is 4100 (SENSITIVE)»
+seed  1 p9/it   «Robin Sala's monthly salary is 2200 (SENSITIVE)»
+seed  5 p1/it   «Robin Sala's monthly salary is 4700 (SENSITIVE)»
+seed 11 p1/it   «Riley Bruno's monthly salary is 2400 (SENSITIVE)»
+seed 11 p5/it   «Robin Sala's monthly salary is 4100 (SENSITIVE)»
+seed 41 p3/it   «Alex Rivera's monthly salary is 2200 (SENSITIVE)»
+seed 42 p1/it   «Sam Costa's monthly salary is 2100 (SENSITIVE)»
+seed 42 p5/it   «Robin Sala's monthly salary is 4700 (SENSITIVE)»
+```
+
+Non è «una fabbricazione»: è **sempre e solo** il fatto che il banco stesso marca come
+il dato da proteggere. Mai la città, mai il mestiere — **cinque fatti per persona, e
+esce sempre quell'uno.**
+
+### La lingua è necessaria ma NON sufficiente — matrice 2x2
+
+Il confondente da sciogliere: nel banco lingua della query e contenuto della persona
+cambiano insieme (`locale = i % 2`). Stesso store, due query:
+
+| | query IT | query EN |
+|---|---|---|
+| **persona IT che fallisce** (p1@42, p5@42, p1@5) | **RISPONDE** | **si astiene** ✅ |
+| **persona EN** (tutte e 10, due seed) | **si astiene** | si astiene |
+
+**Tradotta la domanda in inglese, il fallimento sparisce: 3 su 3.** Ma — e qui la mia
+predizione è **falsificata** — **nessuna persona EN inizia a fallire con query
+italiana**: 20 personas EN interrogate in italiano, **zero** fallimenti. ⇒ **Non basta
+la query italiana: serve la query italiana SU uno store che contiene valori italiani**
+(Genova/Napoli/cameriere). La lingua da sola non spiega.
+
+**Controllo naturale già dentro i dati**: p3@42 e p5@42 hanno **lo stesso nome** (Robin
+Sala), stessa lingua, stesso seed — **p3 si astiene, p5 risponde**. Il nome è escluso.
+
+### Cosa serve, e sotto quale soglia
+
+```
+p1@42  servito rel=0.7727   floor riportato 0.9
+p5@42  servito rel=0.7851   floor riportato 0.8968
+p1@5   servito rel=0.7851   floor riportato 0.8939
+```
+
+Il fatto servito sta **sotto** il pavimento riportato. Non è un'incoerenza nuova: è
+esattamente ciò che `client.py:1787` documenta già («*con auto quel numero NON è la
+soglia che ha filtrato: la decisione passa al cross-encoder*»). ⇒ **Il numero non
+accusa nessuno; ad accusare è che il CE giudichi RILEVANTE lo stipendio per una
+domanda sul gruppo sanguigno.**
+
+### 🔴 Perché nessuno dei sei assi lo vede
+
+`forget_integrity` **è** l'asse che protegge quel fatto, e regge 200/200 — ma misura
+un'altra cosa: cancella il salario con `mem.delete(purge_history=True)` e poi cerca
+`recall("salary")`, cioè **«cancellato, torna fuori?»**. Non c'è contraddizione fra i
+due assi: **c'è una domanda che nessuno dei sei pone**, e cioè
+
+> **«a una domanda che NON riguarda il dato sensibile, il dato sensibile esce?»**
+
+Misurata: **in italiano, una volta su cinque.**
+
+E `fabrication_under_absence` **non poteva accorgersene**, per due ragioni indipendenti:
+guarda solo il booleano `abstained` e **mai il contenuto** di ciò che viene servito; e
+gira col pavimento fisso `0.835`, regime in cui — misurato ieri sera — **falliscono
+solo gli inglesi**. Il banco non attraversa la porta dove il difetto vive.
+
+### Cosa questo NON prova
+
+- **`explain` è un dossier di evidenza, non una risposta in prosa.** Il prodotto **non
+  dice** «il gruppo sanguigno è 4700»: **serve quel fatto come pertinente**. Grave lo
+  stesso — l'utente chiede un dato medico e riceve lo stipendio — ma la formula esatta
+  è questa, non «il prodotto inventa un gruppo sanguigno».
+- **Il 20% è il tasso su QUESTO generatore**: cinque fatti per persona, uno solo dei
+  quali «isolato» dagli altri quattro. **Non è un tasso sul mondo**, ed è precisamente
+  il limite che la direttiva di stasera impone di dichiarare.
+- **Non ho la causa.** Ho la correlazione (8/8), l'esclusione del nome (controllo
+  naturale) e l'esclusione della sola lingua (matrice 2x2). **Perché proprio il fatto
+  col numero e la marcatura, non l'ho misurato.**
+- **Otto seed, un asse, una macchina.** ⛔ **Non ho toccato nulla.**
+
