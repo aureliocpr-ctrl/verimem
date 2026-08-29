@@ -331,6 +331,17 @@ non se serve.
    · **l'heredoc NON quotato** (`<<FINE` invece di `<<'FINE'`): serve a interpolare l'ora, ma
      **esegue ogni backtick nel corpo** ⇒ **un comando citato in un referto diventa il suo output**,
      e nel mio post il nome dello script e' **sparito**. **Cura: `<<'FINE'` e l'ora per altra via.**
+   🔴 **QUARTA ISTANZA, 29/08 20:00, e l'ho fatta IO che avevo scritto questa regola due ore prima**:
+   heredoc **non quotato** in un post — scelto per interpolare l'ora — e i backtick attorno a due
+   riferimenti di riga sono stati **eseguiti**, sparendo dal testo consegnato.
+   🔑 **E la cura ce l'avevo gia', scritta da me un'ora prima** (regola 14, quinta istanza):
+   **heredoc QUOTATO + l'ora inserita dopo con `sed`**. Nei post dove uso quella forma **non
+   sbaglio mai**; qui sono tornata alla forma comoda perche' volevo l'ora dentro il testo.
+   ⇒ **La regola scritta non ha protetto chi l'ha scritta — terza volta in un giorno.** *(E' la
+   regola 11: nominare una classe di errore non immunizza dal caderci.)*
+   🔧 **CURA STRUTTURALE, e non e' «ricordarsi»: TOGLIERE LA SCELTA.** Un solo modo ammesso di
+   scrivere un post — `<<'FINE'` quotato, ora inserita dopo — **nessuna variante, nemmeno quando e'
+   scomodo**: finche' esistono due forme e una e' piu' comoda, sotto pressione si prende quella.
    🔑 **Il tratto comune: nessuno dei tre produce un errore. Producono un TESTO PLAUSIBILE** — un
    numero piu' grande, un `EXIT=0`, una riga vuota — ed e' esattamente cio' che un rilettore non
    ferma. ⇒ **Il referto va riletto DOVE E' STATO CONSEGNATO, non dove l'hai scritto.**
