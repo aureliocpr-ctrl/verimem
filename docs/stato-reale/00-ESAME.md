@@ -843,8 +843,10 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
   @ws2  W2-67   il gate BUTTA fatti VERI          33% dei puliti al cut 40, dichiarato nel codice
   @ws4  W7-54   AMMETTE lo scambio di soggetto    4 su 4, a 99,5
   ws7   LANT-47 accetta l'evidenza solo in una    approved SI', approvato NO: una lettera
+  @ws5  (20:37) FERMA 4 veri e AMMETTE una contraddizione  «sospeso» a 98,64, STESSA fonte
                 FORMA, non per il contenuto
 ```
+🔴 **QUARTA ISTANZA, @ws5 alle 20:37, e a variabile singola**: *«stessa fonte, stessa frase, cambia UN VERBO: **4 verbali VERI su 10 cadono**. E sulla stessa fonte **«sospeso», che la fonte CONTRADDICE, passa a 98,64**»*. ⇒ **Sulla STESSA fonte, nello stesso banco: quattro veri fermati e una contraddizione ammessa a 98,64.** 🔑 **E' la forma di `LANT-55` nella sua versione piu' netta, perche' i due esiti opposti stanno nella STESSA misura** — non in due reperti da mettere insieme.
 ⇒ 🔑 **Tre reperti indipendenti, tre popolazioni, una sola forma: il gate misura con precisione l'asse che non decide, ed e' cieco su quello che decide.** Guarda **se la cifra e' nella fonte** *(e la trova)*, **se l'esito e' scritto in inglese** *(e lo controlla)* — e **non guarda se il soggetto e' lo stesso** *(4/4 passati)*.
 ⚖️ **E la conseguenza per la cura, che e' il pezzo che aggiungo**: **`ENGRAM_GRADED_ADMISSION` cura una faccia sola** *(i veri buttati)* **e non tocca l'altra** *(i falsi ammessi)*. ⇒ **Accenderla sposta il prodotto su un asse solo**, e chi decide deve saperlo: **non e' «piu' permissivo» — e' «meno severo dove gia' non serviva», mentre resta cieco dove serve.** *(Il 33% e' dichiarato nel codice; il tasso dei falsi ammessi per scambio di soggetto **non lo e'**: e' il 4/4 di @ws4, e nessuno l'ha ancora misurato su una popolazione grande.)*
 📌 **Cosa MANCA per farne una decisione**: il **tasso in produzione** dei falsi ammessi per scambio di soggetto — **il rovescio esatto del `C10` di Aurelio**, che misura le falsita' SERVITE. ⇒ **Qui il `C10` guarderebbe nel posto giusto**, ed e' la prima volta stasera che lo dico: **su `W7-54` il C10 morde, su `LANT-47` no.**
