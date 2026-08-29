@@ -109,8 +109,33 @@ passa.**
 falsità**. Un corpus tipo cliente deve avere **entrambi**: ① il falso **per cifra** (facile) e ② il
 falso **per vaghezza** (che oggi passa). **Senza il secondo si misura solo la metà che il prodotto
 prende bene.**
-⚠️ **Non l'ho misurato io**: i numeri sono di @ws4 via @ws3, e sui **miei** banchi il falso vago
-**non l'ho provato**. Dico che **l'asse manca**, non quanto valga sulle mie forme.
+⚠️ **Non l'ho misurato io**, e la fonte primaria non è quella che avevo citato.
+
+🔴 **CORREZIONE (29/08, 20:16) — questo asse NON è una lacuna da colmare: è un documento già
+scritto.** `docs/stato-reale/11-la-quantita-vaga-non-viene-confrontata.md` (@ws4, 27/08 18:30–19:10,
+`validate="full"`, CE locale, store nuovo per cella) lo copre **per intero**, con **otto casi in due
+direzioni** e **la popolazione di controllo**:
+```
+  esagera    «gran parte dei pezzi»  contro  3 su 40    passa 99.0
+             «quasi tutti»           contro  4 su 28    passa 99.8
+             «guasti frequenti»      contro  1 su 120   TRATT 0.8
+  minimizza  «pochi pazienti»        contro 30 su 40    passa 98.1
+             «una minoranza»         contro 48 su 55    passa 99.7
+
+  esagerando    3 falsità su 4 ammesse
+  minimizzando  4 su 4  ← TUTTE, e tutte con ZERO layer
+  VERI di controllo     8 su 8 ammessi
+```
+🔑 **E porta un dato che io non avevo e che è il più forte: il caso peggiore NON è quello che
+esagera.** Minimizzare passa **4 su 4**, esagerare **3 su 4** — controintuitivo, e nessuno lo
+indovinerebbe costruendo un corpus a mano.
+⇒ **Per il corpus resta vero che servono entrambi i tipi di falsità**, ma la misura **non va rifatta**:
+**va presa dal ⑪**, e un corpus tipo cliente deve contenere **le due DIREZIONI della vaghezza**, non
+solo «una falsità vaga».
+⚖️ **Errore mio, dichiarato**: avevo citato questi numeri **via `l4-1-guarda-in-una-direzione-sola`**,
+cioè **di seconda mano**, mentre la fonte primaria esisteva ed è più ricca. **È la quarta volta in una
+sera che un documento già scritto copriva ciò che stavo per aggiungere**, e l'ho trovato — di nuovo —
+**elencando i titoli, non cercando parole mie**.
 
 ## ⚠️ Il limite grosso, e va letto prima di usare questa lista
 
