@@ -6951,3 +6951,60 @@ scrivo pur avendo passato la serata a costruirci sopra.
   da store sintetici**, né miei né del generatore.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — RIMETTO la riga che avevo chiesto di togliere: 65% in italiano contro 5% in inglese. Sei campioni non falsificano un tasso
+
+**Livello**: `Memory.explain()`, regime di default (CE gate). **Perimetro**: **40 personas
+nuove × 2 lingue di query = 80 prove**, stesso store, **una sola variabile: la lingua della
+domanda**. **Istante**: 29/08 21:40-21:47. **Regime**: `HIPPO_DATA_DIR` temporaneo, repo
+`222e13d0`. ⚠️ Frasi mie ⇒ **controllo interno**, non popolazione bersaglio.
+
+### Il dato
+
+```
+QUERY ITALIANA:  26/40  = 65,0%     ← e 26 su 26 servono il fatto (SENSITIVE)
+QUERY INGLESE:    2/40  =  5,0%     ← e servono «job title is giardiniere»
+```
+
+**Fattore 13**, sullo **stesso store**, cambiando **solo la lingua della domanda**.
+
+### 🔻 Ritiro il mio ritiro delle 21:36, ed è l'errore peggiore della serata
+
+Alle 21:36 avevo misurato **1/6 in tutte e quattro le configurazioni** e ne avevo concluso
+«**il fenomeno non è monolingue**», chiedendo a @ws3 e @ws5 di **togliere dalla tabella a
+quattro facce la riga «0% EN contro 20% IT»**. **Quella richiesta era sbagliata: la riga va
+RIMESSA, e il numero è peggiore di quello che c'era.**
+
+🪞 **Come ci sono arrivata, perché è una lezione e non una svista.** Alle 21:36 avevo
+scritto — e ci credo ancora — che **«un caso fuori dallo stampo vale più di dodici
+dentro»**. È vero **per la SUFFICIENZA**: un solo controesempio abbatte una condizione
+necessaria, e infatti N4 ha correttamente abbattuto le quattro condizioni.
+**Ma ho usato quello stesso caso singolo per falsificare un TASSO** — e **un tasso non si
+falsifica con sei campioni.** Con n=6 vedevo 1/6 ovunque e ho letto «nessuna differenza»;
+con n=40 la differenza è **65% contro 5%**.
+⇒ **Ho applicato la regola giusta all'oggetto sbagliato.** Sufficienza e frequenza vogliono
+disegni diversi: **un caso costruito** per la prima, **un campione** per la seconda.
+
+### Cosa resta vero del ritiro, e cosa no
+
+✅ **Resta**: le quattro condizioni **non sono sufficienti** — N4 lo prova, e qui si
+conferma (i 2 fallimenti inglesi servono un **mestiere**, non il salario).
+❌ **Cade**: «il fenomeno non è monolingue». **Lo è, e in modo netto.**
+🔍 E il residuo inglese non è neutro: entrambi i casi servono «*job title is **giardiniere***»
+— **un token italiano dentro uno store con valori italiani.**
+
+### Cosa questo NON prova — e il limite pesa quanto il numero
+
+- **Store costruiti da me.** Il 65% è il tasso **su questo generatore**, **non sul mondo**.
+  ⛔ **Nessuno porti fuori «Verimem sbaglia il 65% delle volte in italiano».**
+- **Ciò che è solido è il CONFRONTO, non il livello**: stesso store, stessa popolazione,
+  una sola variabile ⇒ **la differenza fra le lingue è misurata; il valore assoluto no.**
+- **Su dati di terzi resta 25/25** (HaluEval, **inglese**) — **coerente** con il 5% inglese
+  misurato qui, e **non contraddittorio**.
+- 🔻 **Il limite che non riesco a chiudere resta lo stesso e ora conta di più**: **non ho
+  prosa italiana di terzi.** Il fenomeno più forte che ho trovato stasera vive esattamente
+  dove non ho un corpus per verificarlo.
+- ⛔ **Non ho toccato nulla.**
+
