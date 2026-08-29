@@ -426,6 +426,17 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
         for k, v in overrides.items():
             original[k] = getattr(CONFIG, k)
             object.__setattr__(CONFIG, k, v)
+        # LA RETE SOTTO IL PINNING (2026-08-29). Le quattro `setenv` qui sopra
+        # sono quattro cure alla stessa classe, ognuna aggiunta dopo che un
+        # risolutore aveva guardato il nome non ancora pinnato — il commento
+        # sopra lo conta da se': «Questa e' la quarta». Pinnare i nomi e'
+        # enumerare le porte, e la quinta e' il prossimo alias che nascera'.
+        # Qui non si chiede quali nomi siano pinnati: si chiede DOVE e'
+        # finito il file. Se l'isolamento non ha retto, il test si ferma
+        # ADESSO invece di scrivere nel corpus servito.
+        from verimem.test_isolation import assert_store_isolato
+        for _campo in ("semantic_db", "episodes_db", "skills_db"):
+            assert_store_isolato(getattr(CONFIG, _campo), tmp_root=test_data_dir)
     except ImportError:
         pass
     # CYCLE #28 (critic counterexample on #25): verimem.settings:20
