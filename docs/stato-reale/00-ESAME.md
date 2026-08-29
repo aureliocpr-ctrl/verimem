@@ -5561,3 +5561,28 @@ rm -rf "$T"
 ```
 ⚠️ **Nessuna pipe fra il comando e `$?`**, altrimenti si legge l'exit del filtro e **un veto
 si legge verde**.
+
+> #### ⚖️ RIDIMENSIONAMENTO 19:56 — **il dossier ⑭ aveva già misurato questo, con 8 coppie contro il mio 1**
+> Il **censimento dei titoli** di `docs/stato-reale/` ha trovato
+> **`14-la-forma-della-fonte-decide-quale-layer-sbaglia.md`** (@ws4, 28/08 22:35–23:18), che il mio
+> `git grep` **non aveva visto** perché cercavo **parole mie**.
+> Il ⑭ misura, **su tabella allineata — cioè sulla source che `O3` impone**:
+> ```
+>   L4.1   sui VERI 0 su 8      sui FALSI 8 su 8      separazione PERFETTA
+>   L4.2   sui VERI 8 su 8      sui FALSI 2 su 8      anti-separa
+> ```
+> e la sua lettura chiave: **l'aggregato «almeno un layer L4 parla» NASCONDE la separazione** —
+> 8 su 8 in entrambe le popolazioni si legge come «il gate non separa», mentre **separato per layer
+> `L4.1` separa perfettamente**.
+>
+> ⇒ **La conclusione che ho presentato stasera — «il rumore lo paghiamo noi perché `O3` impone output
+> di strumenti» — ERA GIÀ LÌ, con otto coppie contro il mio caso singolo.** L'ho ripresentata come
+> se fosse mia: **non lo era.**
+>
+> ✅ **Cosa resta effettivamente di questa cella:**
+> · **la PROSA come popolazione di controllo** — il ⑭ misura **solo dentro** la tabella e **non
+> poteva** mostrare che cambiando forma **il rumore sparisce mentre la protezione resta**;
+> · **l'ORDINE etichetta/numero** isolato a variabile singola (cella successiva);
+> · **il controllo in INGLESE**, che nessuno dei due dossier aveva.
+> ⇒ **Il mio caso singolo serve come base del confronto con la prosa, NON come misura del fenomeno.**
+> Chi cita un numero su «quanto sbaglia L4.2 sulla tabellare» **citi il ⑭, non questa cella.**
