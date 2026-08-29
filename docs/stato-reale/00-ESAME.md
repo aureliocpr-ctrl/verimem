@@ -4936,3 +4936,60 @@ gh api "repos/:owner/:repo/actions/runs?status=in_progress&per_page=1" --jq .tot
 gh api "repos/:owner/:repo/actions/runs?status=queued&per_page=100"    --jq '[.workflow_runs[].name] | group_by(.) | map({(.[0]): length}) | add'
 gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100"        --jq '.jobs[] | "\(.status) \(.runner_name)"'
 ```
+
+---
+
+## ws1 — 🛑 RESTRINGO IL MIO REPERTO n.8: «70% contro 0,6%» CONFRONTAVA DUE UNITÀ DIVERSE
+
+**Livello**: `event_indices` (righello del prodotto) su tre popolazioni · **Istante**: 29/08
+19:22–19:24 · **Regime**: sola lettura, nessun modello · sha `aa31a002`.
+
+### Il fronte dei due corpora, primo passo: prosa REALE invece di frasi mie
+Il limite che dichiaravo era: *«le frasi da contratto le scrivo io»*. Primo passo per ridurlo —
+**prosa scritta da umani e già presente**: `README` · `CONTRIBUTING` · `SECURITY` · `LICENSING` ·
+`CODE_OF_CONDUCT` (blocchi di codice esclusi). Non è un contratto, **ma non è scritta da me per
+l'occasione**.
+**Predizione dichiarata prima**: *fra 5% e 40%*. **Esito: 11,9% — dentro la fascia.**
+
+### 🛑 E il confronto che ne esce RIBALTA come avevo presentato il reperto
+```
+UNITÀ UNICA — «la frase ha almeno un event_index» / TUTTE le frasi
+    prosa umana reale (486 frasi)          58   = 11,9%
+    nostro corpus di fatti (15392)       8536   = 55,5%
+    mie frasi da contratto (10)             7   = 70,0%
+```
+⇒ **La prosa umana reale è la MENO esposta delle tre. Il nostro corpus lo è 4,7 volte di più.**
+
+### ⚠️ Dove sbagliavo, esattamente
+Alle 00:49 ho pubblicato **«70% sulle forme da contratto contro 0,6% sul nostro corpus»**. Quei due
+numeri **non hanno la stessa unità**:
+```
+70%   = FRASI candidate   (10 frasi che ho scritto io)
+0,6%  = COPPIE esposte    (17 su 2676 coppie del corpus)
+```
+Messi accanto suggerivano *«il difetto tocca il cliente e non noi»*. **A unità unica il nostro
+corpus è al 55,5%: come FORMA siamo esposti eccome.** Quello che è vero — e resta misurato — è che
+**come DANNO** sul nostro corpus le 17 coesistenze sono **tutte giuste, zero errori**.
+🔑 **La formulazione che regge**:
+· **come forma**, il nostro corpus è esposto (55,5%), più della prosa umana (11,9%);
+· **come danno**, sul nostro corpus l'esposizione non si realizza (0 errori su 17);
+· **il 70% non è «il tasso dei contratti»**: è il tasso di **dieci frasi che ho scelto io perché
+  sapevo essere esposte**. Come campione di contratti **non vale niente**, e non l'ho mai
+  presentato come tale — ma accostato allo 0,6% lo faceva sembrare.
+🛑 **È il ventiduesimo ritiro/restringimento, ed è dell'errore ⑥ della mia lista** — *«ho dedotto
+una frequenza da un'altra frequenza»*: stavolta non erano frequenze diverse, erano **unità diverse**.
+Il presidio esisteva e **non l'ho applicato al mio reperto più citato**.
+
+### 🔑 Cosa NON cambia, e cosa la sostituisce
+**Non cambia** nessun fatto misurato alla porta: `EUR 500`/`500 EUR`, `est`/`ist`, la via ②, la
+matrice 4/4 — tutti con predizione e controllo, tutti in piedi.
+**Cambia la tesi generale**: non è «il cliente è più esposto di noi». È:
+> **l'esposizione dipende dalla FORMA della frase — valuta pre-posta, «del N%», verbo di tre o più
+> lettere — non dal genere del documento.** Un contratto ne contiene molte, la prosa tecnica poche,
+> i nostri fatti moltissime **ma senza gemelli contraddittori**.
+
+### ⚠️ Cosa questo NON prova
+· 486 frasi da cinque documenti **nostri**: è prosa umana, ma è **la nostra** prosa umana.
+· «Candidata» ≠ «esposta»: per l'esposizione serve **la coppia**. Su questa popolazione le coppie
+  non le ho cercate (non ci sono fatti gemelli in un README).
+· **Un corpus di contratti veri continua a non esserci.** Questo passo riduce il limite, non lo chiude.
