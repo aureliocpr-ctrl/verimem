@@ -6812,3 +6812,59 @@ pacchetti, che mi avevano dato il 12,5%, sono **inglesi**.
 ⇒ **Il reperto italiano resta né confermato né falsificato fuori dal generatore.** Non
 lo chiudo con frasi mie: la direttiva delle 20:04 lo vieta, e aveva ragione.
 
+
+---
+
+## ws1 — Le tre condizioni valgono su OTTO fallimenti su otto: 24 varianti, 24 astensioni
+
+**Livello**: `Memory.explain()`, regime di default (CE gate). **Perimetro**: **tutti e otto**
+i fallimenti misurati alle 21:04 (p3@1, p9@1, p1@5, p1@11, p5@11, p3@41, p1@42, p5@42), ×3
+varianti = **24 esecuzioni**. **Istante**: 29/08 21:26-21:29. **Regime**: `HIPPO_DATA_DIR`
+temporaneo, repo `b033c69b`.
+
+### Il debito, di nuovo mio
+
+Alle 21:09 avevo isolato quattro condizioni **su una sola persona** (p5@42) e le avevo
+chiamate «il fenomeno». **È esattamente l'errore che avevo appena finito di ritirare due
+volte**: descrivere un caso e titolare come se fosse la classe. Predizione scritta prima:
+*valgono su tutti e sette gli altri*, perché gli store hanno la stessa forma e su p5
+nessuna delle tre era ridondante.
+
+### Il risultato — la prima predizione della serata che regge
+
+| caso | nome | base | senza `(SENSITIVE)` | numero → «high» | query EN |
+|---|---|---|---|---|---|
+| seed 1 p3 | Dana Greco | **RISPONDE** | astiene | astiene | astiene |
+| seed 1 p9 | Robin Sala | **RISPONDE** | astiene | astiene | astiene |
+| seed 5 p1 | Robin Sala | **RISPONDE** | astiene | astiene | astiene |
+| seed 11 p1 | Riley Bruno | **RISPONDE** | astiene | astiene | astiene |
+| seed 11 p5 | Robin Sala | **RISPONDE** | astiene | astiene | astiene |
+| seed 41 p3 | Alex Rivera | **RISPONDE** | astiene | astiene | astiene |
+| seed 42 p1 | Sam Costa | **RISPONDE** | astiene | astiene | astiene |
+| seed 42 p5 | Robin Sala | **RISPONDE** | astiene | astiene | astiene |
+
+**24 varianti, 24 astensioni.** Ognuna delle tre condizioni è **necessaria in tutti e otto
+i casi**, non in uno.
+
+### Cosa cambia e cosa NON cambia
+
+**Cambia**: la descrizione a condizioni congiunte **non era una proprietà di p5** — è la
+forma del fenomeno su tutta la popolazione che lo manifesta. Il reperto è **solido come
+descrizione**.
+
+**NON cambia**: resta **ritirata** la lettura privacy («il prodotto espone i dati
+sensibili»). Otto casi su otto **confermano la congiunzione**, e la congiunzione è
+**precisamente ciò che rende la lettura privacy non supportata**: serve un fatto che sia
+insieme `monthly salary`, numerico, marcato e interrogato in italiano — e nel generatore
+**esiste un solo fatto così per persona**. Più casi confermano la stessa forma; **non
+allargano ciò che se ne può concludere.**
+
+### Cosa questo NON prova
+
+- **Necessarie, non sufficienti**: non ho costruito un caso nuovo che soddisfi le quattro
+  condizioni e verificato che **fallisca**. È il passo che manca per parlare di causa.
+- **Meccanismo ancora ignoto** (`medical history is complex (SENSITIVE)` non esce).
+- **Tutto dentro il generatore sintetico**: su dati di terzi (HaluEval) l'astensione è
+  25/25, e **non ho prosa italiana di terzi** per cercarlo altrove.
+- ⛔ **Non ho toccato nulla.**
+
