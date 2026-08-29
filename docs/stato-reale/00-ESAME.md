@@ -5048,3 +5048,58 @@ matrice 4/4 — tutti con predizione e controllo, tutti in piedi.
 > dice che il file compila, non che la modifica è avvenuta**: serve un `assert` che il testo sia
 > cambiato. ② Ho **scritto il file prima di validarlo**, e l'ho lasciato rotto per un giro:
 > **`ast.parse` PRIMA del `write_text`**, non dopo.
+
+---
+
+## ws1 — 🛑 IL 70% ERA UNA PROPRIETÀ DELLE MIE DIECI FRASI, NON DEI CONTRATTI: PROSA LEGALE VERA = 12,5%
+
+**Livello**: `event_indices` su prosa **non nostra e non scritta da me** · **Istante**: 29/08 19:28
+· **Regime**: sola lettura, nessun modello · sha `2b38ffdb`.
+
+### Il passo: prosa legale REALE, di terzi
+Il limite che restava era *«le frasi da contratto le scrivo io»*. Fonte più vicina a un contratto
+**che esiste già sul disco e non l'ho scritta io**: le **licenze dei pacchetti** in
+`miniconda3\Lib\site-packages` — **60 file, 872 frasi**. Prosa giuridica scritta da avvocati, con
+clausole e **sezioni numerate** («*Section 4*», «*9. Accepting Warranty*»): esattamente la forma che
+@ws3 aveva misurato essere allo **0,07%** nel nostro corpus.
+
+**Predizione dichiarata prima: 15–45%**, perché mi aspettavo che la numerazione di sezione alzasse
+il tasso rispetto alla prosa tecnica.
+
+### 🛑 La predizione è CADUTA, e la caduta è il risultato
+```
+UNITÀ UNICA — «la frase ha almeno un event_index» / TUTTE le frasi
+    prosa tecnica nostra   (486 frasi)     11,9%
+    PROSA LEGALE DI TERZI  (872 frasi)     12,5%      <- predetto 15–45%: FUORI
+    mie frasi da contratto (10)            70,0%
+```
+⇒ **Due generi di prosa umana su due danno ~12%.** La struttura legale **non alza il tasso**. Le
+etichette che il ramo trova nelle licenze sono `version` (23), `python` (10), `through` (8): sono
+**numeri di versione e riferimenti**, non importi.
+
+### 🔑 Conclusione, ed è il terzo restringimento dello stesso reperto in un giorno
+**Il 70% non è una proprietà dei contratti: è una proprietà delle dieci frasi che ho scritto io**,
+scelte perché sapevo già quali forme espongono. Su prosa reale — **tecnica o legale, nostra o di
+terzi** — l'esposizione è **~12%**.
+```
+00:49  «70% sulle forme da contratto contro 0,6% sul nostro corpus»     ← unità diverse
+19:25  a unità unica: noi 55,5% · prosa umana 11,9% · mie frasi 70%     ← ribalta il verso
+19:29  prosa LEGALE VERA di terzi: 12,5%                                ← il 70% è mio, non del genere
+```
+**La formulazione che resta in piedi**, e non la allargo oltre:
+> Esistono **forme** — valuta **pre-posta**, «**del** N%», verbo di **tre o più lettere** seguito da
+> numero **nudo** — su cui il gate **non confronta** una contraddizione (misurato alla porta, 4/4 +
+> 3/3 di controllo). **Quanto siano frequenti dipende dal testo**: nella prosa umana che ho potuto
+> misurare, ~12% delle frasi è candidata; **nel nostro corpus 55,5%**; nelle dieci frasi che ho
+> costruito io, 70%.
+
+### ⚠️ Cosa questo NON prova, e resta il buco vero
+· **Una licenza non è un contratto commerciale**: non contiene importi in valuta, che sono
+  precisamente il caso in cui la forma esposta (`EUR 12000`) è normale. **Questo non l'ho misurato
+  e non posso misurarlo** senza contratti veri.
+· ⇒ **Il buco non è chiuso.** È **ridotto**: due generi di prosa umana danno ~12%, quindi la
+  congettura «i documenti del cliente sono massicciamente esposti» **non ha nessun supporto
+  misurato**, e l'unico numero alto che avevo l'ho costruito io.
+· 🔑 **Per la decisione**: il difetto resta **reale e riproducibile alla porta**; la sua **portata**
+  è molto minore di come l'avevo presentata alle 00:49. Chi scrive il referto usi **12%**, non 70%,
+  e dica **su quale prosa**.
