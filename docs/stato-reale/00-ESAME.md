@@ -4817,3 +4817,47 @@ non è dicibile** — e dirlo sarebbe esattamente la promessa che questo esame e
   **criteri diversi**, che è più forte di una ri-esecuzione, ma **non è una verifica riga per riga**.
 · «Output di strumenti» è misurato per **forma** (allineamento, marcatori), non per provenienza.
 · Il corpus si muove: +52 span in 18 ore.
+
+---
+
+### 🎯 LA **FORMA DELLA FONTE** DECIDE IL RUMORE — `L4.2` avvisa solo sulla tabellare, e il falso è preso in entrambe
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 19:21 · **Regime**: porta **SDK**, modello vero,
+fuori pytest, **uno store NUOVO per ogni cella** · **Rifallo con**:
+`HIPPO_DATA_DIR=$(mktemp -d) python docs/stato-reale/banchi/ws6-la-forma-della-fonte-decide-il-rumore.py tabellare`
+(e `… prosa`, con una tempdir **nuova**).
+
+**Da dove nasce**: il fronte di @ws3 («*il corpus su cui validiamo non somiglia al cliente*»:
+**51,9%** dei nostri span con righe a colonne) legato al reperto di @ws4 su **L4.2** («*8 falsi
+allarmi su 8 su source tabellare*»). **Una domanda sola**: il falso allarme dipende dal **claim** o
+dalla **forma della fonte**?
+
+| forma della fonte | claim **VERO** (480) | claim **FALSO** (999) |
+|---|---|---|
+| **TABELLARE** — la nostra (`sede  Verona` / `pallet  480`) | `model_claim` **99,8** · 🔴 **`L4.2`** | `quarantined` **0,4** · `L4.1`+`L4-grounding` |
+| **PROSA** — tipo-cliente («*il presente verbale attesta che… contiene 480 pallet, regolarmente censiti…*») | `model_claim` **98,3** · ✅ **nessun layer** | `quarantined` **0,6** · `L4.1`+`L4-grounding` |
+
+#### ① ⛔ La prosa NON è cieca — ed è il controllo che rende leggibile il resto
+Il claim falso è **quarantinato in entrambe le forme**, con **gli stessi due layer** e grounding
+quasi identico (0,4 e 0,6). ⇒ **la protezione non dipende dalla forma della fonte.** Se fosse stato
+il contrario, il reperto sarebbe l'opposto e molto peggiore.
+
+#### ② 🔴 Il falso allarme di `L4.2` esiste **solo** sulla tabellare
+Stesso claim, stessa cifra, stessa verità: cambia **solo la forma**, e su prosa **L4.2 tace**.
+
+#### 🔑 La direzione, ed è ciò che conta per il rilascio
+**Ogni tasso di rumore misurato sul nostro corpus SOVRASTIMA quello di un cliente** che indicizza
+verbali e contratti. ⇒ **dipingiamo il prodotto PEGGIORE di com'è** — e il nostro corpus è tabellare
+**per costruzione**, perché `O3` impone di salvare output di strumenti come `source`.
+🔗 È la classe di @ws2 («*misurare nel regime sbagliato falsifica in entrambi i sensi*») **col verso
+misurato invece che supposto**.
+⚖️ **Non è un'assoluzione**: L4.2 sbaglia davvero, e sbaglia su **noi otto**. **Il difetto resta;
+cambia CHI lo paga.**
+
+#### Limiti
+· **Un** claim, **una** coppia vero/falso, **una** lingua, porta **SDK**. **È una DIREZIONE, non una
+frequenza**: non estrapolare un tasso da qui.
+· Il grounding scende da **99,8** a **98,3** sulla prosa: **non so perché e non lo spiego**.
+· ⚠️ **Primo giro scartato**: con lo **stesso** store per le due forme la seconda scrittura tornava
+`duplicate` e il layer **mascherava** il confronto. **Uno store nuovo per cella non è pignoleria:
+senza, il numero non è leggibile.**
