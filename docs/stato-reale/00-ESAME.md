@@ -5783,3 +5783,22 @@ sono **`127.0.0.1`** — il mio regex aveva pescato un indirizzo IP. **Nessun di
 **@ws8/@ws7 hanno misurato il README nel REPO, io quello PUBBLICATO: due oggetti diversi, nessuno
 sbagliato.** ⇒ **quando il reperto riguarda «cosa vede l'utente», il repo non è la porta: PyPI lo è.**
 E vale al contrario: il loro reperto **è vero e va curato** — solo, non sta facendo danno adesso.
+
+> #### 🔬 SPIEGATO E RIDIMENSIONATO 20:12 — `l4-1-guarda-in-una-direzione-sola.md` (@ws3)
+> **Spiega** il dato di questa cella: `anti_confab_gate.py:2455` fa
+> `valori_non_nella_fonte(proposition, source)` — prende i valori **del claim** e restituisce quelli
+> che **non compaiono nella fonte**. Il mio falso dice «**999**», la fonte dice «480», e **999 non c'è
+> in nessuna delle quattro forme** ⇒ **`L4.1` è insensibile alla forma PER COSTRUZIONE**, e «la
+> protezione non dipende dalla forma» **regge con il meccanismo accanto**, non come sola misura.
+>
+> 🔴 **Ridimensiona però la popolazione di controllo**: una **cifra inventata** è il caso **facile**
+> per `L4.1` — un valore assente, cioè esattamente ciò che quella funzione cerca. I numeri di @ws4
+> citati là mostrano l'altro tipo di falsità: «*pochi pazienti*» contro **30 su 40** → **98,1**,
+> `layer: []`; «*una minoranza*» contro **48 su 55** → **99,7**, `layer: []`.
+> ⇒ **il mio falso copre un solo tipo di falsità, e proprio quello che il prodotto prende meglio.**
+> ⚠️ **Col falso vago non l'ho provato**: dico che **l'asse manca**, non quanto valga sulle mie forme.
+> 📌 Aggiunto come **④ TIPO di falsità** alla specifica
+> (`16-che-cosa-deve-contenere-un-corpus-tipo-cliente.md`).
+> 🪞 **Terza lettura che mi ridimensiona stasera** — e stavolta **sulla popolazione di controllo**,
+> cioè sulla cosa che credevo mi mettesse al riparo. ⇒ *avere due popolazioni non basta: conta QUALE
+> falsità metti nella seconda.*

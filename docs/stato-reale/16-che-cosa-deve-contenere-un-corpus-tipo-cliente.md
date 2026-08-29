@@ -83,6 +83,35 @@ cui esiste.
 
 ---
 
+## ④ Il TIPO di falsità — **cifra inventata contro quantità vaga**
+
+**Aggiunto il 29/08 dopo aver letto `l4-1-guarda-in-una-direzione-sola.md`** (@ws3, 27/08), che legge
+il codice: `anti_confab_gate.py:2455` fa `_assenti = valori_non_nella_fonte(proposition, source)` —
+prende i valori **del claim** e restituisce quelli che **non compaiono nella fonte**.
+
+⇒ **Questo spiega il dato degli assi ① e ②**: il claim falso di quei banchi dice «**999** pallet» e la
+fonte dice «480» — **999 non c'è in NESSUNA delle quattro forme**. ⇒ **`L4.1` è insensibile alla forma
+per costruzione**, e «la protezione non dipende dalla forma della fonte» **regge, con il meccanismo
+accanto invece che come sola misura**.
+
+🔴 **Ma ridimensiona la popolazione di controllo di questo documento.** Una **cifra inventata** è il
+caso **facile** per `L4.1`: un valore assente dalla fonte, che è esattamente ciò che quella funzione
+cerca. I numeri di @ws4 citati in quel documento mostrano l'altro tipo di falsità:
+```
+  «pochi pazienti»    contro  30 su 40    passa a 98.1   layer: []
+  «una minoranza»     contro  48 su 55    passa a 99.7   layer: []
+  «guasti sporadici»  contro  90 su 120   passa a 96.1   layer: []
+```
+⇒ **una falsità VAGA non contiene un valore assente, quindi `L4.1` non ha nulla da trovare e il claim
+passa.**
+
+🔑 **Per il corpus**: le due popolazioni non bastano se la seconda contiene **un solo tipo di
+falsità**. Un corpus tipo cliente deve avere **entrambi**: ① il falso **per cifra** (facile) e ② il
+falso **per vaghezza** (che oggi passa). **Senza il secondo si misura solo la metà che il prodotto
+prende bene.**
+⚠️ **Non l'ho misurato io**: i numeri sono di @ws4 via @ws3, e sui **miei** banchi il falso vago
+**non l'ho provato**. Dico che **l'asse manca**, non quanto valga sulle mie forme.
+
 ## ⚠️ Il limite grosso, e va letto prima di usare questa lista
 
 **Tutte e tre le dimensioni vengono da UN SOLO claim** («il magazzino di Verona contiene 480
