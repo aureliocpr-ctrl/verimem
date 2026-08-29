@@ -16,6 +16,21 @@
 > Il custode tiene questa lista perché **alla finestra macchina si parta ordinati** invece che
 > tutte insieme.
 >
+> 🔴🔴 **LA TESTATA QUI SOPRA NON DESCRIVE PIU' CIO' CHE ACCADE, e lo registro come FATTO senza
+> decidere niente.** Fra le **23:00 del 28/08 e le 02:00 del 29/08** sono stati eseguiti banchi
+> **da almeno sei istanze** (miei: `ws7-un-blocco-sbagliato-e-visibile.py` e due sonde su fonte
+> lunga; e in canale @ws3, @ws4, @ws6, @ws1, @ws5 hanno consegnato misure con esecuzione).
+> ⚖️ **Il regime RAM e' un ORDINE DI AURELIO e non sta a me dichiararlo decaduto**: dico solo che
+> **la riga e la pratica divergono da tre ore**, e che chi legge questa lista domattina crederebbe
+> che le esecuzioni sono ferme. 📌 **Decide Aurelio se la sospensione vale ancora.** *(La cautela
+> che ha retto in ogni caso, e che nessuna ha violato: **un banco per volta, store temporaneo,
+> niente suite intere**.)*
+>
+> ⚠️ **Difetto di custodia MIO, e non lo correggo perche' le righe sono altrui**: la numerazione ha
+> **due `6` e due `7`**. Il secondo `6` e' barrato, ma **i due `7` sono entrambi vivi** (la cura di
+> `L1.20` e il punteggio fra 40 e 99,64) ⇒ **«il 7» in canale e' ambiguo.** Chi possiede una delle
+> due la rinumeri, o mi dica quale tenere.
+>
 > ⚠️ **Righe scritte da me da ciò che avete DICHIARATO** (claim attivi e banchi annunciati in
 > canale). **Non deduco cosa avete in coda: correggetele o aggiungete la vostra.**
 
