@@ -5696,3 +5696,62 @@ si legge verde**.
 > 🪞 **Nota di metodo**: quel documento **non contiene la parola `superseded`**, quindi **nessun
 > `git grep` di quella parola l'avrebbe trovato**. L'ho trovato **elencando i titoli** — **quarto caso
 > della serata in cui l'elenco batte la ricerca.**
+
+---
+
+## ws1 — IL TAG `v0.7.6` ESISTE, HA LA CURA, E NON È MAI STATO PUSHATO — più il C7 che lo verifica
+
+**Livello**: porta vera (PyPI, tag, build dal tag, avvio del server) · **Istante**: 29/08 19:40–20:04
+· **Regime**: sola lettura sul repo; build e install in **directory temporanea**; nessun tag, nessun
+push, nessun branch · sha `210b5a82`. **Tre celle in un commit solo** (richiamo push-batch di
+lead-audit delle 19:48: **i miei quattro push dell'ora precedente erano nel conto di @ws8**).
+
+### ① Il fatto che ha cambiato il quadro della decisione
+```
+tag su ORIGIN         SOLO  v0.7.0  (2b5b2993)
+tag SOLO IN LOCALE    v0.7.6  (397c6375, 2026-08-24, autore Aurelio Capriello)
+messaggio del commit  «registro: l'ultima riga che il veto del publish trattiene»
+pin in quel commit    "mcp>=1.0.0,<2"  ×3   (righe 83, 102, 166)
+distanza da main      805 commit
+```
+⇒ **Il publish non è mai partito perché il tag non è mai stato pushato** — non «nessuno ha taggato».
+`publish.yml` scatta su `on: push: tags: v*` (righe 18–22).
+⚠️ **NON affermo che sia una dimenticanza.** Il messaggio del commit suggerisce un tag **in attesa**
+del cancello verde. ⇒ **È una domanda per Aurelio**, non una diagnosi. ⛔ **Non l'ho toccato.**
+
+### ② C7 — smoke pre-tag su `v0.7.6`: **VERDE**
+`git archive v0.7.6` in temp → venv → `python -m build` → install del wheel → avvio del server.
+```
+build dal tag         verimem-0.7.6-py3-none-any.whl
+mcp risolto a         1.29.1        ← il tetto <2 funziona (la 0.7.0 risolve a 2.x)
+Server.list_tools     True          ← il metodo che mcp 2.0 aveva rimosso
+import mcp_server     OK            ·   EXIT 0
+```
+⚠️ **Quattro limiti, dichiarati prima che qualcuno usi il dato**: ① verificato **il punto che si
+rompeva**, non l'intero server (non messo in ascolto, tool non invocati) · ② **suite NON eseguita**
+· ③ **805 commit fra i due tag: altri difetti NON cercati** — dice «*il difetto noto non c'è più*»,
+**non** «*la 0.7.6 è sana*» · ④ **REGIME**: la venv conteneva anche `build` (serviva per il wheel),
+quindi **non è vergine** come quelle delle 00:0x. **Offerto lo smoke in regime stretto, ~400 s.**
+
+### ③ Il «quarto blocco» (README) va ridimensionato — e il mio sospetto è caduto
+@ws8 e @ws7 hanno misurato il README **nel repo** («994 commits» contro 1785). Io ho misurato **la
+pagina pubblicata** (`pypi.org/pypi/verimem/json`, 20:03):
+```
+versione servita da PyPI   0.7.0
+README pubblicato          28148 caratteri
+occorrenze di «commits»    NESSUNA
+```
+⇒ 🟡 **Il «994» non è nella vetrina che l'utente vede**: è nel repo, aggiunto dopo il 22 luglio.
+**È un blocco PRE-PUBBLICAZIONE, non un danno in corso** — **diventa reale spingendo il tag**.
+Cambia la fretta, non la necessità: **va curato prima del tag**.
+🛑 **E ritiro un sospetto prima di averlo pubblicato**: avevo letto «versioni citate: `0.0.1` ×3,
+`0.6.0`» e stavo per scrivere «*il README pubblicato parla della versione sbagliata*». Stampando il
+**contesto** invece di contare: `0.6.0` è storico corretto («*total rename, 0.6.0*») e i `0.0.1`
+sono **`127.0.0.1`** — il mio regex aveva pescato un indirizzo IP. **Nessun difetto di versione.**
+⚠️ **NON verificati**: i numeri-promessa del README pubblicato — **18%, 24%, 74%, 3 ms, 81 ms**.
+**Fronte aperto sulla VETRINA**, cioè su ciò che l'utente legge **prima** di installare.
+
+### 🔑 Il pezzo di metodo
+**@ws8/@ws7 hanno misurato il README nel REPO, io quello PUBBLICATO: due oggetti diversi, nessuno
+sbagliato.** ⇒ **quando il reperto riguarda «cosa vede l'utente», il repo non è la porta: PyPI lo è.**
+E vale al contrario: il loro reperto **è vero e va curato** — solo, non sta facendo danno adesso.
