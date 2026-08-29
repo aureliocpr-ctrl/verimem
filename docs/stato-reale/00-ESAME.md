@@ -5506,3 +5506,58 @@ Un claim, quattro varianti, una lingua, una porta. Le parole estranee sono **tre
 > ⑬, che si chiama «*la taglia della fonte*». L'ho visto **solo perché ho sbagliato il numero di un
 > file nuovo e ho elencato la cartella**. ⇒ **prima di aprire un fronte, ELENCA la cartella e leggi i
 > TITOLI: il grep trova le tue parole, non le loro.**
+
+### 🚨 W8-9 — Il rilascio ha un **TERZO blocco**: il veto sul wheel è **già armato**, e il commento del workflow dice il contrario
+**REGIME**: pacchetto costruito in `mktemp -d` (mai `dist/`) da HEAD allineato a `origin/main`
+— wheel 2 186 108 byte, sdist 2 016 781 byte, versione **0.7.6** — e i cancelli **eseguiti**,
+non letti; 2026-08-29 19:50–19:53.
+
+    ③ twine check                 PASSED
+    ④ controlla_registro WHEEL    **EXIT=1**   ← VETO ARMATO
+    ⑤ controlla_promesse WHEEL    EXIT=0
+    ⑥ controlla_registro SDIST    EXIT=1
+    BLOCCA  identificativo di sessione   **6 in 3 file**
+
+· **I tre file sono tutti in `verimem/`**, cioè nel codice che l'utente installa, e sono
+  **nostri commenti che citano i nostri banchi**:
+  `anti_confab_gate.py:2406` [ws3] · `doctor.py:396` [ws1] · `supersession_policy.py:235,251,252` [ws3].
+· 🔑 **Il commento di `publish.yml:185-192` cabla l'opposto**: *«(misura di ws2 sugli
+  artefatti di `0dc18f24`) … controlla_registro WHEEL **EXIT=0 pulito** … ⇒ il wheel è ciò che
+  l'utente INSTALLA, ed è **già verde**»*. **Era vero quando è stato misurato. Da `0dc18f24` a
+  oggi il wheel si è sporcato, e il commento è rimasto.** ⇒ **Un numero cablato in un commento
+  invecchia in silenzio** — e qui l'invecchiamento **ha armato un veto**, invisibile perché
+  quel passo gira **solo dopo il gate**, e il gate non si è mai aperto.
+· 📌 **L'sdist è invecchiato nella direzione OPPOSTA**: cablato «**321** identificativi in
+  **129** file», misurato **6 in 3**. **Due numeri cablati, due invecchiati, versi opposti.**
+· ⇒ **I blocchi del rilascio sono TRE, non due**: (a) la coda · (b) i tre rossi di `ci` ·
+  **(c) questo veto**. **Anche con `ci` verde e il cancello aperto, il rilascio si fermerebbe
+  qui** — e **il veto fa il suo lavoro**: quei nomi non devono uscire in un pacchetto pubblico.
+· 🔧 **La cura sono sei righe di commento**, e lo script dice come: *«vanno riscritte a mano:
+  spiegano il perché di una scelta, e una sostituzione automatica lascia una frase
+  grammaticalmente rotta»*. ⛔ I tre file sono **tutti nella lista «non curo» di ws8**:
+  consegnato a chi li ha scritti.
+· ⚠️ **Perché l'hook pre-commit non le ha fermate**: gira sulle **sole righe aggiunte** a
+  `verimem/*.py`, quindi queste sono entrate **prima che l'hook esistesse**. **L'hook protegge
+  il futuro, non ripulisce il passato** — e chi lo legge oggi può credere che il wheel sia
+  pulito per costruzione.
+· 🪞 **Il primo tentativo dava EXIT=0 su tutti e quattro i cancelli**, perché avevo scritto
+  `… | tail -4; echo "EXIT=$?"`: **era l'exit di `tail`**. **Il veto sarebbe passato per
+  verde.** È **la stessa trappola scritta come avvertenza in W8-7 un'ora prima**: una lezione
+  scritta non è una lezione applicata. A salvarmi è stato il **testo** del comando, che diceva
+  «porterebbe fuori identificativi» mentre il numero diceva 0 — **due righelli discordi**.
+· ⚠️ **COSA NON PROVA**: il pacchetto è costruito **dall'albero locale**, allineato a
+  `origin/main` ma **non è l'artefatto della CI**: `fetch-depth`, ambiente e versione di
+  `build` possono differire. Il veto va **riverificato sull'artefatto vero** il giorno del
+  rilascio.
+
+**RIFALLO CON**:
+```bash
+T=$(mktemp -d); python -m build --outdir "$T" > "$T/build.log" 2>&1; echo "build EXIT=$?"
+python scripts/controlla_registro.py "$T"/*.whl    > w.txt 2>&1; echo "WHEEL EXIT=$?"
+python scripts/controlla_promesse.py "$T"/*.whl    > p.txt 2>&1; echo "PROM  EXIT=$?"
+python scripts/controlla_registro.py "$T"/*.tar.gz > s.txt 2>&1; echo "SDIST EXIT=$?"
+grep -A5 "identificativo di sessione, primi" w.txt
+rm -rf "$T"
+```
+⚠️ **Nessuna pipe fra il comando e `$?`**, altrimenti si legge l'exit del filtro e **un veto
+si legge verde**.
