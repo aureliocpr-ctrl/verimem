@@ -5896,3 +5896,50 @@ EOF
 rm -rf "$T"
 git rev-list --count v0.7.0..origin/main
 ```
+
+### 🔄 W8-11 — Sulla pagina PyPI viva ci sono **11 link rotti da 38 giorni**, e la cura è già in `main`: **pubblicare li ripara**
+**REGIME**: `pypi.org/pypi/verimem/0.7.0/json` (descrizione pubblicata, 28 148 caratteri,
+`description_content_type: text/markdown`) contro `README.md` di `origin/main`; regex sui link
+markdown + controllo positivo con `grep`; 2026-08-29 20:15–20:16. Nasce come **seconda firma a
+ws1**, che aveva trovato **un** link relativo.
+
+    descrizione PUBBLICATA (0.7.0) — link relativi:  **11**
+      ./CONTRIBUTING.md · ./LICENSING.md · ./SCALE.md · ./docs/BENCHMARKS.md ·
+      ./benchmark/trustmem_bench.py · ./benchmark/wellgrounded_distractor_bench.py ·
+      ./sdk/typescript · docs/BENCHMARKS.md …
+    README di `main` — link relativi:                **0**
+      main   →  ](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py)
+      0.7.0  →  ](./benchmark/trustmem_bench.py)
+
+· 🔄 **La direzione si rovescia rispetto alla lettura naturale.** La cura proposta — «link
+  assoluto, se qualcuno tocca il README prima del tag» — **è già stata applicata in `main`**.
+  ⇒ **Non è «attenzione a non rompere qualcosa pubblicando»: è «ci sono 11 link rotti sulla
+  pagina viva da 38 giorni, e pubblicare LI RIPARA».**
+· 🔑 **Il difetto è nel PUBBLICATO, la cura è nel REPO, e a tenerli separati è il mancato
+  rilascio.** È la stessa famiglia del blocco ⛔ RILASCIO e del deadlock sulla versione
+  (W8-7): **più si aspetta, più a lungo la vetrina viva resta peggiore di ciò che il repo
+  contiene già.**
+· ⚠️ **Peso onesto**: sono **link**, non dati falsi. Ma **il benchmark È citato nella pagina
+  pubblicata** («deterministic, run it yourself»), quindi la promessa più verificabile del
+  progetto sta sulla vetrina **con il link per raggiungerla rotto**.
+· 🪞 **Lo stesso regex ha dato 0 in locale e 11 su PyPI**, e la prima ipotesi era «il mio
+  righello è rotto». **Controllo positivo** (`grep` dei tre nomi nel README di main): zero
+  occorrenze relative, righe vere assolute. ⇒ **Il righello funzionava: erano i due testi a
+  essere diversi.** **Due misure discordi non chiedono sempre un righello nuovo — a volte
+  dicono che gli oggetti sono due.**
+· ⚠️ **COSA NON PROVA**: i link sono contati **con un regex sul markdown**, quindi un link
+  scritto in HTML **non sarebbe visto**: **11 è un minimo**. E **non ho aperto nessuno degli
+  11** — che PyPI li serva rotti è **dedotto** da come tratta i percorsi relativi, **non
+  osservato su pagina**.
+
+**RIFALLO CON**:
+```bash
+python - <<'EOF'
+import re, json, urllib.request
+P = re.compile(r'\]\((\./[^)]+|(?!https?://|#)[a-zA-Z0-9_][^):]*\.(?:py|md|toml|yml|txt))\)')
+d = json.load(urllib.request.urlopen("https://pypi.org/pypi/verimem/0.7.0/json", timeout=30))
+print("pubblicati:", len(P.findall(d["info"]["description"])))
+print("in main   :", len(P.findall(open("README.md", encoding="utf-8").read())))
+EOF
+grep -oE "\]\([^)]*benchmark/trustmem_bench[^)]*\)" README.md
+```
