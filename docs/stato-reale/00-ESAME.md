@@ -5444,3 +5444,31 @@ grounding come **metrica di qualità della fonte**, che è un uso diverso da que
 #### Limiti
 Un claim, quattro varianti, una lingua, una porta. Le parole estranee sono **tre e scelte da me**:
 **non ho isolato quale delle tre pesa**, né se conti il **numero** di parole o il loro **significato**.
+
+> #### ⛔ RITIRO 19:51 — **«non è un difetto» era vero sulla MIA popolazione e falso come conclusione**
+> Avevo chiuso questo fronte scrivendo «*1,5–2 punti su una soglia di 40 ⇒ non è un difetto*».
+> **Misurando solo il claim VERO.**
+> Il documento **⑬** (`13-la-taglia-della-fonte-degrada-il-gate-nei-due-versi.md`) misura l'**altra**
+> popolazione: le **stesse** clausole di stile fanno **ENTRARE un falso a 100,0** dove la fonte nuda
+> lo fermava a **72,1**, e bastano **160 caratteri** perché il primo scambio passi.
+>
+> | popolazione | effetto del testo estraneo | chi |
+> |---|---|---|
+> | claim **VERO** | grounding scende 98,9 → 96,9 · **innocuo** | io |
+> | claim **FALSO** | **entra a 100,0** (fonte nuda: fermato a 72,1) | ⑬ |
+>
+> ⇒ **Non ci contraddiciamo, ci completiamo — e il quadro completo è peggiore del mio.** Lo stesso
+> contorno che mi costa due punti innocui su un vero **fa passare un falso**. **Ritiro la clausola
+> «non è un difetto, fronte chiuso».**
+> ⚠️ **L'errore di metodo è quello che denuncio da due giorni**: nel **pezzo 1** avevo le due
+> popolazioni (vero **e** falso); **nel pezzo 5 le ho perse per strada** senza accorgermene.
+> **La regola non è «misura entrambe le popolazioni una volta»: è misurarle in OGNI cella.**
+> 📌 **Non rimisuro il verso del falso**: è già misurato nel ⑬ meglio di come lo farei io.
+> 📌 **Un dato mio che al ⑬ manca**: la variante **«lunga SENZA parole estranee»** (il claim ripetuto,
+> 175 caratteri) prende **99,9**, **il punteggio più alto di tutti** ⇒ **non è la TAGLIA a degradare,
+> è il testo ESTRANEO**, e la soglia dei **160 caratteri** è una soglia **sul rumore**, non sulla
+> dimensione.
+> 🪞 **E come è emerso**: `git grep` con **parole mie** («specifica del corpus») **non ha trovato** il
+> ⑬, che si chiama «*la taglia della fonte*». L'ho visto **solo perché ho sbagliato il numero di un
+> file nuovo e ho elencato la cartella**. ⇒ **prima di aprire un fronte, ELENCA la cartella e leggi i
+> TITOLI: il grep trova le tue parole, non le loro.**
