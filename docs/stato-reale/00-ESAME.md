@@ -6565,3 +6565,76 @@ solo gli inglesi**. Il banco non attraversa la porta dove il difetto vive.
   col numero e la marcatura, non l'ho misurato.**
 - **Otto seed, un asse, una macchina.** ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — RESTRINGO il reperto di venti minuti fa: non è «i dati marcati escono», sono QUATTRO condizioni che nel banco capitano tutte sullo stesso fatto
+
+**Livello**: `Memory.explain()`, regime di default (CE gate). **Perimetro**: una persona
+(p5 del seed 42, «Robin Sala»), **11 varianti** dello store, una proprietà cambiata per
+volta. **Istante**: 29/08 21:05-21:09. **Regime**: `HIPPO_DATA_DIR` temporaneo, repo
+`2a3ebd69`.
+
+### Perché l'ho fatto
+
+Alle 21:06 avevo pubblicato «*8 su 8 esce il fatto marcato `(SENSITIVE)`*» — **vero
+come descrizione**, ma il fatto del banco è **anche** l'unico isolato **e** l'unico con
+un numero. Tre proprietà su un solo fatto: senza separarle, il titolo diceva più del
+dato. **Il presidio «prova a far cadere il verde» vale anche sui propri rossi.**
+
+### Le varianti
+
+| variante | esito |
+|---|---|
+| **V0** store originale (controllo, esito noto) | **RISPONDE** — serve il salario, rel 0.7851 |
+| V1 tolgo « (SENSITIVE)», resta «salary is 4700» | **si astiene** |
+| V2 tolgo il fatto salario | si astiene |
+| V3 «salary is **high** (SENSITIVE)» (numero → parola) | **si astiene** |
+| V4 aggiungo un 2º fatto isolato, senza marca né numero | RISPONDE — **serve sempre il salario** |
+| V5 aggiungo un 2º salario (il fatto non è più isolato) | RISPONDE — **serve sempre il salario** |
+| V6 marca spostata sulla **città** | **si astiene** |
+| V7 marca su un **altro numero** («shoe size is 42») | **si astiene** |
+| V8 marca su un numero **non personale** («bus line is 27») | **si astiene** |
+| V9 store originale ma **query inglese** | **si astiene** |
+| V10 marca su testo **senza numeri** («medical history is complex») | **si astiene** |
+
+### Cosa ne esce, e la mia predizione era sbagliata due volte
+
+**Avevo predetto che V1 rispondesse ancora** — cioè che la marcatura fosse una
+coincidenza del generatore. **Falsificata**: togliendo `(SENSITIVE)` il difetto sparisce.
+**Ma avevo anche implicato che il marcatore fosse un attrattore** — e V6/V7/V8/V10 lo
+**falsificano nell'altra direzione**: spostato su qualunque altro fatto, non fa uscire
+niente.
+
+⇒ **Sono QUATTRO condizioni, tutte necessarie, nessuna sufficiente:**
+
+1. il concetto **`monthly salary`** (V7: `shoe size` marcato e numerico non esce)
+2. un **numero** (V3: `high` non esce)
+3. la marcatura **`(SENSITIVE)`** (V1: senza, non esce)
+4. la **query in italiano** (V9: in inglese non esce)
+
+E **l'isolamento NON conta**: V4 e V5 lo alterano in entrambe le direzioni e il servito
+non cambia.
+
+### 🔻 Cosa ritiro, esplicitamente
+
+- ❌ **«il marcatore `(SENSITIVE)` fa uscire il dato»** — falso: spostato altrove non fa
+  uscire nulla. È **co-necessario in questa combinazione**, non causa.
+- ❌ **«il prodotto espone i dati sensibili»** — **non supportato.** Nel banco esiste
+  **un solo fatto** che soddisfa le quattro condizioni insieme, e quel fatto è anche
+  quello sensibile. **La coincidenza è del generatore, non una proprietà del prodotto.**
+- ✅ **Resta vero e misurato**: 8 fallimenti su 8 servono quel fatto (80 prove); zero in
+  inglese, 8/40 in italiano; e **nessuno dei sei assi guarda il contenuto di ciò che
+  viene servito**. Il reperto sull'**astensione che si rompe in italiano** è intatto —
+  cambia **quanto** se ne può concludere sulla privacy, che è: **poco**.
+
+### Cosa questo NON prova
+
+- **Non ho il meccanismo.** Quattro condizioni necessarie, e nessuna spiegazione del
+  perché proprio quella combinazione: `medical history is complex (SENSITIVE)` è
+  medico come «gruppo sanguigno» e **non esce**; `shoe size is 42 (SENSITIVE)` è
+  numerico e marcato e **non esce**. **Non lo so, e non lo affermo.**
+- **Una persona, un seed, 11 varianti**: le condizioni sono necessarie **su questo
+  caso**; non ho verificato che siano le stesse sugli altri sette fallimenti.
+- ⛔ **Non ho toccato nulla.**
+
