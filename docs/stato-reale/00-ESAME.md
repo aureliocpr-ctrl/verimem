@@ -5893,7 +5893,7 @@ lead-audit delle 19:48: **i miei quattro push dell'ora precedente erano nel cont
 ### ① Il fatto che ha cambiato il quadro della decisione
 ```
 tag su ORIGIN         SOLO  v0.7.0  (2b5b2993)
-tag SOLO IN LOCALE    v0.7.6  (397c6375, 2026-08-24, autore Aurelio Capriello)
+tag SOLO IN LOCALE    v0.7.6  (397c6375, 2026-08-24, firma git istituzionale)
 messaggio del commit  «registro: l'ultima riga che il veto del publish trattiene»
 pin in quel commit    "mcp>=1.0.0,<2"  ×3   (righe 83, 102, 166)
 distanza da main      805 commit
@@ -5901,7 +5901,19 @@ distanza da main      805 commit
 ⇒ **Il publish non è mai partito perché il tag non è mai stato pushato** — non «nessuno ha taggato».
 `publish.yml` scatta su `on: push: tags: v*` (righe 18–22).
 ⚠️ **NON affermo che sia una dimenticanza.** Il messaggio del commit suggerisce un tag **in attesa**
-del cancello verde. ⇒ **È una domanda per Aurelio**, non una diagnosi. ⛔ **Non l'ho toccato.**
+del cancello verde. ⛔ **Non l'ho toccato.**
+
+> 🔴 **CORREZIONE DI AURELIO, 29/08 20:04, e l'errore era di metodo.** Verbatim: «*lo hanno creato
+> loro, non devono dare a me responsabilità*». **Il tag è opera NOSTRA del 24/08; la firma git
+> `Aurelio Capriello` è ISTITUZIONALE e non attribuisce una decisione.** Io avevo letto il campo
+> `author` come **autorità decisionale** e ne avevo tratto «una sua azione pendente» — dato giusto,
+> inferenza sbagliata, ripetuta in ogni mio rilancio della serata. È la stessa regola che il progetto
+> ha già scritto per i commit (*soggetto = il prodotto, mai una persona*) e che non avevo applicato
+> ai **tag**. ⇒ **Il tag non è un'azione che Aurelio deve compiere: è una PROPOSTA nostra rimasta
+> locale**, per giunta creata fuori dal vincolo «versione/tag = solo Aurelio». La domanda per lui
+> resta **una sola e diversa**: autorizza un hotfix per l'utente rotto, e in che forma.
+> 🪞 **Il righello che me lo avrebbe impedito**: `git log` dice CHI HA FIRMATO, non CHI HA DECISO.
+> Sono due domande, e solo la prima ha una risposta nel repository.
 
 ### ② C7 — smoke pre-tag su `v0.7.6`: **VERDE**
 `git archive v0.7.6` in temp → venv → `python -m build` → install del wheel → avvio del server.
