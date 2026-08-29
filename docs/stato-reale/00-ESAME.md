@@ -5963,3 +5963,58 @@ print("in main   :", len(P.findall(open("README.md", encoding="utf-8").read())))
 EOF
 grep -oE "\]\([^)]*benchmark/trustmem_bench[^)]*\)" README.md
 ```
+
+---
+
+## ws1 — LA VETRINA: HO ESEGUITO IL CLAIM PIÙ FORTE DELLA PAGINA PyPI, E NON È INVARIANTE AL SEED
+
+**Livello**: la **pagina pubblicata** su PyPI (non il repo) + esecuzione del benchmark che promette ·
+**Istante**: 29/08 20:03–20:20 · **Regime**: sola lettura sul repo, `HIPPO_DATA_DIR` temporaneo,
+10 personas, un processo · sha `47d41863`. **Due celle in un commit** (push-batch).
+
+### ① I numeri-promessa del README **pubblicato** — e due falsi positivi miei
+La lista vera, dopo aver **stampato il contesto invece di contare**: **AUROC 0.829 · 24% · 18% ·
+74%** (TruthfulQA heldout) · **1.3 ms vs 81 ms** (ANN a 1M fatti) · **60/60** (TrustMem-Bench).
+🛑 **Due erano miei errori**: «30s» è una **metafora** («*not a 30s-old photograph*») e «3 ms» era
+in realtà **«1.3 ms»** — il regex aveva **troncato** il numero. **Terzo e quarto falso positivo
+evitati in un'ora dallo stesso presidio.**
+✅ **La promessa «run it yourself» non è vuota**: `benchmark/trustmem_bench.py` esiste **nel repo e
+già nel tag `v0.7.0` pubblicato** (16865 byte).
+⚖️ **Il wheel non lo contiene** (440 file, zero «benchmark») — **ma è VOLUTO**: i benchmark stanno
+nel repo. **Non è un reperto, e lo scrivo perché stavo per farne uno.**
+🟡 **Unica nota, minore**: il link `./benchmark/trustmem_bench.py` è **relativo** ⇒ su GitHub
+funziona, **su PyPI no**. **Link rotto, non dato falso.**
+
+### ② Il «60/60» ESEGUITO — regge col default, **cade con un altro seed**
+```
+--engine verimem --personas 10 --seed 42   (il default)
+   fabrication_under_absence 10/10 · destructive_update 10/10 · temporal_integrity 10/10
+   forget_integrity 10/10 · provenance_honesty 10/10 · sycophancy_resistance 10/10
+   OVERALL  60/60 = 1.0
+--seed 7   (unica variabile cambiata)
+   fabrication_under_absence  9/10  ← cade QUI
+   OVERALL  59/60 = 0.9833
+```
+✅ **Sei assi su sei ESEGUITI, nessuno saltato** — avevo il presidio: *un 60/60 con assi saltati non
+è un 60/60*. ✅ I log mostrano comportamento reale (`abstained=True n=0` sulle domande a vuoto).
+⇒ **È il primo claim pubblico della vetrina verificato end-to-end, e col default REGGE.**
+🟡 **Ma non è invariante al seed**, e cade proprio su **`fabrication_under_absence`** — l'asse che è
+**il cuore del prodotto**. **Non è un difetto del bench**: «deterministic» significa *stesso seed →
+stesso esito*, ed **è vero**. **È come la vetrina presenta il numero**: dice «60/60» secco.
+🎯 **Cura, e costa una parentesi**: **«60/60 (seed 42)»**, oppure la **fascia** su più seed. È
+**esattamente il presidio che ci siamo dati stanotte** — *se un numero dipende dal criterio, dai la
+fascia* — applicato alla pagina che vede il cliente.
+
+### 🟢 E il verde che vale più del numero
+Il docstring del bench dichiara: «*Honesty guard: reports the score AS MEASURED, listing real
+failures — **it is wired to detect them, not to pass***». **Col seed 7 ha rilevato un fallimento.**
+⇒ **L'honesty guard non è una frase: funziona.** Un bench che passa sempre sarebbe sospetto; questo
+no. Dopo una notte in cui ho ritirato 28 cose mie, **questo è un pezzo del prodotto che fa
+esattamente ciò che dichiara**.
+
+### ⚠️ Cosa NON prova
+· **Due seed non sono una distribuzione**: non dico «il vero punteggio è 59,5». **Ne sto misurando
+  20** — è il mio stesso presidio (*se dichiari un limite, misuralo*).
+· Il bench è **sintetico e auto-generato** (`generate_dataset` è del progetto): misura ciò che il
+  progetto ha deciso di misurare. **Non è di terzi, e la vetrina non lo dice.**
+· **«mem0: 40/60» NON verificato** (serve mem0 installato): è l'altra metà della riga sulla vetrina.
