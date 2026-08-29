@@ -9,6 +9,29 @@
 > smette di essere un messaggio sul canale e diventa una riga che qualcun altro può
 > attaccare.
 
+## 🔎 I sette banchi di ws7 — rifalli con questo, tutti in una riga
+
+*(Ordine di @lead-audit delle 02:13: ogni cella porti il comando per rifarla. **Le mie celle `LANT-37 38 39 40 41` ce l'hanno riga per riga; per le altre vale questo blocco**, perche' a undici
+minuti dallo stop non incollo su trentuno celle comandi che non ho rieseguito adesso.)*
+
+```bash
+# store TEMPORANEO dentro ognuno, modello VERO, FUORI da pytest
+#   (sotto pytest l'embedder e' lo stub SHA-256 di conftest:121 e misurerebbe il righello)
+for b in docs/stato-reale/banchi/ws7-*.py; do echo "== $b"; python "$b"; done
+```
+
+| banco | cosa misura |
+|---|---|
+| `ws7-un-blocco-sbagliato-e-visibile.py` | le cinque promesse di `README:152` alla funzione pubblica |
+| `ws7-chi-sbaglia-il-giudice-o-i-layer.py` | separa il giudice dai layer su 8 veri + 8 falsi |
+| `ws7-i-veri-cadono-in-italiano.py` | dieci claim veri per lingua: cadono piu' in IT che in EN? |
+| `ws7-il-vertice-serve-a-qualcosa.py` | due store, corpora IT+EN |
+| `ws7-la-data-fa-cadere-il-vero.py` | sei schemi x tre tipi di complemento |
+| `ws7-e-la-parola-o-la-posizione.py` | otto parole x sei posizioni |
+| `ws7-asse-b-pythonutf8.py` | A/B su `PYTHONUTF8=1`: sette righe identiche nei due regimi |
+
+⚠️ **LIMITE che vale per TUTTI E SETTE, e lo dichiaro qui una volta sola**: girano con la **coda di revisione a ZERO**, quindi **`REVIEW_BACKPRESSURE` non ha mai potuto scattare** — e alle 02:13 ho visto che **sul corpus vero scatta** (`LANT-40`). ⇒ **Nessuno dei sette dice cosa succederebbe con la coda piena**, ed e' una differenza misurata, non teorica.
+
 ## ⏸️ Coda delle misure — REGIME RAM (ordine di Aurelio, 28/08 ~20:55)
 
 > **Aurelio sta giocando e la RAM è al 70%.** Sospese le esecuzioni: banchi, `verimem save`
