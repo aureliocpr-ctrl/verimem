@@ -5816,3 +5816,61 @@ E vale al contrario: il loro reperto **è vero e va curato** — solo, non sta f
 > 🪞 **Terza lettura che mi ridimensiona stasera** — e stavolta **sulla popolazione di controllo**,
 > cioè sulla cosa che credevo mi mettesse al riparo. ⇒ *avere due popolazioni non basta: conta QUALE
 > falsità metti nella seconda.*
+
+### 🟢 W8-10 — Il blocco «⛔ RILASCIO» del README verificato sul pacchetto **pubblicato**: quattro affermazioni su cinque reggono, e la quarta è quella che nessuno verifica mai
+**REGIME**: `pip download "verimem==0.7.0" --no-deps` da PyPI pubblico (1 657 615 byte,
+**nessuna installazione, nessuna credenziale**), wheel letto come archivio, temp rimosso;
+`git` su `origin/main`; PyPI JSON API. 2026-08-29 20:09–20:13.
+
+    ① «latest release is 0.7.0 (22 July)»        ✅ VERO — PyPI: 0.7.0 caricata il 2026-07-22
+    ② «main is **994 commits** ahead»            ❌ **FALSO** — misurati **1802**
+    ③ «0.7.0 dichiara mcp>=1.0.0 senza tetto»    ✅ VERO — `bd4ff5ba` NON è antenato di `v0.7.0`
+    ④ «**18 commands** exist here and not in the package, `save` among them»  ✅ VERO:
+         wheel pubblicato, `verimem/cli.py`:  **40** decoratori   (dichiarati 40)
+         albero locale,   `verimem/cli.py`:  **58** decoratori   (dichiarati 58)
+         presenti qui e non nel pacchetto:   **18**              (dichiarati 18)
+         presenti nel pacchetto e non qui:   **0**  ⇒ «a strict subset» **confermato**
+         `save` fra i mancanti:              **SÌ** — il README lo cita per nome
+    ⑤ «measured on 2026-08-26»                   ⚠️ la data è di tre giorni fa
+
+· 🎯 **La quarta è quella che nessuno verifica mai**: «sottoinsieme stretto» è falsificabile
+  **in un colpo** — sarebbe bastato **un** comando presente nel pacchetto e assente in main.
+  **Zero.** I 18 mancanti: `anchor, ask, correct, dedup, digest, ignorance, label, log,
+  orphans, prepare, quarantine-log, recent, relink, retirement-log, save, telemetry, tip,
+  verify`.
+· ⚖️ **PER IL C10** («che tasso di figure di merda fanno loro, e quale noi»): quel paragrafo
+  dichiara **il perimetro** («i decoratori in `cli.py` soltanto»), **la data**, **i due
+  addendi**, **la relazione fra gli insiemi** e **la propria fragilità** («a wider or narrower
+  perimeter gives a different figure»). ⇒ **Un terzo, tre giorni dopo, con la sola fonte
+  pubblica, lo riproduce esattamente.** **È il contrario di una figura di merda.**
+· 🪞 **E il terzo ero io, che quel numero l'avevo accusato** alle 00:43 («18 ma io ne misuro
+  12»): sbagliavo perché confrontavo i comandi **totali** con una **differenza**. **La
+  differenza fra l'accusa e la verifica sono stati due secondi di rete** — scaricare il
+  pacchetto invece di dedurlo.
+· ⚠️ **Il blocco NON va tolto, va corretto in UNA riga.** Ma un numero puntuale invecchia
+  subito: misurato stasera **1781 alle 19:55 → 1802 alle 20:09**, ~**un commit al minuto**.
+  ⇒ Due forme che reggono: **una soglia** («more than 1800 commits ahead», vera finché il
+  blocco serve) **oppure** generarla da `git rev-list --count v0.7.0..main`.
+· 🚨 **E ⑦ è l'unico cancello che si può attraversare senza accorgersene**: **nessuno step di
+  `publish.yml` lo verifica** — è un blocco di commento che qualcuno deve leggere. ④ ferma il
+  job, ⑦ no. Eppure `pyproject.toml:16` (`readme = "README.md"`) lo rende **la pagina di
+  PyPI**.
+· ⚠️ **COSA NON PROVA**: il perimetro è quello del README (`cli.py` soltanto) — **un perimetro
+  più largo darebbe un altro numero, e lo dice il README stesso**. E ho contato **decoratori**,
+  non comportamento: **non ho verificato che i 18 comandi funzionino**.
+
+**RIFALLO CON**:
+```bash
+T=$(mktemp -d); pip download "verimem==0.7.0" --no-deps --only-binary=:all: -d "$T" -q
+python - "$T" <<'EOF'
+import re, sys, zipfile, pathlib
+P = re.compile(r'@\w*\.?command\(\s*["\']([a-zA-Z0-9_-]+)["\']')
+z = zipfile.ZipFile(next(pathlib.Path(sys.argv[1]).glob("*.whl")))
+n = next(x for x in z.namelist() if x.endswith("verimem/cli.py"))
+a = set(P.findall(z.read(n).decode()))
+b = set(P.findall(open("verimem/cli.py", encoding="utf-8").read()))
+print("pacchetto", len(a), "| locale", len(b), "| solo qui", len(b - a), "| solo la'", len(a - b))
+EOF
+rm -rf "$T"
+git rev-list --count v0.7.0..origin/main
+```
