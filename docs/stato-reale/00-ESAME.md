@@ -6870,3 +6870,81 @@ allargano ciò che se ne può concludere.**
   25/25, e **non ho prosa italiana di terzi** per cercarlo altrove.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Il test di sufficienza fa cadere TUTTE E QUATTRO le condizioni: su store nuovi il fallimento c'è comunque, e non è italiano
+
+**Livello**: `Memory.explain()`, regime di default (CE gate). **Perimetro**: **6 personas
+costruite da zero** — nomi, città e mestieri **mai usati dal generatore** — × 4
+configurazioni. **Istante**: 29/08 21:33-21:36. **Regime**: `HIPPO_DATA_DIR` temporaneo,
+repo `f2326008`.
+⚠️ **Sulla direttiva dei dataset**: qui le frasi sono mie, ma **non come popolazione
+bersaglio** — è un **controllo interno di sufficienza**, l'uso che la direttiva consente.
+I tassi bersaglio restano quelli misurati sul generatore.
+
+### La domanda
+
+Alle 21:29 avevo mostrato che quattro condizioni sono **necessarie** su 8 casi su 8. Il
+passo che mancava: **bastano?** Store nuovo, quattro condizioni, deve fallire.
+
+### Il risultato — e il controllo negativo è quello che parla
+
+| configurazione | fallimenti | cosa viene servito |
+|---|---|---|
+| **N1** store IT nuovo, query IT | **1/6** | Ettore Basile — il salario |
+| **N2** **solo** il fatto salario, query IT | **1/6** | Ettore Basile — il salario |
+| **N3** store con valori **inglesi**, query IT | **1/6** | Ettore Basile — il salario |
+| **N4** store IT, **query INGLESE** (controllo) | **1/6** | Corrado Ferri — **«job title is giardiniere»** |
+
+**N4 doveva astenersi 6 volte su 6. Non l'ha fatto** — e il fatto servito **è un mestiere**:
+non è `monthly salary`, **non ha un numero**, **non è marcato `(SENSITIVE)`**, e la query
+**è in inglese**.
+
+### 🔻 Cadono tutte e quattro, e lo dico per intero
+
+| condizione | come cade |
+|---|---|
+| ① il concetto `monthly salary` | N4 serve **un mestiere** |
+| ② un numero | «giardiniere» **non ne ha** |
+| ③ la marcatura `(SENSITIVE)` | «job title is giardiniere» **non è marcato** |
+| ④ la query italiana | N4 è **in inglese** |
+
+E **N3 fa cadere anche «servono valori italiani nello store»**: con città e mestieri
+inglesi il fallimento resta.
+
+### Come si concilia con l'8/8 delle 21:29 — e la lezione
+
+Le condizioni erano **davvero necessarie su quegli otto casi**: la misura era giusta. Ma
+**quel generatore produce sempre gli stessi cinque fatti per persona**, e in quella
+popolazione l'unico fatto che poteva emergere era il salario. **Ho scambiato le proprietà
+dell'unico candidato disponibile per le condizioni del fenomeno.**
+
+🪞 **Necessario su una popolazione ≠ necessario.** Otto casi su otto non bastavano, perché
+gli otto casi **venivano tutti dallo stesso stampo**. Il controllo che serviva non era
+*più casi*: era **un caso fuori dallo stampo**.
+
+### Cosa resta, ed è più largo e più vago di prima
+
+**Su store nuovi il fallimento c'è in tutte e quattro le configurazioni, ~1 su 6 (≈17%)**
+— compatibile col 20% misurato in italiano sul generatore, **ma qui accade anche in
+inglese**. ⇒ **Il fenomeno non è monolingue**, e non è caratterizzato da quelle quattro
+proprietà.
+
+**Il dato più stretto**: in N1, N2 e N3 **fallisce sempre lo stesso individuo** — «Ettore
+Basile» — e **anche con UN SOLO fatto nello store** (N2). ⇒ dipende dalla **coppia
+(nome, fatto)**, non dal contorno, e ha l'aria di essere **idiosincratico**: una
+similarità superficiale che supera la soglia per quella specifica coppia.
+
+⇒ **Sembra più rumore del retrieval su casi singoli che un difetto strutturale.** Lo
+scrivo pur avendo passato la serata a costruirci sopra.
+
+### Cosa questo NON prova
+
+- **Sei personas per cella.** «1/6» è **un ordine di grandezza**, non un tasso: con sei
+  casi, uno solo che cambia sposta il numero di 17 punti.
+- **Non ho la causa** — e ora ho anche **meno** struttura da spiegare di un'ora fa.
+- **Su dati di terzi resta 25/25** (HaluEval): questo fenomeno **non si è mai visto fuori
+  da store sintetici**, né miei né del generatore.
+- ⛔ **Non ho toccato nulla.**
+
