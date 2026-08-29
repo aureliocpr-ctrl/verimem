@@ -70,6 +70,22 @@ def main() -> int:
                       f" — la legenda ha 🔴🟢🟡⛔🚫")
         print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"
               " chiedi all'autrice quale dei cinque intendeva, non cambiarlo tu.")
+    # 29/08: una cella che contiene un blocco di codice (```) o un a-capo SPEZZA
+    # la riga della tabella markdown: le righe di continuazione non fanno piu'
+    # parte della tabella e la colonna non si allinea. Trovato addosso a me:
+    # 19 celle su 20 rotte erano mie, e i due righelli che avevo usato per
+    # cercarle si contraddicevano, perche' il primo filtrava su `count("|") >= 9`
+    # e cosi' SALTAVA proprio le celle spezzate. Il controllo giusto e' banale:
+    # una riga di tabella comincia con `|` e DEVE finire con `|`.
+    testo = REGISTRO.read_text(encoding="utf-8")
+    spezzate = [RIGA_CELLA.match(r).group(0).strip("| ")
+                for r in testo.splitlines()
+                if RIGA_CELLA.match(r) and not r.rstrip().endswith("|")]
+    if spezzate:
+        print(f"⚠️  {len(spezzate)} celle SPEZZATE su piu' righe (la tabella non si allinea):")
+        print(f"     {' '.join(spezzate[:14])}{' …' if len(spezzate) > 14 else ''}")
+        print("   ⇒ il contenuto e' integro, e' la RESA a rompersi: un blocco ``` dentro")
+        print("     una cella va reso su una riga sola. Difetto di FORMA, nessun numero cambia.")
     print(f"id duplicati: {', '.join(doppi) if doppi else 'nessuno'}")
     return 1 if doppi or conto["?"] else 0
 
