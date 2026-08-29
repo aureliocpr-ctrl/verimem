@@ -77,6 +77,43 @@ dice chi li ha fermati» avrei lanciato un allarme **2,7 volte piu' grande del
 vero**, gonfiato dalla storia del corpus. Un rapporto senza FINESTRA inganna, e
 la finestra qui cambia il verdetto — non il decimale.*
 
+🔴🔴 **⑥ RETTIFICA, DIECI MINUTI DOPO: ANCHE IL 29,1% ERA UN ALLARME FALSO, E
+IL DIFETTO NON ESISTE.**
+
+Avevo spezzato per **mese** e mi ero fermato li', convinto di aver fatto il
+controllo. **Non bastava: dentro agosto ci sono DUE ERE.** Spezzando per
+**giorno**:
+
+    08-01 .. 08-05    194 senza ·   0 con     (100% senza)
+    08-07              10 senza ·  27 con     <- la TRANSIZIONE
+    08-08               1 senza ·   9 con
+    08-12               1 senza ·  20 con
+    08-13 .. 08-29      0 senza · 412 con     (0,0% senza)
+
+⇒ **`quarantined_by` e' entrato in servizio il 7 agosto.** Tutto cio' che manca
+sta **prima** di quella data. Sull'era attuale — **oltre due settimane, 412
+quarantinati** — l'attribuzione c'e' **sempre**: **0,0% senza**.
+
+🟢 **NON C'E' NESSUN DIFETTO.** Il campo funziona al 100% da piu' di due
+settimane, e i punti ④ e ⑤ qui sopra vanno letti **solo** come cronaca di come
+ci sono arrivato.
+
+🔑 **E LA LEZIONE E' RICORSIVA, che e' la parte che mi porto via.** Ho applicato
+la lezione della finestra **una volta** (per mese) e mi sono fermato,
+soddisfatto di aver evitato un allarme falso da 79,2%. **Ma il residuo del 29,1%
+era la stessa malattia a granularita' piu' fine.**
+⇒ **Una finestra sbagliata non si corregge una volta sola: si spinge finche' il
+numero SMETTE DI MUOVERSI.** Se raffinando la granularita' il numero cambia
+ancora, **non hai finito di correggere — hai solo cambiato l'entita' dell'errore**.
+79,2% → 29,1% → **0,0%**: due correzioni, e solo la seconda arriva al vero.
+
+⚠️ E il difetto che avevo attribuito a «un percorso che non registra» **non
+esisteva nemmeno come domanda**: il probe su `writer_role`/`writer_principal`
+mostrava `cli:local` con **184 senza e 474 con** — lo stesso percorso faceva
+entrambe le cose, perche' i due gruppi stavano in **due epoche diverse**, non su
+due percorsi diversi. *Cercavo una differenza di CHI dove c'era una differenza
+di QUANDO.*
+
 ⚠️ ALTRI LIMITI: un install, un istante (il corpus si muove: siamo in otto a
 scrivere). Il test ③ copre il percorso **SDK** su tre casi, non tutti i rami.
 
