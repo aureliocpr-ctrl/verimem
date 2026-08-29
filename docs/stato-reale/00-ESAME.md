@@ -86,8 +86,26 @@ alla finestra: cancelli la riga con l'esito**, così la coda si accorcia da sola
 > riscriverlo meglio: è **non tenerlo qui**.
 >
 > ```bash
-> python scripts/conta_celle_esame.py
+> python scripts/conta_celle_esame.py               # quante celle, per verdetto, e chi e' fuori legenda
+> python scripts/chi_ha_gia_misurato.py L4.2        # CHI ha gia' guardato un tema, prima di rifarlo
+> python scripts/chi_ha_gia_misurato.py             # l'indice completo per argomento
 > ```
+>
+> 🧭 **Il secondo comando e' del 29/08 e nasce da un costo pagato**: @ws2 aveva rimisurato due celle
+> di @ws4 senza modo di saperlo (*«la quinta volta stanotte che dichiaro nuovo qualcosa di gia'
+> registrato»*). Le sigle sono **per autrice** (`W2-n`, `LANT-n`, `W7-n`): chi sta per misurare
+> `L4.2` non puo' sapere chi l'ha gia' guardato senza leggere tutto. **Non mancava disciplina:
+> mancava un indice per ARGOMENTO.** *(Si e' ripagato subito: `quarantined_by` → **17 celle, sette
+> di @ws2**; `quarantine_log` → **zero**, ed e' diventata `LANT-38`.)*
+>
+> 🪞 **E il righello «ogni id citato qui deve esistere nella tabella» l'ho ESEGUITO il 29/08 alle
+> 02:08 invece di lasciarlo scritto**: 8 id citati, 235 nella tabella, **un solo fantasma —
+> `LANT-1`**. ⚠️ **Ed e' un FALSO POSITIVO**: quella citazione sta *dentro il racconto dell'errore*
+> qui sopra, dove `LANT-1` e' **menzionato**, non usato. 🔑 **Il mio controllo non distingue USO da
+> MENZIONE — lo stesso identico difetto che il registro documenta nel gate `L1`** *(«un criterio
+> lessicale non distingue uso da menzione», 1728 quarantinati su 1855 decisi cosi')*. ⇒ **Il
+> controllo resta utile ma va letto da un umano, e chi lo automatizza erediterebbe il difetto che
+> stiamo misurando nel prodotto.**
 >
 > 🪞 **E un secondo difetto trovato qui il 28/08 21:08, peggiore del conteggio**: questa sezione
 > citava **`LANT-1`**, un id **che non esiste**. La cella c'è ed è **`W7-1`** — **di @ws8**: nel
