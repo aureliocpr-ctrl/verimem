@@ -6083,3 +6083,47 @@ da nessuna parte**, e colpisce **proprio le misure di silenzio**.
 #### Limiti
 **n=2.** È un'**osservazione con un meccanismo plausibile**, non una legge. **Per chiuderla bastano
 quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
+
+### 🪞 W8-12 — La mia cura a L1.20 **aggiunge una quarantena su sei claim VERI**: l'allarme regge, ma ridimensionato da 1 caso a 1 su 6
+**REGIME**: due sottoprocessi, **unica variabile** `ENGRAM_ENCODE_SERVICE` (disarma L1.20 senza
+toccare il codice, riproducendo il comportamento **precedente a `54bb9d73`**); modello vero
+fuori pytest, `HIPPO_DATA_DIR` temporaneo con assert, delega rimossa; 2026-08-29 20:23–20:30.
+Nato dal «danno doppio» misurato da ws5 su C2.
+
+    claim VERO (con fonte che lo sostiene)     L1.20 ACCESO        L1.20 SPENTO       cambia?
+    La merce e' arrivata integra.              quarantined 98.3    model_claim 98.3    **SI'**
+    La potenza installata e' di 320 kW.        model_claim 98.8    model_claim 98.8    no
+    Il collaudo si e' concluso senza rilievi   quarantined 99.4    quarantined 99.4    no
+    Il contratto scade il 31 dicembre.         model_claim 98.8    model_claim 98.8    no
+    Le unita' consegnate sono 240.             model_claim 98.9    model_claim 98.9    no
+    Il server e' stato riavviato alle 3.       model_claim 97.7    model_claim 97.7    no
+    ⇒ esito che cambia per la sola cura: **1 su 6**
+    ⇒ veri quarantinati: **2 su 6** con L1.20 acceso · **1 su 6** con L1.20 spento
+
+· 🔴 **Il fenomeno e' REALE e attribuibile**: sul primo caso `layers=['L1.20']` e' **l'unico
+  layer che parla**, e il `grounding` e' **identico** nei due rami — il giudice dice, in
+  entrambi, che la fonte sostiene il claim. ⇒ **L1.20 trattiene CONTRO il giudice**: e' un
+  `withheld_despite_judge` riprodotto a variabile singola.
+· 🪞 **MA RIDIMENSIONO IL MIO ALLARME DELLE 20:21**, che con **un** caso suonava come «la mia
+  cura ferma i fatti veri». Con sei casi e': **aggiunge UNA quarantena su sei**. La differenza
+  fra «ferma i veri» e «ne ferma uno su sei» non e' retorica: e' **la differenza fra RITIRARE
+  una cura e CORREGGERLA**.
+· 🆕 **E il caso piu' istruttivo e' quello che NON cambia**: «il collaudo si e' concluso senza
+  rilievi» e' **quarantinato in ENTRAMBI i rami**. ⇒ **Esiste un problema di veri fermati che
+  NON dipende da questa cura**, e che **misurando solo il delta sarebbe rimasto invisibile**.
+  🔑 **Chi cerca la propria colpa trova solo la propria colpa.**
+· ⚖️ **Bilancio di L1.20 su questa popolazione**: sui **falsi** e' ridondante (28/08: 6 su 6
+  fermati comunque da `L1.10`/`L1.13`/`L1.15`); sui **veri** aggiunge **1 fermata su 6**.
+  Opzioni con il costo: **(a)** declassarlo ad **avviso** · **(b)** non trattenere quando il
+  giudice e' sopra soglia · **(c)** lasciarlo **dichiarando** il costo. ⛔ **La scelta sulla
+  famiglia L1 e' collegiale: qui c'e' la misura, non la scelta.**
+· 🔑 **La lezione**: il referto del 28/08 misurava **la popolazione dei self-claim FALSI** —
+  quella che il difetto suggeriva. **Il difetto sceglie la popolazione, e la popolazione
+  decide il verdetto.** La parte difficile non e' «misura entrambe»: e' **accorgersi di quale
+  delle due non hai guardato**.
+· ⚠️ **COSA NON PROVA**: **sei casi non sono un tasso.** Una lingua sola, un dominio solo
+  (verbali e documenti tecnici), claim brevi. **1 su 6 e' cio' che ho visto, non una frequenza
+  attesa** — per quella serve la popolazione di controllo di ws5 e ws4.
+
+**RIFALLO CON**: lo stesso script due volte, una con `ENGRAM_ENCODE_SERVICE` assente e una con
+`"0"`; store temporaneo, `validate="full"`, e si legge `status` + `warnings[].layer`.
