@@ -90,11 +90,35 @@ def main() -> int:
     print(f"     ORFANI:                    {len(orfani):>4}"
           f"   ({100.0 * len(orfani) / len(banchi):.1f}%)")
 
-    celle = [r for r in registro.split("\n") if r.startswith("| W")]
+    # 🪞 CORRETTO il 29/08 alle 21:56, su segnalazione di un'altra istanza.
+    # La prima stesura filtrava `r.startswith("| W")` e contava **130 celle**:
+    # il registro ne ha **TRE forme di ID** — `W<n>-<n>`, `LANT-<n>` e **solo
+    # numero** — e quel filtro escludeva le ultime due, cioe' **138 celle**.
+    # ⇒ Il numero che avevo pubblicato (46 su 130, 35,4%) era **ottimistico per
+    # costruzione**: mancavano proprio le famiglie messe peggio.
+    import re as _re
+
+    def _id_cella(r: str) -> str | None:
+        if not r.startswith("| ") or r.count("|") < 4:
+            return None
+        i = r.split("|")[1].strip()
+        for pat in (r"W\d+-\d+\w*", r"LANT-\d+", r"\d+"):
+            if _re.fullmatch(pat, i):
+                return i
+        return None
+
+    celle = [r for r in registro.split("\n") if _id_cella(r)]
     con = [r for r in celle if "rifallo con" in r]
-    print(f"\n  == E DALL'ALTRO LATO: le celle con la riga «rifallo con»")
+    print("\n  == E DALL'ALTRO LATO: le celle con la riga «rifallo con»")
     print(f"     celle: {len(celle)}   con «rifallo con»: {len(con)}"
           f"   ({100.0 * len(con) / max(1, len(celle)):.1f}%)")
+    print("     per FORMA di ID, perche' non sono messe uguale:")
+    for nome, pat in (("W<n>-<n>", r"W\d+-\d+\w*"), ("LANT-<n>", r"LANT-\d+"),
+                      ("solo NUMERO", r"\d+")):
+        sub = [r for r in celle if _re.fullmatch(pat, _id_cella(r) or "")]
+        subc = [r for r in sub if "rifallo con" in r]
+        print(f"       {nome:<12} {len(sub):>4} celle, {len(subc):>3} con rifallo"
+              f"  ({100.0 * len(subc) / max(1, len(sub)):.1f}%)")
 
     print("\n  == I PRIMI ORFANI, in ordine alfabetico")
     for f in orfani[:10]:
