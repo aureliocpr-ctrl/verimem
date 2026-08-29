@@ -6138,6 +6138,29 @@ da nessuna parte**, e colpisce **proprio le misure di silenzio**.
 quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
 
 ### 🪞 W8-12 — La mia cura a L1.20 **aggiunge una quarantena su sei claim VERI**: l'allarme regge, ma ridimensionato da 1 caso a 1 su 6
+> 🎯 **MISURA FINALE, 20:47 — il righello precedente era ROTTO e questo e' quello valido.**
+> **`ENGRAM_ENCODE_SERVICE=0` NON disarma L1.20 quando `is_loaded()` e' True**, e il modello
+> si carica alla PRIMA scrittura del processo: dalla seconda in poi il ramo «spento» era in
+> realta' **acceso**. ⇒ **Tutta la tabella qui sotto, tranne la prima riga, confrontava
+> acceso contro acceso.** Il guard a tre vie che rende inefficace l'interruttore e' la riga
+> aggiunta da `54bb9d73`: **lo strumento e la trappola nello stesso commit.**
+> ✅ **Rifatto con UN PROCESSO NUOVO per cella** (`is_loaded=False` in tutte e quattro):
+>
+>     caso      ramo     is_loaded  status        grounding  layers
+>     merce     ACCESO   False      quarantined   98.28      ['L1.20']
+>     merce     SPENTO   False      model_claim   98.28      []
+>     collaudo  ACCESO   False      quarantined   99.38      ['L1.20']
+>     collaudo  SPENTO   False      model_claim   99.38      []
+>
+> ⇒ 🔴 **DUE claim veri su due cambiano esito per la sola cura**, e in entrambi il
+> `grounding` e' **identico** fra i rami: **L1.20 trattiene contro il giudice due volte su
+> due**. Il «2 su 6» che avevo dedotto e' ora **misurato** su questi due.
+> ⚠️ **Gli altri quattro claim NON sono stati rifatti col righello valido**: potrebbero
+> essercene di piu'. **Il denominatore resta 6, il numeratore e' almeno 2.**
+> 📌 **RIFALLO CON**: un processo nuovo per cella (`subprocess`), `ENGRAM_ENCODE_SERVICE`
+> assente contro `"0"`, e **stampa `embedding.is_loaded()` PRIMA della scrittura**: se e'
+> gia' True, il tuo disarmo non sta disarmando niente.
+
 > 🔄 **DUE CORREZIONI IN SEQUENZA, 20:34 e 20:39. Leggere prima del resto.**
 > **(1) alle 20:34** ho ritirato la riga «il collaudo… è quarantinato in entrambi i rami»
 > attribuendola a un **artefatto dello store condiviso**, perché lo stesso claim, scritto da
