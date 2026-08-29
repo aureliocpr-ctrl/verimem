@@ -57,6 +57,11 @@ il verdetto*.
 
 **16 celle · 9 difese · 5 bucate · 1 ridimensionata · 3 con danno doppio.**
 
+> 🪞 **E DELLE 9 «DIFESE», SOLO 6 SONO DIFESE.** Misurato dopo aver consegnato
+> questa tabella, perché la nota ⑤ apriva la domanda su una cella sola:
+> **su 10 celle verdi, 4 sono fermate dal SOLO giudice** — nessun layer
+> deterministico parla. Vedi **nota ⑥**, che è la più importante della pagina.
+
 > 🔎 **Nota di lettura, per chi confronta con i banchi**: qui la colonna dice
 > **falsi FERMATI**, il banco stampa **falsi PASSATI**. Sono complementari
 > (`fermati = totale − passati`) e la conversione è verificata riga per riga:
@@ -107,6 +112,38 @@ due lingue**: l'estrattore distingue `month`/`day` e il confronto ignora la
 differenza. ⇒ La difesa inglese viene dal **giudice** (grounding 2.1), non da
 `L4.1`/`L4.2`. **Un verde che dipende dal giudice non è una garanzia: è una
 fortuna misurata su un caso**, e va letto così anche dove la tabella lo segna 🟢.
+
+**⑥ Delle celle verdi, un terzo è una FORTUNA e non una difesa.** La nota ⑤
+apriva la domanda su `unità-cambiata EN`; l'ho chiusa **su tutte le verdi**
+(banco `ws5-C2-quali-verdi-sono-difese-e-quali-fortuna.py`). Criterio dichiarato
+prima: **DIFESA** = il falso è fermato **e almeno un layer deterministico parla**;
+**FORTUNA** = fermato ma decide **solo il grounding**.
+
+| cella | chi la ferma | |
+|---|---|---|
+| `cifra-inventata` IT+EN | `L4.1` | 🟢 difesa |
+| `negazione` IT+EN | `L1.16` + `L1-domain-precision` | 🟢 difesa |
+| `attestazione-nuda` IT+EN | `L1.10`, `L1.15`, `L1.20` | 🟢 difesa |
+| `cifra-riusata` EN | **solo il giudice** | 🟡 fortuna |
+| `entità-inventata` IT+EN | **solo il giudice** | 🟡 fortuna |
+| `unità-cambiata` EN | **solo il giudice** | 🟡 fortuna |
+
+⇒ **`entità-inventata`, che in questa tabella sembra fra le classi più solide —
+verde in entrambe le lingue — non ha nessuna difesa deterministica.** Il falso
+«*il fornitore Verdi ha consegnato la merce*» cade a **1.3** solo perché il
+giudice lo boccia. **Una cella difesa solo dal giudice non ha un presidio: ha un
+punteggio** — e quel punteggio viene da un modello la cui soglia è **già stata
+spostata a mano** (`grounding_gate.py:510`).
+
+🪞 **Il primo criterio di quel banco era ROTTO, e l'ha smascherato il controllo
+che ci avevo messo apposta.** Il banco dichiarava: «*`unità-cambiata EN` la so
+già FORTUNA: se uscisse DIFESA, il criterio è rotto*». **È uscita DIFESA.**
+Causa: contavo `L4-grounding` fra i layer, ma **`L4-grounding` è il giudice
+sotto un altro nome** (come `L4-review`). ⇒ Col criterio sbagliato il risultato
+era **10 difese su 10** — il più rassicurante e il più falso. Corretto, è 6/4.
+📌 **Vale per chiunque conti i layer stasera**: un `warnings[].layer` che dice
+`L4-grounding` **non è un presidio che ha parlato**, è il grounding che si
+affaccia nella stessa lista.
 
 **④ L'asimmetria IT/EN è più stretta di come l'avevo scritta.** Vedendo due
 classi bucate in IT e difese in EN avevo parlato di asimmetria linguistica.
