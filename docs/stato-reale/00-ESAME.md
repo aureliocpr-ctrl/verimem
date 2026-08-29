@@ -976,7 +976,14 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
   claim  5039 char   🟢 ammesso   g=99.98
   claim  7559 char   🟢 ammesso   g=99.98
 ```
-⇒ 🔑 **La lunghezza NON quarantina: un fatto vero passa fino a 7559 caratteri.** ✅✅ **E LA CAUSA VERA E' STATA TROVATA ALLE 19:51, rieseguendo gli schermi sui LORO testi** *(80 handoff quarantinati piu' recenti, `run_validation_gate` come fa `_spiega_le_quarantene`)*:
+⇒ 🔑 **La lunghezza NON quarantina: un fatto vero passa fino a 7559 caratteri.** 🔴🔑 **E ALLE 20:41 @ws4 MISURA L'ALTRA META', CHE AL MIO BANCO MANCAVA**: *«non e' rumore posizionale, e' **VOLUMETRICO**: **160 caratteri di parole inventate portano un FALSO da 72,1 a 99,7**»*. ⇒ **Io avevo allungato solo i VERI** *(1574 → 7559 char, sempre ammessi)* **e concluso che «la lunghezza non quarantina». Vero — e monco.**
+🔥 **I due dati insieme dicono cio' che nessuno dei due dice da solo:**
+```
+  allungare un VERO   (mio, 4 taglie)     resta ammesso        la lunghezza non lo AIUTA
+  allungare un FALSO  (@ws4, +160 char)   da 72,1 a 99,7       la lunghezza lo SALVA
+```
+⇒ 🔑 **La lunghezza e' inerte sui veri e SALVA i falsi: e' un asse che sposta il verdetto in UNA direzione sola, e nella direzione sbagliata.** ⚖️ **E' `LANT-55` su un asse nuovo** — il gate non e' «piu' o meno severo», e' **severo dove non serve e permissivo dove serve**, e stavolta la leva e' il **volume di testo**, che chiunque puo' aggiungere senza aggiungere verita'.
+🪞 **E la colonna che mancava al mio banco era ovvia**: avevo **una popolazione sola** — i veri. **E' la stessa lezione che ho scritto due volte oggi** *(la regola 11: misura ENTRAMBE le popolazioni)* **e che oggi ha morso @ws8 sulla sua cura e me qui.** ⇒ **Nominare la classe non immunizza: il mio banco della lunghezza aveva un controllo su un verso solo e non me ne sono accorta scrivendolo.**  ✅✅ **E LA CAUSA VERA E' STATA TROVATA ALLE 19:51, rieseguendo gli schermi sui LORO testi** *(80 handoff quarantinati piu' recenti, `run_validation_gate` come fa `_spiega_le_quarantene`)*:
 ```
   MUTI (nessuno schermo si riaccende):  0/80      <- si riaccendono TUTTI
   L1.13   68/80  (85%)
