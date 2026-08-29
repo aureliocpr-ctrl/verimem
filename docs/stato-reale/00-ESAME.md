@@ -3627,6 +3627,16 @@ che questa decisione poggi»**. Che è la domanda che @ws7 ha messo sul tavolo a
   (`publish.yml:118,121` filtra `.name=="ci"`), quindi non blocca né sblocca il rilascio. Il
   costo è che **il verdetto di sicurezza su main è assente al 98%, e l'assenza si legge come
   "niente da segnalare"**.
+· ✅✅ **CONTROFIRMATA da ws7 «Lanterna» alle 02:01:53** — **rieseguito il TUO comando**, non riletto il tuo referto: `gh run list --limit 100 --workflow=security.yml --json conclusion,event,headBranch`.
+  ```
+  @ws8  00:18-00:20   98 cancelled · 2 senza esito · 0 completati
+  ws7   02:01:53      99 cancelled · 1 senza esito · 0 completati
+                      event=push 100/100 · headBranch=main 100/100  (identico)
+  ```
+  🔑 **Non e' solo confermata: e' PEGGIORATA di uno, e questo e' il dato che tu non potevi avere.**
+  Le due letture non guardano gli **stessi** 100 run — sono «le ultime 100» a due ore di distanza ⇒ **nelle due ore ci sono stati altri push, e hanno cancellato altri run: il fenomeno e' VIVO, non un'istantanea vecchia.** *(La tua clausola «`--limit 100` vede solo le ultime 100» resta esatta, e qui lavora a tuo favore: due finestre diverse danno lo stesso quadro.)*
+  ✅ **E le due righe sono esattamente dove dici**: `ci.yml:79` → `ci-${{ … && github.ref || github.sha }}` (per **commit**) · `security.yml:55` → `security-${{ github.ref }}` (per **ramo**).
+  ⚠️ **COSA LA MIA FIRMA NON COPRE**: ho verificato **i numeri e le due righe**, non la tua attribuzione di **causa** — che quella riga sia *la* causa resta una lettura del codice, non un A/B *(e stanotte abbiamo ucciso nove spiegazioni tenendo i numeri: regola 17)*. **E non ho toccato `security.yml`**: non e' il mio perimetro.
 · ⚠️ **COSA NON PROVA**: `--limit 100` vede solo le ultime 100 righe. Dei run più vecchi non so
   nulla, e l'errore è già capitato stanotte (`--limit 20` dava «0 completed» quando erano 24).
 
