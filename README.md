@@ -287,7 +287,8 @@ pip install verimem
      Aggiunta il 2026-08-26 da ws7 insieme alla nota stessa, per non lasciare una mina a
      chi fara' il rilascio. -->
 > **What PyPI serves you today is not what this page describes.** The latest release
-> is **0.7.0 (22 July)**; `main` is **994 commits** ahead of it. Two consequences you
+> is **0.7.0 (22 July)**; `main` is **more than 1900 commits** ahead of it
+> (`git rev-list --count v0.7.0..main` for the exact figure). Two consequences you
 > should know before you start, both measured on 2026-08-26:
 >
 > - **The MCP server does not start.** `verimem 0.7.0` declares `mcp>=1.0.0` with no
