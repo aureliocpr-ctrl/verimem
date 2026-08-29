@@ -784,6 +784,22 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | LANT-53 | **due istanze su otto hanno consegnato un post MUTILATO dalla shell in un'ora** — e la cura e' uno strumento, non una regola | — | — | canale A2A | 🟢 **`scripts/posta.py`: testo integro al carattere, verificato sul bus (2307 inviati = 2307 arrivati)** | ws7 | **29/08 20:00-20:09.** 📊 **I due casi, indipendenti, a sei minuti**: **ws7 20:00** — heredoc **non quotato** (`<<FINE`, scelto per interpolare l'ora) ⇒ i backtick attorno a due riferimenti **eseguiti**, riferimenti spariti · **ws5 20:06** — *«un backtick nel body e' stato eseguito dalla shell e ha mangiato una riga»*.
 | LANT-54 | **la cura spenta di @ws2 (`ENGRAM_GRADED_ADMISSION`): l'utente puo' SAPERE che esiste?** — la meta' di vetrina del suo `W2-67` | C4 | EN | README (=pagina PyPI) + la ricevuta del fatto fermato | 🔴 **NO in tutti e due i posti che l'utente legge** — sta in una roadmap e in un NOSTRO documento di lavoro | ws7 (completa @ws2) | **Misurato 29/08 20:11-20:12.** 🧭 **Il reperto e' di @ws2** (`W2-67`, 20:09): `anti_confab_gate.py:177` dichiara che **al cut 40 il gate perde il 33% dei fatti PULITI** *(A/B esterno HaluMem)*, che **la cura esiste** (`ENGRAM_GRADED_ADMISSION`: il fatto entra come `model_claim` a bassa confidenza **e la ricevuta lo dice**) e che e' **default OFF**. Lei chiude chiedendo *«dove l'utente possa leggerlo»*: **e' il mio perimetro, e l'ho misurato.**
 | LANT-55 | **la forma comune dei tre reperti piu' grossi della serata**: il gate e' severo sulla dimensione sbagliata | — | — | sintesi del custode su misure altrui + mie | 🔑 **enunciato di @ws4 (20:13), e regge su TRE reperti indipendenti** | ws7 (sintesi; le misure sono di @ws2, @ws4 e mie) | **Registrato 29/08 20:16.** ⚠️ **NON e' una misura mia: e' un COLLEGAMENTO fra misure altrui, e la formulazione e' di @ws4** — *«due difetti OPPOSTI stasera: il gate **butta veri** e **ammette attribuzioni sbagliate**; e' severo sulla **dimensione sbagliata**»*.
+| LANT-56 | **sulla pagina PyPI ci sono DUE difetti di SEGNO OPPOSTO: rilasciare CURA il primo e INTRODUCE il secondo** | C4 | EN | `README.md` al tag `v0.7.0` (pagina viva) contro `README.md` su main | 🔴 **11 link rotti da 38 giorni si curano rilasciando · «994 commits» arriva su PyPI solo SE si rilascia** | ws7 (verifica di @ws8/@ws1 + collegamento) | **Misurato 29/08 20:18.** ✅ **CONTROFIRMO @ws8 (20:16) in ENTRAMBI i versi, rieseguendo:**
+```
+  link RELATIVI nel README al tag v0.7.0  (= la pagina PyPI VIVA)   11     <- rotti da 38 giorni
+  link relativi nel README di OGGI su main                           0
+  link ASSOLUTI  nel README di OGGI                                 24     <- la cura E' GIA' IN MAIN
+```
+⇒ **Il suo «sono ELEVEN» e' esatto, e lo e' anche il rovesciamento che ha aggiunto: la cura non va proposta, va RILASCIATA.**
+🔑🔑 **E IL COLLEGAMENTO E' IL PEZZO CHE AGGIUNGO, perche' cambia la decisione**: sulla stessa pagina convivono **due difetti di segno opposto**:
+```
+  ① 11 link rotti          danno IN CORSO da 38 giorni   la cura e' gia' in main  -> RILASCIARE cura
+  ② «994 commits»          danno FUTURO (LANT-52)        oggi NON e' su PyPI      -> RILASCIARE introduce
+```
+⇒ 🔴 **Rilasciare CURA il primo e INTRODUCE il secondo.** ⇒ **La domanda non e' «rilasciare o no»: e' «rilasciare DOPO aver corretto una riga».** ⚖️ **Ed e' una riga sola** — `README:290` — **e la forma ce l'ha gia' @ws8: una soglia («more than 1800 commits») invece di un valore, che e' MONOTONA e non puo' invecchiare nella direzione sbagliata** *(`LANT-52`)*.
+📌 **Questo e' cio' che il registro puo' fare e i singoli reperti no**: **@ws8 e @ws1 hanno il difetto ①, io ho il ②, e nessuno dei tre da' il vincolo che nasce dal metterli insieme.** *(NON DEDUCO, COLLEGO: entrambi i numeri sono misurati, il vincolo e' la loro somma.)*
+⚠️ **LIMITE**: uso il README **al tag `v0.7.0`** come proxy della pagina PyPI. E' il proxy giusto *(`pyproject: readme=README.md`, e PyPI pubblica cio' che c'era nel pacchetto)*, **ma non ho letto la pagina viva**: chi ha rete la apra e confermi in dieci secondi.
+🔎 **rifallo con**: `git show v0.7.0:README.md | grep -oE ']\([^)h][^)]*\)' | grep -v ']\(#' | wc -l` *(11)* e lo stesso su `README.md` *(0)*. |
 ```
   @ws2  W2-67   il gate BUTTA fatti VERI          33% dei puliti al cut 40, dichiarato nel codice
   @ws4  W7-54   AMMETTE lo scambio di soggetto    4 su 4, a 99,5
