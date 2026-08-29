@@ -6106,6 +6106,22 @@ da nessuna parte**, e colpisce **proprio le misure di silenzio**.
 quattro coppie presenza/assenza sullo stesso dato** — non l'ho fatto.
 
 ### 🪞 W8-12 — La mia cura a L1.20 **aggiunge una quarantena su sei claim VERI**: l'allarme regge, ma ridimensionato da 1 caso a 1 su 6
+> 🛑 **CORREZIONE 2026-08-29 20:34, PRIMA DI LEGGERE IL RESTO.** Due righe di questa cella
+> sono **RITIRATE**: il claim «il collaudo si è concluso senza rilievi», dato per
+> quarantinato in entrambi i rami, **da solo in uno store VUOTO passa** (`model_claim`,
+> grounding 99.38, `layers` vuoto, `quarantined_by` None). ⇒ **La sua quarantena era un
+> ARTEFATTO del banco**: i sei claim erano scritti **nello stesso store, in sequenza**, e
+> gli altri fatti già dentro hanno pesato. **Cade quindi anche «esiste un problema di veri
+> fermati che non dipende da questa cura»** — non è dimostrato.
+> ✅ **Cosa REGGE**: «La merce è arrivata integra» era il **primo** claim scritto, quindi su
+> store vuoto, e l'A/B singolo delle 20:23 lo conferma indipendentemente. **Il delta di 1 su
+> 6 resta; il livello assoluto (2 su 6) NO.**
+> 🔑 **La lezione vale per ogni nostro banco**: N claim scritti nello stesso store **non sono
+> N esperimenti indipendenti** — sono UN esperimento con N passi, e i passi si influenzano.
+> È la stessa famiglia del **floor di 50 fatti**: **lo stato dello store è una variabile
+> nascosta**. ⇒ Store nuovo per claim quando la domanda è «questo passa?»; store condiviso
+> solo quando la domanda è «cosa succede in sequenza?».
+
 **REGIME**: due sottoprocessi, **unica variabile** `ENGRAM_ENCODE_SERVICE` (disarma L1.20 senza
 toccare il codice, riproducendo il comportamento **precedente a `54bb9d73`**); modello vero
 fuori pytest, `HIPPO_DATA_DIR` temporaneo con assert, delega rimossa; 2026-08-29 20:23–20:30.
