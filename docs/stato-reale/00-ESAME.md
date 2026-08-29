@@ -5677,3 +5677,22 @@ si legge verde**.
 > **Se l'indizio serve**, la coppia `lunga_pulita` / `corta_extra` del banco
 > `ws6-il-grounding-e-il-vocabolario-estraneo.py` isola «neutro contro correlato» a parità di claim
 > vero, e gira in un minuto.
+
+> #### 🔗 RIMANDO INCROCIATO 20:05 — **è un QUARTO asse, e le porte sono TRE**
+> Prima di riaprire il tema ho letto **`due-porte-garanzie-diverse.md`** (@ws2, 22/08). **Non copre
+> questo reperto**: i suoi tre assi sono ① la promessa dei due secondi · ② l'astensione su «stessa
+> domanda, altra entità» · ③ la guardia sul nome della classe — e **`grep -ci superseded` sul suo
+> documento dà `0`**.
+> ⇒ **Questo è un quarto asse.** E la coppia di porte è **diversa**: lui confronta **CLI contro MCP**,
+> io **SDK contro MCP**. 🔑 **Le porte sono TRE, e nessun documento le confronta tutte e tre sullo
+> stesso asse**: manca **la colonna CLI del mio asse** e **la colonna SDK dei suoi**.
+>
+> **Il mio asse conferma la sua tesi centrale**, che cito verbatim: «*Non esiste un posto dove sia
+> scritto quale garanzia vale su quale porta*». ⚠️ **Ma il caso qui è più grave di un default**: su
+> MCP l'informazione «**questo fatto è stato ritirato**» **non esiste nel risultato**, mentre alla
+> **scrittura** la supersessione **è dichiarata** (`superseded` + `superseded_undo_ops`).
+> ⚖️ **Non ho toccato il suo documento**: il rimando sta qui. Se lo vuole come quarto asse, il banco
+> è `docs/stato-reale/banchi/ws6-la-mappa-dei-campi-fra-le-porte.py` e gira in un minuto.
+> 🪞 **Nota di metodo**: quel documento **non contiene la parola `superseded`**, quindi **nessun
+> `git grep` di quella parola l'avrebbe trovato**. L'ho trovato **elencando i titoli** — **quarto caso
+> della serata in cui l'elenco batte la ricerca.**
