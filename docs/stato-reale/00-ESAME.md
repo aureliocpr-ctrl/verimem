@@ -3702,6 +3702,15 @@ che questa decisione poggi»**. Che è la domanda che @ws7 ha messo sul tavolo a
   `workflow_dispatch` e non lo farò — sarebbe un rilascio. Va tenuta come deduzione finché
   qualcuno non la vede accadere.
 
+
+**RIFALLO CON**:
+```bash
+gh api repos/:owner/:repo/actions/variables --jq .total_count      # deve dare 0
+grep -nE "ref_name|GITHUB_REF|startsWith" .github/workflows/publish.yml   # nessun uso nei passi
+grep -n "^version" pyproject.toml                                   # la versione che verrebbe spedita
+python -c "import urllib.request,json;print(sorted(json.load(urllib.request.urlopen('https://pypi.org/pypi/verimem/json'))['releases']))"
+```
+
 ### 🚨 W8-5 — Il 98% dei verdetti di sicurezza su main non viene mai emesso, per una riga
 **REGIME**: `gh run list --limit 100 --workflow=security.yml --json conclusion,event,headBranch`,
 2026-08-29 00:18–00:20; lettura di `ci.yml` e `security.yml` a HEAD.
@@ -3738,6 +3747,13 @@ che questa decisione poggi»**. Che è la domanda che @ws7 ha messo sul tavolo a
   nulla, e l'errore è già capitato stanotte (`--limit 20` dava «0 completed» quando erano 24).
 
 ---
+
+
+**RIFALLO CON**:
+```bash
+gh run list --limit 100 --workflow=security.yml --json conclusion,event,headBranch
+for f in ci security; do sed -n "/^concurrency:/,/^[a-z]/p" .github/workflows/$f.yml | grep -E "group:|cancel-in-progress:"; done
+```
 
 ### ✅ SWEEP `ENGRAM_DATA_DIR`: ZERO banchi a rischio — e i righelli sono stati **quattro**
 
@@ -4876,3 +4892,47 @@ frequenza**: non estrapolare un tasso da qui.
 · ⚠️ **Primo giro scartato**: con lo **stesso** store per le due forme la seconda scrittura tornava
 `duplicate` e il layer **mascherava** il confronto. **Uno store nuovo per cella non è pignoleria:
 senza, il numero non è leggibile.**
+
+### 🔴 W8-6 — Il pool CI non è fermo e non è lento: è SATURO, e a saturarlo siamo noi. **445 in coda contro 5 in esecuzione**
+**REGIME**: `gh api` in sola lettura, 2026-08-29 19:19–19:21. Fronte assegnato da lead-audit
+(`a4311e02`). **Corregge il LIVELLO di W8-5**, non i suoi numeri.
+
+    queued = 445      in_progress = 5      completed = 2713
+    dei primi 100 in coda:  ci 98 · presidi-lenti 1 · security 1
+    la coda copre 18 ore: dal 2026-08-28 23:11 al 2026-08-29 17:20 (l'istante della misura)
+    un run `ci` = 6 job
+
+· **La coda CRESCE mentre la si misura**: 443 alle 19:19, **445** alle 19:21. Ogni push su
+  main crea un `ci` da 6 job, e **98 dei primi 100 in coda sono `ci`**: la riempiamo noi.
+· ⚖️ **Conseguenza per C9**: il cancello vuole un `ci` verde **sul commit del tag**; un run
+  creato ora è **dietro a 445**. **A questo ritmo il verde non arriva**, e ogni push
+  allontana quello che serve per rilasciare. Non è una proposta di fermo: è il costo del
+  push, dichiarato.
+· 🔑 **QUESTO CORREGGE IL LIVELLO DI W8-5** (rilievo di ws3): la cura al `concurrency` decide
+  **quale run sopravvive alla coda**. Se la coda non si smaltisce, **non c'è nessun run da
+  far sopravvivere** ⇒ curare il gruppo mentre il pool è saturo è curare il livello
+  sbagliato. **I numeri di W8-5 restano veri; cambia che sono un sintomo, non la causa.**
+· ✅ **SEI cause escluse, ognuna con la sua misura**: Actions `enabled:true` · runner
+  self-hosted `total:0` · `runs-on: ubuntu-latest` 9 su 9 · repo **pubblico** ⇒ minuti
+  illimitati · **nessuno zombie** (i 5 `in_progress` hanno un `runner_name` reale, es.
+  «GitHub Actions 1000041390») · **`gh run view` non stampa mai «waiting for a runner»**
+  (0 occorrenze).
+· 🪞 **Un righello sbagliato quattro volte, sempre lo stesso**: `gh run list --limit 60`
+  dava «queued: 32» contro **445** veri — un fattore 14. `run list` risponde a «gli ultimi
+  N», non a «quanti ce ne sono». **Per il VOLUME di un pool serve `total_count` su
+  `?status=`; `--limit` non è un campione, è una finestra.**
+· 🛑 **RIGHELLO INVALIDATO da me**, prima che qualcuno lo usi: «ritardo coda→avvio» calcolato
+  come `started_at` del primo job meno `created_at` del run dà **0.00 h su 8 run su 8**, ed è
+  rotto: su un job **`queued`** lo `started_at` è **già valorizzato**
+  (`build (sdist + wheel) | status=queued | started_at=17:16:36 | runner=NESSUNO`). ⇒ **È il
+  `runner_name`, non lo `started_at`, a dire che un job sta girando.**
+· ⚠️ **COSA NON PROVA**: **ho il volume, non la velocità.** Non conosco la durata media di un
+  job, quindi **non stimo quando la coda si svuoterà** e nessuna data va ricavata da qui.
+
+**RIFALLO CON**:
+```bash
+gh api "repos/:owner/:repo/actions/runs?status=queued&per_page=1"      --jq .total_count
+gh api "repos/:owner/:repo/actions/runs?status=in_progress&per_page=1" --jq .total_count
+gh api "repos/:owner/:repo/actions/runs?status=queued&per_page=100"    --jq '[.workflow_runs[].name] | group_by(.) | map({(.[0]): length}) | add'
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100"        --jq '.jobs[] | "\(.status) \(.runner_name)"'
+```
