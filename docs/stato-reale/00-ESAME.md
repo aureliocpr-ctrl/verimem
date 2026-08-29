@@ -5105,3 +5105,44 @@ terzi** — l'esposizione è **~12%**.
 · 🔑 **Per la decisione**: il difetto resta **reale e riproducibile alla porta**; la sua **portata**
   è molto minore di come l'avevo presentata alle 00:49. Chi scrive il referto usi **12%**, non 70%,
   e dica **su quale prosa**.
+
+---
+
+### 🎯 NELLA FORMA TABELLARE È **L'ORDINE ETICHETTA/NUMERO** AD ATTIVARE `L4.2` — attesa mia falsificata
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 19:35 · **Regime**: porta **SDK**, modello vero, fuori
+pytest, **store NUOVO per ogni cella** · **Rifallo con**:
+`for v in a b c d; do HIPPO_DATA_DIR=$(mktemp -d) python docs/stato-reale/banchi/ws6-cosa-della-tabella-attiva-L4-2.py $v; done`
+
+**Attesa dichiarata PRIMA, e FALSIFICATA**: «*L4.2 confronta i numeri posizionalmente (`b410d594`),
+quindi il colpevole sarà la **compresenza** di più numeri*». **Non era quella.**
+
+| variante della fonte (stesso claim vero) | grounding | layer |
+|---|---:|---|
+| **(a)** tabellare completa — baseline | 99,8 | 🔴 **`L4.2`** |
+| **(b)** stessa tabella **senza la riga della data** → **un solo numero** | 99,8 | 🔴 **`L4.2`** |
+| **(c)** stessa tabella con **la grandezza DOPO** (`480  pallet`) | 99,6 | ✅ **nessuno** |
+| **(d)** **prosa** con **due** numeri | 99,1 | ✅ **nessuno** |
+
+· **(b) uccide «è la compresenza di numeri»**: un solo numero, e L4.2 parla lo stesso.
+· **(c) uccide «è la tabella»**: stessa identica tabella, cambia **solo l'ordine**, e tace.
+· **(d) conferma dall'altro lato**: due numeri in prosa, nessun allarme.
+🔑 **Resta una sola variabile: `pallet 480` fa parlare L4.2, `480 pallet` no.**
+
+#### 🤝 Conferma di @ws4 a variabile singola, e la catena si chiude
+Il suo reperto: «*L4.2 legge la grandezza a **DESTRA** del numero*». Nelle tabelle l'etichetta sta
+**a sinistra** ⇒ il layer guarda a destra, non trova la grandezza, **e avvisa**. **Non è una seconda
+opinione: è la sua ipotesi isolata cambiando UNA cosa per volta.**
+**Tre reperti, tre istanze**: @ws3 (il corpus è al **51,9%** a colonne) → **io** (nelle colonne
+l'etichetta è a sinistra, ed è **quello** che attiva L4.2) → @ws4 (L4.2 legge a destra).
+⇒ **il rumore lo paghiamo noi per una CONVENZIONE TIPOGRAFICA**, non per una proprietà vaga della
+«forma».
+
+#### 📌 Per la cura — perimetro di @ws4, non mio
+Leggere la grandezza **anche a sinistra**, **oppure** astenersi quando a destra non c'è nulla che sia
+una grandezza. **La variante (c) è la popolazione di controllo: deve restare silenziosa.**
+
+#### Limiti
+Un claim, quattro varianti, **una** lingua (il banco gemello mostra che la lingua non conta, ma
+queste quattro celle sono solo IT), una porta. ⚠️ **Il codice di `L4.2` non l'ho letto**: ho misurato
+**ingresso e uscita**, il meccanismo lo dichiara @ws4.
