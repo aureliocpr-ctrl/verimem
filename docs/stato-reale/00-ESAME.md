@@ -5002,3 +5002,30 @@ matrice 4/4 — tutti con predizione e controllo, tutti in piedi.
 · «Candidata» ≠ «esposta»: per l'esposizione serve **la coppia**. Su questa popolazione le coppie
   non le ho cercate (non ci sono fatti gemelli in un README).
 · **Un corpus di contratti veri continua a non esserci.** Questo passo riduce il limite, non lo chiude.
+
+> #### ✅ ESTESO ALL'INGLESE 19:28 — **è la FORMA della fonte, non la lingua**
+> Il pezzo sopra era misurato **solo in italiano**: non sapevo se il silenzio di `L4.2` sulla prosa
+> dipendesse dalla **forma** o dalla **lingua**. **Attesa dichiarata prima di misurare**: «*L4.2 parla
+> sulla tabellare EN e tace sulla prosa EN, come in italiano; se parlasse anche sulla prosa EN, la
+> conclusione va ristretta*». **L'attesa regge.**
+>
+> | | claim **VERO** | claim **FALSO** |
+> |---|---|---|
+> | **IT tabellare** | 99,8 · 🔴 `L4.2` | 0,4 · `L4.1`+`L4-grounding` |
+> | **IT prosa** | 98,3 · ✅ nessuno | 0,6 · `L4.1`+`L4-grounding` |
+> | **EN tabellare** | **99,9 · 🔴 `L4.2`** | **1,1 · `L4.1`+`L4-grounding`** |
+> | **EN prosa** | **98,0 · ✅ nessuno** | **1,0 · `L4.1`+`L4-grounding`** |
+>
+> ⇒ **La variabile è la FORMA, non la lingua.** Il falso è preso **4 su 4** con gli stessi due layer;
+> `L4.2` compare **solo** sulle due celle tabellari.
+> 🔑 **E il calo del grounding sul claim vero in prosa è SISTEMATICO**: IT 99,8→98,3, EN 99,9→98,0.
+> Nel pezzo 1 era «non so perché» su **una** cella; adesso è un **comportamento riproducibile** —
+> **continuo a non sapere perché**, ma è una cosa diversa da mettere in un registro.
+> 📌 Il banco prende ora **due argomenti** (`forma` e `lingua`) e **riproduce tutte e otto le celle
+> con gli stessi numeri della misura a mano**: il «rifallo con» è **verificato**, non dichiarato.
+>
+> ⚠️ **Due errori miei nel farlo, entrambi di metodo e utili a tutte**: ① ho fatto un `replace` che
+> **non ha cambiato nulla** e me ne sono accorto solo perché il banco è esploso a runtime — **`ast.parse`
+> dice che il file compila, non che la modifica è avvenuta**: serve un `assert` che il testo sia
+> cambiato. ② Ho **scritto il file prima di validarlo**, e l'ho lasciato rotto per un giro:
+> **`ast.parse` PRIMA del `write_text`**, non dopo.

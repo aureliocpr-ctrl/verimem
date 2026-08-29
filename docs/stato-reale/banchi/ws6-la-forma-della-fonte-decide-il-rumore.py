@@ -29,15 +29,30 @@ PEGGIORE di com'e' — e il nostro corpus e' tabellare per COSTRUZIONE, perche'
 O3 impone di salvare output di strumenti come source.
 ⚖️ Non e' un'assoluzione: L4.2 sbaglia davvero. Cambia CHI lo paga.
 
-⚠️ LIMITI: un claim, una coppia vero/falso, una lingua, una porta. E' una
+ESTESO ALL'INGLESE il 2026-08-29 alle 19:23, stessa struttura, attesa dichiarata
+PRIMA di misurare («L4.2 parla sulla tabellare EN e tace sulla prosa EN; se
+parla anche sulla prosa, il silenzio dipendeva dalla LINGUA e la conclusione va
+ristretta»). L'attesa REGGE:
+
+    EN tabellare  VERO 99.9 ['L4.2']            FALSO 1.1 ['L4.1','L4-grounding']
+    EN prosa      VERO 98.0 (nessuno)           FALSO 1.0 ['L4.1','L4-grounding']
+
+⇒ IDENTICO all'italiano: la variabile e' la FORMA della fonte, NON la lingua.
+Il falso e' preso 4 volte su 4; L4.2 compare solo sulle due celle tabellari.
+🔑 E il calo del grounding sul claim vero in prosa e' SISTEMATICO: IT 99.8->98.3,
+EN 99.9->98.0. Continuo a non sapere PERCHE', ma non e' rumore di una cella.
+
+⚠️ LIMITI: un claim, una coppia vero/falso, DUE lingue (non «tutte»), una porta. E' una
 DIREZIONE, non una frequenza: non estrapolare un tasso da qui. Il grounding
 scende da 99.8 a 98.3 sulla prosa e NON so perche'.
 ⚠️ PRIMO GIRO SCARTATO: con lo stesso store per le due forme la seconda
 scrittura tornava `duplicate` e il layer mascherava il confronto. Uno store
 nuovo per cella non e' pignoleria: senza, il numero non e' leggibile.
 
-    HIPPO_DATA_DIR=$(mktemp -d) python docs/stato-reale/banchi/ws6-la-forma-della-fonte-decide-il-rumore.py tabellare
-    HIPPO_DATA_DIR=$(mktemp -d) python docs/stato-reale/banchi/ws6-la-forma-della-fonte-decide-il-rumore.py prosa
+    B=docs/stato-reale/banchi/ws6-la-forma-della-fonte-decide-il-rumore.py
+    for forma in tabellare prosa; do for lingua in it en; do
+      HIPPO_DATA_DIR=$(mktemp -d) python $B $forma $lingua
+    done; done
 """
 import sys
 
@@ -48,6 +63,17 @@ assert "Temp" in str(CONFIG.semantic_db) or "tmp" in str(CONFIG.semantic_db), (
     "e una tempdir NUOVA per ogni forma.")
 
 from verimem import Memory  # noqa: E402
+
+FONTI_EN = {
+    "tabellare": "inventory --site verona\n  site      Verona\n  pallets   480\n  updated   2026-08-29",
+    "prosa": ("This report certifies that, as of today, the Verona warehouse "
+              "holds 480 pallets, duly recorded by the logistics office."),
+}
+
+POPOLAZIONI_EN = (
+    ("VERO  (480)", "The Verona warehouse holds 480 pallets."),
+    ("FALSO (999)", "The Verona warehouse holds 999 pallets."),
+)
 
 FONTI = {
     "tabellare": ("inventario --sede verona\n"
@@ -67,12 +93,17 @@ POPOLAZIONI = (
 
 def main() -> None:
     forma = sys.argv[1] if len(sys.argv) > 1 else "tabellare"
+    lingua = sys.argv[2] if len(sys.argv) > 2 else "it"
     if forma not in FONTI:
         raise SystemExit(f"forma sconosciuta: {forma!r} — usa: {sorted(FONTI)}")
-    print(f"=== {forma.upper()} — le due popolazioni")
-    for etichetta, claim in POPOLAZIONI:
+    if lingua not in ("it", "en"):
+        raise SystemExit(f"lingua sconosciuta: {lingua!r} — usa: it | en")
+    fonti = FONTI if lingua == "it" else FONTI_EN
+    popolazioni = POPOLAZIONI if lingua == "it" else POPOLAZIONI_EN
+    print(f"=== {lingua.upper()} / {forma.upper()} — le due popolazioni")
+    for etichetta, claim in popolazioni:
         m = Memory()
-        r = m.add(claim, topic=f"banco/{etichetta[:5].strip()}", source=FONTI[forma])
+        r = m.add(claim, topic=f"banco-{lingua}/{etichetta[:5].strip()}", source=fonti[forma])
         avvisi = r.get("warnings") or []
         layer = [(x.get("layer") if isinstance(x, dict) else str(x)) for x in avvisi]
         print(f"  {etichetta}: status={r.get('status'):<12} "
