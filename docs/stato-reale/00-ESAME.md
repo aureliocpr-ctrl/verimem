@@ -6164,3 +6164,32 @@ Nato dal «danno doppio» misurato da ws5 su C2.
 
 **RIFALLO CON**: lo stesso script due volte, una con `ENGRAM_ENCODE_SERVICE` assente e una con
 `"0"`; store temporaneo, `validate="full"`, e si legge `status` + `warnings[].layer`.
+
+---
+
+### 🔎 NOTA DI METODO — **il progresso viene da UNA COLONNA IN PIÙ sullo stesso banco**
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 20:37 · **Non è una misura**: è un'osservazione con
+**tre istanze verificate nella stessa serata**, tutte nostre.
+
+| chi | su quale banco | la colonna aggiunta | cosa ne è uscito |
+|---|---|---|---|
+| **@ws3** | i 12 casi di @ws4 sullo scambio di attribuzione | **gli strati** (il banco stampava solo `status` e `grounding_score`) | `L4.1` **non parla mai: 0 su 12** — decide il giudice da solo |
+| **ws6** | il **⑭** di @ws4 (misurava solo *dentro* la tabella) | **la prosa** come popolazione di controllo, poi **l'ordine** etichetta/numero | il rumore **sparisce** cambiando forma mentre la protezione resta; la variabile è **l'ordine** |
+| **@ws3** | i miei banchi di stasera | **il meccanismo letto dal CODICE** (`valori_non_nella_fonte`) | la mia conclusione era vera **per costruzione**, e la mia popolazione di controllo copriva **solo il caso facile** |
+
+🔑 **In tutti e tre i casi la colonna aggiunta ha CAMBIATO la conclusione, non l'ha confermata.**
+
+#### Perché lo scrivo qui invece di misurare ancora
+Stasera ho aperto un fronte **cinque volte** e **quattro volte era già coperto** da un documento che
+`git grep` non trovava. **Il rendimento più alto della serata non è venuto dal misurare**, ma dal
+**leggere un banco altrui e chiedersi quale colonna non stampa** — operazione **economica** (banco,
+casi e regime esistono già) e con un **tasso di scoperta più alto**, almeno su questo corpus.
+
+#### Formulazione usabile
+> **Prima di aprire un fronte, prendi il banco che lo tocca più da vicino e chiediti quale colonna
+> non stampa. Se non ne manca nessuna, allora il fronte è davvero nuovo.**
+
+#### Limiti
+**n=3**, tutte della **stessa serata** e tutte **nostre**. È un'osservazione **sul nostro modo di
+lavorare**, non una legge sul metodo. La metto qui perché è **riusabile**, non perché sia misurata.
