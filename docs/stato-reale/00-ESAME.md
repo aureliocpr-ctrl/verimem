@@ -5366,3 +5366,49 @@ done | sort -u | while read s; do
 done | sort | uniq -c
 for f in .github/workflows/*.yml; do printf "%s " "$f"; grep -cE "paths-ignore:|paths:" "$f"; done
 ```
+
+---
+
+### 🔬 IL CALO DEL GROUNDING SULLA PROSA È IL **VOCABOLARIO ESTRANEO**, non la lunghezza — fronte chiuso
+
+**Autore**: ws6/Aldo · **Data**: 2026-08-29, 19:46 · **Regime**: porta **SDK**, modello vero, fuori
+pytest, **store NUOVO per ogni cella** · **Rifallo con**:
+`for v in secca corta_extra lunga_pulita prosa_piena; do HIPPO_DATA_DIR=$(mktemp -d) python docs/stato-reale/banchi/ws6-il-grounding-e-il-vocabolario-estraneo.py $v; done`
+
+**L'anomalia**: nei due banchi gemelli lo stesso claim vero prende **99,8** con la fonte tabellare e
+**98,3** con la prosa (**99,9** e **98,0** in inglese). Sistematico in due lingue, non spiegato.
+
+#### ⛔ Primo: provare a far CADERE il fronte — costava un minuto
+La stessa cella **tre volte**, store nuovo ogni giro: **98,3 · 98,3 · 98,3**. ⇒ **il giudice è
+deterministico qui**, il calo **non è rumore fra esecuzioni** e il fronte resta in piedi.
+📌 *Dato utile a prescindere: chi misura il grounding non deve preoccuparsi della varianza fra run —
+almeno su questa cella.*
+
+#### Le quattro varianti che separano lunghezza e vocabolario
+| fonte | caratteri | grounding |
+|---|---:|---:|
+| **secca** — zero parole estranee | **43** | **98,9** |
+| **corta CON parole estranee** («verbale», «attesta», «censiti») | **71** | 🔴 **96,9** — *la più bassa* |
+| **lunga SENZA parole estranee** (il claim ripetuto 4 volte) | **175** | ✅ **99,9** — *la più alta* |
+| prosa piena del banco (baseline) | 140 | 98,3 |
+
+⇒ **«È la lunghezza» è falsificata e ROVESCIATA**: la fonte **più lunga** ha il punteggio **più
+alto**. ⇒ **«Sono le parole estranee» regge**: tre parole in più su una frase corta portano
+**98,9 → 96,9**, cambiando **solo** quelle.
+
+#### 🔑 La conseguenza che vale
+**Il grounding premia la fonte che RIPETE il claim e penalizza quella che lo CONTESTUALIZZA.** Un
+verbale vero — con le formule di rito che un documento reale ha **per forza** — è giudicato **peggio**
+di una fonte che ripete la stessa frase quattro volte.
+🔗 Si aggancia al fronte di @ws3: **il corpus tipo-cliente non è solo «tabellare contro prosa», è
+anche «asciutto contro contestualizzato»** — e il giudice preferisce l'asciutto.
+
+#### ⚖️ Non è un difetto, e il fronte è CHIUSO
+**1,5–2 punti su una soglia di 40**: **nessun verdetto cambia**, tutte e quattro le varianti restano
+ampiamente ammesse. È un **comportamento misurato**, non un problema — conta per chi usasse il
+grounding come **metrica di qualità della fonte**, che è un uso diverso da quello per cui esiste.
+**Inseguirlo oltre sarebbe il contrario di «atomici».**
+
+#### Limiti
+Un claim, quattro varianti, una lingua, una porta. Le parole estranee sono **tre e scelte da me**:
+**non ho isolato quale delle tre pesa**, né se conti il **numero** di parole o il loro **significato**.
