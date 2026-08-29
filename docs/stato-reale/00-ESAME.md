@@ -766,7 +766,16 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 🔗 **E ricompone `LANT-44`**: i **1909** senza causa registrata su cui ho misurato P3 sono **per il 63,6% handoff** (1215 su 1909). ⇒ **La popolazione di P3 e' dominata da questa famiglia**, e il 99,3% di ricalcolo riuscito sui vecchi va riletto sapendolo.
 📌 **E si aggancia a una lezione gia' in memoria**: *«fatti oltre ~2000 char eccedono la finestra dell'embedder»*. **La mediana degli handoff e' 2471.** ⚠️ **NON dichiaro che sia la causa** — e' una coincidenza fra un numero misurato e una lezione registrata, **non un A/B** *(regola 17)*. Si prova spezzando un handoff in fatti corti e rimisurando.
 🚨 **IL SENSO DI VETRINA, ed e' il piu' pesante finora**: **gli `handoff/` sono i passaggi di consegne fra sessioni — la CONTINUITA' fra agenti.** `README:3` promette *«Verified memory for AI agents»*, e **meta' di tutto cio' che la memoria rifiuta e' esattamente il caso d'uso agente per eccellenza.** ⇒ **Non un difetto di dominio: il difetto e' sul lavoro che il prodotto dichiara di servire.**
-⚠️ **LIMITI**: e' una **correlazione su topic**, non una causa; non ho letto il contenuto dei 1215; non so **quando** siano stati scritti *(potrebbero essere tutti di un'era passata, come i 1699 di `LANT-44`)*; e **la lunghezza e' un'ipotesi, non la variabile isolata.**
+⚠️ **LIMITI**: e' una **correlazione su topic**, non una causa; non ho letto il contenuto dei 1215; non so **quando** siano stati scritti *(potrebbero essere tutti di un'era passata, come i 1699 di `LANT-44`)*; e **la lunghezza e' un'ipotesi, non la variabile isolata.** 🪞 **E L'IPOTESI-LUNGHEZZA L'HO FALSIFICATA IO STESSA, dieci minuti dopo averla scritta** *(«un limite dichiarato e' un debito»)*. Stesso contenuto VERO ripetuto per allungare, la fonte che cresce con lui, store temporaneo:
+```
+  8 pezzi corti (mediana 57 char)   fermati 0/8
+  claim  1574 char   🟢 ammesso   g=99.98
+  claim  3149 char   🟢 ammesso   g=99.98      <- oltre la mediana handoff (2471)
+  claim  5039 char   🟢 ammesso   g=99.98
+  claim  7559 char   🟢 ammesso   g=99.98
+```
+⇒ 🔑 **La lunghezza NON quarantina: un fatto vero passa fino a 7559 caratteri.** **Perche' gli handoff siano fermati resta APERTO**, e `quarantined_by` e' vuoto su tutti e 1215 ⇒ **il database non lo dice e il ricalcolo di `LANT-44` va rifatto proprio su loro.**
+🟢 **E il banco ha trovato un COMPORTAMENTO BUONO che nessuno aveva registrato**: sopra la finestra dell'embedder il prodotto **stampa un avviso preciso e azionabile** — *«long fact: id=… is 3149 chars — beyond the embedder window (~512 tokens); **recall will only see the head**. For whole documents use DocumentIndex/index_file (chunked + cited)»* — **e nomina l'id, la soglia, la conseguenza e la cura.** ⚠️ **MA il fatto viene AMMESSO lo stesso** ⇒ **entra un fatto che il recall potra' servire solo per la testa**: l'avviso c'e', il blocco no. *(Si aggancia alla lezione gia' in memoria — «fatti oltre ~2000 char eccedono la finestra» — che nasceva da un incidente nostro, non dal prodotto: **il prodotto lo diceva gia'**.)*
 🔎 **rifallo con**: `mode=ro` → `SELECT topic, COUNT(*) ... WHERE status='quarantined' GROUP BY prefisso`, poi `LENGTH(proposition)` mediana sui due gruppi. |
 ```
   validation:protocollo_2214_registrato   (IT)   🔴 FERMATO
