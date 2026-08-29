@@ -797,6 +797,7 @@ SCORE: 12'`→**12.0** (l'ultimo, come il docstring dichiara). ⇒ 🔑 **DUE FR
 | W2-49 | **quante delle mie celle di stanotte ho dovuto toccare dopo averle pubblicate?** | C9 · C8 | — | registro | ⚠️ **19 su 32 = 59% · ma solo 3 sbagliate di SEGNO** | ws2 | **perché la scrivo io**: C9 dice «*il repo regge il ricercatore ostile*», e la prima domanda di un ostile è **quante delle vostre celle avete dovuto correggere**. Averlo **dichiarato da noi** vale più che farselo trovare — e se il numero non è nel registro, la risposta di default che si darà è «non lo sanno». **Regime**: conteggio per **marcatori** sulle mie celle da W2-17 in poi (32), ore 01:40. **RIPARTIZIONE**: **ritirata/rovesciata 3** · **corretta (numero o lettura) 7** · **ridimensionata/ristretta 3** · **duplicato dichiarato 2** · **limite aggiunto dopo 10** · **riconfermata dopo un dubbio 6** ⇒ **19 celle toccate almeno una volta = 59%**. 🔑 **La lettura giusta, e la separazione conta più del totale**: **non è che il 59% fosse sbagliato — è che il 59% NON ERA FINITO quando l'ho pubblicato**. Solo **3 su 32 (9%)** erano errate **di segno** (W2-29 EVIDENCE-EXISTENCE, W2-33 il ranking, il conteggio delle firme in W2-46); **10** hanno solo guadagnato un **limite** che non avevo dichiarato, e **6** sono state **riconfermate** dopo che le avevo messe in dubbio io. ⚖️ **E il verso degli errori non è uno solo**: due dipingevano il prodotto **peggiore** di com'è (il ranking, l'astensione «mai»), uno **migliore**. ⇒ **non stavo sbagliando a favore della tesi**, il che è l'accusa che conta. 📌 **Cosa questo numero NON dice**: quante celle **avrebbero dovuto** essere corrette e non lo sono state. Quelle non le posso contare — le troverà chi verifica, ed è esattamente per questo che le seconde firme sono il punto debole misurato in W2-47 (7 su 95) |
 | W2-50 | **il difetto di `L4.2` colto IN PRODUZIONE, mentre usavo il prodotto** — e il gate mi ha anche fermato su un errore VERO | C5 · C2 | IT | CLI (`verimem save`) | 🎯 **due eventi reali in due minuti** | ws2 | **non un banco: un uso**. Stavo salvando in memoria il consuntivo della notte, alle 01:44-01:45. **EVENTO 1 — il gate ha ragione e mi ferma**: ho scritto «*19 toccate e 3 ritirate*» mentre la source, rigenerata, diceva **20 e 4** ⇒ respinto con `L4.1` + `L4.2` + `L4-relazione`. **Il mio claim era davvero sbagliato**: avevo usato i numeri di **tre minuti prima**. ⇒ **il prodotto ha fatto esattamente ciò che promette**, su un errore vero e mio. 🪞 **E perché i numeri erano cambiati**: **W2-49 — la cella che CONTA le correzioni — contiene le parole che il conteggio cerca** («RITIRATA», «corretta»…) ⇒ **si conta da sola**. **Auto-inclusione: il righello include il proprio referto**, ed è il sedicesimo mio difetto di misura di stanotte — **il primo colto dal PRODOTTO e non da me**. **EVENTO 2 — `L4.2` sbaglia, sul mio lavoro vero**: rifatto il claim coi numeri giusti («*delle 33 celle, 20 toccate*»), il fatto passa (`grounded 100.0`) **ma con un avviso `L4.2`: «nella fonte «ritirata» … la cifra compare nella fonte ma parla d'altro»**. Il **20 è esatto** — la source dice `celle toccate almeno una volta: 20` — e la source è **tabellare** (`ritirata: 4`, `corretta: 8`, …). ⇒ **è il caso di W7-30/W7-31 (@ws4) e delle mie W2-31/W2-42, riprodotto NON in un banco ma mentre facevo il mio lavoro**. 🔑 **Ed è la forma di evidenza più forte che abbiamo**: nessuno può dire che sia un caso costruito ad arte, perché **non stavo misurando `L4.2` — stavo salvando un fatto**. 📌 Conferma anche il **meccanismo** di @ws4 («prende la parola successiva»): nella mia source ogni numero è preceduto da un'etichetta, e il layer ne aggancia una sbagliata |
 | W2-51 | **il prodotto registra PERCHÉ ha rifiutato, non registra QUANDO ha solo brontolato** | C5 · C2 | — | corpus + journal | 🔴 **il rumore degli avvisi è INVISIBILE, anche a noi** | ws2 | **la domanda**: `L4.2` è un **avviso** che non blocca (W2-31, W7-31) e W2-31 stima **594 fatti** su source tabellare — ma **quanti hanno DAVVERO preso l'avviso?** Nessuno lo sapeva. **① Nel db**: `quarantined_by` è valorizzato su **650** fatti (`moat` 318 · `gate` 209 · `L4.1` 78 · `L4-review` 31 · `L3-coexistence` 11 · `L1` 2) — cioè **solo dove c'è stato un VETO**. Per i **12.940 ammessi** **nessuna colonna** registra gli avvisi. **② Nel journal** (`flow.write` ha un campo `layers`!) sembrava esserci: **40.105 righe** lette da `events.jsonl` **E** `.jsonl.1` (il journal ruota — leggerne uno solo misura la coda), **12.429 write**, di cui **9.552 ammessi**; `L4.2` compare **215** volte in totale ma **2** su ammessi. ⛔ **IL CONTROLLO CHE HA DEMOLITO IL MIO NUMERO**: alle 01:45 un **mio** save è stato **ammesso CON un avviso `L4.2`** — l'ho letto sulla ricevuta (W2-50). Nel journal quello stesso evento ha **`layers=[]`**, mentre il gemello **quarantinato** porta `['L4-relazione','L4.1','L4.2']`. ⇒ **il journal registra i layer SOLO quando quarantina**: il «2 su 9.552» misurava **il journal, non il prodotto**. 🔑 **Quindi non è che il rumore sia raro: è INVISIBILE.** Nessuno — utente, analista, o noi — può contare quante volte il gate ha messo un avviso su un fatto che è passato. ⇒ **le celle che parlano di «rumore nella ricevuta» (W7-31, W2-31) non possono essere quantificate con gli strumenti attuali**, e la loro stima resta una stima. ⚖️ **E la simmetria è il punto**: il prodotto è ottimo nel dire **perché ha detto no** — è la sua promessa, ed è mantenuta (650 righe con l'autore del veto). **Non dice mai quando ha detto sì brontolando**, che è esattamente il caso in cui l'utente riceve un consiglio inutile o sbagliato. 🪞 **Diciassettesimo mio righello rotto stanotte, e l'ho preso solo perché avevo un caso di cui conoscevo la risposta**: senza il mio save delle 01:45 avrei pubblicato «il rumore è raro, 2 su 9.552» — un numero **plausibile, verificabile e falso** |
+| W2-52 | **dove si perde il «sì brontolando»: UNA riga, e cambiarla non è gratis** | C5 | — | codice (lettura statica) | 🟡 **il buco è scritto, non accidentale — ed è una decisione, non una cura** | ws2 | **Segue W2-51.** Trovato il punto esatto: in `verimem/client.py` l'emissione di `flow.write` per il ramo dei fatti **ammessi** (riga 746) riceve `layers=_hit_layers`, e `_hit_layers` è assegnata due volte poco sopra — `_hit_layers = _layers if action == "downgrade" else ["store-screen"]` sul ramo con **azione**, e **`_hit_layers = []`** sul ramo **ammesso**. ⇒ Sul percorso dell'ammissione la lista è **svuotata per costruzione**. Gli altri due emettitori la valorizzano (`rejected` a riga 612 con `_layers`, `routed_telemetry` a 697 con `["admission-route"]`): il buco è **solo qui**, ed è **il ramo più frequente** (9.552 scritture su 12.429 in W2-51). ⚠️ **PERCHÉ NON L'HO CURATA — il campo cambierebbe significato.** Oggi `layers` risponde a «**chi ha bloccato**»; riempirlo anche sugli ammessi lo farebbe rispondere a «**chi si è espresso**», che è un'altra domanda. Chiunque oggi conti le occorrenze di un layer nel journal per stimare quante volte ha quarantinato otterrebbe **un numero più grande senza che nulla glielo dica** — la stessa forma di errore che W2-51 documenta, spostata di un posto. Le due vie che non hanno questo difetto: un campo **nuovo** accanto (`layers_avvisati`), oppure lasciare il journal com'è e portare gli avvisi altrove. ⇒ **va con le quattro decisioni di prodotto di W2-41, non fra le cure.** ⚖️ **Cosa NON afferma**: che il campo sia sbagliato. Un journal che registra solo i veti è difendibile — costa meno e risponde alla domanda che serviva. La cella dice che *quella* è la domanda a cui risponde, e che **nessuno lo sa leggendo il campo**. 🔎 Verificabile in 30 secondi: `git grep -n "_hit_layers" verimem/client.py` |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
 
@@ -4592,83 +4593,3 @@ superficie giusta**. Serve strumentare il flusso o leggere la ricevuta, non la f
   `payé`/`beträgt` **3 su 3**. Quello **non dipende** da questo tentativo.
 · **Ciò che NON so, e che questo tentativo non ha chiarito**: **quale** componente produce il
   silenzio in FR/DE. Il fronte ⑬ resta **APERTO**.
-
-### W2-52 — dove si perde il «sì brontolando»: UNA riga, e cambiarla non è gratis
-
-**Segue W2-51** (il journal registra i layer solo quando quarantina). Trovato il punto
-esatto in cui l'informazione si perde, e **non è una svista**: è scritto.
-
-`verimem/client.py` — l'emissione di `flow.write` per il ramo che scrive i fatti AMMESSI
-(riga 746) riceve `layers=_hit_layers`, e `_hit_layers` è assegnata due volte poco sopra:
-
-    _hit_layers = _layers if action == "downgrade" else ["store-screen"]   # ramo con AZIONE
-    _hit_layers = []                                                       # ramo AMMESSO
-
-⇒ Sul percorso dell'ammissione la lista è **svuotata per costruzione**. Gli altri due
-emettitori la valorizzano (`rejected` a riga 612 con `_layers`, `routed_telemetry` a 697
-con `["admission-route"]`): il buco è solo qui, ed è **il ramo più frequente** — 9552
-scritture su 12429 nel journal misurato in W2-51.
-
-**⚠️ PERCHÉ NON L'HO CURATA — il campo cambierebbe significato.** Oggi `layers` su
-`flow.write` risponde a «**chi ha bloccato**». Riempirlo anche sugli ammessi lo farebbe
-rispondere a «**chi si è espresso**», che è un'altra domanda. Chiunque oggi conti le
-occorrenze di un layer nel journal per stimare quante volte ha quarantinato otterrebbe
-un numero più grande **senza che nulla glielo dica** — la stessa forma di errore che
-questa cella documenta, spostata di un posto. Le due vie che non hanno questo difetto:
-un campo NUOVO accanto (`layers_avvisati`), oppure lasciare il journal com'è e portare
-gli avvisi altrove. **È una decisione di prodotto, non una cura**: va con le quattro
-di W2-41.
-
-**Cosa NON afferma questa cella**: che il campo sia sbagliato. Un journal che registra
-solo i veti è una scelta difendibile — costa meno e risponde alla domanda che serviva.
-La cella dice che *quella* è la domanda a cui risponde, e che nessuno lo sa leggendo il
-campo. **Verificabile in 30 secondi**: `git grep -n "_hit_layers" verimem/client.py`.
-
-_firma @Varco — 2026-08-29 01:59, HEAD 3b0bbee6 (lettura statica, nessun banco)_
-
----
-
-## ws1 — 🛑 IL «46% NON SPIEGATO» NON ESISTEVA: ERA UN MIO ERRORE DI CONTEGGIO
-
-**Livello**: corpus reale `mode=ro` + `event_indices` / `_record_numerati_diversi` · **Istante**:
-29/08 01:59 · **Regime**: sola lettura, nessun modello · sha `af8c5644`.
-
-### Il fronte ⑪, chiuso dal fatto che la domanda era mal posta
-Alle 01:28 avevo scritto: «*resta un 46% che ha etichetta condivisa e numeri diversi e comunque
-non scatta — quel pezzo non l'ho spiegato*». **Rimisurato con la condizione VERA del prodotto:**
-```
-coppie candidate                                                        2676
-con etichetta condivisa e numeri DISGIUNTI SU OGNI etichetta (`all`)       8
-... di cui il ramo NON scatta comunque (IL RESIDUO)                        0   (0,0%)
-```
-🛑 **Il residuo è ZERO. Il ramo scatta su tutte e 8.**
-
-### Perché il numero di prima era sbagliato
-Il conto delle 01:28 chiedeva «*esiste un'etichetta condivisa con numeri diversi?*» — un `any`.
-La condizione del prodotto è «*i numeri sono disgiunti su **OGNI** etichetta condivisa*» — un
-`all`. Con più etichette per frase (`('mese',2026)` **e** `('sono',148)`), basta che **una** sia
-uguale perché il ramo non scatti: con `any` quelle coppie finivano nel «residuo», con `all` non ci
-sono mai entrate.
-⇒ **Il modello ora spiega il 100% delle 17 coesistenze**: **8** vengono dal ramo posizionale
-(condizione vera, verificata una per una), le altre da rami diversi — `codes_in` su `py3.11`/
-`py3.13`, il ramo date, ecc.
-
-### 🪞 QUINTA VOLTA, e stavolta con un corollario nuovo
-```
-regex «parola numero» 76,3%     ->  funzione del prodotto  55,6%
-«`sono` compare 1437 volte»     ->  coppie esposte             8
-«almeno un numero lungo» 14,8%  ->  «tutti lunghi»          0,7%
-«825 col separatore migliaia»   ->  inequivocabili            19
-«46% non spiegato»              ->  residuo                    0
-```
-🔑 **UN FRONTE APERTO PUÒ ESSERE L'OMBRA DI UN ERRORE DI CONTEGGIO.** Ho passato mezz'ora a
-considerare aperto un fronte che **non esisteva**: il «pezzo non spiegato» era generato dal mio
-`any` al posto di `all`, lo stesso errore già identificato alle 01:22 — e **l'ho ripetuto sul conto
-che quel fronte l'aveva creato**.
-📌 **Il presidio si estende**: *prima di indagare un residuo, verifica che il residuo esista —
-rimisurandolo con la condizione esatta del prodotto, non con quella che l'ha prodotto.*
-
-### Cosa questo NON cambia
-· Il reperto resta identico: **le 17 coesistenze del nostro corpus sono giuste**, e delle 8 dovute
-  al ramo posizionale nessuna è un errore (mesi, job, settimane, finestre, file `m1/m2/m3`).
-· L'esposizione sulle forme da contratto resta **70%**, misurata su un'altra popolazione.
