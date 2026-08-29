@@ -1,5 +1,10 @@
 #!/usr/bin/env python
-"""I sette cancelli del rilascio, eseguiti tutti, in un comando.
+"""I cancelli del rilascio, eseguiti in un comando — e quello che non si puo' eseguire.
+
+Sette si misurano da qui. L'OTTAVO — il trusted publisher su PyPI — no: vive su
+un altro sistema. Il banco lo NOMINA lo stesso, perche' un elenco che tace cio'
+che non sa misurare si legge come completo.
+
 
 PERCHE' ESISTE
   Cinque dei sette cancelli girano **solo dentro `publish.yml`, e solo DOPO che
@@ -146,6 +151,18 @@ def main() -> int:
 
     print(f"\n  ⇒ cancelli che FERMANO il rilascio: {chiusi}"
           "   (⑤ e ⑥ sono avvisi: segnalano e lasciano passare)")
+    print("\n  ⑧  trusted publisher su PyPI      NON MISURABILE DA QUI")
+    print("      Il publish e' OIDC senza token (`pypa/gh-action-pypi-publish` +")
+    print("      `id-token: write`): perche' funzioni, PyPI deve avere un trusted")
+    print("      publisher configurato per QUESTO repository e QUESTO workflow. Sta")
+    print("      su un altro sistema, non nel repo, e `publish.yml` non gira dal")
+    print("      2026-07-22: nessuno sa se sia ancora valido. ⇒ E' un cancello che si")
+    print("      scopre solo FALLENDO, all'ultimo passo, dopo aver superato tutti gli")
+    print("      altri. Chi ha accesso a PyPI lo verifichi PRIMA.")
+    print("      📌 Sta scritto qui perche' la prima versione di questo banco diceva")
+    print("      «i sette cancelli»: quell'elenco veniva dalla lettura di due file, e")
+    print("      un inventario che ha la stessa fonte del processo si dichiara")
+    print("      completo da solo. L'ottavo non e' nominato da nessuno dei due.")
     print("  ⚖️  ⑦ NON e' un controllo automatico nemmeno in `publish.yml`: e' un blocco di")
     print("      commento che qualcuno deve leggere. Qui se ne misura solo la parte")
     print("      numerica — il resto resta una lettura umana, e si puo' attraversare")
