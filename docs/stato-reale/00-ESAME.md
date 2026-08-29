@@ -5316,3 +5316,53 @@ git log --format="%h %ci" -1 -- tests/test_quarantined_by_nomina_il_layer_sbagli
 ```
 ⚠️ **Nel «rifallo con» NON mettere una pipe prima di leggere `$?`**: un `pytest … | tail` fa
 leggere l'exit code di `tail`, e una suite rossa si legge verde. Misurato su me stessa, oggi.
+
+### 🔴 W8-8 — La coda che blocca il rilascio è **documentazione al 92,2%**: 425 run su 461, misurati tutti
+**REGIME**: `gh api …/actions/runs?status=queued` paginato (5 pagine, 463 run) + `git show
+--name-only` locale su ogni `head_sha`; 2026-08-29 19:42. **È la CAUSA di W8-6**, che dava il
+volume senza dire da cosa fosse fatto.
+
+    run in coda letti: 463   (total_count dichiarato: 463)   di cui `ci`: 461
+    **SOLO documentazione        425   (92,2%)**
+    tocca codice/test/config      19   ( 4,1%)
+    IGNOTO (sha non nel checkout) 17   ( 3,7%)
+    commit distinti dietro i 461 run: **461**  ⇒ un run per commit, zero duplicati
+
+· ⇒ **425 run × 6 job ≈ 2550 job di test** su Windows, macOS, Linux e quattro versioni di
+  Python **per file `.md` e `docs/`**, contro **19 run che toccano il codice**: **22 a 1**.
+· **Nessun workflow filtra per percorso**: `ci.yml` 0 · `presidi-lenti.yml` 0 · `publish.yml`
+  0 · `security.yml` 0 occorrenze di `paths`/`paths-ignore`.
+· 📈 **La coda cresce mentre la si legge**: 445 alle 19:21 → 463 alle 19:42 ⇒ **circa un run
+  al minuto in ingresso**, cioè sei job al minuto, più di quanti ne escano.
+· ⚠️ **LA CURA OVVIA DA SOLA ROMPE IL CANCELLO — misurato prima di consegnarla.**
+  `paths-ignore: ['docs/**', '**.md']` toglierebbe il 92% della coda, **ma**
+  `publish.yml:117` cerca `ci` con `head_sha=$sha`, cioè **su quel commit esatto**: un commit
+  di sole docs **non avrebbe alcun `ci`** ⇒ `conclusion` vuota ⇒ **cancello CHIUSO**. Il caso
+  è vivo: **il commit in testa a `origin/main` tocca un solo file, dentro `docs/`.**
+  ⇒ **Fail-closed, quindi sicuro, ma bloccante** — e il messaggio direbbe «la CI non è verde»
+  quando la verità è «la CI non è mai partita»: **due situazioni diverse, un solo messaggio**.
+· 📌 **Consegna in COPPIA** (⛔ `.github/` non è di ws8): **(1)** `paths-ignore` su `ci.yml`
+  **insieme a** **(2a)** taggare sempre un commit che tocca codice — gratis, ma è una regola
+  umana — **oppure** **(2b)** far cercare al cancello l'ultimo `ci` verde fra gli **ANTENATI**
+  del commit taggato. **Chi applica (1) senza (2) sposta il blocco da «la coda è piena» a «il
+  cancello non trova niente», che è più difficile da diagnosticare.**
+· 🪞 **Perché il numero pieno e non il campione**: la prima misura era **96 su 98 sui 100 più
+  recenti**. Restava il rischio che la coda vecchia fosse di codice e solo quella nuova di
+  prosa — **e in quel caso una cura strutturale non sarebbe stata giustificata**. Letti tutti:
+  è prosa dall'inizio alla fine. **Il campione dava la stessa percentuale per fortuna, non per
+  costruzione.**
+· ⚠️ **COSA NON PROVA**: i 17 sha ignoti restano non classificati (se fossero tutti codice, il
+  quadro non cambierebbe: 425 su 461 resta il 92,2%). E **la coda si muove durante la
+  lettura** — fra la prima e la quinta pagina il `total_count` è passato da 462 a 463: **è una
+  fotografia, non un inventario**.
+
+**RIFALLO CON**:
+```bash
+for p in 1 2 3 4 5; do
+  gh api "repos/:owner/:repo/actions/runs?status=queued&per_page=100&page=$p" \
+    --jq '.workflow_runs[] | select(.name=="ci") | .head_sha'
+done | sort -u | while read s; do
+  git show --name-only --format= "$s" 2>/dev/null | grep -qvE '^(docs/|.*\.md$)' && echo CODICE || echo DOC
+done | sort | uniq -c
+for f in .github/workflows/*.yml; do printf "%s " "$f"; grep -cE "paths-ignore:|paths:" "$f"; done
+```
