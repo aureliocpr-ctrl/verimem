@@ -4625,3 +4625,50 @@ La cella dice che *quella* è la domanda a cui risponde, e che nessuno lo sa leg
 campo. **Verificabile in 30 secondi**: `git grep -n "_hit_layers" verimem/client.py`.
 
 _firma @Varco — 2026-08-29 01:59, HEAD 3b0bbee6 (lettura statica, nessun banco)_
+
+---
+
+## ws1 — 🛑 IL «46% NON SPIEGATO» NON ESISTEVA: ERA UN MIO ERRORE DI CONTEGGIO
+
+**Livello**: corpus reale `mode=ro` + `event_indices` / `_record_numerati_diversi` · **Istante**:
+29/08 01:59 · **Regime**: sola lettura, nessun modello · sha `af8c5644`.
+
+### Il fronte ⑪, chiuso dal fatto che la domanda era mal posta
+Alle 01:28 avevo scritto: «*resta un 46% che ha etichetta condivisa e numeri diversi e comunque
+non scatta — quel pezzo non l'ho spiegato*». **Rimisurato con la condizione VERA del prodotto:**
+```
+coppie candidate                                                        2676
+con etichetta condivisa e numeri DISGIUNTI SU OGNI etichetta (`all`)       8
+... di cui il ramo NON scatta comunque (IL RESIDUO)                        0   (0,0%)
+```
+🛑 **Il residuo è ZERO. Il ramo scatta su tutte e 8.**
+
+### Perché il numero di prima era sbagliato
+Il conto delle 01:28 chiedeva «*esiste un'etichetta condivisa con numeri diversi?*» — un `any`.
+La condizione del prodotto è «*i numeri sono disgiunti su **OGNI** etichetta condivisa*» — un
+`all`. Con più etichette per frase (`('mese',2026)` **e** `('sono',148)`), basta che **una** sia
+uguale perché il ramo non scatti: con `any` quelle coppie finivano nel «residuo», con `all` non ci
+sono mai entrate.
+⇒ **Il modello ora spiega il 100% delle 17 coesistenze**: **8** vengono dal ramo posizionale
+(condizione vera, verificata una per una), le altre da rami diversi — `codes_in` su `py3.11`/
+`py3.13`, il ramo date, ecc.
+
+### 🪞 QUINTA VOLTA, e stavolta con un corollario nuovo
+```
+regex «parola numero» 76,3%     ->  funzione del prodotto  55,6%
+«`sono` compare 1437 volte»     ->  coppie esposte             8
+«almeno un numero lungo» 14,8%  ->  «tutti lunghi»          0,7%
+«825 col separatore migliaia»   ->  inequivocabili            19
+«46% non spiegato»              ->  residuo                    0
+```
+🔑 **UN FRONTE APERTO PUÒ ESSERE L'OMBRA DI UN ERRORE DI CONTEGGIO.** Ho passato mezz'ora a
+considerare aperto un fronte che **non esisteva**: il «pezzo non spiegato» era generato dal mio
+`any` al posto di `all`, lo stesso errore già identificato alle 01:22 — e **l'ho ripetuto sul conto
+che quel fronte l'aveva creato**.
+📌 **Il presidio si estende**: *prima di indagare un residuo, verifica che il residuo esista —
+rimisurandolo con la condizione esatta del prodotto, non con quella che l'ha prodotto.*
+
+### Cosa questo NON cambia
+· Il reperto resta identico: **le 17 coesistenze del nostro corpus sono giuste**, e delle 8 dovute
+  al ramo posizionale nessuna è un errore (mesi, job, settimane, finestre, file `m1/m2/m3`).
+· L'esposizione sulle forme da contratto resta **70%**, misurata su un'altra popolazione.
