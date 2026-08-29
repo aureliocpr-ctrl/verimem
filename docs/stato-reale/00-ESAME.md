@@ -747,6 +747,27 @@ l'ha tolta: **la riga resta, con il perché e il rimando a quella che la sostitu
 | LANT-45 | **le tre popolazioni sullo STESSO asse** — chiude la tensione che ho aperto io citando @ws1 | C1 | IT+EN | SDK, store temporaneo, modello vero | 🔴 **separazione TOTALE: prosa umana 0/8 · nostri referti 0/3 · verbali d'ufficio 3/3** — e **raffina la MIA formulazione, non solo la sua** | ws7 | **Misurato 29/08 19:31-19:32**, banco `ws7-tre-popolazioni-un-asse-solo.py`. **Nasce da un debito mio**: alle 19:24 @ws1 ha ristretto «70% contro 0,6%» *(unita' diverse: frasi contro coppie)* e la mia citazione come conferma e' caduta. **Ho aperto una tensione e la chiudo dalla mia parte.**
 | LANT-46 | **la variabile ISOLATA al terzo tentativo: non e' la parola, non e' il dominio — e' il FORMATO di `verified_by`** | C1 | IT | SDK, store temporaneo, modello vero + corpus in sola lettura | 🔴🔴 **il gate accetta evidenza SOLO nei formati dei coding agent: un numero di protocollo — evidenza VERA — e' rifiutato identicamente all'ASSENZA di evidenza** | ws7 | **Misurato 29/08 19:36.** 🧭 **Nasce da @ws1 (19:30)**: *«il mio 70% era una proprieta' delle DIECI FRASI CHE HO SCRITTO IO: su prosa legale VERA di terzi e' 12,5%»* ⇒ **la sua lezione colpisce me piu' di lei: anche i miei verbali li ho scritti io.** Applicata al mio reperto, l'ha ridotto e poi l'ha rifatto piu' forte.
 | LANT-47 | **QUINTA e ultima formulazione: non e' il formato dell'evidenza — e' il TOKEN DI ESITO, e il vocabolario e' MONOLINGUE INGLESE** | C1 · C3 | IT/EN | SDK, store temporaneo, modello vero | 🔴🔴 **`review:consiglio_approved` passa · `review:consiglio_approvato` NO. UNA LETTERA.** | ws7 | **Misurato 29/08 19:39-19:41**, a variabile singola. In `LANT-46` avevo isolato «il formato di `verified_by`». **Anche quella era incompleta**, e il codice mi ha dato il passo: `L1.15` ha **sei prefissi** (`pytest: test: ci: qa: review: validation:`) chiamati **`_OUTCOME_REQUIRED_PREFIXES`** — *«richiedono un token di esito verificabile»*. ⇒ **Il prefisso non basta: serve l'ESITO.**
+| LANT-48 | **META' DELLA QUARANTENA DEL CORPUS E' UNA SOLA FAMIGLIA DI TOPIC: `handoff/`** — e sono i passaggi di consegne fra sessioni | C1 | IT | corpus di Aurelio, **sola lettura** | 🔴🔴 **1215 su 2411 = 50,4% della quarantena · tutti e 1215 SENZA causa registrata · mediana 2471 char contro 117 del resto** | ws7 | **Misurato 29/08 19:44-19:45**, `mode=ro`. 🪞 **NASCE DA UN'IPOTESI MIA CHE E' CADUTA**: @ws6 (19:38) aveva scritto *«la forma di source che `O3` impone e' quella che lo fa parlare a vuoto»* e io stavo per registrare il collegamento *«la forma che O3 ci impone e' quella trattata peggio»*. **Ho misurato prima di scriverlo, ed e' FALSO:**
+```
+  tasso base                     2411/15424 = 15,6%
+  verimem/   (nostri referti O3)   190 fatti    4,7%   0,30x   <- TRE VOLTE MEGLIO della media
+  project/                       10692 fatti    7,2%   0,46x
+  handoff/                        1677 fatti   72,5%   4,63x   <<<
+```
+⇒ **I fatti scritti secondo `O3` sono la popolazione MEGLIO trattata del corpus.** *(Se avessi «collegato» invece di misurare, avrei pubblicato l'opposto — e il collegamento sembrava ovvio, perche' quattro reperti indipendenti puntavano li'.)*
+🔑🔑 **E sotto c'era una cosa piu' grossa di quella che cercavo**:
+```
+  handoff/ quarantinati        1215  =  50,4% DI TUTTA LA QUARANTENA DEL CORPUS
+  chi li ferma: (vuoto)        1215  =  100%: NESSUNO ha la causa registrata
+  lunghezza mediana della proposition:
+      handoff/          2471 char   (n=1215)
+      tutto il resto     117 char   (n=1196)      <- VENTUN VOLTE piu' corti
+```
+🔗 **E ricompone `LANT-44`**: i **1909** senza causa registrata su cui ho misurato P3 sono **per il 63,6% handoff** (1215 su 1909). ⇒ **La popolazione di P3 e' dominata da questa famiglia**, e il 99,3% di ricalcolo riuscito sui vecchi va riletto sapendolo.
+📌 **E si aggancia a una lezione gia' in memoria**: *«fatti oltre ~2000 char eccedono la finestra dell'embedder»*. **La mediana degli handoff e' 2471.** ⚠️ **NON dichiaro che sia la causa** — e' una coincidenza fra un numero misurato e una lezione registrata, **non un A/B** *(regola 17)*. Si prova spezzando un handoff in fatti corti e rimisurando.
+🚨 **IL SENSO DI VETRINA, ed e' il piu' pesante finora**: **gli `handoff/` sono i passaggi di consegne fra sessioni — la CONTINUITA' fra agenti.** `README:3` promette *«Verified memory for AI agents»*, e **meta' di tutto cio' che la memoria rifiuta e' esattamente il caso d'uso agente per eccellenza.** ⇒ **Non un difetto di dominio: il difetto e' sul lavoro che il prodotto dichiara di servire.**
+⚠️ **LIMITI**: e' una **correlazione su topic**, non una causa; non ho letto il contenuto dei 1215; non so **quando** siano stati scritti *(potrebbero essere tutti di un'era passata, come i 1699 di `LANT-44`)*; e **la lunghezza e' un'ipotesi, non la variabile isolata.**
+🔎 **rifallo con**: `mode=ro` → `SELECT topic, COUNT(*) ... WHERE status='quarantined' GROUP BY prefisso`, poi `LENGTH(proposition)` mediana sui due gruppi. |
 ```
   validation:protocollo_2214_registrato   (IT)   🔴 FERMATO
   validation:protocollo_2214_PASS         (EN)   🟢 AMMESSO
