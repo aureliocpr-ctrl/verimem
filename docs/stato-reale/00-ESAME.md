@@ -7018,3 +7018,66 @@ conferma (i 2 fallimenti inglesi servono un **mestiere**, non il salario).
   dove non ho un corpus per verificarlo.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Il 65% NON esiste su store di terzi: 0/15 in italiano come in inglese. E il limite che mi resta ora è PRECISO
+
+**Livello**: `Memory.explain()`, regime di default (CE gate). **Dataset**: **HaluEval QA
+(MIT)** — store da 25 knowledge di terzi, **15 domande unanswerable di terzi** in inglese
+originale e **tradotte da me** in italiano. **Perimetro**: 30 prove, **una sola variabile:
+la lingua della domanda**. **Istante**: 29/08 22:19-22:22. **Regime**: `HIPPO_DATA_DIR`
+temporaneo, repo `1f6017e6`.
+
+### Il risultato
+
+```
+EN (originale, di terzi)     0/15   (0,0%)
+IT (tradotta da me)          0/15   (0,0%)
+```
+
+**Nessun fallimento in nessuna delle due lingue.** Il controllo positivo tiene: le query
+inglesi danno zero, come i 25/25 misurati alle 21:16.
+
+⇒ **Il divario 65%-contro-5% che ho misurato alle 21:47 NON si riproduce su store di
+terzi.** È **il quarto ridimensionamento** dello stesso filone, ed è quello che avevo
+predetto essere **il più importante**: chiude.
+
+### Ma la lettura facile («è irrilevante») sarebbe sbagliata, e dico perché
+
+I due banchi **non differiscono solo per la provenienza**. Cambiano insieme:
+
+| | il mio banco | HaluEval |
+|---|---|---|
+| forma dei fatti | **5 frasi brevi**, «X's Y is Z» | **paragrafi** |
+| domanda | attributo personale **assente** | **multi-hop** su entità |
+| provenienza | **mia** | **di terzi** |
+
+**Tre variabili in una volta**: non posso attribuire lo zero alla sola provenienza.
+
+E soprattutto: **i fatti brevi e strutturati sono la forma tipica di una memoria
+agentica** — «X preferisce Y», «il progetto usa Z» sono esattamente ciò che questo
+prodotto è fatto per salvare. **Il mio banco non è irrealistico: è più vicino all'uso
+tipico di una memoria di quanto lo sia un QA su paragrafi.** ⇒ **non posso concludere «il
+fenomeno non conta»**, solo «**non si manifesta su prosa lunga con domande multi-hop**».
+
+### 🎯 Il limite che mi resta, e ora è PRECISO invece che generico
+
+Per otto ore ho scritto «*mi manca prosa italiana di terzi*». **Era il limite sbagliato.**
+Quello che mi serve è più stretto:
+
+> **fatti BREVI e STRUTTURATI, in italiano, scritti da terzi.**
+
+Prosa lunga italiana non servirebbe: **su prosa lunga il fenomeno non c'è nemmeno in
+inglese**. ⇒ **Precisare il limite è il risultato utile di questo giro**, più del numero.
+
+### Cosa questo NON prova
+
+- **15 domande per lingua.** Uno zero su 15 è compatibile con un tasso vero fino a ~18%
+  (limite superiore grossolano): **«0%» qui significa «non l'ho visto», non «non c'è».**
+- **La traduzione è mia** — dichiarato: non è italiano nativo di terzi.
+- **Non ho isolato quale delle tre variabili conti.** Il passo successivo, e costa poco:
+  **spezzare i knowledge di terzi in frasi brevi** ⇒ popolazione di terzi, forma breve,
+  **una sola variabile cambiata**.
+- ⛔ **Non ho toccato nulla.**
+
