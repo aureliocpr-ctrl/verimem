@@ -5165,3 +5165,55 @@ una grandezza. **La variante (c) è la popolazione di controllo: deve restare si
 Un claim, quattro varianti, **una** lingua (il banco gemello mostra che la lingua non conta, ma
 queste quattro celle sono solo IT), una porta. ⚠️ **Il codice di `L4.2` non l'ho letto**: ho misurato
 **ingresso e uscita**, il meccanismo lo dichiara @ws4.
+
+---
+
+## ws1 — CHIUSURA DEL FRONTE: ZERO VALUTE PRE-POSTE IN 1358 FRASI, MA IL 12% NON È INNOCUO
+
+**Livello**: `event_indices` + classificazione delle etichette · **Istante**: 29/08 19:34 ·
+**Regime**: sola lettura, nessun modello · sha `1af1cf8a`.
+
+### La domanda che restava: il 12% è tutto uguale?
+Le frasi «candidate» non sono tutte lo stesso caso. Ho classificato **le etichette** che il ramo
+estrae in tre gruppi, con la **predizione dichiarata prima**: *sulla prosa umana il gruppo valuta
+sarà ≈ 0*.
+```
+                            valuta pre-posta   parola/verbo   identificatore
+prosa tecnica nostra  (486)      0  (0,0%)      84 (98,8%)      1  (1,2%)
+prosa legale terzi    (872)      0  (0,0%)      75 (68,2%)     35 (31,8%)
+```
+
+### ✅ Il pezzo che chiude, e il pezzo che NON chiude
+· ✅ **ZERO valute pre-poste in 1358 frasi di prosa umana reale.** Il caso `EUR 12000` — quello su
+  cui ho costruito tutto il reperto — **non compare mai** né nella prosa tecnica né in quella legale.
+· ⚠️ **MA il gruppo «parola/verbo» NON è un artefatto innocuo**, e sarebbe comodo dirlo: è
+  esattamente il caso **`est 500`** / **`sono 7975`**, cioè **il difetto in un'altra forma**. È il
+  **98,8%** e il **68,2%** delle etichette trovate.
+· ⚖️ **E gli identificatori (31,8% nelle licenze: `version`, `section`) sono il caso in cui la
+  coesistenza è GIUSTA** — due versioni diverse *devono* coesistere.
+
+### 🔑 Il quadro finale, e non lo allargo
+> Sulla prosa umana misurata (1358 frasi, due generi, uno non nostro): **il 12% delle frasi è
+> candidato; di quel 12%, zero per valuta pre-posta, circa un terzo per identificatori legittimi,
+> il resto per parole e verbi.** ⇒ **Il caso che ho documentato più a fondo (`EUR 12000`) ha
+> frequenza ZERO qui; il caso `est`/`sono` è invece la forma dominante.**
+📌 **E per il danno serve comunque la COPPIA contraddittoria** — che in un README o in una licenza
+**non esiste**: nessuno scrive due frasi che si smentiscono nello stesso documento. Il rischio è
+per un **archivio di fatti**, non per un documento.
+
+### 🛑 Il conto dei miei restringimenti su questo reperto, in un giorno
+```
+00:49  «70% contratti vs 0,6% noi»                    unità diverse (frasi vs coppie)
+19:25  a unità unica: noi 55,5% · prosa umana 11,9%   il verso si ribalta
+19:30  prosa legale VERA di terzi: 12,5%              il 70% è mio, non del genere
+19:34  di quel 12%: valute ZERO, verbi la maggioranza  il caso documentato non c'è
+```
+**Quattro in un giorno, sullo stesso reperto, tutti da presidi scritti.** ⇒ Il reperto **non è
+falso** — alla porta regge 4/4 + 3/3 — ma **la sua importanza l'avevo costruita io**, e ogni volta
+che ho misurato invece di dedurre, si è ridotta.
+
+### ⚠️ Cosa NON prova
+· Due generi, 1358 frasi, nessun contratto commerciale con importi: **il caso `EUR 12000` resta
+  non misurato su testo reale**, e resta **non misurabile** con ciò che abbiamo.
+· La classificazione delle etichette è **mia**, per liste chiuse: `version`/`section` come
+  identificatori, `EUR`/`USD` come valute. Una lista chiusa sbaglia sui casi che non prevede.
