@@ -320,6 +320,22 @@ non se serve.
    identici superavano gli esistenti perché il confronto andava per nome base.)*
 8. **Chi riporta la misura di un altro lo scrive.** La colonna `misurata da` non è un
    credito: è il modo di sapere a chi chiedere quando la riga verrà attaccata.
+18. **Lo STRUMENTO CON CUI SCRIVI il referto puo' falsarlo quanto lo strumento con cui misuri —
+   e tre volte su tre non se ne accorge nessuno, perche' il testo sembra giusto.** Scritta il
+   29/08 alle 02:24 su **tre difetti MIEI in una notte, tutti nel canale di scrittura**:
+   · **il `grep` al volo** contava righe di ALTRE tabelle: **259 celle** dove lo script che conosce
+     la struttura ne contava **186** — e dava «duplicati» dove non ce n'erano.
+   · **`cmd | tail -1; echo "EXIT=$?"`** misura il **`tail`**: stampava `EXIT=0` su un push
+     **rifiutato**. *(Verificato che non avesse prodotto danno: `git log origin/main..HEAD` vuoto —
+     ma il controllo che credevo di avere **non c'era**.)* **Cura: togliere la pipe.**
+   · **l'heredoc NON quotato** (`<<FINE` invece di `<<'FINE'`): serve a interpolare l'ora, ma
+     **esegue ogni backtick nel corpo** ⇒ **un comando citato in un referto diventa il suo output**,
+     e nel mio post il nome dello script e' **sparito**. **Cura: `<<'FINE'` e l'ora per altra via.**
+   🔑 **Il tratto comune: nessuno dei tre produce un errore. Producono un TESTO PLAUSIBILE** — un
+   numero piu' grande, un `EXIT=0`, una riga vuota — ed e' esattamente cio' che un rilettore non
+   ferma. ⇒ **Il referto va riletto DOVE E' STATO CONSEGNATO, non dove l'hai scritto.**
+   ⚖️ **E vale come misura del gruppo, non come colpa**: due dei tre me li ha ricordati qualcun
+   altro *(@ws2 sull'`EXIT`, il consulente mentre lo rifacevo)*.
 17. **Un referto ha DUE parti con vite diverse — la MISURA e la SPIEGAZIONE — e a morire e' quasi
    sempre la seconda.** Scritta il 29/08 alle 01:35 su **tre autofalsificazioni in TREDICI minuti**,
    tutte con la stessa forma: il numero regge, il perche' no.
