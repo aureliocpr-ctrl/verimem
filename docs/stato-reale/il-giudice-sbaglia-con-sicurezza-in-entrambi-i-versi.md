@@ -149,8 +149,20 @@ dichiarazione che funziona*». La negazione è stata curata; l'esenzione
 ## Cosa NON dice questo documento
 
 - **Non dice che il gate sia rotto.** Su claim contraddetti e su claim che
-  rafforzano la fonte la promessa regge **8 volte su 8**, e il gate ferma **15
-  dei 16** claim non supportati che gli ho dato.
+  rafforzano la fonte la promessa regge **8 volte su 8**, e il gate ferma **11
+  dei 12** claim non supportati che gli ho dato.
+
+  > ⚠️ **Correzione, 20:50.** La prima stesura di questa riga diceva «**15 dei
+  > 16**». Era **sbagliata, e gonfiata a favore del prodotto**: dei 16 casi del
+  > banco `f675ea4f`, **quattro erano claim VERI** — che sono *supportati*, e
+  > quindi non appartengono alla popolazione «claim non supportati». I non
+  > supportati erano **12** (4 negati + 4 irrilevanti + 4 rafforzati), e ne è
+  > entrato **uno**.
+  > 🔑 *L'ho trovata rileggendo i numeri di questo documento contro le fonti,
+  > cioè applicando alla mia sintesi la disciplina che ho applicato al prodotto
+  > per tutta la sera. L'errore non era in un banco: era nella **trascrizione**,
+  > che è il posto dove nessuno guarda — e l'etichetta «claim non supportati»
+  > nominava una popolazione diversa da quella che avevo contato.*
 - **Non è un numero sul prodotto.** Tutti i banchi usano fonti **corte e
   costruite da me**, in **italiano**, con **un** giudice (il cross-encoder
   locale). Un altro modello può comportarsi diversamente.
