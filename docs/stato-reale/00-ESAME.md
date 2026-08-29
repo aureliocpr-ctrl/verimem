@@ -6729,3 +6729,82 @@ che oggi il lettore deve indovinare.**
   grandezza, non una stima.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — «58/60 per l'utente» smette di essere un'assunzione: chiuso contando le porte, non rieseguendo
+
+**Livello**: sorgente (`git grep`), non esecuzione. **Perimetro**: le sei vie con cui
+`trustmem_bench.run_verimem` interroga il prodotto. **Istante**: 29/08 21:20-21:23.
+**Regime**: repo `fcbec037`, sola lettura.
+
+### Il debito
+
+Alle 20:51 avevo scritto «*sul seed 42 l'utente prende 8/10 invece di 10/10*» e concluso
+**58/60**, dichiarando che il passaggio da un asse ai sei era **un'assunzione**: gli altri
+cinque non li avevo rimisurati. Un'assunzione dichiarata è **un debito**, e questo si paga
+in tre minuti di lettura invece che in mezz'ora di esecuzione.
+
+### Il righello: quante porte leggono il pavimento?
+
+```
+git grep -n "env_floor\|ENGRAM_MIN_RELEVANCE" -- verimem/
+```
+Nell'intero package, il pavimento è letto in **due sole funzioni** di `client.py`:
+
+| funzione | riga | via |
+|---|---|---|
+| `Memory.search` | 995 | `env_floor_if_set()` — `None` se la variabile non è impostata ⇒ nessun pavimento |
+| `Memory.explain` | 1732 | `env_floor()` — `"auto"` anche a variabile non impostata ⇒ CE gate |
+
+(gli altri due siti sono in `mcp_server.py`, entrambi `env_floor_if_set`, e non riguardano
+questo bench.)
+
+### Cosa attraversa ciascun asse
+
+| asse | come interroga | dipende dal pavimento? |
+|---|---|---|
+| `fabrication_under_absence` | `mem.explain(q, k=5, min_relevance=0.835)` | **SÌ — è l'unico** |
+| `provenance_honesty` | `mem.explain(q, k=5)` **senza pavimento** | no: **è già il default utente** |
+| `destructive_update` | `mem.semantic.get(...)` | no |
+| `temporal_integrity` | `recall_as_of(mem.semantic, ...)` | no |
+| `forget_integrity` | `mem.delete(...)` + `mem.semantic.recall(...)` | no |
+| `sycophancy_resistance` | `classify_conflict(...)` | no |
+
+**Quattro assi passano dal livello `semantic`, che il pavimento non lo legge affatto; il
+quinto usa già il default.** ⇒ **Cinque assi su sei sono identici nei due regimi per
+costruzione**, e il sesto è quello che ho misurato.
+
+### ⇒ Il numero, ora derivato
+
+Sul **seed 42** — quello che la vetrina pubblica — il banco dà **60/60**. Nel regime di
+default dell'utente `fabrication_under_absence` dà **8/10** invece di 10/10, e gli altri
+50 punti sono invariati:
+
+> **58/60 per chi installa e non configura niente.** Non più un'assunzione: **una misura
+> più una lettura del codice.**
+
+🪞 **La lezione**: **contare le porte costa meno che rieseguire, e conclude di più** — la
+rilettura non dice «anche stavolta è uscito uguale», dice **perché non può uscire
+diverso**. È lo stesso righello con cui, un'ora prima, avevo trovato che i due regimi
+sono **due giudici** e non due soglie.
+
+### Cosa questo NON prova
+
+- **Non ho rieseguito.** Se un asse cambiasse il modo di interrogare, la derivazione
+  cadrebbe **senza rumore**: vale su `fcbec037`, non per sempre.
+- **Vale sul seed 42.** Sugli altri seed il default era **uguale o migliore** (46/50
+  contro 45/50 sull'asse): **58/60 è il caso peggiore misurato, non il tipico.**
+- ⚠️ **E su dati di terzi il divario non si vede** (HaluEval, 25/25): questo numero
+  descrive **il banco sintetico**, non il prodotto in generale.
+
+### 🔻 Limite dichiarato che NON riesco a chiudere
+
+**Non esiste prosa italiana di terzi con cui provare il mio reperto sull'italiano.**
+Cercata: `benchmark/data/**` (HaluEval, SQuAD v2, TruthfulQA, MuSiQue, MSC — **tutti
+inglesi**, verificato contando marcatori di lingua) e il disco (`site-packages`: solo
+`num2words/lang_IT.py` e un dizionario di sillabazione — **non è prosa**). Le licenze dei
+pacchetti, che mi avevano dato il 12,5%, sono **inglesi**.
+⇒ **Il reperto italiano resta né confermato né falsificato fuori dal generatore.** Non
+lo chiudo con frasi mie: la direttiva delle 20:04 lo vieta, e aveva ragione.
+
