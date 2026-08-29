@@ -7098,3 +7098,67 @@ inglese**. ⇒ **Precisare il limite è il risultato utile di questo giro**, pi�
   **una sola variabile cambiata**.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Né la forma né il tipo di domanda: su store di terzi resta zero in quattro celle su quattro. E la variabile che restava nascosta è la DEDIZIONE dello store
+
+**Livello**: `Memory.explain()`, regime di default. **Dataset**: **HaluEval QA (MIT)** —
+25 knowledge di terzi **spezzati in 35 frasi brevi** (mediana 118 char). **Perimetro**: 54
+prove su 4 celle. **Istante**: 29/08 22:23-22:26. **Regime**: `HIPPO_DATA_DIR` temporaneo,
+repo `4cc0eb3a`.
+
+### Il disegno: separare tre variabili che finora cambiavano insieme
+
+Il banco che dava 0/15 differiva dal mio (65%) per **forma**, **tipo di domanda** e
+**provenienza**. Qui la provenienza resta **di terzi** e cambio le altre due, una per cella.
+
+```
+F1 EN multi-hop (terzi)                     0/15   (0,0%)
+F1 IT multi-hop (tradotte)                  0/15   (0,0%)
+F2 EN attributo assente (blood type)        0/12   (0,0%)
+F2 IT attributo assente (gruppo sanguigno)  0/12   (0,0%)
+```
+
+### 🔻 La mia predizione F2 è falsificata
+
+Avevo scritto prima: *«F2 riappare, e con divario IT>EN — perché il fallimento nasce quando
+la domanda è su un attributo che la persona non ha e lo store contiene fatti brevi su
+quella stessa persona»*. **Non riappare: zero su 24.** ⇒ **né la forma dei fatti né il tipo
+di domanda spiegano il divario.**
+
+### 🔑 Ma il confronto fa emergere una quinta variabile, che non avevo mai isolato
+
+Rimettendo i due banchi uno accanto all'altro:
+
+| | il mio banco (65%) | questo (0%) |
+|---|---|---|
+| fatti nello store | **5** | **35** |
+| di chi parlano | **TUTTI della stessa persona** | **decine di entità diverse** |
+| competizione per il primo posto | **nessuna** | **34 concorrenti** |
+
+⇒ **Nel mio banco il vicino più prossimo di qualunque domanda su quella persona è
+necessariamente un fatto di quella persona: non c'è nient'altro nello store.** Qui invece
+un fatto sulla persona compete con 34 altri, e nessuno emerge.
+
+**E il dato che lo conferma era già nei miei numeri e non l'avevo letto**: la variante
+**N2** — store con **UN SOLO fatto** — **falliva comunque**. Uno store minimale e dedicato
+è il caso peggiore, e io l'avevo misurato senza accorgermene.
+
+⇒ **Ipotesi nuova, da falsificare al prossimo giro**: *il fenomeno emerge negli store
+PICCOLI e MONO-ENTITÀ*, non per la lingua né per la forma. **E se fosse così conterebbe**,
+perché uno store per-utente con pochi fatti su una persona **è il caso d'uso tipico di una
+memoria agentica**, non un caso di laboratorio.
+
+**Il test che la decide**, e costa poco: prendere **una sola entità di terzi**, costruire
+uno store con **solo le sue frasi** (di terzi), e chiedere l'attributo assente. **Una sola
+variabile: la dedizione dello store.**
+
+### Cosa questo NON prova
+
+- **Le «frasi brevi» qui hanno mediana 118 char**; le mie ne hanno ~26. **La forma non è
+  stata pareggiata davvero**: è più corretto dire «paragrafi spezzati» che «fatti brevi».
+- **0/24 su F2** significa «non l'ho visto», **non «non c'è»**.
+- **La traduzione italiana è mia**, come dichiarato.
+- ⛔ **Non ho toccato nulla.**
+
