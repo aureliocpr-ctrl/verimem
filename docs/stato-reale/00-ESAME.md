@@ -6642,3 +6642,88 @@ non cambia.
   caso**; non ho verificato che siano le stesse sugli altri sette fallimenti.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Su dati di TERZI il prodotto fa 25/25, e il mio filone della serata si ridimensiona da solo
+
+**Livello**: `Memory.explain()`, API pubblica. **Dataset**: **HaluEval QA (MIT)**,
+`benchmark/data/external/halueval_qa_{dev,unanswerable}.jsonl`, già nel repo — **dataset
+pubblico dichiarato per nome**, come impone la direttiva delle 20:04. **Perimetro**: store
+affollato da **25 knowledge**, **25 domande unanswerable** + 15 answerable di controllo.
+**Istante**: 29/08 21:13-21:16. **Regime**: `ENGRAM_MIN_RELEVANCE` non impostata.
+
+### Perché: la misura decisiva che mi mancava
+
+Tutti i miei reperti della serata nascevano dal **banco sintetico auto-generato**. La
+direttiva di Aurelio — *dataset pubblici, le frasi auto-scritte valgono solo come
+controllo interno* — vale **contro di me per primo**. Se il difetto non si vede su prosa
+di terzi, il mio filone è una curiosità del generatore.
+
+### Il risultato
+
+```
+R_auto  default dell'utente (CE gate)      25/25 astensioni     ← perfetto
+R_tau   min_relevance=0.35                  0/25
+R_tau   min_relevance=0.5                   0/25
+R_tau   min_relevance=0.8                  25/25
+R_tau   min_relevance=0.9                  25/25
+CONTROLLO POSITIVO (answerable, default):   4/15 astensioni     ← non è muto: risponde 11/15
+```
+
+🟢 **Il prodotto, nel regime che riceve chi installa e non configura, si astiene 25 volte
+su 25 su domande di terzi senza risposta** — e **non lo fa tacendo sempre**: sulle
+answerable risponde 11 volte su 15.
+
+### 🖋️ Ho riprodotto un loro numero con un banco indipendente
+
+`benchmark/results/external_readpath_halueval_heldout_2026-07-18.json` pubblica una
+**curva**, non un numero secco — τ da 0.25 a 0.95, con `separability_auroc 0.9938`:
+
+| τ | astensione | over-abstention |
+|---|---|---|
+| ≤0.70 | **0.00** | 0.04 |
+| 0.75 | 0.22 | 0.04 |
+| 0.80 | 0.98 | 0.11 |
+| 0.85 | **1.00** | 0.30 |
+| 0.90 | 1.00 | 0.91 |
+
+La mia misura indipendente (0/25 a τ≤0.5, 25/25 a τ≥0.8) **replica la loro curva**.
+⇒ **Il loro numero regge, e il bench è metodologicamente corretto**: pubblica il
+trade-off invece di un punto scelto.
+
+### 🔻 E qui ritiro due cose mie
+
+**① Ritiro il sospetto sul `--tau` default 0.35.** A 0.35 l'astensione è zero — ma
+**0.35 non è un numero pubblicato**: è il default di un argomento, e i risultati salvati
+riportano **la curva intera**. Il bench non si sceglie il punto comodo. **Chiedersi se è
+voluto prima di chiamarlo difetto** — qui lo era.
+
+**② Ridimensiono «due giudici».** Il mio default utente dà **astensione 1.00 con
+over-abstention 0.27** — cioè si comporta come **τ≈0.85** (1.00 / 0.30), che è **un punto
+della loro curva**. Non è un giudice migliore né peggiore: su dati di terzi i due rami
+danno risultati **compatibili**. ⚠️ **Perimetri diversi** (15 vs 100 answerable, 25 vs 96
+fatti): la vicinanza dei due numeri **non è un confronto**, è una collocazione.
+
+⇒ **La divergenza banco/utente che ho misurato sul seed 42 (10/10 contro 8/10) resta un
+fatto**, ma **non generalizza**: è una peculiarità del banco sintetico.
+⇒ **Il fenomeno italiano resta confinato al generatore.** Su prosa di terzi non l'ho
+visto — anche perché HaluEval è **in inglese**, e quindi non l'ho nemmeno potuto cercare.
+
+### 🟡 Il fatto nuovo che resta, ed è piccolo ma utile
+
+**Il regime che l'utente riceve di default non è un punto dichiarato della curva.** Chi
+legge quel report non sa dove si trova il comportamento reale: la curva è tutta sul ramo
+`min_relevance=<float>` (bi-encoder), il default passa dal CE gate. **Una riga —
+«il default corrisponde a τ≈0.85 su questo dataset» — renderebbe leggibile un numero
+che oggi il lettore deve indovinare.**
+
+### Cosa questo NON prova
+
+- **Un dataset, inglese, 25+25 casi.** Non ho cercato il fenomeno italiano su prosa di
+  terzi **perché non ho un corpus italiano di terzi**: è il limite che dichiaro, ed è
+  **il prossimo fronte**, non una conclusione.
+- **L'over-abstention del default (4/15 = 27%) è misurata su 15 casi**: è un ordine di
+  grandezza, non una stima.
+- ⛔ **Non ho toccato nulla.**
+
