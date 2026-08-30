@@ -11692,3 +11692,41 @@ for e in failure cancelled success; do for p in 1 2 3; do
 done; done | sort -k2 -r | head
 python docs/stato-reale/banchi/ws8-quanto-e-vecchio-cio-che-la-ci-sa.py
 ```
+
+---
+
+## ws1 · 30/08 23:39 — QUATTRO CORPORA DIVERSI, SEMPRE 56 RISPOSTE SU 114: È IL FLOOR A DECIDERE IL RICHIAMO, NON LA MEMORIA
+
+**Livello**: la porta pubblica, retriever e gate veri, regime di default. **Perimetro**: il terzo A/B di scala, il più severo — **concorrenza sulle STESSE ENTITÀ**. Stesse 114 domande, stesse sonde, **1996 frasi aggiunte** come negli altri due. **Istante**: 23:32–23:38. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Paga il terzo limite dichiarato alle 23:27: *«stesso dominio non è stesse entità»*.
+
+**Criterio di raccolta dichiarato, con le perdite contate**: «entità» = parole capitalizzate ≥3 lettere, non la prima parola, non interrogative — **606 entità** estratte dalle domande e dalle sonde (è un **proxy**, cattura anche falsi positivi come `Actor`, `Achievement`). «Frase competitrice» = frase del dump da 10 000 che nomina una di quelle entità, non già nel corpus base, **e che non contiene alcuna risposta**: trovate **2815**, **scartate 5796** proprio perché contenevano una risposta. Campione: le prime 1996 in ordine alfabetico.
+
+### 🔴 P-ENT-A FALSIFICATA — e il numero è lo stesso per la quarta volta
+
+| corpus (2397 frasi in tutti tranne il base) | candidati dal nuovo | serviti dal nuovo | **richiamo** |
+|---|---:|---:|---:|
+| base, 401 frasi | — | — | **56/114** |
+| + SQuAD v2 (altro dominio) | 15,3% | 0,0% | **56/114** |
+| + HaluEval (stesso dominio) | 61,1% | 5,9% | **56/114** |
+| **+ in-entità** (questo) | **54,6%** | **2,0%** | **56/114** |
+
+Non «circa il 49%»: **lo stesso identico numero, quattro volte**, mentre la composizione dei candidati passa dal 15% al 61% di materiale nuovo. Astensioni **35/114**, servite-senza-risposta **23/114** — anche queste tornano ai valori del corpus base.
+
+> **Il richiamo del prodotto non dipende da cosa c'è nella memoria. Dipende dal floor.** Le astensioni restano **34 «nothing scored above the relevance floor»** e **1** «no supporting facts».
+
+Il gate respinge **309 delle 311** frasi in-entità che il retriever gli passa.
+
+### ⚖️ P-ENT-B: non confermata — la differenza sta dentro l'intervallo
+
+Sonde servite **2/18**, contro 1/18, 1/16, 1/15 degli altri banchi. Con n=18 la distanza fra 5,6% e 11,1% è **ampiamente dentro l'errore**: **non affermo che sia salito.**
+
+Ma **il testo dei due casi conferma il tipo di falso amico** — struttura simile, entità diversa:
+- «*What team did Pete Elezovic play for that joined the AFL?*» → «*He played college football for the University of **Delaware**…*» (nel banco base era *Pittsburgh*: **frase diversa, stesso errore**).
+- «*When did the episode which followed the 1999 Kids' Choice Awards…*» → «*On October 6, **1999**, this version started to air in Hungarian also.*» — condivide **l'anno**.
+
+### Cosa questi dati NON provano — due limiti, e il primo è serio
+🔴 **Non ho verificato che siano le STESSE 56 domande** nei quattro banchi. Ho i conteggi, non l'identità. Che tre corpora diversi diano 56 domande *diverse* sarebbe una coincidenza tripla, ma **plausibile non è verificato**, e la conclusione «il floor decide» sarebbe più debole se le domande cambiassero. Serve rifare i banchi salvando l'identità delle domande servite: **è il primo controllo da fare**.
+🔴 **Il mio corpus in-entità è DEPURATO**: ho escluso **5796 frasi su 8611** (il 67%) perché contenevano una risposta. Un utente vero avrebbe anche quelle. Questo banco misura la concorrenza **fra fatti che non rispondono**, non la concorrenza fra risposte.
+Il proxy per «entità» è grezzo (parole capitalizzate): `Actor`, `Achievement`, `Act` sono nella lista. Vale in inglese, sul regime di default.
