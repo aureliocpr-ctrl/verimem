@@ -56,6 +56,24 @@ gli equivalenti no.** L'asimmetria **non sta in `L1.13`**: sta nei detector che 
 sul lato italiano. È una causa strutturale, e si somma al divario italiano che un'altra
 istanza misura sui dati.
 
+🤝 **E va RISTRETTA: la lingua conta solo dove decide `L1`.** Un'altra istanza aveva
+misurato l'opposto (attestazione nuda: IT ferma 4/4, EN solo 2/4) e le due misure sembravano
+contraddirsi. Non lo sono — **le sue frasi italiane usavano parole DENTRO le liste, le mie
+quelle FUORI**. Riconciliate, i suoi stessi dati mostrano la cosa che nessuna delle due
+diceva da sola:
+
+```
+   classe dove decide L1          divario di lingua       (attestazione nuda: 4/4 vs 2/4)
+   classe dove decide il GIUDICE  divario ZERO            (negazione: 4/4 e 4/4, L4-grounding)
+```
+
+⇒ 📌 **Chi stima il costo di allargare le liste lo pesi SOLO sulle classi `L1`**: dove
+decide il giudice, allargarle non serve.
+
+⚠️ **E contare le parole in lista SOVRASTIMA la copertura**: sempre da quei dati, dentro il
+perimetro e in inglese `L1` a volte **parla e non ferma** (`L1.20`+`domain-precision` con
+grounding 99.9 → `persist`). **Il perimetro non è l'unico problema: c'è anche la soglia.**
+
 ## 3. Quanto pesa davvero: 13,6%, non di più
 
 **`W7-65`**, sul corpus (**13418 fatti vivi**): **231 occorrenze su 1695** usano una forma
@@ -89,10 +107,20 @@ da confrontare e **nessun layer subentra**.
 
 ⇒ **Il quadro completo**:
 
-| | con FONTE | senza FONTE |
-|---|---|---|
-| **falso allarme** (ferma un vero) | 🔴 danno reale, moat a 99.3 | — |
-| **falso permesso** (lascia passare) | 🟢 coperto da `L4-grounding` | 🔴 **nessuna rete** |
+| | con FONTE **indipendente** | con fonte-**ECO** | senza FONTE |
+|---|---|---|---|
+| **falso allarme** (ferma un vero) | 🔴 danno reale, moat a 99.3 | — | — |
+| **falso permesso** (lascia passare) | 🟢 coperto da `L4-grounding` | 🔴 **la rete APPROVA** | 🔴 **nessuna rete** |
+
+🔴 **La colonna di mezzo è una CORREZIONE al quadro che avevo pubblicato**, e non viene da
+una mia misura: viene dal voto sulla guardia anti-eco. Se la «fonte» sono **le parole
+dell'agente stesso**, il moat gira, trova il claim davvero contenuto lì dentro, e
+**approva** — la difesa forte è accesa e non serve a niente, perché il testo contro cui
+misura non è indipendente. Due misure d'altri lo mostrano: **3 su 5 scappano con fonte-eco**,
+e il fail-closed anti-auto-sorgente **si aggira per riformulazione 3 volte su 3**.
+
+⇒ **«Il falso permesso ha una rete» vale SOLO se la fonte è indipendente.** Detto senza
+quella condizione — come l'avevo scritto io — è **troppo rassicurante**.
 
 📌 E `W7-61` mostra da dove nasce il falso permesso con fonte: la cura del 28/08 perdona
 quando **la parola compare nella fonte**, in **qualunque senso** — *«la strada è chiusa al
@@ -107,9 +135,15 @@ Toglierla riporterebbe indietro il verso che già fa danno.
 
 **② Chi la stringe deve sapere da che parte sta il rischio.** Il verso che arriva
 all'utente è il **falso allarme**: stringere il criterio senza questo dato **peggiora
-proprio quello**. Il falso permesso *con fonte* ha una rete; quello *senza fonte* no, ma si
-cura allargando il **vocabolario**, non stringendo il confronto con la fonte — sono due
-leve diverse e vanno mosse separatamente.
+proprio quello**. Il falso permesso ha una rete **solo con fonte indipendente**; senza
+fonte si cura allargando il **vocabolario**, con fonte-eco si cura **all'etichetta della
+provenienza**. ⚠️ **Tre leve diverse per tre buchi diversi** — e nessuna delle tre è
+«stringere il confronto con la fonte», che è la leva che peggiora i falsi allarmi.
+
+📌 Con la colonna eco, le facce note del buco `L1` sono **quattro** e convergono:
+**riformulazione** (`W7-62`) · **eco** (voto anti-eco) · **polisemia** (`W7-61`) ·
+**provenienza-etichetta** (ws2). La specifica non le cura: dice **dove sono** e **quale
+leva tocca ciascuna**.
 
 **③ Il perimetro è un elenco, e un elenco si allunga.** Le forme più frequenti fuori
 elenco sono misurate (`W7-65`) e si possono aggiungere. ⚠️ Ma **allargare l'elenco aumenta i
