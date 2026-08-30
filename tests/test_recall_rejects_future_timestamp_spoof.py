@@ -87,18 +87,31 @@ def test_legacy_path_rejects_future_last_verified_at(tmp_path) -> None:
 # la seconda e' quella che rende la prima non banale: un `deep` che facesse
 # riemergere tutto sarebbe facile e sbagliato.
 #
-# I due test qui sopra presidiano la guardia nei due percorsi di recall, ma in
-# regime NORMALE: nessuno dei due nomina `deep`, ed e' proprio nel regime
-# «archeologia» che un lettore puo' credere che il nascondimento venga tolto
-# in blocco. Misurato il 2026-08-31 alle 01:13, store temporaneo, tre fatti con
-# tre soggetti distinti e le date spostate via SQL diretto — lo scenario che il
-# docstring di `_fact_is_stale` rivendica esplicitamente di coprire («per
-# QUALSIASI path di scrittura: store, SQL diretto, migrazione»)::
+# 🚨 CORREZIONE, 01:22 — LA COPERTURA ESISTEVA GIA' ALTROVE, e questa cella NON
+# colma un buco. `tests/test_deep_recall_asof.py::test_deep_keeps_integrity_guards`
+# fa gia' la stessa asserzione (spoof con transaction time futuro escluso con
+# `deep=True`, piu' `valid_until` scaduto). Quando ho aggiunto questa cella
+# avevo sweepato SOLO questo file e avevo scritto sul canale «nessuna cella
+# nomina `deep`»: vero di questo file, falso del repo. ⚠️ E' la classe che
+# avevo citato un'ora prima — *manca lo sweep: chi ALTRO fa la stessa cosa?* —
+# commessa mentre la citavo.
+# ⚖️ PERCHE' LA CELLA RESTA: localizzazione, non copertura. Chi apre il file
+# dello spoof per capire quanto sia difesa la guardia trova qui anche il caso
+# `deep`, senza dover sapere dell'altro file. Il valore e' quello, ed e'
+# dichiarato: se un giorno pesasse piu' del suo costo, si toglie questa e resta
+# quella.
+#
+# I due test qui sopra presidiano la guardia nei due percorsi di recall in
+# regime NORMALE. Misurato il 2026-08-31 alle 01:13, store temporaneo, tre
+# fatti con tre soggetti distinti e le date spostate via SQL diretto — lo
+# scenario che il docstring di `_fact_is_stale` rivendica esplicitamente di
+# coprire («per QUALSIASI path di scrittura: store, SQL diretto, migrazione»),
+# e che l'altro file NON esercita (li' le date si scrivono via `Fact(...)`)::
 #
 #     senza deep   torna solo il fatto recente
 #     con deep     torna anche il dormiente (200 giorni), NON quello futuro
 #
-# ⇒ La promessa regge in entrambe le meta'. Questa cella la tiene ferma.
+# ⇒ La promessa regge in entrambe le meta'.
 #
 # 🪞 E vale la pena scriverlo: la prima misura diceva il CONTRARIO — che il
 # fatto futuro riemergesse con `deep`. Era un difetto del misuratore (il token
