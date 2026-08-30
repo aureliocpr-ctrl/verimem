@@ -111,3 +111,52 @@ nessuna delle due superfici.** Le altre quattro, che raccontano il passato, sono
 ⚠️ **Resta non separato** (vedi sopra) se sull'SDK il valore instradi davvero alla document policy
 con esito identico, oppure non instradi affatto: **non ho letto quel codice**, e la differenza
 cambia la cura, non il fatto che il consiglio non sia azionabile.
+
+
+---
+
+## Aggiunta delle 23:50 — le due cause sono separate: il rimedio non viene MAI letto
+
+Sopra restava aperto se `external_content` **instradasse davvero** alla document policy (con esito
+identico) oppure **non instradasse affatto**. Letto il codice: **`verimem/admission_gate.py`,
+righe 253-260**.
+
+```python
+_inj = detect_injection(prop)
+_inj_topic = detect_injection(topic)
+if _inj.is_injection or _inj_topic.is_injection:
+    return AdmissionVerdict(FLAG_INJECTION, "prompt-injection signals: …", False)
+```
+
+**Il controllo sull'injection è il PRIMO del gate e ritorna immediatamente.** `writer_role` compare
+una sola volta, alla **riga 276** — cioè **sedici righe dopo**, in un punto che **non viene mai
+raggiunto** quando l'injection scatta:
+
+```python
+ungrounded = (status == "model_claim") and (not se) and (writer_role in (None, "agent_inference"))
+```
+
+⇒ **Non è «instrada e la document policy fa lo stesso»: è che il valore non viene mai letto su quel
+ramo.** Il rimedio **non può funzionare, per costruzione.**
+
+## 🟢 E il posizionamento è GIUSTO — il che sposta la cura
+
+Il commento sopra quelle righe spiega perché il controllo sta lì, e la ragione è solida:
+
+> *«is screened here, not only in `SemanticMemory.store` (red-team 2026-07-21: every OTHER caller of
+> this function — `requalify_quarantined`, `cleanup_telemetry`, `audit_corpus` — was blind to a
+> poisoned topic). The scan runs BEFORE the telemetry-prefix branch on purpose: **a declared prefix
+> must never out-rank an injection payload sitting in the topic**.»*
+
+**Uscire per primi è una scelta deliberata e difendibile**: nessun campo dichiarato dal chiamante —
+né un prefisso, né `writer_role` — deve poter scavalcare un sospetto di injection. **Questa parte
+del prodotto è progettata bene.**
+
+⇒ 🔑 **Quindi la cura NON è spostare il controllo né far leggere `writer_role` prima: sarebbe
+indebolire un presidio per accontentare un messaggio.** La cura è **il messaggio**: la ricevuta
+consiglia un'azione che, su questo ramo, il codice non guarda. **È una riga di testo, non una riga
+di logica** — e finché resta com'è, chi la segue perde tempo su un'istruzione che non può avere
+effetto.
+
+📌 **Questo chiude anche la formulazione**: non «la ricevuta mente», ma **«la ricevuta dà un
+consiglio giusto per un altro ramo del gate, stampato su un ramo che non lo usa»**.
