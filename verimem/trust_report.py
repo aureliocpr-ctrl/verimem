@@ -211,11 +211,29 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         cs = ContradictionStore(sm.db_path)
     except Exception:  # noqa: BLE001 — disputes are an enrichment
         cs = None
+    _deg_prima = getattr(sm, "_recall_degraded_count", 0) or 0
     if as_of is not None:
         from .temporal_context import recall_as_of
         hits = recall_as_of(sm, query, when=float(as_of), k=k)
     else:
         hits = sm.recall(query or "", k=k, deep=deep)
+    # ⚠️ IL QUINTO CONSUMATORE DEL CONTATORE DEL DEGRADO. Quando l'encoder
+    # non risponde entro il budget, `recall` cade sul ramo keyword e assegna
+    # `0.0` a TUTTI i punteggi: non «nessuna somiglianza» ma somiglianza NON
+    # MISURATA. Il commento di `client.py` accanto a `floor_applied_by` nomina
+    # gia' questa classe — «un numero con la forma di una misura che significa
+    # altro» — e il filtro qui sotto ne era l'istanza. Misurato sull'SDK il
+    # 2026-08-31, cinque fatti, pavimento 0.5, giudice locale assente::
+    #
+    #     a caldo     n=5  abstained=False   ·  senza pavimento  n=5
+    #     degradato   n=0  abstained=True    ·  senza pavimento  n=5
+    #
+    # ⇒ e l'aggravante che le altre porte non hanno: il dossier **dichiarava
+    # l'astensione** (`abstained: True`) su un vuoto prodotto dal degrado. La
+    # porta che esiste per sapere quando non sa, diceva di non sapere per la
+    # ragione sbagliata.
+    _ranking_degradato = (getattr(sm, "_recall_degraded_count", 0) or 0
+                          ) > _deg_prima
     floored = False
     # Abstention floor. ``ce_gate`` is set ONLY when the caller asked for the
     # "auto" floor (delegate the decision to the store): there we prefer the CROSS-
@@ -231,7 +249,7 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         hits, ce_floored, ce_status = _apply_ce_gate(sm, query, hits)
         floored = floored or ce_floored
     ce_ran = ce_status == "ran"
-    if min_relevance > 0.0 and not ce_ran:
+    if min_relevance > 0.0 and not ce_ran and not _ranking_degradato:
         kept = [h for h in hits
                 if len(h) > 1 and h[1] is not None and h[1] >= min_relevance]
         floored = floored or (len(kept) < len(hits))
@@ -300,6 +318,12 @@ def build_trust_report(sm, query: str, *, k: int = 5, deep: bool = False,
         "deep": bool(deep),
         "k": k,
         "min_relevance": min_relevance,
+        # E LO DICE: senza, un dossier PIENO nonostante un pavimento alto
+        # e' inspiegabile da fuori, ed e' la stessa lettura ambigua che il
+        # campo qui sopra esiste per togliere. Stesso nome e stessa
+        # convenzione della porta della cronaca (`null` = nessun degrado
+        # dichiarato): due porte che parlano la stessa lingua.
+        "ranking_degraded": (True if _ranking_degradato else None),
         "generated_at": time.time(),
         "scope": TRUST_SCOPE,
         # the causal moat (Vivarium P38/P49): type the evidence and route — a do(X)
