@@ -9915,3 +9915,44 @@ Ho riscritto i punti **validi** e l'ho dichiarato sul canale.
 verimem save "Il caso 2 … ha grounding 99.93…" --topic ga --source "### ② … g=99.93…"   # ~38
 verimem save "Il caso 2 … ha grounding 99.93…" --topic gb --source "### 2 … g=99.93…"   # ~98
 ```
+
+**㉘ `41` — la supersessione sceglie sei volte meglio del caso, e il danno è sceso di due terzi.**
+**La prima buona notizia misurata della serata.** Righello preso dalla **source** del fact
+`cb4043575870`, non reinventato: coppie **(ritirato non quarantinato, sostituto)**, **Jaccard** fra
+le proposizioni, **<0,15 = «parlano d'ALTRO»**, **>0,80 = duplicati**.
+📊 **Perimetro allineato a quello storico — `writer_role='user'`, le scritture NOSTRE** (istante
+21:44:55 del 30/08):
+
+| | coppie | «parlano d'ALTRO» | mediana jaccard |
+|---|---|---|---|
+| prima del 25/08 | 202 | **66 = 32,7%** | 0,224 |
+| dal 25/08 | 246 | **25 = 10,2%** | 0,375 |
+
+✅ **IL CONTROLLO SENZA IL QUALE IL NUMERO NON VALE** — somiglianza di fondo fra fatti nostri vivi
+dello stesso topic **mai coinvolti in supersessione** (max 40 coppie/topic, seed 7): **prima mediana
+0,091, sotto 0,15 = 62,6%** (7.066 fatti) · **dopo mediana 0,077, sotto 0,15 = 63,4%** (2.102) ⇒ **il
+fondo non cambia, anzi scende** ⇒ **il miglioramento non è un artefatto di come scriviamo**, viene da
+*quali* fatti vengono ritirati.
+🎯 **Il numero che vale**: un ritiro **cieco** dentro il topic colpirebbe un fatto che dice altro nel
+**63%** dei casi — è la somiglianza tipica fra due fatti dello stesso topic. Le supersessioni reali
+ne colpiscono il **10,2%**. ⇒ **sceglie 6 volte meglio del caso**; prima del 25/08 ne sceglieva **2**
+(32,7% contro 62,6%). **Non è «cieco con un tasso d'errore»: discrimina, e la cura ne ha triplicato
+la selettività.**
+📌 **Quello che resta, e non va nascosto**: **25 coppie** ritirano ancora un fatto che dice altro · la
+cura «un topic per misura» **non è applicata integralmente** — nella forma piena produce **zero**
+supersessioni (rubinetto chiuso: 90 fatti/36h), dal 25/08 le nostre sono **246** · il fondo è
+**campionato** · **zero** supersessioni coinvolgono un MASTER da nessuno dei due lati (il filtro non
+era rotto: non c'era nulla da filtrare) · **non ho misurato PERCHÉ il 25/08 sia lo spartiacque**: ho
+confrontato attorno a quella data perché è la data della cura registrata in memoria, non perché
+l'abbia trovata nei dati.
+🪞 **Terzo inciampo della stessa famiglia in una sera, ma stavolta preso in tempo**: la prima misura
+era su **918 coppie non filtrate** e diceva «non duplicati 62,7% contro 34,2%», cioè *peggiorato*.
+Era un confronto **fra popolazioni diverse** — il fatto storico dichiarava «coppie SCRITTE DA NOI:
+321 su 579». Dopo il 40,3% a due ere (㉕) e i 54 che ne contenevano 11 di un'altra popolazione (㉖),
+**stavolta me ne sono accorto prima di scriverlo.**
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-la-supersessione-oggi.py   # fasce + fondo, gia' su writer_role=user
+```
