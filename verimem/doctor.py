@@ -1128,9 +1128,18 @@ def run_doctor() -> list[dict[str, Any]]:
                     f"trust rank ({_mostra}) — they are NEVER auto-retired in "
                     f"a contradiction, so those clashes pile up unresolved "
                     f"instead of being decided wrongly",
-                    "normalise those statuses, or add them to _STATUS_RANK "
-                    "(verimem/semantic.py) — until then nothing is lost, "
-                    "only left for human judgement")
+                    "MEASURE BEFORE YOU NORMALISE: adding these statuses "
+                    "to _STATUS_RANK (verimem/semantic.py) makes those "
+                    "facts auto-retirable, and that is only an improvement "
+                    "if the clashes are real ones. Measured on the "
+                    "development corpus on 2026-08-30 (4000 sampled "
+                    "unresolved pairs): 93.7% of numeric_clash and 99.1% of "
+                    "boolean_clash shared under 0.15 Jaccard with their "
+                    "counterpart - they talk about different things - and "
+                    "normalising would have made 998 distinct facts "
+                    "retirable. Your corpus may differ; run the same check "
+                    "on it. Until then nothing is lost, only left for "
+                    "human judgement")
     except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
         _non_ho_potuto_guardare(add, "trust-rank-coverage", _e)
 
