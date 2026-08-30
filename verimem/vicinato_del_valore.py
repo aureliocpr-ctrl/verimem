@@ -108,6 +108,27 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
     return seguenti, precedenti
 
 
+#: Parole che NON nominano una grandezza: articoli, preposizioni, congiunzioni,
+#: ausiliari, IT ed EN. Serve solo al TESTO della ricevuta — il criterio con cui
+#: `L4.2` decide non la vede, e questo e' voluto: filtrare il criterio
+#: cambierebbe **quali** fatti vengono segnalati, non **come** si raccontano.
+#: ⚠️ La lista e' una scelta dichiarata: una voce in piu' o in meno sposta il
+#: testo mostrato, mai il verdetto.
+_GRAMMATICA = frozenset({
+    "il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "l", "d",
+    "del", "dello", "della", "dei", "degli", "delle", "dell", "di", "da",
+    "dal", "dalla", "dai", "dagli", "dalle", "in", "nel", "nella", "nei",
+    "negli", "nelle", "nell", "con", "col", "su", "sul", "sulla", "sui",
+    "sugli", "sulle", "sull", "per", "tra", "fra", "a", "al", "allo",
+    "alla", "ai", "agli", "alle", "all", "e", "ed", "o", "od", "ma",
+    "che", "chi", "cui", "non", "come", "se", "si", "ne", "ci", "vi",
+    "gia", "ancora", "solo", "anche", "poi", "piu", "meno", "ogni",
+    "the", "an", "of", "on", "at", "to", "for", "and", "or", "is", "are",
+    "was", "were", "be", "been", "with", "by", "from", "as", "it", "its",
+    "this", "that", "these", "those", "not", "only", "also", "each",
+})
+
+
 def _da_mostrare(dopo: set[str], prima: set[str]) -> str:
     """Il contesto da mostrare nella ricevuta, col lato DICHIARATO.
 
@@ -121,11 +142,35 @@ def _da_mostrare(dopo: set[str], prima: set[str]) -> str:
     Il lato precedente non sostituisce quello seguente: lo integra quando
     l'altro non c'e', e si annuncia, perche' «linea» detto senza dire da che
     parte sta rispetto al numero e' ambiguo quanto «?».
+
+    ⚠️ ESTESO IL 30/08 — «quando l'altro non c'e'» diventa «quando l'altro NON
+    DICE NIENTE». La riga sopra restava vera e insufficiente: il token adiacente
+    puo' esserci ed essere **solo grammatica**, e allora la ricevuta stampa una
+    grandezza che grandezza non e'. Il caso che l'ha aperto::
+
+        26 qui e' «fatti», nella fonte «di fonti il la non su»
+
+    MISURATO PRIMA DI CURARE (`W7-80`, popolazione INTERA, 6176 fatti con
+    fonte): il lato `nella_fonte` e' **solo grammatica nel 15,5%** dei casi, il
+    lato `nel_claim` nel **34,6%** — e l'avviso tocca **3077 fatti (49,8%)**.
+    ⇒ Il commento qui sopra diceva «spessissimo», che e' un avverbio: ora c'e'
+    il numero, ed e' **piu' basso di quanto l'avverbio lasciasse credere sul
+    lato che nomina, e piu' alto sull'altro**.
+
+    ⚖️ La regola originale NON e' rovesciata: quando il lato che segue e'
+    PIENO resta quello (il presidio che lo fissa continua a passare). Cambia
+    solo il caso in cui «c'e'» e «serve» non coincidono.
     """
-    if dopo:
-        return " ".join(sorted(dopo))
-    if prima:
-        return "prima del numero: " + " ".join(sorted(prima))
+    dopo_utili = {t for t in dopo if t not in _GRAMMATICA}
+    prima_utili = {t for t in prima if t not in _GRAMMATICA}
+    if dopo_utili:
+        return " ".join(sorted(dopo_utili))
+    if prima_utili:
+        return "prima del numero: " + " ".join(sorted(prima_utili))
+    if dopo or prima:
+        # C'erano parole, ma nessuna nomina una grandezza. Dirlo e' meglio che
+        # stamparle: chi legge crederebbe che QUELLA sia la grandezza.
+        return "(solo parole grammaticali accanto)"
     return "(nessuna parola accanto)"
 
 
