@@ -80,7 +80,13 @@ def main() -> int:
             vb = json.loads(vb_raw or "[]")
         except Exception:  # noqa: BLE001
             vb = []
-        ws = _l1_warnings(prop or "", vb, source=span or None,
+        # `topic=` AGGIUNTO dopo la controfirma di un'altra istanza, che ha
+        # notato l'omissione e **l'ha misurata invece di segnalarla**: A/B sulla
+        # stessa popolazione, 385 senza topic e 385 col topic vero, **layer
+        # diversi in ZERO fatti**. ⇒ Il numero reggeva; questa e' igiene, e su
+        # un'altra popolazione potrebbe discriminare — `L1` guarda il topic dal
+        # 2026-08-04 (`("L1", detect_unsupported_shipped_claim, {"topic": …})`).
+        ws = _l1_warnings(prop or "", vb, topic=topic, source=span or None,
                           provenance=classify_provenance(wr, vb))
         lay = sorted({str((w or {}).get("layer") or "?") for w in (ws or [])})
         if lay:
