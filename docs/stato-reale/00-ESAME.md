@@ -9149,3 +9149,63 @@ telemetria**.
 ```bash
 verimem doctor | grep -A3 "daemon\|embedding-model"   # prima e dopo `verimem warmup`
 ```
+
+---
+
+## ws1 — Il divario IT/EN su 45 entità: 0/45 contro 5/45. E dà lo STESSO numero in regime degradato e in regime valido — quindi non passa dall'embedding
+
+**Livello**: `Memory.explain()`, regime di default. **Dataset**: **HaluEval QA (MIT)**, 451
+frasi di terzi, **45 entità** estratte dal corpus. **Perimetro**: 90 prove. **Istante**: 30/08
+21:06-21:11. **Regime**: **verificato verde PRIMA (`degradato = False`) e DOPO il banco da 90
+store**.
+
+### Il debito chiuso e il numero allargato
+
+Prima ho **riverificato le quattro celle del costrutto** col presidio **a fine di ogni cella**:
+```
+A EN possessivo 0/14 [ok] · B EN senza apostrofo 0/14 [ok]
+C IT con è      2/14 [ok] · D IT con e'          2/14 [ok]
+```
+**Identici alla prima esecuzione, e ogni cella in regime valido** ⇒ **il limite che avevo
+dichiarato alle 20:41 è chiuso: la tenuta regge.**
+
+Poi l'allargamento, **da 14 a 45 entità**:
+```
+ATTRIBUTO ASSENTE — query EN:  0/45  (0,0%)
+ATTRIBUTO ASSENTE — query IT:  5/45  (11,1%)
+   Taylor Swift · Josh Hutcherson · Robin Schulz · Danny Brown · Badr Hari
+```
+⇒ **il divario regge su un campione tre volte più grande**: 11,1% contro 0%.
+
+### 🔑 E c'è un fatto sul MECCANISMO — il primo che ottengo
+
+**Questo numero è IDENTICO a quello che ieri avevo RITIRATO perché misurato in regime
+degradato** (5/45 IT, 0/45 EN). ⇒ **il fenomeno dà lo stesso risultato con l'embedding e
+senza** (quando il recall degrada a keyword).
+
+**Se il divario passasse dal ramo denso, il degrado l'avrebbe cambiato. Non l'ha cambiato.**
+⇒ **la causa NON è nell'embedding**: sta nel CE gate, nel lessicale, o nella soglia. È la prima
+volta che restringo il *dove*, dopo aver escluso solo dei *cosa* (dedizione, forma, tipo di
+domanda, costrutto, apostrofo, `e'`/`è`).
+
+⚖️ **E ritiro parzialmente il mio ritiro di ieri**: il `5/45` l'avevo tolto **perché il regime
+non era verificato**, e **come metodo era giusto** — ma **il numero era buono**. *Ritirare per
+regime ignoto resta corretto anche quando il numero poi regge: il ritiro non era sul valore,
+era sulla sua verificabilità.*
+
+### Il sospetto sui banchi pesanti si indebolisce
+
+Avevo notato che due volte il degrado aveva seguito banchi con decine di store. **Stavolta 90
+store e il regime è verde in coda.** ⇒ **due osservazioni a favore, una contraria: non è un
+pattern affidabile, e lo declasso a coincidenza finché qualcuno non lo isola.**
+
+### Cosa questo NON prova
+
+- ⚠️ **Il presidio per-cella non è finito nel file** (verificato dopo: `grep` non lo trova),
+  quindi ho **inizio e fine verdi, non ogni cella**. Per le quattro celle del costrutto invece
+  il per-cella c'era ed era ok.
+- **5 fallimenti su 45**: è ora un **ordine di grandezza sostenuto da 45 casi**, non una stima
+  di precisione.
+- **Le domande italiane le scrivo io**; **lo store è di terzi**.
+- **Non ho la causa**: ho escluso l'embedding, non ho isolato cosa resta.
+
