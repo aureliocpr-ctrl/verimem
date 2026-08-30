@@ -30,6 +30,8 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass
 
+from .gate_router import AGENT_CLAIM
+
 _COMPLETION_PATTERN = re.compile(
     r"\b(?:complete|completed|done|finished|closed|"
     r"wrapped[- ]up|all[- ]done|task[- ]done|"
@@ -205,6 +207,7 @@ def detect_unsupported_completion_claim(
     proposition: str,
     verified_by: Iterable[str] | None,
     source: str | None = None,
+    provenance: str | None = None,
 ) -> CompletionClaimWarning | None:
     """Return Warning if proposition contains completion claim AND
     verified_by lacks closing criteria evidence. Else None.
@@ -212,6 +215,10 @@ def detect_unsupported_completion_claim(
     ``source`` e' opzionale e il default ``None`` lascia invariato ogni
     chiamante che non lo passa: senza fonte non c'e' niente da confrontare e il
     comportamento e' quello di prima.
+
+    ``provenance`` — da `gate_router.classify_provenance` — decide se il perdono
+    del participio si applichi: vedi `_il_participio_e_nella_fonte`. Anche qui il
+    default ``None`` lascia invariato chi non lo passa.
     """
     if not proposition:
         return None
@@ -233,7 +240,15 @@ def detect_unsupported_completion_claim(
     # che RICALCA la fonte — e su un verbale d'ufficio («la consegna e' stata
     # fatta», «la pratica e' stata chiusa») fermava il secondo credendolo il
     # primo. Reperto dell'esame del 2026-08-28; l'assegnazione sta nel registro.
-    if _il_participio_e_nella_fonte(matched_text, source):
+    #
+    # ⛔ GUARDIA ANTI-ECO (30/08, votata 3/3 sul registro dell'esame). La cura
+    # del 28/08 dichiarava il proprio limite — «si perdona solo cio' che la fonte
+    # scrive» — ma non nominava che **chi scrive la fonte puo' essere chi scrive
+    # il claim**: ripassando la stessa frase come `source` il match e' verbatim
+    # PER COSTRUZIONE, e un banco indipendente l'ha misurato **5 su 5**.
+    # Quando parla l'agente, la sua `source` non e' una testimonianza: e' un'eco.
+    if provenance != AGENT_CLAIM and _il_participio_e_nella_fonte(
+            matched_text, source):
         return None
     # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
     # del corpus (2026-07-30): 1 affermazione 9%, 2-3 16%, 4-9 30%, 10+ 45% —

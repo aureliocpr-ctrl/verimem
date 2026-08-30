@@ -1323,6 +1323,7 @@ def _l1_warnings(
     proposition: str, verified_by: Iterable[str] | None,
     topic: str | None = None,
     source: str | None = None,
+    provenance: str | None = None,
 ) -> list[dict[str, Any]]:
     """Run the L1 family detectors; return one warning dict per positive.
 
@@ -1447,6 +1448,7 @@ def _l1_warnings(
     # Cycle 2026-05-27 (round 5): L1.13 completion claim detector.
     comp = detect_unsupported_completion_claim(
         proposition=proposition, verified_by=vb_list, source=source,
+        provenance=provenance,
     )
     if comp is not None:
         out.append({
@@ -1936,9 +1938,14 @@ def run_validation_gate(
     _l1_ha_giurisdizione = (
         not provenance_trusted
         or _gr_l1x_applies(_gr_classify_provenance(writer_role, _vb_list)))
+    # ⛔ GUARDIA ANTI-ECO: la stessa provenienza che decide se `L1` abbia
+    # giurisdizione decide anche se il perdono del participio si applichi. Il
+    # detector da solo non puo' saperlo — vede la `source`, non chi l'ha
+    # scritta — e la giuntura sta qui, al punto in cui la provenienza esiste.
+    _provenienza = _gr_classify_provenance(writer_role, _vb_list)
     warnings = ([] if narrative_l1_skip or not _l1_ha_giurisdizione
                 else _l1_warnings(proposition, _vb_list,
-                                 source=source))
+                                 source=source, provenance=_provenienza))
     verified_by = _vb_list
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
@@ -1960,7 +1967,7 @@ def run_validation_gate(
     if (repo_root is not None and not warnings and verified_by is not None
             and not narrative_l1_skip):  # companion of the L1 family above
         would_fire_without_evidence = _l1_warnings(
-            proposition, None, source=source)
+            proposition, None, source=source, provenance=_provenienza)
         if would_fire_without_evidence:
             from .provenance_validator import any_evidence_ref_exists
             if not any_evidence_ref_exists(verified_by, repo_root=repo_root):
