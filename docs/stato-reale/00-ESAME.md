@@ -9333,3 +9333,43 @@ significa che **la soglia è troppo alta perché qualunque cosa passi** — il b
   bi-encoder è dichiarato multilingue (`intfloat/multilingual-e5-base`); **del CE non ho
   verificato la lingua di addestramento** e non lo affermo.
 
+
+**㉔ `38` (terza correzione) — il referto promette un fallback che l'ambiente vieta.** Segnalato da
+**ws1**, verificato da me nel codice prima di riscriverlo. `verimem/embedding.py:283-286`:
+```python
+if _delegate_only() and not is_loaded():
+    raise EncodeDelegateUnavailable(
+        "encode daemon unavailable and in-process cold-load is disabled "
+        "(HIPPO_ENCODE_DELEGATE_ONLY=1) — caller must degrade")
+```
+e nel processo **`HIPPO_ENCODE_DELEGATE_ONLY` vale `1`**. ⇒ **Non esiste alcun cold start**: senza
+daemon la funzione **solleva** e il chiamante degrada **per tutta la vita del processo**. La causa è
+una **congiunzione — daemon assente E caricamento locale vietato** — e nessuna delle due metà, da
+sola, spiega perché non si recuperi dopo venti secondi.
+🎯 **Quindi `verimem doctor` dichiara il falso in questo ambiente**: *«first encode in each process
+cold-loads the model (~20s)»*, con fix *«run `verimem warmup` once»*. **Il referto non legge la
+variabile che decide il comportamento che sta descrivendo** — **è la stessa forma del difetto che il
+`38` contesta alla telemetria**, in un altro punto del prodotto: una dichiarazione che non guarda lo
+stato di cui parla. ⇒ **due presidi, lo stesso vizio: uno tace ciò che sa, l'altro afferma ciò che
+non ha guardato.**
+📌 Da ws1, come sua misura e non mia: il daemon è **intermittente** (verde 18:11 e 20:16, rosso
+20:37 e 20:5x) ⇒ **`verimem warmup` una volta non basta, la cura è un presidio**; e **togliendo quella
+variabile l'embedding non è tornato** (timeout 180 s) ⇒ **manca un pezzo, e non lo inventiamo**.
+🪞 **Sesto difetto mio della serata**: quella riga del `doctor` l'avevo **ripetuta nel documento e
+mandata al canale senza aprire il codice**, e ho dovuto **rettificare pubblicamente** un consiglio
+operativo già dato a sette istanze. **Un referto è un claim come un altro**: la regola «output del
+modello = claim finché non è verificato» vale anche quando il claim viene dal prodotto.
+✅ **Sottoprodotto utile — la ricetta della source che passa il gate**: dopo **3 quarantene meritate**
+(L4.1 *«il claim afferma un valore che la fonte non contiene: 20.53»* — l'**ora**, che la source non
+aveva; L4.2 *«278 qui è "vettori", nella fonte "do"»* — la fonte scriveva `0d: 278`, dove numero e
+grandezza non sono legati da parole; L4-grounding *«This proposition splits into 2»*), la forma
+**«output grezzo + una riga di prosa che lega numero e grandezza, una affermazione per fatto»** ha
+dato **8 fatti ammessi su 8**, grounding **99,64-99,98**.
+
+**rifallo con:**
+
+```bash
+sed -n '280,290p' verimem/embedding.py     # il raise, e il messaggio che nomina la ENV
+python -c "import os; print(os.environ.get('HIPPO_ENCODE_DELEGATE_ONLY'))"
+verimem doctor | grep -A2 "daemon"          # la riga che promette il cold-load
+```
