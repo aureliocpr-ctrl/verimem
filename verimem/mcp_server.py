@@ -8050,10 +8050,48 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 user_name=arguments.get("user_name"))
             _audit(name, arguments,
                    outcome="ok" if not res.get("error") else "llm_error")
-            return _ok({**res,
-                        "note": ("atomic facts stored as low-trust model_claim "
-                                  "with conversation provenance; evidence "
-                                  "elevates status, never the chat itself")})
+            # ⚠️ LA NOTA AFFERMAVA AL PRESENTE UN ESITO CHE POTEVA NON ESSERCI.
+            # Misurato alla porta il 2026-08-30 alle 23:29, due messaggi con
+            # un numero verificabile e nessun llm raggiungibile:
+            #
+            #     stored 0 · rejected 0 · extracted 0 · fact_ids []
+            #     error  null
+            #     note   "atomic facts stored as low-trust model_claim …"
+            #
+            # Nessun fatto memorizzato, nessun errore dichiarato, e una nota
+            # che dice «stored». Chi legge `error: null` e quella frase
+            # conclude che l'ingestione sia andata: `rejected: 0` si legge
+            # come «niente è stato rifiutato», che qui e' vero e fuorviante —
+            # non c'era niente da rifiutare perche' non e' stato estratto
+            # nulla. E' la forma che questa notte ha incontrato piu' volte:
+            # una misura che NON C'E' si legge come un risultato buono.
+            # I numeri per distinguere i due casi erano gia' tutti nella
+            # ricevuta; mancava che la riga in prosa li leggesse.
+            _n_stored = int(res.get("stored") or 0)
+            _n_extracted = int(res.get("extracted") or 0)
+            if res.get("error"):
+                _nota = (f"NOTHING was ingested: the extraction step failed "
+                         f"({res['error']}). No fact was stored and none was "
+                         f"rejected — 'rejected: 0' here means there was "
+                         f"nothing to reject.")
+            elif not _n_extracted:
+                _nota = ("NOTHING was ingested: the extractor returned no "
+                         "atomic fact from this conversation, and reported no "
+                         "error. That is either a conversation with no "
+                         "factual claim in it, or an extractor that could not "
+                         "run (it needs an llm — `verimem doctor` says which "
+                         "judge/llm this install has). 'rejected: 0' means "
+                         "there was nothing to reject, NOT that everything "
+                         "passed.")
+            elif not _n_stored:
+                _nota = (f"{_n_extracted} atomic fact(s) were extracted and "
+                         f"NONE was stored: the gate rejected them all. See "
+                         f"`rejected` and re-read the claims.")
+            else:
+                _nota = ("atomic facts stored as low-trust model_claim "
+                         "with conversation provenance; evidence "
+                         "elevates status, never the chat itself")
+            return _ok({**res, "note": _nota})
 
         if name == "hippo_import_conversations":
             # Onboarding import (roadmap #2) — consent-first: default = list
