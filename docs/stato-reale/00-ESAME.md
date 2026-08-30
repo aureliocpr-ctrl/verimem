@@ -9563,3 +9563,43 @@ scrive (che riceve un `admitted`), né la telemetria (cella ㉒).
 python docs/stato-reale/banchi/ws6-quanti-mai-giudicati.py       # separa le ere PRIMA di contare
 python docs/stato-reale/banchi/ws6-le-finestre-cieche-di-oggi.py # blocchi, non sparsi
 ```
+
+**㉖ `39` (correzione) — sono 43, non 54; e il 28 e 29 agosto non avevano finestre cieche.**
+🪞 **Settimo difetto della serata, e il più imbarazzante**: avevo separato MASTER e lavoro **fra i
+blocchi** e non **dentro il blocco**. Il conto esatto:
+```
+blocco 20:30:10-20:53:20 -> totale 54 : MASTER 11, lavoro 43
+```
+⇒ **il costo del daemon oggi è 43 fatti di lavoro**, non 54. **La stessa svista alla scala
+inferiore, cinque minuti dopo averla denunciata** — una separazione applicata fra i gruppi e non
+dentro i gruppi non è una separazione. Rettificato anche al canale.
+✅ **E rifacendo il conto ho chiuso il limite che avevo dichiarato nel `39`, con la risposta
+OPPOSTA a quella che mi aspettavo:**
+
+| giorno | mai giud. | MASTER | lavoro | blocco più lungo |
+|---|---|---|---|---|
+| 26/08 | 1 | 1 | **0** | — |
+| 27/08 | 14 | 2 | 12 | **2,1 min** (10 fatti) |
+| 28/08 | 9 | **9** | **0** | — |
+| 29/08 | 6 | **6** | **0** | — |
+| **30/08** | 70 | 25 | 45 | **23,2 min** (43 di lavoro) |
+
+**Il 28 e il 29 agosto non hanno alcuna finestra cieca**: *ogni singolo* fatto non giudicato di quei
+giorni è un MASTER del consolidamento, cioè una sintesi senza source da giudicare. ⇒ **Il daemon NON
+è intermittente da quattro giorni.** Le morti che hanno prodotto danno sono **due**: il **27/08 per
+2,1 minuti** e **oggi per 23,2**. ⇒ **Oggi è un peggioramento DI NATURA, non di grado: dieci volte la
+finestra più lunga mai osservata prima.**
+⚠️ **Non misurato**: *perché* la finestra di oggi sia stata così più lunga. Il journal non registra
+lo stato del daemon (cella ㉒) ⇒ **la durata delle morti è ricostruibile solo dal danno che
+lasciano**: la conosciamo solo **dopo**, e solo **se qualcuno la conta**.
+📌 **Numero da riconciliare, aperto**: `verimem doctor` dice **9150 di 14049 giudicati (65,1%)**, il
+mio conto diretto dice **6.601 mai giudicati su 16.369 (40,3%)**. **I due non tornano** — probabile
+che il doctor conti su una popolazione diversa (i superati?). Da capire prima di citare l'uno o
+l'altro.
+
+**rifallo con:**
+
+```bash
+# separa MASTER e lavoro DENTRO ogni blocco, non solo fra i blocchi
+python docs/stato-reale/banchi/ws6-le-finestre-cieche-di-oggi.py
+```
