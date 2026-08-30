@@ -1845,7 +1845,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "chunk text is retrievable either way. Idempotent per "
                 "content-hash (re-indexing unchanged content does zero work); a "
                 "changed file becomes a new version that supersedes the old one "
-                "in search. Isolated store — NOT the accepted recall corpus."
+                "in search. Isolated store — NOT the accepted recall corpus: "
+                "measured 2026-08-31 through this API, a file whose only "
+                "distinctive term was indexed and then asked for — the document "
+                "search returned the chunk, the fact doors returned it ZERO "
+                "times. ⚠️ NOT EVERY PATH IS ACCEPTED, and the sentence about "
+                "absolute paths above does not say so: the file must sit under "
+                "an allowed document root, or the call is REFUSED with a message "
+                "naming ENGRAM_DOC_ROOTS — widen it deliberately. Paths crossing "
+                "a sensitive directory are refused too. The refusal is explicit, "
+                "never a silent skip."
             ),
             inputSchema={
                 "type": "object",
