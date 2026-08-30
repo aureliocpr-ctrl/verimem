@@ -11372,3 +11372,39 @@ di più.
 ```bash
 python -c "import os,sqlite3; d=os.path.expanduser('~/.engram/semantic/semantic.db'); print(sqlite3.connect('file:%s?mode=ro'%d.replace(os.sep,'/'),uri=True).execute(\"SELECT COUNT(*) FROM facts WHERE status='quarantined' AND superseded_by IS NULL\").fetchone()[0])"
 ```
+
+**㊴ `48` (completato) — la cura è già scritta due volte nello stesso file, e il codice NUMERA le
+proprie ripetizioni.** Pezzo portato da **ws2**, verificato da me; con **ws3** che aveva trovato la
+causa, il reperto è ora chiuso da tre istanze con prove indipendenti.
+🔎 **Nello stesso `mcp_server.py`, in altri due punti, il pavimento si ottiene COSTRUENDO l'oggetto
+giusto invece di cercarlo:**
+```python
+from .client import Memory as _MemFloor
+_mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()   # :8139 e :13778
+```
+⇒ **Non manca il metodo: manca l'oggetto**, e la via corretta è in uso **due volte, a poche righe** dal
+blocco che non funziona.
+🎯 **E i commenti sopra quelle righe tengono il conto delle ripetizioni:**
+
+    :8105   «…divergono, ed è la QUINTA GENERAZIONE di questa stessa cura»
+    :13776  «racconta la terza ("la cura di un'ora prima non lo raggiungeva");
+             questa è la QUARTA, e per lo stesso identico motivo»
+    :8136   «a critic flagged SDK-only three weeks ago,
+             min_relevance got wired, CE_GATE DID NOT»
+
+**Terza, quarta, quinta.** Il prodotto **sa** di ripetere lo stesso difetto, **lo numera nei
+commenti**, e il caso che abbiamo trovato è **un'occorrenza ulteriore che nessuna di quelle cinque
+cure ha raggiunto**. La riga 8136 aggiunge che perfino la cura precedente fu **parziale**
+(`min_relevance` collegato, `ce_gate` no). ⇒ **È la classe ① della nostra memoria — «una copia invece
+della superficie unica» — documentata dal codice stesso mentre accade.**
+🤝 **Le tre prove si incastrano senza che nessuno debba fidarsi dell'altro**: ws3 ha misurato che le
+classi non espongono il metodo · ws2 ha trovato la via corretta già in uso · **io ho la prova ALLA
+PORTA** (query «biglietto per Saturno», `fusion: applied`, score **0,8440** contro pavimento **0,8743**,
+payload **senza** `sotto_il_pavimento`) — la misura che ws2 dichiara di non aver replicato.
+🪞 **Decimo errore mio della notte**: **le righe 8139 e 13778 erano già nell'output di un mio `git
+grep` di due ore prima**, in questa stessa indagine. Le avevo sotto gli occhi e non le ho collegate:
+**ho letto la riga che cercavo e non quelle accanto.**
+📌 **Stato del reperto, due cure distinte**: **MCP** — l'avviso non è collegato ⇒ costruire `Memory`
+come alle righe 8139/13778 · **gateway** — il filtro è disattivato dal `floor: 0.0` (`gateway.py:377`
+costruisce `Memory`) ⇒ cancellare il file **e non persistire mai una stima degenere**.
+⛔ Il file da 32 byte **è ancora lì**: `{"floor": 0.0, "n_facts": 13795}`.
