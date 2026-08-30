@@ -112,26 +112,37 @@ jobs:
         # 📌 La seconda interrogazione serve solo al MESSAGGIO: distingue «non
         # esiste nessun run» da «esiste un run, ma non su main», che sono due
         # situazioni diverse per chi legge l'errore alle tre di notte.
+        # 2026-08-31 CANCELLO-A (ratifica 3 SI, 00:40): il «costo dichiarato»
+        # qui sopra — «se un domani si volesse rilasciare da un ramo di
+        # release, il cancello bloccherebbe» — quel domani e' arrivato con
+        # hotfix/0.7.1 (la CI del branch non era MAI partita: total_count=0,
+        # e il verde veniva cercato SOLO su main). Il gate ora accetta il
+        # verde di `ci` anche da un ramo hotfix/** e STAMPA cosa ha
+        # accettato (commit, branch, quando). Fail-closed intatto: nessun
+        # run resta nessun verde; i rami di PR restano fuori.
         run: |
           sha='${{ github.sha }}'
-          su_main=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
-                    --jq '[.workflow_runs[] | select(.name=="ci" and .head_branch=="main")] | .[0].conclusion // ""' \
+          accettato=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))] | .[0] | if . then "\(.conclusion)|\(.head_branch)|\(.updated_at)" else "" end' \
                     2>/dev/null || echo "")
           ovunque=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
                     --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion // ""' \
                     2>/dev/null || echo "")
-          echo "commit=$sha  ci su main=${su_main:-NESSUN RUN SU MAIN}  ci altrove=${ovunque:-nessuno}"
-          if [ "$su_main" = "success" ]; then
+          esito="${accettato%%|*}"
+          resto="${accettato#*|}"; ramo="${resto%%|*}"; quando="${accettato##*|}"
+          echo "commit=$sha  ci accettabile=${esito:-NESSUN RUN su main o hotfix/**}  ramo=${ramo:-n/d}  del=${quando:-n/d}  ci altrove=${ovunque:-nessuno}"
+          if [ "$esito" = "success" ]; then
             echo "verde=true" >> "$GITHUB_OUTPUT"
-          elif [ -z "$su_main" ] && [ -n "$ovunque" ]; then
+            echo "Accettato il verde di ci su ramo=$ramo (run del $quando) per $sha."
+          elif [ -z "$esito" ] && [ -n "$ovunque" ]; then
             echo "verde=false" >> "$GITHUB_OUTPUT"
-            echo "::error::Su $sha esiste un run di ci (${ovunque}) ma NON su main: "\
-                 "quel commit non e' mai entrato nel ramo principale, quindi non e' "\
-                 "stato integrato. La pubblicazione e' FERMA. Per scavalcare di "\
+            echo "::error::Su $sha esiste un run di ci (${ovunque}) ma NON su main ne' su "\
+                 "un ramo hotfix/**: quel commit non e' mai stato integrato in un ramo "\
+                 "di rilascio. La pubblicazione e' FERMA. Per scavalcare di "\
                  "proposito: variabile di repository PUBLISH_ANYWAY=1."
           else
             echo "verde=false" >> "$GITHUB_OUTPUT"
-            echo "::error::La CI su $sha non e' verde (${su_main:-nessun run su main}). "\
+            echo "::error::La CI su $sha non e' verde (${esito:-nessun run su main o hotfix/**}). "\
                  "La pubblicazione e' FERMA. Per scavalcare di proposito: "\
                  "variabile di repository PUBLISH_ANYWAY=1."
           fi

@@ -2,7 +2,10 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    # hotfix/**: CANCELLO-A 2026-08-31 — la CI del branch di
+    # rilascio non partiva mai (total_count=0) e il gate del publish
+    # non aveva nulla da leggere.
+    branches: [main, "hotfix/**"]
   pull_request:
     branches: [main]
   # 🔑 UN VERDETTO SI DEVE POTER CHIEDERE, NON SOLO PROVOCARE.
