@@ -11762,3 +11762,57 @@ della stessa famiglia.**
 > 📏 **REGOLA CHE NE ESCE, per tutte**: quando due fatti sembrano contraddirsi, **leggi la SOURCE, non
 > le proposizioni**. Nei nostri banchi A/B la source contiene **entrambi i bracci**, e le due
 > proposizioni sono **le due metà di UNA misura**, non due misure in disaccordo.
+
+---
+
+## W8-29 — La coda non è strozzata: **DIVERGE**. Due foto a cinque ore di distanza
+
+**Domanda**: la coda della CI si sta smaltendo, si sta stabilizzando, o sta crescendo?
+
+Per cinque ore ho descritto il fenomeno («strozzata», «a ondate»). **Non avevo mai
+misurato il bilancio.** Due contatori, cinque ore di distanza, nessun campionamento:
+
+|              | 18:45 | 23:45 | Δ in 5 ore |
+|--------------|------:|------:|-----------:|
+| `queued`     |   796 |   908 |   **+112** |
+| `completed`  |  1161 |  1292 |   **+131** |
+| `success`    |    98 |    98 |     **+0** |
+
+### Il bilancio
+
+- **uscita**: 131 run conclusi in 5 ore ≈ **26/ora**
+- **ingresso**: 131 usciti + 112 di crescita = **243 entrati** ≈ **48/ora**
+
+⇒ **L'ingresso è quasi il doppio dell'uscita.**
+
+### Perché questo chiude la domanda invece di aprirne un'altra
+
+🔑 **Quelle cinque ore CONTENGONO l'ondata delle 20-21Z** — 124 chiusure in 50 minuti, il
+momento di massima produttività dell'intera giornata. **Nel caso più favorevole all'uscita
+la coda è comunque cresciuta di 112.**
+
+⇒ Non è un ingorgo che si smaltisce aspettando. **È un regime in cui la coda si allunga**,
+e ogni run nuovo allontana il verdetto di tutti quelli davanti.
+
+### 🎯 La conseguenza per il rilascio, che è il mio perimetro
+
+Il cancello ① (`ci` verde sul commit) **non si aprirà spontaneamente**: aspettare non
+riduce l'attesa, la aumenta. E il secondo numero lo conferma dal lato del contenuto —
+**+131 conclusi, +0 verdi**: `success` è fermo a 98 da stamattina.
+
+⇒ **Servono meno run, non più pazienza.** La leva è a monte (quanti run partono per
+commit), non a valle. La decisione è collegiale e tocca `.github/`: non la prendo io.
+
+### 🪞 Cosa avevo sbagliato per cinque ore
+
+Ho descritto **la forma** del fenomeno (stasi, ondate, propagazione) senza mai misurarne
+**il segno**. Le prime quattro descrizioni erano compatibili sia con una coda che si
+smaltisce sia con una che diverge — **e non avevo il dato che le separa.**
+📌 La lezione: **descrivere un fenomeno non è misurarlo.** Il conto che decide era due
+`total_count` a cinque ore di distanza, e costava dieci secondi.
+
+    rifallo con:
+    B="repos/:owner/:repo/actions/workflows/ci.yml/runs"
+    for s in queued in_progress completed success; do
+      printf "%-12s %s\n" "$s" "$(gh api "$B?status=$s&per_page=1" --jq .total_count)"; done
+    # ripeti a distanza di ore: Δqueued > 0 con Δcompleted > 0  ⇒  ingresso > uscita
