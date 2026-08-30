@@ -147,26 +147,68 @@ def main() -> int:
         return 1
     print("     retto")
 
-    print("\n  == LA RIGA CHE CONTA")
-    prima = max(cause.items(), key=lambda kv: kv[1])[0] if cause else "-"
-    if veri == 0 and en_veri > 0:
-        print(f"     🔴 ASIMMETRIA DI LINGUA NEL CLASSIFICATORE: {veri} su"
-              f" {len(VERBALI)} in italiano contro {en_veri} su {len(EN)} in")
-        print(f"     inglese, e la regola che cade e' «{prima}».")
-        print("     ⇒ La carve-out `domain-precision` non e' rotta: **non arriva**")
-        print("     ai verbali italiani, e il dossier ㉕ ha una SECONDA causa")
-        print("     oltre ai detector mancanti.")
-    elif veri == 0:
-        print(f"     ⇒ Zero in entrambe le lingue, regola «{prima}»: NON e' un")
-        print("     difetto di lingua. La causa e' un'altra e non la forzo.")
-    else:
-        print(f"     ⇒ {veri} su {len(VERBALI)} in italiano, {en_veri} su"
-              f" {len(EN)} in inglese. Il quadro non e' netto.")
+    # 🪞🪞 QUI LA PRIMA STESURA CONCLUDEVA «ASIMMETRIA DI LINGUA», ED ERA FALSO.
+    #     Il confronto IT/EN qui sopra varia DUE cose insieme: la lingua **e** il
+    #     modo di scrivere il verbo — le mie frasi italiane usano `e'`, quelle
+    #     inglesi `was`, che sta in `_VERB_MARK`. E' esattamente la regola che
+    #     un'altra istanza mi aveva scritto stamattina («un banco che varia due
+    #     cose insieme non puo' attribuire l'effetto a una»), e ci sono cascata.
+    #     L'isolamento vero cambia UNA cosa sola: l'apostrofo.
+    print("\n  == 🔬 L'ISOLAMENTO: e' la LINGUA o e' l'APOSTROFO?")
+    COPPIE = [
+        ("La perizia e' stata conclusa dal geometra incaricato.",
+         "La perizia è stata conclusa dal geometra incaricato."),
+        ("L'istruttoria e' stata chiusa dal responsabile del procedimento.",
+         "L'istruttoria è stata chiusa dal responsabile del procedimento."),
+        ("Il collaudo dell'impianto e' stato completato dalla commissione.",
+         "Il collaudo dell'impianto è stato completato dalla commissione."),
+        ("La spedizione e' stata evasa dal centro logistico.",
+         "La spedizione è stata evasa dal centro logistico."),
+    ]
+    ap_ok = ac_ok = 0
+    print(f"     {'con e-apostrofo':<18}{'con e-accentata':<18}soggetto estratto")
+    for ap, ac in COPPIE:
+        x, y = is_domain_professional(ap), is_domain_professional(ac)
+        ap_ok += x
+        ac_ok += y
+        from verimem.subject_extract import subject_of
+        print(f"     {str(x):<18}{str(y):<18}{subject_of(ap)!r} / {subject_of(ac)!r}")
+    print(f"\n     con `e'`  : {ap_ok} su {len(COPPIE)}")
+    print(f"     con `è`   : {ac_ok} su {len(COPPIE)}")
 
-    print("\n  ⚠️ COSA NON DICE: otto verbali e quattro frasi inglesi COSTRUITI")
-    print("  da me, con la forma dei casi d'ufficio, non quei casi. E la")
-    print("  diagnosi ricostruisce l'ordine delle regole leggendo il codice:")
-    print("  dove il mio esito e quello del prodotto divergono, lo stampo.")
+    #  e la forma ATTIVA, che usa `ha` — gia' presente nella lista
+    ATTIVE = ["La commissione ha completato il collaudo.",
+              "Il geometra ha concluso la perizia.",
+              "L'ufficio tecnico ha verificato la pratica."]
+    att_ok = sum(1 for t in ATTIVE if is_domain_professional(t))
+    print(f"     forma ATTIVA (usa `ha`, in lista): {att_ok} su {len(ATTIVE)}")
+
+    print("\n  == LA RIGA CHE CONTA")
+    if ap_ok == 0 and ac_ok == len(COPPIE):
+        print("     🔑 **NON E' LA LINGUA: E' L'APOSTROFO.** `_VERB_MARK`")
+        print("     (`subject_extract.py:29`) elenca `ha|hanno|è|sono|era|erano|`")
+        print("     `viene|vengono`: c'e' `è` accentata, NON c'e' `e'`. Senza")
+        print("     marcatore di verbo `subject_of()` torna vuoto, il soggetto e'")
+        print("     «non risolvibile» e il classificatore fallisce PRIMA di")
+        print("     guardare il dominio.")
+        print("     ⇒ Il reperto non sparisce, CAMBIA FORMA e diventa azionabile:")
+        print("     non «l'italiano non e' supportato» ma «una forma di scrittura")
+        print("     molto comune dell'italiano non e' riconosciuta», e la cura e'")
+        print("     **una voce in una regex**, non un parser.")
+        print("     📌 E CI TOCCA: tutto il nostro registro scrive `e'`, non `è`.")
+    elif ap_ok == ac_ok:
+        print("     🪞 L'apostrofo NON spiega nulla: i due modi di scrivere danno")
+        print(f"     lo stesso esito ({ap_ok}). La causa e' un'altra, e allora il")
+        print("     confronto di lingua qui sopra torna in gioco.")
+    else:
+        print(f"     ⇒ `e'` {ap_ok}, `è` {ac_ok}, attive {att_ok}: l'apostrofo")
+        print("     spiega una parte e non tutto. Non forzo una tesi.")
+
+    print("\n  ⚠️ COSA NON DICE: otto verbali, quattro coppie e tre frasi attive")
+    print("  COSTRUITI da me. E soprattutto: **il confronto IT/EN qui sopra NON")
+    print("  E' PIU' VALIDO** — variava lingua e apostrofo insieme. Per un")
+    print("  confronto di lingua vero servirebbero frasi italiane con `è`")
+    print("  accentata contro le inglesi, e quel banco non l'ho fatto.")
     return 0
 
 

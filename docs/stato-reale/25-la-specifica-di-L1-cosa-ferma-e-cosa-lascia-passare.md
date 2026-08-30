@@ -74,6 +74,36 @@ decide il giudice, allargarle non serve.
 perimetro e in inglese `L1` a volte **parla e non ferma** (`L1.20`+`domain-precision` con
 grounding 99.9 → `persist`). **Il perimetro non è l'unico problema: c'è anche la soglia.**
 
+### 🔴 E c'è una SECONDA causa, misurata dopo (`W7-72`) — ma NON è la lingua: è l'APOSTROFO
+
+La carve-out `domain-precision`, che dovrebbe salvare i fatti di terzi, su un verbale
+italiano **non viene raggiunta**. La ragione, isolata cambiando **una sola cosa**:
+
+```
+   «La perizia e' stata conclusa dal geometra»    soggetto ''          →  0 su 4
+   «La perizia è stata conclusa dal geometra»     soggetto 'perizia'   →  4 su 4
+   «Il geometra ha concluso la perizia»           soggetto 'geometra'  →  3 su 3
+```
+
+`_VERB_MARK` (`subject_extract.py:29`) elenca `ha|hanno|è|sono|era|erano|viene|vengono`:
+**c'è `è` accentata, non c'è `e'`**. Senza marcatore di verbo, `subject_of()` torna vuoto, il
+soggetto è «non risolvibile» e il classificatore fallisce **prima** di guardare il dominio.
+
+🪞 **La prima stesura di questa sezione diceva «`subject_head` non regge l'italiano».
+Falso**, e il difetto era nel mio banco: le frasi italiane usavano `e'` e quelle inglesi
+`was`, che è in lista — **due variabili insieme, e ho attribuito l'effetto alla lingua.**
+
+🔑 ⇒ **L'italiano è meno protetto due volte, ma la seconda causa è più stretta e più
+curabile di come l'avevo scritta**:
+
+| | causa | verso | cura |
+|---|---|---|---|
+| **`W7-64`** | mancano i detector (`ultimato`, `terminato`) | più **falsi permessi** | vocabolario |
+| **`W7-72`** | `e'` non è un marcatore di verbo | più **falsi allarmi** | **una voce in una regex** |
+
+⚠️ **E ci riguarda direttamente**: tutto questo registro e tutti i nostri fatti scrivono
+`e'`, non `è`. È la stessa classe del gate che non legge i decimali con la virgola.
+
 ## 3. Quanto pesa davvero: 13,6%, non di più
 
 **`W7-65`**, sul corpus (**13418 fatti vivi**): **231 occorrenze su 1695** usano una forma
@@ -182,9 +212,13 @@ fu misurato come **frequenza** (`l1_completion_detector.py:47-49`, *«nessuna fo
 il 2%»*). **La frequenza non è il costo**: dice quante volte il criterio scatterà, non
 quante volte sbaglierà.
 
-**④ L'asimmetria di lingua è una decisione di prodotto, non un difetto da patchare.** Il
-README promette «Verified memory for AI agents». Se gli agenti scrivono in italiano, la
-protezione è più sottile — e questo va **detto**, non tappato con una riga di regex.
+**④ L'asimmetria di lingua ha DUE cause e una sola non basta a spiegarla.** Il README
+promette «Verified memory for AI agents». Se gli agenti scrivono in italiano, la protezione
+è più sottile **in entrambi i versi**: passa di più ciò che dovrebbe fermarsi (detector
+mancanti) **e** si ferma di più ciò che dovrebbe passare (`e'` non riconosciuto come
+marcatore di verbo, `W7-72`). ⚠️ Le due metà **non costano uguale**: la seconda è
+**una voce in una regex**, la prima è vocabolario da misurare su due popolazioni.
+⇒ **Va detto doppio, e va curato in due posti diversi.**
 
 ## 6. ⛔ Cosa questa specifica NON sa
 
