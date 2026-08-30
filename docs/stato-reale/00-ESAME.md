@@ -1425,6 +1425,8 @@ SCORE: 12'`→**12.0** (l'ultimo, come il docstring dichiara). ⇒ 🔑 **DUE FR
 | W2-110 | **RITIRO il mio «external_content = 0 su 15.647»: ho contato UNA etichetta su quattro. E il reperto vero e' peggiore — `L1.x` e' SPENTO su tutto cio' che scriviamo noi, per DUE vie sovrapposte** | C1 · C2 · C9 | IT | codice + porta | 🔴 **mio reperto RITIRATO, reperto nuovo confermato** | ws2 | ⛔ **RITIRO quanto scritto in `W7-62` (mia firma) e mandato due volte sul canale**: *«la via d'uscita `writer_role='external_content'` funziona e non la usa nessuno: 0 su 15.647»*. **Il conteggio era vero, la conclusione FALSA.** 🔎 **La causa, nel codice**: `gate_router.py:73` — `if role == "user": return USER_INPUT` — e `def l1x_applies(provenance): return provenance not in (EXTERNAL_CONTENT, USER_INPUT)` ⇒ **`writer_role='user'` salta `L1.x` ESATTAMENTE come `external_content`**, e `user` e' il **59,5% del corpus (9312 fatti)**. ⇒ **la via d'uscita non e' inutilizzata: e' la NORMA, con un'altra etichetta.** **36esimo righello, e il piu' costoso perche' l'avevo gia' diffuso: la policy dichiara QUATTRO provenienze e io ne ho misurata UNA.** 📊 **Verificato ALLA PORTA** (stesso claim, stessa fonte, store isolato): · **default** ⇒ `quarantined`, layers **`['L1.13','L4-relazione']`** · **`writer_role='user'`** ⇒ **`model_claim`**, layers `['L4-relazione']` — **`L1.13` SPARITO** · `external_content` ⇒ `model_claim`. 🔴 **IL REPERTO VERO, e riguarda ogni fatto che abbiamo scritto**: **`verimem save` marca `writer_role='user'`** (si legge in qualunque nostro fatto recente). **Ma `verimem save "ho misurato X"` non sono «the user's own words»: sono le mie, dell'agente.** ⇒ **`L1.x` — lo screen che ferma «funziona / verificato / completato» senza prova — E' SPENTO SU TUTTO IL NOSTRO CORPUS.** 🔑 **E sono DUE vie indipendenti**: le istruzioni del nostro server dicono *«a write made as a session NOTE — `meta_narrative=True`, **which the `save` command uses** — skips that screen»*, e il 29/08 avevo misurato **`meta_narrative=1` su 375 fatti su 381 (98,4%)**. ⇒ **i nostri fatti saltano lo screen per la nota di sessione E per l'attribuzione, sovrapposte.** ⚖️ **COSA NON STO DICENDO, e la distinzione e' tutto**: · **il moat NON e' toccato** — con una `--source` gira comunque, e in produzione il 29/08 dava `judged=True` su **388 scritture su 388** ⇒ **la difesa forte resta accesa** · `gate_router` lo dichiara apposta: *«provenance NEVER weakens the injection defense — it only routes the anti-confab heuristics… meaningless for third-party text»* ⇒ **la scelta e' deliberata e motivata.** ⇒ **la domanda non e' «c'e' un buco»: e' «siamo third-party text?»** — per un verbale si, **per un fatto che scrivo io su una misura mia, no.** 🙋 **Decisione NON mia** (`save` e' la porta di tutte): se `save` marca `user`, **il prodotto non applica a se' stesso la difesa che vende**, e il nostro corpus non e' un campione valido di «memoria protetta da L1.x». **Va detto nel report o va cambiata l'attribuzione.** 🔎 **rifallo con** (~90s): `HIPPO_DATA_DIR=$(mktemp -d)` + `Memory().add(claim, source=…, writer_role='user')` contro lo stesso senza ⇒ **`model_claim` contro `quarantined`**, e `L1.13` sparisce dai layer; poi `classify_provenance('user')` ⇒ **`user_input`**. | _firma @Varco 13:25 del 30/08_ |
 | W2-111 | **Ho misurato il DANNO del mio stesso allarme e vale il 2,5%: su 40 nostri fatti, `L1.x` ne fermerebbe UNO, ed e' un falso positivo. Il meccanismo di `W2-110` regge, la sua PORTATA no** | C1 · C2 | IT | gate (funzione) | 🟡 **il mio allarme, ridimensionato da me** | ws2 | **Serve alla decisione che @lead-audit ha messo a registro come DESIGN** (*«writer_role='user' … non cura di corsa»*): prima di cambiare l'attribuzione bisogna sapere **quanto costa non cambiarla**. **Nessuno l'aveva misurato, nemmeno io che l'ho sollevato.** 📊 **Banco**: 40 fatti nostri di oggi (`writer_role='user'`), ognuno passato a `run_validation_gate(..., source=None, ground_write=False)` — cioe' **valutati come se fossero `agent_claim`**, che e' esattamente cio' che l'etichetta oggi impedisce. ⇒ **`L1.x` scatterebbe su 1 fatto su 40 = 2,5%**, layer `L1.13`. 🪞 **E l'unico caso e' un FALSO POSITIVO**: *«Le celle con un blocco di codice aperto e mai **chiuso** sono 0.»* — `L1.13` scatta sulla parola «chiuso», che qui parla di **blocchi di codice**, non di un task completato. ⇒ **l'unico fatto che l'etichetta ci sta «salvando» e' uno che L1.13 fermerebbe a torto.** ⇒ **Il meccanismo di `W2-110` REGGE** (l'etichetta spegne davvero `L1.x`, verificato alla porta) **ma la sua PORTATA sul nostro corpus e' piccola**, e almeno in parte sarebbe rumore. ⚖️ **Cosa cambia per la decisione**: cambiare l'attribuzione **non sbloccherebbe una difesa sopita su un corpus pieno di auto-affermazioni** — ne fermerebbe circa il 2,5%, con falsi allarmi dentro. **Resta un difetto di VERITA' dichiarativa** (le parole dell'agente non sono «the user's own words», e il report non puo' dire «protetto da L1.x»), **non un buco di sicurezza da tappare in fretta.** ⚠️ **LIMITI, dichiarati**: · campione **40**, solo di oggi, solo nostri · valutati **senza `source`** ⇒ i layer che guardano la fonte possono comportarsi diversamente, **misuro la FORMA del claim** · **il confronto con `agent_inference` NON lo uso come prova**: quarantena `user` 732 su 9313 (**7,8%**) contro `agent_inference` 1414 su 2753 (**51,4%**), fattore 6,6 — **ma le due popolazioni sono eterogenee** (`agent_inference` include `legacy_unverified`, `diary`, `user_manual`) e il divario **non e' attribuibile a `L1.x`**. Lo riporto e non lo uso, come ha fatto @ws6 con `surface`. 🔎 **rifallo con** (~90s): estrai N proposition con `writer_role='user'` dal DB in `mode=ro` e passale a `run_validation_gate(proposition=p, verified_by=[], topic=None, agent=None, source=None, ground_write=False)`, contando i `warnings` con `layer` che inizia per `L1` ⇒ **1 su 40**. | _firma @Varco 13:34 del 30/08_ |
 | W2-112 | **RIDIMENSIONO il mio «`verimem trust` dà EXIT=0 a una domanda ignota»: su cinque categorie ne sbaglia ZERO, e il caso che citavo era una DOMANDA data a uno strumento che giudica CLAIM** | C1 | IT | CLI | 🟢 **il cancello regge** / 🟡 **una riga d'aiuto da stringere** | ws2 | **Terzo mio fronte ridimensionato oggi, e come gli altri due il numero e' arrivato quando ho smesso di argomentare e ho misurato.** 📊 **Cinque categorie, `verimem trust <frase>`, `EXIT` letto dalla shell**: · **VERO con prova** *«Il test test_l_evento_dice_a_quale_store_appartiene passa con 6 passed»* ⇒ **`EXIT=0`** ✅ · **VERO senza prova** *«La cura dell'impronta e' stata verificata alla porta della CLI»* ⇒ **`EXIT=1`** ✅ (flagga «verificata» senza ref) · **FALSO plausibile** *«Il corpus contiene 99000 fatti verificati e zero quarantinati»* ⇒ **`EXIT=1`** ✅ **— e questo NON l'avevo misurato quando ho aperto il fronte** · **auto-claim con parola-spia** *«il collaudo e' stato completato e tutto funziona»* ⇒ **`EXIT=1`** ✅ (6 righe di flag) · **domanda fuori dominio** *«Come si pota un ulivo secolare in Puglia»* ⇒ **`EXIT=0`**. ⇒ **quattro su cinque corretti, e il quinto non e' un errore del prodotto.** 🪞 **Il caso che citavo era una DOMANDA data a uno strumento che giudica CLAIM**: *«Anti-confab TRUST check: would Verimem trust this **claim**»*. **Un gate anti-confabulazione non ha NIENTE da flaggare in una frase che non afferma nulla** — e infatti la stessa risposta scrive *«this verdict is about the WORDING of the claim, not about whether it is true»*. ⇒ **la mia critica era vera come fatto e FUORVIANTE come accusa**, ed e' la terza volta oggi che un mio reperto regge come misura e cade come conclusione. ✅ **COSA CADE del mio fronte**: *«uno script CI che usa l'exit code accetta qualunque frase priva di parole-spia»* — **falso**: il claim falso e' stato fermato pur non avendo parole-spia da auto-affermazione. **Il cancello non guarda solo le spie.** 🟡 **COSA RESTA, e in forma piu' stretta**: su un input che **non e' un claim**, `EXIT=0` significa «trusted» secondo l'help — **e «trusted» su una frase che non afferma nulla e' una risposta priva di significato**, che un'automazione legge come approvazione. ⇒ **cura minima, NON applicata**: l'help dica *«Exit 0 se il claim non e' segnalato»* invece di *«if trusted»*, **oppure** un terzo esito per «non e' un claim valutabile». ⚠️ **LIMITI**: cinque frasi scritte da me, **una per categoria** — e' un sondaggio, non una stima di precisione; nessuna delle cinque portava `--verified-by`; il giudizio e' sul **wording**, quindi un falso ben scritto senza parole sospette resta da provare. 🔎 **rifallo con** (~90s): `verimem trust "<frase>"; echo EXIT=$?` sulle cinque categorie ⇒ **0 · 1 · 1 · 1 · 0** nell'ordine sopra. | _firma @Varco 13:37 del 30/08_ |
+| W2-113 | **Stavo per proiettare sul gruppo un difetto mio: le celle che dichiarano un difetto sono dimensionate MEGLIO delle altre (82% contro 70%). Ipotesi FALSIFICATA** | C9 · C1 | IT | registro | 🔴 **ipotesi mia falsificata, registro in salute** | ws2 | **Da dove nasce**: oggi ho aperto tre fronti e ridimensionati tutti e tre io stessa, e ne avevo tratto una regola — *«ogni volta che ARGOMENTO sbaglio la portata»*. **Stavo per scriverla come difetto del REGISTRO** («dichiariamo difetti senza dimensionarli, e il primo lettore ostile li sgonfia»). **Prima l'ho misurata.** 📊 **Su 329 celle della tabella**, cercando un dimensionamento (`N su M` · `N/M` · `N%` · `N contro M`) e separando per verdetto: · **celle 🔴: 150, con numero 123, SENZA 27 = 18%** · **popolazione di CONTROLLO (non 🔴): 179, senza numero 53 = 30%**. ⇒ **le celle che accusano sono dimensionate MEGLIO di quelle che non accusano: 82% contro 70%.** ⇒ **FALSIFICATA.** 🪞 **E la lezione e' su di me, non sul registro**: *un difetto mio non e' un difetto del gruppo finche' non lo misuro sul gruppo.* Avevo tre osservazioni vere su di me e stavo per generalizzarle a 329 celle di sei autrici. ⇒ **la generalizzazione da se' stessi e' la forma di confabulazione piu' facile da non vedere, perche' i dati di partenza sono veri.** ⚠️ **E il criterio ha falsi positivi, visibili solo stampando gli esempi accanto al numero** (regola gia' scritta, applicata qui): fra le 27 «rosse senza numero» ci sono **titoli in forma di DOMANDA** — *«il server MCP parte, per chi installa da PyPI?»*, *«il punteggio di grounding cresce con il contesto?»*, *«le due porte restituiscono gli avvisi con lo stesso nome?»* — **che non sono accuse e non hanno bisogno di una portata.** ⇒ **il 18% e' un tetto, non una stima**: il numero vero e' piu' basso. 📌 **Cosa resta di utile**: la mia regola personale vale **per me** ed e' nel promemoria del mio loop (*prima di scrivere «difetto»: qual e' il denominatore?*); **per il gruppo non c'e' niente da correggere su questo fronte**, e chi prepara il report puo' dire che **l'82% delle celle-difetto porta la propria portata** invece di temere il contrario. 🔎 **rifallo con** (~30s): conta le righe che iniziano per `| W` o `| LANT` o `| <numero> |`, separa per presenza di 🔴 nella 6ª colonna e cerca `\d[\d.,]*\s*(?:su|/|di|contro)\s*\d|\d[\d.,]*\s*%` ⇒ **27/150 contro 53/179**. ⚠️ **guarda gli esempi**, il criterio e' sintattico su un fenomeno semantico. | _firma @Varco 13:40 del 30/08_ |
+| W2-114 | **Il pre-commit linta TUTTO il repo, non i file che committi: il lavoro a meta' di una blocca le altre. Due volte in 44 minuti — e la cura e' verificata su entrambe le popolazioni** | C9 | IT | pre-commit | 🟡 **attrito di processo misurato, cura NON applicata** | ws2 | **Successo mentre committavo un `.md`**: `before the tests — every job on every OS would go red. Fix: ruff check verimem tests scripts --fix`. **L'errore non era mio.** 📊 **Due occorrenze in 44 minuti**: · **12:58** `F811` x3 su `test_la_porta_dice_che_ha_ripiegato.py` (sbloccata da se' in ~8 minuti) · **13:39** `UP031` x2 su `test_l120_e_un_avviso_non_un_veto.py`. **Entrambi i file `??` UNTRACKED** ⇒ **lavoro in corso, non errori committati.** ⇒ **il pre-commit esegue `ruff` sull'intero repo, quindi il working tree a meta' di un'istanza impedisce a TUTTE le altre di committare**, anche su file scollegati. 🧪 **La cura, verificata su ENTRAMBE le popolazioni** (`ruff check $(git diff --cached --name-only --diff-filter=ACM | grep '\.py$')`): · **① il mio caso**: nessun `.py` in staging ⇒ **ruff non gira ⇒ `EXIT=0` ⇒ il commit passerebbe** · **② controprova, quella che conta**: lo stesso file rotto, **se fosse staged**, da' **`EXIT=1`** ⇒ **il suo autore verrebbe fermato lo stesso: la protezione NON si perde** · **③ com'e' oggi**: `ruff check verimem tests scripts` ⇒ **`EXIT=1`**, e blocca me che committo un `.md`. ⇒ **la cura sposta il costo su chi lo genera, invece che su chi passa di li'.** ⚠️ **La controindicazione, detta perche' una cura senza il suo costo e' meta' informazione**: un `.py` rotto **committato** non bloccherebbe piu' le altre — **ma quello lo prende la CI**, che e' il posto giusto; oggi paghiamo il costo **prima** del commit e **su chi non c'entra**. ⚠️ **LIMITE del mio dato: due occorrenze non sono una frequenza.** Non so quante volte sia successo alle altre senza dirlo; **ho chiesto sul canale, e finche' non rispondono resta un aneddoto con due istanze, non una decisione.** ⛔ **NON applicata**: il hook e' di tutte, e cambiarlo mentre otto istanze committano e' esattamente il tipo di mossa che oggi ho gia' visto andare storta. **Proposta a @lead-audit.** ⛔ **E cosa NON ho fatto, due volte su due**: nessun `--no-verify` (se lo si fa una volta il cancello non esiste piu') e **nessun «aggiustamento» del file di un'altra mentre lo scrive** — `UP031` e' una preferenza di stile su un test in corso, e chi lo scrive sa se quelle righe restano. 🪞 **Il dettaglio che chiude**: **questa cella e' rimasta in staging, non committabile, per il difetto che descrive.** 🔎 **rifallo con** (~30s): con un solo `.md` in staging, `ruff check $(git diff --cached --name-only --diff-filter=ACM | grep '\.py$')` ⇒ **niente da controllare**; `ruff check verimem tests scripts` ⇒ **`EXIT=1`**. | _firma @Varco 13:43 del 30/08_ |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
 
@@ -7616,3 +7618,120 @@ di condizione che il contratto di uscita chiede di rendere esplicita.
 - **Non so se i fatti lunghi siano un difetto o un dato del banco.**
 - ⛔ **Non ho toccato nulla, e non ho tolto la riga 27**: non è un mio file.
 
+
+### 🔴 W8-16 — I rossi della CI sono **cinque e hanno un nome**, e uno di loro è rosso **perché non si rilascia**
+
+> **REGIME** — letto dal log del run `ci` **#1167** (2026-08-30T00:27), job
+> `test (ubuntu-latest / py3.12)`, scaricato con `gh api .../jobs/<id>/logs` (1.9 MB,
+> 13977 righe). Distanza di versione misurata su `origin/main` in un checkout **non
+> superficiale** (`is-shallow-repository = false`) alle 13:37 del 30/08.
+> **LIMITE** — un solo job su sei letto per intero: gli altri cinque falliscono negli
+> stessi 8 run esaminati, ma **non ho verificato che falliscano sugli stessi test**.
+> Il numero dei rossi vale per `ubuntu-latest / py3.12`. E i 12085 passed **non
+> provano che il prodotto sia sano**: provano che 12085 asserzioni tengono.
+
+**La riga di sintesi di pytest, dal log della CI:**
+
+```
+= 5 failed, 12085 passed, 41 skipped, 39 deselected, 126 xfailed, 35 warnings in 1412.84s (0:23:32) =
+```
+
+⚠️ **Questi 5 non sono un sottoinsieme dei 28 rossi locali**: sono **due liste prodotte
+da due regimi diversi**. Chi sottrae 5 da 28 ottiene un numero che non esiste da
+nessuna parte.
+
+**I cinque, per famiglia:**
+
+| famiglia | test | cosa dice |
+|---|---|---|
+| ① ritardo di versione | `test_il_pacchetto_ha_cio_che_promettiamo.py::test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice` | la versione dichiarata è vecchia |
+| ② promessa non rigenerabile | `test_la_ricetta_del_numero_deve_esistere.py::test_ogni_ricetta_del_registro_e_un_modulo_che_esiste` · `test_repro_registry_g4.py::test_every_claim_backed_by_artifact_and_regenerable` | un numero pubblicato ha la prova, non la ricetta |
+| ③ **bug del prodotto** | `test_quarantined_by_nomina_il_layer_sbagliato.py` (2 test) | `quarantined_by` nomina il layer sbagliato |
+
+### 🔑 Il nodo: un test che si dichiara «avviso» e **funziona da veto**
+
+Il docstring di ① dice, testualmente: **«È un avviso, non un veto — la stessa forma che
+il resto del progetto ha già scelto per il pavimento del recall»**. Non lo è. Un test
+rosso rende rosso il job; il job rende rosso `ci`; e `ci` rosso **chiude il cancello ①
+del rilascio**, che è un VETO in `publish.yml`. La forma scelta e la forma ottenuta sono
+due cose diverse, e **fra le due decide chi legge il risultato, non chi scrive il
+commento**.
+
+Riproducendo il calcolo che il test fa:
+
+```
+versione in pyproject.toml = 0.7.6, bumpata il 2026-08-21 11:28 (f859aad0)
+distanza bump..HEAD = 1133          SOGLIA nel test = 150          eccesso = 983
+```
+
+⇒ **Non si rilascia perché la CI è rossa; la CI è (anche) rossa perché non si rilascia.**
+⚠️ **Il cerchio NON è chiuso**, e dirlo «deadlock» sarebbe più drammatico che vero: un
+bump di `version` azzera la distanza **senza pubblicare niente**. Ma finché nessuno lo
+fa, quel rosso non se ne va da solo — e nessuno lo ha fatto in 1133 commit.
+
+⚠️ **Due righelli diversi sullo stesso tema, da non scambiare**: il test guarda il
+**BUMP** (1133); il README guarda il **TAG** (`v0.7.0..HEAD = 1996`). Sono numeri
+entrambi veri di cose diverse.
+
+### 🔻 Il mio errore, ed è *dentro* il difetto che quel test previene
+
+Per leggere la versione ho usato `grep -oP`. In questo locale non funziona:
+
+```
+grep: -P supports only unibyte and UTF-8 locales
+  versione dichiarata in pyproject.toml:            <- VUOTA
+  ⇒ DISTANZA CHE IL TEST MISURA: 0 commit     SOGLIA nel test: 150
+  ⇒ margine: 150  ⇒ il test e' verde
+```
+
+La variabile vuota ha fatto cercare a `git log -S ""` una stringa vuota, e
+`rev-list --count` ha restituito **0**. **Il mio comando ha stampato «verde» sul test
+più rosso della suite.** E il commento di quel test descrive *lo stesso meccanismo*:
+«su un clone superficiale il valore C'È ed è SBAGLIATO … distanza CALCOLATA = **0** — il
+numero più rassicurante che esista». 🔑 **Ho riprodotto il difetto contro cui il test si
+è immunizzato, dentro il comando con cui volevo misurarlo.** La cura è la stessa che il
+test ha adottato: **fermarsi se il valore manca**, invece di calcolare su un vuoto.
+
+Secondo errore, stessa famiglia: ho interrogato `?head_sha=` con **8 caratteri invece di
+40**. L'API non dà errore — restituisce **elenco vuoto**, che si legge «NESSUN RUN», cioè
+cancello chiuso. Con lo sha intero lo stesso commit risponde `success`. **Un'interrogazione
+malformata torna indistinguibile da un verdetto.**
+
+### 🟡 Da quando la CI non è verde
+
+Interrogando l'**oggetto** (`?status=<esito>` sul workflow), non una pagina:
+
+| finestra | success | failure | cancelled | verdi % |
+|---|---|---|---|---|
+| tutta la storia (da 2026-08-13) | 98 | 748 | 314 | 8.4% |
+| ultimi 30 giorni | 30 | 564 | 151 | 4.0% |
+| ultimi 7 giorni | 12 | 236 | 3 | 4.8% |
+| **ultime 48 ore** | **0** | **39** | **0** | **0.0%** |
+
+Ultimo `ci` verde su main: **#941, 2026-08-25 23:05, `18e434e3`** — **1014 commit** fa.
+Verificato col criterio **esatto** del gate che su quel commit il cancello ① si
+aprirebbe (`success`). ⚠️ **Non è una proposta di rilasciare da lì**: 1014 commit di
+ritardo non sono un rilascio, sono un altro prodotto. È la misura di **quanto è vecchio
+l'ultimo stato verificato**. 📌 Ho spaccato il tasso su tre finestre perché *un rapporto
+senza finestra inganna*; qui **non c'è rovesciamento** — la finestra più recente è la
+peggiore.
+
+### Cosa questo NON prova
+
+- **Non ho letto gli altri cinque job**: il «5» vale per `ubuntu / py3.12`.
+- **Non ho intersecato con i 28 rossi locali**: quella lista non è mia e non l'ho chiesta.
+- **Non ho eseguito nessuno dei cinque test**: leggo il verdetto della CI e i docstring.
+- ⛔ **Non ho toccato `pyproject.toml`** (è nel mio non-curo) né proposto un bump come mia
+  decisione: lo segnalo a chi rilascia.
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=failure&per_page=1" --jq '.workflow_runs[0].id'
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" --jq '.jobs[]|select(.conclusion=="failure")|.id'
+gh api "repos/:owner/:repo/actions/jobs/<jobid>/logs" > log.txt
+grep -oE "=+ [0-9]+ failed[^=]*=+" log.txt | tail -1     # la riga di sintesi, NON il conteggio dei FAILED
+V=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' pyproject.toml | head -1)
+[ -z "$V" ] && { echo "FERMO: versione non letta"; exit 1; }   # <- la riga che mi mancava
+git rev-list --count "$(git log --format=%H -1 -S "version = \"$V\"" -- pyproject.toml)"..HEAD
+```
