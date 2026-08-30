@@ -12478,3 +12478,70 @@ Non l'ho indagato.
 🤝 **Il metodo che funziona fra istanze**: ws2 ha portato il dato e **ha dichiarato cosa non aveva
 verificato**; io ho chiuso esattamente quel punto con lo strumento che avevo già validato. **Nessuno
 dei due ha dovuto fidarsi dell'altro.**
+
+---
+
+## W8-35 — 🚨 Sul binario del treno 0.7.1 **il cancello non c'è**: il publish del branch è del 4 luglio
+
+🚪 **Cancelli: ① `ci` verde (VETO) e ④ `controlla_registro` (VETO).**
+
+W8-32, W8-33 e W8-34 leggevano il `publish.yml` **di `main`**. ⚠️ **Ma per `on: push: tags`
+il workflow che gira è quello del commit taggato.** Sul branch è un altro file.
+
+    righe:  branch 45   ·   main 294
+    ultimo tocco al publish del branch: 9f3e7d8f  2026-07-04  «Verimem v0.3.0»
+
+| cancello | branch | main |
+|---|---:|---:|
+| `controlla_registro` — **VETO ④** | **ZERO** | 9 |
+| `controlla_promesse` — ⑤ | **ZERO** | 4 |
+| `head_branch=="main"` — **VETO ①** | **ZERO** | 1 |
+| `PUBLISH_ANYWAY` — ② | **ZERO** | 9 |
+| `twine check` — ③ | 1 | 2 |
+
+E `scripts/controlla_registro.py` / `controlla_promesse.py` **non esistono nel branch**:
+sono nati dopo il 22 luglio, e il branch parte dal 22 luglio.
+
+⇒ **Un tag `v0.7.1` su `52710a32` farebbe partire il workflow del 4 luglio, che pubblica
+con il solo `twine check`.** Il treno non è fermo al cancello: **sul suo binario il cancello
+non c'è.**
+
+### ⚖️ Il dilemma, che è una decisione di Aurelio e non un dettaglio
+
+- **tag sul branch** → passa, **senza i controlli che abbiamo costruito**;
+- **merge su `main`, poi tag** → tutti i controlli, **ma serve il `ci` verde su `main`**, che
+  manca dal 25 agosto e che la coda non produce.
+
+### ⚠️ Il limite
+
+**Che GitHub Actions usi il workflow del commit taggato è la semantica documentata, non una
+mia misura**: nel repo non esiste un caso reale da cui leggerla. Se qualcuno ha una prova
+contraria, cambia la conclusione.
+
+📌 E una distinzione che vale per tutte le verifiche di rilascio: «**ho eseguito il veto sul
+wheel e dà EXIT=0**» e «**il workflow che pubblica esegue il veto**» sono **due affermazioni
+diverse**. La prima è vera e utile; la seconda, qui, è falsa. Un controllo eseguito a mano
+non è un controllo installato.
+
+### 🪞 La trappola dell'ambiente che mi ha quasi fatto gridare al contrario
+
+La mia prima misura diceva `publish.yml` **assente anche su `main`** — falso. Causa:
+
+    fatal: ambiguous argument 'origin\main;.github\workflows\publish.yml'
+
+**Git Bash converte `<rev>:<path>` quando il path inizia con `.`**: i `:` diventano `;`, e
+il comando fallisce **come se il file non esistesse**. A/B nella stessa esecuzione:
+
+    senza MSYS_NO_PATHCONV, path '.github/…'  → FALLISCE
+    con    MSYS_NO_PATHCONV=1, stesso path    → OK
+    senza, path 'pyproject.toml'              → OK
+
+🔑 **Un file «assente» può essere un artefatto della shell.** Prima di dichiarare che
+qualcosa manca, **rifallo con `MSYS_NO_PATHCONV=1` o con `git ls-tree -r --name-only`**, che
+non contiene i due punti. Vale per chiunque qui interroghi `.github/`, `.claude/`,
+`.pre-commit-config.yaml`.
+
+    rifallo con:
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.github/workflows/publish.yml" | wc -l
+    MSYS_NO_PATHCONV=1 git show "origin/main:.github/workflows/publish.yml"          | wc -l
+    git ls-tree -r --name-only origin/hotfix/0.7.1 | grep controlla_
