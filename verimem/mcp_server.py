@@ -13214,6 +13214,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # non si vede.
             _out_qb = None
             if str(getattr(fact, "status", "")) == "quarantined":
+                # …E ANCHE `agito`, che e' il terzo passo dello stesso
+                # difetto. Il commento qui sopra dice «le stesse funzioni del
+                # write path», ed e' vero: era la stessa FUNZIONE ma non la
+                # stessa CHIAMATA. `agito` e' un parametro opzionale
+                # (`*, agito=()`), e senza di esso il ramo che nomina il layer
+                # non ha niente su cui girare: `chi_ha_quarantinato` cadeva
+                # sempre sull'ultima riga, `return "gate"`.
+                # Misurato alla porta, stesso claim e stessa esecuzione sulle
+                # due superfici: SDK `quarantined_by='L4.1'`, MCP `'gate'` —
+                # e nella STESSA ricevuta MCP `anti_confab_warnings` portava
+                # gia' `layer='L4.1'`. La porta sapeva e non lo diceva nel
+                # campo che serve a dirlo.
+                # `_blocking_layers` e non i warning grezzi: sono i layer che
+                # BLOCCANO, esclusi gli avvisi `*-observe`, se no si
+                # nominerebbe come decisore un layer che non ha deciso.
+                # `store-screen` resta fuori per la ragione gia' dichiarata
+                # sopra — qui lo status lo decide il ramo `downgrade`.
+                from .client import _blocking_layers as _bl
                 from .client import (
                     chi_ha_quarantinato as _chi_q,
                 )
@@ -13226,7 +13244,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _out_qb = _chi_q(
                     _esito_moat(_gate, _gate_warnings,
                                 source=_source or None),
-                    _gate_warnings)
+                    _gate_warnings,
+                    agito=_bl(_gate_warnings))
                 _persisti_q(
                     a.semantic.db_path, str(getattr(fact, "id", "")),
                     _out_qb,
