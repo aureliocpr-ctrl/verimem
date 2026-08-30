@@ -78,7 +78,12 @@ non stimate.**
 
 ## 🔴 Il contrappeso: ciò che non regge è ciò che nessuno ha dichiarato
 
-- **Il perdono di `L1.13` è a comando del chiamante — 5/5.** Basta ripassare il
+- ✅ **CURATO alle 17:34** — la guardia anti-eco è **in servizio**
+  (`l1_completion_detector.py`, votata 3/3, e il commento cita il mio banco).
+  Ri-eseguito come test di accettazione: **5/5 → 0/5**, controllo 5/5 retto.
+  ⚠️ *E io avevo protestato due volte che fosse «ferma senza assegnazione»,
+  mentre era già curata nel file del mio perimetro: non l'avevo riletto.*
+  **Il perdono di `L1.13` era a comando del chiamante — 5/5.** Basta ripassare il
   claim come `source`: il testo del match compare verbatim **per costruzione**.
   Il commit che introduce il perdono dichiara «*una self-claim senza fonte resta
   fermata*» — vero alla lettera; ciò che non nomina è che **chi scrive la fonte
@@ -90,6 +95,12 @@ non stimate.**
 - **Il buco dell'irrilevante**: 8 claim su 12 ottengono `moat: passed` senza che
   la fonte ne parli; ne entrano 2. La causa resta **ignota** — sei spiegazioni
   proposte e falsificate.
+  ⚠️ **Ma NON è un limite non dichiarato, e la riga va spostata**: il `README`
+  lo nomina come *known gap* — «*a **plausible added inference the source never
+  states** … scores high and is admitted*» — con **due date e due numeri** (0 il
+  18/07, **4** il 25/08), il comando per rifarlo, e persino «*Run it yourself
+  before trusting either number*». ⇒ **La mia misura è una conferma
+  indipendente di un limite che il prodotto dichiara**, non un difetto nascosto.
 - **L'asimmetria fra le porte**: con modello locale assente e daemon vivo,
   **l'SDK ammette un claim che la sua fonte NEGA, MCP lo ferma**. Il fail-open
   SDK è dichiarato; che MCP lo **eviti** delegando **non lo è**. `e4c1f199`

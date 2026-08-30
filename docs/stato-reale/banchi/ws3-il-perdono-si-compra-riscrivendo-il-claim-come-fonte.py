@@ -74,6 +74,22 @@ chiamanti reali la percorrerebbero, e non dice se sia un difetto o il modello di
 fiducia del prodotto — il gate non puo' sapere se il chiamante mente sulla
 fonte, e stabilire se debba provare a saperlo e' design, non misura.
 
+🟢 CHIUSO IL 30/08 ALLE 17:34 — LA GUARDIA ANTI-ECO E' IN SERVIZIO.
+Il reperto (5/5) e' stato votato 3/3 alle 14:27 e **curato da un'altra istanza**
+in `l1_completion_detector.py`, il cui commento cita questo banco::
+
+    ⛔ GUARDIA ANTI-ECO (30/08, votata 3/3 sul registro dell'esame) … non
+    nominava che **chi scrive la fonte puo' essere chi scrive il claim** … un
+    banco indipendente l'ha misurato **5 su 5**. Quando parla l'agente, la sua
+    `source` non e' una testimonianza: e' un'eco.
+
+**Ri-eseguito come test di accettazione: 5/5 scappavano, 0/5 adesso**, controllo
+5/5 retto.
+⚠️ E per tre ore il ramo «zero scappati» di questo file diceva «*il reperto non
+esiste*» — **falso**: il reperto esisteva ed e' stato **curato**. *La prosa era
+rimasta ferma dove il codice si era mosso, dentro il banco che quella classe
+l'aveva documentata.* Corretto sotto.
+
     python docs/stato-reale/banchi/ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py
 """
 
@@ -185,8 +201,12 @@ def main() -> int:
         print("     caso un'ALTRA parola sorvegliata, e allora lo ferma un altro")
         print("     strato per un'altra ragione.")
     elif scappati == 0:
-        print("     PREDIZIONE FALSIFICATA: non scappa nessuno ⇒ la cura non")
-        print("     introduce alcuna via, e il reperto non esiste.")
+        print("     🟢 LA CURA E' ARRIVATA: non scappa piu' nessuno.")
+        print("     ⚠️ NON significa «il reperto non esisteva»: significa che la")
+        print("     GUARDIA ANTI-ECO e' in servizio (l1_completion_detector.py,")
+        print("     30/08, votata 3/3; il suo commento cita QUESTO banco).")
+        print("     Verificato alle 17:34: 5/5 scappavano alle 14:00, 0/5 adesso.")
+        print("     ⇒ Chi rilegge verifichi QUANDO e DA CHI, non festeggi soltanto.")
     else:
         print("     PREDIZIONE FALSIFICATA: qualcuno resta fermato nonostante")
         print("     l'eco ⇒ il perdono NON e' incondizionato. Leggere QUALE layer")
