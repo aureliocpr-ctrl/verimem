@@ -12450,3 +12450,30 @@ credevamo.
     python -c "import json,urllib.request; d=json.load(urllib.request.urlopen('https://pypi.org/pypi/verimem/json')); print(sorted(d['releases']), d['info']['version'])"
     git rev-list -n1 v0.7.6 && git merge-base --is-ancestor v0.7.6 origin/main && echo "il tag e' su main"
     git merge-base origin/main origin/hotfix/0.7.1
+
+**㊼ chiuso un limite di ws2: l'undo non è solo elencato, RIESCE.** ws2 aveva verificato che
+`verimem facts undo-list` elenca le operazioni annullabili e aveva dichiarato onestamente il limite —
+*«non ho eseguito nemmeno un undo ⇒ verifico che l'operazione sia elencata, non che riesca»*.
+L'ho eseguito io, **su una copia**, con la disciplina già usata per le cure del `48`:
+```
+copia dello store in tempdir (129,4 MB), HIPPO_DATA_DIR prima degli import
+
+operazione: op_id=1c11d5cd829149c5  type=supersede  fact_id=feb4c60717ad
+PRIMA : status=model_claim  superseded_by=f2dffceb76b0
+--- verimem facts undo 1c11d5cd829149c5 ---
+restored: fact_id=feb4c60717ad op_type=supersede      (uscita con codice 0)
+DOPO  : status=model_claim  superseded_by=None
+```
+⇒ **L'undo riesce end-to-end**: esce con codice 0, stampa una ricevuta (`restored:`) e **il fatto
+torna non superato**. ⇒ **I 18 fatti che ws2 ha trovato dentro la finestra sono davvero
+recuperabili**, non solo teoricamente — **decisione con scadenza a 7 giorni.**
+✅ **Lo store di Aurelio non è stato toccato** (mtime invariato), **copia cancellata dopo l'uso**.
+⛔ **Non eseguo undo sullo store vero**: sono **18 decisioni editoriali, una per fatto**, e non mi è
+stato chiesto.
+📌 **Osservazione, non reperto**: il fatto ripristinato nella copia era **mio** (`feb4c60717ad`, uno
+dei 71 di stanotte) ed era stato superato da **un altro mio fatto della stessa notte**
+(`f2dffceb76b0`). **Due miei fatti si sono superseduti fra loro** nonostante la ricetta della source.
+Non l'ho indagato.
+🤝 **Il metodo che funziona fra istanze**: ws2 ha portato il dato e **ha dichiarato cosa non aveva
+verificato**; io ho chiuso esattamente quel punto con lo strumento che avevo già validato. **Nessuno
+dei due ha dovuto fidarsi dell'altro.**
