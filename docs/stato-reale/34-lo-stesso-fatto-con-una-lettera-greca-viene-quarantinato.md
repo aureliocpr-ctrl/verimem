@@ -68,8 +68,40 @@ che tacciono sono **quelle da cui si legge**.
 
 · **Due scritture**, non una popolazione: l'A/B è a variabile singola e il contrasto è netto,
   **ma è un contrasto**.
-· **Non ho misurato quanti nostri fatti reali contengano mixed-script**: nel corpus di Aurelio non
-  l'ho cercato (qui ho usato uno store temporaneo).
+· ~~**Non ho misurato quanti nostri fatti reali contengano mixed-script**.~~
+  **Misurato — vedi l'aggiunta in fondo.**
 · **Non dico che il criterio vada rilassato**: contro gli homograph è la difesa giusta, e la ricevuta
   offre già la via d'uscita documentata (`writer_role='external_content'`). **Non l'ho provata.**
 · **L'istante è parte del dato**: 30/08 ore 22:10.
+
+
+---
+
+## Aggiunta delle 22:25 — quanti fatti reali contengono il pattern
+
+Sul corpus di Aurelio (`mode=ro`, **15.978 fatti**):
+
+```
+   con almeno un carattere greco (proposition o topic)      36     0,23%
+   di questi, quanti fanno scattare detect_injection        17     0,11%
+   di questi, quanti sono quarantinati                       0
+```
+
+**Status dei 17**: `user_manual` **13** · `provisional` 2 · `legacy_unverified` 1 · `model_claim` 1.
+**Date**: tutte fra **2026-05-11 e 2026-07-16** — nessuna dal 24 agosto in poi.
+
+⇒ **Il difetto è reale ma marginale: lo 0,11% del corpus.**
+⇒ 🔑 **E nessuno di quei 17 è stato fermato, perché sono tutti ANTECEDENTI a `store-screen`**, che è
+entrato in servizio il **24-08** ([doc 24](24-anche-il-gate-ha-ere.md)). **Il corpus contiene 17
+fatti che oggi non entrerebbero nella stessa forma.**
+
+📌 **Chi sono**: per lo più contenuti **tecnici e curati a mano** — una spec (`p3-self-model`), due
+finding con citazione arXiv, un «failure mode #5». **13 su 17 sono `user_manual`**, cioè scritti
+deliberatamente, non generati.
+
+⚠️ **Quello che NON posso dire**: che «sarebbero stati fermati». Nel mio A/B il fatto greco arrivava
+come **`agent_claim`** ed è finito in quarantena; questi sono in maggioranza `user_manual`, e
+**non ho verificato se quel percorso porti allo stesso esito**. La ricevuta stessa distingue
+l'attribuzione (`attribution=agent_claim … set writer_role='external_content'`), quindi la
+differenza è prevista dal prodotto. ⇒ **Quello che posso dire è solo: oggi il rilevatore li
+segnala.**
