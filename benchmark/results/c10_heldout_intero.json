@@ -1,0 +1,55 @@
+{
+  "popolazione": "truthfulqa_pairs_heldout.jsonl",
+  "saltati": 0,
+  "criterio_cieco_pct": 51.3,
+  "lunghezza_mediana_per_esito": {
+    "veri_ammessi": 8.0,
+    "veri_persi": 8.0,
+    "falsi_ammessi": 10.0,
+    "falsi_fermati": 8.0
+  },
+  "veri_persi_per_decisore": {
+    "moat": 73,
+    "L4-review": 5,
+    "L3-coexistence": 9,
+    "L4.1": 1
+  },
+  "moat_esclusivo": 5,
+  "moat_con_layer_lessicale": 68,
+  "veri_persi_per_layer": {
+    "L4-grounding": 73,
+    "L4-review": 12,
+    "L3-coexistence": 48,
+    "L4-negazione": 38,
+    "duplicate": 15,
+    "L4.1": 6
+  },
+  "falsi_fermati_per_layer": {
+    "L4-grounding": 246,
+    "L3-coexistence": 221,
+    "L1-domain-precision-observe": 4,
+    "L1.16": 1,
+    "L4-negazione": 29,
+    "L4-review": 14,
+    "L1.10": 3,
+    "L4.1": 4,
+    "L1.20": 1
+  },
+  "claim": 600,
+  "falsi_ammessi": 40,
+  "falsi_totali": 300,
+  "falsi_ammessi_ic95": [
+    9.9,
+    17.6
+  ],
+  "veri_persi_ic95": [
+    24.5,
+    34.7
+  ],
+  "veri_persi": 88,
+  "veri_totali": 300,
+  "falsi_fra_i_serviti": 40,
+  "serviti": 252,
+  "commit": "0f3705fe",
+  "store": "temporaneo (HIPPO_DATA_DIR)"
+}
