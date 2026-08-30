@@ -10126,3 +10126,71 @@ codice del gate, e il gate non si tocca senza mandato.**
 ```bash
 python docs/stato-reale/banchi/ws6-il-consiglio-del-presidio.py
 ```
+
+### 🎯 W8-23 — **Resta UN SOLO cancello**, ed è quello che ho dimostrato insoddisfacibile
+
+> **REGIME** — banco `a-che-punto-e-il-rilascio.py` eseguito alle 22:02 del 30/08 su
+> `410f8f4d`, in 57 secondi, wheel costruito in `mktemp -d`.
+> **LIMITE, e l'ho ristretto**: il banco gira sull'**albero locale**, la CI su un clone
+> pulito. Verificato che le radici spedite non abbiano differenze: **zero untracked e zero
+> modificati** in `verimem engram hippoagent pyproject.toml`, con **controllo positivo**
+> (lo stesso comando vede i tre untracked in `docs/`, quindi non è cieco). ⇒ I due wheel
+> conterrebbero **gli stessi file**; restano fuori ambiente e versione di `build`.
+
+```
+①  ci verde sul commit                FERMA   esito = NESSUN RUN
+②  PUBLISH_ANYWAY spenta              passa   variabili di repository = 0
+③  twine check                        passa   EXIT=0
+④  registro pulito nel wheel (VETO)   passa   EXIT=0
+⑤  promesse nel wheel (avviso)        passa   EXIT=0
+⑥  registro nell'sdist (avviso)       passa   EXIT=0     ← era EXIT=1, «1 in 1 file»
+⑦  pagina PyPI aggiornata             passa   soglia «more than 1900», sono 2382 ✅
+
+⇒ cancelli che FERMANO: 1     (2 alle 18:03 · 3 il 29/08 alle 19:52)
+```
+
+**Tutto è pronto tranne la verifica continua.**
+
+### 🔑 E ① non è «rosso»: è **insoddisfacibile**
+
+Il cancello chiede `ci` verde su `github.sha`. **Se `ci` non CHIUDE, non è rosso: non
+esiste.** Misurato stasera:
+
+- i run si fermano sull'ultimo anello di una catena a **tre** livelli
+  (`test → build → wheel install-from-scratch`); ogni anello entra in coda **solo quando
+  il precedente finisce**, ripartendo dal fondo di una fila cresciuta (W8-18, W8-21);
+- il **fondo è immobile**: gli stessi 6 run del 28/08 alle 17:07, alle 20:34 **e** alle
+  21:58, mentre 4 uscivano da altrove;
+- attraversamento da **2h38m** (#941, l'ultimo verde) a **~46 ore**;
+- uscita ~1/ora contro ~45/ora in ingresso, coda a **900**.
+
+⇒ **Nessuna cura ai test lo cambierebbe: i test finiscono già.**
+
+### 🔧 L'unica via d'uscita, e ha un banco
+
+```
+`paths-ignore`  (l'84% del carico è documentazione: 287 commit su 341)
+  + il cancello cerca il verde sull'ULTIMO COMMIT CHE TOCCA CIÒ CHE SI SPEDISCE
+```
+
+**La coppia, non la metà**: `paths-ignore` da solo **chiude** il cancello. E la seconda
+parte non è un surrogato — per i commit di sola documentazione l'artefatto è quello già
+verificato (versione cablata, nessuno sha né data iniettati).
+`python docs/stato-reale/banchi/ws8-quale-verde-deve-cercare-il-cancello.py` → **EXIT=0**.
+
+### Cosa resta fuori dalla mia portata
+
+- **⑧ trusted publisher**: la parte pubblica è verificata — `verimem` su PyPI è nostro
+  (autore Aurelio Capriello, 7 rilasci, versione servita 0.7.0). La configurazione del
+  publisher vive su PyPI e **si scopre solo fallendo**: chi ha accesso la verifichi PRIMA.
+- ⛔ **La decisione sulla coppia è collegiale e tocca `.github/`**: porto misura, forma e
+  banco. **Non l'ho implementata.**
+- **⑦ non è automatico nemmeno in `publish.yml`**: è un commento che qualcuno deve leggere.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py        # ~57 s
+git status --porcelain --untracked-files=all -- verimem engram hippoagent pyproject.toml
+git status --porcelain --untracked-files=all -- docs | head -3     # controllo positivo
+```
