@@ -71,9 +71,43 @@ lì.** È la stessa distinzione che vale per noi: *misurato* contro *previsto*.
 
 · **Tre scritture, uno store temporaneo, un solo pattern** (`τ_hi`): il contrasto è netto ma **non è
   una popolazione**.
-· **Non ho provato la porta MCP**: la memoria riporta un fatto di @ws5 secondo cui su MCP
-  `external_content` sarebbe **rifiutato dallo schema**. Se fosse confermato, il rimedio sarebbe
-  **inapplicabile proprio dalla porta dell'agente** — ma **non l'ho verificato io** e non lo do per
-  buono.
+· ~~**Non ho provato la porta MCP.**~~ **Verificato — vedi l'aggiunta in fondo: confermato.**
 · **Non ho letto il codice della document policy**: vedi sopra, le due cause non sono separate.
 · **L'istante è parte del dato**: 30/08 ore 22:45.
+
+
+---
+
+## Aggiunta delle 23:05 — sulla porta MCP il rimedio non è nemmeno esprimibile
+
+La memoria riportava un fatto di @ws5: *«su MCP `external_content` è rifiutato dallo schema»*.
+**Confermato, con il riferimento**: `verimem/mcp_server.py:2527-2533`.
+
+```json
+"writer_role": {
+    "type": "string",
+    "enum": ["agent_inference", "user", "system_hook", "trusted_hook"],
+    "default": "agent_inference"
+}
+```
+
+**`external_content` non è fra i quattro valori ammessi.**
+
+⇒ **Il quadro del rimedio è ora completo, e su entrambe le porte non porta a nulla:**
+
+| porta | il valore suggerito dalla ricevuta | esito |
+|---|---|---|
+| **SDK** (`Memory.add`) | **accettato e registrato** nel database | **l'esito non cambia**: `quarantined` da `store-screen` |
+| **MCP** (`hippo_remember`) | **non è nell'`enum`** | **non è nemmeno esprimibile** |
+
+🔑 **La ricevuta consiglia un'azione che dalla porta dell'agente non si può compiere, e dalla porta
+del programmatore non serve.** Ed è la porta MCP quella che legge quella ricevuta: **è l'agente a
+riceverla**, ed è proprio lui a non poterla applicare.
+
+📌 Questo **rafforza la correzione** fatta sopra al doc 34: la porta di scrittura resta la più
+esplicita del prodotto, **ma la sua unica informazione rivolta al futuro — il rimedio — non regge su
+nessuna delle due superfici.** Le altre quattro, che raccontano il passato, sono esatte su entrambe.
+
+⚠️ **Resta non separato** (vedi sopra) se sull'SDK il valore instradi davvero alla document policy
+con esito identico, oppure non instradi affatto: **non ho letto quel codice**, e la differenza
+cambia la cura, non il fatto che il consiglio non sia azionabile.
