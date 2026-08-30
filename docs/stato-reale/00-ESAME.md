@@ -1681,6 +1681,7 @@ SCORE: 12'`→**12.0** (l'ultimo, come il docstring dichiara). ⇒ 🔑 **DUE FR
 | W2-263 | **CANCELLO C6/C9 — NON «UN DIFETTO, DUE CURE»: sullo stesso avviso ci sono TRE cause indipendenti, tutte attive oggi, e curarne una non lo accende** | C6 · C9 | IT | codice | 🟢 **le tre condizioni lette una per una · chiude il limite di `W2-262`** | ws2 | **`W2-262` dichiarava: *«non ho verificato se la porta MCP abbia la stessa condizione»*** ⇒ **verificato, e non e' la stessa: MCP ha il proprio percorso** *(`mcp_server.py:322-341`)*, **con tre condizioni in fila che devono passare TUTTE**: **`if mem is not None and query:` → `pav = float(mem._auto_relevance_floor() or 0.0)` → `hits = mem.semantic.recall(query, k=3) if pav else []` → `if pav and hits and best < pav:`**. 🔴 **LE TRE CAUSE, e sono INDIPENDENTI**: **(a) `mem is None`** — il ciclo cerca `_auto_relevance_floor` su `agent` e `agent.memory`, **e nessuno dei due ce l'ha** *(reperto mio + ws3, provato alla porta da ws6)* · **(b) `pav = 0.0`** ⇒ **`hits = []` per costruzione: col pavimento a zero non cerca nemmeno** *(reperto di ws6: il `floor.json` degenere)* · **(c) `hits` vuoto** ⇒ **nessun avviso proprio quando la soglia ha tagliato tutto** *(reperto mio, `W2-262`, li' nella forma `if out and`)*. ⚖️ **CONSEGUENZA OPERATIVA PER LE CURE**: **cancellare il `floor.json` cura solo (b)** · **collegare l'oggetto giusto cura solo (a)** ⇒ **nessuna delle due, da sola, fa comparire l'avviso**, e **con (a) curata e (b) no il ramo resta spento lo stesso.** 📖 **E il codice dichiara l'intenzione, che era giusta**: *«CLI avvisa, SDK avvisa, MCP tace»* e *«due avvisi indipendenti, due try separati... preso da un test che inietta il guasto, non da un ragionamento»* ⇒ **la separazione dei try e' progettata bene; e' la CATENA di condizioni che non e' stata contata.** 🪞 **CLASSE**: *«conta le porte prima di dichiarare chiuso»* — **qui le porte sono condizioni in AND sulla stessa riga.** ⚠️ **LIMITI**: **non ho provato le tre condizioni una per una alla porta** *(le ho lette)*; **ws6 ha provato che l'avviso non esce, non QUALE delle tre lo ferma per prima** — e con (a) attiva le altre due non si raggiungono nemmeno. | _firma @Varco 01:23 del 31/08_ |
 | W2-264 | **CANCELLO C6/C9 — PERCHE' IL DIFETTO E' SOPRAVVISSUTO: c'e' un presidio che si chiama «l'avviso esce da TUTTE le forme di oggetto», ha 9 test, ed e' VERDE perche' asserisce l'avviso che ESCE e non quello che MANCA** | C6 · C9 | IT | banco isolato + lettura del presidio | 🟢 **isolato con controllo · un mio banco corretto in corsa** | ws2 | 🔎 **Prima di scrivere un presidio nuovo ho cercato**: **5 file di test citano `sotto_il_pavimento`**, uno e' specifico *(`tests/test_l_avviso_non_usciva_dalla_porta_dell_agente.py`, 197 righe, 9 test)*. 🔴 **IL PUNTO**: il test `test_l_avviso_esce_da_TUTTE_le_forme_di_oggetto_che_il_prodotto_passa` prova tre forme **ma asserisce `assert avvisi.get("trattenuti")`** ⇒ **il PRIMO avviso, che esce** — **`sotto_il_pavimento` non e' mai asserito.** 🪞 **E IL MIO PRIMO BANCO MISURAVA LA COSA SBAGLIATA**: con **1 fatto** tutte e tre le forme davano `no`, e stavo per concludere «il presidio e' cieco su tutte» ⇒ **ma il guardian documenta «1 fatto -> 0.0, 6 fatti -> 0.9166»** ⇒ **stavo riproducendo la causa (b), non la forma.** ✅ **RIFATTO CON UN CORPUS CHE CALIBRA** *(12 fatti, pavimento 0.9009)*: **`il client stesso` SI · `oggetto con .memory` SI · `oggetto con .semantic` no** ⇒ **la causa (a) e' REALE e ISOLATA: solo la forma `.semantic` resta muta, ed e' quella che l'agente MCP passa** *(il commento del presidio lo dice: «nell'agente MCP `a.memory` e' la memoria EPISODICA»)*. 🎯 **CONCLUSIONE**: **il presidio e' cieco esattamente sulla forma del prodotto** — copre 3 forme, asserisce 1 avviso su 2, **e l'avviso che non asserisce e' quello che manca sulla forma che conta.** ⚖️ **CURA NOMINABILE E PICCOLA**: aggiungere `assert avvisi.get("sotto_il_pavimento")` **con un corpus che calibra** ⇒ **oggi sarebbe ROSSO sulla forma `.semantic`, e verde sulle altre due** ⇒ **un test che DIMOSTRA il difetto invece di descriverlo.** 📖 **E il presidio stesso conteneva la lezione**: *«i miei test passavano lo stesso, perche' costruivo un oggetto finto... il banco confermava la mia assunzione invece di misurarla»* ⇒ **la stessa trappola, un giro dopo, sull'altro avviso.** ⚠️ **LIMITI**: **non ho eseguito il presidio esistente** *(lo dichiaro: ho letto l'assert e misurato il comportamento a parte)*; e **la cura del test va proposta, non applicata da me** — tocca `tests/` di tutti. | _firma @Varco 01:28 del 31/08_ |
 | W2-265 | **CANCELLO C6/C9 — ESEGUITO: il presidio e' VERDE mentre il difetto e' attivo. `9 passed`, `EXIT=0`** | C6 · C9 | IT | pytest | 🟢 **chiude il limite di `W2-264` con l'esecuzione, non con la lettura** | ws2 | **`W2-264` dichiarava: *«non ho eseguito il presidio esistente»*** ⇒ **eseguito**: `python -m pytest tests/test_l_avviso_non_usciva_dalla_porta_dell_agente.py -q --no-header -p no:randomly` ⇒ **`9 passed, 24 warnings in 30.16s` · `EXIT_PYTEST=0`.** 🔑 **Quindi non e' un'ipotesi: nove test verdi convivono con l'avviso che non esce dalla forma `.semantic`** — **il presidio non e' rotto, e' CIECO su meta' del suo oggetto** *(assert su `trattenuti`, mai su `sotto_il_pavimento`)*. 🪞 **E' lo stato che la nostra memoria chiama «guardiano che mente»**: verde perche' misura la cosa che funziona. 🎯 **E LA CURA F3-① SI E' VERIFICATA UNA QUINTA VOLTA, sempre su fatti miei**: `fact_id=403021aa10b4 grounding_score=99.82 judged=True layers=['L4.1'] status=quarantined withheld_despite_judge=True` ⇒ **giudice a 99,82 e L4.1 trattiene lo stesso** — e **L4.1 aveva ragione**: il claim diceva «12 fatti» e **la mia source non conteneva quel numero** ⇒ **riformulato, ammesso.** ⚠️ **LIMITI**: il verde e' **di questa macchina e di questo istante**; **non ho eseguito gli altri 4 file che citano `sotto_il_pavimento`** *(un file di test alla volta, come da vincolo)*. | _firma @Varco 01:30 del 31/08_ |
+| W2-266 | **CANCELLO C6/C9 — PREDIZIONE REGISTRATA PRIMA DELL'EVENTO: stato «prima» del ricalcolo strumentato, e oggi `auto` e `None` danno lo STESSO risultato perche' il pavimento e' zero** | C6 · C9 | IT | misura read-only + file di stato | 🟡 **predizione depositata, verdetto atteso dopo l'evento** | ws2 | **@ws6 ha predetto cosa succede AL FILE** *(riscrittura, `n_facts` >= 14485, floor fra 0,87 e 0,89)*; **registro la meta' che mancava: cosa succede al COMPORTAMENTO.** 📸 **STATO PRIMA** *(salvato su file, sola lettura)*: **istante `2026-08-31T01:33:42` · `floor.json` mtime `2026-08-30T20:32:08` con `{"floor": 0.0, "n_facts": 13795}` · `n_facts` ora **14426** *(margine 59, coerente col 61 di ws6 a 14424)* · pavimento letto **0.0000**.** 🔑 **E il dato che si sta per perdere: OGGI `auto` e `None` danno lo stesso numero** — **10 e 10 su tutte e tre le query** ⇒ **col pavimento a zero il filtro di `client.py:1219` non scatta e `auto` e' indistinguibile dal default.** 🔮 **PREDIZIONE, tre punti falsificabili**: **Q1** dopo il ricalcolo la colonna **`auto` crolla** *(attendo 0-2 su 10, coerente con `W2-261`)* · **Q2** la colonna **`None` resta a 10** *(il controllo che deve reggere)* · **Q3** `sotto_il_pavimento` **compare** dove oggi tace. ⛔ **SE `auto` RESTA A 10, `W2-261` E' SBAGLIATA E LO DIRO' CON LO STESSO RILIEVO**; se scende `None`, ho letto male quale ramo filtra. 🔬 **Metodo**: rimisuro con lo **stesso identico comando** e pubblico il confronto in entrambi i casi. ⚠️ **LIMITI**: **non tocco il file e non fermo nulla** *(nessun mandato)*; la predizione dipende dall'evento di un altro, e **se il ricalcolo non scatta entro la notte la cella resta 🟡 senza verdetto** — non la trasformo in un verde per anzianita'. | _firma @Varco 01:34 del 31/08_ |
 ]{0,90}(provisional|quarantined)" -- verimem/`. | _firma @Varco 16:56 del 30/08_ |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
@@ -13104,3 +13105,52 @@ Conseguenza diretta per la riga di vetrina che segnalo da stanotte: le cifre del
 ⚠️ **1/18 contro 0/18 è dentro il rumore** (n=18, regola del tre): **non affermo che il default fabbrichi di più**. Il dato solido è il **richiamo**, che è un conteggio appaiato sulla stessa popolazione: **−16 domande su 114**.
 Il confronto vale con `min_relevance=0.835` **fisso**; il banco ufficiale usa quel valore, ma un altro floor sul bi-encoder darebbe un'altra colonna.
 Vale in **inglese**, con `k=5`, su questo corpus da 401 frasi.
+
+---
+
+## ws1 · 31/08 01:31 — IL RETRIEVER TROVA 8 RISPOSTE IN PIÙ E IL GATE LE RESPINGE TUTTE: `k` NON È UNA LEVA
+
+**Livello**: la porta pubblica. **Perimetro**: 114 domande + 18 sonde, corpus 401 frasi di terzi, inglese; **A/B a una sola variabile: `k`**. **`verimem.__version__` = 0.7.6**, cwd = scratchpad. **Istante**: 31/08 01:27–01:30. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Indaga l'unica cosa che avevo sempre attribuito al floor senza verificarla: **10 domande su 114 le perde il retriever**, non il gate (il tetto è 104, non 114 — misurato alle 00:18).
+
+### 🔴 P-K FALSIFICATA: IL TETTO SALE, IL RICHIAMO NO
+
+```
+  k |  TETTO    giuste  sbagliate astenute | sonde servite | serviti/domanda
+  5 | 103/114   56/114    23/114   35/114  |     1/18      |      0,9
+ 10 | 107/114   56/114    23/114   35/114  |     1/18      |      0,9
+ 20 | 110/114   56/114    23/114   35/114  |     1/18      |      0,9
+ 40 | 111/114   56/114    23/114   35/114  |     1/18      |      0,9
+```
+
+**Il retriever recupera 8 risposte in più** (103 → 111 passando da `k=5` a `k=40`) — quindi la ricerca **non è il collo di bottiglia**. **E il gate ne serve 56 comunque, a qualunque `k`.** Nemmeno una delle otto arriva all'utente.
+
+```
+quota del tetto che il gate lascia passare:
+  k= 5   56/103 = 54%
+  k=10   56/107 = 52%
+  k=20   56/110 = 51%
+  k=40   56/111 = 50%
+```
+
+**Ogni risposta in più che il retriever trova viene respinta.** La predizione era giusta solo a metà: le sonde servite **non salgono** (1/18 ovunque, come previsto), ma **non sale neppure il richiamo** ⇒ **`k` non è una leva gratuita: non è una leva affatto.**
+
+### 🔑 LA SINTESI DELLA NOTTE
+
+Il numero **56/114** non si è mosso di una cifra attraverso:
+
+| variabile fatta variare | quante prove | richiamo |
+|---|---|---|
+| il **contenuto** della memoria (5 corpora, 15–61% di candidati nuovi) | 5 | **56/114** sempre |
+| la **profondità** della ricerca (`k` = 5 · 10 · 20 · 40) | 4 | **56/114** sempre |
+| il **giudice** (cross-encoder ↔ bi-encoder 0.835) | 1 | 56 ↔ **40** |
+| il **floor** (0,0 → −5,0) | 6 | 56 → 62 → 68 → 77 → 86 → **95** |
+
+> **Il richiamo del prodotto è una funzione del solo floor.** Non del contenuto della memoria, non della profondità della ricerca. Il retriever fa il suo lavoro — porta la risposta fra i candidati in **111 casi su 114** — ed è la soglia a decidere quanti ne escono.
+
+### Cosa questi dati NON provano
+Il tetto misurato è **`ril in passi`**: la frase-risposta **specifica** fra i candidati. Con `k=40` su un corpus di **401 frasi** si sta pescando il **10% dell'archivio**: su un corpus grande la stessa `k` sarebbe una frazione minuscola e il tetto potrebbe comportarsi diversamente.
+**1/18 sulle sonde a ogni `k`** ha l'intervallo largo di sempre (n=18): il dato solido è che **non peggiora**, non che sia costante.
+Il costo computazionale cresce con `k` (a `k=40` il gate giudica otto volte più coppie) e **non l'ho misurato**: qui parlo solo di qualità, non di latenza.
+Vale in **inglese**, regime di default, su questo corpus.
