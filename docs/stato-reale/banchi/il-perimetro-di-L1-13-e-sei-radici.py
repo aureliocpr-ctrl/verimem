@@ -117,9 +117,58 @@ def main() -> int:
         print(f"     ⇒ {passano} su {len(FUORI)} passano il detector. Il numero")
         print("     e' questo e non lo forzo.")
 
-    print("\n  ⚠️ COSA NON DICE: i sinonimi li ho scelti io (italiano")
-    print("  professionale, 14 forme); non e' un campione del linguaggio reale.")
-    print("  E vale per l'ITALIANO: l'elenco inglese e' un'altra riga del file.")
+    # ── L'INGLESE, che era il limite dichiarato di questa misura e lo chiudo qui.
+    #    Elenco a `:34-35`: complete | completed | done | finished | closed |
+    #    wrapped[- ]up | all[- ]done | task[- ]done.
+    #    ⚠️ E fuori restano i verbi PIU' COMUNI nel self-claim di un agente
+    #    software: shipped, merged, deployed, fixed, resolved, implemented.
+    EN_DENTRO = ["completed", "done", "finished", "closed", "complete"]
+    EN_FUORI = ["shipped", "merged", "deployed", "fixed", "resolved",
+                "implemented", "finalized", "delivered", "settled",
+                "accomplished", "executed", "processed"]
+    FORMA_EN = "I have {} the payment module migration."
+
+    def prova_en(part):
+        claim = FORMA_EN.format(part)
+        d = det(proposition=claim, verified_by=None, source=None)
+        g = run_validation_gate(proposition=claim, verified_by=[], topic=None,
+                                agent=None, source=None)
+        return ("ferma" if d is not None else "passa",
+                str(getattr(g, "action", None)))
+
+    print("\n  == INGLESE — claim: «I have <participle> the payment module migration.»")
+    en_fermati = sum(1 for p in EN_DENTRO if prova_en(p)[0] == "ferma")
+    print(f"     DENTRO l'elenco: fermati {en_fermati} su {len(EN_DENTRO)}")
+    print(f"     {'participio':<16}{'detector':<10}porta")
+    en_passa = en_passa_porta = 0
+    for p in EN_FUORI:
+        d, az = prova_en(p)
+        en_passa += 1 if d == "passa" else 0
+        en_passa_porta += 1 if az == "persist" else 0
+        print(f"     {p:<16}{d:<10}{az}")
+    print(f"\n     FUORI l'elenco: passano {en_passa} su {len(EN_FUORI)}"
+          f"   (alla porta {en_passa_porta} su {len(EN_FUORI)})")
+    # 🪞 CORRETTO: la prima stesura concludeva «in inglese pesa di piu'» perche'
+    #    guardava SOLO il detector (12 su 12 passano). Ma ALLA PORTA ne passano
+    #    7 su 12: `shipped`/`merged`/`deployed` li ferma `L1`, `fixed`/`resolved`
+    #    li ferma `L1.8`. ⇒ E' IL CONTRARIO, e ci sono ricascata: «il layer ha
+    #    detto» non e' «il sistema ha fatto», la stessa lezione di W7-62.
+    print(f"\n     ⚖️ CONFRONTO ALLA PORTA, che e' il livello che decide:")
+    print(f"        IT: passano {passano_porta} su {len(FUORI)}"
+          "   ⇒ nessun altro layer subentra")
+    print(f"        EN: passano {en_passa_porta} su {len(EN_FUORI)}"
+          "   ⇒ altri layer della famiglia L1 subentrano")
+    if en_passa_porta < en_passa:
+        print("     🔑 ASIMMETRIA DI LINGUA: in INGLESE `shipped`, `merged`,")
+        print("     `deployed` li ferma `L1` e `fixed`, `resolved` li ferma")
+        print("     `L1.8` — il gergo software E' coperto. In ITALIANO gli")
+        print("     equivalenti (`ultimato`, `terminato`, `consegnato`) passano")
+        print("     **con layer vuoto**. ⇒ **L'italiano e' meno protetto**, e")
+        print("     non per il detector che ho misurato: per quelli che MANCANO.")
+
+    print("\n  ⚠️ COSA NON DICE: i sinonimi li ho scelti io (14 IT + 12 EN); non")
+    print("  sono un campione del linguaggio reale, e la frequenza con cui")
+    print("  compaiono davvero nei write NON e' misurata qui.")
     return 0
 
 
