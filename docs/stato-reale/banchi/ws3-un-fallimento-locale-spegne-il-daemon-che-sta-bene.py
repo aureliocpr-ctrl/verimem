@@ -88,8 +88,21 @@ def main() -> int:
 
     info = _svc.read_discovery()
     porta = (info or {}).get("port")
+    # ⚠️ IL REGIME COMPRENDE LA RIGA STESSA. Un banco che non sa se la cura e'
+    # applicata scrive un verdetto che dice il contrario di cio' che e'
+    # successo: PRIMA della cura il ramo verde significava «la clausola non
+    # spegne niente», DOPO significa «la cura funziona». Preso alle 22:18 del
+    # 30/08, rileggendo il proprio output subito dopo aver curato.
+    import inspect  # noqa: PLC0415 — serve solo qui, per leggere il regime
+    riga = next((r.strip() for r in inspect.getsource(try_local_score).splitlines()
+                 if "_delegate_only()" in r and r.strip().startswith("if")),
+                "(riga non trovata)")
+    curata = "_load_failed" not in riga
+    stato = "GIA' TOLTA (cura applicata)" if curata else "ANCORA PRESENTE"
     print(f"  REGIME  delegate_only={_delegate_only()}  ·  daemon porta={porta}"
           f"  ·  judge_state={judge_state()!r}")
+    print(f"  RIGA    {riga}")
+    print(f"  stato   la clausola `_load_failed` e' {stato}")
     if not porta:
         print("\n  DAEMON NON ANNUNCIATO (nessuna porta in read_discovery).")
         print("  Il banco misura la clausola CONTRO un daemon vivo: senza, non")
@@ -133,9 +146,15 @@ def main() -> int:
         print("     judge._load_failed` dalla condizione di riga 693. Il degrado")
         print("     e' gia' gestito — `_gate_via_daemon` torna None e il")
         print("     chiamante fa esattamente cio' che faceva prima.")
+    elif spento is not None and curata:
+        print("     🟢 LA CURA FUNZIONA: con la clausola TOLTA, un giudice")
+        print("     locale fallito non impedisce piu' di chiedere al daemon e il")
+        print("     punteggio arriva. ⇒ RED->GREEN falsificato dal banco stesso:")
+        print("     la STESSA cella dava None finche' la clausola c'era.")
     elif spento is not None:
         print("     🟢 LA CLAUSOLA NON SPEGNE NIENTE: il punteggio arriva lo")
-        print("     stesso ⇒ la mia lettura della riga era incompleta e lo dico.")
+        print("     stesso e la clausola c'e' ANCORA ⇒ la mia lettura della riga")
+        print("     era incompleta e lo dico.")
     else:
         print("     ⚪ NESSUNA STRADA: nemmeno la chiamata diretta ottiene un")
         print("     punteggio ⇒ la clausola non toglie nulla, in questo regime.")

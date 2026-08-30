@@ -690,7 +690,34 @@ def try_local_score(source: str, fact: str, *,
     # sa giudicare o e' lento, si degrada ESATTAMENTE come prima: warm in
     # background e None. Il daemon pero' continua a caricare, quindi il
     # processo successivo lo trova caldo.
-    if judge._scorer is None and not judge._load_failed and _delegate_only():
+    #
+    # ⚠️ `_load_failed` NON E' PIU' NELLA CONDIZIONE, dal 2026-08-30, e la
+    # ragione e' che dice una cosa su QUESTO processo e veniva usata per
+    # decidere di un ALTRO. Il caricamento locale puo' fallire per RAM,
+    # file corrotto, torch assente — e il daemon condiviso, che e' un
+    # processo separato col modello gia' in memoria, sta benissimo. Da
+    # quel momento il giudizio non veniva piu' chiesto a chi poteva darlo,
+    # e la riga qui sopra prometteva l'opposto: «se il daemon non c'e',
+    # non sa giudicare o e' lento, si degrada ESATTAMENTE come prima».
+    # Li' non si degradava: si saltava il daemon a priori, senza avere
+    # alcuna informazione sulla sua salute.
+    #
+    # MISURATO ALLA PORTA il 2026-08-30 alle 22:16, daemon vivo (porta 61574),
+    # A/B nella stessa esecuzione — il banco che accompagna questa cura sta
+    # sotto `docs/stato-reale/banchi/` e si chiama «un fallimento locale
+    # spegne il daemon che sta bene»:
+    #
+    #     _load_failed=False  ->  try_local_score  = (0.5561, 99.64)
+    #     _load_failed=True   ->  try_local_score  = None
+    #     la STESSA strada a mano ->  _gate_via_daemon = [0.5561]
+    #
+    # Il costo di chiedere e' una connessione locale con timeout; il costo
+    # di non chiedere e' una scrittura ammessa senza giudizio, che il
+    # docstring di `_gate_via_daemon` chiama «precisamente cio' che questo
+    # prodotto esiste per non fare». Il degrado resta quello di sempre:
+    # daemon assente o muto -> None -> warm in background e il chiamante
+    # fa esattamente cio' che faceva prima.
+    if judge._scorer is None and _delegate_only():
         punteggi = _gate_via_daemon(
             [judge.coppia(source, fact, focus_budget=focus_budget)])
         if punteggi:
