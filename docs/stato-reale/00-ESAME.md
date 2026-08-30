@@ -11331,3 +11331,42 @@ Delle **35** domande che non ricevono nulla **pur avendo la risposta in memoria*
 **SQuAD v2 è un ALTRO DOMINIO.** Ho aggiunto materiale **dove il cross-encoder è forte**, cioè nella direzione facile: la scala che conta per l'utente è **più materiale dello STESSO dominio**, con le stesse entità, dove il CE è debole (41% al primo posto). **Il mio banco ha testato la robustezza contro rumore fuori dominio, non contro concorrenza in dominio.** La prova vera vuole altre frasi HotpotQA/HaluEval, non SQuAD.
 **Due sonde in più** sono state perse per contaminazione dalle frasi nuove (16 anziché 18): con n=16, 1/16 ha un intervallo che arriva a ~**29%**.
 Vale in inglese, sul regime di default, su questo corpus.
+
+**㊳ `49` — il prodotto avvisa a ogni scrittura da un mese, e l'inerzia è NOSTRA.** È **il rovescio
+della serie**: senza questa cella i tredici pezzi precedenti mentono per omissione.
+📢 Trovato per caso in fondo alla ricevuta di un fatto che stavo salvando:
+> `REVIEW_BACKPRESSURE — 1272 facts are waiting in the quarantine/review backlog (threshold 500),
+> 357 of them in the last 7 days — **this write joins them** … drain the backlog —
+> `verimem facts quarantine-log` … `verimem facts requalify-quarantined` (dry run by default)`
+📊 **Misura (istante 23:14:20, stessa condizione del prodotto — `review_queue.py:78-80`,
+`status='quarantined' AND superseded_by IS NULL`):**
+· backlog **1.272** contro soglia **500** ⇒ **2,5 volte**
+· quarantinati totali **2.621** ⇒ **1.349 sono USCITI dalla coda** ⇒ **il meccanismo di uscita
+funziona**: più della metà è uscita perché un fatto successivo ha risposto al suo posto. **Non è un
+buco che non drena mai.**
+· **sopra soglia da circa un mese**: il **500°** fatto ancora in attesa risale al **1º agosto, 21:10**
+· per mese di creazione: maggio **384** · giugno **22** · luglio **74** · **agosto 792 = 62%** — il
+mese in cui abbiamo lavorato di più, e scritto di più **senza rileggere ciò che veniva trattenuto**
+🔑 **PERCHÉ QUESTA CELLA È DIVERSA DALLE ALTRE TREDICI.** La sintesi `47` dice che il difetto
+ricorrente è *«il prodotto sa fare la cosa e non la fa, e nulla segnala che non la sta facendo»*.
+**Qui è il contrario**: il prodotto **conta** a ogni scrittura, **dichiara** numero e soglia e quanti
+negli ultimi sette giorni, dice **«this write joins them»**, e indica **i due comandi**.
+> **Non manca un segnale. Manca un lettore.** In una notte in cui ho salvato cinquanta fatti,
+> quell'avviso mi è passato sotto gli occhi **ogni volta**, e l'ho letto solo quando un fatto è stato
+> quarantinato per un altro motivo. **Su questo punto il prodotto si comporta come vorremmo, e i
+> lenti siamo noi.**
+💡 **Una riga di quel modulo da copiare altrove** (`threshold()`): *«a malformed or negative value
+falls back to the default: **a typo must not silently switch an alarm off**. Only an explicit `0`
+does that»* ⇒ **l'esatto opposto del difetto del `48`**, dove un valore degenere ha spento un presidio
+senza dirlo.
+⛔ **Non ho eseguito `requalify-quarantined`, nemmeno in `dry run`**: drenare la coda significa
+decidere **quali fatti trattenuti tornano a essere serviti come veri** — una decisione sul contenuto
+della memoria di Aurelio, non una misura. 📌 **Dove guardare per primo, dai numeri**: i **792 di
+agosto**, di cui ricordiamo il contesto; i **480** fra maggio e luglio sono archeologia e costeranno
+di più.
+
+**rifallo con:**
+
+```bash
+python -c "import os,sqlite3; d=os.path.expanduser('~/.engram/semantic/semantic.db'); print(sqlite3.connect('file:%s?mode=ro'%d.replace(os.sep,'/'),uri=True).execute(\"SELECT COUNT(*) FROM facts WHERE status='quarantined' AND superseded_by IS NULL\").fetchone()[0])"
+```
