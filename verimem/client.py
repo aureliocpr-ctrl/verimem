@@ -398,6 +398,21 @@ class Memory:
         self.semantic = SemanticMemory(
             db_path=Path(path) if path else None,
             repo_root=Path(repo_root) if repo_root else None)
+        # L'IMPRONTA SEGUE LO STORE APERTO, non la variabile d'ambiente.
+        # `_store_fingerprint` deriva da `data_dir()`, e chi apre con
+        # `Memory(path)` — circa nove chiamanti su dieci — scriveva altrove
+        # ed emetteva eventi marcati «casa». Non serve architettura nuova:
+        # `set_flow_context` esiste gia' e il gateway lo usa per `tenant` e
+        # `surface`, e `_ambient` applica l'overlay come ULTIMA cosa,
+        # quindi sovrascrive anche `store`.
+        # ⚠️ LIMITE NOTO: e' un overlay di CONTESTO, quindi con due store
+        # aperti nello stesso contesto vince l'ultimo costruito. Copre il
+        # caso dominante (uno store per volta) e non il multiplexing.
+        try:
+            from .flow_events import impronta_di_percorso, set_flow_context
+            set_flow_context(store=impronta_di_percorso(self.semantic.db_path))
+        except Exception:  # noqa: BLE001 — un tag non rompe un'apertura
+            pass
         #: trust odometer: persistent counters of what the gate did (admitted /
         #: quarantined / rejected / abstained) — same DB file, fail-open, no PII.
         from .trust_ledger import TrustLedger

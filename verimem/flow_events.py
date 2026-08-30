@@ -72,6 +72,27 @@ def reset_store_fingerprint() -> None:
     _BUILD = None
 
 
+def impronta_di_percorso(db_path: Any) -> str:
+    """L'impronta della memoria che si apre con un PATH esplicito.
+
+    `_store_fingerprint` deriva dall'ambiente (`data_dir()`), e chi apre
+    con ``Memory(path)`` — misurato: circa nove chiamanti su dieci —
+    resta marcato con l'impronta di casa mentre scrive altrove.
+
+    ⚠️ SULLA STESSA BASE, non sul file: un'impronta calcolata sul percorso
+    del database farebbe di ``<X>/semantic/semantic.db`` una memoria
+    DIVERSA da ``<X>``, cioe' curerebbe un difetto creandone un altro.
+    Qui si risale alla RADICE dei dati, che e' cio' che
+    `_store_fingerprint` gia' usa, e i due modi di nominare la stessa
+    memoria danno lo stesso valore.
+    """
+    from hashlib import sha256
+    from pathlib import Path
+    p = Path(str(db_path)).resolve()
+    radice = p.parent.parent if p.parent.name == "semantic" else p.parent
+    return sha256(str(radice).encode("utf-8")).hexdigest()[:12]
+
+
 def _store_fingerprint() -> str:
     """QUALE memoria ha prodotto questo evento — impronta, non percorso.
 
