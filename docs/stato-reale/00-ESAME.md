@@ -8628,3 +8628,62 @@ gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
   --jq '.jobs[]|"\(.name) started=\(.started_at) completed=\(.completed_at) \(.status)"'
 # confronta lo `started_at` di `build` con il `completed_at` dell'ULTIMO test
 ```
+
+---
+
+## ws1 — Il claim LongMemEval è misurato su un corpus in cui il 99,6% dei fatti supera la finestra dell'embedder. E il verso del reperto non è quello che sembra
+
+**Livello**: lettura del dataset + la soglia che **il prodotto stesso** usa per avvisare.
+**Perimetro**: 500 domande, **948 fatti**. **Istante**: 30/08 20:31. **Regime**: sola lettura,
+nessuna scrittura, nessun encoder. ⚠️ **Proxy dichiarato**: vedi limiti.
+
+### La soglia non è mia: è del prodotto
+
+`verimem/semantic.py:3212` — `ENGRAM_LONG_FACT_WARN_CHARS`, **default 2000** («*≈ conservative
+512-tok head*»). Sopra quella, il prodotto emette:
+> «*long fact: … beyond the embedder window (~512 tokens); **recall will only see the head***»
+
+E il mapping del banco è esplicito (`longmemeval_runner.py:12`): «*each haystack session →
+**one** Engram Fact (proposition = the session turns joined)*» ⇒ **una conversazione intera
+diventa un fatto solo.**
+
+### Il conteggio
+
+```
+fatti ingeriti (una sessione = un fatto):        948
+SOPRA la soglia del prodotto (2000 char):   944/948 = 99,6%
+mediana 14 391 char · media 14 046 · max 28 108
+p50 14 389 · p75 16 325 · p90 18 275 · p99 21 999
+```
+**La mediana è 7,2 volte la soglia.** ⇒ **praticamente ogni fatto del banco è, per il ramo
+denso, troncato alla testa** — e il prodotto lo dice a ogni singola scrittura.
+🔻 **La mia predizione (20–60%) è falsificata verso l'alto.**
+
+### 🔑 Ma il verso giusto NON è «il numero è gonfiato» — è il contrario, ed è più interessante
+
+Il claim pubblicato è **recall@5 = 0,8745**. Se il **99,6%** dei fatti è troncato per
+l'embedder **e il recall resta 0,87**, allora **una** di queste è vera:
+- l'informazione rilevante sta **in testa** alle sessioni, oppure
+- **il recall non dipende solo dal denso** — e infatti la fusione dichiarata è
+  «*dense e5 + entity-PPR + BM25 + CE-rerank*» (`docs/BENCHMARKS.md:114`): **BM25 e il
+  CE-rerank lavorano sul testo, non sul vettore troncato.**
+
+⇒ **Se fosse la seconda, sarebbe un VERDE di progetto**: la fusione **compensa** un limite
+strutturale dell'embedder, ed è misurabile — basta rieseguire con `ENGRAM_PPR_FUSION=0` (il
+ramo «*pure cosine + CE-rerank*», `semantic.py:2534`) e confrontare. **Non l'ho fatto**: 500
+domande sono un run lungo e Aurelio è al PC.
+
+⚖️ **Quindi non lo porto come difetto. Lo porto come REGIME NON DICHIARATO**: il numero in
+vetrina è ottenuto in condizioni particolari, e **quelle condizioni sono la cosa più
+interessante del numero**, non il suo neo.
+
+### Cosa questo NON prova
+
+- 🔴 **È il dataset `longmemeval_oracle` (15 MB), NON `longmemeval_s`** su cui è misurato il
+  claim. **Proxy dichiarato**, stessa struttura e stesso runner. **Non ho usato `_s` (278 MB)
+  perché la RAM disponibile era 1 363 MB e Aurelio sta giocando**: un `json.load` da 278 MB ne
+  chiede 1–2 GB. ⇒ **il 99,6% va riverificato su `_s` quando la macchina è libera.**
+- **Non ho misurato se la fusione compensi**: è un'ipotesi con il suo A/B già scritto sopra.
+- **Non so se sia voluto.** Un banco che ingerisce sessioni intere come fatti singoli può
+  essere esattamente il punto del banco — ma allora **va detto accanto al numero**.
+
