@@ -12391,3 +12391,60 @@ La frase che contiene la risposta è fra i cinque candidati in **104 domande su 
 Il guadagno sul richiamo è invece un **conteggio appaiato** sulla stessa popolazione — 12 domande specifiche cambiano esito, non è la differenza fra due stime indipendenti.
 La simulazione isola il **gate**: non ho eseguito il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata, e il retriever resta quello del regime attuale.
 Vale in **inglese**, su questo corpus da 401 frasi, con `k=5`. **Io misuro, non curo**: la scelta del floor non è mia.
+
+---
+
+## W8-34 — Cercavo un difetto nel treno 0.7.1: **non c'era**. Ma il controllo ne ha trovati due accanto
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO)** + ⑦ blocco `⛔ RILASCIO` nel README.
+
+### Il sospetto, e perché è caduto
+
+`hotfix/0.7.1` dichiara `version = "0.7.1"` mentre `main` dichiara `0.7.6`, ed esiste un tag
+`v0.7.6`. Sembrava una regressione di numero: chi ha `0.7.6` non riceverebbe mai `0.7.1`.
+
+**Falsificato dal dato pubblico:**
+
+    versioni su PyPI: ['0.3.0','0.3.1','0.4.0','0.4.1','0.4.2','0.5.0','0.7.0']
+    ultima dichiarata: 0.7.0   ·   0.7.0: 2 file, caricata 2026-07-22T11:46:43, yanked=0/2
+
+⇒ **L'ultima versione pubblicata è `0.7.0`.** E il branch nasce da `be1635dc`, che è
+**esattamente il commit taggato `v0.7.0`** — cioè il codice in produzione. **È un hotfix
+fatto come va fatto**: si riparte da ciò che gli utenti hanno e si applica la riga che
+ripara (`pin mcp<2`), non due mesi di lavoro non testato. **I 2567 commit di distanza da
+`main` non sono un difetto: sono il senso dell'operazione.**
+
+### 🔴 ① Il tag `v0.7.6` esiste nel repo ma **non è mai stato pubblicato**
+
+    v0.7.6 -> 397c6375  2026-08-24 23:41  su main? si
+    su PyPI: 0.7.6 ASSENTE
+
+⇒ Chi guarda i tag del repo vede una release che **non esiste**. È una promessa che il
+repo fa e il mondo non può verificare — la classe di difetto che il contratto vieta.
+
+### 🔴 ② `pyproject.toml` su `main` dice `0.7.6`, il pubblicato è `0.7.0`
+
+Il numero nel repo è avanti di sei minor rispetto alla realtà. Non è un errore in sé
+(si numera prima di pubblicare), **ma va detto insieme al ①**: tag + versione fanno credere
+che 0.7.6 sia uscita.
+
+### 🎯 ③ Il vincolo che ferma il treno, ora preciso
+
+Il cancello (`publish.yml:118`) vuole `ci` verde con `head_branch=="main"` **sul `github.sha`
+del tag**. Il commit del branch, `52710a32`, **non è su `main`**. ⇒ Un tag lì fa scattare il
+ramo dedicato: «esiste un run di ci ma NON su main: quel commit non è mai entrato nel ramo
+principale». **Fermo, e correttamente.**
+
+⇒ **Perché 0.7.1 passi servono, in alternativa:** il commit su `main` con un `ci` verde lì
+(la coda: W8-29), **oppure** una deroga esplicita — che è `PUBLISH_ANYWAY`, cioè il verde
+spento. **Non c'è una terza via dentro le regole attuali.**
+
+📌 **Il metodo, che è il reperto più riusabile**: il sospetto è caduto in un minuto perché
+esisteva **una fonte fuori dal repo** da interrogare (l'indice PyPI). Quando una promessa
+riguarda il mondo, **la si verifica nel mondo** — non nei nostri file, che dicono ciò che
+credevamo.
+
+    rifallo con:
+    python -c "import json,urllib.request; d=json.load(urllib.request.urlopen('https://pypi.org/pypi/verimem/json')); print(sorted(d['releases']), d['info']['version'])"
+    git rev-list -n1 v0.7.6 && git merge-base --is-ancestor v0.7.6 origin/main && echo "il tag e' su main"
+    git merge-base origin/main origin/hotfix/0.7.1
