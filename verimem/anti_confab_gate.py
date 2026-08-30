@@ -21,8 +21,15 @@ Tiers
 Modes
 -----
 * ``gate_mode="downgrade"`` (default) — if any check fires, persist
-  the fact BUT force ``status='provisional'`` so the suspect claim is
+  the fact BUT force ``status='quarantined'`` so the suspect claim is
   hidden from default recall yet preserved for audit.
+  ⚠️ Diceva ``provisional`` fino al 2026-08-30, e non e' un dettaglio di
+  vocabolario: il gate non scrive ``provisional`` da nessuna parte, e il
+  corpus non ne registra piu' dal 2026-06-02 (reperto di *Varco*, `W7-71`).
+  ``provisional`` ESISTE ancora, ma per un'altra ragione — lo store lo
+  riserva alle ipotesi con riferimento URL/arxiv (`evidence_requirement.py`)
+  e `semantic.py` lo LEGGE: **chi lo trovasse citato qui e lo credesse morto
+  romperebbe quel percorso.**
 * ``gate_mode="reject"`` — if L3 marks the claim ``contradicted``,
   refuse to persist; return action=``reject`` with advice + the
   contradicting fact ids. L1 still merely downgrades (not reject —
@@ -293,7 +300,9 @@ class GateResult:
     action :
         ``"persist"``  — clean claim; caller stores it as-is.
         ``"downgrade"`` — at least one warning; caller persists with
-        ``status="provisional"``.
+        ``status="quarantined"`` (`client.py:661`, `cli.py:4176`,
+        `mcp_server.py:12986`, `semantic.py:2996/3063/3141`,
+        `conversation_ingest.py:391`, `transcript_promote.py:107`).
         ``"reject"`` — L3 contradiction + ``gate_mode="reject"``; caller
         must NOT persist and should return a rejection payload.
     warnings :
