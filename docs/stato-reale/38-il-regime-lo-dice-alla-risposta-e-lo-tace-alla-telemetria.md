@@ -128,13 +128,18 @@ Processi **più corti dei miei**, con **dieci volte le query**, non degradano
 mai. In aggregato: processi sotto i 3 minuti **5,2%**, processi sopra i 10
 minuti **1,9%** — nessuna relazione. Conclusi che l'ipotesi fosse morta.
 
-**Quarto: la falsificazione era rotta, e l'ipotesi era giusta.** La colonna
-«durata» qui sopra non è la vita del processo: è `max(ts) − min(ts)` degli
-eventi di lettura. Sono due cose diverse. Un processo avviato molto prima, con
-il modello **già caldo**, che serve 654 letture in un minuto, mostra esattamente
-lo stesso «span» di un processo appena nato che ne serve 60 a freddo. **Ho
-falsificato l'ipotesi giusta con un proxy che non misurava la variabile.** Il
-sospetto non nasce da un ripensamento: me l'ha detto il prodotto, sotto.
+**Quarto: la falsificazione era rotta.** La colonna «durata» qui sopra non è la
+vita del processo: è `max(ts) − min(ts)` degli eventi di lettura. Sono due cose
+diverse. Un processo avviato molto prima, con il modello **già caldo**, che
+serve 654 letture in un minuto, mostra esattamente lo stesso «span» di un
+processo appena nato che ne serve 60 a freddo. **Il proxy non misurava la
+variabile**, quindi quella tabella non falsifica niente — né in un senso né
+nell'altro.
+
+*(Per un'ora ho scritto qui che «l'ipotesi era giusta» e che il degrado fosse un
+cold start. **Non lo è**: vedi la sezione sulla congiunzione, più sotto. La
+variabile che conta è la presenza del daemon, e il cold start non c'entra —
+perché in questo ambiente il caricamento a freddo **non è nemmeno permesso**.)*
 
 ## La causa c'era, e me l'ha detta la porta di scrittura
 
@@ -156,12 +161,60 @@ Ho eseguito `verimem doctor`, che conferma:
               cold-loads the model (~20s)
         fix: run `verimem warmup` once
 
-**Quindi la causa del regime degradato è nota, ed è una sola: non esiste un
-daemon di encoding condiviso, e ogni processo deve caricare il modello a freddo,
-circa venti secondi.** In quella finestra le letture escono in keyword, le
-scritture entrano senza embedding e il moat non gira — i tre fatti che ho
-salvato per questo documento sono infatti `admitted` ma **`model_claim` non
-giudicati** (`grounding_score=None`), e lo dichiaro qui perché è la stessa causa.
+Da qui avevo concluso che la causa fosse una sola — nessun daemon condiviso,
+ogni processo carica il modello a freddo in una ventina di secondi — e che la
+cura fosse `verimem warmup`. **L'ho scritto qui e l'ho mandato al canale. Era
+incompleto, e la metà che mancava ribalta la cura.**
+
+### La causa è una congiunzione, e la seconda metà sta nel codice
+
+Me l'ha segnalata **ws1**, e l'ho verificata prima di riscriverla.
+`verimem/embedding.py:283-286`:
+
+```python
+if _delegate_only() and not is_loaded():
+    raise EncodeDelegateUnavailable(
+        "encode daemon unavailable and in-process cold-load is disabled "
+        "(HIPPO_ENCODE_DELEGATE_ONLY=1) — caller must degrade"
+    )
+```
+
+e nel mio processo `HIPPO_ENCODE_DELEGATE_ONLY` vale `1`.
+
+**Quindi non c'è nessun cold start.** Senza daemon la funzione non carica il
+modello lentamente: **solleva**, e il chiamante degrada. Non «venti secondi e
+poi va» — **degradato finché il daemon non torna**, per tutta la vita del
+processo. La causa è la congiunzione di due condizioni: **daemon assente E
+caricamento locale vietato**. Nessuna delle due, da sola, spiega perché non si
+recuperi dopo venti secondi.
+
+Questo chiude anche la faccenda della tabella qui sopra: i processi che non
+degradavano mai non erano «più caldi», **avevano il daemon vivo**; i miei
+avevano il daemon morto e nessuna via di riserva.
+
+**E allora il presidio dichiara un fallback che l'ambiente proibisce.** La riga
+di `verimem doctor` — *«first encode in each process cold-loads the model
+(~20s)»* — **è falsa in questo ambiente**, e il doctor non legge la variabile
+che decide il comportamento che sta descrivendo. È lo stesso difetto che questo
+documento contesta alla telemetria, in un altro punto del prodotto: **una
+dichiarazione che non guarda lo stato di cui parla.**
+
+**Sesto difetto mio**: quella riga l'ho ripetuta — nel documento e al canale —
+**senza aprire il codice**. Un referto è un claim come un altro, e la regola che
+applico agli altri («output del modello = claim finché non verificato») vale
+anche quando il claim viene dal prodotto.
+
+Va aggiunto, come misura di ws1 e non mia, che **il daemon è intermittente**:
+verde alle 18:11 e alle 20:16, rosso alle 20:37 e alle 20:5x. Quindi
+**`verimem warmup` una volta non basta**: se il daemon muore si torna degradati
+senza che nessuno se ne accorga — la cura è un presidio, non un comando. E ws1
+dichiara anche ciò che non torna, che riporto senza chiudere il cerchio a forza:
+**togliendo quella variabile l'embedding non è tornato** (timeout 180 s). La
+congiunzione spiega il degrado, non spiega quel test. Manca un pezzo.
+
+Resta vero che in quella finestra le scritture entrano senza embedding e il moat
+non gira: i tre fatti che avevo salvato per questo documento sono `admitted` ma
+**`model_claim` non giudicati** (`grounding_score=None`), ed è la stessa causa.
 
 ### E poi il daemon è tornato, mentre guardavo
 
@@ -229,10 +282,11 @@ causa è nota.
 - La curva durata/degrado **non falsifica il cold start**: la colonna misura lo
   span degli eventi, non l'età del processo. Per rifarla serve l'istante di
   avvio, che il journal non porta.
-- **Prima di misurare il degrado, esegui `verimem warmup` e verifica con
-  `verimem doctor`.** Un banco lanciato senza daemon misura il proprio cold
-  start e lo scambia per una proprietà del prodotto — è quello che ho fatto io,
-  qui e nel documento 37.
+- **Non fidarti di `verimem warmup` come garanzia.** Il daemon è intermittente e
+  non c'è caricamento locale di riserva: un banco può partire caldo e finire
+  degradato senza segnale. **Leggi il campo `ranking` di ogni risposta e scarta
+  le corse degradate**, invece di mediarle — è quello che non ho fatto io, qui e
+  nel documento 37.
 - `verimem doctor` ha segnalato, non richiesto, altri due reperti nel mio
   perimetro che **non ho ancora verificato**: **278 vettori su 16.308 non
   combaciano con il motore e sono «stored but unreachable by semantic search»**,
