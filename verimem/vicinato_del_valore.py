@@ -114,6 +114,24 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
 #: cambierebbe **quali** fatti vengono segnalati, non **come** si raccontano.
 #: ⚠️ La lista e' una scelta dichiarata: una voce in piu' o in meno sposta il
 #: testo mostrato, mai il verdetto.
+#:
+#: 🪞 **CORRETTA IL 30/08, POCHE ORE DOPO ESSERE STATA SCRITTA.** La prima
+#: stesura aveva sei ausiliari INGLESI (`is are was were be been`) e **zero
+#: italiani** — in un prodotto usato in italiano. Il caso che l'ha mostrata e'
+#: una ricevuta vera del prodotto, 19:02:36::
+#:
+#:     146 qui e' «hanno», nella fonte «prima del numero: quarantined»
+#:
+#: cioe' **la cura mancava il caso che l'aveva motivata**. Misurato sulla
+#: popolazione intera (6261 fatti vivi con fonte, 5222 riusi) prima di toccare
+#: una riga: lato `nel_claim` **221 occorrenze su 3323 (6.7%)**, lato
+#: `nella_fonte` **14 su 6004 (0.2%)**. 🔑 L'asimmetria E' il reperto — il claim
+#: e' prosa italiana, la fonte e' quasi sempre output di macchina.
+#:
+#: 🔴 **AMBIGUI TENUTI FUORI DI PROPOSITO**: «danno», «conta», «stato», «era»
+#: in italiano sono ANCHE sostantivi, quindi possono essere una grandezza vera.
+#: Una parola che puo' nominare una grandezza non entra in una lista di
+#: non-grandezze, per quanto frequente sia come verbo.
 _GRAMMATICA = frozenset({
     "il", "lo", "la", "i", "gli", "le", "un", "uno", "una", "l", "d",
     "del", "dello", "della", "dei", "degli", "delle", "dell", "di", "da",
@@ -126,6 +144,14 @@ _GRAMMATICA = frozenset({
     "the", "an", "of", "on", "at", "to", "for", "and", "or", "is", "are",
     "was", "were", "be", "been", "with", "by", "from", "as", "it", "its",
     "this", "that", "these", "those", "not", "only", "also", "each",
+    # ── ausiliari e copule IT, dal corpus e non dall'intuito (30/08): sono i
+    #    token che il banco ha trovato ADIACENTI a un numero. «sono» era il 3°
+    #    piu' frequente del lato claim (92) e «hanno» il 12° (61).
+    "ha", "hanno", "sono", "sia", "siano", "sta", "stanno",
+    "viene", "vengono", "risulta", "risultano", "resta", "restano",
+    "diventa", "diventano", "vale", "valgono",
+    # ── e le forme di `have`, che mancavano anche all'inglese gia' coperto
+    "has", "have", "had",
 })
 
 
