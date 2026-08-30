@@ -11465,3 +11465,47 @@ nera di com'è.
 python docs/stato-reale/banchi/ws8-quanto-e-vecchio-cio-che-la-ci-sa.py
 # e leggi la riga «Finestra: … run esaminati» PRIMA di credere al numero
 ```
+
+---
+
+## ws1 · 30/08 23:27 — LA SCALA *IN DOMINIO*: IL 61% DEI CANDIDATI VIENE DAL MATERIALE NUOVO, E IL RICHIAMO RESTA 49%
+
+**Livello**: la porta pubblica, retriever e gate veri, regime di default. **Perimetro**: A/B a **una sola variabile — il DOMINIO del materiale aggiunto**. Stesse 114 domande, stesse sonde, **esattamente 1996 frasi aggiunte** come nel banco SQuAD delle 23:13, ma prese dal **dump completo di HaluEval QA** (`.cache/qa_data.json`, 10 000 item JSON-lines, 12 815 frasi distinte): **stesso dominio HotpotQA**. **Istante**: 23:19–23:26. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+**Campione dichiarato**: le prime 1996 in **ordine alfabetico** fra quelle non già nel corpus base e **non provenienti dai `knowledge` delle sonde** — che per protocollo del banco non vanno mai ingeriti (136 frasi escluse per questo). Ordine alfabetico = deterministico, non scelto in base al risultato.
+
+Paga il limite che avevo dichiarato alle 23:13: *«SQuAD è un altro dominio, ho aggiunto materiale dove il cross-encoder è forte».*
+
+### 🟢 STAVOLTA LA VARIABILE È ENTRATA IN GIOCO — quattro volte di più
+
+```
+                        SQuAD (altro dominio)   HaluEval (STESSO dominio)
+candidati dal nuovo          87/570  15,3%           348/570  61,1%
+fatti SERVITI dal nuovo       0/98    0,0%             6/102   5,9%
+```
+
+Il materiale in dominio occupa **quasi due terzi dei primi cinque candidati**: è un test **molto più severo** del precedente. **Il gate ne respinge 342 su 348.**
+
+### 🔴 E GLI ESITI NON SI MUOVONO — P-DOM-A e P-DOM-B falsificate
+
+| | corpus 401 | +1996 SQuAD | **+1996 in dominio** |
+|---|---:|---:|---:|
+| astensione | 35/114 (31%) | 35/114 (31%) | **34/114 (30%)** |
+| servito **con** la risposta | 56/114 (49%) | 56/114 (49%) | **56/114 (49%)** |
+| servito **senza** la risposta | 23/114 (20%) | 23/114 (20%) | **24/114 (21%)** |
+| sonde servite | 1/18 | 1/16 | **1/15** |
+
+**P-DOM-A** («il richiamo scende sotto 56/114»): **falsificata** — è identico. **P-DOM-B** («le sonde servite salgono»): **falsificata** — resta una, benché sia una sonda **diversa** («*Kalitta Charters is what to Kalitta Air?*», servita con una frase su una compagnia aerea colombiana). Le differenze di una unità (34 vs 35, 24 vs 23) stanno **ampiamente dentro l'intervallo ±~9 punti**: non le interpreto.
+
+Le astensioni restano dello stesso tipo: **33 su 34** «nothing scored above the relevance floor», **1** «no supporting facts».
+
+### 🔑 IL QUADRO, ORA COMPLETO
+
+> **Il cross-encoder è robusto contro ENTITÀ DIVERSE — due volte dimostrato, fuori dominio (0/98 serviti dal nuovo) e in dominio (6/102, con il 61% dei candidati nuovi). È fragile DENTRO la stessa entità: 41% al primo posto fra le frasi dello stesso testo, 49% di richiamo alla porta.**
+
+E la conseguenza pratica: **la scala non è il problema del prodotto. Il floor lo è**: il richiamo resta inchiodato al 49% a qualunque dimensione del corpus, e **il 30% delle domande è fermato dalla soglia**, non dalla ricerca.
+
+### Cosa questi dati NON provano — il limite residuo, dichiarato per primo
+**«Stesso dominio» non è «stesse entità».** Il campione alfabetico porta altre entità HotpotQA; il test davvero severo è aggiungere **altri fatti sulle STESSE entità delle domande** — che è esattamente dove il cross-encoder è debole (misurato alle 22:38). **Le due prove di robustezza qui valgono contro materiale su ENTITÀ DIVERSE, non contro concorrenza sulla stessa entità.**
+Non ho guardato i **6 fatti serviti dal corpus nuovo**: plausibilmente parlano della stessa entità della domanda, ma **non l'ho verificato** e non lo affermo.
+n(B) = 15: 1/15 ha un intervallo che arriva a ~**30%**. Vale in inglese, sul regime di default.
