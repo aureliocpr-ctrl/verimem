@@ -135,3 +135,55 @@ async def test_restore_refuses_injection_in_TOPIC(real_sm):
 async def test_restore_unknown_id_is_clean_false(real_sm):
     out = await _invoke("hippo_quarantine_restore", {"fact_id": "nope123"})
     assert out.get("restored") is False
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-31: LA GUARDIA CHE QUESTO FILE NOMINAVA E NON ESERCITAVA.
+#
+# Il docstring in cima elenca DUE protezioni del restore: il rifiuto su un fatto
+# SUPERSEDUTO e il ri-screening anti-iniezione. La seconda ha due celle
+# (payload e topic); la prima, fino a qui, zero. 🪞 Non era sfuggita per caso:
+# chi ha scritto il file la conosceva abbastanza da scriverla in cima.
+# *Nominare una guardia non e' presidiarla* — stessa forma di «nominare una
+# classe non chiude le sue istanze».
+#
+# Misurato alla porta il 2026-08-31 alle 01:56, store temporaneo, due fatti
+# quarantinati da L1 e il primo superseduto dal secondo::
+#
+#     restore del SUPERSEDUTO  restored=False
+#       refused_reason: "superseded: restore only un-quarantines,
+#                        never un-supersedes"
+#     restore del PULITO       restored=True
+#
+# ⇒ La guardia regge, e il motivo e' esplicito. Il CONTROLLO e' la seconda
+# riga: se il restore rifiutasse anche un fatto pulito, il rifiuto sul
+# superseduto non proverebbe la guardia ma l'inerzia della porta.
+# Banco: docs/stato-reale/banchi/ws3-il-ripristino-e-il-valore-ritirato.py
+
+
+@pytest.mark.asyncio
+async def test_restore_refuses_a_superseded_fact(real_sm):
+    """Un valore RITIRATO non torna servibile passando dal ripristino."""
+    vecchio = await _quarantine_one(topic="legal/deal")
+    nuovo = await _quarantine_one(topic="legal/deal2")
+    mcp_server._ag().semantic.supersede(
+        vecchio, nuovo, principal="test:suite", reason="ritiro")
+
+    out = await _invoke("hippo_quarantine_restore", {"fact_id": vecchio})
+
+    assert out.get("restored") is not True, (
+        "un fatto SUPERSEDUTO e' stato ripristinato nel recall: un valore "
+        f"ritirato torna servibile. ricevuta={out}")
+    assert "supersed" in str(out.get("refused_reason", "")).lower(), (
+        "il rifiuto non dice che la causa e' la supersessione — chi lo legge "
+        f"non puo' distinguerlo da un rifiuto per iniezione. ricevuta={out}")
+
+
+@pytest.mark.asyncio
+async def test_restore_still_works_on_a_fact_that_was_not_superseded(real_sm):
+    """⚠️ IL CONTROLLO CHE DEVE POTER FALLIRE, accanto alla cella che presidia
+    il rifiuto: se il restore rifiutasse tutto, il test qui sopra sarebbe verde
+    senza provare nulla della guardia."""
+    fid = await _quarantine_one(topic="legal/deal3")
+    out = await _invoke("hippo_quarantine_restore", {"fact_id": fid})
+    assert out.get("restored") is True, out
