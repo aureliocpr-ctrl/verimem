@@ -8836,3 +8836,99 @@ CE-rerank, che leggono il testo) compensa.** **Resta un REGIME NON DICHIARATO, n
   essere il punto del banco: **ma allora va detto accanto al numero.**
 - ⛔ **Non ho toccato nulla; nessuna scrittura, nessun daemon.**
 
+
+### 🩺 W8-19 — Due difetti trovati **usando il prodotto**, e un mio falso reperto ucciso prima di consegnarlo
+
+> **REGIME** — tutto misurato **dalla porta del prodotto** (`verimem save`, `hippo_facts_search`),
+> mai dal codice, il 2026-08-30 fra le 20:37 e le 20:46, sullo store reale (~16.000 fatti).
+> **LIMITE** — non ho letto una riga del moat né del retrieval: **so cosa fanno, non perché**.
+> E ⛔ nessuno dei due è nel mio perimetro: **segnalo, non curo**.
+
+### ① `facts_search` senza `topic` risponde con un altro corpus
+
+Cercavo una mia misura di ieri; il prodotto mi ha risposto con conversazioni **HaluMem**
+(«Christopher Anderson», «Donna Gonzalez»). A/B **a variabile singola** — stessa query,
+cambia solo `topic`:
+
+```
+A  query "coda CI scendeva stanotte PC spento run/ora ingresso uscita"  CON topic
+   -> 4/4 fatti MIEI, giusti, grounding 99.9
+B  query "coda ci queued completed run"                                SENZA topic
+   -> 3/4 conversazioni da `c10/halumem`
+```
+
+🔑 **Incrociato**: la query lunga e vaga **col topic** funziona; quella con **le parole
+esatte** senza topic no. Il fatto `"I run ci con status queued sono 796."` contiene
+**run**, **ci**, **queued** — e la query B le conteneva tutte e tre. **Non è stato
+trovato.** In entrambi i casi `"ramo": "or_fallback"`: la via principale non produce nulla.
+
+⇒ Un agente **non conosce il topic** di ciò che cerca: è quello che sta cercando di
+scoprire. Se senza `topic` la risposta è rumore da un altro corpus, **il topic non è un
+filtro opzionale, è un requisito non dichiarato** — e chi non lo passa riceve risposte
+plausibili e sbagliate **senza alcun segnale**.
+
+### ② Sotto ~20 caratteri di source **il moat non gira**, e l'esito è `admitted`
+
+```
+source = "queued 853"   (10 caratteri)
+→ grounding_score=None   judged=False   status=model_claim   AMMESSO
+```
+
+**Il fatto entra indistinguibile da uno salvato senza alcuna source.** La soglia sta **fra
+10 e 20 caratteri** (a 20 il giudizio c'è: 98.74). L'unico segnale è `judged=False` /
+`grounding=None` — in una ricevuta il cui esito è **`admitted`**, cioè la parola più
+rassicurante del flusso.
+
+⚖️ **Il paradosso**: una source **inutile** (10 char) passa **senza giudizio**; una source
+**mediocre** (70 char, diluita) viene **fermata**. La più povera supera, la media no.
+📌 Non è il difetto già in casa (*«sotto i 21 caratteri il giudice dà 100.0 a un claim e
+al suo contrario»*): lì il giudice **sbaglia**, qui **non gira**.
+
+### 🔻 E il falso reperto che stavo per consegnare
+
+Avevo misurato — stesso fatto, stessa source, solo riempimento aggiunto:
+
+```
+len 10 → g=None      len 40 → g=88.27  ammesso
+len 20 → g=98.74     len 50 → g=65.08  QUARANTINATO
+len 30 → g=96.08     len 70 → g=14.83  QUARANTINATO
+```
+
+Stavo per scrivere **«il grounding crolla con la lunghezza della source»**, che avrebbe
+significato: *chi passa l'evidenza grezza — come impone O3 — è penalizzato rispetto a chi
+passa un estratto minimo*. Un reperto pesante, e **falso**. Il riempimento era `x x x`,
+cioè rumore. Il test che separa lunghezza da rumore:
+
+```
+R1  corta, pertinente             len  10  →  g=None    NON GIUDICATO
+R2  lunga con RUMORE              len  70  →  g=14.83   quarantinato
+R3  lunga TUTTA PERTINENTE        len 147  →  g=99.88   ✅ AMMESSO
+R4  lunga, pertinente ma su ALTRO len 176  →  g=0.34    quarantinato
+```
+
+**R3 è la source più lunga e ha il punteggio più alto.** Non è la lunghezza, è il rumore —
+e su questo **il gate fa esattamente ciò che deve**: una source non sostiene di più per
+essere più lunga, e una diluita sostiene di meno.
+
+🔑 Il test che ha ucciso l'ipotesi **l'ho lanciato apposta perché potesse uccidermela**,
+prima di postare. Senza, avrei consegnato «il gate penalizza chi segue O3» — falso, e
+avrebbe orientato una cura sbagliata. *Un limite che rovescia la conclusione non è una
+postilla: è il comando da lanciare per primo.*
+
+### Cosa questo NON prova
+
+- **Non ho la soglia esatta** fra 10 e 20 caratteri, né so se sia su caratteri, token o parole.
+- **Non ho guardato il codice** di nessuno dei due: è tutto misurato dalla porta.
+- Il caso ① è **una coppia di query**, non un censimento del retrieval.
+- ⚠️ Entrambe le chiamate riportavano «**24 fatti trattenuti dal gate**» sull'argomento:
+  **non ho indagato** se fra quelli ci fosse ciò che cercavo.
+
+**rifallo con:**
+
+```bash
+verimem save "I run ci queued sono 853." --topic t --source "queued 853"                 # judged=False
+verimem save "I run ci queued sono 853." --topic t --source "queued 853 in_progress 3"   # judged=True
+# e, dal lato retrieval:
+hippo_facts_search(query="coda ci queued completed run")                                  # rumore
+hippo_facts_search(query="coda ci queued completed run", topic="guardia/coda-ci-collasso") # giusti
+```
