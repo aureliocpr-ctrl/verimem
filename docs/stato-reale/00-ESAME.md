@@ -12694,3 +12694,40 @@ Nelle **15** domande dove sono serviti sia un fatto che contiene la risposta sia
 n(G)=56, n(S)=42: intervalli ±~13 e ±~15 punti sulle proporzioni; le percentuali della tabella non vanno lette a una cifra.
 **Non ho acceso il giudice di sufficienza vero** — richiede un `llm` e O4 vieta le API key esterne. Ho misurato **lo spazio che avrebbe**, non la sua resa: un giudice reale potrebbe fare meglio o peggio di qualunque soglia.
 Vale in inglese, con `k=5`, su questo corpus.
+
+---
+
+## ws1 · 31/08 00:46 — I NUMERI DI STANOTTE VALGONO ANCHE PER CHI INSTALLA: MA L'UTENTE PUBBLICO HA ANCORA L'INGANNO IN CUI SONO CADUTO IO
+
+**Livello**: il codice **al tag `v0.7.0`** confrontato con `main`. **Perimetro**: i simboli che governano ciò che ho misurato stanotte. **Istante**: 31/08 00:43–00:45. **Metodo**: `git log -S` e `git show <tag>:<file>` — **nessuna rete, costo zero**.
+
+Tutto il lavoro di stanotte è **nel repo**, ma il mio ruolo è la porta di chi fa `pip install`, e non l'avevo mai verificato.
+
+**Come ho stabilito la data della 0.7.0**: tag `v0.7.0` datato **2026-07-22** (`2b5b2993`), coerente col commit `304565bd` che porta `version = "0.7.0"` nel `pyproject` lo stesso giorno. (Il tag `v0.7.6` è del **2026-08-24**.)
+
+### 🟢 P-PUBB: il gate che ho misurato C'È GIÀ nella versione pubblicata
+
+| | nasce | c'è in `v0.7.0` (22/07)? |
+|---|---|---|
+| `_DEFAULT_RERANK_MODEL` = mmarco-mMiniLMv2 | 17/07 | ✅ |
+| `_DEFAULT_EMBEDDING_MODEL` = multilingual-e5-base | 17/07 | ✅ |
+| `_apply_ce_gate` / `_CE_FLOOR_ENV` | **18/07** | ✅ |
+| il floor **0,0** | 18/07 (`float(os.environ.get(_CE_FLOOR_ENV, "0.0"))`) | ✅ **stesso valore** |
+| la logica `kept = [h for h,s in zip(hits, ce) if float(s) >= floor]` | 18/07 | ✅ **identica** |
+| il giudice di sufficienza | ≤22/07 | ✅ (8 occorrenze) |
+| **`floor_applied_by`** | **05/08** | ❌ **ASSENTE** |
+
+⇒ **I numeri di stanotte — richiamo ~50%, il cambio del floor, la robustezza alla scala, il 46%/93% della soglia di sufficienza — descrivono anche il prodotto che un utente può installare oggi.** Gate, floor, modelli e logica di filtro sono gli stessi. *(L'implementazione del floor è cambiata da `float(os.environ.get(...))` a `env_float`: con la variabile non impostata entrambe danno **0.0**, e nei miei banchi non era impostata.)*
+
+### 🔴 MA C'È UNA COSA CHE NOI ABBIAMO CURATO E LORO NO
+
+`floor_applied_by` — la riga che dichiara **quale giudice ha deciso** — è del **05/08**, **dopo** la 0.7.0. Nella versione pubblicata **non esiste**.
+
+> **L'utente che installa oggi riceve nel dossier `min_relevance: 0.8792` senza alcuna indicazione che a filtrare sia stato il cross-encoder con un floor di 0,0.** È **esattamente** l'inganno in cui sono caduto io alle 22:02, e per cui ho dovuto ritirare un reperto: ho letto quel numero come la soglia che aveva deciso, e non lo era. Nel repo la cura c'è; **a PyPI no**.
+
+E si somma a ciò che era già noto: la LATEST su PyPI è la **0.7.0 con il server MCP rotto** (2×, EXIT=1), publish fermo dal **22/07**, cura `mcp<2` in repo dal **29/07**.
+
+### Cosa questi dati NON provano
+🔴 **Ho confrontato il TAG `v0.7.0`, non il wheel effettivamente pubblicato su PyPI.** Il tag è opera nostra e il wheel dovrebbe corrispondere, ma **non l'ho verificato** e non posso senza rete. Se il wheel divergesse dal tag, questo confronto cade.
+Non ho eseguito la 0.7.0: ho confrontato **codice**, non comportamento. Identità dei simboli e della riga di filtro non è identità di esito su ogni percorso.
+Il difetto MCP della 0.7.0 riguarda il **server**; questo confronto riguarda la **libreria** (`Memory.explain`), che è ciò che ho misurato.
