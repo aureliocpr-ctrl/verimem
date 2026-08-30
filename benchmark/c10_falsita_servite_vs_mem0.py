@@ -140,11 +140,27 @@ def criteri_ciechi(casi: list[tuple[str, str, str]]) -> dict[str, float]:
     #: sbilanciata fra le classi. 50% = indifferente, lontano da 50 = predice.
     veri = [c for et, c, _ in casi if et == "vero"]
     falsi = [c for et, c, _ in casi if et == "falso"]
-    qv = sum(1 for c in veri if _NEGAZIONE.search(c)) / max(1, len(veri))
-    qf = sum(1 for c in falsi if _NEGAZIONE.search(c)) / max(1, len(falsi))
-    #: quota fra i negativi che sono FALSI: 50% se la negazione non dice nulla
-    tot_neg = qv * len(veri) + qf * len(falsi)
-    fuori["negazione"] = 100 * (qf * len(falsi)) / tot_neg if tot_neg else 50.0
+    nv = sum(1 for c in veri if _NEGAZIONE.search(c))
+    nf = sum(1 for c in falsi if _NEGAZIONE.search(c))
+    qv = nv / max(1, len(veri))
+    qf = nf / max(1, len(falsi))
+    #: ⚠️ GUARDIA SULLA RARITA', pagata il 30/08 alle 20:30. Su HaluMem la
+    #: negazione compare in **2 claim su 200**: il rapporto fra due numeri cosi'
+    #: piccoli e' RUMORE, e i miei due strumenti davano 50,0% e 11,1% sulla
+    #: stessa popolazione solo per come era campionata. ⇒ **Un criterio su un
+    #: fenomeno raro non misura la popolazione: misura quali due o tre casi ci
+    #: sono finiti dentro.** Sotto una decina di occorrenze totali si dichiara
+    #: NON MISURABILE (50.0 = «non dice nulla»), che e' diverso da «pulita».
+    #: E' la stessa forma del campione minimo di 40 claim: **un righello che
+    #: parla su un campione minuscolo insegna a ignorarlo.**
+    MINIME = 10
+    fuori["_neg_occorrenze"] = nv + nf
+    if nv + nf < MINIME:
+        fuori["negazione"] = 50.0
+        fuori["_neg_misurabile"] = 0.0
+    else:
+        fuori["negazione"] = 100 * nf / (nv + nf)
+        fuori["_neg_misurabile"] = 1.0
     fuori["_neg_quota_veri"] = round(100 * qv, 1)
     fuori["_neg_quota_falsi"] = round(100 * qf, 1)
     return fuori
