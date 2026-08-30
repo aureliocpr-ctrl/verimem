@@ -1,6 +1,6 @@
 """QUANTO COSTA ALLARGARE L'ELENCO DI `L1.13` — le DUE popolazioni, come chiedo agli altri.
 
-Il dossier ㉒ chiude dicendo: *«allargare l'elenco aumenta i falsi allarmi, che
+Il dossier ㉕ chiude dicendo: *«allargare l'elenco aumenta i falsi allarmi, che
 e' il verso che fa danno: chi lo fa **misuri entrambe le popolazioni** prima e
 dopo»*. **Nessuno l'ha fatto, me compresa.** Questo banco lo fa.
 
