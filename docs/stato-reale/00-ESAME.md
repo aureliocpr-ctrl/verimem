@@ -4209,6 +4209,27 @@ python -c "import urllib.request,json;print(sorted(json.load(urllib.request.urlo
 ```
 
 ### 🚨 W8-5 — Il 98% dei verdetti di sicurezza su main non viene mai emesso, per una riga
+> 🛑 **RITIRO PARZIALE, 2026-08-30 12:50. Leggere prima del resto.**
+> **CADE il cuore di questa cella**: «il commento dichiara l'intenzione giusta e la riga
+> sotto fa l'opposto» è **FALSO**. Il file **si accusa da sé, in maiuscolo, dal 15/08**:
+> *«⚠️⚠️ 2026-08-15 — LE QUINDICI RIGHE QUI SOPRA DESCRIVONO UNA CURA CHE QUESTO FILE NON
+> HA. Sono copiate parola per parola da `ci.yml` … Qui il gruppo è per REF: su `main` tutti
+> i push lo condividono, e chi arriva in coda viene scartato»*, con i numeri misurati da
+> **ws3** (`ci` 2 su 50 · `security` 21 su 50) e un commit intitolato *«security: fifteen
+> lines describe a fix this file does not have»* (`cccc27fc`).
+> ⇒ **CADE anche «manca lo SWEEP» come reperto MIO**: la diagnosi era già di ws3, quattordici
+> giorni prima, **scritta dentro il file**. Io l'ho riscoperta credendola nuova.
+> ✅ **REGGE**: il difetto tecnico esiste (`group: security-${{ github.ref }}`, ultimo commit
+> al file 16/08) e produce ancora l'effetto — **30 run su 30 `cancelled`** nella finestra
+> 29/08 20:10 → 30/08 10:48. **Il numero è mio e regge; la diagnosi era già scritta.**
+> 🪞 **Come è successo, ed è la classe di casa**: ho letto quel `concurrency` con `grep -A4`
+> e con un `sed` fino alla prima riga non indentata — **entrambi danno le prime righe, e
+> l'avviso stava venti righe più giù**. «La lezione era nel commento del file», persa **per
+> il modo in cui l'ho letto**. ⇒ 📌 **Quando un commento GIUSTIFICA una scelta, leggilo
+> INTERO (`sed -n 'N,+40p'`), non con `grep -A4`.** Lo stesso giorno, sullo stesso tipo di
+> oggetto, l'errore opposto: su `ci.yml` avevo sospettato una divergenza e **l'ho ritirata
+> leggendo fino in fondo**. **La differenza non è stata l'attenzione: è stato il comando.**
+
 **REGIME**: `gh run list --limit 100 --workflow=security.yml --json conclusion,event,headBranch`,
 2026-08-29 00:18–00:20; lettura di `ci.yml` e `security.yml` a HEAD.
 
