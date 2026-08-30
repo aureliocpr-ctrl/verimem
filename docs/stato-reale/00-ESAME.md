@@ -11732,3 +11732,32 @@ Ma **il testo dei due casi conferma il tipo di falso amico** — struttura simil
 🔴 **Non ho verificato che siano le STESSE 56 domande** nei quattro banchi. Ho i conteggi, non l'identità. Che tre corpora diversi diano 56 domande *diverse* sarebbe una coincidenza tripla, ma **plausibile non è verificato**, e la conclusione «il floor decide» sarebbe più debole se le domande cambiassero. Serve rifare i banchi salvando l'identità delle domande servite: **è il primo controllo da fare**.
 🔴 **Il mio corpus in-entità è DEPURATO**: ho escluso **5796 frasi su 8611** (il 67%) perché contenevano una risposta. Un utente vero avrebbe anche quelle. Questo banco misura la concorrenza **fra fatti che non rispondono**, non la concorrenza fra risposte.
 Il proxy per «entità» è grezzo (parole capitalizzate): `Actor`, `Achievement`, `Act` sono nella lista. Vale in inglese, sul regime di default.
+
+**㊷ `43` (ritrattazione) — l'unico «conflitto vero» era un A/B, e correggerlo avrebbe rotto una
+misura corretta.** Quarta rettifica della notte, e la più istruttiva.
+❌ **Avevo segnalato quattro volte al canale**, come *unico candidato conflitto autentico*:
+`project/verimem/i-miei-verdi-reggono-senza-le-env` — A: *«fermati 4 su 4 con env nostre attive
+**0**»*, B: *«…attive **7**»*, stessa frase e numero diverso.
+✅ **Sono tornato a leggerne la SOURCE**, che nei due fatti è **la stessa** e contiene **entrambe** le
+righe:
+```
+variabili NOSTRE attive in questo processo: 7 su 7
+RIGA DA CONFRONTARE: fermati 4 su 4 - env nostre attive 7 - ground 0.1-4.4
+variabili NOSTRE attive in questo processo: 0 su 7
+RIGA DA CONFRONTARE: fermati 4 su 4 - env nostre attive 0 - ground 0.1-4.4
+```
+⇒ **Era un A/B**: lo stesso banco con sette variabili attive e con zero, **e in entrambi i casi
+«fermati 4 su 4»**. Il nome del topic lo dice da solo — *i miei verdi reggono **senza** le env* — ed è
+**il risultato**, non una discrepanza.
+🪞 **Undicesimo errore della notte, e il più ironico**: ho letto le due **proposizioni** e non la loro
+**fonte**, e ho segnalato come **eccezione** esattamente il pattern che stavo documentando nella cella
+㉚ (*«il rilevatore confonde stessa frase / condizione diversa con stessa frase / valore
+contraddittorio»*). L'ho ripetuto in **quattro messaggi e due documenti** prima di verificarlo.
+⚠️ **E il danno era concreto**: chiunque fosse andato a «correggere» quel fatto **avrebbe rotto un A/B
+corretto**. Rettificato al canale con quella avvertenza in cima.
+🔑 **La conseguenza rafforza il `43` invece di indebolirlo**: dalle coppie ad alto jaccard che ho
+letto **non è emerso nessun conflitto autentico** — **anche quello che sembrava il segnale era rumore
+della stessa famiglia.**
+> 📏 **REGOLA CHE NE ESCE, per tutte**: quando due fatti sembrano contraddirsi, **leggi la SOURCE, non
+> le proposizioni**. Nei nostri banchi A/B la source contiene **entrambi i bracci**, e le due
+> proposizioni sono **le due metà di UNA misura**, non due misure in disaccordo.
