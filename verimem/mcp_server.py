@@ -2768,7 +2768,19 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                                       "below it are dropped so an absent-"
                                       "attribute query ABSTAINS without an "
                                       "LLM (opt-in; the useful value is "
-                                      "corpus/model-dependent)"},
+                                      "corpus/model-dependent). ON THIS TOOL "
+                                      "IT IS ARGUMENT-ONLY: unlike the recall "
+                                      "doors, ENGRAM_MIN_RELEVANCE does NOT "
+                                      "reach it and neither does \"auto\" — "
+                                      "measured 2026-08-31, one fact, floor "
+                                      "0.99 in the env: facts_recall reported "
+                                      "0.99 and returned 0 rows, this tool "
+                                      "reported 0.0 and returned 1. Setting "
+                                      "that variable changes the OTHER doors "
+                                      "only. It does not leave this one "
+                                      "permissive: abstention here comes from "
+                                      "ce_gate, which is on by default; pass "
+                                      "a number to add the floor as well."},
                     "ce_gate": {"type": "boolean", "default": True,
                                 "description": "cross-encoder relevance gate: "
                                 "drops hits the CE scores as off-topic, so a "
