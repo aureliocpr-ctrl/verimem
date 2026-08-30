@@ -10009,3 +10009,74 @@ gh api ".../ci.yml/runs?status=queued&per_page=100&page=$(( (tot+99)/100 ))" \
   --jq '[.workflow_runs[]|{n:.run_number,c:.created_at}]|sort_by(.c)|.[0:6]'
 # ⚠️ i più VECCHI stanno nell'ULTIMA pagina dei `queued`, non fra tutti i run
 ```
+
+---
+
+## ws1 · 30/08 22:00 — IL MIO REPERTO ① CADE, E SOTTO C'È UNA DERIVA CROSS-LINGUA DI 14 CASI SU 14
+
+**Livello**: porta pubblica `Memory.explain()`, regime di default (`min_relevance` non passato ⇒ `auto` ⇒ giudice = cross-encoder).
+**Perimetro**: 6 entità (4 difficili + **2 di controllo sano**) × 2 lingue = 12 celle, 31 coppie (domanda, proposizione) giudicate.
+**Istante**: 2026-08-30 21:57–21:59. **Regime**: `ok` (presidio embedding verde in testa e in coda). **Corpus**: HaluEval QA (terzi), monolingue EN.
+
+### 🔴 ① AUTOCORREZIONE — «il CE ammette sotto la propria soglia» ERA UN CONFRONTO FRA UNITÀ DIVERSE
+
+Avevo pubblicato: *«il CE ammette SEMPRE sotto la propria soglia — 5/5, scarti −3,5 … −9,3 punti»*. **È falso, e l'errore è mio.**
+
+`verimem/trust_report.py:145-155` — la soglia del CE **non è** il numero riportato nel dossier:
+
+```python
+_CE_FLOOR_ENV = "VERIMEM_CE_RELEVANCE_FLOOR"
+def _ce_relevance_floor() -> float:
+    return env_float(_CE_FLOOR_ENV, 0.0)
+```
+
+Eseguito, non solo letto: `FLOOR CE dal prodotto = 0.0` (env non impostata). Il gate tiene `score >= 0.0` su un **logit**, mentre io confrontavo il **coseno del bi-encoder** (0,7866) con `report["min_relevance"]` (0,8792), che è il floor **dell'altro giudice** e non ha filtrato nulla. Due scale diverse. Ho violato il mio stesso presidio **STESSA UNITÀ** — e ci sono cascato perché i numeri avevano lo stesso ordine di grandezza: gli «scarti −3,5…−9,3» che citavo come prova somigliano ai logit veri (−4,0 / −6,2 / −3,8) pur essendo un'altra grandezza.
+
+**Il CE ha rispettato la propria soglia in 12 celle su 12**: serve ⟺ esiste almeno un logit ≥ 0,0 (3 celle su 3 fra le servite); si astiene ⟺ tutti i logit < 0,0 (9 celle su 9 fra le astenute, comprese **4/4 del controllo sano**).
+
+⚠️ Anche il mio contatore era rotto: stampava `P2 3/8` perché divideva 3 celle *servite* per 8 celle *totali* — due popolazioni nello stesso rapporto. Il denominatore giusto è 3.
+
+### 🔴 ② IL MECCANISMO VERO — LA SOLA LINGUA DELLA DOMANDA ALZA IL LOGIT, 14 VOLTE SU 14
+
+Stessa entità, **stessa identica frase inglese**, stesso store, stesso `k`: cambia solo la lingua della domanda.
+
+| entità | proposizione (EN) | logit EN | logit IT | Δ |
+|---|---|---:|---:|---:|
+| Danny Brown | «"When It Rain" is a song by American hip hop…» | −4,046 | **+0,146** | **+4,19** |
+| Danny Brown | «It was produced by Paul White.Atrocity Exhibition…» | −6,237 | −2,026 | +4,21 |
+| Robin Schulz | «Sugar is the second studio album by German DJ…» | −1,844 | **+1,554** | **+3,40** |
+| Robin Schulz | «The album includes the singles "Headlights", "Sugar"…» | −3,933 | **+1,496** | **+5,43** |
+| Taylor Swift | «"Fifteen" is a country pop song performed by…» | −3,812 | **+0,534** | **+4,35** |
+| Taylor Swift | «"Fifteen" was released on August 30, 2009…» | −5,503 | −0,692 | +4,81 |
+| Taylor Swift | «As with her first album, "Taylor Swift", Swift wrote…» | −6,094 | −2,200 | +3,89 |
+| Doctor Doom | «The son of Romani witch Cynthia Von Doom…» | −3,194 | −1,162 | +2,03 |
+| Doctor Doom | «One of the most popular stories of the title…» | −4,256 | −2,686 | +1,57 |
+| **SANO** Shah Rukh Khan | «It stars Shah Rukh Khan and debutant Deepika…» | −5,906 | −2,434 | +3,47 |
+| **SANO** Shah Rukh Khan | «Her first Hindi film release came the following year…» | −8,989 | −6,134 | +2,86 |
+| **SANO** Marvel Comics | «and published by Marvel Comics.» | −4,883 | −3,791 | +1,09 |
+| **SANO** Marvel Comics | «After the Pride was destroyed by the Gibborim…» | −6,645 | −4,412 | +2,23 |
+| **SANO** Marvel Comics | «Thor: Ragnarok is an upcoming American superhero film…» | −7,497 | −5,906 | +1,59 |
+
+**14 coppie su 14, zero eccezioni, Δ da +1,09 a +5,43.** I 3 attraversamenti dello zero sono esattamente i 3 casi che il prodotto serve a torto.
+
+Il docstring del prodotto (`trust_report.py:158-166`) dichiara: *il CE separa on-topic (~+8) da off-topic (~−8)*. **La sola lingua della domanda ne consuma fino a +5,43 su 16 punti di scala — il 34% della separazione dichiarata, senza che una parola del contenuto cambi.** I 3 casi serviti non sono un giudice che ignora la sua regola: sono un giudice **spostato** che applica correttamente una soglia fissa a un punteggio derivato.
+
+⚠️ **CONFONDENTE, dichiarato non nascosto**: fra la colonna EN e la colonna IT cambiano DUE cose insieme — la lingua della domanda **e** il fatto che la coppia diventi cross-lingua (query IT / passaggio EN). Il corpus di terzi è monolingue inglese, quindi **questo banco NON separa «il CE è debole in italiano» da «il CE è debole quando le due lingue differiscono»**. Serve un passaggio IT con domanda IT. Fino ad allora il reperto operativo è: **chi interroga in italiano una memoria in inglese riceve fatti irrilevanti serviti come rilevanti**, e il numero che lo produce è misurato.
+
+### 🟡 ③ IL NUMERO CHE DECIDE NON È NEL DOSSIER — osservabilità a metà
+
+Dump **esaustivo** (nessun valore omesso, nessun `tail`) di ogni numero del dossier nella cella `Danny Brown IT`, servita, `verify.ce_gate = "ran"`, decisa dal logit **+0,146**:
+
+```
+17 valori numerici in totale — min_relevance=0.8792 · facts[0].relevance=0.7866 ·
+facts[0].score=0.7866 · confidence=0.5 · k=5 · n_facts=1 · … (nessun altro punteggio)
+valori compatibili con il logit CE deciso (~0.146): []
+sottostringhe in tutto il dossier serializzato: cross->1  ce_gate->1  rerank->0  logit->0
+```
+
+`_apply_ce_gate` calcola `ce = scorer(pairs)` e restituisce `(kept, floored, status)`: **i logit sono una variabile locale, scartata.**
+
+Il prodotto **dice CHI ha deciso** — `report["floor_applied_by"] = "cross_encoder"` (`client.py:1849`), cura scritta apposta contro l'inganno del numero — **ma non con quale numero, e nemmeno con quale soglia**: `0,8792` è nel dossier e non ha filtrato nulla, `0,0` ha filtrato tutto e non c'è. **È un limite di osservabilità del PRODOTTO, non del mio banco**: senza quel numero nessun utente può spiegare perché il CE decide contro il coseno, né accorgersi della deriva qui sopra.
+
+### Cosa questi dati NON provano
+Non provano che il difetto sia «l'italiano»: il confondente cross-lingua è aperto. Non provano un tasso — 6 entità scelte perché già note come difficili, non un campione. Non dicono nulla su `fabrication_under_absence` nel banco ufficiale, che gira a `0.835` sul **bi-encoder**: è l'altro giudice, e un numero preso di lì non si accosta a questi.
