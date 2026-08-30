@@ -26,6 +26,16 @@ REGISTRO = pathlib.Path("docs/stato-reale/00-ESAME.md")
 #: sola (misurato due volte il 29/08: davi 2 celle «a due firme» che nessuno
 #: aveva firmato).
 FIRMA = re.compile(r"(?:✅|✍️|_)\s*(?:\*\*)?(?:2ª |seconda )?firma @([A-Za-z0-9_-]+)")
+#: Comandi che la disciplina della copia CONDIVISA vieta: otto istanze e un
+#: solo albero, dove uno `stash pop` tocca il lavoro non committato delle
+#: altre sette. La ricetta di una cella e' testo scritto da un'ALTRA, e puo'
+#: CITARE un comando invece di proporlo — `LANT-41` racconta uno stash pop
+#: gia' avvenuto, non chiede di rifarlo. Misurato il 30/08: 1 ricetta su
+#: 139. Questo resta un elenco e non un cancello (vedi il docstring): la
+#: riga si stampa lo stesso, con l'avviso accanto.
+VIETATO = re.compile(r"git\s+(stash|checkout\s+--|reset|clean|push)"
+                     r"|--no-verify|rm\s+-rf|requalify\s+--apply", re.I)
+
 RIFALLO = re.compile(r"🔎\s*\*{0,2}(?:rifallo con|Rifallo con)\*{0,2}[^`]*`([^`]+)`")
 #: gli ID del registro NON sono di una forma sola: accanto a `W2-57` ci sono
 #: `LANT-41` e le celle NUMERICHE (`| 12 |`). Misurato il 30/08: le numeriche
@@ -75,7 +85,12 @@ def main() -> int:
         stato = f"{len(firme)} firma/e" if firme else "NESSUNA firma"
         print(f"\n  {cid}  [{stato}]  {titolo[:74]}")
         if rif:
-            print(f"      $ {rif.group(1)[:110]}")
+            _cmd = rif.group(1)
+            print(f"      $ {_cmd[:110]}")
+            if VIETATO.search(_cmd):
+                print("      ⛔ NON ESEGUIRLA COSI': contiene un comando "
+                      "che la disciplina della copia condivisa vieta. "
+                      "Probabile CITAZIONE nel racconto, non una ricetta.")
     coda = "." if a.tutte else " (con la ricetta gia' pronta)."
     print(f"\n  ⇒ {trovate} celle che puoi firmare{coda}")
     if nascoste:
