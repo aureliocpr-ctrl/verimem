@@ -251,6 +251,18 @@ comparire in nessuna lettura MCP.
 > salvato abbia senso.** Un `0.0` è indistinguibile, per quella riga, da una
 > stima legittima.
 
+**Controllato quattro ore dopo, a guasto finito.** `verimem doctor` alle 00:55
+del 31/08:
+
+    ✓ daemon  shared encode daemon warm on :61574
+    ✓ embedding-model  all 16654 vectors match the engine in use (768d: 16654)
+
+**Il daemon è tornato, i vettori si sono riallineati, e il file è ancora
+`{"floor": 0.0, "n_facts": 13795}` con mtime 20:32.** La causa è sparita da ore
+e l'effetto no: **il valore degenere non si ripara quando si ripara il guasto
+che l'ha prodotto.** È la differenza fra un'interruzione e un danno persistente,
+e questo è il secondo.
+
 ## Il difetto in una frase
 
 **Un guasto transitorio di ventitré minuti si è cristallizzato in un file, e ha
