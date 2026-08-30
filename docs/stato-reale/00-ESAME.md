@@ -10300,3 +10300,54 @@ stress test; e le coppie a **73 token** di distanza sono `TEST 6 proposition lun
 ```bash
 python docs/stato-reale/banchi/ws6-le-contraddizioni-sono-log.py
 ```
+
+---
+
+## ws1 · 30/08 22:26 — LA DERIVA NON SI RIPRODUCE QUI, E IL GIUDICE PREMIA CHI PARLA DELL'ARGOMENTO INVECE DI CHI HA LA RISPOSTA
+
+**Livello**: lo scorer del prodotto (`_load_reranker()`), lo stesso che `_apply_ce_gate` chiama.
+**Perimetro**: 12 item HaluEval (**domande di terzi**, non mie) × 3 popolazioni × 3 lingue.
+**Istante**: 2026-08-30 22:18–22:26. **Regime**: `ok` in testa e in coda.
+**Proxy dichiarato**: le domande IT/ES sono **traduzioni mie** (nomi propri invariati). L'inglese è di terzi.
+**Criterio di raccolta, con le perdite contate PRIMA**: domanda ≤110 char, `right_answer` in **una sola** frase, frase 25–260 char ⇒ **110 tenuti su 300** (98 domanda lunga · 12 risposta in 0 frasi · 11 in 2+ · 69 frase fuori misura). Zona grigia: la frase più lunga dello stesso `knowledge` che **non** contiene la risposta ⇒ **7 item su 12** (5 persi).
+
+### 🟢 IL VERDE, PER PRIMO — la traduzione NON degrada la discriminazione
+
+| lingua | med RILEVANTI | med ZONA GRIGIA | med IRRILEVANTI | **separazione ril−irr** |
+|---|---:|---:|---:|---:|
+| EN | +0,135 | +2,914 | −8,189 | **+8,324** |
+| IT | +0,745 | +1,900 | −7,685 | **+8,430** |
+| ES | +0,882 | +3,114 | −7,909 | **+8,791** |
+
+**La separazione si conserva** (+1,3% in italiano, +5,6% in spagnolo). Su questa popolazione **P-COMPR è falsificata**: la traduzione non comprime la distanza fra ciò che risponde e ciò che è fuori tema.
+
+### 🔴 IL MIO REPERTO DELLE 22:12 HA UN PERIMETRO PIÙ STRETTO DI COME L'HO SCRITTO
+
+Deriva mediana rispetto all'inglese, **sulle tre popolazioni, con le stesse domande**:
+
+```
+IT:  RILEVANTI -0,109    ZONA GRIGIA -0,747    IRRILEVANTI +0,501
+ES:  RILEVANTI +0,158    ZONA GRIGIA +0,209    IRRILEVANTI +0,705
+```
+
+**Tutti fra −0,75 e +0,71: rumore.** Alle 22:12 avevo misurato **+3,435 (IT)** e **+3,448 (ES)**. **Qui non si riproduce**, e la mia predizione — «la zona grigia deriva più degli off-topic» — è **falsificata**: la grigia in italiano **scende** (−0,747), e i grigi ammessi **non crescono** (EN 5/7 → IT **4/7** → ES 5/7).
+
+Cosa distingue i due banchi, senza sceglierne una: (a) lì la domanda era **mia e senza risposta nel corpus** («qual è il gruppo sanguigno di X?»), qui è **di terzi e con risposta**; (b) lì i passaggi erano i candidati della recall per quell'entità, qui sono frasi selezionate. **Non ho isolato quale delle due conta.** L'ipotesi che la deriva viva solo nel regime *di assenza* — cioè proprio `fabrication_under_absence` — è **plausibile e non misurata**: la scrivo come ipotesi, non come reperto. ⇒ **Il reperto delle 22:12 resta valido sul suo perimetro (domande senza risposta nel corpus) e NON si estende a questo.**
+
+### 🔴 IL REPERTO PIÙ GRANDE, E NON C'ENTRA CON LA LINGUA
+
+Nella tabella qui sopra, **in inglese**: `med GRIGIA = +2,914` contro `med RILEVANTI = +0,135`.
+
+> **Il cross-encoder dà un punteggio più alto al passaggio che parla dell'argomento che a quello che contiene la risposta** — di **2,8 punti di logit**, in inglese, senza alcuna questione di lingua.
+
+Conseguenza alla soglia fissa `0.0`: **6 risposte giuste su 12 respinte** in inglese (4/12 IT, 5/12 ES) e **5 passaggi non risponditori su 7 ammessi** (4/7 IT, 5/7 ES).
+
+Il perché si legge nei casi: HaluEval QA è **multi-hop**, e la frase che contiene la risposta spesso **non nomina le entità della domanda**, mentre la frase «grigia» sì.
+- «*In what year was the last novel of the author who wrote Revolutionary Road published?*» → la frase con la risposta, «Cold Spring Harbor (1986) is a novel by American writer Richard Yates», **logit −4,128**; quella che nomina *Revolutionary Road* ma non risponde, **+6,182**.
+- «*What earlier concept does the style of comedy that The War of the Roses employs correspond to?*» → risposta «Black comedy corresponds to the earlier concept of gallows humor» **−2,539**; la frase che nomina *The War of the Roses* **+0,571**.
+
+**Il CE misura la sovrapposizione d'argomento, non il possesso della risposta.** Il prodotto lo dice già in prosa (`trust_report.py`, blocco sufficiency: *relevance ≠ sufficiency, un fatto può essere on-topic e non contenere la risposta*) e tiene il giudice di sufficienza **opt-in, spento senza un `llm`**. Qui c'è il numero che quantifica quella frase: **+2,91 contro +0,14**.
+
+### Cosa questi dati NON provano
+**Confondente non chiuso**: la mia zona grigia è *la frase più lunga* che non contiene la risposta — la lunghezza potrebbe alzare il punteggio da sola. Serve una grigia a lunghezza appaiata.
+n=12 (7 per la grigia): differenze sotto ~1 punto di logit non sono distinguibili qui, e infatti **non le interpreto**. Le traduzioni sono mie. Il reperto vale sul **cross-encoder**, non sul bi-encoder del banco ufficiale. Non dice nulla sul tasso di `fabrication_under_absence`, che gira su un'altra popolazione e un altro giudice.
