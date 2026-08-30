@@ -10083,3 +10083,44 @@ Il prodotto **dice CHI ha deciso** — `report["floor_applied_by"] = "cross_enco
 
 ### Cosa questi dati NON provano
 Non provano che il difetto sia «l'italiano»: il confondente cross-lingua è aperto. Non provano un tasso — 6 entità scelte perché già note come difficili, non un campione. Non dicono nulla su `fabrication_under_absence` nel banco ufficiale, che gira a `0.835` sul **bi-encoder**: è l'altro giudice, e un numero preso di lì non si accosta a questi.
+
+**㉙ `42` — il presidio consiglia una cura che renderebbe ritirabili mille fatti.** `verimem doctor`
+avverte: *«2541 of 14049 live facts carry a status with no trust rank … they are NEVER auto-retired
+in a contradiction, so those clashes **pile up unresolved** instead of being decided wrongly»*, e
+consiglia **«normalise those statuses, or add them to `_STATUS_RANK`»**.
+🔑 **O1 ha pagato**: la memoria diceva già il contrario — fact **`62c2a8610c99`**, *otto criteri su
+otto caduti* per separare catalogo da conflitto, **contraddizioni registrate ~95% rumore**.
+📊 **Istante 21:55:39**: contraddizioni **93.622**, irrisolte **93.263 = 99,6%**; esistono solo
+`numeric_clash` (**74.071**) e `boolean_clash` (**19.192**).
+📊 **Sono contraddizioni? Campione di 4.000 coppie irrisolte, righello Jaccard del `41`:**
+
+| kind | coppie | «parlano d'altro» (<0,15) | «stessa cosa» (≥0,50) | mediana |
+|---|---|---|---|---|
+| `numeric_clash` | 3.193 | **2.993 = 93,7%** | 136 = 4,3% | **0,039** |
+| `boolean_clash` | 807 | **800 = 99,1%** | 1 = 0,1% | **0,031** |
+
+**Due fatti dichiarati in contraddizione condividono il 4% delle parole.** Il ~95% di rumore è
+**confermato con un righello diverso** da quello di allora.
+📊 **Il perimetro del fix, e il numero che conta**: coppie con almeno un fatto senza rank **66.293**,
+**ma i fatti DISTINTI sono 998** (uno compare in molte coppie) su **2.535** senza rank ⇒
+**normalizzare gli status renderebbe ritirabili fino a 998 fatti, il 39,4% di quelli che oggi il
+mancato trust rank protegge**. E **3.312 fatti distinti, il 23,4% dei vivi**, sono in almeno un clash.
+🔑 **LA CAUSA — il prodotto ha già in casa il criterio che lo curerebbe.** Il `numeric_clash` scatta
+su due numeri diversi **senza verificare che si riferiscano alla stessa grandezza**. È *lo stesso*
+errore che il gate di scrittura sa evitare: stasera **`L4.2`** mi ha respinto un claim con
+*«il claim riusa un numero della fonte riferendolo a un'altra grandezza: 278 qui è "vettori", nella
+fonte "do"»*. ⇒ **lo applica in scrittura, dove protegge il corpus, e non nel rilevatore, dove lo
+inquina.**
+⚖️ **In difesa del referto**: la sua stessa riga dice **«instead of being decided wrongly»** —
+riconosce che decidere sarebbe peggio. Il difetto è la forma: apre con `!`, descrive l'accumulo come
+il male e chiude con un fix operativo. **Una protezione presentata come un debito.**
+⚠️ **Non misurato**: se le **~137 coppie** con jaccard ≥0,50 siano contraddizioni **vere** — sarebbero
+il segnale sepolto sotto il rumore, e varrebbe la pena tirarle fuori.
+⛔ **La cura sensata è a monte** (portare il criterio di `L4.2` nel rilevatore) e **non l'ho fatta: è
+codice del gate, e il gate non si tocca senza mandato.**
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-il-consiglio-del-presidio.py
+```
