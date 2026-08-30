@@ -83,10 +83,17 @@ con `writer_role=user`.
     guardia/leva-paths-ignore          user               2
     c10/halumem                        agent_inference   12
 
-**Il costo del daemon assente, oggi, è cinquantaquattro fatti in ventitré
-minuti** — non settanta. La differenza fra i due numeri è tutta metodo: se avessi
-riportato 70, avrei attribuito al daemon anche il comportamento normale del
-consolidamento.
+**Il costo del daemon assente, oggi, è quarantatré fatti di lavoro in ventitré
+minuti** — non settanta, e nemmeno cinquantaquattro. La differenza fra questi
+numeri è tutta metodo, e ci sono cascato una seconda volta: avevo scritto «54»,
+cioè l'intero blocco, dopo aver appena sostenuto che le due popolazioni vanno
+separate. **La separazione va fatta anche DENTRO il blocco**: contando
+esattamente, i 54 sono **11 MASTER e 43 di lavoro**.
+
+    blocco 20:30:10-20:53:20 -> totale 54 : MASTER 11, lavoro 43
+
+Una separazione applicata fra i gruppi e non dentro i gruppi non è una
+separazione: è la stessa svista di prima, alla scala inferiore.
 
 ## La finestra combacia con quello che ho visto succedere
 
@@ -134,10 +141,27 @@ telemetria, che come mostra il documento 38 non registra il regime.
 - Il righello sta in
   `docs/stato-reale/banchi/ws6-quanti-mai-giudicati.py` e
   `ws6-le-finestre-cieche-di-oggi.py` (entrambi in sola lettura).
-- **Quello che non ho misurato**: se le finestre cieche dei giorni scorsi
-  (14 il 27/08, 9 il 28, 6 il 29) abbiano la stessa forma a blocchi. Se
-  l'avessero, il daemon sarebbe intermittente da almeno quattro giorni e il
-  peggioramento di oggi sarebbe di grado, non di natura.
+- **Il limite che avevo lasciato aperto, ora chiuso, e con la risposta
+  contraria.** Ho rifatto il conto sui giorni precedenti separando MASTER e
+  lavoro:
+
+| giorno | mai giudicati | di cui MASTER | di lavoro | blocco più lungo |
+|---|---|---|---|---|
+| 26/08 | 1 | 1 | **0** | — |
+| 27/08 | 14 | 2 | 12 | **2,1 min** (10 fatti) |
+| 28/08 | 9 | **9** | **0** | — |
+| 29/08 | 6 | **6** | **0** | — |
+| **30/08** | 70 | 25 | 45 | **23,2 min** (43 di lavoro) |
+
+  **Il 28 e il 29 agosto non hanno alcuna finestra cieca**: ogni singolo fatto
+  non giudicato di quei giorni è un MASTER del consolidamento. Quindi **il
+  daemon non è intermittente da quattro giorni**: le morti che hanno prodotto
+  danno sono due, il **27/08 per 2,1 minuti** e **oggi per 23,2**. Oggi è un
+  peggioramento **di natura, non di grado** — dieci volte la finestra più lunga
+  osservata prima.
+- **Quello che resta non misurato**: perché la finestra di oggi sia stata così
+  più lunga. Il journal non registra lo stato del daemon (documento 38), quindi
+  la durata delle morti è ricostruibile solo dal danno che lasciano.
 
 ---
 
