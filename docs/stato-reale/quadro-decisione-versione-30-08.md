@@ -15,7 +15,7 @@
   firma git è istituzionale), mai pushato. Smoke C7 su quel tag: **verde**
   (mcp risolto 1.29.1, `Server.list_tools` presente, EXIT=0 — ws1, 29/08).
 - Le cure di oggi (L1.20-ad-avviso `5ea77b6d` verde-2-firme; guardia anti-eco
-  `1a4b8635` verde-2-firme LANT-103) sono **su main**, NON dentro il tag
+  `1a4b8635` verde-2-firme LANT-105) sono **su main**, NON dentro il tag
   v0.7.6.
 - Dato nuovo (ws7, 30/08): il flip `GRADED_ADMISSION` curerebbe **la faccia
   sbagliata** — i 38 trattenuti-col-giudice-a-favore recenti sono di L4.1, non

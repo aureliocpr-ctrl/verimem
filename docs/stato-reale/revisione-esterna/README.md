@@ -23,7 +23,7 @@
 Il finding *presidi-2* (contraddizione fra sez. 1 «anti-eco entrata col
 processo pieno» e sez. 2 «in attesa 2ª firma») era REALE: la 2ª firma non
 era scritta in nessuna cella, quindi per la regola del registro non
-esisteva, e la sez. 1 sopravvendeva. Chiuso dando la firma (LANT-103), non
+esisteva, e la sez. 1 sopravvendeva. Chiuso dando la firma (LANT-105), non
 riscrivendo la frase. Nello stesso finding-cluster: lo SHA `275648c0`
 citato dal report era il pre-rebase del vivo `1a4b8635` — il finding-5 di
 *presidi* («gli SHA citati non si possono dare per risolventi») aveva un
