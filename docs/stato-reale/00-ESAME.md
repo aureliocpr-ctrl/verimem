@@ -9669,3 +9669,67 @@ generale** — che è la cosa che il README promette e che, su questo banco, man
   del cross-encoder, che non è esposto.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Il meccanismo regge su 13 entità: due modi DIVERSI di sbagliare, e nessuno dei due è confabulazione
+
+**Livello**: `Memory.explain()`, punteggi e **testo servito**. **Dataset**: HaluEval QA (MIT),
+451 frasi di terzi. **Perimetro**: **11 entità difficili + 2 sane di controllo** × 2 lingue × 2
+giudici. **Istante**: 30/08 21:36-21:41. **Regime**: `ok` in testa e in coda.
+
+### Le tre predizioni, scritte prima: **tutte e tre confermate**
+
+**① Il CE ammette SEMPRE sotto la propria soglia — 5 su 5**
+
+| entità (IT, CE gate) | floor | top_rel | scarto |
+|---|---|---|---|
+| Taylor Swift | 0,8544 | 0,7727 | **−8,2** |
+| Josh Hutcherson | 0,8297 | 0,7949 | −3,5 |
+| Robin Schulz | 0,8489 | 0,7880 | −6,1 |
+| Danny Brown | **0,8792** | 0,7866 | **−9,3** |
+| Badr Hari | 0,8407 | 0,8035 | −3,7 |
+
+**② Il bi-encoder ammette per un pelo — 8 su 8**: `0,8371 · 0,8373 · 0,8388 · 0,8404 ·
+0,8433 · 0,8447 · 0,8512 · 0,8639` — **da 2 a 29 millesimi sopra 0,835**, e **nessuno oltre
+0,88**. ⇒ **la mia riserva («e se i fatti serviti in inglese fossero davvero pertinenti, allora
+"fallimento" è una mia etichetta sbagliata?») cade: passano per un pelo, non per pertinenza.**
+
+**③ Il controllo sano si astiene in tutte le celle** — nessuna riga stampata per Shah Rukh Khan
+e Marvel Comics.
+
+### 🔑 Due modi DIVERSI di sbagliare
+
+> **Il CE ignora la soglia** (ammette 3,5–9,3 punti sotto quella che riporta).
+> **Il bi-encoder ha la soglia troppo bassa** (ammette per 2–29 millesimi).
+
+Non è lo stesso difetto in due lingue: **sono due difetti di natura diversa**, e la lingua
+decide solo quale dei due si manifesta.
+
+### E i testi serviti dicono che NON è confabulazione
+
+```
+Robin Schulz  → «Sugar is the second studio album by German DJ and record pro…»
+Taylor Swift  → «"Fifteen" is a country pop song performed by American singer…»
+Badr Hari     → «It was considered as one of the biggest kickboxing and MMA p…»
+```
+**Sono fatti VERI sull'entità, ma irrilevanti alla domanda** (il gruppo sanguigno). ⇒ **il
+prodotto non inventa: serve un fatto pertinente all'ENTITÀ invece che alla DOMANDA.** È un
+errore di **rilevanza**, non di **verità** — e per un prodotto che promette anti-confabulazione
+la distinzione conta, in suo favore.
+
+📌 **Un caso a sé**: **Dick Wolf** riceve «*She is currently a Co-Executive Producer…*» — una
+frase che **nomina** Dick Wolf ma **parla di un'altra persona**. Lì il difetto è a monte: la
+frase è stata attribuita all'entità sbagliata dal mio stesso criterio di raccolta (`c in f`).
+**È un limite del mio banco, non del prodotto**, e lo dichiaro.
+
+### Cosa questo NON prova
+
+- **13 entità**, non una popolazione: il pattern è **sistematico su quelle**, non stimato.
+- **Non so PERCHÉ** il CE valuti diversamente le due lingue: **il suo punteggio interno non è
+  esposto** e del suo addestramento non ho verificato nulla.
+- **Il mio criterio di raccolta (`nome in frase`) attribuisce frasi all'entità sbagliata** —
+  vedi Dick Wolf. Sui 12 casi restanti i testi serviti riguardano davvero l'entità, ma **il
+  criterio è grezzo e lo dichiaro**.
+- ⛔ **Non ho toccato nulla.**
+
