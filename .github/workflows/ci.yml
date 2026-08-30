@@ -2,13 +2,85 @@ name: ci
 
 on:
   push:
-    branches: [main]
+    # hotfix/**: CANCELLO-A 2026-08-31 — la CI del branch di
+    # rilascio non partiva mai (total_count=0) e il gate del publish
+    # non aveva nulla da leggere.
+    branches: [main, "hotfix/**"]
   pull_request:
     branches: [main]
+  # 🔑 UN VERDETTO SI DEVE POTER CHIEDERE, NON SOLO PROVOCARE.
+  # Senza questo la CI parte SOLO su push, e il gate di rilascio («UN run
+  # completo sull'ULTIMO sha») diventa una corsa che non si vince: misurato il
+  # 2026-08-21, mediana 8,5 min fra un push e il successivo contro ~55 min di
+  # run, cioe' **un run su dieci** arriva in fondo restando la punta. Gli altri
+  # nove li invalidiamo noi mentre girano, e chi prova a proteggerne uno puo'
+  # solo CHIEDERE agli altri di fermarsi — una regola che si appoggia alla
+  # buona volonta' di otto scrittori, e che infatti ha retto trenta minuti.
+  #
+  # ⚖️ Non e' una scelta di disegno che qui mancasse: `publish.yml` (riga 22) e
+  # `security.yml` (riga 11) lo dichiarano gia' entrambi. Questa riga allinea il
+  # terzo, e non tocca NIENTE di come i run nascono da un push.
+  workflow_dispatch: {}
 
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Su un PULL REQUEST cancellare il run superato e' giusto: si itera in fretta e
+  # conta solo l'ultimo. Su un PUSH SU MAIN no — ogni commit merita un verdetto, e
+  # cancellarlo non lo rimanda: lo CANCELLA, perche' nessuno rilancia il run morto.
+  #
+  # MISURATO il 2026-08-10, con otto autori sullo stesso ramo:
+  #   26 run cancellati su 40 · 4 cancellati contro 1 concluso in una sola serata
+  #   il job piu' lento (windows) e' SEMPRE l'unico che perde: 0 conclusi su 12
+  #   quattro push in 26 minuti -> ZERO verdetti completi
+  # e mezza giornata di diagnosi si e' appoggiata su verdetti mai arrivati.
+  #
+  # Un run di `ci` dura ~45 minuti (matrice di sei: ubuntu 17,5 · macos 22,1 ·
+  # windows 45,0). Perche' ne sopravviva uno servirebbe una finestra di silenzio
+  # di 40 minuti: in otto e' un push ogni 5,3 ore a testa, cioe' un blocco.
+  # La disciplina e' stata provata stasera e non ha retto — questa riga la
+  # sostituisce con una regola che non dipende da chi si ricorda.
+  # AGGIUNTA 2026-08-12. La riga sopra non bastava: `cancel-in-progress: false`
+  # protegge il run CHE GIRA, ma un run PENDENTE nello stesso gruppo viene
+  # SOSTITUITO dal piu' recente — comportamento documentato, non un difetto
+  # dell'espressione. Misurato oggi: tre run cancellati con zero job partiti
+  # (0f496502 8,2 min · a0fbe104 10,8 min · a184694b 4,2 min), e il primo
+  # concluso +1 secondo dopo il push successivo. Tre verdetti persi su sei push.
+  # Un run dura 45-46 minuti (il tetto e' windows), quindi ogni push dentro
+  # quella finestra mette in coda, e la coda la butta il push dopo.
+  #
+  # Gruppo per COMMIT sui push: ogni sha ha il suo gruppo e non c'e' niente da
+  # sostituire. Per ref sulle pull request, dove cancellare il superato e' giusto.
+  #
+  # PREZZO, misurato prima di applicarla: toglie il tetto naturale al numero di
+  # run contemporanei. Traffico osservato su main: 11 run in due giorni, al
+  # massimo 2 contemporanei, ~0,2 run/ora. Se si arrivasse a otto push in un'ora
+  # sarebbero otto run per sei gambe, e questa riga andrebbe ridiscussa.
+  #
+  # LA SOGLIA E' STATA RAGGIUNTA IL 2026-08-13 E NON HA PRODOTTO IL DANNO che
+  # questa riga temeva: sette push in 47 minuti, sette run contemporanei,
+  # quarantadue job — e ZERO IN CODA. Su tre run aperti uno per uno: 5 job
+  # conclusi + 1 in corso, 5 + 1, e 6 partiti insieme. Nessun job ha aspettato
+  # uno slot.
+  # ⇒ La soglia era espressa nella grandezza SBAGLIATA. «Otto run contemporanei»
+  #   non e' il segnale: il segnale sono i JOB IN CODA, ed e' quello che va
+  #   guardato prima di ridiscutere questa riga.
+  #
+  # ⏱️ E IL NUMERO E' SCADUTO IN VENTI MINUTI, il che dice come va letto.
+  #   Alle 13:12Z: 7 run, 42 job, ZERO in coda — misurato aprendo tre run.
+  #   Alle 13:36Z: 8 run in volo, e il conto per stato di TUTTI i loro job dice
+  #     in esecuzione 20 · in coda 1 · conclusi 27
+  #   VENTI e' il tetto dei runner concorrenti, e a otto run in volo e' SATURO:
+  #   il primo job ha cominciato ad aspettare. La misura di prima non era
+  #   sbagliata — era di un altro istante, e questa riga non deve far credere
+  #   che «zero in coda» sia una proprieta' del sistema.
+  # ⇒ CRITERIO, non fotografia: si conta lo stato dei job di TUTTI i run in
+  #   volo (non di tre presi a campione) e si guarda `queued`. Sotto il tetto
+  #   dei venti il parallelismo e' gratis; sopra, ogni push in piu' ritarda i
+  #   verdetti di tutti — ed e' li' che questa riga va ridiscussa, non prima.
+  # ⚠️ Cio' che tiene aperti i run NON e' la concorrenza: e' la gamba windows,
+  #   che dura 40-60 minuti mentre le altre cinque chiudono in 15-20. Chi cerca
+  #   qui la causa di un run lungo la cerca nel posto sbagliato.
+  group: ci-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
@@ -28,7 +100,72 @@ jobs:
     # (windows/py3.11 flaked red on an all-green run, 2026-06-08). 45 min gives
     # comfortable headroom without masking a real hang (the in-process hang
     # watchdog still stack-dumps long calls).
-    timeout-minutes: 45
+    #
+    # AGGIORNAMENTO 2026-08-13. Quel margine confortevole NON ESISTE PIU', e un
+    # tetto unico per sei gambe di durata diversissima lo nega proprio a chi ne
+    # ha bisogno. Job `test (windows-latest / py3.12)` su sei run consecutivi:
+    #   31633951408 cancelled 45,3 · 31633374985 failure 39,9
+    #   31632886567 cancelled 45,1 · 31631810969 cancelled 45,3
+    #   31630796638 failure   41,7 · 31629151172 cancelled 45,3
+    # QUATTRO SU SEI muoiono a 45,1-45,3 minuti: e' il tetto che le uccide, non
+    # un test. Nello stesso run le altre cinque gambe stanno a 17,5-17,9 minuti.
+    # Windows non fallisce, SCADE — e una gamba che scade costa 45 minuti di
+    # calcolo e non consegna nessun verdetto.
+    #
+    # ⚠️ Quanto ci metta davvero windows non e' misurabile finche' il tetto la
+    # tronca: quattro campioni su sei sono censurati a 45. I due tempi veri sono
+    # 39,9 e 41,7, quindi 60 da' ~1,4x sul massimo noto. Il primo run con questo
+    # tetto sara' la prima misura non censurata; se nemmeno 60 bastasse, il
+    # numero non va allargato per riflesso — va capito perche' windows impiega
+    # piu' del doppio delle altre.
+    #
+    # 35 alle altre, non 45: dove il lavoro dura 17,5 minuti un tetto di 45 e'
+    # largo il triplo e non scoprirebbe mai un rallentamento vero.
+    #
+    # 35 e non 30 — misurato qualche ora dopo, e cambia il criterio con cui si
+    # sceglie un tetto. Il passo `Tests` della gamba ubuntu/py3.11, su tre run
+    # consecutivi, e' durato 706 s · 1196 s · 1331 s: quasi il DOPPIO, con un
+    # esito IDENTICO in ogni cifra (20 failed, 92 skipped, 8 not_run:no_judge)
+    # e un setup costante (~2 min in tutti e tre). Il tempo in piu' non e' ne'
+    # lavoro in piu' ne' download: sta dentro l'esecuzione della suite, e la
+    # causa non e' nostra e non e' nota.
+    # ⇒ Un tetto tarato sul tempo OSSERVATO e' fragile per costruzione quando lo
+    # stesso lavoro puo' costare 1,88x. Il 30 lasciava 4,9 minuti al peggiore
+    # osservato (25,1): un run partito da 17 minuti, moltiplicato per quel
+    # fattore, lo avrebbe sfondato. 35 tiene il margine sopra il peggiore
+    # osservato senza tornare al 45 che non sorvegliava piu' niente.
+    # 90 A WINDOWS DAL 20/08, e la riga sopra chiedeva di NON allargare il
+    # numero per riflesso ma di capire prima perche' windows costi il doppio.
+    # Ecco la risposta, misurata sui due log dello STESSO commit (40f6b5d8),
+    # 10473 campioni per parte::
+    #
+    #     mediana per test   windows 74,9 ms   ubuntu 32,1 ms   -> 2,33x
+    #     p90                        423,2 ms          125,9 ms
+    #     p99                       2851,7 ms         1410,5 ms
+    #     somma                       45,6 min          20,3 min
+    #
+    # E il ritardo NON e' concentrato: i +25,3 minuti sono sparsi su 1448 file,
+    # di cui i primi 10 valgono il 15,9% e i primi 50 il 34,0%. Non ci sono
+    # test lenti da ottimizzare: c'e' un COSTO COSTANTE PER TEST che windows
+    # paga e le altre no (creazione di processi e di file, che ogni fixture
+    # con `tmp_path` e uno SQLite tocca).
+    # ⇒ Il tetto non si recupera curando qualcosa: il fattore resta ~2,3x e
+    #   cresce con la suite. Il 60 e' gia' stato colpito una volta — il job
+    #   96380499183 (sha 24ece585) e' durato 60,3 minuti ed e' finito
+    #   `cancelled`, cioe' senza riga di sintesi e senza righe FAILED: per chi
+    #   conta i rossi quella cella valeva ZERO.
+    #
+    # PERCHE' 90 e non un numero a caso: il criterio e' quello gia' scritto
+    # qui sopra — il peggiore osservato per il fattore di variabilita' 1,88x
+    # che questo stesso file documenta. Migliore osservato 47,6 min x 1,88 =
+    # 89,5. Le quattro misure di windows: 47,6 · 51,6 · 52,0 · 60,3(persa).
+    # COSTO: zero quando il job finisce prima — `timeout-minutes` e' un tappo,
+    # non una prenotazione. Si paga solo su un job davvero piantato, che
+    # brucerebbe 90 minuti invece di 60.
+    # ⚠️ RESTA APERTO l'altro lato, e non lo chiude questo numero: una gamba
+    #   SCADUTA e' muta (conclusion `cancelled`, nessuna sintesi). Alzare il
+    #   tetto rende l'evento piu' raro, non piu' visibile.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 35 }}
     strategy:
       fail-fast: false
       matrix:
@@ -37,6 +174,30 @@ jobs:
         # macos leg for OS coverage. Cuts ~11 legs to 6 — matters because this
         # repo's Actions were exhausting the private-repo quota. Widen to the
         # full grid on release tags if per-version OS coverage is ever needed.
+        # 🪞 QUI IL 15/08 HO MESSO «windows solo su main e sui PR» E L'HO TOLTA
+        # DIECI MINUTI DOPO, misurando il run che l'aveva appena introdotta::
+        #
+        #     job nel run 3b0fdb37 (push su main):  6
+        #       ubuntu ×4 · macos · windows          <- windows C'E'
+        #
+        # ⇒ **Inerte.** Noi pubblichiamo tutte su `main`, e la condizione
+        # nominava `main`: la riga non escludeva nulla. Zero posti liberati, e
+        # il prezzo dichiarato (una rottura solo-windows scoperta piu' tardi)
+        # sarebbe rimasto appeso senza contropartita. **Una cura che paga il
+        # prezzo e non da' il beneficio e' peggio di nessuna cura.**
+        #
+        # 🔑 LA TENSIONE VERA, che resta aperta e va nominata invece di aggirata:
+        # il gruppo per COMMIT vuole un verdetto per ogni commit, la coda vuole
+        # meno run contemporanei. Su windows — 46-52 minuti contro i 16-17 di
+        # ubuntu — i due obiettivi confliggono, e **non c'e' una terza leva
+        # gratis**: si sceglie quale dei due si sacrifica. Una via percorribile
+        # sarebbe un workflow windows separato con gruppo per REF (solo
+        # l'ultimo commit tiene la gamba lenta), ma e' un file nuovo e una
+        # decisione che non ho preso.
+        #
+        # 📌 Il dato che resta valido, misurato alle 13:47 sui run in volo:
+        #     ubuntu 4 in esecuzione · 24 in coda   |   windows 6 · 1
+        # Sono i job LENTI a tenere i posti, non il numero di job.
         os: [ubuntu-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
         include:
@@ -45,7 +206,33 @@ jobs:
           - os: macos-latest
             python-version: "3.12"
     steps:
+      # ⚠️ `fetch-depth: 0` NON e' zelo: senza, il clone e' profondo 1 e il
+      # presidio del RILASCIO diventa MUTO. Cerca il commit che ha introdotto
+      # `version = "X"` in pyproject.toml per misurare quanto e' lontano il
+      # numero dichiarato dal codice.
+      # ⚠️ E NON E' UNO SKIP, come avevo scritto qui prima: la guardia
+      # `if not bump: pytest.skip("...shallow clone?")` NON scatta, perche' su
+      # un clone profondo 1 il bump VIENE trovato — senza genitore, quell'unico
+      # commit "introduce" l'intero file. Riprodotto con `git clone --depth 1`:
+      #     clone profondo 1   bump = HEAD    distanza = 0     -> PASSED
+      #     albero completo    bump = 825e679d4  distanza = 426 -> FAILED
+      # In CI il test risultava PASSED su tutte le celle (verificato su tre
+      # log). Non un'astensione contata fra i verdi: un VERDE ATTIVO con un
+      # numero falso dentro.
+      # 🔑 Una storia troncata non produce un'astensione: produce la RISPOSTA
+      # MIGLIORE POSSIBILE — ed e' peggio di uno skip, che almeno compare in
+      # un elenco.
+      # 📌 E' il test che il suo stesso docstring chiama «l'unico del file che
+      # avrebbe preso il difetto vero del 08/08», quando il repo era a 375
+      # commit dal bump e dichiarava un numero gia' pubblicato. Oggi siamo a
+      # 421: PIU' LONTANI di quando il difetto fu scoperto.
+      # 💰 COSTO, misurato da ws2 e non stimato: +9,2 MB e +7 s per job, cioe'
+      # +55 MB e +42 s sull'intera matrice di sei. Sulla gamba windows, che e'
+      # la stretta (49,2 min su un tetto di 60), sette secondi non spostano.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -54,14 +241,86 @@ jobs:
           cache: pip
           cache-dependency-path: pyproject.toml
 
+      # ⚠️ RESTORE E SAVE SEPARATI, e il save con `if: always()`. Il passo unico
+      # `actions/cache@v4` salva nel proprio passo Post, e MISURATO nel job
+      # ubuntu-py3.12 del run 31816624316: quel Post non compare affatto nel
+      # log (c'e' solo «Post job cleanup», di checkout) e la chiave e' persa
+      # anche sul ripiego generico — «Cache not found for input keys:
+      # hf-Linux-<hash>, hf-Linux-» — cioe' in oltre 24 ore NON e' MAI stata
+      # salvata. L'unica differenza costante di questi run e' che il job
+      # FALLISCE, e questa CI e' rossa da 24 ore (58 failure su 60, misura di
+      # ws3).
+      #
+      # 🔁 IL DANNO NON E' IL TEMPO, E' UN CIRCOLO CHE SI CHIUDE DA SOLO:
+      #   job rosso -> cache mai salvata -> il modello si riscarica ->
+      #   huggingface.co non risponde (14 volte in quel job, per rate limit su
+      #   ~20 runner che scaricano insieme) -> 7 errors -> job rosso.
+      # Salvare ANCHE quando il job fallisce e' la sola riga che lo interrompe:
+      # cio' che il warmup ha gia' scaricato resta al run successivo, e nessun
+      # job deve piu' contattare HuggingFace.
+      #
+      # 🔎 Ipotesi dichiarata, non provata: che a saltare il Post sia il
+      # fallimento del job. Non l'ho falsificata — servirebbe un job VERDE, e
+      # non ne esiste uno da 24 ore. La cura non ne dipende: `save` con
+      # `always()` salva in entrambi i casi.
       - name: Cache HuggingFace models
-        uses: actions/cache@v4
+        id: hf_cache
+        uses: actions/cache/restore@v4
         with:
+          # ~/.engram/models AGGIUNTO 2026-08-13: e' dove `ensure_gate_model`
+          # estrae il cross-encoder del moat (711,5 MB, di cui 703,5 il
+          # safetensors). Senza questa riga il passo sotto lo riscarica su OGNI
+          # gamba di OGNI run: sei volte 711 MB, per sempre.
+          # ⚠️ `~/.cache/verimem` E' DOVE IL PRODOTTO SCARICA IL MODELLO DEL
+          # GATE dopo `42f03411` (ws1): sotto una cartella-dati quel download
+          # decideva dove vive la memoria dell'utente. Aggiunto qui in anticipo
+          # il 15/08, su segnalazione di ws3, e quando la cura e' atterrata la
+          # cache la copriva gia'.
+          # 🪞 E LE RIGHE DI QUESTO COMMENTO STAVANO DENTRO IL BLOCCO `path: |`,
+          # dove `#` NON e' un commento: in uno scalare letterale e' TESTO, e
+          # `actions/cache` le riceveva come pattern di percorso. Undici righe
+          # di prosa passate a un glob. Nessuno le avrebbe viste: il file si
+          # legge come se fossero commenti, e lo sono ovunque tranne li'.
           path: |
             ~/.cache/huggingface
             ~/.cache/torch/sentence_transformers
-          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml') }}
-          restore-keys: hf-${{ runner.os }}-
+            ~/.engram/models
+            ~/.cache/verimem
+          # ⚠️ `hf2-` ANCHE QUI, e soprattutto nel ripiego: lasciare
+          # `restore-keys: hf-` avrebbe ripescato ESATTAMENTE la cache
+          # avvelenata che il prefisso nuovo serve ad abbandonare. Il ripiego
+          # generico e' la porta di servizio di una chiave che credi di aver
+          # buttato.
+          # ⚠️ LA GAMBA NELLA CHIAVE, misurato da ws3 il 15/08 sul run 16c68894:
+          # con una chiave per solo SISTEMA OPERATIVO le gambe della matrice
+          # corrono per la stessa voce e si bloccano a vicenda —
+          #   windows py3.12: «Failed to save: Unable to reserve cache with key
+          #   hf-Windows-1a59512b…, another job may be creating this cache»
+          # — e su windows la cache non si popolava MAI, cioe' il circolo li'
+          # restava chiuso. Su linux funzionava solo perche' una delle tre
+          # gambe vinceva la corsa: reggeva per fortuna, non per costruzione.
+          # 💾 Il prezzo e' sei voci invece di una per lo stesso modello. Si
+          # paga: una cache che non si scrive non costa spazio e non serve a
+          # niente.
+          key: hf3-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+          # ⚠️ `hf3-` PERCHE' LA CHIAVE NON DIPENDE DA QUESTO FILE. La chiave si
+          # calcola su `pyproject.toml`, e il passo che ho appena aggiunto —
+          # scaldare anche il modello che i TEST pinnano — tocca SOLO `ci.yml`.
+          # ⇒ Con la chiave invariata e una voce gia' scritta, `cache-hit` e'
+          #   vero e il passo di salvataggio NON RIPARTE MAI (e' scritto qui
+          #   sotto, riga «una cache incompleta e' peggio di una assente»):
+          #   il modello nuovo verrebbe riscaricato a ogni run, per sempre,
+          #   senza entrare mai in cache. La cura funzionerebbe e resterebbe
+          #   cara — che e' il modo piu' silenzioso di sbagliare.
+          # 📌 Il ripiego tiene ANCHE `hf2-`, e stavolta e' voluto: quella cache
+          # non e' avvelenata, e' INCOMPLETA. Ripescarla fa partire il job con
+          # `e5-base` gia' dentro (~440 MB risparmiati), il warmup aggiunge il
+          # modello mancante e il salvataggio scrive `hf3-` con entrambi. Il
+          # divieto scritto sopra riguarda un ripiego che RESUSCITA cio' che si
+          # voleva buttare: qui si eredita cio' che si vuole tenere.
+          restore-keys: |
+            hf3-${{ runner.os }}-${{ matrix.python-version }}-
+            hf2-${{ runner.os }}-${{ matrix.python-version }}-
 
       - name: Install
         run: |
@@ -79,19 +338,601 @@ jobs:
         # NON-FATAL: a flaky HF download must not fail CI. When it succeeds those
         # tests RUN (real coverage); when it fails they SKIP via the
         # `requires_real_model` guard (tests/_real_model.py) — CI stays green either way.
+        # `--no-gate` TOLTO il 2026-08-13, e la ragione non e' «piu' copertura»:
+        # e' che senza il modello il conteggio dei rossi dipende dall'ORDINE DEI
+        # TEST. Misurato sul run 9d6713a3, gamba py3.11, stesso processo:
+        #   12%  13:04:26  test_chi_ha_deciso_la_quarantena  judged=False,
+        #                  layers=[L1.10, L1.15, L4-skipped], not_run:no_judge
+        #        13:07:11  PRIMO judged=True del run
+        #   30%            test_flow_warmup_dichiarato carica il giudice VERO
+        #                  (il suo docstring misura 41 s dentro _ensure_scorer)
+        #   39%            test_il_numero_c_e...  g=99.93484497070312
+        # Il giudice non e' assente ne' presente: SI CARICA A META' SUITE, e chi
+        # gira prima lo trova assente. Con pytest-randomly l'ordine cambia a ogni
+        # run, quindi cambia QUALI test cadono prima del caricamento — ed e'
+        # questa, non il prodotto, la serie 32-64-26-58-58-20 che ci ha fatto
+        # inseguire un peggioramento inesistente per due giorni.
+        # ⇒ Scaldare il gate PRIMA dei test rende il verdetto indipendente
+        #   dall'ordine. Il prezzo e' il download, che la cache sopra trattiene.
+        # ⚠️ NON-FATAL resta: se il download cade, i test del moat tornano a
+        #   saltare o a fallire come oggi — non peggio di adesso.
         continue-on-error: true
-        run: verimem warmup --no-daemon --no-gate
+        run: verimem warmup --no-daemon
+
+      # 🔑 E IL MODELLO CHE I *TEST* USANO, che non e' quello del prodotto.
+      # `tests/conftest.py:11` pinna `HIPPO_EMBEDDING_MODEL` su
+      # `sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2` (384 dim)
+      # PRIMA di qualunque import, di proposito: la suite asserisce su 384 e usa
+      # lo stub, mentre il server gira su `intfloat/multilingual-e5-base` (768).
+      # La separazione e' voluta e sana. Il difetto e' che la CI scalda e mette
+      # in cache SOLO il modello del prodotto.
+      # ⇒ I test in-process non se ne accorgono (lo stub non carica niente), ma
+      #   i sei di `test_la_ricevuta_non_diceva_quale_cifra_mancava` lanciano un
+      #   SOTTOPROCESSO, dove lo stub non arriva e le tre variabili offline si',
+      #   e chiedono un modello che nessuno ha scaricato:
+      #     LocalEntryNotFoundError: Cannot find the requested files in the
+      #     disk cache and outgoing traffic has been disabled
+      # 📌 In locale non si vede perche' quel modello e' in cache da mesi
+      #   (misurato il 17/08: 18 file, 1 file di pesi).
+      # ⚖️ E' la stessa classe che `test_la_cache_della_ci_copre_il_modello_che_
+      #   il_prodotto_usa` gia' presidia sul PERCORSO: due liste in due file che
+      #   devono restare d'accordo e non si conoscono. Li' il percorso, qui il
+      #   NOME del modello — e nessuno guardava il secondo.
+      - name: Scalda anche il modello che i TEST pinnano (non quello del server)
+        # ⚠️ `shell: bash` NON e' cosmesi: senza, su windows-latest il passo
+        # gira in PowerShell, che non capisce `python - <<'PY'`, e con
+        # `continue-on-error: true` MUORE IN SILENZIO.
+        # Misurato sul run 32250440702: su ubuntu il passo stampa
+        # «TEST-MODEL ok, dim=384» e la guardia conta MODELLO-DEI-TEST
+        # file=38; su windows non stampa NIENTE e la guardia conta file=0.
+        # ⇒ i sei test che lanciano la CLI in sottoprocesso sono verdi su
+        # ubuntu dal 17/08 e non lo sono MAI stati su windows: la cura era
+        # a meta' e nessuno poteva vederlo, perche' il passo non protesta.
+        shell: bash
+        continue-on-error: true
+        run: |
+          python - <<'PY'
+          import os
+          from sentence_transformers import SentenceTransformer
+          NOME = "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+          print(f"TEST-MODEL scarico {NOME}")
+          try:
+              m = SentenceTransformer(NOME)
+              print(f"TEST-MODEL ok, dim={m.get_sentence_embedding_dimension()}")
+          except Exception as errore:
+              print(f"TEST-MODEL {type(errore).__name__}: {str(errore)[:200]}")
+          PY
+
+      # SONDA DEL GIUDICE — una riga, e serve perche' IL LOG TRONCA.
+      # Misurato il 2026-08-13: sullo stesso genere di claim (una cifra che la
+      # fonte non sostiene) il gate decide DIVERSAMENTE nei due ambienti —
+      #   in casa   grounding 0.41   layers ['L4-grounding','L4.1']  quarantined
+      #   in CI     layers []  x8    layers ['L4-review']  x2        L4.1 MAI
+      # `L4-review` e' la banda borderline [40,80): il fatto viene trattenuto
+      # invece che quarantinato. Il numero che spiegherebbe la differenza — il
+      # grounding_score — sta dentro l'output di un subprocess che GitHub
+      # TRONCA nel log, quindi non e' leggibile da li'.
+      # ⇒ Questa sonda lo stampa da sola, corto, a ogni run. Una gamba sola:
+      #   il dato non cambia con la versione di Python, e sei copie costerebbero
+      #   sei caricamenti del giudice.
+      # 📌 POSIZIONE: guardia e salvataggio stanno QUI, subito dopo il
+      # warmup, e non in fondo al job com'erano fino alle 12:37 del 15/08.
+      # In fondo non giravano affatto quando il job MORIVA — e il job che
+      # ha avvelenato la cache era morto di SIGSEGV DURANTE i test, cioe'
+      # esattamente nel tratto che li precedeva. Un presidio piazzato dopo
+      # il punto in cui le cose si rompono non e' un presidio.
+      # ⚖️ Il prezzo dichiarato: non si cattura piu' cio' che scaricano i
+      # TEST. E' voluto — i test non devono scaricare nulla, e' tutto il
+      # punto della cache; se un giorno risultasse che scaricano, sara' un
+      # difetto da vedere, non da nascondere dentro una cache piu' grassa.
+      # ⚠️ IL CONTROLLO CHE MANCAVA, e mancava a una cura MIA di ieri.
+      # `always()` fa salvare la cache anche da un job rosso — che era il punto
+      # — ma il primo job a scriverla e' morto di SIGSEGV (exit 139) dopo 2698
+      # test su 11349, e ha salvato quello che c'era in quel momento. Misurato
+      # sul run successivo (31823644806): la cache VIENE ripristinata, pesa
+      # 1656 MB, e `intfloat/multilingual-e5-base` non ci si trova — 8 test
+      # cadono al setup con «couldn't connect to huggingface.co».
+      # 🔑 E il danno non si ripara da solo: con la chiave primaria scritta,
+      # `cache-hit` e' vero e il passo di salvataggio non riparte MAI. Una
+      # cache incompleta e' peggio di una assente — l'assente si riempie al
+      # primo run, l'incompleta resta finche' non cambia l'hash della chiave.
+      # ⇒ Non basta salvare SEMPRE: bisogna salvare solo cio' che SERVE A
+      #   QUALCOSA. Il passo qui sotto guarda dentro la cartella prima di dire
+      #   di si'.
+      - name: La cache contiene davvero il modello?
+        id: hf_completa
+        if: always()
+        shell: bash
+        # ⚠️ SI CERCA IL FILE, NON LA CARTELLA, e non si prende «il primo».
+        # La prima versione faceva `find -type d -name 'models--intfloat--…' |
+        # head -1` e poi cercava i pesi dentro. Ma le cartelle con quel nome
+        # sono DUE — `hub/.locks/models--intfloat--…` (i lock di
+        # huggingface_hub) e `hub/models--intfloat--…` (i pesi) — e la visita
+        # incontra `.locks` per prima. Riprodotto in A/B su una struttura
+        # finta: `pesi=''`, `completa=false`, **sempre**, anche con la cache
+        # perfetta. Il salvataggio non sarebbe mai avvenuto, e il primo run
+        # avrebbe fatto miss per sempre. Trovato da ws8 sul run 31877865842
+        # (gamba ubuntu py3.11) leggendo la riga «CACHE-CHECK INCOMPLETA».
+        # 🔑 Un sensore che risponde SEMPRE la stessa cosa non e' severo, e'
+        # scollegato — e questo lo era nella direzione che blocca tutto.
+        # 📌 Ed e' la terza volta in due giorni che «prendo la prima
+        # corrispondenza» mi da' quella sbagliata (il body col trailer in
+        # fondo, il grep con due copie del package, questo). Qui non si
+        # sceglie: si CONTA, e il conteggio non dipende dall'ordine di visita.
+        # ⚠️⚠️ E IL SECONDO DIFETTO DELLA STESSA GUARDIA, che il primo nascondeva.
+        # Actions lancia `shell: bash` come::
+        #
+        #     /usr/bin/bash --noprofile --norc -e -o pipefail {0}
+        #
+        # cioe' con `-e` E `pipefail` ATTIVI. Un `find` su una cartella che non
+        # esiste esce non-zero; `2>/dev/null` ne nasconde il messaggio ma NON il
+        # codice; `pipefail` lo propaga attraverso la pipe; `-e` uccide lo step.
+        # ⇒ Misurato sul run 1c2491ed, gamba ubuntu py3.11 (segnalato da ws8)::
+        #
+        #     «La cache contiene davvero il modello?»  ->  completed/FAILURE
+        #     «Save HuggingFace models cache»          ->  completed/skipped
+        #     output della guardia:  NESSUNO — e' morta prima di stampare
+        #
+        # E in quel job «Warm embedding model» era SKIPPED, quindi
+        # `~/.cache/huggingface` non esisteva affatto: il caso peggiore e' anche
+        # il piu' comune, il primo run su una cache vuota.
+        # 🔑 Una guardia che MUORE non e' una guardia che dice «no»: `completa`
+        # resta vuoto, `!= 'true'` e' comunque vero, e il salvataggio non parte —
+        # stesso esito del difetto precedente, per una ragione diversa. Due
+        # cause distinte con lo stesso sintomo: curata la prima, la seconda
+        # restava, e nessuno l'avrebbe distinta dal fallimento della prima cura.
+        # 🪞🪞 TERZA CAUSA, misurata il 2026-08-16 sul job `95030996336` (run
+        # `31892593845`, commit `00e14dc9`) — e stavolta il difetto era in
+        # QUESTA guardia, non nell'ambiente::
+        #
+        #     Cache not found for input keys: hf2-Linux-3.12-…   (miss)
+        #     verimem warmup --no-daemon
+        #       Loading weights: 100%|██████████| 199/199
+        #       ✓ model ready in 16.9s (vector dim 768)          <- il modello C'E'
+        #     CACHE-CHECK INCOMPLETA — pesi=0 parziali=0         <- la guardia dice di no
+        #     «Save HuggingFace models cache» -> skipped
+        #
+        # ⇒ Un FALSO NEGATIVO con una conseguenza cara: la cache non si salva
+        # MAI, quindi ogni run riscarica ~440 MB e il «Cache not found» e'
+        # perenne. La guardia nata per non salvare una cache incompleta
+        # impediva di salvarne una completa.
+        #
+        # 🔑 TRE DIFETTI IN TRE RIGHE, e ognuno basta da solo:
+        #   1. cercava in UNA cartella (`~/.cache/huggingface`) mentre il passo
+        #      di salvataggio ne dichiara QUATTRO — il modello di
+        #      sentence-transformers puo' atterrare in un'altra;
+        #   2. filtrava per estensione, ma su HF il file vero e' il BLOB in
+        #      `blobs/`, che di estensione non ne ha: `.safetensors` e' il nome
+        #      del SYMLINK in `snapshots/`;
+        #   3. senza `-L`, `-size` misura il collegamento (pochi byte) invece
+        #      del file puntato.
+        # ⚠️ Il punto 3 NON l'ho potuto provare qui: su Windows `ln -s` produce
+        # una copia e HF copia invece di collegare — infatti lo stesso comando,
+        # su questa macchina, dice `pesi=1 completa=true`. La popolazione dove
+        # il difetto vive e' Linux, e il banco che ho e' Windows. Lo dichiaro
+        # invece di dedurlo: `-L` e' una cintura, non una diagnosi.
+        #
+        # 🔑 E LA CURA CHE VALE PIU' DELLE ALTRE TRE: quando dice INCOMPLETA,
+        # adesso STAMPA cio' che ha visto. Un numero senza evidenza manda il
+        # prossimo a indovinare — «pesi=0» e' costato a me un'ora di ipotesi su
+        # un modello che era li'.
+        # ⚠️ E UN QUARTO DIFETTO, trovato dal controllo positivo PRIMA del
+        # commit: la prima versione di questa cura cercava «qualunque file oltre
+        # 100 MB» nelle quattro cartelle, e su una macchina vera dava
+        # `pesi=20 parziali=1 -> completa=false`. I venti erano dataset (`snli`,
+        # `squad_v2`) e un ALTRO modello (`bge-m3`), e l'`.incomplete` era di un
+        # download estraneo che metteva il veto.
+        # 🔑 Allargare il LUOGO aveva allargato anche il SOGGETTO. Qui il luogo
+        # resta largo (quattro cartelle) e il soggetto torna stretto: conta solo
+        # cio' che sta sotto un percorso che nomina il modello che ai test
+        # serve. Una cache «completa» perche' contiene un dataset non e' una
+        # cache completa.
+        run: |
+          CARTELLE="$HOME/.cache/huggingface $HOME/.cache/torch/sentence_transformers $HOME/.engram/models $HOME/.cache/verimem"
+          for d in $CARTELLE; do mkdir -p "$d"; done   # `find` non muore su una cartella assente
+          MODELLO='*multilingual-e5-base*'
+          pesi=$(find -L $CARTELLE -path "$MODELLO" -type f -size +100M 2>/dev/null | wc -l || true)
+          parziali=$(find -L $CARTELLE -path "$MODELLO" -name '*.incomplete' 2>/dev/null | wc -l || true)
+          # 🔑 E IL SECONDO MODELLO, che questa guardia non ha MAI contato.
+          # I sei test che lanciano `verimem remember` in un sottoprocesso non
+          # caricano l'embedder: chiamano il GIUDICE, che e' un modello a se'
+          # (~700 MB su disco in casa) e arriva solo dal warmup.
+          # `local_grounding.py:48` lo cerca in ~/.cache/verimem/models, e sulla
+          # macchina di sviluppo quella cartella NON esiste mentre il modello
+          # sta in ~/.engram/models: due percorsi in gioco, quindi si cercano
+          # entrambi e si stampa dove sta.
+          # ⇒ Una cache «completa» perche' contiene l'embedder puo' non avere il
+          # giudice, e i test muoiono con «couldn't find them in the cached
+          # files» senza che niente, prima di questa riga, lo dicesse.
+          # ⚖️ SI RIPORTA E BASTA: la decisione di salvataggio qui sotto resta
+          # sull'embedder. Legare il salvataggio a un modello che la cache non
+          # ha mai contenuto lo bloccherebbe sempre, che e' il difetto che
+          # questa guardia ha gia' avuto tre volte.
+          GIUDICE='*local_gate_ce_v2*'
+          giudice=$(find -L $CARTELLE -path "$GIUDICE" -type f -size +100M 2>/dev/null | wc -l || true)
+          echo "GIUDICE pesi=$giudice   (cercato: $GIUDICE nelle stesse quattro cartelle)"
+          # 🔑 E IL TERZO MODELLO: quello che `tests/conftest.py` pinna, diverso
+          # da quello del prodotto. Se qui e' 0, i sei test che lanciano un
+          # sottoprocesso muoiono offline — e per settimane nessun conteggio
+          # nominava questo modello, percio' «cache completa» era vero e
+          # inservibile insieme.
+          TESTMODEL='*paraphrase-multilingual-MiniLM*'
+          testmodel=$(find -L $CARTELLE -path "$TESTMODEL" -type f 2>/dev/null | wc -l || true)
+          echo "MODELLO-DEI-TEST file=$testmodel   (cercato: $TESTMODEL)"
+          find -L $CARTELLE -path "$GIUDICE" -type f 2>/dev/null | head -12 || true
+          # 🔑 L'ELENCO SI STAMPA SEMPRE, non solo quando fallisce — e la ragione
+          # e' un caso reale, non un principio. Il 16/08 la guardia e' passata a
+          # `completa` e i test hanno continuato a morire::
+          #
+          #     m.add -> semantic.store -> embedding.encode -> _load_model
+          #     embedding.py:61  SentenceTransformer(model, local_files_only=True)
+          #     -> LocalEntryNotFoundError
+          #
+          # ⇒ Il modello e' su disco (questa guardia ne conta i pesi) e la
+          # cache-only NON lo trova. La domanda che resta e' UNA — **in quale
+          # delle quattro cartelle sta**, visto che `local_files_only` guarda
+          # solo quella di HF — e la guardia la sapeva senza dirla.
+          # 📌 Stampare solo in caso di errore rende muto proprio il caso che
+          # serve: «completa e inservibile». Un presidio che parla solo quando
+          # dice di no non copre lo stato in cui dice di si' e ha torto.
+          # ⚠️ LE VERSIONI DELLO STACK CHE CARICA IL MODELLO, stampate sempre.
+          # `pyproject` dichiara `sentence-transformers>=2.7.0` — un pavimento e
+          # nessun tetto — e `transformers` / `huggingface_hub` non li dichiara
+          # affatto: arrivano come dipendenze transitive, anch'esse libere.
+          # ⇒ Ogni run installa l'ULTIMA versione pubblicata, quindi la CI puo'
+          # rompersi senza un nostro commit, e due run a un giorno di distanza
+          # non misurano lo stesso prodotto.
+          # 📌 Misurato il 16/08: in CI `sentence_transformers 5.7.0` e
+          # `transformers 5.15.0`, in sviluppo `5.4.1` e `5.8.0`. Il caricamento
+          # offline che qui riesce e li' fallisce e' fra due stack DIVERSI, e
+          # senza questa riga nel log nessuno puo' attribuire una rottura.
+          # ⚖️ Stampare non e' fissare: mettere un tetto in `pyproject` vincola
+          # anche chi installa il pacchetto, ed e' una decisione di prodotto che
+          # non si prende in un file di CI.
+          python - <<'PY' || true
+          for nome in ("sentence_transformers", "transformers", "huggingface_hub", "torch"):
+              try:
+                  print(f"STACK {nome}=" + __import__(nome).__version__)
+              except Exception as errore:
+                  print(f"STACK {nome}=NON IMPORTABILE ({type(errore).__name__})")
+          PY
+          echo "--- dove stanno i pesi (sempre, non solo in caso di errore) ---"
+          find -L $CARTELLE -path "$MODELLO" -type f -size +10M 2>/dev/null | head -10 || true
+          # ⚠️ E LA STRUTTURA, senza filtro di dimensione. La riga sopra ha
+          # risposto «i pesi sono nella cache HF» e NON poteva rispondere alla
+          # domanda che restava, perche' filtra sopra i 10 MB: un caricamento
+          # offline non fallisce per i pesi, fallisce per i file PICCOLI —
+          # `refs/main`, che risolve la revisione, e `config.json`. Misurato il
+          # 16/08: l'elenco mostrava `blobs/…`, `snapshots/…/model.safetensors`
+          # e `tokenizer.json`, e di `refs/` non diceva niente.
+          # 🔑 Un filtro scelto per trovare la cosa GRANDE rende muta la
+          # domanda sulla cosa PICCOLA — e la seconda era quella aperta.
+          # 🔑🔑 SI CONTA, non si elenca. Il 16/08 l'elenco e' stato tagliato da
+          # `head -30` ESATTAMENTE prima di `snapshots/`, che era la cartella da
+          # guardare: 11 `.locks` + `refs` + 8 `.no_exist` + 6 `blobs` fanno
+          # trenta righe tonde, e la risposta stava alla trentunesima.
+          # **Un elenco si tronca, un conteggio no** — e il limite lo scelgo io
+          # PRIMA di sapere dove sara' la risposta. Quarta volta in un giorno che
+          # un mio limite nasconde la cosa che cercavo.
+          #
+          # 📌 E i numeri vanno letti sapendo che i DUE SISTEMI TENGONO LA CACHE
+          # IN MODO DIVERSO (misurato lo stesso giorno):
+          #     Windows   blobs 0   snapshots 10 file VERI   (HF copia)
+          #     Linux     blobs N   snapshots N symlink      (HF collega)
+          # ⇒ confrontare «quanti blob» fra le due piattaforme non significa
+          # niente; confrontare «quanti file nello snapshot» si'.
+          echo "--- conteggi (non si troncano) ---"
+          for sotto in blobs snapshots refs .no_exist; do
+            n=$(find -L $CARTELLE -path "$MODELLO" -path "*/$sotto/*" 2>/dev/null | wc -l || true)
+            echo "CONTA $sotto=$n"
+          done
+          echo "--- la struttura della cartella del modello (senza filtri) ---"
+          find -L $CARTELLE -path "$MODELLO" -maxdepth 6 2>/dev/null \
+            | grep -v '/\.locks/' | head -40 || true
+          if [ "$pesi" -ge 1 ] && [ "$parziali" -eq 0 ]; then
+            echo "completa=true" >> "$GITHUB_OUTPUT"
+            echo "CACHE-CHECK completa — file di pesi: $pesi, parziali: 0"
+          else
+            echo "completa=false" >> "$GITHUB_OUTPUT"
+            echo "CACHE-CHECK INCOMPLETA — pesi=$pesi parziali=$parziali"
+            echo "--- cosa c'e' davvero: i file oltre 10 MB nelle quattro cartelle ---"
+            find -L $CARTELLE -type f -size +10M 2>/dev/null | head -20 || true
+            echo "--- e i primi livelli, per vedere DOVE e' atterrato ---"
+            find -L $CARTELLE -maxdepth 2 2>/dev/null | head -20 || true
+          fi
+
+      # 🔁 La meta' che interrompe il circolo: `always()` perche' il caso da
+      # coprire e' ESATTAMENTE il job rosso — su un job verde la cache si
+      # salverebbe comunque, ed e' l'unico che qui non arriva mai.
+      # La condizione sul cache-hit evita l'avviso «cache already exists» quando
+      # la chiave primaria e' gia' a posto; quella sulla completezza impedisce
+      # che un job morto a meta' scriva una cache che poi nessuno puo' riparare.
+      # 📌 CHIAVE `hf2-`: il prefisso e' cambiato apposta, per ABBANDONARE la
+      # cache avvelenata del 14/08. Cambiare la chiave e' l'unico modo di
+      # buttarne una gia' scritta senza toccare le impostazioni del repository.
+      - name: Save HuggingFace models cache
+        if: >-
+          always() && steps.hf_cache.outputs.cache-hit != 'true'
+          && steps.hf_completa.outputs.completa == 'true'
+        uses: actions/cache/save@v4
+        with:
+          # ⚠️ `~/.cache/verimem` E' DOVE IL PRODOTTO SCARICA IL MODELLO DEL
+          # GATE dopo `42f03411` (ws1): sotto una cartella-dati quel download
+          # decideva dove vive la memoria dell'utente. Aggiunto qui in anticipo
+          # il 15/08, su segnalazione di ws3, e quando la cura e' atterrata la
+          # cache la copriva gia'.
+          # 🪞 E LE RIGHE DI QUESTO COMMENTO STAVANO DENTRO IL BLOCCO `path: |`,
+          # dove `#` NON e' un commento: in uno scalare letterale e' TESTO, e
+          # `actions/cache` le riceveva come pattern di percorso. Undici righe
+          # di prosa passate a un glob. Nessuno le avrebbe viste: il file si
+          # legge come se fossero commenti, e lo sono ovunque tranne li'.
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/torch/sentence_transformers
+            ~/.engram/models
+            ~/.cache/verimem
+          key: hf3-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+      # 🔬 LA SONDA DOVE IL GUASTO AVVIENE, aggiunta il 2026-08-16 dopo aver
+      # falsificato UNDICI ipotesi ragionando da un'altra macchina.
+      #
+      # Nove test vanno in ERROR al setup su
+      # `SentenceTransformer(model, local_files_only=True)`, mentre nello STESSO
+      # job il warmup carica quel modello in 7,8 s. Provato in locale su una
+      # cache con gli stessi conteggi (snapshots 12, refs 1, .no_exist 8):
+      #
+      #     huggingface_hub 1.9.0  vs 1.27.0   -> 7 file su 7 risolti, IDENTICO
+      #     transformers    5.8.0  vs 5.15.0   -> AutoConfig, AutoTokenizer e
+      #                                            cached_files: tutti OK
+      #
+      # ⇒ Ne' la cache (per quanto i conteggi vedano) ne' quelle due librerie
+      # spiegano il guasto. ⚠️ E «i conteggi coincidono» NON e' «le cache sono
+      # identiche»: quattro numeri non descrivono un albero di file.
+      # 🔑 Quindi la domanda si porta QUI, dove il guasto c'e' davvero: quali
+      # file risolve la cache DEL RUNNER, offline, uno per uno. Nessun modello
+      # caricato — sono risoluzioni di percorso, costano millisecondi.
+      # 📌 `continue-on-error` perche' e' una SONDA: deve raccontare, non
+      # decidere. Se fallisse fermerebbe il job che stiamo diagnosticando.
+      # 🔑 L'ENV E' QUELLO DEL PASSO «Tests», NON UN ALTRO — corretto il
+      # 2026-08-16 dopo che la prima versione ha risposto OK su tutto.
+      # La prima sonda metteva `HF_HUB_OFFLINE`, i test mettono `HIPPO_OFFLINE`:
+      # due variabili diverse, e una sonda che non riproduce l'ambiente del
+      # guasto misura un'altra cosa. ⇒ Sul runner, con `HF_HUB_OFFLINE`, sette
+      # file su sette risolvono E `SentenceTransformer(local_files_only=True)`
+      # CARICA — cioe' la chiamata che nei test muore, li' funziona.
+      # 📌 La sonda stampa anche QUALI variabili di offline sono accese, perche'
+      # la differenza fra i due ambienti e' esattamente quella.
+      - name: Sonda offline (quali file risolve la cache di QUESTO runner)
+        # Stesso difetto del passo qui sopra: heredoc senza `shell: bash`
+        # ⇒ muta su windows. Una sonda che non parla sulla piattaforma dove
+        # il guasto c'e' e' peggio di nessuna sonda.
+        shell: bash
+        continue-on-error: true
+        # Le TRE che `tests/conftest.py::_isolate_test_env` imposta (righe
+        # 315-317), non una sola. Con il solo `HIPPO_OFFLINE` huggingface_hub
+        # resta libero di andare in rete, e su un runner con la rete la sonda
+        # riesce SEMPRE: dichiarava OK mentre i test, spenti su tutte e tre,
+        # fallivano. Una sonda che riproduce un pezzo dell'ambiente misura un
+        # ambiente diverso — e questa e' la terza volta che la stessa forma di
+        # errore passa da qui.
+        env:
+          HIPPO_OFFLINE: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: |
+          python - <<'PY'
+          import os
+          from huggingface_hub import hf_hub_download
+          import huggingface_hub, transformers
+          REPO = "intfloat/multilingual-e5-base"
+          spente = [v for v in ("HIPPO_OFFLINE", "ENGRAM_OFFLINE", "VERIMEM_OFFLINE",
+                                "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE")
+                    if os.environ.get(v)]
+          print(f"SONDA env-offline-accese={spente}")
+          print(f"SONDA hub={huggingface_hub.__version__} tf={transformers.__version__}")
+          for nome in ("config.json", "modules.json", "sentence_bert_config.json",
+                       "1_Pooling/config.json", "tokenizer_config.json",
+                       "tokenizer.json", "model.safetensors"):
+              try:
+                  hf_hub_download(REPO, nome, local_files_only=True)
+                  esito = "OK"
+              except Exception as errore:
+                  esito = type(errore).__name__
+              print(f"SONDA  {nome:28} {esito}")
+          try:
+              import sentence_transformers
+              print(f"SONDA st={sentence_transformers.__version__}")
+              sentence_transformers.SentenceTransformer(REPO, local_files_only=True)
+              print("SONDA  SentenceTransformer            OK")
+          except Exception as errore:
+              print(f"SONDA  SentenceTransformer            {type(errore).__name__}")
+              print(f"SONDA    {str(errore)[:200]}")
+          PY
+
+          # 🔑 E ADESSO LA COSA CHE IL GUASTO FA DAVVERO. I sei rossi rimasti di
+          # `test_la_ricevuta_non_diceva_quale_cifra_mancava` non caricano un
+          # modello: lanciano `verimem.cli remember` in un SOTTOPROCESSO, con le
+          # tre variabili di data dir pinnate a una tmp — e il sottoprocesso non
+          # puo' ricevere lo stub del conftest, perche' e' un Python nuovo.
+          # ⇒ La sonda che carica `SentenceTransformer` dice OK e NON riproduce
+          # quel percorso: e' la stessa lezione di stasera («una sonda che non
+          # riproduce l'ambiente che sonda misura un'altra cosa»), applicata al
+          # COMANDO invece che alle variabili.
+          # 📌 `|| true` e l'uscita stampata: qui si racconta, non si decide.
+          echo "--- e ora il percorso VERO dei sei rossi: la CLI in sottoprocesso ---"
+          TMPDATI=$(mktemp -d)
+          # ⚠️ IL CODICE SI CATTURA, NON SI LEGGE DOPO `|| true`. La prima
+          # versione finiva con `|| true` e poi stampava `$?`, che a quel punto
+          # e' l'uscita di `true`: SEMPRE 0. Sul run 31974401758 ha stampato
+          # `SONDA-CLI exit=0` e quel numero non significava niente — a dire che
+          # il comando era riuscito sono stati i byte (1468 di stdout, 849 di
+          # stderr contro i 42241 di un CLI morto), non il codice.
+          # 🔑 Quinto strumento mio oggi che risponde sempre la stessa cosa: un
+          # sensore che non puo' dire di no non e' severo, e' scollegato.
+          HIPPO_DATA_DIR="$TMPDATI" ENGRAM_DATA_DIR="$TMPDATI" VERIMEM_DATA_DIR="$TMPDATI" \
+            python -m verimem.cli remember "L'ordine 77 conteneva 40 pezzi." \
+              --topic sonda --source "Verbale: e' stato consegnato l'ordine 77." \
+              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" && CODICE=0 || CODICE=$?
+          echo "SONDA-CLI exit=$CODICE"
+          echo "SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
+          echo "SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
+          # 🔑 QUALE modello chiede. La coda dell'errore dice «couldn't find
+          # them in the cached files» e NON nomina il repo: e' la stessa
+          # troncatura che nell'asserzione del test lascia fuori il nome. Il
+          # nome sta piu' su, percio' si stampano le righe che contengono un
+          # identificativo `org/nome` e non solo la fine del messaggio.
+          # ⚠️ NIENTE FILTRO PER PREFISSO. La prima versione scartava i token che
+          # cominciano per `home`, `usr`, `tmp` per togliere il rumore dei
+          # percorsi — ed e' esattamente li' che puo' stare la risposta:
+          # `from_pretrained` riceve una CARTELLA, e quando non la trova tratta
+          # la stringa come un repo e va in rete, per cui il nome che cerchiamo
+          # ha la forma di un percorso. Un setaccio che toglie il rumore
+          # togliendo anche il segnale non e' un setaccio: e' la quarta volta
+          # oggi che uno strumento mio esclude cio' che deve trovare, e stavolta
+          # e' stato visto leggendo il codice invece che aspettando il run.
+          echo "SONDA-CLI identificativi org/nome o percorsi nello stderr:"
+          grep -oE "[A-Za-z0-9_./-]+/[A-Za-z0-9_.-]+" "$TMPDATI/errori.txt" 2>/dev/null \
+            | sort | uniq -c | sort -rn | head -20 || true
+          echo "SONDA-CLI righe con 'cached files' o 'does not appear':"
+          grep -nE "cached files|does not appear|Can't load|not found|LocalEntry" \
+            "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
+          echo "SONDA-CLI coda stderr:"
+          tail -c 600 "$TMPDATI/errori.txt" || true
+
+      - name: Gate probe (il verdetto del moat su un claim di riferimento)
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        continue-on-error: true
+        env:
+          HIPPO_OFFLINE: "1"
+        run: |
+          python - <<'PY'
+          import tempfile, pathlib
+          from verimem.client import Memory
+          m = Memory(pathlib.Path(tempfile.mkdtemp()) / "probe.db")
+          # IL CLAIM ESATTO dei sei test di test_la_ricevuta_non_diceva_quale
+          # _cifra_mancava, non uno «della stessa forma»: la differenza non e'
+          # accademica. In casa il claim inventato dava grounding 0.41 (il CE
+          # stesso bocciava), QUESTO da' 95.85 — il CE APPROVA — e a fermarlo e'
+          # il solo L4.1, il controllo sui numeri. Sono due meccanismi diversi,
+          # e misurare il primo non dice niente sul secondo.
+          r = m.add("L'ordine 77 conteneva 40 pezzi.", topic="probe",
+                    source="Verbale: e' stato consegnato l'ordine 77. Ha partecipato Bianchi.")
+          print("GATE-PROBE status=%s grounding=%s layers=%s" % (
+              r.get("status"),
+              r.get("grounding_score"),
+              [w.get("layer") for w in (r.get("warnings") or [])]))
+          PY
 
       - name: Tests
         env:
           HIPPO_OFFLINE: "1"
+        # ⚠️ `-rs` AGGIUNTO 2026-08-14: senza, la riga finale dice «63 skipped»
+        # e nient'altro — sessantatre banchi che NON hanno misurato, e nessuno
+        # sa quali ne' perche'. La distinzione che serve leggere e' fra «non
+        # POTEVO misurare» (docker assente, modello non in cache: legittimo) e
+        # «ho misurato e l'esito non mi piaceva», che e' un presidio che si
+        # disarma proprio quando il prodotto sbaglia. Con `-rs` il motivo di
+        # ogni salto finisce nel log, e la differenza diventa leggibile.
+        # 📌 Misurato lo stesso giorno: gli skip CRESCONO mentre i failed
+        # scendono (ws8, gamba windows: -1 failed e +1 skipped), quindi il
+        # totale dei rossi puo' migliorare senza che nulla sia stato curato.
+        #
+        # 🪞 CORREZIONE 2026-08-16, e il difetto era di quella stessa aggiunta:
+        # il valore predefinito di `-r` e' `fE` (falliti ed errori) e `-rs` NON
+        # si aggiunge, **sostituisce**. Da quel giorno il riepilogo elencava
+        # solo gli skip. Misurato sul job `95030996336` (run `31892593845`,
+        # commit `00e14dc9`), gamba ubuntu/py3.12::
+        #
+        #     = 44 failed, 11433 passed, 64 skipped, ... 9 errors in 1077.70s =
+        #     sezione «short test summary info»: 62 righe SKIPPED, ZERO rossi
+        #
+        # ⇒ Per il triage servivano 14.555 righe verbose invece di 53, e le
+        # righe verbose portano solo il NOME (`nodeid FAILED [ 3%]`) mentre il
+        # riepilogo porta il MOTIVO (`FAILED nodeid - AssertionError: ...`).
+        # ⚖️ `-rsfE` tiene tutto: i motivi dei salti restano, i rossi tornano.
+        # 🔑 La classe: un'opzione che sembra additiva e invece e' sostitutiva
+        # spegne un segnale mentre ne accende un altro — e il segnale spento
+        # non da' errore, da' silenzio.
         run: >-
           pytest
+          -rsfE
           --cov=verimem
           --cov-report=xml
           --cov-report=term-missing:skip-covered
           --cov-fail-under=46
           -m "not slow and not e2e and not perf"
+
+      # 🔑 LA STESSA SONDA, DOPO I TEST — e questa risponde a una domanda che
+      # altrimenti resta aperta a congetture.
+      # Misurato sul run 31974401758: PRIMA dei test la CLI in sottoprocesso
+      # RIESCE (stdout 1468 B, stderr 849 B, nessuna riga «cached files») e il
+      # giudice e' in cache (`GIUDICE pesi=1`). Eppure al 47% della suite i sei
+      # test che eseguono quello stesso comando muoiono con 42241 B di stderr e
+      # «couldn't find them in the cached files».
+      # ⇒ Delle due l'una, e il confronto fra QUESTA riga e quella di prima lo
+      #   dice senza bisogno di ipotesi:
+      #     riesce anche qui  -> non e' il tempo ne' il disco: e' l'ambiente
+      #                          che i test costruiscono attorno a se'
+      #     fallisce qui      -> qualcosa cambia DURANTE la suite, e la coda
+      #                          dello stderr adesso nomina cosa
+      # ⚖️ Costa un caricamento di modello a fine job, su una gamba sola.
+      # `if: always()` perche' la domanda vale SOPRATTUTTO quando i test sono
+      # rossi — un presidio che gira solo sui job verdi non copre il caso per
+      # cui esiste.
+      - name: Sonda offline BIS (la stessa, dopo i test — cosa e' cambiato?)
+        if: always() && matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        continue-on-error: true
+        shell: bash
+        env:
+          HIPPO_OFFLINE: "1"
+          HF_HUB_OFFLINE: "1"
+          TRANSFORMERS_OFFLINE: "1"
+        run: |
+          CARTELLE="$HOME/.cache/huggingface $HOME/.cache/torch/sentence_transformers $HOME/.engram/models $HOME/.cache/verimem"
+          for d in $CARTELLE; do mkdir -p "$d"; done
+          echo "BIS spazio disco:"; df -h "$HOME" | tail -1
+          echo "BIS embedder pesi=$(find -L $CARTELLE -path '*multilingual-e5-base*' -type f -size +100M 2>/dev/null | wc -l || true)"
+          echo "BIS GIUDICE  pesi=$(find -L $CARTELLE -path '*local_gate_ce_v2*' -type f -size +100M 2>/dev/null | wc -l || true)"
+          TMPDATI=$(mktemp -d)
+          HIPPO_DATA_DIR="$TMPDATI" ENGRAM_DATA_DIR="$TMPDATI" VERIMEM_DATA_DIR="$TMPDATI" \
+            python -m verimem.cli remember "L'ordine 77 conteneva 40 pezzi." \
+              --topic sonda --source "Verbale: e' stato consegnato l'ordine 77." \
+              > "$TMPDATI/uscita.txt" 2> "$TMPDATI/errori.txt" && CODICE=0 || CODICE=$?
+          echo "BIS SONDA-CLI exit=$CODICE"
+          echo "BIS SONDA-CLI stdout: $(wc -c < "$TMPDATI/uscita.txt") byte"
+          echo "BIS SONDA-CLI stderr: $(wc -c < "$TMPDATI/errori.txt") byte"
+          echo "BIS righe con 'cached files' o 'does not appear':"
+          grep -nE "cached files|does not appear|Can't load|not found|LocalEntry" \
+            "$TMPDATI/errori.txt" 2>/dev/null | head -10 || true
+          echo "BIS coda stderr:"
+          tail -c 600 "$TMPDATI/errori.txt" || true
+          # 🔑 E LA DOMANDA CHE RESTA, ridotta a UNA misura invece che a ipotesi.
+          # Misurato sul run 31975991221: PRIMA dei test e DOPO i test i numeri
+          # sono IDENTICI — GIUDICE pesi=1, stdout 1468 B, stderr 849 B in
+          # entrambi. ⇒ Durante la suite non cambia niente: ne' il disco, ne'
+          # la cache, ne' i modelli. Resta un solo ramo: l'ambiente che i TEST
+          # costruiscono attorno a se' (le variabili che `conftest` imposta e
+          # che il sottoprocesso EREDITA da `os.environ`).
+          # ⇒ Eseguire QUEL SOLO FILE qui separa due mondi diversi:
+          #     rosso qui  -> bastano le sue fixture, e il guasto e' isolato
+          #                   in un passo dove l'output non e' troncato
+          #     verde qui  -> serve la suite INTERA (ordine, o un altro test
+          #                   che lascia qualcosa dietro di se')
+          # ⚖️ Costa un file di test, non la suite. E gira DOPO, quindi non
+          # sposta il verdetto del passo `Tests`.
+          # ⚠️ `-rsfE` anche qui, e NON e' copia-incolla difensivo: senza, il
+          # presidio `test_il_riepilogo_di_pytest_NOMINA_ANCHE_I_ROSSI` diventa
+          # rosso — scandaglia `ci.yml` e pretende `-r` su OGNI invocazione di
+          # pytest, non solo su quella che da' il verdetto. L'ho scoperto
+          # rompendolo: la prima versione di questo passo ha aggiunto un rosso
+          # invece di spiegarne sei.
+          # 🔑 E il presidio ha ragione anche qui: se questa diagnostica salta
+          # dei test, il motivo del salto deve comparire — altrimenti «verde»
+          # e «non eseguito» si leggono uguale, che e' il difetto per cui la
+          # riga esiste.
+          echo "=== BIS: lo stesso file, da solo, in questo job ==="
+          python -m pytest tests/test_la_ricevuta_non_diceva_quale_cifra_mancava.py \
+            -q -rsfE -p no:randomly --no-header 2>&1 | tail -30 || true
 
       - name: Smoke install (clean wheel)
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
@@ -115,7 +956,37 @@ jobs:
     name: build (sdist + wheel)
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' || github.event_name == 'pull_request'
+    # ⚠️ `always()` AGGIUNTO il 2026-08-15, e non e' un allentamento del gate:
+    # e' l'unico modo perche' il gate ESISTA. `needs:` e' una condizione di
+    # SUCCESSO, non una coda: finche' una gamba di `test` e' rossa, `build` e
+    # `wheel-install` restano `skipped` — e lo sono da oltre duecento ore.
+    #
+    # MISURATO oggi sui run di `ci`: 19 conclusi, 19 failure, ZERO verdi. Nel
+    # piu' recente (31881825707)::
+    #
+    #     test × 6 gambe              completed / failure
+    #     build (sdist + wheel)       completed / SKIPPED
+    #     wheel install-from-scratch  completed / SKIPPED
+    #
+    # 🔑 E `wheel-install` fa ESATTAMENTE cio' che tre di noi stanno facendo a
+    # mano in questo momento — installare il wheel in un venv vergine e provare
+    # gate, provenienza e handshake MCP. La «terza colonna» che stiamo
+    # riempiendo a mano e' un job che esiste e non gira.
+    #
+    # ⇒ Un cuore rosso non e' una ragione per NON verificare il contorno: e' la
+    # ragione per cui il contorno va verificato, perche' mentre si cura il cuore
+    # nessuno sta guardando il pacchetto.
+    #
+    # ⚖️ PREZZO, dichiarato: tre job per run (build su ubuntu + wheel-install su
+    # ubuntu e windows), di cui uno windows, con la coda gia' satura. Sono job
+    # brevi — installano un wheel, non girano la suite — ma il costo non e' zero
+    # e va rimisurato se la coda peggiora.
+    # 📌 `!cancelled()` e non `always()` nudo: su un job CANCELLATO (il tetto
+    # windows) non c'e' un albero coerente da impacchettare, e costruirlo
+    # darebbe un artefatto che nessuno ha chiesto.
+    if: >-
+      !cancelled()
+      && (github.event_name == 'push' || github.event_name == 'pull_request')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -138,10 +1009,74 @@ jobs:
   # is exercised for real). SDK smoke asserts the admission gate fires and
   # reads carry provenance; the MCP stdio server must answer initialize with
   # a protocol-pure stdout (the bug the gate caught on 2026-07-04).
+  # ⚠️⚠️ COSA QUESTO JOB **NON** PROVA — leggerlo verde e concludere troppo e'
+  # il modo in cui si fabbrica la prossima riga scaduta del gate.
+  #
+  # Prova: che il wheel si INSTALLI in un venv vergine e che il pacchetto
+  # RISPONDA — gate deterministico e handshake MCP.
+  # NON prova: che le PROMESSE del README valgano sull'installato. Misurato da
+  # ws2 il 2026-08-15::
+  #
+  #     occorrenze di «test_le_promesse_valgono_appena_installato» in ci.yml:  0
+  #
+  # ⚠️ E aggiungercelo non basterebbe: lo step qui sotto scarica **e5**
+  # (l'embedding), non il **gate** (656 MB, che arriva solo dal warmup senza
+  # `--no-gate`). In un venv vergine `local_ce_available()` risponde False e
+  # quelle prove **skipperebbero in silenzio**, cioe' lo stesso stato di oggi
+  # con un verde in piu' sopra.
+  # 🔑 Questo fronte e quello del warmup best-effort sono LO STESSO FRONTE
+  # (formulazione di ws2): finche' il warmup non scarica il gate — o non
+  # DICHIARA di non averlo fatto — il contorno resta verificato a meta', e la
+  # meta' mancante e' proprio quella che il README promette.
+  #
+  # 📌 Questo job e' rimasto `skipped` per oltre 200 ore (`needs: build` →
+  # `needs: test`), e nel frattempo **G8 del release gate restava ✅ citandolo
+  # come prova**. Riacceso in `dcc41bc8`; G8 datato in `ae210e47`.
   wheel-install:
     name: wheel install-from-scratch (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: build
+    # ⚠️ `!cancelled()` NON SI PROPAGA: la cura su `build` non ha liberato questo
+    # job, ed era LUI la ragione dichiarata della cura. Misurato il 2026-08-15 su
+    # quattro run conclusi — tre con la cura, uno come controllo::
+    #
+    #     6747ad54   test 6/6 failure   build SKIPPED   wheel-install skipped
+    #     dcc41bc8   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #     0e158cbb   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #     ae210e47   test 6/6 failure   build SUCCESS   wheel-install SKIPPED
+    #
+    # 📌 E il job NON e' rotto: sul verde del 04/08 (e2d69715, 7bb4df42,
+    # e584da33) girava ed espandeva la matrice in due esiti `success`. E' tenuto
+    # fermo da un ANTENATO rosso.
+    #
+    # 🔑 IL MECCANISMO: senza `if`, la condizione predefinita e' `success()`, che
+    # guarda TUTTA la catena degli antenati e non il solo `needs` diretto.
+    # `build` passa per la sua eccezione; il figlio non la eredita. ⇒ Ogni job
+    # della catena vuole la sua condizione.
+    # ⚖️ E si guarda l'ESITO di `build`, non solo `!cancelled()`: senza artefatto
+    # `download-artifact` morirebbe su un errore che non nomina la causa.
+    #
+    # ⚖️ PREZZO, rimisurato come il commento di `build` prometteva — e in JOB,
+    # che e' il righello delle misure precedenti (contare i RUN darebbe un numero
+    # piu' piccolo e non confrontabile)::
+    #
+    #     11:47 UTC   queued 33 · in esecuzione 13     build in coda: 0
+    #     12:44 UTC   queued 33 · in esecuzione 13     build in coda: 0
+    #     14:17 UTC   queued 20 · in esecuzione 20     build in coda: 3
+    #
+    # ⇒ Due letture, e la prima correggeva se stessa: la coda NON e' in regime
+    # stazionario come i primi due punti facevano credere — sta DRENANDO, e la
+    # quota in esecuzione e' passata da 13 a 20. E il prezzo dichiarato per
+    # `build` e' ARRIVATO: occupa tre posti dove un'ora e mezza fa ne occupava
+    # zero, perche' aspettava le dipendenze e non la coda.
+    #
+    # Questo job aggiunge due posti brevi per push (ubuntu + windows): installano
+    # un wheel, non girano la suite. Se la coda tornasse a crescere, la mossa e'
+    # stringere QUESTA matrice, non spegnere il job — e' l'unica prova automatica
+    # che il pacchetto si installi da zero, e non gira dal 04/08.
+    if: >-
+      !cancelled()
+      && needs.build.result == 'success'
     timeout-minutes: 35
     strategy:
       fail-fast: false

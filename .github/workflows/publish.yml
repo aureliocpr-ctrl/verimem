@@ -26,9 +26,153 @@ permissions:
   id-token: write # REQUIRED for OIDC trusted publishing
 
 jobs:
+  # ⚠️⚠️ IL CANCELLO CHE NON C'ERA, aggiunto il 2026-08-15 su segnalazione di ws8.
+  # Fino a ora questo workflow non aveva `needs`, ne' `if`, ne' `environment`:
+  # **un `git push` di un tag `v*` pubblicava su PyPI immediatamente**, senza che
+  # un solo test dovesse passare.
+  #
+  # Il contesto in cui l'abbiamo scoperto, che e' quello che lo rende urgente:
+  #   · Aurelio, oggi alle 14:00: «NON E' PRONTA»
+  #   · `ci` su main: 19 run conclusi oggi, 19 failure, ZERO verdi
+  #   · `pyproject` dice 0.7.5, su PyPI c'e' la 0.7.0
+  # ⇒ un tag battuto oggi avrebbe spedito al mondo un pacchetto che la nostra
+  # CI non ha mai approvato, e lo avrebbe fatto in trenta secondi.
+  #
+  # 🔑 `needs:` non attraversa i workflow, quindi il cancello lo si costruisce:
+  # questo job chiede a GitHub com'e' andata `ci` SUL COMMIT DEL TAG, e il job
+  # di pubblicazione dipende da lui. Nessuna configurazione fuori dal
+  # repository, nessun segreto: solo `gh` in lettura.
+  # ⚖️ E si puo' scavalcare di proposito — `PUBLISH_ANYWAY=1` come variabile del
+  # repository — perche' un cancello che non si puo' aprire viene tolto. La
+  # differenza e' che aprirlo diventa un GESTO, invece che l'impostazione
+  # predefinita.
+  # ⚠️⚠️ COSA QUESTO CANCELLO **NON** GUARDA — scritto subito, perche' un
+  # cancello che promette piu' di quanto misura e' il difetto che abbiamo
+  # curato due volte oggi (G8 e `wheel-install`).
+  #
+  # Guarda: **la CI e' verde su questo commit?** — cioe' la qualita' del CODICE.
+  # NON guarda: **cosa c'e' dentro il pacchetto**. Misurato da ws2 il 15/08::
+  #
+  #     release.py          non usato da questo workflow  (vale solo a mano)
+  #     controlla_registro  non cablato in nessun workflow
+  #     controlla_promesse  non cablato in nessun workflow
+  #     l'sdist di oggi porta 299 identificativi interni in 126 file
+  #
+  # ⚠️ L'ULTIMA RIGA E' SUPERATA dal 17/08 (`f3609dfe`, MANIFEST.in): sullo
+  # stesso righello l'sdist porta ora 6 file e 75 occorrenze, e le 75 sono
+  # l'indirizzo del repository e il campo `authors`, aperte una per una. Il
+  # dato vecchio resta scritto perche' e' la ragione per cui il resto di questo
+  # commento e' stato scritto — cancellarlo renderebbe incomprensibile il
+  # ragionamento che lo segue, che NON e' superato: il cancello continua a
+  # guardare la CI e non il contenuto del pacchetto.
+  # 👉 Il passo di avviso in fondo a questo file ha gia' il ramo «SDIST PULITO»:
+  # con la cura sopra dovrebbe accendersi da solo alla prossima pubblicazione.
+  # Nessuno l'ha ancora visto accendersi.
+  #
+  # ⇒ **Se la CI fosse verde, questo cancello si aprirebbe e quell'sdist
+  # passerebbe.** Il cancello e' NECESSARIO e NON SUFFICIENTE, e chi lo legge
+  # deve saperlo: fermare un rilascio con la CI rossa non e' la stessa cosa che
+  # verificare cio' che si spedisce.
+  # 🙋 I due presidi sono di ws2; il workflow e' mio. Cablarli qui e' la mossa
+  # ovvia e non la faccio da sola sul fronte di un'altra: proposta sul canale.
+  gate:
+    name: la CI del commit taggato e' verde?
+    runs-on: ubuntu-latest
+    outputs:
+      verde: ${{ steps.controlla.outputs.verde }}
+    steps:
+      - name: Interroga la CI sul commit di questo tag
+        id: controlla
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # ⚠️ IL FILTRO SUL RAMO, aggiunto il 2026-08-15 su una fessura trovata da
+        # ws8: il cancello chiedeva «la CI e' verde su questo SHA» e NON «questo
+        # SHA sta su main». Ma `ci` gira anche sui PULL REQUEST, quindi un
+        # commit di un ramo di lavoro ha un suo run — e se quel run fosse verde
+        # il cancello si sarebbe aperto su codice mai integrato ne' rivisto.
+        #
+        # Lei l'aveva dedotto e marcato come non eseguito; misurato qui su
+        # entrambe le popolazioni::
+        #
+        #     44d47c6f  (ramo ws3/gate-precision, PR)  vecchio=failure  curato=(nulla)
+        #     ae210e47  (main, run concluso)           vecchio=failure  curato=failure
+        #     dcc41bc8  (main, run concluso)           vecchio=failure  curato=failure
+        #     0e158cbb  (main, run concluso)           vecchio=failure  curato=failure
+        #     6747ad54  (main, run concluso)           vecchio=failure  curato=failure
+        #
+        # ⇒ Sui commit di main i due filtri danno lo STESSO esito (4 su 4): la
+        # cura non chiude il caso buono. Sul commit di ramo il vecchio trovava
+        # un run e il curato non ne trova: la fessura si chiude.
+        # 🔑 Non era un errore di logica, era una DOMANDA CHE IL CANCELLO NON
+        # FACEVA — e le due cose si curano in modo diverso.
+        # ⚖️ COSTO dichiarato: se un domani si volesse rilasciare da un ramo di
+        # release, il cancello bloccherebbe. Sarebbe un blocco VISIBILE con un
+        # messaggio che nomina la causa, non un'apertura silenziosa — e resta
+        # `PUBLISH_ANYWAY` per il gesto deliberato.
+        # 📌 La seconda interrogazione serve solo al MESSAGGIO: distingue «non
+        # esiste nessun run» da «esiste un run, ma non su main», che sono due
+        # situazioni diverse per chi legge l'errore alle tre di notte.
+        # 2026-08-31 CANCELLO-A (ratifica 3 SI, 00:40): il «costo dichiarato»
+        # qui sopra — «se un domani si volesse rilasciare da un ramo di
+        # release, il cancello bloccherebbe» — quel domani e' arrivato con
+        # hotfix/0.7.1 (la CI del branch non era MAI partita: total_count=0,
+        # e il verde veniva cercato SOLO su main). Il gate ora accetta il
+        # verde di `ci` anche da un ramo hotfix/** e STAMPA cosa ha
+        # accettato (commit, branch, quando). Fail-closed intatto: nessun
+        # run resta nessun verde; i rami di PR restano fuori.
+        run: |
+          sha='${{ github.sha }}'
+          accettato=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))] | .[0] | if . then "\(.conclusion)|\(.head_branch)|\(.updated_at)" else "" end' \
+                    2>/dev/null || echo "")
+          ovunque=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
+                    --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion // ""' \
+                    2>/dev/null || echo "")
+          esito="${accettato%%|*}"
+          resto="${accettato#*|}"; ramo="${resto%%|*}"; quando="${accettato##*|}"
+          echo "commit=$sha  ci accettabile=${esito:-NESSUN RUN su main o hotfix/**}  ramo=${ramo:-n/d}  del=${quando:-n/d}  ci altrove=${ovunque:-nessuno}"
+          if [ "$esito" = "success" ]; then
+            echo "verde=true" >> "$GITHUB_OUTPUT"
+            echo "Accettato il verde di ci su ramo=$ramo (run del $quando) per $sha."
+          elif [ -z "$esito" ] && [ -n "$ovunque" ]; then
+            echo "verde=false" >> "$GITHUB_OUTPUT"
+            echo "::error::Su $sha esiste un run di ci (${ovunque}) ma NON su main ne' su "\
+                 "un ramo hotfix/**: quel commit non e' mai stato integrato in un ramo "\
+                 "di rilascio. La pubblicazione e' FERMA. Per scavalcare di "\
+                 "proposito: variabile di repository PUBLISH_ANYWAY=1."
+          else
+            echo "verde=false" >> "$GITHUB_OUTPUT"
+            echo "::error::La CI su $sha non e' verde (${esito:-nessun run su main o hotfix/**}). "\
+                 "La pubblicazione e' FERMA. Per scavalcare di proposito: "\
+                 "variabile di repository PUBLISH_ANYWAY=1."
+          fi
+
   build-and-publish:
+    needs: gate
+    if: needs.gate.outputs.verde == 'true' || vars.PUBLISH_ANYWAY == '1'
     runs-on: ubuntu-latest
     steps:
+      # 🔑 IL BYPASS SI ANNUNCIA. La condizione qui sopra ha una scappatoia
+      # (`vars.PUBLISH_ANYWAY == '1'`) che pubblica su una CI ROSSA, e finora
+      # non lasciava traccia: il job partiva e basta, identico a un rilascio
+      # regolare. ⇒ Un bypass che non si annuncia e' indistinguibile da un
+      # cancello assente, e chi legge il registro dopo non puo' sapere quale
+      # dei due e' stato.
+      # 📌 Misurato il 2026-08-17: `actions/variables` risponde
+      # `{"variables":[],"total_count":0}`, quindi oggi la variabile NON c'e' e
+      # il cancello e' vivo. Questa riga serve al giorno in cui ci sara'.
+      # ⚖️ Non blocca niente: la decisione di pubblicare comunque resta di chi
+      # imposta la variabile. Rende solo impossibile che passi in silenzio.
+      - name: Il cancello e' stato scavalcato?
+        if: needs.gate.outputs.verde != 'true'
+        run: |
+          echo "::warning title=Cancello scavalcato::Questo rilascio parte con "\
+               "la CI NON verde (gate.verde='${{ needs.gate.outputs.verde }}'), "\
+               "perche' la variabile di repository PUBLISH_ANYWAY vale "\
+               "'${{ vars.PUBLISH_ANYWAY }}'. Il pacchetto pubblicato NON e' "\
+               "coperto dalla suite."
+          echo "SCAVALCATO=1 gate.verde='${{ needs.gate.outputs.verde }}' PUBLISH_ANYWAY='${{ vars.PUBLISH_ANYWAY }}'"
+
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
@@ -41,5 +185,121 @@ jobs:
         run: |
           python -m pip install --upgrade twine
           python -m twine check dist/*
+
+      # ⚙️ I PRESIDI DI ws2 CABLATI SUL WHEEL, col suo assenso e col suo criterio.
+      # Stanno QUI e non nel cancello perche' il cancello gira PRIMA del build:
+      # non ha ancora gli artefatti da guardare. Qui gli artefatti esistono e non
+      # sono ancora partiti — l'unico punto in cui la domanda «cosa stiamo
+      # spedendo?» ha una risposta.
+      #
+      # ⚖️ SOLO IL WHEEL, ed e' la separazione che ha reso la scelta decidibile.
+      #
+      # ⏱️ I NUMERI QUI SOTTO SONO UNA FOTO, NON LO STATO. Misura di ws2 sugli
+      # artefatti di `0dc18f24`, **valida a quella data e su quell'albero**::
+      #
+      #     controlla_registro  WHEEL   EXIT=0   pulito
+      #     controlla_promesse  WHEEL   EXIT=0
+      #     controlla_registro  SDIST   EXIT=1   321 identificativi in 129 file
+      #                                          + 5 nomi propri in 4 file
+      #
+      # 🔴 NON SONO PIU' VERI. Rimisurati il 2026-08-30 alle 18:03 su `a6ea383a`:
+      #
+      #     controlla_registro  WHEEL   EXIT=1   2 nomi propri in 2 file   <- il veto FERMA
+      #     controlla_registro  SDIST   EXIT=1   1 in 1 file
+      #
+      # ⇒ **I due numeri si sono INVERTITI**: il wheel, che era la superficie
+      # pulita su cui accendere a costo zero, oggi e' quella che ferma; l'sdist,
+      # che era il debito da 321, e' sceso a 1. La decisione qui sotto puo'
+      # restare valida — ma **la sua motivazione scritta non lo e' piu'**, e chi
+      # la rileggesse per decidere partirebbe da premesse rovesciate.
+      #
+      # 📌 PER I NUMERI DI ADESSO NON LEGGERE QUESTO COMMENTO, ESEGUILO::
+      #
+      #     python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py
+      #
+      # E' l'unico modo onesto: un numero cablato in un commento invecchia in
+      # silenzio e nessuno se ne accorge finche' non decide su di lui.
+      #
+      # ⇒ Il wheel e' cio' che l'utente INSTALLA, ed e' gia' verde: accenderlo
+      # costa zero e protegge il percorso vero. L'sdist e' un debito con un
+      # numero, non un allarme da spegnere accendendo un blocco che ferma
+      # qualunque rilascio.
+      # ⚠️ IL DEBITO CRESCEVA: 303 identificativi alle 11:58, 321 alle 15:48 —
+      # +18 righe e +3 file in quattro ore, perche' scriviamo referti e commenti
+      # mentre lavoriamo.
+      # 🔴 La tendenza si e' INVERTITA: il 2026-08-30 alle 18:03 l'sdist e' a
+      # **1 in 1 file**. Una tendenza invecchia peggio di un numero — un numero
+      # sbagliato si controlla, una tendenza sbagliata orienta una decisione. Un blocco secco sull'sdist costa piu' domani di oggi:
+      # la mossa che ws2 indica e' accendere sulle righe NUOVE, per fermare la
+      # crescita invece di curare il passato. Non e' questa riga, ed e' sua.
+      # ⚠️ IL NOME DICEVA «ne' promesse scoperte», e quello NON e' un veto.
+      # I due script che girano qui sotto sono diversi per costruzione:
+      #   controlla_registro.py   `return 1` -> esce non-zero e FERMA il job
+      #   controlla_promesse.py   «Uscita 0 SEMPRE: questo non e' un veto»
+      #                           (lo dice il suo docstring, ed e' una scelta
+      #                            argomentata: «un controllo che blocca sempre
+      #                            viene disattivato»)
+      # ⇒ Il vecchio nome prometteva due garanzie e ne dava una. Chi legge il
+      #   workflow — o una lista di controlli prima di rilasciare — concludeva
+      #   che un wheel con una promessa scoperta non puo' partire. Puo'.
+      # ⚖️ Il COMPORTAMENTO resta invariato: la scelta di non vetare le promesse
+      #   e' di chi ha scritto lo script e regge. Cambia solo cio' che il nome
+      #   dichiara — ed e' il primo dei tre esami: «afferma cose che non fa».
+      - name: Il wheel non porta identificativi interni (veto) e le promesse su piu' superfici sono elencate (avviso)
+        run: |
+          w=$(ls dist/*.whl | head -1)
+          echo "artefatto: $w"
+          python scripts/controlla_registro.py "$w"
+          python scripts/controlla_promesse.py "$w"
+
+      # ⚠️⚠️ IL FATTO CHE MANCAVA A QUESTO FILE, portato da ws8 il 2026-08-15 e
+      # riverificato qui: **L'SDIST NON RESTA IN CASA.**
+      # `pypa/gh-action-pypi-publish` senza `with:` carica `dist/` INTERO, e in
+      # questo file le uniche righe non-commento che nominano `dist/` sono
+      # `twine check dist/*` (solo i metadata) e `ls dist/*.whl` (il wheel).
+      # Nessun `packages-dir`, nessun `rm`, nessun filtro ⇒ **il .tar.gz parte.**
+      #
+      # 🔑 IL CRITERIO CON CUI I CONTROLLI FURONO ACCESI SUL SOLO WHEEL ERA «CHI
+      # INSTALLA», ed era il criterio sbagliato: l'sdist non ha bisogno che
+      # qualcuno lo installi per fare danno, basta che qualcuno lo APRA. Su PyPI
+      # sta in «Download files» — scaricabile da chiunque, indicizzato, e letto
+      # per mestiere dagli scanner di sicurezza aziendali proprio perche' e' il
+      # sorgente.
+      #
+      # ⛔ ⇒ QUESTO PERCORSO NON VERIFICA CIO' CHE SPEDISCE. Non e' un limite che
+      # accompagna la promessa: la SOSPENDE. Chi legge lo step qui sopra vede
+      # «il wheel non porta identificativi» e conclude che l'artefatto sia
+      # verificato; l'artefatto e' due, e uno esce senza guardia.
+      #
+      # ⚖️ QUESTO PASSO AVVISA E NON BLOCCA, e la distinzione e' deliberata: un
+      # avviso puo' stare da solo, un veto no. Togliere l'sdist da PyPI (un
+      # `packages-dir` sul solo wheel) e' una **scelta di distribuzione**, non una
+      # toppa: senza sdist non si compila da sorgente e i pacchettizzatori a valle
+      # — Debian, conda-forge, Nix — lo pretendono. La domanda sta in una riga e
+      # non e' di questo file: **«preferiamo che il sorgente non esca finche' e'
+      # sporco, o che esca sporco perche' serve a chi impacchetta?»**
+      # 📌 Finche' non c'e' risposta, il numero va almeno DETTO nel momento in cui
+      # si pubblica, invece di vivere in una conversazione.
+      - name: Cosa esce nell'sdist e non e' controllato (avviso, non veto)
+        run: |
+          s=$(ls dist/*.tar.gz 2>/dev/null | head -1 || true)
+          if [ -z "$s" ]; then
+            echo "::warning::nessun sdist in dist/: se e' stato tolto di proposito questo passo va riletto, non cancellato"
+            exit 0
+          fi
+          echo "artefatto NON presidiato che sta per essere pubblicato: $s"
+          if python scripts/controlla_registro.py "$s"; then
+            echo "SDIST PULITO — e allora il veto si puo' accendere: e' il momento di parlarne."
+          else
+            # ⚠️ «il wheel e' pulito» qui NON e' una misura: e' una conseguenza.
+            # Il veto sul wheel gira PRIMA (`controlla_registro.py "$w"`, che
+            # esce non-zero e ferma il job): se siamo arrivati fin qui, il wheel
+            # e' passato. La frase e' vera **per quell'invariante**, non perche'
+            # qualcuno la verifichi in questo punto — e se un giorno quel veto
+            # venisse spostato o reso non-bloccante, diventerebbe falsa in
+            # silenzio. Percio' dice PERCHE' e' vera, invece di affermarlo.
+            echo "::warning::l'sdist esce con identificativi interni (elenco sopra). Il wheel ha gia' superato il veto qui sopra, altrimenti il job sarebbe fermo; questo avviso NON ferma la pubblicazione."
+          fi
+
       - name: Publish to PyPI (OIDC — no token)
         uses: pypa/gh-action-pypi-publish@release/v1
