@@ -39,12 +39,51 @@ di questo banco e' tanto in cio' che ha escluso quanto in cio' che ha trovato**:
                                     `focus_budget=1500` ⇒ non e' l'argomento in
                                     piu' che il gate passa
 
-⇒ **La causa NON e' localizzata**, e lo dico invece di indovinarla. Il valore
-esiste a `try_local_score`, e fra li' e la ricevuta di `add()` si perde. Il
-prossimo passo e' strumentare la porta pubblica del gate: la mia chiamata a
-`fact_grounding_score_ex` e' fallita per **firma** (`TypeError: got multiple
-values for argument 'llm'`), quindi il punto va raggiunto leggendo il chiamante
-reale, non indovinando gli argomenti.
+🔑 **LOCALIZZATA — 30/08 16:26.** Il valore tracciato in TRE punti dello stesso
+processo, stesso regime::
+
+    try_local_score(fonte, claim)          0.56
+    fact_grounding_score_ex(None, f, c)    [0.56, 'local']   <- IL GATE RACCOGLIE
+    Memory().add(...)                      gs=None           <- si perde QUI
+
+*(la prima chiamata alla porta pubblica era fallita per **firma** — `llm` e' il
+PRIMO posizionale, non un keyword: letta la firma invece di indovinarla.)*
+
+⇒ La perdita e' **fra il gate e la ricevuta**, e sta in una riga sola:
+`anti_confab_gate.py:2336-2338`::
+
+    _have_judge = (grounding_llm is not None
+                   or _resolve_backend() == "local"
+                   or local_ce_available())
+    ...
+    if source and _ground_on and _have_judge:
+        gscore, _judge_used = fact_grounding_score_ex(...)
+
+Nel regime misurato: `grounding_llm` e' `None` · `_resolve_backend()` da'
+`claude` (non `local`) · **`local_ce_available()` da' `False`** perche' il
+modello non e' su disco. ⇒ **`_have_judge` e' falso e il gate non viene MAI
+chiamato** — mentre il gate, chiamato, risponde **0.56**.
+
+🔑 **`local_ce_available()` risponde a «il modello e' su disco?» e viene usata
+per rispondere a «c'e' un giudice?».** Sono domande diverse: **il daemon e' un
+giudice senza modello su disco.** Il commento accanto elenca le vie —
+«*an llm was injected, the backend is explicitly 'local', OR no llm but the
+multilingual local CE is on disk*» — e **il daemon non e' nell'elenco**.
+⇒ E' la stessa classe che ho pagato oggi sul mio `come_fonte`: *un elenco che
+non conosce il caso aggiunto dopo*. Li' erano «le due potature» e ne avevo messa
+una terza fuori; qui sono tre vie al giudizio e la quarta non e' nominata.
+
+📌 **PROPOSTA, e non l'applico**: la guardia decide **prima di provare**, su un
+proxy (il modello su disco) che non copre tutte le vie. La cura naturale e'
+**provare e decidere sul risultato** — il gate sa gia' dire di non poter
+giudicare (`NoGroundingJudge`), e `try_local_score` torna `None`.
+⚠️ **Non e' banale e va detto**: `judge_state()` da' `absent` col modello assente
+e diventa `delegated` **solo dopo** una delega riuscita — quindi **la
+disponibilita' del daemon non e' nota prima di provarci**, ed e' proprio per
+questo che un pre-check non puo' saperla.
+⛔ `anti_confab_gate.py` e' il cuore del prodotto e quella condizione tocca OGNI
+scrittura: **misuro, localizzo, propongo. La decisione e' di chi mantiene il
+layer.**
 
 ⚠️ COSA QUESTO BANCO NON DICE:
   · **non dice che sia un difetto**: potrebbe esserci una ragione deliberata per
