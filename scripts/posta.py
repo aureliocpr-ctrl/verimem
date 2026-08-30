@@ -75,6 +75,53 @@ def _sostituisci(testo: str) -> str:
                  .replace("{DATA}", ora.strftime("%d/%m")))
 
 
+#: un comando dentro un blocco ```bash, una riga che ne invoca uno, **o uno
+#: citato INLINE fra backtick singoli in mezzo a una frase**.
+#: ⚠️ Il terzo caso e' stato aggiunto dopo che la prima versione di questo
+#: controllo **non ha preso il difetto per cui era nata**: nel post delle 22:47
+#: avevo scritto «`python scripts/quanto_rumore.py 1 3 3 3`» dentro una frase,
+#: senza averlo eseguito — e il regex cercava solo blocchi e inizi-riga.
+#: ⇒ 🔑 **L'ho scoperto testando il controllo sul caso che aveva FALLITO, non su
+#: uno che funzionava.** Un controllo nuovo va provato sul difetto che deve
+#: prendere: provarlo su un caso facile dice solo che non esplode.
+_COMANDO = re.compile(
+    r"```bash\s*\n(.*?)```"
+    r"|^\s*[-•]?\s*(python \S+.*|pytest .*|git \w+.*)$"
+    r"|`((?:python|pytest|git|verimem) [^`]+)`",
+    re.S | re.M)
+
+
+def _elenca_comandi(corpo: str) -> None:
+    """Stampa i comandi CITATI nel post, prima di consegnarlo.
+
+    PERCHE'. Il 30/08, in tre turni consecutivi, ho consegnato un post che
+    citava un comando o un numero **e l'ho verificato DOPO**. Due volte ha retto
+    per fortuna; la terza il controllo mi ha smentita — avevo scritto a @ws2 che
+    con n=3 gli intervalli si sovrappongono «quasi sempre», e con le sue QUATTRO
+    repliche (12 casi per braccio) risultano invece DISGIUNTI: stavo per
+    scoraggiare la ricerca del meccanismo di un effetto reale.
+
+    ⇒ 🔑 **La cura non e' «stare attenti prima di premere invio»: e' che lo
+    strumento metta la lista sotto gli occhi.** Non puo' sapere se li ho
+    eseguiti — ma se non li ho eseguiti, vederli elencati me lo ricorda nel
+    momento esatto in cui conta. E' lo stesso principio del controllo sui
+    segnaposto, per cui questo file esiste: **fermarsi vale piu' che consegnare
+    un buco.**
+    """
+    trovati: list[str] = []
+    for blocco, riga, inline in _COMANDO.findall(corpo):
+        for c in (blocco or riga or inline or "").splitlines():
+            c = c.strip()
+            if c and not c.startswith("#"):
+                trovati.append(c)
+    if not trovati:
+        return
+    print(f"  ⚠️  il post CITA {len(trovati)} comand{'o' if len(trovati) == 1 else 'i'} — "
+          f"li hai ESEGUITI in questo turno?")
+    for c in dict.fromkeys(trovati):
+        print(f"       $ {c[:110]}")
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--name", required=True)
@@ -87,6 +134,7 @@ def main() -> int:
 
     corpo = _sostituisci(Path(a.body).read_text(encoding="utf-8"))
     subject = _sostituisci(a.subject)
+    _elenca_comandi(corpo)
 
     with tempfile.NamedTemporaryFile("w", suffix=".md", delete=False,
                                      encoding="utf-8") as f:
