@@ -4,7 +4,7 @@ Seconda forma del difetto del campo `store` (`W2-115`). La cura del
 30/08 (`9ac64916`) ha risolto la prima — l'impronta congelata all'import
 — ma l'impronta continua a derivare da ``data_dir()``, cioe' dalla
 variabile d'ambiente: **chi apre con ``Memory(path)`` resta marcato
-«casa»**. Misurato: ~90% dei chiamanti apre cosi', e il banco di ws7 lo
+«casa»**. Misurato: ~90% dei chiamanti apre cosi', e un banco dell'esame lo
 mostra dal vivo — store in ``Temp\tmp2j860m62`` ed eventi che dicono
 l'impronta di casa.
 

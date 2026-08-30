@@ -9,8 +9,8 @@ e la scrittura produce ``quarantined`` — `client.py` e altri sei punti.
 Nessuna riga assegna piu' ``provisional`` per questa via: e' il
 comportamento del gate che e' cambiato (lo status esiste ancora, lo store
 lo riserva alle ipotesi con riferimento URL/arxiv, e `semantic.py` lo
-legge — precisazione di ws3, che mi ha corretto un «e' morto» troppo
-ampio). ⇒ Un utente prova il gate, legge una parola, scrive, e ne trova
+legge — precisazione emersa in revisione, che ha corretto un «e' morto»
+troppo ampio). ⇒ Un utente prova il gate, legge una parola, scrive, e ne trova
 un'altra: il prodotto si contraddice fra la prova e la scrittura.
 
 E la tabella portava una voce per ``quarantine``, che ``GateAction`` non
