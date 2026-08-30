@@ -11007,3 +11007,38 @@ for f in ci security presidi-lenti; do
 done
 # ⚠️ le date sono UTC: verifica il filtro con una data che DEVE dare >0
 ```
+
+**㊱ `48` (seguito) — 🔴 lo stesso file spegne DUE porte su tre, e la seconda è quella enterprise.**
+Il limite che avevo dichiarato chiudendo il ㉟ («e il gateway?») si chiude leggendo **tre righe**, e
+la risposta è **peggiore**:
+· `verimem/gateway.py:461` — `_gateway_min_relevance()` legge `ENGRAM_GATEWAY_MIN_RELEVANCE` con
+**default `"auto"`**
+· `verimem/client.py:1112` — `if min_relevance == "auto": min_relevance = self._auto_relevance_floor()`
+⇒ **lo stesso file**
+· `verimem/client.py:1200` — `if min_relevance and not _degradato:` ⇒ **`0.0` è falsy**
+⇒ **il gateway, nella configurazione di default, NON FILTRA NULLA.**
+🔑 **E lì la promessa non è «ti do il righello»**: il README dice *«gateway/console FILTER — results
+under the self-calibrated floor are **not served at all**»*, e il docstring della funzione è ancora
+più esplicito:
+> *«**Making the enterprise API abstain by default is the point of a TRUST product**»*
+**Il punto di un prodotto di fiducia, secondo le sue stesse parole, è disattivato da un file di 32
+byte scritto durante un guasto di ventitré minuti.**
+
+| porta | cosa promette il README | cosa fa |
+|---|---|---|
+| **MCP** | segnala (`sotto_il_pavimento` a ogni lettura) | **non segnala** — campo assente |
+| **gateway/console** | **filtra** (non serve affatto ciò che è sotto) | **non filtra** — `min_relevance` = 0.0 |
+| SDK | permissivo per scelta dichiarata | invariato — **corretto** |
+
+⏳ **E resterà così**: l'invalidazione guarda solo il **conteggio** (`_FLOOR_DRIFT = 0.05`, `n =
+semantic.count()` = non quarantinati): salvato **13.795**, oggi **13.888**, differenza **93**, soglia
+**689,8** ⇒ **mancano ~600 fatti**.
+⛔ **Non ho cancellato il file** — è il rimedio immediato (`rm` di 32 byte, poi il prodotto ricalcola
+~0,87), ma è lo store di Aurelio e non mi è stato chiesto. 💡 **La cura vera, perché non si ripeta**:
+① **rifiutare di persistere una stima degenere** (uno `0.0` su quattordicimila fatti non è un
+risultato, è un fallimento) ② **invalidare anche sul valore, non solo sul conteggio**.
+🎯 **Perché questo pezzo conta più degli altri**: la sintesi `47` dice che *«una capacità spenta non
+emette segnale»*. Qui la capacità non è spenta da un default di progetto — **è stata spenta da un
+incidente, e il prodotto ha registrato l'incidente come se fosse una misura.** Un analista che provi
+l'API enterprise con la configurazione di default non vede l'astensione che il README promette, **e
+la causa non è un bug del motore: è un file di cache.**
