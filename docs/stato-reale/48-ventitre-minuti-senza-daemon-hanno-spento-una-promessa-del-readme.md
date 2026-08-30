@@ -235,8 +235,31 @@ stanotte.)*
   distingua.
 - **Invalidare anche sul valore, non solo sul conteggio.**
 - **Il rimedio immediato è cancellare quel file**: alla prima lettura il
-  prodotto ricalcola. **Non l'ho fatto** — è lo store di Aurelio e una
-  cancellazione non mi è stata chiesta.
+  prodotto ricalcola. **Non l'ho fatto sullo store di Aurelio** — una
+  cancellazione non mi è stata chiesta — **ma l'ho verificato su una copia**,
+  perché proporre una cura senza provarla è mezzo lavoro:
+
+```
+copia dello store in …\ws6-floor-9vd0ttxz\semantic\semantic.db   (129.4 MB)
+
+1) col file presente ({"floor": 0.0, "n_facts": 13795})
+   _auto_relevance_floor() -> 0.0
+
+2) file cancellato NELLA COPIA
+   _auto_relevance_floor() -> 0.8881
+   il file e' stato riscritto: True
+   nuovo contenuto: {"floor": 0.8881, "n_facts": 14278}
+```
+
+  **La diagnosi è confermata e la cura funziona**: col file presente la funzione
+  restituisce `0.0`, senza il file ricalcola **0,8881** e lo ripersiste. Lo
+  store di Aurelio è rimasto intatto (`{"floor": 0.0}`, mtime 20:32) — la prova
+  è stata fatta interamente su una copia in `tempdir`, con `HIPPO_DATA_DIR`
+  impostata **prima** degli import del prodotto.
+
+  *(Il valore ricalcolato, 0,8881, non coincide con lo 0,8743 del documento 36:
+  il corpus è cresciuto nel frattempo. Sono la stessa grandezza a due istanti
+  diversi, non due misure in disaccordo.)*
 - Niente di tutto questo è codice che posso toccare: sta nel percorso del gate.
 
 ## Per chi riprende
