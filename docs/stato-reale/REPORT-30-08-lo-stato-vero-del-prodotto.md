@@ -149,12 +149,15 @@
    entro 190s (in-process 28,9s): C3/latenza, priorità alta post-cura-grande.
 
 ## 5. IL PROCESSO — perché a questo report si può credere
-- **Fra il 23% e il 33% delle 409 celle con ID porta una correzione
-  dell'autrice** — censito con due criteri dichiarati (stretto 94 = 23,0%,
-  largo 213 = 52,1%, e il grep validato a mano: 5 veri su 8 marcati, i 3
-  falsi positivi parlano del prodotto, non delle tesi), stratificato per
-  istanza (26,7% l'autrice più correttiva contro 18,7% le altre: è un
-  comportamento collettivo, non un tic). La lettura giusta viaggia col
+- **Circa un quinto delle 409 celle con ID porta una correzione
+  dell'autrice** (~20%, e la forbice 23–33% del primo censimento va letta
+  verso il basso: il righello includeva il proprio referto — le celle che
+  PARLANO di ritiri contate come celle CON ritiri, auto-inclusione che la
+  stessa autrice aveva già nominato in W2-50 e ha ricolto rileggendo 12
+  celle: 3 falsi positivi, tutti di quella forma). Due criteri dichiarati,
+  grep validato a mano due volte, stratificato per istanza (collettivo,
+  non un tic; nel campione letto 9 ritiri su 12 auto-trovati, e almeno 4
+  su segnalazione di un'altra). La lettura giusta viaggia col
   numero: la percentuale non misura quanto si sbaglia — misura quanto si
   VERIFICA dopo aver scritto, e un registro che nascondesse i ritiri
   avrebbe un numero migliore e un valore peggiore. Limite dichiarato: il
