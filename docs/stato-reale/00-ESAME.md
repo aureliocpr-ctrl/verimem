@@ -10197,3 +10197,56 @@ python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py        # ~57 s
 git status --porcelain --untracked-files=all -- verimem engram hippoagent pyproject.toml
 git status --porcelain --untracked-files=all -- docs | head -3     # controllo positivo
 ```
+
+---
+
+## ws1 · 30/08 22:12 — NON È «L'ITALIANO»: È OGNI LINGUA DIVERSA DA QUELLA DEL CORPUS — E PERSINO UNA PARAFRASI INGLESE
+
+**Livello**: lo scorer del prodotto (`_load_reranker()`), lo stesso oggetto che `_apply_ce_gate` chiama.
+**Perimetro**: 6 entità (4 difficili + **2 di controllo sano**) × **14 passaggi FISSI** × 6 formulazioni = 84 giudizi.
+**Istante**: 2026-08-30 22:08–22:12. **Regime**: `ok` in testa e in coda. **Corpus**: HaluEval QA (terzi), monolingue EN.
+**Disegno — una variabile alla volta**: i passaggi giudicati sono **sempre gli stessi** (i candidati della recall EN); cambia **solo la lingua della domanda**. La popolazione resta di terzi; le domande sono la variabile manipolata.
+
+### 🔴 IL GIUDICE È DICHIARATAMENTE MULTILINGUE — e l'ipotesi «giuntura» cade
+
+Stavo per scrivere che il prodotto ha un retriever multilingue e un giudice inglese. **È falso**, e l'ho falsificata prima di pubblicarla:
+
+```
+verimem/semantic.py:1710  _DEFAULT_RERANK_MODEL = "cross-encoder/mmarco-mMiniLMv2-L12-H384-v1"
+verimem/config.py:74      _DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-base"
+```
+
+**mMARCO** è MS MARCO tradotto in 14 lingue, **italiano, francese, tedesco e spagnolo inclusi**. Entrambi i modelli sono multilingui. Il reperto qui sotto vale quindi **contro la multilinguità dichiarata del giudice**, non contro un modello che non conosce la lingua.
+
+### 🔴 PREDIZIONI, E COME SONO ANDATE
+
+| | predetto prima | esito |
+|---|---|---|
+| **P-A** cross-linguità | FR, DE, ES derivano come IT | ✅ **confermata** |
+| **P-B** «è l'italiano» | solo IT deriva | ❌ **falsificata** |
+| **P-C** controllo intra-lingua | una parafrasi EN **non** deve derivare | ⚠️ **non pulito** — vedi sotto |
+
+Δ del logit rispetto alla stessa domanda in inglese, sugli **stessi 14 passaggi**:
+
+| formulazione | n | Δ min | **mediana** | Δ max | Δ > 0 | attraversamenti dello zero |
+|---|---:|---:|---:|---:|---:|---:|
+| **EN-parafrasi** | 14 | −0,523 | **+0,593** | +3,287 | 10/14 | **1** |
+| **IT** | 14 | +1,093 | **+3,435** | +5,428 | **14/14** | **4** |
+| **FR** | 14 | +0,901 | **+1,854** | +3,175 | **14/14** | 1 |
+| **DE** | 14 | −0,299 | **+1,162** | +2,413 | 13/14 | 0 |
+| **ES** | 14 | +0,810 | **+3,448** | +6,012 | **14/14** | **4** |
+
+**Tutte e quattro le lingue non inglesi derivano verso l'alto**, e **lo spagnolo deriva quanto l'italiano** (mediana +3,448 contro +3,435). ⇒ **Il difetto non è italiano: è di ogni utente che non interroga nella lingua del corpus.** Le quattro lingue sono tutte *dentro* il training del modello: ciò che è fuori distribuzione non è la lingua, è la **coppia cross-lingua** — mMARCO traduce *entrambi* i lati e addestra su coppie same-language.
+
+### ⚠️ IL MIO CONTROLLO È USCITO SPORCO, E DICE LA COSA PIÙ IMPORTANTE
+
+`EN-parafrasi` **non è piatta**: mediana +0,593, 10/14 sopra zero, e **un attraversamento della soglia** — `Doctor Doom`, «The son of Romani witch Cynthia Von Doom…»: **EN −3,194 → EN-par +0,093**. Stessa lingua, stessa domanda, sola riformulazione («What is X's blood type?» → «Which blood group does X have?»): **il passaggio passa da respinto ad ammesso.**
+
+La separazione resta netta — **+0,59 (parafrasi) contro +3,4 (traduzione)**, la traduzione è la perturbazione ~6× più forte — ma il reperto va enunciato più largo di come l'avevo previsto:
+
+> **La soglia è fissa a 0,0 su un punteggio che si sposta di ~0,6 per una parafrasi e di ~3,4 per una traduzione, senza che una parola del contenuto cambi.** La fragilità non è *solo* cross-lingua: la traduzione è la perturbazione più forte, non l'unica.
+
+### Cosa questi dati NON provano
+Non ho ancora una coppia **same-language non inglese** (domanda IT + passaggio IT): sarebbe la prova diretta che il mismatch è la causa, e **non esiste un corpus italiano fra i dati di terzi** — porte contate: `external/` (HaluEval, SQuAD v2, TruthfulQA), `external/.cache/` (TruthfulQA.csv, MuSiQue, MSC, QuALITY, qa_data), cache HuggingFace (SWE-bench-lite, snli, squad_v2), LongMemEval. **Tutti inglesi.** La prova qui è **indiretta ma su quattro lingue**: l'unica cosa che le accomuna è il mismatch col passaggio inglese.
+**Non torna** e non lo spiego: il tedesco deriva meno del francese (+1,162 contro +1,854), e italiano e spagnolo sono i più alti. Non ho verificato alcuna ragione, e non ne invento una.
+Non è un tasso: 6 entità scelte perché già note come difficili. Non dice nulla sul banco ufficiale, che gira sul **bi-encoder**.
