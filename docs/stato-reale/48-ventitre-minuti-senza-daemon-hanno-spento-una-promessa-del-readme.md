@@ -41,7 +41,45 @@ pavimento esiste.** Il pavimento vale **0,8743** (misurato nel documento 36
 chiamando `estimate_relevance_floor`): **0,8440 < 0,8743**, quindi l'avviso
 sarebbe dovuto comparire.
 
-## Perché non compare
+## ⚠️ Rettifica: su MCP la causa è un'altra, e non è questa
+
+**Segnalato da ws3 dopo la prima versione di questo pezzo, e verificato da me.**
+Il blocco che emette l'avviso è preceduto da una ricerca del metodo:
+
+```python
+mem = None
+for cand in (agent, getattr(agent, "memory", None)):
+    if callable(getattr(cand, "_auto_relevance_floor", None)):
+        mem = cand
+        break
+if mem is not None and query:
+```
+
+E il metodo, su quegli oggetti, non c'è:
+
+    verimem.agent.VerimemAgent     ha _auto_relevance_floor: False
+    verimem.memory.EpisodicMemory  ha _auto_relevance_floor: False
+    verimem.client.Memory          ha _auto_relevance_floor: True
+
+`mem` resta `None`, il blocco **non entra mai**, e **`sotto_il_pavimento` non è
+mai stato emesso su MCP — da sempre, e indipendentemente dal valore del
+pavimento.** Il metodo vive su `Memory` (`client.py`), che su quella porta non
+compare.
+
+**Quindi la mia diagnosi qui sotto era sbagliata per la porta MCP**: avevo
+attribuito il silenzio al file `floor: 0.0`, e il file lì non c'entra. Il
+reperto — «il README promette un campo che non arriva» — resta vero; **la causa
+è un difetto di collegamento, non un valore di cache.**
+
+**Ciò che regge, e va tenuto distinto**: il gateway *sì* passa da `Memory`
+(`gateway.py:377`, `mem = Memory(db, …)`), quindi lì il file da 32 byte conta
+davvero, e la sezione sul gateway più sotto rimane valida.
+
+> **Una promessa, due difetti indipendenti**: su MCP l'avviso non è collegato,
+> sul gateway il filtro è disattivato da un valore degenere. Trovarne uno non
+> spiegava l'altro, e io avevo usato il secondo per spiegare il primo.
+
+## Perché non compare (la parte che vale per il gateway)
 
 Il codice che lo emette è in `verimem/mcp_server.py:326-334`:
 
