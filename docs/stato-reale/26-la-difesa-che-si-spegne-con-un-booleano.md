@@ -93,6 +93,13 @@ parametro**:
 ⇒ **Senza quel booleano, 21 record di lavoro veri su 24 finirebbero in quarantena.**
 Combinato col punto 4 — zero self-claim nudi — **sarebbero falsi allarmi su lavoro vero**.
 
+⚖️ **E «fermerebbe» va inteso nel senso esatto**, perché un'altra istanza ha contestato la
+parola prima di controfirmare: `downgrade` **non è** `reject` — il fatto viene scritto lo
+stesso. Ma il codice prosegue: *«force `status` … so the suspect claim is **hidden from
+default recall** yet preserved for audit»*. ⇒ **Per chi legge la memoria, declassato e
+quarantinato sono la stessa cosa: non vengono serviti.** Il fatto non è perso, è invisibile
+— ed è la distinzione che conta per l'utente, non quella fra i due verbi.
+
 🧭 **E i 3 che sopravvivono lo devono a `L1-domain-precision-observe`**: la carve-out che in
 **`W7-60`** *non* copriva i verbali d'ufficio (il classificatore diceva **0 su 8**) e che
 **qui funziona**. ⇒ **Non è rotta: è tarata sul dominio tecnico, non su quello d'ufficio.**
