@@ -1,18 +1,43 @@
-# Il prodotto è affidabile su ciò che sa di sé
+# Ciò che il prodotto fa e ciò che dice di fare invecchiano a velocità diverse
 
-*ws3 «Galileo», 30/08. **Tredici** promesse **dichiarate** del prodotto,
-misurate una per una fra le **12:19 e le 18:55** (ore lette, non stimate). Le
-misure sono sparse fra banchi eseguibili e messaggi di canale, e sparse **non
-le legge nessuno** — questo documento le mette in fila e, per ognuna, dice
-anche **su quanti casi si applica**.*
+*30/08. **Diciotto** promesse **dichiarate** del prodotto, misurate una per una
+fra le **12:19 e le 22:10** (ore lette, non stimate). Le misure erano sparse fra
+banchi eseguibili e messaggi di canale, e sparse **non le legge nessuno** —
+questo documento le mette in fila e, per ognuna, dice anche **su quanti casi si
+applica**.*
+
+⚠️ **Il titolo di questo file era «Il prodotto è affidabile su ciò che sa di
+sé»**, ed era la tesi delle prime tredici. Le cinque della notte l'hanno
+falsificata: il nome è cambiato quando è cambiato ciò che il documento
+dimostra, perché **un titolo che afferma una tesi caduta è un guardiano che
+mente**. Il file resta lo stesso per non spezzare i riferimenti già dati.
 
 ---
 
-## La tesi in una riga
+## La tesi in una riga — ⚠️ RISCRITTA ALLE 22:50, PERCHÉ L'HO FALSIFICATA IO
 
-**Ciò che il prodotto dichiara di sé regge. Ciò che nessuno ha dichiarato è dove
-stanno i buchi.** Per un analista è una distinzione più utile di qualunque
-tasso: dice **dove fidarsi** e **dove guardare**.
+> 🔴 **La tesi di questo documento fino alle 18:55 era: «ciò che il prodotto
+> dichiara di sé regge; ciò che nessuno ha dichiarato è dove stanno i buchi».**
+> **Fra le 20:50 e le 22:10 ho misurato altre cinque cose dichiarate, e
+> NESSUNA delle cinque reggeva.** La tesi vecchia resta scritta qui sopra e
+> non altrove: un documento che afferma una tesi falsificata dal proprio
+> autore è il guardiano che mente.
+
+**La tesi che regge alla misura di stanotte:**
+
+> **Le promesse sui MECCANISMI reggono. Le promesse nelle DESCRIZIONI — i
+> parametri di uno schema, il nome di un campo, il rimedio in fondo a una
+> diagnosi — si staccano dal codice, e nessuno se ne accorge.**
+
+E la ragione non è morale, è meccanica: **un meccanismo ha un test che lo
+esercita; una descrizione no.** Delle cinque cadute stanotte, **zero avevano
+un presidio** prima che ne scrivessi uno. ⚠️ Su diciotto misure è una
+correlazione, non una legge — ma è falsificabile: *si cerchi una descrizione
+presidiata che si sia staccata lo stesso.*
+
+⇒ Per un analista la distinzione utile diventa: **fidarsi di ciò che il
+prodotto FA e verificare ciò che il prodotto DICE di fare**, perché le due
+cose invecchiano a velocità diverse.
 
 ---
 
@@ -324,6 +349,33 @@ E il bilancio va letto per quello che dice: **cercando attivamente in due modi
 diversi, il repo ha restituito un difetto morto e una giuntura già nota per
 metà.** ⇒ *È più pulito di quanto la caccia suggerisse* — e questo è un
 risultato, non l'assenza di uno.
+
+## Le cinque promesse della notte, e perché sono un'altra famiglia
+
+*Misurate fra le 20:50 e le 22:10, dopo il rientro. Non stanno nella tabella
+sopra perché non sono dello stesso tipo: quelle erano promesse su cosa il gate
+**fa**; queste sono promesse su cosa i suoi **parametri e i suoi campi
+significano** — ed è esattamente la differenza che la tesi nuova nomina.*
+
+| | dove | la promessa | la misura | esito |
+|---|---|---|---|---|
+| A | schema MCP, `validate` | «`off` = **bypass**» | **non bypassa**: e' neutralizzato di proposito (args MCP untrusted) e la ricevuta lo dichiara in `gate_knobs_denied` — ma **DOPO** la decisione che doveva informare | 🔴 curata |
+| B | schema MCP, `validate` | «`fast` (default) = detector **sub-ms**» | con una `source` **il moat gira a ogni livello**: primo write **32.724 ms**, a caldo 187-340 ms — **quattro ordini di grandezza** | 🔴 curata |
+| C | schema MCP, `gate_mode` | «`downgrade` persiste con `status='provisional'`» | scrive **`quarantined`**, su entrambe le popolazioni. **Terza superficie** con quella prosa; le altre due curate al mattino, **questa è la sola che legga un agente** | 🔴 curata |
+| D | `doctor` e `cli`, sei copie | «pass `llm=` to Memory» | eseguibile **solo dall'SDK**: un chiamante CLI o MCP non può iniettarlo (su MCP lo configura l'**operatore**). E chi esegue `doctor` è **alla CLI** | 🔴 curata |
+| E | la ricevuta, campo `ok` | *(nessuna: non era documentato)* | vale **sempre `True`**, anche sui quarantinati. Non un difetto di comportamento — `ok` = «la chiamata non è fallita» — ma **nessuna superficie lo diceva**, e un quarantinato **è memorizzato e fuori dal recall** | 🔴 curata |
+
+⚠️ **E una sesta che NON ho curato**, perché la cura tocca due file su cui
+un'altra stava lavorando: **`replaced` non dice che la scrittura ne ha mangiata
+un'altra**. Misurato: due ricevute con `replaced=False` mentre nello store il
+primo fatto porta `superseded_by`. `replaced` è il rimpiazzo **per id identico**,
+che da quella porta non accade mai. ⇒ **Consegnato come reperto, non come cura.**
+
+🔑 **La regolarità che le tiene insieme**: in tutte e sei **il comportamento era
+giusto** e **la descrizione no**. Nessuna era un difetto del gate; tutte erano
+difetti di ciò che il gate DICE — il perimetro che questo documento misura.
+
+---
 
 ## Bilancio, alle 18:55 (ora letta)
 
