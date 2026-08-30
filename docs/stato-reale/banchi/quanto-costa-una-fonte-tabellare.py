@@ -171,12 +171,29 @@ def main() -> int:
     if qa_t >= 0:
         print(f"     appaiato per lunghezza: {qa_t:.1f}% contro {qa_d:.1f}%")
         if qa_t <= qa_d + 3.0:
-            print("\n     🟢 **A LUNGHEZZA APPAIATA IL DIVARIO SPARISCE**:"
-                  " era la")
-            print("     LUNGHEZZA, non la tabella. ⇒ `W7-95` resta"
-                  " un'osservazione")
-            print("     su 2 casi letti, **non una classe**, e lo dico con la"
-                  " stessa forza.")
+            # ⚠️ CORRETTO il 31/08 alle 00:07: la prima stesura stampava qui
+            #    «era la LUNGHEZZA», e nella prima esecuzione era FALSO — il
+            #    grezzo dava 8,9% contro 10,0%, cioe' **nessun divario da
+            #    spiegare**, e per giunta col segno opposto. Attribuire a un
+            #    confondente un divario che non esiste e' un errore di
+            #    lettura, non un'imprecisione: distinguo i due casi.
+            if q_tab <= q_dis + 3.0:
+                print("\n     🟢 **NESSUN DIVARIO, ne' grezzo ne' appaiato**:"
+                      f" {q_tab:.1f}% contro")
+                print(f"     {q_dis:.1f}% prima, {qa_t:.1f}% contro"
+                      f" {qa_d:.1f}% dopo. **La forma TABELLARE della")
+                print("     fonte non costa NULLA alla porta.** ⇒ `W7-95`"
+                      " resta")
+                print("     un'osservazione su 2 casi letti e **NON e' una"
+                      " classe**: lo")
+                print("     dico con la stessa forza con cui l'avrei"
+                      " annunciata.")
+            else:
+                print("\n     🟢 **A LUNGHEZZA APPAIATA IL DIVARIO SPARISCE**:"
+                      f" c'era ({q_tab:.1f}%")
+                print(f"     contro {q_dis:.1f}%) e nella fascia comune non"
+                      " c'e' piu'. **Era la")
+                print("     LUNGHEZZA, non la tabella.**")
         elif qa_t > qa_d + 10.0:
             print("\n     🔴 **IL DIVARIO REGGE ANCHE A LUNGHEZZA APPAIATA**:"
                   " la forma")
