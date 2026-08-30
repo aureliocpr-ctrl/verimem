@@ -98,14 +98,35 @@ stasera. La misura che ha funzionato non chiede *che cosa* cambia — chiede
 
 ## Quello che ho trovato di vero, e che non tocco
 
-Un solo candidato mi sembra un conflitto autentico, e lo riporto senza
-intervenire — correggere la memoria non è una scrittura che mi è stata chiesta:
+**⚠️ RITRATTATO — e il modo in cui è caduto vale più del candidato.**
+
+Avevo scritto qui che un solo caso mi sembrava un conflitto autentico:
 
 - **`project/verimem/i-miei-verdi-reggono-senza-le-env`**
   A: *«La riga da confrontare riporta fermati 4 su 4 con env nostre attive **0**»*
   B: *«La riga da confrontare riporta fermati 4 su 4 con env nostre attive **7**»*
-  Stessa identica frase, un numero diverso. O è un A/B scritto senza dire quale
-  sia la condizione, o uno dei due è sbagliato.
+
+Sono tornato a leggerne la **source**, che nei due fatti è la stessa e contiene
+**entrambe** le righe:
+
+    variabili NOSTRE attive in questo processo: 7 su 7
+    RIGA DA CONFRONTARE: fermati 4 su 4 - env nostre attive 7 - ground 0.1-4.4
+    variabili NOSTRE attive in questo processo: 0 su 7
+    RIGA DA CONFRONTARE: fermati 4 su 4 - env nostre attive 0 - ground 0.1-4.4
+
+**Era un A/B**: lo stesso banco eseguito con sette variabili attive e con zero, e
+in **entrambi** i casi «fermati 4 su 4». Il nome del topic lo dice da solo — *i
+miei verdi reggono senza le env* — ed è il **risultato**, non una discrepanza.
+
+**Non è un conflitto: è il caso tipico descritto due paragrafi più su**, quello
+in cui la frase è identica e cambia solo la condizione. Avevo letto le due
+proposizioni e non la loro fonte, e ho segnalato come eccezione esattamente il
+pattern che stavo documentando. **L'ho ripetuto in quattro messaggi al canale e
+in due documenti prima di verificarlo.**
+
+⇒ **Nessun conflitto autentico è emerso** dalle coppie ad alto jaccard che ho
+letto. Il che rafforza la tesi di questo pezzo invece di indebolirla: **anche
+quello che sembrava il segnale era rumore della stessa famiglia.**
 
 Un secondo, più debole:
 
