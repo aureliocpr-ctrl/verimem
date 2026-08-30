@@ -8473,3 +8473,93 @@ pagato proprio perché era dichiarato bene.** Il marcatore ben scritto **compra 
 - **`8/8 regenerable` continua a significare «il modulo si importa»**, non «il comando è
   eseguibile» — limite già registrato, non risolto da questa verifica.
 
+
+### 🔴🔴 W8-18 — La mia previsione è **falsificata**, e la causa vera è che **`build` non parte mai e tiene aperto ogni run**
+
+> **REGIME** — misure delle 20:17–20:20 del 2026-08-30, interrogando l'**oggetto**
+> (`?status=`) e i job per `run_id`. Campione: i run `ci` **#1661, #1662, #1663** (più
+> #1671 e #1672 in corso). Tutti gli orari dell'API sono **UTC**.
+> **LIMITE** — cinque run, non un censimento. E **non so perché** `build` non ottenga un
+> runner: ho la forma del difetto, non la sua causa.
+
+### ① La previsione ha perso, ed era scritta perché potesse perdere
+
+Agli atti in W8-17 alle 18:48: *«`completed` deve salire di almeno 3 entro le 21:00; se
+resta 1161-1162, "strozzata ma viva" è sbagliato»*.
+
+```
+ore 20:17   completed = 1161      (+0 in 1h 29m)     queued 833 (era 796)
+⇒ 🔴 PREVISIONE FALSIFICATA. La diagnosi «strozzata ma viva» era SBAGLIATA.
+```
+
+⚖️ Mancavano formalmente 43 minuti, ma il meccanismo qui sotto la chiude: **non è
+lentezza, e nessuna quantità di attesa la sanerebbe.**
+
+### ② I run hanno **sette** job, e il settimo non parte mai
+
+```
+#1661   job per stato: {'completed': 6, 'queued': 1}   job per esito: {'failure': 6}
+#1662   idem
+#1663   idem
+```
+
+Il settimo, in tutti e tre:
+
+```
+build (sdist + wheel)   stato=queued   started=2026-08-30T16:57:09Z   runner=NESSUNO
+build (sdist + wheel)   stato=queued   started=2026-08-30T17:11:12Z   runner=NESSUNO
+build (sdist + wheel)   stato=queued   started=2026-08-30T17:14:17Z   runner=NESSUNO
+```
+
+🔑 **Ha uno `started_at` di tre ore prima, è `queued`, e non ha runner.** Il run non può
+chiudere finché quel job non finisce ⇒ **`completed` non sale mai.**
+
+E spiega l'oscillazione: alle 18:45 quei tre erano `in_progress`, alle 20:18 sono
+**tornati `queued`**. Non è un run che riparte — è **il run che aspetta il suo ultimo
+job**, e lo stato aggregato oscilla dietro di lui.
+
+### ③ Questo **completa e corregge W8-13**
+
+W8-13 diceva: «`build` è **cancellato** dalla coda — `runner = NESSUNO` su 5 run su 5».
+Il `runner = NESSUNO` era giusto; **«cancellato» no**. Non viene cancellato: **resta
+appeso a tempo indeterminato**. E la differenza decide tutto:
+
+```
+cancellato  →  il run CHIUDE comunque, con un esito
+appeso      →  il run NON CHIUDE affatto
+```
+
+📌 Avevo letto un `runner = NESSUNO` e concluso «cancellato» perché era la spiegazione
+che avevo in mano. Il campo che distingue i due casi è lo **stato del job**, e non
+l'avevo guardato.
+
+### ⛔ La conseguenza per il rilascio, ed è la più grave della giornata
+
+`build (sdist + wheel)` **è il job che produce l'artefatto**. Il cancello ① cerca `ci`
+**verde** su un commit: se `ci` non CHIUDE, non è rosso — **non esiste**.
+
+⇒ **Il cancello ① non è insoddisfatto: è insoddisfacibile** finché `build` non ottiene un
+runner. Non è questione di aspettare, di curare i test o di alleggerire la coda:
+**anche con tutti i test verdi, il run resterebbe aperto sull'ultimo job.**
+
+### Cosa questo NON prova
+
+- **Non so perché `build` non ottenga un runner** mentre i `test` di run più recenti sì
+  (#1671 e #1672 hanno job partiti alle 17:33–18:09). **Non è un pool a zero**: riguarda
+  *quel* job. Tre ipotesi non misurate — `needs: test` con i test in `failure`,
+  dimensione della coda, un limite di concorrenza — e le lascio come ipotesi.
+- **Campione: 5 run.** Non ho contato quanti dei 833 in coda siano nella stessa forma.
+- ⛔ **`.github/workflows/ci.yml` non lo curo**: segnalo.
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
+  --jq '.jobs[]|select(.status!="completed")|"\(.name) \(.status) started=\(.started_at) runner=\(.runner_name)"'
+gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=completed&per_page=1" --jq .total_count
+```
+
+📌 **La lezione che mi riguarda**: la previsione l'avevo scritta perché potesse smentirmi,
+e mi ha smentita in novanta minuti. Senza, avrei continuato a chiamare «strozzatura» un
+**blocco strutturale**, e avrei cercato la leva sbagliata — togliere carico — per un
+difetto che il carico non spiega.
