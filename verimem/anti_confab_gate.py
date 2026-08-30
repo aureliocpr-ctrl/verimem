@@ -2879,7 +2879,38 @@ def run_validation_gate(
     # shape-confab regardless of an attached source. The honest recovery path
     # for a real documental fact is a grounding JUDGE (L4), which verifies
     # source-entailment; the L4-skipped advisory above says so when none is set.
-    l1_escalates = (has_l1 and not _personal_fp and not _world_fp
+    # `L1.20` DICHIARA E NON TRATTIENE (2026-08-30). Il detector semantico
+    # multilingue resta acceso e il suo warning resta in ricevuta — quello che
+    # perde e' il potere di veto, nella stessa forma scelta per `L4-relazione` e
+    # `L4.2`: dichiara e lascia decidere.
+    #
+    # Perche', misurato su tre popolazioni indipendenti che non si erano lette:
+    #   80 handoff        `L1.13` 68 volte, `L1.15` 40, **`L1.20` 2**
+    #   10 verbali veri   a fermarli sono `L1.13`/`L1.15`/`L1.16`/`L4-relazione`
+    #                     — mai `L1.20` (banco a variabile singola: una fonte,
+    #                     una frase, cambia solo il verbo)
+    #   5 verbali veri    rimisura indipendente: `L1.13` tre volte, `L1.15`,
+    #                     `L1.16`, mai `L1.20`
+    # ⇒ Come veto il beneficio e' ZERO — dove ferma, i lessicali fermano gia' —
+    # e il costo no: un claim VERO quarantinato a grounding 99.72 con
+    # `layers=['L1.20']`, cioe' il giudice che sostiene il fatto e il detector
+    # che lo trattiene lo stesso.
+    #
+    # LA MODIFICA E' QUI E NON SU `has_l1` DI PROPOSITO. `has_l1` significa «un
+    # layer L1 ha parlato» e alimenta i due marcatori di osservabilita' qui
+    # sotto (`L1-domain-precision-observe` e la traccia di `_domain_advisory`):
+    # toglierne `L1.20` li farebbe tacere su un caso in cui oggi parlano, e
+    # scambierebbe un declassamento con un presidio invisibile — il difetto gia'
+    # registrato in `test_l120_si_disarma_quando_il_daemon_c_e.py`. Cambia la
+    # DECISIONE di trattenere, non il fatto che il detector abbia parlato.
+    #
+    # ⚠️ Cio' che questo NON chiude: i verbali veri fermati da `L1.13`/`L1.15`/
+    # `L1.16` cadono esattamente come prima. Quello e' un difetto della
+    # specifica dei lessicali, non di questo layer.
+    _l1_oltre_l120 = any(
+        str(w.get("layer", "")).startswith("L1")
+        and str(w.get("layer", "")) != "L1.20" for w in warnings)
+    l1_escalates = (_l1_oltre_l120 and not _personal_fp and not _world_fp
                     and not _domain_advisory and not _domain_precision_fp)
     if _domain_precision_fp and not _personal_fp and not _world_fp \
             and not _domain_advisory:
