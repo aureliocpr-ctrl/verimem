@@ -31,12 +31,14 @@
   il dogfooding punisce chi sbaglia, incluso chi lo costruisce.
 - **Due cure sono entrate col processo pieno** (proposta → voti informati →
   ratifica → RED→GREEN falsificato → firma): L1.20-ad-avviso (`5ea77b6d`,
-  verde-2-firme, costo 1/70 a verbale) e guardia anti-eco (`275648c0`).
+  verde-2-firme, costo 1/70 a verbale) e guardia anti-eco (`1a4b8635`,
+  verde-2-firme: LANT-103 — la 2ª firma mancava, l'ha visto il primo
+  lettore esterno; qui prima si citava lo SHA pre-rebase `275648c0`).
 
 ## 2. DIFETTOSO — misurato, riproducibile, con la cura nominata
 - **La famiglia L1 decide con le parole, e sbaglia nei due versi.** Le facce
   misurate del buco (convergenti da banchi indipendenti): l'auto-eco comprava
-  il perdono (5/5, curato da `275648c0` — guardia in attesa 2ª firma); la
+  il perdono (5/5, curato da `1a4b8635` — 2ª firma LANT-103); la
   riformulazione senza trigger passa (banco D `ef234ae0`, resta per la cura
   grande); la polisemia perdona ciò che non deve (W7-61); l'etichetta
   `writer_role='user'` scritta da `verimem save` sulle parole dell'AGENTE
