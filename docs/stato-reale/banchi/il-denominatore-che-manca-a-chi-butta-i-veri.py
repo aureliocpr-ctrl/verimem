@@ -55,6 +55,7 @@ MOAT = "L4-grounding"
 def main() -> int:
     try:
         from verimem.anti_confab_gate import run_validation_gate
+        from verimem.local_grounding import judge_state, warm_local_judge_async
     except Exception as e:  # noqa: BLE001
         print(f"NON RIUSCITO: import fallito - {type(e).__name__}: {e}")
         return 1
@@ -74,11 +75,35 @@ def main() -> int:
         print("NON RIUSCITO: meno di cinquanta per popolazione.")
         return 1
 
+    # ⚠️ PREFLIGHT — E' LA RIGA PIU' IMPORTANTE DEL BANCO, e l'ho scritta dopo
+    #    averci sbattuto: un processo nuovo trova il giudice in stato
+    #    «warming», e in quella finestra il gate **ammette tutto** emettendo
+    #    `L4-skipped` («entailment NOT verified»). E' un comportamento
+    #    DELIBERATO e dichiarato nel prodotto, non un difetto — ma un banco che
+    #    non aspetta misura il warmup e non il moat. La mia esecuzione delle
+    #    20:32 ha dato 0/300 veri e 0/300 falsi fermati in 26s: numeri puliti,
+    #    completamente privi di significato.
+    #    ⇒ Chiunque misuri il gate deve chiedere `judge_state()` PRIMA.
+    print("\n  -- preflight: il moat deve essere CALDO, o non sto misurando lui")
+    warm_local_judge_async()
+    t0 = time.time()
+    stato = judge_state()
+    while stato == "warming" and time.time() - t0 < 180:
+        time.sleep(2)
+        stato = judge_state()
+    print(f"     `judge_state()` = {stato!r}  dopo {time.time() - t0:.1f}s")
+    if stato != "ready":
+        print("NON RIUSCITO: il giudice non e' pronto. Ogni write sarebbe"
+              " ammesso con")
+        print("`L4-skipped` e il banco misurerebbe il warmup, non il moat.")
+        return 1
+
     # scattato[layer] = su quanti claim il layer si e' pronunciato
     # fermato[layer]  = su quanti di quelli l'esito e' stato negativo
     def _giudica(claim: list[dict], etichetta: str) -> dict[str, object]:
         scattato: Counter[str] = Counter()
         fermato: Counter[str] = Counter()
+        solo_lui: Counter[str] = Counter()
         muti = 0
         negativi = 0
         t0 = time.time()
@@ -103,11 +128,19 @@ def main() -> int:
                 for lay in layers:
                     if lay != MOAT:
                         fermato[lay] += 1
+                        # ⚠️ IL CONTROLLO CHE PUO' SMONTARE LA TABELLA. Un
+                        #    layer al 100% puo' esserlo per CO-OCCORRENZA: se
+                        #    scatta solo dove il moat bocciava comunque, non
+                        #    ha perso NESSUN vero che si sarebbe salvato. Il
+                        #    numero attribuibile e' questo, non il tasso.
+                        if MOAT not in layers:
+                            solo_lui[lay] += 1
                 if not layers:
                     muti += 1
             if i and i % 100 == 0:
                 print(f"    ...{i}/{len(claim)} ({time.time() - t0:.0f}s)")
         return {"scattato": scattato, "fermato": fermato, "muti": muti,
+                "solo_lui": solo_lui,
                 "negativi": negativi, "n": len(claim),
                 "secondi": time.time() - t0, "etichetta": etichetta}
 
@@ -123,8 +156,9 @@ def main() -> int:
     #    risultato principale stava in coda a una misura di controllo. La
     #    lezione e' che l'ordine di stampa e' parte del disegno: **cio' che
     #    risponde alla domanda va emesso appena e' noto**, il controllo dopo.
-    _tabella(sc=v["scattato"], fe=v["fermato"],  # type: ignore[arg-type]
-             muti=int(v["muti"]))
+    righe_tab = _tabella(sc=v["scattato"], fe=v["fermato"],  # type: ignore[arg-type]
+                         muti=int(v["muti"]),
+                         solo=v["solo_lui"])  # type: ignore[arg-type]
 
     print("\n  -- giudico i FALSI (l'esito negativo qui e' il LAVORO)")
     f = _giudica(falsi, "falsi")
@@ -142,15 +176,17 @@ def main() -> int:
     print(f"     ✅ controllo (1) superato: il gate ferma {quota_falsi:.1f}%"
           " dei falsi,")
     print("     quindi il conto sui veri e' leggibile.")
+    _verdetto(righe_tab)
     return 0
 
 
-def _tabella(*, sc: Counter, fe: Counter, muti: int) -> None:
+def _tabella(*, sc: Counter, fe: Counter, solo: Counter,
+             muti: int) -> list[tuple[str, int, int, float]]:
     """La tabella dei tassi sui VERI. Separata perche' va emessa appena i veri
     sono finiti: e' la risposta alla domanda, non il controllo."""
     print("\n  == LA TABELLA CHE MANCAVA: numeratore E denominatore")
-    print("     («scattato» = quante volte quel decisore si e' pronunciato"
-          " su un VERO)")
+    print("     («scattato» = occasioni · «SOLO LUI» = veri persi che il moat"
+          " NON bocciava)")
     print(f"\n     {'decisore':<32}{'scattato':>9}{'fermati':>9}{'tasso':>9}")
     righe_tab = []
     for lay, n_sc in sc.most_common():
@@ -161,12 +197,30 @@ def _tabella(*, sc: Counter, fe: Counter, muti: int) -> None:
         righe_tab.append((lay, n_sc, n_fe, tasso))
     for lay, n_sc, n_fe, tasso in sorted(righe_tab, key=lambda t: -t[3]):
         segno = "🔴" if tasso >= 50 else ("🟡" if tasso >= 20 else "  ")
-        print(f"  {segno} {lay:<32}{n_sc:>9}{n_fe:>9}{tasso:>8.1f}%")
+        n_solo = solo.get(lay, 0)
+        print(f"  {segno} {lay:<28}{n_sc:>9}{n_fe:>8}{tasso:>7.1f}%"
+              f"{n_solo:>10}")
     if muti:
         print(f"\n     ⚠️ {muti} veri fermati SENZA alcun warning:"
               " un decisore che non si dichiara.")
+    print("\n     ⏸️  I NUMERI SONO SOPRA, LA CONCLUSIONE NO: arriva dopo il")
+    print("     controllo sui falsi, che puo' ancora dichiararli illeggibili.")
+    return righe_tab
 
+
+def _verdetto(righe_tab: list[tuple[str, int, int, float]]) -> None:
+    """La lettura dei numeri — DOPO il controllo positivo, mai prima.
+
+    ⚠️ Scritto cosi' per un difetto che ho introdotto io alle 20:31 spostando
+    la tabella prima dei falsi: la conclusione usciva insieme ai numeri, e
+    nell'esecuzione col moat freddo ha stampato *«la premessa REGGE, spostare
+    la cura sul cut e' motivato»* su 0 veri fermati su 300 — la conclusione
+    esattamente opposta al vero, sopra il controllo che la smontava tre righe
+    dopo. **I numeri grezzi possono uscire presto; il verdetto no.**
+    """
     print("\n  == LA RIGA CHE CONTA")
+    sc = Counter({lay: n for lay, n, _f, _t in righe_tab})
+    fe = Counter({lay: f for lay, _n, f, _t in righe_tab})
     moat_sc, moat_fe = sc.get(MOAT, 0), fe.get(MOAT, 0)
     moat_tasso = 100.0 * moat_fe / moat_sc if moat_sc else 0.0
     peggiori = [t for t in righe_tab if t[0] != MOAT and t[3] > moat_tasso]
