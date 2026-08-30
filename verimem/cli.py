@@ -4740,6 +4740,48 @@ def _node_line(node: dict) -> str:
             f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
 
 
+def riga_moat_non_verificato(moat: str | None) -> str:
+    """Il testo di «not verified», col rimedio GIUSTO per lo stato del giudice.
+
+    ⚠️ TRE STATI, NON DUE. La cura del 2026-08-21 ha separato «nessuna fonte» da
+    «nessun giudice», e per due settimane e' bastato. Ma `not_run:no_judge`
+    copre ANCHE il giudice che sta CARICANDO, e li' il testo mandava a scaricare
+    un modello gia' presente — **due righe consecutive della stessa ricevuta che
+    si contraddicono**, che e' esattamente il difetto che quella cura aveva
+    chiuso un livello piu' indietro. Misurato alla porta CLI il 2026-08-30 alle
+    20:40, store temporaneo, daemon giu'::
+
+        L4-skipped — ... the local CE judge is warming ... It is NOT missing ...
+        not verified — ... no grounding judge is installed ... run `verimem warmup`
+
+    🔑 Lo stato lo dice gia' `local_grounding.judge_state()`, uno solo per tutte
+    le superfici: qui si LEGGE invece di dedurlo dal campo `moat`, che sui tre
+    stati del giudice ne distingue uno solo.
+    """
+    if str(moat or "") != "not_run:no_judge":
+        return ("[yellow]not verified[/yellow] [dim]— no source, so the "
+                "entailment moat did not run; pass --source \"<the output "
+                "that proves it>\" to have it judged[/dim]")
+    from .local_grounding import judge_state  # noqa: PLC0415
+    stato = judge_state()
+    if stato == "warming":
+        return ("[yellow]not verified[/yellow] [dim]— a source was given and "
+                "the local judge is LOADING, so the entailment moat did not "
+                "run for THIS write. The model is already on disk: `verimem "
+                "warmup` would not help. A shared encode daemon is what makes "
+                "the first write judged - `verimem doctor` says whether one is "
+                "reachable[/dim]")
+    if stato == "failed":
+        return ("[yellow]not verified[/yellow] [dim]— a source was given and "
+                "the local judge is on disk but FAILED to load in this "
+                "process, so the entailment moat did not run; run `verimem "
+                "doctor` for the reason[/dim]")
+    return ("[yellow]not verified[/yellow] [dim]— a source was "
+            "given but no grounding judge is installed, so the "
+            "entailment moat did not run; run `verimem warmup` to "
+            "fetch the free local judge[/dim]")
+
+
 @app.command("save")
 def save_cmd(
     text: str = typer.Argument(None, help="Checkpoint text (or --from-file)."),
@@ -4888,15 +4930,7 @@ def save_cmd(
         # `not_run:no_judge`. Quel test guarda il DATO; nessuno guardava la riga
         # STAMPATA, ed e' li' che si perdeva. Si legge il campo, non si deduce
         # dal punteggio: sono due domande diverse.
-        if str(r.get("moat") or "") == "not_run:no_judge":
-            console.print("  [yellow]not verified[/yellow] [dim]— a source was "
-                          "given but no grounding judge is installed, so the "
-                          "entailment moat did not run; run `verimem warmup` to "
-                          "fetch the free local judge[/dim]")
-        else:
-            console.print("  [yellow]not verified[/yellow] [dim]— no source, so the "
-                          "entailment moat did not run; pass --source \"<the output "
-                          "that proves it>\" to have it judged[/dim]")
+        console.print("  " + riga_moat_non_verificato(r.get("moat")))
     # A save that RETIRES an older fact is not an append: the old value stops
     # being served by default recall. save_checkpoint has always returned the
     # ids (client.py sets _out["superseded"]) and this receipt dropped them, so

@@ -34,11 +34,30 @@ RADICE = Path(__file__).resolve().parents[1]
 
 
 def _sorgente_ricevuta() -> str:
-    """Il blocco di ``cli.py`` che stampa l'esito del moat."""
+    """Il blocco di ``cli.py`` che stampa l'esito del moat.
+
+    ⚠️ IL PRESIDIO SEGUE IL CODICE, aggiornato il 2026-08-30. La scelta del
+    messaggio e' stata ESTRATTA da ``save_cmd`` in
+    ``riga_moat_non_verificato``, perche' i TRE stati del giudice
+    (``absent`` / ``warming`` / ``failed``) cadevano tutti in
+    ``not_run:no_judge`` e la riga mandava a scaricare un modello gia'
+    presente — due righe della stessa ricevuta che si contraddicevano, di
+    nuovo, un livello piu' in la'. Questo parser cercava solo dentro
+    ``save_cmd`` ed e' diventato rosso per il posto del codice, non per il
+    suo comportamento.
+
+    🔑 La TESI non cambia: si ispeziona la funzione estratta quando c'e',
+    ``save_cmd`` altrimenti, e chi rimettesse la scelta cieca del messaggio
+    fa tornare rossi gli stessi due test.
+    """
     testo = open(RADICE / "verimem" / "cli.py", encoding="utf-8").read()
-    i = testo.find("def save_cmd(")
-    assert i > 0, "save_cmd non trovato: il parser di questo test va rivisto"
-    return testo[i:i + 20000]
+    for ancora in ("def riga_moat_non_verificato(", "def save_cmd("):
+        i = testo.find(ancora)
+        if i > 0:
+            return testo[i:i + 20000]
+    raise AssertionError(
+        "ne' riga_moat_non_verificato ne' save_cmd trovati in cli.py: "
+        "il parser di questo test va rivisto")
 
 
 def test_la_ricevuta_non_dice_no_source_quando_manca_solo_il_giudice() -> None:

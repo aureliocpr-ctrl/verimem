@@ -1812,10 +1812,23 @@ def _advisory_l4_skipped() -> dict[str, str]:
             "layer": "L4-skipped",
             "reason": "source provided but the grounding judge was still "
                       "loading - entailment NOT verified for THIS write",
+            # ⚠️ IL RIMEDIO NOMINA LA CONDIZIONE CHE LO RENDE VERO, e prima
+            # non lo faceva. Diceva «writing through the CLI gets the moat
+            # verdict»: misurato alla porta il 2026-08-30 alle 20:40, la CLI
+            # (`surface=cli`) ha stampato `grounding_score=None`,
+            # `judged=False` e QUESTO STESSO avviso — cioe' consigliava di
+            # usare la CLI mentre la superficie era gia' la CLI. La CLI e'
+            # anch'essa in delegate-only: cio' che fa la differenza non e' la
+            # porta, e' il DAEMON condiviso, e il warm in-process non fa in
+            # tempo per un processo che fa una chiamata sola (256 su 293,
+            # audit log citato in `_gate_via_daemon`).
             "advice": "the local CE judge is warming on a background thread "
                       "(delegate-only mode keeps the ~30s cold load off the "
-                      "request thread). It is NOT missing: re-writing after it "
-                      "lands, or writing through the CLI, gets the moat verdict.",
+                      "request thread). It is NOT missing and `warmup` will "
+                      "not help. What gets the FIRST write judged is a "
+                      "reachable shared encode daemon; `verimem doctor` says "
+                      "whether one is. Without it a short-lived process ends "
+                      "before the background load lands.",
         }
     if stato == "failed":
         return {
