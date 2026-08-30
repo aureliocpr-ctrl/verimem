@@ -9522,3 +9522,40 @@ banco, che gira a `0.835`, **misura il regime peggiore dei due**.
   addestramento**.
 - **Le domande italiane le scrivo io**; lo store è di terzi.
 
+
+**㉕ `39` — le finestre cieche: ventitré minuti, cinquantaquattro fatti.** Quanto costa, in fatti mai
+giudicati, il daemon che muore. `grounding_score IS NULL` = **mai giudicato**, non «giudicato male».
+Alle **21:19:44 del 30/08**: **6.601 su 16.369 = 40,3%**.
+🪞 **Ma il 40,3% mescola DUE ERE e non è il costo di niente**: a **luglio è il 100% ogni giorno**
+(18/07 105 su 105 · 19/07 66/66 · 25/07 50/50 · 27/07 33/33) — **lì il moat non esisteva**. Nell'era
+corrente il fondo è **0,0-0,8%** (19/08, 21/08, 24/08, 25/08 tutti a **0,0%**).
+📈 **Il numero che conta**: 27/08 **3,2%** · 28/08 **2,3%** · 29/08 **1,5%** · **30/08 8,8%
+(70 su 797)** ⇒ **un fattore 20 sopra il fondo di metà agosto**.
+🔬 **E i 70 non sono sparsi: quattro blocchi** — `12:19:33-12:19:35` (**6 fatti in 2 secondi**) ·
+`13:16:23-13:19:34` (2) · `16:23:06-16:23:07` (**8 in 1 secondo**) · **`20:30:10-20:53:20` (23,2 min,
+54 fatti)**. 🔑 **Due popolazioni, e la somma sarebbe una falsa attribuzione**: le raffiche istantanee
+sono **tutte `AUTO-CLUSTER-MASTER … auto-consolidated`** (`role=agent_inference`) — sintesi di
+cluster, **senza source esterna da giudicare: non sono state perse dal moat, non avevano nulla da
+sottoporgli**; la finestra lunga è **lavoro vero**, in maggioranza `writer_role=user`
+(`dogfooding/moat-soglia-source` 4 · **`verimem/telemetria-regime` 3, i miei** ·
+`guardia/criterio-cieco-overlap` 2 · `guardia/leva-paths-ignore` 2 · `c10/halumem` 12).
+⇒ **Il costo del daemon assente oggi è 54 fatti in 23 minuti, non 70.**
+✅ **La finestra combacia con l'osservazione diretta, ai due estremi**: **20:51** la ricevuta del mio
+`save` (*«encode delegate unavailable»*, `grounding_score=None`) · **20:53** `doctor`:
+*«no encode daemon is running»* · **21:05** `doctor`: *«all 16322 vectors match … from the running
+encode daemon»* · **21:00: 52 fatti scritti, ZERO non giudicati**. **La finestra cieca si chiude
+esattamente quando il daemon torna.**
+🎯 **Il danno, detto senza gonfiarlo**: quei 54 fatti **non sono persi** — sono `stored` e
+interrogabili. Manca il **giudizio**: restano `model_claim` con `grounding_score = null`, cioè
+**indistinguibili da fatti scritti senza alcuna prova**. Chi li rileggerà domani non ha modo di
+sapere che **la source c'era ed è stata ignorata per una ragione infrastrutturale**. E poiché il
+daemon è **intermittente**, si ripeterà: **la cura non è un comando prima della sessione, è un
+presidio che si accorga della finestra mentre è aperta** — oggi non se ne accorge nessuno, né chi
+scrive (che riceve un `admitted`), né la telemetria (cella ㉒).
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-quanti-mai-giudicati.py       # separa le ere PRIMA di contare
+python docs/stato-reale/banchi/ws6-le-finestre-cieche-di-oggi.py # blocchi, non sparsi
+```
