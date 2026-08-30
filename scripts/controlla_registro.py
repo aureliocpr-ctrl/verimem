@@ -236,6 +236,57 @@ def _avvisa_se_l_artefatto_e_vecchio(percorso: pathlib.Path) -> None:
     )
 
 
+def _non_esaminati(percorso: pathlib.Path) -> int | None:
+    """Quanti file l'artefatto contiene che ``_sorgenti`` NON guarda.
+
+    ⚠️⚠️ 2026-08-30 — PERCHE' ESISTE. Questo controllo e' il VETO del rilascio, e
+    guarda **solo i .py**. E' una scelta legittima, ma non era dichiarata nel suo
+    stesso verdetto: su una cartella con due file palesemente sporchi — un nome
+    proprio di sessione in un `.md` e uno in un `.json` — usciva::
+
+        file .py esaminati: 0
+            ok   identificativo di sessione   0 in 0 file
+            ok   nome proprio di sessione     0 in 0 file
+        EXIT = 0
+
+    Tre «ok» e via libera. 🔑 Un `ok` su ZERO file guardati e' indistinguibile da
+    un `ok` su una cartella pulita, e chi legge il riepilogo del rilascio non ha
+    modo di saperlo.
+
+    ⚖️ Questa funzione **non estende il perimetro** — sarebbe un'altra decisione,
+    con altri costi. Rende VISIBILE che il perimetro esiste.
+    📌 Serve perche' `pyproject.toml` spedisce anche non-.py (`package-data`:
+    ``webui/vendor/*.txt``, ``webui/vendor/README.md``, ``*.yaml``).
+
+    Si ASTIENE (``None``) se non riesce a contare: un'assenza non e' uno zero, e
+    uno zero inventato qui rifarebbe il difetto che questa funzione denuncia.
+    """
+    io_stesso = pathlib.Path(__file__).resolve()
+    try:
+        if percorso.is_dir():
+            fuori = 0
+            for f in sorted(percorso.rglob("*")):
+                if not f.is_file() or f.suffix == ".py":
+                    continue
+                if ESCLUSE & set(f.parts) or f.name.startswith("."):
+                    continue
+                if f.resolve() == io_stesso:
+                    continue
+                fuori += 1
+            return fuori
+        if percorso.suffix in (".whl", ".zip"):
+            with zipfile.ZipFile(percorso) as z:
+                return sum(1 for n in z.namelist()
+                           if not n.endswith(".py") and not n.endswith("/"))
+        if ".tar" in percorso.suffixes or percorso.suffix == ".gz":
+            with tarfile.open(percorso) as tf:
+                return sum(1 for m in tf.getmembers()
+                           if m.isfile() and not m.name.endswith(".py"))
+    except Exception:
+        return None
+    return None
+
+
 def controlla(percorso: pathlib.Path) -> int:
     conteggi: Counter[str] = Counter()
     file_per_classe: defaultdict[str, set[str]] = defaultdict(set)
@@ -275,6 +326,15 @@ def controlla(percorso: pathlib.Path) -> int:
 
     print(f"artefatto: {percorso}")
     print(f"file .py esaminati: {totale_file}")
+    fuori_perimetro = _non_esaminati(percorso)
+    if fuori_perimetro is None:
+        print("file NON esaminati (non .py): ?   "
+              "— non contati: leggi questo verdetto come parziale")
+    elif fuori_perimetro:
+        print(f"file NON esaminati (non .py): {fuori_perimetro}   "
+              "— il controllo guarda SOLO i .py: un «ok» non li copre")
+    else:
+        print("file NON esaminati (non .py): 0")
     _avvisa_se_l_artefatto_e_vecchio(percorso)
     print()
     blocca = False
