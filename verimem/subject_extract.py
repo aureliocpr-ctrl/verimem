@@ -33,7 +33,25 @@ _VERB_MARK = re.compile(
     r"approved|completed|finished|scheduled|planned|works?|holds?|caught|"
     r"got|became|plays?|lives?|crashed|went|switched|adopted|shipped|passed|"
     r"succeeded|rated|meets?|auto-renews?|renews?|renewed|does|do|did|can|will|"
-    r"would|should|may|might|must)\b",
+    r"would|should|may|might|must)\b"
+    # ⚠️ `e'` STA FUORI DAL GRUPPO, e non e' una svista: il gruppo si chiude con
+    # `\b`, e dopo un apostrofo il word-boundary NON matcha (apostrofo e spazio
+    # sono entrambi non-word). Messo dentro, sarebbe morto in silenzio.
+    #
+    # Perche' serve: `è` c'era, `e'` no — e `e'` e' la forma ASCII con cui
+    # l'italiano si scrive senza tastiera italiana. Senza marcatore di verbo
+    # `subject_of()` torna vuoto, il soggetto e' «non risolvibile» e
+    # `is_domain_professional` fallisce PRIMA di guardare il dominio: la
+    # carve-out per i fatti di terzi non viene nemmeno raggiunta.
+    #
+    # Misurato prima di curare (registro dell'esame, 30/08):
+    #   W7-72  isolamento a una variabile: `e'` 0/4 · `è` 4/4 · attiva 3/3
+    #   W7-73  il corpus scrive `e'` 976 volte contro 357 con `è` — il TRIPLO —
+    #          e 174 fatti vivi perdono il soggetto per l'apostrofo
+    #   W7-74  ma ALLA PORTA l'esito cambia in 1 caso su 24: il 93,7% di quei
+    #          174 sta dove `L1` non gira comunque. **Cura piccola, effetto
+    #          misurato minimo** — le due cose vanno dette insieme.
+    r"|\be'(?=\s)",
     re.IGNORECASE)
 
 #: Adverbs that sit between the subject NP and its verb ('the team STILL runs') —
