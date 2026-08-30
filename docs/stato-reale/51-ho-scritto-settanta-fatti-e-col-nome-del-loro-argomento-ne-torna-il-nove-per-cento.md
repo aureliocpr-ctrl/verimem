@@ -137,6 +137,36 @@ che si contraddicono in apparenza.
 Questo non ritira la regola: la restringe. **Serve una source distinta per
 misura — non un topic distinto per misura.**
 
+## Quanto ho duplicato, contato
+
+Resta da dire quanto sia grande il danno che ho fatto io. Contando i miei 36
+topic che hanno un «gemello» già nello store — criterio grossolano e dichiarato
+tale: **almeno due parole in comune** nell'ultimo segmento del nome:
+
+    >>> miei topic con almeno un gemello preesistente: 9 su 36 = 25,0%
+
+**Un quarto dei topic che ho aperto stanotte duplicava qualcosa che c'era già.**
+I casi:
+
+| il mio | il gemello |
+|---|---|
+| `verimem/pavimento-persistito` | `project/verimem/pavimento-persistito` |
+| `verimem/daemon-encode` | `project/verimem/ws4-costo-senza-daemon-encode` |
+| `verimem/fatti-mai-giudicati` | `guardia/doctor-fatti-non-giudicati` |
+| `verimem/pavimento-avviso-muto` | `project/verimem/astensione-ws5/l-avviso-dice-che-il-migliore…` |
+| `verimem/cura-pavimento-verificata` | `lessons/errors/cura-verificata-ma-non-nel-ramo-che-gira` (+11) |
+| **`verimem/coda-revisione`** | **`verimem/coda-revisione-avviso`** |
+
+L'ultima riga è la più istruttiva: **quei due li ho creati entrambi io, stanotte,
+a pochi minuti di distanza.** Non serve un mese e un'altra istanza per
+frammentare un namespace — bastano venti minuti e la stessa persona che scrive
+due fatti sullo stesso argomento.
+
+*(Il criterio «due parole in comune» sovrastima e sottostima: accosta
+`cura-pavimento-verificata` a dodici topic diversi che parlano di cure, e non
+vedrebbe due nomi sinonimi senza parole condivise. Dà l'ordine di grandezza, non
+la cifra esatta.)*
+
 ## Un errore di misura, e uno di lettura
 
 **Tredicesimo errore della notte.** La prima versione di questo banco filtrava
