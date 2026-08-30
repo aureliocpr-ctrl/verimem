@@ -1,2 +1,6 @@
 # vendored minified bundles: bytes are the contract, no EOL conversion
 engram/webui/vendor/*.js -text
+
+# shell hooks: eseguiti da sh, un CRLF li rompe e autocrlf li marca
+# "modificati" per sempre bloccando ogni merge (misurato 30/08 21:58)
+.githooks/* text eol=lf

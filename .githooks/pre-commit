@@ -46,11 +46,25 @@ if [ -z "$TARGETS" ]; then
     TARGETS="verimem tests scripts"
 fi
 
-if ! ruff check $TARGETS; then
+# 2026-08-30: il lint girava sull'ALBERO INTERO, e con otto istanze sulla
+# stessa copia il file-a-meta' di una fermava i commit di tutte — misurato due
+# volte in un'ora (F821 su mcp_server.py in lavorazione: nessuna poteva
+# committare nemmeno un .md). La CI linta il CHECKOUT del commit, cioe' cio'
+# che e' staged: lintare qui i soli file staged e' la stessa promessa, senza
+# punire chi non c'entra. Cura approvata dal collegio (ratifica 53d56ec0).
+# ⚠️ Limite dichiarato: ruff legge il file su DISCO, non il contenuto staged —
+# con un add parziale (-p) puo' giudicare piu' di cio' che committi. E un
+# errore cross-file (import di un nome che un modulo NON staged ha perso) lo
+# vede solo la CI: questo resta il primo cancello, non l'ultimo.
+STAGED_PY=$(git diff --cached --name-only --diff-filter=ACMR -- $TARGETS \
+            | grep -E '\.py$' || true)
+if [ -z "$STAGED_PY" ]; then
+    echo "pre-commit: nessun .py in staging dentro ($TARGETS) — lint saltato"
+elif ! ruff check $STAGED_PY; then
     echo ""
-    echo "pre-commit BLOCKED: ruff would fail the CI's Lint step, which runs"
-    echo "before the tests — every job on every OS would go red."
-    echo "Fix:  ruff check $TARGETS --fix"
+    echo "pre-commit BLOCKED: ruff would fail the CI's Lint step on a file"
+    echo "you are committing — every job on every OS would go red."
+    echo "Fix:  ruff check $STAGED_PY --fix"
     exit 1
 fi
 
@@ -99,4 +113,4 @@ if [ -f "$REG" ]; then
     fi
 fi
 
-echo "pre-commit: lint clean ($TARGETS)"
+echo "pre-commit: lint clean (staged: ${STAGED_PY:-nessun py})"
