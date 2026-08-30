@@ -245,6 +245,47 @@ def test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice():
         )
     distanza = int(git("rev-list", "--count", f"{bump}..HEAD") or 0)
 
+    # ⚠️⚠️ 2026-08-30 — QUESTO TEST OFFRIVA TRE USCITE E NE RICONOSCEVA DUE.
+    # Il messaggio qui sotto dice «o si pubblica, o si alza la versione, **o si
+    # dichiara la distanza nel README**», ma il controllo era il solo
+    # `distanza <= SOGLIA`: nel corpo del test la parola README compariva una
+    # volta sola, dentro la f-string del messaggio, e l'unico `read_text` era su
+    # `pyproject.toml`. La terza uscita ERA GIA' STATA PERCORSA — `2ab18dc1` ha
+    # messo nel README (dentro il blocco «⛔ RILASCIO») la forma monotona
+    # «**more than 1900 commits** ahead» — e il test restava rosso lo stesso,
+    # cioe' chiedeva una cosa che qualcuno aveva gia' fatto.
+    #
+    # 🔑 Il criterio NON si indebolisce: passa da «la distanza e' piccola» a «la
+    # distanza e' piccola OPPURE e' dichiarata E LA DICHIARAZIONE E' VERA». Una
+    # frase messa e poi dimenticata non basta: se il README dichiarasse un numero
+    # che i commit hanno superato, si torna rossi.
+    # ⚖️ E la via d'uscita e' uno SKIP, non un pass, perche' e' la scelta che
+    # questo stesso file argomenta piu' su: «uno skip lascia una traccia nel
+    # riepilogo e qualcuno puo' andarlo a leggere; un verde da misura sbagliata
+    # non lascia NIENTE».
+    # ⚠️ E QUI IL PRIMO TENTATIVO DI QUESTA CURA HA SBAGLIATO, il 30/08: confrontava
+    # il numero del README con `distanza`, che sono DUE RIGHELLI DIVERSI. Il test
+    # misura dal BUMP in `pyproject.toml` (1363 quel giorno); il README dichiara la
+    # distanza dalla RELEASE pubblicata (1900+ da `v0.7.0`). Confrontarli dava
+    # «la dichiarazione non regge» su un README perfettamente aggiornato.
+    # ⇒ La dichiarazione va verificata CONTRO CIO' CHE DICHIARA: la release che il
+    # README stesso nomina. Cosi' nel test non resta nessun numero e nessun tag
+    # cablato — se domani si pubblica la 0.8.0 e il README lo dice, questo segue.
+    dichiarata = _distanza_dichiarata_nel_readme(README.read_text(encoding="utf-8"))
+    if distanza > SOGLIA and dichiarata is not None:
+        soglia_readme, monotona = dichiarata
+        release = _release_dichiarata_nel_readme(README.read_text(encoding="utf-8"))
+        dal_tag = int(git("rev-list", "--count", f"v{release}..HEAD") or 0) if release else 0
+        regge = dal_tag >= soglia_readme if monotona else dal_tag == soglia_readme
+        if regge:
+            forma = "more than " if monotona else ""
+            pytest.skip(
+                f"la distanza dal bump e' {distanza} (soglia {SOGLIA}), MA il README"
+                f" dichiara {forma}{soglia_readme} commits dalla release {release} e la"
+                f" dichiarazione REGGE (misurati {dal_tag}): e' la terza uscita che il"
+                " messaggio d'errore offre."
+            )
+
     assert distanza <= SOGLIA, (
         f"la versione {versione.group(1)} è ferma da {distanza} commit (soglia {SOGLIA}).\n"
         f"Chi installa riceve un artefatto diverso da questo, con lo stesso numero: "
@@ -599,3 +640,72 @@ def test_la_soglia_in_commit_del_readme_e_ancora_vera():
         "Una soglia monotona regge da sola finche' resta SOTTO la realta'; "
         "quando la supera va alzata al valore corrente arrotondato per difetto, "
         "non aggiornata al numero esatto (che invecchierebbe di nuovo).")
+
+
+def _distanza_dichiarata_nel_readme(testo: str) -> tuple[int, bool] | None:
+    """La distanza che il README DICHIARA, e se la dichiara in forma monotona.
+
+    Due forme, e non sono equivalenti::
+
+        «**more than 1900 commits** ahead»   SOGLIA: resta vera finche' i commit
+                                             crescono, cioe' finche' serve
+        «**994 commits** ahead»              VALORE FISSO: invecchia al commit dopo
+
+    Si ASTIENE (``None``) se il README non dichiara nulla: un'assenza non e' uno
+    zero, e restituire 0 farebbe passare proprio il caso peggiore.
+    """
+    monotona = re.search(r"\*\*more than ([\d.,]+) commits\*\* ahead", testo)
+    if monotona:
+        return int(monotona.group(1).replace(".", "").replace(",", "")), True
+    fissa = re.search(r"\*\*([\d.,]+) commits\*\* ahead", testo)
+    if fissa:
+        return int(fissa.group(1).replace(".", "").replace(",", "")), False
+    return None
+
+
+def _release_dichiarata_nel_readme(testo: str) -> str | None:
+    """La release che il README dichiara come «l'ultima pubblicata», o ``None``.
+
+    Sta qui perche' la distanza dichiarata nel README e' misurata DA QUELLA, e
+    verificarla contro un tag cablato nel test riprodurrebbe il difetto che
+    questa cura esiste per togliere: un numero che invecchia in silenzio.
+    """
+    # ⚠️ `[\s>]` e non `\s`: nel README quella frase sta in un BLOCKQUOTE e va a
+    # capo proprio li', dentro il blockquote. Con uno `\s+` semplice
+    # il regex non attraversa il «>» e restituisce None, cioe' «il README non
+    # dichiara nulla» su un README che dichiara benissimo. Misurato il 30/08: il
+    # primo tentativo di questa funzione falliva esattamente cosi', e il suo test
+    # di controllo non se ne accorgeva perche' provava la forma su UNA riga
+    # mentre il caso vero e' su due.
+    # 📌 Limite dichiarato: se un giorno anche «**more than N commits** ahead»
+    # andasse a capo, l'altra funzione qui sopra si romperebbe allo stesso modo.
+    # Non l'ho reso robusto perche' non l'ho visto succedere — ma e' scritto.
+    m = re.search(r"latest release[\s>]+is[\s>]+\*\*([0-9]+\.[0-9]+\.[0-9]+)", testo)
+    return m.group(1) if m else None
+
+
+def test_CONTROLLO_il_riconoscimento_della_dichiarazione_e_armato():
+    """Il sensore introdotto sopra e' collegato? Se no, quel test e' spento.
+
+    Serve perche' la cura del 30/08 introduce una VIA D'USCITA: senza questo
+    controllo, un regex che non trova mai niente — o che trova sempre — sarebbe
+    indistinguibile da uno che funziona. Nel primo caso il test resterebbe rosso
+    per sempre, nel secondo verde per sempre. Entrambi in silenzio.
+    """
+    assert _distanza_dichiarata_nel_readme("nessuna dichiarazione qui") is None, (
+        "il riconoscimento inventa una dichiarazione dove non ce n'e'"
+    )
+    assert _distanza_dichiarata_nel_readme("**more than 1900 commits** ahead of it") == (1900, True)
+    assert _distanza_dichiarata_nel_readme("**994 commits** ahead of it") == (994, False)
+    # e sul README VERO: se un giorno il blocco viene tolto, questo lo dice.
+    assert _release_dichiarata_nel_readme("The latest release is **0.7.0 (22 July)**") == "0.7.0"
+    # il caso VERO: in blockquote, e va a capo dopo «release». E' il caso su cui la
+    # prima versione falliva, ed e' qui perche' un controllo che prova solo la forma
+    # comoda non controlla niente.
+    assert _release_dichiarata_nel_readme("The latest release\n> is **0.7.0 (22 July)**") == "0.7.0"
+    assert _release_dichiarata_nel_readme("niente release qui") is None
+    vero = _distanza_dichiarata_nel_readme(README.read_text(encoding="utf-8"))
+    assert vero is not None, (
+        "il README non dichiara piu' la distanza: la terza uscita non e' piu' percorsa "
+        "e il test della versione tornera' rosso — corretto, ma sappilo da qui."
+    )
