@@ -78,6 +78,49 @@ verde su un caso resta **un limite dichiarato**, non una promessa.
 
 ---
 
+## ⑦ RIMISURATA SU HEAD IL 30/08 CON QUATTRO CURE DENTRO — i danni doppi sono chiusi
+
+Rimisura chiesta da `lead-audit` per sapere **se le cure muovono il claim
+centrale**. Rieseguiti su `HEAD` entrambi i banchi della tabella, con dentro:
+
+| cura | ora | cosa fa |
+|---|---|---|
+| `5ea77b6d` | 13:44 | `L1.20` declassato ad avviso |
+| `1a4b8635` | 14:20 | guardia anti-eco sul perdono di `L1.13` |
+| `c857752e` | 18:05 | l'apostrofo come marcatore di verbo |
+| `5eb64443` | 18:21 | il default di `domain-precision` non si contraddice più |
+
+### La risposta, in una riga: **i danni doppi si chiudono, le difese no**
+
+| classe | prima | ora |
+|---|---|---|
+| `omissione` IT | 🔴 danno doppio — il VERO **fermato** da `L1.20` a 98.9 | il VERO **passa** a 98.9, `L1.20` come **avviso** |
+| `omissione` EN | 🔴 danno doppio | il VERO **passa** a 99.4 |
+| `numerale-a-parole` IT | 🔴 danno doppio | il VERO **passa** a 97.2 (`L1.13` resta avviso) |
+
+⇒ **I tre «danni doppi» della tabella sono chiusi**: nessuna cella fa più cadere
+un fatto vero *mentre* ammette il falso sulla stessa fonte. È il difetto peggiore
+delle tre categorie, perché l'utente perdeva un fatto sostenuto **e** ne guadagnava
+uno inventato.
+
+⇒ **Le difese NON salgono, e non dovevano.** I falsi restano bucati identici a
+prima — `cifra-riusata` IT 1/4 · `omissione` IT ed EN 3/4 · `numerale-a-parole`
+IT 3/4 · `numerale-a-parole` EN 4/4 · `unità-cambiata` IT 3/4 — e i **veri salvi
+sono 2/2 in tutte e sei** le celle allargate.
+
+📌 **Era la predizione pubblicata prima di misurare**: «*la cura `L1.20` non
+dovrebbe muovere quasi nulla in C2*», perché i verbali veri li fermano
+`L1.13`/`L1.15`/`L1.16` e `L1.20` compariva in una cella sola. **Regge** — e
+muove esattamente la cosa che poteva muovere.
+
+⚖️ **Limiti di questa rimisura**: non ho fatto l'A/B sul commit cella per cella —
+il meccanismo è provato dal `RED→GREEN` del test della cura e da un terzo caso
+indipendente misurato da un'altra istanza, non da un confronto diretto su queste
+righe. E `ENGRAM_L1_DOMAIN_PRECISION` risulta «non impostata» ma nel codice è
+**default ON dal 22/07**: verificato che non è una variabile cambiata oggi.
+
+---
+
 ## Le note che cambiano la lettura
 
 **① `cifra-riusata IT` NON era bucata.** Nel primo referto risultava rossa su
