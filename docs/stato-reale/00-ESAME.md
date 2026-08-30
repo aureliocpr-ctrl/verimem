@@ -7644,6 +7644,10 @@ di condizione che il contratto di uscita chiede di rendere esplicita.
 > `test (ubuntu-latest / py3.12)`, scaricato con `gh api .../jobs/<id>/logs` (1.9 MB,
 > 13977 righe). Distanza di versione misurata su `origin/main` in un checkout **non
 > superficiale** (`is-shallow-repository = false`) alle 13:37 del 30/08.
+> ⚠️ **IL REGIME È PIÙ STRETTO DI COSÌ, e me ne sono accorta dopo aver scritto la
+> cella**: quel run è stato **creato il 2026-08-28 alle 17:30** su `2bad80ef`, e fra
+> quel commit e `origin/main` ci sono **732 commit**. Il verdetto descrive un albero di
+> due giorni fa, non lo stato di adesso — vedi l'aggiornamento in fondo.
 > **LIMITE** — un solo job su sei letto per intero: gli altri cinque falliscono negli
 > stessi 8 run esaminati, ma **non ho verificato che falliscano sugli stessi test**.
 > Il numero dei rossi vale per `ubuntu-latest / py3.12`. E i 12085 passed **non
@@ -7753,4 +7757,51 @@ grep -oE "=+ [0-9]+ failed[^=]*=+" log.txt | tail -1     # la riga di sintesi, N
 V=$(sed -n 's/^version[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' pyproject.toml | head -1)
 [ -z "$V" ] && { echo "FERMO: versione non letta"; exit 1; }   # <- la riga che mi mancava
 git rev-list --count "$(git log --format=%H -1 -S "version = \"$V\"" -- pyproject.toml)"..HEAD
+```
+
+### 🔴 AGGIORNAMENTO 13:46 — **la coda non ritarda i verdetti: li rende obsoleti**
+
+Rimisurando il rosso ② **sull'albero di adesso**, eseguendo il criterio del test:
+
+```
+voci nel REGISTRY: 8
+  🔴 modulo NON esiste : 0
+  ✅ modulo esiste     : 8
+  ⚠️  NON GIUDICABILI   : 0   (il criterio si astiene: NON sono un «va bene»)
+```
+
+**Zero mancanti.** La cura è `d0fcc6a2` (28/08 19:02) — **un'ora e mezza dopo** che
+`2bad80ef` fosse creato. Il run stava già in coda mentre la cura entrava.
+
+I tempi veri del ciclo, letti su `created_at` **contro** `started_at` dei job e il
+`runner_name` (perché due volte ho già sbagliato esattamente lì):
+
+```
+created 2026-08-28 17:30 · primo job parte 2026-08-28 23:24 (coda 5h54m) · fine 2026-08-30 00:27
+durata totale del ciclo = 30h 57m     mentre la suite dura 23m 32s
+```
+
+⇒ **Gli 8 job non partono insieme: aspettano slot uno alla volta.**
+
+🔑 **Il punto strutturale.** `publish.yml:116` cerca `ci` **sul commit corrente**
+(`sha='${{ github.sha }}'`). Se un verdetto impiega 31 ore e nel frattempo entrano
+centinaia di commit, il cancello ① chiede una cosa che il sistema non produce più in
+tempo. ⚠️ **Non è insoddisfacibile** — dirlo sarebbe più drammatico che vero: è
+soddisfacibile **congelando `main` per ~31 ore** dopo il tag. Il cancello è sano; è la
+**latenza** a renderlo inservibile mentre otto istanze committano.
+
+📌 Si aggancia a **W8-13** (sotto saturazione i job in fondo alla catena vengono
+cancellati) e alla **coppia di W8-8**.
+
+⚖️ **Cosa questo aggiornamento NON prova**: gli altri quattro rossi **non li ho
+rimisurati**; il campione dei tempi è **5 run**, tutti creati il 28/08 fra le 17:24 e le
+17:30. E il conteggio «5 rossi» resta valido **come elenco di nomi**, non come stato di
+oggi.
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" --jq '[.jobs[].started_at]|min'
+git rev-list --count <sha_del_run>..origin/main
+python -c "import importlib.util; from benchmark.repro_all import REGISTRY, command_module; print(sum(1 for k,e in REGISTRY.items() if (m:=command_module(e['command'])) and importlib.util.find_spec(m) is None))"
 ```
