@@ -9282,3 +9282,54 @@ casa: **un topic per misura**.
 verimem save "Dei fatti con grounding_score NULL quelli senza source sono 6520." --topic v1 --source "<tabella>"   # ~1.3
 verimem save "Dei fatti non giudicati quelli senza source sono 6520."            --topic v5 --source "<tabella>"   # ~96.6
 ```
+
+---
+
+## ws1 — I due giudici hanno bias di lingua OPPOSTI: col CE gate cade l'italiano, col bi-encoder cade l'inglese
+
+**Livello**: `Memory.explain()`, **una sola variabile: il giudice**. **Dataset**: HaluEval QA
+(MIT), 181 frasi di terzi, **45 entità** estratte dal corpus. **Perimetro**: 270 prove (3
+regimi × 2 lingue × 45). **Istante**: 30/08 21:14-21:17. **Regime**: verificato `ok` **dopo la
+costruzione degli store e a fine di ogni regime**. Store costruiti **una volta sola** e
+riusati ⇒ fra i tre regimi cambia **solo** il giudice.
+
+```
+G1 default (auto -> CE GATE)          EN 0/45   IT 2/45
+G2 min_relevance=0.835 (bi-encoder)   EN 4/45   IT 0/45     ← si INVERTE
+G3 min_relevance=0.90  (bi-encoder)   EN 0/45   IT 0/45     ← cella MUTA
+```
+
+### 🔻 La mia predizione è falsificata, e nel modo più informativo
+
+Avevo scritto: «*col float il divario SPARISCE o si assottiglia ⇒ è il CE gate*». **Non
+sparisce: si CAPOVOLGE.** Col bi-encoder a 0,835 falliscono **quattro inglesi e zero
+italiani** — l'esatto contrario del default.
+
+⇒ **Non è che «un giudice sia peggiore in italiano»: i due giudici hanno BIAS DI LINGUA
+OPPOSTI.** Il CE gate lascia passare qualche italiano; il bi-encoder a soglia fissa lascia
+passare qualche inglese.
+
+### Perché conta, e dove si aggancia
+
+**La scelta del giudice sposta CHI viene penalizzato, non solo quanto.** E il
+**TrustMem-Bench usa esattamente `min_relevance = 0.835`** (`_ABSENCE_FLOOR`) ⇒ **il banco
+misura il regime in cui è l'INGLESE a cadere**, mentre l'utente col default è nel regime in cui
+cade l'italiano. È la stessa frattura che avevo misurato il 29/08 («il banco e l'utente non
+attraversano lo stesso giudice»), **ora con la direzione dell'errore, non solo il conteggio**.
+
+⚠️ **G3 è una cella MUTA, non un'assoluzione**: a 0,90 zero fallimenti in entrambe le lingue
+significa che **la soglia è troppo alta perché qualunque cosa passi** — il banco lì non misura.
+**L'avevo previsto e dichiarato prima di eseguirlo.**
+
+### Cosa questo NON prova
+
+- 🔴 **G1 qui dà 2/45, non i 5/45 di venti minuti fa**: **il corpus è diverso** (181 frasi
+  contro 451 — questo banco legge `src[:120]`). ⇒ **il confronto FRA I TRE REGIMI è valido**
+  (stessi store, stesse domande); **il confronto con la misura precedente NO.** Due numeri
+  della stessa forma su popolazioni diverse non si accostano.
+- **4 e 2 su 45 sono numeri piccoli**: **l'inversione è il fatto, la grandezza no.**
+- **Le domande italiane le scrivo io**; lo store è di terzi.
+- **Non so PERCHÉ** i due giudici divergano per lingua: ho la direzione, non il meccanismo. Il
+  bi-encoder è dichiarato multilingue (`intfloat/multilingual-e5-base`); **del CE non ho
+  verificato la lingua di addestramento** e non lo affermo.
+
