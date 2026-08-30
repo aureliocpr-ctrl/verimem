@@ -1,17 +1,30 @@
-"""`hippo_recall_history` tagliava la risposta col pavimento e non lo diceva.
+"""`hippo_recall_history` non diceva quale pavimento avesse usato.
+
+📌 Questo file si chiamava `test_la_porta_applicava_il_pavimento_senza_dirlo.py`
+(commit `e24d25d5`): il nome affermava un taglio che a caldo non avviene —
+vedi la correzione qui sotto.
 
 MISURATO ALLA PORTA il 2026-08-31 alle 00:12, store temporaneo con UN fatto,
 giudice locale assente per costruzione::
 
     porta                  argomento             ricevuta
-    hippo_facts_recall     min_relevance=0.5     min_relevance=0.5   n=1
-    hippo_recall_history   min_relevance=0.5     ['context', 'n']    n=0
+    hippo_facts_recall     min_relevance=0.5     min_relevance=0.5
+    hippo_recall_history   min_relevance=0.5     ['context', 'n']   ← muta
 
-⇒ **La porta accettava il pavimento, lo applicava (`n: 0`) e non lo riportava.**
-Chi legge quella ricevuta non puo' distinguere «il corpus non ha risposte» da
-«un pavimento le ha tagliate» — la distinzione che la porta gemella dichiara
-esplicitamente di garantire nel proprio schema (*«a short list from a poor
-corpus and a short list from a high floor stay distinguishable»*).
+⇒ **La porta accettava il pavimento e non lo riportava.** Chi legge quella
+ricevuta non puo' distinguere «il corpus non ha risposte» da «un pavimento le
+ha tagliate» — la distinzione che la porta gemella dichiara esplicitamente di
+garantire nel proprio schema (*«a short list from a poor corpus and a short
+list from a high floor stay distinguishable»*).
+
+🚨 CORREZIONE, 00:30 dello stesso giorno. La prima stesura di questo docstring
+diceva «lo applicava (`n: 0`)» e quel numero era **il mio conteggio su una
+chiave inesistente** (`results` invece di `context`): il misuratore, non il
+prodotto. Rimisurato con la chiave letta dalla ricevuta, **a caldo la porta NON
+taglia** (n=5 su cinque fatti). La lacuna curata qui — il campo assente — era
+reale e resta; era sbagliata la ragione. Il taglio esiste ma solo col ranking
+DEGRADATO, ed e' un difetto diverso, curato in
+``test_il_quarto_consumatore_non_conosceva_il_degrado.py``.
 
 📌 SESTA GENERAZIONE DELLA STESSA CURA, e le prime cinque sono scritte nei
 commenti di `mcp_server.py`: hanno fatto ARRIVARE il pavimento su questa porta —

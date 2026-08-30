@@ -8154,6 +8154,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # `env_floor_if_set` e non una copia del criterio: due copie
             # divergono, ed e' la quinta generazione di questa stessa cura.
             from .relevance_floor import env_floor_if_set as _env_floor
+            _deg_prima_h = getattr(a.semantic, "_recall_degraded_count", 0) or 0
             _mrh = arguments.get("min_relevance")
             if _mrh is None:
                 _mrh = _env_floor()
@@ -8176,8 +8177,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # che la porta gemella dichiara di garantire. Stesso campo, stesso
             # nome, stessa convenzione: il pavimento che ha davvero filtrato,
             # o `null`.
+            # E QUANDO IL PAVIMENTO NON HA FILTRATO PERCHE' IL RANKING ERA
+            # DEGRADATO, dirlo: senza, la lista piena NONOSTANTE un pavimento
+            # alto e' inspiegabile da qui, ed e' la stessa lettura ambigua che
+            # il campo qui sopra esiste per togliere. `null` = nessun degrado
+            # dichiarato, come per il pavimento.
+            _deg_h = (getattr(a.semantic, "_recall_degraded_count", 0) or 0
+                      ) > _deg_prima_h
             return _ok({"context": lines, "n": len(lines),
-                        "min_relevance": (float(_mrh) if _mrh else None)})
+                        "min_relevance": (float(_mrh) if _mrh else None),
+                        "ranking_degraded": (True if _deg_h else None)})
 
         if name == "hippo_trust_report":
             # F3 (iter 47): il gate reso ATOMICO — dossier di custodia per query.

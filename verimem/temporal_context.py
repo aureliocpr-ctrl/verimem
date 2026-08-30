@@ -312,6 +312,7 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
                 pass
             out.append(line)
         return out
+    _deg_prima = getattr(sm, "_recall_degraded_count", 0) or 0
     hits = sm.recall(query or "", k=k)
     # ⚠️ IL PAVIMENTO ARRIVA ANCHE QUI, e senza era il buco piu' visibile che
     # restasse sul canale degli agenti. Misurato, stesso store e stesso
@@ -329,7 +330,24 @@ def recall_with_history(sm, query: str, *, k: int = 5, max_hops: int = 3,
     # Il filtro sta QUI e non nell'handler perche' questa funzione restituisce
     # righe gia' formattate: a valle lo score non esiste piu'. Un solo recall,
     # non due.
-    if min_relevance:
+    # ⚠️ IL QUARTO CONSUMATORE. `_recall_degraded_count` esiste perche' il
+    # ramo keyword assegna `score 0.0` a TUTTI i risultati: non «nessuna
+    # somiglianza» ma somiglianza NON MISURATA. Confrontarla con una soglia di
+    # somiglianza e' un errore di categoria, e qui svuotava la risposta. Tre
+    # chiamanti guardavano gia' il contatore (client.py, l'handler della porta
+    # gemella, l'iniettore proattivo); questo no, ed e' l'unico in cui il
+    # filtro sta nella funzione invece che nell'handler — cosi' la guardia
+    # scritta la' non poteva raggiungerlo. Misurato alla porta il 2026-08-31,
+    # cinque fatti, pavimento 0.5::
+    #
+    #     a caldo     recall_history n=5   ·  porta gemella n=5
+    #     degradato   recall_history n=0   ·  porta gemella n=5
+    #     degradato, SENZA pavimento       ·  recall_history n=5
+    #
+    # ⇒ un'astensione FALSA su un canale letto da modelli, che non hanno modo
+    # di sospettarla.
+    _degradato = (getattr(sm, "_recall_degraded_count", 0) or 0) > _deg_prima
+    if min_relevance and not _degradato:
         _pav = float(min_relevance)
         hits = [h for h in hits
                 if float((h[1] if len(h) > 1 else 0.0) or 0.0) >= _pav]
