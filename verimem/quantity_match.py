@@ -1107,7 +1107,7 @@ def extract_quantities(text: str, *,
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
     (provenance after an evidence marker is not measured); bare YEARS excluded.
 
-    ``come_fonte=True`` legge il testo INTERO, saltando le due potature. Sono
+    ``come_fonte=True`` legge il testo INTERO, saltando le TRE potature. Sono
     giuste su un claim e sbagliate su una fonte, e il difetto misurato il 16/08
     e' esattamente questo — un numero PRESENTE nella fonte non veniva visto, il
     claim che lo citava sembrava inventarselo e L4.1 quarantinava un fatto vero
@@ -1119,6 +1119,15 @@ def extract_quantities(text: str, *,
         _senza_identificatori  `cli.py-354-` e' il formato di `git grep -C`,
                                non un codice prodotto: `cli.py:100:` dava 100,
                                `cli.py-354-` dava nulla
+        _spans_dei_riferimenti «art. 15» in un CLAIM e' un puntatore a una
+                               norma, non un valore da confrontare (28/08,
+                               `29ab5544`). In una FONTE quel 15 e' contenuto:
+                               nata SOTTO il bivio, acciecava 3 casi su 8 anche
+                               qui — misurato e curato il 30/08
+
+    ⚠️ CHI AGGIUNGE LA QUARTA LA METTA SOPRA QUESTA RIGA, o la scriva qui: il
+    numero in questa frase e' l'unica cosa che dice al prossimo quante sono, e
+    una potatura dimenticata non rende rossa nessuna riga.
 
     ⚠️ Il default NON cambia: le sei superfici che leggono questa funzione
     continuano a vedere la parte-claim, ed e' cio' che vogliono. Solo chi SA di
@@ -1131,7 +1140,7 @@ def extract_quantities(text: str, *,
     # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
-    _riferimenti = _spans_dei_riferimenti(claim)
+    _riferimenti = [] if come_fonte else _spans_dei_riferimenti(claim)
     for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
         if any(a <= m.start(1) < b for a, b in _date):
