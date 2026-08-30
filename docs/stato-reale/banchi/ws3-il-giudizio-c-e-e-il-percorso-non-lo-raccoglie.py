@@ -90,8 +90,30 @@ layer.**
     cui la scrittura non usa la delega quando il modello locale manca, e non
     l'ho trovata scritta da nessuna parte — *ma «non l'ho trovata» non e' «non
     esiste»*.
-  · **non dice quanto sia largo**: e' misurato su UN claim e UNA fonte. Che
-    valga su ogni claim non e' verificato.
+  · **QUANTO E' LARGO — misurato il 30/08 16:25, e la risposta e' precisa.**
+    `_have_judge` non guarda il claim, quindi la predizione era «totale». Tre
+    cause diverse nello stesso regime::
+
+        fonte che NEGA        model_claim   gs=None   L4-skipped
+        irrilevante           model_claim   gs=None   L4-skipped
+        self-claim con fonte  quarantined   gs=None   L1.10,L1.15,L1.20,L4-skipped
+
+    ⇒ **Il MOAT non gira mai: 3/3 con `gs=None` e `L4-skipped`.** Ma la famiglia
+    **`L1` continua a girare** e ferma cio' che sa fermare lessicalmente. 🔑 La
+    formulazione giusta non e' «il buco e' totale», e': **in quel regime resta
+    solo la difesa lessicale, e passa cio' che SOLO il moat poteva fermare** —
+    una fonte che nega, un irrilevante. *La difesa in profondita' regge la parte
+    che le compete.*
+  · **IL REGIME E' ARTIFICIALE NEL MODO IN CUI L'HO COSTRUITO, e va detto.**
+    `ENGRAM_LOCAL_GATE_MODEL` cambia la vista del **processo**; il daemon ha il
+    **suo** modello ed e' per questo che risponde 0.56. Un utente che non ha mai
+    installato il modello non avrebbe nemmeno il daemon caldo. ⇒ **Il buco e'
+    reale nel codice**, e i regimi che lo raggiungono sono di **configurazione**:
+    env puntata al posto sbagliato · modello spostato o cancellato con il daemon
+    ancora vivo · due percorsi d'installazione (default contro legacy).
+    🟢 **E `doctor` lo diagnostica**: sul modello assente risponde `status='fail'`
+    col path e con entrambe le conseguenze (misurato nello stesso giro). **La
+    mitigazione esiste ed e' quella giusta.**
   · **dipende da un daemon VIVO**: senza, non c'e' niente da raccogliere e
     l'asimmetria sparisce. **E' una proprieta' della macchina, non del codice.**
   · **il caso quarantinato normale NON e' toccato**: con il modello presente le
