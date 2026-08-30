@@ -1813,7 +1813,38 @@ def trust_stats_cmd(
                           "this store — pass source='...' to run it[/dim]")
 
 
+#: Il verdetto che l'anteprima del gate stampa PRIMA di scrivere. Le chiavi
+#: sono azioni del gate: ``GateAction`` ne dichiara TRE, e una voce per
+#: un'azione che il gate non produce non si vede mai eseguita.
+_VERDETTI: dict[str, str] = {
+    # `downgrade` scrive `quarantined` — `client.py` piu' altri sei punti —
+    # e nessuna riga assegna piu' `provisional` per questa via. Lo STATUS
+    # esiste ancora (lo store lo riserva alle ipotesi con riferimento
+    # URL/arxiv e `semantic.py` lo legge): a essere cambiato e' il
+    # comportamento del GATE. Chi prova con `trust` e poi scrive deve
+    # trovare la stessa parola, o il prodotto si contraddice fra la prova
+    # e la scrittura.
+    "downgrade": ("[yellow]FLAGGED ↓ (would store as quarantined "
+                  "— excluded from recall)[/yellow]"),
+    # `quarantine` NON e' fra le tre azioni di `GateAction`: la voce non
+    # poteva essere selezionata, e diceva la cosa giusta su una riga che
+    # non veniva mai eseguita. Il fallback resta per un'azione ignota.
+    "reject": "[red]REJECTED ✗[/red]",
+}
+
+
+def _verdetto_del_gate(action: str, *, judged: bool) -> str:
+    """La riga di esito dell'anteprima, per un'azione del gate."""
+    if action == "persist":
+        return ("[green]TRUSTED ✓[/green]" if judged
+                else "[green]NO FLAGS ✓[/green] [dim](no source was "
+                     "checked — see `checked:` below for what did "
+                     "run)[/dim]")
+    return _VERDETTI.get(action, f"[white]{action}[/white]")
+
 @app.command()
+
+
 def trust(
     claim: str = typer.Argument(..., help="The claim / proposition to evaluate"),
     verified_by: list[str] = typer.Option(  # noqa: B008 — typer idiom
@@ -1899,15 +1930,7 @@ def trust(
     # how an invented module with a fabricated ISO 27001 date got a green tick
     # (measured 2026-07-29). Same verdict, honest name.
     _judged = isinstance(d.get("grounding_score"), (int, float))
-    verdict = {
-        "persist": ("[green]TRUSTED ✓[/green]" if _judged
-                    else "[green]NO FLAGS ✓[/green] [dim](no source was "
-                         "checked — see `checked:` below for what did "
-                         "run)[/dim]"),
-        "downgrade": "[yellow]FLAGGED ↓ (would store as provisional)[/yellow]",
-        "quarantine": "[red]QUARANTINED ✗ (excluded from recall)[/red]",
-        "reject": "[red]REJECTED ✗[/red]",
-    }.get(action, f"[white]{action}[/white]")
+    verdict = _verdetto_del_gate(action, judged=_judged)
     lines = [
         f"[bold]Anti-confab trust check[/bold]   {verdict}",
         f"  claim:       {claim[:90]}",
