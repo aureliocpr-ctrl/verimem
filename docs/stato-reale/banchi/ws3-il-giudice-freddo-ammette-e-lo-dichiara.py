@@ -76,6 +76,32 @@ verdetto. ② **regge**: dichiarato «~32 s -> 0.3 s», misurato **35,7-36,2 s -
 strana», ma *quella riga di env*. Su una macchina senza quella variabile il
 caricamento e' sincrono e i quattro test passano.
 
+🔑 SEGUITO DEL 30/08 15:25 — **IL FAIL-OPEN DELL'SDK NON E' UNA FINESTRA
+TEMPORALE: E' BINARIO.** La misura qui sopra girava nel regime EREDITATO dalla
+macchina (`HIPPO_ENCODE_DELEGATE_ONLY=1`), e restava la domanda se in
+delegate-only l'SDK smettesse di aspettare. Rifatta col regime **scelto**, modello
+locale PRESENTE, processo fresco::
+
+    DELEGATE_ONLY  stato in->out         tre scritture (status/gs/tempo)
+    =0             ready   -> ready      quara/0.54/20.7s  quara/0.50/0.3s  quara/0.46/0.2s
+    =1             warming -> delegated  quara/0.54/18.1s  quara/0.50/0.2s  quara/0.46/0.2s
+
+    ammesse per giudice freddo: 0/6
+
+⇒ **In entrambi i regimi la prima scrittura ASPETTA e giudica.** In `=1` lo stato
+parte `warming` e finisce `delegated`: l'SDK o carica o delega, **comunque
+giudica**. ⇒ Il rischio **non e' il tempo**: e' un **modello locale assente o
+rotto** su una porta che non delega — ed e' esattamente cio' che il README
+dichiara («*only when neither an llm nor the local model is present does the gate
+fail-open*»).
+
+📌 Il quadro completo, con il banco `ws3-le-due-porte-separano-gli-stessi-tre-stati`::
+
+    porta  modello locale  esito
+    SDK    presente        aspetta e giudica (18-36s la prima), in ENTRAMBI i regimi
+    SDK    assente         AMMETTE non giudicato          <- dichiarato
+    MCP    assente         delega al daemon e GIUDICA     <- NON dichiarato
+
 ⚠️ E DUE COSE CHE QUESTO LASCIA APERTE, per chi le possiede:
   · **La suite eredita quella variabile e la CI (probabilmente) no** ⇒ i due
     regimi non misurano la stessa cosa, e quattro rossi locali possono non
