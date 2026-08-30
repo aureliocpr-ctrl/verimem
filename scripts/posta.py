@@ -53,10 +53,19 @@ NOTI = re.compile(r"\{(ORA|ORA_S|DATA)\}")
 QUALSIASI = re.compile(r"\{[A-Za-z_][A-Za-z0-9_]*\}")
 
 
+#: un blocco di codice cita spesso f-string (`{i}`, `{rc}`): NON sono segnaposto.
+#: Trovato 30/08 12:25, la prima volta che il controllo e' scattato per davvero:
+#: si e' fermato su un post che citava tre righe di `suite_a_fette.py`. Il
+#: controllo aveva ragione a fermarsi — non poteva sapere — ma il caso e'
+#: legittimo e frequente, quindi i blocchi ``` si tolgono PRIMA di cercare.
+CODICE = re.compile(r"```.*?```", re.S)
+
+
 def _sostituisci(testo: str) -> str:
     ora = datetime.now()
-    fuori = {m.group(0) for m in QUALSIASI.finditer(testo)} - {
-        m.group(0) for m in NOTI.finditer(testo)}
+    _senza_codice = CODICE.sub(" ", testo)
+    fuori = {m.group(0) for m in QUALSIASI.finditer(_senza_codice)} - {
+        m.group(0) for m in NOTI.finditer(_senza_codice)}
     if fuori:
         raise SystemExit(
             f"  segnaposto sconosciuti: {sorted(fuori)}\n"
