@@ -11277,3 +11277,54 @@ default is the point of a TRUST product»*.
 contiene `heal_err` col messaggio **esatto** di `embedding.py:283` e **`masters_persisted: 11`** — gli
 stessi **11 MASTER** che il `39` aveva contato nel blocco 20:30:10-20:53:20. **Tre righelli diversi —
 journal, store, file di stato — sulla stessa finestra di ventitré minuti.**
+
+---
+
+## ws1 · 30/08 23:13 — CORPUS SEI VOLTE PIÙ GRANDE, RISULTATI IDENTICI CIFRA PER CIFRA: È IL GATE CHE REGGE, E IL FLOOR FERMA 34 ASTENSIONI SU 35
+
+**Livello**: la porta pubblica (`Memory.explain()`), retriever e gate veri, regime di default. **Perimetro**: A/B a **una sola variabile** — stesse 114 domande, stesse sonde, stesso codice; cambia **solo il corpus**: 401 frasi (HaluEval) → **2397** (+1996 di SQuAD v2, l'**83%** del corpus finale è nuovo). **Tutto di terzi, tutto inglese.** **Istante**: 23:02–23:12. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Paga il **secondo** dei due limiti dichiarati alle 22:48 («il corpus è piccolo, l'1/18 è un limite inferiore»).
+
+### 🔴 LE MIE DUE PREDIZIONI SONO FALSIFICATE — i numeri non si spostano di una cifra
+
+| | corpus 401 | **corpus 2397** |
+|---|---:|---:|
+| astensione | 35/114 (31%) | **35/114 (31%)** |
+| servito **con** la risposta | 56/114 (49%) | **56/114 (49%)** |
+| servito **senza** la risposta | 23/114 (20%) | **23/114 (20%)** |
+| sonde servite (assenza) | 1/18 | **1/16** — la stessa sonda, lo stesso testo |
+
+**P-SCALA-A** («il richiamo scende») e **P-SCALA-B** («le sonde servite salgono»): **entrambe cadute**.
+
+### ⚠️ UN RISULTATO IDENTICO CIFRA PER CIFRA HA DUE SPIEGAZIONI OPPOSTE — non l'ho pubblicato prima di sapere quale
+
+**(a)** robustezza vera, **(b)** corpus nuovo **inerte**, mai pescato ⇒ il banco non avrebbe misurato niente. Ho contato la **provenienza dei candidati**:
+
+```
+candidati recuperati: 570   dal corpus NUOVO: 87  (15,3%)
+domande con almeno un candidato nuovo fra i primi 5: 51/114 (45%)
+fatti SERVITI:         98   dal corpus NUOVO:  0  ( 0,0%)
+```
+
+**(b) è falsificata**: le frasi nuove **competono davvero** — entrano nei primi 5 nel 45% delle domande. **E il gate le respinge tutte: 0 su 98 fatti serviti viene dal corpus nuovo.**
+
+> 🟢 **Il bi-encoder lascia entrare materiale fuori dominio fra i primi cinque; il cross-encoder lo respinge integralmente. È il gate CE a impedire che il rumore di scala arrivi all'utente** — ed è la ragione per cui un corpus sei volte più grande non sposta un solo esito.
+
+Coerente con tutta la serata: il CE è forte **fra argomenti** (qui 87 frasi fuori dominio respinte su 87) e debole **dentro l'argomento** (primo posto 41%, richiamo 49%).
+
+### 🔴 FRONTE ②: A FERMARE LE ASTENSIONI È IL FLOOR, NON LA RICERCA
+
+Delle **35** domande che non ricevono nulla **pur avendo la risposta in memoria**, `rep["reason"]` dice:
+
+```
+34  nothing scored above the relevance floor for this query
+ 1  no supporting facts in memory for this query
+```
+
+**34 su 35 sono fermate dal floor del gate, non dal retriever** — il **30% di tutte le domande**. La ricerca i candidati li trova; è la soglia a buttarli. Si aggancia direttamente al banco delle 22:48: floor `0.0` contro un punto migliore misurato a **−3,0**.
+
+### Cosa questi dati NON provano — e il limite è mio, lo dichiaro per primo
+**SQuAD v2 è un ALTRO DOMINIO.** Ho aggiunto materiale **dove il cross-encoder è forte**, cioè nella direzione facile: la scala che conta per l'utente è **più materiale dello STESSO dominio**, con le stesse entità, dove il CE è debole (41% al primo posto). **Il mio banco ha testato la robustezza contro rumore fuori dominio, non contro concorrenza in dominio.** La prova vera vuole altre frasi HotpotQA/HaluEval, non SQuAD.
+**Due sonde in più** sono state perse per contaminazione dalle frasi nuove (16 anziché 18): con n=16, 1/16 ha un intervallo che arriva a ~**29%**.
+Vale in inglese, sul regime di default, su questo corpus.
