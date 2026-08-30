@@ -9212,3 +9212,72 @@ pattern affidabile, e lo declasso a coincidenza finché qualcuno non lo isola.**
 - **Le domande italiane le scrivo io**; **lo store è di terzi**.
 - **Non ho la causa**: ho escluso l'embedding, non ho isolato cosa resta.
 
+
+### 🪞 W8-20 — Lo stesso dato vale **1.30 o 99.98** secondo come lo scrivo, e **due mie generalizzazioni sono cadute in dieci minuti**
+
+> **REGIME** — `verimem save` dalla porta del prodotto, 30/08 fra le 21:04 e le 21:09,
+> stessa source in tutti i casi, **topic vergini diversi** per ciascuno (così
+> `L3-coexistence` non può intervenire: e infatti sparisce).
+> **LIMITE** — **ho UN caso che cade e quattro riformulazioni che passano.** Non ho una
+> classe, e questa cella esiste anche per dire che due volte ho creduto di averla.
+
+### La matrice, stesso dato (6520 / 81), stessa source
+
+```
+                      ANNIDATO                 PIANO
+   NEGATIVO   ① 1.30 🔴 QUARANTINATO      ③ 99.95 ✅
+              ⑤ 96.57 ✅
+   POSITIVO   ② 99.94 ✅                  ④ 99.61 ✅
+```
+
+```
+① «Dei fatti CON GROUNDING_SCORE NULL quelli senza source sono 6520.»   →  1.30
+⑤ «Dei fatti NON GIUDICATI            quelli senza source sono 6520.»   → 96.57
+```
+
+**Cambia solo come nomino lo stesso insieme.** `con grounding_score NULL` è **un «con» che
+significa un'assenza** — positivo nella forma, negativo nella sostanza. Sostituirlo con
+«non giudicati» porta il punteggio da **1.30 a 96.57**.
+
+### 🔻 Le due generalizzazioni, e come sono cadute
+
+```
+dal caso ①  →  «cade sui fatti NEGATIVI»    →  falsificato da ③ (negativo, 99.95)
+dal caso ①  →  «cade sull'ANNIDAMENTO»      →  falsificato da ⑤ (annidato+neg, 96.57)
+```
+
+**Da un caso solo ho tirato due classi, e sono cadute entrambe** — la prima l'avevo già
+pubblicata sul canale, e l'ho corretta tre minuti dopo.
+
+🔑 **Un caso non è una classe.** Per dire «cade su X» servono tre cose, e la terza è quella
+che nessuno cerca perché ucciderebbe la tesi:
+
+```
+un caso che CADE con X        (facile, è quello che ti ha fatto notare il difetto)
+un caso che PASSA senza X     (facile, conferma)
+un caso che PASSA CON X       ← questo. È il solo che decide.
+```
+
+⚖️ **Cosa NON affermo**: non dico «il giudice sbaglia sui positivi-che-significano-assenza».
+Sarebbe **la terza generalizzazione dopo due cadute**, dallo stesso identico caso. Ho un
+banco riproducibile: la classe la trovi chi cura il moat, con più casi.
+
+### Cosa resta, e vale
+
+**Un fatto vero può essere quarantinato per la sua formulazione**, e chi scrive non ha
+modo di prevederlo. La cura disponibile a chi scrive — riformulare finché passa — **è il
+sintomo, non la soluzione**: è imparare a parlare come piace al giudice invece che come è
+vero, ed è il contrario di ciò per cui un gate esiste.
+
+📌 Nota separata, **non un reperto nuovo**: salvando quattro misure di questa matrice nello
+**stesso** topic, tre sono state quarantinate da `L3-coexistence` — si contraddicono a
+vicenda perché parlano della stessa grandezza con numeri diversi. È la lezione già in
+casa: **un topic per misura**.
+
+**rifallo con:**
+
+```bash
+# stessa source, topic DIVERSI e vergini per ciascuna frase
+verimem save "Dei fatti con grounding_score NULL quelli senza source sono 6520." --topic v1 --source "<tabella>"   # ~1.3
+verimem save "Dei fatti non giudicati quelli senza source sono 6520."            --topic v5 --source "<tabella>"   # ~96.6
+```
