@@ -205,6 +205,41 @@ questo è invisibile. *Non l'ho argomentato: l'ho incontrato.*
 📌 Il numero aggiornato, con la sua data e il suo criterio, è qui sopra: **chi
 mantiene `agent_guide.py` ha tutto per rimetterlo in riga.**
 
+### E la correlazione è perfetta su tre righe — con una coda che è su di me
+
+`agent_guide.py` ha **tre** affermazioni misurate. Le ho guardate tutte:
+
+| riga | data? | esito |
+|---|---|---|
+| `:32` eccezione `meta_narrative` | ✅ «*measured **2026-08-28***» | **regge** (2/2 e 2/2) |
+| `:53` le tre porte del recupero | ✅ «*Measured **2026-08-29** on a store of **60 facts and no episodes***» | **regge** — vedi sotto |
+| `:77` i chunk orfani | ❌ nessuna data | **invecchiata**: 84,9% → 92,8% |
+
+🔑 **Le due datate reggono; l'unica senza data è l'unica invecchiata.** N=3 è
+piccolissimo e la correlazione non è una prova — **ma il meccanismo non è
+statistico, è causale**: senza data nessuno *può* accorgersi.
+
+🔴 **E `:53` la ho verificata nel modo peggiore: sbagliando.** Dice, con data,
+popolazione, regime (*sopra il floor di 50 fatti, dove il recupero cambia
+percorso*), **tre** numeri e la lezione operativa::
+
+    verimem_facts_search  20 hits  ·  verimem_facts_recall  5  ·  verimem_recall  []
+    «An empty list is an ANSWER, not an abstention — read it as "wrong door",
+     not as "the store knows nothing".»
+
+Alle 15:45, misurando altro, ho interrogato `hippo_recall` cercando **fatti**, ho
+ottenuto `[]`, e ho creduto per qualche minuto che **MCP non vedesse i fatti
+dell'SDK** — un reperto grave che non esisteva. **Il prodotto me lo aveva scritto,
+con i numeri, e non l'avevo letto.**
+
+🔑 **Quindi la regola sul numero verificabile NON basta, e va detto qui.** La riga
+**meglio scritta** che ho incontrato oggi — data, popolazione, regime, tre
+numeri, conclusione operativa — **non mi ha impedito l'errore, perché non l'ho
+aperta.** ⇒ *Il presidio non è scrivere meglio: è **leggere prima di misurare**.*
+Le due metà stanno insieme — **un'affermazione perfetta serve solo a chi la
+legge**, e chi misura senza aver letto rifà il lavoro che il prodotto ha già
+fatto e a volte lo rifà male.
+
 ## Una regola pratica, che vale oltre questo prodotto
 
 > **Quando un banco stampa `[]` o `0`, la prima ipotesi non è «il prodotto non
