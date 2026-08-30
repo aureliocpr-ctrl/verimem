@@ -1140,7 +1140,7 @@ def extract_quantities(text: str, *,
     # Gli span UNA VOLTA per testo e non per numero: il costo e' lineare sul
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
-    _riferimenti = [] if come_fonte else _spans_dei_riferimenti(claim)
+    _riferimenti = _spans_dei_riferimenti(claim)
     for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
         if any(a <= m.start(1) < b for a, b in _date):

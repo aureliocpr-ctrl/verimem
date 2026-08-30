@@ -41,14 +41,21 @@ from verimem.quantity_match import extract_quantities
 from verimem.valore_non_nella_fonte import valori_non_nella_fonte
 
 #: Il punto di abbreviazione: il numero che segue è una quantità vera.
+#: ⚠️ TRE CASI SONO USCITI DA QUI IL 30/08 SERA, e non per farli sparire:
+#: `art.15`, `pag.7` e `fig.3` erano in lista per la FORMA (abbreviazione,
+#: punto, cifra) e sono RIFERIMENTI per il senso. Vivono ora in
+#: `test_una_fonte_non_offre_il_numero_di_un_riferimento.py`, dove sono
+#: asseriti con il segno OPPOSTO: la fonte non deve offrirli, o un claim che
+#: inventa «15 giorni» risulta sostenuto dal numero dell'articolo. La
+#: popolazione non si e' ridotta — ha cambiato segno, e resta misurata.
+#: La misura che l'ha deciso e' alla PORTA (`valori_non_nella_fonte`), non
+#: alla funzione: banco
+#: `docs/stato-reale/banchi/ws3-il-riferimento-nella-fonte-alla-porta-del-prodotto.py`.
 ABBREVIAZIONI = [
     ("grad.3", 3.0),
     ("temp.22", 22.0),
-    ("l'art.15 del codice", 15.0),
-    ("vedi pag.7", 7.0),
     ("il n.42 del registro", 42.0),
     ("tot.300 pezzi", 300.0),
-    ("fig.3", 3.0),
     ("Nr.5 im Lager", 5.0),
 ]
 
@@ -79,14 +86,17 @@ def test_un_numero_dopo_una_abbreviazione_e_una_quantita(frase, valore):
 
     Il 28/08 `29ab5544` ha aggiunto una terza potatura (i riferimenti: «art. 15»
     in un CLAIM è un puntatore, non la quantità 15) e le due modalità hanno
-    smesso di coincidere su `art.`/`pag.`/`fig.`. Quella potatura era anche
-    finita SOTTO il bivio `come_fonte`, accecando pure il lato fonte: curato in
-    `fb2ff485`, e da lì la modalità-fonte vede di nuovo **8 su 8**.
+    smesso di coincidere su `art.`/`pag.`/`fig.`. Il 30/08 pomeriggio
+    `fb2ff485` ha esentato la lettura-fonte da quella potatura per riportare
+    la lista a 8 su 8; **la sera quella cura e' stata RITIRATA**, perche' alla
+    porta del prodotto l'esenzione non comprava nulla e faceva sostenere i
+    numeri inventati.
 
-    🔑 La copertura del lato CLAIM non si perde, sta in
-    `test_la_terza_potatura_era_fuori_dall_esenzione.py`, che misura ENTRAMBE le
-    popolazioni: fonte 8/8 **e** claim che non afferma il numero del proprio
-    riferimento 3/3.
+    🔑 I tre casi che erano riferimenti stanno ora in
+    `test_una_fonte_non_offre_il_numero_di_un_riferimento.py`, che misura TRE
+    popolazioni: la grandezza abbreviata che la fonte deve vedere, il
+    riferimento che nessuna delle due letture offre, e il claim che non
+    afferma il numero del proprio riferimento.
     """
     valori = {v for _u, v in extract_quantities(frase, come_fonte=True)}
     assert valore in valori, (
