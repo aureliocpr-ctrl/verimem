@@ -1,4 +1,4 @@
-# ㉒ La specifica di `L1`: cosa ferma, cosa lascia passare, e quale dei due errori arriva all'utente
+# ㉕ La specifica di `L1`: cosa ferma, cosa lascia passare, e quale dei due errori arriva all'utente
 
 **Misurato il 29-30/08/2026** · celle **`W7-60` · `W7-61` · `W7-62` · `W7-64` · `W7-65`**
 del registro, con i comandi per rifarle · tutte le misure **fuori da pytest**, un processo
