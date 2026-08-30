@@ -61,6 +61,37 @@ una non lo facesse, misurerei una porta col moat spento.
 regime** — `mcp_server._ag()` valorizza `semantic.repo_root`, `Memory()` lo
 lascia `None` (misurato il 29/08). Si misura cosa dicono **cosi' come sono**.
 
+🟢 [C] SEGUITO DEL 30/08 16:01 — **E QUANDO QUARANTINANO?** [A] e [B] guardano i
+tre stati *ammessi*; il caso **quarantinato** non era appaiato. Misurato con lo
+STESSO `FIGLIO` qui sotto, variando claim e fonte su tre CAUSE diverse, regime
+scelto `DELEGATE_ONLY=0`, uno store per cella::
+
+    caso                   porta status        qb     sotto-strati
+    L1  self-claim nudo    sdk   quarantined   L1     L1.10,L1.15,L1.20
+                           mcp   quarantined   L1     L1.10,L1.15,L1.20
+    L4  fonte che NEGA     sdk   quarantined   moat   L4-grounding,L4.1
+                           mcp   quarantined   moat   L4-grounding,L4.1
+    L1.15 tested/verified  sdk   quarantined   L1     L1.13,L1.15
+                           mcp   quarantined   L1     L1.13,L1.15
+
+    le due porte dichiarano la stessa cosa   3/3
+    MCP espone i SOTTO-STRATI                3/3
+
+I tre claim: «Il fix funziona ed e' verificato.» (nessuna fonte) · «La penale e'
+di 500 euro al giorno.» contro «Il contratto fissa la penale in 120 euro al
+giorno.» · «The database migration was completed and verified in production.»
+(nessuna fonte).
+
+⇒ Un chiamante **MCP** sa **perche'** e' stato quarantinato **senza leggere la
+prosa**: non solo `quarantined_by`, ma il **sotto-strato**, con la stessa
+granularita' dell'SDK.
+🔑 **IL CONTROLLO STA DENTRO IL RISULTATO**: le tre cause danno **tre firme
+diverse** (`L1`+tre strati · `moat`+due · `L1`+due). *Se avessero dato la stessa
+firma non starei misurando l'equivalenza fra le porte, ma un gate che dice sempre
+la stessa cosa*, e ogni cella sarebbe illeggibile.
+⚠️ E si legge accanto a **[B]**: sul quarantinato le due porte **coincidono**;
+divergono **solo** quando il modello locale manca e il daemon e' vivo.
+
 REGIME: un processo per cella, store TEMPORANEO, `Memory()` senza path esplicito.
 Il giudice locale si rende assente puntando `ENGRAM_LOCAL_GATE_MODEL` a una
 cartella vuota — nessun download, ⛔ nessun `warmup`. Store di Aurelio intatto.
