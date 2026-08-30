@@ -39,8 +39,21 @@ def find_outcome_patterns(
     occurrences: dict[str, int] = defaultdict(int)
     successes: dict[str, int] = defaultdict(int)
 
+    # ⚖️ Le due basi del confronto. Senza, «correlated with success» non e'
+    #    leggibile: su un corpus con 8 fallimenti su 459 (misurato il 30/08 al
+    #    tool MCP) i negativi sono impossibili per costruzione e i positivi
+    #    stanno tutti a 1.0 — cioe' sono i token piu' FREQUENTI, non quelli
+    #    correlati. Chi legge deve poterlo vedere senza contare gli episodi.
+    #    Gli esiti diversi da success/failure non entrano in nessuno dei due:
+    #    «non e' un successo» non vuol dire «e' un fallimento».
+    n_success = n_failure = 0
+
     for ep in episodes:
         outcome = getattr(ep, "outcome", "")
+        if outcome == "success":
+            n_success += 1
+        elif outcome == "failure":
+            n_failure += 1
         for tok in set(_tokens(getattr(ep, "task_text", ""))):
             occurrences[tok] += 1
             if outcome == "success":
@@ -69,6 +82,8 @@ def find_outcome_patterns(
         "positive_signals": pos[:top_k],
         "negative_signals": neg[:top_k],
         "n_episodes_scanned": len(episodes),
+        "n_success": n_success,
+        "n_failure": n_failure,
     }
 
 
