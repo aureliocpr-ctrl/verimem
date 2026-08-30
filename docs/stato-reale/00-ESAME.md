@@ -12646,3 +12646,47 @@ ragione. Il dato c'è già.
 📌 **Ipotesi non verificata**: un pezzo che **nomina la propria condizione** («con il daemon
 assente…») dà a `_entita_diverse` qualcosa da distinguere; uno che dice solo il numero no. **Va
 falsificata.**
+
+---
+
+## ws1 · 31/08 00:38 — IL CROSS-ENCODER UN SEGNALE SULLA SUFFICIENZA CE L'HA, MA PER BUTTARE IL 93% DEL RUMORE PERDE IL 54% DELLE RISPOSTE
+
+**Livello**: la porta pubblica, sui fatti effettivamente **serviti** a soglia `0,0`. **Perimetro**: 114 domande, corpus 401 frasi di terzi, inglese — **56 fatti serviti che contengono la risposta (G)** contro **42 che non la contengono (S)**. **Istante**: 31/08 00:34–00:37. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Risponde a una domanda che avevo lasciato aperta citando più volte il **giudice di sufficienza** come «la cura che il prodotto ha in casa, spenta senza `llm`» — **senza mai misurare se serva**.
+
+### ⚖️ P-SUFF FALSIFICATA NELLA FORMA FORTE: i due gruppi SEPARANO
+
+```
+G  CONTENGONO la risposta   n=56   q1 +3,490   mediana +5,709   q3 +10,715
+S  NON la contengono        n=42   q1 +0,667   mediana +2,459   q3  +4,369
+
+quota di S sopra la mediana di G: 5/42 = 11,9%   (0% = separati, ~50% = sovrapposti)
+```
+
+**Le mediane distano 3,25 punti** e solo il **12%** dei fatti che non rispondono supera la mediana di quelli che rispondono. Avevo predetto che **non** separassero: **è falso, un segnale c'è**. Questo **precisa** anche il reperto delle 22:38 («il CE misura l'argomento, non il possesso della risposta»): ne misura **anche** il possesso, ma debolmente.
+
+### 🔴 MA NESSUNA SOGLIA È BUONA
+
+```
+ soglia   G tenuti   S buttati   media
+   +0,0      100%          0%     50%
+   +2,0       84%         45%     65%
+   +4,0       62%         64%     63%
+   +6,0       48%         88%     68%
+   +8,0       46%         93%     70%   <== il migliore possibile
+  +10,0       38%         98%     68%
+```
+
+> **Il miglior compromesso ottenibile con una soglia sul cross-encoder è mediocre: per buttare il 93% dei fatti che non rispondono si perde il 54% di quelli che rispondono.** A `+2,0` si tiene l'84% delle risposte ma si butta meno della metà del rumore.
+
+⇒ **Un secondo giudice non è ridondante.** Il segnale del CE sulla sufficienza esiste ma non è abbastanza netto perché una soglia lo sfrutti: è esattamente la distanza fra *relevance* e *sufficiency* che il prodotto documenta, ora quantificata.
+
+### ⚖️ Test appaiato: suggestivo, non conclusivo
+Nelle **15** domande dove sono serviti sia un fatto che contiene la risposta sia uno che non la contiene, il primo batte il secondo **11 volte su 15 (73%)**. Con n=15 il test dei segni dà p ≈ 0,06: **suggestivo, non conclusivo** — lo riporto come tale.
+
+### Cosa questi dati NON provano
+**G e S sono già condizionati alla soglia `0,0`**: sono solo i fatti **serviti**. È il condizionamento giusto per la domanda «una soglia alta come secondo filtro», ma non descrive la popolazione completa.
+n(G)=56, n(S)=42: intervalli ±~13 e ±~15 punti sulle proporzioni; le percentuali della tabella non vanno lette a una cifra.
+**Non ho acceso il giudice di sufficienza vero** — richiede un `llm` e O4 vieta le API key esterne. Ho misurato **lo spazio che avrebbe**, non la sua resa: un giudice reale potrebbe fare meglio o peggio di qualunque soglia.
+Vale in inglese, con `k=5`, su questo corpus.
