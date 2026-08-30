@@ -20,8 +20,16 @@ misurera' quella.**
 
 ⇒ 🔑 **E uno solo non basta: «la popolazione e' pulita» vale SOLO sulla dimensione
 che hai misurato.** Le altre sono IGNOTE, non sane. Questo strumento ne misura
-due — lunghezza e negazione — perche' sono quelle che i layer del gate usano
-davvero; **se il vostro criterio ne guarda una terza, aggiungetela qui.**
+tre — lunghezza, negazione e **sovrapposizione claim/fonte** — perche' sono
+quelle che il gate usa davvero; **se il vostro criterio ne guarda una quarta,
+aggiungetela qui.**
+
+⚠️ **L'OVERLAP e' stato aggiunto dopo essere caduto nella trappola che questo
+strumento esiste per evitare.** Avevo dichiarato HaluMem «la piu' pulita delle
+tre» perche' passava lunghezza e negazione; il banco ha poi dato **0,0% di veri
+persi**, e la causa era che li' l'overlap segna **93,0%** — cioe' la forma
+predice la classe sulla dimensione che il MOAT usa. ⇒ 🔑 **Il criterio cieco va
+scelto sulla dimensione che il TUO DECISORE usa**, non su una qualsiasi.
 
 COME SI LEGGE
 
@@ -100,8 +108,8 @@ FONTI = [
 def main() -> int:
     from benchmark.c10_falsita_servite_vs_mem0 import criteri_ciechi
 
-    print(f"  {'popolazione':30} {'claim':>6}  {'lunghezza':>10} {'negazione':>10}   verdetto")
-    print(f"  {'-' * 30} {'-' * 6}  {'-' * 10} {'-' * 10}   {'-' * 30}")
+    print(f"  {'popolazione':28} {'claim':>6}  {'lungh.':>8} {'negaz.':>8} {'overlap':>8}   verdetto")
+    print(f"  {'-' * 28} {'-' * 6}  {'-' * 8} {'-' * 8} {'-' * 8}   {'-' * 34}")
     for nome, percorso, adattatore in FONTI:
         righe: list[dict] = []
         if percorso is not None:
@@ -127,12 +135,16 @@ def main() -> int:
             verdetto = "🔴 NON usabile: " + ", ".join(viziate) + note
         else:
             verdetto = "✅ usabile sulle dimensioni misurate" + note
-        print(f"  {nome:30} {len(casi):6}  {c['lunghezza']:9.1f}% {c['negazione']:9.1f}%   {verdetto}")
+        print(f"  {nome:28} {len(casi):6}  {c['lunghezza']:7.1f}% {c['negazione']:7.1f}% "
+              f"{c.get('overlap', 50.0):7.1f}%   {verdetto}")
 
     print()
-    print("  ⚠️ «usabile» vale SOLO sulle due dimensioni qui sopra. Se il vostro criterio")
-    print("     ne guarda una terza (entita' nominate, cifre, tempo verbale…), quella e'")
+    print("  ⚠️ «usabile» vale SOLO sulle TRE dimensioni qui sopra. Se il vostro decisore")
+    print("     ne guarda una quarta (entita' nominate, cifre, tempo verbale…), quella e'")
     print("     IGNOTA — non sana — finche' non la aggiungete a `criteri_ciechi`.")
+    print("  🔑 E sceglietela sulla dimensione che il VOSTRO decisore usa: `overlap` e' stata")
+    print("     aggiunta dopo che HaluMem, «pulita» su lunghezza e negazione, ha dato 0,0% di")
+    print("     veri persi — perche' li' la sovrapposizione claim/fonte predice la classe al 93%.")
     return 0
 
 

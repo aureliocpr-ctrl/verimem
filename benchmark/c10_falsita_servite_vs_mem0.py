@@ -153,6 +153,38 @@ def criteri_ciechi(casi: list[tuple[str, str, str]]) -> dict[str, float]:
     #: NON MISURABILE (50.0 = «non dice nulla»), che e' diverso da «pulita».
     #: E' la stessa forma del campione minimo di 40 claim: **un righello che
     #: parla su un campione minuscolo insegna a ignorarlo.**
+    #: ═══ SOVRAPPOSIZIONE claim↔fonte — LA DIMENSIONE CHE IL MOAT USA ═══
+    #: Aggiunta il 30/08 alle 20:45, e la ragione e' la piu' istruttiva della
+    #: notte. Avevo dichiarato HaluMem «la piu' pulita delle tre» perche' passava
+    #: lunghezza (55,5%) e negazione (50,0%). Poi il banco ha dato **0,0% di veri
+    #: persi e 1,0% di falsi ammessi** — un risultato troppo bello, che
+    #: contraddiceva il 33% dichiarato da `anti_confab_gate.py:177`.
+    #:
+    #:     HaluMem      overlap  93,0%    <- la forma predice la classe
+    #:     TruthfulQA   overlap  49,5%    <- il caso esatto
+    #:     HaluEval     overlap  64,0%
+    #:
+    #: ⇒ Su HaluMem i claim veri condividono il **79%** delle parole con la
+    #: fonte e i falsi il **33%**: il compito e' quasi risolvibile CONTANDO
+    #: PAROLE, e quello 0,0% non misura la bravura del gate.
+    #: ⇒ 🔑 **Il criterio cieco va scelto sulla dimensione che il TUO DECISORE
+    #: usa.** Il moat confronta claim e fonte: la sua dimensione e' l'overlap.
+    #: Misurare lunghezza e negazione era misurare le dimensioni di qualcun
+    #: altro — e il mio stesso strumento lo avvisava («le dimensioni non
+    #: elencate sono IGNOTE, non sane»): l'avviso si e' avverato nello stesso giro.
+    def _ov(c: str, s: str) -> float:
+        cw, sw = set(c.lower().split()), set(s.lower().split())
+        return len(cw & sw) / max(1, len(cw))
+
+    ovs = [_ov(c, s) for _, c, s in casi]
+    if any(s for _, _, s in casi):
+        soglia_ov = st.median(ovs)
+        fuori["overlap"] = 100 * sum(
+            1 for (et, c, s) in casi if (_ov(c, s) > soglia_ov) == (et == "vero")
+        ) / max(1, len(casi))
+    else:
+        fuori["overlap"] = 50.0
+
     MINIME = 10
     fuori["_neg_occorrenze"] = nv + nf
     if nv + nf < MINIME:
