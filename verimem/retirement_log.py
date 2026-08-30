@@ -712,11 +712,20 @@ def quarantine_breakdown(sm, *, limit: int = 10,
                       if (top and tot) else None),
             # lo stesso campo dei ritiri, e serve nei DUE versi: la' mostrava
             # un evento, qui mostra che un evento NON c'e'
+            # DATATO, non derivato: il 92% e' la misura di un'ALTRA vista
+            # in un ALTRO istante, e derivarlo qui accoppierebbe due
+            # letture per un esempio. Regola: un numero servito o e'
+            # derivato — e allora coincide col payload — o e' un evento, e
+            # allora porta la sua data. Senza nessuna delle due invecchia
+            # in silenzio: quel 92% era 1665 su 1805 il 2026-08-07 e lo
+            # stesso rapporto oggi vale 74%, perche' il denominatore e'
+            # cresciuto e il numeratore no.
             "formula": ("share = quarantines on the busiest day / all live "
                         "quarantines — the same field the retirement view "
                         "uses, and it earns its place in both directions: "
-                        "there it showed one hour holding 92%, here it shows "
-                        "there is no such event"),
+                        "there it showed a single day holding 92% of every "
+                        "retirement in the store when measured on "
+                        "2026-08-07, here it shows there is no such event"),
         },
         "topic": topic,
     }

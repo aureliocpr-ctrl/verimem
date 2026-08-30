@@ -109,3 +109,65 @@ def test_su_un_corpus_SENZA_dati_la_formula_non_inventa_una_quota(tmp_path):
     assert "%" not in ch["formula"] or "overall" not in ch["formula"], (
         ch["formula"])
     assert "must not travel alone" in ch["formula"], ch["formula"]
+
+
+# ─────────────────────────────────────────────────────────────────────
+# IL PRESIDIO DI CLASSE. Curati tre casi uno per uno, la lezione dice che
+# la cura vera e' un CONTROLLO, non tre toppe. La regola che li separa
+# tutti: un numero dentro un testo servito o e' DERIVATO — e allora
+# coincide col payload — o e' un EVENTO, e allora porta la sua data.
+# Senza nessuna delle due, invecchia in silenzio contro il campo accanto.
+# ─────────────────────────────────────────────────────────────────────
+
+_DATA_ISO = re.compile(r"\b20\d\d-\d\d-\d\d\b")
+_NUMERO = re.compile(r"\b\d+(?:[.,]\d+)?\s*%|\b\d{3,}\b")
+
+
+def _testi_serviti(payload, _dove=()):
+    """Ogni stringa lunga che il payload SERVE, col suo percorso."""
+    if isinstance(payload, dict):
+        for k, v in payload.items():
+            if isinstance(v, str) and len(v) > 60:
+                yield ".".join((*_dove, str(k))), v
+            else:
+                yield from _testi_serviti(v, (*_dove, str(k)))
+    elif isinstance(payload, list):
+        for i, v in enumerate(payload):
+            yield from _testi_serviti(v, (*_dove, str(i)))
+
+
+def _numeri_del_payload(payload) -> set[str]:
+    """I valori numerici che il payload calcola, come li stamperebbe."""
+    fuori: set[str] = set()
+    if isinstance(payload, dict):
+        for v in payload.values():
+            fuori |= _numeri_del_payload(v)
+    elif isinstance(payload, list):
+        for v in payload:
+            fuori |= _numeri_del_payload(v)
+    elif isinstance(payload, bool):
+        pass
+    elif isinstance(payload, int):
+        fuori.add(str(payload))
+    elif isinstance(payload, float):
+        fuori |= {str(round(payload * 100)), f"{payload * 100:.1f}"}
+    return fuori
+
+
+@pytest.mark.parametrize("vista", ["retirement", "quarantine"])
+def test_ogni_numero_servito_e_DERIVATO_oppure_DATATO(mem_con_same_topic,
+                                                      vista):
+    from verimem.retirement_log import quarantine_breakdown
+    bd = (retirement_breakdown if vista == "retirement"
+          else quarantine_breakdown)(mem_con_same_topic.semantic)
+    vivi = _numeri_del_payload(bd)
+    scoperti = []
+    for dove, testo in _testi_serviti(bd):
+        if _DATA_ISO.search(testo):
+            continue                      # e' un evento e dichiara quando
+        for n in _NUMERO.findall(testo):
+            if n.rstrip("%").strip() not in vivi:
+                scoperti.append((dove, n, testo[:80]))
+    assert not scoperti, (
+        "numeri letterali senza data e senza corrispondenza nel payload: "
+        f"{scoperti}")
