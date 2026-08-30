@@ -91,6 +91,19 @@ due giorni.** La mia ipotesi diceva «cade il vero» e sarebbe stata confermata
 guardando solo i veri. Il falso a 98.9 - che nessuna ipotesi mia prevedeva - si
 vede **solo** perche' i falsi viaggiavano accanto.
 
+🪞 **E RESTRINGO IO LA PORTATA, un minuto dopo averla scritta.** Nel messaggio
+di consegna avevo scritto: «*ogni fatto salvato con la source di un banco lungo
+sta nel regime dove il gate puo' preferire il falso al vero*», promettendo di
+riportare come sarebbe andato il salvataggio di questi stessi fatti. **E'
+andato bene: 3 fatti su 3 AMMESSI**, con una source di **9630 caratteri**.
+⇒ **La mia frase era piu' larga della misura.** La differenza: la source di un
+banco e' un file `.py` con un lungo docstring **in prosa** piu' del codice —
+**e' MISTA**, non tabellare pura. La cella rovesciata usa zeppa tabellare
+**pura** (righe di log e di diff, nient'altro).
+⇒ La formulazione che regge: **il regime pericoloso e' fonte lunga e tabellare
+PURA** — l'uscita grezza di uno script senza prosa intorno. Un file di banco
+non ci rientra, e chi salva col docstring come source e' al riparo.
+
 REGIME: build corrente · store TEMPORANEO da `trap` · `ground_write=True` ·
 porta `run_validation_gate`.
 ⚖️ PUNTI DEBOLI: **un claim vero e uno falso per cella** - il segnale e' netto
