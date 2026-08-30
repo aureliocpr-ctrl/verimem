@@ -4,18 +4,25 @@ La domanda e' di Aurelio, verbatim: **«che tasso di figure di merda fanno loro
 e quale noi»**. Questo banco produce quel numero su una popolazione PUBBLICA e
 su ENTRAMBE le facce.
 
-POPOLAZIONE — `benchmark/data/external/halueval_qa_heldout.jsonl`
-  HaluEval QA (RUCAIBox, licenza MIT, sha256 della fonte in
-  `benchmark/data/external/README.md`). 200 item, ognuno con:
-      knowledge            <- la FONTE
-      right_answer         <- il claim VERO
-      hallucinated_answer  <- il claim FALSO, costruito dagli autori
-  ⇒ **400 claim etichettati, 200 veri e 200 falsi, ciascuno con la sua fonte.**
-  Non l'abbiamo scritto noi: e' esattamente il punto di `TRUST_CORE.md` —
-  «i numeri di fiducia smettono di correggere i nostri compiti».
+POPOLAZIONE — default `truthfulqa_pairs_heldout.jsonl` (600 righe: un claim per
+riga, con `source`, `claim`, `label`). TruthfulQA, licenza e sha256 della fonte
+in `benchmark/data/external/README.md`. Non l'abbiamo scritto noi: e' il punto
+di `TRUST_CORE.md` — «i numeri di fiducia smettono di correggere i nostri
+compiti».
+
+  ⚠️ Questo blocco ha dichiarato `halueval_qa_heldout` per DUE esecuzioni fatte
+  su truthfulqa — costante rimasta dal primo giro, esattamente come il titolo
+  del log che stampava la popolazione sbagliata. **I numeri erano giusti e
+  l'etichetta no**, che e' il difetto che passiamo le giornate a smontare.
+  `halueval` resta selezionabile con `--popolazione halueval`, ma **solo per
+  poter RIFARE il suo artefatto di forma** (LANT-90), non per misurarci sopra.
 
   ⚠️ DISCIPLINA DEL README, rispettata: `heldout` si ESEGUE e non si legge. Lo
   sviluppo di questo banco e' avvenuto guardando UN item del `dev`.
+
+  🔁 REPLICA su campione DISGIUNTO: `--salta 200` misura sulle righe che la
+  prima corsa non ha visto (600 in tutto, 200 usate). Stessa disciplina, stesso
+  apparecchio, materiale nuovo.
 
 PERCHE' DUE FACCE, E PERCHE' UNA SOLA SAREBBE MARKETING.
   mem0 non ha un gate di ammissione: con `infer=False` scrive cio' che riceve.
@@ -61,11 +68,21 @@ POPOLAZIONI = {
 }
 
 
-def carica(nome: str, n: int | None) -> tuple[list[tuple[str, str, str]], str]:
-    """Restituisce [(etichetta, claim, fonte)] — forma unica per le due popolazioni."""
+def carica(nome: str, n: int | None, salta: int = 0) -> tuple[list[tuple[str, str, str]], str]:
+    """Restituisce [(etichetta, claim, fonte)] — forma unica per le due popolazioni.
+
+    `salta` serve alla REPLICA su campione DISGIUNTO: `truthfulqa_pairs_heldout`
+    ha 600 righe e la prima misura ne ha usate 200, quindi `--salta 200` misura
+    su materiale **mai visto dalla misura precedente**, con la stessa disciplina
+    (sempre `heldout`, che si esegue e non si legge) e lo stesso apparecchio.
+    ⇒ **Un numero che si riproduce su un campione disgiunto non e' un caso; uno
+    che non si riproduce e' instabile e va detto.**
+    """
     f_nome, forma = POPOLAZIONI[nome]
     with open(ESTERNI / f_nome, encoding="utf-8") as f:
         righe = [json.loads(r) for r in f if r.strip()]
+    passo = 1 if forma == "qa" else 2   # `pairs` ha una riga per claim, `qa` due per item
+    righe = righe[salta * passo:]
     fuori: list[tuple[str, str, str]] = []
     if forma == "qa":
         for it in (righe[:n] if n else righe):
@@ -138,6 +155,8 @@ def main() -> int:
     ap.add_argument("--n", type=int, default=None,
                     help="quanti ITEM (ognuno da' 2 claim: 1 vero + 1 falso)")
     ap.add_argument("--popolazione", choices=sorted(POPOLAZIONI), default="truthfulqa")
+    ap.add_argument("--salta", type=int, default=0,
+                    help="salta i primi N item: serve alla REPLICA su campione disgiunto")
     ap.add_argument("--out", default="benchmark/results/c10_lato_verimem.json")
     a = ap.parse_args()
 
@@ -146,7 +165,7 @@ def main() -> int:
     #: la porta che usa `verimem save` (cli.py:975 e :1762), non una scorciatoia:
     #: se misurassi da una porta diversa misurerei un altro prodotto.
 
-    casi, f_nome = carica(a.popolazione, a.n)
+    casi, f_nome = carica(a.popolazione, a.n, a.salta)
     ciechi = criteri_ciechi(casi)
     print(f"  popolazione {a.popolazione} ({f_nome}) — {len(casi)} claim")
     #: sotto una quarantina di claim questi numeri sono degeneri: con 6 claim
@@ -284,7 +303,8 @@ def main() -> int:
         quota = per_layer.get(k, 0)
         print(f"     {n:4}  {k}   (sui veri persi: {quota})")
 
-    corpo = {"popolazione": f_nome, "criterio_cieco_pct": round(cieco, 1),
+    corpo = {"popolazione": f_nome, "saltati": a.salta,
+             "criterio_cieco_pct": round(cieco, 1),
              "lunghezza_mediana_per_esito": lunghezze,
              "veri_persi_per_decisore": dict(per_chi),
              "veri_persi_per_layer": dict(per_layer),
