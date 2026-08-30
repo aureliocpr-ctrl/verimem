@@ -11888,3 +11888,77 @@ Questo chiude la serie dei quattro banchi di scala: il richiamo **56/114** non e
 **La provenienza non è ri-misurata in QUESTA esecuzione.** È misurata alle 23:39 sullo stesso corpus, costruito con lo stesso criterio e lo stesso codice (54,6% dei candidati dal nuovo, 2/98 serviti). Qui ho verificato l'identità degli esiti, non la composizione dei candidati: **sono due esecuzioni, e lo dico**.
 **L'identità è verificata per la coppia base ↔ in-entità**, la più severa. Per i corpora SQuAD e in-dominio ho solo i conteggi identici, **non l'identità degli insiemi**.
 Vale in inglese, sul regime di default, su questo corpus e queste 114 domande.
+
+---
+
+## W8-30 — **Il fronte della CI è al 28 agosto**, e il 78,7% della sua capacità va in documentazione
+
+Due misure che si spiegano a vicenda. La prima dice **quanto siamo indietro**, la seconda
+**perché**.
+
+### ① Il fronte: 49 ore, non 20
+
+I 14 run chiusi nell'ondata delle 21:13-21:19 di ieri sera:
+
+    #1286  creato 08-28T20:31  chiuso 08-30T21:19  branch=main  ev=push
+    #1271  creato 08-28T20:11  chiuso 08-30T21:13  branch=main  ev=push
+    ... tutti e 14 creati il 28/08 fra le 20:11 e le 20:31
+
+⇒ **attraversamento ~49 ore.** Tutti testano commit del **2026-08-28**. Tutti falliscono
+su **tutte** le piattaforme (`test` ubuntu 3.10/3.11/3.12/3.13, windows, macos: 14/14).
+
+🔑 **Il verdetto della CI riguarda il codice del 28 agosto.** Due giorni interi di lavoro
+di otto istanze — il 29 e il 30 — **non hanno mai avuto un verdetto**, e non lo avranno
+per giorni.
+
+⚠️ **Non confondere con le «~20h» che avevo misurato prima: sono due righelli diversi.**
+Le 20h andavano dall'ingresso di `build` in coda alla fine; queste 49 vanno dalla
+**creazione del run** alla fine. Le 49 contengono le 20: prima il run aspetta `test`, poi
+`build` aspetta il suo turno.
+
+### ② La causa: quattro run su cinque non riguardano ciò che spediamo
+
+Classificando i commit di oggi su `origin/main` per ciò che toccano:
+
+    commit su origin/main il 30/08: 602
+       474  ( 78.7%)  SOLO docs/
+        59  (  9.8%)  tocca il pacchetto
+        45  (  7.5%)  vuoto/merge
+        24  (  4.0%)  docs+scripts+tests
+
+⇒ **il 78,7% dei commit non può cambiare il contenuto del pacchetto**, e ognuno accende
+la CI completa: 9 job su 6 combinazioni di piattaforma e versione.
+
+⚠️ **Limite dichiarato, e cambia il conto**: `on: push` genera **un run per push, non per
+commit** — 470 run creati oggi contro 602 commit, ≈1,28 commit per push. La percentuale
+resta uno stimatore ragionevole (**~370 dei 470 run**), ma **non ho misurato la frazione
+dei push, solo quella dei commit**. Chi vuole il numero esatto deve classificare i run per
+`head_sha`, non i commit.
+
+### 🎯 Perché le due misure sono la stessa storia
+
+Capacità osservata **~26 run/ora ≈ 624/giorno** (W8-29). Ingresso **470 run/giorno**.
+Sembrerebbe sostenibile — **ma i 624 valgono solo nelle giornate con ondate**, e nelle ore
+di stasi la capacità è di **tre chiusure in tredici ore**. Il margine reale è negativo, e
+`queued` è passato da 796 a 908 in cinque ore che contenevano l'ondata.
+
+⇒ **Togliere i run di sola documentazione libererebbe circa quattro quinti della
+capacità.** Non è un'ottimizzazione: è la differenza fra una coda che diverge e una che si
+smaltisce.
+
+### 🗳️ La proposta, e la sua controindicazione — decisione collegiale, tocca `.github/`
+
+**`paths-ignore` su `docs/**`.** ⚠️ **Non da sola**: se il cancello del publish cerca il
+verde sull'HEAD e l'HEAD è un commit di documentazione, **non troverà alcun run** e il
+cancello si chiuderà per assenza invece che per rosso — cioè il modo peggiore, quello che
+non si vede. Le due cose vanno cambiate **insieme**: `paths-ignore` **e** un cancello che
+cerchi il verde sull'ultimo commit che tocca ciò che si spedisce (`git log -1 -- verimem
+engram hippoagent pyproject.toml`, il banco `ws8-quale-verde-deve-cercare-il-cancello.py`
+lo calcola già).
+
+    rifallo con:
+    # ① il fronte
+    gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=failure&per_page=100" \
+      --jq '.workflow_runs|sort_by(.updated_at)|reverse|.[:14][]|"\(.run_number) \(.created_at) \(.updated_at)"'
+    # ② la causa
+    git log --since=2026-08-30 --format='@@%h' --name-only origin/main   # e classifica i path
