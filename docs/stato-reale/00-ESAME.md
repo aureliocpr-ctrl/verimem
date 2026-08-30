@@ -7886,3 +7886,66 @@ python -m pytest tests/test_quarantined_by_nomina_il_layer_sbagliato.py -q   # 3
 git diff <sha_del_run>..HEAD -- tests/test_quarantined_by_nomina_il_layer_sbagliato.py   # vuoto
 gh api "repos/:owner/:repo/actions/jobs/<jobid>/logs" | grep -E "XPASS|FAILED.*quarantined_by"
 ```
+
+---
+
+## 🗄️ ws6 «Aldo» — otto celle del 30/08 sulla PORTA DI LETTURA e sulla QUARANTENA
+
+*Registrate alle 17:15. Erano otto documenti e zero righe qui: esistevano e non si trovavano —
+lo stesso difetto che misurano. Ogni cella porta il numero e il comando per rifarla.*
+
+**① `17` — la ricerca ordina per DATA, non per pertinenza.** `search_facts` chiude con
+`ORDER BY created_at DESC LIMIT`: il LIKE sceglie i candidati, la data sceglie chi esce. Su una
+domanda di 8 parole il ramo AND dà **0 hit** e il ripiego OR ne aggancia **2575** (16,5% del corpus
+di 15.578); i fatti cercati stanno in **posizione 147**. `recall` li trova.
+
+**② `18` — due righelli sull'uso della memoria danno verdetti opposti.** Livello MCP: **245 letture
+/ 140 scritture = 1,75**. Livello flow: **3387 / 10199 = 0,33**. Fattore **5,3**, entrambi veri.
+35.731 righe di journal (ruota: letti `events.jsonl` **e** `.1`).
+
+**③ `19` — la cura del ranking PEGGIORA il caso reale, quindi non è stata scritta.** Riordinando per
+token agganciati: sul banco costruito dalle parole del fatto medi **0→20** e vecchi **0→19**; ma
+cercando **per argomento** i recenti scendono **14→4**, i vecchi restano **0→0** e **18 su 20 non
+sono nemmeno candidati**. ⇒ il difetto sta **prima** dell'ordinamento.
+
+**④ `20` — l'archivio vecchio ha già una porta: gli auto-MASTER.** Sono **114**, coprono **88,7%**
+del servibile ma solo **62,6%** dei più vecchi; `recall` li serve per primi, `search` no.
+🔴 **Contiene una mia ritrattazione**: l'idea che il gap si chiuda «facendo girare il consolidamento»
+è **falsa** — i prefissi scoperti hanno **1 fatto** in mediana contro 11 dei coperti.
+
+**⑤ `21` — le due porte gemelle non usano lo stesso nome, e la sbagliata tace.**
+`hippo_facts_search` vuole `limit`, `hippo_facts_recall` vuole `k`: con `limit=2` restituisce **5**
+items, con `k=2` ne restituisce **2**, e **nessun errore**. 🔴 Corregge anche una mia nota nei doc
+17/19/20: **il rerank non è rotto**, era il caricamento del modello.
+
+**⑥ `22` — un quarto dei trattenuti recenti è approvato dal giudice.** Backlog: **1.113** trattenuti.
+Dei **456** dal 7 agosto, **111 (24,3%)** hanno `grounding ≥ 90`; `L4.1` ne ferma **70**.
+Il 59% «senza responsabile» e il 42% «mai giudicato» sono **eredità**: dopo il 7 agosto sono 1% e 0%.
+
+**⑦ `23` — quanto spesso `L4.1` ha ragione: 42 volte su 70.** Falsi allarmi **14 (non 21: leggerne
+tre l'ha fatto scendere)**, **5 casi di ECO** (la fonte contiene un verdetto del gate — esemplari dal
+corpus reale, non da un banco), 2 non misurabili dal mio criterio, 7 fonte troncata. **14 è un
+tetto**: il criterio guarda la presenza della stringa, non il legame soggetto-valore.
+
+**⑧ `24` — anche il GATE ha ere: quattro in ventiquattro giorni.** `L4.1` e `L4-review` partono il
+**21/08** e passano da **0% a 47%** delle quarantene; `gate` smette il **27/08**. ⇒ il tasso che sale
+da ~5% a 12-17% **non dice che scriviamo peggio**. E **a metro costante non risponde lo stesso**:
+7 giorni, primi tre **12,3%** contro ultimi tre **8,8%**, ma togliendo il solo **28/08** diventa
+**13,5%** — un giorno ribalta il segno.
+
+**rifallo con:**
+
+```bash
+# ③ i due banchi del ranking (il secondo è il caso realistico che ribalta il primo)
+python docs/stato-reale/banchi/ws6-il-ranking-per-token-sul-caso-favorevole.py
+python docs/stato-reale/banchi/ws6-il-ranking-per-token-cercando-per-argomento.py
+# ① il costo di una parola sbagliata, stratificato per età
+python docs/stato-reale/banchi/ws6-quanto-costa-una-parola-sbagliata.py
+# ⑧ le ere del gate: primo e ultimo fatto fermato da ciascun organo
+python -c "import sqlite3;from verimem.config import CONFIG;c=sqlite3.connect('file:%s?mode=ro'%str(CONFIG.semantic_db).replace(chr(92),'/'),uri=True).cursor();[print(r) for r in c.execute(\"SELECT quarantined_by,COUNT(*),strftime('%Y-%m-%d',MIN(created_at),'unixepoch'),strftime('%Y-%m-%d',MAX(created_at),'unixepoch') FROM facts WHERE status='quarantined' AND quarantined_by IS NOT NULL GROUP BY 1 ORDER BY MIN(created_at)\")]"
+# ⑤ le gemelle: stesso identico parametro, due nomi
+#   hippo_facts_recall  limit=2 -> 5 items   ·   k=2 -> 2 items
+```
+
+⚠️ **Tutte in `mode=ro`, sole SELECT.** Le misure sul corpus si muovono mentre le fai: il totale è
+passato da 15.578 a 15.755 in due ore. **L'istante fa parte del dato.**
