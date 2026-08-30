@@ -5,10 +5,24 @@ Read-only detector. Returns fact_ids that are candidates for
 
 Composes over the cycle-128 ``anti_confabulation.SHIPPED_KEYWORDS``
 detection rule but applies it at REST (post-write) instead of write-time.
-The L1 gate already downgrades suspect claims to ``provisional`` /
-``model_claim`` at write-time; this detector finds the ones that have
-sat in that state past a grace period (default 7 days) without ever
-accumulating a commit-tracking ref.
+The L1 gate downgrades suspect claims at write-time; this detector finds
+the ones that have sat in that state past a grace period (default 7
+days) without ever accumulating a commit-tracking ref.
+
+The filter is ``status IN ('provisional', 'model_claim')``, and the two
+entries are there for DIFFERENT reasons — the sentence that used to name
+them as one had gone stale:
+
+* ``model_claim`` is the live population and the one that matters: those
+  facts ARE served, so a suspect claim sitting there is what this
+  detector exists to surface.
+* ``provisional`` is historical. The gate's downgrade path writes
+  ``quarantined`` (``client.py`` plus six other call sites; no line
+  assigns ``provisional`` on that path any more). The status itself is
+  NOT dead — the store reserves it for URL/arxiv-backed hypotheses — so
+  the entry stays and keeps catching the older rows.
+* ``quarantined`` is deliberately absent: those facts are already out of
+  default recall, so flipping them to ``orphaned`` would add nothing.
 
 Closes gap §5 of ``docs/sota/L0-L3-anti-confab-layers.md`` (cycle 180).
 The write-mode reconciler is deferred — A6 lentezza, scope chiuso.
