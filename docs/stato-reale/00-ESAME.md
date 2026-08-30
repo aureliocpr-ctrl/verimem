@@ -12862,3 +12862,55 @@ Avevo scritto che «la fonte attendibile è `importlib.metadata.version` / `veri
 ### Cosa questi dati NON provano
 Vale **su questa macchina e con questa installazione editable**: non è un difetto del prodotto, è come è montato l'ambiente. Con un'installazione non-editable `verimem.__version__` seguirebbe il pacchetto installato e il ragionamento cambierebbe.
 Non ho verificato se altri strumenti (`pip list`, `uv`, gli hook) leggano l'una o l'altra fonte.
+
+---
+
+## ws1 · 31/08 01:09 — CINQUE CORPORA, MAI UNA DOMANDA CHE CAMBIA ESITO: IL RICHIAMO È INSENSIBILE AL CONTENUTO DELLA MEMORIA
+
+**Livello**: la porta pubblica. **Perimetro**: 114 domande di terzi, inglese; **`verimem.__version__` = 0.7.6**, lanciato dallo scratchpad *(la cwd conta: vedi la cella delle 01:00)*. **Istante**: 31/08 01:05–01:08. **Regime**: `ok` in testa, dopo ogni ingestione e in coda.
+
+Paga **l'ultimo debito aperto**: il corpus in-entità delle 23:39 era **depurato** (5796 frasi escluse perché contenevano una risposta), quindi avevo testato solo la concorrenza *fra fatti che non rispondono*.
+
+### 🟢 PRIMA: HO TROVATO UN DIFETTO NEL MIO MISURATORE E L'HO CHIUSO
+
+Nei banchi precedenti contavo «servito con la risposta» se il testo **conteneva la stringa** `right_answer`. Regge finché il criterio di raccolta garantisce che **una sola** frase del corpus la contenga — vero nel corpus base, **falso** appena si aggiungono frasi che parlano d'altro citando «1986». Ho quindi usato il **criterio esatto** (servito-giusto ⟺ fra i testi serviti c'è **la frase rilevante specifica**) e **rimisurato anche il baseline** con lo stesso metro:
+
+```
+BASE-401, criterio «contiene la stringa»  ->  56/114 · 23 sbagliate · 35 astenute
+BASE-401, criterio ESATTO                 ->  56/114 · 23 sbagliate · 35 astenute
+```
+
+**Identici.** ⇒ **I numeri di stanotte non erano gonfiati dal misuratore permissivo.**
+
+### 🔴 P-RISP FALSIFICATA — nemmeno le risposte altrui spostano nulla
+
+Corpus allargato con **1996 frasi**, di cui **405 contengono una risposta** di una delle 114 domande — la forma che il cross-encoder premia (+5,709 contro +2,459, misurato alle 00:38).
+
+```
+                        giuste   sbagliate  astenute | candidati dal nuovo | serviti dal nuovo
+BASE-401                56/114      23        35     |      0/570          |     0/98
+CON-RISPOSTE-2397       56/114      23        35     |    311/570 (54,6%)  |     5/101
+```
+
+**La variabile è entrata** — il 54,6% dei candidati viene dal materiale nuovo — **e il gate ne respinge 306 su 311.** Non una domanda cambia esito.
+
+### 🔑 IL QUADRO COMPLETO: CINQUE CORPORA
+
+| corpus | candidati dal nuovo | **richiamo** |
+|---|---:|---:|
+| base, 401 frasi | — | **56/114** |
+| + SQuAD v2 (altro dominio) | 15,3% | **56/114** |
+| + HaluEval (stesso dominio) | 61,1% | **56/114** |
+| + in-entità **depurato** | 54,6% | **56/114** |
+| + in-entità **con le risposte** | 54,6% | **56/114** |
+
+E l'identità è verificata, non solo il conteggio: fra base e in-entità **Jaccard 100%, zero entrate, zero uscite** (cella delle 23:50).
+
+> **Il richiamo del prodotto non dipende da cosa c'è nella memoria — non dalla dimensione, non dal dominio, non dalle entità, non dalla presenza di altre risposte. Dipende dal floor, e dal floor soltanto.**
+
+Con questo la serie sui corpora si chiude: **P-SCALA-A/B, P-DOM-A/B, P-ENT-A, P-RISP — sei predizioni mie, tutte falsificate nella stessa direzione.**
+
+### Cosa questi dati NON provano
+Ho comunque escluso **5083 frasi** perché contenevano la risposta di una **sonda**: necessario nel disegno precedente, **superfluo qui** (questo banco non usa le sonde). L'ho tenuto per coerenza; senza, il pool sarebbe stato più grande — **non cambia il verso**, visto che 311 candidati su 570 erano già entrati.
+Le altre perdite del criterio: 426 già nel corpus base, 137 knowledge di una sonda, 3897 senza entità in comune.
+Vale in **inglese**, con `k=5`, su queste 114 domande.
