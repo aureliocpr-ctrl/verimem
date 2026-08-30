@@ -12107,3 +12107,38 @@ fatti di un'altra istanza** — proprio ciò che avevo scoperto io nel `41` («s
 avevo scritto TRE volte nel promemoria della notte.**
 📌 **Non misurato**: la stessa cosa con query costruite dal **contenuto** invece che dal topic. Il
 controllo dice che lì il fatto torna primo o secondo, ma è **un caso singolo**.
+
+**㊺ `51` (completato) — il 92,4% dei topic ha UN SOLO fatto, e la nostra regola si restringe.**
+📊 **Il numero che spiega l'8,6%** (rimisurato oggi, dopo aver trovato un fatto del **05/08** che ne
+contava **5.716**):
+```
+topic distinti : 12.401        fatti : 16.601
+fatti per topic: 1,34
+topic con UN SOLO fatto: 11.458 = 92,4% dei topic
+```
+**In venticinque giorni i topic sono più che raddoppiati.** ⇒ **Il topic ha smesso di essere una
+categoria: è quasi un identificatore del fatto**, e **cercare per nome di topic in un namespace così
+non può funzionare** — non c'è niente da aggregare e ogni nome è troppo specifico.
+🔑 **La causa è la NOSTRA regola**: «un topic per misura» protegge le **scritture** (supersessioni
+corrette nel `41`, niente conflitti quadratici nel `44`) e **il prezzo, mai misurato prima, è 1,34
+fatti per topic**. I miei 36 topic di stanotte sono **36 righe di quel 92,4%**.
+🎯 **MA LA TENSIONE SI SCIOGLIE — provato sui fatti di questo stesso pezzo.** Invece di aprire il
+trentasettesimo topic ho salvato due dei miei numeri **dentro `project/verimem/topic-non-normalizzati`**
+(del 05/08), che conteneva già quattro fatti con numeri **diversi** dai miei (**5.716 contro 12.401**):
+esattamente la situazione che dovrebbe far scattare una supersessione.
+```
+ammessi 3, quarantinati 0
+supersessioni scattate: NESSUNA
+```
+Coerente con `cb4043575870`: **la supersessione è governata dalla FONTE, non dal topic.** Source
+diverse ⇒ nessun conflitto, **anche nella stessa cartella, anche con numeri che in apparenza si
+contraddicono**.
+> 📏 **LA REGOLA SI RESTRINGE, NON SI RITIRA: serve una SOURCE distinta per misura, non un TOPIC
+> distinto per misura.** Riusare un topic esistente **non costa nulla sulle scritture e guadagna
+> sulle letture**. E **prima di aprirne uno nuovo, cercarlo**: l'ho fatto per la prima volta stanotte
+> e ho trovato subito il topic del 5 agosto sullo stesso tema.
+🪞 **Tredicesimo e quattordicesimo errore**, entrambi nel banco: la prima versione filtrava
+`writer_role='user'` e ha misurato **i fatti di un'altra istanza** (19,7% su 122 — **non era mio e non
+l'ho pubblicato**), proprio ciò che avevo scoperto io nel `41` e dimenticato tre ore dopo; la seconda
+cercava i miei id con `glob("/tmp/*")` da Python, e **il `/tmp` di Git Bash non è quello che Python
+vede su Windows** — è la trappola che avevo scritto **tre volte** nel promemoria della notte.
