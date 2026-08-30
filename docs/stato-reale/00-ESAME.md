@@ -12983,6 +12983,61 @@ diversi: **è il primo controllo da fare** · **la misura «10 su 10» è del do
 come dichiarazione del prodotto, **non rieseguita.**
 *(doc `56`)*
 
+**54ª `57` (banco) — chiudo il limite «l'inglese» e cade la SPIEGAZIONE che avevo dato un'ora prima:
+la memoria ATTRAVERSA le lingue (87,5%) e NON attraversa i sinonimi (25% · 6,2%). Ottava rettifica,
+e stavolta cade una causa, non un numero.**
+**Il timore** che aveva motivato il banco: se il richiamo è lessicale (`55`: sinonimi 20,8% contro
+vocabolario del dominio 91,7%), **una domanda in inglese non vede i fatti in italiano ⇒ metà memoria
+invisibile all'altra metà**, e il corpus è misto.
+✅ **DISEGNO migliore del `55`** — là i bracci differivano anche in lunghezza e l'avevo dichiarato;
+**qui il fattore è UNO**: stesso fatto, **stessa domanda**, cambia **solo la lingua**. 24 fatti
+italiani, `k=10`, appaiato.
+
+| la domanda | ritrovati | al 1º posto | sovrapposizione |
+|---|---|---|---|
+| in **italiano** | 22/24 = **91,7%** | 87,5% | 85,9% |
+| la **stessa in inglese** | 21/24 = **87,5%** | 62,5% | **22,7%** |
+
+🪞 **CONTROLLO**: 10 domande contengono identificatori che *sopravvivono* alla traduzione
+(`EncodeDelegateUnavailable`, `flow.recall`, `2f92d9e5`, `jaccard`, `768`) — **senza separarli
+misurerei la presenza di un token identico, non la lingua**. Separate: **con** identificatori
+**10/10 in entrambe** · **senza** identificatori **IT 12/14 = 85,7% · EN 11/14 = 78,6%** (sovr.
+13,2%) ⇒ **anche senza un solo token in comune l'inglese regge.**
+🔴 **E QUI CADE LA MIA SPIEGAZIONE DEL `55`** (*«il richiamo è governato dal LESSICO»*), dal
+confronto più crudele: **sinonimi IT sovr. 16,1% → 20,8%** contro **stessa domanda tradotta sovr.
+22,7% → 87,5%** ⇒ **sovrapposizione quasi uguale, risultato opposto.** Se decidesse il lessico di
+superficie, l'inglese crollerebbe come i sinonimi. **Non crolla.**
+🎯 **ESPERIMENTO DECISIVO, predizione registrata PRIMA**: se l'encoder (`multilingual-e5-base`)
+allinea le **traduzioni** e non le **parafrasi**, i sinonimi *in inglese* devono crollare come quelli
+italiani ⇒ **sinonimi IT 4/16 = 25,0% (sovr. 15,6%) · gli stessi in EN 1/16 = 6,2% (sovr. 2,1%)**.
+**Non solo crollano: crollano di più. La predizione regge.**
+
+| sugli stessi fatti italiani | ritrovati |
+|---|---|
+| vocabolario del dominio, **italiano** | **91,7%** |
+| vocabolario del dominio, **tradotto** | **87,5%** |
+| sinonimi lontani, italiano | 25,0% |
+| sinonimi lontani, **tradotti** | **6,2%** |
+
+> 🔑 **La traduzione costa 4 punti. La parafrasi ne costa 67. La traduzione di una parafrasi costa
+> tutto.** ⇒ **il confine non è la lingua né la sovrapposizione lessicale: è QUALI TRASFORMAZIONI
+> L'ENCODER HA IMPARATO AD ALLINEARE.**
+
+⚖️ **RICADUTA, ed è l'OPPOSTO del timore**: ❌ **non c'è metà memoria invisibile all'altra metà per
+la lingua** — chi interroga in inglese un corpus italiano lo vede (**87,5%**), e **dirlo vale quanto
+un allarme** · ⚠️ **il rischio vero è il SINONIMO, in qualunque lingua**: «contraddizioni» e «liti»
+sono più lontane, per questa memoria, di *contraddizioni* e *contradictions* · 📉 **ma il RANGO paga
+il passaggio**, primi posti da 87,5% a **62,5%**: **trova, e posiziona peggio** — con `k` piccolo si
+vedrebbe di più.
+📌 **LIMITI**: ⚠️ **l'ipotesi «allinea le traduzioni perché le ha viste in addestramento» NON è
+misurata** — regge alla falsificazione che le ho fatto, **non è un fatto verificato** · i fatti sono
+**tutti in italiano**: la direzione opposta **non l'ho misurata**, e il corpus ne contiene · **le
+traduzioni le ho scritte io e sono FEDELI** — una traduzione sciatta è una parafrasi e cadrebbe
+nell'altro braccio · **n=24 e n=16**: reggono i divari da 60-80 punti, **non** i 4 punti fra 91,7 e
+87,5, che sono **un fatto solo e non li interpreto** · `k=10`.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-cross-lingua.py`.
+*(doc `57`, e riquadro di rettifica dentro al `55`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
