@@ -113,12 +113,42 @@ dei fatti scritti nella notte…», «nel confronto delle firme delle fonti…»
 **Tre su tre sopravvissuti**, dove poche ore prima undici pezzi su undici si
 erano ritirati a vicenda.
 
-**Non è una dimostrazione**: sono tre fatti, un solo tentativo, e le loro source
-erano diverse — ma lo erano anche in due delle tre coppie che si sono mangiate,
-quindi la source diversa da sola non spiega. **È la prima evidenza a favore, ed
-è stata raccolta salvando il documento che la propone.** Serve un banco vero:
-N misure spezzate in due modi — solo-numero contro numero-più-condizione — e il
-conteggio dei sopravvissuti a distanza.
+**Non è una dimostrazione**: sono tre fatti, un solo tentativo. Serve un banco.
+
+## Il banco, e la mia proposta è falsificata
+
+L'ho costruito subito (`banchi/ws6-banco-pezzi-condizione.py`, store
+**temporaneo**): sei misure per braccio, ciascuna spezzata in **due fatti con la
+stessa source** — la forma esatta dei fatti che si sono mangiati.
+
+| braccio | i due pezzi | vivi |
+|---|---|---|
+| **A** (controllo) | dicono **solo il numero** | **6 su 12** |
+| **B** (la mia proposta) | nominano **lo stesso soggetto** | **6 su 12** |
+| **C** | nominano **entità diverse** | **12 su 12** |
+
+**Il braccio B non fa meglio del controllo: la proposta come l'avevo scritta è
+falsificata.** I tre fatti sopravvissuti erano un caso fortunato.
+
+**E l'errore era nel disegno della cura, non solo nella cura.** In B avevo
+ripetuto *lo stesso* soggetto in entrambi i pezzi («nella misura sonde…», «nel
+conteggio successivo della misura sonde…»): le entità restavano **identiche**, e
+`_entita_diverse` non aveva niente da distinguere. In C ogni pezzo nomina un
+oggetto suo — «il file di ingresso», «la tabella di uscita» — e **non se ne
+perde nemmeno uno**.
+
+Un dato in più, e conferma il meccanismo: **in A e in B il ritirato è sempre il
+primo pezzo scritto, 12 volte su 12.** Non è probabilistico: con la stessa
+source e le stesse entità, **il secondo fatto ritira il primo, sempre**.
+
+> **La cura non è nominare qualcosa: è che i due pezzi parlino di cose
+> diverse.** Se una misura ha due valori dello *stesso* oggetto, spezzarla lo
+> dimezza — e allora vanno tenuti in un fatto solo, o agganciati a oggetti
+> distinti.
+
+*(Limiti: sei misure per braccio, store **vuoto** all'inizio — giudice e
+pavimento possono comportarsi diversamente che su un corpus reale — e tutti i
+fatti risultano `judged`, quindi il moat girava.)*
 
 ## Per chi riprende
 
