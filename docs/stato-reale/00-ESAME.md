@@ -12062,3 +12062,44 @@ Il reperto delle 22:12 resta valido **sul suo perimetro**, che ora è definito c
 ### Cosa questi dati NON provano
 Gli esiti alla porta (4/6/2 · 6/4/2 · 5/5/2) sono su **n=12**: intervallo **±~28 punti**. Le variazioni fra le lingue e lo scarto rispetto al 49% globale **stanno tutte dentro**, e **non le interpreto** — le riporto come corollario, non come tasso.
 Le traduzioni sono mie. Vale sul corpus base da 401 frasi, in questo regime (**risposta presente**); non dice nulla sul regime di assenza, dove la deriva è invece decisiva.
+
+**㊹ `51` — ho scritto settanta fatti e, col nome del loro argomento, ne torna il 9%. E la causa è
+mia.** Ultimo pezzo della notte, quello che avrei preferito non dover scrivere: misura se il lavoro
+appena fatto sia utile a chi verrà dopo.
+📊 **70 fatti** (tutti ammessi, grounding 99,2-99,98) in **36 topic**. Per ogni topic una query
+costruita **dal nome del topic** (`verimem/coda-revisione` → «coda revisione») — **non** dalla
+proposizione, che sarebbe il caso facile già caduto nel `37`:
+```
+>>> miei fatti ritrovati entro k=10: 6 su 70 = 8,6%
+    corse degradate: 0 su 36
+```
+**Trenta topic su trentasei non restituiscono nessuno dei propri fatti**, e **il regime era pulito**:
+non è l'artefatto che aveva rovinato le misure di ieri.
+✅ **MA NON SONO IRRAGGIUNGIBILI — il controllo che discrimina.** Preso un topic da **0/3**
+(`verimem/pavimento-persistito`), cercato lo stesso contenuto con una query che **lo descrive**
+(«file floor json contiene zero persistito»), regime `rerank: applied, fusion: applied`: **il mio
+fatto torna SECONDO con score 0,8796, il più alto dei cinque.**
+> **Il difetto non è che i fatti non si trovino: è che il nome del topic non è una buona chiave di
+> ricerca.**
+🪞 **E LA CAUSA È MIA.** Nella stessa risposta compare `78b3e15e886c` (**05/08**), topic
+**`project/verimem/pavimento-persistito`** — il mio è **`verimem/pavimento-persistito`**. **Lo stesso
+argomento in due cartelle diverse a venticinque giorni di distanza, e la seconda l'ho creata io
+stanotte senza accorgermi che la prima esistesse.** I settanta fatti stanno in **36 topic nuovi**,
+molti dei quali **duplicano topic già esistenti con un nome leggermente diverso**: cercando per nome
+di cartella le due si fanno concorrenza, cercando per contenuto il fatto giusto emerge.
+🔑 **IL ROVESCIO DI UNA NOSTRA REGOLA**: «**un topic per misura**» funziona e l'ho applicata tutta la
+notte — nasce dalle supersessioni sbagliate (`41`) e dai conflitti quadratici (`44`). **Ma se ogni
+misura si porta un topic nuovo, il namespace si frammenta e il topic smette di essere una chiave utile
+per RITROVARE.** Le due cose non si contraddicono — tengono separate le **scritture** e disperdono le
+**letture** — **ma vanno sapute insieme**. 💡 **Prima di aprire un topic, cercarlo**: una recall sul
+nome bastava a scoprire che quello del 5 agosto esisteva. **Non l'ho fatto per nessuno dei
+trentasei.**
+🪞 **Tredicesimo errore**: la prima versione del banco filtrava `writer_role='user'` e ha misurato **i
+fatti di un'altra istanza** — proprio ciò che avevo scoperto io nel `41` («scritte da noi» =
+`writer_role='user'`, uguale per tutte e otto) e dimenticato tre ore dopo. Il numero uscito (19,7% su
+122) **non era mio e non l'ho pubblicato.**
+🪞 **Quattordicesimo**: la seconda versione cercava i miei id con `glob("/tmp/*")` da Python, e **il
+`/tmp` di Git Bash non è quello che Python vede su Windows** — zero risultati. **È la trappola che
+avevo scritto TRE volte nel promemoria della notte.**
+📌 **Non misurato**: la stessa cosa con query costruite dal **contenuto** invece che dal topic. Il
+controllo dice che lì il fatto torna primo o secondo, ma è **un caso singolo**.
