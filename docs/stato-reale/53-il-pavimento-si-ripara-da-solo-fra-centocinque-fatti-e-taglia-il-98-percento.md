@@ -1,6 +1,12 @@
-# 53 — Il pavimento si ripara da solo fra 105 fatti, e quel giorno taglia il 98% del traffico
+# 53 — Il pavimento si ripara da solo fra 105 fatti, e quel giorno l'avviso si accende sul 98% delle risposte
 
 *ws6/Aldo — 31 agosto 2026, notte. Seguito diretto del [48](48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md).*
+
+> ✍️ **Il nome del file dice ancora «taglia il 98%», e il titolo no.** Ho
+> pubblicato questo documento alle 01:20 con quel verbo; alle 01:45, leggendo il
+> ramo che avevo misurato, ho visto che **«taglia» è il verbo sbagliato** — la
+> sezione ⑦ lo corregge. Il nome del file resta quello per non rompere i link
+> già in giro sul canale.
 
 Il documento `48` chiude con un fatto: `semantic.db.floor.json` contiene
 `{"floor": 0.0, "n_facts": 13795}`, scritto alle 20:32 dentro la finestra senza
@@ -168,6 +174,47 @@ non va esteso al regime normale senza misurarlo. Il punto non è il tasso: è ch
 **il 105 era già falso venti minuti dopo averlo scritto.** Il margine si legge
 rifacendo il conto (`banchi/ws6-margine-del-pavimento.py`), mai ricopiando il
 numero da qui.
+
+## ⑦ Rettifica: non «taglia», **avvisa** — e il prodotto lo sapeva già
+
+Mentre scrivevo, @ws2 ha pubblicato `W2-258`, che nomina una distinzione che io
+non avevo: **`_auto_relevance_floor()` alimenta due usi diversi.** Non l'ho preso
+per buono — sono andato a leggere i due punti.
+
+| dove | che cosa ne fa | chi l'ha misurato |
+|---|---|---|
+| `client.py:1113` | lo mette in `min_relevance`, che **filtra ogni fatto** | @ws2: recall da 10 a **1 su 30** su domande i cui fatti esistono |
+| `client.py:1271` | lo confronta con `_best`, e ne fa il campo **`sotto_il_pavimento`** | **questo documento** |
+
+**I `best` che ho misurato sono il secondo ramo.** Quindi il mio 97,8% non dice
+«il prodotto scarterebbe il 97,8% delle risposte»: dice **«il prodotto
+attaccherebbe l'avviso *sotto_il_pavimento* al 97,8% delle risposte»**.
+
+**È un difetto diverso, e non più piccolo: un avviso che si accende 98 volte su
+100 non è un avviso, è rumore** — la stessa forma dei «96% di falsi allarmi» che
+ci era già costata una cura buttata.
+
+🔑 **E la lezione era scritta nel codice, sei righe sopra il punto che ho
+misurato** (`client.py:1264-1269`):
+
+```
+#     banco A  rispondibili min 0.8757 · pavimento 0.8689 -> 0 falsi tagli
+#     banco B  rispondibili min 0.8489 · pavimento 0.8491 -> 1 falso taglio su 5
+# La taratura del pavimento dipende dal corpus: come veto perderebbe un
+# fatto vero, come avviso costa un avviso.
+```
+
+**Il prodotto sa già che come veto perde fatti veri, e per questo a `:1271` si è
+scelto l'avviso.** Ma quel commento contiene anche il dato che oggi non regge
+più: nel banco che ha tarato la cura, **i fatti rispondibili stavano SOPRA il
+pavimento** (min 0,8757 contro 0,8689). Nel traffico di oggi il p95 è **0,863**,
+sotto entrambi. **Il corpus si è spostato sotto il righello che l'aveva
+tarato**, e «come avviso costa un avviso» diventa «costa 2823 avvisi su 2887».
+
+📐 **Tre stime indipendenti dello stesso pavimento, e concordano**: 0,8743
+(mia, prima) · **0,8797** (mia, daemon caldo) · 0,8853 (@ws2, corpus vero).
+**Varianza ~1%, tutte sopra 0,868**: la dispersione delle sonde non salva il
+caso, qualunque delle tre esca.
 
 ---
 *Banchi: `banchi/ws6-margine-del-pavimento.py`, `banchi/ws6-best-reali-dal-journal.py`,
