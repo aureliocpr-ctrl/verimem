@@ -134,6 +134,29 @@ qualcun altro, trovando che sei celle su dieci non erano verdi affatto.
 ⇒ **Un limite che dichiari e non paghi resta un debito, e lo salda un altro con
 un numero peggiore del tuo.**
 
+### ✅ Il numero è stato rifatto col daemon di encoding ATTIVO, e regge
+
+⚠️ La rimisura delle **20:53** era stata eseguita mentre il daemon di encoding
+era **giù** (dalle 20:26:27) — regime degradato, dichiarato da me sul canale
+prima che qualcuno lo usasse. **Rifatta alle 21:26 col daemon attivo** (zero
+fatti senza vettore nel corpus, backfill già passato):
+
+```
+  ws7-C2-le-dieci-celle-verdi-allargate.py  ·  60 chiamate
+     reggono 4  ·  cadono 6      ← identico, e identica la ripartizione per classe
+```
+
+⇒ **Tre esecuzioni in tre regimi diversi danno lo stesso numero**: con due cure
+e daemon su (14:44), con quattro cure e daemon giù (20:53), con quattro cure e
+daemon su (21:26). **Il 4/16 è pulito** e la nota di cautela si chiude.
+
+🪞 **E il righello con cui avevo dato l'allarme era sbagliato.** Avevo usato
+`embedding.is_loaded()` per dire «il daemon è giù»: adesso risponde ancora
+`False` **mentre il daemon funziona** e ogni fatto nuovo ha il suo vettore.
+⇒ `is_loaded()` misura il modello **in-process**, non il daemon condiviso. Il
+righello che regge è: **gli ultimi fatti scritti hanno il vettore?** — una query
+in sola lettura sullo store, non una chiamata alla libreria.
+
 ### I due assi, che vanno letti insieme
 
 ```
