@@ -25,7 +25,7 @@ Modes
   hidden from default recall yet preserved for audit.
   ⚠️ Diceva ``provisional`` fino al 2026-08-30, e non e' un dettaglio di
   vocabolario: il gate non scrive ``provisional`` da nessuna parte, e il
-  corpus non ne registra piu' dal 2026-06-02 (reperto di *Varco*, `W7-71`).
+  corpus non ne registra piu' dal 2026-06-02 (reperto in `W7-71`).
   ``provisional`` ESISTE ancora, ma per un'altra ragione — lo store lo
   riserva alle ipotesi con riferimento URL/arxiv (`evidence_requirement.py`)
   e `semantic.py` lo LEGGE: **chi lo trovasse citato qui e lo credesse morto

@@ -647,7 +647,7 @@ def run_doctor() -> list[dict[str, Any]]:
             # ha misurato: dice qualcosa SULLO STORE, mentre ha guardato SOLO
             # lo store della data_dir. Chi apre `Memory(path=…)` scrive
             # altrove e i suoi fatti non passano di qui — e non e' un caso
-            # raro: `91f6b5a3` (Varco) misura **circa nove chiamanti su
+            # raro: `91f6b5a3` misura **circa nove chiamanti su
             # dieci** con un path esplicito. Misurato il 30/08: tre scritture
             # via `Memory(path=…)` e questa riga diceva «no facts stored yet».
             _coverage = ("no facts in the store this process reads (the one "
