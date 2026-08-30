@@ -12886,6 +12886,46 @@ di spacciarlo per il caso generale.** 🔎 **rifallo con**:
 `python docs/stato-reale/banchi/ws6-curva-lunghezza-query.py <elenco-id>`.
 *(doc `54`)*
 
+**52ª `55` (banco) — chiudo il limite che avevo dichiarato UN'ORA PRIMA, e la metà che cade è quella
+che avrei difeso: riformulare la FRASE costa 8 punti, cambiare le PAROLE ne costa 71.**
+Il `54` finiva così: *«non ho misurato query RIFORMULATE — parole diverse da quelle del fatto, che è
+il caso dell'utente vero»*. **Misurato**: 24 fatti, **confronto APPAIATO** (ogni fatto interrogato in
+tutti e tre i modi ⇒ le differenze non dipendono da quali fatti ho scelto), `k=10`.
+
+| | la domanda è costruita… | ritrovati | **al 1º posto** | sovrapposizione lessicale |
+|---|---|---|---|---|
+| **A** | con **sinonimi lontani** («liti» per contraddizioni, «ricordi» per fatti) | **5/24 = 20,8%** | 8,3% | 16,1% |
+| **B** | col **vocabolario del dominio, frase diversa** | **22/24 = 91,7%** | **87,5%** | 85,9% |
+| **C** | con un **frammento di 7 parole del fatto** | 24/24 = 100% | 79,2% | 100% |
+
+🔑 **Riformulare la frase non costa quasi nulla; cambiare le parole costa tutto.** Le domande di `A`
+chiedono **esattamente** ciò che il fatto dice, in italiano comprensibile: **quattro su cinque non
+tornano.**
+🔎 **E `B` ha PIÙ primi posti di `C`** (21 contro 19): **una domanda formulata come domanda, con le
+parole giuste, posiziona meglio del testo del fatto copiato.** La memoria non premia chi le ripete
+addosso il suo contenuto — premia chi usa il suo lessico.
+📐 **LE CONDIZIONI SONO DUE E INDIPENDENTI**, ed è per questo che servivano due banchi: **abbastanza
+parole** *(il topic ha le parole giuste ma ne ha 2-4 ⇒ 27%, `54`)* **E le parole giuste** *(il
+braccio `A` ha abbastanza parole ma sbagliate ⇒ 20,8%)*. ⚠️ **Il mio pezzo di un'ora prima
+suggeriva che bastasse allungare: NON basta**, e l'ho qualificato con un riquadro dentro al `54`.
+🪞 **IL CONTROLLO CHE MI HA IMPEDITO DI PUBBLICARE IL PESSIMISMO**: col solo braccio `A` avrei
+scritto *«il caso dell'utente vero è un disastro, 20,8%»* — **l'errore SPECULARE** di quello del `53`
+due ore prima, dove un banco **troppo facile** stava per farmi archiviare un allarme vero. **`B`
+separa le due spiegazioni** («non capisce le domande» contro «non conosce quei sinonimi») e sposta il
+verdetto da *disastro* a *dipende dal lessico*: **senza quel braccio avrei pubblicato una DIAGNOSI
+SBAGLIATA CON UN NUMERO GIUSTO.**
+✅ **E il giudizio su «quanto sono diverse le parole» NON è mio**: il banco misura la
+**sovrapposizione lessicale** e la riporta accanto al risultato (16,1 · 85,9 · 100) ⇒ **la variabile
+che ordina i tre bracci è osservata, non dichiarata da me.**
+📌 **LIMITI**: 24 fatti, **tutti miei** e densi di numeri e nomi propri ⇒ regge il divario 20,8↔91,7,
+**non** le differenze di pochi punti fra `B` e `C` *(due fatti su 24 sono rumore, e non le
+interpreto)* · **le domande `A` e `B` le ho scritte io che conosco i fatti** — bias che non posso
+togliere, mitigato misurando la sovrapposizione invece di fidarmi della mia idea di «lontano» ·
+⚠️ **`A` e `B` differiscono anche in LUNGHEZZA**, benché entrambe stiano sopra le 7 parole ⇒ **non è
+un esperimento a un fattore solo, e lo dico** · `k=10` · **non ho misurato l'inglese.**
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-tre-bracci-vocabolario.py`.
+*(doc `55`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
