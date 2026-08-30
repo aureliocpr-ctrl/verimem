@@ -8932,3 +8932,53 @@ verimem save "I run ci queued sono 853." --topic t --source "queued 853 in_progr
 hippo_facts_search(query="coda ci queued completed run")                                  # rumore
 hippo_facts_search(query="coda ci queued completed run", topic="guardia/coda-ci-collasso") # giusti
 ```
+
+## 🗄️ ws6 «Aldo» — tre celle sul pavimento e sul regime: la promessa spenta e la porta muta
+
+*Quarto blocco del 30/08, registrate alle 20:50. Documenti `36`, `37`, `38`.*
+
+**⑳ `36` — la promessa di astensione esiste, funziona, ed è spenta di default.** `min_relevance` è
+esposto su `hippo_facts_recall` e la sua descrizione la chiama *«the abstention over hallucination
+promise»*; il prodotto sa perfino **calcolarsi la soglia da solo** (`verimem/relevance_floor.py`,
+`estimate_relevance_floor`, 32 sonde in 39,6s → **0,8743**). Alla domanda senza risposta («biglietto
+per Saturno») i tre fatti serviti stavano a **0,8119 · 0,7796 · 0,7807**: **tutti e tre sotto il
+rumore stimato dal prodotto stesso**. Con il pavimento acceso la porta restituisce `items: []`.
+⇒ *non è una capacità mancante: è un default.*
+
+**㉑ `37` — il mio banco è caduto, e il prodotto aveva già la guardia.** Misurando «quanto costa il
+silenzio» ho ottenuto `score 0.0000` in **54 casi su 54**. Non era un risultato: ero sul **ramo
+degradato** (`ranking: "keyword"`), dove lo score non è *somiglianza bassa* ma **somiglianza non
+misurata**. Il prodotto lo aveva previsto — lo chiama **errore di categoria**, l'ha misurato il
+05/08 e **curato in codice**: `verimem/client.py`, `if min_relevance and not _degradato`, con il
+degrado **dichiarato su ogni item**. ⇒ *il rischio maggiore del pavimento è già coperto; resta
+aperto il costo del silenzio a caldo, che richiede una finestra non degradata.*
+
+**㉒ `38` — il regime lo dice alla risposta e lo tace alla telemetria.** Journal
+`~/.engram/events.jsonl` + `.1`: **37.312 righe**, **14 tipi di evento**. Ricerca di
+`ranking|degraded|rerank|keyword|fusion|timeout` ⇒ **zero occorrenze**: **il regime non è registrato
+da nessun evento**. `flow.recall` porta `surface · store · build · kind · n · best`. **Tre punti di
+emissione su quattro registrano `abstained`** (`client.py:1885` explain, `gateway.py:1237` answer,
+`gateway.py:1268` correct); **il quarto, `client.py:1229` per `kind=search`, no — ed è l'81% del
+traffico** (2.841 letture su 3.509). `flow_tail.py:61` stampa `ABSTAIN`: **quel cruscotto non potrà
+mai mostrare il degrado.** Col proxy `best=0` (dichiarato tale): **135 su 2.841 = 4,8%**, ma
+**0,0% dal 21 al 28/08** (su 2.367) e **35,1% il 30/08** (134 su 382).
+🪞 **Tre difetti nel mio misuratore, non nel prodotto**: `kind=explain` **non porta `best`** e il mio
+`or 0.0` ha reso *assente* = *zero*, **279 finti degradati** (la lezione «una misura che non c'è si
+legge come perfetta», **al rovescio**: l'assenza si legge come **guasta**) · `explain` tenuto nel
+denominatore (3.120 invece di 2.841) · **ipotesi del cold start falsificata dai dati stessi**:
+`82a724a4` vive **1,0 min**, serve **654** letture, **0%** di degrado, mentre i miei due banchi
+(1,2 min) degradano **60/60** e **61/61**; corti <3 min **5,2%**, lunghi ≥10 min **1,9%**.
+🔑 **La causa resta ignota, e questo È il reperto**: il journal non registra né latenza né regime,
+quindi *«quanto spesso rispondiamo degradato, e quando?»* — la prima domanda che farebbe un cliente
+— **non ha risposta nei dati che raccogliamo**.
+
+**rifallo con:**
+
+```bash
+# ⑳ il pavimento che il prodotto si calcola da solo
+python -c "from verimem.relevance_floor import estimate_relevance_floor; from verimem.semantic import SemanticMemory as S; print(estimate_relevance_floor(S(), n_probes=32, quantile=0.95))"
+# ㉒ il regime non e' nel journal: sei stringhe, zero occorrenze
+cd ~/.engram && grep -o '"ranking"\|"degraded"\|"rerank"\|"keyword"\|"fusion"\|"timeout"' events.jsonl events.jsonl.1 | sort | uniq -c
+# ㉒ chi registra abstained e chi no
+cd ~/Code/HippoAgent && git grep -n -A3 'flow.recall' -- 'verimem/*.py' | grep -i 'kind=\|abstain'
+```
