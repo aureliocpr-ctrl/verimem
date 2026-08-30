@@ -103,6 +103,47 @@ un fatto vero *mentre* ammette il falso sulla stessa fonte. È il difetto peggio
 delle tre categorie, perché l'utente perdeva un fatto sostenuto **e** ne guadagnava
 uno inventato.
 
+### 🪞 Il numero delle difese: 4 su 16, e l'avevo respinto
+
+⚠️ **Correzione di una mia correzione.** Alla domanda «*le difese salgono da
+4/16?*» ho risposto tre volte «*4 non è un numero mio, sono 9*». **Il 4 è reale**:
+sta nella controfirma di `LANT-68` sulla cella `W5-1` — allargando le dieci celle
+verdi da 1+1 a **4 falsi + 2 veri**, **sei cadono** e le difese passano da 9 a 4.
+
+⇒ **Rieseguito il banco dell'allargamento (`ws7-C2-le-dieci-celle-verdi-allargate.py`)
+su HEAD con tutte e quattro le cure: 4 reggono, 6 cadono — identico.**
+
+| cadono | falsi fermati | | reggono | falsi fermati |
+|---|---|---|---|---|
+| `cifra-riusata` EN | 2/4 | | `cifra-inventata` IT | 4/4 |
+| `entità-inventata` IT | 3/4 | | `cifra-inventata` EN | 4/4 |
+| `entità-inventata` EN | 2/4 | | `negazione` IT | 4/4 |
+| `unità-cambiata` EN | **1/4** | | `negazione` EN | 4/4 |
+| `attestazione-nuda` IT | 2/4 | | | |
+| `attestazione-nuda` EN | 2/4 | | | |
+
+📌 **E il confronto temporale**: quel 4 era stato misurato con **due** cure in
+HEAD; qui ce ne sono **quattro**. Stesso numero ⇒ **le due cure del pomeriggio
+non hanno mosso le difese di C2 nemmeno di una cella.**
+
+🪞 **Perché avevo risposto male**: ho rieseguito i banchi **originali** (celle
+verdi a 1+1) invece dell'**allargamento**, e ho risposto alla domanda facile. La
+popolazione stretta era **un limite dichiarato da me** in questa stessa pagina —
+«*aggiungere casi a una cella verde non la rende più verde*» — e l'ha pagato
+qualcun altro, trovando che sei celle su dieci non erano verdi affatto.
+⇒ **Un limite che dichiari e non paghi resta un debito, e lo salda un altro con
+un numero peggiore del tuo.**
+
+### I due assi, che vanno letti insieme
+
+```
+  DIFESE       (celle che fermano i falsi su 4 casi)   4/16  →  4/16   invariato
+  DANNI DOPPI  (celle che fanno CADERE il vero)        3     →  0      chiusi
+```
+
+⇒ **Il claim centrale si è mosso su un asse e non sull'altro.** Un referto che
+desse solo il secondo numero suonerebbe meglio di com'è.
+
 ⇒ **Le difese NON salgono, e non dovevano.** I falsi restano bucati identici a
 prima — `cifra-riusata` IT 1/4 · `omissione` IT ed EN 3/4 · `numerale-a-parole`
 IT 3/4 · `numerale-a-parole` EN 4/4 · `unità-cambiata` IT 3/4 — e i **veri salvi
