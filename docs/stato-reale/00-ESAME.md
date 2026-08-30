@@ -10883,3 +10883,48 @@ con `floor = 0.0` non filtrerebbero nulla, **e lì la promessa è ancora più fo
 cat ~/.engram/semantic/semantic.db.floor.json
 python -c "from verimem.relevance_floor import estimate_relevance_floor; from verimem.semantic import SemanticMemory as S; print(estimate_relevance_floor(S()))"
 ```
+
+---
+
+## ws1 · 30/08 22:57 — ALLA PORTA VERA: IL PRODOTTO SI ASTIENE BENE QUANDO LA RISPOSTA NON C'È, E SBAGLIA QUANDO C'È
+
+**Livello**: **la porta pubblica** — `Memory.explain()`, retriever vero (bi-encoder) + gate vero (cross-encoder, floor `0.0`), **regime di default**. Non lo scorer isolato dei banchi precedenti. **Perimetro**: store di **401 frasi** di terzi; **114 domande con risposta presente**, **18 domande sonda** (assenza), **18 di controllo sano** su un secondo store che contiene anche i loro `knowledge`. **Tutto di terzi, tutto inglese.** **Istante**: 22:52–22:57. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+**Questo paga il primo dei due limiti che avevo dichiarato alle 22:48**: lì la popolazione «assenza» usava un **proxy lessicale** al posto del retriever. Qui c'è il retriever del prodotto.
+
+### 🟢 L'ASTENSIONE FUNZIONA — 1 sonda su 18 viene servita
+
+Delle 18 domande la cui risposta **non è nello store**, **17 ricevono un'astensione**. L'unica servita:
+
+> «*What team did Pete Elezovic play for that joined the AFL?*» → servito: «*He played college football for the University of Pittsburgh and was drafted in the first…*»
+
+Il testo servito è un fatto **vero** che parla di football e di un draft, ma **su un'altra persona**: è un falso amico strutturale, ed è `fabrication_under_absence` **misurato alla porta, su dati di terzi, nel regime dell'utente**. **1/18.**
+
+**P-PORTA-B confermata, ma appena**: avevo predetto che col retriever vero qualcuna sarebbe passata. Ne passa **una**. ⚠️ Con n=18, l'intervallo di 1/18 va da ~1% a **~26%**: il tasso vero è **≤26%**, e **«5,6%» non è un numero utilizzabile**.
+
+### 🔴 IL DIFETTO È NELL'ALTRA DIREZIONE — quando la risposta C'È
+
+| esito, 114 domande con la risposta nello store | n | % | intervallo |
+|---|---:|---:|---|
+| **astensione** (nulla servito) | 35/114 | 31% | ±~8 |
+| **servito, e contiene la risposta** | **56/114** | **49%** | ±~9 |
+| **servito, ma NON contiene la risposta** | **23/114** | **20%** | ±~7 |
+
+> **Su 79 risposte date, 23 non contengono la risposta: il 29%** (±~10). E un altro 31% delle domande non riceve niente **pur avendo la risposta nello store**.
+
+**P-PORTA-A confermata**: avevo predetto un richiamo vicino al **49%** misurato con lo scorer a soglia 0.0 — alla porta è **49%** (56/114).
+
+### 🟢 IL CONTROLLO SANO ALLA PORTA PASSA — e mostra lo stesso difetto
+
+Sulle **stesse 18 sonde**, contro uno store che **contiene** i loro `knowledge`: **16/18 servite** (contro 1/18 senza) — il banco non è rotto, il divario è netto. Ma **solo 10/18 servite con la risposta giusta**: 6 volte il prodotto serve **altro pur avendo la risposta in casa**. ⚠️ n=18: quel 56% ha un intervallo ~[34%, 75%], non lo interpreto oltre il segno.
+
+### 🔑 LA SINTESI, ALLA PORTA
+
+> **Il prodotto tace quando deve tacere. Quando deve parlare, metà delle volte dice la cosa giusta, un quinto delle volte dice un fatto vero che non risponde, e un terzo delle volte tace pur avendo la risposta.**
+
+Coerente con tutta la serata: il cross-encoder discrimina **fra argomenti** (astensione 17/18, separazione +8,324, controllo sano 91%) e **non dentro un argomento** (primo posto 41%, richiamo 49%).
+
+### Cosa questi dati NON provano
+Il **4%** di `fabrication_under_absence` del banco ufficiale **non si accosta** a questo 1/18: quello è sintetico, a `0.835`, sul **bi-encoder**; questo è di terzi, in `auto`, sul **cross-encoder**. Due popolazioni e due giudici.
+**Resta aperto il secondo limite dichiarato alle 22:48**: il corpus è di **401 frasi**. Su un corpus grande i falsi amici aumentano, quindi **l'1/18 è un limite inferiore**, non una stima stabile.
+n=18 su tre celle: gli intervalli sono larghi e li ho scritti. Vale in **inglese**.
