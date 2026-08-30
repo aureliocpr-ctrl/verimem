@@ -8342,3 +8342,79 @@ git grep -n -A 6 '"writer_role"' verimem/mcp_server.py     # enum MCP: external_
 
 ⚠️ **I banchi che SCRIVONO vanno in uno store temporaneo**, mai su quello di casa. Le letture sullo
 store di Aurelio sono in **`mode=ro`, sole SELECT**.
+
+---
+
+## ws1 — Il divario IT/EN non è il costrutto: quattro celle, due controlli a esito noto, entrambi rispettati. E ritiro un allarme che avevo dato io e passato a tutte
+
+**Livello**: `Memory.explain()`, regime di default. **Dataset**: **HaluEval QA (MIT)**, 181
+frasi di terzi, 14 entità estratte dal corpus. **Perimetro**: 56 prove su 4 celle.
+**Istante**: 30/08 20:16-20:22. **Regime**: verificato **non degradato** (vedi sotto).
+
+### 🔻 Prima: ritiro un allarme mio, perché l'ho anche passato alle altre
+
+Dalle 18:16 alle 19:23 ho ripetuto — e messo nel registro — che «*in questa sessione i banchi
+scrivono senza embedding*». **È falso.** La misura che mi smonta:
+
+```
+get().embedding                                  -> False      ← il CAMPO
+colonna `embedding` nel DB                       -> 2/2 con valore   ← il VETTORE C'È
+recall semantico, query senza parole in comune   -> 2 hit      ← E FUNZIONA
+_encode_via_service('...')                       -> dim 768    ← il servizio RISPONDE
+```
+⇒ **`SemanticMemory.get()` non idrata `embedding`**: scelta di design, colonna pesante.
+**Ho controllato un campo che il prodotto non popola in lettura, e ne ho concluso «regime
+degradato».** Ho misurato **il mio assert**, non il prodotto — e **l'ho proposto a tutte**.
+
+⚖️ **Non ritiro il ritiro del `5/45`**: in *quel* run lo stderr era davvero pieno di
+`store: encode delegate unavailable`, che è **un segnale del prodotto**. Poi il servizio è
+tornato e io ho continuato a misurare col campo sbagliato per otto ore.
+
+🪞 **La lezione, ed è quella che predico da due giorni**: *il difetto è nel misuratore* — e
+stavolta il misuratore ero io, **mentre scrivevo a tutte di controllare il regime**.
+🔑 **La prova che un presidio funziona è che togliendolo il numero cambi.** Il mio dava
+sempre `False`, **anche quando tutto andava bene**: **un presidio che non ha mai un verde
+non è un presidio, è un blocco.** ⇒ **Regola nuova: un controllo di regime va tarato su un
+caso sano NOTO prima di usarlo.** Il presidio corretto guarda ciò che **il prodotto dice**:
+```python
+degradato = "encode delegate unavailable" in <warning catturati durante una scrittura di prova>
+```
+e alla prima esecuzione ha stampato **`REGIME: degradato = False`** — il verde che al
+precedente mancava.
+
+### Il banco: lingua o COSTRUTTO?
+
+Nel mio confronto IT/EN **lingua e costrutto cambiavano insieme** — EN col possessivo
+(`{n}'s blood type`), IT senza (`il gruppo sanguigno di {n}`). È la stessa forma dell'errore
+che il documento ㉕ dichiara su di sé (`e'` vs `è` attribuito alla lingua). Quattro celle:
+
+| cella | domanda | fallimenti |
+|---|---|---|
+| **A** EN possessivo (con apostrofo) | `What is {n}'s blood type?` | **0/14** ← controllo, atteso 0 ✅ |
+| **B** EN preposizionale (senza apostrofo) | `What is the blood type of {n}?` | **0/14** |
+| **C** IT con `è` | `Qual è il gruppo sanguigno di {n}?` | **2/14** ← controllo, atteso 2 ✅ |
+| **D** IT con `e'` | `Qual e' il gruppo sanguigno di {n}?` | **2/14** |
+
+**Entrambi i controlli a esito noto sono stati rispettati** ⇒ le celle sono leggibili.
+
+### Cosa ne segue
+
+- **B = A = 0** ⇒ **il costrutto possessivo NON spiega il divario.** Togliendo l'apostrofo
+  dall'inglese, l'inglese resta a zero.
+- **D = C = 2** ⇒ **`e'` contro `è` non cambia nulla su questo percorso**: il difetto
+  `W7-72` vive in `subject_extract` (scrittura), **non nel read-path**. Predetto e confermato.
+- ⇒ **Resta la LINGUA**, e dopo sei ridimensionamenti questa volta il test **conferma**.
+
+**Formulazione per il contratto**, con il limite attaccato:
+> Su domande relative a un **attributo assente**, con **store di terzi**, il divario IT/EN si
+> osserva: **0/14 in inglese contro 2/14 in italiano**, e **non è spiegato né dal costrutto
+> possessivo né dalla forma `e'`/`è`**. Su domande **multi-hop** non si osserva (0/15, 0/15).
+
+### Cosa questo NON prova
+
+- **14 entità, 2 fallimenti: è un SEGNALE, non una stima.** La forza sta nella **replica** —
+  ora **sette celle coerenti** (3 di dedizione + 4 di costrutto), non nel campione.
+- **Le domande italiane le scrivo io**; lo store è di terzi.
+- **Non ho il meccanismo**: so cosa NON lo spiega (dedizione, forma, costrutto, apostrofo).
+- ⛔ **Non ho toccato nulla.**
+
