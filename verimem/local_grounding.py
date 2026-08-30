@@ -383,6 +383,45 @@ def judge_state() -> str:
     return "warming" if _delegate_only() else "ready"
 
 
+def daemon_del_giudice_annunciato() -> bool:
+    """True quando un daemon condiviso si e' ANNUNCIATO: la quarta via al giudizio.
+
+    ⚠️ PERCHE' ESISTE. Il gate chiede «c'e' un giudice?» con tre criteri (llm
+    iniettato, backend `local`, modello CE su disco) e il DAEMON non era fra
+    questi — mentre `try_local_score` gli chiede per PRIMO, ed e' cio' che
+    rende giudicata la prima scrittura invece di ammetterla al buio. Con il
+    modello locale assente e il daemon vivo, misurato il 2026-08-30 alle 22:33
+    su due processi freschi::
+
+        _have_judge (i tre criteri)      False
+        try_local_score, stesso processo 0.5561      <- il daemon RISPONDE
+        Memory().add(..., source=...)    gs=None     <- il write esce al buio
+
+    E la cura NON e' togliere il predicato: nello stesso banco, il tentativo di
+    giudizio in un processo SENZA alcun giudice costa **15.453 ms** (il write
+    con la guardia ne costa 351, perche' non tenta). Un predicato che protegge
+    quindici secondi si tiene: gli si aggiunge la via che gli manca.
+
+    ECONOMICA COME LE ALTRE, ed e' il vincolo che questa funzione deve
+    rispettare: legge il file di discovery e l'interruttore d'ambiente, non apre
+    connessioni e non carica nulla — `local_ce_available` e' un `os.path`,
+    questa e' una lettura di file. Un annuncio non e' una garanzia (il daemon
+    puo' essere morto fra l'annuncio e la chiamata): serve a NON escludere una
+    strada che esiste, e chi la percorre degrada gia' da solo.
+    """
+    try:
+        import os as _os
+        if _os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+            "0", "false", "no", "off",
+        ):
+            return False
+        from . import encode_service as _svc
+        info = _svc.read_discovery()
+        return bool(info and info.get("port"))
+    except Exception:  # noqa: BLE001 — un predicato non rompe una scrittura
+        return False
+
+
 def local_ce_available() -> bool:
     """True when the local CE moat judge can score WITHOUT an injected llm — an
     injected scorer (tests) or a model dir present on disk. Cheap by design:
@@ -749,7 +788,7 @@ def try_local_score(source: str, fact: str, *,
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
-           "judge_state", "_gate_via_daemon",
+           "judge_state", "_gate_via_daemon", "daemon_del_giudice_annunciato",
            "ensure_gate_model", "DEFAULT_GATE_MODEL_URL",
            "DEFAULT_GATE_MODEL_SHA256", "DEFAULT_GATE_MODEL_HUB_ID",
            "DEFAULT_MODEL_DIR"]

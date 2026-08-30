@@ -2352,7 +2352,7 @@ def run_validation_gate(
     # None falls back to the env. The local CE backend needs no injected llm,
     # so a local judge OR an injected llm satisfies the "have a judge" arm.
     from .grounding_gate import _resolve_backend
-    from .local_grounding import local_ce_available
+    from .local_grounding import daemon_del_giudice_annunciato, local_ce_available
     _ground_on = _grounding_write_on() if ground_write is None else bool(ground_write)
     # The moat has a judge when: an llm was injected, the backend is explicitly
     # 'local', OR (2026-07-18) no llm but the multilingual local CE is on disk —
@@ -2360,9 +2360,26 @@ def run_validation_gate(
     # silent fail-open. The CE is multilingual (measured EN/IT/FR/ES), so this is
     # NOT English-only. If the CE isn't present either, fall through to the honest
     # L4-skipped advisory below.
+    # ⚠️ E LA QUARTA VIA, dal 2026-08-30: il DAEMON condiviso. I tre criteri
+    # sopra guardano tutti IN CASA — un llm iniettato, il backend dichiarato,
+    # il modello su disco — mentre `try_local_score` chiede al daemon PER
+    # PRIMO, ed e' cio' che rende giudicata la prima scrittura invece di
+    # ammetterla al buio. Con il modello locale assente e il daemon vivo,
+    # misurato su due processi freschi:
+    #
+    #     i tre criteri                    False
+    #     try_local_score, stesso processo 0.5561    <- il daemon RISPONDE
+    #     Memory().add(..., source=...)    gs=None   <- il write esce al buio
+    #
+    # ⚖️ E NON si toglie il predicato, che protegge un costo vero: nello stesso
+    # banco il tentativo di giudizio in un processo SENZA alcun giudice costa
+    # 15.453 ms, contro i 351 del write che la guardia ferma prima. Un
+    # predicato che risparmia quindici secondi si tiene; gli si aggiunge la
+    # via che gli manca, con lo stesso costo delle altre — una lettura di file.
     _have_judge = (grounding_llm is not None
                    or _resolve_backend() == "local"
-                   or local_ce_available())
+                   or local_ce_available()
+                   or daemon_del_giudice_annunciato())
     def _emit_l4_skipped() -> None:
         warnings.append(_advisory_l4_skipped())
 
