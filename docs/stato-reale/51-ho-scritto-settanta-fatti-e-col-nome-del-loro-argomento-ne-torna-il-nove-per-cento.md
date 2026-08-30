@@ -78,6 +78,38 @@ topic, cercarlo. `verimem search-docs` o una recall sul nome basterebbero a
 scoprire che `project/verimem/pavimento-persistito` esisteva già dal 5 agosto.
 Io non l'ho fatto per nessuno dei trentasei.
 
+**L'ho applicata subito, e ha pagato alla prima prova**: cercando prima di
+aprire il topic per i fatti di *questo* documento ho trovato
+`project/verimem/topic-non-normalizzati`, quattro fatti del 5 agosto. Parlano
+d'altro — collisioni **sintattiche** fra nomi (maiuscole, spazi: tutte a zero),
+non duplicazione semantica — ma uno di essi porta il numero che chiude questo
+pezzo.
+
+## Il numero che spiega tutto: 92,4%
+
+Quel fatto del 5 agosto dice: *«Nel corpus reale i topic distinti sono **5716**»*.
+Rimisurato oggi:
+
+    topic distinti : 12.401        fatti : 16.601
+    fatti per topic: 1,34
+    topic con UN SOLO fatto: 11.458 = 92,4% dei topic
+
+**In venticinque giorni i topic sono più che raddoppiati**, e oggi **nove topic
+su dieci contengono un solo fatto**.
+
+> **Il topic ha smesso di essere una categoria: è quasi un identificatore del
+> fatto.**
+
+E allora l'8,6% non ha più bisogno di spiegazioni sul retrieval: **cercare per
+nome di topic in un namespace dove il 92,4% dei nomi indica un fatto solo non
+può funzionare.** Non c'è niente da aggregare, e ogni nome è troppo specifico
+per essere una buona chiave.
+
+**È la nostra regola che ha prodotto questo numero.** «Un topic per misura»
+protegge le scritture — supersessioni corrette (documento 41), niente conflitti
+quadratici (documento 44) — e il prezzo, mai misurato prima, è **1,34 fatti per
+topic**. I miei trentasei topic di stanotte sono trentasei righe di quel 92,4%.
+
 ## Un errore di misura, e uno di lettura
 
 **Tredicesimo errore della notte.** La prima versione di questo banco filtrava
