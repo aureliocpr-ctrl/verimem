@@ -10672,3 +10672,52 @@ S="ORA 21:47:09 del 30/08 · coda: alfa=1167 · queued=895 · in_progress=13"
 verimem save "Alle 21:47 del 30/08 i run ci alfa sono 1167."  --topic i1 --source "$S"   # ~0.5
 verimem save "Alle 21:47 del 30/08 il valore di alfa e 1167." --topic i2 --source "$S"   # ~99.9
 ```
+
+## 🗄️ ws6 «Aldo» — la sintesi della notte del 30/08: una classe, non sette difetti
+
+**㉞ `47` — «Sa fare la cosa e non la fa»: sette misure indipendenti, un motivo solo.**
+Sette indagini aperte per ragioni diverse (pavimento, telemetria, giudizio, rerank, supersessione,
+contraddizioni, quarantena, episodi) sono finite **sullo stesso motivo**. Una classe vale più di
+sette difetti, quindi la nomino:
+> **Il prodotto possiede la capacità, la implementa correttamente, la misura anche — e poi non la
+> usa. E nulla, da nessuna parte, segnala che non la sta usando.**
+**Non è incapacità** (la cosa giusta è già scritta e funziona) **né disonestà** (quando parla, dice
+il vero): è che **una capacità spenta non emette alcun segnale**.
+📋 **Le cinque istanze, tutte misurate nei pezzi:**
+· **`36`** pavimento: soglia che il prodotto **si calcola da solo** (**0,8743**), fatti serviti a
+**0,8119 · 0,7796 · 0,7807** tutti sotto il rumore, `items: []` se acceso — **default `None`**
+· **`38`** regime: **dichiarato** su ogni item, **zero occorrenze** in **37.312 righe** di journal;
+`client.py:1229` (**81%** del traffico) non registra né regime né astensione, gli altri tre sì
+· **`42`-`44`** il criterio di **`L4.2`** («278 qui è "vettori", nella fonte "do"») è applicato **in
+scrittura** e non dal rilevatore, che produce **93.263** conflitti (**93,7%** fra fatti che parlano
+d'altro) e arriva al **99,5% di tutte le coppie possibili** di un topic
+· **`45`** `quarantined_by` esiste e **207 quarantinati di agosto su 912 (22,7%)** non lo valorizzano
+· **`46`** la salience discrimina (**0,248** vs **0,449** su 470 episodi) e ha **invalidati 0**:
+`decay_run` mai eseguito
+🎯 **IL CONTROESEMPIO, che è la parte più importante** — se il motivo fosse una lente, deformerebbe
+anche ciò che va bene: il **`40`** mostra che non lo fa. Il cross-encoder **non entra mai**
+(**120/120** query sopra soglia) **ma di proposito e con i numeri in mano**: aggregato nullo
+(**ΔMRR +0,0078**, p=**0,716**) da due effetti opposti (corte **+0,146**, lunghe **−0,080**), tenuta
+allo split-half, **+2067 ms** su ogni query. ⇒ **La differenza non è acceso/spento: è che lì qualcuno
+ha misurato, deciso e scritto perché.**
+⚖️ **E il prodotto non è cieco**: `doctor` segnala da solo il daemon assente **con la cura**, il
+topic-crowding, i vettori disallineati; la ricevuta di `save` dice *che*, *perché*, *cosa comporta* e
+*con quale strumento verificarlo*. **Molta dell'onestà che ho usato per misurare viene dal prodotto.**
+Ma lo stesso referto consiglia *«normalise those statuses»*, che renderebbe ritirabili **998 fatti**
+(`42`). ⇒ **vede molto, e non è calibrato su quanto valga ciò che vede.**
+🔑 **Il costo, in concreto**: un difetto che non emette segnale **non si trova con l'uso** — si trova
+solo se qualcuno lo va a cercare. Per questo sono lì da mesi senza lamentele: non rompono niente. **La
+domanda per il rilascio: quante delle capacità che dichiariamo sono ACCESE nel default con cui la
+gente le userà?** Nessuno dei cinque casi si vedrebbe leggendo il README.
+🪞 **I MIEI NOVE ERRORI DI MISURA della notte**, elencati nel pezzo perché chi legge deve sapere
+quanto spesso il misuratore sbaglia: campo assente letto come zero (**279 finti degradati**) ·
+popolazione estranea nel denominatore · proxy che non misurava la variabile · **riga del referto
+ripetuta senza aprire il codice** (con rettifica pubblica) · misura fatta **dopo** l'auto-riparazione
+· **918 coppie contro un perimetro di 321** · separazione fra i gruppi e non dentro · criterio
+sintattico su fenomeno semantico (**8 su 2.919**) · **ora locale contro UTC**.
+⇒ **Otto su nove erano nel misuratore, non nel prodotto**, e **in tre casi il prodotto aveva ragione e
+io torto**.
+💡 **La cura non è cinque cure**: è **un posto dove l'inerzia si veda** — un referto che elenchi le
+capacità e il loro stato (`min_relevance: off` · `decay_run: mai eseguito` · `quarantined_by:
+valorizzato nel 77%`) mostrerebbe in venti secondi ciò che a me è costato una notte. ⛔ **Non
+applicato: sono default e codice del gate.**
