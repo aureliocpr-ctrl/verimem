@@ -10547,3 +10547,51 @@ grigie AMMESSE:                       38/95  (40%)
 **n=68 ⇒ intervallo ±~12 punti** (non ±9 come avevo previsto per n=110): 41% è compatibile con qualsiasi valore fra ~29% e ~53%, e **non interpreto differenze più piccole**. Ciò che regge non è il valore puntuale ma **il divario col controllo sano**, 41% contro 91%.
 **Le grigie sono poche**: mediana **1 frase per item** (95 in totale), rango massimo 3 — «tutte le frasi» qui spesso significa *una*. Non è un ranking profondo, è quello che HaluEval consente.
 Vale sul **cross-encoder** in **inglese**: non dice nulla sul bi-encoder del banco ufficiale, né sul tasso di `fabrication_under_absence`, né sul comportamento in altre lingue.
+
+**㉝ `46` — gli episodi si ricordano di essere stati letti, e nessuno li dimentica mai.** Ultima area
+del perimetro rimasta fuori: **il giro è completo.**
+📊 **Istante 22:34:22, `~/.engram/episodes/episodes.db` in sola lettura: 470 episodi.**
+· **mai riletti 120 = 25,5%** ⇒ **tre su quattro sono stati riletti almeno una volta**; ultimo accesso
+**agosto 170** · maggio 117 · giugno 57 · luglio 6, mentre la creazione è concentrata a **maggio
+(386)**. ⇒ **contro la mia aspettativa, NON è un archivio che nessuno interroga.**
+· 🔎 **Prima di fidarmi del contatore ho cercato chi lo alza**: `_bump_access_tracking`
+(`verimem/memory.py:1507`), docstring *«**Called by `recall()`** after the result set is computed…
+Ebbinghaus-curve recovery (spaced repetition) lives here»* ⇒ conta le **recall vere**, non i passaggi
+del consolidamento. ⚠️ **Ma misura «servito», non «usato»**: sale anche se chi ha chiesto poi ignora
+il risultato ⇒ **il 74,5% è un limite superiore all'utilità reale.**
+🎯 **LA SALIENCE FUNZIONA E NON HA UN CONSUMATORE.**
+
+| | n | salience media |
+|---|---|---|
+| mai serviti | 120 | **0,248** |
+| serviti | 350 | **0,449** |
+
+*(nessun episodio ha salience nulla: è calcolata per tutti, e alimenta la retention —
+`episode.py:127`, `_RETENTION_GAMMA_ACCESS`)*
+**Discrimina davvero: gli episodi serviti valgono quasi il doppio.** **E invalidati 0, pinned 0** su
+470 in tre mesi: l'oblio esiste (`decay_simulate` / `decay_run`) **come comando manuale mai
+eseguito**. ⇒ **stessa forma del `36`: una capacità presente, corretta, misurabile e SPENTA** — là un
+default a `None`, qui un comando che nessuno lancia; **in entrambi i casi il prodotto sa fare la cosa
+e non la fa, e nulla segnala l'inerzia.**
+⚖️ **Non dimenticare non è un difetto in sé** — su una memoria di lavoro è probabilmente la scelta
+giusta. **Il difetto è che la salience venga calcolata per 470 episodi, discrimini correttamente, e
+non abbia alcun consumatore.**
+🪞 **Il puntatore dell'indice non punta**: `02d16947285b`, citato in `MEMORY.md` per «tier episodi
+fermo», ha per proposizione *«Su 65 same-source evolution il vincitore cita l'id esatto del fatto che
+ritira in 6 casi»* — **non parla di episodi**. **Seconda volta stanotte** che una citazione
+dell'indice non regge alla lettura (la prima: «L1 precisione ~40%», che è di **maggio** e misurata su
+**11 casi**). ⇒ **leggi il fatto, non la sintesi — e la sintesi va riverificata insieme al fatto, o il
+puntatore invecchia senza che nessuno se ne accorga.**
+⚠️ **Non misurato**: `episode_telemetry` ha **652 righe contro 470 episodi**. Più telemetria che
+episodi: o registra più eventi ciascuno, o conserva tracce di episodi non più presenti. Non l'ho
+aperta.
+⛔ **Nessun `decay_run`**: è una scrittura persistente e non mi è stata chiesta. **La domanda per chi
+decide**: la salience deve restare informativa, o `decay_run` va messo in un ciclo? Con 120 episodi
+mai serviti a salience 0,248 il materiale per una prima potatura c'è — **ma è una decisione, non una
+misura.**
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-gli-episodi-riletti.py   # sola lettura, nessun decay_run
+```
