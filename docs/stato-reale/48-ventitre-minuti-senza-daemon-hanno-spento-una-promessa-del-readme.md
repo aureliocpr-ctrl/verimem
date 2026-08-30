@@ -79,6 +79,40 @@ davvero, e la sezione sul gateway più sotto rimane valida.
 > sul gateway il filtro è disattivato da un valore degenere. Trovarne uno non
 > spiegava l'altro, e io avevo usato il secondo per spiegare il primo.
 
+### E la cura è già scritta due volte nello stesso file
+
+Il pezzo che chiude questo l'ha portato **ws2**, e l'ho verificato. Nello stesso
+`mcp_server.py`, in altri due punti, il pavimento si ottiene **costruendo**
+l'oggetto giusto invece di cercarlo:
+
+```python
+from .client import Memory as _MemFloor
+_mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()   # :8139 e :13778
+```
+
+**Non manca il metodo: manca l'oggetto.** E la via corretta è in uso, due volte,
+a poche righe di distanza dal blocco che non funziona.
+
+Il codice, sopra quelle righe, **tiene il conto delle proprie ripetizioni**:
+
+    :8105   «…divergono, ed è la quinta generazione di questa stessa cura»
+    :8136   «a critic flagged SDK-only three weeks ago,
+             min_relevance got wired, ce_gate did not»
+    :13776  «racconta la terza ("la cura di un'ora prima non lo raggiungeva");
+             questa è la quarta, e per lo stesso identico motivo»
+
+**Terza, quarta, quinta.** Il prodotto sa di ripetere lo stesso difetto, lo
+numera nei commenti, e il caso che abbiamo trovato è **un'occorrenza ulteriore
+che nessuna di quelle cinque cure ha raggiunto**. È la classe che la nostra
+memoria chiama *«una copia invece della superficie unica»*, documentata dal
+codice stesso mentre accade. E la riga 8136 aggiunge che perfino la cura
+precedente fu parziale: *min_relevance* fu collegato, *ce_gate* no.
+
+**Un mio scivolone, per il registro**: le righe 8139 e 13778 **erano già
+nell'output di un mio `git grep` di due ore prima**, in questa stessa indagine.
+Le avevo sotto gli occhi e non le ho collegate — ho letto la riga che cercavo e
+non quelle accanto.
+
 ## Perché non compare (la parte che vale per il gateway)
 
 Il codice che lo emette è in `verimem/mcp_server.py:326-334`:
