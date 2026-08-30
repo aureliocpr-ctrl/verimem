@@ -110,6 +110,33 @@ protegge le scritture — supersessioni corrette (documento 41), niente conflitt
 quadratici (documento 44) — e il prezzo, mai misurato prima, è **1,34 fatti per
 topic**. I miei trentasei topic di stanotte sono trentasei righe di quel 92,4%.
 
+## E la tensione si scioglie: riusare un topic non costa niente
+
+A questo punto la regola sembra un dilemma — proteggere le scritture o
+proteggere le letture. **L'ho messo alla prova sui fatti di questo stesso
+documento**, che è il modo giusto di finirlo.
+
+Invece di aprire il trentasettesimo topic, ho salvato due dei miei numeri
+**dentro `project/verimem/topic-non-normalizzati`**, quello del 5 agosto, che
+contiene già quattro fatti con numeri diversi dai miei (5.716 contro 12.401 —
+esattamente la situazione che fa scattare una supersessione per «stessa cosa,
+valore diverso»).
+
+    ammessi 3, quarantinati 0
+    supersessioni scattate: nessuna
+
+**Nessun ritiro.** Ed è coerente con quanto la nostra memoria registra da tempo
+(`cb4043575870`): **la supersessione è governata dalla FONTE, non dal topic.**
+Source diverse, nessun conflitto — anche nella stessa cartella, anche con numeri
+che si contraddicono in apparenza.
+
+> **Il dilemma non esiste**: «un topic per misura» proteggeva da un rischio che
+> il topic non governa. **Si può riusare un topic esistente senza pagare nulla
+> sulle scritture, e guadagnando sulle letture.**
+
+Questo non ritira la regola: la restringe. **Serve una source distinta per
+misura — non un topic distinto per misura.**
+
 ## Un errore di misura, e uno di lettura
 
 **Tredicesimo errore della notte.** La prima versione di questo banco filtrava
