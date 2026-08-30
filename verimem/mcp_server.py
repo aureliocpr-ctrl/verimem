@@ -12921,6 +12921,27 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # promote themselves to TRUSTED_HOOKS — those values are
             # validated at the enum level (schema) and persisted as
             # provenance metadata for later audit.
+            #
+            # ⚠️ E DA QUESTA PORTA IL BYPASS NON SI OTTIENE, dal 2026-06-02:
+            # `run_validation_gate` lo ha reso TOKEN-GATED
+            # (`verify_trusted_writer`, fail-closed senza ENGRAM_HOOK_TOKEN)
+            # proprio perche' «writer_role is client-spoofable via MCP
+            # arguments», e la corsia `narrative_l1_skip` e' dichiarata per le
+            # sole superfici IN-PROCESS. Questo commento diceva ancora che i
+            # due argomenti «together skip L1.x», che qui non e' vero da tre
+            # mesi. Misurato il 2026-08-30 alle 23:16, stesso claim, A/B fra
+            # le due porte:
+            #
+            #     MCP  meta_narrative=True  -> quarantined  L1.10,L1.15,L1.20
+            #     SDK  meta_narrative=True  -> model_claim  (nessuno strato)
+            #
+            # L'asimmetria e' VOLUTA e presidiata
+            # (`test_mcp_arguments_meta_narrative_does_not_skip_l1`). Qui si
+            # allinea solo la prosa: chi legge questa riga credeva che da MCP
+            # il bypass fosse raggiungibile.
+            # E l'enum e' applicato dal SERVER, non dal client: un valore fuori
+            # lista torna `rejected_schema` con il messaggio che nomina i
+            # quattro ammessi (verificato alla porta lo stesso giorno).
             _writer_role = str(
                 arguments.get("writer_role") or "agent_inference"
             )
