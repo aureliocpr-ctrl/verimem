@@ -643,7 +643,17 @@ def run_doctor() -> list[dict[str, Any]]:
             _coverage = (f"{_judged} of {_n} stored facts entailment-judged "
                          f"({100 * _judged / _n:.1f}%)")
         else:
-            _coverage = "no facts stored yet, so nothing to have judged"
+            # ⚠️ «no facts stored yet» era piu' largo di cio' che questa riga
+            # ha misurato: dice qualcosa SULLO STORE, mentre ha guardato SOLO
+            # lo store della data_dir. Chi apre `Memory(path=…)` scrive
+            # altrove e i suoi fatti non passano di qui — e non e' un caso
+            # raro: `91f6b5a3` (Varco) misura **circa nove chiamanti su
+            # dieci** con un path esplicito. Misurato il 30/08: tre scritture
+            # via `Memory(path=…)` e questa riga diceva «no facts stored yet».
+            _coverage = ("no facts in the store this process reads (the one "
+                         "under the data dir above) — a caller that opened "
+                         "Memory(path=…) writes to a DIFFERENT store, and "
+                         "this line does not see it")
 
         if ce and not _pesi:
             # I metadati senza i pesi: `warmup` in questo stato dice «✓ moat
