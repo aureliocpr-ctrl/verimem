@@ -1,9 +1,10 @@
 # Il prodotto è affidabile su ciò che sa di sé
 
-*ws3 «Galileo», 30/08. Otto promesse **dichiarate** del prodotto, misurate una
-per una fra le 12:19 e le 16:00. Le misure sono sparse in sei banchi eseguibili
-e sparse **non le legge nessuno** — questo documento le mette in fila e, per
-ognuna, dice anche **su quanti casi si applica**.*
+*ws3 «Galileo», 30/08. **Tredici** promesse **dichiarate** del prodotto,
+misurate una per una fra le **12:19 e le 18:55** (ore lette, non stimate). Le
+misure sono sparse fra banchi eseguibili e messaggi di canale, e sparse **non
+le legge nessuno** — questo documento le mette in fila e, per ognuna, dice
+anche **su quanti casi si applica**.*
 
 ---
 
@@ -15,7 +16,7 @@ tasso: dice **dove fidarsi** e **dove guardare**.
 
 ---
 
-## Le otto promesse
+## Le tredici promesse
 
 Ogni riga: la promessa **come è scritta nel prodotto**, la misura, il commit.
 La colonna che conta di più è l'ultima.
@@ -30,11 +31,27 @@ La colonna che conta di più è l'ultima.
 | ⑥ | «only when neither an llm nor the local model is present does the gate fail-open» — `README:64` | **binario, non temporale**: `DELEGATE_ONLY` 0 e 1 → **0/6** a freddo con modello presente | 🟢 | **installazioni senza modello**; non misurabile da qui |
 | ⑦ | `doctor` esiste per dire perché manca un punteggio | modello assente → **`status='fail'`**, dice il path, distingue «con fonte → avviso» da «**senza fonte → nessun avviso**» | 🟢 | chi esegue `doctor` |
 | ⑧ | la separazione deve sopravvivere alla **lettura** | SDK `recall` → gs 99.56 / `None`; MCP `hippo_facts_search` → espone `grounding_score` **e** `meta_narrative` | 🟢 | ⚠️ **«può», non «lo fa»**: quanti chiamanti guardino il campo non è misurabile da qui |
+| ⑨ | «Retrieve FACTS with verimem_facts_search … verimem_recall is a DIFFERENT door … An empty list is an ANSWER, not an abstention» — `agent_guide:53`, **datata** (*Measured 2026-08-29 on a store of 60 facts and no episodes*) | **riprodotta senza volerlo sul mio store**: `hippo_recall` → `[]` con `episodes: 0`, mentre `hippo_facts_search` trovava gli stessi fatti | 🟢 | ⚠️ ho riprodotto il **fenomeno**, non i suoi numeri (20 / 5 / `[]`): altra popolazione. 🔴 **E la riga meglio scritta che ho incontrato oggi non mi ha impedito l'errore, perché non l'avevo aperta** |
+| ⑩ | «538 of 634 chunks (84.9%) pointed at files that no longer existed, while the chunk text was present for 100% of them» — `agent_guide:77`, **l'unica riga del file senza data** | ri-misurata su `document_index.db` (sola lettura, **30/08 ore 17:22**): **683** chunk — orfani **634/683 = 92,8%**, testo conservato **683/683 = 100,0%** | 🟡 | **la sostanza regge** e il **100% è esatto** sulla popolazione cresciuta; **è il tasso a essere invecchiato**, 84,9% → 92,8%. 🎭 E «634» compare nei due referti in **ruoli diversi** — *totale* ieri, *mancanti* oggi ⇒ chi li confrontasse di sfuggita concluderebbe «nulla è cambiato» |
+| ⑪ | «`verified_by` records WHO vouches for a fact and **does not run this check**» — istruzioni MCP | **4/4**: né `status` né `grounding_score` si muovono, a giudice **presente** e **assente** | 🟢 | ⚠️ **con il controllo attaccato**: su un self-claim **nudo** il campo *cambia* l'esito (sposta la provenienza, `L1` non si applica più) ⇒ il 4/4 non misura un campo inerte. E il **costo del bypass è dichiarato**: `verified_by` lo scrive il chiamante e nessuno lo verifica |
+| ⑫ | «the fact **leaves** the `quarantine_log` because it is live again» + «Without the audit trail **the keys still exist**» — docstring di `restore` | **2/2**: log **vuoto** dopo il restore; `reason` e `layers` presenti **anche senza audit** (`reason=None`, nessun `KeyError`) | 🟢 | ⚠️ **trappola d'uso, non difetto**: l'audit si accende con **`VERIMEM_AUDIT_LOG=1`** — con l'env sbagliata si legge `reason: None` e si conclude che il prodotto non registra il perché. Acceso, il `reason` porta i **sotto-strati** (`L1.10/15/20`), non solo `L1` |
+| ⑬ | «A governance action must be as visible as the decision it reverses» — `semantic.py`, commento del 2026-08-05 | **due eventi uniti dal `fact_id`**: `flow.write` (`status=quarantined`, `layers=[L1.10,L1.15,L1.20]`) e `fact_restored` (`to_status`, `reason` **del restore**) | 🟢 | ⚠️ **la sfumatura che cambia cosa si può promettere**: `flow.write` porta i **layer**, non la **frase** dell'avviso ⇒ *«la storia non si perde: si ricompone da due eventi, e il perché resta come **layer**, non come frase»* |
 
-Banchi: `ws3-il-giudice-freddo-ammette-e-lo-dichiara.py` (① ② ⑥ ⑦) ·
+Banchi eseguibili: `ws3-il-giudice-freddo-ammette-e-lo-dichiara.py` (① ② ⑥ ⑦) ·
 `ws3-il-campo-che-distingue-non-giudicato-da-giudicato.py` (③ ⑧) ·
 `ws3-le-due-porte-separano-gli-stessi-tre-stati.py` (⑤) ·
-`ws3-la-guida-dichiara-la-propria-eccezione-e-vera.py` (④).
+`ws3-la-guida-dichiara-la-propria-eccezione-e-vera.py` (④) ·
+`ws3-verified-by-conta-per-la-provenienza-e-non-fa-girare-il-moat.py` (⑪).
+
+⚠️ **⑨ ⑩ ⑫ ⑬ non hanno un banco**: sono misure dirette, e perché siano
+rifacibili la ricetta sta qui invece che in prosa. **⑩** legge
+`~/.engram/documents/document_index.db`, tabella `chunks`, in **sola lettura**
+(quanti `uri` non risolvono / totale). **⑫ ⑬** girano su store temporaneo
+(`HIPPO_DATA_DIR=$(mktemp -d)`) con **`VERIMEM_AUDIT_LOG=1`** acceso e spento:
+si legge il `quarantine_log` prima e dopo `quarantine_restore`, poi gli eventi
+del journal filtrati per `fact_id`. **⑨** non è rifacibile a comando: l'ho
+riprodotta sbagliando porta, e l'ho scritta perché l'errore è il reperto.
+⛔ Lo store di Aurelio non è mai in scrittura.
 
 ---
 
@@ -69,7 +86,7 @@ succederebbe se lo facesse.
 che è la mia stessa regola («leggi le righe, non contarle») applicata al log
 della suite e **non** al numero di un altro.
 
-⇒ Da qui la colonna «su quanti casi si applica». Tre delle otto **non sono
+⇒ Da qui la colonna «su quanti casi si applica». Tre delle tredici **non sono
 misurabili da dentro il repo**, e sono dichiarate tali: *quanti usano SDK contro
 MCP*, *quanti processi freschi*, *quanti chiamanti leggono i campi*. **Dichiarate,
 non stimate.**
@@ -133,18 +150,24 @@ con la riga e l'evidenza, **senza chiedere** — **curati entro 15 minuti**.
 
 - **Non dice che il prodotto sia a posto.** Dice che le sue **dichiarazioni**
   reggono. Sono due cose diverse, e la seconda non implica la prima.
-- **Non è un campione rappresentativo.** Otto promesse **le ho scelte io**,
-  guardando dove il prodotto parla di sé. Un altro ne sceglierebbe altre.
+- **Non è un campione rappresentativo.** Le tredici promesse **le ho scelte io**,
+  guardando dove il prodotto parla di sé. Un altro ne sceglierebbe altre, e
+  soprattutto: **ho misurato ciò che il prodotto DICHIARA**, quindi per
+  costruzione questa tabella non può trovare i buchi di cui nessuno parla.
 - **Non misura il traffico reale.** Tutti i banchi girano su store temporanei,
   con claim scritti da me, in italiano e inglese, e i numeri di frequenza
   mancanti sono segnati come mancanti.
-- **Non assolve i miei banchi.** Oggi ho contato **dieci difetti nel mio
+- **Non assolve i miei banchi.** Oggi ho contato **dodici difetti nel mio
   misuratore**, e la famiglia dominante è una sola: *la popolazione non
   conteneva ciò che credevo di misurare* — regime ereditato invece che scelto,
   casi non appaiati, uno stato che non si produce, due fatti che si mangiano a
   vicenda per `same-source`, uno strumento che interroga un'altra tabella, e
   **il decimo non in un banco ma in un ragionamento**: un numero altrui letto
-  come rischio senza guardare i fatti che lo componevano.
+  come rischio senza guardare i fatti che lo componevano. Gli ultimi due sono
+  della stessa famiglia e li ho presi **prima** di pubblicare: due criteri di
+  conteggio diversi spacciati per confronto («35 layer» contro «quattordici»), e
+  una env inventata (`ENGRAM_QUARANTINE_AUDIT`) al posto di quella vera
+  (`VERIMEM_AUDIT_LOG`), trovata **leggendo il test del prodotto**.
   ⇒ **Ogni banco qui citato ha ora un controllo che fallisce se la popolazione
   non c'è**, ed è l'unica ragione per cui questi numeri si possono leggere.
 
@@ -302,13 +325,39 @@ diversi, il repo ha restituito un difetto morto e una giuntura già nota per
 metà.** ⇒ *È più pulito di quanto la caccia suggerisse* — e questo è un
 risultato, non l'assenza di uno.
 
+## Bilancio, alle 18:55 (ora letta)
+
+**13 promesse misurate · 12 reggono piene · 1 regge la sostanza e invecchia il
+tasso** (⑩). ⇒ *Su tredici affermazioni che il prodotto fa di sé, tredici sono
+vere; una porta un numero vecchio — ed è l'unica riga del suo file senza data.*
+
+🔑 **Il metodo che le ha rette tutte è sempre lo stesso**, e sono quattro mosse:
+
+1. **cerca se è già PRESCRITTO** — tre volte oggi il prodotto aveva già scritto
+   ciò che stavo per misurare, una volta con i numeri e la data;
+2. **misura con il controllo che deve poter fallire** — senza, ⑨⑪ sarebbero
+   stati indistinguibili da un campo inerte;
+3. **dichiara il regime** — embedding, grafia (`e'` contro `è` muove il
+   *punteggio*, non il *verdetto*), env, porta;
+4. **di' cosa NON hai misurato.**
+
+⚠️ **La quarta è quella che ha reso di più, e non me l'aspettavo.** Alle 18:51
+avevo chiuso ⑫ scrivendo *«dopo il restore la ragione dovrebbe sopravvivere
+nell'evento, ma non l'ho verificato»*. Verificarlo quattro minuti dopo ha
+prodotto ⑬ **e** la sua sfumatura — *layer contro frase* — che **nessuno avrebbe
+trovato se avessi scritto «regge» e basta.**
+
 ## Una regola pratica, che vale oltre questo prodotto
 
 > **Quando un banco stampa `[]` o `0`, la prima ipotesi non è «il prodotto non
 > lo fa»: è «non gliel'ho chiesto».**
 
-Oggi mi ha impedito di pubblicare due volte un reperto grave che non esisteva —
-la seconda smontata facendo scrivere a MCP **un fatto suo** e chiedendogli di
-ritrovarlo.
+Oggi mi ha impedito di pubblicare **tre** volte un reperto grave che non
+esisteva: *«MCP non vede i fatti dell'SDK»* (smontato facendo scrivere a MCP
+**un fatto suo** e chiedendogli di ritrovarlo), *«il recall è vuoto»* (era la
+porta degli EPISODI), e stasera *«il `quarantine_log` non registra il
+perché»* — avevo acceso `ENGRAM_QUARANTINE_AUDIT`, che **non esiste**. La
+env vera è `VERIMEM_AUDIT_LOG`, e l'ho trovata **leggendo il test del
+prodotto** invece di indovinare.
 
 **Agent: Galileo**
