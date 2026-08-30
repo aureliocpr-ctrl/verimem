@@ -1,0 +1,14 @@
+{
+  "sistema": "mem0 2.0.4 (e5 locale, infer=False, zero-API)",
+  "popolazione": "truthfulqa_pairs_heldout.jsonl",
+  "claim_scritti": 200,
+  "presenti_nello_store": 200,
+  "trattenuti": 0,
+  "falsi_nel_corpus": 100,
+  "claim_distinti": 191,
+  "retrieval_domande": 100,
+  "retrieval_primo_falso": 76,
+  "retrieval_primo_vero": 24,
+  "retrieval_non_riconosciuto": 0,
+  "nota": "il retrieval e' un dato secondario col limite dichiarato nel docstring"
+}
