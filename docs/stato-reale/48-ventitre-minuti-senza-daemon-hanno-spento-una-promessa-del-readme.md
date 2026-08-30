@@ -153,9 +153,38 @@ python -c "from verimem.relevance_floor import estimate_relevance_floor; \
 - **Da controllare su ogni installazione**, non solo qui: se il pavimento è
   stato calcolato una volta sola in un momento sfortunato, il file resta zero e
   nessuno lo vede.
-- **Quello che non ho misurato**: se anche `gateway/console` — che secondo il
-  README **filtra** invece di segnalare — legga lo stesso file. Se lo legge, con
-  `floor = 0.0` non filtra niente, e lì la promessa è ancora più forte.
+- **Il limite che avevo lasciato qui l'ho chiuso subito, e la risposta è
+  peggiore**: vedi la sezione seguente.
+
+## Il gateway legge lo stesso file, e lì la promessa è più forte
+
+Avevo lasciato come limite la domanda se anche `gateway/console` — che secondo
+il README **filtra** invece di segnalare — leggesse lo stesso pavimento. Si
+chiude leggendo tre righe:
+
+- `verimem/gateway.py:461` — `_gateway_min_relevance()` legge
+  `ENGRAM_GATEWAY_MIN_RELEVANCE` con **default `"auto"`**;
+- `verimem/client.py:1112` — `if min_relevance == "auto": min_relevance =
+  self._auto_relevance_floor()`, cioè **lo stesso file**;
+- `verimem/client.py:1200` — `if min_relevance and not _degradato:` — e
+  **`0.0` è falsy**.
+
+**Quindi il gateway, nella configurazione di default, non filtra nulla.**
+
+E qui la promessa non è «ti do il righello»: il README dice *«gateway/console
+FILTER — results under the self-calibrated floor are **not served at all**»*, e
+il docstring della funzione è ancora più esplicito:
+
+> *«**Making the enterprise API abstain by default is the point of a TRUST
+> product**»*
+
+**Il punto di un prodotto di fiducia, secondo le sue stesse parole, è
+disattivato da un file di 32 byte scritto durante un guasto di ventitré
+minuti.**
+
+Un file, due porte su tre: su MCP non arriva il righello, sul gateway non
+avviene il filtro. La terza — l'SDK — è permissiva per scelta dichiarata, quindi
+lì non cambia niente.
 
 ---
 
