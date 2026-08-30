@@ -12766,3 +12766,49 @@ quindi il moat girava · store di Aurelio **non toccato**, copia cancellata.
 ✅ **Corretta anche la memoria** (`MEMORY.md` e `i-pezzi-di-una-misura-e-i-topic.md`): ci avevo
 scritto la cura sbagliata due ore prima, e **una lezione sbagliata in memoria è peggio di nessuna
 lezione**.
+
+---
+
+## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
+
+**Livello**: l'ambiente di questa macchina. **Perimetro**: come è installato `verimem` e cosa contiene il wheel presente in cache. **Istante**: 31/08 00:50–00:53. **Metodo**: `pip show`, `pip cache list`, lettura dello zip del wheel — **tutto locale, nessuna rete**.
+
+Chiude il limite che avevo dichiarato alle 00:46 («ho confrontato il tag, non il wheel pubblicato»).
+
+### ⚖️ P-WHEEL CONFERMATA — il limite NON è pagabile qui, e lo chiudo come tale
+
+```
+pip show -f verimem  ->  Editable project location: C:\Users\aurel\Code\HippoAgent
+site-packages        ->  __editable__.verimem-0.7.0.pth, __editable___verimem_0_7_0_finder.py
+pip cache list       ->  verimem-0.7.6-py3-none-any.whl (2,1 MB)
+   il suo percorso    ->  ...\pip\cache\WHEELS\d8\46\b5\...     <== build LOCALE
+```
+
+L'installazione è **editable sul repo**: nessun wheel `0.7.0` è presente. Il wheel in cache è una **build locale** — sta sotto `wheels/`, non sotto `http-v2/` — quindi **non prova nulla su ciò che è pubblicato**. ⇒ **Il confronto «tag contro wheel di PyPI» non è possibile senza rete: lo dichiaro CHIUSO COME NON PAGABILE QUI**, invece di lasciarlo aperto a tempo indeterminato.
+
+### 🔴 MA SOTTO C'ERA UNA TRAPPOLA: LA VERSIONE DIPENDE DA CHI LA CHIEDE
+
+```
+pip show verimem                       ->  Version: 0.7.0
+importlib.metadata.version("verimem")  ->  0.7.6
+verimem.__version__                    ->  0.7.6
+pyproject.toml                         ->  version = "0.7.6"
+verimem.__file__                       ->  C:\Users\aurel\Code\HippoAgent\verimem\__init__.py
+```
+
+Il codice eseguito è **quello del repo**, che è a **0.7.6**; il `dist-info` residuo dell'installazione editable è rimasto a **0.7.0** e `pip show` legge quello.
+
+> **Chi verifica «quale versione sto misurando» con `pip show` ottiene 0.7.0 mentre esegue 0.7.6.** Su questa macchina la fonte attendibile è `importlib.metadata.version` / `verimem.__version__`, che concordano col `pyproject`.
+
+**Non ho stabilito perché i due strumenti divergano** — in `site-packages` ho trovato solo `verimem-0.7.0.dist-info`, quindi non so da dove `importlib.metadata` prenda 0.7.6. **Lo registro come divergenza osservata, non come meccanismo spiegato.**
+
+### 🟢 E DUE VERIFICHE CHE VENGONO GRATIS
+
+Aprendo il wheel `0.7.6` (463 file):
+- **`floor_applied_by` c'è**, in `verimem/client.py` (1 occorrenza) — **non** in `trust_report.py`, dove infatti non è mai stato. ⇒ **un pacchetto costruito dal codice di oggi porta la cura** che manca alla 0.7.0: conferma l'argomento delle 00:46.
+- **`build/` non entra nel wheel: 0 file su 463.** È la lezione già in memoria («`build/lib/` è la copia morta, il wheel non la imbarca»), qui **rimisurata invece che citata**.
+
+### Cosa questi dati NON provano
+Il wheel ispezionato è una **build locale della 0.7.6**, non un artefatto di PyPI: **non dice cosa contenga il pacchetto pubblicato**, che resta la 0.7.0 del 22/07.
+La divergenza `pip show` / `importlib.metadata` è osservata **su questa macchina** e con questa installazione editable; non è un difetto del prodotto.
+Non ho eseguito codice della 0.7.0: il confronto delle 00:46 resta sui **sorgenti al tag**.
