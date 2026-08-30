@@ -41,6 +41,62 @@ cose invecchiano a velocità diverse.
 
 ---
 
+## ⚠️ 31/08, 01:40 — LA TESI DI STANOTTE È FALSIFICATA, E DAI MIEI STESSI DATI
+
+Fra le **00:00 e le 01:35** ho misurato **altre dodici** promesse dichiarate,
+con lo stesso metodo. La tesi qui sopra prevedeva: *meccanismi reggono,
+descrizioni no*. **Cade in ENTRAMBE le direzioni.**
+
+**Meccanismi che NON reggevano** — la parte che la tesi escludeva:
+
+| meccanismo | cosa faceva |
+|---|---|
+| la guardia sul ranking degradato in `temporal_context.py` | col ranking degradato un pavimento **svuotava** la porta della cronaca: astensione falsa |
+| la stessa guardia in `trust_report.py` | il dossier si svuotava **dichiarando** l'astensione (`abstained: true`) |
+
+Due meccanismi rotti, e nessuno dei due era «una descrizione invecchiata».
+
+**Descrizioni SENZA presidio che reggevano** — la parte che la tesi non
+prevedeva: `trust_signals` (i tre campi promessi, e nessuno quando il flag è
+falso) · `min_status` (la gerarchia dichiarata, applicata) · **«Pure-local»**
+· **«~250ms»** (misurato: 11–15 ms a caldo, ~16x di margine).
+
+⇒ **La natura della promessa — meccanismo o descrizione — NON predice se
+regga.** La correlazione delle prime diciotto era vera del campione, non della
+causa: avevo misurato soprattutto descrizioni non presidiate, e trovato che non
+reggevano.
+
+### La tesi che i dati di stanotte sostengono
+
+> 🔑 **Il difetto sta dove la STESSA COSA è fatta in PIÙ PUNTI e uno è stato
+> dimenticato.** Non conta se il punto dimenticato sia codice o prosa: conta
+> che nessuno abbia chiesto *«chi ALTRO fa la stessa cosa?»*.
+
+Le sei cure di stanotte, una per una: il pavimento è applicato in **cinque**
+punti e **due** non guardavano il degrado · l'interruttore del pavimento è
+letto da **tre** porte MCP e **una** non lo legge · il campo `min_relevance`
+è nella ricevuta di **due** porte e **una** taceva · le porte dei fatti sono
+**due** e la guida le trattava come **una** · il rimedio `llm=` era in **sei**
+copie · i quarantinati si leggono da **una** porta e la guida non la nominava.
+
+**Sei difetti su sei in punti ripetuti.** Ed è falsificabile in modo netto:
+*si cerchi un difetto di stanotte che stia in un punto UNICO.* Io non ne ho.
+
+⚠️ **E la prova più forte è contro di me**: alle 01:22 ho dovuto correggere
+un'affermazione fatta qui un'ora prima («il presidio anti-spoof non nominava
+`deep`») perché avevo sweepato **solo il file che stavo leggendo** — cioè ho
+commesso la classe **mentre la citavo**. Una regola che si conosce non è una
+regola che si applica; il presidio non è saperla, è **il controllo**: prima di
+dire «non presidiato», `git grep` su TUTTI i test e **leggere i nomi**, perché
+l'assert può stare due righe sotto la parola cercata.
+
+📌 **Cosa resta vero della tesi vecchia**: che una descrizione non ha un test
+che la esercita, e quindi *quando* si stacca nessuno se ne accorge. È una
+verità sulla RILEVABILITÀ, non sulla probabilità del difetto — e le due erano
+confuse.
+
+---
+
 ## Le tredici promesse
 
 Ogni riga: la promessa **come è scritta nel prodotto**, la misura, il commit.
