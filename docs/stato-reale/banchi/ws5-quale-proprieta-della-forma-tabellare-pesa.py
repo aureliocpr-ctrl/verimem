@@ -39,6 +39,46 @@ carattere (stesso ordine di grandezza, ~2500-3400); un vero e un falso per
 forma; «prosa» e «colonne» sono giudizi miei — un linguista dividerebbe
 diversamente.
 
+✅ ESITO - **nessuna proprieta' da sola rovescia il gate: e' la COMBINAZIONE**::
+
+    forma della zeppa            car.   VERO       ground   FALSO      ground  verdetto
+    A prosa (CONTROLLO)          3350   passa       100.0   cade          0.6  🟢 distingue
+    B righe spezzate             3350   passa       100.0   cade          0.3  🟢 distingue
+    C simboli                    3626   passa       100.0   cade          1.2  🟢 distingue
+    D colonne chiave=valore      2762   passa       100.0   cade         19.2  🟢 distingue
+    E tabellare (CONTROLLO)      2517   CADE         52.0   passa        98.9  🔴🔴 ROVESCIATO
+
+✅ **I due controlli sono riprodotti** (A distingue, E si rovescia), quindi i verdetti
+su B, C e D sono leggibili. ⇒ **Andare a capo, mettere simboli e togliere le frasi
+non rovesciano il gate, presi uno alla volta.** Solo la loro combinazione lo fa.
+
+🔑 **CONSEGUENZA SULLA CURA, ed e' il motivo per cui la domanda valeva**: la cura
+**non puo' essere tipografica**. «Togliete i simboli dai log», «non spezzate le
+righe», «scrivete a frasi invece che a colonne» non chiudono niente — ognuna di
+quelle tre, da sola, non produce il difetto. ⇒ **Serve agire sul giudizio**, e il
+consiglio operativo che regge e' quello gia' dato da @ws7 in `LANT-75`: **se la
+fonte e' l'uscita di uno script, mettici accanto una frase in prosa che enunci la
+relazione** — non riformattare l'uscita.
+
+📌 Nota su `D colonne`: il falso prende **19.2** contro lo 0.3-1.2 delle altre
+forme — un ordine di grandezza in piu', pur restando fermato. E' l'unica delle tre
+che si muove nella direzione del rovesciamento, e chi cercasse la proprieta'
+dominante ripartirebbe da li'.
+
+⚠️ **CONFONDENTE DI @ws8 (il primo write di ogni processo non viene giudicato
+quando il daemon di encoding e' assente): NON tocca questo banco.** Il criterio e'
+verificabile a occhio nella tabella qui sopra — **nessuna cella ha
+`ground=None`**, quindi tutte e dieci le chiamate sono state giudicate. Chi vuole
+sapere se il confondente tocca il proprio banco cerchi `None` nella colonna del
+grounding: se non c'e', il giudice ha girato ovunque.
+
+REGIME: build corrente · store TEMPORANEO da `trap` · `ground_write=True` ·
+porta `run_validation_gate`.
+⚖️ PUNTI DEBOLI: le cinque zeppe sono **mie** e non sono lunghe uguali al
+carattere (2517-3626); un vero e un falso per forma; «prosa» e «colonne» sono
+giudizi miei; **non ho provato le combinazioni a due** (B+C, B+D, C+D), che
+direbbero se ne bastano due o se servono tutte e tre.
+
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-quale-proprieta-della-forma-tabellare-pesa.py <dir-temp>
 """
 import os
