@@ -101,9 +101,31 @@ non stimate.**
   18/07, **4** il 25/08), il comando per rifarlo, e persino «*Run it yourself
   before trusting either number*». ⇒ **La mia misura è una conferma
   indipendente di un limite che il prodotto dichiara**, non un difetto nascosto.
-- **L'asimmetria fra le porte**: con modello locale assente e daemon vivo,
-  **l'SDK ammette un claim che la sua fonte NEGA, MCP lo ferma**. Il fail-open
-  SDK è dichiarato; che MCP lo **eviti** delegando **non lo è**. `e4c1f199`
+- ⚠️ **L'asimmetria fra le porte — L'UNICO ANCORA APERTO**: con modello locale
+  assente e daemon vivo, **l'SDK ammette un claim che la sua fonte NEGA, MCP lo
+  ferma**. Localizzato a `anti_confab_gate.py:2350-2352`: `_have_judge` chiede
+  «*il modello è su disco?*» per rispondere a «*c'è un giudice?*», e **il daemon
+  non è nell'elenco**. `e4c1f199` · `1090f1fd`
+  📌 **È anche il più difficile dei quattro**: tocca **ogni scrittura**, e la cura
+  non è cambiare il predicato ma **spostare la decisione** — `judge_state()`
+  diventa `delegated` solo **dopo** una delega riuscita, quindi *nessun pre-check
+  può sapere se il daemon risponderà*.
+
+### Il contrappeso, ricontato alle 17:45 — e tre su quattro erano già curati
+
+| reperto | stato |
+|---|---|
+| perdono `L1.13` a comando (5/5) | ✅ **curato** — guardia anti-eco in servizio; il mio banco è il suo test: **5/5 → 0/5** |
+| `cli.py` «*would store as provisional*» (utente-visibile) | ✅ **curato** `b2fc39af`, **15 min** dopo la segnalazione |
+| `l1_orphan_detector.py` idem | ✅ **curato** `31f1335e` |
+| `_have_judge` / asimmetria porte | ⚠️ **aperto** — il più difficile |
+| buco dell'irrilevante | ⚠️ **non è un difetto nascosto**: *known gap* dichiarato nel README |
+
+🔑 **E la lezione operativa si misura**: alle 16:15 e 16:35 ho **reclamato** che un
+lavoro fosse fermo — **era già fatto**. Alle 16:50 ho **segnalato** due difetti
+con la riga e l'evidenza, **senza chiedere** — **curati entro 15 minuti**.
+⇒ *La segnalazione fattuale funziona meglio della protesta, e oggi la differenza
+è misurata: 0 su 1 contro 2 su 2.*
 
 ---
 
