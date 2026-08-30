@@ -28,13 +28,13 @@ REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00
 #: una riga-cella: `| <id> | <domanda> | ... |` con almeno le nove colonne.
 RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
 #: il verdetto e' il PRIMO simbolo, non uno qualsiasi: vedi il docstring.
-SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫]")
+SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫📋]")   # 📋 = cella di metodo (30/08)
 #: i simboli che NON sono verdetti ma vengono usati come tali: servono a dire
 #: all'autrice cosa ha scritto, non a indovinare cosa intendeva. Il 28/08 cinque
 #: celle usavano ✅ o ⚠️ — la terza volta in un giorno che qualcuno prende il
 #: simbolo piu' naturale invece di uno dei cinque, e ogni volta il difetto era
 #: della legenda, non di chi la usava.
-ALTRI_SIMBOLI = re.compile(r"[✅⚠️❌⚪🆕🔧🚨]")
+ALTRI_SIMBOLI = re.compile(r"[✅⚠️❌⚪🆕🔧🚨]")   # 📋 e' uscito da qui: ora e' in legenda
 
 
 def verdetto(riga: str) -> str:
@@ -57,6 +57,7 @@ def main() -> int:
         f"🟡 parziali {conto['🟡']}"
         + (f" · ⛔ non misurabili {conto['⛔']}" if conto["⛔"] else "")
         + (f" · 🚫 ritirate {conto['🚫']}" if conto["🚫"] else "")
+        + (f" · 📋 di metodo {conto['📋']}" if conto["📋"] else "")
         + f"   (su {len(celle)} celle)"
     )
     if conto["?"]:
@@ -67,7 +68,7 @@ def main() -> int:
                 altri = "".join(dict.fromkeys(ALTRI_SIMBOLI.findall(riga.split("|")[6])))
                 autrice = riga.split("|")[7].strip()[:12]
                 print(f"     {ident:9} (di {autrice or '?'}) usa «{altri or '—'}»"
-                      f" — la legenda ha 🔴🟢🟡⛔🚫")
+                      f" — la legenda ha 🔴🟢🟡⛔🚫📋")
         print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"
               " chiedi all'autrice quale dei cinque intendeva, non cambiarlo tu.")
     # 29/08: una cella che contiene un blocco di codice (```) o un a-capo SPEZZA
