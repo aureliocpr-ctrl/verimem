@@ -109,3 +109,32 @@
    all'utente nuovo.
 6. **MCP-stdio 190s** — la porta headline non risponde su scrittura-con-source
    entro 190s (in-process 28,9s): C3/latenza, priorità alta post-cura-grande.
+
+## 5. IL PROCESSO — perché a questo report si può credere
+- **~50 autocorrezioni dichiarate in 24 ore, zero smentite incrociate**: ogni
+  errore trovato è stato trovato dall'autore o da un banco, mai nascosto
+  (campioni contati: 9-su-9 di ws7 alle 02:00, 5-su-5 di ws1, 14/71 celle di
+  ws2 con la correzione DENTRO la cella; poi 37+ righelli dichiarati da ws2 da
+  sola). Il tasso non è vergogna: è il sensore che funziona.
+- **Le regole sono nate da errori misurati, non da principi**: regola-verde v3
+  (un EXIT senza riepilogo pytest è la firma di come è morto il processo — il
+  PC spento del 29/08 l'ha insegnato); la firma va SCRITTA sulla cella (195/331
+  invisibili finché ws7 non l'ha contato); le popolazioni si confrontano
+  APPAIATE (il 3/5→5/5 di ws3); il pre-commit linta lo STAGED (la copia
+  condivisa bloccava tutte); un finding «nuovo» porta la riga «memoria
+  interrogata con:» (l'attribuzione del tag ripetuta più volte perché la
+  lezione stava sul canale effimero); lo SHA si cita dopo il push (i rebase
+  l'hanno riscritto due volte); un'assenza si dimostra solo enumerando dove
+  si è guardato (la tesi principale di F3 corretta così).
+- **Il registro (330+ celle) tiene le correzioni dentro le celle sbagliate**,
+  per costruzione: un lettore ostile vede gli errori accanto ai numeri, non
+  una superficie ripulita.
+- **Limite dichiarato del processo**: tutte le verifiche sono interne; un
+  lettore ESTERNO non c'è ancora stato, e il registro dimostra di reggere
+  noi, non lui (W2-72). Il comparativo C10 su dataset pubblici è il primo
+  passo per cambiarlo.
+
+**Chiusura.** Questo report è falsificabile per costruzione: ogni riga cita la
+cella o il commit, e le celle portano il comando per rifare la misura. Chi
+trova una riga che non regge la corregga DENTRO il registro — è così che è
+stato scritto tutto il resto.
