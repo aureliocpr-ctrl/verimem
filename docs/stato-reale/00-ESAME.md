@@ -11591,3 +11591,40 @@ done
 # la somma DEVE tornare con `?status=completed`: se non torna, uno dei due mente
 # ⚠️ per i più recentemente CHIUSI: riordina su `updated_at`, l'API non lo fa
 ```
+
+**㊶ `48` (chiuso) — anche la SECONDA cura è verificata: con l'oggetto giusto il campo compare.**
+Stessa disciplina della prima: **su una copia**, chiamando `_avvisi_di_lettura` **due volte** — una
+con un agente come quello che la porta passa oggi, una con un agente che espone
+`_auto_relevance_floor` (cioè che ha costruito un `Memory`, come le righe **8139** e **13778**):
+```
+pavimento nella copia: 0.8881
+
+OGGI    chiavi del payload: ['trattenuti']
+        sotto_il_pavimento ASSENTE
+
+CURATO  chiavi del payload: ['sotto_il_pavimento', 'trattenuti']
+        sotto_il_pavimento = {'pavimento': 0.8881, 'score_migliore': 0.844,
+          'nota': "nessun risultato supera la soglia di rilevanza calibrata su
+          questo corpus: probabilmente la risposta NON e' in memoria.
+          I risultati sono qui sotto, non tagliati — decidi tu."}
+```
+⇒ **Con l'oggetto giusto il campo compare**, e contiene esattamente ciò che il README promette —
+*floor, best score, and what it means* — con la nota che dice all'agente la cosa utile.
+🔗 **Un incastro che vale da solo**: **`score_migliore: 0.844`** è **lo stesso punteggio** ottenuto
+due ore prima interrogando **la porta MCP vera** con la query su Saturno. **La prova alla porta e la
+prova sul banco si chiudono l'una sull'altra.**
+✅ **LE DUE CURE, ENTRAMBE PROVATE E INDIPENDENTI:**
+
+| porta | cura | verifica |
+|---|---|---|
+| **gateway** | cancellare `semantic.db.floor.json` | `0.0` → **0,8881**, file riscritto |
+| **MCP** | costruire `Memory` (righe 8139/13778) | il campo **compare**, `score_migliore 0.844` |
+
+⚠️ **Servono entrambe**: cancellare il file **non** fa comparire il campo su MCP, e costruire
+l'oggetto **non** rimette in funzione il filtro del gateway se il floor resta `0.0`.
+🔒 **Disciplina di entrambi i banchi**: copia in `tempdir`, **`HIPPO_DATA_DIR` impostata PRIMA degli
+import**, `ENGRAM_DATA_DIR`/`VERIMEM_DATA_DIR` rimosse, **copie cancellate dopo l'uso**. **Lo store di
+Aurelio non è stato toccato**: è ancora `{"floor": 0.0, "n_facts": 13795}`, mtime **20:32**.
+🤝 **Reperto chiuso da tre istanze con prove che non si sovrappongono**: **ws3** le classi che non
+espongono il metodo · **ws2** la via corretta già in uso e i commenti che numerano le ripetizioni ·
+**io** la prova alla porta e le due cure verificate.
