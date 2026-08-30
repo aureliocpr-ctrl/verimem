@@ -284,11 +284,33 @@ def main() -> int:
     #: fatte su truthfulqa, perche' era una costante rimasta dal primo giro.
     #: Un log che dichiara la popolazione sbagliata e' il difetto che passiamo
     #: le giornate a smontare — con l'aggravante che il numero era giusto.
+    #: ═══ LA BARRA D'ERRORE, che a questi numeri mancava ═══
+    #: Il 30/08 alle 21:06 ho calcolato l'intervallo di Wilson sui miei stessi
+    #: risultati: con n=100 per faccia, **29,0% ha IC95 [21,0 – 38,5]**. ⇒ Le
+    #: differenze fra i miei tre giri (29 vs 34 sui veri, 16 vs 18 sui falsi)
+    #: **NON sono distinguibili dal rumore**, e la conclusione «il +5,0 e' la
+    #: popolazione» era infondata: non c'era niente da spiegare.
+    #: ⇒ 🔑 **Una proporzione senza intervallo invita a spiegare differenze che
+    #: non esistono** — e io ne ho spiegate due in una sera. Con n=100 non si
+    #: distingue nulla sotto ~10 punti: il banco ora lo stampa da solo.
+    def _wilson(k: int, n: int, z: float = 1.96) -> tuple[float, float]:
+        if n <= 0:
+            return 0.0, 0.0
+        import math
+        p, d = k / n, 1 + z * z / n
+        centro = (p + z * z / (2 * n)) / d
+        semi = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d
+        return 100 * (centro - semi), 100 * (centro + semi)
+
     print(f"\n  === VERIMEM su {a.popolazione} ({f_nome}) — {len(esiti)} claim ===")
+    _la, _ha = _wilson(len(falsi_ammessi), len(falsi))
+    _lb, _hb = _wilson(len(veri_persi), len(veri))
     print(f"  faccia A  falsi AMMESSI (serviti):  {len(falsi_ammessi):4}/{len(falsi):<4} "
-          f"= {100 * len(falsi_ammessi) / max(1, len(falsi)):5.1f}%")
+          f"= {100 * len(falsi_ammessi) / max(1, len(falsi)):5.1f}%   IC95 [{_la:4.1f} , {_ha:4.1f}]")
     print(f"  faccia B  veri PERSI (quarantinati):{len(veri_persi):4}/{len(veri):<4} "
-          f"= {100 * len(veri_persi) / max(1, len(veri)):5.1f}%")
+          f"= {100 * len(veri_persi) / max(1, len(veri)):5.1f}%   IC95 [{_lb:4.1f} , {_hb:4.1f}]")
+    print(f"  ⚠️ con n={len(veri)} per faccia non si distingue nulla sotto ~{_hb - _lb:.0f} punti: "
+          f"due giri che differiscono meno di cosi' NON differiscono.")
 
     #: e la grandezza che l'utente subisce davvero: di cio' che gli viene
     #: SERVITO, quanto e' falso? (le due facce si combinano qui)
@@ -391,6 +413,8 @@ def main() -> int:
              "falsi_fermati_per_layer": dict(per_layer_falsi),
              "claim": len(esiti),
              "falsi_ammessi": len(falsi_ammessi), "falsi_totali": len(falsi),
+             "falsi_ammessi_ic95": [round(_la, 1), round(_ha, 1)],
+             "veri_persi_ic95": [round(_lb, 1), round(_hb, 1)],
              "veri_persi": len(veri_persi), "veri_totali": len(veri),
              "falsi_fra_i_serviti": len(falsi_serviti), "serviti": len(serviti),
              "commit": sha, "store": "temporaneo (HIPPO_DATA_DIR)"}

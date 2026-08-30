@@ -8,15 +8,31 @@
 > W2-78) + registro 00-ESAME.md (330+ celle) + canale verimem-coord 28-30/08.
 
 ## 1. DIFENDIBILE — il prodotto lo fa, e lo dimostra
-- **Il moat (giudice source⊢fact) è acceso e copre**: 98,8% dei fatti recenti
-  giudicati (agosto, banco `la-copertura-del-giudizio-nel-tempo.py`, 3 firme);
-  senza fonte dichiara `grounding_score=null` e la promessa dei campi regge
+- **Il moat (giudice source⊢fact) è acceso e copre — dove la fonte c'è**:
+  agosto 9587/9768 = 98,1% (rimisurato 30/08 21:07 col banco
+  `la-copertura-del-giudizio-nel-tempo.py`; alla prima stesura era 98,8 —
+  il corpus si muove, e il tasso si rimisura invece di citarsi). Sul
+  corpus INTERO è 9734/16335 = 59,6%: i mesi pre-moat non sono giudicati,
+  e le due facce vanno dette insieme. Caveat del banco, che viaggia col
+  numero: il volume è quasi tutto `cli:local`, la cui disciplina impone
+  la fonte a ogni scrittura ⇒ il 98,1% dice «quando la fonte c'è, il
+  giudizio avviene», NON «il prodotto giudica tutto ciò che un utente
+  qualunque scrive». Senza fonte dichiara `grounding_score=null` e la promessa dei campi regge
   3/3 con popolazione appaiata — un agente distingue «giudicato / fonte
   non giudicata / fonte assente» leggendo SOLO campi (`grounding_score` +
   `L4-skipped`): il prodotto sbaglia la propria promessa PER DIFETTO.
 - **`grounding_span` allega la prova del passaggio al 99,7%** dei giudicati
-  degli ultimi sei giorni (W2-123) ed è corretto nel merito 17/20 con i casi
-  limite decisi bene 3/3 (W2-124).
+  degli ultimi sei giorni (1949/1955 — la colonna è nata l'8 agosto,
+  W2-123) ed è corretto nel merito 17/20 con i casi limite decisi bene
+  3/3 (W2-124).
+- **Il comparativo C10 poggia su ground truth esterna umana** (TruthfulQA
+  heldout, etichette non nostre): falsità servita 13,3–18,4% contro il
+  ~50% di un write-through senza gate, al prezzo di 29–34% di veri persi
+  col moat primo decisore (LANT-91/92/93, 2ª firma su n=600; replica su
+  campione disgiunto 16,0%). È l'unica riga di questa sezione il cui
+  metro NON è il giudice del prodotto: per tutte le altre, il tasso lo
+  certifica lo strumento descritto difettoso nella sezione 2 — il primo
+  lettore esterno l'ha detto senza sconti, e questa riga è la risposta.
 - **Il read path dichiara ciò che nasconde**: `trattenuti {quanti, perché,
   non-persi}` su SDK e MCP (W2-75/76) — un motore che dice quanti risultati ha
   censurato e perché è una rarità. (CLI: assente — vedi difetti.)
@@ -143,10 +159,14 @@
 - **Il registro (330+ celle) tiene le correzioni dentro le celle sbagliate**,
   per costruzione: un lettore ostile vede gli errori accanto ai numeri, non
   una superficie ripulita.
-- **Limite dichiarato del processo**: tutte le verifiche sono interne; un
-  lettore ESTERNO non c'è ancora stato, e il registro dimostra di reggere
-  noi, non lui (W2-72). Il comparativo C10 su dataset pubblici è il primo
-  passo per cambiarlo.
+- **Limite dichiarato del processo**: quasi tutte le verifiche sono
+  interne e il registro dimostra di reggere noi (W2-72). I primi due
+  contrappesi esterni sono arrivati il 30/08: il comparativo C10 su
+  etichette umane pubbliche (sez. 1) e il primo lettore ostile non
+  interno (GLM-5.3, 24 finding sul solo testo di questo report —
+  `revisione-esterna/`), il cui primo finding verificato ha prodotto
+  LANT-105 e le correzioni di questa revisione. Gli altri finding: o
+  correzione o risposta scritta accanto, mai archiviazione muta.
 
 **Chiusura.** Questo report è falsificabile per costruzione: ogni riga cita la
 cella o il commit, e le celle portano il comando per rifare la misura. Chi
