@@ -61,16 +61,44 @@ def main() -> int:
         + f"   (su {len(celle)} celle)"
     )
     if conto["?"]:
-        print(f"⚠️  {conto['?']} celle senza simbolo di LEGENDA nella colonna verdetto:")
+        #: 30/08 (LANT-98): queste NON sono tutte difettose. Guardando i verdetti
+        #: veri invece del solo simbolo, 16 su 16 avevano un verdetto PIENO, di
+        #: un tipo diverso: 🔑 chiave · ✅ verificato · 🔁 replica · 🎯 causa
+        #: isolata · 🪞 autocritica · 📊 bilancio · 🗳️ voto.
+        #: ⇒ **La legenda ha sei simboli per lo STATO della misura; noi ne usiamo
+        #: altri per la NATURA del risultato. Sono DUE DIMENSIONI e la legenda ne
+        #: copre una sola.** Chiamarle «senza simbolo di legenda» gonfiava il
+        #: referto di 16 righe che non c'era niente da sistemare — ed e' la
+        #: regola che avevo scritto io: *non segnalare come difetto cio' che e'
+        #: legittimo; gonfiare il proprio referto e' lo stesso errore che
+        #: smontiamo negli altri*.
+        #: ⇒ La cura NON e' allargare la legenda — una legenda che cresce a ogni
+        #: simbolo nuovo non e' piu' una legenda: e' lo STRUMENTO che smette di
+        #: chiamarli difetti. Restano difetti solo i verdetti VUOTI.
+        NATURA = re.compile(r"[🔑🔁🎯🪞📊🗳✅]")
+        di_natura, vuoti = [], []
         for riga in celle:
-            if verdetto(riga) == "?":
+            if verdetto(riga) != "?":
+                continue
+            col6 = riga.split("|")[6]
+            (di_natura if NATURA.search(col6) else vuoti).append(riga)
+
+        if di_natura:
+            print(f"ℹ️  {len(di_natura)} celle con un verdetto di NATURA "
+                  f"(🔑 chiave · 🔁 replica · 🎯 causa · 🪞 autocritica · 📊 bilancio "
+                  f"· 🗳 voto · ✅ verificato) — **non sono difetti**:")
+            print("     la legenda copre lo STATO della misura, questi dicono la NATURA")
+            print("     del risultato. Due dimensioni diverse; nessuna cella da sistemare.")
+        if vuoti:
+            print(f"⚠️  {len(vuoti)} celle con la colonna verdetto VUOTA — queste si':")
+            for riga in vuoti:
                 ident = RIGA_CELLA.match(riga).group(0).strip("| ")
                 altri = "".join(dict.fromkeys(ALTRI_SIMBOLI.findall(riga.split("|")[6])))
                 autrice = riga.split("|")[7].strip()[:12]
                 print(f"     {ident:9} (di {autrice or '?'}) usa «{altri or '—'}»"
                       f" — la legenda ha 🔴🟢🟡⛔🚫📋")
-        print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"
-              " chiedi all'autrice quale dei cinque intendeva, non cambiarlo tu.")
+            print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"
+                  " chiedi all'autrice quale dei cinque intendeva, non cambiarlo tu.")
     # 29/08: una cella che contiene un blocco di codice (```) o un a-capo SPEZZA
     # la riga della tabella markdown: le righe di continuazione non fanno piu'
     # parte della tabella e la colonna non si allinea. Trovato addosso a me:
