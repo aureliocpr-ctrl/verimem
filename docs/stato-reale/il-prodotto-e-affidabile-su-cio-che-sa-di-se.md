@@ -115,6 +115,44 @@ non stimate.**
   ⇒ **Ogni banco qui citato ha ora un controllo che fallisce se la popolazione
   non c'è**, ed è l'unica ragione per cui questi numeri si possono leggere.
 
+## La classe del giorno: la prosa resta ferma dove il codice si è mosso
+
+Quattro istanze, **tre autori diversi**, una forma sola:
+
+| | dove | l'affermazione | il codice |
+|---|---|---|---|
+| ① | `quantity_match` (mia) | «saltando le **DUE** potature» | ne avevo aggiunta una **terza**, fuori dall'esenzione |
+| ② | `anti_confab_gate:2336` | tre vie al giudizio elencate | **il daemon non è nell'elenco** |
+| ③ | `anti_confab_gate:24,296` | il downgrade forza `provisional` | scrive **`quarantined`**, in 7 punti |
+| ④ | `anti_confab_gate:902` | `return False` (il default vecchio) | il default è **`return True`** — riga **irraggiungibile** |
+
+⇒ Dopo la terza ho smesso di aspettare la quarta e ho usato **la classe come
+setaccio**: `git grep` sulle affermazioni che nominano un conteggio, nel mio
+perimetro. **Otto candidati, un difetto vero** (④, curato `613306f7`), **sette
+no** — e lo dico con la stessa forza con cui avrei annunciato sette reperti.
+
+🟢 **Due dei sette sono la FORMA GIUSTA, e sono già nel prodotto**:
+`anti_confab_gate:1196` («*MISURATO su **quattro** aggiornamenti legittimi ne
+blocca **due***» — **e li elenca**) e `mcp_server:8159` («*nessuna delle **tre**
+superfici (mcp_server 0, cli 0, client 0)*» — **nomina superfici e numeri**).
+**Si auto-verificano**: fra sei mesi qualcuno può contare.
+
+🔑 **E il reperto di metodo vale più del difetto.** Due candidati —
+«*i **quattordici** layer*», «*i **tre** detector*» — **non sono nemmeno
+verificabili**: il mio contatore dà 35 e 4, ma **conto una cosa diversa** (il 35
+include varianti `-observe`/`-graded`; «detector» non è «punto di import»).
+
+> **Il puntatore non serve solo a tenere il numero aggiornato: serve a renderlo
+> VERIFICABILE.** Un numero senza il suo criterio di conteggio non si può
+> nemmeno controllare — e quindi **non invecchia mai visibilmente**.
+
+⇒ È **peggio** di un numero sbagliato: quello prima o poi qualcuno lo smentisce;
+un numero **non verificabile** non lo smentisce nessuno. Stessa famiglia di
+*«una misura che non c'è si legge come perfetta»*.
+📌 **Proposta**: *un'affermazione che nomina un numero, un elenco o uno stato
+dica **dove sta scritto nel codice** — o, se è un conteggio, **con quale criterio
+si conta**.* Non serve un test: gli esempi buoni sono già nel repo.
+
 ## Una regola pratica, che vale oltre questo prodotto
 
 > **Quando un banco stampa `[]` o `0`, la prima ipotesi non è «il prodotto non
