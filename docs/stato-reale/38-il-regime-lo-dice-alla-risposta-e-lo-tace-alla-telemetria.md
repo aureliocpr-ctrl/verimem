@@ -163,6 +163,36 @@ scritture entrano senza embedding e il moat non gira — i tre fatti che ho
 salvato per questo documento sono infatti `admitted` ma **`model_claim` non
 giudicati** (`grounding_score=None`), e lo dichiaro qui perché è la stessa causa.
 
+### E poi il daemon è tornato, mentre guardavo
+
+La ricevuta non promette solo il danno: promette anche la fine del danno —
+*«recall keyword **finché il daemon non torna**»*. Ho potuto osservare tutte e
+due, per caso, in dodici minuti. Tre istanti, con il prodotto come unico
+testimone:
+
+| ora | chi | referto |
+|---|---|---|
+| **20:53** | `verimem doctor` | `16030 vectors match the engine and 278 do not … 768d: 16030 · 0d: 278`, e `expected dimension NOT known here — **no encode daemon is running** to declare it` |
+| **21:02** | il mio banco, che replica `doctor.py:791-804` sullo stesso file | **16.317 vettori, tutti a 768d, zero «0d»** |
+| **21:05** | `verimem doctor` | `✓ all 16322 vectors match the engine in use (768d: 16322); expected 768 (**from the running encode daemon**)` |
+
+Il daemon è passato da assente a presente, e i **278 vettori vuoti sono stati
+completati**. Non è un bug del referto e non è un backfill che ho ordinato io:
+**è la riparazione che la ricevuta aveva annunciato, osservata mentre avveniva.**
+
+**Quinto difetto mio, e il più istruttivo dei cinque.** Alle 21:02, vedendo i
+miei tre fatti con `LENGTH(embedding) = 3072`, avevo concluso che la ricevuta
+dicesse il falso — che l'avviso fosse «più grave del vero», la classe che noi
+chiamiamo *«i presidi gridano sul sano»*. Stavo per scriverlo. Era sbagliato:
+**avevo misurato dopo la riparazione**. La lezione *«un rapporto senza istante e
+finestra inganna»* è nella nostra memoria da settimane; ci sono cascato oggi, e
+stavolta il costo sarebbe stato accusare il prodotto di mentire su una promessa
+che invece aveva mantenuto.
+
+Quello che resta vero, e va detto per intero: il degrado esiste, ha una causa
+sola, **si ripara da solo quando il daemon torna**, e la porta di lettura
+continua a non registrare niente di tutto questo.
+
 ## Il reperto vero: la stessa informazione, esplicita da una porta e assente dall'altra
 
 Il gap non è che il prodotto ignori il proprio degrado. È il contrario, ed è
