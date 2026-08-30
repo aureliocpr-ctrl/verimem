@@ -13021,3 +13021,41 @@ Con questo la serie sui corpora si chiude: **P-SCALA-A/B, P-DOM-A/B, P-ENT-A, P-
 Ho comunque escluso **5083 frasi** perché contenevano la risposta di una **sonda**: necessario nel disegno precedente, **superfluo qui** (questo banco non usa le sonde). L'ho tenuto per coerenza; senza, il pool sarebbe stato più grande — **non cambia il verso**, visto che 311 candidati su 570 erano già entrati.
 Le altre perdite del criterio: 426 già nel corpus base, 137 knowledge di una sonda, 3897 senza entità in comune.
 Vale in **inglese**, con `k=5`, su queste 114 domande.
+
+---
+
+## ws1 · 31/08 01:23 — IL PONTE FRA I DUE GIUDICI: IL BANCO UFFICIALE GIRA IN UN REGIME PIÙ SEVERO DI QUELLO DELL'UTENTE, −14 PUNTI DI RICHIAMO
+
+**Livello**: la porta pubblica. **Perimetro**: 114 domande + 18 sonde, corpus 401 frasi di terzi, inglese; **`verimem.__version__` = 0.7.6**, cwd = scratchpad. **A/B a una sola variabile: il GIUDICE.** **Istante**: 31/08 01:18–01:22. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Risolve quello che ho ripetuto tutta la notte senza poterlo chiudere: *«due giudici, numeri che non si accostano»*. Ora sono **lo stesso banco**, quindi si accostano.
+
+### 🟢 LA VARIABILE È ENTRATA AL 100%
+
+```
+(a) mem.explain(q, k=5)                      ->  floor_applied_by: cross_encoder  114/114
+(b) mem.explain(q, k=5, min_relevance=0.835) ->  floor_applied_by: cosine         114/114
+```
+
+`client.py:1785` — `ce_gate=want_ce_floor` è vero **solo** con `auto`; un float esplicito resta sul bi-encoder. Il dossier lo conferma su tutte e 114 le domande, in entrambi i regimi.
+
+### 🔴 P-PONTE FALSIFICATA: IL BI-ENCODER A 0.835 È PIÙ SEVERO, NON MENO
+
+| regime | giuste | sbagliate | astenute | sonde servite |
+|---|---:|---:|---:|---:|
+| **(a)** cross-encoder, `auto` — *il default dell'utente* | **56/114 (49%)** | 23 (20%) | 35 (31%) | 1/18 |
+| **(b)** bi-encoder, `0.835` — *il regime del banco ufficiale* | **40/114 (35%)** | 20 (18%) | 54 (47%) | 0/18 |
+| differenza (b) − (a) | **−16** | −3 | **+19** | −1 |
+
+Avevo predetto il contrario — *«il bi-encoder ammette per un pelo, quindi richiamo più alto e più fabbricazione»* — basandomi sul reperto del 29/08 (`0,8371…0,8639`, 2–29 millesimi sopra la soglia). **Ma quello era misurato su un'altra popolazione** (entità difficili, domande *senza* risposta nel corpus). **Ho accostato due popolazioni dentro una predizione**: è il presidio che ripeto da ore, violato da me nel formularla.
+
+### 🔑 IL NUMERO CHE ACCOSTA I DUE MONDI
+
+> **Il banco ufficiale gira in un regime più conservativo di quello che l'utente riceve di default: 14 punti di richiamo in meno (35% contro 49%) sulla stessa popolazione e sullo stesso corpus.**
+
+Conseguenza diretta per la riga di vetrina che segnalo da stanotte: le cifre del banco a `0.835` sul bi-encoder **non descrivono il comportamento del regime di default**. Il suo `fabrication_under_absence` (8/200 = 4%) è misurato in una configurazione dove io osservo **0 sonde servite su 18**; nel regime dell'utente ne osservo **1**.
+
+### Cosa questi dati NON provano
+⚠️ **1/18 contro 0/18 è dentro il rumore** (n=18, regola del tre): **non affermo che il default fabbrichi di più**. Il dato solido è il **richiamo**, che è un conteggio appaiato sulla stessa popolazione: **−16 domande su 114**.
+Il confronto vale con `min_relevance=0.835` **fisso**; il banco ufficiale usa quel valore, ma un altro floor sul bi-encoder darebbe un'altra colonna.
+Vale in **inglese**, con `k=5`, su questo corpus da 401 frasi.
