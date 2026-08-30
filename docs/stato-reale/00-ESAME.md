@@ -12026,3 +12026,39 @@ dire «dei rossi del 28, 5 sono vivi».**
     gh api "repos/:owner/:repo/actions/jobs/<job-id>/logs" | grep -E "^\S*\s*(FAILED|ERROR) "
     # poi, un file alla volta (mai la suite intera):
     python -m pytest tests/<file>.py -q --no-header -p no:randomly   # e leggi $? SENZA pipe
+
+---
+
+## ws1 · 30/08 23:59 — LA DERIVA CROSS-LINGUA C'È ANCHE QUI, MA NON CAMBIA NIENTE: SPOSTA PUNTEGGI CHE STANNO A −6 CONTRO UNA SOGLIA A 0
+
+**Livello**: lo scorer del prodotto **e** la porta pubblica. **Perimetro**: 12 domande già tradotte EN/IT/ES, corpus **401 frasi di terzi**. **Due misure**, perché il retriever è multilingue e i candidati cambiano con la lingua: **(b)** a **passaggi fissi** (i candidati della recall EN) per isolare il **gate**; **(a)** alla **porta reale**, retriever incluso. **Istante**: 23:56–23:59. **Regime**: `ok` in testa, dopo l'ingestione e in coda. **Proxy dichiarato**: le traduzioni IT/ES sono mie, l'inglese è di terzi.
+
+### 🔴 P-LING-FLOOR FALSIFICATA — lo stesso identico numero in tutte e tre le lingue
+
+```
+(b) PASSAGGI FISSI (isola il gate)     sopra il floor    logit mediano    logit max
+    EN                                     13/60            -6,268         +10,927
+    IT                                     13/60            -5,289         +10,768
+    ES                                     13/60            -4,434         +10,929
+
+(a) ALLA PORTA REALE                   cand sopra floor  astenute giuste sbagliate
+    EN                                     13/60              2      4       6
+    IT                                     13/60              2      6       4
+    ES                                     13/60              2      5       5
+```
+
+**13 su 60 in tutte e tre le lingue**, sia isolando il gate sia alla porta. La mia ipotesi — *«in italiano il floor è di fatto meno severo, quindi la stessa memoria dà più risposte»* — **è falsa in questo regime**.
+
+### 🔑 MA LA DERIVA C'È — e il perché non conta è il reperto
+
+Il **logit mediano sale**: **−6,268 (EN) → −5,289 (IT) → −4,434 (ES)**, cioè **+0,98** e **+1,83**. La deriva cross-lingua misurata alle 22:12 **si riproduce anche su questa popolazione**.
+
+> **Solo che sposta una massa centrale che sta a −6, contro una soglia a 0. Una deriva di un punto e mezzo non fa attraversare sei punti di distanza. La deriva conta SOLO dove la distribuzione è già vicina alla soglia.**
+
+E questo **delimita definitivamente il reperto delle 22:12**: là i punteggi stavano fra −4 e 0 (domande **senza risposta nel corpus**, tutti i candidati in zona grigia) e **+3,4 di deriva bastavano ad attraversare**. Qui la distribuzione è bimodale — pochi candidati molto alti (max +10,9, la frase che risponde) e una massa molto bassa — e **la deriva cade nel vuoto fra le due**.
+
+Il reperto delle 22:12 resta valido **sul suo perimetro**, che ora è definito con precisione: **il regime in cui i punteggi sono già vicini a zero.**
+
+### Cosa questi dati NON provano
+Gli esiti alla porta (4/6/2 · 6/4/2 · 5/5/2) sono su **n=12**: intervallo **±~28 punti**. Le variazioni fra le lingue e lo scarto rispetto al 49% globale **stanno tutte dentro**, e **non le interpreto** — le riporto come corollario, non come tasso.
+Le traduzioni sono mie. Vale sul corpus base da 401 frasi, in questo regime (**risposta presente**); non dice nulla sul regime di assenza, dove la deriva è invece decisiva.
