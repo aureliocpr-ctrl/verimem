@@ -153,6 +153,38 @@ un numero **non verificabile** non lo smentisce nessuno. Stessa famiglia di
 dica **dove sta scritto nel codice** — o, se è un conteggio, **con quale criterio
 si conta**.* Non serve un test: gli esempi buoni sono già nel repo.
 
+### La regola, dimostrata invece che argomentata
+
+`agent_guide.py:77` — la guida che **ogni agente legge** — promette:
+
+> *Measured on a real corpus: **538 of 634** chunks (84.9%) pointed at files that
+> no longer existed, while the chunk text was present for **100%** of them.*
+
+È **la forma giusta al massimo grado**: numero · criterio (*cosa* conta) ·
+popolazione · contrasto · conclusione operativa. **Manca solo la DATA.** Ho
+provato a ri-misurarlo (store dei documenti, **sola lettura**, 30/08 ore 16:58):
+
+```
+73 documenti indicizzati
+  uri che NON esiste più   42  (57,5%)
+  content conservato       73/73  (100%)
+  esempi: contract.txt · docs\ROADMAP-v0.7.md · …\Temp\claude\…
+```
+
+🟢 **La sostanza REGGE su una popolazione indipendente**: i path si perdono, il
+contenuto resta **al 100%** — e con esso la conclusione operativa, *la citazione
+è esatta sull'indice, non è una garanzia di riaprire l'originale*. 🟢 **E la
+guida nomina già la causa giusta** («*a RELATIVE path resolved from a different
+working directory*»): i miei esempi sono esattamente path **relativi** e
+**temporanei**.
+
+⚠️ **Ma il numero non è confrontabile**: 57,5% su **73 documenti** contro 84,9%
+su **634 chunk** — **popolazioni diverse, istanti diversi**. Il mio numero **non
+smentisce né conferma** il suo.
+🔑 **Ed è precisamente la dimostrazione della regola**: senza sapere **quando** e
+**su quale grandezza** fu preso l'84,9%, nessuno può dire se sia invecchiato.
+*Non l'ho argomentato: ci ho provato e non ci sono riuscito.*
+
 ## Una regola pratica, che vale oltre questo prodotto
 
 > **Quando un banco stampa `[]` o `0`, la prima ipotesi non è «il prodotto non
