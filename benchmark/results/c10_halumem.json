@@ -1,0 +1,21 @@
+{
+  "popolazione": "HaluMem-Medium.jsonl (scambio di soggetto)",
+  "criteri_ciechi": {
+    "lunghezza": 55.5,
+    "_neg_occorrenze": 2,
+    "negazione": 50.0,
+    "_neg_misurabile": 0.0,
+    "_neg_quota_veri": 1.0,
+    "_neg_quota_falsi": 1.0
+  },
+  "veri": 100,
+  "falsi": 100,
+  "falsi_ammessi": 1,
+  "veri_persi": 0,
+  "falsi_fra_i_serviti": 1,
+  "serviti": 101,
+  "veri_persi_per_decisore": {},
+  "commit": "6ab2d2fa",
+  "store": "temporaneo (HIPPO_DATA_DIR)",
+  "seed": 42
+}
