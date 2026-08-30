@@ -86,7 +86,23 @@ def main() -> int:
         print(f"\n  {cid}  [{stato}]  {titolo[:74]}")
         if rif:
             _cmd = rif.group(1)
-            print(f"      $ {_cmd[:110]}")
+            # La ricetta e' il PRIMO backtick dopo «rifallo con», e quando
+            # quel backtick e' lontano appartiene a un'altra frase: LANT-33
+            # rimanda a un blocco in cima al file e il primo backtick che
+            # segue e' una variabile citata 245 caratteri piu' in la',
+            # stampata come se fosse il comando da eseguire. Misurato il
+            # 30/08: 12 ricette su 148 (8%), e una a distanza NEGATIVA —
+            # il backtick veniva da prima della riga stessa.
+            _q = riga.lower().find("rifallo con")
+            _d = riga.find("`" + _cmd + "`", _q) - _q if _q >= 0 else 999
+            if 0 <= _d <= 70:
+                print(f"      $ {_cmd[:110]}")
+            else:
+                # niente falso `$`: si stampa cio' che la cella DICE.
+                _testo = riga[_q:_q + 150].split("`")[0] if _q >= 0 else ""
+                print(f"      ↪ {_testo.strip()[:110]}")
+                print("      ⚠️  non e' un comando: la cella rimanda "
+                      "a un altro punto. Leggila prima di eseguire.")
             if VIETATO.search(_cmd):
                 print("      ⛔ NON ESEGUIRLA COSI': contiene un comando "
                       "che la disciplina della copia condivisa vieta. "
