@@ -2885,7 +2885,22 @@ def run_validation_gate(
     # L3/L4 semantic gates below are untouched.
     _domain_advisory = _l1_domain_advisory()
     # PER-FACT domain-precision carve-out (design (d), env ENGRAM_L1_DOMAIN_
-    # PRECISION, DEFAULT OFF). Unlike _domain_advisory (which disarms L1 for the
+    # PRECISION, **DEFAULT ON** — flipped 2026-07-22, come dichiara `:192`).
+    #
+    # ⚠️ QUESTA RIGA DICEVA «DEFAULT OFF» E CONTRADDICEVA `:192` NELLO STESSO
+    # FILE. Non era una svista di chi l'ha scritta: e' prosa rimasta ferma dove
+    # il codice si e' mosso (il flip del 22/07). Il default vero l'ho CHIESTO al
+    # prodotto invece di leggerlo — `_l1_domain_precision()` torna `True` — ed
+    # e' il metodo, perche' fra due commenti opposti nessuno dei due e' prova.
+    #
+    # La discrepanza e' stata trovata due volte per due strade diverse: in
+    # `W7-60` (30/08 mattina) misurando la carve-out sui verbali, e da un'altra
+    # istanza mentre votava la cura di `_VERB_MARK` cercandosi la controipotesi
+    # «chi altro legge quel marcatore?». Costava a valle: una nota operativa
+    # diceva «oggi OFF» perche' aveva letto QUESTO commento — nessuno aveva
+    # sbagliato, il file non era univoco.
+    #
+    # Unlike _domain_advisory (which disarms L1 for the
     # WHOLE deployment), this suppresses the L1 escalation ONLY for a fact the
     # subject classifier reads as a third-party professional fact — an agent's
     # self-claim about its OWN software ('the migration is complete') is NOT
