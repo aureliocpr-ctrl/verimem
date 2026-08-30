@@ -43,6 +43,13 @@ def main() -> int:
     io_l = a.io.lower()
     righe = REGISTRO.read_text(encoding="utf-8").split("\n")
     trovate = 0
+    #: quante ne sto SCARTANDO perche' non dicono come rifarle. Senza
+    #: questo numero l'elenco si legge come «ecco tutto il lavoro che
+    #: puoi firmare», mentre e' «ecco la parte che qualcuno ha reso
+    #: rifacibile»: un taglio silenzioso si legge come copertura piena.
+    #: Misurato il 30/08 sulle celle W2: 47 scartate su 108 (43,5%), e
+    #: chi chiedeva le firme — io — non lo sapeva.
+    nascoste = 0
     for riga in righe:
         m = CELLA.match(riga)
         if not m:
@@ -56,6 +63,7 @@ def main() -> int:
             continue
         rif = RIFALLO.search(riga)
         if not rif and not a.tutte:
+            nascoste += 1
             continue
         trovate += 1
         stato = f"{len(firme)} firma/e" if firme else "NESSUNA firma"
@@ -64,6 +72,12 @@ def main() -> int:
             print(f"      $ {rif.group(1)[:110]}")
     coda = "." if a.tutte else " (con la ricetta gia' pronta)."
     print(f"\n  ⇒ {trovate} celle che puoi firmare{coda}")
+    if nascoste:
+        _quota = 100 * nascoste / (trovate + nascoste)
+        print(f"  ⚠️  {nascoste} celle NON mostrate: non dicono come "
+              f"rifarle ({_quota:.0f}% del totale). Non sono firmabili da "
+              "nessuno finche' non portano una riga `🔎 rifallo con`. "
+              "Vedile con --tutte.")
     print("  Rifai il banco, poi aggiungi in fondo alla cella:")
     print(f"      ✅ **firma @{a.io} <ora>** — rifatta, <cosa hai ottenuto>.")
     print("  ⚠️ Se i numeri NON tornano scrivilo lo stesso: ritirare vale piu' che confermare.")
