@@ -9603,3 +9603,68 @@ l'altro.
 # separa MASTER e lavoro DENTRO ogni blocco, non solo fra i blocchi
 python docs/stato-reale/banchi/ws6-le-finestre-cieche-di-oggi.py
 ```
+
+---
+
+## ws1 — Il meccanismo: il cross-encoder decide CONTRO il coseno, e lo fa in direzioni opposte nelle due lingue
+
+**Livello**: `Memory.explain()`, punteggi letti da `rep["facts"]` e `rep["min_relevance"]`.
+**Dataset**: HaluEval QA (MIT), 451 frasi di terzi. **Perimetro**: 4 entità × 2 lingue × 2
+giudici = 16 celle. **Istante**: 30/08 21:29-21:33. **Regime**: `ok` in testa e in coda.
+**Controllo sano incluso** — due entità che non falliscono mai.
+
+### I numeri, e il pezzo che spiega tutto
+
+| entità | cella | astenuto | floor | **top_rel** |
+|---|---|---|---|---|
+| **Robin Schulz** | EN auto/CE | **True** | 0,8489 | — (n=0) |
+| | EN 0,835/BE | **False** | 0,835 | **0,8371** ← passa per **2 millesimi** |
+| | IT auto/CE | **False** | 0,8489 | **0,788** ← **SOTTO il floor, e non si astiene** |
+| | IT 0,835/BE | **True** | 0,835 | — (n=0) |
+| **Badr Hari** | EN auto/CE | **True** | 0,8407 | — |
+| | EN 0,835/BE | **False** | 0,835 | **0,8639** |
+| | IT auto/CE | **False** | 0,8407 | **0,8035** ← **sotto il floor, e non si astiene** |
+| | IT 0,835/BE | **True** | 0,835 | — |
+| **Shah Rukh Khan** (sano) | tutte e 4 | **True** | 0,8193 / 0,835 | — |
+| **Marvel Comics** (sano) | tutte e 4 | **True** | 0,8562 / 0,835 | — |
+
+### 🔑 Il meccanismo
+
+**In italiano, col CE gate, il fatto servito ha `relevance` 0,788 e 0,8035 — SOTTO il floor
+riportato (0,8489 e 0,8407) — e il prodotto NON si astiene.** ⇒ **il cross-encoder ammette
+contro il coseno.**
+**In inglese, sempre col CE gate, il prodotto si astiene ANCHE se il coseno passerebbe**
+(0,8371 > 0,835 col bi-encoder). ⇒ **il cross-encoder rifiuta contro il coseno.**
+
+> **Il CE non è «più permissivo» o «più severo»: decide CONTRO il coseno in entrambe le
+> direzioni, ed è più permissivo sull'italiano e più severo sull'inglese.**
+
+Ed è **esattamente** ciò che `client.py:1787` documenta di sé: «*con `auto` quel numero NON è
+la soglia che ha filtrato: la decisione passa al cross-encoder e il float resta un riferimento
+sulla scala del coseno*». **Il prodotto lo dichiara; qui è misurato con i valori.**
+
+### 🔻 La mia predizione è falsificata, e in modo utile
+
+Avevo previsto che sui casi difficili la differenza IT/EN fosse **di pochi millesimi** — «un
+caso-limite, non una frattura». **Falso**: in italiano il top_rel è **0,788**, cioè **6 punti
+percentuali sotto** la soglia. **Non è un caso-limite del coseno: è il CE che sovrascrive.**
+✅ Confermate invece le altre due: **il controllo sano si astiene in tutte e quattro le celle**
+(il banco distingue, non è muto), e **il floor `auto` varia per entità** (0,8193 → 0,8562)
+mentre il bi-encoder resta fisso a 0,835.
+
+### 🟢 E il verde da tenere accanto
+
+**Il controllo sano funziona**: due entità con frasi proprie nel corpus, e il prodotto si
+astiene **8 volte su 8**. ⇒ **il fenomeno riguarda casi specifici, non l'astensione in
+generale** — che è la cosa che il README promette e che, su questo banco, mantiene.
+
+### Cosa questo NON prova
+
+- **Due entità difficili e due sane**: il meccanismo è **osservato**, non stimato su una
+  popolazione.
+- **Non so PERCHÉ** il CE valuti diversamente le due lingue: **del suo addestramento non ho
+  verificato nulla** e non lo affermo.
+- **`top_rel` è la relevance riportata nel dossier**: non ho ispezionato il punteggio interno
+  del cross-encoder, che non è esposto.
+- ⛔ **Non ho toccato nulla.**
+
