@@ -97,7 +97,28 @@ il meccanismo**: non è il numero a scatenarlo da solo, è il numero **più** un
 Non si risolve scegliendo una delle due. **Un pezzo che nomina la propria
 condizione** — «con il daemon assente…», «con il file presente…» — dà a
 `_entita_diverse` qualcosa da distinguere; un pezzo che dice solo il numero no.
-È una proposta, non una misura: non l'ho verificata.
+
+### L'ipotesi, messa alla prova sul salvataggio di questo documento
+
+Non l'ho lasciata come proposta: i tre fatti che sostengono **questo** pezzo li
+ho scritti apposta **nominando ciascuno il proprio soggetto** — «nel conteggio
+dei fatti scritti nella notte…», «nel confronto delle firme delle fonti…»,
+«nell'esecuzione su fatti veri…» — invece di enunciare solo il numero.
+
+    ac5ed73e76a4  superseded_by=None
+    67679a26fcfe  superseded_by=None
+    df331b3b01f1  superseded_by=None
+    >>> vivi: 3 su 3
+
+**Tre su tre sopravvissuti**, dove poche ore prima undici pezzi su undici si
+erano ritirati a vicenda.
+
+**Non è una dimostrazione**: sono tre fatti, un solo tentativo, e le loro source
+erano diverse — ma lo erano anche in due delle tre coppie che si sono mangiate,
+quindi la source diversa da sola non spiega. **È la prima evidenza a favore, ed
+è stata raccolta salvando il documento che la propone.** Serve un banco vero:
+N misure spezzate in due modi — solo-numero contro numero-più-condizione — e il
+conteggio dei sopravvissuti a distanza.
 
 ## Per chi riprende
 
