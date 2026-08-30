@@ -11539,3 +11539,51 @@ e non è una misura.**
 📌 *(0,8881 non coincide con lo **0,8743** del `36`: il corpus è cresciuto. **Stessa grandezza a due
 istanti diversi, non due misure in disaccordo** — il tipo di differenza che stanotte ho imparato a
 dichiarare invece di spiegare.)*
+
+### 🔴 W8-27 · IL NUMERO CHE CHIUDE (23:26) — **+129 run conclusi, +0 verdi**
+
+Per la prima volta oggi la coda **scende** (`queued` 942 → **886**). Ma il controllo della
+somma dice da dove viene il movimento:
+
+```
+21:47:  success  98 · failure 749 · cancelled 314  = 1161
+23:26:  success  98 · failure 878 · cancelled 316  = 1292
+        ─────────────────────────────────────────────────
+        success  +0  ·  failure +129  ·  cancelled +2
+```
+
+🔑 **`success` è fermo a 98. Non da un'ora: da tutto il giorno.** Centoventinove run hanno
+attraversato il sistema e **nessuno ha prodotto un verde.**
+
+⇒ Coerente col resto: o `build` muore a 24 ore (`failure`, con `wheel: skipped`), o arriva
+in fondo e **falliscono i test — su codice del 29 agosto**.
+
+⛔ **Il cancello ① non ha più bisogno di congetture sulla coda**: è il **contatore dei
+`success` che non si muove**. È la formulazione più solida che ho, e la più corta.
+
+### 🪞 Un errore di finestra NUOVO nella famiglia, e va nella lista
+
+Volevo attribuire i 129 a **servizio** o **scadenza**. Ho chiesto i run per stato e ho
+guardato i primi — **ma `/actions/runs` ordina per `created_at`, non per `updated_at`**:
+guardavo i run **creati** più di recente, non quelli **chiusi**. I dieci esaminati sono
+chiusi fra le 19 e le 21, non nell'ultima ora.
+
+⇒ **Non ho attribuito i 129, e non lo invento.** Il modello a due popolazioni regge sui
+**dieci** misurati (4 servizio con scarti 20:13–20:17, 6 scadenza con `1 day, 0:00:01`),
+ma su quei 129 **non ho il dato**.
+
+📌 Da aggiungere ai miei errori ricorrenti, accanto a *`created_at` ≠ `started_at` ≠
+`runner_name`*: **l'elenco dei run è ordinato per CREAZIONE — per i più recentemente
+CHIUSI va riordinato a mano su `updated_at`.** Stavolta l'ho visto subito perché **i
+timestamp non tornavano con l'orologio**: è il controllo che costa meno di tutti.
+
+**rifallo con:**
+
+```bash
+for e in success failure cancelled; do
+  printf "%s " "$e"
+  gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=$e&per_page=1" --jq .total_count
+done
+# la somma DEVE tornare con `?status=completed`: se non torna, uno dei due mente
+# ⚠️ per i più recentemente CHIUSI: riordina su `updated_at`, l'API non lo fa
+```
