@@ -41,7 +41,11 @@
   grande); la polisemia perdona ciò che non deve (W7-61); l'etichetta
   `writer_role='user'` scritta da `verimem save` sulle parole dell'AGENTE
   spegne L1 sul 59,5% del corpus totale (b13a9f32) — 65,1% sui fatti VIVI
-  (8822/13561, W7-69): due denominatori, entrambi dichiarati. Il
+  (8822/13561, W7-69): due denominatori, entrambi dichiarati. MA la lettura
+  ha due facce (W7-70/71): 24 di quei fatti letti nel merito sono 11
+  resoconti e 13 misure, ZERO self-claim nudi — e senza l'eccezione L1 ne
+  declasserebbe 21 su 24 A TORTO: l'eccezione è anche COMPENSAZIONE, non
+  solo buco (dossier 26). Il
   carve-out non si attivava sui verbali scritti con `e'` invece di `è`:
   `_VERB_MARK` non riconosceva la forma ASCII, il soggetto risultava «non
   risolvibile» e il classificatore falliva prima di guardare il dominio
@@ -109,7 +113,8 @@
    simmetrica finché la cura grande non pareggia.
 4. **Etichetta `writer_role='user'` da `verimem save`** — le parole
    dell'agente marcate come parole dell'utente spengono L1 sul 59,5% del
-   corpus totale (65,1% dei fatti vivi, W7-69): design di provenienza da decidere nella specifica (non urgente,
+   corpus totale (65,1% dei fatti vivi, W7-69 — ma su un campione letto nel
+   merito L1 sbaglierebbe 21/24: l'eccezione compensa, W7-70/71): design di provenienza da decidere nella specifica (non urgente,
    dichiarato).
 5. **Namespace `verimem_*`** — il flip del default cura 1 superficie su 3
    (voto ws7): le altre due a registro; incoerenza di marca visibile
