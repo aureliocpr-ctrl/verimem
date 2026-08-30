@@ -46,20 +46,30 @@ import re
 import sqlite3
 import sys
 
-#: (regex che TROVA la forma A, funzione che produce la forma B, descrizione)
-LEVE: dict[str, tuple[re.Pattern[str], object, str]] = {
+#: (regex che TROVA la forma A, funzione → forma B, descrizione, quante volte)
+#: ⚠️ `count=1` serve alle leve che tolgono o aggiungono UNA cosa sola: senza, la
+#: sostituzione colpisce tutte le occorrenze e **non e' piu' la stessa leva**.
+#: L'ho aggiunto dopo che un'altra istanza ha notato che il suo «togli il PRIMO
+#: articolo» e il mio «per X → per il X» erano **due leve diverse** — e che i due
+#: numeri quindi non erano confrontabili, come invece avevamo scritto entrambe.
+LEVE: dict[str, tuple[re.Pattern[str], object, str, int]] = {
     "accento": (re.compile(r"\be'(?=\s)"),
                 lambda m: "è",
-                "`e'` → `è` (la leva di W7-77)"),
+                "`e'` → `è` (la leva di W7-77)", 0),
     "articolo": (re.compile(r"\bper (?=[a-z]{4,}\b)"),
                  lambda m: "per il ",
-                 "«per X» → «per il X» (la leva dell'altra istanza)"),
+                 "«per X» → «per il X» (leva MIRATA, W7-78)", 0),
+    "articolo-via": (re.compile(r"\b(?:il|lo|la|i|gli|le) (?=[a-z])"),
+                     lambda m: "",
+                     "togli il PRIMO articolo determinativo (leva AMPIA, di "
+                     "un'altra istanza; la sua giustificazione: toglierlo non "
+                     "cambia il valore di verita' della frase)", 1),
     "maiuscole": (re.compile(r"(?<=\. )[a-z](?=[a-z]{3,})"),
                   lambda m: m.group(0).upper(),
-                  "iniziale minuscola dopo il punto → maiuscola"),
+                  "iniziale minuscola dopo il punto → maiuscola", 0),
     "spazi": (re.compile(r"(?<=[a-z]), (?=[a-z])"),
               lambda m: " , ",
-              "«a, b» → «a , b» (spaziatura attorno alla virgola)"),
+              "«a, b» → «a , b» (spaziatura attorno alla virgola)", 0),
 }
 #: la condizione di ritiro, dichiarata PRIMA di vedere i dati.
 SOGLIA_CODA = 5.0   # % di casi oltre 10 punti
@@ -71,7 +81,7 @@ def main() -> int:
         print(f"NON RIUSCITO: leva sconosciuta «{nome}». Disponibili:"
               f" {', '.join(LEVE)}")
         return 1
-    trova, sostituisci, descr = LEVE[nome]
+    trova, sostituisci, descr, quante = LEVE[nome]
     print(f"  LEVA: {nome} — {descr}")
 
     try:
@@ -98,6 +108,20 @@ def main() -> int:
         print("piu' frequente, o si misura l'ESISTENZA e non la frequenza.")
         return 1
 
+    # ⚠️ TETTO AL CAMPIONE, e la sua RAGIONE — non e' il tempo che ho, e' la
+    #    frequenza che voglio poter escludere: con 400 osservazioni un fenomeno
+    #    all'1% ne produce ~4, abbastanza per distinguerlo dall'assenza. E' la
+    #    lezione che oggi mi e' costata il ritiro di una cella: 16 casi non
+    #    vedevano una coda al 5,87%.
+    #    Il campione e' UNO OGNI N sulla popolazione ordinata per id: leggere i
+    #    primi e' l'altro errore che ho gia' fatto.
+    TETTO = 400
+    if len(casi) > TETTO:
+        passo = len(casi) // TETTO
+        casi = casi[::passo][:TETTO]
+        print(f"  ⚠️ CAMPIONE: uno ogni {passo} ⇒ {len(casi)} casi"
+              f"  (tetto {TETTO}: con questo n una coda all'1% da' ~4 casi)")
+
     def voto(t: str, r) -> float | None:
         _f, _p, span, wr, vb_raw, topic = r
         try:
@@ -122,7 +146,7 @@ def main() -> int:
     diffs, coppie, senza = [], [], 0
     for r in casi:
         t = r[1] or ""
-        sa, sb = voto(t, r), voto(trova.sub(sostituisci, t), r)
+        sa, sb = voto(t, r), voto(trova.sub(sostituisci, t, count=quante), r)
         if sa is None or sb is None:
             senza += 1
             continue
