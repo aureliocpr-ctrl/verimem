@@ -113,6 +113,19 @@ def main() -> int:
         if i and i % 50 == 0:
             print(f"    ...{i} ({time.time() - t:.0f}s)")
     print(f"     sotto il cut OGGI: {len(sotto)}  ·  sopra: {len(sopra)}")
+    # 🔑 IL NUMERO CHE IL BANCO CALCOLAVA SENZA DIRLO. Questa popolazione e'
+    #    selezionata: sono i fatti in cui un numero compare IDENTICO nel claim
+    #    e nella fonte. `W7-89` ha misurato che sui fatti con fonte in
+    #    generale il gate ne boccia il 17,5-19,3%; qui la quota e' molto piu'
+    #    bassa ⇒ **la coincidenza letterale di un numero e' un forte segnale
+    #    di ammissione**, e va detto perche' e' il rovescio utile di `W7-91`
+    #    (dove `completed=1167` nella forma della fonte passava a 99,82 mentre
+    #    la stessa cosa in prosa cadeva a 0,83).
+    tot_b = len(sotto) + len(sopra)
+    print(f"     ⇒ bocciati {100.0 * len(sotto) / max(1, tot_b):.1f}% di"
+          f" questa popolazione, contro il 17,5-19,3% che `W7-89` misura sui")
+    print("       fatti con fonte in generale: **un numero che coincide alla"
+          " lettera fra claim e fonte tira il verdetto verso l'ammissione**.")
     if len(sotto) < 5:
         print("NON RIUSCITO: meno di cinque fatti sotto il cut fra i")
         print("candidati: non ho una popolazione di persi su cui misurare.")
@@ -156,8 +169,24 @@ def main() -> int:
     print(f"     ammessi che CADONO col vicino    : {c_sopra}/{p_sopra}"
           f"  ({q_sopra:.1f}%)   <- rumore")
 
-    # (1) il controllo che deve poter fallire
-    if q_sopra >= q_sotto:
+    # (1) il controllo che deve poter fallire.
+    # ⚠️ CORRETTO il 30/08 alle 23:13, DOPO la prima esecuzione: la condizione
+    #    era `q_sopra >= q_sotto`, che con **0 e 0** stampava «la sonda non
+    #    isola nulla» — ed e' falso. Zero cambi sugli ammessi non e' rumore
+    #    alto: e' **rumore ZERO**, cioe' una sonda PULITA. Il caso «entrambi a
+    #    zero» significa *nessun effetto misurabile*, e va distinto da *la
+    #    sonda sporca*. E' la terza volta in una sera che il difetto sta nel
+    #    mio criterio di lettura e non nei dati.
+    if c_sotto == 0 and c_sopra == 0:
+        print("\n     ⚪ **NESSUN EFFETTO MISURABILE**, in nessuna delle due"
+              " popolazioni.")
+        print(f"     Il rumore e' ZERO ({c_sopra}/{p_sopra} ammessi caduti):"
+              " la sonda e'")
+        print(f"     **pulita**. Ma i bocciati provati sono {p_sotto}: **con"
+              " questo n")
+        print("     non c'e' verdetto**, ne' a favore ne' contro. Serve una")
+        print("     popolazione di bocciati piu' grande, non una conclusione.")
+    elif q_sopra >= q_sotto:
         print("\n     🟢 **LA SONDA NON ISOLA NULLA**: il vicino muove gli"
               " ammessi quanto")
         print("     i bocciati. Il numero sopra **non va usato**, e"
