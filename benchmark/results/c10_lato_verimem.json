@@ -1,13 +1,44 @@
 {
-  "popolazione": "halueval_qa_heldout.jsonl (RUCAIBox, MIT)",
-  "item": 60,
-  "claim": 120,
-  "falsi_ammessi": 25,
-  "falsi_totali": 60,
-  "veri_persi": 17,
-  "veri_totali": 60,
-  "falsi_fra_i_serviti": 25,
-  "serviti": 68,
-  "commit": "797be4cf",
+  "popolazione": "truthfulqa_pairs_heldout.jsonl",
+  "saltati": 0,
+  "criterio_cieco_pct": 51.3,
+  "lunghezza_mediana_per_esito": {
+    "veri_ammessi": 8.0,
+    "veri_persi": 8.0,
+    "falsi_ammessi": 10.0,
+    "falsi_fermati": 8.0
+  },
+  "veri_persi_per_decisore": {
+    "moat": 73,
+    "L4-review": 10,
+    "L3-coexistence": 2,
+    "L4.1": 3
+  },
+  "veri_persi_per_layer": {
+    "L4-grounding": 73,
+    "L4-review": 12,
+    "L3-coexistence": 17,
+    "L4-negazione": 38,
+    "duplicate": 15,
+    "L4.1": 6
+  },
+  "falsi_fermati_per_layer": {
+    "L4-grounding": 246,
+    "L3-coexistence": 91,
+    "L1-domain-precision-observe": 4,
+    "L1.16": 1,
+    "L4-negazione": 29,
+    "L4-review": 14,
+    "L1.10": 3,
+    "L4.1": 4
+  },
+  "claim": 600,
+  "falsi_ammessi": 40,
+  "falsi_totali": 300,
+  "veri_persi": 88,
+  "veri_totali": 300,
+  "falsi_fra_i_serviti": 40,
+  "serviti": 252,
+  "commit": "52895b0b",
   "store": "temporaneo (HIPPO_DATA_DIR)"
 }
