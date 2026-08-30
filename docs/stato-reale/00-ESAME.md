@@ -11112,3 +11112,53 @@ gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
   --jq '.jobs[]|select(.name|startswith("build"))|"\(.conclusion) \(.started_at) \(.completed_at)"'
 # ⚠️ `started_at` da solo mostra l'attesa: serve `completed_at` per vedere la fine
 ```
+
+### ⚖️ W8-26 · RETTIFICA (23:03) — si esce in **DUE** modi: due popolazioni, nessun comportamento medio
+
+La cella qui sopra dice «i run **non vengono serviti: scadono**». **È vero per metà.**
+
+```
+#1296  build in coda da 29/08 19:58Z → chiuso 30/08 19:58Z  scarto = 1 day, 0:00:01  🔴 SCADENZA
+#1295  build in coda da 29/08 19:45Z → chiuso 30/08 19:45Z  scarto = 1 day, 0:00:01  🔴 SCADENZA
+────────────────────────────────────────────────────────────────────────────────────────────
+#1228  build in coda da 30/08 00:45Z → chiuso 30/08 21:02Z  scarto =    20:17:04     ✅ SERVIZIO
+#1190  build in coda da 30/08 00:38Z → chiuso 30/08 20:52Z  scarto =    20:13:59     ✅ SERVIZIO
+```
+
+**`#1190` e `#1228` NON sono scaduti**: sono usciti a ~20 ore, **prima** del limite. E per
+`#1190` il job `build` era durato **17 secondi** — quindi a tenerlo aperto venti ore era il
+**terzo** livello, `wheel install-from-scratch`.
+
+🔑 **Il collo di bottiglia si sposta lungo la catena**: chi supera `build` va ad aspettare
+al gradino dopo.
+
+### La forma corretta: DUE popolazioni
+
+```
+trova un runner per `build` nei primi secondi  →  arriva in fondo in ~20 ore   (servizio)
+non lo trova                                    →  muore a 1 day, 0:00:01      (scadenza)
+```
+
+⇒ **Non esiste un comportamento medio**, e una media fra le due direbbe una cosa che **non
+accade a nessuno**. 📌 Stasera ho oscillato fra tre letture — «bloccata», «viva»,
+«scadono» — perché **guardavo un campione alla volta, e ogni campione conteneva una sola
+popolazione**. È la stessa classe già registrata in casa: *misura ENTRAMBE le popolazioni*.
+
+### 📌 Previsione secca, agli atti alle 23:02
+
+`#1242` ha `build` in coda da **30/08 00:47Z**. Deve uscire **o entro ~21:10Z del 30/08**
+(servizio, come `#1228` che ha `build` da 00:45Z) **o alle 00:47Z del 31/08** (scadenza).
+**Non in mezzo.** Se chiude a un'ora intermedia, **il modello a due popolazioni è
+sbagliato** e c'è una terza via d'uscita.
+
+⛔ **Per il rilascio non cambia**: il verde richiede che `build` parta nei primi secondi, e
+con la coda a 930 accade di rado. Ma **«la CI è morta» sarebbe falso**, e non deve restare
+scritto così.
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
+  --jq '.jobs[]|select(.name|startswith("build"))|"\(.conclusion) \(.started_at) \(.completed_at)"'
+# confronta `started_at` di build con `updated_at` del run: ~20h = servizio, 24h esatte = scadenza
+```
