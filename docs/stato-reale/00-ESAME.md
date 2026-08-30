@@ -10599,3 +10599,76 @@ misura.**
 ```bash
 python docs/stato-reale/banchi/ws6-gli-episodi-riletti.py   # sola lettura, nessun decay_run
 ```
+
+### 🔬 W8-24 — Non è il numero e non è la forma: **è la coppia**. E il nome del campo è irrilevante
+
+> **REGIME** — `verimem save` dalla porta del prodotto, 30/08 fra le 22:37 e le 22:41,
+> **topic vergini distinti** per ogni caso, daemon di encoding attivo. Otto casi su un
+> numero e due forme.
+> **LIMITE** — **otto casi, UN numero.** Non dico «la forma predicativa è cieca»: sarebbe
+> la sesta ipotesi della serata dopo cinque cadute (W8-20, W8-22).
+
+### Il contesto: @ws4 aveva chiuso il caso, e la sua mappa regge
+
+`W7-92` di ws4 misura che la cecità del giudice sui numeri è **a chiazze** — 42,5% nel
+tratto `1160-1199`, **0,0%** in `1500-1539` e `1860-1899`, 20,0% in `3160-3199`, 0,0% in
+`160-199` — e falsifica sia «sono gli anni» sia «è la lunghezza». Conclude: *è un
+cross-encoder distillato, non c'è una grammatica da scoprire.* **Regge.**
+
+La sua conclusione in `W7-91` — «la causa non è linguistica, è il numero `1167`» — è però
+**metà del quadro**.
+
+### ① Il nome del campo non c'entra — chiude un limite che avevo dichiarato
+
+```
+source: "coda: NOME=1167 · queued=895 · in_progress=13"
+
+«…i run ci completed sono 1167.»   →   0.58   🔴
+«…i run ci conclusi  sono 1167.»   →   0.49   🔴
+«…i run ci pippo     sono 1167.»   →   0.58   🔴
+«…i run ci completed sono  895.»   →  99.85   ✅
+```
+
+Non è il nome, **e non è la lingua**: `conclusi` cade come `completed`.
+
+### ② Ma `1167` **non è cieco sempre**
+
+```
+«…il valore di alfa e 1167.» con QUATTRO source diverse:
+   con beta/gamma/delta        → 99.96 ✅      col solo alfa              → 98.13 ✅
+   con queued=895/in_progress  → 99.89 ✅      con completed=895 accanto  → 99.93 ✅
+```
+
+**Lo stesso numero, e nello stesso contesto in cui l'altra frase cade.**
+
+### ✅ Il test incrociato: forma × nome
+
+| forma | nome | grounding |
+|---|---|---|
+| «i run ci **X** sono 1167» | alfa | **0.53** 🔴 |
+| «il valore di **X** e 1167» | alfa | **99.89** ✅ |
+| «i run ci **X** sono 1167» | pippo | **0.58** 🔴 |
+| «il valore di **X** e 1167» | pippo | **99.62** ✅ |
+
+🔑 **Il nome è irrilevante (alfa ≡ pippo). La forma decide.** E siccome con `895` la forma
+«i run ci X sono» **passa** (99.85), **non è nemmeno solo la forma**.
+
+⇒ **È la COPPIA numero × forma.** E spiega perché le due misure sembravano contraddirsi:
+il banco di ws4 a valori nudi trova chiazze stabili, il mio controllo con `alfa=1167`
+passava — **misuravamo la stessa cifra dentro due frasi diverse**.
+
+### 📌 Cosa cambia in pratica, stanotte
+
+Chi salva un fatto e lo vede cadere può **riformularlo** («il valore di X è N» invece di
+«i run ci X sono N») e passa. ⚖️ **È il sintomo, non la cura**: è imparare a parlare come
+piace al giudice invece che come è vero, ed è il contrario di ciò per cui un gate esiste.
+Ma serve a chi stanotte deve salvare misure con numeri in quelle chiazze — **e a me è
+successo oggi**: fatti veri persi per come li avevo scritti.
+
+**rifallo con:**
+
+```bash
+S="ORA 21:47:09 del 30/08 · coda: alfa=1167 · queued=895 · in_progress=13"
+verimem save "Alle 21:47 del 30/08 i run ci alfa sono 1167."  --topic i1 --source "$S"   # ~0.5
+verimem save "Alle 21:47 del 30/08 il valore di alfa e 1167." --topic i2 --source "$S"   # ~99.9
+```
