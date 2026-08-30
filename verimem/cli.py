@@ -600,10 +600,10 @@ def warmup(
                 # due copie divergono (misurato: quella scritta a mano
                 # prometteva un avviso che le scritture senza fonte non
                 # ricevono mai)
-                from .doctor import AVVISO_SENZA_GIUDICE
+                from .doctor import AVVISO_SENZA_GIUDICE, RIMEDIO_LLM
                 console.print(
                     f"[yellow]  Until installed, {AVVISO_SENZA_GIUDICE}; "
-                    f"pass llm= to Memory for the llm judge.[/]")
+                    f"{RIMEDIO_LLM}.[/]")
         except Exception as exc:  # noqa: BLE001 — warmup must not die on this
             console.print(f"[yellow]· gate model fetch failed "
                           f"({type(exc).__name__}: {exc})[/]")

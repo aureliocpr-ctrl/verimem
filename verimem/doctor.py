@@ -67,6 +67,23 @@ AVVISO_SENZA_GIUDICE = (
     "same source retracts the earlier one, so an unchecked claim can end up "
     "the only fact left")
 
+#: L'ALTRA META' DEL RIMEDIO: **su quale porta** e' eseguibile. Sei punti
+#: fra `doctor` e `cli` dicevano «pass llm= to Memory» senza dirlo, e
+#: `Memory(llm=...)` esiste **solo nell SDK Python** (`client.py:376`): un
+#: chiamante della CLI o di MCP non puo' iniettarne uno — su MCP il giudice
+#: llm viene dall'agente costruito dal SERVER (`mcp_server.py:12936`), cioe'
+#: e' una scelta dell'OPERATORE, non del chiamante. Chi legge `doctor` dalla
+#: CLI leggeva percio' un rimedio che su quella porta non puo' applicare.
+#: (Letto nel sorgente il 2026-08-30, non misurato: qui si dichiara una
+#: disponibilita' di API, non un comportamento a runtime.)
+#: Stessa ragione di `AVVISO_SENZA_GIUDICE`: una frase sola, o le copie
+#: divergono.
+RIMEDIO_LLM = (
+    "pass llm=... to Memory — that is the PYTHON SDK (`Memory(llm=...)`); "
+    "a CLI or MCP caller cannot inject one, so on those ports the local CE "
+    "model is the only judge a CALLER can get (on MCP an OPERATOR can "
+    "configure an llm server-side)")
+
 
 def _misura(byte: int) -> str:
     for unita, soglia in (("GB", 1e9), ("MB", 1e6), ("KB", 1e3)):
@@ -676,8 +693,8 @@ def run_doctor() -> list[dict[str, Any]]:
                 add("moat-judge", WARN,
                     f"the local CE gate model is INCOMPLETE: {_meta}; an llm "
                     f"provider is available ({provider}) — the moat runs only "
-                    f"when you pass llm=... to Memory; {_coverage}",
-                    f"{_togli}; or pass llm= to Memory")
+                    f"when you {RIMEDIO_LLM}; {_coverage}",
+                    f"{_togli}; or {RIMEDIO_LLM}")
             else:
                 add("moat-judge", FAIL,
                     f"NO working grounding judge: {_meta} and no llm provider "
@@ -742,17 +759,17 @@ def run_doctor() -> list[dict[str, Any]]:
         elif provider and provider != "mock":
             add("moat-judge", WARN,
                 f"local CE gate model NOT installed; an llm provider is available "
-                f"({provider}) — the moat runs only when you pass llm=... to "
-                f"Memory; {_coverage}",
-                "run `verimem warmup` to download the gate model (~656 MB), or "
-                "pass llm= to Memory")
+                f"({provider}) — the moat runs only when you {RIMEDIO_LLM}; "
+                f"{_coverage}",
+                f"run `verimem warmup` to download the gate model (~656 MB), or "
+                f"{RIMEDIO_LLM}")
         else:
             add("moat-judge", FAIL,
                 f"NO grounding judge: local CE model missing at "
                 f"{_resolve_model_dir(None)} and no llm provider detected "
                 f"(moat OFF) — {AVVISO_SENZA_GIUDICE}; {_coverage}",
                 "run `verimem warmup` to download the published gate model "
-                "(~656 MB, no account needed), or pass llm= to Memory")
+                f"(~656 MB, no account needed), or {RIMEDIO_LLM}")
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
 
