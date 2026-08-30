@@ -10505,3 +10505,45 @@ percorso di scrittura, non lo store.
 ```bash
 python docs/stato-reale/banchi/ws6-la-quarantena-oggi.py   # stampa claim e source affiancati, NON decide
 ```
+
+---
+
+## ws1 · 30/08 22:38 — IL CROSS-ENCODER DISCRIMINA FRA ARGOMENTI, NON DENTRO UN ARGOMENTO — E LA SOGLIA RESPINGE IL 68% DELLE RISPOSTE
+
+**Livello**: lo scorer del prodotto. **Perimetro**: 68 item HaluEval, **domande di terzi**, **solo inglese** — nessuna traduzione mia, nessun proxy. **163 coppie**, **tutte** le frasi di ogni `knowledge`: **nessuna scelta mia fra le grigie**, che è ciò che aveva viziato il banco delle 22:26. **Istante**: 22:35–22:38. **Regime**: `ok`.
+
+**Criterio di raccolta, perdite contate PRIMA** (somma verificata = 300): domanda ≤110 char, `right_answer` in **una sola** frase, frase 25–260 char, **e almeno una frase grigia** ⇒ **68 tenuti**; persi 98 domanda lunga · 12 risposta in 0 frasi · 11 in 2+ · 69 frase fuori misura · **42 senza alcuna frase grigia**. (I «110» del banco precedente non includevano quest'ultimo criterio.)
+
+### 🟢 IL CONTROLLO SANO REGGE — quindi i numeri si possono leggere
+
+**P-SANO: il rilevante batte le frasi di *altri* item nel 91% dei casi (62/68).** Il cross-encoder discrimina benissimo, e il banco non è rotto: senza questo controllo, i numeri qui sotto sarebbero potuti essere un difetto del mio disegno.
+
+### 🔴 MA DENTRO LO STESSO TESTO NON DISTINGUE
+
+| misura | n=68 |
+|---|---:|
+| la frase con la risposta è **al primo posto** | **28/68 — 41%** |
+| almeno una frase che **non** risponde la supera | 40/68 — 59% |
+| la **mediana** delle grigie la supera | 34/68 — **50%** |
+| rango mediano del rilevante | **2** (distribuzione 1/2/3/4+ = 28/36/4/0) |
+
+> **41% dentro l'argomento contro 91% fra argomenti diversi.** Il cross-encoder separa un testo da un altro; **dentro lo stesso testo, fra la frase che contiene la risposta e quelle che parlano solo dell'argomento, è vicino al caso.**
+
+Questo **conferma** e spiega il verde delle 22:26 (separazione rilevanti/off-topic **+8,324**): la discriminazione del CE è **fra argomenti**, ed è lì che è forte. È la stessa cosa che il prodotto scrive in prosa — *relevance ≠ sufficiency* — misurata sul suo asse vero.
+
+### 🔴 E LA SOGLIA FISSA RESPINGE PIÙ DI DUE RISPOSTE SU TRE
+
+```
+rilevanti RESPINTI dalla soglia 0.0:  46/68  (68%)
+grigie AMMESSE:                       38/95  (40%)
+```
+
+**68% delle frasi che contengono la risposta cadono sotto il floor del gate.** È un **conteggio su una sola popolazione** — non il confronto fra popolazioni che ho ritirato alle 22:30 — e sostituisce il «6 su 12» (50%) di quel banco, che era compatibile ma su un dodicesimo dei dati.
+
+### ⚖️ La mia predizione delle 22:35, verificata
+**P-MED confermata**: la mediana delle grigie batte il rilevante **esattamente 34/68 = 50%** ⇒ il reperto delle 22:26 (*«il CE premia chi parla dell'argomento più di chi ha la risposta»*) **resta caduto**, ora su n cinque volte più grande. **P-RANGO**: il rilevante è primo nel 41% — il difetto è reale e misurato, **questa volta senza scelte mie**.
+
+### Cosa questi dati NON provano
+**n=68 ⇒ intervallo ±~12 punti** (non ±9 come avevo previsto per n=110): 41% è compatibile con qualsiasi valore fra ~29% e ~53%, e **non interpreto differenze più piccole**. Ciò che regge non è il valore puntuale ma **il divario col controllo sano**, 41% contro 91%.
+**Le grigie sono poche**: mediana **1 frase per item** (95 in totale), rango massimo 3 — «tutte le frasi» qui spesso significa *una*. Non è un ranking profondo, è quello che HaluEval consente.
+Vale sul **cross-encoder** in **inglese**: non dice nulla sul bi-encoder del banco ufficiale, né sul tasso di `fabrication_under_absence`, né sul comportamento in altre lingue.
