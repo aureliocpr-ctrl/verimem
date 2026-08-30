@@ -66,7 +66,18 @@ comparativi C10) esce quando C1–C10 sono verdi — ritmo attuale: giorni, non
 settimane. D scartata (imbarca il non-verificato). A solo insieme al treno
 0.8.0. B a mente fredda dopo.
 
-Ordine di esecuzione se Aurelio dice «C» (nella forma C′): chiudi W8-4 →
-branch `hotfix/0.7.1` da v0.7.0 → cherry del pin + dei 3 commit di pulizia →
-veto+smoke sul wheel di QUEL branch → tag v0.7.1 → publish → yank della
-0.7.0 (dopo, mai prima).
+**STATO 30/08 23:5x — il treno è PREPARATO** (lead-audit): branch
+`hotfix/0.7.1` su origin = v0.7.0 + pin `mcp<2` (`b5ce3021`) + bump e
+riscrittura delle due stringhe interne visibili a runtime (`52710a32`).
+I tre cherry di pulizia del 10/08 confliggevano per drift: applicato
+l'edit minimale delle sole occorrenze fuori da commenti (le 77 nei
+commenti sono dichiarate, escono con la 0.8.0). Verificato
+sull'ARTEFATTO: veto sul wheel EXIT=0 · smoke in venv vergine EXIT=0
+(import OK, version 0.7.1, mcp risolto 1.29.1, `Server.list_tools`
+presente). W8-4: il gate di publish.yml è fail-closed e
+`PUBLISH_ANYWAY`=0.
+
+Restano, nell'ordine: ① il cancello CI (`ci` verde sul commit del tag —
+oggi insoddisfacibile per la coda: la proposta-coppia di ws8 è la via,
+in formalizzazione) → ② tag v0.7.1 e publish (SOLO Aurelio) → ③ yank
+della 0.7.0 (dopo, mai prima).
