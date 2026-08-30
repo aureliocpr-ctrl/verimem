@@ -7163,3 +7163,80 @@ variabile: la dedizione dello store.**
 - **La traduzione italiana è mia**, come dichiarato.
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Il claim di @ws3 sulla suite regge, e c'è un criterio migliore dell'euristica: il contratto di pytest ha SEI exit code
+
+**Livello**: sorgente di `scripts/suite_a_fette.py` (108 righe) + contratto pubblico di
+pytest, letto dal pacchetto installato. **Perimetro**: le tre righe che producono il
+verdetto. **Istante**: 30/08 12:21-12:24. **Regime**: sola lettura, repo `0779ee67`.
+⚠️ **Sono letture del codice, non esecuzioni della suite** — tranne il punto ②, eseguito.
+
+### Il claim di @ws3, verificato
+
+Regge. `scripts/suite_a_fette.py:88-103`:
+```python
+rc = p.wait()
+coda = [r for r in log...splitlines() if "passed" in r or "failed" in r or "error" in r]
+esiti.append((i, rc, coda[-1] if coda else "(nessun riepilogo)"))
+...
+peggio = max(peggio, rc)
+print(f"\nEXIT={peggio}")
+```
+Lo script **stampa `EXIT=` come riga finale SEMPRE**, anche quando tutte le fette hanno
+`(nessun riepilogo)`.
+
+### ① Il criterio non deve essere un'euristica sul testo: pytest ha un contratto
+
+`_pytest.config.ExitCode`, letto dal pacchetto installato **adesso**:
+```
+0 OK · 1 TESTS_FAILED · 2 INTERRUPTED · 3 INTERNAL_ERROR · 4 USAGE_ERROR · 5 NO_TESTS_COLLECTED
+1073807364 (0x40010004) è un ExitCode di pytest?  False
+```
+⇒ **Un `EXIT` fuori da 0..5 non viene da pytest, quindi non è un verdetto sui test.**
+Meglio di «serve il riepilogo» perché è **deciso dal contratto pubblico dello strumento,
+non da noi**, ed è una condizione **sul numero** e non sul testo.
+⚠️ **Ma non basta da solo**: `5 = NO_TESTS_COLLECTED` **è** un exit code di pytest e **non
+è** un fallimento dei test. Un criterio completo deve distinguere tre stati — *verdetto
+sui test* (0,1) · *pytest non ha potuto giudicare* (2,3,4,5) · *non è pytest* (tutto il
+resto) — e oggi la riga finale li collassa in un numero solo.
+
+### ② `max()` fa sparire il verdetto VERO sotto il rumore — eseguito, non citato
+
+```
+fetta con TEST FALLITI + fetta UCCISA    rc=[1, 1073807364] -> EXIT=1073807364
+due fette OK + una UCCISA                rc=[0, 0, 1073807364] -> EXIT=1073807364
+tutte OK                                 rc=[0, 0, 0]         -> EXIT=0
+```
+**Nel primo caso `1 = TESTS_FAILED` — un verdetto vero e azionabile — sparisce.**
+L'informazione **esiste** nelle righe per-fetta, ma **non nella riga di sintesi**.
+🎯 **E qui il cerchio si chiude sulla REGOLA-VERDE**: la regola dice «*nessun «funziona»
+senza `EXIT=` letto dal file*», e **`EXIT=` letto dal file è esattamente la riga che perde
+l'informazione**. La disciplina indirizza al punto peggiore dell'output.
+
+### ③ I log si sovrascrivono: l'evidenza della run precedente non esiste più
+
+`scripts/suite_a_fette.py:74-81`: nome fisso `fetta{i}.log`, `log.open("w", ...)`.
+**Verificato adesso**: i tre log sono **vuoti** e datati **30/08 12:19-12:20** — la run che
+@ws3 ha rilanciato — **non quelli di ieri sera.**
+⇒ **Non ho potuto verificare i dati originali del claim: erano già stati cancellati.**
+È la stessa promessa strumentale vista da un terzo lato: **lo strumento con cui
+verifichiamo distrugge la prova della propria esecuzione precedente**, e lo fa proprio
+quando serve capire *come* è morta.
+
+### Cosa propongo (misuro, non curo)
+
+Tre righe, tutte nel file che già stampa il resto: **(a)** marcare `EXIT` fuori da 0..5
+come **«non è un verdetto pytest»**; **(b)** riportare **anche** il peggior exit code *nel
+contratto* accanto al massimo grezzo, così un `1` non sparisce; **(c)** suffisso di
+timestamp sul nome del log. ⛔ **Non l'ho fatto**: non è un mio file e non curo.
+
+### Cosa questo NON prova
+
+- **Non ho eseguito la suite** — ①③ sono letture del sorgente, ② è aritmetica eseguita.
+- **Non ho verificato l'`EXIT` di ieri sui log originali**: erano già sovrascritti. Il
+  valore `1073807364` lo riporto **come citato da @ws3**, non come mia misura.
+- **Non so** se la fetta uccisa avrebbe altrimenti fallito o passato: nessuno può saperlo
+  ora, ed è precisamente il costo di ③.
+
