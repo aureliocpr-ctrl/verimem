@@ -10929,3 +10929,79 @@ Coerente con tutta la serata: il cross-encoder discrimina **fra argomenti** (ast
 Il **4%** di `fabrication_under_absence` del banco ufficiale **non si accosta** a questo 1/18: quello è sintetico, a `0.835`, sul **bi-encoder**; questo è di terzi, in `auto`, sul **cross-encoder**. Due popolazioni e due giudici.
 **Resta aperto il secondo limite dichiarato alle 22:48**: il corpus è di **401 frasi**. Su un corpus grande i falsi amici aumentano, quindi **l'1/18 è un limite inferiore**, non una stima stabile.
 n=18 su tre celle: gli intervalli sono larghi e li ho scritti. Vale in **inglese**.
+
+### 🔴🎯 W8-25 — **Un esperimento naturale**: `ci` e `security` hanno 402 run oggi, uno è a zero coda. La causa è la **catena `needs:`**
+
+> **REGIME** — API GitHub alle 22:53 del 30/08, interrogando l'**oggetto** per ciascun
+> workflow (`?status=` e `?created=>=`), con controllo positivo sul filtro `created`
+> (`>=2026-08-01` su `ci` → 1713). Struttura letta da `.github/workflows/*.yml`.
+> **LIMITE** — **non ho misurato la durata dei job** di `security`: se fossero molto più
+> corti, parte del divario verrebbe da lì. Non spiegherebbe però una coda a **zero**
+> contro 927.
+
+### Il confondente ovvio, e il caso che lo elimina
+
+Avevo scritto «correlazione, non prova causale». Il confondente era **il volume di run**:
+
+```
+              run OGGI   queued   completed   struttura
+ci               402       927       1200     9 job  ·  2 needs
+security         402         0       2140     13 job ·  0 needs
+presidi-lenti      1         1         15     6 job  ·  0 needs
+```
+
+🔑 **402 contro 402.** Stesso repository, stesso pool di runner, stesso account, stessa
+finestra. E **`security` ha PIÙ job** (13 contro 9), quindi non è nemmeno il costo per run.
+⇒ **`security` sta a ZERO in coda con 2140 completati; `ci` ne ha 927 in coda con 1200.**
+
+### L'unica differenza strutturale
+
+```
+ci.yml          build:         needs: test    (riga  955)
+                wheel-install: needs: build   (riga 1035)   → catena a TRE livelli
+security.yml    13 job, nessun `needs:`                     → tutti paralleli
+presidi-lenti   6 job,  nessun `needs:`                     → tutti paralleli
+```
+
+⇒ **Non è il carico, non è il numero di job, non è la frequenza: è la CATENA.** Un job che
+entra in coda solo quando finisce il precedente **riparte dal fondo di una fila cresciuta
+nel frattempo**, e con 402 run al giorno la fila cresce più in fretta di quanto lui avanzi.
+
+📌 Le condizioni che ne fanno un esperimento e non un aneddoto: **stesso repo, stesso pool,
+stesso volume, e la variabile sospetta è l'unica che differisce.** Non l'ho costruito io —
+era già lì, e bastava **contare i run degli ALTRI workflow** invece di guardare solo il mio.
+
+### ⚠️ E questo ridimensiona la mia stessa proposta (W8-21 §④, W8-23)
+
+`paths-ignore` + il cancello sull'ultimo commit utile curano il **CARICO**, non la
+**CATENA**.
+
+- ✅ Abbassare l'ingresso **aiuta**: la fila cresce più piano e gli anelli in fondo
+  arrivano al turno.
+- ⛔ **Non toglie il difetto**: finché la catena esiste ogni anello riparte dal fondo, e
+  con un ingresso sufficiente a saturare **il fondo si affama di nuovo**.
+
+⇒ La cura strutturale sarebbe **togliere la serializzazione**. ⚖️ **Ma cambierebbe la
+semantica del gate**: `needs: test` è anche ciò che rende sensato il cancello — non si
+costruisce un artefatto se i test non passano — e il commento a `ci.yml:957` lo dice
+esplicitamente. **Non è una modifica da proporre di rimbalzo: è una decisione di progetto,
+e non la propongo.** Porto la misura che dice **dove** sta la causa.
+
+### Cosa questo NON prova
+
+- **Durata dei job non misurata** (vedi il limite in testa).
+- **Gli eventi non sono identici**: entrambi su `push` e `pull_request`, `security` ha anche
+  `schedule`. I **402 = 402 di oggi** restano il dato che conta.
+- La capacità è per **account**: se altri repository consumassero runner si vedrebbe su
+  entrambi — **e su `security` non si vede.** È un argomento in più, non una prova.
+
+**rifallo con:**
+
+```bash
+for f in ci security presidi-lenti; do
+  printf "%s " "$f"
+  gh api "repos/:owner/:repo/actions/workflows/$f.yml/runs?created=>=$(date -u +%F)&per_page=1" --jq .total_count
+  grep -c '^    needs:' .github/workflows/$f.yml
+done
+# ⚠️ le date sono UTC: verifica il filtro con una data che DEVE dare >0
+```
