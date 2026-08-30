@@ -126,24 +126,66 @@ falsificata**:
 
 Processi **più corti dei miei**, con **dieci volte le query**, non degradano
 mai. In aggregato: processi sotto i 3 minuti **5,2%**, processi sopra i 10
-minuti **1,9%** — nessuna relazione. L'ipotesi è morta, ed è giusto così.
+minuti **1,9%** — nessuna relazione. Conclusi che l'ipotesi fosse morta.
 
-## Quello che non posso dire, e perché
+**Quarto: la falsificazione era rotta, e l'ipotesi era giusta.** La colonna
+«durata» qui sopra non è la vita del processo: è `max(ts) − min(ts)` degli
+eventi di lettura. Sono due cose diverse. Un processo avviato molto prima, con
+il modello **già caldo**, che serve 654 letture in un minuto, mostra esattamente
+lo stesso «span» di un processo appena nato che ne serve 60 a freddo. **Ho
+falsificato l'ipotesi giusta con un proxy che non misurava la variabile.** Il
+sospetto non nasce da un ripensamento: me l'ha detto il prodotto, sotto.
 
-Non so **perché** i miei due banchi di stasera abbiano risposto degradato per
-tutta la loro vita mentre un processo di un minuto ne serviva 654 senza
-degradare mai. Ho dei candidati — costo della singola query, dimensione del
-corpus interrogato, carico della macchina con otto istanze in parallelo — e
-**nessun modo di sceglierne uno**, perché il giornale non registra la latenza,
-non registra il regime, non registra la dimensione del corpus.
+## La causa c'era, e me l'ha detta la porta di scrittura
 
-Ed è esattamente il punto di questo pezzo. La domanda «quanto spesso rispondiamo
-degradato, e in quali condizioni?» è la domanda che un cliente farebbe per
-prima, ed è **legittima, semplice e senza risposta nei dati che raccogliamo**.
-Il proxy che ho trovato per caso dà il numero e non dà la causa.
+Mentre salvavo i fatti di questo stesso documento, la ricevuta di
+`verimem save` ha stampato, in chiaro:
 
-Il gap non è nel motore. È nel fatto che l'unica cosa che il prodotto sa sul
-proprio degrado la dice una volta sola, a una persona sola, e poi la butta via.
+    store: encode delegate unavailable → il fatto viene scritto SENZA embedding
+    (recall keyword finché il daemon non torna)
+
+e, sul moat:
+
+    entailment moat did not run for THIS write. The model is already on disk:
+    `verimem warmup` would not help. A shared encode daemon is what makes the
+    first write judged — `verimem doctor` says whether one is reachable
+
+Ho eseguito `verimem doctor`, che conferma:
+
+    ! daemon  no shared encode daemon — first encode in each process
+              cold-loads the model (~20s)
+        fix: run `verimem warmup` once
+
+**Quindi la causa del regime degradato è nota, ed è una sola: non esiste un
+daemon di encoding condiviso, e ogni processo deve caricare il modello a freddo,
+circa venti secondi.** In quella finestra le letture escono in keyword, le
+scritture entrano senza embedding e il moat non gira — i tre fatti che ho
+salvato per questo documento sono infatti `admitted` ma **`model_claim` non
+giudicati** (`grounding_score=None`), e lo dichiaro qui perché è la stessa causa.
+
+## Il reperto vero: la stessa informazione, esplicita da una porta e assente dall'altra
+
+Il gap non è che il prodotto ignori il proprio degrado. È il contrario, ed è
+peggio:
+
+- **Alla porta di scrittura** il prodotto dice *che* è degradato, *perché*
+  (`encode delegate unavailable`), *cosa comporta* (`recall keyword`), *fino a
+  quando* (`finché il daemon non torna`) e *quale strumento lo verifica*
+  (`verimem doctor`). Quattro informazioni e una cura, non richieste.
+- **Alla porta di lettura** — l'81% del traffico — non registra nemmeno il
+  fatto nudo che stia succedendo.
+
+Un'ora di lavoro per misurare col proxy `best=0` una cosa che il prodotto
+scrive in chiaro a ogni salvataggio. La nostra memoria ha una lezione del 27/08
+intitolata *«il prodotto lo diceva già e non lo eseguivamo»*: `verimem doctor`
+aveva impiegato venti secondi per dire quello che cercavo a mano da un'ora.
+**Ci sono ricascato oggi, sullo stesso strumento.** La lezione non mancava:
+mancava l'applicazione — che è, alla lettera, la regola M4.
+
+Resta vero, e va corretto in codice da chi possiede quella porta, che
+`client.py:1229` non registri il regime: senza quel campo la domanda «quanto
+spesso, e quando» resta senza risposta **nella telemetria**, anche adesso che la
+causa è nota.
 
 ## Per chi riprende
 
@@ -154,7 +196,20 @@ proprio degrado la dice una volta sola, a una persona sola, e poi la butta via.
 - Il proxy `best=0` resta valido **solo su `kind=search`**, e **solo
   distinguendo il campo assente dal valore zero**. Chi lo riusa senza questa
   distinzione ottiene il mio 279.
-- La curva durata/degrado è misurata e **non spiega**: non ripercorretela.
+- La curva durata/degrado **non falsifica il cold start**: la colonna misura lo
+  span degli eventi, non l'età del processo. Per rifarla serve l'istante di
+  avvio, che il journal non porta.
+- **Prima di misurare il degrado, esegui `verimem warmup` e verifica con
+  `verimem doctor`.** Un banco lanciato senza daemon misura il proprio cold
+  start e lo scambia per una proprietà del prodotto — è quello che ho fatto io,
+  qui e nel documento 37.
+- `verimem doctor` ha segnalato, non richiesto, altri due reperti nel mio
+  perimetro che **non ho ancora verificato**: **278 vettori su 16.308 non
+  combaciano con il motore e sono «stored but unreachable by semantic search»**,
+  e il *topic-crowding* (**1204 su 1724** sopravvivono sui topic già usati,
+  contro **1020 su 1125** sui topic usati una volta sola). Il secondo conferma
+  dal lato del prodotto la regola «un topic per misura» che avevamo derivato
+  dai nostri incidenti.
 
 ---
 
