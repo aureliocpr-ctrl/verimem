@@ -9957,3 +9957,55 @@ Era un confronto **fra popolazioni diverse** — il fatto storico dichiarava «c
 ```bash
 python docs/stato-reale/banchi/ws6-la-supersessione-oggi.py   # fasce + fondo, gia' su writer_role=user
 ```
+
+### 🔴 W8-21 · LA PROVA CHE MANCAVA (21:58) — il **fondo** della coda immobile per 84 minuti
+
+W8-21 deduceva la starvation dall'**ordine** (un run più recente esce, uno più vecchio no).
+Ora è **osservazione diretta a due istanti**, che è un'altra cosa.
+
+```
+ore 20:34   i 6 run in coda più vecchi:  #1147 #1150 #1154 #1155 #1163 #1166
+ore 21:58   i 6 run in coda più vecchi:  #1147 #1150 #1154 #1155 #1163 #1166
+                                         ↑ IDENTICI, stesso ordine
+tutti creati il 28/08 fra le 17:07 e le 17:29 — in coda da oltre 52 ore
+```
+
+**Nel frattempo:** `completed` 1163 → **1167** (+4 usciti) · `queued` 872 → **900**
+(+28 entrati).
+
+⇒ **Quattro run sono usciti e nessuno veniva dal fondo.** Il fondo è immobile mentre la
+coda scorre sopra di lui. **Non è lentezza: quei run non sono in fila per uscire.**
+
+E un dettaglio che rincara, perché esclude la lettura più benevola («la coda serve i
+blocchi recenti, poi tocca ai vecchi»):
+
+```
+#1289  creato 28/08 20:36Z   ✅ chiuso
+#1295  creato 28/08 20:43Z   ✅ chiuso
+#1300  creato 28/08 20:46Z   🔴 ANCORA IN CODA
+```
+
+**Dentro lo stesso quarto d'ora l'ordine non è rispettato.**
+
+### 🪞 Un mio errore, dichiarato perché la sua forma si ripete
+
+Al primo tentativo avevo cercato quei run scorrendo **tutti** i run (i 900 più recenti) e
+avevo letto «non trovati». **Non erano spariti: erano oltre la finestra.** Vanno cercati
+fra i `queued`, nell'**ultima** pagina.
+📌 È la **finestra scambiata per la popolazione** — il mio errore ricorrente, il sesto
+oggi in questa famiglia. L'ho visto solo perché il risultato era **troppo comodo**: «i run
+vecchi sono spariti» sarebbe stata un'ottima notizia, e **le ottime notizie inattese vanno
+controllate due volte**.
+
+⚖️ **Cosa NON affermo**: non dico che `#1147` non uscirà mai — dico che in 84 minuti, con
+4 uscite, non si è mosso. Non conosco la politica di scheduling: osservo il comportamento.
+E sono **due istanti, non una serie**.
+
+**rifallo con:**
+
+```bash
+tot=$(gh api ".../ci.yml/runs?status=queued&per_page=1" --jq .total_count)
+gh api ".../ci.yml/runs?status=queued&per_page=100&page=$(( (tot+99)/100 ))" \
+  --jq '[.workflow_runs[]|{n:.run_number,c:.created_at}]|sort_by(.c)|.[0:6]'
+# ⚠️ i più VECCHI stanno nell'ULTIMA pagina dei `queued`, non fra tutti i run
+```
