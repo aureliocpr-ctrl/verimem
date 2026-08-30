@@ -11817,3 +11817,42 @@ smaltisce sia con una che diverge — **e non avevo il dato che le separa.**
     for s in queued in_progress completed success; do
       printf "%-12s %s\n" "$s" "$(gh api "$B?status=$s&per_page=1" --jq .total_count)"; done
     # ripeti a distanza di ore: Δqueued > 0 con Δcompleted > 0  ⇒  ingresso > uscita
+
+**㊸ `50` — il pavimento è una lama a DUE tagli, e chiude il limite che il `37` aveva lasciato aperto
+sette ore fa.** Trovato **per caso**, mentre facevo un controllo di ritrovabilità sul mio lavoro.
+📊 `hippo_facts_recall`, k=4, query *«pavimento di rilevanza a zero persistito durante il guasto del
+daemon»*, regime **`fusion: applied`** (**non** degradato):
+
+| score | fatto |
+|---|---|
+| **0,8421** | i due difetti del daemon guadagnati dagli avversari (25/07) |
+| **0,8389** | *«il pavimento passa da 0.0 con un fatto a 0.8956 con due»* (03/08) |
+| **0,8389** | il discovery cancellato di un daemon vivo (25/07) |
+| **0,8388** | un daemon vivo che teneva spenta la semantica su tutta la macchina (25/07) |
+
+**Tutti e quattro PERTINENTI. Tutti e quattro sotto il pavimento (0,8881).** ⇒ **con il pavimento
+acceso questa ricerca non avrebbe restituito niente.**
+🔑 **Il `36` mostrava l'altro taglio**: su una domanda **senza** risposta i fatti serviti stavano a
+**0,8119 · 0,7796 · 0,7807** e il pavimento li avrebbe tagliati **giustamente**. Qui la domanda **ha**
+risposta, i fatti sono **utili**, e li taglierebbe tutti. ⇒ **la banda è sottilissima: i falsi a
+0,78-0,81, i veri a 0,8388-0,8421, la soglia a 0,8881 — 46 millesimi fra gli utili e la soglia, 27 fra
+gli inutili e gli utili.**
+⚠️ **Due avvertenze, perché il numero non venga usato più di quanto regga**: il **`rerank` è stato
+saltato** (query di dieci parole) ⇒ non è regime pieno; ed è **UN CASO SINGOLO**, non una statistica.
+**Dice che il costo esiste ed è misurabile, non quanto sia grande.**
+🪞 **Dodicesimo scivolone, e viola O1**: fra i risultati c'era `da61772965b9` (**03/08**) — *«il
+pavimento passa da **0.0 con un fatto** a 0.8956 con due»* ⇒ **qualcuno aveva già osservato il
+pavimento a 0.0 in condizione degenere** (corpus minimo, causa **diversa** dalla mia). **Non è
+duplicazione: è un precedente che RAFFORZA** ⇒ **il pavimento va a 0.0 in più condizioni degenere
+diverse, e in nessuna il prodotto lo distingue da una stima valida.** L'ho trovato **per caso invece
+che cercandolo**.
+🪞 **E il test che ero venuto a fare è FALLITO**: dei **64 fatti** scritti stanotte, **nessuno compare
+nei primi quattro** di una query che ne descrive il contenuto. Una query e un k=4 non bastano per una
+conclusione, ma il sospetto è il tema di tutta la serie ed è scomodo quando tocca il proprio lavoro:
+**scrivere in memoria ed essere ritrovabili sono due cose diverse, e ho misurato la seconda per il
+prodotto senza misurarla per me.**
+🎯 **PER CHI DECIDE**: **il pavimento non va acceso senza il numero mancante** — N domande **con
+risposta nota**, in regime pulito (`fusion: applied` **e** query sotto le dieci parole perché il
+rerank non salti), contando quante risposte corrette cadrebbero sotto 0,8881. **Il `36` lo mostra
+utile, il `50` lo mostra costoso: la decisione richiede entrambi i lati, e nessuno dei due è stato
+misurato in regime pieno.**
