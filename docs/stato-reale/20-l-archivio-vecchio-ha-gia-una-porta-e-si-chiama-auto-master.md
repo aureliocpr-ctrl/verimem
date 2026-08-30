@@ -59,9 +59,8 @@ muove.
   Quello che torna è il punto d'ingresso del cluster, da cui si arriva ai sotto-fatti.
 · **`hippo_facts_search` non serve a questo**: gli auto-MASTER sono testo come tutto il resto, e la
   LIKE non li privilegia.
-· **Il gap è azionabile**: far girare il consolidamento sui prefissi vecchi scoperti alzerebbe il
-  62,6% senza toccare una riga del percorso di lettura — che è la cura che il documento 19 ha
-  scartato.
+· ~~**Il gap è azionabile**: far girare il consolidamento sui prefissi vecchi scoperti alzerebbe il
+  62,6%.~~ 🔴 **RITIRATA lo stesso giorno, ore 14:50 — vedi la correzione in fondo.**
 
 ## Limiti
 
@@ -72,3 +71,36 @@ muove.
 · **La copertura è per prefisso di topic, non per contenuto**: un fatto può stare sotto un prefisso
   con auto-MASTER ed essere comunque irrilevante per quel cluster. Non l'ho verificato.
 · **L'istante è parte del dato**: 30/08 ore 14:22, corpus servibile 12.247.
+
+
+---
+
+## 🔴 Correzione del 30/08 ore 14:50 — la frase sull'azionabilità era sbagliata
+
+Sopra avevo scritto che il gap si chiude «facendo girare il consolidamento sui prefissi vecchi
+scoperti». **Ho misurato, e non è vero.** Confronto fra i prefissi coperti e quelli no:
+
+```
+                  prefissi   fatti/prefisso (mediana)   ultimo fatto (mediana)
+   COPERTI            115              11                    2026-07-17
+   SCOPERTI           852               1                    2026-05-29
+```
+
+⇒ **I prefissi scoperti hanno UN SOLO fatto in mediana. Non c'è niente da raggruppare.**
+Il consolidamento **non «manca» i vecchi: raggruppa dove c'è un gruppo**, ed è il comportamento
+corretto. I sei auto-MASTER creati oggi stanno tutti su prefissi attivi
+(`verimem/sera-29-08`, `guardia/pool-ci-*`), non per un difetto di copertura ma perché lì c'erano
+cluster veri.
+
+**Che cosa resta del gap, detto bene:** non è «l'archivio vecchio è escluso», è che **852 prefissi
+hanno un fatto solo** — e un fatto solo non ha bisogno di un punto d'ingresso, ha bisogno di essere
+trovato. Più un caso singolo che pesa: **86 fatti con un topic a un solo segmento**, senza `/`, che
+non appartengono a nessun prefisso e quindi non possono averne uno.
+
+🪞 **E un difetto del misuratore che ho creato io stesso.** Contavo gli auto-MASTER con
+`topic LIKE '%auto-MASTER%'`: quel filtro pesca anche `verimem/archivio/auto-master-quanti`, che è
+**un fatto salvato da me poche ore fa mentre misuravo questo fenomeno**. Un falso positivo su 115.
+Col filtro corretto (`LIKE '%/auto-MASTER'`) restano **114**, e la copertura è **62,6 / 79,8 / 88,6**
+— le differenze rispetto ai numeri sopra sono il corpus cresciuto (12.247 → 12.265), non il filtro.
+⇒ **Misurando il fenomeno l'ho contaminato**: se salvi i risultati con un topic che contiene il
+nome della cosa che conti, la misura dopo conta anche te.
