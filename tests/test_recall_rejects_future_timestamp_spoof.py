@@ -76,3 +76,50 @@ def test_legacy_path_rejects_future_last_verified_at(tmp_path) -> None:
         f"spoof #3b (legacy path): recall ha ritornato un fatto con "
         f"last_verified_at nel futuro (id={spoof_id}). ids={ids}"
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-31: LA TERZA PORTA — `deep`, che il file non nominava.
+#
+# Lo schema MCP di `hippo_facts_recall` descrive `deep` come *«v14 ARCHAEOLOGY
+# mode: lift the 45-day age-based hiding … Integrity guards stay (future
+# timestamp = tamper, valid_until hard-expire)»*. La promessa ha DUE meta', e
+# la seconda e' quella che rende la prima non banale: un `deep` che facesse
+# riemergere tutto sarebbe facile e sbagliato.
+#
+# I due test qui sopra presidiano la guardia nei due percorsi di recall, ma in
+# regime NORMALE: nessuno dei due nomina `deep`, ed e' proprio nel regime
+# «archeologia» che un lettore puo' credere che il nascondimento venga tolto
+# in blocco. Misurato il 2026-08-31 alle 01:13, store temporaneo, tre fatti con
+# tre soggetti distinti e le date spostate via SQL diretto — lo scenario che il
+# docstring di `_fact_is_stale` rivendica esplicitamente di coprire («per
+# QUALSIASI path di scrittura: store, SQL diretto, migrazione»)::
+#
+#     senza deep   torna solo il fatto recente
+#     con deep     torna anche il dormiente (200 giorni), NON quello futuro
+#
+# ⇒ La promessa regge in entrambe le meta'. Questa cella la tiene ferma.
+#
+# 🪞 E vale la pena scriverlo: la prima misura diceva il CONTRARIO — che il
+# fatto futuro riemergesse con `deep`. Era un difetto del misuratore (il token
+# che riconosceva i fatti nella risposta era «di», una preposizione presente in
+# tutti). Il sospetto e' nato dal contrasto con la lettura del sorgente, dove
+# `base > now` precede `ignore_age` e non e' scavalcabile. **Quando la misura
+# contraddice una lettura netta, il primo indiziato e' la misura.**
+# Banco: docs/stato-reale/banchi/ws3-l-archeologia-e-le-due-guardie.py
+
+
+def test_archaeology_mode_still_rejects_future_last_verified_at(tmp_path) -> None:
+    """`deep` lifta l'ETA', non l'INTEGRITA'."""
+    sm = SemanticMemory(db_path=tmp_path / "sem.db")
+    fresh_id, spoof_id = _seed(sm)
+
+    ids = [f.id for f, _sim in sm.recall(_QUERY, k=5, deep=True)]
+
+    assert fresh_id in ids, f"setup rotto: fresco assente con deep (ids={ids})"
+    assert spoof_id not in ids, (
+        f"spoof #3b in ARCHAEOLOGY mode: `deep` ha fatto riemergere un fatto "
+        f"con last_verified_at nel futuro (id={spoof_id}). Lo schema promette "
+        f"che le guardie d'integrita' restino: `deep` sta liftando piu' "
+        f"dell'eta'. ids={ids}"
+    )
