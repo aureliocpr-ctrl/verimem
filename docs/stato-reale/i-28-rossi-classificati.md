@@ -35,9 +35,24 @@ un verdetto ([l'EXIT che non è un verdetto](l-exit-che-non-e-un-verdetto.md)).
 ### ② Ambiente (10) — dipendono da ciò che questa macchina ha
 
 - **4 ricevuta** — `L4-skipped — source provided but the grounding judge was
-  still loading`. Cold start: tre fette in parallelo, il giudice non è caldo.
-  🔑 **Il prodotto lo DICE nella ricevuta**, e la ricevuta è leggibile. Ma il
-  comportamento quando il giudice non è pronto è **ammettere**.
+  still loading`. **Catena completa, cinque anelli, tutti letti**:
+  `HIPPO_ENCODE_DELEGATE_ONLY='1'` è **attiva in questo ambiente** e la suite la
+  eredita → `_delegate_only()` True (`local_grounding.py:590`) →
+  `judge_state()` restituisce `warming` (`:383`) → `_advisory_l4_skipped()`
+  (`anti_confab_gate.py:1797`) → **il write è ammesso** con l'avviso, e i test
+  che attendono `quarantined` cadono.
+  🔑 *Non «la macchina è strana»: **quella riga di env**.*
+  🟢 **E le due promesse che circondano il fail-open REGGONO** (banco
+  [`ws3-il-giudice-freddo-ammette-e-lo-dichiara.py`](banchi/ws3-il-giudice-freddo-ammette-e-lo-dichiara.py)):
+  «*SDK processes keep the synchronous one-time load*» → **0 ammissioni per
+  giudice freddo su 6**, 3 processi freschi, controllo 6/6; «*first write ~32 s
+  → 0.3 s*» → misurato **34,9-36,3 s → 0,27-0,34 s**, stesso ordine su un'altra
+  macchina. *Un limite dichiarato è un debito: questo è pagato, e va detto con
+  la stessa forza con cui direi il contrario.*
+  ⚠️ **Resta aperto per chi lo possiede**: la suite eredita quella variabile e la
+  CI probabilmente no ⇒ **i due regimi non misurano la stessa cosa**. E il test
+  non dichiara il regime che richiede: la ricevuta lo spiega benissimo, l'assert
+  che cade no.
 - **3 daemon** — `ensure_running_spawns_when_unreachable`,
   `ensure_running_cooldown_blocks_double_spawn`,
   `l120_parla_quando_l_encoding_non_costa_un_cold_load`. I test vogliono il
