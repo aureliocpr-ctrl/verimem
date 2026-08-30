@@ -111,6 +111,41 @@ def test_la_guida_nomina_il_campo_dell_astensione():
     assert "`abstained`" in testo, testo[:600]
 
 
+def test_la_guida_dice_DOVE_si_leggono_i_quarantinati():
+    """«kept OUT of DEFAULT recall» prometteva un modo non-default e non lo diceva.
+
+    Chi legge quella riga cerca l'argomento che allarga la ricerca, e nella
+    stessa guida ne trova due che SEMBRANO quello. Misurato il 2026-08-31 alle
+    00:58, uno store con un fatto quarantinato::
+
+        include_legacy=true              0 righe
+        min_status=legacy_unverified     0 righe
+        verimem_quarantine_log           1 riga, con `reason` e `layers`
+
+    ⇒ I due argomenti riguardano `legacy_unverified`, che e' un ALTRO stato: la
+    porta esiste, ma e' un TOOL diverso. 🔑 Una promessa implicita — quel
+    «default» — manda a cercare quanto una esplicita, e sbagliare porta qui
+    costa piu' che altrove: chi non trova il fatto conclude che non sia stato
+    memorizzato, cioe' l'opposto di quello che la riga sopra gli ha appena
+    detto.
+
+    ⚠️ Il misuratore ha sbagliato chiave anche qui (quinta volta nella
+    stessa notte): il log non porta `entries`/`items`/`rows` ma `quarantined`,
+    e la prima lettura dava 0. Le chiavi si LEGGONO.
+    """
+    testo = _guida()
+    assert "quarantine_log" in testo, testo[:600]
+    assert "DIFFERENT TOOL" in testo or "different tool" in testo, testo[:600]
+
+
+def test_la_guida_non_lascia_credere_che_un_argomento_basti():
+    """⚠️ LA META' CHE TIENE ONESTA L'ALTRA: nominare la porta giusta senza
+    dire che i due argomenti vicini NON servono lascia il lettore a provarli —
+    ed e' il percorso che ho fatto io misurando."""
+    testo = _guida()
+    assert "include_legacy" in testo and "min_status" in testo, testo[:600]
+
+
 def test_la_guida_dice_che_un_quarantinato_e_memorizzato():
     """⚠️ LA META' CHE RENDE SERIA L'ALTRA: se un quarantinato sparisse, leggere
     `ok` sarebbe innocuo. E' perche' resta MEMORIZZATO e fuori dal recall che la

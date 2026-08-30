@@ -58,6 +58,13 @@ can rely on it:
   branches on `ok` treats "held back" as "accepted". The fields that answer the
   question you actually have are `status` (was it admitted?), `moat` (did the
   check run, and how did it end?) and `quarantined_by` (which layer decided).
+  TO READ THE ONES ALREADY HELD BACK, ask verimem_quarantine_log — it is a
+  DIFFERENT TOOL, not an argument to recall, and it hands back each fact with
+  the `reason` and the `layers` that stopped it. Measured 2026-08-31 on a store
+  holding one quarantined fact: the two recall arguments that look like they
+  would widen the search do NOT reach it — `include_legacy=true` returned it
+  0 times and `min_status` at its lowest rank 0 times, because both are about
+  `legacy_unverified`, a different status. The quarantine log returned it.
 
 Orientation (each tool's exact arguments are in its own schema):
 - Retrieve FACTS with verimem_facts_search / verimem_facts_recall. verimem_recall
