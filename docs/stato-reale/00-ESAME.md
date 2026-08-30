@@ -11408,3 +11408,59 @@ grep` di due ore prima**, in questa stessa indagine. Le avevo sotto gli occhi e 
 come alle righe 8139/13778 · **gateway** — il filtro è disattivato dal `floor: 0.0` (`gateway.py:377`
 costruisce `Memory`) ⇒ cancellare il file **e non persistire mai una stima degenere**.
 ⛔ Il file da 32 byte **è ancora lì**: `{"floor": 0.0, "n_facts": 13795}`.
+
+### ⚠️ W8-27 · RETTIFICA (23:21) — **non 2 giorni: ~27 ore**. E il banco ha corretto me, poi io lui
+
+La cella dice «il verdetto più fresco riguarda codice di **2 giorni e 27 minuti** fa».
+**Il numero è sbagliato.**
+
+```
+run #1590   sha=b7e09b5f   creato 29/08 17:46Z   test: {'failure': 5, 'cancelled': 1}
+⇒ IL VERDETTO PIÙ FRESCO riguarda codice di 1 giorno, 3:29:03 fa
+```
+
+### Come è emerso: il banco ha corretto me, e poi ho corretto il banco
+
+Trasformando la misura in banco (`ws8-quanto-e-vecchio-cio-che-la-ci-sa.py`, commit di
+questa sera), la **prima** esecuzione ha dato `1 giorno 3h40m` invece dei miei 2 giorni —
+e ha stampato accanto:
+
+```
+⚠️  Finestra: 2 pagine da 100 per stato (3 run esaminati)
+```
+
+**Tre run su quattrocento.** Il banco aveva un `break` **fuori dall'`if`**: usciva al primo
+run di ogni pagina, concluso o no. E accanto c'era un mio commento che lo giustificava —
+*«basta il primo con i test conclusi: sono ordinati»* — **che descriveva un'intenzione che
+il codice non aveva**.
+
+🔑 È la classe già in casa: *un commento che GIUSTIFICA una scorciatoia è un indizio a
+favore del difetto, non contro.* **L'ho scritta io e ci sono ricascata dentro lo strumento
+che doveva misurare meglio di me.** Tolto il `break`: **204 run esaminati**, numero finale
+**1 giorno 3h29m**.
+
+### 🪞 E lo stesso difetto era nella misura FATTA A MANO
+
+Il loop con cui avevo prodotto «2 giorni» aveva **lo stesso `break` messo male**. Non è
+che il banco sia peggiore del lavoro a mano: **il lavoro a mano aveva lo stesso bug e
+nessuna riga che lo denunciasse.**
+
+📌 **La riga che ha salvato la misura è quella in cui il banco dichiara la propria
+finestra.** Senza, «2 giorni» sarebbe rimasto: plausibile, coerente col resto, mai
+controllato. ⇒ **Un banco che non dichiara quanto ha guardato non è verificabile — nemmeno
+da chi l'ha scritto.**
+
+### Cosa NON cambia
+
+Il ritardo resta **grave: 27 ore**, e tutte le conclusioni di W8-27 reggono — le cure di
+oggi sono invisibili alla CI, «la CI è rossa» è un'affermazione **su ieri**, e il cancello
+① chiede un verdetto su un commit di cui la CI non sa nulla.
+⚖️ **Cambia solo la cifra, e la mia era peggiorativa**: avevo dipinto la situazione più
+nera di com'è.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws8-quanto-e-vecchio-cio-che-la-ci-sa.py
+# e leggi la riga «Finestra: … run esaminati» PRIMA di credere al numero
+```
