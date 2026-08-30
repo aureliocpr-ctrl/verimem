@@ -1515,6 +1515,7 @@ SCORE: 12'`→**12.0** (l'ultimo, come il docstring dichiara). ⇒ 🔑 **DUE FR
 | W2-153 | **DUE LEVE INDIPENDENTI, LA STESSA DISTRIBUZIONE: la classe non e' «l'accento», e' «una variazione superficiale qualsiasi». p95 17,7 contro 18,2 · 5,87% contro 6,67%** | C1 · C2 · C9 | IT | SDK | 🔴 **replica indipendente su un'altra leva** | ws2 | **@ws4 ha ritirato `W7-75` alle 17:33 e misurato la coda dell'ACCENTO su 358 casi. Io ho replicato il suo disegno sulla MIA leva — l'ARTICOLO — per vedere se la classe e' piu' larga.** 📊 **I DUE RISULTATI, uno accanto all'altro**: `p50` **0,006** contro **0,019** · `p95` **17,715** contro **18,206** · `max` **92,562** contro **57,508** · **|Δ|≥10: 5,87% contro 6,67%** · **attraversano il cut 40: 3,07% contro 3,33%**. ⇒ **quattro grandezze su cinque quasi coincidono, su due leve che non hanno nulla in comune** ⇒ 🔑 **la classe NON e' l'ortografia: e' la VARIAZIONE SUPERFICIALE.** ⇒ **e il fenomeno che @ws4 ha misurato sull'accento non e' un difetto dell'accento — e' un difetto del giudice davanti a qualunque riscrittura che non cambia il significato.** 📖 **L'esempio piu' duro, dal corpus reale**: *«**Il** comando remember sul modulo beta stampa admitted…»* ⇒ **71.38 → 13.87 togliendo l'articolo** ⇒ **attraversa il cut e passa da ammesso a quarantinato per un «Il».** ⛔ **CORRETTA da @ws4 alle 17:52 (`W7-78`, 196 casi): IL MIO 6,67% ERA GONFIATO SEI VOLTE.** Sulla leva misurata da lei ⇒ **coda oltre 10 punti 1,02%** (non 6,67%) · **attraversano il cut 40: ZERO** (non 3,33%) · **max 24,846** (non 57,508) · `p95` **1,701** (non 18,206). ⇒ **il mio «p95 quasi identico al suo» CADE: era l'artefatto di trenta osservazioni.** ⚠️ **E UNA PRECISAZIONE CHE VALE PER ENTRAMBE**: **non abbiamo misurato la stessa leva.** Lei ha applicato **«per X» → «per il X»** (mirata, 196 casi); io **«togli il PRIMO articolo, qualunque esso sia»** (piu' ampia, 30 casi) ⇒ **due popolazioni diverse, e la differenza fra 1,02% e 6,67% e' in parte reale e in parte rumore del mio n** ⇒ **il numero SOLIDO e' il suo, sulla sua leva; il mio non e' una frequenza e non lo chiamo cosi'.** ✅✅ **E IL REGALO, che vale piu' della correzione**: **il mio caso costruito valeva 25,6 punti e il MASSIMO REALE del corpus su quella leva e' 24,846** ⇒ **il caso che avevo scelto a mano non era un outlier fabbricato: era praticamente il tetto che il traffico vero produce.** ⇒ **e il suo caso peggiore va nella MIA stessa direzione** — `58.005 → 82.852`, **la forma CON l'articolo premiata e quella corretta punita.** 🪞 **La lezione che incasso**: avevo dichiarato il limite («n=30, non posso dire identiche») **e non e' bastato dichiararlo** — il numero e' circolato lo stesso per dieci minuti. **Dichiarare un limite non lo cura: lo cura chi rifa' la misura con il campione giusto.** ⚠️ **Il limite originale restava**: il mio **n=30** contro il suo **n=358** ⇒ **con 30 coppie il p95 poggia su due osservazioni** ⇒ **la coincidenza dei numeri e' impressionante ma NON posso dire «identiche»: posso dire stessa FORMA e stesso ORDINE DI GRANDEZZA.** ⇒ **e' esattamente l'errore che @ws4 ha appena ritirato** (*«16 casi non erano un campione: erano il corpo di una distribuzione a coda spessa»*) ⇒ **non lo ripeto: dichiaro il mio n.** 🔗 **E il suo «rumore proprio del giudice = 0,0000» SPIEGA il determinismo di `W2-152`**: se il rumore e' zero, ripetere DEVE dare lo stesso valore ⇒ **i miei 72.08 e 97.66 esatti tre volte su tre non erano fortuna, erano attesi.** ⇒ **la sua misura da' il denominatore al mio caso singolo, e il mio caso estende la sua classe a una leva nuova: nessuno dei due reggeva da solo.** 🪞 **E un inciampo mio, curato**: avevo impostato `HIPPO_DATA_DIR` **prima** di leggere il corpus ⇒ **la env che isola le SCRITTURE aveva spostato anche la LETTURA** e il database risultava vuoto. **Leggi da casa in `mode=ro`, POI isola.** 🔎 **rifallo con** (~4 min): 30 fatti vivi con fonte e un articolo, togli il primo articolo, confronta i due `grounding_score`. | _firma @Varco 17:42 del 30/08_ |
 | W2-154 | **LA MIA TESI DI 10 MINUTI FA E' FALSIFICATA: NON e' «una variazione superficiale qualsiasi». Due leve neutre su due non spostano nulla — e la falsificazione porta DOVE STA LA CURA** | C1 · C2 · C9 | IT | SDK + codice | 🔴✅ **tesi mia ritirata, e un innesto individuato** | ws2 | **In `W2-153` avevo concluso che la classe fosse «la variazione superficiale». Sono andata a falsificarla scegliendo leve che NESSUNO puo' dire che cambino il senso** *(@ws4: «chi sceglie la leva deve poter dire perche' le due forme significano la stessa cosa»)*. 📊 **ESITO — la tesi CADE**: **maiuscola iniziale** ⇒ mediana **0,003**, max **0,963**, zero attraversamenti · **apostrofo tipografico `'`→`’`** ⇒ mediana **0,001**, max **0,001**, zero. ⇒ **due leve indiscutibilmente neutre non spostano NIENTE**, contro la coda spessa di accento (p95 17,7) e articolo (p95 18,2) ⇒ **la classe e' piu' STRETTA di come l'avevo enunciata: non basta che una variazione sia superficiale.** ⇒ **`W2-153` va letta con questa restrizione.** 🔑 **E LA FALSIFICAZIONE PORTA DOVE STA LA CURA**: cercando perche' l'apostrofo tipografico non sposti ho trovato **`composer.normalizza_apostrofi`** — *«porta ogni variante tipografica di apostrofo su `U+0027`»* — **e viene chiamata in DUE soli punti, entrambi in `composer.py`, dentro la copula** ⇒ **il percorso del GIUDIZIO non normalizza affatto.** ⇒ **e' la classe «esiste gia' e non e' collegato»**, la terza volta che questo registro la incontra. ⇒ 📌 **@ws4: la cura alla tua leva non e' da inventare — il prodotto sa gia' normalizzare, altrove.** ⚠️ **IPOTESI, dichiarata come tale e NON verificata**: `’` e `'` non spostano perche' **il tokenizer del modello li tratta uguali**, mentre `e'` e `è` sono token diversi — **non l'ho misurato, e non e' `normalizza_apostrofi` a farlo** (il giudice non la chiama). ⚠️ **Limite del banco**: **n=8 per leva** ⇒ **serve a SCEGLIERE quali leve meritano la misura completa, non a misurarle** — e per un «non sposta» con max 0,001 e' abbastanza, per un «sposta» non lo sarebbe. **Terza leva (spazio doppio) non misurata: zero casi utili nel campione.** 🔎 **rifallo con** (~2 min): otto fatti vivi con fonte, abbassa l'iniziale e sostituisci il primo apostrofo con `’`, confronta i `grounding_score`. | _firma @Varco 17:49 del 30/08_ |
 | W2-155 | **DUE SPIEGAZIONI MECCANICHE PROPOSTE, DUE FALSIFICATE DA ME: il «perche'» del giudice fragile resta IGNOTO — e due strade sono chiuse per tutte** | C1 · C2 · C9 | IT | giudice + tokenizer | 🔴 **non lo so, e dico perche'** | ws2 | **Il pezzo che manca a me e a @ws4 non e' il QUANTO — quello lei ce l'ha su 358 e 196 casi — e' il PERCHE'. Ho provato a darlo. Non ci sono riuscita, e questo e' il resoconto.** 🔍 **PRIMA IPOTESI, dal tokenizer del GIUDICE** (`local_gate_ce_v2`, non l'embedder — sono due modelli diversi e conta quello del giudice): le leve che spostano cambiano i **token**. ⇒ **verificato, e la forma dei dati era bellissima**: accento `e'`→`è` **−1 token** (SPOSTA) · articolo «per X» **+1** (SPOSTA) · apostrofo `'`→`’` **0** (non sposta) · maiuscola **0** (non sposta) ⇒ **regola candidata: conta il CONTEGGIO, non l'identita'** — e l'ipotesi che avevo dichiarato in `W2-154` (*«il tokenizer tratta `’` e `'` uguali»*) **era gia' FALSA: i token sono diversi, e' il numero a coincidere.** 🚫 **POI L'HO MESSA ALLA PROVA PREDICENDO PRIMA DI MISURARE** *(soglia dichiarata prima: «sposta» = |Δ grounding| > 1 punto)*: **doppio spazio** Δ0 ⇒ predetto «non sposta» ⇒ **NON sposta ✅** · **virgola aggiunta** Δ+1 ⇒ predetto «SPOSTA» ⇒ **max 0,017: NON sposta ❌** · **trattino** Δ+1 ⇒ predetto «SPOSTA» ⇒ **max 0,008: NON sposta ❌**. ⇒ **UNA su tre.** ⇒ **«Δ token ≠ 0 ⇒ sposta» e' FALSA.** ⇒ **regge solo la direzione debole: Δ=0 ⇒ NON sposta** (tre casi su tre: doppio spazio, apostrofo, maiuscola). 🔑 **COSA RESTA, detto senza girarci intorno**: **il fenomeno esiste ed e' misurato** (accento p95 17,7 · articolo max 24,846, @ws4) **e il meccanismo NON LO SO.** Le due spiegazioni che avevo proposto — *«qualunque variazione superficiale»* (`W2-153`, falsificata in `W2-154`) e *«conta il numero di token»* (questa) — **sono cadute entrambe, tutte e due per mano mia.** 📌 **E IL VALORE PER LE ALTRE E' PROPRIO QUESTO**: **due strade sono chiuse e nessuno deve ripercorrerle.** ⇒ va nella sezione «NON RITENTARE». ⚠️ **Limite**: 6 fatti per leva, tre leve nuove ⇒ **un «non sposta» con max 0,017 e' solido, un «sposta» servirebbe piu' n** — ma qui tutti e tre gli esiti erano «non sposta», che e' il verso in cui il campione piccolo basta. 🔎 **rifallo con** (~3 min): `AutoTokenizer.from_pretrained(_resolve_model_dir(None))`, conta i token delle due forme, **predici**, poi misura col giudice. | _firma @Varco 17:59 del 30/08_ |
+| W2-156 | **CURATA LA TERZA FORMA DEL CAMPO `store` — la piu' LARGA: 99 tipi di evento su 115 non dicevano in quale memoria erano successi. Un innesto solo, zero chiamanti toccati. `4e5785ef`** | C1 · C5 · C9 | IT | journal | 🟢 **curata in main** | ws2 | **Ordine di Aurelio via ws-peer: «la cura del campo `store` completala, le 3 forme trovate».** 📋 **IL CONTO DELLE TRE**: `W2-100` **l'impronta fissata all'import** ⇒ **curata** (`9ac64916`) · `W2-115` **il path esplicito** (~90% dei chiamanti) ⇒ **APERTA** · `W2-119` **99 tipi su 115 senza tag** ⇒ **questa, ora curata.** 🔴 **IL DIFETTO**: `flow_events.emit_flow` aggiunge i tag ambient (`surface`, `store`, `build`); **`observability.emit` no — ed e' la via che usano quasi tutti** ⇒ **chi legge il journal per contare qualcosa mescola casa e banchi senza accorgersene** ⇒ **e' il difetto che ha gia' falsato TRE indagini.** 🔑 **LA CURA NON E' SU `emit`, ed e' il punto**: e' su **`event_jsonl_log.append_event`**, **il punto UNICO dove entrambe le vie atterrano** ⇒ **nessun chiamante cambia e i 115 tipi si coprono insieme** ⇒ **una superficie sola invece di una toppa per emettitore** — la classe ① del metodo, applicata invece che subita. ✅ **E la cura e' ADDITIVA**: usa `setdefault`, quindi **chi porta gia' l'impronta se la tiene** (la sua e' piu' informata di questa), e resta **fail-open** come il resto del modulo: **se i tag non si ricavano si scrive la riga senza** — un evento non taggato e' il comportamento di sempre, un evento perso sarebbe un danno nuovo. 🧪 **RED→GREEN FALSIFICATO**: senza la cura **`1 failed`**, con **`3 passed`**, **rimossa ⇒ rossa di nuovo** · **25 test vicini sul journal invariati** (`EXIT=0`) · **e alla porta VERA, fuori da pytest**: tre tipi fra i 99 (`recall.served`, `gate.decision`, `quarantine.hit`) ⇒ **3 su 3 con `store=67712a7ceb5e` e `build`.** ⚠️ **LIMITE DICHIARATO**: la cura copre **il journal JSONL** — la superficie che si ANALIZZA e che ha falsato le tre indagini — **non il log strutturato ne' il bus in-process**, che ricevono il payload prima del fan-out. **Curare quelli significherebbe toccare `emit`, che e' la scelta invasiva che ho scartato.** 🪞 **E un errore mio nel mezzo**: il primo commit e' stato **respinto dal pre-commit** per un `E741` (variabile `l`) **nel mio test** ⇒ corretto e ricommesso; **mai `--no-verify`.** 🔎 **rifallo con** (~30s): `ENGRAM_EVENT_LOG=<tmp> python -c "from verimem import observability; observability.emit('prova', quanti=1)"` e leggi `payload.store`. | _firma @Varco 18:07 del 30/08_ |
 ]{0,90}(provisional|quarantined)" -- verimem/`. | _firma @Varco 16:56 del 30/08_ |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
@@ -8002,3 +8003,80 @@ python -c "import sqlite3;from verimem.config import CONFIG;c=sqlite3.connect('f
 
 ⚠️ **Tutte in `mode=ro`, sole SELECT.** Le misure sul corpus si muovono mentre le fai: il totale è
 passato da 15.578 a 15.755 in due ore. **L'istante fa parte del dato.**
+
+---
+
+## ws1 — In questa sessione i banchi scrivono SENZA embedding: il presidio ha retto tre volte, e la causa che avevo ipotizzato è falsificata
+
+**Livello**: `SemanticMemory.store(..., embed="sync")`, verificato leggendo il campo
+`embedding` del fatto scritto. **Istante**: 30/08 18:04-18:13. **Regime**: repo `14b0b09d`,
+processo figlio della sessione MCP di Aurelio.
+
+### Il presidio, e perché va tenuto
+
+Alle 18:04 il mio banco si è **fermato da solo** invece di produrre numeri:
+```
+REGIME: embedding presente = False
+REGIME DEGRADATO -> banco NON valido, non misuro.
+```
+**È la terza volta oggi che questo controllo mi impedisce di pubblicare un numero
+invalido** (la prima me ne ero accorto solo dopo, ritirando `0/45 vs 5/45`). ⇒ **una riga
+di `assert` prima di ogni banco vale più di qualunque rilettura.**
+
+### Cosa NON è la causa — ipotesi eseguita e caduta
+
+`verimem/embedding.py:283` alza `EncodeDelegateUnavailable` quando
+`_delegate_only() and not is_loaded()`. E l'ambiente di questa sessione **ha davvero**
+`HIPPO_ENCODE_DELEGATE_ONLY=1` (ereditata dal server MCP; `verimem doctor` la mostra).
+Ipotesi ovvia: **i banchi ereditano quella ENV e degradano**.
+
+**A/B, unica variabile cambiata:**
+```
+prima:  HIPPO_ENCODE_DELEGATE_ONLY=1   -> embedding presente? False
+dopo:   (ENV rimossa)                  -> embedding presente? False
+```
+⇒ **falsificata.** E il messaggio `store: encode delegate unavailable` **non compare** nel
+secondo caso: quindi non è più quel ramo, ed è **un'altra** ragione per cui il vettore
+manca. **Non l'ho isolata, e non la invento.**
+
+### Il quadro, per chi misura stanotte
+
+| osservazione | esito |
+|---|---|
+| `verimem doctor` sul daemon | **✓ warm on :58251**, 15 905 vettori a 768d |
+| porta 58251 raggiungibile dal mio processo | **sì** (connessione TCP nuda) |
+| vettore ottenuto da un `store(embed="sync")` | **no** |
+| togliendo `HIPPO_ENCODE_DELEGATE_ONLY` | **no lo stesso** |
+
+⇒ **Il daemon è vivo e la porta risponde, ma i fatti scritti dai miei processi non hanno
+vettore.** Il recall in quei banchi è **keyword**, non semantico.
+
+🔴 **Conseguenza operativa per tutte**: **qualunque banco che scriva fatti in questa
+sessione sta misurando un regime diverso da quello dell'utente**, e i numeri di recall
+prodotti così **non sono confrontabili** con quelli di ieri. **La riga di controllo costa
+nulla:**
+```python
+m.semantic.store(Fact(id="chk", topic="t", proposition="X lives in Y",
+                      asserted_at=1_700_000_000.0), embed="sync")
+assert getattr(m.semantic.get("chk"), "embedding", None) is not None
+```
+
+### 🔻 E un fronte che resta APERTO per causa mia
+
+Volevo verificare se il divario IT/EN che ho misurato (2/14 su terzi) sia confuso con il
+**costrutto** della domanda: le mie query EN hanno il possessivo con apostrofo
+(`{n}'s blood type`), le IT no (`il gruppo sanguigno di {n}`). **Lingua e apostrofo
+cambiano insieme, e non li avevo separati** — è la stessa forma dell'errore che il
+documento ㉕ dichiara su di sé (`e'` vs `è` attribuito alla lingua).
+**Il banco a quattro celle è scritto** (`porta_apostrofo.py`: EN possessivo · EN
+preposizionale · IT con `è` · IT con `e'`) **e non l'ho potuto eseguire.** Resta lì.
+✅ **Verificato almeno l'encoding**: le mie query italiane contengono `è` (U+00E8), **non**
+`e'` ⇒ il difetto `W7-72` del documento ㉕ **non spiega** il mio risultato.
+
+### Cosa questo NON prova
+
+- **Non ho la causa** del vettore mancante: ho falsificato la mia unica ipotesi.
+- **Non ho toccato né avviato daemon** (vincolo processi).
+- **Non so da quando dura**: alle 12:38 c'era già, alle 13:09 il runner LongMemEval
+  ingeriva — **non ho verificato se anche lì i vettori mancassero.**
+
