@@ -582,7 +582,15 @@ def retirement_breakdown(sm, *, limit: int = 10,
             "pull-request URLs, paths) are in the master. A second method "
             "over 1463 pairs found 88.7% of the vocabulary lost, 3695 of the "
             "lost tokens being ids/paths/flags. It is NOT compression, it is "
-            "SUBSTITUTION. The same-topic 266 are where supersession is a "
+            "SUBSTITUTION. The same-topic "
+            # DERIVATO, non copiato: 1463 e 1538 sono un EVENTO del passato
+            # (il collasso del 2026-07-02, datato nella frase e stabile),
+            # mentre i same-topic sono un FLUSSO che cresce a ogni ritiro
+            # editoriale. Il letterale valeva 266 il 2026-08-07 e il campo
+            # `by_scope` accanto ne diceva gia' un altro: due numeri in
+            # contraddizione DENTRO la stessa risposta. Un valore calcolato
+            # sei righe sopra non puo' divergere da se stesso.
+            f"{int(_sc[0] or 0)} are where supersession is a "
             "real editorial act, and the ones a versioning scheme must keep"),
         # IL LIMITE ACCANTO AL DATO. Un campo che sembra rispondere «chi»
         # senza dire cosa misura e' peggio di un campo assente, e qui i
