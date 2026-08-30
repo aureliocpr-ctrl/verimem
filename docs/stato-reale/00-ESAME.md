@@ -9050,3 +9050,69 @@ fuori dall'inglese*» è **vera nella direzione e irrilevante nella grandezza**.
 - **Non so quali testi stiano nella coda densa** (819 token): non li ho stampati.
 - ⛔ **Nessuna scrittura, nessun daemon toccato.**
 
+
+### 🛑 W8-19 · RETTIFICA (20:56) — **il §② era FALSO**: non è la lunghezza, è il primo write del processo
+
+La cella W8-19 §② afferma: *«sotto ~20 caratteri di source il moat non gira»*, con la
+soglia bisecata fra 10 e 12 caratteri e verificata «sui caratteri, non sulle parole».
+**È falso.** Rettifico qui invece di lasciarlo, perché una cella sbagliata nel registro è
+peggio di nessuna cella.
+
+**Cosa l'ha ucciso**: rifacendo la bisezione, la **stessa** source di 10 caratteri ha dato
+`g=98.90, judged=True` — il contrario di cinque minuti prima. *Un risultato che cambia
+senza che cambi l'input non è una soglia.* Il test decisivo, processo nuovo, source più
+lunga **per prima**:
+
+```
+1o save del processo — source 147 char  ->  g=None    judged=FALSE   <- la LUNGA, non giudicata
+2o save              — source  10 char  ->  g=98.90   judged=True
+3o save              — source   5 char  ->  g=87.67   judged=True
+4o save              — source 147 char  ->  g=99.88   judged=True
+```
+
+⇒ **È il PRIMO WRITE DI OGNI PROCESSO.** La mia «soglia» era l'ordine in cui lanciavo i
+casi: nella prima batteria il primo della lista era il più corto.
+
+### 🩺 E il prodotto lo diceva, nella ricevuta che avevo sotto gli occhi
+
+```
+store: encode delegate unavailable → il fatto viene scritto SENZA embedding
+       (recall keyword finche' il daemon non torna)
+`warmup` will not help. What gets the FIRST write judged is a reachable shared
+encode daemon.
+```
+
+**Non è un difetto nascosto: è documentato nella ricevuta**, con la causa e persino con
+l'anticipazione dell'errore che avrei fatto («`warmup` non aiuta»). **Ho letto
+`grounding_score` e ho concluso.**
+
+### Cosa resta vero, ed è più piccolo ma reale
+
+Il primo write di un processo, col daemon non raggiungibile, entra **`admitted` con
+`grounding_score=None` e `judged=False`** — indistinguibile da un fatto salvato **senza
+source**. ⇒ **Chi salva un solo fatto per processo — chiunque usi `verimem save` da riga
+di comando una volta sola — non ottiene mai la verifica**, e non se ne accorge se non
+legge `judged`.
+⚖️ Ma **il prodotto avvisa**: non è un silenzio, è **un avviso non letto**. Da me.
+
+### 🪞 Il metodo, e stavolta è andata fino in fondo
+
+Tre volte oggi un controllo mi ha impedito di consegnare un falso reperto. **La quarta è
+passata**: pubblicato *e* messo in cella. La differenza è che lì il controllo l'avevo
+lanciato **prima**; qui **dopo**, mentre affinavo un dettaglio di una tesi già consegnata.
+
+🔑 **Un reperto non è finito quando i numeri concordano: è finito quando ho provato a
+farlo cadere.** Tre misure coerenti fra loro non sono tre prove — se condividono lo stesso
+artefatto, sono **una sola misura ripetuta**.
+📌 E la lezione vera: **la ricevuta conteneva la spiegazione, e ho guardato solo il campo
+che confermava la mia ipotesi.**
+
+⚖️ **Il §① della cella (il retrieval senza `topic`) NON è toccato da questa rettifica**: è
+un A/B fra due chiamate nello stesso processo, e non dipende dall'ordine.
+
+**rifallo con:**
+
+```bash
+# processo NUOVO, source LUNGA per prima → judged=False; dal secondo save in poi → judged=True
+python -c "import sys; from verimem.cli import main; sys.argv=['verimem','save','<fatto>','--topic','t','--source','<147 char pertinenti>']; main()"
+```
