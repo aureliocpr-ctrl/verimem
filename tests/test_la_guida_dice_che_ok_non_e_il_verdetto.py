@@ -71,6 +71,23 @@ def test_la_guida_indirizza_ai_campi_che_rispondono():
         assert campo in testo, f"la guida non indirizza a `{campo}`"
 
 
+def test_la_guida_nomina_il_campo_dell_astensione():
+    """La promessa dell'astensione c'era, il CAMPO che la porta no.
+
+    Per `grounding_score` la guida nomina il campo esplicitamente — *«it is
+    `grounding_score` that carries it»* — e per l'astensione diceva solo che il
+    tool «ABSTAINS», lasciando al lettore di indovinare dove leggerlo.
+    Misurato il 2026-08-30 alle 23:45, un fatto nello store::
+
+        domanda NEL corpus     abstained: False
+        domanda FUORI corpus   abstained: True
+
+    ⇒ La promessa REGGE e il campo esiste: mancava che la guida lo dicesse.
+    """
+    testo = _guida()
+    assert "`abstained`" in testo, testo[:600]
+
+
 def test_la_guida_dice_che_un_quarantinato_e_memorizzato():
     """⚠️ LA META' CHE RENDE SERIA L'ALTRA: se un quarantinato sparisse, leggere
     `ok` sarebbe innocuo. E' perche' resta MEMORIZZATO e fuori dal recall che la

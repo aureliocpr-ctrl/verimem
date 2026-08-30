@@ -79,7 +79,11 @@ Orientation (each tool's exact arguments are in its own schema):
   returns a provenance dossier and, on a question it cannot support, it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
   When it matters that the answer be IN memory rather than merely nearest,
-  that is the tool to use.
+  that is the tool to use. READ THAT OFF THE `abstained` FIELD, not off the
+  prose: it is a boolean and it is the one that carries the decision.
+  Measured through this API on 2026-08-30, one fact in the store: a question
+  the store covers returned `abstained: false`, a question about something it
+  had never heard of returned `abstained: true`.
 - Search indexed files with verimem_document_semantic_search. Each hit carries
   `file:<source_id>:<start>-<end>`, which locates the chunk EXACTLY inside the
   indexed text (`indexed_text[start:end] == chunk text`) and is always
