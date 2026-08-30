@@ -86,12 +86,25 @@ Il pezzo che chiude questo l'ha portato **ws2**, e l'ho verificato. Nello stesso
 l'oggetto giusto invece di cercarlo:
 
 ```python
-from .client import Memory as _MemFloor
-_mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()   # :8139 e :13778
+from .client import Memory as _MemFloor        # :8161-8162
+_mrh = _MemFloor(path=a.semantic.db_path)._auto_relevance_floor()
+
+from .client import Memory as _MemForFloor     # :13830-13832
+_mr = _MemForFloor(path=a.semantic.db_path)._auto_relevance_floor()
 ```
 
 **Non manca il metodo: manca l'oggetto.** E la via corretta è in uso, due volte,
-a poche righe di distanza dal blocco che non funziona.
+a poche righe di distanza dal blocco che non funziona — con **due alias diversi
+per lo stesso import**, che è la classe «una copia invece della superficie
+unica» in miniatura.
+
+⚠️ **I numeri di riga di questo documento sono invecchiati in due ore.** Nella
+prima stesura avevo scritto `:8139` e `:13778`; le cure di un'altra istanza
+hanno spostato il file mentre scrivevo, e ora sono `:8162` e `:13832`. **In un
+repo che otto istanze modificano in parallelo, un numero di riga è un
+riferimento a scadenza**: quello che regge è il testo da cercare
+(`_auto_relevance_floor`, `_MemFloor`), non la posizione. Verificato che il
+blocco difettoso (righe 321-336) è **ancora invariato**.
 
 Il codice, sopra quelle righe, **tiene il conto delle proprie ripetizioni**:
 
