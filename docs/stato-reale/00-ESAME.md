@@ -8273,3 +8273,60 @@ for s in completed queued in_progress; do gh api "repos/:owner/:repo/actions/wor
 gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" --jq '.jobs[]|select(.status!="completed")|"\(.name) \(.started_at)"'
 # ⚠️ le date dei filtri sono UTC: verifica sempre con una data che DEVE dare >0
 ```
+
+---
+
+## 🗄️ ws6 «Aldo» — quattro celle della notte del 30/08: le porte e i loro presidi
+
+*Registrate alle 23:15. Terzo blocco della giornata; **anche stavolta erano documenti senza una riga
+qui**, e stavolta me ne sono accorto prima che me lo dicessero.*
+
+**⑯ `32` — il rerank sa quando NON ha trovato, e la porta serve lo stesso.** Sulla porta semantica
+dei documenti: rerank del 1º **+8,46** e **+1,94** quando trova, **−3,27** quando non trova (poi
+−4,23 · −4,47 · −5,05 · −5,13). **Undici punti di distanza, e cinque risultati serviti in entrambi i
+casi senza dichiarare la differenza.** ⇒ *ha già in mano il numero per astenersi.*
+⚠️ **NON confermo la conseguenza ④ del Dossier 19 sulla lingua**: **40 documenti su 42 sono
+italiani**, quindi sbilanciamento e modello **non sono separabili** con questo corpus.
+
+**⑰ `33` — il chunk nascosto è PHASE 0 della ROADMAP.** `"hidden_chunks": 1` in ogni risposta: è la
+sezione d'ingresso dell'**unico documento di prodotto** indicizzato, e il testo silenziato contiene
+il motto **«nothing silent, nothing mislabeled»**. Scatta `obfuscation` **severity high** per un
+**carattere greco attaccato a lettere latine** (`τ_hi` `τhi` `σ_hi` sì; `τ` `τ_` `t_hi` no): è la
+difesa **anti-homograph**, **criterio sensato**. 📌 **Due mie ipotesi falsificate dal prodotto**:
+«START HERE» e «il tau da solo».
+
+**⑱ `34` — lo stesso fatto, con una lettera greca, viene quarantinato.** A/B a variabile singola:
+`t_hi` → **`model_claim`**; `τ_hi` → **`quarantined` da `store-screen`**; **giudice 99,97 a
+entrambi**. Il rilevatore è anche sul percorso di scrittura (`admission_gate.py:253-254`, su
+`proposition` **e** `topic`). **Popolazione**: **17 fatti su 15.978 (0,11%)** fanno scattare il
+rilevatore, **0 quarantinati**, **tutti antecedenti al 24-08** (quando `store-screen` è entrato in
+servizio), **13 su 17 `user_manual`**.
+🔑 **Reperto di sintesi: l'onestà del prodotto NON è uniforme fra le porte** — la **scrittura**
+dichiara tutto, i **documenti** in parte, la **ricerca dei fatti** tace. **Le due che tacciono sono
+quelle da cui si legge.**
+
+**⑲ `35` — il rimedio che la ricevuta suggerisce non cambia l'esito.** La ricevuta dice
+*«set `writer_role='external_content'`»*: dall'**SDK** il valore è **accettato e registrato nel DB**
+ma il fatto resta **quarantined**; dalla porta **MCP** non è **nemmeno esprimibile**
+(`mcp_server.py:2527-2533`, `enum` = `agent_inference` · `user` · `system_hook` · `trusted_hook`).
+⇒ **Correzione al ⑱**: la porta di scrittura resta la più esplicita del prodotto, **ma delle cinque
+informazioni le prime quattro descrivono il passato e sono esatte; la quinta promette il futuro ed è
+l'unica che non regge.**
+
+**rifallo con:**
+
+```bash
+# ⑰ perche' quel chunk e' nascosto — chiedilo al rilevatore, non dedurlo
+python -c "from verimem.document_index import detect_injection as d; print(d('la soglia τ_hi vale 80'), d('la soglia t_hi vale 80'))"
+# ⑱ l'A/B della lettera greca (store TEMPORANEO: HIPPO_DATA_DIR in tempdir PRIMA degli import)
+#    Memory().add('…τ_hi…')  -> quarantined / store-screen      Memory().add('…t_hi…') -> model_claim
+# ⑲ il rimedio, sulle due porte
+#    SDK: Memory().add('…τ_hi…', writer_role='external_content') -> ancora quarantined
+git grep -n -A 6 '"writer_role"' verimem/mcp_server.py     # enum MCP: external_content NON c'e'
+# ⑯ il rerank che sa e non lo dice
+#    hippo_document_semantic_search "the external reviewers gave the product six out of ten"  -> rerank +1.94
+#    hippo_document_semantic_search "i due modelli esterni hanno dato sei su dieci al prodotto" -> tutti negativi
+```
+
+⚠️ **I banchi che SCRIVONO vanno in uno store temporaneo**, mai su quello di casa. Le letture sullo
+store di Aurelio sono in **`mode=ro`, sole SELECT**.
