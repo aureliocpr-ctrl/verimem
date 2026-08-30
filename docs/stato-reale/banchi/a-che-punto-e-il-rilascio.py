@@ -54,6 +54,16 @@ def _esegui(*argomenti: str, cwd: Path | None = None, timeout: int = 900) -> tup
     return fatto.returncode, (fatto.stdout or "") + (fatto.stderr or "")
 
 
+#: Cancelli il cui esito NON e' stato misurabile. Sta qui perche' il 2026-08-30
+#: questo banco ha contato un «?» come se fosse un «passa»: il README era stato
+#: curato (il contatore fisso e' diventato la soglia «more than 1900 commits»),
+#: il regex non ha piu' trovato il numero, la riga e' diventata «?» **e il totale
+#: e' sceso da 2 a 1**. Chi legge il totale conclude che un cancello si e' aperto.
+#: 🔑 E' la classe che questo stesso banco esiste per prevenire — «una misura che
+#: non c'e' si legge come verde» — costruita dentro lo strumento che la denuncia.
+_IGNOTI: list[str] = []
+
+
 def _riga(numero: str, nome: str, aperto: bool | None, dettaglio: str,
           veto: bool = True) -> None:
     """`veto=False` per i controlli che NON fermano il rilascio.
@@ -64,6 +74,7 @@ def _riga(numero: str, nome: str, aperto: bool | None, dettaglio: str,
     contrario. Un termometro che si contraddice non e' un termometro."""
     if aperto is None:
         segno = "?"
+        _IGNOTI.append(f"{numero} {nome}")
     elif aperto:
         segno = "passa"
     else:
@@ -135,15 +146,32 @@ def main() -> int:
     # ⑦ il README e' la pagina di PyPI: i numeri che dichiara sono ancora veri?
     testo_readme = (RADICE / "README.md").read_text(encoding="utf-8")
     blocco = "⛔ RILASCIO" in testo_readme
-    dichiarati = re.search(r"\*\*(\d+) commits\*\* ahead", testo_readme)
+    # Due forme, e NON sono equivalenti:
+    #   «**994 commits** ahead»            → un valore FISSO: invecchia a ogni commit
+    #   «**more than 1900 commits** ahead» → una SOGLIA monotona: resta vera finche'
+    #                                        non si rilascia, cioe' finche' serve
+    # La seconda e' arrivata il 2026-08-29 (`2ab18dc1`) ed e' la cura giusta: qui
+    # va RICONOSCIUTA, non trattata come «numero non leggibile». Il banco che non
+    # la capisce declassa una cura a un'assenza di misura.
+    soglia = re.search(r"\*\*more than (\d+) commits\*\* ahead", testo_readme)
+    dichiarati = soglia or re.search(r"\*\*(\d+) commits\*\* ahead", testo_readme)
     _, uscita = _esegui("git", "rev-list", "--count", "v0.7.0..origin/main")
     veri = uscita.strip()
     if dichiarati and veri.isdigit():
-        scarto = int(veri) - int(dichiarati.group(1))
-        aperto = scarto == 0
+        n = int(dichiarati.group(1))
+        scarto = int(veri) - n
+        if soglia:
+            # una soglia regge finche' il vero le sta SOPRA: e' monotona, non invecchia
+            aperto = int(veri) >= n
+            dettaglio = (f"soglia «more than {n}», sono {veri}  "
+                         + ("✅ la soglia REGGE (forma monotona, non invecchia)"
+                            if aperto else f"🔴 SCESA SOTTO la soglia ({scarto:+d})"))
+        else:
+            aperto = scarto == 0
+            dettaglio = (f"valore FISSO {n}, sono {veri}  (scarto {scarto:+d}) — "
+                         "invecchia a ogni commit: meglio una soglia")
         chiusi += not aperto
-        _riga("⑦", "pagina PyPI aggiornata", aperto,
-              f"dichiara {dichiarati.group(1)}, sono {veri}  (scarto {scarto:+d})")
+        _riga("⑦", "pagina PyPI aggiornata", aperto, dettaglio)
     else:
         _riga("⑦", "pagina PyPI aggiornata", None, "numeri non leggibili")
     print(f"\n  blocco «⛔ RILASCIO» presente nel README: {'si' if blocco else 'NO'}"
@@ -151,6 +179,13 @@ def main() -> int:
 
     print(f"\n  ⇒ cancelli che FERMANO il rilascio: {chiusi}"
           "   (⑤ e ⑥ sono avvisi: segnalano e lasciano passare)")
+    if _IGNOTI:
+        print(f"  ⚠️  cancelli NON MISURATI: {len(_IGNOTI)}  →  {', '.join(_IGNOTI)}")
+        print("      Un «?» NON e' un «passa». Il totale qui sopra conta solo cio' che ho")
+        print("      potuto misurare: con dei non misurati, il numero vero puo' essere piu'")
+        print("      alto. Guarda PERCHE' non si misura prima di leggerlo come una buona")
+        print("      notizia — puo' voler dire che il difetto e' stato curato (e allora il")
+        print("      righello va aggiornato) oppure che ha cambiato forma.")
     print("\n  ⑧  trusted publisher su PyPI      NON MISURABILE DA QUI")
     print("      Il publish e' OIDC senza token (`pypa/gh-action-pypi-publish` +")
     print("      `id-token: write`): perche' funzioni, PyPI deve avere un trusted")
