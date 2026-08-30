@@ -12,10 +12,17 @@ that mounts it), plain SDK use, the CLI. Events carry flow METADATA only
 
 Tagging:
 
-* ``surface`` — where the call came from: ``sdk`` (default), ``mcp``,
-  ``gateway``. Ambient default via env ``ENGRAM_FLOW_SURFACE`` (set once by
-  the MCP server at bootstrap — env, not contextvar, so it survives thread
-  pools); per-request override via :func:`set_flow_context`.
+* ``surface`` — where the call came from: ``cli``, ``mcp``, ``gateway``,
+  ``sdk``, or ``unknown``. Ambient default via env ``ENGRAM_FLOW_SURFACE``
+  (set once by the MCP server at bootstrap — env, not contextvar, so it
+  survives thread pools); per-request override via :func:`set_flow_context`.
+  ⚠️ THE DEFAULT IS ``unknown``, NOT ``sdk``, and that is deliberate: this
+  line named the SDK as the fallback until 2026-08-30 while the code had
+  stopped falling back to it on 2026-08-04 — see the comment at the emission
+  site, which gives the reason with the numbers (a fallback that names a real
+  surface makes a dashboard unable to tell a default from a datum). An event
+  that says ``unknown`` means nobody declared the entrypoint, NOT that the
+  SDK wrote it.
 * ``actor`` — the agent's label, from env ``VERIMEM_ACTOR`` (or legacy
   ``ENGRAM_ACTOR``): a codex/gemini/gpt agent sets it in its MCP config and
   every one of its events arrives labeled — the single multi-agent panel.
