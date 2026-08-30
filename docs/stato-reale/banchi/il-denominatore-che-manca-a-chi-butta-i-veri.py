@@ -176,7 +176,8 @@ def main() -> int:
     print(f"     ✅ controllo (1) superato: il gate ferma {quota_falsi:.1f}%"
           " dei falsi,")
     print("     quindi il conto sui veri e' leggibile.")
-    _verdetto(righe_tab)
+    _verdetto(righe_tab, v["solo_lui"],  # type: ignore[arg-type]
+              int(v["negativi"]))
     return 0
 
 
@@ -208,7 +209,8 @@ def _tabella(*, sc: Counter, fe: Counter, solo: Counter,
     return righe_tab
 
 
-def _verdetto(righe_tab: list[tuple[str, int, int, float]]) -> None:
+def _verdetto(righe_tab: list[tuple[str, int, int, float]],
+              solo: Counter, negativi: int) -> None:
     """La lettura dei numeri — DOPO il controllo positivo, mai prima.
 
     ⚠️ Scritto cosi' per un difetto che ho introdotto io alle 20:31 spostando
@@ -219,6 +221,37 @@ def _verdetto(righe_tab: list[tuple[str, int, int, float]]) -> None:
     dopo. **I numeri grezzi possono uscire presto; il verdetto no.**
     """
     print("\n  == LA RIGA CHE CONTA")
+
+    # ⚠️ LA RIPARTIZIONE ATTRIBUIBILE viene PRIMA del confronto fra tassi,
+    #    perche' e' la sola che risponde a «chi ha perso questi veri».
+    #    Misurato il 30/08: tre layer stavano al 100%, e i veri SALVABILI che
+    #    perdevano erano 0, 12 e 3. Un tasso al 100% con «solo lui» a ZERO e'
+    #    CO-OCCORRENZA: quel layer non ha perso nessun vero che si sarebbe
+    #    salvato, e indicarlo come colpevole e' esattamente l'errore che
+    #    questo banco esiste per evitare.
+    #    ⚠️ Per il MOAT la colonna NON E' DEFINITA: il criterio e' «il moat non
+    #    e' fra i layer scattati», che per lui e' sempre falso. Il suo numero
+    #    si ottiene per sottrazione.
+    altrui = sum(solo.get(lay, 0) for lay, _n, _f, _t in righe_tab
+                 if lay != MOAT)
+    del_moat = negativi - altrui
+    print(f"     ripartizione ATTRIBUIBILE dei veri persi (totale {negativi}):")
+    print(f"       moat  {del_moat}"
+          f"  ({100.0 * del_moat / max(1, negativi):.1f}%)  [per sottrazione]")
+    for lay, _n, _f, _t in sorted(righe_tab,
+                                  key=lambda t: -solo.get(t[0], 0)):
+        n_solo = solo.get(lay, 0)
+        if lay != MOAT and n_solo:
+            print(f"       {lay}  {n_solo}"
+                  f"  ({100.0 * n_solo / max(1, negativi):.1f}%)")
+    zero = [lay for lay, _n, f_, _t in righe_tab
+            if lay != MOAT and f_ and not solo.get(lay, 0)]
+    if zero:
+        print("     ⚠️ CO-OCCORRENZA PURA (fermano veri, ma il moat li"
+              f" bocciava comunque): {', '.join(zero)}")
+        print("     ⇒ il loro tasso NON costa un vero salvabile:"
+              " curarli non ne salva nessuno.")
+
     sc = Counter({lay: n for lay, n, _f, _t in righe_tab})
     fe = Counter({lay: f for lay, _n, f, _t in righe_tab})
     moat_sc, moat_fe = sc.get(MOAT, 0), fe.get(MOAT, 0)
