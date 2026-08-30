@@ -434,6 +434,16 @@ class Memory:
         source: str | None = None,
         verified_by: list[str] | None = None, validate: str | None = None,
         ground: bool | None = None, gate_mode: str | None = None,
+        # `asserted_at` non e' solo il tempo dell'evento per il time-travel:
+        # decide come viene INSTRADATA una scrittura successiva sulla stessa
+        # fonte. Senza, le due si ordinano per momento di SCRITTURA e la piu'
+        # recente vince sempre — una correzione supersede in silenzio invece
+        # di andare al giudice come conflitto
+        # (`supersession_policy.classify_write_relation`, che dichiara «any
+        # ambiguity -> conflict» e in assenza di questo campo non ha
+        # l'ambiguita' da risolvere). Misurato il 30/08: valorizzato su 0
+        # fatti su 15.978, ed e' esposto da tutte e tre le porte — la
+        # conseguenza qui sopra non era dichiarata in nessuna.
         asserted_at: float | None = None, conversation_id: str | None = None,
         user_name: str | None = None,
         purpose: str | None = None,

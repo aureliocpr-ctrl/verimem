@@ -4760,7 +4760,11 @@ def save_cmd(
         None, "--asserted-at",
         help="When the fact is TRUE (YYYY-MM-DD or epoch), if different from "
              "now. Feeds the time-travel: `recall_as_of` finds it from that "
-             "moment on, not from when you wrote it."),
+             "moment on, not from when you wrote it. AND it decides how a "
+             "later write on the same source is routed: without it the two "
+             "are ordered by WRITE time, so a correction supersedes the old "
+             "fact silently instead of going to the judge as a conflict "
+             "(`supersession_policy.classify_write_relation`)."),
     json_out: bool = typer.Option(False, "--json"),
     local: bool = typer.Option(
         False, "--local", help="Run on the local store even in server mode."),
