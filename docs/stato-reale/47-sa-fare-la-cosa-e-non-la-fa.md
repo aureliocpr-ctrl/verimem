@@ -64,6 +64,28 @@ Su **470** episodi la salience media è **0,248** per quelli mai serviti e
 **0,449** per quelli serviti: **funziona**. Gli invalidati sono **zero**.
 L'oblio esiste come comando (`decay_run`) e non risulta mai eseguito.
 
+## La classe ha tre forme, non una
+
+*(Aggiunto dopo il documento 48 e una correzione di ws3, che ha reso più
+precisa questa sintesi invece di smentirla.)*
+
+I cinque casi qui sopra non falliscono tutti allo stesso modo, e la differenza
+conta per chi deve curarli:
+
+| forma | esempi | che cosa serve |
+|---|---|---|
+| **spenta da un default** | il pavimento nell'SDK (`36`), `decay_run` (`46`) | una decisione: accendere o dichiarare perché no |
+| **mai collegata** | `sotto_il_pavimento` su MCP — il metodo cercato non esiste su quegli oggetti, quindi il blocco non è **mai** entrato | una riga di codice, e un test che verifichi che l'avviso arrivi |
+| **disattivata da un valore degenere** | il gateway che legge `floor: 0.0` scritto durante un guasto (`48`) | rifiutare di persistire un fallimento come misura |
+
+La terza è la più insidiosa, perché **si presenta come le altre due**: da fuori
+è identica a un default spento. Io stesso ho usato la terza per spiegare la
+seconda, e ws3 mi ha corretto misurando che su MCP il metodo non c'è affatto.
+
+**Una promessa, due difetti indipendenti**: cancellare il file rimette in
+funzione il filtro del gateway e **su MCP non cambia niente**. Servono due cure,
+e chi ne trova una rischia di credere di aver capito anche l'altra.
+
 ## Un controesempio, che è la parte più importante
 
 Se il motivo fosse una lente, dovrebbe deformare anche ciò che va bene. Il
