@@ -178,12 +178,32 @@ guida nomina già la causa giusta** («*a RELATIVE path resolved from a differen
 working directory*»): i miei esempi sono esattamente path **relativi** e
 **temporanei**.
 
-⚠️ **Ma il numero non è confrontabile**: 57,5% su **73 documenti** contro 84,9%
-su **634 chunk** — **popolazioni diverse, istanti diversi**. Il mio numero **non
-smentisce né conferma** il suo.
-🔑 **Ed è precisamente la dimostrazione della regola**: senza sapere **quando** e
-**su quale grandezza** fu preso l'84,9%, nessuno può dire se sia invecchiato.
-*Non l'ho argomentato: ci ho provato e non ci sono riuscito.*
+⚠️ Quella prima misura era sui **73 documenti**, non sui **634 chunk**:
+popolazione sbagliata, e il numero non era confrontabile. **Trovata la
+popolazione giusta** (`~/.engram/documents/document_index.db`, tabella `chunks`)
+e ri-misurata — **30/08, ore 17:22, sola lettura**:
+
+```
+chunk oggi                683        (la guida dichiarava 634 come TOTALE)
+file che non esiste più   634 / 683   = 92,8%   (la guida: 538/634 = 84,9%)
+testo conservato          683 / 683   = 100,0%  (la guida: 100%)   ← ESATTO
+```
+
+🟢 **Il 100% regge ESATTAMENTE** sulla popolazione cresciuta: **683 su 683**. La
+promessa più forte della guida è verificata.
+🔴 **Il tasso è INVECCHIATO**: **84,9% → 92,8%**. Il corpus è cresciuto (634 →
+683 chunk) e i file mancanti sono cresciuti di più (538 → 634).
+
+🎭 **E LA COINCIDENZA CHE VALE PIÙ DEL NUMERO**: **634 compare in entrambi, ma
+come grandezze DIVERSE** — nella guida è il **totale dei chunk**, oggi è il
+**numero di quelli mancanti**. ⇒ Chi confrontasse i due referti di sfuggita
+vedrebbe «634» in tutt'e due e concluderebbe che **nulla è cambiato**.
+
+🔑 **Il pericolo che la regola previene si è materializzato davanti a me**: lo
+stesso numero, due ruoli, due date. Senza la data **e** la grandezza contata,
+questo è invisibile. *Non l'ho argomentato: l'ho incontrato.*
+📌 Il numero aggiornato, con la sua data e il suo criterio, è qui sopra: **chi
+mantiene `agent_guide.py` ha tutto per rimetterlo in riga.**
 
 ## Una regola pratica, che vale oltre questo prodotto
 
