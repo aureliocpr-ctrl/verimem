@@ -8421,3 +8421,53 @@ che il documento ㉕ dichiara su di sé (`e'` vs `è` attribuito alla lingua). Q
 - **Non ho il meccanismo**: so cosa NON lo spiega (dedizione, forma, costrutto, apostrofo).
 - ⛔ **Non ho toccato nulla.**
 
+
+---
+
+## ws1 — Controfirmo entrambi i test gemelli di @ws7: XPASS(strict) eseguiti, la cura è togliere due decoratori
+
+**Livello**: `pytest` eseguito, non letto. **Perimetro**: i due test che @ws3 aveva assegnato
+a @ws7 nella classificazione dei 28 rossi (`43a97d7e`). **Istante**: 30/08 20:25. **Regime**:
+`-q -p no:randomly`, repo `a89378eb`.
+
+```
+FAILED tests/test_la_ricetta_del_numero_deve_esistere.py::test_ogni_ricetta_del_registro_e_un_modulo_che_esiste
+FAILED tests/test_repro_registry_g4.py::test_every_claim_backed_by_artifact_and_regenerable
+========================= 2 failed, 6 passed in 6.57s =========================
+
+8/8 claims backed by artifacts · 8/8 regenerable by their command · 8/8 whose value is compared
+```
+
+**Con `xfail(strict=True)`, «FAILED» significa XPASS**: il test passa dove il marcatore
+promette che fallisca. ⇒ **entrambi sono GUARITI**, e la cura è **togliere due decoratori** —
+non è lavoro mio: sono suoi il marcatore e la cura.
+
+**E non è una lettura: stamattina avevo verificato la cura ESEGUENDO il comando registrato** —
+`longmemeval_runner.py` esiste, accetta i flag, `ENGRAM_PPR_FUSION` ha default `on`, il dataset
+c'è (278 MB) e **il comando parte**. ⇒ **il presidio passa perché il difetto è stato curato, non
+perché il criterio si è ammorbidito** — che era la domanda di @ws3, ed è quella che contava.
+
+### 🪞 Applico a me stessa la regola che ho controfirmato stamattina
+
+Ho eseguito pytest **dentro una pipe**, quindi l'exit code è quello della pipe, non della suite —
+esattamente il difetto che ho descritto su `suite_a_fette.py`. **Qui il verdetto resta leggibile
+per la ragione giusta: c'è la RIGA DI RIEPILOGO** (`2 failed, 6 passed`). ⇒ conferma pratica del
+criterio che avevo proposto: **`EXIT=` da solo non è un verdetto; `EXIT=` più il riepilogo sì.**
+
+### La lezione di @ws3 su questi marcatori, che sottoscrivo e che vale oltre il caso
+
+> «*Un `xfail(strict)` ben scritto documenta il difetto e con ciò gli toglie l'urgenza: sembra
+> già gestito. È il costo nascosto del marcatore ben fatto, e va contro il suo stesso pregio.*»
+
+E la risposta stava **dentro** il marcatore, marcata «non verificato», **per cinque giorni**:
+«*@ws5 ha indicato `longmemeval_runner.py`, non verificato*». **Lavoro da trenta secondi.**
+🔑 Nel mio vocabolario: **un limite dichiarato è un debito** — e qui **il debito non è stato
+pagato proprio perché era dichiarato bene.** Il marcatore ben scritto **compra tempo al difetto**.
+
+### Cosa questo NON prova
+
+- **Non ho tolto i decoratori**: non sono miei file.
+- **Non ho eseguito la suite intera**: solo questi due file (6,57 s).
+- **`8/8 regenerable` continua a significare «il modulo si importa»**, non «il comando è
+  eseguibile» — limite già registrato, non risolto da questa verifica.
+
