@@ -95,6 +95,25 @@ def test_gate_mode_non_promette_piu_provisional(proprieta):
     assert "status='provisional'" not in testo, testo
 
 
+def test_force_persist_dice_che_e_neutralizzato_come_validate(proprieta):
+    """L'ALTRO knob che indebolisce il gate, e la stessa omissione.
+
+    Misurato attraverso il handler il 2026-08-30 alle 23:02, tre casi::
+
+        force_persist=True                gate_knobs_denied ['force_persist']
+        force_persist + validate='off'    ['validate=off', 'force_persist']
+        nessun knob                       []            <- non inventa rifiuti
+
+    ⇒ Il COMPORTAMENTO era gia' giusto e ben dichiarato — anche cumulativamente,
+    e con l'array vuoto quando non si chiede nulla. Mancava, come per
+    `validate`, la meta' che l'agente legge PRIMA di scegliere.
+    """
+    testo = str(proprieta["force_persist"]["description"])
+    assert "NEUTRALIZED" in testo or "neutralized" in testo, testo
+    assert "VERIMEM_MCP_TRUST_GATE_KNOBS" in testo, testo
+    assert "gate_knobs_denied" in testo, testo
+
+
 def test_i_tre_livelli_restano_annunciati(proprieta):
     """⚠️ LA POPOLAZIONE OPPOSTA: una descrizione onesta non deve diventare una
     descrizione che TOGLIE un livello. `off` resta un valore legale — e' la

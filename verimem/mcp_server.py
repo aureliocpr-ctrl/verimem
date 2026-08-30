@@ -2538,7 +2538,15 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                         "description": (
                             "Bypass the gate's reject decision. Warnings "
                             "still surface in the response but persist "
-                            "wins. Use for migrations / replays / admin."
+                            "wins. Use for migrations / replays / admin. "
+                            "⚠ NEUTRALIZED on this surface unless the "
+                            "OPERATOR sets VERIMEM_MCP_TRUST_GATE_KNOBS: "
+                            "MCP args are untrusted, so a gate-weakening "
+                            "value is dropped and the response says so in "
+                            "`gate_knobs_denied` — measured through this "
+                            "handler 2026-08-30, which returned "
+                            "['force_persist'] and quarantined the fact "
+                            "anyway."
                         ),
                     },
                     "writer_role": {
