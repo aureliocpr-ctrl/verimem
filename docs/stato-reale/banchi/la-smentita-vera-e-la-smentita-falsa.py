@@ -84,6 +84,24 @@ def main() -> int:
           f" ⇒ vere ammesse = 0")
     print(f"  esito: vere ammesse = {ammesse_vere} ⇒ "
           f"{'PREDIZIONE CONFERMATA' if ammesse_vere == 0 else 'PREDIZIONE FALSIFICATA'}")
+    # IL CONTROESEMPIO che falsifica la mia stessa spiegazione. Se la
+    # differenza fosse «e' un elenco», nulla la cambierebbe; se invece e'
+    # «la fonte ENUNCIA o OMETTE», basta scrivere l'assenza perche' lo
+    # STESSO claim passi. Stessa lista, una frase in piu'.
+    print()
+    print('  == CONTROESEMPIO: stessa lista, assenza DETTA non mostrata')
+    for k, (fonte, claim) in enumerate([
+        ("Il file elenca tre voci: alfa, beta, gamma. "
+         "Delta non e' presente nel file.", 'Il file non elenca delta.'),
+        ('Gli status assegnati sono model_claim, quarantined, verified. '
+         "Provisional non e' fra gli status assegnati.",
+         'Fra gli status assegnati non compare provisional.'),
+    ]):
+        rc = mem.add(claim, topic=f'ctrl/{k}', source=fonte, validate='full')
+        gc = rc.get('grounding_score')
+        _g = f'{gc:.1f}' if isinstance(gc, (int, float)) else '-'
+        print(f"     {str(rc.get('status')):<14}{_g:>8}   assenza ENUNCIATA")
+
     print("\n  ⚠️ COSA NON DICE: otto casi costruiti, non un campione del")
     print("  corpus. Dice se il meccanismo distingue, non quanto spesso")
     print("  capiti. E il regime e' quello di default del giudice locale.")
