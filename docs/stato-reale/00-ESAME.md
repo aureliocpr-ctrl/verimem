@@ -7404,3 +7404,51 @@ sed -n '956,988p' .github/workflows/ci.yml
 ```
 ⚠️ **La chiamata `/jobs` può superare i 150 s**: alzare il timeout invece di fermarsi al primo
 run — è l'errore che ho fatto e corretto qui dentro.
+
+### 🪞 W8-14 — Un righello che davanti a una CURA dice «non misurabile» **cancella il merito di chi ha curato** — e conta l'ignoto come un passaggio
+**REGIME**: `a-che-punto-e-il-rilascio.py` eseguito alle **12:41** (prima) e **12:43** (dopo la
+cura), `git log -- README.md`, `git rev-list --count v0.7.0..origin/main` = **1956**;
+2026-08-30.
+
+· **Cos'era successo.** Il cancello ⑦ è stato **curato** da `2ab18dc1` (29/08 22:24, «il
+  contatore diventa una soglia monotona più il comando»): la vetrina è passata da
+  **«`main` is 994 commits ahead»** — un valore **fisso**, che invecchiava a ogni commit — a
+  **«more than 1900 commits ahead»**, una **soglia monotona**, che resta vera **finché non si
+  rilascia, cioè finché il blocco serve**. ✅ **Verificato: i commit reali sono 1956, la soglia
+  regge.**
+· 🚨 **Il mio banco l'ha letta come un'ASSENZA.** Il regex cercava `**NNN commits** ahead` e
+  non capiva `more than`:
+      ⑦ pagina PyPI aggiornata   **?**   «numeri non leggibili»
+      ⇒ cancelli che FERMANO: **1**   ← **era 2, ed è sceso senza che nulla si aprisse**
+  ⇒ **Il totale contava il «?» come un «passa».** Chi leggeva solo il totale concludeva che un
+  cancello si era aperto — **per la ragione sbagliata**.
+· 🔑 **È «una misura che non c'è si legge come verde», costruita DENTRO lo strumento che
+  esiste per denunciarla** — e consegnato alle altre il giorno prima.
+· ✅ **Curato in `412625e3`, due cose distinte:**
+  **(a)** un «?» **non abbassa più il totale**: i non misurati si contano a parte, si stampano
+  col nome, e portano la riga *«guarda PERCHÉ non si misura prima di leggerlo come una buona
+  notizia: può voler dire che il difetto è stato curato — e allora il righello va aggiornato —
+  oppure che ha cambiato forma»*.
+  **(b)** la **soglia viene riconosciuta**: `more than N` non è «numero illeggibile», è **una
+  forma migliore** del valore fisso, e il banco ora lo dice: *«la soglia REGGE (forma
+  monotona, non invecchia)»*.
+· 🔑 **LA LEZIONE, e vale oltre questo banco**: **quando qualcuno cura un difetto, il righello
+  che lo misurava smette di funzionare.** Il modo in cui smette decide se la cura **si vede o
+  si perde**. Un righello che davanti a una cura risponde «non misurabile» **e non lo dichiara**
+  fa due danni insieme: **nasconde il lavoro di chi ha curato** e **abbassa il conteggio dei
+  problemi**, cioè mente due volte nella stessa direzione — quella rassicurante.
+· 📊 **Stato dopo la cura**: **un solo cancello ferma il rilascio** (①, `ci`) — da **3** (ieri
+  19:52) a **2** (ieri 21:03) a **1**. ⚠️ Ed è il più duro: dipende dalla coda (574) e dai tre
+  test rossi, e **W8-13 mostra che sotto saturazione `build` viene cancellato prima di
+  partire**.
+· ⚠️ **COSA NON PROVA**: ④ ⑤ ⑥ sono misurati su un pacchetto **costruito dal mio albero**, e
+  **oggi sappiamo che la CI quel job non lo esegue più** ⇒ **dicono cosa succederebbe, non cosa
+  succede**. E la cura (b) riconosce **una** forma di soglia: un'altra formulazione tornerebbe
+  «non misurabile» — **ora però lo direbbe**.
+
+**RIFALLO CON**:
+```bash
+python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py
+grep -oE '\*\*(more than )?[0-9]+ commits\*\* ahead' README.md
+git rev-list --count v0.7.0..origin/main
+```
