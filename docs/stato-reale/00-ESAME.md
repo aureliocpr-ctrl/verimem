@@ -9373,3 +9373,94 @@ sed -n '280,290p' verimem/embedding.py     # il raise, e il messaggio che nomina
 python -c "import os; print(os.environ.get('HIPPO_ENCODE_DELEGATE_ONLY'))"
 verimem doctor | grep -A2 "daemon"          # la riga che promette il cold-load
 ```
+
+### 🔴 W8-21 — La coda **non è FIFO**, l'attraversamento è ×17, e **come accendere la coppia**
+
+> **REGIME** — misure delle 21:13–21:18 del 30/08 via API GitHub (interrogando l'oggetto) e
+> `git log` su `origin/main`. Orari dell'API in **UTC**.
+> **LIMITE** — 4 run confrontati per l'ordine, 38 commit per la leva. **Non so PERCHÉ la
+> coda non sia FIFO**: osservo l'ordine, non la politica che lo produce.
+
+### ① Non è una fila, è un mucchio
+
+```
+#1150  creato 28/08 17:09Z   status=queued       🔴 ANCORA IN CODA
+#1173  creato 28/08 17:32Z   status=queued       🔴 ANCORA IN CODA
+#1289  creato 28/08 20:36Z   status=completed    ✅ CHIUSO
+#1291  creato 28/08 20:36Z   status=completed    ✅ CHIUSO
+```
+
+**Due run entrati tre ore dopo sono usciti; i due entrati prima sono fermi** — e #1150 e
+#1173 sono fermi sul terzo livello (`wheel install-from-scratch`, misurato alle 20:34).
+⇒ **Un mucchio con l'ingresso maggiore dell'uscita affama chi sta sotto.** È la definizione
+di starvation, non una metafora: ora ha anche il meccanismo.
+
+### ② Il costo, e il confronto che fa male
+
+```
+#1291  creato 28/08 20:36Z  chiuso 30/08 19:06Z  →  1 giorno 22h 29m
+#941   creato 25/08 20:26Z  chiuso 25/08 23:05Z  →  2h 38m     ← l'ULTIMO VERDE
+```
+
+**×17.** E #941 è il commit su cui il cancello ① si aprirebbe oggi.
+
+### ③ Il dato controintuitivo: più capacità non basta
+
+```
+ore 18:45   completed 1161   queued 796   in_progress  3
+ore 21:13   completed 1163   queued 872   in_progress 12    ← pool 4× più libero
+```
+
+I run in esecuzione sono avanzati da #1661 a #1694, **ma fra i loro job non ce n'è
+NEMMENO UNO di `build` o `wheel`: solo `test`.** La capacità liberata va tutta ai run
+nuovi. ⇒ **Più capacità non basta se l'ordine è sbagliato.** Uscita misurata: **+2 in
+2h28m = ~0,8/ora**, contro ~45/ora in ingresso.
+
+### 🔧 ④ Come accendere la COPPIA — la proposta, con la dimostrazione
+
+`paths-ignore` toglie l'84% del carico, **ma da solo chiude il cancello**: `publish.yml:116`
+chiede `ci` verde **su `github.sha`**, e un commit che non fa girare `ci` non produce
+nulla da leggere.
+
+⛔ **La strada che NON propongo**: un job sentinella che riporta `success` senza aver
+eseguito niente. È **«un verde ottenuto spegnendo qualcosa»**, e costa più di un rosso.
+
+✅ **La proposta**: il cancello chieda il verde **sull'ultimo commit che tocca ciò che si
+spedisce**, non su quello del tag.
+
+```bash
+rilevante=$(git log -1 --format=%H -- verimem engram hippoagent pyproject.toml)
+# le radici da pyproject.toml, non una lista a mano — vedi il banco 4d7b2cfd
+```
+
+**Non è un surrogato del verde: è il verde giusto**, perché per quei commit l'artefatto è
+quello già verificato. Dimostrazione:
+
+```
+① quanto spesso servirebbe (ultimi 38 commit di origin/main)
+   NON toccano ciò che si spedisce : 35/38  (92%)
+② l'artefatto dipende solo dai sorgenti?
+   pyproject.toml:14  version = "0.7.6"   ← CABLATA, non derivata da git
+   nessun SOURCE_DATE_EPOCH, nessun `git rev-parse`, nessun __commit__ iniettato
+```
+
+⚠️ **Non dico «byte-identico»**: i timestamp dentro lo ZIP non li ho verificati, e stasera
+ho già sbagliato due volte affermando una classe da un caso solo (W8-20). Dico ciò che ho
+misurato: **niente, nel build, varia col commit**.
+
+### Cosa questo NON risolve
+
+- **Non svuota la coda esistente** (874) e **non riordina la fila**: agisce sull'ingresso.
+- **Non so in quanto tempo si smaltirebbe**: non ho il throughput a coda scarica, e
+  inventarlo sarebbe peggio che tacerlo.
+- ⛔ **Non l'ho implementata**: `.github/` è nel mio non-curo, e il processo di rilascio è
+  una decisione **collegiale**. Porto la misura e la forma, non la decisione.
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?per_page=100&page=N" \
+  --jq '.workflow_runs[]|select(.run_number==1150 or .run_number==1289)|"\(.run_number) \(.created_at) \(.status)"'
+git log -1 --format=%H -- verimem engram hippoagent pyproject.toml
+grep -nE "setuptools_scm|dynamic|SOURCE_DATE_EPOCH" pyproject.toml   # nessun match
+```
