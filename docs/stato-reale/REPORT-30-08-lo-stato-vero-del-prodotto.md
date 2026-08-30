@@ -70,3 +70,42 @@
   in uscita (16:1), 92,2% dei run da commit solo-docs, nessun filtro path;
   e il verdetto CI descrive un albero di centinaia di commit fa — un verde
   vecchio non è un verde sul presente (regola: si cita con l'età).
+
+## 3. DA NON SCRIVERE — frasi vere a metà che un lettore ostile smonta
+- *«Il gate ferma i fatti veri sulle fonti lunghe»* → falso in generale: ferma
+  il vero RIFORMULATO (W2-62/64).
+- *«I layer lessicali scavalcano il giudice in 323 casi»* → vero come
+  conteggio, falso come accusa: sul documento tecnico il layer SALVA il
+  giudice (W2-54 corretta da W7-13). La frase giusta: «in 323 write i due
+  hanno dato verdetti opposti; il campo che lo registra non arriva a nessuno —
+  il difetto è la consegna, non il disaccordo».
+- *«Accendere GRADED_ADMISSION non costa nulla»* → falso: la negazione entra
+  (W2-69); e curerebbe la faccia sbagliata (i trattenuti-col-giudice-a-favore
+  recenti sono di L4.1, non del moat — ws7 30/08).
+- *«Il gate rumoreggia su N fatti»* → quel N non esiste: il journal non
+  registra gli avvisi sugli ammessi (W2-51).
+- Ogni tasso SENZA popolazione, ogni verde CI SENZA età, ogni benchmark SENZA
+  seed: il 70%-vs-0,6% divenne 12,5% su prosa vera; il 60/60 è 58–60/60 su 20
+  seed; il verdetto CI di oggi descrive un albero di ieri.
+
+## 4. DECISIONI PER AURELIO (le tecniche sono già collegiali; queste toccano
+   prodotto/vetrina/release)
+1. **Versione** — quadro completo in `quadro-decisione-versione-30-08.md`:
+   raccomandazione **C adesso** (0.7.1 = v0.7.0 + sola riga pin), 0.8.0 a
+   contratto chiuso; D scartata; prerequisiti di publish comunque (W8-4,
+   veto-wheel, smoke).
+2. **Bande in vetrina/doctor** — descrivono un ramo riempito dal rumore e
+   muto quando percorso: o si toglie la promessa o si ricostruisce
+   l'escalation sul DISACCORDO fra segnali (direzione già votata e4d12f25).
+3. **Asimmetria di lingua** — decisione di prodotto ratificata come «da
+   dichiarare»: la vetrina dica che la protezione lessicale IT/EN non è
+   simmetrica finché la cura grande non pareggia.
+4. **Etichetta `writer_role='user'` da `verimem save`** — le parole
+   dell'agente marcate come parole dell'utente spengono L1 sul 59,5% del
+   corpus: design di provenienza da decidere nella specifica (non urgente,
+   dichiarato).
+5. **Namespace `verimem_*`** — il flip del default cura 1 superficie su 3
+   (voto ws7): le altre due a registro; incoerenza di marca visibile
+   all'utente nuovo.
+6. **MCP-stdio 190s** — la porta headline non risponde su scrittura-con-source
+   entro 190s (in-process 28,9s): C3/latenza, priorità alta post-cura-grande.
