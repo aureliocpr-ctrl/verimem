@@ -158,7 +158,33 @@ def main() -> int:
 
     sha = subprocess.run(["git", "log", "-1", "--format=%h"], cwd=RADICE,
                          capture_output=True, text=True).stdout.strip()
+    #: la LUNGHEZZA per esito: e' il modo di verificare A POSTERIORI se
+    #: l'artefatto di forma (LANT-68) ha morso anche su questa popolazione.
+    #: Se i veri PERSI sono sistematicamente piu' corti dei veri AMMESSI, il
+    #: gate sta punendo la brevita' e non la falsita'. Senza questi numeri il
+    #: banco dava un totale che non si puo' interrogare — ed e' la lezione
+    #: «un rapporto senza regime inganna» applicata al mio stesso strumento.
+    import statistics as st
+
+    def _med(gruppo: list[dict]) -> float:
+        L = [len(e["claim"].split()) for e in gruppo]
+        return round(st.median(L), 1) if L else 0.0
+
+    veri_ammessi = [e for e in veri if servito(e)]
+    falsi_fermati = [e for e in falsi if not servito(e)]
+    lunghezze = {"veri_ammessi": _med(veri_ammessi), "veri_persi": _med(veri_persi),
+                 "falsi_ammessi": _med(falsi_ammessi), "falsi_fermati": _med(falsi_fermati)}
+    print(f"
+  lunghezza mediana (parole) per esito — il controllo dell'artefatto:")
+    for k, v in lunghezze.items():
+        print(f"     {k:16} {v:5.1f}")
+    if lunghezze["veri_persi"] and lunghezze["veri_ammessi"]:
+        r = lunghezze["veri_persi"] / lunghezze["veri_ammessi"]
+        print(f"     ⇒ veri persi / veri ammessi = {r:.2f}x  "
+              f"{'⚠️ il gate punisce la brevita' if r < 0.7 else 'la lunghezza non spiega chi cade'}")
+
     corpo = {"popolazione": f_nome, "criterio_cieco_pct": round(cieco, 1),
+             "lunghezza_mediana_per_esito": lunghezze,
              "claim": len(esiti),
              "falsi_ammessi": len(falsi_ammessi), "falsi_totali": len(falsi),
              "veri_persi": len(veri_persi), "veri_totali": len(veri),
