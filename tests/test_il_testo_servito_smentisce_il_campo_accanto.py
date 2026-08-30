@@ -64,3 +64,48 @@ def test_i_numeri_dell_EVENTO_restano_letterali_e_datati(mem_con_same_topic):
     nota = retirement_breakdown(mem_con_same_topic.semantic)["scope_means"]
     assert "1463" in nota and "1538" in nota, nota
     assert "2026-08-07" in nota, nota
+
+
+# ─────────────────────────────────────────────────────────────────────
+# LO SWEEP. Curato `scope_means`, la domanda che segue e' «chi altro fa
+# la stessa cosa?». Nello stesso modulo altri due testi serviti citano
+# un numero-flusso letterale, e il payload che li accompagna lo smentisce
+# gia' oggi: `chain.formula` dice 37% mentre `ends_servable` su tutte le
+# catene ne da' un altro, e `principal_means` dice «174 of 1805» mentre
+# `attribution` accanto somma il totale corrente.
+# ─────────────────────────────────────────────────────────────────────
+
+
+def test_la_formula_delle_catene_non_deve_citare_una_quota_smentita(
+        mem_con_same_topic):
+    bd = retirement_breakdown(mem_con_same_topic.semantic)
+    ch = bd["chain"]
+    tot = ch["ends_servable"] + ch["ends_dead"] + ch["ends_missing"]
+    atteso = round(ch["ends_servable"] / tot * 100)
+    citate = [int(x) for x in re.findall(r"(\d+)%\s+overall", ch["formula"])]
+    assert citate == [] or citate == [atteso], (
+        f"la formula cita {citate}%, il payload ne da' {atteso}%")
+
+
+def test_principal_means_non_deve_citare_un_totale_smentito(
+        mem_con_same_topic):
+    bd = retirement_breakdown(mem_con_same_topic.semantic)
+    att = bd["attribution"]
+    tot = att["attributed"] + att["unattributed"]
+    m = re.search(r"(\d+) of (\d+) retirements carry one",
+                  bd["principal_means"])
+    assert m is not None, bd["principal_means"]
+    assert (int(m.group(1)), int(m.group(2))) == (att["attributed"], tot), (
+        f"il testo dice {m.group(1)} of {m.group(2)}, il payload accanto "
+        f"dice {att['attributed']} of {tot}")
+
+
+def test_su_un_corpus_SENZA_dati_la_formula_non_inventa_una_quota(tmp_path):
+    """Zero su zero non e' una percentuale: e' la regola che questo stesso
+    modulo applica gia' a `concentration`. Derivando, la frase deve
+    perdere il numero, non stamparne uno finto."""
+    m = Memory(tmp_path / "vuoto.db")
+    ch = retirement_breakdown(m.semantic)["chain"]
+    assert "%" not in ch["formula"] or "overall" not in ch["formula"], (
+        ch["formula"])
+    assert "must not travel alone" in ch["formula"], ch["formula"]

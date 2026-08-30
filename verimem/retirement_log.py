@@ -348,6 +348,26 @@ _SENZA_MOTIVO = "(no reason recorded)"
 _MAX_CATENE = 50_000
 
 
+def _esempio_che_si_ribalta(conti: dict[str, int],
+                            per_motivo: dict[str, Any]) -> str:
+    """L'esempio numerico dentro ``chain.formula``, DERIVATO dal corpus.
+
+    Torna stringa vuota quando non c'e' niente da dividere: un esempio
+    inventato per illustrare «non fidarti dell'aggregato» sarebbe la
+    cosa contro cui la frase mette in guardia.
+    """
+    tot = (conti.get("ends_servable", 0) + conti.get("ends_dead", 0)
+           + conti.get("ends_missing", 0))
+    if not tot:
+        return ""
+    agg = round(conti["ends_servable"] / tot * 100)
+    ss = per_motivo.get("same-source evolution")
+    if not ss or not ss[0]:
+        return f"on this corpus it reads {agg}% overall — "
+    return (f"on this corpus it reads {agg}% overall and "
+            f"{round(ss[1] / ss[0] * 100)}% for same-source evolution — ")
+
+
 def _esito_delle_catene(sm, *, topic: str | None = None) -> dict[str, Any]:
     """Dove FINISCE la catena delle supersessioni, non solo il primo passo.
 
@@ -424,11 +444,17 @@ def _esito_delle_catene(sm, *, topic: str | None = None) -> dict[str, Any]:
             {"reason": k, "n": v[0], "ends_servable": v[1],
              "share": round(v[1] / v[0], 4) if v[0] else None}
             for k, v in sorted(per_motivo.items(), key=lambda x: -x[1][0])],
+        # DERIVATO. La lezione («un numero che si ribalta quando lo
+        # dividi non deve viaggiare da solo») vale sempre; l'ESEMPIO che
+        # la illustra e' un flusso, e da letterale invecchiava contro il
+        # payload che gli sta accanto. Su un corpus senza catene l'esempio
+        # SPARISCE invece di stampare uno zero su zero — stessa regola che
+        # questo modulo applica gia' a `concentration`.
         "formula": ("follow superseded_by to the end of the chain; "
                     "ends_servable = the tip is servable. The aggregate "
-                    "ships WITH the per-reason split on purpose: on the "
-                    "real corpus it reads 37% overall and 100% for "
-                    "same-source evolution — a number that flips when you "
+                    "ships WITH the per-reason split on purpose: "
+                    + _esempio_che_si_ribalta(conti, per_motivo)
+                    + "a number that flips when you "
                     "divide it must not travel alone"),
     }
 
@@ -605,7 +631,11 @@ def retirement_breakdown(sm, *, limit: int = 10,
             "instance — six agents share cli:local on this corpus. "
             "'(not recorded)' means no audit row exists for that "
             "retirement, which is not the same as nobody: on the real "
-            "corpus 174 of 1805 retirements carry one. system:heal is the "
+            # DERIVATO come sopra: il letterale «174 of 1805» invecchiava
+            # contro `attribution`, che sta sei righe piu' su nello stesso
+            # payload e conta gli stessi ritiri.
+            f"corpus {_attribuiti} of {_tot_ritiri} retirements carry one. "
+            "system:heal is the "
             "exception that identifies a real actor — the unattended "
             "maintenance pass"),
         "chain": _esito_delle_catene(sm, topic=topic),
