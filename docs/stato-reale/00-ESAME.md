@@ -12775,6 +12775,64 @@ quindi il moat girava · store di Aurelio **non toccato**, copia cancellata.
 scritto la cura sbagliata due ore prima, e **una lezione sbagliata in memoria è peggio di nessuna
 lezione**.
 
+**㊿ `53` (banco+codice) — il pavimento degenere si ripara DA SOLO fra 105 fatti, e quel giorno
+l'avviso si accende sul 97,8% delle risposte. Settima rettifica, mia, dentro la stessa notte.**
+Nel `48` avevo scritto che il `floor.json` degenere sarebbe rimasto «finché non entrano **~600
+fatti**». **Era una stima, e stimare quando puoi contare è un errore.**
+🔑 **Il margine vero è 105 fatti VIVI**, non 600: `client.py` usa `n = self.semantic.count()`, e il
+contratto di `count()` dichiara **«Live facts only (superseded excluded)»** ⇒ **vivi 14380** (scarto
++585, dentro la tolleranza `13795 × 0,05 = 689,8`) contro **totali 16664** (+2869, avrebbe già
+ricalcolato). Il file **non è stato riscritto in quattro ore**: è la conferma indipendente che il
+conteggio in uso è quello dei vivi. ⚠️ **La soglia è simmetrica** (`abs`): scatta sopra 14484 **o
+sotto 13105** — una tornata di ritiri ci arriva dall'altro lato.
+⏳ **E l'ho visto scadere mentre scrivevo**: stesso banco venti minuti dopo ⇒ **14390 vivi, margine
+95**. Il `105` era già falso quando l'ho pubblicato. **Il numero si rilegge, non si ricopia.**
+🔥 **Il valore che uscirà non dipende dal daemon**: ricalcolato ORA su copia, **daemon caldo**,
+**0,8797** (ieri sera, daemon spento: 0,8881) ⇒ la differenza è rumore delle sonde. **Tre stime
+indipendenti — 0,8743 · 0,8797 · 0,8853 (@ws2) — varianza ~1%, tutte sopra 0,868.**
+📊 **Che cosa fa quel valore, sulla popolazione VERA** (non un banco mio: i `best` che il prodotto
+registra; journal **ruotato**, `events.jsonl` + `.1` = **39.008 righe**, 3893 `flow.recall`; tolti
+gli `explain` che **non portano `best`** e i 268 `best=0` del degradato ⇒ **n=2887**, mediana 0,850,
+p95 0,863):
+
+| soglia | che cos'è | quanti stanno sotto |
+|---|---|---|
+| **0,0000** | il valore degenere di **oggi** | **0/2887 = 0,0%** |
+| 0,8500 | la mediana del traffico stesso | 1547/2887 = 53,6% |
+| 0,8680 | max dentro-dominio di @ws2 | 2770/2887 = 95,9% |
+| **0,8797** | **il ricalcolo di adesso** | **2823/2887 = 97,8%** |
+
+⇒ **oggi il sistema sta a un estremo e fra 95 fatti salta all'altro**, e in mezzo **non c'è nessun
+valore che la stima automatica possa produrre.**
+🔴 **LA RETTIFICA** (avevo scritto «taglia», ed è il verbo sbagliato): `W2-258` di @ws2 nomina i
+**due usi** del pavimento, e sono andato a leggerli — **`client.py:1113` lo mette in
+`min_relevance`, che FILTRA ogni fatto** (là @ws2 misura il recall da 10 a **1 su 30**);
+**`client.py:1271` lo confronta con `_best` e ne fa il campo `sotto_il_pavimento`** ⇒ **la mia
+misura è su questo secondo ramo**: non «scarterebbe il 97,8%», ma **«attaccherebbe l'AVVISO al
+97,8%»**. ⚠️ **Difetto diverso e non più piccolo: un avviso che si accende 98 volte su 100 non è un
+avviso, è rumore** — la forma dei «96% di falsi allarmi» che ci è già costata una cura buttata.
+📖 **E LA LEZIONE ERA SEI RIGHE SOPRA IL PUNTO CHE HO MISURATO** (`client.py:1264-1269`): *«banco A
+rispondibili min 0.8757 · pavimento 0.8689 → 0 falsi tagli … come veto perderebbe un fatto vero,
+come avviso costa un avviso»* ⇒ **il prodotto sa già perché a `:1271` si è scelto l'avviso**. Ma
+quello stesso commento porta il dato che **oggi non regge più**: nel banco che tarò la cura i
+**rispondibili stavano SOPRA** il pavimento (0,8757 > 0,8689); **il traffico di oggi ha p95 0,863,
+sotto entrambi** ⇒ **il corpus si è spostato sotto il righello che l'aveva tarato.**
+🪞 **L'errore che ho fatto per primo, perché è il modo normale di sbagliare qui**: 40 query «dentro
+dominio» costruite copiando **frasi intere del corpus** ⇒ mediana 0,947, «solo il 15% sotto» ⇒
+avrei concluso che **l'allarme non esiste**. Ma quelle non sono query, **sono documenti**: il banco
+misurava la propria facilità. **La popolazione vera era nel journal e non me la dovevo inventare.**
+⚖️ **Per chi decide**: «lasciare il file com'è» **non è più un'opzione stabile — è cancellarlo in
+differita, senza che nessuno lo decida**. E il `rm` **non cura la causa, la riarma**: finché la
+stima usa **sonde scramblate** (p95 **0,8797**) contro un traffico a p95 **0,863**, ogni ricalcolo
+rimetterà ~0,88. **Il righello si taglia sopra la testa di ciò che deve misurare.**
+📌 **LIMITI**: `best` esiste **solo per `kind=search`** (3355 su 3893) — gli `explain` non lo
+portano, e contarli zero è l'errore che ho già fatto su questo journal · `best` è il punteggio del
+**primo risultato**, non la prova che fosse **giusto** · **una sola esecuzione** per ricalcolo ·
+**non ho verificato `_degradato`**, che condiziona il ramo del filtro. ✅ **Store di Aurelio in sola
+lettura**: nessun `rm`, `floor.json` invariato (mtime 20:32) **controllato prima e dopo ogni
+misura**. 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-margine-del-pavimento.py` (~5s).
+*(doc `53`, commit `e24f90a1`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
