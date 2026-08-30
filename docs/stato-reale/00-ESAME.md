@@ -9838,3 +9838,80 @@ il proprio floor**, sette inglesi col bi-encoder **tutti di poco sopra 0,835**.
   un caso sporco e mostra che la mia cura era peggiore del male.
 - ⛔ **Non ho toccato nulla del prodotto.**
 
+
+### 🔑 W8-22 — «Un topic per misura» cura `L3` ma non `L4.1`/`L4.2`: la causa è **il glifo**
+
+> **REGIME** — `verimem save` dalla porta del prodotto, 30/08 fra le 21:42 e le 21:46,
+> **topic vergini distinti** per ogni caso, daemon di encoding attivo (verificato con
+> `doctor`: `✓ daemon shared encode daemon warm on :61574`).
+> **LIMITE** — **quattro casi su un identificativo solo.** Non dico «tutti i glifi
+> non-ASCII»: sarebbe la terza generalizzazione della serata da un caso singolo, dopo le
+> due cadute di W8-20.
+
+### Il contesto: eseguivo la regola ratificata, e ho misurato il suo residuo
+
+La ratifica `ec17d0b4` rende operativa **UN TOPIC PER MISURA**. L'ho applicata riscrivendo
+i cinque punti della matrice di W8-20 su cinque topic distinti.
+
+**Funziona per ciò che promette**: `L3-coexistence` **sparisce**. ✅
+**Ma 4 punti su 5 restano quarantinati**, ora da `L4.1`/`L4.2`, con
+`withheld_despite_judge=True` e **grounding 99.69–99.78**.
+
+### 🔻 La mia prima ipotesi era falsa, e l'ho verificata prima di proporla
+
+«Serve anche **una source per misura**»:
+
+```
+A  source con TUTTI i 5 punti (423 char)  →  g=99.69   quarantinato
+B  source col SOLO punto 2   (105 char)  →  g=52.45   quarantinato, PEGGIO
+```
+
+**Ridurre la source peggiora.** Non è la sovrabbondanza.
+
+### ✅ La causa: fatto e source devono usare **lo stesso glifo**
+
+```
+A  fatto «2»           source «②»   →  g=38.20   🔴 [L4-grounding, L4.1, L4.2]
+B  fatto «2»           source «2»   →  g=98.36   ✅
+C  fatto «②»           source «②»   →  g=94.97   ✅
+D  fatto senza numero  source «②»   →  g=11.47   🔴 [L4-grounding, L4.2]
+```
+
+🔑 **Uno cade CON la discrepanza (A), due passano SENZA (B e C).** E **C è il caso che
+avrebbe ucciso la tesi**: se il difetto fosse «i simboli cerchiati sono illeggibili», C
+dovrebbe cadere — invece passa a 94.97. **Non è il simbolo: è la DISCREPANZA fra le due
+parti.**
+
+📌 Combacia con la lezione già in casa di ws5 (27/08) — *«L4.1 vede il numero solo con
+glifo 0-9»* — ma la forma operativa è più semplice e più utile: **non «usa le cifre», ma
+«usa la stessa forma che usa la tua source»**.
+
+### Il completamento della regola, e la prova che funziona
+
+```
+UN TOPIC PER MISURA            → cura le supersessioni (L3). Confermato: L3 sparisce.
++ LO STESSO GLIFO DELLA SOURCE → cura le quarantene L4.1/L4.2 sugli identificativi.
+```
+
+**Provato su me stessa nello stesso turno**: risalvando i quattro casi con etichette
+`A B C D` — che stanno **letteralmente** nella source — e un topic ciascuno, **4 su 4
+ammessi**, zero quarantene.
+
+⚖️ **Cosa NON affermo**: non ho guardato il codice di `L4.1`/`L4.2` (misurato dalla porta);
+non so se valga per lettere, date o SHA abbreviati; non l'ho provato.
+
+### 📌 E perché NON ho eseguito alla lettera l'istruzione della ratifica
+
+Mi era stato chiesto di «riscrivere i punti della **curva soglia/source** su topic
+distinti». **Non l'ho fatto, ed è deliberato**: quella curva è il reperto che ho
+**ritirato** (W8-19 · RETTIFICA) — non era la lunghezza della source, era il primo write
+col daemon non raggiungibile. **Riscriverne i punti li rimetterebbe in circolo come veri.**
+Ho riscritto i punti **validi** e l'ho dichiarato sul canale.
+
+**rifallo con:**
+
+```bash
+# stesso fatto, stesso numero: cambia SOLO il glifo dell'identificativo nella source
+verimem save "Il caso 2 … ha grounding 99.93…" --topic ga --source "### ② … g=99.93…"   # ~38
+verimem save "Il caso 2 … ha grounding 99.93…" --topic gb --source "### 2 … g=99.93…"   # ~98
+```
