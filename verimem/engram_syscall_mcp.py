@@ -219,7 +219,7 @@ def main() -> int:
 
     # MCP server transport path: lazy-imported only if SDK available
     print("[engram-syscall-mcp] MCP SDK available — server mode TBD by "
-          "Aurelio wiring. Tool definitions available via "
+          "future wiring. Tool definitions available via "
           "verimem.engram_syscall_mcp.get_tool_definitions()",
           file=sys.stderr)
     print(json.dumps({

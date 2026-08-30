@@ -2790,7 +2790,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "neighbours (cosine on embedding). User reviews and "
                 "applies via direct re-store or hippo_remember overwrite. "
                 "Resolves P5 + topic-pollution metric from cycle #84 "
-                "(86/836 = 10.3% Aurelio corpus). Pure-local."
+                "(86/836 = 10.3% of the measured corpus). Pure-local."
             ),
             inputSchema={
                 "type": "object",
