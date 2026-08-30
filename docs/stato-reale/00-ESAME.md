@@ -12596,3 +12596,48 @@ prezzo di ogni passo, in punti percentuali:
 Le sonde restano **inglesi** e costruite con **un criterio mio** (dichiarato sopra con le perdite). Le 300 sono **le prime nell'ordine del file**, non un campione casuale.
 Il controllo sano misura il gate **senza retriever** (coppia domanda ↔ frase che risponde): è il **tetto** del gate, non la porta intera. Che coincida col richiamo alla porta suggerisce che il retriever non sia il collo di bottiglia — coerente con **104/114** candidati recuperati — ma sono **due misure diverse** e non le accosto oltre questa osservazione.
 La simulazione non esegue il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata. Vale con `k=5`, su questo corpus. **Io misuro, non curo**: il cambio è questo, la scelta non è mia.
+
+**㊽ `52` — undici dei miei settantasette fatti si sono mangiati fra loro, e l'etichetta del ritiro
+afferma una verifica che non avviene.** Nato da un dettaglio trovato mentre chiudevo un limite di
+ws2: il fatto che avevo ripristinato nella copia era **mio**, superato da **un altro mio fatto della
+stessa notte**.
+📊 **Dei 77 fatti scritti stanotte: 11 già superseduti, e 11 su 11 da un ALTRO MIO fatto.**
+**Il 14,3% del lavoro di una notte ritirato da sé stesso** — non da una correzione altrui, ma da un
+altro **pezzo della stessa misura**, scritto a secondi di distanza:
+
+| ritirato | dal fatto | di che parlavano |
+|---|---|---|
+| `1e70a6c03664` | `4a6e084ed45f` | doctor: «nessun encode daemon» / «16322 vettori a 768d» |
+| `433219596cc9` | `d0ca371c09e8` | le 120 query del banco / le proposizioni IT-EN |
+| `cee5a51bff75` | `378af4427a05` | L4.1 ha fermato 118 fatti / L1 ne ha fermati 2 |
+
+**Nessuna coppia si contraddice**: sono le due metà di una misura, spezzate **perché O3 lo impone**
+(*«frase con più affermazioni → spezza»*).
+🔎 **L'etichetta dice «same-source» e le firme dicono il contrario**: due ritiri su tre hanno
+`source_signature` **diverse** (`sha256:95dc6921…` vs `sha256:421dd9e8…`; `sha256:4c767e75…` vs
+`sha256:c8394c88…`), il terzo uguali.
+⚖️ **E qui il prodotto va difeso, perché la causa non è un errore:**
+· la ragione è una **costante** — `client.py:811` e `mcp_server.py:13418` registrano
+`reason="same-source evolution"` per **ogni** supersessione decisa dal gate, senza confrontare le
+firme;
+· **`is_same_source` non guarda il testo della fonte**: il docstring (`supersession_policy.py:168`)
+dice *«Due fatti vengono dalla **stessa penna**? (la `canonical_source` del loro `verified_by`)»*;
+· **misurato su fatti veri**: tutti i nostri hanno `canonical_source='user'` ⇒ **`is_same_source` è
+`True` su tutte e 10 le coppie testate**, anche fra `verified_by` diversi;
+· **ed è per disegno**: il docstring racconta che l'asse dell'autore fu **ritirato dopo tre ore** con
+una matrice alla mano (curava «bruno archivia anna», rompeva «la correzione di un collega non
+sovrascrive»), e che l'asse che conta è **l'entità** (`_entita_diverse`).
+> 🔑 **Il difetto non è che la funzione sbagli: è che il nome e l'etichetta promettono una verifica
+> che non avviene.** Chi legge `same-source evolution` crede che le fonti fossero la stessa; in due
+> casi su tre non lo erano, e il dato per accorgersene — `source_signature` — **è nella riga accanto,
+> inusato.**
+🔗 **Cosa aggiungo alla lezione che avevamo già** (*«pezzi con valori diversi = evoluzione, 1/3
+vivo»*): **il meccanismo**. Non è il numero da solo — è il numero **più** una `is_same_source` che
+non può dire di no, e `_entita_diverse` che non distingue pezzi della stessa misura.
+⛔ **Cosa NON propongo**: disattivare le supersessioni — il `41` misura che scelgono **sei volte
+meglio del caso**, e il `44` mostra cosa succede quando un criterio smette di discriminare.
+💡 **Cosa propongo, ed è piccolo**: scrivere nel registro **la firma delle due fonti** accanto alla
+ragione. Il dato c'è già.
+📌 **Ipotesi non verificata**: un pezzo che **nomina la propria condizione** («con il daemon
+assente…») dà a `_entita_diverse` qualcosa da distinguere; uno che dice solo il numero no. **Va
+falsificata.**
