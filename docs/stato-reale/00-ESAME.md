@@ -12546,3 +12546,52 @@ non contiene i due punti. Vale per chiunque qui interroghi `.github/`, `.claude/
     MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.github/workflows/publish.yml" | wc -l
     MSYS_NO_PATHCONV=1 git show "origin/main:.github/workflows/publish.yml"          | wc -l
     git ls-tree -r --name-only origin/hotfix/0.7.1 | grep controlla_
+
+---
+
+## ws1 · 31/08 00:27 — CON 300 SONDE INVECE DI 18 IL «COSTO ZERO» SPARISCE: ABBASSARE IL FLOOR COSTA DA SUBITO, E IL PAREGGIO È A −4,0
+
+**Livello**: la porta pubblica; candidati dalla recall vera, soglia simulata contando i logit `>= t` (fedele a `_apply_ce_gate`). **Perimetro**: **114 domande** con la risposta nello store + **300 sonde** costruite dal dump da 10 000 item; corpus 401 frasi di terzi, inglese. **Istante**: 31/08 00:23–00:27. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+**Paga il limite che avevo dichiarato io alle 00:18**: *«n(B)=18 è l'unico numero che non regge il peso di una decisione»*.
+
+**Criterio delle sonde, con le perdite contate** (protocollo README: *probe questions whose knowledge is never ingested*): domanda ≤110 char · `right_answer` in **una sola** frase del proprio `knowledge` · **nessuna** frase del suo knowledge già nel corpus · **la sua risposta non compare in nessuna frase del corpus, verificato**. Su **1088 item esaminati**: 300 tenuti, 356 domanda lunga, 325 risposta non in una sola frase, 17 knowledge già nel corpus, **90 risposta presente nel corpus** (la contaminazione che avevo imparato a verificare alle 00:14).
+
+### 🟢 IL CONTROLLO SANO PASSA — e replica il richiamo su una popolazione indipendente
+
+Giudicando ogni sonda contro **la frase del suo stesso knowledge che contiene la risposta**, il gate l'ammetterebbe in **151/300 = 50,3%** dei casi a soglia `0,0`. È **lo stesso numero del richiamo misurato alle 22:57 sulle 114 domande (56/114 = 49,1%)**, su una popolazione **indipendente** e con n quasi triplo — l'intervallo scende da ±~9 a **±~5,7 punti**.
+
+> **Il richiamo del gate alla soglia attuale è ~50%, confermato su due popolazioni disgiunte.**
+
+### 🔴 E IL «COSTO ZERO» ERA UN ARTEFATTO DI n=18
+
+```
+ soglia |  giuste   astenute |   sonde servite
+   +0,0 | 56/114     35/114  |    6/300  ( 2,0%)   <== floor attuale
+   -1,0 | 62/114     29/114  |   13/300  ( 4,3%)
+   -2,0 | 68/114     23/114  |   22/300  ( 7,3%)
+   -3,0 | 77/114     15/114  |   47/300  (15,7%)
+   -4,0 | 86/114      8/114  |   88/300  (29,3%)
+   -5,0 | 95/114      4/114  |  157/300  (52,3%)
+```
+
+Alle 00:18, con 18 sonde, le sonde servite restavano **1/18 fino a −2,0** e sembrava un guadagno gratuito. **Con 300 sonde il costo c'è già al primo passo**: +7 sonde a −1,0, **+16 a −2,0**.
+
+```
+prezzo di ogni passo, in punti percentuali:
+          richiamo   fabbricazione   rapporto
+   -1,0     +5,3         +2,3          2,3 : 1
+   -2,0    +10,5         +5,3          2,0 : 1
+   -3,0    +18,4        +13,7          1,3 : 1
+   -4,0    +26,3        +27,3          1,0 : 1   <== il pareggio
+   -5,0    +34,2        +50,3          0,7 : 1
+```
+
+> **Fino a −3,0 ogni punto di richiamo guadagnato costa meno di un punto di fabbricazione; a −4,0 si pareggia; sotto, si perde.** Non esiste un punto «gratuito»: esiste un **cambio**, e a −2,0 il cambio è **due a uno**.
+
+**Questo corregge la lettura della cella delle 00:18**: quel «+12 risposte con le sonde servite ferme a 1/18» era vero come conteggio e **fuorviante come conclusione** — l'avevo scritto io stesso nel «cosa non prova», e la misura su n=300 mi dà ragione nel dubbio, non nel titolo.
+
+### Cosa questi dati NON provano
+Le sonde restano **inglesi** e costruite con **un criterio mio** (dichiarato sopra con le perdite). Le 300 sono **le prime nell'ordine del file**, non un campione casuale.
+Il controllo sano misura il gate **senza retriever** (coppia domanda ↔ frase che risponde): è il **tetto** del gate, non la porta intera. Che coincida col richiamo alla porta suggerisce che il retriever non sia il collo di bottiglia — coerente con **104/114** candidati recuperati — ma sono **due misure diverse** e non le accosto oltre questa osservazione.
+La simulazione non esegue il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata. Vale con `k=5`, su questo corpus. **Io misuro, non curo**: il cambio è questo, la scelta non è mia.
