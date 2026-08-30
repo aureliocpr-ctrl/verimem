@@ -181,21 +181,44 @@ jobs:
       # sono ancora partiti — l'unico punto in cui la domanda «cosa stiamo
       # spedendo?» ha una risposta.
       #
-      # ⚖️ SOLO IL WHEEL, ed e' la separazione che ha reso la scelta decidibile
-      # (misura di ws2 sugli artefatti di `0dc18f24`)::
+      # ⚖️ SOLO IL WHEEL, ed e' la separazione che ha reso la scelta decidibile.
       #
-      #     controlla_registro  WHEEL   EXIT=0   pulito        <- cablato
-      #     controlla_promesse  WHEEL   EXIT=0                 <- cablato
+      # ⏱️ I NUMERI QUI SOTTO SONO UNA FOTO, NON LO STATO. Misura di ws2 sugli
+      # artefatti di `0dc18f24`, **valida a quella data e su quell'albero**::
+      #
+      #     controlla_registro  WHEEL   EXIT=0   pulito
+      #     controlla_promesse  WHEEL   EXIT=0
       #     controlla_registro  SDIST   EXIT=1   321 identificativi in 129 file
       #                                          + 5 nomi propri in 4 file
+      #
+      # 🔴 NON SONO PIU' VERI. Rimisurati il 2026-08-30 alle 18:03 su `a6ea383a`:
+      #
+      #     controlla_registro  WHEEL   EXIT=1   2 nomi propri in 2 file   <- il veto FERMA
+      #     controlla_registro  SDIST   EXIT=1   1 in 1 file
+      #
+      # ⇒ **I due numeri si sono INVERTITI**: il wheel, che era la superficie
+      # pulita su cui accendere a costo zero, oggi e' quella che ferma; l'sdist,
+      # che era il debito da 321, e' sceso a 1. La decisione qui sotto puo'
+      # restare valida — ma **la sua motivazione scritta non lo e' piu'**, e chi
+      # la rileggesse per decidere partirebbe da premesse rovesciate.
+      #
+      # 📌 PER I NUMERI DI ADESSO NON LEGGERE QUESTO COMMENTO, ESEGUILO::
+      #
+      #     python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py
+      #
+      # E' l'unico modo onesto: un numero cablato in un commento invecchia in
+      # silenzio e nessuno se ne accorge finche' non decide su di lui.
       #
       # ⇒ Il wheel e' cio' che l'utente INSTALLA, ed e' gia' verde: accenderlo
       # costa zero e protegge il percorso vero. L'sdist e' un debito con un
       # numero, non un allarme da spegnere accendendo un blocco che ferma
       # qualunque rilascio.
-      # ⚠️ E IL DEBITO CRESCE: 303 identificativi alle 11:58, 321 alle 15:48 —
+      # ⚠️ IL DEBITO CRESCEVA: 303 identificativi alle 11:58, 321 alle 15:48 —
       # +18 righe e +3 file in quattro ore, perche' scriviamo referti e commenti
-      # mentre lavoriamo. Un blocco secco sull'sdist costa piu' domani di oggi:
+      # mentre lavoriamo.
+      # 🔴 La tendenza si e' INVERTITA: il 2026-08-30 alle 18:03 l'sdist e' a
+      # **1 in 1 file**. Una tendenza invecchia peggio di un numero — un numero
+      # sbagliato si controlla, una tendenza sbagliata orienta una decisione. Un blocco secco sull'sdist costa piu' domani di oggi:
       # la mossa che ws2 indica e' accendere sulle righe NUOVE, per fermare la
       # crescita invece di curare il passato. Non e' questa riga, ed e' sua.
       # ⚠️ IL NOME DICEVA «ne' promesse scoperte», e quello NON e' un veto.
@@ -257,7 +280,14 @@ jobs:
           if python scripts/controlla_registro.py "$s"; then
             echo "SDIST PULITO — e allora il veto si puo' accendere: e' il momento di parlarne."
           else
-            echo "::warning::l'sdist esce con identificativi interni (elenco sopra). Il wheel e' pulito; questo NON ferma la pubblicazione."
+            # ⚠️ «il wheel e' pulito» qui NON e' una misura: e' una conseguenza.
+            # Il veto sul wheel gira PRIMA (`controlla_registro.py "$w"`, che
+            # esce non-zero e ferma il job): se siamo arrivati fin qui, il wheel
+            # e' passato. La frase e' vera **per quell'invariante**, non perche'
+            # qualcuno la verifichi in questo punto — e se un giorno quel veto
+            # venisse spostato o reso non-bloccante, diventerebbe falsa in
+            # silenzio. Percio' dice PERCHE' e' vera, invece di affermarlo.
+            echo "::warning::l'sdist esce con identificativi interni (elenco sopra). Il wheel ha gia' superato il veto qui sopra, altrimenti il job sarebbe fermo; questo avviso NON ferma la pubblicazione."
           fi
 
       - name: Publish to PyPI (OIDC — no token)
