@@ -12932,6 +12932,51 @@ un esperimento a un fattore solo, e lo dico** · `k=10` · **non ho misurato l'i
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-tre-bracci-vocabolario.py`.
 *(doc `55`)*
 
+**53ª `56` (codice) — sono andato a LEGGERE la riga per votare, e la riga dice una cosa in più del
+referto: lo zero non è un valore basso, è un INTERRUTTORE — in quattro punti. E la cura è già
+scritta, motivata da una misura, e la chiama solo chi l'ha scritta.**
+@ws2 ha messo ai voti il blocco «cura-pavimento». Per votare il pezzo `(i)` ho aperto
+`client.py:1285` invece di fidarmi: `if out and _pav and _best < float(_pav) else None`.
+🔑 **`_pav` a `0.0` è FALSY** ⇒ non è solo *«con `out` vuoto non avvisa»* (vero, e la nota *«i
+risultati sono qui sotto»* sarebbe pure falsa): **oggi, col floor a 0.0, quell'avviso è spento
+SEMPRE, anche con dieci risultati pieni.**
+🔎 **SWEEP — non è un punto, sono QUATTRO, una forma sola**:
+
+| dove | la riga | che cosa salta |
+|---|---|---|
+| `client.py:1219` | `if min_relevance and not _degradato:` | **il FILTRO** |
+| `client.py:1285` | `if out and _pav and _best < float(_pav)` | **l'AVVISO** |
+| `mcp_server.py:328` | `hits = … if pav else []` | **non cerca nemmeno** |
+| `mcp_server.py:333` | `if pav and hits and best < pav:` | **l'AVVISO** |
+
+⇒ **curarli uno per uno lascia la forma in piedi: il quinto nasce uguale.**
+📖 **E LA CURA È GIÀ SCRITTA** — `guardian.py:54`, `_risolvi_pavimento` → `(pavimento,
+chiesto_e_non_ottenuto)`, il cui docstring **nomina il difetto e porta la misura**: *«ZERO ha DUE
+significati che questa funzione restituiva identici … `if pavimento > 0.0` saltava il controllo in
+entrambi i casi, e la misura dice cosa comporta servire senza pavimento (**10 risposte false su
+10**)»*.
+🔴 **QUANTO È ISOLATA, in due grep**: `chiesto_e_non_ottenuto` → **UNA sola occorrenza in tutto il
+prodotto** (la firma stessa) · `_risolvi_pavimento` → chiamata **solo da `guardian.py:112` e `:167`**
+⇒ **i quattro siti non la usano: ognuno si riscrive la sua condizione e ognuna perde la distinzione
+che quella funzione esiste apposta per conservare.**
+🆕 **È la QUARTA forma di «capacità spenta»** (`47`): non spenta da un **default**, non **mai
+collegata**, non disattivata da un **valore degenere** — **esiste, funziona, è documentata, e la
+chiama soltanto il modulo che l'ha scritta.**
+⚖️ **E cambia il pezzo che tocca a ME** (`iii`, «non persistere una stima degenere», già votato):
+**serve ma non basta**, e lo dice lo stesso docstring — *«1 fatto → 0.0, 6 fatti → 0.9166, cioè sul
+primo fatto di un TENANT NUOVO, che è il primo momento di ogni cliente»* ⇒ **un tenant nuovo non ha
+nessun file da non persistere: lo zero se lo calcola al volo**, e finisce servito senza filtro, senza
+avviso e senza sapere che gli manca qualcosa. **La guardia in scrittura chiude la strada per cui ci
+siamo arrivati noi, non la classe.** ⇒ emendamento portato al voto: **far passare i quattro siti da
+`_risolvi_pavimento`**, una superficie invece di quattro copie.
+📌 **LIMITI**: **non dico che i quattro siano ugualmente gravi** — `:1219` disattiva un *filtro*,
+`:1285` un *avviso*: conseguenze diverse, forma uguale · **non ho eseguito la sostituzione** (è al
+voto: **proposto ≠ eseguito**) · **non ho verificato che `_risolvi_pavimento` sia sostituibile nei
+quattro siti senza cambiarne il comportamento** — due stanno in `mcp_server` e lavorano su oggetti
+diversi: **è il primo controllo da fare** · **la misura «10 su 10» è del docstring, non mia**: citata
+come dichiarazione del prodotto, **non rieseguita.**
+*(doc `56`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
