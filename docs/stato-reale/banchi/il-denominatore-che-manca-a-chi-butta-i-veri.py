@@ -178,7 +178,56 @@ def main() -> int:
     print("     quindi il conto sui veri e' leggibile.")
     _verdetto(righe_tab, v["solo_lui"],  # type: ignore[arg-type]
               int(v["negativi"]))
+    _rendimento(veri=v, falsi=f)
     return 0
+
+
+def _rendimento(*, veri: dict, falsi: dict) -> None:
+    """Quanto RENDE ogni layer: falsi fermati contro veri persi, ATTRIBUIBILI.
+
+    ⚠️ Aggiunto il 30/08 alle 21:13 perche' il banco aveva **la tabella dei
+    veri e non quella dei falsi**: e' la lezione «misura ENTRAMBE le
+    popolazioni» applicata al totale ma **non per layer**, che e' il livello a
+    cui si decide una cura.
+
+    🔑 Il rapporto che conta e' fra numeri **attribuibili**, non fra numeri
+    lordi: un layer che ferma cento falsi gia' bocciati dal moat non rende
+    nulla, e uno che perde dodici veri che il moat lasciava passare costa
+    dodici. Il rendimento lordo (`fermati / persi`) mette insieme le due cose
+    e da' un rapporto che sembra informativo e non lo e'.
+    """
+    print("\n  == QUANTO RENDE OGNI LAYER, su numeri ATTRIBUIBILI")
+    print("     (falsi che il moat NON bocciava · veri che il moat NON"
+          " bocciava)")
+    sv: Counter = veri["solo_lui"]
+    sf: Counter = falsi["solo_lui"]
+    nomi = sorted(set(sv) | set(sf), key=lambda k: -(sf.get(k, 0)))
+    if not nomi:
+        print("     nessun layer ha fermato qualcosa che il moat lasciasse"
+              " passare.")
+        return
+    print(f"\n     {'layer':<28}{'falsi SUOI':>12}{'veri SUOI':>11}"
+          f"{'resa':>10}")
+    for lay in nomi:
+        buoni, cattivi = sf.get(lay, 0), sv.get(lay, 0)
+        if not buoni and not cattivi:
+            continue
+        if cattivi == 0:
+            resa = "solo utile"
+        elif buoni == 0:
+            resa = "SOLO DANNO"
+        else:
+            resa = f"{buoni / cattivi:.2f}:1"
+        print(f"     {lay:<28}{buoni:>12}{cattivi:>11}   {resa:>10}")
+    print("\n     ⚠️ «SOLO DANNO» = quel layer non ferma NESSUN falso che il"
+          " moat")
+    print("     lasciasse passare, e perde veri che sarebbero entrati."
+          " Toglierlo")
+    print("     costerebbe zero falsi in piu'. **E' il candidato piu'"
+          " pulito.**")
+    print("     ⚠️ Un layer con pochi casi ha una resa fragile: leggi i due"
+          " numeri,")
+    print("     non il rapporto.")
 
 
 def _tabella(*, sc: Counter, fe: Counter, solo: Counter,
