@@ -273,6 +273,35 @@ Le due metà stanno insieme — **un'affermazione perfetta serve solo a chi la
 legge**, e chi misura senza aver letto rifà il lavoro che il prodotto ha già
 fatto e a volte lo rifà male.
 
+### Due setacci, 1 difetto e 0 — e il secondo zero conta quanto il primo uno
+
+Ho cercato difetti in due modi **sistematici**, non aspettando che emergessero:
+
+| setaccio | segnale cercato | candidati | difetti |
+|---|---|---|---|
+| ① | prosa che **nomina un conteggio** («le due potature», «i tre detector») | 8 | **1** (riga irraggiungibile) |
+| ② | **una nota di cautela contro una funzione** in un chiamante e non negli altri | 7 | **0** |
+
+Il secondo nasce da un'osservazione precisa: *se un chiamante scrive «**I PESI**,
+non `local_ce_available()`», quella nota è la prova che la funzione inganna — e
+che gli altri chiamanti non lo sanno.* Ha funzionato **una volta**
+(`local_ce_available`, due vittime) e **non ha prodotto altro**:
+
+- `client.py:3210` — «*`label(…)` risponde True, il DB contiene …*» → è la
+  **cronaca di una cura già fatta**, non un difetto aperto. *(E la sua forma è
+  la mia: «si scriveva e non si rileggeva» — qualcuno aveva già posto la
+  domanda dell'⑧ su un altro campo.)*
+- `telemetry_analyzer.py:88` — «*`str.isprintable()` non basta*» → **unico
+  chiamante, e applica già la cautela** (`c.isprintable() and c not in
+  _INVISIBILI`).
+- gli altri tre sono **soglie e regex**, non giunture fra componenti.
+
+🔑 **Il segnale è preciso ma raro: è un rilevatore, non un setaccio produttivo.**
+E il bilancio va letto per quello che dice: **cercando attivamente in due modi
+diversi, il repo ha restituito un difetto morto e una giuntura già nota per
+metà.** ⇒ *È più pulito di quanto la caccia suggerisse* — e questo è un
+risultato, non l'assenza di uno.
+
 ## Una regola pratica, che vale oltre questo prodotto
 
 > **Quando un banco stampa `[]` o `0`, la prima ipotesi non è «il prodotto non
