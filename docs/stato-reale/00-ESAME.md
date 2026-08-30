@@ -9116,3 +9116,36 @@ un A/B fra due chiamate nello stesso processo, e non dipende dall'ordine.
 # processo NUOVO, source LUNGA per prima → judged=False; dal secondo save in poi → judged=True
 python -c "import sys; from verimem.cli import main; sys.argv=['verimem','save','<fatto>','--topic','t','--source','<147 char pertinenti>']; main()"
 ```
+
+**㉓ `38` (seguito) — la causa del degrado c'era, la dice la porta di scrittura, e la riparazione
+l'ho vista avvenire.** Correzione alla cella precedente, che dava la causa per ignota. La ricevuta di
+`verimem save` stampa da sola: *«store: encode delegate unavailable → il fatto viene scritto SENZA
+embedding (recall keyword **finché il daemon non torna**)»*, e indica lo strumento
+(`verimem doctor`), che conferma: **`no shared encode daemon — first encode in each process
+cold-loads the model (~20s)`**, fix **`verimem warmup`**. ⇒ **Un banco di recall lanciato senza
+daemon misura il proprio cold start e lo scambia per una proprietà del prodotto**: è quello che ho
+fatto io nel `37` (54 casi su 54 a zero) e stasera nel `38`.
+🔁 **Poi ho visto la riparazione, in dodici minuti, con il prodotto come unico testimone**: alle
+**20:53** `doctor` dava **278 vettori a 0d su 16.308** e *«no encode daemon is running»*; alle
+**21:02** una replica del suo stesso codice (`doctor.py:791-804`, stesso file, `data_dir()` e
+`CONFIG.semantic_db` concordi) contava **16.317 vettori tutti a 768d**; alle **21:05** `doctor`:
+**`all 16322 vectors match … expected 768 (from the running encode daemon)`**. **La promessa della
+ricevuta è stata mantenuta.**
+🪞 **Cinque difetti nel mio misuratore in una sera, non uno nel prodotto**: ① `kind=explain` non
+porta `best` e il mio `or 0.0` ha reso *assente* = *zero* (**279 finti degradati**) ② `explain` nel
+denominatore (3.120 invece di 2.841) ③ ho «falsificato» il cold start usando **lo span degli eventi
+al posto dell'età del processo** ④ ho ripetuto la ricevuta senza verificarla ⑤ e poi, vedendo i
+vettori pieni **dopo** la riparazione, stavo per scrivere che la ricevuta mentiva — la classe
+*«i presidi gridano sul sano»* applicata a un presidio che aveva ragione. **La lezione «un rapporto
+senza istante e finestra inganna» è nostra da settimane: il costo, stavolta, sarebbe stato accusare
+il prodotto di non mantenere una promessa che invece mantiene.**
+🔑 **Resta il reperto del `38`**: `client.py:1229` (`kind=search`, **81%** del traffico) **non
+registra il regime né l'astensione**, mentre gli altri tre punti di emissione registrano
+`abstained`. Il degrado ha una causa, una cura e un'auto-riparazione — e **nessuna traccia nella
+telemetria**.
+
+**rifallo con:**
+
+```bash
+verimem doctor | grep -A3 "daemon\|embedding-model"   # prima e dopo `verimem warmup`
+```
