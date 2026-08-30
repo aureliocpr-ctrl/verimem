@@ -102,9 +102,28 @@ consumatore**.
   informativo, o `decay_run` va messo in un ciclo? Con 120 episodi mai serviti e
   salience media 0,248, il materiale per una prima potatura c'è — ma è una
   decisione, non una misura.
-- **Quello che non ho misurato**: `episode_telemetry` ha **652 righe** contro 470
-  episodi. Più telemetria che episodi: o registra più eventi per episodio, o
-  contiene tracce di episodi non più presenti. Non l'ho aperta.
+- **Il limite che avevo lasciato qui è chiuso, e non era un difetto.**
+  `episode_telemetry` ha 652 righe contro 470 episodi, e sospettavo tracce
+  orfane. Aperta:
+
+```
+telemetria: id=e507a7aa…  "[gemini-call 2026-05-19T18-37-31Z] prompt=rispondi solo: AUDIT-V2-OK"
+episodi   : id=dec9f7fa…  "## REPO MAP (top files by relevance) ### calculator.py"
+
+righe di telemetria il cui id NON è un episodio: 652 = 100,0%
+righe il cui task_text esiste anche fra gli episodi:  0 = 0,0%
+```
+
+  **Non è la telemetria degli episodi: è il registro delle chiamate ai provider
+  LLM**, scritto da `verimem/_call_telemetry.py`. Condivide il file di database
+  con gli episodi e nient'altro — id diversi, testi diversi, periodi diversi
+  (la telemetria è per l'81% di luglio, gli episodi per l'82% di maggio).
+  **Il nome della tabella inganna; il comportamento è corretto.** Un sospetto in
+  meno, e nessuna anomalia.
+
+  *(Dato collaterale, riportato senza giudizio perché non è nel mio perimetro
+  deciderne: le 652 righe registrano chiamate a un provider esterno — 643
+  `success`, 9 `failure`, concentrate fra maggio e luglio, 2 in agosto.)*
 - **Da correggere nell'indice della memoria**: «tier episodi fermo →
   `02d16947285b`» punta a un fatto sulle supersessioni.
 
