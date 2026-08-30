@@ -10825,3 +10825,61 @@ tot=$(gh api ".../ci.yml/runs?status=queued&per_page=1" --jq .total_count)
 gh api ".../ci.yml/runs?status=queued&per_page=100&page=$(( (tot+99)/100 ))" \
   --jq '[.workflow_runs[]|{n:.run_number,c:.created_at}]|sort_by(.c)|.[0:6]'
 ```
+
+**㉟ `48` — 🔴 ventitré minuti senza daemon hanno spento una promessa del README, e resterà spenta.
+Il pezzo lega tutta la notte, e finisce su un file da 32 byte.**
+📢 **La promessa** (README, *Abstention by design*, righe 180-201): *«**MCP SERVES the results and
+flags them — every read carries `sotto_il_pavimento`** (floor, best score, and what it means) **so
+the agent has the yardstick**»*, con tre porte distinte: **gateway/console FILTRANO**, MCP segnala,
+**SDK permissivo di default, «one switch away»**.
+⚖️ **Questo CORREGGE il mio `36`**: il README **dichiara** il default permissivo dell'SDK e ne spiega
+la ragione (un archivio nuovo e quasi vuoto si asterrebbe troppo). **Su quel punto la vetrina è
+onesta e il mio pezzo era ingeneroso.** La promessa sulla porta MCP è un'altra: **ogni lettura porta
+il righello.**
+🔴 **NON LO PORTA.** In tutte le mie letture MCP di stanotte: `ranking`, `trattenuti`,
+`min_relevance`, `items` — **mai `sotto_il_pavimento`**. **Prova diretta**, con `fusion: applied`
+(**non** degradato): query *«come si compra un biglietto ferroviario per Saturno»* ⇒ score **0,8440 ·
+0,8100 · 0,7804** contro pavimento vero **0,8743** ⇒ `best < pav` **vero**, **campo assente**. I tre
+fatti serviti parlavano di Cline e Goose e di un job CI chiamato **`saturno-latest`**, che combacia
+per **omonimia**: *il caso esatto per cui il pavimento esiste.*
+🔎 **Perché** (`mcp_server.py:326-334`): `pav = float(mem._auto_relevance_floor() or 0.0)` e
+`if pav and hits and best < pav:` ⇒ **con `pav = 0` la condizione è sempre falsa**. E il pavimento è
+**persistito**:
+```
+~/.engram/semantic/semantic.db.floor.json
+{"floor": 0.0, "n_facts": 13795}      ← scritto oggi alle 20:32
+```
+🎯 **IL CERCHIO SI CHIUDE**: le **20:32** cadono **dentro la finestra senza encode daemon misurata nel
+`39` con un righello diverso** (**20:30:10-20:53:20**, `doctor` alle 20:53: *no encode daemon is
+running*). Il pavimento si stima con **32 sonde giudicate dal cross-encoder**: senza daemon quelle
+sonde non hanno vettore, la stima ha prodotto **0,0** — **che non è un pavimento basso, è il segno che
+il calcolo non è potuto avvenire** — e **il fallimento è stato scritto su disco come se fosse una
+stima valida**. ⚠️ *Chi abbia chiamato la funzione alle 20:32 non l'ho provato: coincidenza temporale
+esatta e meccanismo coerente, ma è **inferenza**, non osservazione.*
+⏳ **E RESTERÀ SPENTO** (`client.py:2500`): `if abs(n - n_salvato) <= max(1, n_salvato) *
+_FLOOR_DRIFT: return salvato`, con **`_FLOOR_DRIFT = 0.05`** e `n = semantic.count()` = i **non
+quarantinati**: salvato **13.795**, oggi **13.888**, **differenza 93**, soglia **689,8** ⇒ **mancano
+quasi seicento fatti prima che il prodotto rifaccia il conto.**
+> **La condizione di invalidazione guarda quanti fatti ci sono, non se il valore salvato abbia senso.
+> Uno `0.0` è indistinguibile, per quella riga, da una stima legittima.**
+🔑 **Il difetto in una frase**: **un guasto transitorio di 23 minuti si è cristallizzato in un file, e
+ha disattivato una promessa del README per un tempo che dipende da quanti fatti scriveremo.** Nessuno
+se n'è accorto perché — è la classe del `47` — **una capacità spenta non emette segnale**: il payload
+non dice «il pavimento non è calcolabile», semplicemente **non contiene il campo**, e l'assenza di un
+campo non è un errore che qualcuno legga.
+🪞 **E mi riguarda**: `_avvisi_di_lettura` è **la funzione che ho curato io** (campo `ricerca`, commit
+`5219443a`). **Il campo che ho aggiunto funziona; quello accanto è muto, e non me n'ero accorto fino a
+stanotte.** `sotto_il_pavimento` e `trattenuti` furono aggiunti **insieme** l'8/08, in **due `try`
+separati** perché *«un guasto nel primo spegnerebbe silenziosamente il secondo»*: **la precauzione ha
+funzionato** — `trattenuti` parla — **ma nessuno controlla che l'altro parli.**
+⛔ **Non ho cancellato il file** (è il rimedio immediato: un `rm` di 32 byte, poi il prodotto
+ricalcola ~0,87): **è lo store di Aurelio e non mi è stato chiesto.**
+📌 **Non misurato**: se **gateway/console** leggano lo stesso file. Il README dice che **filtrano**:
+con `floor = 0.0` non filtrerebbero nulla, **e lì la promessa è ancora più forte.**
+
+**rifallo con:**
+
+```bash
+cat ~/.engram/semantic/semantic.db.floor.json
+python -c "from verimem.relevance_floor import estimate_relevance_floor; from verimem.semantic import SemanticMemory as S; print(estimate_relevance_floor(S()))"
+```
