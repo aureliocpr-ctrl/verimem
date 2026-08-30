@@ -32,3 +32,41 @@
 - **Due cure sono entrate col processo pieno** (proposta → voti informati →
   ratifica → RED→GREEN falsificato → firma): L1.20-ad-avviso (`5ea77b6d`,
   verde-2-firme, costo 1/70 a verbale) e guardia anti-eco (`275648c0`).
+
+## 2. DIFETTOSO — misurato, riproducibile, con la cura nominata
+- **La famiglia L1 decide con le parole, e sbaglia nei due versi.** Le facce
+  misurate del buco (convergenti da banchi indipendenti): l'auto-eco comprava
+  il perdono (5/5, curato da `275648c0` — guardia in attesa 2ª firma); la
+  riformulazione senza trigger passa (banco D `ef234ae0`, resta per la cura
+  grande); la polisemia perdona ciò che non deve (W7-61); l'etichetta
+  `writer_role='user'` scritta da `verimem save` sulle parole dell'AGENTE
+  spegne L1 sul 59,5% del corpus (b13a9f32 — design, specifica). Il
+  classificatore del carve-out legge 0/8 verbali come third-party: il
+  percorso ON non si attiva mai (W7-60 — è il primo bersaglio della cura
+  grande in corso).
+- **Il claim centrale (C2) regge solo in parte**: sulla tabella 8 classi ×
+  2 lingue le difese scendono a 4/16 quando le celle verdi vengono ALLARGATE
+  (firma ws7 su a252adac). Va rimisurato su HEAD con le due cure dentro
+  (assegnato). L'italiano è meno protetto dell'inglese (elenco radici
+  IT-only per costruzione — lacuna di copertura, distinta da quella di
+  architettura, per decisione ratificata).
+- **Il giudice è bimodale e cieco all'attribuzione**: decide, non gradua
+  (0 valori intermedi su 18 a supporto eroso; 91,8% dei verdetti agli
+  estremi, W2-131); dà ~100 a scambi di soggetto in campo vicino (curva
+  f466e983: eco 81,4 / solo-soggetto 0,2 / campo-lontano 14,7) e la banda
+  40–80 si riempie di rumore posizionale, non di incertezza (79 casi, W7-…);
+  il ramo review quando è percorso costa 141× e fallisce muto (W7-56).
+  Sotto i 21 caratteri dà 100 a un claim E al suo contrario (ws5, 30/08).
+- **Il disaccordo interno non è consegnato**: `withheld_despite_judge` esiste,
+  è derivato e presidiato, ma vive nel journal — 323 write (2,6% delle
+  scritture; 21,4% dei GIUDICATI del corpus) dove giudice e layer hanno detto
+  l'opposto e il chiamante non lo vede; `adjudication` mostra margine +59,97
+  accanto a «quarantined» senza nominare chi ha ribaltato (F3 al voto).
+- **Le porte non sono equivalenti (scacchiera)**: `trattenuti` manca sulla
+  CLI; `recall` ha due significati; MCP rispondeva `[]` in silenzio dove SDK
+  trovava (avviso ora dichiarato, `5219443a`); su MCP-stdio una scrittura CON
+  source non risponde entro 190s contro 28,9s in-process (ws5 — C3/latenza).
+- **La CI si satura da sola**: nel picco ~1 run/min in ingresso contro ~2,6/h
+  in uscita (16:1), 92,2% dei run da commit solo-docs, nessun filtro path;
+  e il verdetto CI descrive un albero di centinaia di commit fa — un verde
+  vecchio non è un verde sul presente (regola: si cita con l'età).
