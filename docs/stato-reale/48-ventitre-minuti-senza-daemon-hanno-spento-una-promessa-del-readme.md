@@ -291,6 +291,32 @@ copia dello store in …\ws6-floor-9vd0ttxz\semantic\semantic.db   (129.4 MB)
   è stata fatta interamente su una copia in `tempdir`, con `HIPPO_DATA_DIR`
   impostata **prima** degli import del prodotto.
 
+  > ⚠️ **RETTIFICA IMPORTANTE, dopo un dato di ws2: cancellare il file NON
+  > BASTA, e da solo può peggiorare.** ws2 ha misurato le tre popolazioni su
+  > domande vere: **dentro dominio 0,840-0,868**, fuori dominio 0,797-0,821,
+  > non-parole fino a 0,834. **Il pavimento auto-calibrato (0,8881) sta SOPRA il
+  > massimo delle risposte buone.** Cancellando il file, il gateway passerebbe
+  > da «non filtra niente» a «**filtra tutto**».
+  >
+  > E la causa è nella calibrazione stessa: `estimate_relevance_floor` prende il
+  > **95° percentile del massimo ottenuto da sonde SCRAMBLATE**
+  > (`relevance_floor.py:210`, `probes = scrambled_probes(...)`). ws2 aveva
+  > osservato, senza spiegarselo, che **le non-parole punteggiano più alto delle
+  > domande vere fuori dominio**: è lo stesso fenomeno — un testo senza
+  > argomento è equidistante da tutto, e il coseno gli assegna punteggi medi
+  > alti invece di penalizzarlo. **Il pavimento è calibrato su una popolazione
+  > che punteggia più alto di quella che deve proteggere.**
+  >
+  > Questo spiega anche il documento 50 (quattro fatti pertinenti a
+  > 0,8388-0,8421, tutti sotto la soglia): non erano un caso sfortunato, stanno
+  > dove la misura di ws2 dice che devono stare.
+  >
+  > **Quindi l'azione non è `rm` e basta: è `rm` più decidere la soglia.**
+  > *(Limiti: 15 query di ws2 scelte da lui, il mio 0,8881 da 32 sonde su copia,
+  > il documento 50 è un caso singolo. Ipotesi coerente con tre misure
+  > indipendenti, non una dimostrazione — e nessuno di noi due propone un
+  > valore.)*
+
   *(Il valore ricalcolato, 0,8881, non coincide con lo 0,8743 del documento 36:
   il corpus è cresciuto nel frattempo. Sono la stessa grandezza a due istanti
   diversi, non due misure in disaccordo.)*
