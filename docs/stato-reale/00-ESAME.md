@@ -11167,3 +11167,74 @@ gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
   --jq '.jobs[]|select(.name|startswith("build"))|"\(.conclusion) \(.started_at) \(.completed_at)"'
 # confronta `started_at` di build con `updated_at` del run: ~20h = servizio, 24h esatte = scadenza
 ```
+
+### 🎯 W8-27 — Previsione **verificata al minuto**, e il cancello ① è chiuso dal **RITARDO**, non da un difetto
+
+> **REGIME** — API GitHub fra le 23:02 e le 23:07 del 30/08, job letti con `started_at`
+> **e** `completed_at`, su tre run serviti (`#1190`, `#1228`, `#1242`).
+> **LIMITE** — tre run. Ma la previsione era **secca e datata prima** della verifica, e i
+> tre tempi caratteristici stanno in quattro minuti: non è un campione, è una regolarità.
+
+### ① La previsione, messa agli atti alle 23:02 e verificata alle 23:05
+
+> «`#1242` deve uscire **o entro ~21:10Z (servizio) o alle 00:47Z (scadenza). Non in
+> mezzo.**»
+
+```
+#1242  chiuso 21:05:21Z   build: success  started 00:47:40 → completed 00:47:52  (12 SECONDI)
+       scarto = 20:17:41   ✅ SERVIZIO — cinque minuti prima del limite indicato
+```
+
+E il tempo caratteristico dei run **serviti**, su tre casi:
+
+```
+#1190  20:13:59        #1228  20:17:04        #1242  20:17:41
+```
+
+### ② Chi li trattiene venti ore: il **terzo** livello, non il lavoro
+
+```
+build (sdist + wheel)        success   12–17 secondi   parte alle 00:38–00:47
+wheel install-from-scratch   success   ~2 minuti       parte alle 20:49–21:02
+```
+
+🔑 **`build` e `wheel` FUNZIONANO**: il pacchetto si costruisce in 12 secondi e si installa
+da zero in 2 minuti. **A tenere aperto il run per venti ore è l'attesa in coda di `wheel`.**
+
+### 🎯 ③ E allora perché quei run sono rossi? I test — **su codice del 28 agosto**
+
+```
+#1190  sha=8157a777  creato 28/08 17:48   test: 5 failure
+#1228  sha=87c559bd  creato 28/08 18:26   test: 5 failure
+#1242  sha=d91239ec  creato 28/08 18:50   test: 6 failure
+```
+
+⇒ **Verdetti su un albero di due giorni fa**, precedente alle cure di oggi — inclusa
+`bd3d0806`, che toglie un rosso.
+
+### ⛔ La conclusione, diversa da come l'avevo scritta stasera
+
+**Il cancello ① non è chiuso da un difetto del prodotto: è chiuso dal RITARDO.**
+
+- `build` ✅ · `wheel` ✅ · i test falliscono **su un albero del 28/08**
+- un run creato **oggi** arriva in fondo **fra ~20 ore**
+- ⇒ **il verdetto sul codice di oggi non esiste ancora**
+
+🔑 **Chi legge «la CI è rossa» sta leggendo una fotografia del 28 agosto.** E non possiamo
+sapere se i test siano verdi adesso prima di domani sera.
+
+### 📌 Previsione, agli atti alle 23:06 — e verifica il MIO censimento
+
+I run creati **oggi** che arriveranno in fondo devono mostrare **al più 2 test falliti**
+(i due `XPASS(strict)` di regime di W8-16), non 5-6 — se il censimento delle 14:10 era
+giusto (1 rosso reale curato + 2 già spariti + 2 di regime) e se `bd3d0806` regge.
+**Se ne mostrano ancora 5-6, il mio censimento era sbagliato.**
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=completed&per_page=5" \
+  --jq '.workflow_runs[]|select(.created_at>"2026-08-30")|"\(.run_number) \(.head_sha[0:8]) \(.conclusion)"'
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
+  --jq '[.jobs[]|select(.name|startswith("test"))|.conclusion]|group_by(.)|map({(.[0]):length})'
+```
