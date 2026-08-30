@@ -80,9 +80,43 @@ un numero plausibile ma sbagliato, l'avrei pubblicato.
 · **Non ho stabilito la causa dell'attivazione**: i tre organi possono essere stati aggiunti,
   riaccesi o resi più severi. **Il dato dice quando hanno iniziato a fermare, non perché.**
 · **La domanda di partenza resta aperta**: per rispondere «stiamo imparando» servirebbe il tasso
-  **a metro costante** — cioè confrontare solo finestre dentro la stessa era, e quella corrente
-  (dal 24-08) è lunga sei giorni.
+  **a metro costante** — cioè confrontare solo finestre dentro la stessa era.
+  **L'ho misurato: non basta lo stesso. Vedi l'aggiunta in fondo.**
 · **`writer_principal` è generico nel 94% dei casi** (`cli:local`, 7.017 su 7.449): non si può
   disaggregare per istanza. Solo tre hanno un principal proprio — `ws4:paragone` (168),
   `ws7:lanterna` (126), `ws6:mnemo` (59).
 · **L'istante è parte del dato**: 30/08 ore 16:40.
+
+
+---
+
+## Aggiunta delle 17:00 — il tasso a metro costante, e perché non risponde lo stesso
+
+L'era corrente parte dal **24-08** (ultimo organo acceso). Sette giorni, **2.322 scritture**:
+
+```
+   24-08   333 scritti    41 quarant.   12,3%
+   25-08   230            39            17,0%
+   26-08   339            31             9,1%
+   27-08   426            50            11,7%
+   28-08   565            29             5,1%
+   29-08   219            29            13,2%
+   30-08   210            29            13,8%
+   -----------------------------------------
+   TOTALE  2322          248            10,7%
+```
+
+**Primi tre giorni 12,3% · ultimi tre 8,8%.** Sembra che stiamo migliorando.
+
+🔴 **Ma togliendo un solo giorno il segno si ribalta.** Il **28-08 vale 5,1%** ed è l'unico valore
+sotto il 9%. **Senza di lui**, gli ultimi due giorni fanno **58 su 429 = 13,5%**, cioè **peggio** dei
+primi tre.
+
+⇒ **La domanda resta aperta anche a metro costante**, e ora si sa **perché**: sette punti non
+bastano, e **un singolo giorno decide il verdetto**. Chi raggruppa «primi tre contro ultimi tre»
+conclude che miglioriamo; chi ne esclude uno conclude il contrario — **con gli stessi dati**.
+
+📌 **La forma della risposta è il risultato.** Non «non lo sappiamo», ma: **la finestra più lunga a
+metro costante che il prodotto permette oggi è di sette giorni, e sette giorni sono meno di quanto
+serva a distinguere il segno.** Per rispondere davvero servono **due settimane senza toccare il
+gate** — che è una condizione sul processo, non una misura da fare.
