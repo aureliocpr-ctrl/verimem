@@ -77,8 +77,34 @@ risultato è stato **scritto su disco come se fosse una stima valida**.
 
 *(Quello che non posso provare direttamente: chi abbia chiamato la funzione alle
 20:32. Non ho un log di quella chiamata. La coincidenza temporale con la
-finestra misurata nel documento 39 è esatta e il meccanismo è coerente, ma lo
-dichiaro come inferenza, non come osservazione.)*
+finestra misurata nel documento 39 è esatta e il meccanismo è coerente, ma
+l'attribuzione resta un'inferenza, non un'osservazione.)*
+
+**Il meccanismo però è documentato dal prodotto stesso, in un terzo posto.**
+Cercando altri file di stato scritti quella sera ho trovato
+`~/.engram/consolidate_last.json`, **scritto alle 20:45** — dentro la stessa
+finestra:
+
+```json
+{"consolidate": {"clusters_detected": 133, "masters_proposed": 11,
+                 "masters_persisted": 11, …},
+ "heal_err": "encode daemon unavailable and in-process cold-load is disabled
+              (HIPPO_ENCODE_DELEGATE_ONLY=1) — call…"}
+```
+
+Due cose, entrambe verifiche incrociate di misure fatte con altri righelli:
+
+- **`heal_err` è il messaggio esatto** di `verimem/embedding.py:283`, che il
+  documento 38 aveva trovato leggendo il codice. Non è più solo un'ipotesi sul
+  perché il calcolo fallisse: **in quella finestra il prodotto riceveva
+  davvero quell'eccezione, e l'ha registrata.**
+- **`masters_persisted: 11`** — e il documento 39, contando i fatti nello store,
+  aveva trovato che il blocco 20:30:10-20:53:20 conteneva «54 fatti: **11
+  MASTER** e 43 di lavoro». **Gli undici MASTER sono questo consolidamento**,
+  girato mentre l'encoding era rotto.
+
+Tre strade diverse — gli eventi del journal, i fatti nello store, i file di
+stato — che si incontrano sulla stessa finestra di ventitré minuti.
 
 ## E resterà spento
 
