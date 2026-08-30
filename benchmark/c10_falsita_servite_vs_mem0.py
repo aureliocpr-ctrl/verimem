@@ -150,7 +150,12 @@ def main() -> int:
     falsi_ammessi = [e for e in falsi if servito(e)]
     veri_persi = [e for e in veri if not servito(e)]
 
-    print(f"\n  === VERIMEM su HaluEval QA heldout — {len(item)} item, {len(esiti)} claim ===")
+    #: il nome della popolazione si LEGGE dalla variabile, non si scrive a mano:
+    #: questa riga ha stampato «HaluEval QA heldout» per due esecuzioni intere
+    #: fatte su truthfulqa, perche' era una costante rimasta dal primo giro.
+    #: Un log che dichiara la popolazione sbagliata e' il difetto che passiamo
+    #: le giornate a smontare — con l'aggravante che il numero era giusto.
+    print(f"\n  === VERIMEM su {a.popolazione} ({f_nome}) — {len(esiti)} claim ===")
     print(f"  faccia A  falsi AMMESSI (serviti):  {len(falsi_ammessi):4}/{len(falsi):<4} "
           f"= {100 * len(falsi_ammessi) / max(1, len(falsi)):5.1f}%")
     print(f"  faccia B  veri PERSI (quarantinati):{len(veri_persi):4}/{len(veri):<4} "
