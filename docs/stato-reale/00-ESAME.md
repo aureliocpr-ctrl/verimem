@@ -12288,3 +12288,60 @@ sarebbe il difetto che troviamo ogni giorno.
 🤝 **Quattro istanze sullo stesso reperto, con prove che non si sovrappongono**: ws3 il metodo non
 esposto · ws2 la via corretta già in uso **e** la banda dei punteggi · io la prova alla porta, le due
 cure verificate e la calibrazione sul rumore. **Nessuno di noi aveva il quadro da solo.**
+
+---
+
+## W8-33 — L'ultimo verde è del **25 agosto**, e rilasciare da lì costa **1798 righe di cure**
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).** Chiude il limite dichiarato in W8-32.
+
+### ① Il verde più recente su `main`
+
+    total_count (success, branch=main): 61
+      #941  18e434e3  creato 2026-08-25T20:26  chiuso 2026-08-25T23:05   ← IL PIÙ RECENTE
+    commit da 18e434e3 a origin/main: 1589
+
+⇒ **Dal 25 agosto alle 22:26 non c'è più stato un run verde su `main`.** Il `success`
+fermo a **98** che vedevo immobile tutto il giorno non era un plateau: **era la fine della
+serie.**
+
+### ② Cosa costa rilasciare da lì — il numero che esclude la scorciatoia
+
+    commit fra 18e434e3 e HEAD:                   1589
+    di cui toccano il pacchetto:                    77   (4,8%)
+    file di produzione cambiati: 24, +1798 / -150
+
+    +269  verimem/mcp_server.py        +148  verimem/anti_confab_gate.py
+    +213  verimem/soggetto_valore.py   +126  verimem/quantity_match.py
+    +104  verimem/client.py             +97  verimem/doctor.py
+     +99  verimem/cli.py                +68  verimem/local_grounding.py
+
+⇒ **Sono le cure che il contratto promette.** `anti_confab_gate`, `quantity_match`,
+`local_grounding`, `doctor`: pubblicare da `18e434e3` significa **spedire un prodotto senza
+le cure di cui stiamo scrivendo**. La versione dichiarata è identica (`0.7.6` in entrambi),
+quindi **nulla nel pacchetto direbbe all'utente che gli manca tutto questo.**
+
+### 🎯 ③ E lo stesso numero è l'argomento definitivo per la cura della coda
+
+**77 commit su 1589 toccano il pacchetto: il 4,8%.** Con `paths-ignore` sui percorsi che
+non finiscono nel wheel, in sei giorni sarebbero partiti **77 run invece di 1589** — a
+26 run/ora, **circa tre ore di coda.** La CI avrebbe potuto dare un verdetto **su ogni
+commit del pacchetto, in tempo reale, per sei giorni.**
+
+⇒ È ferma perché **il 95,2% del suo lavoro non riguardava ciò che spediamo.**
+
+### 📌 Il rilascio è a **due** cure di distanza, non a un via
+
+1. **la coda** — senza, nessun commit recente arriva in fondo (W8-29, W8-30);
+2. **i cinque rossi vivi** (W8-31) — con la coda libera, il run arriverebbe in fondo
+   **rosso**. Curare solo la prima non apre il cancello.
+
+⚠️ **Non è mia nessuna delle due**: la prima tocca `.github/`, la seconda è dei
+proprietari dei test. **Io porto i numeri e il banco.**
+
+    rifallo con:
+    gh api ".../ci.yml/runs?status=success&branch=main&per_page=1" \
+       --jq '.total_count, .workflow_runs[0].head_sha'
+    git rev-list --count <ultimo-verde>..origin/main
+    git rev-list --count <ultimo-verde>..origin/main -- verimem engram hippoagent pyproject.toml
+    git diff --stat <ultimo-verde>..origin/main -- verimem engram hippoagent
