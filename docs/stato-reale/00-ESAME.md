@@ -13204,3 +13204,44 @@ Il tetto misurato è **`ril in passi`**: la frase-risposta **specifica** fra i c
 **1/18 sulle sonde a ogni `k`** ha l'intervallo largo di sempre (n=18): il dato solido è che **non peggiora**, non che sia costante.
 Il costo computazionale cresce con `k` (a `k=40` il gate giudica otto volte più coppie) e **non l'ho misurato**: qui parlo solo di qualità, non di latenza.
 Vale in **inglese**, regime di default, su questo corpus.
+
+---
+
+## ws1 · 31/08 01:46 — L'ASTENSIONE È UNA PROPRIETÀ DI UNA PORTA SU DUE: `search` SERVE 18 SONDE SU 18
+
+**Livello**: le porte pubbliche di `Memory`. **Perimetro**: 114 domande + 18 sonde, corpus 401 frasi di terzi, inglese; **`verimem.__version__` = 0.7.6**, cwd = scratchpad, `ENGRAM_MIN_RELEVANCE` **non impostata**. **Istante**: 31/08 01:41–01:45. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Per tutta la notte ho misurato **`explain()`** e ho scritto «il prodotto». **Ho contato una porta sola.**
+
+### 📜 IL CONTRATTO È SCRITTO — non è una svista
+
+`client.py:1104-1108`, docstring di `search`:
+
+> *«`min_relevance` … `None` (default) takes `ENGRAM_MIN_RELEVANCE` **ONLY IF SET** — the switch documented as working "across every surface", which until 2026-08-02 reached only `explain`. **An unset variable leaves this surface exactly as it was**»*
+
+`search` usa `env_floor_if_set()` → `None`; `explain` usa `env_floor()` → `"auto"` → il gate cross-encoder **sempre**. **Due porte, due contratti, per scelta documentata.** *(Le porte pubbliche sono `search`, `ask`, `explain`, `search_documents`: **`recall` non è una porta pubblica**, è `mem.semantic.recall`, il livello sotto — avevo scritto male nel briefing.)*
+
+### 🔴 E QUESTO È CIÒ CHE VEDE L'UTENTE
+
+```
+porta                domande servite   con la risposta   SONDE SERVITE
+explain (dossier)         79/114           56/114 (49%)      1/18
+search  (default)        113/114          103/114 (90%)     18/18
+```
+
+> **`search` non astiene mai: serve qualcosa a tutte e 18 le sonde**, cioè a tutte le domande la cui risposta **non è in memoria**. In cambio restituisce la risposta nel **90%** dei casi contro il **49%** di `explain`.
+
+**Coerenza interna che conferma la lettura**: il **tetto del retriever a `k=5`** misurato alle 01:31 era **103/114** — ed è **esattamente** quanto `search` serve con la risposta. ⇒ **`search` è il tetto del retriever senza filtro**; `explain` è lo stesso tetto meno ciò che il gate respinge.
+
+### ⚖️ Il verso giusto: differenza di contratto, non difetto — ma il claim di copertina non la distingue
+
+`search` è «dammi i candidati», e il suo docstring lo dice. **Non lo chiamo difetto.** Però il `Summary` del pacchetto — quello che `pip show verimem` stampa — recita:
+
+> *«Verified memory for AI agents: gated writes, provenance on every read, bi-temporal history, **abstention instead of hallucination**»*
+
+**Quella promessa vale su `explain`, non su `search`** — e `search` è la superficie che porta il nome della ricerca. Chi legge il Summary e chiama `search` **non riceve l'astensione promessa**: riceve i cinque vicini più prossimi, sempre.
+
+### Cosa questi dati NON provano
+Non ho misurato **`ask`** (router d'intento: classifica la domanda e può fare scan/conteggio invece di top-k) né `search_documents`: **due porte su quattro restano non misurate**, e lo dico invece di generalizzare.
+n(B) = 18 per le sonde: ma qui il dato è **18/18 contro 1/18**, un divario che nessun intervallo a questo n può riassorbire.
+Vale in **inglese**, con `k=5`, su questo corpus da 401 frasi, con `ENGRAM_MIN_RELEVANCE` non impostata — **impostandola, per contratto, `search` adotterebbe il floor**.
