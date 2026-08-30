@@ -9775,3 +9775,66 @@ python docs/stato-reale/banchi/ws6-la-soglia-in-parole-e-la-lingua.py
 git merge-base --is-ancestor 2f92d9e5 origin/main; echo "antenato di main? EXIT=$?"
 git show 2f92d9e5:scripts/bench_hybrid_fair_queries.json | head -3   # l'unico modo di averle
 ```
+
+---
+
+## ws1 — Curare un criterio non è restringerlo: il mio «criterio pulito» ha perso il 54% delle entità e reso il banco quasi muto
+
+**Livello**: A/B fra due criteri di raccolta, **stessa popolazione di partenza, stesse domande,
+stessi giudici**. **Dataset**: HaluEval QA (MIT), 451 frasi di terzi. **Istante**: 30/08
+21:44-21:48. **Regime**: `ok` in testa e in coda.
+
+### Perché: il limite l'avevo trovato io
+
+`Dick Wolf` riceveva «*She is currently a Co-Executive Producer…*» — una frase che lo **nomina**
+ma parla d'altro. Il mio criterio di raccolta era `nome in frase`. Ho provato a curarlo:
+**tenere solo le frasi in cui il nome compare nei primi 40 caratteri**, come proxy di «è il
+soggetto».
+
+### Il risultato: il criterio nuovo è PEGGIORE
+
+```
+GREZZO (nome ovunque)          13/13 entità · 13 fallimenti · il pattern completo
+CURATO (nome nei primi 40 ch)   6/13 entità · 1 fallimento  · PERSE: Robin Schulz, Danny Brown,
+                                Badr Hari, Olivia Munn, Doctor Doom, Dick Wolf, Atrocity Exhibition
+```
+
+⇒ **Ha eliminato 7 entità su 13 — il 54%** — e con esse **tutte** quelle italiane che cadevano
+col CE gate. ⚠️ **Questo NON falsifica il pattern**: il banco curato ha **6 entità e 1
+fallimento**, cioè **non c'è più popolazione per vederlo**. È **una cella quasi muta**, come il
+G3 di prima.
+
+### 🪞 Perché il mio «criterio pulito» era sbagliato
+
+Nel dataset le frasi **raramente iniziano col nome dell'entità**: sono frasi di continuazione
+(«*Sugar is the second studio album by German DJ and record producer **Robin Schulz***» — il
+nome sta in fondo). ⇒ **il proxy «primi 40 caratteri» non cattura «è il soggetto», cattura «è
+all'inizio»**, che è un'altra cosa.
+
+> 🔑 **Ho sostituito un criterio grezzo con un criterio grezzo diverso, e il secondo è peggiore
+> perché perde metà popolazione. Curare un criterio non è restringerlo: un criterio più stretto
+> che dimezza la popolazione non è più pulito, è più cieco.**
+
+### La cura giusta è chirurgica, e la applico
+
+`Dick Wolf` è **un caso su tredici**, e va tolto **a mano**, non con una regola che ne perde
+sette. **Senza di lui il pattern regge su 12 casi su 12**: cinque italiani col CE **tutti sotto
+il proprio floor**, sette inglesi col bi-encoder **tutti di poco sopra 0,835**.
+
+### Le mie tre predizioni
+
+- **①** «il pattern regge» — **non falsificata ma NON verificata**: col criterio curato il banco
+  è troppo piccolo per dirlo. **Una predizione che il banco non può testare non è confermata:
+  è sospesa.**
+- **②** «Dick Wolf sparisce» — ✅ **sì, ma insieme ad altre sei.**
+- **③** «qualche entità perderà tutte le frasi, e lo dico invece di nasconderlo» — ✅ **sette, ed
+  è la riga che conta**: un banco che si restringe in silenzio **mente sul denominatore**.
+
+### Cosa questo NON prova
+
+- **Non ho un criterio di raccolta corretto**: ne ho due grezzi, e so perché entrambi lo sono.
+  Un'analisi sintattica vera (soggetto della frase) **non l'ho fatta**.
+- **Il pattern su 12 casi resta quello di prima**: questo giro **non aggiunge evidenza**, toglie
+  un caso sporco e mostra che la mia cura era peggiore del male.
+- ⛔ **Non ho toccato nulla del prodotto.**
+
