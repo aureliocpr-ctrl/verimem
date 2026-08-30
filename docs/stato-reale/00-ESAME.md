@@ -12346,3 +12346,48 @@ proprietari dei test. **Io porto i numeri e il banco.**
     git rev-list --count <ultimo-verde>..origin/main
     git rev-list --count <ultimo-verde>..origin/main -- verimem engram hippoagent pyproject.toml
     git diff --stat <ultimo-verde>..origin/main -- verimem engram hippoagent
+
+---
+
+## ws1 · 31/08 00:18 — LA CURVA DI SCAMBIO COL RETRIEVER VERO: DA 0,0 A −2,0 SI GUADAGNANO 12 RISPOSTE SENZA SERVIRE UNA SONDA IN PIÙ
+
+**Livello**: la porta pubblica — candidati dalla **recall vera** di ciascuna domanda; simulare una soglia = contare i logit `>= t`, che è esattamente ciò che fa `_apply_ce_gate`. **Perimetro**: **114 domande** la cui risposta è nello store + **18 sonde** la cui risposta non c'è; corpus 401 frasi di terzi, tutto inglese. **Istante**: 31/08 00:14–00:17. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+**Paga il debito delle 22:48**, dove la popolazione di assenza usava un **proxy lessicale** al posto del retriever — e avevo predetto che il proxy **sottostimava** l'assenza.
+
+### 📈 LA CURVA
+
+```
+ soglia |  giuste  sbagliate  astenute |  sonde servite
+   +0,0 |  56/114     23/114    35/114 |      1/18   <== floor attuale
+   -1,0 |  62/114     23/114    29/114 |      1/18
+   -2,0 |  68/114     23/114    23/114 |      1/18
+   -3,0 |  77/114     22/114    15/114 |      3/18   <== punto migliore col proxy
+   -4,0 |  86/114     20/114     8/114 |      6/18
+   -5,0 |  95/114     15/114     4/114 |      9/18
+```
+
+```
+prezzo di ogni passo, rispetto a 0,0:
+   -1,0   risposte guadagnate  +6    sonde servite in più  +0
+   -2,0   risposte guadagnate +12    sonde servite in più  +0
+   -3,0   risposte guadagnate +21    sonde servite in più  +2
+   -4,0   risposte guadagnate +30    sonde servite in più  +5
+   -5,0   risposte guadagnate +39    sonde servite in più  +8
+```
+
+> **Fra `0,0` e `−2,0` il richiamo passa da 56 a 68 risposte corrette su 114 — dodici domande che oggi non ricevono risposta la riceverebbero — e le sonde servite restano 1 su 18. Le dodici guadagnate escono TUTTE dalle astensioni (35 → 23): le risposte sbagliate restano 23, invariate.**
+
+Da `−3,0` in giù comincia il prezzo: +21 risposte ma +2 sonde; a `−5,0` sono +39 risposte e **metà delle sonde servite** (9/18).
+
+**Il debito è pagato e la mia predizione di allora è confermata**: col proxy lessicale il punto migliore sembrava `−3,0` a costo nullo; **col retriever vero il costo comincia proprio a −3,0**, e il punto a costo non osservato è **−2,0**. Il proxy sottostimava, come avevo dichiarato.
+
+### ⚙️ E il tetto non è 114
+
+La frase che contiene la risposta è fra i cinque candidati in **104 domande su 114**: le altre **10 le perde il retriever**, a qualunque soglia. Quindi il massimo raggiungibile è 104, e a `−5,0` si arriva a **95/104 = 91% del possibile**.
+
+### Cosa questi dati NON provano
+🔴 **«Senza servire una sonda in più» non è «a costo zero».** n(B) = 18: zero variazioni su 18 è compatibile, per la regola del tre, con un aumento vero **fino a ~17 punti percentuali**. Il dato dice **nessun aumento osservato su 18 sonde**, non «nessun aumento».
+Il guadagno sul richiamo è invece un **conteggio appaiato** sulla stessa popolazione — 12 domande specifiche cambiano esito, non è la differenza fra due stime indipendenti.
+La simulazione isola il **gate**: non ho eseguito il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata, e il retriever resta quello del regime attuale.
+Vale in **inglese**, su questo corpus da 401 frasi, con `k=5`. **Io misuro, non curo**: la scelta del floor non è mia.
