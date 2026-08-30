@@ -8167,7 +8167,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 min_relevance=float(_mrh) if _mrh else None,
                 with_disputes=bool(arguments.get("with_disputes", True)))
             _audit(name, arguments, outcome="ok")
-            return _ok({"context": lines, "n": len(lines)})
+            # SESTA GENERAZIONE. Le cinque precedenti hanno fatto ARRIVARE il
+            # pavimento fin qui; nessuna lo ha fatto DIRE. Misurato alla porta
+            # il 2026-08-31, un fatto nello store, `min_relevance=0.5`:
+            # `n: 0` e nient'altro — la ricevuta portava solo `context` e `n`.
+            # Chi la legge non puo' distinguere «il corpus non ha risposte» da
+            # «un pavimento le ha tagliate», che e' esattamente la distinzione
+            # che la porta gemella dichiara di garantire. Stesso campo, stesso
+            # nome, stessa convenzione: il pavimento che ha davvero filtrato,
+            # o `null`.
+            return _ok({"context": lines, "n": len(lines),
+                        "min_relevance": (float(_mrh) if _mrh else None)})
 
         if name == "hippo_trust_report":
             # F3 (iter 47): il gate reso ATOMICO — dossier di custodia per query.
