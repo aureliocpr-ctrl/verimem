@@ -9734,3 +9734,44 @@ frase è stata attribuita all'entità sbagliata dal mio stesso criterio di racco
   criterio è grezzo e lo dichiaro**.
 - ⛔ **Non ho toccato nulla.**
 
+
+**㉗ `40` — il rerank non si attiva quasi mai, ed è lo scopo; il difetto è che il suo banco non si può
+rieseguire.** Ci sono arrivato leggendo il campo che il `37` mi ha insegnato a guardare **prima** dei
+punteggi: `"ranking": {"rerank": "skipped_long_query", "fusion": "timeout"}`.
+📊 **La misura**: `semantic.py:4537` salta il rerank quando la query supera **10 parole**
+(`_rerank_auto_max_words`); modo di default **`auto`** verificato (nessuna ENV impostata). Le **120
+query del banco del prodotto** (IT fluente), misurate con `_query_word_count` **del prodotto**:
+**mediana 20 parole, min 11, max 26 — 120 su 120 sopra soglia = 100,0%**. La più corta dell'intero
+banco ne ha **undici**: una parola oltre il limite. ⇒ **su questo traffico il cross-encoder non viene
+eseguito mai.**
+✅ **E NON è un difetto: è lo scopo, ed è la decisione meglio documentata che abbia incontrato nel
+prodotto.** Il docstring di `_rerank_mode` (`semantic.py:1715`) motiva il default: il flip a ON del
+10/06 aveva evidenza vera (**R@1 0,533→0,683, p=0,00052, n=120**) ma *«sampled only the CE-friendly
+regime»*; sul traffico reale (**304 query, GT 26/07**) l'aggregato è **nullo** (**ΔMRR +0,0078,
+p=0,716**) perché **due effetti reali si annullano** — **corte +0,146 MRR (47 meglio/16 peggio)**,
+**lunghe −0,080 (12/38)**; **mediana reale 16 parole**; regge allo **split-half** (soglia ≤9 scelta
+indipendentemente da entrambe le metà, plateau 10-16); e always-ON **costa +2067 ms su OGNI query**.
+📌 **Il dato di prodotto, non un difetto**: si spedisce un modello cross-encoder, col suo peso e il
+suo caricamento, **per servire la coda corta del traffico**.
+🎯 **IL DIFETTO VERO — la riproducibilità dell'evidenza.** Il docstring invita: *«Derived from ONE
+corpus (n=304, one user) … **stays falsifiable by a second corpus**»*. Ma chi accetta l'invito trova
+che `scripts/bench_rerank_fair.py` e `scripts/bench_hybrid_fair.py` sono **in main** mentre
+`scripts/bench_hybrid_fair_queries.json` **no**: aggiunto il **09/06/2026** dal commit **`2f92d9e5`**,
+che **non è antenato di `origin/main`** (vive su rami feature mai integrati). Ho potuto misurare le
+120 query **solo** con `git show 2f92d9e5:…`. ⇒ **due script in main citano un'evidenza i cui dati
+non sono in main.** ✅ **Ma lo script lo dichiara** (`if not QUERIES_JSON.exists(): print(f"missing
+{QUERIES_JSON}"); return 1`) ⇒ **difetto di riproducibilità, non di onestà.**
+🪞 **Ipotesi mia falsificata** (previsione sbagliata, non errore di misura): credevo che una soglia in
+**parole** penalizzasse l'italiano. A parità di lunghezza (100-200 char): **IT mediana 21 parole
+(3.270 casi), EN 19 (137)**, entrambi ~100% sopra soglia. E il caso multilingue serio **era già
+curato**: `_query_word_count` conta **un carattere CJK come una parola**, perché `split()` leggeva
+*«una domanda giapponese di 26 caratteri come UNA parola»* e faceva girare il CE proprio dove
+danneggia.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-la-soglia-in-parole-e-la-lingua.py
+git merge-base --is-ancestor 2f92d9e5 origin/main; echo "antenato di main? EXIT=$?"
+git show 2f92d9e5:scripts/bench_hybrid_fair_queries.json | head -3   # l'unico modo di averle
+```
