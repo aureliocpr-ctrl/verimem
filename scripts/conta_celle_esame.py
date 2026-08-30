@@ -78,14 +78,34 @@ def main() -> int:
     # e cosi' SALTAVA proprio le celle spezzate. Il controllo giusto e' banale:
     # una riga di tabella comincia con `|` e DEVE finire con `|`.
     testo = REGISTRO.read_text(encoding="utf-8")
-    spezzate = [RIGA_CELLA.match(r).group(0).strip("| ")
-                for r in testo.splitlines()
-                if RIGA_CELLA.match(r) and not r.rstrip().endswith("|")]
-    if spezzate:
-        print(f"⚠️  {len(spezzate)} celle SPEZZATE su piu' righe (la tabella non si allinea):")
-        print(f"     {' '.join(spezzate[:14])}{' …' if len(spezzate) > 14 else ''}")
-        print("   ⇒ il contenuto e' integro, e' la RESA a rompersi: un blocco ``` dentro")
-        print("     una cella va reso su una riga sola. Difetto di FORMA, nessun numero cambia.")
+    # 🔴 30/08: questo blocco chiamava tutto «SPEZZATE» e concludeva «difetto di
+    # FORMA, nessun numero cambia». ERA FALSO, e la diagnosi sbagliata e' rimasta
+    # per giorni davanti a chiunque eseguisse lo script. Sono DUE difetti:
+    #   A  la cella e' su piu' righe fisiche e una continuazione la chiude
+    #      -> vera resa rotta, il contenuto c'e'
+    #   B  la riga e' SOLA, ha 8 pipe invece di 9 e la riga dopo e' gia' un'altra
+    #      cella -> il testo e' TRONCATO, e cio' che manca e' l'ULTIMA colonna:
+    #      il REGIME. Cioe' proprio il campo che rende la misura ripetibile.
+    # ⇒ La differenza decide la cura: A si unisce, B NON si puo' riparare
+    #   aggiungendo un `|` — lo si farebbe sembrare completo mentendo.
+    righe_t = testo.splitlines()
+    A, B = [], []
+    for i, r in enumerate(righe_t):
+        if not (RIGA_CELLA.match(r) and not r.rstrip().endswith("|")):
+            continue
+        ident = RIGA_CELLA.match(r).group(0).strip("| ")
+        dopo = righe_t[i + 1] if i + 1 < len(righe_t) else ""
+        (B if (RIGA_CELLA.match(dopo) or not dopo.strip()) else A).append(ident)
+    if A:
+        print(f"⚠️  {len(A)} celle su PIU' RIGHE (resa rotta, contenuto integro):")
+        print(f"     {' '.join(A[:14])}{' …' if len(A) > 14 else ''}")
+        print("   ⇒ un blocco ``` dentro una cella va reso su una riga sola.")
+    if B:
+        print(f"🔴 {len(B)} celle TRONCATE (manca l'ultima colonna, il REGIME):")
+        print(f"     {' '.join(B[:14])}{' …' if len(B) > 14 else ''}")
+        print("   ⇒ NON e' un difetto di forma: il testo e' stato tagliato in scrittura")
+        print("     e con esso il regime. Chiudere la riga con un `|` la fa sembrare")
+        print("     completa e MENTE. O si recupera il regime, o si dichiara che manca.")
     print(f"id duplicati: {', '.join(doppi) if doppi else 'nessuno'}")
     return 1 if doppi or conto["?"] else 0
 
