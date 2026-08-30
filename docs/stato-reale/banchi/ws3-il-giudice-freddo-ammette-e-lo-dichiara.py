@@ -102,6 +102,25 @@ fail-open*»).
     SDK    assente         AMMETTE non giudicato          <- dichiarato
     MCP    assente         delega al daemon e GIUDICA     <- NON dichiarato
 
+🟢 E `doctor` NOMINA IL CASO BINARIO — misurato 15:40, quattro celle appaiate
+(modello presente/assente × `DELEGATE_ONLY` 0/1), tre scritture con fonte per
+cella, `Memory()` senza path::
+
+    modello presente  ->  status='ok'    «the grounding moat is ON … 3 of 3
+                                          stored facts entailment-judged (100%)»
+    modello assente   ->  status='fail'  «NO grounding judge: local CE model
+                                          missing at <path> and no llm provider
+                                          detected (moat OFF) — writes that CARRY
+                                          A SOURCE are admitted with an
+                                          L4-skipped advisory; writes without a
+                                          source get no advisory at all»
+
+⇒ Sul caso che **e' l'unico rischio reale**, la superficie diagnostica non e'
+tiepida: **`fail`, non un avviso**; dice **dove** manca il modello; e distingue
+**le due conseguenze** — con fonte c'e' l'avviso, senza fonte non c'e' niente.
+Quest'ultima e' la meta' sottile, ed e' quella che un operatore non dedurrebbe
+da solo. Identico in entrambi i regimi di delega.
+
 ⚠️ E DUE COSE CHE QUESTO LASCIA APERTE, per chi le possiede:
   · **La suite eredita quella variabile e la CI (probabilmente) no** ⇒ i due
     regimi non misurano la stessa cosa, e quattro rossi locali possono non
