@@ -182,15 +182,29 @@ def main() -> int:
     print(f"     bocciati fra chi ricopia MOLTO: {molto[2]}/{molto[1]}"
           f"  ({q_molto:.1f}%)")
     if q_poco > q_molto + 10.0:
-        print("\n     🔴 **IL GIUDICE PREMIA CHI RICOPIA**: chi riformula viene")
-        print(f"     bocciato {q_poco / max(0.1, q_molto):.1f} volte piu'"
-              " spesso.")
-        print("     ⇒ `nli-deberta` e' addestrato per l'ENTAILMENT, e questo"
-              " sarebbe")
-        print("     **un difetto nel suo compito proprio** — diverso dal caso"
-              " di @ws1,")
-        print("     dove `ms-marco` premia la pertinenza, che e' il suo"
-              " mestiere.")
+        print(f"\n     🟡 **GRADIENTE FORTE**: chi ricopia poco e' bocciato"
+              f" {q_poco / max(0.1, q_molto):.1f} volte")
+        print("     piu' spesso, con le lunghezze appaiate. **MA QUESTO NON"
+              " BASTA A DIRE")
+        print("     «il giudice premia chi ricopia»**, e la prima stesura lo")
+        print("     stampava: manca il controllo che **un claim senza token in")
+        print("     comune con la fonte puo' semplicemente NON essere"
+              " sostenuto**,")
+        print("     e allora cade a ragione.")
+        print("     ⇒ **LEGGI I CASI DELLA FASCIA BASSA UNO PER UNO.** Fatto"
+              " il 30/08")
+        print("     su 9 casi: **3 bocciati giustamente** (la fonte parlava"
+              " d'altro),")
+        print("     **2 falsi negativi netti**, 4 non giudicabili dai primi")
+        print("     caratteri. ⇒ Il reperto non e' «chi riformula», e' **chi")
+        print("     SINTETIZZA una fonte TABELLARE** (*«i passati sono 10»*")
+        print("     contro *«10 passed»*; *«nessuna delle sette celle…»*, che"
+              " va")
+        print("     CALCOLATA leggendo tutte le righe).")
+        print("     ⚠️ E la sovrapposizione qui sopra **ignora i numeri**"
+              " (token")
+        print("     alfabetici soltanto): sui claim numerici — i nostri — la")
+        print("     **sottostima**.")
     elif q_molto > q_poco:
         print("\n     🟢 **ROVESCIATO**: chi ricopia viene bocciato di PIU'."
               " La mia")
