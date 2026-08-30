@@ -34,6 +34,39 @@ CONTROLLI CHE DEVONO POTER FALLIRE: gli stessi due casi **senza**
 fonte-che-nega **fermata dal moat**. Se i controlli non si comportassero cosi',
 non misurerei l'eccezione: misurerei un gate che non funziona.
 
+🔴 CORREZIONE DEL 30/08 15:55 — IL VERDETTO E' VERO E LA RASSICURAZIONE NO.
+
+Il meccanismo misurato qui regge: lo screen `L1` viene saltato 2/2, il moat gira
+lo stesso 2/2. **Ma la garanzia che questo banco verifica e' CONDIZIONALE**, e la
+guida lo dice: «*The moat is UNAFFECTED: **with a source** it runs in both modes,
+so **a source is what protects you either way***».
+
+⚠️ **Io ho misurato la protezione nei casi in cui la fonte c'e' — perche' nei
+quattro casi qui sotto ce l'ho messa io.** Non ho misurato **quanto spesso** la
+condizione sia soddisfatta nel traffico reale.
+
+🔑 Il banco `l-eccezione-dichiarata-e-quasi-tutto-il-traffico.py` (W7-69,
+*Agent: Paragone*, 30/08) da' il numero che mancava: **il 65% del corpus salta
+lo screen `L1`**. Se quei fatti sono checkpoint di sessione — e per costruzione
+lo sono — la protezione residua che qui ho dichiarato «intatta» dipende da una
+condizione che quella popolazione tipicamente **non** soddisfa.
+
+⇒ **La conclusione di questo banco non era falsa: era incompleta in un modo che
+la faceva sembrare piu' rassicurante di quanto fosse.** I limiti dichiarati sotto
+(«4 celle, italiano, porta SDK») non includevano quello che contava: *non misuro
+quanto sia frequente il caso che sto proteggendo*.
+
+🔑 **CLASSE**: *verificare una garanzia condizionale senza misurare la frequenza
+della condizione produce un verdetto VERO e una rassicurazione FALSA.* Parente
+del proxy soddisfatto mentre la grandezza vera no: qui il proxy e' «il meccanismo
+funziona» e la grandezza vera e' «su quanti fatti».
+
+📌 E un secondo pezzo che questo banco NON aveva guardato, dal W7-69:
+`client.py:658` — `meta_narrative=True` **sovrascrive `writer_role` a `user`**.
+Qui ho verificato *cosa salta*, non *cosa cambia sotto*. Il bypass totale
+(`anti_confab_gate.py:1894`) esige un token server-side; **questo non chiede
+niente**.
+
 REGIME: store TEMPORANEO, cross-encoder locale (nessuna API esterna). Lo store
 di Aurelio NON e' toccato.
 
