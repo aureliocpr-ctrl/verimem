@@ -7817,3 +7817,67 @@ gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" --jq '[.jobs[].s
 git rev-list --count <sha_del_run>..origin/main
 python -c "import importlib.util; from benchmark.repro_all import REGISTRY, command_module; print(sum(1 for k,e in REGISTRY.items() if (m:=command_module(e['command'])) and importlib.util.find_spec(m) is None))"
 ```
+
+### ✅ CENSIMENTO CHIUSO 14:10 — dei cinque, **uno è vero, due sono già spariti, due dicono il contrario**
+
+Rieseguiti tutti e cinque **sull'albero di oggi**:
+
+| rosso in CI (#1167) | oggi in locale | verdetto |
+|---|---|---|
+| ① `test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice` | 🔴 `assert 1146 <= 150` | **rosso in entrambi i regimi** |
+| ② `test_ogni_ricetta...` · `test_every_claim_backed...` | ✅ 0 moduli mancanti su 8 | **curato da `d0fcc6a2`, dopo il run** |
+| ③ `test_quarantined_by_...` ×2 | ✅ `3 passed, 2 xfailed` EXIT=0 | **divergenza di regime** |
+
+### 🔑 ③ va letto al contrario di come si presenta
+
+Il file **non è cambiato**: `git diff 2bad80ef..HEAD -- <file>` è **vuoto**. Stesso
+codice, stesso commit, esito opposto nei due ambienti. Dal log del run #1167:
+
+```
+FAILED ...::test_quarantined_by_dovrebbe_nominare_chi_ha_deciso - [XPASS(strict)]
+FAILED ...::test_CONTROLLO_la_seconda_scrittura_e_trattenuta_da_piu_di_un_layer
+       - AssertionError: parla un layer ...
+```
+
+Il primo è **`XPASS(strict)`**: in CI quel test **passa**, e siccome è
+`xfail(strict=True)` un passaggio inatteso **è** un fallimento. ⇒ **In CI il difetto che
+il test documenta non si riproduce.** Il secondo è il CONTROLLO della stessa coppia e
+cade sulla propria premessa. ⇒ **Una sola causa spiega entrambi: in CI il gate
+attribuisce layer diversi da quelli locali** — cambiato il layer che parla, l'etichetta
+non è più `L3-coexistence`, il test del difetto passa e il controllo che si aspettava
+quella configurazione cade.
+
+⚠️ **Non ho identificato la causa della divergenza.** L'ipotesi naturale è il giudice
+(in locale gira con `RuntimeWarning: local grounding judge ships an unusable cut
+(99.6 > 90) — using the validated local CE moat cut 40`), ma **non l'ho verificata**, e
+una spiegazione non misurata è peggio di un'assenza dichiarata.
+📌 È la classe già registrata — *un rosso che non si riproduce dipende da ciò che la tua
+macchina ha e la loro no* — qui **col segno invertito**: è la CI ad avere l'ambiente in
+cui il difetto sparisce.
+
+### Cosa cambia per il rilascio
+
+```
+① versione     → reale; tre uscite dichiarate, una già percorsa e non riconosciuta
+② ricetta ×2   → già spariti: il prossimo run non li vedrà
+③ regime ×2    → restano finché i due ambienti divergono, e NON sono un difetto
+                 del prodotto in produzione
+```
+
+⇒ **Non è «la suite è in fiamme»**: è **un ritardo di versione più
+un'incompatibilità di regime fra due ambienti**. Ma ③ non si toglie da solo: finché
+resta, curare ① non basta a far tornare verde la CI.
+
+⚖️ **Cosa il censimento NON prova**: di ② ho rieseguito il *criterio*, non i due test;
+di ③ ho la forma della divergenza e **non la causa**; tutto vale per
+`ubuntu-latest / py3.12`, gli altri cinque job non li ho letti. E i due ambienti **non
+sono confrontabili alla cieca** — il locale avvisa di usare un cut diverso, ed è
+esattamente il punto in discussione.
+
+**rifallo con:**
+
+```bash
+python -m pytest tests/test_quarantined_by_nomina_il_layer_sbagliato.py -q   # 3 passed, 2 xfailed
+git diff <sha_del_run>..HEAD -- tests/test_quarantined_by_nomina_il_layer_sbagliato.py   # vuoto
+gh api "repos/:owner/:repo/actions/jobs/<jobid>/logs" | grep -E "XPASS|FAILED.*quarantined_by"
+```
