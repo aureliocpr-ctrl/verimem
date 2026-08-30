@@ -28,7 +28,7 @@ un verdetto ([l'EXIT che non è un verdetto](l-exit-che-non-e-un-verdetto.md)).
 | ① | **regressione mia** (`29ab5544`, 28/08) | **4** |
 | ② | **ambiente — questa macchina** | 10 |
 | ③ | **servizio esterno** | 1 |
-| ④ | **`XPASS(strict)`: presidi guariti col marcatore addosso** | 3 |
+| ④ | **`XPASS(strict)`: guarigioni non registrate** (1 tolto, 2 a ws7) | 3 |
 | ⑤ | **debito di presidio: un numero da aggiornare** | 4 |
 | ⑥ | **prezzo di una cura altrui** (`e3ecd7f1`) | 6 |
 
@@ -63,13 +63,35 @@ un verdetto ([l'EXIT che non è un verdetto](l-exit-che-non-e-un-verdetto.md)).
 ⚠️ *Un rosso che non si riproduce non è «instabile»: dipende da ciò che la tua
 macchina ha e la loro no.* Per ognuno serve il regime, non l'etichetta.
 
-### ④ I tre `XPASS(strict)` non sono difetti: sono guarigioni non registrate
+### ④ I tre `XPASS(strict)`: tre guarigioni non registrate, **zero difetti**
 
-`every_claim_backed_by_artifact_and_regenerable` porta nel proprio stdout
-**`8/8 claims backed by artifacts` · `8/8 regenerable` · `8/8 whose value is
-actually compared`**. Il marcatore `xfail` dice che dovrebbe fallire. **La cura
-è togliere una riga.** Stesso caso per `ogni_ricetta_del_registro_e_un_modulo` e
-`il_package_non_porta_identificativi_di_sessione`.
+Verificati uno per uno, non dedotti.
+
+**Due sono la stessa cura, di *ws7*** (`test_la_ricetta_del_numero_deve_esistere`
+· `test_repro_registry_g4`). Il marcatore diceva «*`benchmark/lme_retrieval_bench.py`
+non esiste nel repo: il numero di README:22 è pubblicato e non rigenerabile*».
+Il file **davvero non esiste** — ma la premessa del marcatore era sbagliata:
+cella `LANT-21`, «*il modulo era **il nome sbagliato**, non un banco mancante*».
+Il banco si chiama `longmemeval_runner`, il registro invocava un nome che *non è
+mai esistito*, e corretto il comando il presidio passa da sé.
+
+🔑 **E la risposta stava DENTRO il marcatore, marcata «non verificato», per
+cinque giorni**: «*OWNER: chiunque ripristini il banco (@ws5 ha indicato
+`longmemeval_runner.py`, **non verificato**)*». Era un lavoro da trenta secondi.
+⇒ *Un `xfail(strict)` ben scritto documenta il difetto e con ciò gli toglie
+l'urgenza: sembra già gestito.* È il costo nascosto del marcatore ben fatto, e
+va contro il suo stesso pregio.
+
+**Il terzo era MIO** — `test_il_package_non_porta_identificativi_di_sessione`,
+`reason`: «*OWNER: @ws3 (è suo il commento e suo il banco)*». Il package portava
+fuori il nome di un banco di sessione, citato da `anti_confab_gate.py`. Curato
+da `fa850457` (29/08, *Agent: TARA*) rendendo i riferimenti navigabili per
+argomento. Verificato il 30/08: `git grep -E "ws[0-9]-[a-z]" -- verimem/*.py` →
+**zero occorrenze**. **Marcatore tolto** (`EXIT=1`, 1 failed → `EXIT=0`,
+3 passed), come la sua stessa `reason` prescriveva.
+
+📌 **Gli altri due restano a *ws7***: sono suoi il marcatore e la cura. Misuro e
+propongo, non tocco i test altrui.
 
 ### ⑤ Debito (4) — presidi che chiedono un numero aggiornato
 

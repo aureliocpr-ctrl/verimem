@@ -64,14 +64,14 @@ def _esegui(cartella: Path) -> subprocess.CompletedProcess[str]:
                           timeout=300)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="verimem/anti_confab_gate.py:2403 cita "
-           "docs/stato-reale/banchi/ws3-la-batteria-italiana-caso-o-classe.py, e "
-           "l'identificativo sta nel NOME del file citato: non si toglie "
-           "riformulando la frase. OWNER: @ws3 (è suo il commento e suo il banco). "
-           "APERTO dal 2026-08-26. Diventa XPASS(strict) da sé quando il package "
-           "torna pulito, e allora questa riga va TOLTA: è il lavoro per cui è qui.")
+# CHIUSO. Qui stava un `xfail(strict=True)` intestato a @ws3: il package portava
+# fuori il nome di un banco di sessione, citato da `anti_confab_gate.py`. Il
+# difetto e' stato curato da `fa850457` (29/08, Agent: TARA) — i riferimenti ai
+# banchi sono resi navigabili per argomento invece che per nome di file.
+# Verificato il 30/08: `git grep -E "ws[0-9]-[a-z]" -- verimem/*.py` -> zero
+# occorrenze, e il presidio passa da se'. Il marcatore e' tolto perche' la sua
+# stessa `reason` lo prescriveva: «diventa XPASS(strict) da se' quando il package
+# torna pulito, e allora questa riga va TOLTA».
 def test_il_package_non_porta_identificativi_di_sessione():
     """Il cuore: lo stato del pacchetto ORA, non la bontà dello strumento."""
     esito = _esegui(PACKAGE)
