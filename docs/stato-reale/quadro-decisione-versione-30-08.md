@@ -20,6 +20,12 @@
 - Dato nuovo (ws7, 30/08): il flip `GRADED_ADMISSION` curerebbe **la faccia
   sbagliata** — i 38 trattenuti-col-giudice-a-favore recenti sono di L4.1, non
   del moat. Il flip esce dal pacchetto raccomandato finché non rimisurato.
+- Dato nuovo (ws8, 21:37): il **pacchetto pubblicato** (0.7.0, 22 luglio)
+  passa il veto identificativi (EXIT=0 sul wheel scaricato) ma contiene
+  ancora le stringhe interne che il repo ha ripulito il **10 agosto**
+  (3ca00954, e81d9201, dd5dca0f) — due sono stringhe di codice, non
+  commenti. Il pubblicato precede la pulizia di 19 giorni, e **il tag
+  v0.7.0 le contiene tutte**: un hotfix «solo pin» le ripubblicherebbe.
 
 ## Le opzioni
 **A — bump 0.8.0 su `main`.** Sblocca il test-deadlock subito. Contro: il
@@ -34,7 +40,13 @@ all'intenzione. Legittimo ma tocca il senso di un presidio: a mente fredda.
 Cura l'utente rotto OGGI col minimo cambiamento possibile (una riga su una
 base già pubblicata e nota). Non imbarca nulla del lavoro non-a-contratto.
 Contro: mantiene viva una linea vecchia; richiede comunque i prerequisiti di
-publish (sotto).
+publish (sotto); e col dato ws8 delle 21:37 ripubblicherebbe le stringhe
+interne pre-pulizia.
+
+**C′ — la forma corretta di C**: pin `mcp<2` **+ cherry dei 3 commit di
+pulizia del 10/08** (`3ca00954`, `e81d9201`, `dd5dca0f` — solo docstring e
+stringhe, zero logica). Resta un hotfix minimale (4 cherry) e cura anche la
+faccia pubblica del pacchetto.
 
 **D — push del tag v0.7.6 esistente.** Smoke utente verde; renderebbe
 confrontabile pubblicato-vs-repo. Contro: imbarca TUTTO il codice fino al
@@ -48,12 +60,13 @@ verificati», cioè il rischio che il contratto esiste per evitare.
 3. Smoke install-from-scratch sulla base pubblicanda (C7, già ripetibile).
 
 ## Raccomandazione del direttore
-**C adesso, 0.8.0 a contratto chiuso.** La 0.7.1 ripara l'utente di oggi con
-una riga verificabile; la release vera (0.8.0, con le cure L1 e i numeri
+**C′ adesso, 0.8.0 a contratto chiuso.** La 0.7.1 ripara l'utente di oggi
+con quattro cherry verificabili (pin + pulizia); la release vera (0.8.0, con le cure L1 e i numeri
 comparativi C10) esce quando C1–C10 sono verdi — ritmo attuale: giorni, non
 settimane. D scartata (imbarca il non-verificato). A solo insieme al treno
 0.8.0. B a mente fredda dopo.
 
-Ordine di esecuzione se Aurelio dice «C»: chiudi W8-4 → branch `hotfix/0.7.1`
-da v0.7.0 → cherry della sola riga pin → veto+smoke sul wheel di QUEL branch →
-tag v0.7.1 → publish → yank della 0.7.0 (dopo, mai prima).
+Ordine di esecuzione se Aurelio dice «C» (nella forma C′): chiudi W8-4 →
+branch `hotfix/0.7.1` da v0.7.0 → cherry del pin + dei 3 commit di pulizia →
+veto+smoke sul wheel di QUEL branch → tag v0.7.1 → publish → yank della
+0.7.0 (dopo, mai prima).
