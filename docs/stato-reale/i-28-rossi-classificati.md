@@ -88,12 +88,12 @@ fonte **e'** il claim, il verbatim c'e' **per costruzione**:
 ```
 REGIME ENGRAM_L1_DOMAIN_PRECISION=0 · fonte = eco del claim
 claim          senza fonte      fonte = eco
-LEGALE  EN     FERMATO L1       passa      <-- scappa
-VERBALE IT     FERMATO L1       passa      <-- scappa
-AUDIT   EN     FERMATO L1       passa      <-- scappa
-SOFTWARE       FERMATO L1       FERMATO L1
-DEPLOY  IT     FERMATO L1       FERMATO L1
-controllo (fermati senza fonte) 5/5   ·   scappano con l'eco 3/5
+LEGALE  EN     FERMATO L1.13    passa
+VERBALE IT     FERMATO L1.13    passa
+AUDIT   EN     FERMATO L1.13    passa
+SOFTWARE       FERMATO L1.13    passa
+DEPLOY  IT     FERMATO L1.13    passa
+controllo (fermati senza fonte) 5/5   ·   scappano con l'eco 5/5
 ```
 
 Il commit dichiara: «*una self-claim senza fonte non ha nulla da perdonare e
@@ -106,8 +106,23 @@ riformulare, basta la copia identica. ⇒ La «guardia anti-eco» del voto del 2
 ha ora una misura che la chiede. Banco:
 [`ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py`](banchi/ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py).
 
-⚠️ **3/5 non e' un tasso**: dice che la via esiste e **non e' universale**. Chi
-resta fermato lo deve a un **secondo strato**, non alla guardia curata.
+🔴 **Rettifica, 13:55.** La prima stesura di questa sezione diceva **3/5** e
+attribuiva la resistenza al **dominio** («si apre sui verbali, resta chiusa su
+software»). **Falso, e il difetto stava nel mio banco**: due claim su cinque — e
+solo quei due — contenevano «and **verified**», che sveglia `L1.15`, un detector
+diverso che non c'entra col completamento. Tolta la parola, scappano anche
+quelli. ⇒ *Un banco che varia due cose insieme non puo' attribuire l'effetto a
+una,* ed e' **il secondo difetto nel misuratore in un'ora**.
+
+⚠️ **5/5 non e' un tasso sul corpus**: e' la misura che la condizione del perdono
+e' soddisfatta **per costruzione** dalla fonte-eco. Cio' che salva un claim reale
+e' che porti *per caso* un'altra parola sorvegliata («verified», «fixed»,
+«shipped») — e allora lo ferma un altro strato, per un'altra ragione. **Un
+verbale d'ufficio non ne ha nessuno.**
+📌 Si compone col banco di *Paragone* `a83d9605` («il perimetro di `L1.13` e' sei
+radici»): li' il layer si aggira **cambiando parola** e senza fonte, qui
+**passando il claim come fonte** e senza cambiare parola. **Due vie indipendenti
+sullo stesso strato.**
 
 #### E un errore mio nel misurare, corretto qui
 

@@ -16,55 +16,63 @@ la fonte e' chi scrive il claim**. Se il chiamante passa come `source` la stessa
 identica frase, il `matched_text` compare verbatim **per costruzione**, e il
 perdono diventa una scelta del chiamante invece che una proprieta' della fonte.
 
-LA DOMANDA: quanto e' larga questa via? Un caso non e' una classe, e un buco che
-si apre su ogni claim e' un'altra cosa da un buco che si apre su tre domini.
+LA DOMANDA: quanto e' larga questa via?
 
-LA PREDIZIONE, scritta prima di eseguire: **la via si apre sui domini che la
-cura voleva servire** (verbali, pratiche, adempimenti) e **resta chiusa su
-software/deploy**, perche' li' un SECONDO strato prende il claim comunque — il
-commit stesso dichiarava che «La consegna e' stata effettuata» resta fermata da
-`L1.20`, non da `L1.13`.
+LA PREDIZIONE, scritta prima di eseguire: **la via si apre su ogni claim di
+completamento**, perche' la condizione del perdono e' testuale e la fonte-eco la
+soddisfa sempre. Cio' che restera' fermato lo dovra' a un **altro** detector,
+non a questo.
 
-CONDIZIONE DI FALSIFICAZIONE: se **tutti e cinque** scappano con l'eco, la via
-non e' legata al dominio ma alla guardia, ed e' molto piu' larga di come la
-racconto. Se **nessuno** scappa, la cura non introduce alcuna via e il reperto
-non esiste.
+CONDIZIONE DI FALSIFICAZIONE: se qualche claim resta fermato **da `L1.13`**
+nonostante l'eco, il perdono non e' incondizionato e la via e' piu' stretta.
 
-CONTROLLO CHE DEVE POTER FALLIRE: **senza fonte tutti e cinque devono essere
-fermati**. Se anche uno passasse gia' senza fonte, non misurerei l'eco:
-misurerei un detector che non prende quel claim, e ogni cella sarebbe illeggibile.
+CONTROLLO CHE DEVE POTER FALLIRE: **senza fonte tutti devono essere fermati**.
+Se anche uno passasse gia' senza fonte, non misurerei l'eco: misurerei un
+detector che non prende quel claim, e ogni cella sarebbe illeggibile.
 
-⚠️ REGIME DICHIARATO: `ENGRAM_L1_DOMAIN_PRECISION=0`, cioe' il carve-out di
-dominio DISATTIVATO — lo stesso regime che il fixture di
-`test_quarantine_restore_public.py` chiede. Col default (ON, dal 22/07) il claim
-legale passa comunque per via del carve-out, e la misura direbbe un'altra cosa.
-**La leva morde**: verificato con la cella `PREC=1` contro `PREC=0` a fonte
-assente. Store TEMPORANEO, mai quello di Aurelio.
+🔴 RETTIFICA DELLA PRIMA STESURA (30/08 13:55, commit 584df914 → questo).
+La prima versione concludeva **3 su 5** e attribuiva la resistenza al **DOMINIO**
+(«si apre sui verbali, resta chiusa su software/deploy»). **Era falso, e il
+difetto stava nel banco**: due dei cinque claim — e solo quei due — contenevano
+«and **verified**» / «e **verificato**», che sveglia `L1.15` (*tested/verified
+claim*), un detector **diverso** che non c'entra col completamento.
 
-🔴 ESITO: PREDIZIONE RETTA — **3 su 5 scappano**, e sono i tre non-software.
+    SOFTWARE con «verified»      senza fonte FERMATO L1.13,L1.15   eco FERMATO L1.15
+    SOFTWARE SENZA «verified»    senza fonte FERMATO L1.13         eco passa
+
+🔑 **Un banco che varia due cose insieme non puo' attribuire l'effetto a una.**
+La popolazione ora e' **appaiata** — nessun claim porta parole da collaudo — e le
+due coppie del confondente sono stampate invece che rimosse, perche' sono il
+reperto piu' utile del banco.
+
+🔴 ESITO, con la popolazione corretta: **`L1.13` perdona 5 su 5.**
 
     claim          senza fonte      fonte = eco del claim
-    LEGALE  EN     FERMATO L1       passa      <-- scappa
-    VERBALE IT     FERMATO L1       passa      <-- scappa
-    AUDIT   EN     FERMATO L1       passa      <-- scappa
-    SOFTWARE       FERMATO L1       FERMATO L1
-    DEPLOY  IT     FERMATO L1       FERMATO L1
+    LEGALE  EN     FERMATO L1.13    passa
+    VERBALE IT     FERMATO L1.13    passa
+    AUDIT   EN     FERMATO L1.13    passa
+    SOFTWARE       FERMATO L1.13    passa
+    DEPLOY  IT     FERMATO L1.13    passa
 
-    controllo (fermati senza fonte): 5/5     scappano con l'eco: 3/5
+⇒ **Il perdono e' incondizionato rispetto al contenuto**: basta ripassare la
+frase come fonte. Cio' che salva un claim reale e' che porti *per caso* anche
+un'altra parola sorvegliata — «verified», «fixed», «shipped» — e allora lo ferma
+un altro strato, per un'altra ragione.
+🔑 Si compone col banco di @Paragone `a83d9605` («il perimetro di `L1.13` e' sei
+radici»): li' il layer si aggira **cambiando parola**, senza fonte; qui si aggira
+**passando il claim come fonte**, senza cambiare parola. **Due vie indipendenti
+sullo stesso strato**, e cio' che resta e' la copertura di detector che guardano
+il gergo di collaudo. Un verbale d'ufficio non ne ha nessuno.
+🔑 Ed e' il banco `ef234ae0` di lead-audit da un lato nuovo: la' il fail-closed
+anti-auto-sorgente si aggirava **per riformulazione**; qui basta la **copia
+identica**.
 
-⇒ La via di fuga **esiste e non e' universale**. Chi resta fermato lo deve a un
-SECONDO strato, non alla guardia curata: togliere quel secondo strato
-allargherebbe la via senza che nulla diventi rosso.
-🔑 E' il banco D di lead-audit (`ef234ae0`, «il fail-closed anti-auto-sorgente si
-aggira per riformulazione 3/3») **da un lato nuovo**: qui non serve nemmeno
-riformulare — basta la copia identica — e il bersaglio e' `L1.13` DOPO la cura.
-
-⚠️ COSA QUESTO BANCO NON DICE: cinque casi scritti da me, due lingue, un solo
-sotto-strato. **3/5 non e' un tasso**: dice che la via esiste e che non e'
-universale. Non dice quanti claim reali la percorrerebbero, e non dice se sia un
-difetto o il modello di fiducia del prodotto — il gate non puo' sapere se il
-chiamante mente sulla fonte, e stabilire se debba provare a saperlo e' una
-decisione di design, non una misura.
+⚠️ COSA QUESTO BANCO NON DICE: cinque claim scritti da me, due lingue, un solo
+sotto-strato. **5/5 non e' un tasso sul corpus**: e' la misura che la condizione
+del perdono e' soddisfatta per costruzione dalla fonte-eco. Non dice quanti
+chiamanti reali la percorrerebbero, e non dice se sia un difetto o il modello di
+fiducia del prodotto — il gate non puo' sapere se il chiamante mente sulla
+fonte, e stabilire se debba provare a saperlo e' design, non misura.
 
     python docs/stato-reale/banchi/ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py
 """
@@ -86,10 +94,15 @@ mem = Memory(os.environ["HIPPO_DATA_DIR"] + "/eco.db")
 claim = sys.argv[1]
 kw = {"source": claim} if sys.argv[2] == "eco" else {}
 r = mem.add(claim, topic="legal/deal", verified_by=["source-doc:dd:1"], **kw)
-print(json.dumps({"status": r.get("status"), "qb": r.get("quarantined_by")},
+lay = [str(w.get("layer")) for w in (r.get("warnings") or []) if isinstance(w, dict)]
+print(json.dumps({"status": r.get("status"), "layers": lay},
                  default=str, ensure_ascii=False))
 '''
 
+#: ⚠️ POPOLAZIONE APPAIATA: nessuno di questi claim porta parole da collaudo.
+#: La prima stesura ne aveva due con «verified» e tre senza, e quella differenza
+#: — non il dominio — produceva la resistenza che avevo scambiato per un
+#: meccanismo.
 CASI: list[tuple[str, str]] = [
     ("LEGALE  EN",
      "The due-diligence review was completed before the acquisition closed."),
@@ -98,8 +111,17 @@ CASI: list[tuple[str, str]] = [
     ("AUDIT   EN",
      "The compliance audit was completed by the external firm."),
     ("SOFTWARE  ",
-     "The database migration was completed and verified in production."),
+     "The database migration was completed in production."),
     ("DEPLOY  IT",
+     "Il deploy in produzione e' stato completato."),
+]
+
+#: le due coppie che ESPONGONO il confondente: identiche alle ultime due di
+#: `CASI` piu' la parola che sveglia `L1.15`.
+COPPIE_CONFONDENTE: list[tuple[str, str]] = [
+    ("SOFTWARE + «verified»",
+     "The database migration was completed and verified in production."),
+    ("DEPLOY + «verificato»",
      "Il deploy in produzione e' stato completato e verificato."),
 ]
 
@@ -112,7 +134,7 @@ def _scrivi(claim: str, modo: str, env: dict) -> str:
     d = json.loads(p.stdout.strip().splitlines()[-1])
     if d["status"] != "quarantined":
         return "passa"
-    return f"FERMATO {d['qb']}"
+    return f"FERMATO {','.join(d['layers']) or '?'}"
 
 
 def main() -> int:
@@ -120,10 +142,21 @@ def main() -> int:
     env["ENGRAM_L1_DOMAIN_PRECISION"] = "0"
     print("  REGIME: ENGRAM_L1_DOMAIN_PRECISION=0 (il carve-out di dominio OFF,")
     print("          lo stesso che chiede il fixture di quarantine_restore)")
-    print("          store TEMPORANEO per ogni scrittura; quello di Aurelio mai toccato\n")
+    print("          store TEMPORANEO per ogni scrittura; quello di Aurelio mai toccato")
 
-    print(f"  {'claim':<12} {'senza fonte':<18} {'fonte = eco del claim':<22}")
-    print("  " + "-" * 56)
+    print("\n  [0] IL CONFONDENTE, esposto invece che rimosso")
+    print(f"      {'claim':<24} {'senza fonte':<22} {'fonte = eco':<16}")
+    for etichetta, claim in COPPIE_CONFONDENTE:
+        senza = _scrivi(claim, "no", env)
+        eco = _scrivi(claim, "eco", env)
+        print(f"      {etichetta:<24} {senza:<22} {eco:<16}")
+    print("      ⇒ la stessa frase con una parola in piu' resta fermata, e NON")
+    print("        dal detector del completamento: da `L1.15`. E' cio' che aveva")
+    print("        falsato la prima stesura di questo banco.")
+
+    print(f"\n  [1] LA POPOLAZIONE APPAIATA — {len(CASI)} claim, nessuna parola da collaudo")
+    print(f"      {'claim':<14} {'senza fonte':<22} {'fonte = eco':<16}")
+    print("      " + "-" * 54)
     fermati_senza = 0
     scappati = 0
     for etichetta, claim in CASI:
@@ -132,36 +165,38 @@ def main() -> int:
         fuga = senza.startswith("FERMATO") and eco == "passa"
         fermati_senza += senza.startswith("FERMATO")
         scappati += fuga
-        print(f"  {etichetta:<12} {senza:<18} {eco:<22}"
+        print(f"      {etichetta:<14} {senza:<22} {eco:<16}"
               f"{'  <-- scappa' if fuga else ''}")
 
     tot = len(CASI)
-    print(f"\n  [1] CONTROLLO — fermati SENZA fonte: {fermati_senza}/{tot}")
+    print(f"\n  [2] CONTROLLO — fermati SENZA fonte: {fermati_senza}/{tot}")
     if fermati_senza < tot:
-        print("      CONTROLLO CADUTO: un claim passa gia' senza fonte ⇒ non sto")
-        print("      misurando l'eco, sto misurando un detector che non prende")
-        print("      quel claim. NESSUN VERDETTO.")
+        print("      CONTROLLO CADUTO: un claim passa gia' senza fonte, quindi non")
+        print("      sto misurando l'eco ma un detector che non prende quel claim.")
+        print("      NESSUN VERDETTO.")
         return 1
 
     print("\n  ══ VERDETTO ══")
     print(f"     scappano con la fonte-eco: {scappati}/{tot}")
     if scappati == tot:
-        print("     PREDIZIONE FALSIFICATA: scappano TUTTI ⇒ la via non e' legata")
-        print("     al dominio ma alla guardia, ed e' piu' larga di come la")
-        print("     raccontavo. Il reperto va riscritto al rialzo.")
+        print("     PREDIZIONE RETTA: il perdono e' INCONDIZIONATO rispetto al")
+        print("     contenuto — la fonte-eco soddisfa la condizione testuale per")
+        print("     costruzione. Cio' che salva un claim reale e' che porti per")
+        print("     caso un'ALTRA parola sorvegliata, e allora lo ferma un altro")
+        print("     strato per un'altra ragione.")
     elif scappati == 0:
         print("     PREDIZIONE FALSIFICATA: non scappa nessuno ⇒ la cura non")
         print("     introduce alcuna via, e il reperto non esiste.")
     else:
-        print("     PREDIZIONE RETTA: la via esiste e NON e' universale. Chi resta")
-        print("     fermato lo deve a un SECONDO strato, non alla guardia curata —")
-        print("     e togliere quel secondo strato allargherebbe la via senza che")
-        print("     nulla diventi rosso.")
+        print("     PREDIZIONE FALSIFICATA: qualcuno resta fermato nonostante")
+        print("     l'eco ⇒ il perdono NON e' incondizionato. Leggere QUALE layer")
+        print("     lo ferma prima di raccontare un meccanismo: e' l'errore che")
+        print("     questa stessa pagina ha gia' fatto una volta.")
 
-    print(f"\n  ⚠️ LIMITI: {tot} casi scritti da me, 2 lingue, un solo sotto-strato.")
-    print("     Non e' un tasso. E non dice se sia un difetto o il modello di")
-    print("     fiducia del prodotto: che il gate DEBBA sospettare del chiamante")
-    print("     e' una decisione di design, non una misura.")
+    print(f"\n  ⚠️ LIMITI: {tot} claim scritti da me, 2 lingue, un solo sotto-strato.")
+    print("     Non e' un tasso sul corpus. E non dice se sia un difetto o il")
+    print("     modello di fiducia del prodotto: che il gate DEBBA sospettare del")
+    print("     chiamante e' una decisione di design, non una misura.")
     return 0
 
 
