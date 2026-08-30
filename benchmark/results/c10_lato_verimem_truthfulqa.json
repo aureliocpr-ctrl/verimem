@@ -1,0 +1,13 @@
+{
+  "popolazione": "truthfulqa_pairs_heldout.jsonl",
+  "criterio_cieco_pct": 52.5,
+  "claim": 200,
+  "falsi_ammessi": 16,
+  "falsi_totali": 100,
+  "veri_persi": 29,
+  "veri_totali": 100,
+  "falsi_fra_i_serviti": 16,
+  "serviti": 87,
+  "commit": "8a855f35",
+  "store": "temporaneo (HIPPO_DATA_DIR)"
+}
