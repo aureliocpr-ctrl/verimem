@@ -1556,6 +1556,7 @@ SCORE: 12'`→**12.0** (l'ultimo, come il docstring dichiara). ⇒ 🔑 **DUE FR
 | W2-176 | **QUANTO E' ESPOSTO IL FIANCO: il 17% delle supersessioni decide fra due fatti scritti a meno di un MINUTO. Ma NON sono errori, e dirlo cosi' sarebbe barare** | C1 · C2 · C9 | IT | corpus | 🟡 **esposizione misurata, danno non misurabile** | ws2 | **Dopo la cura di `W2-175` la domanda onesta e': a NOI servirebbe davvero?** ⇒ ho cercato di dare un numero al rischio invece di affermarlo. 📊 **MISURATO su 2242 coppie superseduto→successore**: **`p10` = 7,7 secondi** · `p50` = 19.401 s (5h 23m) · **entro 1 minuto: 381 (17,0%)** · entro 5 minuti: 458 (20,4%) · entro 1 ora: 643 (28,7%). ⇒ **il 17% delle supersessioni si decide fra due scritture separate da meno di un minuto.** ⚠️⚠️ **E QUI LA LETTURA ONESTA, che e' meta' del valore di questa cella**: **quel 17% NON e' «supersessioni sbagliate».** Se scrivo un fatto e lo correggo dieci secondi dopo, **il piu' recente E' quello giusto** e l'ordine di scrittura funziona benissimo. ⇒ **e' «supersessioni in cui l'ordine di ARRIVO e' l'unica informazione disponibile»** ⇒ **il prodotto decide con l'unico segnale che ha, e se quel segnale fosse sbagliato nessuno se ne accorgerebbe.** 🔑 **IL CASO IN CUI MORDE DAVVERO E' IL BACKFILL** — caricare un fatto VECCHIO dopo uno nuovo ⇒ **il vecchio vincerebbe** ⇒ **e `asserted_at` lo evita: verificato in `W2-168`, `PRECEDENTE → conflict`.** ⇒ **ma quanti dei 2242 siano backfill NON e' misurabile senza il campo che manca** ⇒ **controfattuale, come gia' dichiarato in `W2-164`.** ⇒ **verdetto 🟡: il numero dice l'ESPOSIZIONE, non il danno** — e chiamarlo «il 17% delle supersessioni e' arbitrario» sarebbe **esattamente la figura che C1 vuole evitare.** ⚠️ **Limite del righello**: la colonna `reason` non e' interrogabile su questo store, quindi ho misurato **TUTTE** le supersessioni, **non solo le `same-source evolution`** ⇒ **il 17% mescola popolazioni** (dentro c'e' anche il collasso autohook del 02/07, 1463 righe in 36 secondi) ⇒ **il numero e' un limite SUPERIORE, e la parte davvero interessante — le sole `same-source` — resta da isolare.** 📌 **A1: il «34,3% di supersessioni che cancellano un fatto che dice altro» sta nell'indice di memoria e NON l'ho ri-misurato** — la ricerca lo restituisce fra 428 trattenuti dal gate. **Non lo uso come appoggio.** 🔎 **rifallo con** (~20s): join `facts v` su `facts n ON v.superseded_by=n.id`, e i percentili di `abs(n.created_at - v.created_at)`. | _firma @Varco 20:25 del 30/08_ |
 | W2-177 | **ISOLANDO LA POPOLAZIONE GIUSTA IL NUMERO QUADRUPLICA: 69,1% contro 17,0%, e la mediana e' 8,5 SECONDI. Poi il test che doveva spiegarlo NON conclude — e me l'ha detto il prodotto** | C1 · C9 | IT | corpus + SDK | 🟡 **numero chiuso, spiegazione NO** | ws2 | **Chiudo il limite di `W2-176`** (*«ho misurato TUTTE le supersessioni, le sole `same-source` restano da isolare»*) **usando il prodotto**: `retirement_log(reason=...)`. ⚠️ **E-STUCK applicata**: il tool MCP con `limit=500` e' andato in **timeout** ⇒ **non ho ritentato: ho cambiato path** (la funzione Python diretta), che e' la lezione gia' scritta sui payload grandi. 📊 **SULLE SOLE 427 `same-source evolution`**: **`p10` = 0,7 s · `p50` = 8,5 s · entro 1 minuto 295 (69,1%)** ⇒ **contro il 17,0% del misto** ⇒ 🔑 **il mio limite dichiarato era una sottostima di QUATTRO VOLTE: mescolare le popolazioni aveva diluito il fenomeno con il collasso autohook.** ⇒ **la META' delle supersessioni evolutive avviene entro 8,5 secondi.** 🔍 **LE 65 COPPIE SOTTO IL SECONDO**: tutte `retired_by = cli:local` — **che non distingue l'istanza, e il codice lo dichiara** (*«six agents share cli:local»*) — e **tutte sullo stesso topic**, con topic nostri e specifici (`guardia/ci-rossi-nomi`, `guardia/celle-integre`). ⇒ **ipotesi: sono i NOSTRI fatti SPEZZATI** — O3 dice *«frase con piu' affermazioni → spezza»*, e due pezzi sullo stesso topic potrebbero mangiarsi. 🪞🪞 **E QUI IL TEST NON CONCLUDE, ma il prodotto ME L'HA DETTO**: due `save` sullo stesso topic in uno store temporaneo ⇒ **nessuna supersessione** ⇒ **stavo per scrivere «spezzare non fa danno ✅»** — **e sopra il mio risultato c'era stampato `store: encode delegate unavailable → il fatto viene scritto SENZA embedding`** ⇒ **senza embedding la similarita' semantica non gira** ⇒ **il meccanismo che volevo misurare era SPENTO.** ⇒ **non e' un esito: e' una misura che non c'e'** — la classe di stasera, **e stavolta l'avviso era del PRODOTTO, non mio.** ⇒ **il prodotto dichiara quando non puo' fare il suo lavoro; chi legge in fretta lo scambia per un risultato.** ⚠️ **APERTO e dichiarato**: **l'ipotesi «spezzare sullo stesso topic si mangia il primo pezzo» NON e' verificata** — serve un banco col daemon di embedding vivo. 📌 **E la cura, se l'ipotesi regge, e' gia' in memoria**: *«UN TOPIC PER MISURA»* ⇒ **io stasera ho usato topic distinti per ogni fatto senza sapere perche'.** 🔎 **rifallo con** (~30s): `retirement_log(sm, reason="same-source evolution")` e i percentili di `winner_created_at - loser_created_at`. | _firma @Varco 20:31 del 30/08_ |
 | W2-178 | **🔴 IL DAEMON DI EMBEDDING E' CADUTO STASERA e stiamo scrivendo fatti non ritrovabili semanticamente: 11 su 20 delle ultime scritture. Trovato per caso, cercando di chiudere un mio debito** | C1 · C5 · C9 | IT | corpus | 🔴 **incidente in corso, non curato da me** | ws2 | **Nato dal debito di `W2-177`** (*«l'ipotesi non e' verificata: serve il daemon vivo»*) ⇒ **sono andata a vedere se era tornato, e ho trovato un incidente.** 📊 **MISURATO**: **fatti totali 16.041 · senza embedding 11 (0,07%)** ⇒ **ma sugli ULTIMI 20 scritti solo 9 hanno l'embedding** ⇒ **gli 11 di tutto il corpus sono TUTTI di stasera** (i piu' recenti alle **20:32:58** e **20:30:20**, mentre misuravo) ⇒ **il daemon e' caduto poco fa e da allora circa META' delle scritture perde l'embedding.** ⇒ **e i topic non sono miei**: `project/verimem/c2-difese-restano-quattro`, `guardia/starvation-needs` ⇒ **riguarda piu' istanze.** 🔑 **COSA SIGNIFICA, e il prodotto lo dichiara a ogni scrittura**: *«encode delegate unavailable → il fatto viene scritto SENZA embedding (recall keyword finche' il daemon non torna)»* ⇒ **i fatti sono salvati e non persi, ma si trovano solo per KEYWORD** ⇒ ⚠️ **e ogni misura su similarita', recall semantico, supersessioni o rivali fatta in questa finestra gira col meccanismo SPENTO**: **un banco che non trova niente non sta misurando un filtro, sta misurando un daemon assente.** ⇒ **e' esattamente cio' che ha reso inconcludente il mio test di dieci minuti fa** (`W2-177`). ⛔ **NON HO RIAVVIATO NULLA**: processi pesanti vietati, «mai uccidere per nome», e **non e' il mio fronte** — **portato al canale perche' decida chi ha il daemon in carico.** 🪞 **E LA COSA CHE MI PORTO VIA**: **questo incidente l'ho trovato solo perche' stavo chiudendo un limite che avevo dichiarato.** ⇒ **un debito dichiarato non e' un'ammissione di debolezza: e' l'unico posto dove si va a guardare di nuovo** — e stasera ci ho trovato dentro un incidente in corso. 🔎 **rifallo con** (~10s): `SELECT length(COALESCE(embedding,'')) FROM facts ORDER BY created_at DESC LIMIT 20`. | _firma @Varco 20:33 del 30/08_ |
+| W2-179 | **IL DEGRADO E' CONTROLLATO E DICHIARATO: col daemon giu' il keyword funziona, il semantico da' ZERO, e il controllo negativo non inventa. Misurato IN AVARIA, che e' l'unico momento in cui si puo'** | C1 · C2 · C9 | IT | SDK (store temporaneo) | 🟢 **promessa mantenuta in condizioni avverse** | ws2 | **L'incidente di `W2-178` mi ha dato l'occasione che di solito non c'e': misurare il prodotto MENTRE e' rotto.** Il messaggio promette *«recall keyword finche' il daemon non torna»* ⇒ **e' una promessa, e nessuno l'aveva verificata.** 🧪 **QUATTRO QUERY su due fatti scritti SENZA embedding**: **«fornitore Bianchi»** (keyword) ⇒ **1, ed e' quello giusto** ✅ · **«quanto e' grande il deposito?»** (semantica pura, zero parole in comune) ⇒ **0** ✅ · **«chi ha portato la merce?»** (idem) ⇒ **0** ✅ · **«xilofono marziano»** (controllo negativo) ⇒ **0** ✅. ⇒ 🔑 **il degrado e' ESATTAMENTE quello promesso: il keyword tiene, il semantico cade, e il prodotto NON COMPENSA INVENTANDO.** ⇒ **in avaria perde una capacita', lo dice, e non finge di averla** — ed e' precisamente cio' che una «memoria verificata» deve fare quando un pezzo si spegne. 🪞 **E IL PRIMO GIRO L'AVEVO SBAGLIATO**: la mia «query semantica pura» era *«chi ha CONSEGNATO la merce»* e il fatto dice *«ha CONSEGNATO 320 pallet»* ⇒ **la parola era in comune, quindi era keyword travestita** ⇒ **il test tornava ✅ su tutte e cinque e non dimostrava niente.** ⇒ **rifatto con query a zero sovrapposizione, e solo allora ha discriminato.** ⚠️ **IL ROVESCIO, che va detto e non e' piccolo**: **chi NON legge l'avviso crede che il recall funzioni**, riceve **0 risultati** su una query semantica **e lo legge come «non c'e' nulla nel corpus»** ⇒ **e' la trappola su cui sono inciampata due volte stasera** ⇒ **il degrado e' onesto nella ricevuta, muto nel risultato.** 📌 **Proposta (non applicata)**: quando il delegate e' assente, **il payload del recall dovrebbe portarlo** — come `sample` fa per `epistemic_health` — cosi' chi legge 0 sa perche'. 🔎 **rifallo con** (~60s): due `add` col daemon giu', poi `search` con una query keyword, una a ZERO parole in comune, e una senza senso. | _firma @Varco 20:37 del 30/08_ |
 ]{0,90}(provisional|quarantined)" -- verimem/`. | _firma @Varco 16:56 del 30/08_ |
 
 ### ⚠️ Prima di dire che due celle si contraddicono
@@ -8725,3 +8726,56 @@ risposta resta plausibile* — che è il modo in cui questi errori sopravvivono.
 
 ⚖️ **Campione: 12 run su 850**, tutti dello stesso quarto d'ora del 28/08 — è la **coda di
 fondo**, non la coda. E non ho guardato **perché i job appesi siano 2 e non 1**.
+
+---
+
+## ws1 — Il presidio corretto è tarato (ha mostrato verde E rosso), l'encoder è intermittente, e questo minaccia un mio risultato di venti minuti fa
+
+**Livello**: warning emessi dal prodotto durante una scrittura di prova + chiamata diretta a
+`_encode_via_service`. **Istante**: 30/08 20:35-20:40. **Regime**: RAM 5 940 MB libere.
+
+### Il presidio ora è tarato: l'ho visto in entrambi gli stati
+
+```
+20:16  degradato = False   ← il banco porta_apostrofo è girato ed è valido
+20:37  degradato = True    ← il banco allargato si è FERMATO da solo
+```
+**Quattro campioni a 20 s di distanza, tutti rossi**, con `_encode_via_service` → `None`:
+```
+t+0s  True/None · t+20s True/None · t+40s True/None · t+60s True/None
+```
+⇒ **non è un flicker istantaneo: è uno stato che dura.** E **avere visto sia il verde sia il
+rosso è precisamente ciò che mancava al presidio rotto** che ho ritirato un'ora fa — quello
+dava `False` sempre, anche quando tutto funzionava.
+
+### 🔴 E qui c'è un limite MIO, sul risultato delle 20:22
+
+`porta_apostrofo` ha costruito **56 store** con scritture `embed="sync"`, e il mio presidio
+stava **solo all'inizio**. Se l'encoder è caduto **a metà**, le celle finali sono in regime
+diverso dalle prime — e l'ordine era **A, B, C, D**, quindi **D è la più esposta**.
+⇒ **Il risultato A=B=0/14 · C=D=2/14 va riverificato con il presidio anche in CODA.**
+🪞 **L'avevo scritto io stamattina** — «*controllo all'INIZIO e alla FINE di ogni banco*» — **e
+non l'ho implementato.** ⇒ *un presidio scritto nel briefing e non nel codice non è un presidio.*
+⚖️ **Cosa regge comunque**: **C** (2/14) è il valore **già misurato tre volte** nelle celle di
+dedizione, quando l'encoder era su; e **A** e **B** sono zeri, che un degrado a keyword renderebbe
+semmai **più** probabili, non meno. **Il verso della conclusione non cambia; la sua tenuta sì.**
+
+### Il sospetto sul perché, con due osservazioni e nessuna prova
+
+| quando | prima c'era stato | esito |
+|---|---|---|
+| 29/08 | `porta_ampio` — **90 store** | degradato |
+| 30/08 20:37 | `porta_apostrofo` — **56 store** | degradato |
+
+**Due volte su due, il degrado segue un banco con decine di store.** ⚠️ **Non è una prova**: non
+ho isolato la variabile e non ho toccato il daemon (vincolo processi). Ma è **azionabile**:
+⇒ **chi misura metta il controllo di regime anche A METÀ e IN CODA**, non solo in testa.
+
+### Cosa questo NON prova
+
+- **Non ho la causa** della caduta, e **non riavvio daemon**.
+- **Non ho verificato che il degrado sia iniziato durante `porta_apostrofo`**: potrebbe essere
+  caduto dopo. **Il limite lo dichiaro perché non posso escluderlo, non perché l'ho visto.**
+- **Il banco allargato (45 entità) non è stato eseguito**: il presidio l'ha fermato, ed è ciò
+  che doveva fare.
+
