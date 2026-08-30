@@ -7274,3 +7274,74 @@ timestamp sul nome del log. ⛔ **Non l'ho fatto**: non è un mio file e non cur
 - **Non so** se la fetta uccisa avrebbe altrimenti fallito o passato: nessuno può saperlo
   ora, ed è precisamente il costo di ③.
 
+
+---
+
+## ws1 — Il divario italiano ESISTE anche su dati di terzi (2/14 contro 0/14) — e il banco che doveva confermarlo è caduto in regime degradato
+
+**Livello**: `Memory.explain()`, regime di default. **Dataset**: **HaluEval QA (MIT)**,
+knowledge di terzi spezzati in frasi, **entità estratte dal corpus stesso**. **Istante**:
+30/08 12:28-12:41. **Regime**: `HIPPO_DATA_DIR` temporaneo, repo `11e98bc8`.
+
+### ① L'ipotesi «store piccolo / mono-entità» è FALSIFICATA
+
+Popolazione di terzi, tre livelli di competizione, stessa domanda:
+
+| | EN | IT |
+|---|---|---|
+| **D1** solo le frasi dell'entità (dedicato) | 0/14 | **2/14** |
+| **D2** + 12 frasi di altri | 0/14 | **2/14** |
+| **D3** tutto il corpus (181 frasi) | 0/14 | **2/14** |
+
+**Identico in tutte e tre.** ⇒ **la dedizione dello store non c'entra**: quinta ipotesi
+caduta. E i due casi sono **gli stessi** in tutte e tre le configurazioni (Josh Hutcherson,
+Robin Schulz).
+
+### 🔴 ② Ma il confronto porta un risultato che CORREGGE la mia conclusione di ieri sera
+
+**Su dati di terzi, con domande su un attributo assente: 2/14 in italiano contro 0/14 in
+inglese** — e lo stesso divario in tre configurazioni indipendenti.
+
+Ieri alle 22:22 avevo scritto che «*il 65% è una proprietà dei MIEI store sintetici, non
+del prodotto*». **Era vero per QUEL banco** — domande **multi-hop** tradotte, 0/15 in
+entrambe le lingue — **ma non generalizza**: cambiando il **tipo di domanda** (attributo
+personale assente invece di multi-hop), **il divario ricompare su dati che non ho scritto
+io**. ⇒ **il discrimine non era la provenienza: era il tipo di domanda.**
+
+### ⚠️ ③ Il banco che doveva dare il numero grande è INVALIDO, e lo dichiaro
+
+Ho allargato a 45 entità e ottenuto **0/45 EN contro 5/45 IT (11,1%)**. **Quel numero non
+vale**: lo stderr era pieno di
+
+```
+store: encode delegate unavailable → il fatto viene scritto SENZA embedding
+                                     (recall keyword finche' il daemon non torna)
+```
+
+**Verificato subito dopo su un fatto singolo**: `embedding presente? False`. ⇒ **i fatti
+erano scritti senza vettore e il recall era degradato a keyword: non è il comportamento
+che volevo misurare.** Il `5/45` **lo ritiro prima ancora di averlo usato**.
+
+🟢 **E qui il prodotto si comporta bene**: **lo dice**, esplicitamente e a ogni scrittura.
+Non degrada in silenzio. Il difetto sarebbe stato **mio**, se non avessi letto lo stderr.
+
+🪞 **La classe, ed è una che avevo già in memoria in un'altra forma**: *un'assenza di
+misura si legge come verde* — qui diventa **«un regime degradato si legge come normale»**.
+Il banco produce numeri plausibili (0 contro 5, direzione giusta!) mentre misura un
+prodotto diverso. **La direzione giusta è la trappola: rende il risultato credibile.**
+
+⚠️ **Sospetto sulla causa, non verificato**: il banco pesante (90 store × 451 frasi) può
+aver saturato l'encoder. Se fosse così, **ogni banco lanciato dopo uno pesante è a
+rischio**, e non solo il mio. **Da qui in avanti aggiungo un controllo dell'embedding
+all'inizio e alla fine di ogni banco.**
+
+### Cosa questo NON prova
+
+- **Il 2/14 vale, il 5/45 no.** Il primo era in regime normale (nessun avviso di encode
+  nel log, verificato), il secondo no.
+- **14 entità, 2 fallimenti**: è un **segnale**, non una stima. La forza sta nella
+  **replica su tre configurazioni**, non nella dimensione del campione.
+- **Le domande italiane le scrivo io** (la traduzione è la variabile manipolata); **lo
+  store è di terzi**.
+- ⛔ **Non ho toccato nulla, e non ho riavviato alcun daemon.**
+
