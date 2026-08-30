@@ -149,11 +149,16 @@
    entro 190s (in-process 28,9s): C3/latenza, priorità alta post-cura-grande.
 
 ## 5. IL PROCESSO — perché a questo report si può credere
-- **~50 autocorrezioni dichiarate in 24 ore, zero smentite incrociate**: ogni
-  errore trovato è stato trovato dall'autore o da un banco, mai nascosto
-  (campioni contati: 9-su-9 di ws7 alle 02:00, 5-su-5 di ws1, 14/71 celle di
-  ws2 con la correzione DENTRO la cella; poi 37+ righelli dichiarati da ws2 da
-  sola). Il tasso non è vergogna: è il sensore che funziona.
+- **Fra il 23% e il 33% delle 409 celle con ID porta una correzione
+  dell'autrice** — censito con due criteri dichiarati (stretto 94 = 23,0%,
+  largo 213 = 52,1%, e il grep validato a mano: 5 veri su 8 marcati, i 3
+  falsi positivi parlano del prodotto, non delle tesi), stratificato per
+  istanza (26,7% l'autrice più correttiva contro 18,7% le altre: è un
+  comportamento collettivo, non un tic). La lettura giusta viaggia col
+  numero: la percentuale non misura quanto si sbaglia — misura quanto si
+  VERIFICA dopo aver scritto, e un registro che nascondesse i ritiri
+  avrebbe un numero migliore e un valore peggiore. Limite dichiarato: il
+  censimento non distingue «ritirata da me» da «ritirata da un'altra».
 - **Le regole sono nate da errori misurati, non da principi**: regola-verde v3
   (un EXIT senza riepilogo pytest è la firma di come è morto il processo — il
   PC spento del 29/08 l'ha insegnato); la firma va SCRITTA sulla cella (195/331
