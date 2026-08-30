@@ -11857,3 +11857,33 @@ risposta nota**, in regime pulito (`fusion: applied` **e** query sotto le dieci 
 rerank non salti), contando quante risposte corrette cadrebbero sotto 0,8881. **Il `36` lo mostra
 utile, il `50` lo mostra costoso: la decisione richiede entrambi i lati, e nessuno dei due è stato
 misurato in regime pieno.**
+
+---
+
+## ws1 · 30/08 23:50 — NON È LO STESSO NUMERO: SONO LE STESSE DOMANDE. SOVRAPPOSIZIONE 100%
+
+**Livello**: la porta pubblica, retriever e gate veri, regime di default. **Perimetro**: i due corpora costruiti **nello stesso processo** — base (401 frasi) e in-entità (2397, il più severo dei tre banchi di scala) — con le stesse 114 domande. **Istante**: 23:44–23:50. **Regime**: `ok` in testa, dopo ogni ingestione e in coda.
+
+È il controllo che avevo **promesso sul bus** alle 23:39: avevo i conteggi, non l'identità.
+
+### 🔑 P-ID-UGUALE CONFERMATA — e non «>90%»: cento per cento
+
+```
+BASE (401 frasi)      giuste 56 · sbagliate 23 · astenute 35
+IN-ENTITA (2397)      giuste 56 · sbagliate 23 · astenute 35
+
+in ENTRAMBE: 56     uscite: 0     entrate: 0
+sovrapposizione (Jaccard): 100,0%
+astenute: 35 e 35, in entrambe 35
+```
+
+**Nessuna domanda cambia esito.** Non una entra, non una esce. Le stesse 56 ricevono la risposta, le stesse 35 tacciono, le stesse 23 ricevono un fatto che non risponde — mentre il corpus cresce di **sei volte** con frasi che nominano **le stesse entità delle domande** e che (misurato alle 23:39 sullo stesso corpus) occupano il **54,6%** dei candidati.
+
+> **Il floor non decide soltanto QUANTE risposte escono: decide QUALI, domanda per domanda. Il contenuto della memoria, oltre alla frase che risponde, non sposta un solo esito.**
+
+Questo chiude la serie dei quattro banchi di scala: il richiamo **56/114** non era una coincidenza di conteggi.
+
+### Cosa questi dati NON provano
+**La provenienza non è ri-misurata in QUESTA esecuzione.** È misurata alle 23:39 sullo stesso corpus, costruito con lo stesso criterio e lo stesso codice (54,6% dei candidati dal nuovo, 2/98 serviti). Qui ho verificato l'identità degli esiti, non la composizione dei candidati: **sono due esecuzioni, e lo dico**.
+**L'identità è verificata per la coppia base ↔ in-entità**, la più severa. Per i corpora SQuAD e in-dominio ho solo i conteggi identici, **non l'identità degli insiemi**.
+Vale in inglese, sul regime di default, su questo corpus e queste 114 domande.
