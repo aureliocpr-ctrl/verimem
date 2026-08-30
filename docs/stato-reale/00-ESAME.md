@@ -11044,3 +11044,70 @@ emette segnale»*. Qui la capacità non è spenta da un default di progetto — 
 incidente, e il prodotto ha registrato l'incidente come se fosse una misura.** Un analista che provi
 l'API enterprise con la configurazione di default non vede l'astensione che il README promette, **e
 la causa non è un bug del motore: è un file di cache.**
+
+### 🔴🔴 W8-26 — I run **SCADONO**, non vengono serviti. E questo **rettifica due mie celle**
+
+> **REGIME** — API GitHub alle 22:58 del 30/08, 7 run `ci` chiusi di recente, letti sul
+> job `build` con `started_at` **e** `completed_at` (è il secondo che mancava a tutte le
+> misure precedenti).
+> **LIMITE** — 7 run, non un censimento. Ma i quattro scaduti mostrano `1 day, 0:00:0x`:
+> **la regolarità del numero è essa stessa la prova** che è un timeout e non un caso.
+
+```
+#1296  creato 28/08 20:44Z  chiuso 30/08 19:58Z   build in coda = 1 day, 0:00:00  🔴 SCADUTO
+#1295  creato 28/08 20:43Z  chiuso 30/08 19:45Z   build in coda = 1 day, 0:00:00  🔴 SCADUTO
+#1294  creato 28/08 20:43Z  chiuso 30/08 19:38Z   build in coda = 1 day, 0:00:01  🔴 SCADUTO
+#1293  creato 28/08 20:42Z  chiuso 30/08 19:27Z   build in coda = 1 day, 0:00:01  🔴 SCADUTO
+──────────────────────────────────────────────────────────────────────────────────────────
+#1190  creato 28/08 17:48Z  chiuso 30/08 20:52Z   build in coda =      0:00:17    ✅ servito
+#1105  creato 27/08 20:02Z  chiuso 28/08 09:22Z   build in coda =      0:00:38    ✅ servito
+```
+
+🔑 **`1 day, 0:00:00` esatto è il timeout massimo di GitHub Actions** (`ci.yml` non imposta
+`timeout-minutes` su `build`: è il default). E quando `build` parte, parte in **17–38
+secondi** e dura **0–1 minuti**.
+
+⇒ **Non c'è via di mezzo: o parte subito, o aspetta 24 ore e viene cancellato.** È
+**binario**. E `wheel install-from-scratch` (`needs: build`) risulta **`skipped`**.
+
+### ⇒ Un run con `build` scaduto NON PUÒ essere verde
+
+`build: cancelled` + `wheel: skipped` ⇒ il run chiude **failure**. **Mai `success`.**
+Ecco i **98 success su 1160**: i verdi sono solo i run in cui `build` ha trovato un runner
+nei primi secondi.
+
+### 🪞 RETTIFICA 1 — W8-18 §③: la mia correzione era falsa, l'originale era giusta
+
+W8-13 (mattina) diceva «`build` è **cancellato** dalla coda». In W8-18 §③ l'ho «corretta»
+in «non viene cancellato: **resta appeso** a tempo indeterminato». **La correzione è
+falsa.** Non resta appeso: **viene cancellato dal timeout di 24 ore.**
+📌 Avevo corretto una cosa vera perché guardavo `status=queued`, che mostra **l'attesa** e
+non la fine. **Il campo che mancava era `completed_at`.** — *una correzione fatta su un
+campo incompleto è peggio dell'errore che voleva curare.*
+
+### 🪞 RETTIFICA 2 — W8-21 (agg. 22:47): «lentissima ma viva» è FALSO
+
+Alle 22:47 il fondo della coda si era mosso e ho concluso «lentissima ma **viva**, non
+affamata». **Ora so perché si muoveva**: quei run **stavano compiendo 24 ore**.
+
+⇒ Non è il sistema che accelera: **è la coda che SCADE.** Il fondo continuerà a muoversi
+al ritmo con cui i run compiono 24 ore, **indipendentemente dalla capacità**. La parola
+giusta non è «viva»: è **«sta scadendo»**.
+
+### ⛔ Per il rilascio: ① è chiuso più duramente di quanto avessi scritto
+
+Non è «`ci` è lento» né «`ci` è rosso»: con la coda a **930**, `build` non trova un runner
+nei primi secondi, quindi **ogni run muore a 24 ore**. Il verde che il cancello cerca **non
+può prodursi** — e non per i test, che finiscono in 25 minuti.
+
+⇒ La leva sull'ingresso (`paths-ignore`) diventa **più** importante: serve a riportare la
+coda al regime in cui `build` parte nei primi secondi, **l'unico in cui `ci` produce
+verdi**. ⚖️ Ma resta la cura del **carico**, non della **catena** (W8-25).
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
+  --jq '.jobs[]|select(.name|startswith("build"))|"\(.conclusion) \(.started_at) \(.completed_at)"'
+# ⚠️ `started_at` da solo mostra l'attesa: serve `completed_at` per vedere la fine
+```
