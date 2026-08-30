@@ -69,9 +69,28 @@ NON_SONO_QUANTITA = [
 def test_un_numero_dopo_una_abbreviazione_e_una_quantita(frase, valore):
     """IL CUORE: «grad.3» dice grado 3. Non vederlo fa concludere che la fonte
     non contenga il numero, e il claim che lo cita viene quarantinato — cioè un
-    fatto vero esce dal recall per un punto."""
-    valori = {v for _u, v in extract_quantities(frase)}
-    assert valore in valori, f"«{frase}» -> {extract_quantities(frase)}"
+    fatto vero esce dal recall per un punto.
+
+    ⚠️ `come_fonte=True` DAL 30/08, ed è una parola che allinea la chiamata a ciò
+    che questo docstring già diceva: parla della **FONTE** («fa concludere che
+    *la fonte* non contenga il numero»), e la modalità-fonte è nata il 16/08
+    (`da6d083e`), **nove giorni dopo questo test** (07/08, `665ce380`) — quando
+    non esisteva, la modalità-claim era l'unica e coincideva.
+
+    Il 28/08 `29ab5544` ha aggiunto una terza potatura (i riferimenti: «art. 15»
+    in un CLAIM è un puntatore, non la quantità 15) e le due modalità hanno
+    smesso di coincidere su `art.`/`pag.`/`fig.`. Quella potatura era anche
+    finita SOTTO il bivio `come_fonte`, accecando pure il lato fonte: curato in
+    `fb2ff485`, e da lì la modalità-fonte vede di nuovo **8 su 8**.
+
+    🔑 La copertura del lato CLAIM non si perde, sta in
+    `test_la_terza_potatura_era_fuori_dall_esenzione.py`, che misura ENTRAMBE le
+    popolazioni: fonte 8/8 **e** claim che non afferma il numero del proprio
+    riferimento 3/3.
+    """
+    valori = {v for _u, v in extract_quantities(frase, come_fonte=True)}
+    assert valore in valori, (
+        f"«{frase}» come FONTE -> {extract_quantities(frase, come_fonte=True)}")
 
 
 @pytest.mark.parametrize("frase", NON_SONO_QUANTITA)
