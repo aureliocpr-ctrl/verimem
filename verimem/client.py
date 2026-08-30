@@ -1010,6 +1010,25 @@ class Memory:
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
+        # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
+        # ma non arrivava a chi scrive: la ricevuta diceva `moat: passed`,
+        # `grounding_score: 99`, `status: quarantined` e lasciava dedurre da
+        # soli che due decisori non erano d'accordo.
+        # DERIVATO, mai accettato dal chiamante, e con la STESSA
+        # `judged_true` del journal e della vista sul corpus: una soglia
+        # scritta due volte diverge, e `None` non e' mai giudicato — un
+        # giudice ancora `warming` non produce un «nonostante il giudice».
+        # DESCRITTIVO, NON VALUTATIVO: `True` non vuol dire «il gate ha
+        # sbagliato». Puo' essere il layer ad avere ragione — un claim quasi
+        # identico alla fonte prende 99.9 dal giudice semantico e solo il
+        # layer lessicale vede che la cifra e' 160 invece di 162.
+        # Condizionale come `quarantined_by`: una scrittura ordinaria non
+        # cambia forma.
+        from .retirement_log import judged_true as _judged_true
+        if (str(fact.status) in ("quarantined", "rejected")
+                and _judged_true(gate.grounding_score)):
+            _out["withheld_despite_judge"] = True
         if _superseded:
             _out["superseded"] = _superseded
             if _superseded_undo:

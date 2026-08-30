@@ -13527,6 +13527,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                              "write (no llm and no local CE model); this is NOT a "
                              "pass — run `verimem warmup` to fetch the free "
                              "judge, or `verimem doctor` to see which is missing")
+            from verimem.retirement_log import judged_true as _judged_true_mcp
             return _ok({
                 "ok": True,
                 "id": fact.id,
@@ -13561,6 +13562,21 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # una quarantena da spiegare, cosi' una scrittura ordinaria
                 # non cambia forma.
                 **({"quarantined_by": _out_qb} if _out_qb else {}),
+                # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE — e qui, non
+                # solo nell'SDK: questa lista di campi e' ESPLICITA, quindi
+                # un campo aggiunto in `client.py` non arriverebbe mai su
+                # questa porta. Misurato: `flow.write` con `surface=sdk` e'
+                # 18 su 10955, cioe' curare il solo SDK consegnerebbe il
+                # campo alla superficie meno usata.
+                # Stessa derivazione del journal (`judged_true`, dove `None`
+                # non e' mai giudicato) e stessa forma condizionale di
+                # `quarantined_by` qui sopra. DESCRITTIVO: `True` dice che un
+                # layer ha trattenuto mentre il giudice era a favore, NON che
+                # il gate abbia sbagliato.
+                **({"withheld_despite_judge": True}
+                   if (str(getattr(fact, "status", "")) in ("quarantined",
+                                                            "rejected")
+                       and _judged_true_mcp(_gs_out)) else {}),
                 # Il verdetto per esteso: chi ha deciso, con che punteggio,
                 # contro quale soglia e a che distanza. Non condizionale —
                 # la promessa e' «ogni scrittura», ammesse comprese.
