@@ -105,3 +105,32 @@ def test_vale_per_TUTTI_gli_eventi_non_solo_per_la_scrittura(canale):
     misurando — resterebbero senza."""
     flow_events.emit_flow("flow.quarantine", fact_id="f1", reason="banco")
     assert _ultimo(canale).get("store"), _ultimo(canale)
+
+
+def test_un_banco_che_cambia_data_dir_DOPO_l_import_non_deve_MENTIRE(
+        canale, monkeypatch, tmp_path):
+    """Il caso REALE, che i test sopra non toccano.
+
+    `test_due_store_DIVERSI_danno_impronte_diverse` chiama
+    `reset_store_fingerprint()` a mano prima di riemettere: verifica il caso
+    CURATO, non quello che succede. Nessun banco chiama quel reset — importa
+    verimem e POI imposta `HIPPO_DATA_DIR`, esattamente come qui sotto. Con
+    l'impronta memorizzata all'import, i suoi eventi finiscono nel journal di
+    casa marcati come se fossero di casa: 592 scritture su 980 il 29/08.
+
+    E' lo stesso difetto che questo file racconta di aver curato:
+    `EVENT_LOG_PATH` si fissava all'import, e `_IMPRONTA` si fissa all'import
+    allo stesso modo. La cura ha ereditato il difetto che curava.
+    """
+    flow_events.emit_write(stored=True, status="model_claim", fact_id="f1",
+                           topic="t", grounding_score=None)
+    casa = _ultimo(canale)["store"]
+
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path / "banco"))
+    # NESSUN reset: e' precisamente cio' che fa ogni banco reale.
+    flow_events.emit_write(stored=True, status="model_claim", fact_id="f2",
+                           topic="t", grounding_score=None)
+
+    assert _ultimo(canale)["store"] != casa, (
+        "l'evento del banco porta l'impronta della memoria di casa: "
+        "chi analizza il journal non puo' separare le due popolazioni")

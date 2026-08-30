@@ -53,16 +53,22 @@ def reset_flow_context(token: contextvars.Token | None = None) -> None:
         _CTX.set(None)
 
 
-#: Impronta della memoria a cui gli eventi si riferiscono, calcolata una
-#: volta per processo. `None` = non ancora calcolata.
+#: Impronta della memoria a cui gli eventi si riferiscono. `None` = non
+#: ancora calcolata. La cache e' sulla RADICE (sotto), non sul processo:
+#: vedi `_store_fingerprint`.
 _IMPRONTA: str | None = None
+
+#: La radice da cui `_IMPRONTA` e' stata calcolata, per accorgersi da soli
+#: che la data dir e' cambiata a processo vivo. `None` = mai calcolata.
+_RADICE_IMPRONTA: str | None = None
 
 
 def reset_store_fingerprint() -> None:
     """Ricalcola l'impronta e il build alla prossima emissione (banchi, e chi
     cambia data dir a processo vivo)."""
-    global _IMPRONTA, _BUILD
+    global _IMPRONTA, _RADICE_IMPRONTA, _BUILD
     _IMPRONTA = None
+    _RADICE_IMPRONTA = None
     _BUILD = None
 
 
@@ -93,8 +99,8 @@ def _store_fingerprint() -> str:
     L'impronta e' stabile, corta, e basta a dire «questi due eventi
     vengono da memorie diverse».
     """
-    global _IMPRONTA
-    if _IMPRONTA is None:
+    global _IMPRONTA, _RADICE_IMPRONTA
+    if True:
         from hashlib import sha256
         try:
             from ._compat import data_dir
@@ -113,7 +119,21 @@ def _store_fingerprint() -> str:
                 _radice = _env_data_dir() or "unknown"
             except Exception:  # noqa: BLE001 — resta un tag, non una garanzia
                 _radice = "unknown"
-        _IMPRONTA = sha256(_radice.encode("utf-8")).hexdigest()[:12]
+        # 🔑 La cache sta sulla RADICE, non sul processo. Tenerla per
+        # processo ereditava ESATTAMENTE il difetto che questo campo cura:
+        # `EVENT_LOG_PATH` si fissava all'import, e `_IMPRONTA` si fissava
+        # all'import allo stesso modo — cosi' chi imposta la data dir DOPO
+        # (cioe' ogni banco, che importa verimem e poi isola) continuava a
+        # emettere l'impronta di casa, e il journal dichiarava «di
+        # produzione» eventi che erano dei nostri test. Misurato il 29/08:
+        # 592 scritture su 980 marcate casa venivano da un banco, e le tre
+        # misure che quel giorno hanno usato il campo sono da rifare.
+        # `reset_store_fingerprint()` resta, per chi vuole forzare il
+        # ricalcolo — ma il campo non dipende piu' dal fatto che qualcuno
+        # si ricordi di chiamarla.
+        if _IMPRONTA is None or _RADICE_IMPRONTA != _radice:
+            _RADICE_IMPRONTA = _radice
+            _IMPRONTA = sha256(_radice.encode("utf-8")).hexdigest()[:12]
     return _IMPRONTA
 
 
