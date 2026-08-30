@@ -545,3 +545,57 @@ def test_LA_GUARDIA_SALTA_DAVVERO_SU_UN_CLONE_SUPERFICIALE(tmp_path):
         f"scatta: bump={bump[:8]!r} head={testa[:8]!r} shallow={superficiale!r}.\n"
         "Il presidio della versione calcolerebbe una distanza e la dichiarerebbe "
         "vera: e' esattamente il verde falso che la guardia esiste per impedire.")
+
+
+def test_la_soglia_in_commit_del_readme_e_ancora_vera():
+    """Il README dice «main is more than N commits ahead»: N e' ancora vero?
+
+    CURA DI `W8-1` (@ws8, 28/08), che la lasciava per nome: *«nessun test copre
+    quel numero, mentre questo file calcola gia' la distanza in commit per
+    l'altro test»*. La riga era rimasta scoperta per due giorni.
+
+    LA STORIA CHE RENDE NECESSARIO QUESTO TEST. Il README diceva **«994
+    commits»** quando erano **1347** (@ws8, 28/08), poi **1785**, poi **1926**:
+    un numero ESATTO in vetrina invecchia di circa un commit al minuto con otto
+    istanze che scrivono, e **nessuno se ne accorge**, perche' il testo resta
+    plausibile. Il 29/08 e' stato sostituito da una **soglia monotona** («more
+    than 1900»), che ha una proprieta' utile: **cresce solo, quindi diventa piu'
+    vera col tempo, mai meno.**
+
+    ⇒ Questo test non insegue il numero: verifica che **la soglia sia ancora
+    sotto la realta'**. Fallisce solo se qualcuno scrive una soglia PIU' GRANDE
+    della distanza vera — cioe' se la vetrina promette piu' di quanto il repo
+    abbia — o se torna a un numero esatto senza la parola «more than».
+
+    ⚠️ Il conteggio dipende dal tag ``v0.7.0`` LOCALE: il limite e' dichiarato
+    nella cella di @ws8 e qui diventa uno **skip**, non un rosso. Un test che
+    fallisce perche' manca un tag misura il checkout, non la vetrina.
+    """
+    testo = README.read_text(encoding="utf-8")
+    dichiarata = re.search(r"more than \*{0,2}([\d,]+)\*{0,2}\s+commits?", testo)
+    assert dichiarata, (
+        "il README non dichiara piu' la distanza come SOGLIA («more than N "
+        "commits»). Se e' tornata a un numero esatto, invecchiera' di nuovo di "
+        "un commit al minuto: e' il difetto misurato in W8-1 e curato in LANT-62.")
+    soglia = int(dichiarata.group(1).replace(",", ""))
+
+    def git(*a: str) -> tuple[int, str]:
+        e = subprocess.run(["git", *a], cwd=str(RADICE), capture_output=True,
+                           text=True, timeout=60)
+        return e.returncode, e.stdout.strip()
+
+    rc, _ = git("rev-parse", "--verify", "v0.7.0^{commit}")
+    if rc != 0:
+        pytest.skip("tag v0.7.0 assente in questo checkout: la distanza non e' "
+                    "calcolabile qui (limite dichiarato in W8-1)")
+    rc, conteggio = git("rev-list", "--count", "v0.7.0..HEAD")
+    if rc != 0 or not conteggio.isdigit():
+        pytest.skip(f"git rev-list non utilizzabile: {conteggio[:120]!r}")
+    reale = int(conteggio)
+
+    assert reale > soglia, (
+        f"il README promette «more than {soglia} commits» ma la distanza reale "
+        f"da v0.7.0 e' {reale}: la vetrina afferma piu' di quanto il repo abbia.\n"
+        "Una soglia monotona regge da sola finche' resta SOTTO la realta'; "
+        "quando la supera va alzata al valore corrente arrotondato per difetto, "
+        "non aggiornata al numero esatto (che invecchierebbe di nuovo).")
