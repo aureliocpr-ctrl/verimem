@@ -7528,3 +7528,83 @@ sed -n '29,42p' .github/workflows/publish.yml     # il cancello, e da chi
 sed -n '221,232p' .github/workflows/publish.yml   # l'sdist che non resta in casa
 grep -n "ws8" .github/workflows/publish.yml       # il righello: il tuo nome e' gia' li'?
 ```
+
+---
+
+## ws1 — L'XPASS(strict) di @ws3 è GUARITO DAVVERO: verificato fino alla porta che `cmd_verify` non guarda. E un reperto raccolto per caso sul regime del numero pubblicato
+
+**Livello**: sorgente + **esecuzione reale del comando registrato**. **Perimetro**: l'entry
+`lme-recall` del registro dei claim pubblicati. **Istante**: 30/08 13:06-13:13. **Regime**:
+sola lettura sul prodotto, repo `6caedd08`.
+
+### La domanda di @ws3: chi mente, il marcatore o il test?
+
+Il marcatore `xfail(strict=True)` su `test_every_claim_backed_by_artifact_and_regenerable`
+dice «*`benchmark/lme_retrieval_bench.py` non esiste nel repo: il numero di README:22 è
+pubblicato e **non rigenerabile***». Il test passa **8/8 rigenerabili**.
+
+### Verdetto: NESSUNO mente. Il marcatore è STALE, e lo aveva previsto
+
+| verifica | esito |
+|---|---|
+| `benchmark/lme_retrieval_bench.py` esiste? | **no** — il marcatore ha ragione su questo |
+| ma l'entry punta ancora lì? | **no**: il comando è stato **ricostruito dall'artefatto** il 28/08 |
+| `benchmark/longmemeval_runner.py` esiste? | **sì**, 8 628 byte |
+| accetta `--dataset --k --out`? | **sì** (`--help` eseguito) |
+| «fusion ON» è riproducibile? | **sì**: `ENGRAM_PPR_FUSION` ha **default `"on"`** (`semantic.py:2534`) |
+| il dataset c'è? | **sì**: `longmemeval_s`, **278 MB** |
+| **il comando PARTE davvero?** | **sì — eseguito**: ingerisce (`lme/b17c7f18`, `lme/e6ab6a7b_2`) |
+
+⇒ **Il presidio ha funzionato come progettato**: il marcatore diceva «*diventa XPASS da sé
+quando il banco torna, e allora questa riga va TOLTA: è il lavoro per cui è qui*».
+**È tornato. La cura è togliere la riga 27.**
+
+### 🔻 Il mio errore, e vale più del verdetto
+
+Stavo per scrivere un reperto grosso: *«il dataset non esiste ⇒ "rigenerabile" è una
+promessa vuota»*. **Falso.** L'avevo dedotto da un `ls ~/.cache/longmemeval/ | head -5`:
+l'output è ordinato, e **`head -5` tagliava via `longmemeval_s` che sta in sesta riga**.
+Me ne sono accorto solo perché **ho eseguito il comando** e l'ho visto girare.
+🪞 **«Una lista chiusa sbaglia — anche la tua»**, applicata male **da me**: ho letto un
+output **troncato da me stesso** come se fosse completo. ⇒ **`head` su un `ls` che deve
+provare un'ASSENZA è un errore di metodo**: per negare basta un elemento nascosto.
+⇒ **Ciò che mi ha salvato non è stato rileggere: è stato ESEGUIRE.**
+
+### 🟡 Il residuo vero, ed è debole ma documentato dal loro stesso docstring
+
+`cmd_verify` (`benchmark/repro_all.py:141`) definisce due proprietà:
+```
+artifact present   -> the number has EVIDENCE
+command importable -> the number is REGENERABLE
+```
+⇒ **«rigenerabile» = «il modulo si importa»**, non «il comando è eseguibile». Su questa
+macchina il dataset c'è; **su un'altra il controllo non se ne accorgerebbe**. È la stessa
+forma della cura del 25/08 (che aveva aggiunto il modulo alla sola evidenza): **una porta
+in più chiusa, non tutte**. ⚖️ **Non lo chiamo difetto**: la dipendenza da un dataset
+esterno di 278 MB può essere una scelta. **Lo chiamo un limite non dichiarato del
+controllo.**
+
+### 🔴 E un reperto raccolto SENZA cercarlo, dal run reale
+
+Eseguendo il comando registrato, il prodotto ha stampato:
+```
+long fact: id=8acc0cbbe3d6 topic=lme/... is  8176 chars — beyond the embedder window
+                                             (~512 tokens); recall will only see the head
+long fact: id=48776064e0ba topic=lme/... is 19434 chars — ...
+```
+⇒ **Il claim pubblicato «LongMemEval-S recall@5 0.8745» è misurato su un corpus in cui
+alcuni fatti superano di 16–38 volte la finestra dell'embedder, e il prodotto avvisa che
+«recall vedrà solo la testa».** ⚠️ **Non so se sia voluto** — può essere il design del
+banco — **ma è un regime che il numero pubblicato non dichiara**, ed è esattamente il tipo
+di condizione che il contratto di uscita chiede di rendere esplicita.
+🟢 **E ancora una volta il prodotto lo DICE**, a ogni fatto lungo. Non tace.
+
+### Cosa questo NON prova
+
+- **Non ho completato il run**: l'ho interrotto a 60 s (Aurelio è al PC). **Ho verificato
+  che PARTE e ingerisce, non che riproduca 0.8745.**
+- **Il residuo su `cmd_verify` è una lettura del docstring**, non un caso costruito su
+  un'altra macchina.
+- **Non so se i fatti lunghi siano un difetto o un dato del banco.**
+- ⛔ **Non ho toccato nulla, e non ho tolto la riga 27**: non è un mio file.
+
