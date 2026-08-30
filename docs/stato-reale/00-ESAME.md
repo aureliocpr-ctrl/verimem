@@ -10722,3 +10722,48 @@ io torto**.
 capacità e il loro stato (`min_relevance: off` · `decay_run: mai eseguito` · `quarantined_by:
 valorizzato nel 77%`) mostrerebbe in venti secondi ciò che a me è costato una notte. ⛔ **Non
 applicato: sono default e codice del gate.**
+
+---
+
+## ws1 · 30/08 22:48 — LE DUE DIREZIONI SONO SEPARATE, E IL FLOOR ATTUALE STA 3 PUNTI PIÙ SEVERO DEL PUNTO MIGLIORE
+
+**Livello**: lo scorer del prodotto. **Perimetro**: 114 coppie «risposta presente» + 18 domande sonda «assenza» × pool 5 + 18 di controllo sano; corpus ingerito **401 frasi distinte**. **Tutto di terzi, tutto inglese.** **Istante**: 22:43–22:48. **Regime**: `ok`.
+
+### ⚠️ PRIMA: IL NOME DEL FILE MI STAVA INGANNANDO
+
+`halueval_qa_unanswerable.jsonl` **non contiene domande senza risposta**: il **94% ha la `right_answer` nel proprio `knowledge`** (94/100; per confronto dev 95/100, heldout 196/200). Il README lo dice ed è corretto — *«probe questions whose knowledge is never ingested»*: **l'assenza è una proprietà del PROTOCOLLO del banco, non del dato**. Chi legge il nome del file e non il README costruisce la popolazione sbagliata. Ci sarei cascato: la popolazione «assenza» si fa mettendo quelle domande contro un corpus che **non** contiene il loro `knowledge` — e verificandolo, non assumendolo (**14 domande scartate** perché il corpus conteneva comunque la loro risposta).
+
+### 🟢 LE TRE POPOLAZIONI SONO SEPARATE — P-SEP confermata, P-SOVR falsificata
+
+| popolazione | n | min | q1 | **mediana** | q3 | max |
+|---|---:|---:|---:|---:|---:|---:|
+| **A** risposta presente | 114 | −8,278 | −3,858 | **−0,208** | +5,550 | +10,932 |
+| **B** assenza (max del pool) | 18 | −9,398 | −6,343 | **−5,792** | −4,160 | **−3,297** |
+| **C** controllo sano (stesse domande di B, contro la frase che le risponde) | 18 | −7,176 | −3,719 | **+2,768** | +7,091 | +10,856 |
+
+**Il massimo assoluto di B (−3,297) sta sotto la mediana di A.** Quota di B che supera la mediana di A: **0%**. E il controllo sano regge: **le stesse 18 domande prendono +2,768 mediano contro la frase che le risponde e −5,792 contro il corpus altrui** — 8,5 punti di divario. Il giudice fa il suo lavoro su questo asse.
+
+### 🔴 MA IL FLOOR ATTUALE È MOLTO PIÙ SEVERO DEL PUNTO MIGLIORE
+
+```
+ soglia   A trattenute   B respinte
+   -4,0            76%          83%
+   -3,0            68%         100%   <== punto migliore
+   -2,0            60%         100%
+    0,0            49%         100%   <== floor del prodotto
+   +2,0            41%         100%
+```
+
+**Fra `0.0` e `−3,0` il prodotto perde 19 punti di risposte trattenute (49% → 68%) senza perdere nulla sulle assenze.** Su questo banco, il floor attuale è severo oltre il necessario: la separazione fra le due popolazioni lascia un margine che non viene usato.
+
+### 🔑 LA SINTESI CHE UNIFICA LA SERATA
+
+> **Il cross-encoder è forte nel dire «questo testo non parla della tua domanda» e debole nel dire «questa frase contiene la risposta». La soglia lo usa per il secondo compito.**
+
+Coerente con tutto il resto: separazione rilevanti/off-topic **+8,324**; controllo sano **91%** *fra* testi diversi; **41%** al primo posto *dentro* lo stesso testo; A/B/C qui separate. È *relevance ≠ sufficiency*, e la cura che il prodotto ha già in casa è il **giudice di sufficienza** — opt-in, spento senza un `llm`.
+
+### Cosa questi dati NON provano — e qui il limite è grosso
+**n(B) = 18.** «100% respinte» con 18/18 significa, per la regola del tre, un tasso vero **≥ 83%**, non 100%. **Non usare «100%» come numero.**
+**Il pool di B è un proxy lessicale dichiarato**, non il retriever del prodotto: il regime vero seleziona le frasi **più simili**, quindi il massimo vero è probabilmente **più alto** ⇒ **B qui è sottostimata e la separazione è ottimistica**.
+**Il corpus è piccolo: 401 frasi.** Il massimo su un pool cresce con la dimensione del corpus — più frasi, più occasioni di un falso amico. **Questa separazione non si estende a un corpus reale senza rimisurarla lì.**
+Non è una raccomandazione di cambiare il floor: **io misuro, non curo.** E vale sul **cross-encoder** in inglese, non sul bi-encoder del banco ufficiale.
