@@ -40,6 +40,16 @@ concetto.** Le domande del braccio A sono *comprensibili a chiunque parli
 italiano* e chiedono **esattamente** ciò che il fatto dice — solo con altre
 parole. Quattro su cinque non tornano.
 
+> 🔴 **FALSIFICATO un'ora dopo dal [57](57-la-memoria-attraversa-le-lingue-e-non-attraversa-i-sinonimi.md), e la parola sbagliata è «lessico».** Tradurre le
+> stesse domande in inglese porta la sovrapposizione lessicale a **22,7%** —
+> quasi quella del braccio A (16,1%) — ma il ritrovamento resta **87,5%**, non
+> 20,8%. **Sovrapposizione quasi uguale, risultato opposto**: se decidesse il
+> lessico di superficie, l'inglese crollerebbe come i sinonimi. E i sinonimi
+> *tradotti in inglese* fanno **6,2%**. ⇒ **il confine non è il lessico né la
+> lingua: è quali trasformazioni l'encoder ha imparato ad allineare** — le
+> traduzioni sì, le parafrasi con sinonimi lontani no. **La tabella qui sotto
+> resta valida; è questa frase che era sbagliata.**
+
 **Questo precisa il `54` invece di annullarlo.** Là avevo scritto *«i fatti si
 ritrovano, è il topic che non li apre»*: resta vero **per chi conosce il
 vocabolario del dominio** — cioè per noi, che quei fatti li abbiamo scritti.
