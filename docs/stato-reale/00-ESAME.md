@@ -7346,3 +7346,59 @@ all'inizio e alla fine di ogni banco.**
   store è di terzi**.
 - ⛔ **Non ho toccato nulla, e non ho riavviato alcun daemon.**
 
+
+### 🔴 W8-13 — La coda satura non ritarda soltanto: **CANCELLA i job che aspettano**, e sono proprio i presidi sul pacchetto
+**REGIME**: `gh api …/actions/runs/<id>/jobs?per_page=100` su **5 run `ci` chiusi** (#1161,
+#1162, #1164, #1165, #1167), lettura di `.github/workflows/ci.yml:956-988`; 2026-08-30
+12:34–12:36. Nato dalla previsione verificata delle 22:24 di ieri.
+
+    run #1167 — job per job
+      failure    test (windows-latest / py3.12)  runner **GitHub Actions 1000040665**
+      failure    test (ubuntu-latest / py3.13)   runner **…666**
+      failure    test (macos-latest / py3.12)    runner **…668**
+      failure    test (ubuntu-latest / py3.10)   runner **…667**
+      failure    test (ubuntu-latest / py3.12)   runner **…670**
+      failure    test (ubuntu-latest / py3.11)   runner **…671**
+      **cancelled  build (sdist + wheel)          runner = NESSUNO**
+      skipped    wheel install-from-scratch      runner = NESSUNO
+    ⇒ su **5 run su 5**: `test` = 6 failure · `build` = **cancelled** · `install` = skipped
+
+· 🔑 **`build` non è fermato dalla sua condizione: non ha MAI avuto un runner.** I sei `test`
+  hanno girato su macchine con nome e numero; `build` è stato cancellato **mentre aspettava**.
+  ⇒ **È il `runner_name` a dire se un job ha girato** — non `started_at`, che è valorizzato
+  anche su chi non è mai partito.
+· 🛑 **RITIRO un sospetto che stavo per pubblicare**: avevo letto il commento dire `always()`
+  e il codice `!cancelled()`, e stavo per denunciare una divergenza. **Il commento la spiega
+  da sé**: *«📌 `!cancelled()` e non `always()` nudo: su un job CANCELLATO non c'è un albero
+  coerente da impacchettare»*. **Nessun difetto: apre col nome informale e chiude con la forma
+  esatta e il perché.**
+· 🚨 **Ma la ragione dichiarata non copre ciò che si osserva**: il commento giustifica
+  `!cancelled()` col caso «un job di test è cancellato» — e **in questi run nessun test è
+  cancellato**, sono tutti `failure`. **Il cancellato è `build` stesso**, e per un'altra
+  ragione: l'attesa.
+· ⚖️ **CONSEGUENZA, ed è la parte grave.** La cura del **2026-08-15** ha riacceso `build` e
+  `wheel-install` proprio *«perché il gate ESISTA»* e *«perché mentre si cura il cuore nessuno
+  sta guardando il pacchetto»*. ⇒ **Sotto saturazione quella cura è INEFFICACE**: il job
+  esiste, la condizione è giusta, **ma non arriva mai a una macchina**. ⇒ **La sola prova che
+  il pacchetto si costruisce e si installa resta quella del 27/08** (run #1121, dove `build` e
+  `wheel install-from-scratch` erano `success`).
+· 🔑 **E dà alla diagnosi della coda una SECONDA prova, di natura diversa dalla prima**: la
+  prima è **temporale** (i run aspettano ~25 h e poi girano ~1 h); questa è **strutturale** —
+  **la coda fa morire i job in fondo alla catena delle dipendenze**, che è esattamente dove
+  stanno i presidi sull'artefatto. **I job che dipendono da altri sono quelli che non girano
+  mai.**
+· ⚠️ **COSA NON PROVA**: **non ho un messaggio di GitHub che attesti la causa della
+  cancellazione.** So che `build` non ha mai avuto un runner e che il run si è chiuso: è la
+  spiegazione più semplice, **non una conferma**. E un'anomalia che non spiego: `build`
+  riporta `started_at` **29/08 00:27** e `install` **30/08 00:27** — **un giorno esatto di
+  differenza**, che sospetto sia un artefatto del campo.
+
+**RIFALLO CON**:
+```bash
+id=$(gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=completed&per_page=1" --jq '.workflow_runs[0].id')
+gh api "repos/:owner/:repo/actions/runs/$id/jobs?per_page=100" \
+  --jq '.jobs[] | "\(.conclusion)  \(.name)  runner=\(.runner_name // "NESSUNO")"'
+sed -n '956,988p' .github/workflows/ci.yml
+```
+⚠️ **La chiamata `/jobs` può superare i 150 s**: alzare il timeout invece di fermarsi al primo
+run — è l'errore che ho fatto e corretto qui dentro.
