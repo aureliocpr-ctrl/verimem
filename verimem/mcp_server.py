@@ -2995,8 +2995,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "smaller version of the same answer: facts come "
                             "back most-recent-first, and recent ones carry a "
                             "source far more often, so every fraction reads "
-                            "HIGH. Measured on an 11k-fact store: limit=2000 "
-                            "gave composite 0.976, the whole corpus 0.771. "
+                            "HIGH. Measured 2026-08-12 on an 11k-fact store: "
+                            "limit=2000 gave composite 0.976, the whole "
+                            "corpus 0.771 (re-measured 2026-08-30 on 15.8k: "
+                            "0.957 against 0.801 — the gap narrows, the "
+                            "direction holds). "
                             "The `sample` field says which one you got."),
                     },
                     "threshold": {"type": "number", "default": 85.0,
@@ -12852,7 +12855,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if source_signature is not None:
                 source_signature = str(source_signature)
             # Cycle 138 (2026-05-18) — anti-confab gate on write. The
-            # gate runs BEFORE _build_fact so a downgrade to 'provisional'
+            # gate runs BEFORE _build_fact so a downgrade — which writes
+            # 'quarantined', not the 'provisional' this line used to name —
             # is reflected in the constructed Fact, and a reject short-
             # circuits the persist path entirely.
             from .anti_confab_gate import run_validation_gate
