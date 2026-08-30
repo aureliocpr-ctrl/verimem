@@ -67,6 +67,34 @@ distingue**, `model_claim` copre sia «non giudicato» sia «mai giudicato». Ch
 filtrasse su `status` tratterebbe i due casi allo stesso modo — ed e'
 esattamente cio' che la frase delle istruzioni avverte di non fare.
 
+🔑 SEGUITO DEL 30/08 15:50 — **E IN LETTURA?** Un campo che separa nella
+ricevuta di SCRITTURA non serve a niente se sparisce quando l'agente RILEGGE la
+memoria: la distinzione esisterebbe solo nell'istante del write.
+
+    SDK   `Memory().recall(...)`      -> gs 99.56 e None sui due fatti
+    MCP   `hippo_facts_search(...)`   -> campi: confidence · confidence_tier ·
+          created_at · **grounding_score** · id · **meta_narrative** ·
+          proposition · status · topic · verified_by · writer_principal
+          -> gs=None sul non giudicato, gs=99.56 sul giudicato
+
+⇒ **La separazione SOPRAVVIVE alla lettura su entrambe le porte.** Un agente che
+rilegge la memoria **puo'** sapere quali fatti sono stati giudicati.
+⚠️ **«Puo'», non «lo fa»**: quanti chiamanti reali guardino quel campo non e'
+misurabile da qui, ed e' esattamente il limite che questa giornata ha insegnato —
+*una garanzia verificata come meccanismo non dice quanto spesso qualcuno la usi*.
+
+🔴 DUE DIFETTI DEL BANCO PRIMA DI ARRIVARCI, e sono la stessa famiglia:
+  · **la popolazione si e' auto-distrutta**: i primi due claim differivano solo
+    per un suffisso e condividevano la FONTE ⇒ same-source evolution, il secondo
+    ha superseduto il primo e lo store aveva **1 fatto invece di 2**. Il
+    controllo «fatti vivi == 2» e' nato da qui.
+  · **strumento sbagliato**: interrogavo `hippo_recall`, che cerca gli EPISODI —
+    `hippo_status` diceva `episodes: 0`, quindi `[]` era la risposta GIUSTA a
+    una domanda che non era la mia. I fatti si cercano con `hippo_facts_search`.
+    ⚠️ Per un attimo ho creduto che MCP non vedesse i fatti dell'SDK: il
+    controllo che l'ha smontato e' stato **far scrivere a MCP un fatto suo** e
+    chiedergli di ritrovarlo.
+
 ⚠️ LIMITI: un claim, una fonte, italiano, porta SDK. La ricevuta MCP espone gli
 stessi campi con nomi in parte diversi (misurato altrove); qui si verifica la
 PROMESSA, non l'equivalenza fra le due porte.
