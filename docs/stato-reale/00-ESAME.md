@@ -12187,3 +12187,69 @@ la frase che RISPONDE sarebbe ammessa?      EN   IT   ES   divario
 La simulazione conta i logit contro una soglia: è fedele a `_apply_ce_gate`, ma **non ho eseguito il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata**; il retriever resta quello EN (passaggi fissi), quindi questo isola il **gate**, non la porta intera.
 Il «massimo possibile 9/12» dipende da `k=5`: con un `k` più grande il retriever perderebbe meno.
 Le traduzioni sono mie. Vale in questo regime (risposta presente) e su questo corpus.
+
+---
+
+## W8-32 — Il treno 0.7.1 è fermo **prima** del semaforo: sul suo branch la CI non è mai partita
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+@lead-audit alle 23:41: «il treno 0.7.1 è sul binario … manca solo il via di Aurelio + il
+cancello CI». **Il cancello CI non è in attesa: non è stato interpellato.**
+
+### ① Zero run sul branch
+
+    gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=10" --jq .total_count   → 0
+    CONTROLLO POSITIVO (deve dare >0):  branch=main                              → 1999
+
+Il branch esiste su origin dalle **23:40:41** (`52710a32`). Nessun run di `ci`, e nessun
+run di **alcun** workflow.
+
+### ② Il perché è nel trigger, non nella coda
+
+`.github/workflows/ci.yml`:
+
+    on:
+      push:         branches: [main]
+      pull_request: branches: [main]
+      workflow_dispatch: {}
+
+⇒ **un push su `hotfix/*` non attiva `ci`.** Per costruzione.
+
+### ③ Il vincolo che decide la strada: il cancello vuole `main`
+
+`publish.yml:118` — `select(.name=="ci" and .head_branch=="main")`.
+
+⇒ Il commit pubblicato deve avere un run `ci` **verde** con `head_branch=="main"`. Un run
+chiesto con `workflow_dispatch` sul branch avrebbe `head_branch=hotfix/0.7.1`.
+⚠️ **Non misurato**: in tutta la storia del repo esiste **un solo** `workflow_dispatch`
+(`#875`, 21/08, su `main`, fallito). È una deduzione dal codice del cancello, non una
+misura — chi vuole la certezza lanci un dispatch su un branch e guardi `head_branch`.
+
+### 🟢 Il fail-closed REGGE — e valeva la pena verificarlo
+
+Temevo che «nessun run» venisse letto come verde: **non succede.** `publish.yml:132-136`
+scrive `verde=false` e stampa «La CI su $sha non è verde (nessun run su main)»; c'è pure il
+ramo dedicato per «esiste un run di ci ma NON su main: quel commit non è mai entrato nel
+ramo principale». **Il cancello non mente**, ed è la proprietà che ci serve.
+
+### 🛤️ Le tre vie
+
+- **ⓐ portare il commit su `main`** e prendersi il verde lì → corretta, ma la coda diverge
+  (W8-29, W8-30): fronte al 28 agosto, `queued` 908. **Giorni.**
+- **ⓑ `workflow_dispatch` sul branch** → per ③ probabilmente non soddisfa il cancello.
+- **ⓒ `PUBLISH_ANYWAY=1`** → ⛔ è «il verde ottenuto spegnendo qualcosa».
+
+### 🎯 Dove i pezzi si saldano
+
+**`paths-ignore` su `docs/**` non è un'ottimizzazione: è la corsia del treno.** Il 78,7%
+dei commit di oggi è sola documentazione. Liberando quattro quinti della capacità, ⓐ
+diventa percorribile in ore invece che in giorni. Va fatto **insieme** al cancello che
+cerca il verde sull'ultimo commit che tocca ciò che si spedisce: da soli, i due cambi si
+aprono un buco a vicenda.
+
+    rifallo con:
+    gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?branch=hotfix/0.7.1&per_page=1" --jq .total_count
+    gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?branch=main&per_page=1"          --jq .total_count   # deve dare >0
+    sed -n '1,25p' .github/workflows/ci.yml        # il trigger
+    sed -n '115,137p' .github/workflows/publish.yml # come il cancello cerca il verde
