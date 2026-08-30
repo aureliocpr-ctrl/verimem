@@ -12731,3 +12731,36 @@ E si somma a ciò che era già noto: la LATEST su PyPI è la **0.7.0 con il serv
 🔴 **Ho confrontato il TAG `v0.7.0`, non il wheel effettivamente pubblicato su PyPI.** Il tag è opera nostra e il wheel dovrebbe corrispondere, ma **non l'ho verificato** e non posso senza rete. Se il wheel divergesse dal tag, questo confronto cade.
 Non ho eseguito la 0.7.0: ho confrontato **codice**, non comportamento. Identità dei simboli e della riga di filtro non è identità di esito su ogni percorso.
 Il difetto MCP della 0.7.0 riguarda il **server**; questo confronto riguarda la **libreria** (`Memory.explain`), che è ciò che ho misurato.
+
+**㊾ `52` (banco) — la cura che avevo dato è falsificata, e quella vera è un'altra. Sesta rettifica.**
+Ho costruito il banco che il `52` dichiarava mancante (`banchi/ws6-banco-pezzi-condizione.py`, store
+**temporaneo**): sei misure per braccio, ciascuna spezzata in **due fatti con la stessa source** — la
+forma esatta dei fatti che si erano mangiati.
+
+| braccio | i due pezzi | vivi |
+|---|---|---|
+| **A** (controllo) | dicono **solo il numero** | **6 su 12** |
+| **B** (la mia proposta) | nominano **lo stesso soggetto** | **6 su 12** |
+| **C** | nominano **ENTITÀ DIVERSE** | **12 su 12** |
+
+❌ **Il braccio B non fa meglio del controllo**: i tre fatti sopravvissuti che avevo mostrato come
+«prima evidenza» erano **un caso fortunato**, non una prova. **Campione di 3 contro un banco di 12:
+il banco vince.**
+🔎 **E l'errore era nel DISEGNO della cura, non solo nella cura**: in B ripetevo *lo stesso* soggetto
+in entrambi i pezzi («nella misura sonde…» / «nel conteggio successivo della misura sonde…») ⇒ **le
+entità restavano identiche** e `_entita_diverse` non aveva nulla da distinguere. In C ogni pezzo
+nomina un oggetto suo — «il file di ingresso», «la tabella di uscita» — e **non se ne perde nemmeno
+uno**.
+🔒 **E il ritiro è DETERMINISTICO**: in A e in B **il ritirato è sempre il primo pezzo scritto, 12
+volte su 12**. Non è probabilistico: con la stessa source e le stesse entità, **il secondo fatto
+ritira il primo, sempre**. ⇒ conferma il meccanismo del `52`: `is_same_source` è sempre vera,
+`_entita_diverse` è l'unica difesa.
+> 📏 **LA REGOLA, che sostituisce quella che avevo dato**: **non basta nominare qualcosa — i due
+> pezzi devono parlare di COSE DIVERSE.** Se una misura ha due valori dello **stesso** oggetto,
+> **spezzarla la dimezza**: o stanno in **un fatto solo**, o vanno agganciati a oggetti distinti.
+📌 **Limiti dichiarati**: sei misure per braccio · store **vuoto** all'inizio (giudice e pavimento
+possono comportarsi diversamente che su un corpus reale) · tutti i fatti risultano **`judged`**,
+quindi il moat girava · store di Aurelio **non toccato**, copia cancellata.
+✅ **Corretta anche la memoria** (`MEMORY.md` e `i-pezzi-di-una-misura-e-i-topic.md`): ci avevo
+scritto la cura sbagliata due ore prima, e **una lezione sbagliata in memoria è peggio di nessuna
+lezione**.
