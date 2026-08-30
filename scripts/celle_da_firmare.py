@@ -27,7 +27,13 @@ REGISTRO = pathlib.Path("docs/stato-reale/00-ESAME.md")
 #: aveva firmato).
 FIRMA = re.compile(r"(?:✅|✍️|_)\s*(?:\*\*)?(?:2ª |seconda )?firma @([A-Za-z0-9_-]+)")
 RIFALLO = re.compile(r"🔎\s*\*{0,2}(?:rifallo con|Rifallo con)\*{0,2}[^`]*`([^`]+)`")
-CELLA = re.compile(r"^\| (W\d-\d+) \| ([^|]*)\|")
+#: gli ID del registro NON sono di una forma sola: accanto a `W2-57` ci sono
+#: `LANT-41` e le celle NUMERICHE (`| 12 |`). Misurato il 30/08: le numeriche
+#: sono 86, e le scrivono soprattutto le istanze che ricevono MENO controfirme
+#: (ws6 16, ws8 6, ws5 5). Riconoscendo un solo formato questo elenco le
+#: teneva fuori TUTTE, cioe' nascondeva proprio il lavoro che aveva piu'
+#: bisogno di essere offerto. Un marcatore non marca chi non lo conosce.
+CELLA = re.compile(r"^\| ((?:[A-Z]+\d*-)?\d+) \| ([^|]*)\|")
 
 
 def main() -> int:
