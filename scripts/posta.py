@@ -84,10 +84,26 @@ def _sostituisci(testo: str) -> str:
 #: ⇒ 🔑 **L'ho scoperto testando il controllo sul caso che aveva FALLITO, non su
 #: uno che funzionava.** Un controllo nuovo va provato sul difetto che deve
 #: prendere: provarlo su un caso facile dice solo che non esplode.
+#: ⚠️ il prompt `$ ` o `> ` davanti va accettato: subito dopo la prima cura ho
+#: consegnato un post con `$ python …` e il controllo e' rimasto muto. Li' erano
+#: OUTPUT citato — quindi non era un errore — ma **la stessa forma serve anche a
+#: citare un comando**, e in dubbio voglio l'avviso: **il costo di un falso
+#: positivo e' un'occhiata, quello di un falso negativo e' un post sbagliato.**
+#: ⚠️⚠️ il recinto ```bash deve stare a INIZIO RIGA (`^`). Senza quell'ancora,
+#: un ```bash **citato dentro una frase** («cercava blocchi ```bash e righe…»)
+#: apriva una cattura finta che si chiudeva al recinto successivo, e il
+#: controllo elencava 10 «comandi» di cui 8 erano testo normale. Preso al test
+#: su quattro post, non in produzione — **ed e' la ragione per cui il banco di
+#: un controllo deve avere piu' di un caso.**
 _COMANDO = re.compile(
-    r"```bash\s*\n(.*?)```"
-    r"|^\s*[-•]?\s*(python \S+.*|pytest .*|git \w+.*)$"
-    r"|`((?:python|pytest|git|verimem) [^`]+)`",
+    #: ⚠️⚠️ `[^\n]*` e NON `.*`: il flag `re.S` fa attraversare i newline al
+    #: punto, quindi `.*` mangiava il resto del post e il controllo elencava
+    #: 10 «comandi» di cui 8 erano testo normale. **La mia prima diagnosi
+    #: (il recinto ```bash citato in una frase) era SBAGLIATA** — l'ho vista
+    #: solo perche' il banco aveva quattro post e uno solo falliva.
+    r"^```bash[ \t]*\n(.*?)^```"
+    r"|^[ \t]*[-•>$]?[ \t]*((?:python|pytest|git)[ \t][^\n]*)$"
+    r"|`\$?[ \t]*((?:python|pytest|git|verimem)[ \t][^`]+)`",
     re.S | re.M)
 
 
