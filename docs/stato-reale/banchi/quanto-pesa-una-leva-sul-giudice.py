@@ -64,6 +64,34 @@ LEVE: dict[str, tuple[re.Pattern[str], object, str, int]] = {
                      "togli il PRIMO articolo determinativo (leva AMPIA, di "
                      "un'altra istanza; la sua giustificazione: toglierlo non "
                      "cambia il valore di verita' della frase)", 1),
+    # 🔗 Le forme che un'altra istanza ha trovato facendo lo SWEEP sulla cura di
+    #    `_VERB_MARK` («quante altre forme restano fuori?»): `da'` 144, `piu'`
+    #    49, `entita'` 30, `unita'` 28 nel corpus. Lei le ha classificate
+    #    correttamente come **accenti resi con apostrofo, NON copule** — quindi
+    #    fuori dalla sua cura. Ma sono **dentro il mio filone**: `W7-77` misura
+    #    che l'accento sposta il giudice, e diceva «`è`/`e'` e' UNA differenza
+    #    ortografica, non dice nulla sulle altre». Queste sono le altre.
+    #    ⚖️ La giustificazione semantica non ha dubbi: `piu'` e `più` sono la
+    #    stessa parola, e cosi' le altre. Tabella ESPLICITA e non una regola
+    #    generale, perche' «vocale finale + apostrofo → accento» sbaglierebbe
+    #    su troncamenti veri (`po'`, `mo'`) che NON sono accenti.
+    "accenti-apostrofo": (
+        re.compile(r"\b(?:da|piu|entita|unita|citta|qualita|verita|attivita|"
+                   r"puo|perche|poiche|cosi|gia|meta|liberta|novita|"
+                   r"proprieta|identita|priorita|velocita)'"),
+        lambda m: {
+            "da'": "dà", "piu'": "più", "entita'": "entità",
+            "unita'": "unità", "citta'": "città", "qualita'": "qualità",
+            "verita'": "verità", "attivita'": "attività", "puo'": "può",
+            "perche'": "perché", "poiche'": "poiché", "cosi'": "così",
+            "gia'": "già", "meta'": "metà", "liberta'": "libertà",
+            "novita'": "novità", "proprieta'": "proprietà",
+            "identita'": "identità", "priorita'": "priorità",
+            "velocita'": "velocità",
+        }.get(m.group(0).casefold(), m.group(0)),
+        "accenti resi con apostrofo → accento vero (`piu'`→`più`, `da'`→`dà`): "
+        "le forme trovate da un'altra istanza nello sweep, che NON sono copule "
+        "e quindi restavano fuori dalla cura di `_VERB_MARK`", 0),
     "maiuscole": (re.compile(r"(?<=\. )[a-z](?=[a-z]{3,})"),
                   lambda m: m.group(0).upper(),
                   "iniziale minuscola dopo il punto → maiuscola", 0),
