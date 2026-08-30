@@ -9465,3 +9465,60 @@ gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?per_page=100&page=N" \
 git log -1 --format=%H -- verimem engram hippoagent pyproject.toml
 grep -nE "setuptools_scm|dynamic|SOURCE_DATE_EPOCH" pyproject.toml   # nessun match
 ```
+
+---
+
+## ws1 — L'inversione regge sulla popolazione grande, il debito del corpus è chiuso, e le entità difficili cadono in lingue diverse a seconda del giudice
+
+**Livello**: `Memory.explain()`, **una sola variabile: il giudice**. **Dataset**: HaluEval QA
+(MIT), **451 frasi** di terzi (tutto `src`, non più `src[:120]`), **45 entità** estratte dal
+corpus. **Perimetro**: 270 prove. **Istante**: 30/08 21:21-21:25. **Regime**: `ok` verificato
+dopo la costruzione degli store **e a fine di ogni regime**. **Store costruiti una volta sola e
+riusati.**
+
+```
+G1 default (auto -> CE GATE)          EN 0/45   IT 5/45
+G2 min_relevance=0.835 (bi-encoder)   EN 8/45   IT 0/45     ← inversione CONFERMATA, più netta
+G3 min_relevance=0.90  (bi-encoder)   EN 0/45   IT 0/45     ← ancora MUTA
+```
+
+### ✅ Il debito del corpus è chiuso
+
+Venti minuti fa `G1` dava **2/45** e la misura precedente **5/45**; avevo dichiarato che la
+differenza era **il corpus** (181 contro 451 frasi) e che i due numeri **non si accostavano**.
+**Sulla popolazione grande `G1` dà 5/45**: **combacia**. ⇒ **la diagnosi era giusta, e ora i
+tre regimi sono confrontabili fra loro E con la misura di prima.**
+
+### 🔑 Il pezzo nuovo: le entità difficili cadono in lingue diverse a seconda del giudice
+
+```
+G1 (CE gate)     IT: Taylor Swift · Josh Hutcherson · Robin Schulz · Danny Brown · Badr Hari
+G2 (bi-encoder)  EN: Olivia Munn · Doctor Doom · Robin Schulz · The Schapendoes · Dick Wolf
+                     Atrocity Exhibition · Badr Hari · The Genesis Flood
+```
+**`Robin Schulz` e `Badr Hari` falliscono in ENTRAMBI i regimi — ma in lingue OPPOSTE**: in
+italiano col CE gate, in inglese col bi-encoder.
+
+⇒ **Non è che «il CE gate penalizzi l'italiano»**: è che **alcune entità sono difficili in
+assoluto, e quale lingua cede dipende da quale giudice sta decidendo.** Il giudice non crea la
+difficoltà: **sceglie da che lato si rompe.**
+
+### 🟢 E un verde per il default, sul totale
+
+**5 fallimenti col CE gate contro 8 col bi-encoder a 0,835**, stessa popolazione e stessi store.
+⇒ **il regime che riceve l'utente sbaglia MENO di quello che il TrustMem-Bench usa** — e il
+banco, che gira a `0.835`, **misura il regime peggiore dei due**.
+
+### Cosa questo NON prova
+
+- ⚠️ **G3 resta una cella MUTA**: 0/45 in entrambe le lingue a 0,90 significa **soglia troppo
+  alta perché qualunque cosa passi**, non «nessun divario». Terza volta che lo dichiaro, e vale
+  ancora.
+- **5 e 8 su 45 sono numeri piccoli**: **l'inversione e il segno del totale sono i fatti; le
+  grandezze no.**
+- **Non ho il meccanismo**: so **dove** (il giudice), **in che direzione** (opposta per lingua),
+  e ora **che le entità difficili sono le stesse**. **Perché** un giudice ceda sull'italiano e
+  l'altro sull'inglese, **non lo so** — e del CE **non ho verificato la lingua di
+  addestramento**.
+- **Le domande italiane le scrivo io**; lo store è di terzi.
+
