@@ -50,19 +50,55 @@ import tempfile
 from pathlib import Path
 
 RADICE = Path(__file__).resolve().parents[1]
-DATI = RADICE / "benchmark" / "data" / "external" / "halueval_qa_heldout.jsonl"
+ESTERNI = RADICE / "benchmark" / "data" / "external"
+
+#: DUE popolazioni, e la differenza fra loro E' il reperto (LANT-68).
+#: `halueval` resta selezionabile per POTER RIFARE l'artefatto, non per usarlo.
+POPOLAZIONI = {
+    "truthfulqa": ("truthfulqa_pairs_heldout.jsonl", "pairs"),
+    "halueval": ("halueval_qa_heldout.jsonl", "qa"),
+}
 
 
-def carica(n: int | None) -> list[dict]:
-    with open(DATI, encoding="utf-8") as f:
+def carica(nome: str, n: int | None) -> tuple[list[tuple[str, str, str]], str]:
+    """Restituisce [(etichetta, claim, fonte)] — forma unica per le due popolazioni."""
+    f_nome, forma = POPOLAZIONI[nome]
+    with open(ESTERNI / f_nome, encoding="utf-8") as f:
         righe = [json.loads(r) for r in f if r.strip()]
-    return righe[:n] if n else righe
+    fuori: list[tuple[str, str, str]] = []
+    if forma == "qa":
+        for it in (righe[:n] if n else righe):
+            fuori.append(("vero", it["right_answer"], it["knowledge"]))
+            fuori.append(("falso", it["hallucinated_answer"], it["knowledge"]))
+    else:
+        for it in (righe[: 2 * n] if n else righe):
+            fuori.append(("vero" if it["label"] == 1 else "falso", it["claim"], it["source"]))
+    return fuori, f_nome
+
+
+def criterio_cieco(casi: list[tuple[str, str, str]]) -> float:
+    """Il righello che dice se la POPOLAZIONE e' viziata, prima di eseguire.
+
+    Un criterio che guarda SOLO la lunghezza — cieco alla verita' — quanto ci
+    prende? **50% e' il caso; molto di piu' significa che la forma predice la
+    classe**, e allora il confronto misurera' la forma.
+
+    Misurato 30/08: halueval **98%** (il falso e' 6x piu' lungo in 98 item su
+    100) · truthfulqa **50,0%**. Due righe che mi hanno risparmiato un numero
+    falso nel documento che conta le nostre figure di merda.
+    """
+    import statistics as st
+    lun = [len(c.split()) for _, c, _ in casi]
+    soglia = st.median(lun)
+    giusti = sum(1 for (et, c, _) in casi if ((len(c.split()) > soglia) == (et == "falso")))
+    return 100 * giusti / max(1, len(casi))
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--n", type=int, default=None,
                     help="quanti ITEM (ognuno da' 2 claim: 1 vero + 1 falso)")
+    ap.add_argument("--popolazione", choices=sorted(POPOLAZIONI), default="truthfulqa")
     ap.add_argument("--out", default="benchmark/results/c10_lato_verimem.json")
     a = ap.parse_args()
 
@@ -71,25 +107,30 @@ def main() -> int:
     #: la porta che usa `verimem save` (cli.py:975 e :1762), non una scorciatoia:
     #: se misurassi da una porta diversa misurerei un altro prodotto.
 
-    item = carica(a.n)
+    casi, f_nome = carica(a.popolazione, a.n)
+    cieco = criterio_cieco(casi)
+    print(f"  popolazione {a.popolazione} ({f_nome}) — {len(casi)} claim")
+    print(f"  criterio CIECO alla verita' (solo lunghezza): {cieco:.1f}%  "
+          f"{'⚠️ ARTEFATTO DI FORMA' if cieco > 60 else '✅ la forma non predice la classe'}")
+    if cieco > 60:
+        print("  ⇒ su questa popolazione il confronto misurerebbe la FORMA. "
+              "Procedo solo perche' e' stato chiesto esplicitamente.")
+
     mem = Memory()
     esiti: list[dict] = []
-
-    for i, it in enumerate(item):
-        fonte = it["knowledge"]
-        for etichetta, claim in (("vero", it["right_answer"]),
-                                 ("falso", it["hallucinated_answer"])):
-            try:
-                r = mem.add(claim, source=fonte, topic="c10/halueval")
-                stato = getattr(r, "status", None) or (r.get("status") if isinstance(r, dict) else None)
-                punteggio = (getattr(r, "grounding_score", None)
-                             or (r.get("grounding_score") if isinstance(r, dict) else None))
-            except Exception as e:  # il banco non deve morire su un item
-                stato, punteggio = f"ERRORE:{type(e).__name__}", None
-            esiti.append({"i": i, "etichetta": etichetta, "stato": stato,
-                          "grounding": punteggio, "claim": claim[:120]})
-        if (i + 1) % 10 == 0:
-            print(f"    …{i + 1}/{len(item)} item", flush=True)
+    for i, (etichetta, claim, fonte) in enumerate(casi):
+        try:
+            r = mem.add(claim, source=fonte, topic=f"c10/{a.popolazione}")
+            stato = getattr(r, "status", None) or (r.get("status") if isinstance(r, dict) else None)
+            punteggio = (getattr(r, "grounding_score", None)
+                         or (r.get("grounding_score") if isinstance(r, dict) else None))
+        except Exception as e:  # il banco non deve morire su un caso
+            stato, punteggio = f"ERRORE:{type(e).__name__}", None
+        esiti.append({"i": i, "etichetta": etichetta, "stato": stato,
+                      "grounding": punteggio, "claim": claim[:120]})
+        if (i + 1) % 20 == 0:
+            print(f"    …{i + 1}/{len(casi)} claim", flush=True)
+    item = casi
 
     #: «servito» = torna nel recall di default. Il quarantinato NON torna.
     def servito(e: dict) -> bool:
@@ -117,8 +158,8 @@ def main() -> int:
 
     sha = subprocess.run(["git", "log", "-1", "--format=%h"], cwd=RADICE,
                          capture_output=True, text=True).stdout.strip()
-    corpo = {"popolazione": "halueval_qa_heldout.jsonl (RUCAIBox, MIT)",
-             "item": len(item), "claim": len(esiti),
+    corpo = {"popolazione": f_nome, "criterio_cieco_pct": round(cieco, 1),
+             "claim": len(esiti),
              "falsi_ammessi": len(falsi_ammessi), "falsi_totali": len(falsi),
              "veri_persi": len(veri_persi), "veri_totali": len(veri),
              "falsi_fra_i_serviti": len(falsi_serviti), "serviti": len(serviti),

@@ -1,0 +1,13 @@
+{
+  "popolazione": "halueval_qa_heldout.jsonl (RUCAIBox, MIT)",
+  "item": 60,
+  "claim": 120,
+  "falsi_ammessi": 25,
+  "falsi_totali": 60,
+  "veri_persi": 17,
+  "veri_totali": 60,
+  "falsi_fra_i_serviti": 25,
+  "serviti": 68,
+  "commit": "797be4cf",
+  "store": "temporaneo (HIPPO_DATA_DIR)"
+}

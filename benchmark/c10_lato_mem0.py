@@ -31,6 +31,20 @@ FAIR PLAY, dichiarato. Interrogo `vector_store.search` direttamente invece di
 `Memory.search`: il runner di `competitor_probe_mem0.py` documenta un bug di
 ranking in `Memory.search`, e passare da li' **handicapperebbe il concorrente**.
 Il numero deve reggere anche se lo legge chi fa mem0.
+
+⛔ LIMITE DICHIARATO, e per questo il retrieval su `truthfulqa` NON e' il numero
+principale di C10. Li' molti claim veri sono risposte secche — «Yes», «Cardiff
+University» — che **nessun retrieval per similarita' puo' ragionevolmente
+recuperare da una domanda**. Misurare il retrieval su quella popolazione
+punirebbe entrambi i sistemi per una proprieta' del DATASET. ⇒ Il confronto
+principale sta sull'AMMISSIONE (`c10_falsita_servite_vs_mem0.py`), e su quella
+la differenza va detta per quello che e':
+
+    **mem0 non ha un gate di ammissione.** Con `infer=False` scrive cio' che
+    riceve, quindi su un corpus al 50% falso ne serve il 50%. **Non perche' sia
+    scritto male: perche' non promette di filtrare.** La differenza fra noi e
+    loro e' una differenza di PROMESSA, non di qualita' dell'ingegneria — e il
+    nostro filtro si paga in veri persi, che e' la faccia da pubblicare accanto.
 """
 from __future__ import annotations
 
@@ -66,6 +80,13 @@ def main() -> int:
 
     with open(DATI, encoding="utf-8") as f:
         item = [json.loads(r) for r in f if r.strip()][:a.n]
+    #: `truthfulqa` non ha un campo `question`: la domanda sta dentro `source`
+    #: nel formato «Q: …
+A: …» (verificato: 200/200 righe del dev).
+    for it in item:
+        if "question" not in it and str(it.get("source", "")).lstrip().startswith("Q:"):
+            it["question"] = it["source"].lstrip()[2:].split("
+A:")[0].strip()
 
     mem = build_memory(tempfile.mkdtemp(prefix="ws7_c10_mem0_"), "c10")
 
