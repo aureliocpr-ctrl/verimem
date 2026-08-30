@@ -93,10 +93,34 @@ argomento. Verificato il 30/08: `git grep -E "ws[0-9]-[a-z]" -- verimem/*.py` �
 📌 **Gli altri due restano a *ws7***: sono suoi il marcatore e la cura. Misuro e
 propongo, non tocco i test altrui.
 
-### ⑤ Debito (4) — presidi che chiedono un numero aggiornato
+### ⑤ Debito (4) — e il primo ha un nome
 
-codice scollegato **39 contro 38** · divergenze **scese a 0** (nota 159) ·
-**versione ferma da 1073 commit** (è il bump congelato in attesa di Aurelio) ·
+**`test_il_codice_scollegato_non_cresce`: 39 contro un cricchetto di 38.** Il
+test conta; l'ho fatto **nominare**. Eseguita la sua stessa `_irraggiungibili()`
+e datato ogni modulo per nascita, il 39° è **`soggetto_valore`**, nato *28/08
+20:37* — l'unico dopo il 25/07.
+
+🔑 **E il suo commit lo dichiara nel titolo**: `e283ae70` — «*L4.3 — il legame
+soggetto-valore: il layer e i casi pre-registrati (**non ancora collegato**)*».
+`avviso_soggetto_valore` è chiamato **solo** dal suo test e da due banchi (uno
+mio). **Nessun modulo di prodotto lo importa.**
+
+⇒ **Il rosso non è un difetto nuovo: è il cricchetto che funziona.** Il presidio
+si chiama *«il codice scollegato non cresce»* e ha fatto esattamente il suo
+mestiere — ha notato che il numero è salito.
+
+⚠️ **E la cura NON è alzare il cricchetto a 39**: sarebbe normalizzare il debito,
+cioè la stessa dinamica del marcatore ben scritto della classe ④ — rendere
+invisibile ciò che è documentato. Il lavoro vero è **collegare `L4.3`**, e non è
+mio: è di chi ha scritto il layer. *(Il reperto «`L4.3`, 21 test verdi, non
+collegato» era già registrato — questo rosso è la sua seconda comparsa, da un
+altro lato.)* Il file ha già `test_il_cricchetto_si_stringe_quando_si_collega`:
+**il meccanismo per non normalizzare esiste**, va solo usato quando si decide.
+
+**Gli altri tre sono debito dichiarato, senza difetto di prodotto sotto**:
+divergenze **scese a 0** (nota 159 — il numero va abbassato, e il test lo chiede
+per non lasciare un cricchetto lasco) · **versione ferma da 1073/1133 commit**
+(⛔ è il bump, decisione di Aurelio, l'unico fronte fermo non per nostra scelta) ·
 un banco che non dichiara come guarda l'esito del subprocess.
 
 ### ⑥ Non era da capire: e' il prezzo di una cura (6)
