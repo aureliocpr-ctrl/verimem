@@ -2499,10 +2499,21 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                         "enum": ["off", "fast", "full"],
                         "default": "fast",
                         "description": (
-                            "Cycle 138 anti-confab gate tier. 'off' = "
-                            "bypass; 'fast' (default) = L1+L1.5+L1.7 "
-                            "keyword detectors (sub-ms); 'full' = fast "
-                            "+ validate_claim (~13ms mean, p95 40ms)."
+                            "Anti-confab gate tier. 'fast' (default) = "
+                            "L1+L1.5+L1.7 keyword detectors; 'full' adds "
+                            "validate_claim. ⚠ 'off' is NEUTRALIZED on "
+                            "this surface unless the OPERATOR sets "
+                            "VERIMEM_MCP_TRUST_GATE_KNOBS: MCP args are "
+                            "untrusted, so a gate-weakening value falls "
+                            "back to the operator default and the response "
+                            "says so in `gate_knobs_denied`. ⚠ The "
+                            "sub-ms/13ms figures are the DETECTORS only. If "
+                            "you pass `source`, the entailment moat runs at "
+                            "every tier, and the FIRST write in a cold "
+                            "process also pays the judge load: measured "
+                            "2026-08-30 through this handler, 32.7 s cold "
+                            "then 187-340 ms warm, identical verdict at "
+                            "'off', 'fast' and 'full'."
                         ),
                     },
                     "gate_mode": {
@@ -2511,8 +2522,14 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                         "default": "downgrade",
                         "description": (
                             "On L3 contradiction: 'downgrade' (default) "
-                            "persists with status='provisional'; "
-                            "'reject' refuses to persist."
+                            "persists the fact OUT of default recall; "
+                            "'reject' refuses to persist. ⚠ The status "
+                            "written is 'quarantined', not 'provisional' "
+                            "— measured through this handler 2026-08-30 on "
+                            "both a bare self-claim and a claim its source "
+                            "denies. `provisional` still exists in the store "
+                            "layer for URL/arxiv-backed hypotheses, which is "
+                            "a different path."
                         ),
                     },
                     "force_persist": {
