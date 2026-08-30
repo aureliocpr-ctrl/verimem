@@ -10407,3 +10407,42 @@ si tocca senza mandato.**
 ```bash
 python docs/stato-reale/banchi/ws6-la-clique-di-un-topic.py
 ```
+
+---
+
+## ws1 · 30/08 22:30 — RITIRO LA FORMA FORTE DEL REPERTO DELLE 22:26: NEL CONFRONTO APPAIATO LA GRIGIA NON BATTE IL RILEVANTE
+
+**Livello**: lo scorer del prodotto. **Perimetro**: gli **stessi** 12 item HaluEval del banco precedente, **solo inglese** (la lingua qui non c'entra). **Istante**: 22:27–22:29. **Regime**: `ok`.
+
+### 🔴 CHE COSA HO SBAGLIATO — due popolazioni diverse nello stesso confronto
+
+Alle 22:26 ho pubblicato: *«il CE premia chi parla dell'argomento (+2,914) più di chi ha la risposta (+0,135)»*. Quel confronto metteva **la mediana di 12 rilevanti** accanto **alla mediana di 7 grigie** — la zona grigia esiste solo per 7 item su 12. **Numeratore e denominatore su popolazioni diverse**: è il presidio che avevo scritto io, violato in forma sottile.
+
+Ristretti i rilevanti agli **stessi 7 item**, la mediana dei rilevanti è **−0,309**, non +0,135. E soprattutto il confronto va fatto **appaiato, item per item**:
+
+```
+ #     RILEVANTE (len)   GRIGIA piu lunga (len)   GRIGIA appaiata (len)
+ 0    +0,579 (107)        +4,113 (197)             +4,113 (197)    grigia / grigia
+ 1    -3,209 (130)        -0,406 (153)             -6,614 (152)    grigia / RILEV
+ 2    -4,128 ( 70)        +6,182 ( 87)             +6,182 ( 87)    grigia / grigia
+ 3    -0,757 ( 52)        -3,094 (129)             +0,259 ( 75)    RILEV  / grigia
+ 8    -0,309 (116)        +4,329 (220)             -3,360 (165)    grigia / RILEV
+ 9    +5,550 ( 62)        +2,914 ( 81)             +2,914 ( 81)    RILEV  / RILEV
+10    +4,632 ( 65)        +0,571 (118)             +0,571 (118)    RILEV  / RILEV
+```
+
+**Test dei segni, n=7** (conclusivo solo a 7/7 o 0/7): la grigia più lunga batte il rilevante **4/7**, quella a lunghezza appaiata **3/7**. **Una moneta.** ⇒ **Non ho evidenza che il CE preferisca sistematicamente chi parla dell'argomento a chi ha la risposta.** La forma forte del reperto è **ritirata**.
+
+### ⚖️ IL CONFONDENTE CHE TEMEVO NON ERA QUELLO GIUSTO
+
+**P-LEN falsificata**: correlazione lunghezza↔logit su **tutte le 38 coppie inglesi** = **r = +0,132**. La lunghezza **non** spiega il punteggio. Eppure appaiare per lunghezza ha cambiato l'esito (4/7 → 3/7), e su due item il salto è enorme (item 1: −0,406 → **−6,614**; item 8: +4,329 → **−3,360**). ⇒ **Non è la lunghezza: è QUALE frase scegli.** Fra le frasi non-risponditrici dello stesso `knowledge` la varianza è di 10 punti di logit, e un criterio di selezione qualsiasi — anche innocuo come «la più lunga» — **decide il risultato**. Una zona grigia costruita così è un manico, non una popolazione.
+
+### ✅ CHE COSA RESTA IN PIEDI, misurato e non comparativo
+
+- **6 risposte giuste su 12 respinte** dalla soglia `0.0` in inglese (4/12 IT, 5/12 ES). È un **conteggio su una sola popolazione**, non un confronto fra due: **regge**.
+- **I casi singoli documentati**, che restano veri uno per uno: «*In what year was the last novel of the author who wrote Revolutionary Road published?*» → la frase con la risposta (`Cold Spring Harbor (1986) … Richard Yates`) prende **−4,128**, la frase che nomina *Revolutionary Road* e non risponde prende **+6,182**. Dieci punti di logit nel verso sbagliato, su un caso reale.
+- 🟢 **Il verde delle 22:26**: la separazione rilevanti/off-topic si conserva nelle tre lingue (+8,324 → +8,430 → +8,791).
+- La distanza documentata dal prodotto stesso fra *relevance* e *sufficiency* resta quella che spiega i casi singoli — ma **non l'ho quantificata**, e il numero «+2,91 contro +0,14» che avevo pubblicato **non va usato**.
+
+### Cosa questi dati NON provano
+Non provano il contrario, cioè che il CE ordini bene: 3/7 e 4/7 con n=7 **non distinguono nulla**, in nessuna direzione. Per decidere servirebbe una zona grigia costruita con un criterio che non sia una scelta mia fra frasi molto diverse — per esempio **tutte** le frasi non-risponditrici di ogni item, non una — e un n molto maggiore.
