@@ -13,6 +13,19 @@ regola che abbiamo pagato piu' volte dice di curare lo strumento, non le persone
     python scripts/chi_ha_gia_misurato.py L4.2
     python scripts/chi_ha_gia_misurato.py supersession
     python scripts/chi_ha_gia_misurato.py            # indice completo dei layer
+    python scripts/chi_ha_gia_misurato.py --ultima LANT   # l'ultima cella scritta,
+                                                          # termini estratti da soli
+
+PERCHE' `--ultima` esiste (30/08, ws7). La forma con un termine **richiede
+ancora disciplina**: devi ricordarti che lo strumento esiste E scegliere la
+parola giusta. Ho scritto questo script per non duplicare, e il 30/08 ho
+duplicato lo stesso — `LANT-75` ripeteva un reperto gia' misurato SETTE volte
+da @ws4 e @ws2, e me ne sono accorta dopo aver consegnato. **Avevo lo
+strumento, la regola (`O1`) e il precedente.** ⇒ La lezione che paghiamo da
+settimane — *l'adozione misura l'ATTRITO, non la disciplina: se una cura non e'
+usata, cura lo strumento* — **vale anche per lo strumento nato da quella
+lezione**. `--ultima` toglie i due passi che restavano: prende l'ultima cella
+scritta da quella sigla ed **estrae i termini da sola**.
 
 Cerca nel testo INTERO della cella (non solo nella domanda), stampa id, autrice e
 la domanda troncata. Il confronto e' case-insensitive; un punto nel termine e'
@@ -84,5 +97,68 @@ def indice() -> int:
     return 0
 
 
+#: i termini che vale la pena cercare in una cella: sigle di layer, nomi di file
+#: e parole tecniche lunghe. Le parole comuni non discriminano e sporcherebbero
+#: il risultato con celle che non c'entrano.
+TERMINE_UTILE = re.compile(
+    r"\b(?:L\d[.\-]?\d*(?:[.\-]\w+)?|[a-z_]{6,}\.py|[a-z_]{8,})\b")
+COMUNI = {"misurata", "registro", "grounding", "popolazione", "controllo",
+          "verificato", "dichiarato", "conferma", "riferimento", "precedente",
+          "eseguito", "temporaneo", "risultato", "misurato", "verifica",
+          "elemento", "sostiene", "contiene", "compare", "misurare", "misurano"}
+
+
+def ultima(sigla: str) -> int:
+    """L'ultima cella scritta da *sigla*: quali suoi temi erano gia' misurati?"""
+    mie = [r for r in celle() if r.lstrip("| ").startswith(sigla)]
+    if not mie:
+        print(f"  nessuna cella con sigla «{sigla}».")
+        return 1
+    riga = mie[-1]
+    ident, autrice, domanda = _campi(riga)
+    print(f"  ultima cella di «{sigla}»: {ident} ({autrice})")
+    print(f"    {domanda}")
+    print()
+
+    #: i termini della cella, i piu' lunghi per primi (i piu' specifici)
+    grezzi = {m.group(0).lower() for m in TERMINE_UTILE.finditer(riga)} - COMUNI
+    termini = sorted(grezzi, key=len, reverse=True)[:8]
+    print(f"  cerco i suoi {len(termini)} termini piu' specifici: {' '.join(termini)}")
+    print()
+
+    tutte = celle()
+    trovato = False
+    for termine in termini:
+        pat = re.compile(re.escape(termine), re.IGNORECASE)
+        altre = [r for r in celle()
+                 if pat.search(r) and not r.startswith(f"| {ident} |")]
+        if len(altre) < 2:            # una cella sola non e' un tema condiviso
+            continue
+        #: e un termine che compare OVUNQUE non discrimina: «indipendente» sta
+        #: in 21 celle di 6 autrici e non dice niente su cosa hai misurato.
+        #: Un tetto sulla frequenza batte una lista di parole comuni — la lista
+        #: e' monolingue, va manutenuta, e dimentica sempre un caso.
+        if len(altre) > len(tutte) // 8:
+            continue
+        autrici = {_campi(r)[1] for r in altre} - {autrice}
+        if not autrici:               # gia' tuo: non e' un duplicato fra istanze
+            continue
+        trovato = True
+        print(f"  ⚠️  «{termine}» — {len(altre)} altre celle, "
+              f"{len(autrici)} altre autrici: {' '.join(sorted(autrici))}")
+        for r in altre[:4]:
+            i2, a2, d2 = _campi(r)
+            print(f"        {i2:9} ({a2:12}) {d2[:56]}")
+    if not trovato:
+        print("  ✅ nessun tema di questa cella e' gia' misurato da un'altra: e' nuova.")
+    else:
+        print()
+        print("  ⇒ LEGGI quelle celle prima di dichiarare il reperto NUOVO.")
+        print("     Puoi comunque avere un pezzo che loro non hanno: dillo cosi'.")
+    return 0
+
+
 if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--ultima":
+        sys.exit(ultima(sys.argv[2]))
     sys.exit(cerca(" ".join(sys.argv[1:])) if len(sys.argv) > 1 else indice())
