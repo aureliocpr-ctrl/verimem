@@ -8563,3 +8563,67 @@ gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=completed&per_pa
 e mi ha smentita in novanta minuti. Senza, avrei continuato a chiamare «strozzatura» un
 **blocco strutturale**, e avrei cercato la leva sbagliata — togliere carico — per un
 difetto che il carico non spiega.
+
+### 🔑 W8-18 · CHIUSURA DEL LIMITE (20:29) — **è starvation della catena `needs:`**
+
+La cella qui sopra dichiarava: *«non so perché `build` non ottenga un runner»*. Ora lo so,
+e **due delle tre ipotesi cadono**.
+
+**Cade «gira su un runner scarso»** — `ci.yml:953`:
+
+```yaml
+name: build (sdist + wheel)
+runs-on: ubuntu-latest        # LO STESSO dei test che partono a decine
+needs: test
+```
+
+**Dimostrata la terza**, coi tempi dei job:
+
+```
+#1661  run creato 08-29T18:39Z
+  test (windows-latest/py3.12)   started 08-30T15:46   completed 08-30T16:39
+  test (ubuntu-latest/py3.12)    started 08-30T16:30   completed 08-30T16:57   <- ULTIMO
+  build (sdist + wheel)          started 08-30T16:57   ————————   queued
+  ⇒ `build` entra in gioco 22:17:43 dopo la creazione del run
+
+#1663  stesso schema: ultimo test alle 17:14, `build` entra alle 17:14 — 22:33:16 dopo
+```
+
+🔑 **`build` entra in coda nel minuto esatto in cui finisce l'ultimo test.** È `needs:`
+che funziona come deve — ma sotto saturazione produce un effetto che nessuno ha scelto:
+
+```
+il run aspetta 22 ore che partano i suoi test
+poi `build` ricomincia ad aspettare DA CAPO,
+in fondo a una coda che nel frattempo è cresciuta a 833
+```
+
+⇒ Davanti a `build` ci sono i test di centinaia di run **più nuovi**, entrati in coda
+**prima** di lui — loro alla creazione del run, lui ventidue ore dopo. **Ogni volta che il
+suo turno si avvicina, la coda si è allungata.**
+
+⛔ **In una riga: i job in fondo a una catena `needs:` non ottengono mai risorse quando
+l'ingresso supera l'uscita.** Non è lentezza, non è un pool vuoto, non è un difetto di
+`ci.yml`: è **starvation**, e si autoalimenta.
+
+### 🔁 E questo rivaluta la coppia di W8-8
+
+Avevo scritto che `paths-ignore` (il **92%** della coda è documentazione) va acceso
+**insieme** a come il cancello trova il verde. Alla luce di questo: **non è una leva fra
+tante, è l'unica.** Curare i test non serve — **i test finiscono già**. Aspettare non
+serve — la coda cresce. Solo abbassando l'ingresso i `build` arrivano al proprio turno.
+
+⚖️ **Cosa resta non verificato**: due run analizzati riga per riga (#1661, #1663),
+coerenti con #1662; **non ho contato quanti degli 833 siano fermi sullo stesso job**. E se
+GitHub applicasse una priorità ai run più vecchi questa spiegazione sarebbe incompleta —
+osservo che **di fatto non sta accadendo**.
+📌 Il difetto **non è nel workflow**: `needs: test` è corretto ed è anche ciò che rende il
+gate possibile (lo dice il commento a `ci.yml:957`). **È nel regime in cui gira.**
+
+**rifallo con:**
+
+```bash
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
+  --jq '.jobs[]|"\(.name) started=\(.started_at) completed=\(.completed_at) \(.status)"'
+# confronta lo `started_at` di `build` con il `completed_at` dell'ULTIMO test
+```
