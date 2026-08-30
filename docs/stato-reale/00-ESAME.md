@@ -8156,3 +8156,113 @@ python docs/stato-reale/banchi/ws6-la-query-non-viene-dal-topic.py
 
 ⚠️ Tutte in **`mode=ro`, sole SELECT**. **L'istante fa parte del dato**: fra le 12:25 e le 20:15 il
 corpus è passato da **15.578 a 15.903** fatti.
+
+### 🔴 W8-17 — Il **veto ④ si è richiuso** mentre nessuno guardava, e la coda non è bloccata: è **strozzata**
+
+> **REGIME** — cancelli eseguiti col banco `a-che-punto-e-il-rilascio.py` il 2026-08-30
+> alle 18:03 su `a6ea383a`, wheel costruito in `mktemp -d` (mai `dist/`). Coda e job
+> letti alle 18:45–18:48 interrogando l'**oggetto** (`?status=`), non una pagina.
+> **LIMITE** — il pacchetto è costruito da **questo albero**, non dall'artefatto della
+> CI: profondità del clone e ambiente possono differire. E i tempi dei job sono una
+> **fotografia**: due minuti dopo il quadro cambia.
+
+### ① Il cancello ④ — il VETO sul wheel — è tornato a fermare
+
+Stamattina i cancelli che fermavano erano **1**. Alle 18:03 sono **2**:
+
+```
+①  ci verde sul commit                FERMA   esito = NESSUN RUN
+④  registro pulito nel wheel (VETO)   FERMA   EXIT=1  — 2 nomi propri in 2 file
+```
+
+```
+verimem/anti_confab_gate.py:28   [Varco]   da `c1e6dac1`  2026-08-30 16:33
+verimem/doctor.py:650            [Varco]   da `0b363cd1`  2026-08-30 18:30
+```
+
+⇒ **Due commit, due ore, e cresce**: il secondo era di nove minuti prima che lo trovassi.
+Il contenuto di quei commenti è buono — **è la firma il problema**, ed è la regola già
+scritta per i commit: *il soggetto è il prodotto, mai un'istanza*.
+⚠️ Ho cercato **il mio nome prima di segnalare**: `git grep -cn "Vedetta" -- 'verimem/*.py'`
+→ nessuna riga. Una mia ricerca più larga tirava dentro un terzo file, ma la mia lista
+conteneva parole italiane comuni (`ancora`, `faro`): **il righello autorevole dice 2, il
+terzo era un falso positivo mio**.
+
+🔑 **Il buco di processo è peggiore del difetto**: `controlla_registro` gira **solo dentro
+`publish.yml`**, che non gira dal 2026-07-22, e **il pre-commit non controlla i nomi
+propri** (controlla `ruff`). ⇒ Questo veto **si scopre solo provando a pubblicare**. Oggi
+l'unico modo di accorgersene è costruire il wheel a mano, e **mi ha richiesto ~34 minuti**.
+
+### ② La coda: 1 run completato in ~20 ore contro 226 entrati oggi
+
+```
+completed 1161  (era 1160 ieri ~23:00)   queued 796   in_progress 3   waiting 0
+run `ci` creati oggi: 226
+```
+
+```
+INGRESSO  ≈ 11/ora        USCITA  1 run in ~20 ore ≈ 0,05/ora        rapporto ≈ 220:1
+```
+
+Ieri era 43/ora contro 2,6/ora (16:1). **Il rapporto è peggiorato di un ordine di
+grandezza, e non perché sia salito l'ingresso — l'ingresso è SCESO**. È l'uscita a essere
+collassata.
+✅ **Controllo che il numero non sia un artefatto**: `success 98 + failure 749 +
+cancelled 314 = 1161`, identico al `completed` dichiarato.
+
+### 🔻 Due errori miei, e il secondo mi ha risparmiato un post falso
+
+**a) «zero run creati nell'ultima ora» era falso, ed era un fuso orario.** Avevo letto
+`created=>=2026-08-30T17:45 → 0`. Il controllo positivo mostra che il filtro funziona
+(`>=2026-08-30 → 226`, `>=2026-08-01 → 1537`): **ho passato un'ora locale a un'API che
+ragiona in UTC**, chiedendo di fatto «dalle 19:45 locali», cioè dal futuro. **L'ultimo run
+era entrato un minuto prima che scrivessi che non ne entravano.**
+📌 *Un filtro temporale va accompagnato da un controllo positivo con una data che DEVE
+dare >0* — senza, uno zero da fuso è indistinguibile da uno zero vero.
+
+**b) Stavo per pubblicare «tre run zombie da 22 ore» PER LA SECONDA VOLTA.**
+
+```
+#1663  creato 08-29 18:41Z  età 22h06m   6 job su 6 IN ESECUZIONE, con runner
+```
+
+La conclusione «sono appesi e occupano i 3 slot» era pronta e spiegava tutto. Il controllo
+su `started_at` dei **job** la rovescia:
+
+```
+#1663  windows-latest/py3.12  partito 16:08Z  gira da 0:39:43  ok
+       ubuntu-latest/py3.11   partito 16:47Z  gira da 0:01:12  ok
+```
+
+**Nessun job supera i 40 minuti.** Un run resta `in_progress` finché l'**ultimo** dei suoi
+job non finisce, e i job **entrano col contagocce**. Un run che costa ~6 job × 23 min ≈
+**2,3 ore-macchina** viene servito in **22 ore**. ⇒ **La CI non è bloccata: è strozzata.**
+L'età del run misura l'attesa, non il lavoro.
+
+🟢 E nello stesso dato c'è una notizia: **15 job partiti in ~20 minuti** (16:08 · 16:27 ·
+16:28 · 16:30 · 16:37 · 16:39 · 16:40 · 16:41 · 16:42 · 16:45 · 16:47). **Il pool si sta
+liberando.**
+
+### 📌 Previsione falsificabile — agli atti alle 18:48 del 2026-08-30
+
+Se il ritmo tiene, **`completed` di `ci` (oggi 1161) deve salire di almeno 3 entro le
+21:00**. Se alle 21:00 è ancora 1161 o 1162, **«strozzata ma viva» è sbagliato** e va
+cercata una causa che ferma i run vicino al traguardo.
+
+### Cosa questo NON prova
+
+- **Non so perché l'uscita sia collassata**: `in_progress` è 3, quindi non è «zero runner».
+- **Non ho confrontato con `security` e `presidi-lenti`**: il righello è su `ci`.
+- La finestra «~20 ore» è **approssimata all'ora in cui avevo letto 1160**, non un secondo
+  campione preso ora.
+- ⛔ **Non ho toccato** `anti_confab_gate.py` né `doctor.py`: sono nel mio non-curo.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py
+T=$(mktemp -d); python -m build --outdir "$T" >/dev/null 2>&1; python scripts/controlla_registro.py "$T"/*.whl; echo "EXIT=$?"
+for s in completed queued in_progress; do gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=$s&per_page=1" --jq .total_count; done
+gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" --jq '.jobs[]|select(.status!="completed")|"\(.name) \(.started_at)"'
+# ⚠️ le date dei filtri sono UTC: verifica sempre con una data che DEVE dare >0
+```
