@@ -11965,3 +11965,64 @@ lo calcola già).
       --jq '.workflow_runs|sort_by(.updated_at)|reverse|.[:14][]|"\(.run_number) \(.created_at) \(.updated_at)"'
     # ② la causa
     git log --since=2026-08-30 --format='@@%h' --name-only origin/main   # e classifica i path
+
+---
+
+## W8-31 — Cosa manca **davvero** per il verde: 11 rossi il 28 agosto, **5 ancora vivi oggi**
+
+W8-30 dice che il verdetto della CI riguarda il 28 agosto. Domanda naturale: **quei rossi
+sono ancora rossi?** Ho letto il log del run `#1286` (job `ubuntu-latest / py3.12`) e poi
+eseguito **gli stessi file** sul codice di oggi, uno alla volta.
+
+Sul codice del 28: `11 failed, 12132 passed, 42 skipped, 126 xfailed in 1401.25s`.
+
+| file di test | 28 ago | **oggi su main** | |
+|---|---|---|---|
+| `test_grad_3_era_invisibile_e_il_fatto_vero_cadeva` | 3 FAILED | `14 passed` | ✅ curato |
+| `test_il_pacchetto_ha_cio_che_promettiamo` | 1 FAILED | `10 passed, 1 skipped` | ✅ curato (`bd3d0806`) |
+| `test_quarantined_by_nomina_il_layer_sbagliato` | 2 FAILED | `3 passed, 2 xfailed` | ✅ curato |
+| `test_la_fonte_si_legge_intera` | 1 FAILED | `1 failed, 3 passed` | 🔴 **vivo** |
+| `test_nessun_banco_nuovo_ignora_l_esito_del_subprocess` | 1 FAILED | `1 failed, 2 passed` | 🔴 **vivo** |
+| `test_nessun_modulo_nasce_irraggiungibile` | 1 FAILED | `1 failed, 3 passed` | 🔴 **vivo** |
+| `test_la_ricetta_del_numero_deve_esistere` | XPASS(strict) | `1 failed, 5 passed` | 🟡 vivo, noto |
+| `test_repro_registry_g4` | XPASS(strict) | `1 failed, 1 passed` | 🟡 vivo, noto |
+
+**6 fallimenti chiusi + 5 vivi = 11.** Il conto torna sul numero del log.
+
+### Cosa sono i cinque vivi
+
+- 🟡 **Due sono lo stesso problema**: `benchmark/lme_retrieval_bench.py` non esiste, quindi
+  il numero pubblicato in `README:22` non è rigenerabile. Aperto dal **2026-08-25**,
+  dichiarato nel test stesso. Sono `XPASS(strict)`: **si spegneranno da soli quando il
+  banco torna**, e allora le due righe vanno tolte.
+- 🔴 **`test_nessun_modulo_nasce_irraggiungibile`**: «39 moduli non sono raggiungibili da
+  CLI/MCP/SDK/gateway, **erano 38**». È un contatore che cresce: **qualcosa è nato
+  staccato dopo il 28.**
+- 🔴 **`test_nessun_banco_NUOVO_ignora_l_esito_del_subprocess`**: il banco cieco è
+  `tests/test_l120_si_disarma_quando_il_daemon_c_e.py`. La cura è scritta nel messaggio del
+  test: `from tests._esito import esito`, oppure dichiararlo in `ANCORA_CIECHI` spiegando
+  **come** guarda l'esito per comportamento. Non lo tocco: è un test su L1.20.
+- 🔴 **`test_la_fonte_si_legge_intera`**: «999 non compare da nessuna parte nella fonte e
+  deve restare assente: []».
+
+### 🎯 La conseguenza per il rilascio: il cancello ① è chiuso da **due** cause indipendenti
+
+1. **il ritardo** — il verdetto è al 28 agosto e la coda diverge (W8-29, W8-30);
+2. **il contenuto** — anche a coda vuota, oggi il verde **non arriverebbe**: ci sono 5
+   fallimenti, di cui 3 rossi veri e 2 in attesa di un banco.
+
+⇒ Curare solo la coda non apre il cancello. **Servono entrambe.**
+
+### ⚠️ Il limite, che è la lista dei comandi da eseguire
+
+**Ho eseguito solo gli 8 file che erano rossi il 28.** Se il lavoro del 29 e del 30 ha reso
+rosso un file che allora era verde, **io non lo vedrei**: la mia tabella risponde a «di
+quelli, quanti restano», **non** a «quanti rossi ha il codice di oggi». Quest'ultima
+domanda si risponde solo con la suite intera, che non eseguo mentre Aurelio usa la
+macchina. **Chi legge questa cella non ha il diritto di dire «oggi ci sono 5 rossi»: può
+dire «dei rossi del 28, 5 sono vivi».**
+
+    rifallo con:
+    gh api "repos/:owner/:repo/actions/jobs/<job-id>/logs" | grep -E "^\S*\s*(FAILED|ERROR) "
+    # poi, un file alla volta (mai la suite intera):
+    python -m pytest tests/<file>.py -q --no-header -p no:randomly   # e leggi $? SENZA pipe
