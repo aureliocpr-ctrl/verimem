@@ -10769,3 +10769,56 @@ Coerente con tutto il resto: separazione rilevanti/off-topic **+8,324**; control
 **Il pool di B è un proxy lessicale dichiarato**, non il retriever del prodotto: il regime vero seleziona le frasi **più simili**, quindi il massimo vero è probabilmente **più alto** ⇒ **B qui è sottostimata e la separazione è ottimistica**.
 **Il corpus è piccolo: 401 frasi.** Il massimo su un pool cresce con la dimensione del corpus — più frasi, più occasioni di un falso amico. **Questa separazione non si estende a un corpus reale senza rimisurarla lì.**
 Non è una raccomandazione di cambiare il floor: **io misuro, non curo.** E vale sul **cross-encoder** in inglese, non sul bi-encoder del banco ufficiale.
+
+### 🟢 W8-21 · AGGIORNAMENTO (22:47) — **il fondo si è mosso**: «lentissima ma viva», non affamata
+
+La cella e la sua prova dicono che il fondo della coda era **immobile**. Era vero alle
+21:58. **Non lo è più.**
+
+```
+20:34 e 21:58   #1147 #1150 #1154 #1155 #1163 #1166   (28/08 17:07–17:29)  ← 84 min fermo
+22:47           #1180 #1182 #1183 #1184 #1185 #1186   (28/08 17:41–17:45)  ← +33 run in 49 min
+```
+
+E il ritmo di uscita è salito con lui:
+
+```
+18:45   completed 1161   queued 796   in_progress  3
+21:58   completed 1167   queued 900   in_progress 13
+22:47   completed 1174   queued 939   in_progress 14
+
+finestra lunga (4h02m):  +13  →  ~3,2/ora        ultima finestra (11m): +4 → ~22/ora
+```
+
+⚠️ **Non estrapolo dagli 11 minuti**: stasera ho visto **tre burst rientrare**. Il numero
+onesto resta **3,2/ora sulla finestra lunga**; il fatto nuovo è **qualitativo** — il fondo
+non è più fermo.
+
+### Cosa resta vero della diagnosi, e cosa no
+
+**Resta**: la catena a **tre livelli** con ogni anello che rientra in coda dal fondo; il
+**non-FIFO** (`#1300` del 28/08 20:46 in coda mentre `#1289` delle 20:36 è chiuso);
+l'ingresso ancora sopra l'uscita — **`queued` da 796 a 939** nelle stesse quattro ore.
+
+**Non resta**: che il fondo sia bloccato. ⇒ La parola giusta ora è **lentissima ma viva**.
+
+📌 **E questo è il motivo per cui una misura porta l'ISTANTE.** W8-21 non è sbagliata: è
+**datata**. Senza quella data sarebbe diventata una convinzione invece di un'osservazione
+— che è esattamente come muore un reperto buono.
+
+### 📌 Previsione falsificabile, agli atti alle 22:47
+
+Se il ritmo tiene, **entro le 23:30 il run in coda più vecchio dev'essere successivo a
+`#1186`** (creato dopo il 28/08 17:45). Se alle 23:30 il fondo è ancora `#1180`-`#1186`,
+**era un altro burst e «viva» è sbagliato.**
+
+⛔ **Il cancello ① resta chiuso comunque**: `ci` non produce ancora un verde sul commit
+corrente, e la proposta della coppia (W8-21 §④) resta l'unica via identificata.
+
+**rifallo con:**
+
+```bash
+tot=$(gh api ".../ci.yml/runs?status=queued&per_page=1" --jq .total_count)
+gh api ".../ci.yml/runs?status=queued&per_page=100&page=$(( (tot+99)/100 ))" \
+  --jq '[.workflow_runs[]|{n:.run_number,c:.created_at}]|sort_by(.c)|.[0:6]'
+```
