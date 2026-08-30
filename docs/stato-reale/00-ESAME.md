@@ -11628,3 +11628,65 @@ Aurelio non è stato toccato**: è ancora `{"floor": 0.0, "n_facts": 13795}`, mt
 🤝 **Reperto chiuso da tre istanze con prove che non si sovrappongono**: **ws3** le classi che non
 espongono il metodo · **ws2** la via corretta già in uso e i commenti che numerano le ripetizioni ·
 **io** la prova alla porta e le due cure verificate.
+
+### 🧭 W8-28 — **IL MODELLO FINALE DELLA CODA**, e perché ci sono voluti cinque tentativi
+
+> Questa cella **sostituisce** le letture parziali di W8-18, W8-21, W8-25 e W8-26 su *come*
+> si esce dalla coda. Le lascio scritte perché ognuna porta una misura vera: quello che
+> cambia è **la cornice**. Chi cerca la conclusione la trova qui.
+> **REGIME** — 698 run raccolti e **riordinati a mano su `updated_at`** (l'API ordina su
+> `created_at`), 30/08 alle 23:30. **LIMITE**: 10 run attribuiti su 129 usciti.
+
+### Il modello: **stasi e ONDATE**
+
+```
+il sistema alterna periodi di stasi a ONDATE in cui smaltisce in blocco
+chi entra durante una stasi aspetta finché non arriva un'ondata   → scarti VARIABILI
+chi non ne incontra nessuna entro 24 ore                           → muore di timeout
+```
+
+La prova: i 10 run più recentemente chiusi hanno scarti **11:03 · 13:59 · 14:12 · 16:11 ·
+16:15 · 20:15 · 20:19 ×4** — un continuo, non due picchi — **ma sono chiusi tutti fra le
+21:14 e le 21:19. Cinque minuti.** Non sono usciti quando è arrivato il loro turno: **sono
+usciti insieme.**
+
+⇒ E spiega **anche** i quattro scaduti a `1 day, 0:00:01` misurati alle 22:58: erano
+entrati in coda nella finestra sbagliata — **non una popolazione separata per natura**,
+come avevo scritto in W8-26.
+
+### 🔻 Cinque tentativi, e ognuno è caduto per il campione che non guardavo
+
+```
+«bloccata»           →  cade guardando `started_at` dei JOB (nessuno oltre 40 min)
+«strozzata ma viva»  →  cade sulla previsione: +0 completed in 90 minuti
+«scadono»            →  cade guardando i run SERVITI (#1190: build in 17 secondi)
+«due popolazioni»    →  cade sugli scarti: 11h, 14h, 16h — un continuo
+«ondate»             →  regge, per ora
+```
+
+🔑 **Non è indecisione: un sistema in coda ha molte facce e ognuna si vede da una finestra
+diversa.** Il torto sarebbe stato fermarsi alla prima e chiamarla «la diagnosi». 📌 Ogni
+caduta è arrivata da **una misura nuova, mai da un ripensamento**: è la differenza fra
+correggersi e oscillare.
+
+### ⛔ E il punto che NON è mai cambiato in cinque tentativi
+
+```
+success  98  →  98        +129 run conclusi nell'ultima ora e mezza,  +0 verdi
+```
+
+**Il cancello ① è chiuso perché il contatore dei `success` non si muove**, e i test
+falliscono su codice del **29 agosto** (fronte del verdetto: ~27 ore, W8-27).
+⇒ **Non serve sapere come si esce dalla coda per sapere che il rilascio è fermo.** Serve
+sapere **quando** arriverà un verdetto sul codice di oggi: **fra ~20 ore, se incontra
+un'ondata.**
+
+**rifallo con:**
+
+```bash
+# l'API ordina su created_at: per i più recentemente CHIUSI raccogli e riordina TU
+for e in failure cancelled success; do for p in 1 2 3; do
+  gh api ".../ci.yml/runs?status=$e&per_page=100&page=$p" --jq '.workflow_runs[]|"\(.run_number) \(.updated_at)"'
+done; done | sort -k2 -r | head
+python docs/stato-reale/banchi/ws8-quanto-e-vecchio-cio-che-la-ci-sa.py
+```
