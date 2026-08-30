@@ -12813,3 +12813,45 @@ Aprendo il wheel `0.7.6` (463 file):
 Il wheel ispezionato è una **build locale della 0.7.6**, non un artefatto di PyPI: **non dice cosa contenga il pacchetto pubblicato**, che resta la 0.7.0 del 22/07.
 La divergenza `pip show` / `importlib.metadata` è osservata **su questa macchina** e con questa installazione editable; non è un difetto del prodotto.
 Non ho eseguito codice della 0.7.0: il confronto delle 00:46 resta sui **sorgenti al tag**.
+
+---
+
+## ws1 · 31/08 01:00 — LA VERSIONE DIPENDE DALLA DIRECTORY DA CUI LANCI PYTHON: 0.7.6 DAL REPO, 0.7.0 DA ALTROVE
+
+**Livello**: l'ambiente di questa macchina. **Istante**: 31/08 00:58–00:59. **Metodo**: `importlib.metadata`, due `cwd` diverse — locale, nessuna rete.
+
+Chiude — e **corregge** — la cella delle 00:54, dove avevo scritto che «non ho stabilito perché» i due strumenti divergano e che «la fonte attendibile è `importlib.metadata.version` / `verimem.__version__`». **La prima metà di quella frase è sbagliata.**
+
+### 🔴 CI SONO DUE DISTRIBUZIONI, E UNA HA UN PERCORSO RELATIVO
+
+```
+importlib.metadata.distribution("verimem")._path  ->  verimem.egg-info      <== RELATIVO
+tutte le distribuzioni chiamate verimem:
+   0.7.6  <-  verimem.egg-info
+   0.7.0  <-  C:\...\site-packages\verimem-0.7.0.dist-info
+```
+
+`verimem.egg-info` è un percorso **relativo alla directory di lavoro**: entra nella ricerca solo quando si lancia Python **dal repo**. Da lì vince e dà `0.7.6`; da qualunque altra directory resta solo il `dist-info` di `site-packages`, fermo a `0.7.0`.
+
+```
+                                            dal repo    da altrove
+importlib.metadata.version("verimem")        0.7.6       0.7.0      <== CAMBIA
+verimem.__version__                          0.7.6       0.7.6      <== stabile
+pip show verimem                             0.7.0       0.7.0      <== sempre stantio
+```
+
+### ⚠️ CORREGGO L'AVVISO CHE HO DATO ALLE 00:54
+
+Avevo scritto che «la fonte attendibile è `importlib.metadata.version` / `verimem.__version__`». **`importlib.metadata.version` NON è attendibile qui**: risponde 0.7.6 o 0.7.0 a seconda di dove lanci.
+
+> **L'unica fonte stabile su questa macchina è `verimem.__version__`**, che legge dal modulo importato — e il finder editable lo fa puntare sempre al repo, da qualunque directory.
+
+### 🔑 PERCHÉ MI RIGUARDA, E PERCHÉ RIGUARDA I BANCHI
+
+**Tutti i banchi di stanotte li ho lanciati dallo scratchpad**, non dal repo. Se avessi registrato la versione con `importlib.metadata` — il modo più naturale — **avrei scritto `0.7.0` in un referto che misurava `0.7.6`**. Il codice eseguito era comunque quello del repo (`verimem.__file__` lo conferma da entrambe le directory): **le misure restano valide, sarebbe stata falsa l'etichetta**.
+
+È la trappola di riproducibilità nella sua forma più pulita: **stesso codice, stessa macchina, numero diverso a seconda di dove sei.**
+
+### Cosa questi dati NON provano
+Vale **su questa macchina e con questa installazione editable**: non è un difetto del prodotto, è come è montato l'ambiente. Con un'installazione non-editable `verimem.__version__` seguirebbe il pacchetto installato e il ragionamento cambierebbe.
+Non ho verificato se altri strumenti (`pip list`, `uv`, gli hook) leggano l'una o l'altra fonte.
