@@ -303,6 +303,36 @@ def main() -> int:
 
     per_chi = Counter((e.get("quarantined_by") or "(non registrato)") for e in veri_persi)
     per_layer = Counter(s for e in veri_persi for s in (e.get("layer") or []) or ["(nessun layer)"])
+
+    #: ═══ ESCLUSIVITA' — la domanda di @ws3 (30/08 19:10), e il campo da solo
+    #: non la risponde. `chi_ha_quarantinato` (`client.py:291`) e' una PRECEDENZA
+    #: a cinque rami: `store-screen → MOAT → L1 → _BLOCK_LAYER_PRIORITY → agito`.
+    #: ⇒ quando il moat fallisce, **qualunque layer abbia agito NON compare nel
+    #: campo**. Contare `quarantined_by == 'moat'` da' un TETTO SUPERIORE alla
+    #: responsabilita' esclusiva, non la responsabilita'.
+    #: Senza queste righe il banco produceva «il moat ferma il 25 su 29» e da li'
+    #: la conseguenza operativa «curare i layer cura il 14%», che era FALSA:
+    #: dagli aggregati risultava k >= 11 su 25. Qui k si conta esatto.
+    LESSICALI = ("L1", "L3", "L4.1", "L4.2", "L4-negazione", "L4-review", "duplicate")
+
+    def _lessicale(s: str) -> bool:
+        return any(s.startswith(p) for p in LESSICALI)
+
+    moat_soli, moat_con_layer = [], []
+    for e in veri_persi:
+        if (e.get("quarantined_by") or "") != "moat":
+            continue
+        (moat_con_layer if any(_lessicale(s) for s in (e.get("layer") or []))
+         else moat_soli).append(e)
+    tot_moat = len(moat_soli) + len(moat_con_layer)
+    print("")
+    print(f"  ESCLUSIVITA' del moat sui veri persi (la domanda di @ws3):")
+    print(f"     quarantined_by == 'moat':            {tot_moat:4}")
+    print(f"     di cui SENZA alcun layer lessicale:  {len(moat_soli):4}   <- responsabilita' esclusiva")
+    print(f"     di cui CON almeno un layer:          {len(moat_con_layer):4}   <- il campo li nasconde")
+    if tot_moat:
+        print(f"  ⇒ «il moat ferma {tot_moat} su {len(veri_persi)}» vale come ESCLUSIVITA' solo per "
+              f"{len(moat_soli)}; per gli altri {len(moat_con_layer)} un layer aveva gia' segnalato.")
     print("")
     print(f"  CHI ferma i {len(veri_persi)} VERI persi — per decisore:")
     for k, n in per_chi.most_common():
@@ -323,6 +353,8 @@ def main() -> int:
              "criterio_cieco_pct": round(cieco, 1),
              "lunghezza_mediana_per_esito": lunghezze,
              "veri_persi_per_decisore": dict(per_chi),
+             "moat_esclusivo": len(moat_soli),
+             "moat_con_layer_lessicale": len(moat_con_layer),
              "veri_persi_per_layer": dict(per_layer),
              "falsi_fermati_per_layer": dict(per_layer_falsi),
              "claim": len(esiti),
