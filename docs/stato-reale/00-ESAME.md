@@ -10352,3 +10352,55 @@ Il perché si legge nei casi: HaluEval QA è **multi-hop**, e la frase che conti
 ### Cosa questi dati NON provano
 **Confondente non chiuso**: la mia zona grigia è *la frase più lunga* che non contiene la risposta — la lunghezza potrebbe alzare il punteggio da sola. Serve una grigia a lunghezza appaiata.
 n=12 (7 per la grigia): differenze sotto ~1 punto di logit non sono distinguibili qui, e infatti **non le interpreto**. Le traduzioni sono mie. Il reperto vale sul **cross-encoder**, non sul bi-encoder del banco ufficiale. Non dice nulla sul tasso di `fabrication_under_absence`, che gira su un'altra popolazione e un altro giudice.
+
+**㉛ `44` — il rilevatore dichiara in conflitto il 99% delle coppie possibili di un topic. Chiude la
+serie `42`-`43`-`44`.**
+📊 **Da dove vengono le 93.263 contraddizioni irrisolte** (istanti 22:15:36-22:19:12):
+· **`coppie fra topic DIVERSI: 0 = 0,0%`** ⇒ **il rilevatore confronta SOLO dentro lo stesso topic**.
+Spiega retroattivamente il «stesso topic 100%» che avevo notato nel `41` senza capirlo.
+· **Tre topic fanno il 72,6%**: `research/memoria-appresa` **39.322 = 42,2%** · `project/orin`
+**16.865 = 18,1%** · **topic vuoto** 11.529 = 12,4%. Sei topic fanno l'**82%**.
+· 🎯 **LA CLIQUE, e non è un caso isolato:**
+
+| topic | fatti | coppie possibili | dichiarate | |
+|---|---|---|---|---|
+| `research/memoria-appresa` | 250 | 31.125 | 30.974 | **99,5%** |
+| `project/orin` | 160 | 12.720 | 12.477 | **98,1%** |
+| *(topic vuoto)* | 136 | 9.180 | 9.043 | **98,5%** |
+
+**Un rilevatore che segnala quasi ogni coppia non sta rilevando: sta enumerando.** Dentro questi
+topic, «questi due fatti sono in contraddizione» è indistinguibile da «questi due fatti esistono
+entrambi». I 12 fatti più conflittuali hanno **458-459 clash** ciascuno — la firma della clique — e
+sono appunti di ricerca **lunghi e densi di numeri** (`GROKKING (a+b) mod 97, MLP 256,
+weight_decay 1.0`, `KEPLER orbite 2-invarianti`).
+· 🆕 **DUPLICAZIONE**: **93.263 righe** ma **74.646 coppie non ordinate distinte** ⇒ **18.617 in
+eccesso (20%)**. **Chi cita «93.263» cita un numero gonfiato del 25%.** ✅ Ma **il registro non si
+gonfia da solo**: solo **49 coppie (0,3%)** sono duplicate **in giorni diversi** ⇒ duplicano dentro
+la stessa giornata, non nel tempo.
+· ⚖️ **E NON STA PEGGIORANDO**: negli ultimi 10 giorni ~**5.100 righe su 93.263**; tutto il resto è
+**antecedente al 14/08**. **È un deposito, non una falla che sanguina** ⇒ prima si sistema il
+criterio, poi si decide del deposito, senza fretta.
+· ✅ **Il picco di fine agosto è spiegato e conferma il meccanismo su materiale RECENTE**:
+**`brainstorming/25-08`**, **81 fatti → 1.413 coppie**, il **43,6%** delle 3.240 possibili.
+· ✅ **Righe orfane: 22 su 93.263** — verificato apposta, perché se fossero state migliaia ogni
+numero del `42`, `43` e `44` sarebbe stato una sottostima.
+🔑 **IL LEGAME NUOVO**: è **il secondo effetto del topic-crowding** che `verimem doctor` segnala
+(sopravvivono 1204/1724 sui topic già usati contro 1020/1125). **«Un topic per misura» aveva una
+ragione conosciuta; ne ha una seconda, ed è quadratica**: 250 fatti lunghi in un topic ⇒ **30.974
+falsi conflitti**.
+🪞 **Nono difetto mio della serata**: la tabella per giorno in **ora locale**, le query per topic in
+**UTC** ⇒ 4.467 contro 2.990. **Non era un'anomalia dei dati: era il fuso.**
+
+🔎 **IL QUADRO COMPLETO DELLE CONTRADDIZIONI (`42`+`43`+`44`)**: **93.263 irrisolte (99,6%) = 74.646
+distinte + 18.617 duplicate** · **zero cross-topic** · **93,7%/99,1% con jaccard <0,15** (parlano
+d'altro, mediana 0,039) · le **3.021** ad alto jaccard sono **log** (94,2% a ≤4 token) · togliere
+test e timestamp lascia il **97,0%** ⇒ **nessuna scorciatoia di pulizia** · **le cure vere sono due**:
+legare numero e grandezza come già fa **`L4.2`** in scrittura, **e** non confrontare a coppie oltre
+una certa cardinalità del topic. ⛔ **Nessuna delle due applicata: è codice del gate, e il gate non
+si tocca senza mandato.**
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-la-clique-di-un-topic.py
+```
