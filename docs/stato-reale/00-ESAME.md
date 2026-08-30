@@ -12143,3 +12143,47 @@ contraddicono**.
 l'ho pubblicato**), proprio ciò che avevo scoperto io nel `41` e dimenticato tre ore dopo; la seconda
 cercava i miei id con `glob("/tmp/*")` da Python, e **il `/tmp` di Git Bash non è quello che Python
 vede su Windows** — è la trappola che avevo scritto **tre volte** nel promemoria della notte.
+
+---
+
+## ws1 · 31/08 00:08 — IL COSTO CHE AVEVO PAVENTATO NON SI MISURA: ABBASSARE IL FLOOR AIUTA TUTTE E TRE LE LINGUE ALLO STESSO MODO
+
+**Livello**: lo scorer del prodotto, simulazione fedele del gate (`_apply_ce_gate` tiene un hit quando `score >= floor`, quindi contare i logit ≥ t **è** ciò che il gate farebbe con quel floor). **Perimetro**: 12 domande tradotte × 5 candidati **fissi** (quelli della recall EN) × 3 lingue = 60 logit per lingua; corpus 401 frasi di terzi. **Istante**: 31/08 00:05–00:08. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Testa una frase che **avevo detto io sul bus** alle 23:59: *«un floor più permissivo rende il prodotto più sensibile alla lingua… è una cosa da misurare prima, e nessuno l'ha ancora fatta»*.
+
+### ⚖️ P-COSTO: direzione confermata, grandezza NO
+
+```
+ soglia       EN       IT       ES   divario
+   +0,0       13       13       13        0    <== floor attuale
+   -1,0       16       14       13        3
+   -2,0       17       16       16        1
+   -3,0       18       20       22        4    <== punto migliore misurato alle 22:48
+   -4,0       23       26       26        3
+   -5,0       27       28       32        5
+```
+
+Alla soglia attuale il divario fra lingue è **esattamente 0**; sotto è **sempre ≥1**, e a −3,0 è **4, con IT ed ES sopra EN** — la direzione che avevo predetto. **Ma con n=60 un divario di 4 vale 6,7 punti percentuali, e l'intervallo su una proporzione con n=60 è ±~12 punti: è dentro il rumore.** Il pattern monotono è suggestivo, **non è misurato**.
+
+### 🟢 E SUL RICHIAMO — la cosa che conta per l'utente — LA LINGUA NON CONTA
+
+```
+la frase che RISPONDE sarebbe ammessa?      EN   IT   ES   divario
+   +0,0                                      4    6    5      2
+   -1,0                                      6    6    5      1
+   -2,0                                      6    7    6      1
+   -3,0                                      7    7    8      1
+   -4,0                                      8    9    9      1
+   -5,0                                      9    9    9      0
+```
+
+**Il divario fra lingue sul richiamo è 0–2 su 12: nullo.** E abbassando la soglia il richiamo **sale allo stesso modo in tutte e tre**: da 4–6 fino a **9 su 9** — il massimo possibile, perché la frase che risponde è fra i cinque candidati in **9 domande su 12** (le altre 3 le perde il **retriever**, non il gate).
+
+> **Correggo quello che ho scritto sul bus: il costo linguistico dell'abbassare il floor non è misurabile su questo banco. Abbassare la soglia aiuta l'inglese, l'italiano e lo spagnolo nella stessa misura.** La direzione del divario esiste ed è coerente (0 alla soglia attuale, positiva sotto), ma va trattata come **ipotesi non confermata**, non come reperto.
+
+### Cosa questi dati NON provano
+**n=60 per lingua sui candidati, n=12 sul richiamo**: gli intervalli sono ±~12 e ±~28 punti. **Nessuna delle differenze fra lingue qui è distinguibile dal rumore** — riporto i numeri, non li interpreto.
+La simulazione conta i logit contro una soglia: è fedele a `_apply_ce_gate`, ma **non ho eseguito il prodotto con `VERIMEM_CE_RELEVANCE_FLOOR` impostata**; il retriever resta quello EN (passaggi fissi), quindi questo isola il **gate**, non la porta intera.
+Il «massimo possibile 9/12» dipende da `k=5`: con un `k` più grande il retriever perderebbe meno.
+Le traduzioni sono mie. Vale in questo regime (risposta presente) e su questo corpus.
