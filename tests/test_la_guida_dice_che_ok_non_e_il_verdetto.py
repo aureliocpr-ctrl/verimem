@@ -71,6 +71,29 @@ def test_la_guida_indirizza_ai_campi_che_rispondono():
         assert campo in testo, f"la guida non indirizza a `{campo}`"
 
 
+def test_la_guida_distingue_le_due_porte_dei_fatti():
+    """«The fact doors … DO NOT abstain» era vero per UNA delle due.
+
+    Misurato il 2026-08-30 alle 23:51, un fatto nello store::
+
+        query                 facts_search        facts_recall
+        coperta dallo store   1 hit, score 0.0    1 hit, score 0.857
+        mai sentita           0 hits              1 hit, score 0.757
+
+    ⇒ `facts_recall` PROVA l'avvertimento (0.757 su una domanda mai sentita,
+    quasi quanto quella coperta). `facts_search` e' LESSICALE: zero parole in
+    comune, zero righe. ⚠️ E la lettura sbagliata e' l'OPPOSTO di quella che la
+    guida teme: chi vede `[]` da `facts_search` e ricorda che «le porte dei
+    fatti non si astengono» conclude che lo store non sappia nulla.
+
+    ⚠️ CONTROLLO che regge nella misura: sulla domanda COPERTA rispondono
+    entrambe — nessuna delle due porte e' rotta.
+    """
+    testo = _guida()
+    assert "facts_search` is LEXICAL" in testo or "LEXICAL" in testo, testo[:400]
+    assert "0.757" in testo, "manca il numero che prova l'avvertimento"
+
+
 def test_la_guida_nomina_il_campo_dell_astensione():
     """La promessa dell'astensione c'era, il CAMPO che la porta no.
 

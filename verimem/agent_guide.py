@@ -75,6 +75,21 @@ Orientation (each tool's exact arguments are in its own schema):
   something the store knows nothing about and you still get the nearest facts
   back, with high scores. A result is not evidence that the store knows the
   answer.
+  ⚠️ THAT IS TRUE OF `facts_recall`, AND NOT OF `facts_search` — the two doors
+  do NOT behave the same, and reading them as one is how you get the opposite
+  error. Measured 2026-08-30, one fact in the store, one query it covers and
+  one about something it never heard of:
+
+      query                 facts_search          facts_recall
+      covered by the store  1 hit,  score 0.0     1 hit, score 0.857
+      never heard of        0 hits               1 hit, score 0.757
+
+  `facts_recall` is the one that proves the warning: on a question the store
+  never heard of it still hands back a fact at 0.757 — nearly the score of the
+  one it does cover. `facts_search` is LEXICAL: no shared words, no rows, and
+  the scores it reports are not relevance. So an empty list from
+  `facts_search` is a MISS, not an abstention and not "the store knows
+  nothing" — same conclusion as the line above, reached from the other side.
 - To learn WHETHER the store can answer at all, ask verimem_trust_report: it
   returns a provenance dossier and, on a question it cannot support, it
   ABSTAINS ("I don't know") instead of stitching a guess from weak matches.
