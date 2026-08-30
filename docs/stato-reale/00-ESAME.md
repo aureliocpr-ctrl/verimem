@@ -8688,3 +8688,40 @@ interessante del numero**, non il suo neo.
 - **Non so se sia voluto.** Un banco che ingerisce sessioni intere come fatti singoli può
   essere esattamente il punto del banco — ma allora **va detto accanto al numero**.
 
+
+### ⚠️ W8-18 · PRECISAZIONE (20:34) — i livelli sono **tre**, e i run vecchi sono al terzo
+
+La cella dice «il settimo job è `build`, ed è lì che si fermano». **Vero per i run del
+29/08 che ho esaminato (#1661-1663). Falso come generalizzazione**: nei run del 28/08
+`build` **è già passato**.
+
+I 12 run `queued` più vecchi (ultima pagina, `page=9` di 850):
+
+```
+#1147  creato 08-28T17:07   7 job fatti / 2 appesi   ->  wheel install-from-scratch
+#1173  creato 08-28T17:32   7 fatti / 2 appesi       ->  wheel install-from-scratch
+⇒ fermi su `build`: 0/12 · mai partiti: 0/12 · fermi su `wheel …`: 12/12
+```
+
+**7 fatti = 6 test + build.** `build` ha girato. **`#1147` è in coda da oltre 51 ore.**
+
+```
+test  ──needs──►  build (sdist + wheel)  ──needs──►  wheel install-from-scratch
+      ci.yml:955                        ci.yml:1033
+```
+
+⇒ **Tre livelli, quindi DUE ripartenze da fondo coda**, non una. Si sommano, e con 850 in
+coda il terzo livello non arriva mai.
+
+🟢 **Una nota che non è cattiva**: `build` gira, **l'artefatto viene costruito**. Il difetto
+non è «non riusciamo a produrre un pacchetto»: è che **il run non chiude**, e senza
+chiusura non c'è esito da leggere per il cancello ①.
+
+🪞 **Il mio errore nel campione**: al primo tentativo ho preso «i più vecchi» **dentro la
+prima pagina**, che contiene i più **recenti** (l'API ordina per data decrescente).
+Risultato: 18/18 «mai partiti» — vero e **inutile**, erano run di oggi pomeriggio.
+📌 *Un ordinamento non dichiarato trasforma un campione in un altro campione, e la
+risposta resta plausibile* — che è il modo in cui questi errori sopravvivono.
+
+⚖️ **Campione: 12 run su 850**, tutti dello stesso quarto d'ora del 28/08 — è la **coda di
+fondo**, non la coda. E non ho guardato **perché i job appesi siano 2 e non 1**.
