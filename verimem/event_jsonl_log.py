@@ -172,6 +172,33 @@ def _avvisa_se_diverge() -> None:
         pass
 
 
+def _con_i_tag_ambient(payload: dict[str, Any]) -> dict[str, Any]:
+    """I tag che dicono DOVE e' successo, aggiunti solo se mancano.
+
+    `flow_events.emit_flow` li mette gia'; `observability.emit` — la via
+    che usano quasi tutti — no, e senza di essi una riga del journal non
+    dice in quale memoria e' successa. Misurato il 30/08: 99 tipi di
+    evento su 115 arrivavano qui senza `store`.
+
+    Qui e non nei chiamanti: e' il punto UNICO dove entrambe le vie
+    atterrano, quindi i 115 tipi si coprono insieme e nessuno deve
+    ricordarsi di taggare. E si usa ``setdefault``: chi porta gia'
+    l'impronta se la tiene, perche' la sua e' piu' informata di questa.
+
+    Fail-open come tutto il resto del modulo: se i tag non si ricavano,
+    si scrive la riga senza — un evento non taggato e' il comportamento
+    di sempre, un evento perso sarebbe un danno nuovo.
+    """
+    try:
+        from .flow_events import _build, _store_fingerprint
+        fuori = dict(payload)
+        fuori.setdefault("store", _store_fingerprint())
+        fuori.setdefault("build", _build())
+        return fuori
+    except Exception:  # noqa: BLE001 — vedi il fail-open dichiarato sopra
+        return payload
+
+
 def append_event(
     name: str,
     payload: dict[str, Any],
@@ -190,7 +217,7 @@ def append_event(
     _maybe_rotate()
     rec: dict[str, Any] = {
         "name": name,
-        "payload": payload,
+        "payload": _con_i_tag_ambient(payload),
         "ts": ts if ts is not None else time.time(),
     }
     try:
