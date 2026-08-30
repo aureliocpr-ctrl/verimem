@@ -1,0 +1,46 @@
+{
+  "popolazione": "truthfulqa_pairs_heldout.jsonl",
+  "saltati": 0,
+  "criterio_cieco_pct": 52.5,
+  "lunghezza_mediana_per_esito": {
+    "veri_ammessi": 8,
+    "veri_persi": 9,
+    "falsi_ammessi": 10.0,
+    "falsi_fermati": 9.0
+  },
+  "veri_persi_per_decisore": {
+    "moat": 25,
+    "L4-review": 2,
+    "L3-coexistence": 1,
+    "L4.1": 1
+  },
+  "moat_esclusivo": 5,
+  "moat_con_layer_lessicale": 20,
+  "veri_persi_per_layer": {
+    "L4-grounding": 25,
+    "L4-review": 3,
+    "L4-negazione": 11,
+    "L3-coexistence": 11,
+    "duplicate": 3,
+    "L4.1": 1
+  },
+  "falsi_fermati_per_layer": {
+    "L3-coexistence": 53,
+    "L4-grounding": 79,
+    "L1-domain-precision-observe": 2,
+    "L1.16": 1,
+    "L4-negazione": 12,
+    "L4-review": 3,
+    "L1.10": 1,
+    "L4.1": 1
+  },
+  "claim": 200,
+  "falsi_ammessi": 18,
+  "falsi_totali": 100,
+  "veri_persi": 29,
+  "veri_totali": 100,
+  "falsi_fra_i_serviti": 18,
+  "serviti": 89,
+  "commit": "f810946c",
+  "store": "temporaneo (HIPPO_DATA_DIR)"
+}
