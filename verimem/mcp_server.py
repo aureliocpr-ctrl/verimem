@@ -236,7 +236,7 @@ def _conta_sostituiti(agent) -> int | None:
         return None
 
 
-def _avvisi_di_lettura(agent, query: str) -> dict:
+def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict:
     """Gli avvisi che CLI e SDK danno gia', portati alla porta dell'AGENTE.
 
     2026-08-08. `Risultati` (client.py) espone due segnali che nessuna superficie
@@ -261,6 +261,16 @@ def _avvisi_di_lettura(agent, query: str) -> dict:
     vuoto e la risposta parte comunque.
     """
     out: dict = {}
+    # 2026-08-30 — IL RIPIEGO NON PUO' AVVENIRE IN SILENZIO. `hippo_facts_search`
+    # prova l'AND su tutti i token e, se non aggancia, ripiega sull'OR: su una
+    # domanda di piu' parole quello puo' prendere una fetta larghissima del
+    # corpus (misurato: 0 hit in AND, 2575 in OR = 16,5%, coi fatti cercati in
+    # posizione 147). L'ordine che decide poi cosa esce e' `created_at DESC`,
+    # non la rilevanza. Chi legge riceveva i piu' recenti senza sapere nessuna
+    # delle due cose. Sta PRIMA del try perche' un errore negli altri avvisi
+    # non deve portarsi via anche questo.
+    if ripiego is not None:
+        out["ricerca"] = {"ramo": ripiego, "ordinati_per": "created_at DESC"}
     try:
         # ⚠️ L'OGGETTO NON E' SEMPRE LO STESSO, e la prima versione di questo
         # helper ci e' cascata: cercava `agent.memory` e basta. Ma `Memory` (il
@@ -12377,6 +12387,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # across tokens first (precision); if that yields nothing, fall
                 # back to OR (any token) so the user always gets relevant hits
                 # instead of []. Both are plain SQL LIKE (no encode, ~ms).
+                _ramo = "and"
                 hits = a.semantic.search_facts(
                     query, limit=_search_limit, topic=_search_topic,
                     exclude_legacy=not include_legacy,
@@ -12385,6 +12396,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     **_pf,
                 )
                 if not hits and len(query.split()) > 1:
+                    _ramo = "or_fallback"
                     hits = a.semantic.search_facts(
                         query, limit=_search_limit, topic=_search_topic,
                         exclude_legacy=not include_legacy,
@@ -12426,7 +12438,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # e `trattenuti`, quest'ultimo appena aggiunto all'SDK e che
                 # senza questa riga sarebbe stato «codice che gira e non arriva
                 # mai all'utente» — una categoria gia' censita.
-                **_avvisi_di_lettura(a, query),
+                **_avvisi_di_lettura(a, query, ripiego=_ramo),
             })
 
         if name == "hippo_validate_claim":
