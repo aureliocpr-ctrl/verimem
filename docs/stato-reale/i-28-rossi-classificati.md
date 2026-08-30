@@ -30,7 +30,7 @@ un verdetto ([l'EXIT che non è un verdetto](l-exit-che-non-e-un-verdetto.md)).
 | ③ | **servizio esterno** | 1 |
 | ④ | **`XPASS(strict)`: presidi guariti col marcatore addosso** | 3 |
 | ⑤ | **debito di presidio: un numero da aggiornare** | 4 |
-| ⑥ | **da capire — né mio né d'ambiente** | 6 |
+| ⑥ | **prezzo di una cura altrui** (`e3ecd7f1`) | 6 |
 
 ### ② Ambiente (10) — dipendono da ciò che questa macchina ha
 
@@ -62,21 +62,67 @@ codice scollegato **39 contro 38** · divergenze **scese a 0** (nota 159) ·
 **versione ferma da 1073 commit** (è il bump congelato in attesa di Aurelio) ·
 un banco che non dichiara come guarda l'esito del subprocess.
 
-### ⑥ Da capire (6) — per chi mantiene `L1`
+### ⑥ Non era da capire: e' il prezzo di una cura (6)
 
 Tutti i `test_quarantine_restore_public.py` e `test_quarantine_log_*`. Il
-fixture disattiva la precisione di dominio — `ENGRAM_L1_DOMAIN_PRECISION=0` —
-per ottenere la quarantena legacy da cui partire, **e non la ottiene più**:
+fixture disattiva il carve-out di dominio — `ENGRAM_L1_DOMAIN_PRECISION=0` —
+per ottenere la quarantena legacy da cui partire, **e non la ottiene piu'**.
+
+**Causa: `e3ecd7f1`** (28/08 23:44, *Agent: Paragone*, cura assegnata da
+lead-audit) — «L1.13 non vedeva la fonte, e fermava i verbali d'ufficio che la
+ricalcano». Il commit e' lavoro serio: RED→GREEN falsificato tre volte, presidio
+nuovo, non-regressione verificata su **«i 6 file di test che toccano il
+detector»**.
+
+🔑 **Il fixture non era fra quei sei, e non poteva esserlo: non *testa* il
+detector, lo *usa*** per fabbricare il falso positivo da restaurare. ⇒ *«Chi
+tocca X» non e' «chi dipende da X».* E' la stessa classe del mio errore di
+stamattina, specchiata: li' non ho detto al bivio che aggiungevo una potatura,
+qui non si e' chiesto chi si appoggia all'esito.
+
+#### Il reperto che vale piu' dei sei rossi
+
+La cura perdona quando il `matched_text` compare **verbatim nella fonte**. Se la
+fonte **e'** il claim, il verbatim c'e' **per costruzione**:
 
 ```
-setup: expected FP, got {'moat': 'passed', 'stored': True,
-                         'status': 'model_claim', 'grounding_score': 99.53…}
+REGIME ENGRAM_L1_DOMAIN_PRECISION=0 · fonte = eco del claim
+claim          senza fonte      fonte = eco
+LEGALE  EN     FERMATO L1       passa      <-- scappa
+VERBALE IT     FERMATO L1       passa      <-- scappa
+AUDIT   EN     FERMATO L1       passa      <-- scappa
+SOFTWARE       FERMATO L1       FERMATO L1
+DEPLOY  IT     FERMATO L1       FERMATO L1
+controllo (fermati senza fonte) 5/5   ·   scappano con l'eco 3/5
 ```
 
-⚠️ **La fonte È il claim** (`source=LEGAL_FP` su un claim `LEGAL_FP`) e passa a
-**99,53**. Va letto accanto al banco `ef234ae0` di lead-audit, dove il
-fail-closed anti-auto-sorgente si aggira per riformulazione 3/3. **Non è il mio
-perimetro e non lo decido io.**
+Il commit dichiara: «*una self-claim senza fonte non ha nulla da perdonare e
+resta fermata*» — **vero alla lettera**, 5/5. Cio' che non nomina e' che **chi
+scrive la fonte e' chi scrive il claim**: il perdono diventa una scelta del
+chiamante invece che una proprieta' della fonte.
+🔑 E' il banco `ef234ae0` di lead-audit (fail-closed anti-auto-sorgente
+aggirato **per riformulazione** 3/3) **da un lato nuovo**: qui non serve
+riformulare, basta la copia identica. ⇒ La «guardia anti-eco» del voto del 28/08
+ha ora una misura che la chiede. Banco:
+[`ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py`](banchi/ws3-il-perdono-si-compra-riscrivendo-il-claim-come-fonte.py).
+
+⚠️ **3/5 non e' un tasso**: dice che la via esiste e **non e' universale**. Chi
+resta fermato lo deve a un **secondo strato**, non alla guardia curata.
+
+#### E un errore mio nel misurare, corretto qui
+
+Avevo prima misurato i tre regimi della leva concludendo «**la variabile non
+morde**». **Falso: il difetto era nel mio misuratore** — tutte e tre le celle
+avevano `source=CLAIM`, e la fonte-eco domina l'esito, quindi misuravo l'eco e
+non la leva. Con la cella mancante: `LEGALE + PREC=0 + senza fonte` → `QUAR:L1`;
+`PREC=1` → passa. **La leva morde.** *La prova che un criterio funziona e' che
+togliendolo il numero cambi — e non l'avevo tolto.*
+
+⚠️ **Discrepanza aperta**: la nota interna dice «`ENGRAM_L1_DOMAIN_PRECISION`
+(oggi OFF)», `anti_confab_gate.py:185` dice «**DEFAULT ON** (flipped
+2026-07-22)», e la misura conferma ON. Una delle due e' vecchia; il pavimento e'
+di chi mantiene `L1`.
+
 
 ---
 
@@ -158,8 +204,11 @@ tornare verde un numero.
   sono ambiente, debito o marcatori da togliere; 6 vanno capiti; **4 li ho messi
   io e 3 sono curati qui**.
 - **Non dice che sia verde.** Non lo è, e il rosso più fresco è mio.
-- **Non classifica per me i 6 di ⑥**: li ho letti abbastanza per dire che non
-  sono d'ambiente, non abbastanza per dire cosa siano.
+- **Non dice che `e3ecd7f1` sia una cura sbagliata.** Ha chiuso un difetto vero
+  e con metodo. Dice che il suo criterio di non-regressione cercava i riceventi
+  per argomento, e che il perdono introdotto e' a comando del chiamante.
+- **Non dice quanto sia grave la via dell'eco**: 5 casi miei, 2 lingue, un solo
+  sotto-strato. Se un chiamante reale la percorrerebbe, non l'ho misurato.
 
 ## Le due lezioni, che valgono oltre questo caso
 
