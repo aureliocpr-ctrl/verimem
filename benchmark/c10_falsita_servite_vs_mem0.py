@@ -44,6 +44,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -76,22 +77,60 @@ def carica(nome: str, n: int | None) -> tuple[list[tuple[str, str, str]], str]:
     return fuori, f_nome
 
 
-def criterio_cieco(casi: list[tuple[str, str, str]]) -> float:
-    """Il righello che dice se la POPOLAZIONE e' viziata, prima di eseguire.
+#: parole che segnalano una NEGAZIONE. E' una dimensione di forma quanto la
+#: lunghezza, e i layer del gate la usano davvero (`L4-negazione`).
+_NEGAZIONE = re.compile(
+    r"\b(no|not|never|none|nothing|cannot|can't|doesn't|don't|isn't|aren't|won't)\b", re.I)
 
-    Un criterio che guarda SOLO la lunghezza — cieco alla verita' — quanto ci
+
+def criteri_ciechi(casi: list[tuple[str, str, str]]) -> dict[str, float]:
+    """I righelli che dicono se la POPOLAZIONE e' viziata, PRIMA di eseguire.
+
+    Un criterio cieco alla verita' — che guarda solo la FORMA — quanto ci
     prende? **50% e' il caso; molto di piu' significa che la forma predice la
-    classe**, e allora il confronto misurera' la forma.
+    classe**, e allora il confronto misurera' la forma invece della verita'.
 
-    Misurato 30/08: halueval **98%** (il falso e' 6x piu' lungo in 98 item su
-    100) · truthfulqa **50,0%**. Due righe che mi hanno risparmiato un numero
-    falso nel documento che conta le nostre figure di merda.
+    ⚠️ **UNO SOLO NON BASTA, ed e' la lezione che mi e' costata di piu' il
+    30/08.** Avevo certificato `truthfulqa` «pulita» con il criterio sulla
+    LUNGHEZZA (50,0%, il caso esatto) e l'ho scritto due volte come se fosse un
+    verdetto generale. Poi ho misurato le NEGAZIONI sulla stessa popolazione:
+
+        veri con negazione  45%   ·   falsi con negazione  16%     (heldout)
+        veri con negazione  43%   ·   falsi con negazione   7%     (dev)
+
+    ⇒ **Su TruthfulQA negare vuol dire quasi sempre dire il vero** — e' un
+    dataset di *misconception*, dove la risposta corretta SMENTISCE. ⇒ Il layer
+    `L4-negazione`, che fermava 12 falsi e 11 veri, sembrava «non discriminare»:
+    **stavo per proporlo come candidato cura, e sarebbe stato un peggioramento.**
+
+    ⇒ 🔑 **«La popolazione e' pulita» vale SOLO sulla dimensione che hai
+    misurato.** Serve un criterio cieco per OGNI dimensione di forma che i layer
+    usano davvero — e le dimensioni non misurate vanno dichiarate ignote, non
+    assunte sane.
+
+    Misurato 30/08 sulla lunghezza: halueval **98%** · truthfulqa **50,0%**.
     """
     import statistics as st
+
+    fuori: dict[str, float] = {}
     lun = [len(c.split()) for _, c, _ in casi]
     soglia = st.median(lun)
-    giusti = sum(1 for (et, c, _) in casi if ((len(c.split()) > soglia) == (et == "falso")))
-    return 100 * giusti / max(1, len(casi))
+    fuori["lunghezza"] = 100 * sum(
+        1 for (et, c, _) in casi if (len(c.split()) > soglia) == (et == "falso")
+    ) / max(1, len(casi))
+
+    #: per la negazione non c'e' una soglia: si guarda se la sua PRESENZA e'
+    #: sbilanciata fra le classi. 50% = indifferente, lontano da 50 = predice.
+    veri = [c for et, c, _ in casi if et == "vero"]
+    falsi = [c for et, c, _ in casi if et == "falso"]
+    qv = sum(1 for c in veri if _NEGAZIONE.search(c)) / max(1, len(veri))
+    qf = sum(1 for c in falsi if _NEGAZIONE.search(c)) / max(1, len(falsi))
+    #: quota fra i negativi che sono FALSI: 50% se la negazione non dice nulla
+    tot_neg = qv * len(veri) + qf * len(falsi)
+    fuori["negazione"] = 100 * (qf * len(falsi)) / tot_neg if tot_neg else 50.0
+    fuori["_neg_quota_veri"] = round(100 * qv, 1)
+    fuori["_neg_quota_falsi"] = round(100 * qf, 1)
+    return fuori
 
 
 def main() -> int:
@@ -108,13 +147,36 @@ def main() -> int:
     #: se misurassi da una porta diversa misurerei un altro prodotto.
 
     casi, f_nome = carica(a.popolazione, a.n)
-    cieco = criterio_cieco(casi)
+    ciechi = criteri_ciechi(casi)
     print(f"  popolazione {a.popolazione} ({f_nome}) — {len(casi)} claim")
-    print(f"  criterio CIECO alla verita' (solo lunghezza): {cieco:.1f}%  "
-          f"{'⚠️ ARTEFATTO DI FORMA' if cieco > 60 else '✅ la forma non predice la classe'}")
-    if cieco > 60:
-        print("  ⇒ su questa popolazione il confronto misurerebbe la FORMA. "
-              "Procedo solo perche' e' stato chiesto esplicitamente.")
+    #: sotto una quarantina di claim questi numeri sono degeneri: con 6 claim
+    #: la lunghezza dava 83,3% e la negazione 0,0% su una popolazione che a 200
+    #: claim risulta pulita sulla lunghezza. **Un righello che grida su un
+    #: campione minuscolo insegna a ignorarlo**, ed e' il difetto dei presidi
+    #: che gridano sul sano. ⇒ sotto la soglia si dice «non misurabile», che e'
+    #: un'informazione diversa da «pulito».
+    CAMPIONE_MINIMO = 40
+    piccolo = len(casi) < CAMPIONE_MINIMO
+    print("  criteri CIECHI alla verita' (50% = il caso; lontano da 50 = la forma predice):")
+    for nome, val in ciechi.items():
+        if nome.startswith("_"):
+            continue
+        scarto = abs(val - 50)
+        if piccolo:
+            esito = f"— non misurabile sotto {CAMPIONE_MINIMO} claim"
+        elif scarto > 10:
+            esito = "⚠️ ARTEFATTO DI FORMA"
+        else:
+            esito = "✅ non predice la classe"
+        print(f"     {nome:12} {val:5.1f}%   {esito}")
+    print(f"     (negazione presente nel {ciechi['_neg_quota_veri']}% dei veri e nel "
+          f"{ciechi['_neg_quota_falsi']}% dei falsi)")
+    print("  ⚠️ le dimensioni NON elencate qui sono IGNOTE, non sane: se un layer")
+    print("     guarda una forma che non e' misurata sopra, il suo numero non e' letto.")
+    cieco = ciechi["lunghezza"]
+    if not piccolo and any(abs(v - 50) > 10 for k, v in ciechi.items() if not k.startswith("_")):
+        print("  ⇒ almeno una dimensione e' viziata: i rapporti per LAYER che")
+        print("     dipendono da quella forma NON sono interpretabili qui.")
 
     mem = Memory()
     esiti: list[dict] = []
