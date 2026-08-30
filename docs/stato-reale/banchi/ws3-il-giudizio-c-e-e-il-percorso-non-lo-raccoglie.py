@@ -64,9 +64,33 @@ Nel regime misurato: `grounding_llm` e' `None` · `_resolve_backend()` da'
 modello non e' su disco. ⇒ **`_have_judge` e' falso e il gate non viene MAI
 chiamato** — mentre il gate, chiamato, risponde **0.56**.
 
-🔑 **`local_ce_available()` risponde a «il modello e' su disco?» e viene usata
-per rispondere a «c'e' un giudice?».** Sono domande diverse: **il daemon e' un
-giudice senza modello su disco.** Il commento accanto elenca le vie —
+🔴 **CORREZIONE DEL 30/08 17:53 — la mia prima formulazione era sbagliata.**
+Avevo scritto che `local_ce_available()` «*risponde a «il modello e' su disco?» e
+viene usata per rispondere a «c'e' un giudice?»*». **Falso**: la sua docstring
+dice che la funzione **e' nata proprio per quello** — «*so the gate can ask "is
+there a judge?" **on the hot write path** without paying the cold-start*».
+⇒ Non e' un uso improprio: **e' che il suo elenco — scorer iniettato **o** model
+dir su disco — non contempla il daemon, che e' una terza via nata dopo.** Ancora
+la classe del giorno: *l'elenco non conosce il caso aggiunto dopo.*
+
+📌 **E LA CONOSCENZA ESISTE GIA' NEL REPO, sparsa in tre commenti.** Cinque
+chiamanti, **tre** con una nota di cautela accanto::
+
+    cli.py:581        «I PESI, non `local_ce_available()`. Quella risponde True
+                       sui soli …»                          ← usa `holds_the_weights`
+    doctor.py:554     «I PESI, non solo i metadati …»        ← idem
+    mcp_server.py:13493 «`local_ce_available()` True, `judge_state()` …»
+                                                            ← confronta le due
+    anti_confab_gate.py:2352   nessuna nota   ← IL PERCORSO DI SCRITTURA
+    validate_claim.py:548      nessuna nota
+
+⇒ **Tre chiamanti si sono accorti che la funzione e' piu' generosa della domanda
+che pongono, e ognuno l'ha risolto per conto suo.** La nota di cautela sta nei
+chiamanti che se ne sono accorti, **non nella docstring della funzione** — cosi'
+chi arriva nuovo (o chi scrive il percorso caldo) non la incontra.
+📌 **Cura naturale, e non e' su `_have_judge`**: la cautela vada **nella
+docstring di `local_ce_available()`**, dove la legge ogni chiamante presente e
+futuro. *E' una riga di prosa nel posto giusto invece di tre nei posti sbagliati.* Il commento accanto elenca le vie —
 «*an llm was injected, the backend is explicitly 'local', OR no llm but the
 multilingual local CE is on disk*» — e **il daemon non e' nell'elenco**.
 ⇒ E' la stessa classe che ho pagato oggi sul mio `come_fonte`: *un elenco che
