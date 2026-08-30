@@ -12835,6 +12835,53 @@ lettura**: nessun `rm`, `floor.json` invariato (mtime 20:32) **controllato prima
 misura**. 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-margine-del-pavimento.py` (~5s).
 *(doc `53`, commit `e24f90a1`)*
 
+**51ª `54` (banco) — chiudo il limite del `51`: i fatti si ritrovano al 100%, è il TOPIC che non li
+apre. E la memoria non ha un tetto di lunghezza, ha un PAVIMENTO a cinque parole.**
+Il `51` lasciava scritto: *«la misura che manca: la stessa cosa con query costruite dal CONTENUTO
+invece che dal topic»*. Era il debito più pesante, perché senza si leggeva come «i miei fatti non si
+ritrovano». **Non è vero.** Stessi 66 fatti vivi, `k=10`, **zero corse degradate su 198**, cambia
+solo come si costruisce la domanda: **topic in parole 8/66 = 12,1% · frammento di 7 parole 66/66 =
+100% · proposizione intera 63/66 = 95,5%.** ⇒ **non una memoria che perde i fatti, una CHIAVE che
+non li apre.**
+🪞 **Poi ho sbagliato ipotesi, e lo scrivo perché è il banco ad avermi fermato**: `B` batteva `C`, e
+ne ho dedotto *«esiste un TETTO di lunghezza oltre cui il recall peggiora»* — plausibile, esiste
+persino `rerank: skipped_long_query`. **Curva misurata** (22 fatti, cambia solo la lunghezza):
+
+| parole | trovati | **al primo posto** | punteggio |
+|---|---|---|---|
+| 3 | **6/22 = 27%** | 2/22 | 0,8409 |
+| 5 | 21/22 = 95% | 7/22 | 0,8503 |
+| 7 | **22/22 = 100%** | 15/22 | 0,8668 |
+| 10 | 22/22 = 100% | 20/22 | 0,8919 |
+| 15 | 21/22 = 95% | 20/22 | 0,9248 |
+| intera | 21/22 = 95% | **21/22** | 0,9507 |
+
+❌ **Nessun ginocchio: ipotesi falsificata.** Da 7 parole in su resta fra 95% e 100%, e **il rango
+migliora in modo monotono fino alla frase intera** (2 → 7 → 15 → 20 → 20 → **21 primi posti**).
+**La differenza che mi aveva incuriosito erano TRE fatti su 66; sulla curva UN caso su 22.** La
+lezione *«una proporzione senza intervallo invita a spiegare il rumore»* ce l'avevo scritta in
+memoria — **e stavo per spiegarlo lo stesso.**
+🔑 **IL DATO VERO È UN PAVIMENTO, NON UN TETTO**: `3 parole → 27% · 5 → 95% · 7 → 100%` ⇒ **68 punti
+fra tre e cinque parole**, un salto che nessun intervallo su 22 casi assorbe.
+🎯 **E QUI SI SPIEGA IL 12,1% DEL `51`**: i nomi dei topic sono **corti** —
+`pavimento-persistito`, `cura-avviso-verificata` — **2-4 parole sciolti i trattini** ⇒ **interrogare
+per topic È interrogare sotto il pavimento.** Non un mistero del corpus né una colpa della
+supersessione: **è il regime «3 parole».** **Due misure che si spiegano a vicenda, e nessuna delle
+due da sola lo diceva.**
+⚠️ **RICADUTA SU `O1` (memoria-first), per tutti**: cercando con 2-3 parole si trova il 27%.
+*«La memoria non è muta, è poco interrogata»* — **adesso c'è il meccanismo: non solo poco, ma
+CORTO.** ⇒ **chiedere con una FRASE, non con un'etichetta**; le parole in più **non fanno danno**
+(punteggio e rango migliorano fino alla frase intera). **Il `topic` resta ottimo per FILTRARE**
+(`count(topic=…)`, `topic_prefix`) **e pessimo come TESTO di ricerca**: due usi diversi.
+📌 **LIMITI**: 22 fatti nella curva, 66 nel confronto ⇒ **regge il salto da 68 punti, NON differenze
+di pochi punti** · **la riga «30 parole» aveva n=3 e l'ho TOLTA dalla tabella** invece di riportarla
+accanto alle altre · i fatti sono **i miei**, prosa densa di numeri e nomi propri · `k=10` ·
+⚠️ **non ho misurato query RIFORMULATE** — parole *diverse* da quelle del fatto, che è il caso
+dell'utente vero: **il frammento usa le parole del fatto, è un caso favorevole e lo dichiaro invece
+di spacciarlo per il caso generale.** 🔎 **rifallo con**:
+`python docs/stato-reale/banchi/ws6-curva-lunghezza-query.py <elenco-id>`.
+*(doc `54`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
