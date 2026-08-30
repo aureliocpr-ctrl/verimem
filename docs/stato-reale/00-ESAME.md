@@ -13249,3 +13249,53 @@ search  (default)        113/114          103/114 (90%)     18/18
 Non ho misurato **`ask`** (router d'intento: classifica la domanda e può fare scan/conteggio invece di top-k) né `search_documents`: **due porte su quattro restano non misurate**, e lo dico invece di generalizzare.
 n(B) = 18 per le sonde: ma qui il dato è **18/18 contro 1/18**, un divario che nessun intervallo a questo n può riassorbire.
 Vale in **inglese**, con `k=5`, su questo corpus da 401 frasi, con `ENGRAM_MIN_RELEVANCE` non impostata — **impostandola, per contratto, `search` adotterebbe il floor**.
+
+---
+
+## ws1 · 31/08 01:57 — LE TRE PORTE, E UN ROUTER CHE SCAMBIA «QUANTE PERSONE SONO MORTE» CON «QUANTI FATTI PARLANO DI…»
+
+**Livello**: le porte pubbliche di `Memory`. **Perimetro**: 114 domande + 18 sonde, corpus 401 frasi di terzi, inglese; **`verimem.__version__` = 0.7.6**, cwd = scratchpad, `ENGRAM_MIN_RELEVANCE` non impostata. **Istante**: 31/08 01:50–01:56. **Regime**: `ok` in testa, dopo l'ingestione e in coda.
+
+Paga il limite dichiarato alle 01:46 («due porte su quattro non misurate»). **`ask` è misurabile**: il router è **lessicale** (`classify_query_intent`, EN+IT), **non serve alcun `llm`** — O4 non è un ostacolo.
+
+### 📜 DAL CODICE, LETTO PRIMA DI ESEGUIRE
+`client.py:1774` — `return {"intent": FIND, "results": self.search(query, k=k)}` ⇒ **il ramo `find` di `ask` delega a `search`**, che col default non applica alcun floor.
+
+### 🔴 LE TRE PORTE, STESSA POPOLAZIONE
+
+```
+porta                domande servite   con la risposta   SONDE SERVITE
+explain (dossier)         79/114           56/114 (49%)      1/18
+search  (default)        113/114          103/114 (90%)     18/18
+ask     (router)         108/114           98/114 (86%)     18/18
+```
+
+**Anche `ask` non astiene mai**: 18 sonde su 18 ricevono qualcosa, e **tutte e 18 sono classificate `find`** ⇒ vanno a `search`. **La misura conferma il codice.**
+
+> **Su tre porte pubbliche misurate, l'astensione esiste su UNA.**
+
+### 🔴 E IL ROUTER SBAGLIA STRADA SU 5 DOMANDE SU 114
+
+Intenti classificati: **109 `find` + 5 `count`** sulle domande; **18 `find`** su tutte le sonde. E la differenza fra `ask` (98 con la risposta) e `search` (103) è **esattamente 5**: le cinque instradate a `count` **non ricevono la risposta**, perché quel ramo restituisce un conteggio, non `results`.
+
+Quali sono:
+
+```
+«…fires that killed HOW MANY people?»                          risposta attesa: 16
+«HOW MANY spectators does the stadium … hold?»                 risposta attesa: 6,900
+«HOW MANY academic departments does this institution …?»       risposta attesa: 16
+«…a borough with a population of HOW MUCH?»                    risposta attesa: 8,711
+«HOW MANY awards did the … animator … receive?»                risposta attesa: over 80
+```
+
+**Sono tutte domande fattuali la cui risposta è un numero** — non domande di conteggio sul corpus.
+
+> **Il router scambia «quante persone sono morte» con «quanti fatti parlano di…»: confonde una domanda sul MONDO con una domanda sulla MEMORIA.** Su questo banco succede **5 volte su 114 (4,4%, ±~4 punti)**.
+
+Il prodotto **conosce già** la fragilità del ramo `count` — il commento a `client.py:1623-1640` è esplicito: *«uno zero su una domanda di conteggio è la risposta peggiore possibile»*, e la cura (`per_term`) mostra quale termine ha azzerato. **Ma quella cura è a valle.** Qui il difetto è **a monte**: la domanda non doveva entrare in quel ramo.
+
+### Cosa questi dati NON provano
+`search_documents` resta **non misurata**: **una porta su quattro**.
+Il 4,4% è misurato su **domande HaluEval in inglese**, che sono multi-hop e spesso numeriche: su un'altra popolazione di domande la quota di falsi `count` sarebbe diversa.
+Non ho verificato **cosa** restituiscono quelle 5 nel ramo `count` (il numero, `per_term`, o uno zero): ho misurato che **non contengono la risposta attesa**, non che siano vuote.
+Vale con `ENGRAM_MIN_RELEVANCE` non impostata: impostandola, per contratto, `search` — e quindi `ask` — adotterebbe il floor.
