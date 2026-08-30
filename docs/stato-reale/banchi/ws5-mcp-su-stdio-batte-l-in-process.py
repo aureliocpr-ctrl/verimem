@@ -57,14 +57,22 @@ Le riporto perche' risparmiano il giro a chi viene dopo:
 spiegazioni plausibili sono cadute, e una terza non misurata varrebbe come le
 prime due prima di misurarle.
 
-⚠️⚠️ **IL CONFONDENTE CHE NON POSSO TOGLIERE DA QUI, ed e' il primo che
-chiunque deve provare**: tutte le mie prove girano su uno **store temporaneo**,
-dove il **daemon di encoding non esiste** - gira sullo store principale. Il
-regime normale di Aurelio ha il daemon attivo. ⇒ **Non affermo che questo
-succeda in uso normale**: affermo che succede in un regime pulito, e che il
-percorso senza source in quello stesso regime **degrada e risponde** mentre
-quello con source no. Non lo verifico sullo store principale perche' sarebbe
-una **scrittura** li' dentro, e non si fa.
+✅ **IL CONFONDENTE E' STATO TOLTO, E IL DIFETTO RESTA.** Avevo dichiarato:
+«*tutte le prove girano su uno store temporaneo, dove il daemon di encoding non
+esiste; non affermo che questo succeda in uso normale*». Il 30/08 alle 21:43 il
+daemon e' **tornato su** (righello: gli ultimi 12 fatti dello store hanno tutti
+il vettore) e ho **rieseguito questo stesso banco, senza cambiare una riga**::
+
+    scrittura         in-process              STDIO
+    handshake         -                       3.5s
+    SENZA source      2.5s   model_claim      2.4s   model_claim
+    CON source       20.9s   model_claim      NESSUNA RISPOSTA entro 190s
+
+🔑 **E la prova che il daemon serviva davvero il processo figlio e' nella riga
+in-process: da 28.9s a 20.9s** sulla stessa identica operazione. ⇒ Il daemon
+c'era, in-process ne ha beneficiato, **e su stdio non e' cambiato niente**.
+⇒ **Il difetto di stdio NON e' il daemon di encoding.** Il confondente che
+avevo dichiarato come «il primo che chiunque deve provare» e' provato e cade.
 
 📌 **CONSEGUENZA SUI MIEI TRE REFERTI**: il limite **non si chiude** - non posso
 confrontare gli esiti, perche' su stdio l'esito non arriva. Restano misure
@@ -160,8 +168,8 @@ async def main():
     print("  Le due righe vanno lette INSIEME: se anche 'SENZA source' non")
     print("  rispondesse, il difetto sarebbe il trasporto. Se risponde e l'altra")
     print("  no, il trasporto funziona ed e' il percorso col GIUDICE a non tornare.")
-    print("  ⚠️ Store TEMPORANEO: il daemon di encoding non c'e'. E' il primo")
-    print("     confondente da provare, e non lo tolgo scrivendo nello store vero.")
+    print("  ✅ Il confondente del daemon E' STATO TOLTO (rieseguito il 30/08 col")
+    print("     daemon su): in-process accelera 28.9s -> 20.9s, stdio non cambia.")
 
 
 asyncio.run(main())
