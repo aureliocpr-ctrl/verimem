@@ -40,10 +40,15 @@
   riformulazione senza trigger passa (banco D `ef234ae0`, resta per la cura
   grande); la polisemia perdona ciò che non deve (W7-61); l'etichetta
   `writer_role='user'` scritta da `verimem save` sulle parole dell'AGENTE
-  spegne L1 sul 59,5% del corpus (b13a9f32 — design, specifica). Il
-  classificatore del carve-out legge 0/8 verbali come third-party: il
-  percorso ON non si attiva mai (W7-60 — è il primo bersaglio della cura
-  grande in corso).
+  spegne L1 sul 59,5% del corpus totale (b13a9f32) — 65,1% sui fatti VIVI
+  (8822/13561, W7-69): due denominatori, entrambi dichiarati. Il
+  carve-out non si attivava sui verbali scritti con `e'` invece di `è`:
+  `_VERB_MARK` non riconosceva la forma ASCII, il soggetto risultava «non
+  risolvibile» e il classificatore falliva prima di guardare il dominio
+  (W7-72, che corregge W7-60). Curato in `51eb3022` con doppia firma: 132
+  fatti passano a DOMAIN, 0 lo perdono, 0 in prima persona; alla porta
+  l'esito cambia in 1 caso su 24 (W7-74) — cura piccola, effetto misurato
+  minimo.
 - **Il claim centrale (C2) regge solo in parte**: sulla tabella 8 classi ×
   2 lingue le difese scendono a 4/16 quando le celle verdi vengono ALLARGATE
   (firma ws7 su a252adac). Va rimisurato su HEAD con le due cure dentro
@@ -54,7 +59,9 @@
   (0 valori intermedi su 18 a supporto eroso; 91,8% dei verdetti agli
   estremi, W2-131); dà ~100 a scambi di soggetto in campo vicino (curva
   f466e983: eco 81,4 / solo-soggetto 0,2 / campo-lontano 14,7) e la banda
-  40–80 si riempie di rumore posizionale, non di incertezza (79 casi, W7-…);
+  40–80 si riempie di rumore posizionale, non di incertezza (misura di ws4
+  nel canale, msg b60e4a22 — cella non ancora scritta, e il numero va letto
+  lì);
   il ramo review quando è percorso costa 141× e fallisce muto (W7-56).
   Sotto i 21 caratteri dà 100 a un claim E al suo contrario (ws5, 30/08).
 - **Il disaccordo interno non è consegnato**: `withheld_despite_judge` esiste,
@@ -102,7 +109,7 @@
    simmetrica finché la cura grande non pareggia.
 4. **Etichetta `writer_role='user'` da `verimem save`** — le parole
    dell'agente marcate come parole dell'utente spengono L1 sul 59,5% del
-   corpus: design di provenienza da decidere nella specifica (non urgente,
+   corpus totale (65,1% dei fatti vivi, W7-69): design di provenienza da decidere nella specifica (non urgente,
    dichiarato).
 5. **Namespace `verimem_*`** — il flip del default cura 1 superficie su 3
    (voto ws7): le altre due a registro; incoerenza di marca visibile
