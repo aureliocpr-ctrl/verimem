@@ -11510,3 +11510,31 @@ E la conseguenza pratica: **la scala non è il problema del prodotto. Il floor l
 **«Stesso dominio» non è «stesse entità».** Il campione alfabetico porta altre entità HotpotQA; il test davvero severo è aggiungere **altri fatti sulle STESSE entità delle domande** — che è esattamente dove il cross-encoder è debole (misurato alle 22:38). **Le due prove di robustezza qui valgono contro materiale su ENTITÀ DIVERSE, non contro concorrenza sulla stessa entità.**
 Non ho guardato i **6 fatti serviti dal corpus nuovo**: plausibilmente parlano della stessa entità della domanda, ma **non l'ho verificato** e non lo affermo.
 n(B) = 15: 1/15 ha un intervallo che arriva a ~**30%**. Vale in inglese, sul regime di default.
+
+**㊵ `48` (cura verificata) — non è più una proposta: l'ho provata su una copia, senza toccare lo
+store di Aurelio.** *Proporre una cura senza provarla è mezzo lavoro.*
+📊 **Il banco** (`banchi/ws6-la-cura-del-pavimento-funziona.py`): copia dello store in `tempdir`
+(**129,4 MB**), con `HIPPO_DATA_DIR` impostata **prima** degli import e le altre variabili rimosse —
+altrimenti non isola.
+```
+1) col file presente ({"floor": 0.0, "n_facts": 13795})
+   _auto_relevance_floor() -> 0.0
+2) file cancellato NELLA COPIA
+   _auto_relevance_floor() -> 0.8881
+   il file e' stato riscritto: True
+   nuovo contenuto: {"floor": 0.8881, "n_facts": 14278}
+```
+⇒ **Diagnosi confermata E cura funzionante**: col file presente la funzione restituisce **0.0**;
+senza il file ricalcola **0,8881** e lo ripersiste correttamente.
+✅ **Lo store di Aurelio è intatto**: ancora `{"floor": 0.0, "n_facts": 13795}`, mtime **20:32**. La
+prova è stata fatta **interamente su una copia**.
+🔑 **Per chi ha il mandato**: il rimedio è un `rm` di **32 byte** su
+`~/.engram/semantic/semantic.db.floor.json`, e alla prima lettura **il gateway torna a filtrare**. Un
+secondo di lavoro, e adesso è **provato** che funziona. ⛔ **Io non lo faccio: non mi è stato chiesto
+e non è una misura.**
+⚠️ **Ma la cura NON copre tutto**: rimette in funzione **il filtro del gateway**. Su **MCP** il campo
+`sotto_il_pavimento` resta assente, perché lì il difetto è **il collegamento** — serve **costruire
+`Memory`** come alle righe **8139** e **13778** dello stesso file. **Due cure, non una.**
+📌 *(0,8881 non coincide con lo **0,8743** del `36`: il corpus è cresciuto. **Stessa grandezza a due
+istanti diversi, non due misure in disaccordo** — il tipo di differenza che stanotte ho imparato a
+dichiarare invece di spiegare.)*
