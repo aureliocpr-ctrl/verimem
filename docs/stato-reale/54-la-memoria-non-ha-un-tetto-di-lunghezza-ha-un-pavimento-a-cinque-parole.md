@@ -23,6 +23,14 @@ domanda**:
 ⇒ **Il `51` non aveva trovato una memoria che perde i fatti: aveva trovato una
 CHIAVE che non li apre.** Chiedendo il contenuto tornano tutti.
 
+> ⚠️ **Qualificato un'ora dopo, dal [55](55-non-e-la-forma-della-domanda-e-il-vocabolario.md).** «Chiedendo il contenuto tornano tutti» vale
+> **per chi conosce il vocabolario del dominio**. Con domande che dicono la
+> stessa cosa **con altre parole** (sinonimi: «liti» per contraddizioni,
+> «ricordi» per fatti) il ritrovamento scende a **5/24 = 20,8%**; con le parole
+> giuste ma la frase riformulata resta **91,7%**. **Le condizioni sono due e
+> indipendenti — abbastanza parole (questo documento) E le parole giuste (il
+> `55`)** — e qui avevo verificato solo la prima.
+
 ## ② L'ipotesi che mi sono fatto era sbagliata, e il banco l'ha detto
 
 **B (100%) faceva meglio di C (95,5%)**, cioè il frammento batteva la frase
