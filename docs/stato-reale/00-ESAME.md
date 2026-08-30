@@ -10251,3 +10251,50 @@ La separazione resta netta — **+0,59 (parafrasi) contro +3,4 (traduzione)**, l
 Non ho ancora una coppia **same-language non inglese** (domanda IT + passaggio IT): sarebbe la prova diretta che il mismatch è la causa, e **non esiste un corpus italiano fra i dati di terzi** — porte contate: `external/` (HaluEval, SQuAD v2, TruthfulQA), `external/.cache/` (TruthfulQA.csv, MuSiQue, MSC, QuALITY, qa_data), cache HuggingFace (SWE-bench-lite, snli, squad_v2), LongMemEval. **Tutti inglesi.** La prova qui è **indiretta ma su quattro lingue**: l'unica cosa che le accomuna è il mismatch col passaggio inglese.
 **Non torna** e non lo spiego: il tedesco deriva meno del francese (+1,162 contro +1,854), e italiano e spagnolo sono i più alti. Non ho verificato alcuna ragione, e non ne invento una.
 Non è un tasso: 6 entità scelte perché già note come difficili. Non dice nulla sul banco ufficiale, che gira sul **bi-encoder**.
+
+**㉚ `43` — le contraddizioni ad alto jaccard sono LOG a istanti diversi, e il pezzo si ridimensiona da
+solo.** Chiude il limite lasciato aperto dal `42`: le coppie in cui i due fatti parlano *davvero*
+della stessa cosa non sono errori nascosti, sono righe di log.
+📊 **Istante 22:06:46** (rimisurando pochi minuti dopo escono 2.919 e 2.774: **il corpus cresce
+mentre lo si legge**): coppie irrisolte con **jaccard ≥0,50** = **3.021**, di cui **190 con topic
+`test/`**, **389 fatti distinti**. 🪞 Nel `42` avevo stimato «~137»: era **il conteggio nel campione**
+dei primi 4.000 per `id`, **non rappresentativo**.
+📊 **Sulle 2.774 non-test — la misura che ha funzionato non chiede *che cosa* cambia, ma *quanto*:**
+
+| token di differenza | coppie | cumulato |
+|---|---|---|
+| 2 | 261 | 9,4% |
+| 3 | 808 | 38,5% |
+| **4** | **1.544** | **94,2%** |
+
+E quei token sono: `ts=1779017247.725` contro `ts=1779017247.677` · `write 9` contro `write 49` ·
+`@23:46:35 stopped` contro `@23:39:18 starting…`. **Timestamp, contatori, orari.** Frase tipo:
+*«Lab stress test worker 1 write 9 ts=1779017247.725»*.
+🔑 **IL PATTERN**: **il rilevatore confonde «stessa frase, oggetto diverso» con «stessa frase, valore
+contraddittorio»**. Cambia un **identificatore**: il file (`critic_live2`/`critic_live`; `_g5.py` e
+`_g3.py` **con lo stesso identico esito `3 passed EXIT 0`**), il run CI (`3235…`/`3228…`), lo slot
+(`lay1`/`lay2`), la condizione di un A/B, la lingua EN/IT.
+⚖️ **E IL PEZZO SI RIDIMENSIONA DA SOLO — misura fatta prima di consegnarlo**, invece di lasciarla
+come «limite dichiarato»: su **93.241** irrisolte, topic `test/` **191 = 0,2%**, con **timestamp**
+nella frase **2.623 = 2,8%** ⇒ **togliendo entrambi resterebbero 90.427 = 97,0%**. **La cura
+economica non risolve: i log sono il 3% del problema.** ⇒ **la cura che conta resta quella del `42`**
+(legare numero e grandezza, come `L4.2` fa già in scrittura) — **non c'è scorciatoia di pulizia che
+eviti di sistemare il criterio del rilevatore.**
+🪞 **Ottavo difetto della serata**: avevo provato a classificare cercando **coppie di opposti
+lessicali** (acceso/spento, EN/IT, con/senza). Ne ha riconosciute **8 su 2.919**. *Un criterio
+sintattico su un fenomeno semantico sbaglia in entrambe le direzioni* — lezione nostra, ri-pagata.
+🎯 **L'unico candidato che sembra un conflitto VERO**, riportato e **non toccato** (correggere la
+memoria non è una scrittura che mi è stata chiesta): `project/verimem/i-miei-verdi-reggono-senza-le-env`
+— *«…fermati 4 su 4 con env nostre attive **0**»* contro *«…attive **7**»*, **stessa identica frase**.
+Secondo, più debole: `autocorrezione-notte-29-08` («33 celle, **20** toccate» contro «**19** toccate e
+3 ritirate»; il secondo era già `quarantined`, il sistema aveva dubitato da solo).
+📌 **Reperto di sistema**: nello store di **produzione** ci sono **fatti di test e righe di log** —
+`test/cap20/system/cap20-test` con proposizioni che sono letteralmente `cap20 0`, `cap20 18`; gli
+stress test; e le coppie a **73 token** di distanza sono `TEST 6 proposition lunga ASCII` contro
+`TEST 5 … caratteri speciali`, **con il topic VUOTO**, quindi invisibili anche a chi filtra `test/`.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-le-contraddizioni-sono-log.py
+```
