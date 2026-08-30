@@ -11239,3 +11239,40 @@ gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=completed&per_pa
 gh api "repos/:owner/:repo/actions/runs/<id>/jobs?per_page=100" \
   --jq '[.jobs[]|select(.name|startswith("test"))|.conclusion]|group_by(.)|map({(.[0]):length})'
 ```
+
+**㊲ `48` (rettifica) + `47` (arricchito) — su MCP la causa è un'altra, e la classe ha TRE forme.**
+🪞 **Terza rettifica pubblica della notte. Segnalata da ws3, verificata da me:**
+
+    verimem.agent.VerimemAgent     ha _auto_relevance_floor: False
+    verimem.memory.EpisodicMemory  ha _auto_relevance_floor: False
+    verimem.client.Memory          ha _auto_relevance_floor: True
+
+Il blocco di `mcp_server.py` cerca il metodo su `(agent, agent.memory)`: **nessuno dei due ce l'ha**,
+`mem` resta `None`, **il blocco non entra mai** ⇒ **`sotto_il_pavimento` non è MAI stato emesso su
+MCP**, da sempre e **indipendentemente dal valore del pavimento**.
+❌ **Cosa ho sbagliato**: avevo trovato un difetto vero (il file `floor: 0.0`) e **l'ho usato per
+spiegarne un altro** (il campo assente) **senza verificare il collegamento fra i due**. Il reperto —
+il README promette un campo che non arriva — **resta vero**; **la causa è un difetto di collegamento,
+non un valore di cache.**
+✅ **Cosa regge, e va tenuto distinto**: il **gateway** passa davvero da `Memory` (`gateway.py:377`,
+`mem = Memory(db, …)`) ⇒ **lì il file conta**: default `"auto"` → `client.py:1112` →
+`_auto_relevance_floor()` → **0.0** → `client.py:1200` `if min_relevance and …` è **falsy** ⇒ **non
+filtra**, dove il README dice *«not served at all»* e il docstring *«the enterprise API abstain by
+default is the point of a TRUST product»*.
+> 🔑 **UNA PROMESSA, DUE DIFETTI INDIPENDENTI.** Cancellare il file rimette in funzione **il filtro
+> del gateway** e **su MCP non cambia niente**: servono **due cure**, e chi ne trova una rischia di
+> credere di aver capito anche l'altra. **È esattamente quello che ho fatto io.**
+
+🎯 **E la correzione ha ARRICCHITO la sintesi `47` invece di smentirla — la classe ha tre forme:**
+
+| forma | esempi | cura |
+|---|---|---|
+| **spenta da un default** | pavimento nell'SDK (`36`), `decay_run` (`46`) | una decisione: accendere, o dichiarare perché no |
+| **mai collegata** | `sotto_il_pavimento` su MCP | una riga di codice **e un test che verifichi che l'avviso arrivi** |
+| **disattivata da un valore degenere** | il gateway col `floor: 0.0` scritto durante il guasto (`48`) | **rifiutare di persistire un fallimento come misura** |
+
+**La terza è la più insidiosa perché da fuori è identica alla prima.**
+📌 **Conferma incrociata che regge** (aggiunta al `48`): `consolidate_last.json` delle **20:45**
+contiene `heal_err` col messaggio **esatto** di `embedding.py:283` e **`masters_persisted: 11`** — gli
+stessi **11 MASTER** che il `39` aveva contato nel blocco 20:30:10-20:53:20. **Tre righelli diversi —
+journal, store, file di stato — sulla stessa finestra di ventitré minuti.**
