@@ -51,6 +51,19 @@ lo screen `L1`**. Se quei fatti sono checkpoint di sessione — e per costruzion
 lo sono — la protezione residua che qui ho dichiarato «intatta» dipende da una
 condizione che quella popolazione tipicamente **non** soddisfa.
 
+🔴 SECONDA CORREZIONE, 16:00 — **E LA PRIMA CORREZIONE SBAGLIAVA NELL'ALTRO
+VERSO.** `W7-70`/`W7-71` (*Paragone*) hanno **letto** 24 di quei fatti,
+campionati uno ogni 14: **11 resoconti · 13 misure verificabili · ZERO self-claim
+nudi**. E il controfattuale: **senza l'eccezione la porta ne declasserebbe 21 su
+24**, quasi tutti per `L1.13`.
+⇒ **L'eccezione non e' un buco: e' una COMPENSAZIONE misurata.** Il silenzio cade
+su materiale che il layer **sbaglierebbe** — «completo, chiuso, verificato,
+testato» e' il vocabolario con cui si parla di CI e cicli di lavoro.
+🔑 **La frequenza da sola non dice se il rischio si realizzi: serve il
+CONTROFATTUALE.** Avevo ragionato su cio' che il layer NON fa, senza chiedermi
+cosa succederebbe se lo facesse — cioe' ho preso un numero e ne ho dedotto un
+rischio **senza leggere la popolazione**.
+
 ⇒ **La conclusione di questo banco non era falsa: era incompleta in un modo che
 la faceva sembrare piu' rassicurante di quanto fosse.** I limiti dichiarati sotto
 («4 celle, italiano, porta SDK») non includevano quello che contava: *non misuro
