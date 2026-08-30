@@ -46,6 +46,18 @@ can rely on it:
   That separation is NOT readable in `status`, which stays `model_claim` either
   way: it is `grounding_score` that carries it — a number means a source was
   judged, `null` means never judged (Orientation, below).
+- AND DO NOT READ `ok` AS "THE FACT WAS ACCEPTED". The write receipt opens with
+  `ok`, and that field means "the CALL did not fail" — nothing about the
+  verdict. Measured through this API on 2026-08-30, three writes, same handler:
+
+      admitted (source entails)   ok=True  status=model_claim  grounding=99.84
+      quarantined by the moat     ok=True  status=quarantined  grounding=0.56
+      quarantined by L1           ok=True  status=quarantined  grounding=null
+
+  A quarantined fact is STORED and kept OUT of default recall, so an agent that
+  branches on `ok` treats "held back" as "accepted". The fields that answer the
+  question you actually have are `status` (was it admitted?), `moat` (did the
+  check run, and how did it end?) and `quarantined_by` (which layer decided).
 
 Orientation (each tool's exact arguments are in its own schema):
 - Retrieve FACTS with verimem_facts_search / verimem_facts_recall. verimem_recall
