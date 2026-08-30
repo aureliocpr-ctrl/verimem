@@ -26,10 +26,11 @@
   W2-123) ed è corretto nel merito 17/20 con i casi limite decisi bene
   3/3 (W2-124).
 - **Il comparativo C10 poggia su ground truth esterna umana** (TruthfulQA
-  heldout, etichette non nostre): falsità servita 13,3–18,4% contro il
-  ~50% di un write-through senza gate, al prezzo di 29–34% di veri persi
-  col moat primo decisore (LANT-91/92/93, 2ª firma su n=600; replica su
-  campione disgiunto 16,0%). È l'unica riga di questa sezione il cui
+  heldout, etichette non nostre — definitivo su 600 claim, LANT-109): di
+  ciò che viene servito è falso il **15,9%** (40/252) contro il **50,0%**
+  dello stesso corpus senza gate; falsi ammessi 13,3% IC95 [9,9–17,6],
+  veri persi 29,3% IC95 [24,5–34,7]; replica su campione disgiunto 16,0%,
+  2ª firma su n=600 (LANT-91). È l'unica riga di questa sezione il cui
   metro NON è il giudice del prodotto: per tutte le altre, il tasso lo
   certifica lo strumento descritto difettoso nella sezione 2 — il primo
   lettore esterno l'ha detto senza sconti, e questa riga è la risposta.
@@ -86,6 +87,13 @@
   lì);
   il ramo review quando è percorso costa 141× e fallisce muto (W7-56).
   Sotto i 21 caratteri dà 100 a un claim E al suo contrario (ws5, 30/08).
+  E l'attribuzione «è il moat che butta i veri» era una lettura del solo
+  campo: l'esclusività del moat sui veri persi è **5,7%** (5/88, IC95
+  [2,5–12,6]) — in 68 casi su 73 un layer lessicale aveva GIÀ segnalato
+  (LANT-109), quindi curare i layer tocca quasi tutta la coda, non il 14%.
+  Il livello dell'acqua sul corpus VIVO: ~1 fatto su 5 non ripasserebbe
+  la porta di oggi (18,4% medio su popolazione italiana con fonti-output,
+  W7-89 — stesso ordine del 29,3% del benchmark).
 - **Il disaccordo interno non è consegnato**: `withheld_despite_judge` esiste,
   è derivato e presidiato, ma vive nel journal — 323 write (2,6% delle
   scritture; 21,4% dei GIUDICATI del corpus) dove giudice e layer hanno detto
