@@ -898,8 +898,13 @@ def _record_numerati_diversi(pa: str, pb: str) -> bool:
         return False
     if _numeri_disgiunti(pa, pb, _ATTRIBUTI_NUMERATI):
         return not _stesso_scheletro(pa, pb)
+    # ⚠️ Qui c'era un secondo `return False`, IRRAGGIUNGIBILE: era il default
+    # della funzione prima di `41ff5f34` (20/08), che ha aggiunto il `return
+    # True` qui sopra senza togliere la riga vecchia. Non cambiava niente
+    # eseguendo — ma diceva l'OPPOSTO del vero a chi leggesse la funzione dal
+    # basso, ed e' la stessa classe delle docstring disallineate curate oggi:
+    # la riga vecchia resta ferma dove il comportamento si e' mosso.
     return True
-    return False
 
 
 #: Le parole che aprono una frase senza essere un soggetto («Il», «The», «Nel»).
