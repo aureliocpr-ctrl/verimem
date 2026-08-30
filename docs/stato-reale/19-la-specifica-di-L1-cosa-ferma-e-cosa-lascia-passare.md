@@ -158,9 +158,24 @@ dal perdono che confronta stringhe** — conferma indipendente di `W7-61`, e un 
 strutturale in una lingua flessa che in inglese quasi non si vedrebbe (`shipped` è
 `shipped`).
 
-📌 **Quindi c'è una SEQUENZA, non una scelta**: rendere il perdono **morfologico**, poi
-allargare l'elenco. Fatto in quest'ordine, su questi casi il costo va a zero; fatto
-nell'altro, si paga in falsi allarmi.
+📌 In laboratorio questo dà una **sequenza**: rendere il perdono **morfologico**, poi
+allargare l'elenco.
+
+🔄 **Ma sul CORPUS VERO quella sequenza non regge, e l'ho misurato subito dopo** (`W7-67`,
+5692 fatti con fonte conservata e giudizio ≥80): il costo è **26 su 5639 — lo 0,46%**, tutto
+da **una sola radice** (`esegui`), e i falsi allarmi morfologici sono **0 su 26**. La causa
+vera è un'altra: **26 su 26** hanno una fonte che **non contiene affatto** la parola del
+claim, e **21 su 26** sono **output grezzo** (`passed`, `EXIT=`, SHA).
+
+🔑 ⇒ **Il perdono testuale è cieco per costruzione proprio nel regime che la disciplina
+delle fonti impone**: una fonte che è evidenza grezza sostiene il claim **senza usarne le
+parole**, e nessun confronto testuale potrà mai perdonarla. Alla porta quei 26 fermano
+**12 su 12** nel campione, con grounding **99,8 / 100,0 / 100,0** — falsi allarmi **certi**,
+non potenziali.
+
+📌 **Le due misure insieme**: allargare l'elenco costa poco (0,46%), e **la cura morfologica
+che sembrava obbligatoria comprerebbe quasi niente sul traffico**. Il laboratorio e il
+corpus danno **lo stesso sintomo con due cause diverse** — chi decide guardi il secondo.
 
 ⚠️ E il precedente pesa: quando il 03/08 l'elenco fu allargato alle flessioni, il rischio
 fu misurato come **frequenza** (`l1_completion_detector.py:47-49`, *«nessuna forma supera
