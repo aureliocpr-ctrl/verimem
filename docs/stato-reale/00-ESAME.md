@@ -10449,3 +10449,57 @@ Ristretti i rilevanti agli **stessi 7 item**, la mediana dei rilevanti è **−0
 
 ### Cosa questi dati NON provano
 Non provano il contrario, cioè che il CE ordini bene: 3/7 e 4/7 con n=7 **non distinguono nulla**, in nessuna direzione. Per decidere servirebbe una zona grigia costruita con un criterio che non sia una scelta mia fra frasi molto diverse — per esempio **tutte** le frasi non-risponditrici di ogni item, non una — e un n molto maggiore.
+
+**㉜ `45` — il grounding alto non protegge dai numeri sbagliati: `L4.1` è l'unico che li vede.**
+Ultima area del perimetro non ancora guardata: **chi mette i fatti in quarantena, e se ha ragione.**
+🔑 **O1, e la memoria era vecchia**: l'indice cita *«L1 precisione ~40%, 1728/1855 quarantinati da
+sole keyword»*. Ho letto il **fatto** invece della sintesi (`78b1aecf3ff4`): *«su un campione casuale
+di **11** warning L1, 4 corretti e 7 falsi positivi»*, e con **`grounding_span = None`**. ⇒ **il
+numero che citiamo come consolidato poggia su UNDICI osservazioni, e nessuno lo dice quando lo cita.**
+📊 **La quarantena oggi (istante 22:29:08): 2.614 su 16.467 = 15,9%**
+
+| chi ferma | n | quota | grounding medio | di cui ≥90 |
+|---|---|---|---|---|
+| *(nullo)* | 1.909 | 73,0% | 17,2 | 15 |
+| `moat` | 476 | 18,2% | **6,3** | 0 |
+| **`L4.1`** | **118** | 4,5% | **96,8** | **109** |
+| `gate` | 55 | 2,1% | **98,8** | **54** |
+| `L4-review` | 37 | 1,4% | 60,0 | 0 |
+| **`L1`** | **2** | **0,1%** | 99,9 | 2 |
+
+⇒ **`L1` oggi ferma DUE fatti su 2.614**: il regime descritto in memoria **è finito**, al suo posto
+lavorano il `moat` e i layer `L4.x`. La lezione non era falsa — **è di un'altra era, e va letta come
+storia.**
+🔑 **Il 73% muto è quasi tutto eredità, ma non del tutto**: il campo `quarantined_by` **è nato ad
+agosto** (con: **705, tutti di agosto**; senza: maggio **1.579**, giugno 47, luglio 76, **agosto
+207**) ⇒ **anche ora, 207 su 912 (22,7%) non dichiarano chi li ha fermati**: **stessa forma del
+difetto del `38` — il prodotto sa e non lo scrive.**
+🎯 **IL CASO CHE CONTA — 173 fatti fermati mentre il giudice li dichiarava fondati al 90-99%.** Non
+si decide a tavolino: ho letto quattro casi con **claim e source affiancati**.
+· `ws4-soglia-di-sopravvivenza` (99,99): claim «durata media **23,5** min»; la source ha **6.1** e
+**3.4** ⇒ **il numero non esiste: L4.1 ha ragione, e il grounding non se n'era accorto**
+· `a1-costo-ricevuta` (99,98): claim `0.776`/`90.59`, source `0.7760113…`/`90.59536…` ⇒ **ha fermato
+un arrotondamento**: severo, ma **è la nostra regola O3 applicata** («i numeri come stanno nella
+source»)
+· `approvati-trattenuti-w34-67` (99,99): **67** e **17** ci sono, ma il claim li chiama «quarantinati
+con grounding sopra 80» e la source «APPROVATI-ma-trattenuti» ⇒ **grandezza descritta diversamente,
+ambiguo, lo dichiaro tale**
+· `teclast/pacchetto-consegnato`: non giudicabile (elenchi troncati)
+⇒ **Nessun falso positivo grossolano.**
+🔑 **LA TESI**: **grounding e L4.1 non misurano la stessa cosa.** Il grounding chiede *«la source
+sostiene il senso?»*, L4.1 chiede *«i numeri sono proprio QUELLI?»*. **Un fatto può essere sensato e
+avere un numero sbagliato**: lì il primo dice 99,99 e solo il secondo lo ferma. Con 118 fatti a
+grounding medio 96,8, **L4.1 intercetta gli errori numerici dentro claim che sembrano fondati — i più
+pericolosi, perché nessun'altra difesa li vedrebbe.**
+✅ **Verificato su me stesso stanotte, senza volerlo**: L4.1 mi ha respinto un claim per **un'ora che
+la source non aveva** e uno con *«278 qui è "vettori", nella fonte "do"»*. **Aveva ragione entrambe le
+volte.** Legando numero e grandezza nella source, **28 fatti su 28 sono passati** (grounding
+99,37-99,98).
+⚠️ **Non misurato**: quale controllo abbia fermato i **207 di agosto senza autore** — richiede il
+percorso di scrittura, non lo store.
+
+**rifallo con:**
+
+```bash
+python docs/stato-reale/banchi/ws6-la-quarantena-oggi.py   # stampa claim e source affiancati, NON decide
+```
