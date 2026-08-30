@@ -113,6 +113,40 @@ nell'output di un mio `git grep` di due ore prima**, in questa stessa indagine.
 Le avevo sotto gli occhi e non le ho collegate — ho letto la riga che cercavo e
 non quelle accanto.
 
+### E anche questa cura è verificata
+
+Stessa disciplina della prima: provata **su una copia**, chiamando
+`_avvisi_di_lettura` due volte — una con un agente come quello che la porta
+passa oggi, una con un agente che espone il metodo (cioè che ha costruito un
+`Memory`, come le righe 8139 e 13778):
+
+```
+pavimento nella copia: 0.8881
+
+OGGI    chiavi del payload: ['trattenuti']
+        sotto_il_pavimento ASSENTE
+
+CURATO  chiavi del payload: ['sotto_il_pavimento', 'trattenuti']
+        sotto_il_pavimento = {'pavimento': 0.8881, 'score_migliore': 0.844,
+          'nota': "nessun risultato supera la soglia di rilevanza calibrata su
+          questo corpus: probabilmente la risposta NON e' in memoria.
+          I risultati sono qui sotto, non tagliati — decidi tu."}
+```
+
+**Con l'oggetto giusto il campo compare**, e contiene esattamente ciò che il
+README promette — *floor, best score, and what it means* — con una nota che dice
+all'agente la cosa utile: *probabilmente la risposta non è in memoria, e i
+risultati non sono stati tagliati*.
+
+**Un incastro che vale da solo**: `score_migliore: 0.844` è **lo stesso
+punteggio** che avevo ottenuto due ore prima interrogando la porta MCP vera con
+la query su Saturno. La prova alla porta e la prova sul banco si chiudono l'una
+sull'altra.
+
+> **Entrambe le cure sono provate**: cancellare il file rimette in funzione il
+> filtro del gateway; costruire l'oggetto giusto fa comparire l'avviso su MCP.
+> Sono indipendenti, e servono tutte e due.
+
 ## Perché non compare (la parte che vale per il gateway)
 
 Il codice che lo emette è in `verimem/mcp_server.py:326-334`:
