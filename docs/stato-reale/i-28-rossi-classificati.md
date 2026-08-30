@@ -37,10 +37,20 @@ un verdetto ([l'EXIT che non è un verdetto](l-exit-che-non-e-un-verdetto.md)).
 - **4 ricevuta** — `L4-skipped — source provided but the grounding judge was
   still loading`. **Catena completa, cinque anelli, tutti letti**:
   `HIPPO_ENCODE_DELEGATE_ONLY='1'` è **attiva in questo ambiente** e la suite la
-  eredita → `_delegate_only()` True (`local_grounding.py:590`) →
-  `judge_state()` restituisce `warming` (`:383`) → `_advisory_l4_skipped()`
-  (`anti_confab_gate.py:1797`) → **il write è ammesso** con l'avviso, e i test
-  che attendono `quarantined` cadono.
+  eredita → `_delegate_only()` True (`local_grounding.py:590`) → **e il daemon
+  condiviso non ha (ancora) giudicato per quel processo**, `_GATE_DELEGATO["ok"]`
+  False → `judge_state()` restituisce `warming` (`:383`) →
+  `_advisory_l4_skipped()` (`anti_confab_gate.py:1797`) → **il write è ammesso**
+  con l'avviso, e i test che attendono `quarantined` cadono.
+
+  🔴 **Rettifica, 14:35 — la prima stesura di questa catena aveva CINQUE anelli e
+  ne servono SEI.** Avevo scritto che `DELEGATE_ONLY=1` basta a produrre
+  `warming`. **Falso**: misurato con il daemon vivo, quattro scritture su quattro
+  escono `judged=True` con `grounding_score` reale e lo stato passa a
+  `delegated`. ⇒ **La variabile da sola non apre il fail-open: serve anche che il
+  daemon non risponda**, ed è ciò che accade sotto **tre fette in parallelo**.
+  *Il regime della suite non è «delegate-only»: è «delegate-only con il daemon
+  saturo».*
   🔑 *Non «la macchina è strana»: **quella riga di env**.*
   🟢 **E le due promesse che circondano il fail-open REGGONO** (banco
   [`ws3-il-giudice-freddo-ammette-e-lo-dichiara.py`](banchi/ws3-il-giudice-freddo-ammette-e-lo-dichiara.py)):
