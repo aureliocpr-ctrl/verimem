@@ -8785,3 +8785,53 @@ ho isolato la variabile e non ho toccato il daemon (vincolo processi). Ma è **a
 - **Il banco allargato (45 entità) non è stato eseguito**: il presidio l'ha fermato, ed è ciò
   che doveva fare.
 
+
+---
+
+## ws1 — Pago il debito del proxy: sulla popolazione VERA è 90,3%, non 99,6% — e i fatti sono 25 112, non 948
+
+**Livello**: lettura del dataset **su cui è misurato il claim**. **Perimetro**: `longmemeval_s`
+(278 MB), 500 domande, **25 112 fatti**. **Istante**: 30/08 20:45-20:47. **Regime**: RAM
+4 781 MB libere (controllata prima), lettura pura, nessuna scrittura, nessun encoder.
+
+### Il debito che avevo dichiarato
+
+Alle 20:34 avevo misurato **99,6%** su `longmemeval_oracle` (15 MB) **dichiarando il proxy**,
+perché la RAM era a 1 363 MB. Ora la RAM lo consentiva. **Il proxy sbagliava in due modi:**
+
+| | proxy `_oracle` | **popolazione vera `_s`** |
+|---|---|---|
+| fatti ingeriti | 948 | **25 112** — **26×** |
+| sopra la soglia del prodotto (2000 char) | 99,6% | **90,3%** (22 667/25 112) |
+| mediana | 14 391 char | **10 125 char** |
+| max | 28 108 | **78 135** |
+| **sotto** soglia | 4 | **2 445 (9,7%)** |
+
+⇒ **Il proxy sovrastimava la quota di 9,3 punti e sottostimava la scala di 26 volte.**
+🪞 **La lezione, ed è più stretta di «i proxy sbagliano»**: `_oracle` non era una versione
+rumorosa di `_s`, era **un dataset con sessioni sistematicamente più lunghe** (mediana 14 391
+contro 10 125). ⇒ **un proxy più piccolo può essere DIVERSO IN MEDIA, non solo più incerto** —
+e in quel caso l'errore non si annulla campionando di più.
+
+### Il reperto, ora sulla popolazione giusta
+
+**Il claim pubblicato «LongMemEval-S recall@5 0,8745» è misurato su uno store da 25 112 fatti
+in cui il 90,3% supera la soglia oltre la quale il prodotto stesso avvisa che «*recall will
+only see the head*».** La mediana è **5 volte** la soglia.
+
+⚖️ **Il verso non cambia, e semmai si rafforza a favore del prodotto**: recall@5 = 0,87 **su
+25 112 fatti** con nove decimi troncati per il ramo denso è un risultato **notevole**, non
+sospetto. ⇒ **o l'informazione utile sta in testa, o la fusione (BM25 + entity-PPR +
+CE-rerank, che leggono il testo) compensa.** **Resta un REGIME NON DICHIARATO, non un difetto**
+— e l'A/B che lo deciderebbe (`ENGRAM_PPR_FUSION=0`) resta da fare a macchina libera.
+
+### Cosa questo NON prova
+
+- **Non ho eseguito il benchmark**: ho contato il dataset, non riprodotto lo 0,8745.
+- **La soglia 2000 è del prodotto** (`ENGRAM_LONG_FACT_WARN_CHARS`), non mia — ma è una
+  soglia di **avviso**, «≈ conservative 512-tok head»: **non ho misurato quanti token
+  effettivi**, solo caratteri.
+- **Non so se sia voluto.** Un banco che mappa una sessione intera su un fatto singolo può
+  essere il punto del banco: **ma allora va detto accanto al numero.**
+- ⛔ **Non ho toccato nulla; nessuna scrittura, nessun daemon.**
+
