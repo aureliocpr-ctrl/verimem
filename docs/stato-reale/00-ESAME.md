@@ -8092,3 +8092,65 @@ preposizionale · IT con `è` · IT con `e'`) **e non l'ho potuto eseguire.** Re
 - **Non so da quando dura**: alle 12:38 c'era già, alle 13:09 il runner LongMemEval
   ingeriva — **non ho verificato se anche lì i vettori mancassero.**
 
+
+---
+
+## 🗄️ ws6 «Aldo» — sette celle della sera del 30/08: le due porte a confronto
+
+*Registrate alle 20:55. Seguono le otto celle delle 17:15; **anche queste erano documenti senza una
+riga qui**, ed è la seconda volta nella stessa giornata.*
+
+**⑨ `25` — tre ordinamenti, e nessuno domina.** Cercando per argomento: **data 11 · conteggio 14 ·
+IDF 16** (su 60 casi), ma **l'IDF dimezza i recenti (11→6)**. La variante «IDF solo sul ripiego» è
+**falsificata**: recenti e medi stanno tutti e 40 nel ramo OR. ⚠️ L'«ibrido token-poi-data»
+**era già quello scartato dal doc 19**: `sorted` in Python è stabile. **Voto: A** (lasciare la data).
+
+**⑩ `26` — le nove trappole della copia condivisa.** **5 silenziose · 3 rumorose · 1 a metà**, e una
+famiglia nuova: **i controlli indiretti che dicono NO quando è SÌ** — `origin/main` stale, lo SHA
+riscritto dal rebase, il `grep` case-sensitive. **Tre falsi negativi in un giorno, tutti su un proxy
+invece che sulla cosa.**
+
+**⑪ `27` — la porta ignora `topic`, il campo che dice di cosa parla un fatto.** Estendendo il `LIKE`:
+candidati mediani **2.411 → 1**, «mai candidati» **7/4/18 → 0/0/0**. ⚠️ Ritrovamento **circolare**
+(la query viene dal topic); **il numero che vale è la riduzione dei candidati**. ⇒ le due cure sono
+**in sequenza**, non alternative.
+
+**⑫ `28` — cercare nel topic costa MENO.** **283→127 ms** (recenti) e **324→144** (medi), perché
+**fa riuscire il ramo AND** ed evita il ripiego; **+28%** dove l'AND già riusciva. Predizione
+confermata su 2 fasce su 3, **sulla terza era ottimista**.
+
+**⑬ `29` — con parole proprie: 0 su 60.** Query presa dalla prosa di un fatto *fratello*: il fatto
+cercato **non entra mai fra i candidati**, né oggi né con la cura. ⇒ **la cura del topic copre UNA
+casella su TRE**; la terza è coperta **solo da `recall`**.
+
+**⑭ `30` — la porta dei DOCUMENTI è costruita meglio, l'indice è fatto di noi.** Coseno + rerank,
+**nessun `ORDER BY` per data**, `vec` su **683/683**. Ma **40 documenti su 42 vengono da scratchpad
+o temp (95%)**, `indexed_by` è **vuoto in 683 su 683**, e **non esiste un campo data** ⇒ la regola
+«spezza per era» **qui non è applicabile per mancanza del campo**.
+
+**⑮ `31` — la porta dei documenti dichiara ciò che quella dei fatti tace.** Stessa domanda in parole
+proprie: `document_search` **`[]`**, `document_semantic_search` **primo posto** (rerank 1,94 contro
+−2,26). E la risposta porta **`query_terms_matched`**, **`rerank_score` separato**, e
+**«these results are PARTIAL — 1 chunk hidden»** con la ragione.
+🔑 ⇒ **La cura scritta in `5219443a` non era un'invenzione: era portare la porta dei fatti dov'è già
+quella dei documenti.** Chi curerà il resto **non deve progettare: deve copiare
+`document_semantic_search`.**
+
+**rifallo con:**
+
+```bash
+# ⑨ i tre ordinamenti, e la variante che cade
+python docs/stato-reale/banchi/ws6-tre-ordinamenti-data-conteggio-idf.py
+python docs/stato-reale/banchi/ws6-l-idf-sul-solo-ripiego-or.py
+# ⑪ ⑫ l'aggancio col topic, e quanto costa
+python docs/stato-reale/banchi/ws6-cercare-anche-nel-topic.py
+python docs/stato-reale/banchi/ws6-quanto-costa-cercare-anche-nel-topic.py
+# ⑬ la prova NON circolare: la query viene dalla prosa di un fratello
+python docs/stato-reale/banchi/ws6-la-query-non-viene-dal-topic.py
+# ⑮ le due porte dei documenti, sulla STESSA domanda in parole proprie
+#   hippo_document_search          "the external reviewers gave the product six out of ten"  -> []
+#   hippo_document_semantic_search  (stessa)  -> chunk giusto al 1o posto, rerank 1.9372
+```
+
+⚠️ Tutte in **`mode=ro`, sole SELECT**. **L'istante fa parte del dato**: fra le 12:25 e le 20:15 il
+corpus è passato da **15.578 a 15.903** fatti.
