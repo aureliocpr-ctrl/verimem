@@ -124,10 +124,19 @@ def main() -> int:
             stato = getattr(r, "status", None) or (r.get("status") if isinstance(r, dict) else None)
             punteggio = (getattr(r, "grounding_score", None)
                          or (r.get("grounding_score") if isinstance(r, dict) else None))
+            #: CHI ha fermato il fatto. `quarantined_by` lo dice direttamente;
+            #: i layer stanno in `warnings[].layer` — NON in un campo `layers`,
+            #: che e' vuoto (me l'aveva gia' detto @ws3 e avevo guardato quello
+            #: sbagliato). Senza questo il banco dava un totale di veri persi
+            #: che non si puo' interrogare: 29% e nessuna idea di chi li ferma.
+            chi = r.get("quarantined_by") if isinstance(r, dict) else None
+            warn = (r.get("warnings") or []) if isinstance(r, dict) else []
+            strati = sorted({(w or {}).get("layer") for w in warn if (w or {}).get("layer")})
         except Exception as e:  # il banco non deve morire su un caso
-            stato, punteggio = f"ERRORE:{type(e).__name__}", None
+            stato, punteggio, chi, strati = f"ERRORE:{type(e).__name__}", None, None, []
         esiti.append({"i": i, "etichetta": etichetta, "stato": stato,
-                      "grounding": punteggio, "claim": claim[:120]})
+                      "grounding": punteggio, "claim": claim[:120],
+                      "quarantined_by": chi, "layer": strati})
         if (i + 1) % 20 == 0:
             print(f"    …{i + 1}/{len(casi)} claim", flush=True)
     item = casi
@@ -174,8 +183,8 @@ def main() -> int:
     falsi_fermati = [e for e in falsi if not servito(e)]
     lunghezze = {"veri_ammessi": _med(veri_ammessi), "veri_persi": _med(veri_persi),
                  "falsi_ammessi": _med(falsi_ammessi), "falsi_fermati": _med(falsi_fermati)}
-    print(f"
-  lunghezza mediana (parole) per esito — il controllo dell'artefatto:")
+    print("")
+    print("  lunghezza mediana (parole) per esito — il controllo dell'artefatto:")
     for k, v in lunghezze.items():
         print(f"     {k:16} {v:5.1f}")
     if lunghezze["veri_persi"] and lunghezze["veri_ammessi"]:
@@ -183,8 +192,36 @@ def main() -> int:
         print(f"     ⇒ veri persi / veri ammessi = {r:.2f}x  "
               f"{'⚠️ il gate punisce la brevita' if r < 0.7 else 'la lunghezza non spiega chi cade'}")
 
+    #: ═══ CHI ferma i VERI — la domanda lasciata aperta in LANT-69 ═══
+    #: Il 29% di veri persi era un totale che non si poteva interrogare. Qui si
+    #: conta per DECISORE (`quarantined_by`) e per LAYER (`warnings[].layer`,
+    #: non un campo `layers` che resta vuoto). Senza questa riga il banco dice
+    #: quanto perdiamo e non da chi: e' la differenza fra un numero e una cura.
+    from collections import Counter
+
+    per_chi = Counter((e.get("quarantined_by") or "(non registrato)") for e in veri_persi)
+    per_layer = Counter(s for e in veri_persi for s in (e.get("layer") or []) or ["(nessun layer)"])
+    print("")
+    print(f"  CHI ferma i {len(veri_persi)} VERI persi — per decisore:")
+    for k, n in per_chi.most_common():
+        print(f"     {n:4}  {k}")
+    print(f"  e per layer (un fatto puo' averne piu' d'uno):")
+    for k, n in per_layer.most_common():
+        print(f"     {n:4}  {k}")
+    #: il rovescio, obbligatorio: gli stessi layer sui FALSI FERMATI. Un layer
+    #: che compare SOLO sui veri persi e' un candidato cura; uno che compare su
+    #: entrambi sta facendo il suo lavoro e ha un costo.
+    per_layer_falsi = Counter(s for e in falsi_fermati for s in (e.get("layer") or []) or ["(nessun layer)"])
+    print(f"  e gli stessi layer sui {len(falsi_fermati)} FALSI fermati — il rovescio:")
+    for k, n in per_layer_falsi.most_common():
+        quota = per_layer.get(k, 0)
+        print(f"     {n:4}  {k}   (sui veri persi: {quota})")
+
     corpo = {"popolazione": f_nome, "criterio_cieco_pct": round(cieco, 1),
              "lunghezza_mediana_per_esito": lunghezze,
+             "veri_persi_per_decisore": dict(per_chi),
+             "veri_persi_per_layer": dict(per_layer),
+             "falsi_fermati_per_layer": dict(per_layer_falsi),
              "claim": len(esiti),
              "falsi_ammessi": len(falsi_ammessi), "falsi_totali": len(falsi),
              "veri_persi": len(veri_persi), "veri_totali": len(veri),
