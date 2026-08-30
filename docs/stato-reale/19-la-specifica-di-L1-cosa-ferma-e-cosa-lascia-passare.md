@@ -145,10 +145,27 @@ provenienza**. ⚠️ **Tre leve diverse per tre buchi diversi** — e nessuna d
 **provenienza-etichetta** (ws2). La specifica non le cura: dice **dove sono** e **quale
 leva tocca ciascuna**.
 
-**③ Il perimetro è un elenco, e un elenco si allunga.** Le forme più frequenti fuori
-elenco sono misurate (`W7-65`) e si possono aggiungere. ⚠️ Ma **allargare l'elenco aumenta i
-falsi allarmi**, che è il verso che fa danno: chi lo fa **misuri entrambe le popolazioni**
-prima e dopo.
+**③ Il perimetro è un elenco, e un elenco si allunga — ma NON per primo.** Chiedevo a chi
+allarga di misurare entrambe le popolazioni; **l'ho fatto io** (`W7-66`), e il risultato
+cambia la raccomandazione. Aggiungendo le sei radici più frequenti di `W7-65`: **6 su 6**
+self-claim nudi fermati (guadagno pieno), **3 su 6** fatti veri con fonte fermati
+(**rapporto 2 a 1**).
+
+🔑 **Ma i 3 non erano casuali: erano esattamente i 3 in cui claim e fonte hanno flessione
+diversa** (`ultimata`/`ultimato`, `evasa`/`evaso`, `espletata`/`espletato`). Allineando
+**solo** la flessione, **3 su 3 passano**. ⇒ **Il costo non viene dall'allargamento: viene
+dal perdono che confronta stringhe** — conferma indipendente di `W7-61`, e un difetto
+strutturale in una lingua flessa che in inglese quasi non si vedrebbe (`shipped` è
+`shipped`).
+
+📌 **Quindi c'è una SEQUENZA, non una scelta**: rendere il perdono **morfologico**, poi
+allargare l'elenco. Fatto in quest'ordine, su questi casi il costo va a zero; fatto
+nell'altro, si paga in falsi allarmi.
+
+⚠️ E il precedente pesa: quando il 03/08 l'elenco fu allargato alle flessioni, il rischio
+fu misurato come **frequenza** (`l1_completion_detector.py:47-49`, *«nessuna forma supera
+il 2%»*). **La frequenza non è il costo**: dice quante volte il criterio scatterà, non
+quante volte sbaglierà.
 
 **④ L'asimmetria di lingua è una decisione di prodotto, non un difetto da patchare.** Il
 README promette «Verified memory for AI agents». Se gli agenti scrivono in italiano, la
