@@ -236,6 +236,44 @@ def _conta_sostituiti(agent) -> int | None:
         return None
 
 
+def _pavimento_di(agent) -> float:
+    """Il pavimento calibrato, da QUALUNQUE forma di oggetto la casa passi.
+
+    Stessa lezione dell'avviso gemello dieci righe piu' sotto, che il suo
+    ripiego ce l'ha gia': `Memory` (il client) non ha `.memory`, e nell'agente
+    MCP `a.memory` e' la memoria EPISODICA. Cercare il metodo su quei due
+    soltanto significa non trovarlo mai sulla forma che il prodotto passa
+    davvero — che espone lo store come `a.semantic`.
+
+    Misurato il 2026-08-31 sulle tre forme, con un corpus che calibra::
+
+        il client stesso      trattenuti SI   sotto_il_pavimento SI
+        oggetto con .memory   trattenuti SI   sotto_il_pavimento SI
+        oggetto con .semantic trattenuti SI   sotto_il_pavimento no   <-
+
+    Il ripiego costruisce `Memory` dal `db_path`, come gia' fanno due punti di
+    questo stesso file: non e' una via nuova, e' quella in uso.
+
+    Fail-open: un pavimento che non si sa calcolare vale 0.0 (nessun avviso),
+    mai un'eccezione — questo e' un percorso di lettura.
+    """
+    for cand in (agent, getattr(agent, "memory", None)):
+        f = getattr(cand, "_auto_relevance_floor", None)
+        if callable(f):
+            try:
+                return float(f() or 0.0)
+            except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
+                return 0.0
+    sem = getattr(agent, "semantic", None)
+    if sem is not None and getattr(sem, "db_path", None):
+        try:
+            from .client import Memory as _MemFloor
+            return float(_MemFloor(path=sem.db_path)._auto_relevance_floor() or 0.0)
+        except Exception:  # noqa: BLE001 — idem: il ripiego non puo' costare nulla
+            return 0.0
+    return 0.0
+
+
 def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict:
     """Gli avvisi che CLI e SDK danno gia', portati alla porta dell'AGENTE.
 
@@ -318,19 +356,34 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
         # guasto nel primo spegnerebbe silenziosamente il secondo. Preso da un
         # test che inietta il guasto, non da un ragionamento. Qui si calcola il
         # pavimento e basta: due avvisi indipendenti, due try separati.
-        mem = None
-        for cand in (agent, getattr(agent, "memory", None)):
-            if callable(getattr(cand, "_auto_relevance_floor", None)):
-                mem = cand
-                break
-        if mem is not None and query:
-            pav = float(mem._auto_relevance_floor() or 0.0)
-            hits = mem.semantic.recall(query, k=3) if pav else []
+        pav = _pavimento_di(agent)
+        sem = getattr(agent, "semantic", None)
+        if pav and sem is not None and query:
+            hits = sem.recall(query, k=3)
             best = 0.0
             for h in (hits or []):
                 s = h[1] if isinstance(h, tuple) else getattr(h, "score", 0.0)
                 best = max(best, float(s or 0.0))
-            if pav and hits and best < pav:
+            # ⚠️ QUANTO SPESSO QUESTA NOTA SI ACCENDERA' NON E' DECISO, ed e'
+            # una taratura mancante, non una svista. Col pavimento che la stima
+            # produce sul corpus reale (0.8791) scatterebbe su quasi ogni
+            # risposta — misurato il 2026-08-31 su 30 domande con risposta e 30
+            # senza::
+            #
+            #     soglia 0.8400 -> separazione 0.87   (30/30 senza vs  4/30 con)
+            #     soglia 0.8791 -> separazione 0.13   (30/30 senza vs 26/30 con)
+            #
+            # cioe' 26 avvisi sbagliati su 30 domande legittime. Il valore alto
+            # NON viene dal quantile (a 0.50 la stima da' ancora 0.8634): viene
+            # dalle sonde, costruite col vocabolario del corpus, che percio'
+            # battono le domande davvero fuori dominio. `trust_report.py` lo
+            # dice gia' — «the bi-encoder is anisotropic», con la banda misurata
+            # «relevant top-1 >=0.842 vs absent <=0.828», dentro cui cade il
+            # valore trovato sul corpus vero.
+            # La condizione resta com'era: spegnerla qui farebbe cadere due
+            # presidi che pretendono questo avviso, e una taratura non si
+            # impone da un ramo solo.
+            if hits and best < pav:
                 out["sotto_il_pavimento"] = {
                     "pavimento": round(pav, 4),
                     "score_migliore": round(best, 4),
