@@ -212,6 +212,34 @@ Banchi: `banchi/ws3-la-riga-dell-astensione-sulla-porta-della-riga-di-comando.py
 
 ---
 
+## 🚫 Una domanda che NON si può rispondere con i dati che abbiamo
+
+Per pesare le celle sulle letture reali servirebbe sapere **quante letture
+passano da quale porta**. La telemetria non lo permette, e la ragione è
+**misurata**, non supposta — `events.jsonl` **+ `events.jsonl.1`** (il journal
+ruota: leggere solo il primo misura la coda), 40.007 righe, lette alle **03:21
+del 31/08**:
+
+| superficie, sui soli `flow.recall` | eventi | % |
+|---|---|---|
+| `unknown` | 2468 | **52,3%** |
+| `gateway` | 2199 | 46,6% |
+| `cli` | 47 | 1,0% |
+| `sdk` | 2 | 0,04% |
+| **`mcp`** | **0** | **mai** |
+
+⇒ 🔑 **Più di metà delle letture non ha una superficie attribuita, e la porta
+MCP non compare MAI fra le letture** — pur comparendo **1373** volte sugli altri
+eventi, quindi la superficie *è* tracciata altrove. ⚠️ **Conseguenza per il
+contratto di uscita**: nessuna affermazione del tipo *«la maggior parte delle
+letture passa da X»* è sostenibile con questi dati, e una percentuale calcolata
+su questo denominatore parlerebbe soprattutto di `unknown`.
+
+📌 *(Il file avverte anche di essere «inquinato all'88% dal dogfooding». **Quel
+numero non l'ho verificato e non lo riporto come mio.**)*
+
+---
+
 ## Come leggere questo documento
 
 - **misurata alla porta** = un banco eseguibile, con il suo controllo e la sua popolazione opposta, citato per nome;
