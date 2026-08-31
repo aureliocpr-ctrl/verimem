@@ -65,8 +65,12 @@ tag+publish.**
 - **Il criterio «verde = due firme» è oggi soddisfatto sul 5% delle celle**
   (30/568; censimento ws2 delle 04:35). Lettura giusta: misure mai riviste,
   non falsità — ma se il contratto promette due firme, questo è il primo
-  numero che un esterno troverebbe. Campagna controfirme avviata (raddoppia
-  con 2-a-testa) e proposta di criterio per te: due firme ESIGIBILI sulle
+  numero che un esterno troverebbe. Precisazione delle 07:05 (ws2, su 603
+  celle): con la definizione STRETTA dello script di casa (marcatore nella
+  cella altrui) le doppie controfirme sono 0 — ma molte controfirme della
+  notte sono in convenzione B (cella propria, ratificata FIRMA-AB) che lo
+  script NON conta ancora: il primo attrezzo di oggi è il verificatore che
+  cerca A oppure B. Proposta di criterio per te: due firme ESIGIBILI sulle
   celle load-bearing (citate da report/vetrina/quadro), il resto dichiarato.
 - **~1 fatto vivo su 5 non ripasserebbe la porta di oggi** (W7-89: 18,4%
   medio su 228 fatti appaiati 114+114, popolazione italiana con
