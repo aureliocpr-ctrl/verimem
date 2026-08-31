@@ -477,10 +477,27 @@ asserted_at valorizzati    0 / 16805  (03:47)  →  1 / 16839  (04:38)   SCADUTO
 trattenuti / quarantene    404 (13,0%) (04:05) →  407 (13,1%) (05:14)  STABILE in 69 min
 ```
 
-⇒ 🔑 **Non è il caso: è il NUMERATORE.** Uno a zero cade al primo evento — e
-infatti è bastata **una** scrittura. Uno a 404 su una popolazione grande non si
-muove. **Un numeratore piccolo è una promessa a scadenza; ricontarlo costa una
-query e dice quale dei tuoi numeri è fragile.**
+⇒ Primo tentativo di regola: *«è il numeratore — uno a zero cade al primo
+evento»*. **Vera ma incompleta**, e il terzo numero la corregge:
+
+```
+letture MCP nel registro   0 / 4716  (03:21)  →  0 / 4761  (05:40)   ZERO STABILE in 2h19
+```
+
+🔑🔑 **DUE numeratori a zero, destini opposti — e la differenza NON è la
+dimensione, è la RAGIONE dello zero:**
+
+| zero | perché | scade? |
+|---|---|---|
+| `asserted_at` 0/16805 | **per disuso**: la via esiste (`--asserted-at`) e nessuno la usava | ✅ **al primo utente** — 50 minuti |
+| letture MCP 0/4716 | **per costruzione**: gli handler di lettura non emettono l'evento | ❌ **mai**, finché non si aggiunge l'emit |
+
+⇒ 🔑 **Uno zero per disuso è una promessa a scadenza; uno zero per costruzione è
+un fatto strutturale.** E si distinguono **leggendo il codice**, non aspettando:
+la domanda giusta non è «quanto è piccolo il numeratore» ma **«esiste un modo
+perché diventi diverso da zero?»**. *(Raffinata alle 05:41 dopo il terzo
+ricalcolo: la prima formulazione avrebbe fatto ricontare in eterno un numero
+che non può muoversi.)*
 
 ### 🪞 E il ricalcolo ha trovato un difetto nel MIO righello, non nel numero
 
@@ -499,11 +516,16 @@ denominatore che si muove in modo implausibile accusa il righello, non i dati.**
 
 ### 🚫 E i limiti del registro, misurati stanotte
 
-| limite | numero |
-|---|---|
-| letture (`flow.recall`) **senza superficie attribuita** | **52,3%** (`unknown`) |
-| letture attribuite alla porta **MCP** | **0** — mai, pur essendo `mcp` su 1373 eventi complessivi |
-| «inquinato all'88% dal dogfooding» (dichiarato nel file) | **non verificato da me — non lo riporto come mio** |
+| limite | 03:21 | 05:40 |
+|---|---|---|
+| **letture (`flow.recall`) totali** — il denominatore | **4716** | **4761** |
+| di cui **senza superficie attribuita** | 52,3% (`unknown`) | **52,8%** (2513) |
+| di cui attribuite alla porta **MCP** | **0** | **0** — mai, pur essendo `mcp` su **1377** eventi complessivi |
+| «inquinato all'88% dal dogfooding» (dichiarato nel file) | **non verificato da me — non lo riporto come mio** | |
+
+*(Il denominatore mancava: la riga diceva «0 letture MCP» senza dire **su
+quante**. Aggiunto alle 05:40 insieme al ricalcolo — un numeratore senza
+denominatore è la prima cosa che questo documento rimprovera altrove.)*
 
 ⇒ **Nessuna affermazione del tipo «la maggior parte delle letture passa da X» è
 sostenibile con questo registro.**
