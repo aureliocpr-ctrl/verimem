@@ -20,7 +20,8 @@ rilascio che il branch NON aveva — il suo publish.yml era del 4 luglio, con un
 cancello su cinque). Wheel costruito e verificato SULL'ARTEFATTO: veto
 identificativi EXIT=0, smoke da venv vergine EXIT=0 (`mcp 1.29.1` risolto —
 il crash dell'utente nuovo è curato). **Mancano solo: il run `ci` verde sul
-branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
+branch (primo run della sua storia, **creato 00:40, ancora in coda alle
+05:58 — 5,3 ore**) e il TUO tag+publish.**
 
 ## Cancelli mossi (chi, cosa)
 1. **CANCELLO-A votata (3 SI) ed eseguita** — il gate del publish accettava
@@ -103,8 +104,14 @@ branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
    nei pezzi): una riga da aggiornare in CLAUDE.md, testo pronto.
 
 ## Rischi e aperti, senza trucco
-- Il run `ci` del branch è in coda da ~4h30 (la coda di main scade i run a
-  24h: se scade anche lui, si riprovoca con dispatch — la via è dichiarata).
+- Il run `ci` del branch è **creato alle 00:40 e ancora in coda alle 05:58 —
+  5,3 ore** (la coda di main scade i run a 24h: se scade anche lui, si
+  riprovoca con dispatch — la via è dichiarata). *(ws7: scritto così invece di
+  «da ~4h30» perché **l'ora di creazione non cambia e il «da quanto» sì** —
+  quella cifra invecchia di sessanta minuti ogni ora. Contesto misurato alle
+  05:50: sugli ultimi 60 run del repo **30 sono `queued`**, quindi non è un
+  caso isolato; e il cancello di `publish.yml:126` legge la `conclusion` di
+  questo run, che è la stringa vuota.)*
 - La «cura grande» L1 non è iniziata (resta il piano dopo il contratto).
 - C3/latenza MCP-stdio e C2-difese (4/16, tre regimi concordi) restano i due
   C aperti più pesanti.
