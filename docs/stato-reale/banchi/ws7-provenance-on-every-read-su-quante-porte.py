@@ -50,6 +50,79 @@ DOMANDA = "Quanto e' la spesa corrente del comune di Ozzano?"
 SEGNALI = ("source", "provenance", "citation", "cite", "evidence", "origin",
            "ref", "episode", "document", "offset", "fact_id", "id")
 
+#: 🔴🪞 31/08 02:52 — LA PRIMA VERSIONE GIUDICAVA SULLE CHIAVI, NON SUI VALORI,
+#: e il verde e' finito in una cella pubblicata. @ws3 (02:36) ha misurato che
+#: su `search` il campo `source` **esiste ed e' None**, e che il testo della
+#: fonte sta in `grounding_span` — verificato qui: `source=None`,
+#: `source_signature='sha256:…'` (un'IMPRONTA), `verified_by=[]`,
+#: `grounding_span='Il contratto Rossi, articolo 7…'`.
+#: ⇒ Avevo scritto «`search` porta `source` + `source_signature`»: **il primo
+#: e' vuoto e il secondo non e' la fonte**. Un criterio SINTATTICO (il nome
+#: della chiave) su un fenomeno SEMANTICO (la fonte c'e' o no) — la lezione
+#: che avevo in testa e non ho applicato al mio stesso banco.
+#: 📌 Lo strumento pero' ha fatto la sua parte: **stampava tutte le chiavi**,
+#: ed e' per quello che un'altra istanza ha potuto contestarlo.
+#:
+#: TRE COSE CHE UN VERDE SOLO CONFONDE (classificazione di @ws3):
+#:   A LEGGIBILE     torna il TESTO della fonte      -> si vede SU COSA si regge
+#:   B VERIFICABILE  torna un'impronta/riferimento   -> conferma chi ce l'ha gia'
+#:   C GIUDICATO     torna il VERDETTO               -> si sa CHE e' stata pesata
+#: Solo **A** e' «provenance» nel senso che un lettore intende.
+#: ⚠️ `_id` ESCLUSO dal TESTO: al primo giro `source_id` finiva in A perche'
+#: contiene «source» ed e' una stringa lunga — ma un identificatore non e' la
+#: fonte. **Il righello nuovo era peggiore del vecchio in 2 punti su 4** (qui e
+#: su `explain`, dove guardavo il livello sbagliato): e' la ragione per cui si
+#: fa girare accanto al vecchio prima di pubblicare.
+TESTO = ("grounding_span", "passage", "text_source", "quote", "text")
+NON_TESTO = ("_id", "_signature", "_ids")
+IMPRONTA = ("source_signature", "verified_by", "doc_id", "source_id", "uri",
+            "start", "end", "offset", "episode", "ref")
+VERDETTO = ("grounding_score", "confidence", "confidence_tier", "provenance",
+            "evidence_types", "judge")
+
+
+def _pieno(v) -> bool:
+    """Un campo che c'e' ed e' vuoto NON e' un campo pieno."""
+    return not (v is None or v == "" or v == [] or v == {} or v == ())
+
+
+def classifica(d: dict) -> dict[str, list[str]]:
+    """A/B/C con i campi che hanno davvero un VALORE.
+
+    ⚠️⚠️ IL VERDETTO DI QUESTA FUNZIONE E' INDICATIVO, NON PROBANTE — e la
+    prova sta nella sua storia: **in dieci minuti ha dato tre esiti diversi**
+    sullo stesso store (4/4 -> 3/4 -> 4/4), ogni volta per un difetto diverso
+    del criterio, non dei dati:
+
+        ① `source` vuota contata come provenienza  (chiave, non valore)
+        ② `source_id` contato come TESTO           (un id non e' la fonte)
+        ③ `text` contato come TESTO                (e' il CLAIM, non la fonte)
+
+    ⇒ 🔑 **Un criterio sintattico su un fenomeno semantico sbaglia in
+    entrambe le direzioni, e qui l'ha fatto tre volte di fila su me stessa.**
+    La classificazione che vale e' quella scritta nella cella `LANT-130`,
+    fatta LEGGENDO i campi uno per uno; questa serve a mettere i valori sotto
+    gli occhi, che e' cio' che il banco sa fare davvero.
+
+    Il controllo che decide, e non passa da qui: **cercare una frase della
+    fonte nella risposta serializzata**. Su `explain` «articolo 7» non compare
+    da nessuna parte; su `search` compare.
+    """
+    out = {"A": [], "B": [], "C": []}
+    for k, v in d.items():
+        if not _pieno(v):
+            continue
+        kl = k.lower()
+        if any(t in kl for t in NON_TESTO):
+            out["B"].append(k)
+        elif any(t in kl for t in TESTO) and isinstance(v, str) and len(v) > 30:
+            out["A"].append(k)
+        elif any(t in kl for t in IMPRONTA):
+            out["B"].append(k)
+        elif any(t in kl for t in VERDETTO):
+            out["C"].append(k)
+    return out
+
 
 def _chiavi(x, prof: int = 0) -> list[str]:
     """Le chiavi di primo e secondo livello, per stamparle prima di contare."""
@@ -103,18 +176,44 @@ def main() -> int:
             esiti[nome] = f"ERRORE {type(e).__name__}"
             print(f"  {nome:<18} ERRORE  {type(e).__name__}: {str(e)[:90]}")
             continue
+        #: il primo record, appiattito: e' li' che si guardano i VALORI.
+        rec = out
+        while isinstance(rec, (list, tuple)) and rec:
+            rec = rec[0]
+        #: ⚠️ le porte annidano il record dove capita: `ask` sotto `results`,
+        #: `explain` sotto `facts`. Al primo giro guardavo solo il primo
+        #: livello e `explain` risultava «solo verdetto» — falso: la sua
+        #: provenienza sta un piano sotto. **Chi cerca in un solo livello
+        #: misura la forma della risposta, non il suo contenuto.**
+        for dentro in ("results", "facts", "items"):
+            if isinstance(rec, dict) and rec.get(dentro):
+                rec = rec[dentro][0]
+                break
+        d = rec if isinstance(rec, dict) else (vars(rec) if hasattr(rec, "__dict__") else {})
+        abc = classifica(d)
         ch = _chiavi(out)
-        ha = sorted({k for k in ch if any(s in k.lower() for s in SEGNALI)})
         vuota = not out
-        esiti[nome] = "VUOTA" if vuota else ("SI" if ha else "NO")
-        print(f"  {nome:<18} {esiti[nome]:<6} tipo={type(out).__name__} "
-              f"vuota={vuota}")
-        print(f"  {'':<18} chiavi: {', '.join(ch[:14]) or '(nessuna)'}")
-        print(f"  {'':<18} → di provenienza: {', '.join(ha) or 'NESSUNA'}\n")
+        esiti[nome] = ("VUOTA" if vuota
+                       else "A" if abc["A"] else "B" if abc["B"]
+                       else "C" if abc["C"] else "NO")
+        print(f"  {nome:<18} {esiti[nome]:<6} tipo={type(out).__name__} vuota={vuota}")
+        print(f"  {'':<18} chiavi: {', '.join(ch[:12]) or '(nessuna)'}")
+        for lettera, etichetta in (("A", "TESTO della fonte"),
+                                   ("B", "impronta/riferimento"),
+                                   ("C", "verdetto")):
+            print(f"  {'':<18} {lettera} {etichetta:<22} "
+                  f"{', '.join(abc[lettera]) or '—'}")
+        vuoti = sorted(k for k, v in d.items()
+                       if any(s in k.lower() for s in SEGNALI) and not _pieno(v))
+        if vuoti:
+            print(f"  {'':<18} ⚠️ chiavi di provenienza PRESENTI e VUOTE: "
+                  f"{', '.join(vuoti)}")
+        print()
 
-    si = sum(1 for v in esiti.values() if v == "SI")
-    print(f"  «provenance on every read»: {si}/{len(PORTE)} porte pubbliche")
+    a = sum(1 for v in esiti.values() if v == "A")
+    print(f"  «provenance on every read» LEGGIBILE (A): {a}/{len(PORTE)} porte")
     print(f"  dettaglio: {esiti}")
+    print("  ⚠️ A = il testo torna · B = solo un'impronta · C = solo il verdetto")
     print(f"\n  store temporaneo: {os.environ['HIPPO_DATA_DIR']}")
     return 0
 
