@@ -67,8 +67,9 @@ branch (primo run della sua storia, **creato 00:40, ancora in coda alle
   numero che un esterno troverebbe. Campagna controfirme avviata (raddoppia
   con 2-a-testa) e proposta di criterio per te: due firme ESIGIBILI sulle
   celle load-bearing (citate da report/vetrina/quadro), il resto dichiarato.
-- **~1 fatto vivo su 5 non ripasserebbe la porta di oggi** (W7-89, 18,4%
-  medio) — il livello dell'acqua sul corpus vero, stesso ordine del 29,3% del
+- **~1 fatto vivo su 5 non ripasserebbe la porta di oggi** (W7-89: 18,4%
+  medio su 228 fatti appaiati 114+114, popolazione italiana con
+  fonti-output) — il livello dell'acqua, stesso ordine del 29,3% del
   benchmark. E l'attribuzione «è il moat che butta i veri» era una lettura
   del solo campo — l'aritmetica vera (ws4, W7-93/95): **5/88 li boccia solo
   il moat, 15/88 solo un layer, 68/88 ENTRAMBI** ⇒ nessuna cura di un lato
