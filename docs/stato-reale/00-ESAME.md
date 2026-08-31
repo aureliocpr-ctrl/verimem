@@ -14873,3 +14873,91 @@ store temporaneo isolato · regime encode ok in testa e in coda · un processo p
 ```
 
 **Banchi**: `porta_l3_semantico.py` (scratchpad di sessione). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 05:25 — ws1 · IL MOAT SEMANTICO FUNZIONA: SU SNLI PRENDE 12 CONTRADDIZIONI SU 30 CONTRO 5, SENZA UN SOLO FALSO ALLARME — ED È PROPRIO QUESTO CHE RENDE GRAVE CHE SIA SPENTO SU UN'INSTALLAZIONE FRESCA
+
+**Livello** porta pubblica `Memory.add`, **un regime per processo** · **Perimetro** 30
+coppie `contradiction` + 30 `entailment` di **SNLI** (Stanford NLI), etichettate da terzi,
+lette **offline dal parquet** in cache — mai `load_dataset` · **Istante** 2026-08-31
+05:08–05:22 · **Regime** dichiarato per intero sotto, RAM controllata prima di ogni carico
+· `verimem.__version__` **0.7.6**, cwd = scratchpad.
+
+**Paga il limite dichiarato alle 05:05**: «*il mio contraddittorio aveva le parole quasi
+identiche, cioè FUORI DAL COMPITO del layer; NON ho misurato il valore aggiunto*». E lo
+paga **senza scrivermi i casi da solo**, che sarebbe il manico che il registro conosce.
+
+### 🟢 IL NUMERO, appaiato sugli stessi item
+
+```
+                        off      enforce
+CONTRADDIZIONI         5/30      12/30
+ENTAILMENT (sano)      0/30       0/30
+
+appaiato (stessi item, uguaglianza verificata sul TESTO dell'ipotesi):
+  SOLO enforce: 7   ·   SOLO off: 0   ·   discordi: 7
+  sign test p = 0,0233   ->   FUORI DAL RUMORE
+```
+
+⇒ **P-VALORE CONFERMATA.** Il layer semantico **più che raddoppia** le contraddizioni
+rilevate, **non ne perde nemmeno una** di quelle che il percorso lessicale già prendeva, e
+**non produce un solo falso allarme** sulla popolazione sana. Su dati di terzi, con
+etichette di terzi, letti offline.
+
+### 🚨 E QUESTO RENDE IL REPERTO DELLE 04:48 PIÙ GRAVE, NON MENO
+
+Il layer **funziona**. E — misurato alle 04:48 — è **`off` su un'installazione fresca**,
+perché `_semantic_conflict_mode()` unset dà `enforce` **solo se** il modello NLI è già
+nella cache HF; **`warmup` non lo scarica**; **nessuna superficie lo riferisce** (`doctor`
+non lo nomina, `_semantic_conflict_mode()` è usato solo dentro `anti_confab_gate.py`).
+⇒ **quei 7 casi su 30 sono esattamente ciò che un utente fresco NON riceve**, senza che
+niente glielo dica. **Non è una capacità marginale spenta: è una capacità che qui funziona
+e che dipende da cosa un altro software ha scaricato sul disco.**
+
+### Il criterio di selezione, dichiarato prima di guardare i risultati
+
+Cercavo coppie **lessicalmente distanti** — il compito che il layer si attribuisce
+(«*conflicts where the WORDS differ but the MEANING contradicts*», `:2074`). Distanza =
+Jaccard sui token minuscoli; tenute le coppie con **jaccard ≤ 0,34**, **lo stesso filtro
+applicato a ENTRAMBE le popolazioni**:
+
+```
+CONTRADDIZIONI  jaccard mediano delle scelte 0,156   (di tutte: 0,150)
+ENTAILMENT      jaccard mediano delle scelte 0,200   (di tutte: 0,250)
+```
+
+⚠️ **Le due mediane non sono uguali (0,156 contro 0,200)**: il filtro non pareggia
+perfettamente le popolazioni sulla distanza lessicale. Lo dichiaro perché è il tipo di
+squilibrio che altrove stanotte ho contato come confondente — qui però **spinge nella
+direzione opposta al mio verde** (le sane sono *meno* distanti, quindi più facili da
+segnalare per il percorso lessicale), e restano **0/30** in entrambi i regimi.
+
+### Cosa NON prova
+
+**Il layer prende meno della metà**: 12 su 30, cioè **il 40%** delle contraddizioni
+etichettate. **Non è un rilevatore completo**, e il numero da riportare è questo, non «il
+layer funziona» senza cifra. Le premesse/ipotesi di SNLI sono **descrizioni di scene**, non
+«fatti» nel senso del prodotto: **proxy dichiarato**. **Non ho passato `source`** — così il
+moat non gira (`not_run:no_source`) e il layer L3 resta isolato: è il modo di misurare una
+cosa sola, **ma non è il regime di un utente che passa le fonti**. n=30 per classe, un solo
+dataset, inglese; il filtro jaccard è **mio**. Non ho misurato **quanto costa in tempo** il
+layer acceso.
+
+### Regime, per intero
+
+```
+POPPATE: HIPPO_ENCODE_DELEGATE_ONLY='1' · ENGRAM_DATA_DIR='C:\Users\aurel\.engram'
+         + ENGRAM_GROUNDING_BACKEND · ENGRAM_MIN_RELEVANCE · VERIMEM_DATA_DIR
+         + ENGRAM_GROUNDING_THRESHOLD · ENGRAM_GROUNDING_WRITE_THRESHOLD
+         + ENGRAM_SEMANTIC_CONFLICT · ENGRAM_LOCAL_GATE_MODEL
+off:      ENGRAM_LOCAL_NLI_MODEL='nessuno/modello-che-non-esiste' -> mode 'off'
+enforce:  ENGRAM_LOCAL_NLI_MODEL non impostata (cache reale)      -> mode 'enforce'
+dati: ~/.cache/huggingface/hub/datasets--snli/snapshots/<sha>/plain_text/
+      test-00000-of-00001.parquet  (10 000 righe, letto con pandas: NESSUNA rete)
+un topic dedicato per coppia · store temporaneo isolato · un processo per regime
+regime encode ok in testa e in coda · RAM 5,07 GB in testa al regime pesante
+```
+
+**Banchi**: `porta_snli.py`, dati in `snli_off.json` / `snli_enforce.json` (scratchpad di
+sessione). **Io misuro, non curo.**
