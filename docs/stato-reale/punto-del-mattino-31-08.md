@@ -41,14 +41,18 @@ branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
    59,6% dichiarato accanto).
 4. **F3-① eseguita sulle due porte** (ws2): la ricevuta ora dice
    `withheld_despite_judge` quando un layer trattiene col giudice a favore;
-   il fix `agito` (la porta MCP nominava `gate` invece del layer) ha due firme
-   (LANT-108 lead + ws3). Al presidio-porta manca il test che cade senza la
-   cura: firma finale in sospeso, dichiarata.
+   il fix `agito` (la porta MCP nominava `gate` invece del layer) ha due
+   firme (LANT-108 lead + ws3) e da stanotte un SENSORE provato nei due
+   versi (ws3: stessa funzione con/senza il parametro, A/B in una sola
+   esecuzione). Sul campo in ricevuta il test esiste ma è condizionato da
+   uno skip di regime (formulazione di ws2: «c'è, non incondizionato») —
+   ultima rifinitura possibile, dichiarata, non un buco.
 5. **CURA-PAVIMENTO ratificata in blocco** (5 pezzi, 3+ SI ciascuno): il floor
    degenere 0.0 serviva avvisi rotti su tre cause in AND. L'evento naturale
    delle 02:52 (ricalcolo automatico: floor 0.0→0.8781) è stato catturato con
    QUATTRO predizioni registrate prima — tutte verificate/falsificate in
-   pubblico. Esecuzioni in corso (ws2/ws3/ws6).
+   pubblico. La (ii) è ESEGUITA e in main (`eaa464dc`, verificata alla
+   porta vera sul corpus); le altre in corso (ws3/ws6).
 6. **Cure minori col processo pieno**: pre-commit staged-only (il file a metà
    di una non blocca più le altre — 50143a1a + .gitattributes 691ede4e),
    stop-list bilingue W7-100 (ws4, A/B appaiato su 459 episodi), porta-layer
