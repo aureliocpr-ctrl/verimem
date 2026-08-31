@@ -13442,6 +13442,40 @@ critic · **la soglia 0,50 è ereditata dal `42`**, non l'ho ritarata.
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quante-sono-contraddizioni-vere.py`.
 *(doc `63`)*
 
+**61ª (banchi) — la finestra di recupero ha 54 candidati a ritiro sbagliato e QUATTRO scadono entro
+18 ore. Li ho LETTI invece di lasciare una lista: due vanno recuperati, uno è discutibile, uno no.**
+Un ritiro si annulla per **sette giorni**; dopo, il fatto resta ritirato per sempre. `verimem doctor`
+dice quanti sono reversibili, **non quando scadono né quali valga la pena recuperare**.
+📊 **Il registro** (`facts_undo_log`, presidio: composizione stampata prima di contare): **336 voci,
+zero già scadute** ⇒ `entro 24 ore **16** · entro 2 giorni 24 · entro 4 giorni 129 · entro 7 giorni
+167`.
+🔎 **Quali valgono**: applicato il criterio del `41` (due testi che condividono poco lessico non
+parlano della stessa cosa) confrontando il testo **ritirato** — che sta in `pre_row_json` — con
+quello che l'ha superseduto ⇒ **54 candidati** (`jaccard < 0,15`), **di cui 4 in scadenza entro 24
+ore**.
+📖 **E li ho aperti tutti e quattro**, perché una lista di «candidati» scarica il lavoro su chi legge:
+
+| op_id | il vecchio contro il nuovo | giudizio |
+|---|---|---|
+| `b149bf04…` | *«su 7330fc0d `_entita_diverse` non viene chiamata»* → *«il fratello raggiunge il giudice in entrambi i regimi»* | **da recuperare** — non lo nega, lo **affianca** |
+| `d5680817…` | *«run 32764736605: 9 job su 9 success»* → *«sullo SHA 76fb5221 la query restituisce success»* | **da recuperare** — due misure diverse, e il vecchio porta **il numero** |
+| `626f48a5…` | il SIGSEGV su **un run specifico** → la sintesi *«1 cella su 6»* | **discutibile**: complementari, decida chi ha scritto il topic |
+| `f37f1be8…` | versione più breve del precedente | **ritiro ragionevole**, duplicato più povero |
+
+📐 **E un dato sul mio criterio, che vale più dei quattro casi**: il `jaccard < 0,15` ne ha indicati
+4 e leggendoli ne ho confermati **2 pieni + 1 parziale** ⇒ **precisione ~75% su n=4**. ⚠️ **Campione
+minuscolo, NON lo generalizzo ai 54**: dice che il criterio **non è rumore** e che quei 54 meritano
+una lettura, non un'archiviazione.
+⛔ **NON ho fatto il restore**: non sono fatti miei e **richiede mandato** — il comando è
+`verimem facts undo <op_id>`. ⚠️ **E il giudizio «il nuovo non nega il vecchio» è MIO, fatto
+leggendo**: non ho un righello oggettivo per questo, e chi ha scritto quei topic sa cose che io non
+so. **Se per loro il ritiro era voluto, il mio giudizio non conta.**
+⚠️ **Due numeri che NON vanno fatti coincidere**: i **54** misurati col criterio lessicale e i **~34**
+che avevo *stimato* poco prima applicando al totale la quota del `41` (10,2%). **Righelli diversi,
+numeri diversi**; il secondo è estrapolato, il primo misurato.
+🔎 **rifalli con**: `ws6-cosa-scade-dalla-finestra-di-undo.py` (le scadenze) ·
+`ws6-quali-ritiri-sono-sbagliati.py` (la lista ordinata per tempo residuo).
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
