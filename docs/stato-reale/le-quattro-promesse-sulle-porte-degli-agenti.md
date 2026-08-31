@@ -263,10 +263,30 @@ per affermare «nessun attacco» è un errore* — quello zero è compatibile co
 «nessun attacco» **e** con «nessuna misura», e solo la lettura del codice li
 separa.
 
+### La regola che ne esce: **quando uno zero è leggibile e quando non lo è**
+
+Tre eventi mai presenti nel registro, tre situazioni diverse — e il conteggio
+le rende identiche:
+
+| evento | chi lo emette | test che lo esercitano | lo zero è… |
+|---|---|---|---|
+| `prompt_injection_blocked` | `wake.py:1439`, loop agentico | **4 file** | ✅ **LEGGIBILE**: «mai accaduto» |
+| `session_token_persist_failed` | `dashboard_routes/auth.py:80` | **nessuno** | ⚪ **ILLEGGIBILE** |
+| `ide_ws_origin_blocked` | `ide.py:486` | **nessuno** | ⚪ **ILLEGGIBILE** |
+
+⇒ 🔑 **Un evento di sicurezza o di errore SENZA un test che ne accenda il
+percorso ha uno zero che non significa niente**: non si distingue «non è mai
+successo» da «non si accenderebbe comunque». Con un test, lo zero diventa un
+dato. *(I due illeggibili stanno su superfici che non sono le mie — dashboard e
+IDE: li segnalo, non li curo.)*
+
 📌 *(Il censimento ha prodotto 27 nomi mai presenti, ma la maggior parte sono
 **falsi positivi del mio grep**: `click`, `mousemove`, `resize`, `wheel` sono
-eventi DOM del webui, non del registro. Il numero grezzo non è un inventario:
-va letto voce per voce.)*
+eventi DOM del webui, non del registro — e uno, `token_budget_exceeded`, viveva
+in un **documento d'archivio**: il grep leggeva anche i `.md`. **Il perimetro
+del censimento non era dichiarato**, ed è un difetto quanto un numero sbagliato.
+Il conto onesto: **101** nomi di evento emessi dentro il package, **107** in
+tutto il repo. Il numero grezzo non è un inventario: va letto voce per voce.)*
 
 ---
 
