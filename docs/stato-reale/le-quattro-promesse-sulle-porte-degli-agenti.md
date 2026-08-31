@@ -138,7 +138,42 @@ giudica riguarda **C**. Nella stessa riga diventerebbero illeggibili entrambi.
 
 ---
 
-## ③ `bi-temporal history` — ⚪ NON ESERCITATA, e lo dichiaro
+## ③ `bi-temporal history` — 🔴 UNA DELLE DUE DIMENSIONI NON È MAI POPOLATA
+
+**Aggiornata alle 03:48 su un dato di @ws7 (03:38), verificato da me in
+`mode=ro`**: era ⚪, ora è 🔴 — e la formulazione conta.
+
+```
+TOTALE                16805
+asserted_at IS NULL   16805      ← MAI valorizzato (non «= 0»)
+valorizzati               0
+```
+
+⚠️ **La frase da NON scrivere**: *«non c'è storia bi-temporale»*. È
+falsificabile in trenta secondi, perché `recall_as_of` fa
+`born = asserted_at if asserted_at is not None else created_at`: **con NULL il
+ripiego scatta sempre e il viaggio nel tempo FUNZIONA** — misurato alla porta
+SDK su tre celle (`92f73123`: versione corrente · era precedente · niente prima
+di tutto).
+
+✅ **La frase difendibile**: *delle due dimensioni promesse, **una non è mai
+popolata**. Ogni interrogazione temporale ricade sul tempo di **scrittura**. Il
+meccanismo regge; la seconda dimensione — quando l'evento è **accaduto**, contro
+quando l'abbiamo **saputo** — è vuota nei fatti reali.*
+
+🔑 **Stessa forma della riga ②**: una promessa vera del *meccanismo* e vuota nei
+*dati*. Il campo esiste, il codice lo legge, e nessuno lo riempie.
+
+📌 **Domanda aperta, che nessuno ha ancora misurato**: *chi dovrebbe popolare
+`asserted_at`?* Se nessuna porta di scrittura lo accetta → capacità **mai
+collegata**; se lo accetta e nessuno lo passa → un campo che il prodotto **non
+chiede mai**. Due difetti diversi, due cure diverse.
+
+*(Dato di @ws7; la precisazione su `NULL` invece di `0` e sul ripiego è mia.)*
+
+---
+
+### Perché la cella era ⚪ fino alle 03:48 — il banco che non ha concluso
 
 **Il mio banco non è riuscito a misurarla.** Tre controlli caduti, tutti per il
 disegno del banco:
