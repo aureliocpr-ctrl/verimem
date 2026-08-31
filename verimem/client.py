@@ -1846,6 +1846,16 @@ class Memory:
         # l'ultima parola dimezza i falsi silenzi (misurato). Cambia che
         # il dossier lo dice. È la stessa classe dello `0.0` del ranking
         # degradato: un numero con la forma di una misura che significa altro.
+        # ⚠️ COSA DICE DAVVERO, misurato il 2026-08-31: QUALE pavimento
+        # deciderebbe, non che uno ABBIA filtrato. Con il pavimento SPENTO
+        # (`min_relevance` risolto a 0.0 — cioe' `ENGRAM_MIN_RELEVANCE=off`,
+        # che la docstring di `env_floor` dichiara come via legittima) questo
+        # campo vale ancora `"cosine"`, e il participio del nome («applied»)
+        # promette piu' di cosi'. Il valore NON e' cambiato di proposito: chi
+        # si dirama su queste due stringhe non deve trovarne una terza senza
+        # che sia stato deciso insieme. Chi vuole sapere se un pavimento abbia
+        # DAVVERO tagliato legge `min_relevance` nella stessa ricevuta: e' il
+        # numero che ha filtrato, oppure zero.
         report["floor_applied_by"] = (
             "cross_encoder" if want_ce_floor else "cosine")
         # IL DOSSIER DICHIARA ANCHE LA FONDATEZZA, non solo la rilevanza.

@@ -86,3 +86,39 @@ def test_il_numero_riportato_resta_quello_di_prima(listino):
                           min_relevance="auto")
     assert isinstance(rep.get("min_relevance"), float)
     assert rep.get("min_relevance") > 0.0
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2026-08-31: IL CASO CHE MANCAVA — il pavimento SPENTO.
+# Le celle qui sopra presidiano QUALE pavimento decide (cross-encoder con
+# `auto`, coseno con un numero, e il default secondo l'ambiente). Nessuna
+# chiede cosa dica il campo quando NESSUN pavimento e' in vigore, che e' una
+# via legittima e dichiarata (`ENGRAM_MIN_RELEVANCE=off`, docstring di
+# `env_floor`: «off/0 keeps the old permissive behaviour»).
+# Misurato: vale ancora "cosine". ⇒ Il campo dice QUALE pavimento
+# deciderebbe, non che uno ABBIA filtrato — e il participio del nome
+# («applied») promette di piu'. Il valore NON e' stato cambiato: chi si dirama
+# su queste due stringhe non deve trovarne una terza senza una decisione
+# collegiale. Questa cella FISSA il comportamento e lo rende leggibile a chi
+# arriva dopo, invece di lasciarlo scoprire come l'ho scoperto io.
+# 📌 Chi vuole sapere se un pavimento abbia DAVVERO tagliato legge
+# `min_relevance` nella stessa ricevuta.
+
+
+def test_col_pavimento_SPENTO_il_campo_dice_ancora_coseno(listino):
+    """Il comportamento fissato, e la ragione per cui non e' un difetto da
+    curare qui: cambiarlo e' una decisione sul CONTRATTO della ricevuta."""
+    rep = listino.explain("quanto costa il piano annuale", min_relevance=0.0)
+    assert rep.get("floor_applied_by") == "cosine", sorted(rep)
+    # ⚠️ LA META' CHE RENDE LEGGIBILE L'ALTRA: il numero accanto dice la
+    # verita', ed e' li' che si legge se un pavimento abbia filtrato.
+    assert float(rep.get("min_relevance") or 0.0) == 0.0, rep.get("min_relevance")
+
+
+def test_con_un_pavimento_VERO_il_numero_accanto_lo_dice(listino):
+    """⚠️ IL CONTROLLO CHE DEVE POTER FALLIRE: se `min_relevance` valesse zero
+    anche con un pavimento in vigore, il rimando della cella qui sopra —
+    «guarda il numero» — manderebbe il lettore su un campo che non distingue
+    niente."""
+    rep = listino.explain("quanto costa il piano annuale", min_relevance=0.42)
+    assert float(rep.get("min_relevance") or 0.0) == pytest.approx(0.42), rep
