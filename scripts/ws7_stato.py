@@ -31,6 +31,9 @@ REGISTRO = RADICE / "docs" / "stato-reale" / "00-ESAME.md"
 CELLA = re.compile(r"^\| (LANT-\d+[a-z]?) \|")
 #: i verdetti che segnalano un lavoro NON concluso
 APERTI = ("🟡", "⛔")
+#: i simboli che la legenda usa come VERDETTO (stessa lista di
+#: `conta_celle_esame.py`, che da sempre prende il PRIMO della colonna).
+SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫📋]")
 
 
 def _riga(r: str) -> tuple[str, str, str]:
@@ -67,13 +70,27 @@ def main() -> int:
     #: gli APERTI non stanno in una lista a parte che invecchia: sono le celle
     #: con un verdetto 🟡 o ⛔ nel registro. Se una si chiude, sparisce da qui
     #: SENZA che nessuno debba ricordarsi di cancellarla.
-    #: ⚠️ LIMITE DEL CRITERIO, dichiarato: 🟡 non significa «aperta» — significa
+    #: 🔴 31/08 02:05 — LA VERSIONE PRECEDENTE CERCAVA IL SIMBOLO OVUNQUE NEL
+    #: VERDETTO (`any(s in col6 ...)`) e contava aperte le celle che usano ⛔ o
+    #: 🟡 come MARCATORE RETORICO in mezzo al testo — «⛔ NON affermo che…»,
+    #: «⚠️ il limite». Misurato accanto al vecchio: **26 contro 20, sei celle
+    #: gonfiate** (`LANT-86 103 112 114 127 128`), fra cui DUE chiuse 🔴 dieci
+    #: minuti prima. ⇒ Il verdetto e' il **PRIMO** simbolo della colonna, come
+    #: `conta_celle_esame.py` fa da sempre: **due miei strumenti leggevano la
+    #: stessa colonna con due regole diverse**, e quello che consulto a ogni
+    #: turno era il piu' permissivo.
+    #: ⚠️ LIMITE CHE RESTA, dichiarato: 🟡 non significa «aperta» — significa
     #: «non completamente verde». Molte 🟡 sono CHIUSE con un limite dichiarato
     #: (es. una misura valida che non si generalizza). ⇒ **Questa lista e' una
     #: lista di COSE DA GUARDARE, non di lavori da finire**: separarle richiede
     #: di leggerle, e un criterio sintattico su un fenomeno semantico sbaglia in
-    #: entrambe le direzioni (`LANT-104`).
-    aperti = [r for r in mie if any(s in r.split("|")[6] for s in APERTI)]
+    #: entrambe le direzioni (`LANT-104`). La cura sopra toglie il rumore
+    #: SINTATTICO; quello semantico non lo tocca nessun regex.
+    def _e_aperta(riga: str) -> bool:
+        m = SIMBOLO.search(riga.split("|")[6])
+        return bool(m) and m.group(0) in APERTI
+
+    aperti = [r for r in mie if _e_aperta(r)]
     print(f"\n  celle MIE non-verdi (🟡/⛔) — da GUARDARE, non necessariamente da finire: {len(aperti)}")
     for r in aperti[-6:]:
         ident, domanda, _ = _riga(r)
