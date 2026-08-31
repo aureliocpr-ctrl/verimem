@@ -14086,3 +14086,117 @@ distanza, il proprio lavoro è lavoro di un altro.**
 *(Ciò che resta valido della cella sopra: il write gate **usa 40**, verificato a runtime
 in questa sessione, e il commento sopra `_ANSWER_VERIFY_THRESHOLD` nomina una soglia che
 il codice rifiuta dal 18/07. Ciò che va tolto: la pretesa che sia una scoperta di stanotte.)*
+
+---
+
+## 2026-08-31 03:40 — ws1 · IL GIUDICE GRATUITO NON È DI SECONDA CLASSE — E IL «SOLO IL 45% DI ALLUCINAZIONI FERMATE» NON MISURA IL GATE, MISURA LE ETICHETTE
+
+**Livello** `grounding_gate.fact_grounding_score_ex(None, source, claim)` — il write gate
+per chi **non passa un `llm`** · **Perimetro** HaluEval QA heldout, **n_pos=60 n_neg=60**,
+seed 42, soglia 40,0, inglese · **Istante** 2026-08-31 03:27–03:35 ·
+**Regime** dichiarato per intero sotto · `verimem.__version__` **0.7.6**, cwd = scratchpad.
+
+**Paga il debito dichiarato alle 03:05**: «*ho misurato che il giudizio AVVIENE, non che
+FUNZIONA — i 6/6 erano tutti claim veri*».
+
+### O1 prima di costruire: due banchi di casa esistono, e nessuno copre questa cella
+
+- `benchmark/moat_external_judge.py` fa **già** HaluEval faithful-vs-hallucinated su
+  `fact_grounding_score_ex` — ma alla riga 107 **forza**
+  `os.environ["ENGRAM_GROUNDING_BACKEND"] = "claude"`, col commento «*Force the LLM judge
+  path (not the local CE) — this bench measures the judge*».
+- `benchmark/halumem_admission_sweep_local_ce.py` misura il CE **locale**, ma su
+  **HaluMem** (clean = memory point dell'utente / noise = di un altro utente): un altro
+  compito. Il suo docstring dice il punto meglio di me: «*la soglia di ammissione spedita
+  (40) è calibrata su un giudice diverso da quello che giudica*».
+
+⇒ **La cella vuota era: il giudice LOCALE su HaluEval.** L'ho riempita riusando la
+**costruzione identica** di `load_halueval` (copiata, non reinventata), così i due numeri
+stanno sugli **stessi item, stesso seed**.
+
+### 🟢 VERDE 1 — Il giudice gratuito regge il confronto con quello a pagamento
+
+| giudice | auroc | veri ammessi | allucinazioni fermate |
+|---|---|---|---|
+| **locale (CE, nessun `llm`, nessuna rete)** | **0,8197** | **0,9667** | **0,5000** |
+| llm (claude-sonnet-5, banco di casa 17/07) | 0,8139 | 0,9000 | 0,4500 |
+
+**Appaiato sugli stessi item**, che è l'unico confronto lecito:
+
+```
+allucinazioni fermate SOLO dal locale: 9
+allucinazioni fermate SOLO dall'llm:   6      9 contro 6 su 15 discordi -> p = 0,6056
+VERI ammessi SOLO dal locale: 4 | SOLO dall'llm: 0
+```
+
+⇒ **dentro il rumore: NON dico «il locale è migliore».** Dico ciò che il dato sostiene:
+**non è peggiore.** Per chi installa senza `llm` — e senza pagare nulla — **la garanzia
+non è di seconda classe.** ⚖️ **Cade la mia predizione P-FALSI** («il locale blocca meno
+del 45%»): blocca il 50%.
+
+### 🟢 VERDE 2 — E il «solo la metà fermate» è un pavimento del DATASET, non del gate
+
+Entrambi i giudici fermano ~metà delle `hallucinated_answer`. Prima di leggerlo come
+difetto ho fatto il controllo che **si può fare senza rete**, ed è esattamente ciò che il
+moat giudica: **la `knowledge` accanto sostiene quella frase?** Ispezionate a mano le
+**12 ammesse col punteggio più alto**, con fonte e frase stampate per intero:
+
+```
+#53  «John Belushi met Dan Aykroyd at … The Second City»
+     FONTE: «…whom he met while they were both working at Chicago's The Second City
+             comedy club»                                              -> SOSTENUTA
+#43  «"You're All I Need" was released in May, along with the rest of Girls, Girls, Girls»
+     FONTE: «…released on May 15, 1987»                                -> SOSTENUTA
+#11  «Auguste Laurent discovered benzene's cousin, carbolic acid»
+     FONTE: «…his discoveries of anthracene, phthalic acid, and carbolic acid» +
+            «Phenol, also known as carbolic acid»                      -> SOSTENUTA
+#57  «RAAF Base Edinburgh, located in Australia»  (= la risposta VERA + una precisazione
+     vera dalla fonte)                                                 -> SOSTENUTA
+#35  «BBN Technologies was awarded the Franklin Institute Medal»
+     FONTE: «the Franklin Institute awarded the firm the Frank P. Brown Medal» -> SOSTENUTA
+#33  «30 Hudson Yards is nicknamed "The Billionaire Building"»
+     FONTE: il nickname è di **One57**                                 -> FALSA, davvero
+```
+
+**Su 12 ispezionate, dieci sono sostenute dalla fonte.** ⇒ **`confab_block_rate` su
+HaluEval risponde a una domanda diversa da quella del write gate**: l'etichetta chiede «è
+la risposta *precisa* alla domanda?», il moat chiede «la fonte *sostiene* questo claim?».
+Una frase vaga ma vera («*the father … was Duke of Florence for many years*») è una cattiva
+**risposta** e un buon **fatto**. ⇒ **il 45% e il 50% sono PAVIMENTI**, e vanno letti così
+per **entrambi** i giudici. *(Il 45% è il numero che il banco di casa pubblica in
+`benchmark/results/moat_external_judge_sonnet_2026-07-17.json`: chiunque lo porti in una
+vetrina va avvisato di questo.)*
+
+### ⚠️ L'osservazione che NON nascondo, e va nel verso opposto ai due verdi
+
+**L'unica falsità netta rispetto alla fonte fra le 12 (#33) è ammessa dal locale a
+99,977 e bloccata dall'llm a 0,0.** È **un caso**, non una tendenza: lo scrivo perché è
+esattamente il tipo di dato che un banco favorevole tende a non riportare. Con n=1 non
+sostiene nulla; con 12 casi ispezionati e 1 falsità vera, **la popolazione utile di questo
+banco per misurare il blocco è troppo piccola**, ed è il suo limite principale.
+
+### Regime, per intero (presidio ①: poppa TUTTE le variabili e dichiarale)
+
+```
+HIPPO_ENCODE_DELEGATE_ONLY  = '1'   -> POPPATA          ENGRAM_MIN_RELEVANCE = None
+ENGRAM_DATA_DIR = 'C:\Users\aurel\.engram' -> POPPATA    ENGRAM_GROUNDING_BACKEND = None
+ENGRAM_LOCAL_GATE_MODEL = None   VERIMEM_DATA_DIR = None
+ENGRAM_GROUNDING_THRESHOLD = None    ENGRAM_GROUNDING_WRITE_THRESHOLD = None
+ENGRAM_ENCODE_SERVICE imposto a '0'  -> il daemon NON è interrogato: so QUALE giudice gira
+backend 'claude' + llm=None -> ramo LOCALE   |  backend che ha giudicato: {'local'}
+modello C:\Users\aurel\.engram\models\local_gate_ce_v2  (pesi True)
+judge_state() 'ready' in testa e in coda | regime encode ok | soglia del prodotto 40.0
+```
+
+### Cosa NON prova
+
+n=60+60 su **un** dataset in **inglese**: gli intervalli a questo n sono ±~12 punti, e
+**nessuno dei tre confronti con l'llm esce dal rumore**. Le 12 ispezionate sono **le più
+alte**, cioè una coda scelta: la proporzione «10 su 12 sostenute» **non si estende** alle
+30 ammesse senza ispezionarle tutte. Non ho verificato la **verità nel mondo** di quelle
+frasi (niente rete) — solo se la **fonte le sostiene**, che è ciò che il moat giudica. Il
+riferimento llm è di luglio e **non l'ho rieseguito** (O4): lo cito come numero del banco
+di casa, non come mia misura.
+
+**Banchi**: `porta_moat_locale_halueval.py`, `porta_etichette_halueval.py`, dati in
+`moat_locale_halueval.json` (scratchpad di sessione). **Io misuro, non curo.**
