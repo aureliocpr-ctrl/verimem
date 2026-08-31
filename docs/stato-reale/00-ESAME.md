@@ -14599,3 +14599,95 @@ nei miei banchi: li segnalo per **forma del codice**, non per osservazione.
 
 **Banchi**: nessuno nuovo — `git grep`, `sed`, `local_nli_available()`, e la rilettura di
 `prime.out`. **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 04:48 — ws1 · UNA DELLE QUATTRO «OPT OUT» DI `LANT-127` HA UN TERZO STATO: SU UN'INSTALLAZIONE FRESCA È SPENTA, E IL CRITERIO È UN FILE CHE UN ALTRO SOFTWARE PUÒ AVER SCARICATO
+
+**Livello** `anti_confab_gate._semantic_conflict_mode()`, sorgente **e** esecuzione ·
+**Perimetro** `main` (0.7.6) **e `v0.7.0`, la stessa versione che `LANT-127` ha esaminato**
+· **Istante** 2026-08-31 04:36–04:46 · **Regime** lettura + **due chiamate
+filesystem-only** (`local_nli_available()` non importa torch e non carica nulla) ·
+RAM 4,89 GB, nessun modello caricato · `verimem.__version__` **0.7.6**.
+
+### Il dato, misurato nei due regimi sulla stessa macchina
+
+```
+ENGRAM_SEMANTIC_CONFLICT = None    ENGRAM_LOCAL_NLI_MODEL = None
+
+REGIME A — questa macchina (cache HF di Aurelio)
+   local_nli_available()      = True
+   _semantic_conflict_mode()  = 'enforce'
+
+REGIME B — utente fresco (ENGRAM_LOCAL_NLI_MODEL su un nome inesistente)
+   local_nli_available()      = False
+   _semantic_conflict_mode()  = 'off'
+```
+
+### 🟢 Prima il verde: è una scelta DELIBERATA e scritta
+
+`anti_confab_gate.py:356-363` — e **le stesse righe sono in `v0.7.0`**:
+
+```
+# UNSET → AUTO (0.7.0): the tier enforces iff the local NLI model is
+# already installed (pure-filesystem check, no load) — shipped capability
+# = enabled capability. A fresh install without the model pays nothing.
+```
+
+**Non è una svista**: il prodotto ha scelto di non far pagare a un'installazione fresca il
+costo di un modello che non ha. E `local_nli_available()` è **onesto e cheap**: check puro
+di filesystem che rispetta `HF_HUB_CACHE` / `HF_HOME`, senza importare torch.
+
+### 📌 MA CORREGGE UNA RIGA DI `LANT-127`, e l'ho verificato sulla SUA versione
+
+`LANT-127` (sweep sulle 11 env del README v0.7.0) classifica
+**`ENGRAM_SEMANTIC_CONFLICT` fra le «4 opt out»** — «*la capacità è **ACCESA** e l'env la
+spegne*». **Nella stessa `v0.7.0`, unset non è "accesa": è AUTO**, e l'auto dà `off`
+quando il modello NLI non è in cache — cioè **su un `pip install` pulito**.
+
+⚠️ **La conclusione GENERALE di `LANT-127` non cade, e va detto**: il censimento resta
+valido (nessun opt-in fra le 11, il README è sistematicamente esplicito sui default, e il
+suo reperto sull'audit trail resta intero). **Cade la classificazione di UNA riga su 11**,
+e per una ragione che quello sweep non poteva vedere leggendo il README: **il terzo stato
+non sta nel README, sta in un ramo del sorgente**.
+
+### 🔑 E LA FORMA È NUOVA: non «spenta per default», ma «accesa a seconda del disco altrui»
+
+Il registro conosce «**una capacità spenta non emette segnale**» (righe 10848, 11024,
+11194). Qui la forma è **un'altra**, e più insidiosa: il layer non è spento *da noi* —
+**si accende o si spegne in base a un file nella cache HF, che verimem non controlla**.
+La cache di questa macchina contiene `BAAI`, `Qwen`, `SWE-bench`, `snli`, `squad_v2`: è la
+cache di chi ha scaricato mezzo mondo. **Il modello NLI (`MoritzLaurer/DeBERTa-v3-large`)
+può esserci perché un ALTRO progetto lo ha tirato giù.**
+⇒ **Due utenti con lo stesso `pip install verimem` hanno un moat semantico diverso, e la
+differenza la decide software di terzi.** E `verimem warmup` scarica **solo** il gate CE
+(`ensure_gate_model`, `cli.py:594`): il NLI **non è mai scaricato dal prodotto**.
+
+### 🔴 E NESSUNA SUPERFICIE LO RIFERISCE
+
+```
+git grep "_semantic_conflict_mode()" -- verimem
+  anti_confab_gate.py:392  (definizione) · :429 · :2083   ← usato SOLO dentro il gate
+git grep "semantic_conflict\|local_nli" -- verimem/doctor.py verimem/cli.py
+  (vuoto)
+```
+
+`verimem doctor` — eseguito da me alle 02:35 — **non nomina questo layer**. Non c'è un
+`judge_state()` per L3-semantico, non c'è una riga sulla ricevuta che dica «*non girato:
+modello assente*» come fa `moat='not_run:no_judge'` per il moat.
+⇒ **il prodotto è bravissimo a dichiarare l'assenza del giudice di grounding, e muto
+sull'assenza del giudice semantico.** È lo stesso prodotto, a due porte diverse.
+
+### Cosa NON prova
+
+**Non ho eseguito il banco a due scritture contraddittorie** nei due regimi: so che il
+*mode* cambia, **non ho misurato che un fatto contraddittorio passi davvero** in `off` e
+venga fermato in `enforce`. È la prova che manca, costa il caricamento del DeBERTa-large
+(~1,6 GB) e va fatta quando la macchina è libera — **la dichiaro come il prossimo debito**.
+`REGIME B` è simulato puntando `ENGRAM_LOCAL_NLI_MODEL` a un nome inesistente: è la via
+che il codice stesso prevede, **ma non è un'installazione fresca vera** (quella non posso
+farla senza rete). Non ho verificato se il README 0.7.6 dica qualcosa di diverso dal
+v0.7.0 su questa env: ho guardato il **sorgente** in entrambe le versioni, non il testo.
+
+**Banchi**: nessuno nuovo — due chiamate filesystem-only e `git show v0.7.0:…`.
+**Io misuro, non curo.**
