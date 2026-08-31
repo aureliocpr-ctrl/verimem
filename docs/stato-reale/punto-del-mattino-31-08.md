@@ -71,7 +71,8 @@ branch (primo run della sua storia, **creato 00:40, ancora in coda alle
   medio su 228 fatti appaiati 114+114, popolazione italiana con
   fonti-output) — il livello dell'acqua, stesso ordine del 29,3% del
   benchmark. E l'attribuzione «è il moat che butta i veri» era una lettura
-  del solo campo — l'aritmetica vera (ws4, W7-93/95): **5/88 li boccia solo
+  del solo campo — i numeri sono di ws7 (LANT-109), l'aritmetica del lato
+  opposto di ws4: **5/88 li boccia solo
   il moat, 15/88 solo un layer, 68/88 ENTRAMBI** ⇒ nessuna cura di un lato
   libera la coda (solo-layer ne libera il 17%, solo-moat il 5,7%): i 68
   doppi esigono la coppia.

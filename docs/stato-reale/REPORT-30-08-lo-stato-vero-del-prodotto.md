@@ -92,9 +92,12 @@
   [2,5–12,6]; 15/88 li boccia solo un layer, 68/88 ENTRAMBI — LANT-109 +
   aritmetica W7-93/95) ⇒ nessuna cura di un lato solo libera la coda:
   solo-layer il 17%, solo-moat il 5,7%, i 68 doppi esigono la coppia.
-  Il livello dell'acqua sul corpus VIVO: ~1 fatto su 5 non ripasserebbe
-  la porta di oggi (18,4% medio su popolazione italiana con fonti-output,
-  W7-89 — stesso ordine del 29,3% del benchmark).
+  Il livello dell'acqua: ~1 fatto su 5 non ripasserebbe la porta di oggi
+  (18,4% medio su 228 fatti appaiati 114+114, popolazione italiana con
+  fonti-output, W7-89 — il 18,4% è la media di un banco APPAIATO, che pesa
+  le due classi 50/50; nel corpus pesano 1,74% e 98,26%, quindi la stima
+  pesata è 19,3% e la lettura «~1 su 5» regge in entrambe le letture;
+  stesso ordine del 29,3% del benchmark).
 - **Il disaccordo interno non è consegnato**: `withheld_despite_judge` esiste,
   è derivato e presidiato, ma vive nel journal — 323 write (2,6% delle
   scritture; 21,4% dei GIUDICATI del corpus) dove giudice e layer hanno detto
