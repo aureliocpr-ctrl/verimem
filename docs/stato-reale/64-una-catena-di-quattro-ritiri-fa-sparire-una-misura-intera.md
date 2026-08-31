@@ -130,11 +130,18 @@ su viaggi, animali e abbigliamento.
 Misurato su tutto il corpus:
 
 ```
-fatti superseduti in tutto                                    2661
+fatti superseduti in tutto                                    2289   ← rettificato
   da un sostituto che ne ha cancellato UNO SOLO                474
   da sostituti che ne hanno cancellati 5 O PIÙ                1687
   il più vorace, da solo                                       389
 ```
+
+> ⚠️ **Rettifica (08:02): la prima riga diceva 2661 e non si riproduce.** Rilette
+> le stesse query: `superseded_by IS NOT NULL` dà **2289**, e la somma dei
+> conteggi per sostituto dà **2289** — coincidono. Gli `undo` eseguiti sono
+> **zero**, quindi il numero non può essere *calato*: il 2661 era un mio errore
+> isolato. **Le tre righe sotto erano giuste** (474 + 1687 + i sostituti da 2-4
+> tornano con 2289, non con 2661), e nessuna conclusione dipendeva dal totale.
 
 **Sembrava enorme. Poi il controllo, prima di pubblicare.** Il sostituto da 389
 ha topic `handoff/pre-compact-auto-hook-*`, e **i 389 che ha cancellato sono essi
