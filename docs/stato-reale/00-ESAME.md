@@ -13044,6 +13044,51 @@ nell'altro braccio · **n=24 e n=16**: reggono i divari da 60-80 punti, **non** 
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-cross-lingua.py`.
 *(doc `57`, e riquadro di rettifica dentro al `55`)*
 
+**55ª `58` (banco) — chiudo DUE limiti miei con una popolazione sola, e il secondo resta APERTO
+perché il mio controllo non discriminava. E un A/B involontario sul gate: grounding 2,55 → 99,98
+senza cambiare né il claim né l'evidenza.**
+I limiti: il `57` dichiarava *«i fatti sono tutti in italiano, la direzione opposta non l'ho
+misurata»*; il `55` *«i fatti sono I MIEI, densi di numeri»*. I **105 fatti inglesi** del corpus li
+chiudono entrambi — **altra lingua, altro registro** (prosa discorsiva di un banco a personaggi
+sintetici), **scritti da altri**. Criterio di lingua: l'euristica a parole funzionali **già in uso**
+in `ws6-la-soglia-in-parole-e-la-lingua.py`, non una nuova.
+✅ **① LA SIMMETRIA REGGE** — 16 fatti, appaiato, `k=10`, domande **senza i nomi propri**:
+
+| la domanda | ritrovati | al 1º posto | sovrapposizione |
+|---|---|---|---|
+| in **inglese** (la lingua del fatto) | 9/16 = **56,2%** | 56,2% | 89,4% |
+| la **stessa in italiano** | 8/16 = **50,0%** | 37,5% | **2,7%** |
+
+**La lingua costa 6,2 punti**, contro i **4,2** dell'altra direzione ⇒ **il `57` non era un artefatto
+dell'aver preso solo fatti italiani.** 📉 **E il rango paga più del ritrovamento anche qui** (56,2 →
+37,5; di là 87,5 → 62,5): **due popolazioni diverse, stessa forma — attraversa per TROVARE, fatica a
+ORDINARE.** ⚠️ **Con sovrapposizione 2,7%** — quasi nessuna parola in comune — **si ritrova ancora
+metà dei fatti**: la conferma più netta che **non è il lessico di superficie a decidere.**
+🔴 **② MA IL LIVELLO CROLLA — 56,2% contro 91,7% sui fatti miei, 35 punti — E LA CAUSA NON L'HO
+ISOLATA.** Due candidate: **(a)** ambiguità (105 fatti quasi identici su due personaggi) · **(b)**
+registro discorsivo. **Braccio di controllo**: la stessa domanda inglese **col nome proprio davanti**
+⇒ **9/16 = 56,2%, gli stessi nove fatti, identico.** ⛔ **Sembrerebbe escludere (a) e NON lo fa**: il
+nome compare in **quasi tutti** i 105 fatti, quindi **aggiungerlo non disambigua niente**. **Il
+controllo era mal progettato per la domanda che gli facevo** ⇒ **il 56,2% resta senza spiegazione e
+lo lascio senza**: un controllo che non discrimina **non diventa una prova** per la tesi rimasta in
+piedi — sarebbe il «criterio cieco sulla dimensione che il decisore usa».
+🧪 **③ E UN A/B INVOLONTARIO SUL GATE, a parità di claim e di evidenza.** Salvando i fatti, uno è
+finito **quarantinato da `moat` con grounding 2,55** (gli altri della stessa serie: 99,98). Il claim
+univa **due parti separate** della source — *«fatti INGLESI nel banco: 16»* in un punto, *«la STESSA
+domanda in ITALIANO … trovati 8»* in un altro: **il gate non COMPONE.** Aggiunta alla source **una
+riga di prosa che enuncia il legame** (i 16 fatti sono inglesi, e quella riga riporta le domande
+italiane su quei 16) ⇒ **grounding 2,55 → 99,98, ammesso.** 📖 **E la regola era già scritta in
+memoria** — *«source = output grezzo **più una riga di prosa che lega**»* — **non applicata**:
+`M4`, applicazione mancante, non regola mancante.
+📌 **PROVATO**: la lingua costa poco in **entrambe** le direzioni (4,2 e 6,2) · il **rango** ne
+risente molto di più (−25 e −19) · con **2,7%** di sovrapposizione si ritrova **metà**.
+❌ **NON PROVATO**: perché su questa popolazione il livello sia 56,2%. Serve **un corpus discorsivo i
+cui fatti siano distinguibili fra loro**, cioè non un banco a due personaggi.
+📌 **ALTRI LIMITI**: n=16 · domande e traduzioni **scritte da me** · `k=10` · il criterio di lingua
+**scarta** gli ambigui invece di classificarli.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-direzione-opposta.py`.
+*(doc `58`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
