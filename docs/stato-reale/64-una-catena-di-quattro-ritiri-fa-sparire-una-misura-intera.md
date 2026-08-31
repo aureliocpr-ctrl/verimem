@@ -80,6 +80,52 @@ saperlo era leggere.
 - ⛔ **Nessun restore.** Non sono fatti miei e richiede mandato. Gli `op_id` sono
   sopra, e restano ~87 ore.
 
+## ⑦ Non solo catene: VENTAGLI — e il numero grosso è quasi tutto legittimo
+
+Leggendo gli ultimi candidati è saltata fuori una forma diversa dalla catena: un
+**ventaglio**. Un solo fatto — *«Christopher Anderson launched mobility programs
+for seniors»* — aveva superseduto **otto fatti diversi**, su persone e argomenti
+scorrelati (Steven Miller sugli investimenti, Donna sul tè, un reddito mensile);
+un altro — *«Games I like to play: Board games»* — ne aveva cancellati quattro,
+su viaggi, animali e abbigliamento.
+
+Misurato su tutto il corpus:
+
+```
+fatti superseduti in tutto                                    2661
+  da un sostituto che ne ha cancellato UNO SOLO                474
+  da sostituti che ne hanno cancellati 5 O PIÙ                1687
+  il più vorace, da solo                                       389
+```
+
+**Sembrava enorme. Poi il controllo, prima di pubblicare.** Il sostituto da 389
+ha topic `handoff/pre-compact-auto-hook-*`, e **i 389 che ha cancellato sono essi
+stessi dei «PRE-COMPACT MASTER FACT» della stessa catena**. Verificato: **su 40
+cancellati controllati, 40 hanno l'incipit dentro il master.** È un
+**consolidamento voluto** — ogni checkpoint supersede i precedenti e **ne
+contiene il contenuto**. Non è un difetto.
+
+| categoria del sostituto | sostituti | fatti cancellati |
+|---|---|---|
+| **consolidamenti** (`handoff/`, `master/`, `diary/`, `auto-MASTER`) | 11 | **1546** |
+| **altri** | 12 | **141** |
+
+⇒ **l'allarme passa da 1687 a 141**, e dei 141: **69** da un solo fatto di test
+(`test/bug8/pytest-verif`), **33** da eventi ripetuti di `shellai` (plausibili
+duplicati), **~39 non spiegati** — fra cui i due del banco `halumem` trovati
+leggendo (8 e 7 fatti).
+
+✅ **Cosa resta vero**: **il meccanismo esiste**. Un fatto *può* cancellarne otto
+che parlano di cose diverse — **l'ho letto, non dedotto**. Che l'aggregato sia
+quasi tutto legittimo **non rende legittimi quegli otto**.
+⛔ **Cosa non dico più**: *«1687 fatti cancellati in massa»*. Sarebbe stato
+**vero come numero e falso come allarme**.
+
+🪞 **Seconda volta in un'ora che un controllo mi ferma prima di pubblicare** — la
+prima era la tesi sulla vicinanza temporale (§⑥). **In entrambi i casi il numero
+era vero e la lettura sbagliata**, che è la forma più difficile da smentire per
+chi legge: il dato c'è.
+
 ## ⑤ Rettifica: 34 dei 54 erano già quarantinati, e il presidio l'avevo scritto io
 
 **@ws7 ha segnalato** che tre dei quattro casi che avevo dichiarato urgenti erano
