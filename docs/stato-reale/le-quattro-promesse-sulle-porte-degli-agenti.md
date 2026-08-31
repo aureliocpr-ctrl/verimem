@@ -413,18 +413,34 @@ tutto il repo. Il numero grezzo non è un inventario: va letto voce per voce.)*
 Letto da `events.jsonl` **più il ruotato `.1`** (leggere solo il primo misura la
 coda) alle **04:05 del 31/08**, in sola lettura.
 
-### Il numero: **13,0% delle quarantene colpisce fatti che il giudice aveva validato**
+### ⚠️ Le tre cautele — e ora stanno DAVVERO prima del numero
 
-| | |
-|---|---|
-| `flow.write` totali | 11415 |
-| di cui **giudicati** (`grounding_score` non nullo) | 7375 |
-| di cui **quarantinati / rifiutati** | 3102 |
-| **trattenuti NONOSTANTE il giudice** | **404** |
-| — sui giudicati | 5,5% |
-| — sui quarantinati | **13,0%** |
+*(Correzione delle 05:15: il titolo diceva già «vanno lette PRIMA del numero» e
+il blocco stava **dopo**. Un analista lo vede in un colpo d'occhio, e la frase
+che dichiara l'ordine giusto mentre lo viola vale meno di zero.)*
 
-**Chi li ha trattenuti**: `L4.1` **271 (67%)** · `L4.2` 136 · `L1.15` 49 ·
+1. **Non sono 407 errori.** Il gate trattiene anche per ragioni che il giudice
+   non copre (auto-affermazione, iniezione, forma del numero). È la
+   **popolazione da esaminare**, non un conteggio di falsi positivi. Il team lo
+   sa in forma qualitativa (`anti_confab_gate.py:2512` cita casi con grounding
+   99,3–99,9 trattenuti da un layer); **mancava l'aggregato**.
+2. **Il denominatore giusto sono i GIUDICATI**, non tutte le scritture: un fatto
+   senza `grounding_score` non può essere «trattenuto nonostante il giudice».
+3. **L'ora fa parte del dato**: il registro cresce mentre lo si legge — e
+   **quanto**, è misurato due righe più sotto invece che dichiarato.
+
+### Il numero: **13,1% delle quarantene colpisce fatti che il giudice aveva validato**
+
+| | 04:05 | 05:14 |
+|---|---|---|
+| `flow.write` totali | 11415 | 11451 |
+| di cui **giudicati** (`grounding_score` non nullo) | 7375 | 7411 |
+| di cui **quarantinati / rifiutati** | 3102 | 3107 |
+| **trattenuti NONOSTANTE il giudice** | **404** | **407** |
+| — sui giudicati | 5,5% | 5,5% |
+| — sui quarantinati | **13,0%** | **13,1%** |
+
+**Chi li ha trattenuti** (05:14): `L4.1` **274 (67%)** · `L4.2` 139 · `L1.15` 49 ·
 `L1.16` 36 · `L1.10` 28 · `L1.20` 26 · `store-screen` 14 · `L4-relazione` 12.
 
 🔑 **Il campo è DERIVATO, non dichiarabile dal chiamante** — `flow_events.py:305`:
@@ -433,16 +449,34 @@ col commento *«se una porta potesse dichiarare `judged=True` senza un punteggio
 il campo mentirebbe — ed è il campo su cui questo prodotto si vende»*. Il numero
 non è auto-riportato: esce dall'incrocio di due fatti indipendenti.
 
-### ⚠️ Le tre cautele, e vanno lette PRIMA del numero
+### 🕐 QUALE dei miei numeri scade, e quale no — misurato, non supposto
 
-1. **Non sono 404 errori.** Il gate trattiene anche per ragioni che il giudice
-   non copre (auto-affermazione, iniezione, forma del numero). È la
-   **popolazione da esaminare**, non un conteggio di falsi positivi. Il team lo
-   sa in forma qualitativa (`anti_confab_gate.py:2512` cita casi con grounding
-   99,3–99,9 trattenuti da un layer); **mancava l'aggregato**.
-2. **Il denominatore giusto sono i GIUDICATI**, non tutte le scritture: un fatto
-   senza `grounding_score` non può essere «trattenuto nonostante il giudice».
-3. **L'ora fa parte del dato**: il registro cresce mentre lo si legge.
+Due numeri di questo documento, stessa notte, **destini opposti**:
+
+```
+asserted_at valorizzati    0 / 16805  (03:47)  →  1 / 16839  (04:38)   SCADUTO in 50 min
+trattenuti / quarantene    404 (13,0%) (04:05) →  407 (13,1%) (05:14)  STABILE in 69 min
+```
+
+⇒ 🔑 **Non è il caso: è il NUMERATORE.** Uno a zero cade al primo evento — e
+infatti è bastata **una** scrittura. Uno a 404 su una popolazione grande non si
+muove. **Un numeratore piccolo è una promessa a scadenza; ricontarlo costa una
+query e dice quale dei tuoi numeri è fragile.**
+
+### 🪞 E il ricalcolo ha trovato un difetto nel MIO righello, non nel numero
+
+Ricalcolando a mano ho ottenuto **1904 trattenuti (61,3%)** invece di 407.
+**Il salto era impossibile**: il numeratore quadruplicava mentre il denominatore
+cresceva dello 0,3% (11415 → 11451). ⇒ **Il righello era cambiato, non il
+mondo.** La causa: avevo scritto `grounding_score is not None`, che è `judged`;
+il prodotto usa `_judged_true(_gs)` — *giudicato* non è *validato*, e un fatto
+con grounding 0,33 è il primo dei due e non il secondo (`flow_events.py:300-308`).
+
+⚠️ **La cura è che quel campo NON va ricalcolato**: `withheld_despite_judge` è
+**già nel payload di ogni `flow.write`**, derivato dal prodotto. Ricalcolarlo
+significa reimplementare una definizione che esiste — e sbagliarla.
+🔑 **Il rilevatore che mi ha fermato costa zero: un rapporto numeratore /
+denominatore che si muove in modo implausibile accusa il righello, non i dati.**
 
 ### 🚫 E i limiti del registro, misurati stanotte
 
