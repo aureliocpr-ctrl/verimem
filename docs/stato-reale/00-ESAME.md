@@ -14341,3 +14341,106 @@ debito, e lo dichiaro ora.**
 
 **Banchi**: `porta_sessanta_negativi.py` (stampa tutti e 60 con fonte intera),
 `porta_ricalcolo.py` (le tre liste e i tassi). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 04:12 — ws1 · IL BANCO CONFRONTA FRAMMENTI CONTRO PROPOSIZIONI (57/60 CONTRO 3/60), E IL GIUDICE LOCALE SEGUE LA LUNGHEZZA DOVE L'LLM NON LA SEGUE
+
+**Livello** le due popolazioni del banco di casa `load_halueval`, non il prodotto ·
+**Perimetro** i **60 positivi** e i 60 negativi di HaluEval QA heldout, seed 42 ·
+**Istante** 2026-08-31 04:04–04:10 · **Regime** **lettura pura, nessun modello caricato**
+(RAM scesa a **2,8 GB** durante il giro: Aurelio sta usando la macchina — questo banco non
+carica nulla) · `verimem.__version__` **0.7.6**, cwd = scratchpad.
+
+**Paga il debito dichiarato alle 04:00**: «*non ho ispezionato i 60 positivi con lo stesso
+criterio*».
+
+### 🟢 PRIMA IL VERDE: le etichette POSITIVE reggono, il tasso di ammissione NON va corretto
+
+```
+right_answer che compaiono LETTERALMENTE nella knowledge:  59/60 = 98,3%
+```
+
+⇒ **P-POS-ETICHETTE confermata.** A differenza dei negativi (dove 15 su 60 erano
+fuorvianti), qui le etichette sono sane: **l'ammissione misurata alle 03:30 — locale
+0,9667, llm 0,9000 — resta valida senza correzioni.** *(È anche una misura automatica,
+non il mio giudizio: la sottostringa c'è o non c'è.)*
+
+### 🚨 MA LE DUE POPOLAZIONI NON HANNO LA STESSA NATURA
+
+```
+POSITIVI (right_answer)     mediana  12 char |  2,0 parole
+NEGATIVI (hallucinated)     mediana  58 char |  9,0 parole
+FRAMMENTI (<=4 parole, proxy dichiarato):  positivi 57/60  ·  negativi 3/60
+```
+
+**Il banco chiede al write gate di ammettere «Lisbon», «I-90», «no», «2013» e di
+respingere frasi intere.** Un write gate giudica **fatti**, cioè proposizioni: qui il
+positivo è quasi sempre un **sintagma nudo** (57 su 60) e il negativo quasi mai (3 su 60).
+
+### 🚨 E IL CONFONDENTE OPERA — su un giudice sì, sull'altro no
+
+Dentro **una** popolazione la verità è costante: una correlazione lunghezza~punteggio lì è
+**forma pura**, non verità. Spearman:
+
+| popolazione | giudice **locale** | giudice **llm** |
+|---|---|---|
+| POSITIVI | **+0,480** | +0,121 |
+| NEGATIVI | **+0,285** | +0,007 |
+
+⇒ **P-FORMA confermata per il locale, CADUTA per l'llm.** Il CE locale premia il claim
+più lungo **a parità di verità**; il giudice llm è quasi insensibile alla forma
+(+0,007 sui negativi). ⚠️ **È un limite del banco DI CASA prima che del prodotto**: con
+positivi e negativi così diversi per forma, **una parte della separazione (auroc ~0,82 per
+entrambi) è forma e non verità**, e la quota è **diversa per i due giudici** — il che
+rende il confronto fra loro meno pulito di quanto sembrasse alle 03:30 e alle 04:00.
+
+### 🔑 IL CASO CHE CHIUDE IL CERCHIO: lo stesso fatto in due forme, e i giudici si scambiano l'errore
+
+L'item **#07** compare in **entrambe** le popolazioni — è la stessa verità, scritta due
+volte:
+
+```
+come POSITIVO   claim «no»                        (a «are Leckie Mine and Giant Mine
+                                                   located in the same town?»)
+                LOCALE 97,9  ✅        LLM  0,0  ❌
+come NEGATIVO   claim «Leckie Mine and Giant Mine have DIFFERENT towns»  — VERO
+                LOCALE  4,85 ❌        LLM 100   ✅
+```
+
+**Stessa verità, due formulazioni, e ciascun giudice ne prende una e sbaglia l'altra.**
+⇒ **il claim non è giudicato solo per ciò che dice, ma per come è scritto** — ed è
+coerente con lo Spearman qui sopra. Non è una tesi su un caso: è **il caso che rende
+visibile la correlazione misurata**.
+
+### I positivi respinti, tutti (sono pochi e sono i più informativi)
+
+```
+LOCALE respinge 2/60 -> #28 «2013» (16,64; la fonte dice «September 2013»)
+                        #30 «no»   ( 2,63; la fonte non contiene «no»)
+LLM    respinge 6/60 -> #02 «2017 Stanley Cup playoffs» (20,0 · locale 100)
+                        #07 «no»                        ( 0,0 · locale  97,9)
+                        #14 «North Carolina»            ( 0,0 · locale  99,9)
+                        #28 «2013»                      ( 0,0 · locale  16,6)
+                        #30 «no»                        ( 0,0 · locale   2,6)
+                        #42 «Important contributors and co-sponsors» (20,0 · locale 100)
+```
+
+**Cinque dei sei respinti dall'llm sono LETTERALMENTE nella fonte.** E **#28 «2013»** è
+respinto da **entrambi** benché la fonte dica «*launched in September 2013*»: ⇒ **su un
+frammento nudo il compito «la fonte lo sostiene?» è mal posto per costruzione**, e i due
+giudici lo risolvono in modo diverso e arbitrario.
+
+### Cosa NON prova
+
+Il proxy «≤4 parole = frammento» è **grezzo e dichiarato**: dà un ordine di grandezza
+(57 contro 3), non una tassonomia. Lo Spearman dentro una popolazione **non separa** la
+lunghezza da ciò che a essa si accompagna (un claim più lungo porta più contesto
+ripetuto dalla fonte): dice che **la forma predice il punteggio**, non *perché*. n=60 su
+un dataset in inglese. Il riferimento llm è di luglio e **non l'ho rieseguito** (O4).
+**Non ho misurato** se riscrivendo i positivi come proposizioni la separazione cambi — è
+il modo di falsificare questo reperto, e **richiederebbe di riscrivere i claim, cioè di
+costruire una popolazione con la mia mano**: lo lascio dichiarato come il seguito, con la
+sua trappola annessa.
+
+**Banchi**: `porta_positivi.py` (scratchpad di sessione). **Io misuro, non curo.**
