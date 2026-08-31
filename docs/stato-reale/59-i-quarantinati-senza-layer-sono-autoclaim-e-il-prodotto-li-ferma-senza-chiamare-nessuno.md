@@ -64,9 +64,40 @@ esempi**, non i numeri: *«**Test fatto** del Round 5 di Aurelio»* — dove
 sono tre: se il divario fosse esistito solo col criterio largo, sarebbe stato il
 mio regex a produrlo.
 
-⚠️ **E il residuo non è spiegato**: col criterio stretto, **391 dei 661** senza
-layer non hanno marcatori di esito. **L'ipotesi copre la maggioranza, non tutto**,
-e non ho indagato il resto.
+## ②-bis Il residuo, chiuso mezz'ora dopo — e la causa dominante è un'altra
+
+Avevo scritto che **391 dei 661** senza layer non hanno marcatori di esito e che
+non li avevo indagati. Li ho indagati, e la seconda causa era **sotto il naso, nel
+contratto del prodotto**:
+
+> *«WITHOUT a source: there is nothing to check the fact against, so **the moat
+> does not run**.»*
+
+**Nessuna source ⇒ il moat non gira ⇒ non c'è nessun layer da registrare.** Sui
+391 residui: **87,7% senza source**, e **52,7% senza nemmeno un
+`grounding_score`** — cioè mai giudicati. Per contro, i 623 **con** layer hanno
+un punteggio nel **100%** dei casi.
+
+Misurata l'**unione** delle due cause (non la somma: 243 fatti le hanno
+entrambe), sempre su tutte e due le popolazioni:
+
+| | **senza** layer (661) | **con** layer (623) |
+|---|---|---|
+| auto-claim (criterio stretto) | 40,8% | 2,9% |
+| **senza source** | **88,7%** | **1,0%** |
+| **unione — una delle due** | **92,7%** | **3,9%** |
+| **non spiegati** | **7,3% (48 fatti)** | 96,1% |
+
+⇒ **Le due cause coprono il 92,7% dei senza-layer e appena il 3,9% dei
+con-layer**: il criterio separa le popolazioni di **ventiquattro volte**. Il
+limite è chiuso, **meno 48 fatti (7,3%) che restano senza spiegazione** — e
+quelli li lascio dichiarati, non li arrotondo via.
+
+🪞 **E la causa da cui ero partito è la MENO importante**: l'auto-claim di
+`veriagent` spiega il **40,8%**, l'assenza di source l'**88,7%**. Il caso che
+salta all'occhio — 47 fatti su 48 in un topic solo — mi aveva fatto trovare la
+strada giusta **per la ragione sbagliata**: la causa grande è silenziosa e
+distribuita, quella piccola è vistosa e concentrata.
 ⚠️ **Numeri diversi da quelli del limite**: il limite parlava di «207
 quarantinati **di agosto**», qui misuro **tutti** i non superseduti (661 senza
 layer). Popolazioni diverse, e lo dico invece di far coincidere le cifre.
