@@ -13394,6 +13394,41 @@ riga giusta invece di tutta la tabella.**
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-tagliare-la-source-invece-di-allungarla.py`.
 *(doc `62`)*
 
+**60ª `63` (banco) — chiudo l'ULTIMO limite del `42`, e la cura che lì avevo solo proposto ora ha un
+numero: toglierebbe l'86% dei conflitti.**
+Il `42` finiva con due cose non fatte: *«la cura sensata è portare nel rilevatore il criterio di
+`L4.2` — NON l'ho fatto, è codice del gate»* e *«quello che NON ho misurato: quante delle coppie
+`numeric_clash` con jaccard ≥ 0,50 siano contraddizioni VERE — sono ~137 nel campione»*.
+🔑 **Il criterio esiste già come funzione pubblica, e non serve toccare il gate per USARLO**:
+`numeric_conflict(a, b)` in `quantity_match.py` ritorna `(unità, valore_a, valore_b)` **solo se** i
+due testi danno un valore diverso per la **stessa unità** sullo **stesso soggetto**, con le guardie
+del suo docstring. **L'ho chiamata in LETTURA.** *(Presidio: composizione della tabella stampata
+prima di contare — 93.851 righe, 19.981 coppie `numeric_*` irrisolte.)*
+
+| popolazione | n | **il criterio conferma** | quota |
+|---|---|---|---|
+| coppie ad **ALTO** jaccard (≥ 0,50) | 400 | **336** | **84,0%** |
+| coppie a **BASSO** jaccard (< 0,50) | 400 | **11** | **2,8%** |
+
+⇒ **trenta volte di differenza**: il righello **separa**, ed è la prova che mancava al `42` — là
+avevo mostrato che il rilevatore dichiara in conflitto quasi tutto **senza poter dire dove avesse
+ragione**. ✅ **LIMITE CHIUSO: le coppie ad alto jaccard sono confermate nell'84%** ⇒ **il rilevatore
+non sbaglia dappertutto — ha ragione proprio dove i due testi si somigliano**, e sbaglia dove non si
+somigliano (**97,2% di falsi**).
+📊 **QUANTO COSTEREBBE LA CURA** — composizione: `jaccard ≥ 0,50` **2.660 (13,3%)** · `< 0,50`
+**17.321 (86,7%)** ⇒ applicando le due quote: **19.981 → ~2.719, meno 86%**, e i superstiti sono per
+l'84% coppie che il criterio conferma. 📌 **È il numero che il `42` cercava per decidere**: là il
+problema era che «normalizzare gli status renderebbe ritirabili fino a **998** fatti» su scontri
+quasi tutti falsi ⇒ **col criterio a monte la base di quei ritiri si riduce di sei settimi.**
+⛔ **COSA NON DICO**: **«confermata dal criterio» ≠ «vera»** — `numeric_conflict` è il righello del
+**prodotto**, non la verità; per sapere quante siano davvero contraddizioni **bisogna leggerle, e non
+l'ho fatto** · **due campioni da 400**: il divario 84 ↔ 2,8 regge, **la stima ~2.719 NO** — è
+un'estrapolazione da due proporzioni campionarie, ordine di grandezza · **non ho toccato il gate**:
+chiamare una funzione in lettura **non è** portarla nel rilevatore, che richiede mandato, RED→GREEN e
+critic · **la soglia 0,50 è ereditata dal `42`**, non l'ho ritarata.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quante-sono-contraddizioni-vere.py`.
+*(doc `63`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
