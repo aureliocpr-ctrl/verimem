@@ -80,6 +80,36 @@ saperlo era leggere.
 - ⛔ **Nessun restore.** Non sono fatti miei e richiede mandato. Gli `op_id` sono
   sopra, e restano ~87 ore.
 
+## ⑧ Chiuso: 56 su 57 letti — e il tasso è un PAVIMENTO, non il tasso vero
+
+Finita la lettura. **Non è più una stima campionaria:**
+
+```
+supersessioni nella finestra di 7 giorni        340
+candidati (jaccard < 0.15)                       57   = 16,8%
+di questi LETTI uno per uno                      56   = 98,2%
+  ritiro SBAGLIATO (il nuovo non nega il vecchio)  52
+  discutibile                                       3
+  ritiro ragionevole                                1
+precisione del criterio                        52/56 = 92,9%
+⇒ tasso di false-supersede ≈ 15,6%
+```
+
+⚠️ **Il denominatore si è mosso mentre misuravo**: all'inizio erano **336
+supersessioni e 54 candidati**, alla fine **340 e 57**. Sommando i letti di ogni
+giro sarei arrivato a «56 su 54», che è assurdo: **ho ricalcolato invece di
+sommare.** Chi rifà il conto troverà numeri diversi — **il righello si riesegue,
+non si ricopia.**
+
+> 🔑 **E la precisazione che cambia come va usato il numero: il 15,6% è un
+> PAVIMENTO, non il tasso vero.** Il criterio **seleziona** i candidati per
+> somiglianza lessicale bassa, quindi **i ritiri sbagliati fra testi che si
+> somigliano non li vede proprio** — e quelli esistono: due misure dello stesso
+> banco, parole simili e valori diversi, passerebbero sotto il radar. **Ho
+> misurato la PRECISIONE (92,9%), non il RICHIAMO.** Il tasso vero è **≥ 15,6%**,
+> e di quanto non lo so. **Chi lo cita in una decisione lo citi come limite
+> inferiore.**
+
 ## ⑦ Non solo catene: VENTAGLI — e il numero grosso è quasi tutto legittimo
 
 Leggendo gli ultimi candidati è saltata fuori una forma diversa dalla catena: un
