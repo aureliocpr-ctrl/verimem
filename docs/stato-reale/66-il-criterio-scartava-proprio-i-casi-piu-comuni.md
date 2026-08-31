@@ -82,6 +82,40 @@ dei ritiri, non a un sesto.**
 evolution`** — il meccanismo che sappiamo cieco, perché `is_same_source` guarda
 **la penna** (`canonical_source_of`, sempre `'user'`), non il contenuto.
 
+## ②-bis L'impatto storico, e la crescita
+
+Il tasso dice **quanto spesso**; questo dice **quanto pesa**. Sui **2289** fatti
+superseduti di tutta la storia, il motivo che il prodotto dichiara:
+
+| motivo | quanti |
+|---|---|
+| `autohook-snapshot daily collapse` | **1463** ← consolidamento **automatico** |
+| `same-source evolution` | **460** |
+| `exact-text dedup (corpus truth scan)` | 202 |
+| `heal_contradictions: numeric_clash` | 142 |
+| `heal_contradictions: boolean_clash` | 5 |
+
+✅ **Il grosso è il collapse automatico**, ed è **voluto** — conferma quanto
+verificato sui ventagli (40 incipit su 40 dentro il master). ⇒ **il fenomeno di
+questo documento vale 460 su tutta la storia, ma 274 sono degli ultimi sette
+giorni.**
+
+🔴 **E la crescita è il pezzo che preoccupa** — `same-source evolution` per mese
+di creazione del fatto ritirato:
+
+```
+2026-07     41
+2026-08    419      ← dieci volte in un mese
+```
+
+⚠️ **Non dico che il prodotto sia peggiorato**: il meccanismo è lo stesso. **È il
+nostro modo di scrivere che lo attiva più spesso** — scriviamo di più e a
+raffiche, e **ogni serie di misure salvata a pezzi produce ritiri**. La causa è
+condivisa.
+⚠️ **E i mesi sono due soli**: prima di luglio `same-source evolution` non
+compare. **Non so se perché il meccanismo non c'era o perché il campo non veniva
+valorizzato, e non l'ho indagato.**
+
 ## ③ L'errore mio, e la sua forma
 
 **Ho misurato la precisione su una popolazione che avevo selezionato io, e ho
