@@ -15361,6 +15361,19 @@ def main() -> None:
     # process serves tools is tagged surface=mcp (env, not contextvar, so it
     # survives worker threads). setdefault: an explicit override still wins.
     # The agent's label comes from VERIMEM_ACTOR in the client's MCP config.
+    #
+    # ⚠️ «BY THE CORE» IS THE LOAD-BEARING WORD, and it excludes the READS.
+    # `flow.recall` is emitted by `Memory.search` / `Memory.explain`
+    # (client.py) — the READ handlers here call `a.semantic` DIRECTLY, so no
+    # flow.recall is emitted for them and this tag never reaches one. Measured
+    # 2026-08-31 on the live journal (events.jsonl + the rotated .1, 40007
+    # rows): of 4716 `flow.recall` events, `surface=mcp` appears ZERO times —
+    # while `mcp` tags 1373 events overall, because the WRITES do go through
+    # the core. So the tag works; the reads simply never pass the emitter.
+    # ⇒ Whoever counts reads per surface on this journal cannot see the MCP
+    # port at all. Wiring an emit into the read handlers would add rows to a
+    # journal several people measure on, so it is a group decision, not a
+    # silent fix — this comment exists so the gap is READABLE meanwhile.
     os.environ.setdefault("ENGRAM_FLOW_SURFACE", "mcp")
     # DELEGATE-ONLY (2026-06-06, root fix for the recurring recall/save hang):
     # an MCP server NEVER cold-loads the embedding model in-process (the ~33s
