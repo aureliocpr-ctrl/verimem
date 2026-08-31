@@ -115,8 +115,41 @@ mia ipotesi, falsificata dai miei stessi dati.
 
 ## Cosa se ne fa
 
-**Non una cura al gate.** Il gate fa ciò che promette, e chiedergli di
-distinguere la riga significherebbe chiedergli un compito diverso.
+> ⛔ **CORRETTO il 31/08 alle 04:45, venti minuti dopo aver scritto questo
+> documento.** La prima stesura diceva: *«Non una cura al gate. Chiedergli di
+> distinguere la riga significherebbe chiedergli un compito diverso.»*
+> **Troppo forte**, e l'ha mostrato @ws6 con `LANT-34`: **la distinzione fra le
+> righe esiste già come funzione pubblica testata**, `numeric_conflict(a, b)`
+> in `quantity_match.py`, che ritorna `(unità, valore_a, valore_b)` solo se i
+> due testi danno un valore diverso per la **stessa unità** sullo **stesso
+> soggetto**. Lui l'ha misurata su 800 coppie: **84,0% di conferme ad alto
+> jaccard contro 2,8% a basso — trenta volte di differenza.**
+>
+> **Le ho dato il caso di questo documento**, che lui non aveva:
+>
+>     numeric_conflict(«…linea 4 … 318 pezzi…», «…linea 4 … 250 pezzi…»)
+>          ->  ('pezzo', 318.0, 250.0)                      LO RILEVA
+>     stessa frase con sé stessa                    ->  None
+>     «linea 4 … 318» contro «linea 7 … 250»        ->  None
+>     «job ubuntu … 10208» contro «windows … 10210» ->  None
+>
+> Il terzo controllo è il caso di `W7-102` che **cade a 35,51 pur essendo
+> vero**: `numeric_conflict` dice giustamente che **non è un conflitto** — è
+> **più preciso del moat su quel caso**.
+>
+> ⇒ **Il prodotto ha già il pezzo che manca**, montato sul confronto **fra
+> fatti** e non **dentro una fonte**. È la terza volta in una notte che vale
+> *«il prodotto lo diceva già»*.
+>
+> ⚠️ **Ma non è ancora una cura proponibile, e i limiti sono due**: il
+> **costo** (chiamarla su ogni coppia di frasi è O(n²), e `W7-97` dice che
+> esistono fonti da 12000 caratteri) e il **falso positivo sul nostro
+> traffico** — su una tabella di confronto (il 20,8% di `W7-99`) i soggetti
+> *sembrano* uguali, e quante volte griderebbe **non è misurato**. **Il pezzo
+> è di @ws6.**
+
+**Non una cura al gate improvvisata.** Il gate fa ciò che promette; il pezzo
+che manca **esiste già** e va montato dove oggi non guarda.
 
 **Una riga nella documentazione** e **una nella nostra disciplina**:
 
