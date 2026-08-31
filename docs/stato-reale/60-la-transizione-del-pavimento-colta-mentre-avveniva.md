@@ -82,10 +82,35 @@ storico la stima del `53` resta in piedi: **2823 su 2887 = 97,8% sotto 0,8781**.
 traffico medio. **È la quinta volta stanotte che il campione spiega il numero —
 la prima in cui l'ho visto prima di scriverlo invece che dopo.**
 
-📌 **Quello che manca, e si potrà misurare invece che stimare**: il journal
-registra `best` a ogni recall. Fra qualche ora di traffico si potrà **contare**
-quante volte `sotto_il_pavimento` è uscito davvero, invece di dedurlo dai
-punteggi storici. **Non estrapolo: si misura.**
+## ⑥ Misurato, mezz'ora dopo: 87,5% — e la mia stima era 10 punti troppo alta
+
+Avevo scritto qui sopra *«si potrà contare invece di stimare»*. **Contato**, sui
+`best` che il prodotto ha registrato **dopo** le 02:52:23:
+
+```
+recall reali dopo il ricalcolo, con best > 0 : 72
+  mediana 0.8421   p95 0.8860   max 0.8860
+  SOTTO il pavimento 0.8781 : 63/72 = 87,5%
+```
+
+| | quota di risposte sotto il pavimento |
+|---|---|
+| **stima** del `53` (dai 2887 `best` storici) | **97,8%** |
+| **misura** sul traffico dopo il ricalcolo (n=72) | **87,5%** |
+| | **−10,3 punti** |
+
+**La stima era troppo alta di dieci punti, e la sostanza regge lo stesso:
+l'avviso si accende su quasi nove risposte su dieci.** La conclusione del `53`
+non cambia — *un avviso che si accende quasi sempre non è un avviso, è rumore* —
+ma il numero da citare adesso è **87,5% misurato**, non 97,8% stimato.
+
+📌 **Limiti di questa misura**: **n=72 e venticinque minuti** · e **fra quelle
+recall ci sono le mie quattro query di verifica**, che ho fatto io poco prima
+(togliendole il quadro non cambia in modo apprezzabile, ma vanno dichiarate) ·
+il campione è il traffico di **una manciata di istanze che lavorano di notte**,
+non di utenti.
+📌 **Va rifatta domani** su qualche ora di traffico: `banchi/ws6-best-reali-dal-journal.py`
+con la finestra che parte dalle 02:52:23 e la soglia 0,8781.
 📌 **Una sola esecuzione** per il costo di 18,44 s, e su questa macchina.
 📌 **Il valore 0,8781 non è stabile per sempre**: è la stima di questo corpus a
 quest'ora, e si rifarà alla prossima deriva del 5% — cioè fra circa 724 fatti
