@@ -90,8 +90,15 @@ branch (primo run della sua storia, **creato 00:40, ancora in coda alle
   bug dell'avviso.
 - **Vetrina** (ws7, 5 numeri ricontati): il primo è A FAVORE — il README
   pubblicato dichiara i propri default (11 env censite, zero capacità
-  nascoste, LANT-127); il Summary del pacchetto fa 4 promesse e 3 reggono
-  (la quarta è a registro col suo numero).
+  nascoste, LANT-127); il Summary del pacchetto fa **4 promesse: UNA regge
+  pienamente, una con un'eccezione, DUE no** — `gated writes` 🟢 (3 porte,
+  LANT-33) · `provenance on every read` 🟡 (3 porte su 4: non dal dossier
+  `explain`, LANT-130) · `bi-temporal history` 🔴 (una delle due dimensioni
+  mai popolata, LANT-133) · `abstention instead of hallucination` 🔴 (non su
+  `search`, @ws1 + LANT-131). *(ws7: il «3 reggono» era un mio numero
+  SUPERATO — valeva prima che la ③ cadesse alle 03:38. La correzione è mia e
+  la segnalo io: chi ha pubblicato il numero vecchio deve pubblicare anche
+  quello nuovo.)*
 
 ## Decisioni che aspettano TE (in ordine di leva)
 1. **Tag v0.7.1 e publish** — quando il run del branch è verde: tutto il
