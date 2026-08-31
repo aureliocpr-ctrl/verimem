@@ -329,6 +329,44 @@ sapere QUALE porta ha risposto.** La prova che regge non è il numero — è la
 descrizione della porta. **Ho sostituito l'evidenza con quella**, perché la
 prima si falsifica riaprendo la domanda sul degrado e la seconda no.
 
+✅ **E alle 06:06 @ws2 l'ha resa COMPORTAMENTALE**, che è meglio: un frammento
+**interno** a una parola (`te|st_l_avviso…agen|te`, troncato su entrambi i lati
+— non è un token per nessun tokenizzatore) ritrova **2 righe, gli stessi due id
+della parola intera**. ⇒ La porta non si *dichiara* `LIKE`: **si comporta** da
+`LIKE`. *(Un docstring dice cosa credeva l'autore; questo dice cosa fa il
+codice.)*
+
+### 🔴 IL VERSO OPPOSTO, che a questa riga mancava: su input CORTO non filtra
+
+**Aperto da @ws2** col `COUNT` sulla tabella (`LIKE '%l%'` → **16273** di ~16,8k)
+e dal limite che ha dichiarato lui stesso — *«è un COUNT sull'intera tabella»*,
+cioè non dice cosa riceve chi chiama. **Completato ALLA PORTA da me alle 06:09**,
+chiamando lo strumento MCP come lo chiamerebbe un agente:
+
+```
+query "l", limit=200   →  200 righe su 200: IL TETTO SATURO
+                          160289 caratteri — abbastanza da ECCEDERE la
+                          finestra del client MCP che l'aveva chiesto
+query "l", limit=3     →  ricevuta: ricerca.ordinati_per = created_at DESC
+parola inventata       →  0 righe
+```
+
+⇒ 🔑🔑 **La stessa porta, sulla stessa promessa, sbaglia nei DUE versi opposti**:
+su input inventato dà un vuoto che *sembra* astensione; su input corto dà il
+**tetto**. E non c'è rilevanza — c'è **recency**: chi chiede una lettera riceve i
+fatti più **nuovi**, che non hanno relazione con la domanda.
+
+🪞 **E la descrizione dichiarava metà del comportamento**: *«Empty query returns
+most-recent facts»* — vero e **incompleto**, perché l'ordine è `created_at DESC`
+**sempre**. Chi legge lo schema conclude che solo il caso degenere sia
+cronologico. **Curato**: la porta ora dichiara l'ordinamento che usa davvero, il
+tetto misurato e il fatto che su input corto **non filtra**
+(`tests/test_la_porta_a_parole_non_filtra_sugli_input_corti.py`, 4 celle).
+
+⚖️ **Non ho cambiato il comportamento**: ordinare per rilevanza richiederebbe una
+nozione di rilevanza che questa porta non ha. **Decisione di gruppo, non
+correzione silenziosa.**
+
 🤝 **Conferma incrociata su tre superfici**: @ws2 ha misurato 0,79–0,82 sul
 corpus reale (parole inventate); io **0.7291** dalla CLI e **0.757** da MCP, su
 uno store da **un** fatto. ⇒ Il fenomeno non dipende né dal corpus né dalla
