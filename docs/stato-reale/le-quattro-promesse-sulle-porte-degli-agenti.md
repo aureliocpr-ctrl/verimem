@@ -156,10 +156,23 @@ giudica riguarda **C**. Nella stessa riga diventerebbero illeggibili entrambi.
 `mode=ro`**: era ⚪, ora è 🔴 — e la formulazione conta.
 
 ```
-TOTALE                16805
-asserted_at IS NULL   16805      ← MAI valorizzato (non «= 0»)
-valorizzati               0
+alle 03:47                        alle 04:38 (ricontato)
+TOTALE                16805       TOTALE                16839
+asserted_at IS NULL   16805       asserted_at IS NULL   16838
+valorizzati               0       valorizzati               1   ← b2306dc5eb03
 ```
+
+🔴 **QUESTO NUMERO È SCADUTO IN CINQUANTA MINUTI, E CHI L'HA FATTO SCADERE
+STAVA MISURANDOLO.** Alle 04:13 @ws7 ha scritto il **primo fatto del corpus con
+`asserted_at` valorizzato** (`b2306dc5eb03`, topic `vetrina/asserted-at-porta`)
+mentre misurava che nessuno lo valorizza. ⇒ **Tre referti di stanotte dicono
+«0» — @ws2 0/16779 (03:06), @ws7 0/16796, io 0/16805 (03:47) — e un analista
+che riesegue la query oggi trova `1` e conclude che il referto mentiva.** La
+frase pubblicabile è: ***1 su 16839, e quell'uno è nostro.***
+
+✅ **E il fatto scaduto vale più del numero che ha rotto**, perché in
+quell'unica riga i due tempi sono **diversi**: `asserted_at` 00:00 contro
+`created_at` 04:13. **La dimensione non è morta: è inutilizzata.**
 
 ⚠️ **La frase da NON scrivere**: *«non c'è storia bi-temporale»*. È
 falsificabile in trenta secondi, perché `recall_as_of` fa
@@ -176,12 +189,38 @@ quando l'abbiamo **saputo** — è vuota nei fatti reali.*
 🔑 **Stessa forma della riga ②**: una promessa vera del *meccanismo* e vuota nei
 *dati*. Il campo esiste, il codice lo legge, e nessuno lo riempie.
 
-📌 **Domanda aperta, che nessuno ha ancora misurato**: *chi dovrebbe popolare
-`asserted_at`?* Se nessuna porta di scrittura lo accetta → capacità **mai
+📌 **La domanda che avevo lasciato aperta — ORA HA RISPOSTA, ed è la seconda.**
+Chiedevo: *se nessuna porta di scrittura lo accetta → capacità **mai
 collegata**; se lo accetta e nessuno lo passa → un campo che il prodotto **non
-chiede mai**. Due difetti diversi, due cure diverse.
+chiede mai**.* ⇒ **È il secondo caso**: `verimem save --asserted-at` esiste
+(`LANT-135`, @ws7) e **funziona end-to-end** — il fatto `b2306dc5eb03` lo prova
+con i due tempi distinti nella stessa riga. La cura non è costruire: è **che la
+porta principale lo chieda**.
 
-*(Dato di @ws7; la precisazione su `NULL` invece di `0` e sul ripiego è mia.)*
+### 🔗 E il costo del campo vuoto non è «una dimensione su due»
+
+**Letto nel sorgente** (`supersession_policy.py:229-252`, non misura mia): il
+verdetto `evolution` — che **ritira** il fatto vecchio — richiede stessa fonte
+**e** ordine in valid-time, dove valid-time è *«`asserted_at` when present,
+else `created_at`»*. Il commento del prodotto dichiara la conseguenza::
+
+    both facts unsourced, no asserted_at   → "evolution"   ← the real-world case
+
+⇒ 🔑 **Con `asserted_at` vuoto il ramo conservativo non scatta mai**: l'ordine
+non è *ambiguo→conflitto* ma, parole del sorgente, **INVENTATO** dal tempo di
+scrittura. Il campo spento non toglie una lettura: **toglie la guardia che
+impedisce a un fatto nuovo di ritirarne uno vecchio che dice altro** — ed è
+esattamente ciò che @ws2 ha misurato dal verso opposto (`W2-168`: *con
+`asserted_at` valorizzato la sostituzione silenziosa non avviene*).
+
+⚠️ **UNA FRASE DEL PRODOTTO È ORA FALSIFICATA ALLA LETTERA**, e non è nostra:
+il commento dice *«no write path fills `asserted_at`»* (misurato 2026-08-26).
+Una via di scrittura lo riempie — la CLI — e alle 04:13 è stata usata. 📌 **Non
+la correggo io**: `supersession_policy.py` è fuori dal mio perimetro, ed è
+segnalata sul canale a chi lo tiene.
+
+*(Dato di @ws7; la precisazione su `NULL` invece di `0`, il ripiego, il
+ricalcolo delle 04:38 e la giuntura con la supersessione sono miei.)*
 
 ---
 

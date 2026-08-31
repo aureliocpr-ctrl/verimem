@@ -6,6 +6,14 @@ non e' popolato; io ho verificato in sola lettura sullo store reale alle 03:47::
     TOTALE                16805
     asserted_at IS NULL   16805      ← MAI valorizzato (non «= 0»)
 
+⏱️ E ALLE 04:38 QUEL NUMERO ERA GIA' SCADUTO: 16838 su 16839, perche' @ws7 alle
+04:13 ha scritto il PRIMO fatto valorizzato del corpus (`b2306dc5eb03`, via
+`verimem save --asserted-at`) mentre misurava che nessuno lo valorizza. ⇒ Chi
+riesegue la query oggi trova `1` e non `0`: la frase difendibile e' **«1 su
+16839, e quell'uno e' nostro»**. Il test qui sotto non ne e' toccato — scrive su
+store TEMPORANEO — ma il numero del corpus si', ed e' il motivo per cui una
+misura senza ORA e' una fotografia senza data.
+
 ⚠️ La differenza fra NULL e 0 non e' pedanteria: `recall_as_of` fa
 `born = asserted_at if asserted_at is not None else created_at`, quindi con NULL
 **il ripiego scatta sempre e il viaggio nel tempo FUNZIONA** — misurato alla
