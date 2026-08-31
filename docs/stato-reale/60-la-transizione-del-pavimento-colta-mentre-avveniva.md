@@ -112,6 +112,21 @@ non di utenti.
 📌 **Va rifatta domani** su qualche ora di traffico: `banchi/ws6-best-reali-dal-journal.py`
 con la finestra che parte dalle 02:52:23 e la soglia 0,8781.
 📌 **Una sola esecuzione** per il costo di 18,44 s, e su questa macchina.
+
+🔁 **E il costo è UNA TANTUM — verificato subito dopo.** Rieseguito lo stesso
+banco a file ormai riscritto: **3,27 s**, cioè il baseline. Il conto completo:
+
+| momento | una recall |
+|---|---|
+| prima della soglia (file servito) | **2,84 s** |
+| **la recall che ha innescato il ricalcolo** | **18,44 s** |
+| subito dopo (nuovo file servito) | **3,27 s** |
+
+⇒ **non è un degrado che resta: è una singola richiesta sacrificata.** Il che
+non lo rende innocuo — **quella richiesta è di un utente qualunque, che aspetta
+sei volte il normale senza sapere perché** — ma cambia la forma del problema per
+il pezzo **(iv)**: non «il prodotto è lento», bensì «una lettura ogni ~724 fatti
+paga per tutte le altre».
 📌 **Il valore 0,8781 non è stabile per sempre**: è la stima di questo corpus a
 quest'ora, e si rifarà alla prossima deriva del 5% — cioè fra circa 724 fatti
 vivi, in su o in giù.
