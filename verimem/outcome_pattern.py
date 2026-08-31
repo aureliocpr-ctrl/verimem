@@ -13,10 +13,34 @@ from collections import defaultdict
 from typing import Any
 
 _TOKEN_RE = re.compile(r"[A-Za-z0-9_\-]+")
+#: ⚠️ CORRETTA IL 31/08: la lista aveva **voci solo inglesi**, e i `task_text`
+#: di questo prodotto sono scritti in italiano. Alla porta del tool MCP
+#: uscivano fra i «tokens correlated with success»::
+#:
+#:     per 41  ·  con 37  ·  non 25
+#:
+#: MISURATO PRIMA DI CURARE (A/B nella stessa esecuzione, 459 episodi):
+#: **3 segnali cambiano** — tolti `per`, `con`, `non`; entrati `live`,
+#: `audit`, `pqc-audit-italia`. **I primi nove non si muovono**: la cura
+#: ripulisce la cima della classifica, non la rifa'.
+#:
+#: 📌 E mancava anche `are`, che l'inglese aveva accanto a `is`: il buco non
+#: era solo nell'altra lingua.
+#:
+#: 🔴 AMBIGUI TENUTI FUORI DI PROPOSITO: «danno», «conta», «stato», «era»,
+#: «parte», «caso», «modo», «punto», «campo», «resto», «fine» in italiano sono
+#: **anche sostantivi** — filtrarli toglierebbe un segnale possibile. Un test
+#: parametrizzato lo presidia, insieme a un tetto sulla dimensione: una
+#: stop-list che cresce senza misura toglie segnali veri.
 _STOP = frozenset({
     "the", "a", "an", "and", "or", "of", "to", "for", "in", "on",
-    "at", "by", "with", "is", "was", "were", "be", "been",
+    "at", "by", "with", "is", "are", "was", "were", "be", "been",
     "has", "have", "had", "do", "does", "did", "this", "that",
+    # ── funzionali italiane, dal corpus e non dall'intuito
+    "per", "con", "non", "che", "come", "nel", "nella", "sul", "sulla",
+    "dei", "delle", "degli", "dal", "dalla", "alla", "allo", "agli",
+    "una", "uno", "gli", "piu", "meno", "anche", "solo", "ancora",
+    "poi", "quando", "dove", "sono", "hanno",
 })
 
 
