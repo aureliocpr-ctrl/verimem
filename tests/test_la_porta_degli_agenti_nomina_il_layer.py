@@ -111,6 +111,29 @@ async def test_la_causa_non_e_l_etichetta_generica(porta) -> None:  # noqa: ANN0
 
 
 @pytest.mark.asyncio
+async def test_CONTROLLO_il_regime_del_banco_produce_ancora_la_quarantena(porta) -> None:  # noqa: ANN001
+    """Senza questo, i due test sopra si spengono in SILENZIO.
+
+    Entrambi iniziano con ``if status != "quarantined": pytest.skip(...)`` — una
+    guardia giusta, perche' un banco che asserisse su un esito che il gate non
+    produce misurerebbe se stesso. Ma uno skip si legge come verde: se un giorno
+    il claim smettesse di essere quarantinato, i due presidi passerebbero senza
+    provare piu' niente, e nessuno se ne accorgerebbe.
+
+    Questo test rende quella condizione una ASSERZIONE invece che un ramo muto:
+    se cade, i due sopra non stanno piu' proteggendo nulla, e il messaggio dice
+    dove guardare.
+    """
+    out = await _invoke("hippo_remember", {
+        "proposition": _CLAIM, "topic": "notes/porta-layer-regime", "source": _FONTE,
+    })
+    assert out.get("status") == "quarantined", (
+        "il claim di banco non e' piu' quarantinato: i due test sopra ora "
+        f"SKIPPANO invece di proteggere. Esito ricevuto: {out.get('status')!r} "
+        f"con grounding_score={out.get('grounding_score')!r}")
+
+
+@pytest.mark.asyncio
 async def test_CONTROLLO_un_fatto_ammesso_non_nomina_nessun_decisore(porta) -> None:  # noqa: ANN001
     """L'altra popolazione: dove non c'e' quarantena il campo non compare, e
     una scrittura ordinaria non cambia forma."""
