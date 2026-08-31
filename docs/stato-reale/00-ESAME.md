@@ -13482,6 +13482,35 @@ che avevo *stimato* poco prima applicando al totale la quota del `41` (10,2%). *
 numeri diversi**; il secondo è estrapolato, il primo misurato.
 🔎 **rifalli con**: `ws6-cosa-scade-dalla-finestra-di-undo.py` (le scadenze) ·
 `ws6-quali-ritiri-sono-sbagliati.py` (la lista ordinata per tempo residuo).
+🔴 **RETTIFICA (undicesima della notte, e la peggiore) — @ws7 ha ragione: 34 dei 54 erano GIÀ
+`quarantined`, e il presidio che mi mancava L'AVEVO SCRITTO IO DUE ORE PRIMA.** `undo` *«restores
+the pre-op row»*, e per quei 34 la riga pre-ritiro era **già invisibile al recall** ⇒ **recuperarli
+non li renderebbe disponibili.** Applicato il controllo mancante — lo stato conservato in
+`pre_row_json` — a tutti e 54:
+
+| stato **prima** del ritiro | quanti | |
+|---|---|---|
+| `quarantined` | **34 = 63,0%** | il restore **non** li rende disponibili |
+| `model_claim` | **20 = 37,0%** | qui il restore cambia qualcosa |
+
+⇒ **utili 20 su 54**, e **in scadenza entro 24 ore UNO, non quattro**: **l'urgenza che avevo lanciato
+era sbagliata di quattro volte.** Dei quattro elencati, solo **`3deedf78d88f`** (`model_claim`,
+superseduto per `same-source evolution`) vale un restore.
+🪞 **LA FORMA DELL'ERRORE, che conta più del numero**: la regola *«stampa la composizione per
+`status` PRIMA di misurare»* **l'ho ricavata io stanotte** sbagliando il `58`, l'ho **postata al
+canale come presidio** e l'ho messa **nel promemoria che rileggo a ogni risveglio** — **poi ho
+costruito il banco dei ritiri senza applicarla**: lo `status` non l'ho proprio guardato. ⇒ **`M4`,
+applicazione mancante e non regola mancante, per la QUARTA volta in una notte** — e questa variante è
+la peggiore: **le altre tre la regola stava in memoria da settimane e non l'avevo riletta; questa
+l'avevo scritta due ore prima e la stavo rileggendo di continuo.** *Una regola che scrivi e non
+applichi al caso nuovo vale meno di zero: dà anche l'impressione di avere un presidio.*
+✅ **RESTA VALIDO**: i 54 candidati e il criterio · la lettura dei 14 (**12 sbagliati, 1 discutibile,
+1 ragionevole**) — *«il sostituto misura altro»* vale **anche** per i quarantinati · e la **catena di
+quattro supersessioni** del `64`, che non dipende dallo stato.
+🔗 **AGGANCIO**: il motivo che @ws7 ha trovato nel campo — `heal_contradictions: numeric_clash clash
+on shared topic` — è **esattamente** il difetto che il `63` misura, e la cura esiste:
+`numeric_conflict()` su *«139 contro 1/6 contro 0/6»* — **grandezze diverse** — **non darebbe
+conflitto**. Portarlo dentro `heal_contradictions` eviterebbe queste cancellazioni.
 
 ---
 
