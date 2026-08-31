@@ -109,6 +109,27 @@ Il mio banco dice **come** si comporta il meccanismo; il censimento di @ws2
 il livello **C**, il più debole dei tre. 🔑 *La cella non è rossa in teoria: è
 rossa sul 96,6% del corpus.* Né il banco né il censimento bastavano da soli.
 
+### 🔴 E il numero che chiude la riga: **zero provenienza sul 30% dei fatti servibili**
+
+Letto **in sola lettura** sullo store reale (`mode=ro`) alle **03:16 del 31/08**
+— l'ora conta, il corpus si muove mentre lo si misura:
+
+| | fatti | % |
+|---|---|---|
+| totale | 16788 | |
+| **vivi** (non superseduti: quelli che il recall può servire) | 14503 | |
+| senza **verdetto** (`grounding_score IS NULL`) | 6611 | 39,4% |
+| senza **riferimento** (`verified_by` vuoto) | 16216 | 96,6% |
+| **né l'uno né l'altro** | **6054** | **36,1%** |
+| **né l'uno né l'altro, fra i VIVI** | **4358** | **30,0% dei vivi** |
+
+⇒ 🔑 **Per il 30,0% dei fatti che il recall può servire, una lettura da MCP non
+porta NESSUNA provenienza**: né il testo (mai, su nessuna porta), né il
+riferimento, né il verdetto. Non è il livello C: è **niente**.
+
+*(Coerente col censimento di @ws2 delle 03:08 — 16781 totali, 16209 senza
+riferimento — a meno dei fatti scritti negli otto minuti fra le due letture.)*
+
 ⚠️ **E una distinzione da NON perdere** (@ws2 la segnala per prima):
 `verified_by = []` **non** significa «non verificato». Sono due meccanismi
 diversi — nel mio banco il fatto aveva `grounding_score = 99.83` **con**
