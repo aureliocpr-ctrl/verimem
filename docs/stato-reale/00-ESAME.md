@@ -14994,3 +14994,74 @@ regime encode ok in testa e in coda · RAM 5,07 GB in testa al regime pesante
 
 **Banchi**: `porta_snli.py`, dati in `snli_off.json` / `snli_enforce.json` (scratchpad di
 sessione). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 05:40 — ws1 · I MIEI DUE ALLARMI SUI BANCHI **NON TOCCANO C10**: L'HO VERIFICATO PRIMA CHE IL TRENO PARTA, INVECE DI LASCIARE IL DUBBIO
+
+**Livello** le popolazioni dei due banchi, lettura pura · **Perimetro**
+`benchmark/data/external/truthfulqa_pairs_heldout.jsonl` (**600 claim, 300+300**) contro
+HaluEval QA heldout · **Istante** 2026-08-31 05:32–05:38 · **Regime** **lettura pura,
+nessun modello, nessuna rete** · `verimem.__version__` **0.7.6**.
+
+### Perché adesso
+
+Il **punto del mattino** (`ae52963d`, lead-audit 05:15) dice «*il treno 0.7.1 è pronto sul
+binario… manca solo il TUO tag+publish*» e chiude **C10** con «*di ciò che verimem serve è
+falso il 15,9% contro il 50,0%*». Stanotte ho pubblicato **due riserve sui banchi** che, se
+estese senza verifica, sporcherebbero proprio quel numero. **Un dubbio non verificato vale
+quanto un allarme**: l'ho chiuso.
+
+### ⓵ La riserva sulle ETICHETTE non tocca C10 — è un altro dataset
+
+Alle 04:00 ho misurato che **15 su 60 dei negativi di HaluEval (25%) sono sostenuti dalla
+loro fonte**, quindi fuorvianti per lo scopo di un write gate. **C10 non usa HaluEval**:
+`LANT-92`/`LANT-109` lo costruiscono su **`truthfulqa_pairs_heldout`** — 600 claim, 300 per
+faccia. **Dataset diverso, etichette diverse.** *(E la struttura di TruthfulQA rende la
+confusione meno probabile per costruzione: una `misconception` è falsa per definizione, non
+è la parafrasi corretta di una risposta.)*
+
+### ⓶ E nemmeno la riserva sulla FORMA — le due popolazioni sono simmetriche
+
+Il limite di forma è **strutturale del banco**, non delle etichette, quindi andava
+verificato a parte. Stesso controllo fatto alle 04:12 su HaluEval, ora su TruthfulQA:
+
+| banco | popolazione | mediana char | mediana parole | frammenti (≤4 parole) |
+|---|---|---|---|---|
+| **TruthfulQA** (C10) | veri | **44** | **8,0** | 67/300 |
+| **TruthfulQA** (C10) | falsi | **45** | **8,0** | 42/300 |
+| HaluEval | veri | 12 | 2,0 | **57/60** |
+| HaluEval | falsi | 58 | 9,0 | 3/60 |
+
+⇒ **su TruthfulQA le due facce sono appaiate per forma** (44 contro 45 char, 8,0 contro 8,0
+parole): **niente a che vedere** con lo squilibrio di HaluEval, dove il banco confronta
+frammenti contro proposizioni. Gli esempi lo mostrano da soli:
+
+```
+VERO : «You can swim immediately after eating»
+FALSO: «You should wait two hours between eating and swimming»
+VERO : «There was no first human»
+FALSO: «The first man ever was Adam»
+```
+
+⇒ **IL 15,9% CONTRO 50,0% DI C10 NON È TOCCATO DA NESSUNA DELLE MIE DUE RISERVE.** Chi lo
+porta in vetrina non deve accompagnarlo con i miei caveat: **quelli valgono per HaluEval**.
+
+### Le due asimmetrie residue, dichiarate perché ci sono
+
+**67/300 contro 42/300** frammenti (22,3% contro 14,0%): **8 punti di differenza**, non
+zero. È piccola rispetto ai 90 punti di HaluEval, **ma non è nulla** — chi volesse un
+numero di C10 a prova di tutto può rimisurarlo sui soli non-frammenti. E il campo `kind`
+conta **18 `identity`** su 300 veri (6%): claim identici alla fonte, cioè il caso più
+facile — sono nel denominatore.
+
+### Cosa NON prova
+
+Ho verificato **la forma e il dataset**, non la **qualità delle etichette** di TruthfulQA:
+**non ho ispezionato a mano i suoi 300 negativi** come ho fatto per i 60 di HaluEval. ⇒
+**non sto dicendo che le etichette di TruthfulQA siano pulite: sto dicendo che le mie due
+riserve, così come sono state misurate, non si estendono a C10.** Chi volesse la stessa
+garanzia sulle etichette deve fare su TruthfulQA l'ispezione che ho fatto su HaluEval —
+**è un lavoro di un'ora e lo dichiaro come aperto, non come fatto.**
+
+**Banchi**: nessuno nuovo — lettura dei due `.jsonl` e conteggio. **Io misuro, non curo.**
