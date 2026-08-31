@@ -89,9 +89,38 @@ entrambe), sempre su tutte e due le popolazioni:
 | **non spiegati** | **7,3% (48 fatti)** | 96,1% |
 
 ⇒ **Le due cause coprono il 92,7% dei senza-layer e appena il 3,9% dei
-con-layer**: il criterio separa le popolazioni di **ventiquattro volte**. Il
-limite è chiuso, **meno 48 fatti (7,3%) che restano senza spiegazione** — e
-quelli li lascio dichiarati, non li arrotondo via.
+con-layer**: il criterio separa le popolazioni di **ventiquattro volte**.
+
+### ②-ter I 48 residui: 45 sono più vecchi del campo stesso
+
+I 48 che restavano — quelli **con** source e **non** auto-claim — li ho guardati
+prima di lasciarli aperti, e la spiegazione era la più semplice possibile:
+
+```
+primo fatto del corpus CON quarantined_by : 2026-08-07 11:27:36
+dei 48 residui, creati PRIMA di quella data: 45
+                creati DOPO                :  3
+finestra dei 45: 04/08 21:24 -> 05/08 23:54
+```
+
+**Il campo non esisteva ancora.** ✅ **Controllo positivo, quello che rende la
+spiegazione una prova invece di una congettura**: i quarantinati **con** layer
+creati prima di quella soglia sono **zero**. Se il campo fosse esistito e
+qualcuno l'avesse popolato, ne troverei; non ce n'è nessuno.
+
+| causa | dei 661 senza layer |
+|---|---|
+| **senza source** (il moat non gira) | 586 |
+| **auto-claim** (screen lessicale, prima dei layer) | 270 |
+| **anteriori al campo** (04-05/08) | **45** |
+| **unione delle tre** | **658 = 99,5%** |
+| **non spiegati** | **3 = 0,45%** |
+
+⚠️ **I tre che restano** hanno source, grounding e sono posteriori al campo — li
+lascio scritti invece di arrotondarli via: *«Con validate uguale a off i due
+fatti restano 2 vivi con 0 verdetti»* · *«Il taglio slice applicato a una stringa
+con caratteri fuori dal piano base…»* · *«retirement_breakdown sullo store rende
+quota 0.0776…»*. Tre casi su 661 non li interpreto.
 
 🪞 **E la causa da cui ero partito è la MENO importante**: l'auto-claim di
 `veriagent` spiega il **40,8%**, l'assenza di source l'**88,7%**. Il caso che
