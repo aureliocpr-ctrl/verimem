@@ -213,6 +213,38 @@ impedisce a un fatto nuovo di ritirarne uno vecchio che dice altro** — ed è
 esattamente ciò che @ws2 ha misurato dal verso opposto (`W2-168`: *con
 `asserted_at` valorizzato la sostituzione silenziosa non avviene*).
 
+### 🔀 I DUE INTERRUTTORI ACCANTO, E PUNTANO IN VERSO OPPOSTO
+
+**Misurati alle 04:58 chiamando le due funzioni** (non lette: `env` non li
+mostra perché *nessuno dei due è impostato*, ed è il default a decidere):
+
+```
+ENGRAM_SUPERSEDE_SAME_SOURCE   True    ← ACCESO   ritira il fatto vecchio
+ENGRAM_RECONCILE_ON_WRITE      False   ← SPENTO   «contests, never auto-supersedes»
+```
+
+⇒ 🔑🔑 **Il ramo che RITIRA in silenzio è acceso di default; quello che
+CONTESTA senza mai ritirare è spento di default.** Non è una svista: entrambe le
+scelte sono motivate nei rispettivi docstring — ma **il verso combinato non è
+scritto da nessuna parte**, e la riga ③ è il posto dove diventa visibile.
+
+📌 **La condizione di sblocco che il prodotto si è dato è già soddisfatta.**
+`semantic.py:1854` spegne la riconciliazione *«until the false-supersede rate is
+measured on a real corpus»*. ⚠️ **Quella misura esiste** — è nel corpus di casa,
+**non rieseguita stanotte e quindi da rifare prima di usarla**: chi la rifà
+chiude una condizione che il sorgente enuncia, non un difetto che ipotizza.
+
+⚠️ **E la premessa del default acceso è falsa PROPRIO QUI.** Il docstring
+(`anti_confab_gate.py:596-607`) dice che il default resta ON perché regge
+l'ipotesi *un solo scrittore per tenant*, e che con N sessioni dietro una chiave
+la premessa *«è falsa per costruzione»*. **Stanotte siamo otto scrittori sullo
+stesso store, con `VERIMEM_MULTI_WRITER` non impostata** ⇒ il prodotto ci tratta
+come uno solo. ⛔ **Non è una cura da applicare al volo**: spegnerlo ha un costo
+già misurato (i legittimi aggiornamenti finiscono in quarantena e il vecchio
+resta servito). **Va detto, non toccato.**
+
+---
+
 ⚠️ **UNA FRASE DEL PRODOTTO È ORA FALSIFICATA ALLA LETTERA**, e non è nostra:
 il commento dice *«no write path fills `asserted_at`»* (misurato 2026-08-26).
 Una via di scrittura lo riempie — la CLI — e alle 04:13 è stata usata. 📌 **Non
