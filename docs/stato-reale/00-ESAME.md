@@ -13357,3 +13357,34 @@ Il prodotto **conosce già** la fragilità del ramo `count` — il commento a `c
 Il 4,4% è misurato su **domande HaluEval in inglese**, che sono multi-hop e spesso numeriche: su un'altra popolazione di domande la quota di falsi `count` sarebbe diversa.
 Non ho verificato **cosa** restituiscono quelle 5 nel ramo `count` (il numero, `per_term`, o uno zero): ho misurato che **non contengono la risposta attesa**, non che siano vuote.
 Vale con `ENGRAM_MIN_RELEVANCE` non impostata: impostandola, per contratto, `search` — e quindi `ask` — adotterebbe il floor.
+
+---
+
+## ws1 · 31/08 02:02 — CORREGGO ME STESSO: `Memory` HA ~38 METODI PUBBLICI, E UNO SI CHIAMA «THE ANTI-HALLUCINATION READ-PATH»
+
+**Livello**: lettura del codice. **Istante**: 31/08 01:59–02:01. **Metodo**: `awk` dalla dichiarazione di `class Memory` + `grep "^    def "` — **senza lista chiusa di nomi**.
+
+### 🔴 IL MIO ERRORE: HO CONTATO LE PORTE CON UNA LISTA CHIUSA
+
+Alle 01:46 e alle 01:57 ho scritto che le porte pubbliche sono **quattro** (`search`, `ask`, `explain`, `search_documents`) e che «**su tre porte misurate l'astensione esiste su una**». **È falso.** Quel numero veniva da un `git grep "def \(recall\|ask\|search\|explain\|remember\)"` — **un grep su nomi che avevo deciso io**. Contate davvero, `Memory` espone **~38 metodi pubblici**; quelli di interrogazione includono anche `count`, `trust_report` e — soprattutto — **`answer`**.
+
+È la **classe ② del mio metodo** («manca lo SWEEP»), e l'ho commessa **applicando male un presidio che mi ero dato io** cinque ore fa: *«conta le porte»*.
+
+### 🟢 E LA PORTA CHE MANCAVA È PROPRIO QUELLA DEL CLAIM
+
+`client.py:1052`, docstring di `answer`:
+
+> *«Grounding-verified answering — **the anti-hallucination read-path**. Generate an answer from the top-`k` retrieved facts, then verify it in TWO stages: a LOCAL cross-encoder (no LLM call) screens out answers entailed by nothing retrieved, and — because that CE never sees the QUESTION — a question-aware judge (one extra `llm` call) checks the answer actually answers the question from the evidence. **If either stage fails, abstain (`NO ANSWER`) rather than serve a probable hallucination.**»*
+
+⇒ **Il claim «abstention instead of hallucination» ha una casa precisa: `answer()`.** È progettata esattamente per quello, a due stadi, e il secondo è il **giudice question-aware** — cioè proprio la funzione che alle 00:38 avevo misurato come «non ridondante» sul CE.
+
+### ⚖️ COSA RESTA IN PIEDI E COSA RITIRO
+
+**Ritiro**: «su tre porte misurate l'astensione esiste su una» come affermazione sul **prodotto**. Il denominatore era sbagliato e mancava la porta più pertinente.
+**Resta vero, ed è misurato**: `search` serve **18 sonde su 18**, `ask` **18/18**, `explain` **1/18** — e chi usa `search`/`ask` non riceve astensione. **Resta vero** anche che il `Summary` del pacchetto non dice **su quale superficie** valga la promessa.
+**Cade** l'insinuazione implicita che il prodotto prometta astensione senza averne una porta: **ce l'ha, e la dichiara nel docstring**.
+
+### Cosa questi dati NON provano
+🔴 **`answer()` NON è misurabile qui**: richiede un `llm` (`answer(query, *, llm: Any, …)`), e **O4 vieta le API key esterne**. Posso dire cosa **dichiara**, non cosa **fa**. Il suo primo stadio è un cross-encoder locale — quello sarebbe misurabile — ma **il contratto completo no**.
+`search_documents` cerca nei **documenti indicizzati** (`self.documents.search`), non nei fatti: **non applicabile** a questo corpus, e lo chiudo come tale.
+Non ho misurato `count`, `trust_report` né le altre ~30 superfici.
