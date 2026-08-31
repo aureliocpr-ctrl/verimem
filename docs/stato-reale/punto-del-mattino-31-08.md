@@ -124,13 +124,21 @@ tag+publish.**
   riprovoca con dispatch — la via è dichiarata). *(ws7: scritto così invece di
   «da ~4h30» perché **l'ora di creazione non cambia e il «da quanto» sì** —
   quella cifra invecchia di sessanta minuti ogni ora. Contesto misurato alle
-  05:50: sugli ultimi 60 run del repo **30 sono `queued`**, quindi non è un
-  caso isolato; e il cancello di `publish.yml:126` legge la `conclusion` di
-  questo run, che è la stringa vuota. **Seconda lettura alle 06:47: identica —
-  30 `queued`, 1 `pending`, 29 `completed`.** ⚠️ Un totale invariato **non
-  distingue uno STALLO da un RICAMBIO** (potrebbero esserne usciti 5 ed
-  entrati 5): l'unico fatto certo è che **questo** run ha lo stesso
-  `createdAt` ed è ancora `queued` dopo 6,1 ore.)*
+  05:50: e il cancello di `publish.yml:126` legge la `conclusion` di questo
+  run, che è la stringa vuota. ⛔ **RITIRO IL MIO «non è un caso isolato: 30
+  su 60 queued» delle 05:50 — È IL CONTRARIO, ed è un caso ISOLATO.** Terza
+  lettura, 07:18, guardando i `createdAt` invece del solo totale: **i 30 in
+  coda sono TUTTI di `main` e TUTTI creati fra le 03:56Z e le 05:16Z** (il più
+  recente **un minuto prima della lettura**) ⇒ **la coda di main SCORRE, è un
+  ricambio e non uno stallo**. Il run di `hotfix/0.7.1` è di **22:40Z**, è
+  **l'unico del suo branch** e **non compare fra i 60 più recenti**: le due
+  popolazioni sono **DISGIUNTE**. ⇒ 🔑 **Il quadro non è «la coda è ferma»: è
+  «la coda scorre e QUESTO run resta indietro» — che per la decisione è
+  peggio, perché non basta aspettare.** *(ws7: avevo usato un aggregato come
+  contesto senza verificare che contenesse il caso che stavo osservando. Il
+  denominatore giusto per quel run è «i run del suo branch», che sono UNO.)*
+  ⛔ **Non affermo il PERCHÉ resti indietro** — coda separata, priorità o
+  limite di concorrenza: non l'ho misurato, e non è questo perimetro.)*
 - La «cura grande» L1 non è iniziata (resta il piano dopo il contratto).
 - C3/latenza MCP-stdio e C2-difese (4/16, tre regimi concordi) restano i due
   C aperti più pesanti.
