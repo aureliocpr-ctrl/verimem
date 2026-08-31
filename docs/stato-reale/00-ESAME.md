@@ -14206,3 +14206,103 @@ di casa, non come mia misura.
 
 **Banchi**: `porta_moat_locale_halueval.py`, `porta_etichette_halueval.py`, dati in
 `moat_locale_halueval.json` (scratchpad di sessione). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 04:00 — ws1 · UN QUARTO DELLE ETICHETTE NEGATIVE DI HALUEVAL NON MISURA CIÒ CHE UN WRITE GATE DEVE FARE — E LE DUE SOLE FRASI VERE CHE IL GIUDICE LOCALE RESPINGE SONO ENTRAMBE NEGAZIONI
+
+**Livello** etichette del dataset contro la domanda che il moat pone · **Perimetro** i
+**60 negativi** di HaluEval QA heldout, seed 42 — **tutti e sessanta ispezionati a mano**,
+non solo gli ammessi · **Istante** 2026-08-31 03:45–03:58 · **Regime** lettura pura,
+nessun modello caricato · `verimem.__version__` **0.7.6**, cwd = scratchpad.
+
+**Paga il limite dichiarato alle 03:40**: «*le 12 ispezionate sono LE PIÙ ALTE, cioè una
+coda scelta: 10 su 12 non si estende alle 30 ammesse*». E lo paga **su entrambe le
+popolazioni**: ispezionare solo le ammesse sarebbe costruire la popolazione scegliendo.
+
+### Il criterio, dichiarato prima di guardare i punteggi
+
+Giudico la domanda che **il moat** pone — «la `knowledge` accanto **sostiene** questa
+frase?» — non «è vera nel mondo» (niente rete) né «è la risposta **precisa** alla
+domanda», che è ciò che chiede l'etichetta di HaluEval. **SOSTENUTA** vale anche per una
+parafrasi, una generalizzazione corretta o una frase vaga ma non contraddetta.
+**⚠️ Il misuratore sono io**: giudizio a mano, ribaltabile — fonte e frase di **tutti e
+60** sono stampate da `porta_sessanta_negativi.py`, chi non è d'accordo rilegge.
+
+### Il numero, denominatore pieno
+
+```
+60 negativi = 43 VERI + 15 SOSTENUTE dalla fonte + 2 DUBBIE
+quota di etichette fuorvianti per lo scopo del write gate: 15/60 = 25,0%  (+2 dubbie)
+```
+
+Le 15 non sono casi al limite. **#53** «*met … at … The Second City*» sta nella fonte
+parola per parola; **#29** «*Sarah Caudwell was known for writing detective stories*» pure;
+**#43** «*released in May*» ← «*released on May 15, 1987*»; **#05** «*born in 1946*» ←
+«*Howard Kendall (22 May 1946…)*»; **#45** «*Brian Kidd was likely born first*» ← 1949
+contro 1982. Sono **cattive risposte e buoni fatti**.
+
+### 🟢 IL TASSO DI BLOCCO VERO, per entrambi i giudici
+
+| giudice | su tutti i 60 (**il numero pubblicato**) | sui soli **veri** negativi |
+|---|---|---|
+| locale (CE, nessun `llm`) | 0,5000 | **0,6512** |
+| llm (claude-sonnet-5, 17/07) | 0,4500 | **0,6279** |
+
+⇒ **il «45%» che sta in `benchmark/results/moat_external_judge_sonnet_2026-07-17.json`
+sottostima il giudice di ~18 punti**, e per la stessa ragione sottostima anche il mio 50%.
+Appaiato sui soli veri negativi: **7 contro 6 su 13 discordi, p=1,0000** — i due giudici
+restano **indistinguibili**, come alle 03:40 ma su una popolazione ora pulita.
+
+### 🚨 E IL COSTO CHE IL NUMERO PUBBLICATO NASCONDEVA — è il reperto nuovo
+
+```
+locale   blocca 2/15 delle frasi SOSTENUTE dalla fonte  -> #07, #09
+llm      blocca 0/15
+```
+
+**Le due sole frasi vere che il giudice locale respinge sono entrambe NEGAZIONI:**
+
+```
+#07  «Leckie Mine and Giant Mine have DIFFERENT towns»
+     FONTE: Temagami (Ontario) contro Yellowknife (NWT)   -> VERO   LOC 4,85 | LLM 100
+#09  «Fuzhou and Malipo County are in DIFFERENT provinces»
+     FONTE: Jiangxi contro Yunnan                          -> VERO   LOC 0,38 | LLM 100
+```
+
+🔗 **Si aggancia al reperto di ws3 sul thai** (banco `31448d73`, 25/08): lì il giudice
+**ammette a 99,87** una negazione **falsa** («il contratto *è stato* rinnovato» contro
+«*non è stato* rinnovato»). Qui **respinge a 0,38** una negazione **vera**. **Due errori
+opposti sulla stessa famiglia grammaticale**, trovati da due istanze per due strade
+indipendenti — ed è esattamente la forma che il registro conosce: *un criterio sintattico
+su un fenomeno semantico sbaglia in entrambe le direzioni*. ⚠️ **n=2 qui e n=1 lì: non è
+una tesi, sono due osservazioni indipendenti sulla stessa classe.** Il modo di
+falsificarla è un banco di negazioni vere e false costruito apposta — **non l'ho fatto**.
+
+### Le mie predizioni: una caduta, due confermate
+
+```
+P-AMMESSE  (predetta >=60%)  sostenute fra le 30 AMMESSE  = 43,3%   -> CADUTA
+P-BLOCCATE (predetta <=25%)  sostenute fra le 30 BLOCCATE =  6,7%   -> CONFERMATA
+P-CORRETTO (predetta >50%)   veri negativi: locale 65,1%, llm 62,8% -> CONFERMATA
+```
+
+**P-AMMESSE è caduta e conta**: alle 03:40, sulle 12 più alte, avevo trovato 10 su 12
+sostenute e ne avevo dedotto «≥60% sulle 30». Sulle 30 vere sono **43,3%**. ⇒ **la coda
+alta esagerava di ~20 punti** — che è precisamente il limite che mi ero dichiarato, e che
+si è rivelato **più grande di quanto lo temessi**.
+
+### Cosa NON prova
+
+Il criterio «sostenuta dalla fonte» **l'ho applicato io a mano**, caso per caso: non è un
+algoritmo e non è stato controfirmato. Le 2 dubbie (#39, un frammento nudo — «*Shahrukh
+Khan*» — che non è una proposizione; #44, ambiguo su cosa la data qualifichi) le ho
+**contate a parte** invece di spostarle dove mi conveniva. n=60 su **un** dataset in
+inglese: gli intervalli restano ±~12 punti e **nessun confronto fra i due giudici esce dal
+rumore**. Il riferimento llm è di luglio, **non l'ho rieseguito** (O4). Non ho misurato i
+60 **positivi** con lo stesso criterio: se anche fra i `right_answer` ci fossero etichette
+fuorvianti, il tasso di ammissione andrebbe corretto allo stesso modo — **è il prossimo
+debito, e lo dichiaro ora.**
+
+**Banchi**: `porta_sessanta_negativi.py` (stampa tutti e 60 con fonte intera),
+`porta_ricalcolo.py` (le tre liste e i tassi). **Io misuro, non curo.**
