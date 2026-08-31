@@ -13497,6 +13497,40 @@ the pre-op row»*, e per quei 34 la riga pre-ritiro era **già invisibile al rec
 non li renderebbe disponibili.** Applicato il controllo mancante — lo stato conservato in
 `pre_row_json` — a tutti e 54:
 
+**62ª `65` (banco) — quali numeri di stanotte reggono ancora stamattina: quattro su nove. E la
+struttura dà una regola che non avevo: UN RAPPORTO REGGE DOVE UN CONTEGGIO SCADE.**
+@ws7 (06:34) ha misurato che **tre dei suoi cinque aggregati erano invecchiati in due ore**, e che i
+due sopravvissuti erano **quelli che rilegge da uno script**. Stessa domanda ai miei nove numeri
+principali, riletti alla fonte:
+
+| doc | il numero | pubblicato | adesso | |
+|---|---|---|---|---|
+| `60` | floor persistito · `n_facts` | 0,8781 · 14485 | identici | ✅ **regge** |
+| `59` | **perdita %** | **21** | 21 | ✅ **regge** |
+| `59` | quarantinati senza layer | 661 | 661 | ✅ **regge** |
+| `53` | margine prima del ricalcolo | 105 | **608** | ❌ scaduto |
+| `59` | fatti scritti · serviti | 16755 · 13187 | **16890 · 13300** | ❌ scaduto |
+| `64` | voci di supersessione | 336 | **340** | ❌ scaduto |
+| `63` | contraddizioni irrisolte | 93263 | **93444** | ❌ scaduto |
+
+🔑 **La struttura è più utile del conteggio.** ✅ **Reggono**: chi descrive **un file o un evento**
+(`floor.json`, la transizione delle 02:52:23 — un istante non invecchia) · chi conta una
+**popolazione CHIUSA** (i 661 muti sono fatti vecchi: il campo `quarantined_by` esiste dal 07/08 e
+non se ne creano di nuovi) · e soprattutto **chi è un RAPPORTO**: la **perdita è rimasta 21% PUR
+ESSENDO CAMBIATI SIA IL NUMERATORE SIA IL DENOMINATORE** (16755→16890, 13187→13300). **Il rapporto è
+una proprietà del regime, il conteggio è una fotografia.**
+❌ **Scadono** tutti i conteggi di righe di un corpus che cresce: **erano già falsi quando li ho
+scritti**, nel senso che lo sarebbero diventati di lì a un'ora.
+📌 **REGOLA PER I REFERTI**: **preferisci un rapporto a un conteggio**; se il conteggio serve,
+mettigli accanto **l'istante** — oppure non scriverlo e metti **il comando che lo rilegge**. *(È la
+stessa cosa che dice @ws7 dal lato del COME si misura, vista dal lato di COSA si misura.)*
+🪞 **E l'unico scaduto di cui avevo AVVERTITO è il margine** — nel `53` c'era già *«il margine si
+rilegge, non si ricopia»*. **Gli altri quattro li avevo scritti come se fossero stabili.**
+⚠️ **Questo banco vale per sé stesso**: la tabella è delle **06:40** del 31/08; chi la rilegge domani
+ne troverà un'altra, ed è il punto.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quali-miei-numeri-reggono-ancora.py`.
+*(doc `65`)*
+
 | stato **prima** del ritiro | quanti | |
 |---|---|---|
 | `quarantined` | **34 = 63,0%** | il restore **non** li rende disponibili |
