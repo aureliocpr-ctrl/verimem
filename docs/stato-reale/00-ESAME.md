@@ -13346,6 +13346,45 @@ query, e senza quelle non lo chiudo.
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-il-punteggio-predice-la-bonta.py`.
 *(doc `61`)*
 
+**59ª `62` (banco) — verifico la cura di @ws2 su un caso MIO già caduto: funziona, e costa UN SESTO
+della mia. E il primo banco che avevo scritto NON discriminava, per la porta sbagliata.**
+@ws4 (`W7-102`) misura che **72 fatti hanno tutti i numeri nella fonte e il moat li boccia comunque**
+(30,4% dei quarantinati con numeri), con causa nelle **fonti che confrontano più valori**; @ws2
+propone *«taglia la source alla riga che sostiene il claim»*. **Io avevo il caso e non l'avevo letto
+così**: stanotte un mio fatto è caduto a **grounding 2,55** con una source-tabella a tre righe, e
+l'ho curato **ALLUNGANDO** (una riga che enuncia il legame) ⇒ 99,97. **La cura di ws2 dice
+l'opposto.**
+
+| braccio | esito | caratteri |
+|---|---|---|
+| **A** la tabella **INTERA** | **QUARANTINATO** | 392 |
+| **B** intera **+ la riga che LEGA** (la mia cura) | ammesso | 633 |
+| **C** **TAGLIATA** alla riga che sostiene (@ws2) | **ammesso** | **109** |
+
+✅ **Il caso reale è RIPRODOTTO** (A cade come in produzione) ⇒ il banco misura la cosa giusta ·
+✅ **entrambe le cure funzionano** · 🔑 **ma C costa 109 caratteri contro 633 — un sesto** — e **non
+aggiunge prosa mia alla source: TOGLIE**, quindi la source resta *output grezzo* invece di diventare
+output più una mia frase. ⇒ **la sua è migliore della mia sullo stesso caso**, e ci è arrivato da
+un'analisi delle fonti-tabella, non dal mio incidente.
+🪞 **E IL PRIMO BANCO NON DISCRIMINAVA — l'errore che rende inutile un A/B.** Usavo `Memory.add()`:
+**tutti e tre i bracci passavano** e `grounding_score` era `None`, cioè **il moat non girava**. Il
+banco misurava una porta che **non fa il controllo che volevo misurare**, e avrebbe concluso *«le
+cure sono equivalenti, anzi non serve curare»*. Cambiata la porta con quella che uso davvero
+(`verimem save` via `verimem.cli.main`), **stesso store e stesse source**, A cade. 📖 *«Il livello a
+cui misuri decide il verdetto»* applicato a me: **`Memory.add` e `verimem save` sono due porte, e
+solo una fa passare il fatto dal moat.**
+⛔ **COSA NON DICO**: **non ho il VALORE del grounding** dei tre bracci — il banco cattura `stdout`, il
+log strutturato esce altrove ⇒ ho l'**esito**, non il punteggio · **store VUOTO**: i tre esiti non si
+trasferiscono tali e quali al corpus vero · **un caso solo** (il numero di @ws4 dice quanto è
+frequente la forma, il mio banco che su **una** istanza la cura funziona) · e **non dico che tagliare
+sia sempre giusto**: una source tagliata troppo smette di essere evidenza — qui il taglio **conserva
+entrambi i numeri che il claim usa** (16 e 8) e toglie le righe che parlano d'altro.
+📌 **Ricaduta sulla regola che avevo dato al canale** (*«non contare tu, non comporre tu»*): va
+integrata — **non basta mettere il numero nella source; se la source confronta più valori, dalle la
+riga giusta invece di tutta la tabella.**
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-tagliare-la-source-invece-di-allungarla.py`.
+*(doc `62`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
