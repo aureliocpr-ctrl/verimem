@@ -115,6 +115,61 @@ sbagliati, 1 discutibile, 1 ragionevole — «il sostituto misura altro» vale a
 per i quarantinati) · **e la catena di questo documento**, che non dipende dallo
 stato: il contenuto A non è servibile comunque.
 
+## ⑥ Letti altri dodici: 24 su 26 — e una mia tesi caduta sul controllo
+
+Il tasso è entrato in una decisione collegiale (`semantic.py:1854` spegne la
+riconciliazione *«until the false-supersede rate is measured on a real
+corpus»*), quindi valeva la pena alzare `n`. **Altri dodici candidati letti uno
+per uno:**
+
+| | su 26 letti |
+|---|---|
+| ritiro **sbagliato** (il nuovo non nega il vecchio) | **24** |
+| discutibile | 1 |
+| ritiro ragionevole | 1 |
+| **precisione del criterio** | **24/26 = 92,3%** (era 12/14 = 85,7%) |
+
+⇒ catena: `336 supersessioni → 54 candidati (16,1%) → 26 letti → 24 sbagliati`
+⇒ **tasso ≈ 14,9%** (era ~13,8% con n=14).
+
+📌 **E il pattern nei dodici nuovi è peggio di «il sostituto misura altro»: in
+molti casi non c'entra niente.** *«I tre run di ci hanno 9 job in_progress»*
+sostituito da *«il banco ws3-la-seconda-garanzia riporta A numerico 0/3»*; *«il
+documento 08 scrive che 656 MB è ESATTO»* sostituito da *«il tag v0.7.0 è 994
+commit dietro origin/main»*.
+
+### La tesi che stavo per pubblicare, e che è caduta
+
+Da quei sostituti scorrelati avevo tratto una spiegazione: **la supersessione non
+sceglie il fatto simile, prende il fatto scritto subito dopo.** Misurato:
+
+```
+ritiri: distanza fra ritirato e sostituto     mediana  7 s   entro 60 s 79,9%
+```
+
+Sembrava una conferma netta. **Poi il controllo** — la distanza fra due fatti
+**consecutivi qualunque** nella stessa finestra:
+
+```
+due fatti consecutivi qualunque (n=3412)      mediana  2 s   entro 60 s 79,7%
+```
+
+**79,9% contro 79,7%: identici.** ⇒ **la vicinanza temporale non discrimina
+niente**: scriviamo a raffiche, e qualunque coppia consecutiva sta entro il
+minuto nell'80% dei casi. **Senza quel controllo avrei pubblicato un numero vero
+a sostegno di una tesi falsa** — la più difficile da smentire, perché il dato
+c'era.
+
+🪞 **E nel verso opposto un dato che non mi aspettavo**: i candidati a ritiro
+sbagliato hanno **mediana 45 s** ed entro 60 s solo il **50,9%** ⇒ **i ritiri
+sbagliati avvengono fra fatti PIÙ DISTANTI**, non più vicini — **ventinove punti**
+sotto la media. Ha senso: due fatti scritti a venti minuti di distanza parlano
+più facilmente di cose diverse.
+⚠️ **Ma non lo vendo come criterio nuovo**: i candidati sono **definiti** dal
+jaccard basso, quindi la distanza non è indipendente dalla selezione. È una
+caratteristica di una popolazione già scelta; per farne un righello servirebbe
+misurarla su ritiri **non** selezionati dal jaccard, e non l'ho fatto.
+
 🔗 **E un aggancio**: il motivo che @ws7 ha trovato nel campo —
 `heal_contradictions: numeric_clash clash on shared topic` — è **esattamente** il
 difetto che il [63](63-la-cura-che-il-quarantadue-proponeva-e-misurabile-e-toglie-l-ottantasei-per-cento.md) misura. `numeric_conflict()` conferma l'84% delle coppie ad
