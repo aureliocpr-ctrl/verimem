@@ -126,10 +126,43 @@ mese di creazione del fatto ritirato: **41 a luglio, 419 ad agosto**, dieci volt
 > scade»*. **Scrivere la lezione e applicarla sono due cose diverse.**
 
 ✅ **Quello che invece regge**: `same-source evolution` **non compare prima di
-luglio**, e **non è un artefatto della telemetria** — verificato che
-`superseded_reason` è popolato al **100% fin da maggio** (1457 ritiri, 1457 con
-motivo). ⇒ **il meccanismo è nuovo**, o prima aveva un altro nome. *(Quale delle
-due, non l'ho indagato.)*
+luglio**, e **non è un artefatto della telemetria** — `superseded_reason` è
+popolato al **100% fin da maggio** (1457 ritiri, 1457 con motivo).
+
+### ②-ter Non è «nuovo»: ha SOSTITUITO criteri più conservativi
+
+I motivi, mese per mese (composizione sui ritiri di ciascun mese):
+
+| mese | motivo dominante | quota |
+|---|---|---|
+| 2026-05 (1457) | `autohook-snapshot daily collapse` | **98,7%** |
+| 2026-06 (175) | `exact-text dedup` | **85,7%** |
+| 2026-07 (89) | `exact-text dedup` 50,6% · **`same-source evolution` 46,1%** | ← compare |
+| 2026-08 (568) | **`same-source evolution`** | **73,8%** |
+
+**Non aveva un altro nome: è un cambio di regime**, e la differenza fra i criteri
+è esattamente il punto:
+
+- **`exact-text dedup`** cancella solo duplicati con lo **stesso testo**: non può
+  quasi sbagliare — se i testi sono identici, il secondo non porta informazione
+  che il primo non abbia;
+- **`autohook collapse`** consolida una catena di checkpoint e **ne contiene il
+  contenuto** (verificato: 40 incipit su 40 dentro il master);
+- **`same-source evolution`** cancella per **stessa penna** — e su **30 letti a
+  caso, 30 sbagliati**.
+
+> ⇒ **Fino a giugno il prodotto ritirava con criteri che non possono quasi
+> sbagliare; da luglio con uno che sbaglia quasi sempre.** Il fenomeno di questo
+> documento **non è un difetto sempre esistito e appena scoperto: è il risultato
+> di una sostituzione, e la sostituzione ha meno di due mesi.**
+
+⚠️ **Non so perché** sia stato sostituito, né se `exact-text dedup` sia ancora
+attivo e semplicemente non scatti più (ad agosto non compare fra i primi quattro
+motivi). **Non ho letto il codice del cambio**, e chi l'ha fatto avrà avuto una
+ragione che io non vedo.
+📌 **Per la decisione su `semantic.py:1854` questo aggiunge un argomento**: non si
+sta decidendo se accendere qualcosa di sperimentale, ma **se tornare al
+comportamento che il prodotto aveva fino a luglio**.
 
 ## ③ L'errore mio, e la sua forma
 
