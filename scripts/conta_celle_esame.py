@@ -139,9 +139,36 @@ def main() -> int:
         dopo = righe_t[i + 1] if i + 1 < len(righe_t) else ""
         (B if (RIGA_CELLA.match(dopo) or not dopo.strip()) else A).append(ident)
     if A:
-        print(f"⚠️  {len(A)} celle su PIU' RIGHE (resa rotta, contenuto integro):")
-        print(f"     {' '.join(A[:14])}{' …' if len(A) > 14 else ''}")
+        # 🔴 31/08 03:55 — IL CONTEGGIO NON DICEVA LA MOLE, e «3 celle» suona
+        # piccolo: sotto LANT-64 ci sono **407 righe consecutive** senza una
+        # sola riga che cominci con la barra e senza righe vuote, cioe' un
+        # blocco che il markdown NON rende come tabella. Un conteggio di celle
+        # e una quantita' di righe raccontano cose diverse, e il referto
+        # riportava solo la prima.
+        # ⚠️ Il primo righello per la mole era troppo largo: contava «prosa in
+        # mezzo alle celle» su tutto il documento e dava 9168 righe, il 65% —
+        # ma quel 65% e' il documento, che alterna sezioni narrative e tabelle.
+        # **Un numero implausibilmente grande e' un segnale sul righello, non
+        # sul mondo**: il criterio giusto conta solo cio' che segue una cella
+        # spezzata, fino alla prima riga vuota o alla prossima cella.
+        def _continua(ident: str) -> int:
+            k = next((x for x, r in enumerate(righe_t)
+                      if r.startswith(f"| {ident} |")), None)
+            if k is None:
+                return 0
+            j = k + 1
+            while j < len(righe_t) and righe_t[j].strip() \
+                    and not righe_t[j].startswith(("|", "#")):
+                j += 1
+            return j - k - 1
+
+        mole = {i: _continua(i) for i in A}
+        tot = sum(mole.values())
+        print(f"⚠️  {len(A)} celle su PIU' RIGHE (resa rotta, contenuto integro) "
+              f"— e sono {tot} RIGHE non rese come tabella:")
+        print("     " + " · ".join(f"{i} ({n} righe)" for i, n in mole.items()))
         print("   ⇒ un blocco ``` dentro una cella va reso su una riga sola.")
+        print("   ⇒ il CONTEGGIO delle celle non dice la MOLE: leggere entrambi.")
     if B:
         print(f"🔴 {len(B)} celle TRONCATE (manca l'ultima colonna, il REGIME):")
         print(f"     {' '.join(B[:14])}{' …' if len(B) > 14 else ''}")
