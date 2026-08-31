@@ -31,6 +31,35 @@ Il terzo sono **i due bracci di un A/B**. Il secondo sono **due workflow
 diversi**. Il quarto **due scritture diverse** dello stesso banco. **Nessuno di
 questi fatti nega quello che ha cancellato.**
 
+## ①-bis Raddoppiato il campione: 30 su 30 — e il pattern ha un nome
+
+Secondo campione, **seme diverso**, altri sedici: **30 letti in totale, 30
+sbagliati, zero eccezioni.** E stavolta la forma è inequivocabile:
+
+| il fatto **ritirato** | il **sostituto** |
+|---|---|
+| con l'etichetta **a sinistra** il layer L4.2 **segnala** | con l'etichetta **a destra** L4.2 **tace** |
+| il caso **fonte x1**: action `downgrade`, g=1.1 | il caso **fonte x4**: action `persist`, g=86.1 |
+| il claim **vero** riceve score 99.979 | il claim di **scambio** riceve score 1.973 |
+| in `BENCHMARKS.md` **alla radice** LoCoMo compare 11 volte | in **`docs/`**`BENCHMARKS.md` compare 0 volte |
+| nel run 1121 il job **build sdist** ha esito success | nel run 1121 il job **wheel install-from-scratch** success |
+| il doctor riporta **daemon warm on :61574** | il doctor **esce con EXIT=1** |
+
+> 🔑 **Sono i due bracci di un A/B, due righe dello stesso output, due job dello
+> stesso run. Il secondo fatto non corregge il primo: lo COMPLETA — e il prodotto
+> lo legge come una sostituzione.**
+
+**E questo spiega perché il mio criterio sbagliava direzione**: due bracci di un
+A/B **si somigliano** (stesso banco, stesse parole, valori diversi), quindi il
+`jaccard` è **alto** e il criterio **li scarta**. Cercavo i ritiri sbagliati fra
+i testi **dissimili**, e la fabbrica sta fra quelli **simili**.
+
+📌 **Ricaduta immediata, e vale più del numero**: **quando si salvano i due bracci
+di un A/B come due fatti separati, il secondo cancella il primo.** È la stessa
+cosa misurata nel [52](52-undici-dei-miei-fatti-si-sono-mangiati-fra-loro.md) (*«due valori dello stesso oggetto stanno in un fatto
+solo»*) — ma là era una regola per scrivere bene, **qui è la causa di 274 ritiri
+su 340**.
+
 ## ② Il quadro, e il motivo che il prodotto dichiara
 
 ```
