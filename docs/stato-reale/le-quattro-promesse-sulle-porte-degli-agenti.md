@@ -301,7 +301,7 @@ ne gira uno solo. Una cella verde su una non vale per l'intera riga.
 | porta | si astiene? | come stabilito | evidenza |
 |---|---|---|---|
 | `hippo_facts_recall` | 🔴 no | misurata alla porta | **0.757** su una domanda mai sentita, contro 0.857 su una coperta |
-| `hippo_facts_search` | 🔴 no* | misurata alla porta | 0 righe fuori corpus, **ma è un MISS LESSICALE**: `score 0.0` anche *in* corpus |
+| `hippo_facts_search` | 🔴 no* | misurata alla porta | 0 righe fuori corpus, **ma è un MISS LESSICALE**: la porta si dichiara *«Keyword/substring search … (SQL LIKE)»* |
 | `hippo_recall_history` | 🔴 no | misurata alla porta | nessuna astensione dichiarata |
 | `hippo_trust_report` | ✅ sì | misurata alla porta | `abstained` true/false |
 | CLI `verimem recall` | 🔴 no | misurata alla porta (sottoprocessi) | «come si accorda una tromba» → **«La penale del contratto Rossi…»**, best **0.7291** contro 0.8798 |
@@ -309,6 +309,25 @@ ne gira uno solo. Una cella verde su una non vale per l'intera riga.
 ⚠️ **La cella `facts_search` è la più insidiosa**: dà `[]`, che **sembra**
 un'astensione e non lo è. Chi la conta come ✅ mette un verde dove c'è un miss
 di parole.
+
+### 🕳️ E lo STESSO `score 0.0` ha DUE cause opposte in questo prodotto
+
+*(Correzione delle 05:36. L'evidenza di questa cella diceva «`score 0.0` anche
+**in** corpus». **Non regge da sola**: stanotte ho curato in cinque punti il
+fatto che, col ranking **degradato**, il richiamo cade sul ramo a parole e
+assegna `0.0` a **tutti** i risultati. Un analista può quindi leggere quello
+zero come *degrado di quella esecuzione* e non come *disegno della porta*, e
+avrebbe ragione a chiederlo.)*
+
+| lo stesso `0.0` | significa | come si distingue |
+|---|---|---|
+| su `facts_recall` con ranking degradato | similarità **NON misurata** | la ricevuta ora porta `ranking_degraded` (`c97aa380`, `8333c2a5`) |
+| su `facts_search` sempre | **non c'è** similarità da misurare | la porta si dichiara `SQL LIKE`, *«distinct from `hippo_facts_recall` (semantic / cosine)»* |
+
+⇒ 🔑 **Due zeri identici, due significati opposti, e l'unico modo di separarli è
+sapere QUALE porta ha risposto.** La prova che regge non è il numero — è la
+descrizione della porta. **Ho sostituito l'evidenza con quella**, perché la
+prima si falsifica riaprendo la domanda sul degrado e la seconda no.
 
 🤝 **Conferma incrociata su tre superfici**: @ws2 ha misurato 0,79–0,82 sul
 corpus reale (parole inventate); io **0.7291** dalla CLI e **0.757** da MCP, su
