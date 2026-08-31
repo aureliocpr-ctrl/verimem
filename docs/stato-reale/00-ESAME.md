@@ -13251,6 +13251,49 @@ estrapolo.**
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-cronometro-della-transizione.py`.
 *(doc `60`)*
 
+**58ª `61` (banco) — rispondo a una domanda che avevo posto al canale venti minuti prima senza
+saperla risolvere, e la risposta SPOSTA IL DIFETTO: il punteggio separa benissimo, quindi l'86,3% di
+avvisi non è rumore — è che le nostre letture non trovano.**
+Dopo la transizione (`60`) il pavimento è **0,8781** e l'avviso si accende sull'**86,3%** delle
+letture reali; con la banda di @ws2 scenderebbe a **~50%**. Avevo chiuso il post con una domanda:
+*«le risposte con best basso sono davvero cattive? Se lo sono l'avviso ha ragione e il problema è il
+retrieval; se no, stiamo tarando la soglia sbagliata.»*
+🔑 **Serviva un righello della bontà CHE NON FOSSE IL PUNTEGGIO — e ce l'avevo sotto mano**: nei miei
+banchi **so quale fatto la query deve trovare**. «Il fatto atteso è fra i risultati» è indipendente
+dal punteggio. *(Presidio applicato: composizione per `status` controllata prima — nessuno dei 24
+attesi era quarantinato.)*
+
+| popolazione | n | min | mediana | **avvisati** |
+|---|---|---|---|---|
+| **A** fatto atteso **TROVATO** | 22 | **0,8645** | 0,8953 | **1 = 5%** |
+| **B** fatto atteso **mancato** | 2 | 0,7798 | 0,8654 | 2 = 100% |
+| **C** **fuori dominio** | 10 | 0,7829 | 0,8177 | 10 = 100% |
+
+```
+minimo di A 0.8645 · massimo di C 0.8474
+query fuori dominio sopra il minimo delle buone:  0 SU 10
+```
+
+⇒ **SEPARAZIONE COMPLETA, margine 0,0171: nessuna sovrapposizione.**
+🎯 **E QUINDI L'86,3% NON È RUMORE DEL MISURATORE.** Se il best separa così bene, quel numero vuol
+dire l'altra cosa: **la maggior parte delle nostre letture non trova ciò che cerca.** ⇒ **la risposta
+è la prima delle due: l'avviso è GIUSTO, e il difetto è il RETRIEVAL, non la soglia.** Tarare il
+pavimento sposta il *numero* di avvisi; non cambia che quelle letture tornano a mani vuote.
+✅ **CONFERMA INDIPENDENTE PER @ws2**: la finestra dove il taglio separa senza errori è **0,8474 –
+0,8645**, e la sua banda **0,84-0,85 ci cade dentro** — arrivata da un banco e un metodo diversi dai
+miei. **Due strade indipendenti, stessa finestra.**
+📉 **E il pavimento attuale è appena sopra il bordo**: 0,8781 contro 0,8645 ⇒ **avvisa su una
+risposta buona su 22 (5%)**. **Non è la catastrofe che il mio 97,8% stimato lasciava immaginare**:
+un falso allarme ogni venti, più tutti quelli veri.
+⛔ **COSA NON DICO**: **`B` ha n=2 e non lo interpreto** — la separazione riportata è fra `A` e `C` ·
+**le query di `A` sono LE MIE**, col vocabolario del dominio, cioè il caso favorevole del `55`
+(91,7%): il traffico vero ha domande peggiori e infatti trova meno · **la bontà è STRETTA** (un solo
+fatto è quello giusto), il che rende il righello **pessimista su A, non ottimista** · **non ho
+misurato quanto del traffico reale sia fuori dominio** — il journal salva `best`, non il testo delle
+query, e senza quelle non lo chiudo.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-il-punteggio-predice-la-bonta.py`.
+*(doc `61`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
