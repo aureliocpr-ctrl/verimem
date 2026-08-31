@@ -13090,6 +13090,37 @@ cui fatti siano distinguibili fra loro**, cioè non un banco a due personaggi.
 📌 **ALTRI LIMITI**: n=16 · domande e traduzioni **scritte da me** · `k=10` · il criterio di lingua
 **scarta** gli ambigui invece di classificarli.
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-direzione-opposta.py`.
+🔴 **RETTIFICA, quarantacinque minuti dopo — il «crollo» non esisteva e la causa era il MIO
+CAMPIONE.** Guardato **dove finiscono** i persi con `k=100`: **rango BIMODALE — 9 al primo posto,
+ZERO fra l'11º e il 100º, 7 oltre il centesimo.** Un o-tutto-o-niente non è «richiamo mediocre»: è
+una popolazione che si divide in due. E si divide sullo **`status`**: i **9 trovati** sono
+`model_claim`, i **7 persi** sono **`quarantined`, sette su sette** — e il prodotto li tiene **fuori
+dal recall di default**, come dichiara la sua documentazione (*«stored, but kept OUT of default
+recall»*). **Non un difetto: la promessa mantenuta, che io stavo misurando come guasto.**
+
+| separando per `status` | ritrovati | al 1º posto | sovrapposizione |
+|---|---|---|---|
+| **servibili** — domanda in inglese | **9/9 = 100%** | **100%** | 88,0% |
+| **servibili** — la stessa in italiano | 8/9 = 88,9% | 66,7% | 4,8% |
+| **quarantinati** — in inglese | **0/7 = 0%** | 0 | **91,3%** |
+| **quarantinati** — in italiano | **0/7 = 0%** | 0 | 0,0% |
+
+✅ **Nessun crollo sulla prosa discorsiva**: sui servibili è **100%, tutti al primo posto** — meglio
+che sui fatti miei (91,7%) · **la lingua costa 11,1 punti** (100 → 88,9), in linea con 4,2 e 6,2 ·
+🔒 **e la promessa regge in condizioni severe: i quarantinati non tornano nemmeno con il 91,3% di
+parole in comune fra domanda e fatto.** Non è un filtro che il lessico aggira: **0 su 7**.
+🪞 **L'errore**: avevo selezionato con `superseded_by IS NULL` e **non con lo `status`** — filtrando
+su una dimensione diversa da **quella che il decisore usa**. La riga *«`superseded_by IS NULL` ≠
+vivo, il quarantinato è invisibile»* **è in memoria da settimane**: regola presente, **applicazione
+mancante — terza volta stanotte** (`M4`). E il campione non era sfortunato ma **sistematicamente**
+viziato: fra i fatti inglesi **65 servibili contro 40 quarantinati (38%)** ⇒ a caso ne prendevo ~6
+su 16, **ne ho presi 7**.
+⚠️ **Anche il limite che avevo dichiarato era il consiglio sbagliato** (*«serve un corpus discorsivo
+con fatti distinguibili»*): **non serviva un altro corpus, serviva filtrare la popolazione.**
+⚠️ **PER CHI COSTRUISCE BANCHI SU QUESTO CORPUS**: il **38%** dei fatti inglesi con `superseded_by
+IS NULL` è quarantinato e **non tornerà mai** dal recall. Senza filtrare `status` si misura il
+proprio campione, non il prodotto.
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-per-status.py`.
 *(doc `58`)*
 
 ---
