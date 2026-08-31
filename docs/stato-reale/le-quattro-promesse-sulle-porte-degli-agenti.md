@@ -462,6 +462,34 @@ che dichiara l'ordine giusto mentre lo viola vale meno di zero.)*
 **Chi li ha trattenuti** (05:14): `L4.1` **274 (67%)** · `L4.2` 139 · `L1.15` 49 ·
 `L1.16` 36 · `L1.10` 28 · `L1.20` 26 · `store-screen` 14 · `L4-relazione` 12.
 
+### 🔴 CORREZIONE DELLE 05:56 — quel «67%» dice COMPARE, non DECIDE
+
+**Innescata da @ws4**, che alle 05:47 ha corretto una riga del punto del mattino
+per la stessa ragione: *«toccare» non è «liberare»*. **Il suo argomento vale sul
+mio numero, e l'ho verificato sulla mia popolazione invece di dedurlo:**
+
+```
+trattenuti nonostante il giudice          407
+   con UN SOLO layer                      220   54,1%   ← curarlo LIBERA il fatto
+   con DUE layer                          166   40,8%   ← curarne uno non basta
+   con TRE layer                           21    5,2%
+
+L4.1 COMPARE in                           274   67,3%
+L4.1 è SOLO in                            131   32,2%   ← la leva vera
+```
+
+⇒ 🔑 **Il 67% non è la leva: è la presenza.** Curare `L4.1` da solo libererebbe
+**131 casi (32,2%)**, non 274 — sugli altri 143 resta un secondo layer che
+blocca comunque. **Il numero non era falso; era falsa la sua lettura operativa**,
+ed è la classe che questo documento rimprovera altrove: *un numeratore letto per
+una domanda diversa da quella che gli si può porre.*
+
+📌 **Le leve vere, se il criterio è «curarlo libera il fatto»**: `L4.1` 131
+(32,2%) · `L1.16` 36 · `L1.15` 26 · `store-screen` 14 · gli altri sotto l'1,5%.
+
+⚠️ **Consegnato al lead alle 05:24 nella forma vecchia**: corretto sul canale
+alle 05:58, prima della rifinitura delle 07:00.
+
 🔑 **Il campo è DERIVATO, non dichiarabile dal chiamante** — `flow_events.py:305`:
 `withheld_despite_judge = status in (quarantined, rejected) AND judged_true(grounding_score)`,
 col commento *«se una porta potesse dichiarare `judged=True` senza un punteggio,
