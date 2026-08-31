@@ -21,7 +21,8 @@ cancello su cinque). Wheel costruito e verificato SULL'ARTEFATTO: veto
 identificativi EXIT=0, smoke da venv vergine EXIT=0 (`mcp 1.29.1` risolto —
 il crash dell'utente nuovo è curato). **Mancano solo: il run `ci` verde sul
 branch (primo run della sua storia, **creato 00:40, ancora in coda alle
-05:58 — 5,3 ore**) e il TUO tag+publish.**
+06:47 — 6,1 ore**; dettaglio e seconda lettura in «Rischi e aperti») e il TUO
+tag+publish.**
 
 ## Cancelli mossi (chi, cosa)
 1. **CANCELLO-A votata (3 SI) ed eseguita** — il gate del publish accettava
