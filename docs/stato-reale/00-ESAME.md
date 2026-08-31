@@ -13206,6 +13206,32 @@ quarantinati 4 volte più della media, 38% contro 8,9%»*. **Spuria**: quel 38% 
 **`c10/halumem`, un corpus di benchmark importato al 51,4%**, non dalla lingua. **Quarta volta
 stanotte che il campione spiega il numero — la prima in cui l'ho verificato PRIMA di pubblicare.**
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quarantinati-senza-layer.py`.
+✅ **CHIUSO AL 99,5% un'ora dopo — e la terza causa era la più banale: una DATA.** I 48 che
+restavano (con source **e** non auto-claim) li ho guardati prima di lasciarli aperti: **il primo
+fatto del corpus che valorizza `quarantined_by` è del 2026-08-07 11:27:36**, e **45 dei 48 sono
+anteriori** (finestra **04/08 21:24 → 05/08 23:54**). **Il campo non esisteva ancora.**
+✅ **CONTROLLO POSITIVO, che rende la spiegazione una prova invece di una congettura**: i
+quarantinati **CON** layer creati prima di quella soglia sono **ZERO** — se il campo fosse esistito e
+qualcuno l'avesse popolato, ne troverei.
+
+| causa | dei 661 muti |
+|---|---|
+| **senza source** (il moat non gira) | 586 |
+| **auto-claim** (screen lessicale, prima dei layer) | 270 |
+| **anteriori al campo** (04-05/08) | **45** |
+| **UNIONE delle tre**, senza doppi conteggi | **658 = 99,5%** |
+| **non spiegati** | **3 = 0,45%** |
+
+⚠️ **I tre che restano** hanno source, grounding e sono posteriori al campo; li lascio **scritti**
+invece di arrotondarli via — *«Con validate uguale a off i due fatti restano 2 vivi con 0 verdetti»* ·
+*«Il taglio slice applicato a una stringa con caratteri fuori dal piano base…»* ·
+*«retirement_breakdown sullo store rende quota 0.0776…»*. **Tre casi su 661 non li interpreto.**
+📌 **NOTA DI METODO — le tre cause sono in ordine INVERSO di vistosità**: ero partito dal topic
+`veriagent` (47 muti su 48 **in una giornata**, tutti auto-claim), e **il caso che salta all'occhio
+spiega il 40,8%**; la causa maggiore — l'assenza di source — ne spiega l'**88,7%** ed è invisibile; e
+la terza, che chiude il residuo, **è una data: il campo è più giovane dei fatti.** ⇒ **chi si fosse
+fermato al caso vistoso avrebbe chiuso il limite con la spiegazione minore, e sarebbe sembrata
+completa.**
 *(doc `59`)*
 
 **57ª `60` (evento+banco) — LA TRANSIZIONE COLTA MENTRE AVVENIVA, alle 02:52:23. Tre predizioni su
