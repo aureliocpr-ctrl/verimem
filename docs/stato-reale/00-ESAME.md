@@ -14734,3 +14734,99 @@ v0.7.0 su questa env: ho guardato il **sorgente** in entrambe le versioni, non i
 
 **Banchi**: nessuno nuovo — due chiamate filesystem-only e `git show v0.7.0:…`.
 **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 05:05 — ws1 · IL MIO ROSSO CADE: COL MOAT SEMANTICO SPENTO IL PRODOTTO NON È MUTO. E IL «GEMELLO» NOTO DIPENDE DAL REGIME — UNO IN `off`, DUE IN `enforce`
+
+**Livello** porta pubblica `Memory.add(claim, source=…)`, **un regime per processo** ·
+**Perimetro** 3 scritture × 2 regimi, corpus vuoto, topic unico · **Istante**
+2026-08-31 04:53–05:02 · **Regime** dichiarato per intero sotto; RAM controllata prima di
+ogni carico (5,44 GB in testa al regime pesante) · `verimem.__version__` **0.7.6**.
+
+**Paga il debito dichiarato alle 04:48**: «*so che il MODE cambia, NON ho misurato che un
+fatto contraddittorio PASSI davvero*».
+
+### ⚖️ PRIMA IL RITIRO: P-B è caduta, e il prodotto ne esce meglio
+
+Avevo predetto che in `off` il contraddittorio entrasse «**pulito e senza alcun segnale**»,
+confermando «*una capacità spenta non emette segnale*» **alla porta**. **Falso.**
+
+```
+REGIME off (local_nli_available()=False, _semantic_conflict_mode()='off')
+  scrittura 1  «Howard Kendall was born on 22 May 1946.»   L3: NESSUNO
+  scrittura 2  «Howard Kendall was born in 1952.»          L3: ['L3-supersession']
+               reason: «a newer same-source value supersedes a stored fact»
+  scrittura 3  CASO SANO, non contraddice                  L3: NESSUNO  (giusto)
+```
+
+⇒ **il percorso LESSICALE di L3 copre il caso anche col semantico spento.** Il mio rosso
+delle 04:48 — «il prodotto è muto sull'assenza del giudice semantico» — **resta vero come
+affermazione sul CODICE** (nessuna superficie riferisce il *mode*, `doctor` non lo nomina),
+ma **cade come affermazione sull'ESITO**: la contraddizione **viene segnalata lo stesso**.
+**Il caso sano è pulito in entrambi i regimi**: il banco non fabbrica avvisi.
+
+### 📌 Il layer semantico, su questo caso, non aggiunge nulla — e raddoppia la riga
+
+```
+REGIME enforce (local_nli_available()=True, mode='enforce')
+  scrittura 2   L3: ['L3-supersession', 'L3-supersession']   <- DUE, identici
+  status 'model_claim' · stored True · quarantined_by None   <- IDENTICO a `off`
+```
+
+**Stesso verdetto, stesso esito, un warning in più.** ⚠️ **Il duplicato NON è mio**: il
+prodotto lo conosce, l'ha misurato e lo dichiara (`anti_confab_gate.py:963-976`), con
+tanto di autocritica —
+
+```
+⚠️ AGGIUNTO ALLE 21:14 DOPO LO SWEEP CHE AVREI DOVUTO FARE SUBITO…
+    L3-coexistence    2 warning   <- curato
+    L3-supersession   2 warning   <- IL GEMELLO, rimasto
+`L3-supersession` ha le stesse DUE copie letterali (righe ~1997 e ~2280), oggi
+identiche — e due copie identiche sono solo due copie che non hanno ANCORA divergiuto
+```
+
+### 🔍 IL DATO CHE È MIO: quel «2» dipende dal REGIME
+
+La tabella del prodotto scrive `L3-supersession → 2 warning`, **senza condizione**. Io ne
+misuro **UNO in `off`** e **DUE in `enforce`**. ⇒ **il gemello si manifesta solo quando il
+layer semantico è acceso**, cioè — per il reperto delle 04:48 — **solo se il modello NLI è
+già nella cache HF dell'utente**. **Il numero di warning sulla ricevuta dipende da cosa un
+altro software ha scaricato sul disco.** Quella tabella è stata misurata, verosimilmente,
+su una macchina col NLI presente: **il conteggio è giusto lì e non è universale.**
+
+### ⚠️ IL LIMITE È MIO, ED È GROSSO — lo dico prima che lo trovi un altro
+
+Il commento a `anti_confab_gate.py:2074-2076` dice che il layer semantico esiste per i
+casi in cui «*the WORDS differ but the MEANING contradicts*». **Il mio contraddittorio ha
+le parole quasi identiche** (stesso soggetto, stessa struttura, cambia la data): è
+**esattamente il caso che il percorso lessicale prende già**, cioè **fuori dal compito**
+del layer che volevo misurare.
+⇒ **NON ho misurato il valore aggiunto del moat semantico.** Ho misurato che **su un caso
+lessicale** non aggiunge nulla e raddoppia la riga. Il banco che lo metterebbe alla prova
+usa un contraddittorio **lessicalmente distante** — e va costruito **senza scrivermelo da
+solo**, altrimenti è un manico. **Debito dichiarato, non pagato.**
+
+### Cosa NON prova
+
+n=3 scritture per regime, **un solo** caso di contraddizione, corpus vuoto, topic unico,
+inglese. La mia `FONTE2` **sostiene** il claim falso («*born in the year 1952 according to
+this record*»): grounding **99,66** — quindi il moat fa bene ad ammetterlo, e **il mio
+banco misura la contraddizione fra due FATTI, non fra fonte e claim**. Non ho verificato
+**se il fatto vero sia stato effettivamente ritirato** dopo la supersessione (il tema è
+arcinoto al registro: «supersessione» compare **55** volte, `L3-supersession` **20**) —
+non l'ho inseguito perché non è mio e non aggiungerei nulla.
+
+### Regime, per intero
+
+```
+POPPATE: HIPPO_ENCODE_DELEGATE_ONLY='1' · ENGRAM_DATA_DIR='C:\Users\aurel\.engram'
+         + ENGRAM_GROUNDING_BACKEND · ENGRAM_MIN_RELEVANCE · VERIMEM_DATA_DIR
+         + ENGRAM_GROUNDING_THRESHOLD · ENGRAM_GROUNDING_WRITE_THRESHOLD
+         + ENGRAM_SEMANTIC_CONFLICT · ENGRAM_LOCAL_GATE_MODEL
+regime off: ENGRAM_LOCAL_NLI_MODEL='nessuno/modello-che-non-esiste'
+regime enforce: ENGRAM_LOCAL_NLI_MODEL non impostata (cache reale)
+store temporaneo isolato · regime encode ok in testa e in coda · un processo per regime
+```
+
+**Banchi**: `porta_l3_semantico.py` (scratchpad di sessione). **Io misuro, non curo.**
