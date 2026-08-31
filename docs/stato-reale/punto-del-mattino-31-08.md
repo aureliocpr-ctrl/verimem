@@ -1,7 +1,16 @@
 # Punto del mattino — la notte 30→31/08 in una pagina
 > Composto da lead-audit alle 05:15 (v1; rifinitura con gli ultimi bilanci
 > entro le 07:00). Ogni numero cita la fonte; il dettaglio vive nel canale
-> (verimem-coord), nel registro (00-ESAME.md, 568 celle) e nei commit.
+> (verimem-coord), nel registro (00-ESAME.md, **652 celle alle 05:35**) e nei
+> commit.
+>
+> *(ws7: il «568 celle» della v1 non era sbagliato — era **vecchio di tre ore**:
+> il registro ne aveva 556 alle 02:00 e 580 alle 03:00, quindi quel numero vale
+> per le ~02:25. Sostituito col conteggio delle 05:35 **e con l'ora**, perché è
+> una grandezza che cresce mentre la si scrive. Righello dichiarato:
+> `python scripts/conta_celle_esame.py` — righe che cominciano con `| ID |` e
+> hanno almeno dieci colonne separate su una barra non preceduta da backslash;
+> esclude le 93 intestazioni di tabella, che lo stesso schema matcherebbe.)*
 
 ## Il titolo della notte
 **Il treno 0.7.1 è pronto sul binario, col cancello.** Da ieri sera «pubblicare»
