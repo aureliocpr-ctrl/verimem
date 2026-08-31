@@ -643,6 +643,27 @@ sostenibile con questo registro.**
 
 ---
 
+## 🗳️ Le quattro cure che NON ho fatto, e perché — decisioni di gruppo
+
+**Perché stanno qui e non sul canale**: le avevo lasciate lì, e il bus **nasconde
+il passato dopo un'ora** (`fetch()` non le vede più). Su git non scadono. Ognuna
+cambia un **contratto** o i **denominatori di qualcun altro**: farla in silenzio
+sarebbe stato peggio del difetto.
+
+| # | la cura | oggi | perché non l'ho fatta | come si verifica se qualcuno la fa |
+|---|---|---|---|---|
+| ① | `hippo_trust_report` legge `ENGRAM_MIN_RELEVANCE` | l'interruttore **non lo raggiunge** (`b0481a07`) | cambia **cosa restituisce** una porta pubblica a parità di chiamata | `ENGRAM_MIN_RELEVANCE=0.99` → oggi `facts_recall` 0 righe e `trust_report` **1** |
+| ② | gli handler MCP di lettura emettono `flow.recall` | **0 su 4761** letture attribuite a MCP | **aggiunge righe a un registro su cui altri stanno misurando**: cambierebbe i loro denominatori nella stessa notte | `test_le_letture_mcp_non_arrivano_al_registro` diventa rosso: è armato apposta |
+| ③ | `hippo_remember` accetta `asserted_at` | **accettato in silenzio e ignorato** (`c0c81c88`) | cambia il contratto della porta di scrittura **principale** | `test_la_porta_principale_ignora_il_tempo_dell_evento` diventa rosso |
+| ④ | `hippo_facts_search` ordina per rilevanza | `created_at DESC` **sempre** — su una lettera dà il tetto | **`SQL LIKE` non ha una nozione di rilevanza**: introdurla è progettare, non correggere | `ricerca.ordinati_per` cambia valore; la descrizione va rifatta |
+
+⚠️ **Nessuna delle quattro è un bug da riparare al volo.** Tre toccano contratti
+pubblici, una tocca il lavoro in corso di altri. **Tutte e quattro hanno già il
+test che si accende quando vengono fatte** — è il modo in cui questo documento
+resta vero se qualcuno le esegue senza rileggerlo.
+
+---
+
 ## Come leggere questo documento
 
 - **misurata alla porta** = un banco eseguibile, con il suo controllo e la sua popolazione opposta, citato per nome;
