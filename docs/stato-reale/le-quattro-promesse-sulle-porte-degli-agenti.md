@@ -139,6 +139,33 @@ Letto **in sola lettura** sullo store reale (`mode=ro`) alle **03:16 del 31/08**
 porta NESSUNA provenienza**: né il testo (mai, su nessuna porta), né il
 riferimento, né il verdetto. Non è il livello C: è **niente**.
 
+### 🔬 RICONTATO alle 06:38 — il numero regge (29,9%), e il ricalcolo dice DI PIÙ
+
+**I numeratori non si sono mossi di un'unità in 3h22; i denominatori sì.**
+
+| | 03:16 | 06:38 | Δ |
+|---|---|---|---|
+| totale | 16788 | 16887 | **+99** |
+| vivi | 14503 | 14598 | +95 |
+| senza **verdetto** | 6611 | **6611** | **0** |
+| senza **riferimento** | 16216 | **16315** | **+99** |
+| né l'uno né l'altro, fra i vivi | 4358 | **4358** | **0** — 29,9% |
+
+⇒ 🔑🔑 **Il difetto si divide in una metà CHIUSA e una metà VIVA, e solo il
+ricalcolo lo mostra:**
+
+* **il verdetto**: dei 99 fatti scritti in tre ore e mezza, **99 su 99 ce
+  l'hanno** (il numeratore è fermo). ⇒ Il «senza verdetto» è **debito storico**,
+  non produzione corrente. **A favore del prodotto, e va detto.**
+* **il riferimento**: **0 su 99 ce l'hanno** (il numeratore cresce esattamente
+  quanto il totale). ⇒ Quel difetto è **in corso adesso**, mentre scriviamo.
+
+📌 **Per chi deve decidere**: «il 30% non ha provenienza» da solo suggerisce di
+ripulire il passato. Il ricalcolo dice che **il passato si è già fermato da
+solo sul verdetto**, e che l'unica cosa da cambiare per non aggravare il totale
+riguarda il **riferimento**. *(Il 30,0% resta il numero da citare: 29,9% è la
+stessa misura tre ore dopo, e la differenza è nel denominatore.)*
+
 *(Coerente col censimento di @ws2 delle 03:08 — 16781 totali, 16209 senza
 riferimento — a meno dei fatti scritti negli otto minuti fra le due letture.)*
 
