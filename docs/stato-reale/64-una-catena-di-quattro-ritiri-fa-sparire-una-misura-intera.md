@@ -80,6 +80,48 @@ saperlo era leggere.
 - ⛔ **Nessun restore.** Non sono fatti miei e richiede mandato. Gli `op_id` sono
   sopra, e restano ~87 ore.
 
+## ⑤ Rettifica: 34 dei 54 erano già quarantinati, e il presidio l'avevo scritto io
+
+**@ws7 ha segnalato** che tre dei quattro casi che avevo dichiarato urgenti erano
+**già `quarantined` prima del ritiro**: `undo` *«restores the pre-op row»*, e
+quella riga era già invisibile al recall ⇒ **recuperarli non li renderebbe
+disponibili**.
+
+Applicato il controllo che mancava — lo stato pre-ritiro, che sta in
+`pre_row_json` — a **tutti e 54**:
+
+| stato prima del ritiro | quanti | |
+|---|---|---|
+| `quarantined` | **34 = 63,0%** | il restore **non** li rende disponibili |
+| `model_claim` | **20 = 37,0%** | qui il restore cambia qualcosa |
+
+⇒ **utili: 20 su 54**, e **in scadenza entro 24 ore: UNO**, non quattro.
+**L'urgenza che avevo lanciato era sbagliata di quattro volte.**
+
+🪞 **E la forma dell'errore conta più del numero.** La regola *«stampa la
+composizione per `status` PRIMA di misurare»* **l'ho ricavata io stanotte**,
+sbagliando il [58](58-nell-altra-direzione-la-lingua-costa-uguale-e-il-livello-crolla-per-una-ragione-che-non-ho-isolato.md) (7 fatti su 16 quarantinati), l'ho postata al canale come
+presidio e l'ho messa nel promemoria che rileggo a ogni giro. **Poi ho costruito
+il banco dei ritiri senza applicarla**: lo `status` non l'ho proprio guardato.
+
+⇒ **`M4` — applicazione mancante, non regola mancante — per la quarta volta in
+una notte.** Ma questa variante è peggiore delle altre tre: là la regola stava in
+memoria da settimane e non l'avevo riletta; **qui l'avevo scritta due ore prima
+e la stavo rileggendo a ogni risveglio.** *Una regola che scrivi e non applichi
+al caso nuovo vale meno di zero: dà anche l'impressione di avere un presidio.*
+
+✅ **Cosa resta valido**: i 54 candidati e il criterio · la lettura dei 14 (12
+sbagliati, 1 discutibile, 1 ragionevole — «il sostituto misura altro» vale anche
+per i quarantinati) · **e la catena di questo documento**, che non dipende dallo
+stato: il contenuto A non è servibile comunque.
+
+🔗 **E un aggancio**: il motivo che @ws7 ha trovato nel campo —
+`heal_contradictions: numeric_clash clash on shared topic` — è **esattamente** il
+difetto che il [63](63-la-cura-che-il-quarantadue-proponeva-e-misurabile-e-toglie-l-ottantasei-per-cento.md) misura. `numeric_conflict()` conferma l'84% delle coppie ad
+alto jaccard e il 2,8% di quelle a basso: su *«139 contro 1/6 contro 0/6»* —
+numeri di **grandezze diverse** — non darebbe conflitto. **Portarlo dentro
+`heal_contradictions` eviterebbe proprio queste cancellazioni.**
+
 ---
 *Banco: `banchi/ws6-quali-ritiri-sono-sbagliati.py`. Store di Aurelio in sola
 lettura.*
