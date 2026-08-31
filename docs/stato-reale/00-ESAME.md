@@ -13472,3 +13472,148 @@ Alle 01:46 e alle 01:57 ho scritto che le porte pubbliche sono **quattro** (`sea
 🔴 **`answer()` NON è misurabile qui**: richiede un `llm` (`answer(query, *, llm: Any, …)`), e **O4 vieta le API key esterne**. Posso dire cosa **dichiara**, non cosa **fa**. Il suo primo stadio è un cross-encoder locale — quello sarebbe misurabile — ma **il contratto completo no**.
 `search_documents` cerca nei **documenti indicizzati** (`self.documents.search`), non nei fatti: **non applicabile** a questo corpus, e lo chiudo come tale.
 Non ho misurato `count`, `trust_report` né le altre ~30 superfici.
+
+---
+
+## 2026-08-31 02:25 — ws1 · IL PRIMO STADIO DI `answer()` AMMETTE «WASHINGTON STATE UNIVERSITY» AL POSTO DI «MONTANA TECH» CON 99,98 SU 100 — E IL SECONDO STADIO È ESATTAMENTE CIÒ CHE IL PRODOTTO HA MESSO LÌ PER FERMARLO
+
+**Livello** funzione pubblica `Memory.answer` (client.py:1423), primo stadio isolato ·
+**Perimetro** 113 domande appaiate + corpus 401 frasi di terzi (HaluEval), inglese ·
+**Istante** 2026-08-31 02:17-02:22 · **Regime** `ok` in testa, dopo l'ingestione e in
+coda; `try_local_score` ha risposto `None` **0 volte** su 1808 chiamate (il giudice ha
+girato davvero) · `verimem.__version__` **0.7.6**, cwd = scratchpad · modello del primo
+stadio: `C:\Users\aurel\.engram\models\local_gate_ce_v2`.
+
+**Paga il limite che avevo dichiarato alle 02:02**: «il suo primo stadio è un
+cross-encoder locale — quello sarebbe misurabile». Misurato.
+
+### Che cos'è il primo stadio, letto prima di eseguire
+
+Il «1052» del mio briefing era **relativo a `class Memory`** (offset 372): `def answer`
+sta alla riga **1423**. Il corpo:
+
+```
+hits  = self.search(query, k=k)        # k=8 di default, NON 5
+facts = [h["text"] for h in hits]
+raw   = llm.complete(...)              # <- l'unico punto che vuole un llm
+for t in facts:
+    r = try_local_score(t, raw)        # LOCALE, nessun llm
+    if r is None: return ce_unavailable_failopen
+    if r[0] > best_ce: best_ce = r[0]
+if best_ce < 40.0: return NO ANSWER / unsupported_by_facts
+```
+
+Il primo stadio è `try_local_score(FATTO, RISPOSTA)` — **non** (domanda, fatto). Il
+modello non è il reranker mMARCO misurato tutta la notte: è `local_gate_ce_v2`, un
+deberta-v3-base fine-tuned su HaluMem, `sigmoid(logit)*100`.
+
+**La mia P-STADIO1 di ieri sera accostava due popolazioni** — prevedeva questo stadio
+partendo dalla popolazione «S» delle 00:38, fatta di coppie (domanda, fatto)
+punteggiate da un **altro modello**. L'ho riscritta sulla popolazione giusta prima di
+eseguire. È il mio presidio, già violato con P-PONTE.
+
+### Il proxy, dichiarato
+
+`raw` è l'output di un llm e O4 vieta le API esterne. Al suo posto uso le due risposte
+che HaluEval porta per **ogni** item: `right_answer` (che il primo stadio **deve**
+passare) e `hallucinated_answer` (che **dovrebbe** fermare). Popolazioni **appaiate**:
+stessa domanda, stessi fatti recuperati, cambia solo la risposta giudicata.
+
+### Il numero, denominatore unico n=113
+
+| soglia | VERE passate | ALLUC. passate | ferma le allu. | perde vere | J |
+|---|---|---|---|---|---|
+| 0,00 | 113/113 | 113/113 | 0,0% | 0,0% | 0,000 |
+| 20,00 | 106/113 | 61/113 | 46,0% | 6,2% | 0,398 |
+| **40,00** | **104/113** | **54/113** | **52,2%** | **8,0%** | **0,442** ← **IL PRODOTTO** |
+| 70,00 | 100/113 | 50/113 | 55,8% | 11,5% | 0,442 |
+| 95,00 | 90/113 | 35/113 | 69,0% | 20,4% | 0,487 |
+| 99,00 | 78/113 | 21/113 | 81,4% | 31,0% | 0,504 |
+| 99,64 | 68/113 | 14/113 | 87,6% | 39,8% | 0,478 ← calibrazione del modello |
+| 99,90 | 48/113 | 6/113 | 94,7% | 57,5% | 0,372 |
+
+### IL VERDE: il secondo stadio non è un lusso, e i testi lo dicono meglio dei numeri
+
+I casi in cui l'allucinazione batte la risposta vera, col punteggio del primo stadio:
+
+```
+vera  0,70 | alluc 99,98   Q: Hi Fly Malta e' controllata da una compagnia di quale citta'?
+                           VERA: Lisbon         ALLU: Hi Fly Malta is actually headquartered in Malta.
+              alluc 99,98  VERA: Montana Tech   ALLU: Washington State University.
+              alluc 99,97  VERA: Priyanka Chopra    ALLU: Shahrukh Khan
+              alluc 99,85  VERA: The Godfather  ALLU: Negus is a mix of two types of alcohol.
+```
+
+Un giudice che non vede la domanda dà **99,98 su 100** a «Washington State University»
+quando la risposta è «Montana Tech». Il docstring di `answer` lo dichiara dall'alto —
+«*because that CE never sees the QUESTION*» — e **la misura dal basso gli dà ragione**:
+non c'è taratura di questo stadio che protegga senza mutilare. La migliore della gamma
+(99,0) ferma l'81,4% delle allucinazioni ma **perde il 31,0% delle risposte vere**.
+⇒ **il giudice question-aware del secondo stadio è ciò che regge la promessa**, ed è la
+stessa conclusione a cui ero arrivato alle 00:38 per un'altra strada (il giudice di
+sufficienza in `explain`, 46%/93%). **Due strade indipendenti, stessa conclusione.**
+
+### IL SECONDO VERDE: la taratura 40,0 regge alla ritaratura che il codice stesso invita a fare
+
+Il commento sopra la costante (client.py:89-93) chiude con «*Recalibrate on the bench*».
+L'ho fatto, **appaiato sugli stessi item**:
+
+```
+allucinate che 99,0 ferma e 40,0 no (GUADAGNO): 33
+vere che 40,0 passa e 99,0 no        (PERDITA): 26
+33 contro 26 su 59 che cambiano stato -> sign test p = 0,435
+```
+
+**Dentro il rumore.** Non posso dire che nessun'altra soglia separi meglio di 40,0.
+
+### RITIRO P-SOGLIA (tredicesimo) — E L'ERRORE DI METODO CHE C'È SOTTO
+
+Avevo predetto che `answer()` **scartasse** la soglia calibrata che `try_local_score`
+restituisce. È vero che la restituisce (`(0.2501…, 99.6413…)`) e che il codice usa solo
+`r[0]`. Stavo per titolarlo «taratura non documentata». **Non lo è.** Tre righe sopra
+la costante:
+
+```
+#: CE score above which the answer counts as fact-supported. Distinct from the
+#: WRITE gate's 99.64 (Youden on source-entails-fact hard negatives): the probe
+#: 2026-07-16 measured answering-facts ~91-94 vs distractors ~1-3, so any cut in
+#: (3, 90) separates; 40 is its own CE-scale cut ... Recalibrate on the bench.
+```
+
+Il prodotto **sa** che la 99,64 è la soglia del **write gate**, tarata con Youden su
+`source ⊢ fact`, e dice che è un compito **distinto**. La mia tabella lo conferma: J è
+piatto (0,442) da 40 a 70.
+
+**L'errore di metodo**: ho applicato «LEGGI IL CODICE PRIMA DI ESEGUIRE» **alla
+funzione e non alla costante**. È la stessa classe delle 02:02 (un grep su nomi decisi
+da me) e delle 22:02 (due scale diverse): **ho letto una parte e concluso sul tutto.**
+Presidio nuovo: **quando un numero ti sembra sbagliato, la riga sopra la costante è
+parte del codice da leggere.**
+
+### I LIMITI, prima che li trovi un altro
+
+1. **Circa un terzo delle «allucinazioni ammesse» non sono allucinazioni.** Ispezionate
+   a mano 18 delle 54 ammesse a 40,0: **6 sono parafrasi corrette o contengono la
+   risposta vera** — `documentary` → «non-fiction movies»; `board game` → «both classic
+   board games»; `1988` → «Sébastien Buemi was born in 1988»; `gallows humor` → «dark
+   humor»; `BrainSurge` → «…including BrainSurge». ⇒ il **47,8%** va letto come **~32%**
+   di allucinazioni vere ammesse. Stima su un campione di 18/54 giudicato da me.
+2. **Confondente lunghezza, asimmetrico**: mediana **12** char le vere, **56** le
+   allucinate; Spearman lunghezza~punteggio **+0,457 dentro le vere**, −0,021 dentro le
+   allucinate. Parte del divario è forma, non verità.
+3. **Il proxy**: la risposta del dataset non è la risposta di un llm reale.
+4. **Il secondo stadio NON è misurabile qui** (serve un `llm`; O4). Posso dire cosa
+   dichiara e che il primo da solo non basta, **non** quanto il secondo recuperi.
+
+### IL CONTROLLO SANO — che falsifica la spiegazione facile
+
+La spiegazione comoda sarebbe «il giudice non riconosce una risposta nuda come `I-90`».
+**È falsa.** Dato il fatto rilevante **noto** contro la risposta vera: mediana
+**99,855**, passate a 40,0 **101/113**. E il fatto rilevante era fra i k=8 recuperati in
+**106/113**; di quei 106, i casi «il fatto c'era e il giudizio è sotto 40» sono
+**quattro**. ⇒ quando il fatto giusto c'è, il primo stadio lo riconosce. Il problema non
+è la forma della risposta: è che **il giudice, non vedendo la domanda, non sa quale
+delle due risposte stia giudicando**.
+
+**Banchi**: `porta_stadio1.py`, `porta_stadio1b.py`, dati in `stadio1.json` (scratchpad
+di sessione). **Io misuro, non curo.**
