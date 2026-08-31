@@ -100,21 +100,36 @@ verificato sui ventagli (40 incipit su 40 dentro il master). ⇒ **il fenomeno d
 questo documento vale 460 su tutta la storia, ma 274 sono degli ultimi sette
 giorni.**
 
-🔴 **E la crescita è il pezzo che preoccupa** — `same-source evolution` per mese
-di creazione del fatto ritirato:
+🔴 **E la crescita sembrava il pezzo preoccupante** — `same-source evolution` per
+mese di creazione del fatto ritirato: **41 a luglio, 419 ad agosto**, dieci volte.
 
-```
-2026-07     41
-2026-08    419      ← dieci volte in un mese
-```
+> 🪞 **RITIRATO dieci minuti dopo averlo pubblicato: era il NUMERATORE SENZA IL
+> DENOMINATORE.** Rapportando i ritiri ai fatti **scritti** in ciascun mese:
+>
+> | mese | scritti | ritirati | **quota** |
+> |---|---|---|---|
+> | 2026-05 | 3644 | 1457 | **40,0%** |
+> | 2026-06 | 1454 | 175 | 12,0% |
+> | 2026-07 | 1470 | 89 | 6,1% |
+> | 2026-08 | 10341 | 568 | **5,5%** |
+>
+> ⇒ **la quota SCENDE: 40% → 5,5%.** Ad agosto abbiamo scritto **sette volte più
+> fatti**, quindi 419 su 10341 è **meno grave** di 41 su 1470. **Il fenomeno non
+> accelera: in proporzione migliora**, ed è un dato **buono per il prodotto** —
+> va detto con la stessa prontezza di un allarme.
+> ⛔ **Ritiro** «dieci volte in un mese», «il fenomeno accelera» e «è il nostro
+> modo di scrivere che lo attiva più spesso»: quest'ultima era anche generosa col
+> prodotto e severa con noi, **ed era sbagliata lo stesso**.
+> 🪞 **La forma**: è la prima delle *«quattro forme di un numero vero che
+> inganna»* che ho in memoria da settimane — e l'ho commessa **un'ora dopo aver
+> scritto io il [65](65-quali-numeri-di-stanotte-reggono-ancora-stamattina.md)**, la cui tesi è *«un rapporto regge dove un conteggio
+> scade»*. **Scrivere la lezione e applicarla sono due cose diverse.**
 
-⚠️ **Non dico che il prodotto sia peggiorato**: il meccanismo è lo stesso. **È il
-nostro modo di scrivere che lo attiva più spesso** — scriviamo di più e a
-raffiche, e **ogni serie di misure salvata a pezzi produce ritiri**. La causa è
-condivisa.
-⚠️ **E i mesi sono due soli**: prima di luglio `same-source evolution` non
-compare. **Non so se perché il meccanismo non c'era o perché il campo non veniva
-valorizzato, e non l'ho indagato.**
+✅ **Quello che invece regge**: `same-source evolution` **non compare prima di
+luglio**, e **non è un artefatto della telemetria** — verificato che
+`superseded_reason` è popolato al **100% fin da maggio** (1457 ritiri, 1457 con
+motivo). ⇒ **il meccanismo è nuovo**, o prima aveva un altro nome. *(Quale delle
+due, non l'ho indagato.)*
 
 ## ③ L'errore mio, e la sua forma
 
