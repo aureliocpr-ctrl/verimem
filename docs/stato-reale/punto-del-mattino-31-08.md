@@ -88,7 +88,7 @@ branch (primo run della sua storia, **creato 00:40, ancora in coda alle
 - **Il «30% senza provenienza» sono DUE difetti, e uno si è già fermato**
   (ws3, ricalcolo a 3h22 di distanza): il verdetto mancante è debito
   STORICO — i 99 fatti nuovi della notte sono giudicati 99/99; il
-  riferimento () invece si aggrava ADESSO (0/99 nuovi ce
+  riferimento (verified_by) invece si aggrava ADESSO (0/99 nuovi ce
   l'ha) ⇒ la leva è sul flusso corrente del riferimento, non sul passato.
 - **L'86% di avvisi sul traffico reale non è rumore del misuratore** (ws6,
   doc 61): il punteggio SEPARA senza sovrapposizioni (22 letture attese
