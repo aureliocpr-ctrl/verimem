@@ -325,6 +325,55 @@ tutto il repo. Il numero grezzo non è un inventario: va letto voce per voce.)*
 
 ---
 
+## 📓 Cosa dice il registro, e cosa NON può dire
+
+Letto da `events.jsonl` **più il ruotato `.1`** (leggere solo il primo misura la
+coda) alle **04:05 del 31/08**, in sola lettura.
+
+### Il numero: **13,0% delle quarantene colpisce fatti che il giudice aveva validato**
+
+| | |
+|---|---|
+| `flow.write` totali | 11415 |
+| di cui **giudicati** (`grounding_score` non nullo) | 7375 |
+| di cui **quarantinati / rifiutati** | 3102 |
+| **trattenuti NONOSTANTE il giudice** | **404** |
+| — sui giudicati | 5,5% |
+| — sui quarantinati | **13,0%** |
+
+**Chi li ha trattenuti**: `L4.1` **271 (67%)** · `L4.2` 136 · `L1.15` 49 ·
+`L1.16` 36 · `L1.10` 28 · `L1.20` 26 · `store-screen` 14 · `L4-relazione` 12.
+
+🔑 **Il campo è DERIVATO, non dichiarabile dal chiamante** — `flow_events.py:305`:
+`withheld_despite_judge = status in (quarantined, rejected) AND judged_true(grounding_score)`,
+col commento *«se una porta potesse dichiarare `judged=True` senza un punteggio,
+il campo mentirebbe — ed è il campo su cui questo prodotto si vende»*. Il numero
+non è auto-riportato: esce dall'incrocio di due fatti indipendenti.
+
+### ⚠️ Le tre cautele, e vanno lette PRIMA del numero
+
+1. **Non sono 404 errori.** Il gate trattiene anche per ragioni che il giudice
+   non copre (auto-affermazione, iniezione, forma del numero). È la
+   **popolazione da esaminare**, non un conteggio di falsi positivi. Il team lo
+   sa in forma qualitativa (`anti_confab_gate.py:2512` cita casi con grounding
+   99,3–99,9 trattenuti da un layer); **mancava l'aggregato**.
+2. **Il denominatore giusto sono i GIUDICATI**, non tutte le scritture: un fatto
+   senza `grounding_score` non può essere «trattenuto nonostante il giudice».
+3. **L'ora fa parte del dato**: il registro cresce mentre lo si legge.
+
+### 🚫 E i limiti del registro, misurati stanotte
+
+| limite | numero |
+|---|---|
+| letture (`flow.recall`) **senza superficie attribuita** | **52,3%** (`unknown`) |
+| letture attribuite alla porta **MCP** | **0** — mai, pur essendo `mcp` su 1373 eventi complessivi |
+| «inquinato all'88% dal dogfooding» (dichiarato nel file) | **non verificato da me — non lo riporto come mio** |
+
+⇒ **Nessuna affermazione del tipo «la maggior parte delle letture passa da X» è
+sostenibile con questo registro.**
+
+---
+
 ## Come leggere questo documento
 
 - **misurata alla porta** = un banco eseguibile, con il suo controllo e la sua popolazione opposta, citato per nome;
