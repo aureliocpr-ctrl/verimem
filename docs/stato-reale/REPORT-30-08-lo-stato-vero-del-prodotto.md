@@ -89,8 +89,9 @@
   Sotto i 21 caratteri dà 100 a un claim E al suo contrario (ws5, 30/08).
   E l'attribuzione «è il moat che butta i veri» era una lettura del solo
   campo: l'esclusività del moat sui veri persi è **5,7%** (5/88, IC95
-  [2,5–12,6]) — in 68 casi su 73 un layer lessicale aveva GIÀ segnalato
-  (LANT-109), quindi curare i layer tocca quasi tutta la coda, non il 14%.
+  [2,5–12,6]; 15/88 li boccia solo un layer, 68/88 ENTRAMBI — LANT-109 +
+  aritmetica W7-93/95) ⇒ nessuna cura di un lato solo libera la coda:
+  solo-layer il 17%, solo-moat il 5,7%, i 68 doppi esigono la coppia.
   Il livello dell'acqua sul corpus VIVO: ~1 fatto su 5 non ripasserebbe
   la porta di oggi (18,4% medio su popolazione italiana con fonti-output,
   W7-89 — stesso ordine del 29,3% del benchmark).
