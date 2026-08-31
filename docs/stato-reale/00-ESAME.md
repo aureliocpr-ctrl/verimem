@@ -13532,6 +13532,52 @@ ne troverà un'altra, ed è il punto.
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quali-miei-numeri-reggono-ancora.py`.
 *(doc `65`)*
 
+**63ª `66` (banco) — 🔴 DODICESIMA RETTIFICA, e la più grave: il tasso che avevo consegnato alla
+decisione è sbagliato di un ORDINE DI GRANDEZZA. Sui ritiri che il criterio NON seleziona: 14 letti,
+14 sbagliati.**
+Nel `64` avevo consegnato **≈15,6%** e ne avevo dichiarato io il limite: *«è un PAVIMENTO — ho
+misurato la PRECISIONE, non il RICHIAMO»*. **Ho misurato il richiamo. Il pavimento non era basso:
+era bassissimo.**
+🔴 **Campione casuale fra i ritiri con `jaccard ≥ 0,15`** (quelli in cui i due testi **si
+somigliano**, che il criterio scarta): **14 letti, 14 sbagliati, nessuna eccezione** — e tutti della
+stessa forma, **due misure diverse dello stesso banco**:
+
+| j | il fatto **ritirato** | il **sostituto** |
+|---|---|---|
+| 0,667 | la latenza riporta **mediana 33.0s** | la latenza riporta **min 16.3s** |
+| 0,571 | il workflow **security** ha `completed_total` 1578 | il workflow **ci** ha 1121 |
+| 0,500 | scambio su fonte **nuda** (453 char) score 72.08 | su fonte **ricca** (820) score 99.98 |
+| 1,000 | `ENCODE_SERVICE=0`, **scrittura 2**: L1.20 presente | … **scrittura 3**: L1.20 presente |
+
+**Il terzo sono i due bracci di un A/B. Il secondo due workflow diversi. Nessuno nega quello che ha
+cancellato.**
+
+```
+340 ritiri · 57 candidati (letti 56 → 52 sbagliati) · 283 NON candidati (letti 14 → 14 sbagliati)
+motivo dichiarato:  same-source evolution 274  ·  heal_contradictions: numeric_clash 62
+```
+
+⇒ **il 15,6% era la quota che il MIO criterio segnala**, e il criterio scarta **proprio i casi più
+comuni**: le riscritture della stessa serie. **Il tasso vero è vicino alla totalità dei ritiri, non a
+un sesto.** 📌 E **274 su 340 dichiarano `same-source evolution`** — il meccanismo cieco
+(`is_same_source` guarda **la penna**, sempre `'user'`).
+🪞 **L'ERRORE MIO, e la forma conta**: ho misurato la precisione su una popolazione **che avevo
+selezionato io**, e ho chiamato «tasso» quello che era «tasso **fra i selezionati**». Il limite
+l'avevo scritto — **ma in fondo, mentre il numero stava in cima e in grassetto.** ⇒ **un limite
+dichiarato non protegge se il numero viene citato senza di esso: il richiamo andava misurato PRIMA di
+consegnare la cifra.** Finché non sai quanto il tuo criterio **perde**, quello che hai non è un
+tasso — è una proprietà del tuo filtro.
+✅ **PROVATO**: 14 su 14 (campione casuale) · 274/340 con `same-source evolution` · i quattro esempi
+sono testuali. ❌ **NON PROVATO**: **una percentuale nuova** — 14 su 283 sono pochi e **non do una
+cifra sostitutiva**, do il fatto che su quattordici presi a caso non ce n'era uno giusto ·
+❌ **non provato** che le riscritture fossero involontarie: chi scriveva **aggiungeva** misure a una
+serie, e il prodotto le ha lette come **sostituzioni**.
+⚖️ **PER LA DECISIONE** su `semantic.py:1854` (*«until the false-supersede rate is measured on a real
+corpus»*): **la misura c'è ed è molto peggiore di quella che avevo consegnato.** Il verso non cambia
+— riaccendere il ramo non distruttivo — **ma l'urgenza sì: non è un ritiro sbagliato ogni sei, è
+quasi sempre.**
+*(doc `66`; il `64` §⑧ porta ora il rimando in testa)*
+
 | stato **prima** del ritiro | quanti | |
 |---|---|---|
 | `quarantined` | **34 = 63,0%** | il restore **non** li rende disponibili |
