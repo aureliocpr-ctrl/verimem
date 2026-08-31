@@ -27,6 +27,18 @@ REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00
 
 #: una riga-cella: `| <id> | <domanda> | ... |` con almeno le nove colonne.
 RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
+#: 🔴 31/08 02:40 — SEPARARE LE COLONNE CON `split("|")` E' SBAGLIATO.
+#: @ws2 (02:32) ha trovato che un `|` NON escapato dentro una cella la TRONCA
+#: alla scrittura, senza errore. Il complemento: un `\|` ESCAPATO **non**
+#: tronca — il markdown lo rende — ma per `split("|")` e' comunque un
+#: separatore. Misurato sul registro: **10 celle su 573** hanno un escape
+#: (2 mie, 7 di ws2, 1 di ws8) e una arriva a **20 colonne contare invece di
+#: 16**. ⚠️ In tutte e 10 la colonna 6 risulta IDENTICA coi due criteri: il
+#: difetto **oggi non morde** — ma e' una TRAPPOLA ARMATA, innocua solo
+#: perche' gli escape stanno DOPO il verdetto. Il giorno che uno finisce
+#: prima, questo script legge come verdetto un pezzo di frase, **e non emette
+#: alcun segnale**.
+COLONNE = re.compile(r"(?<!\\)\|")
 #: il verdetto e' il PRIMO simbolo, non uno qualsiasi: vedi il docstring.
 SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫📋]")   # 📋 = cella di metodo (30/08)
 #: i simboli che NON sono verdetti ma vengono usati come tali: servono a dire
@@ -38,14 +50,15 @@ ALTRI_SIMBOLI = re.compile(r"[✅⚠️❌⚪🆕🔧🚨]")   # 📋 e' uscito 
 
 
 def verdetto(riga: str) -> str:
-    trovato = SIMBOLO.search(riga.split("|")[6])
+    trovato = SIMBOLO.search(COLONNE.split(riga)[6])
     return trovato.group(0) if trovato else "?"
 
 
 def main() -> int:
     testo = REGISTRO.read_text(encoding="utf-8")
     celle = [
-        r for r in testo.splitlines() if RIGA_CELLA.match(r) and r.count("|") >= 9
+        r for r in testo.splitlines()
+        if RIGA_CELLA.match(r) and len(COLONNE.split(r)) >= 10
     ]
     conto = Counter(verdetto(r) for r in celle)
 
@@ -80,7 +93,7 @@ def main() -> int:
         for riga in celle:
             if verdetto(riga) != "?":
                 continue
-            col6 = riga.split("|")[6]
+            col6 = COLONNE.split(riga)[6]
             (di_natura if NATURA.search(col6) else vuoti).append(riga)
 
         if di_natura:
@@ -93,8 +106,8 @@ def main() -> int:
             print(f"⚠️  {len(vuoti)} celle con la colonna verdetto VUOTA — queste si':")
             for riga in vuoti:
                 ident = RIGA_CELLA.match(riga).group(0).strip("| ")
-                altri = "".join(dict.fromkeys(ALTRI_SIMBOLI.findall(riga.split("|")[6])))
-                autrice = riga.split("|")[7].strip()[:12]
+                altri = "".join(dict.fromkeys(ALTRI_SIMBOLI.findall(COLONNE.split(riga)[6])))
+                autrice = COLONNE.split(riga)[7].strip()[:12]
                 print(f"     {ident:9} (di {autrice or '?'}) usa «{altri or '—'}»"
                       f" — la legenda ha 🔴🟢🟡⛔🚫📋")
             print("   ⇒ il difetto e' della LEGENDA se il simbolo usato e' quello naturale:"

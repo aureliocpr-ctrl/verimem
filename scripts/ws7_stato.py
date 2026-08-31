@@ -34,10 +34,17 @@ APERTI = ("🟡", "⛔")
 #: i simboli che la legenda usa come VERDETTO (stessa lista di
 #: `conta_celle_esame.py`, che da sempre prende il PRIMO della colonna).
 SIMBOLO = re.compile(r"[🔴🟢🟡⛔🚫📋]")
+#: 🔴 31/08 02:42 — le colonne si separano su un `|` NON preceduto da `\`.
+#: Un `\|` escapato non tronca il markdown ma per `split("|")` e' un
+#: separatore: 10 celle su 573 ne hanno uno (misurato con @ws2, che aveva
+#: trovato il caso peggiore — un `|` NUDO tronca la cella alla scrittura).
+#: Oggi la colonna 6 esce identica coi due criteri: e' una trappola armata,
+#: non un difetto attivo.
+COLONNE = re.compile(r"(?<!\\)\|")
 
 
 def _riga(r: str) -> tuple[str, str, str]:
-    col = [c.strip() for c in r.split("|")]
+    col = [c.strip() for c in COLONNE.split(r)]
     ident = col[1]
     domanda = re.sub(r"\*\*|`", "", col[2])[:88]
     verdetto = re.sub(r"\*\*|`", "", col[6] if len(col) > 6 else "")[:96]
@@ -50,7 +57,8 @@ def main() -> int:
     a = ap.parse_args()
 
     testo = REGISTRO.read_text(encoding="utf-8")
-    mie = [r for r in testo.splitlines() if CELLA.match(r) and r.count("|") >= 9]
+    mie = [r for r in testo.splitlines()
+           if CELLA.match(r) and len(COLONNE.split(r)) >= 10]
     if not mie:
         print("  nessuna cella LANT-* nel registro")
         return 1
@@ -87,7 +95,7 @@ def main() -> int:
     #: entrambe le direzioni (`LANT-104`). La cura sopra toglie il rumore
     #: SINTATTICO; quello semantico non lo tocca nessun regex.
     def _e_aperta(riga: str) -> bool:
-        m = SIMBOLO.search(riga.split("|")[6])
+        m = SIMBOLO.search(COLONNE.split(riga)[6])
         return bool(m) and m.group(0) in APERTI
 
     aperti = [r for r in mie if _e_aperta(r)]
