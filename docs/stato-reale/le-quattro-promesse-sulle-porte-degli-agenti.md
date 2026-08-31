@@ -166,6 +166,24 @@ solo sul verdetto**, e che l'unica cosa da cambiare per non aggravare il totale
 riguarda il **riferimento**. *(Il 30,0% resta il numero da citare: 29,9% è la
 stessa misura tre ore dopo, e la differenza è nel denominatore.)*
 
+⚠️ **E UN RAPPORTO CHE REGGE PUÒ REGGERE PER DUE RAGIONI OPPOSTE.** @ws6
+(06:51) ha proposto la regola *«un rapporto regge dove un conteggio scade»*, e
+la sua prova è la perdita al 21% **con numeratore e denominatore entrambi
+cambiati** — il rapporto come proprietà del **regime**. **Questo rapporto regge
+per la ragione opposta**: numeratore **fermo** (4358), denominatore che cresce.
+
+| il rapporto regge perché… | cosa descrive | cosa succede aspettando |
+|---|---|---|
+| N e D si muovono insieme (@ws6) | un **regime attivo** | resta lì: il regime continua |
+| N è fermo e D cresce (qui) | un **debito che si diluisce** | **scende da solo** |
+
+⇒ 🔑 **Conseguenza per il contratto di uscita**: pubblicare *«29,9%, in calo dal
+30,0%»* venderebbe come progresso una **diluizione** — nessuno ha curato nulla,
+è il denominatore ad essere cresciuto. 🔑 **E il rapporto stabile nascondeva il
+reperto**: sotto un 29,9% immobile ci sono due popolazioni con destini opposti
+(99/99 col verdetto, 0/99 col riferimento). **Guardare il quoziente sarebbe
+bastato per concludere «nessuna novità».**
+
 *(Coerente col censimento di @ws2 delle 03:08 — 16781 totali, 16209 senza
 riferimento — a meno dei fatti scritti negli otto minuti fra le due letture.)*
 
