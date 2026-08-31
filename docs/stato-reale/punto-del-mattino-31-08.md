@@ -50,8 +50,9 @@ branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
 5. **CURA-PAVIMENTO ratificata in blocco** (5 pezzi, 3+ SI ciascuno): il floor
    degenere 0.0 serviva avvisi rotti su tre cause in AND. L'evento naturale
    delle 02:52 (ricalcolo automatico: floor 0.0→0.8781) è stato catturato con
-   QUATTRO predizioni registrate prima — tutte verificate/falsificate in
-   pubblico. La (ii) è ESEGUITA e in main (`eaa464dc`, verificata alla
+   QUATTRO predizioni registrate prima — e una (P4: «la prima recall
+   costerà >20s») è CADUTA con onore: 18,44s misurati. Le altre tre rette,
+   tutto in pubblico. La (ii) è ESEGUITA e in main (`eaa464dc`, verificata alla
    porta vera sul corpus); le altre in corso (ws3/ws6).
 6. **Cure minori col processo pieno**: pre-commit staged-only (il file a metà
    di una non blocca più le altre — 50143a1a + .gitattributes 691ede4e),
@@ -68,8 +69,10 @@ branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
 - **~1 fatto vivo su 5 non ripasserebbe la porta di oggi** (W7-89, 18,4%
   medio) — il livello dell'acqua sul corpus vero, stesso ordine del 29,3% del
   benchmark. E l'attribuzione «è il moat che butta i veri» era una lettura
-  del solo campo: l'esclusività del moat è **5,7%** (68/73 casi avevano un
-  layer che aveva già segnalato) ⇒ curare i layer tocca quasi tutta la coda.
+  del solo campo — l'aritmetica vera (ws4, W7-93/95): **5/88 li boccia solo
+  il moat, 15/88 solo un layer, 68/88 ENTRAMBI** ⇒ nessuna cura di un lato
+  libera la coda (solo-layer ne libera il 17%, solo-moat il 5,7%): i 68
+  doppi esigono la coppia.
 - **Il flip `GRADED_ADMISSION` è veleno misurato** (ws7): falsi ammessi da
   13,3% a 98,7% — il «33% di veri salvati» del codice costava 3,1× in falsi.
   Chiuso: non si accende.
@@ -79,6 +82,15 @@ branch (primo run della sua storia, in coda da ~4h30) e il TUO tag+publish.**
 - **~20% delle celle porta una correzione dell'autrice** (censimento con
   auto-inclusione corretta): il numero non misura quanto si sbaglia — misura
   quanto si verifica dopo aver scritto.
+- **L'86% di avvisi sul traffico reale non è rumore del misuratore** (ws6,
+  doc 61): il punteggio SEPARA senza sovrapposizioni (22 letture attese
+  ≥0,8645 contro 10 fuori-dominio ≤0,8474) ⇒ quel tasso dice che le nostre
+  letture spesso non trovano ciò che cercano — priorità di prodotto, non
+  bug dell'avviso.
+- **Vetrina** (ws7, 5 numeri ricontati): il primo è A FAVORE — il README
+  pubblicato dichiara i propri default (11 env censite, zero capacità
+  nascoste, LANT-127); il Summary del pacchetto fa 4 promesse e 3 reggono
+  (la quarta è a registro col suo numero).
 
 ## Decisioni che aspettano TE (in ordine di leva)
 1. **Tag v0.7.1 e publish** — quando il run del branch è verde: tutto il
