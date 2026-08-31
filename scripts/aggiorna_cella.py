@@ -56,8 +56,11 @@ def inserisci(dopo: str, riga_nuova: Path) -> int:
         print("  la riga nuova non comincia e non finisce con la barra: mi fermo")
         return 1
     n_col = len(COLONNE.split(testo))
-    if n_col < 10:
-        print(f"  la riga nuova ha {n_col} colonne (ne servono almeno 10): mi fermo")
+    #: stessa correzione di sotto: il minimo è STRUTTURALE (serve la colonna
+    #: del verdetto), non un numero preso dalla famiglia più comune.
+    if n_col <= VERDETTO:
+        print(f"  la riga nuova ha {n_col} colonne "
+              f"(ne serve almeno {VERDETTO + 1}): mi fermo")
         return 1
     ident = testo.split("|")[1].strip()
     righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
@@ -107,8 +110,18 @@ def main() -> int:
         return 0
 
     col = COLONNE.split(riga)
-    if len(col) < 10 or not riga.rstrip().endswith("|"):
-        print(f"  {a.cella} ha {len(col)} colonne e finisce con barra="
+    # 🔴 31/08 08:22 — TOLTA LA SOGLIA FISSA «>= 10 colonne», su misura di
+    # @ws4: `LANT-34` ha 10 pipe e `LANT-109` ne ha 9 — **il numero di colonne
+    # varia ANCHE DENTRO LA STESSA FAMIGLIA**, quindi «le W7 ne hanno 9 e le
+    # LANT 10» era falso pure quello. Questo strumento avrebbe RIFIUTATO di
+    # aggiornare `LANT-109`, e per una ragione inventata da me.
+    # ⇒ 🔑 **La guardia giusta non è un numero: è che il numero NON CAMBI
+    #   rispetto alla riga che sto toccando** — ed è il controllo che c'era
+    #   già dieci righe più sotto. Resta il minimo strutturale (serve almeno
+    #   la colonna del verdetto) e la barra finale.
+    if len(col) <= VERDETTO or not riga.rstrip().endswith("|"):
+        print(f"  {a.cella} ha {len(col)} colonne (ne serve almeno "
+              f"{VERDETTO + 1}) e finisce con barra="
               f"{riga.rstrip().endswith('|')}: NON la tocco")
         return 1
 
