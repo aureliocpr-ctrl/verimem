@@ -41,14 +41,57 @@ COLONNE = re.compile(r"(?<!\\)\|")
 VERDETTO = 6
 
 
+def inserisci(dopo: str, riga_nuova: Path) -> int:
+    """Inserisce una cella NUOVA subito dopo `dopo`.
+
+    🔴 31/08 03:32 — AGGIUNTO PERCHE' LO STRUMENTO COPRIVA META' DEL BISOGNO.
+    `--coda` curava l'aggiornamento, ma la cella NUOVA la inserivo ancora a
+    mano; e «a mano» ha voluto dire heredoc, e heredoc ha mangiato il
+    backslash del lookbehind **per la quinta volta stanotte**.
+    ⇒ 🔑 **Uno strumento che copre meta' del caso reale lascia in piedi meta'
+    del difetto** — e la meta' scoperta e' quella che si usa sotto pressione.
+    """
+    testo = riga_nuova.read_text(encoding="utf-8").rstrip("\n")
+    if not (testo.startswith("| ") and testo.endswith("|")):
+        print("  la riga nuova non comincia e non finisce con la barra: mi fermo")
+        return 1
+    n_col = len(COLONNE.split(testo))
+    if n_col < 10:
+        print(f"  la riga nuova ha {n_col} colonne (ne servono almeno 10): mi fermo")
+        return 1
+    ident = testo.split("|")[1].strip()
+    righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
+    if any(r.startswith(f"| {ident} |") for r in righe):
+        print(f"  {ident} esiste gia' nel registro: non lo duplico")
+        return 1
+    trovate = [k for k, r in enumerate(righe) if r.startswith(f"| {dopo} |")]
+    if len(trovate) != 1:
+        print(f"  {len(trovate)} righe per {dopo}: mi fermo")
+        return 1
+    righe.insert(trovate[0] + 1, testo + "\n")
+    REGISTRO.write_text("".join(righe), encoding="utf-8")
+    print(f"  {ident} inserita dopo {dopo} · {len(testo)} char · "
+          f"{n_col} colonne · chiude con la barra")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("cella", help="es. LANT-130")
-    ap.add_argument("--coda", required=True, type=Path,
+    ap.add_argument("cella", help="es. LANT-130 (o la cella DOPO cui inserire)")
+    ap.add_argument("--coda", type=Path,
                     help="file col testo da appendere al verdetto")
+    ap.add_argument("--inserisci-dopo", type=Path, metavar="RIGA",
+                    help="file con una riga-cella COMPLETA da inserire "
+                         "subito dopo `cella`")
     ap.add_argument("--se-manca", default=None,
                     help="non fare niente se la riga contiene gia' questa stringa")
     a = ap.parse_args()
+
+    if bool(a.coda) == bool(a.inserisci_dopo):
+        print("  serve esattamente uno fra --coda e --inserisci-dopo")
+        return 1
+    if a.inserisci_dopo:
+        return inserisci(a.cella, a.inserisci_dopo)
 
     testo = a.coda.read_text(encoding="utf-8").strip()
     righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
