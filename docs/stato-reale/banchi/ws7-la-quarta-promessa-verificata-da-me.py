@@ -73,14 +73,34 @@ TEMPORALI = [
 ]
 
 
-def serve(out) -> bool:
-    """La porta ha restituito qualcosa, o si e' astenuta?"""
+def serve(out) -> tuple[bool, str]:
+    """La porta ha restituito qualcosa, e lo sappiamo COME?
+
+    Ritorna ``(ha_servito, come_lo_sappiamo)``.
+
+    🔴 PERCHE' DUE VALORI E NON UN BOOL. @ws3 (31/08 02:19) ha misurato che
+    `hippo_facts_search` restituisce `[]` su una domanda fuori corpus — ma e'
+    un **MISS LESSICALE**, non un'astensione: lo score e' 0.0 anche DENTRO il
+    corpus. ⇒ **Un vuoto SEMBRA un'astensione e non lo e'**, e la mia prima
+    versione (`bool(out)`) le avrebbe contate uguali, mettendo un verde dove
+    c'e' un fallimento del retriever.
+
+    Qui il verdetto e' etichettato alla fonte:
+      · `abstained`  — la porta lo DICHIARA (il caso forte)
+      · `n_facts`/`results` — conteggio esplicito
+      · `vuoto?`     — nessun segnale: **ambiguo**, e va letto come tale, non
+                       come astensione.
+    Nei dati di questo banco l'ambiguita' non si e' manifestata (le porte hanno
+    sempre servito), ma il criterio era vulnerabile e ora lo dice.
+    """
     if isinstance(out, dict):
+        if "abstained" in out:
+            return (not out["abstained"]), "abstained"
         if "n_facts" in out:
-            return bool(out.get("n_facts"))
+            return bool(out.get("n_facts")), "n_facts"
         if "results" in out:
-            return bool(out.get("results"))
-    return bool(out)
+            return bool(out.get("results")), "results"
+    return bool(out), ("non-vuoto" if out else "vuoto?")
 
 
 def main() -> int:
@@ -97,20 +117,26 @@ def main() -> int:
                          ("CONTROLLI (risposta IN memoria)", CONTROLLI)):
         print(f"  {nome}")
         conta = {p: 0 for p, _ in PORTE}
+        segni: dict[str, set[str]] = {p: set() for p, _ in PORTE}
         for q in gruppo:
             riga = []
             for porta, chiama in PORTE:
                 try:
-                    s = serve(chiama(q))
+                    s, come = serve(chiama(q))
                 except Exception as e:  # noqa: BLE001
-                    s = None
                     riga.append(f"{porta}=ERR({type(e).__name__})")
                     continue
                 conta[porta] += bool(s)
-                riga.append(f"{porta}={'SERVE' if s else 'astiene'}")
-            print(f"     {q[:52]:<54} {' · '.join(riga)}")
+                segni[porta].add(come)
+                riga.append(f"{porta}={'SERVE' if s else 'astiene'}[{come}]")
+            print(f"     {q[:48]:<50} {' · '.join(riga)}")
         print(f"     → servite: " + " · ".join(
-            f"{p} {conta[p]}/{len(gruppo)}" for p, _ in PORTE) + "\n")
+            f"{p} {conta[p]}/{len(gruppo)}" for p, _ in PORTE))
+        ambigue = {p: s for p, s in segni.items() if "vuoto?" in s}
+        if ambigue:
+            print(f"     ⚠️ verdetto AMBIGUO (vuoto senza segnale) su: "
+                  f"{', '.join(ambigue)} — vuoto ≠ astensione (@ws3)")
+        print()
 
     print(f"  store temporaneo: {os.environ['HIPPO_DATA_DIR']}")
     return 0
