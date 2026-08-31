@@ -2500,7 +2500,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "drift detection (optional).\n\n"
                 "Without verified_by + status, fact defaults to "
                 "'model_claim' — distinguible at retrieval da fact "
-                "verified empiric."
+                "verified empiric. "
+                "⚠️ THIS PORT DOES NOT SET THE EVENT TIME. `asserted_at` — when "
+                "the fact BECAME TRUE, as opposed to when you wrote it — is not "
+                "an argument here, and passing it is ACCEPTED WITHOUT ERROR AND "
+                "IGNORED: measured 2026-08-31 through this API, the write "
+                "returns status=model_claim and the stored row keeps "
+                "asserted_at NULL. On MCP only hippo_ingest_conversation takes "
+                "it; the python SDK takes it on Memory.add. So time-travel "
+                "reads (`as_of`) fall back to the WRITE time for anything "
+                "stored here — they still work, on one axis instead of two."
             ),
             inputSchema={
                 "type": "object",
