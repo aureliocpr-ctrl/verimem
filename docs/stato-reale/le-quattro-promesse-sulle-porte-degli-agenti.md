@@ -240,6 +240,36 @@ numero non l'ho verificato e non lo riporto come mio.**)*
 
 ---
 
+## ⚠️ E un errore che il registro invita a fare: contare gli EVENTI DI SICUREZZA
+
+Censiti i nomi di evento **emessi nel sorgente** contro quelli **presenti nel
+registro** (03:35). Fra quelli mai presenti c'è **`prompt_injection_blocked`:
+zero occorrenze**. La tentazione è leggerlo come *«nessuna injection è mai stata
+bloccata»* — e da lì come *«il presidio non è collegato»* **oppure** come
+*«nessun attacco»*. **Uno zero non distingue le due cose**, e servono due
+letture per farlo:
+
+| domanda | risposta, per questo evento |
+|---|---|
+| **chi lo emette, e a quale condizione?** | `wake.py:1439`, dentro il loop agentico: un tool pericoloso chiamato **dopo** che la traiettoria ha incluso contenuto esterno (`web_fetch` / `vision_describe` / `web_search`) |
+| **quella condizione è esercitata dai test?** | **sì**, `_injection_review_blocks_call` è asserito in **quattro** file (`test_prompt_injection_defense.py` — 16 celle —, `test_pentest_validation.py`, `test_wake_extra.py`, `test_wake_macro_injection_guard_scan68.py`) |
+
+⇒ 🔑 **Il presidio è collegato ed esercitato: lo zero significa «mai accaduto»,
+non «mai collegato».** Ed è coerente col nostro uso — quel percorso richiede un
+episodio agentico con contenuto esterno, che il dogfooding di memoria non fa.
+
+⚠️ **Per il contratto di uscita**: *contare gli eventi di sicurezza nel registro
+per affermare «nessun attacco» è un errore* — quello zero è compatibile con
+«nessun attacco» **e** con «nessuna misura», e solo la lettura del codice li
+separa.
+
+📌 *(Il censimento ha prodotto 27 nomi mai presenti, ma la maggior parte sono
+**falsi positivi del mio grep**: `click`, `mousemove`, `resize`, `wheel` sono
+eventi DOM del webui, non del registro. Il numero grezzo non è un inventario:
+va letto voce per voce.)*
+
+---
+
 ## Come leggere questo documento
 
 - **misurata alla porta** = un banco eseguibile, con il suo controllo e la sua popolazione opposta, citato per nome;
