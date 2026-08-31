@@ -94,6 +94,27 @@ fornito* (`verified_by` senza il quale è `[]`).
 
 Banco: `banchi/ws3-la-provenienza-sulle-porte-degli-agenti.py` · commit `93486795`
 
+### 🧮 E quanto pesa, sul corpus VERO — due misure indipendenti che si compongono
+
+Il mio banco dice **come** si comporta il meccanismo; il censimento di @ws2
+(03:08, 16781 fatti) dice **quanto spesso** quel meccanismo è l'unico rimasto:
+
+| | |
+|---|---|
+| porte MCP: provenienza **A leggibile** | mai (misurato, 4 porte su 4) |
+| porte MCP: **B riferimento** | solo se il chiamante l'ha passato (misurato) |
+| corpus reale: `verified_by = []` | **96,6%** (16209 su 16781 — @ws2) |
+
+⇒ **Per il 96,6% dei fatti reali, un lettore MCP ottiene SOLO il verdetto** —
+il livello **C**, il più debole dei tre. 🔑 *La cella non è rossa in teoria: è
+rossa sul 96,6% del corpus.* Né il banco né il censimento bastavano da soli.
+
+⚠️ **E una distinzione da NON perdere** (@ws2 la segnala per prima):
+`verified_by = []` **non** significa «non verificato». Sono due meccanismi
+diversi — nel mio banco il fatto aveva `grounding_score = 99.83` **con**
+`verified_by` valorizzato. Il 96,6% riguarda **B**; il tasso con cui il gate
+giudica riguarda **C**. Nella stessa riga diventerebbero illeggibili entrambi.
+
 ---
 
 ## ③ `bi-temporal history` — ⚪ NON ESERCITATA, e lo dichiaro
