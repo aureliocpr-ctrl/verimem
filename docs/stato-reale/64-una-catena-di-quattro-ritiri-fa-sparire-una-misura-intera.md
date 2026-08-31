@@ -82,6 +82,14 @@ saperlo era leggere.
 
 ## ⑧ Chiuso: 56 su 57 letti — e il tasso è un PAVIMENTO, non il tasso vero
 
+> 🔴 **IL NUMERO DI QUESTA SEZIONE È SUPERATO — leggi il [66](66-il-criterio-scartava-proprio-i-casi-piu-comuni.md) prima di citarlo.** Ho poi
+> misurato il **richiamo**, cioè quello che questo paragrafo dichiarava di non
+> aver misurato: sui ritiri che il criterio **NON** seleziona, **14 letti a caso,
+> 14 sbagliati**. ⇒ **il 15,6% non è un pavimento basso, è bassissimo**: era la
+> quota che *il mio criterio segnala*, e il criterio scarta **proprio i casi più
+> comuni** (le riscritture della stessa serie, dove i testi si somigliano ma
+> misurano cose diverse). **Il tasso vero è vicino alla totalità dei ritiri.**
+
 Finita la lettura. **Non è più una stima campionaria:**
 
 ```
