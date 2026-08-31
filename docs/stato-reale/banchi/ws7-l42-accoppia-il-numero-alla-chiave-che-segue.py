@@ -53,6 +53,21 @@ def _kv(nome: str, k1: str, v1: int, k2: str, v2: int) -> str:
     return f"{nome} {k1}={v1} {k2}={v2}"
 
 
+#: ⚠️⚠️ LA FORMA CHE CONTA NON ERA QUELLA CHE AVEVO SOTTO MANO. Contati i
+#: `grounding_span` reali dello store (7343 pieni, `mode=ro`):
+#:
+#:     chiave=numero     27,1%      <- l'unica che il banco provava
+#:     chiave: numero    45,9%      <- la forma DOMINANTE, non provata
+#:     almeno una        61,4%
+#:
+#: Avevo costruito il banco sulla forma della MIA source, non su quella che il
+#: corpus usa davvero: lo stesso errore del criterio cieco scelto sulla
+#: dimensione sbagliata. Se l'effetto e' della forma tabellare deve comparire
+#: anche coi due punti — e se NON compare, la portata del difetto si dimezza.
+def _due_punti(nome: str, k1: str, v1: int, k2: str, v2: int) -> str:
+    return f"{nome}\n  {k1}: {v1}\n  {k2}: {v2}"
+
+
 def _prosa(nome: str, k1: str, v1: int, k2: str, v2: int) -> str:
     return (f"Il campo {nome} ha {v1} occorrenze in {k1}. "
             f"Il campo {nome} ha {v2} occorrenze in {k2}.")
@@ -67,20 +82,26 @@ def giudica(m: Memory, claim: str, source: str, topic: str) -> tuple[str, bool]:
 
 def main() -> int:
     m = Memory()
-    print(f"  {'campo':<24} {'forma k=v':>12} {'prosa':>12}")
-    colpiti = {"kv": 0, "prosa": 0}
+    FORME = (("k=v", _kv), ("k: v", _due_punti), ("prosa", _prosa))
+    print(f"  {'campo':<24} " + " ".join(f"{nome:>8}" for nome, _ in FORME))
+    colpiti = {nome: 0 for nome, _ in FORME}
+    quarantene = {nome: 0 for nome, _ in FORME}
     for i, (nome, k1, v1, k2, v2) in enumerate(COPPIE):
         claim = (f"Il campo {nome} ha {v1} occorrenze in {k1} "
                  f"e {v2} occorrenze in {k2}.")
-        s_kv, w_kv = giudica(m, claim, _kv(nome, k1, v1, k2, v2), f"banco/l42-kv-{i}")
-        s_pr, w_pr = giudica(m, claim, _prosa(nome, k1, v1, k2, v2), f"banco/l42-pr-{i}")
-        colpiti["kv"] += w_kv
-        colpiti["prosa"] += w_pr
-        print(f"  {nome:<24} {('L4.2 ' + s_kv) if w_kv else ('— ' + s_kv):>12}"
-              f" {('L4.2 ' + s_pr) if w_pr else ('— ' + s_pr):>12}")
+        celle = []
+        for forma, rendi in FORME:
+            st, w = giudica(m, claim, rendi(nome, k1, v1, k2, v2),
+                            f"banco/l42-{forma}-{i}")
+            colpiti[forma] += w
+            quarantene[forma] += (st == "quarantined")
+            celle.append("L4.2" if w else "—")
+        print(f"  {nome:<24} " + " ".join(f"{c:>8}" for c in celle))
     n = len(COPPIE)
-    print(f"\n  L4.2 avvisa su k=v:   {colpiti['kv']}/{n}")
-    print(f"  L4.2 avvisa su prosa: {colpiti['prosa']}/{n}")
+    print()
+    for forma, _ in FORME:
+        print(f"  L4.2 avvisa su {forma:<6} {colpiti[forma]:>3}/{n}"
+              f"   (quarantene: {quarantene[forma]}/{n})")
     print(f"\n  store temporaneo: {os.environ['HIPPO_DATA_DIR']}")
     return 0
 
