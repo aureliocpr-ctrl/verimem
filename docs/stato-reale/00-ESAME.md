@@ -14493,3 +14493,102 @@ costruire una popolazione con la mia mano**: lo lascio dichiarato come il seguit
 sua trappola annessa.
 
 **Banchi**: `porta_positivi.py` (scratchpad di sessione). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 04:30 — ws1 · LA CURA CONTRO L'HANG DI QUATTRO ORE È IN DUE FILE SU TRE — E IL TERZO STA SUL WRITE PATH
+
+**Livello** caricamento dei modelli, lettura del codice + i miei log di stanotte ·
+**Perimetro** `verimem/{embedding,semantic,local_relation,cross_encoder_rerank,
+resonator_text_bridge}.py` · **Istante** 2026-08-31 04:20–04:28 · **Regime** **statico**
+(`git grep`, `sed`) più **una** chiamata filesystem-only e la rilettura dei miei log —
+**nessun modello caricato, nessuna rete** · `verimem.__version__` **0.7.6**.
+
+Paga l'aperto che avevo dichiarato **due volte** senza indagarlo: l'avviso «*You are
+sending unauthenticated requests to the HF Hub*» comparso nei miei banchi.
+
+### 🟢 PRIMA IL VERDE, ed è grosso: la cura esiste, è motivata e datata
+
+`embedding.py:50-72` — prova **prima** `local_files_only=True`, e sul fallimento
+**rilancia** invece di andare in rete quando un flag offline è impostato:
+
+```
+# Cache-only: evita il round-trip di rete a HF Hub ad OGNI load (il check
+# "unauthenticated HF Hub" — lento/flaky offline o sotto rate-limit, puo'
+# stallare il PRIMO encode di un server MCP a freddo).
+# Verificato 2026-06-04: con local_files_only il warning di rete sparisce.
+…
+# 2026-06-05 ROOT-CAUSE FIX (4h save/recall hang): the network fallback can
+# stall indefinitely… NEVER touch the network when an offline flag is set.
+```
+
+**Il prodotto conosce l'avviso che ho visto, l'ha diagnosticato il 04/06 e l'ha curato** —
+e la cura nasce da un incidente reale di **quattro ore** di blocco su save/recall.
+`semantic.py:2030-2042` (reranker) ha la **stessa identica struttura**. E c'è un modulo
+intero, `airgap.py`, con due livelli: `airgap_status()` (config, nessuna rete, nessun
+modello) e **`probe_live_egress()`** — «*esercita una vera write+search sotto un audit hook
+`socket.connect` e riporta ogni destinazione non-loopback effettivamente tentata*»,
+esposto come `verimem airgap --live`. ⇒ **la mia predizione («`from_pretrained` senza
+`local_files_only`, l'offline non è gestito») CADE**, ed è il verso che cercavo.
+
+### 🔴 MA LA CURA È IN DUE FILE SU CINQUE, E IL BUCO STA SUL WRITE PATH
+
+`local_files_only` compare **solo** in `embedding.py:61` e `semantic.py:2036`. **Non**
+compare in:
+
+```
+local_relation.py:98-101   AutoConfig / AutoTokenizer / AutoModelForSequenceClassification
+                           .from_pretrained(model_name)   <- TRE volte, PER NOME
+                           DEFAULT_NLI_MODEL = "MoritzLaurer/DeBERTa-v3-large-mnli-…"
+cross_encoder_rerank.py:16 CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+resonator_text_bridge.py:56 SentenceTransformer("all-MiniLM-L6-v2")
+embedding.py:71            SentenceTransformer(model)   [è il fallback online, voluto]
+```
+
+E **`local_relation` è chiamato dal write gate**: `anti_confab_gate.py:2102-2103`
+(`get_local_relation_judge()`).
+
+### La prova che è proprio quello — dai miei log, non per deduzione
+
+In `prime.out` (banco delle 03:00), tre righe consecutive:
+
+```
+flow.write … fact_id=4db3f6249502 grounding_score=98.90306854248047 judged=True
+ 1   24.6   ready   passed   98.90
+Warning: You are sending unauthenticated requests to the HF Hub…
+Loading weights: 100%|██████████| 394/394
+```
+
+⇒ l'avviso arriva **dopo il primo write** e **immediatamente prima** di un caricamento da
+**394 shard**. Il gate CE (`local_gate_ce_v2`) è un deberta-v3-**base** e nei log di
+stanotte carica **201** shard; **394 è il `-large`**, cioè il modello NLI di
+`local_relation`. **Il numero di shard distingue i due modelli**, e non è un'inferenza sul
+nome del file. Confermato che il ramo può partire: `local_nli_available()` → **True**, e
+`models--MoritzLaurer--DeBERTa-v3-large-mnli-fever-anli-ling-wanli` **è nella cache HF**.
+
+### Il verso: non è sicurezza, è la STESSA CLASSE DI HANG che la cura chiudeva
+
+Il modello è in cache e il caricamento riesce: **nessun dato esce**. Ma su una macchina
+**senza rete che non lo dichiara** (aereo, firewall, rete caduta) quei tre
+`from_pretrained` **tentano l'hub** — ed è esattamente il meccanismo che il commento del
+04-05/06 descrive: «*the network fallback can stall indefinitely on a flaky /
+rate-limited HF Hub… a stall wedges EVERY embedding for hours*». `local_relation` **non
+chiama nemmeno `_offline()`**: la protezione fail-fast lì non esiste. ⇒ **classe ② del
+metodo — manca lo SWEEP**: la cura è stata applicata dove il difetto era stato osservato,
+non a tutti i punti che hanno la stessa forma. È la terza volta stanotte che incontro
+questa classe (`local_grounding.py:450`, l'advisory «It is NOT missing», e ora questa).
+
+### Cosa NON prova
+
+**Non ho eseguito `verimem airgap --live`**, che è **lo strumento del prodotto per questa
+esatta domanda**: farlo significherebbe lasciar tentare una connessione, e il mio
+perimetro dice «niente rete». ⇒ **non ho la prova diretta che la connessione parta**: ho
+l'avviso, la sequenza nel log, il conteggio degli shard e il codice che carica per nome.
+**Chi può eseguire `airgap --live` chiuda la questione in un minuto** — e quello è anche
+il modo di far cadere questo reperto. Non ho misurato **quanto** stalli senza rete (non
+posso staccarla), quindi **il costo resta non quantificato**: dico dov'è il buco, non
+quanto pesa. `cross_encoder_rerank.py` e `resonator_text_bridge.py` non li ho visti girare
+nei miei banchi: li segnalo per **forma del codice**, non per osservazione.
+
+**Banchi**: nessuno nuovo — `git grep`, `sed`, `local_nli_available()`, e la rilettura di
+`prime.out`. **Io misuro, non curo.**
