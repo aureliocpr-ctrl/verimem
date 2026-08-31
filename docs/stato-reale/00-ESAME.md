@@ -13131,6 +13131,48 @@ proprio campione, non il prodotto.
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-per-status.py`.
 *(doc `58`)*
 
+**56ª `59` (banco+prodotto) — chiudo un limite aperto da giorni: i quarantinati che non dichiarano
+il layer NON sono telemetria rotta, sono AUTO-CLAIM fermati prima dei layer. E la perdita
+aggiornata: quota 25%→21%, assoluto 2778→3568.**
+🔎 **Trovato cercando altro** (la quota di quarantena per famiglia di topic): **`veriagent` ha 48
+fatti non superseduti e 47 quarantinati — 97,9%**, tutti del **18 luglio fra le 08:32 e le 23:08**,
+tutti con `quarantined_by` **NULL**, tutti della stessa forma: *«Task veriagent completato con
+receipt — 'esegui il comando: git status…'»*. **Sono auto-claim**, e il prodotto **dichiara di
+fermarli**: *«ON EVERY WRITE: a lexical screen. Unsupported "it works / verified / done" self-claims
+are quarantined, **with no LLM call**»* ⇒ **«with no LLM call» è la risposta: lo screen precede i
+layer, quindi non ha un layer da registrare.** Non un difetto — **una fase che sta prima.**
+✅ **VERIFICA SU ENTRAMBE LE POPOLAZIONI** *(sui soli senza-layer qualunque criterio sembrerebbe
+ottimo)*, sui 1283 quarantinati non superseduti:
+
+| criterio di «auto-claim» | **senza** layer | **con** layer | divario |
+|---|---|---|---|
+| largo (`completato/fatto/done/ok/receipt`…) | 372/661 = **56,3%** | 59/623 = 9,5% | **+46,8** |
+| senza `fatto`/`ok` (ambigui) | 311/661 = **47,0%** | 44/623 = 7,1% | **+40,0** |
+| **stretto** (soli participi di esito) | 270/661 = **40,8%** | 18/623 = **2,9%** | **+38,0** |
+
+**Regge su tutti e tre**; col più stretto la separazione è di **quattordici volte**.
+🪞 **Il falso positivo l'ho trovato LEGGENDO gli esempi, non i numeri**: *«**Test fatto** del Round
+5»* — «fatto» è un **sostantivo**. **È il motivo per cui i criteri sono tre**: se il divario fosse
+esistito solo col criterio largo, l'avrebbe prodotto il mio regex.
+⚠️ **RESIDUO NON SPIEGATO**: col criterio stretto **391 dei 661** senza layer non hanno marcatori ⇒
+**l'ipotesi copre la maggioranza, non tutto**, e il resto non l'ho indagato. ⚠️ **E i numeri non
+coincidono col limite** («207 di agosto» era una finestra, qui sono tutti i non superseduti):
+**popolazioni diverse, non le faccio combaciare.**
+📊 **LA PERDITA, col righello CHE C'ERA GIÀ** (`scripts/quanti_fatti_sono_davvero_serviti.py`,
+scritto il 4 agosto **da chi aveva fatto esattamente il mio errore di stanotte**): `scritti 16755 ·
+non superseduti 14470 (ritirati 2285) · DAVVERO SERVITI 13187 (muti per quarantena 1283) · perdita
+3568 = 21%`. Contro il **15/08**: scritti 10753, serviti 7975, **perdita 25%**.
+⚖️ **DUE LETTURE ENTRAMBE VERE**: la **quota** migliora (25→21%), il **numero assoluto** peggiora
+(2778 → 3568, **+790**). *Chi cita solo la prima fa marketing, chi cita solo la seconda fa
+allarmismo.* 📌 E i **ritiri** pesano di nuovo più delle quarantene (2285 contro 1283) — il 15/08
+avevo annotato l'opposto, ma **non ho il dettaglio di allora e non lo racconto come tendenza.**
+🪤 **TRAPPOLA EVITATA, e vale quanto un reperto**: stavo per scrivere *«i fatti inglesi sono
+quarantinati 4 volte più della media, 38% contro 8,9%»*. **Spuria**: quel 38% viene da
+**`c10/halumem`, un corpus di benchmark importato al 51,4%**, non dalla lingua. **Quarta volta
+stanotte che il campione spiega il numero — la prima in cui l'ho verificato PRIMA di pubblicare.**
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quarantinati-senza-layer.py`.
+*(doc `59`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
@@ -13624,3 +13666,125 @@ delle due risposte stia giudicando**.
 
 **Banchi**: `porta_stadio1.py`, `porta_stadio1b.py`, dati in `stadio1.json` (scratchpad
 di sessione). **Io misuro, non curo.**
+
+---
+
+## 2026-08-31 02:45 — ws1 · IL CODICE DICHIARA UN BUCO CHE È STATO COLMATO CINQUE GIORNI FA — E LA MISURA CHE LO COLMA DICE UNA COSA **PEGGIORE** DEL BUCO
+
+**Livello** testo del codice contro registro condiviso (verifica statica + una
+esecuzione) · **Perimetro** `verimem/local_grounding.py`, `verimem/doctor.py`,
+`tests/test_il_docstring_del_giudice_nomina_il_modello_che_gira.py` ·
+**Istante** 2026-08-31 02:35-02:45 · **Regime** `git grep` (non la copia morta di
+`build/lib/`), `git log`, ed **esecuzione reale** di `verimem doctor` ·
+`verimem.__version__` **0.7.6**, cwd = `C:\Users\aurel\Code\HippoAgent`.
+
+### Il fatto, in due righe che si contraddicono
+
+`verimem/local_grounding.py:450`, docstring di `local_ce_available()` — **ancora
+oggi**, verificato con `git grep`:
+
+```
+3. on NON-LATIN script there is NO measurement of this judge at all. Not
+   "it works", not "it fails": unmeasured.
+```
+
+`docs/stato-reale/banchi/ws3-il-giudice-fuori-dall-alfabeto-latino.py`, **su origin
+dal 25/08** (commit `31448d73`, «*il giudice fuori dall'alfabeto latino, e il thai
+sbaglia con 99.87*»), misurato dalla **porta pubblica** `verimem remember --source`:
+
+```
+VERI ammessi ................ 7/7
+falsi NUMERICI fermati ...... 7/7    <- il controllo: i casi ARRIVANO al gate
+falsi SEMANTICI fermati ..... 6/7    <- passa SOLO il thai
+```
+
+**La misura esiste, è pubblica, ed è dello stesso giorno della cura che ha scritto
+quella riga.** `local_grounding.py` è stato modificato **ieri** — `45d6687f`,
+2026-08-30 — e la riga non è stata toccata.
+
+### Perché non è pedanteria: le due frasi chiamano ad AZIONI OPPOSTE
+
+- «**nessuna misura**» chiama a **misurare**.
+- «**il thai ammette una falsità a 99,87**» chiama a **curare**.
+
+Il testo del codice fa **riscrivere un banco che esiste** a chi lo legge, invece di
+mostrargli un difetto noto. **La prova d'uso sono io**: dieci minuti fa stavo per
+lanciare esattamente il banco di ws3, perché il codice mi diceva che il buco era
+aperto. Me ne ha salvato `O1` (cercare prima di dichiarare un finding nuovo) — non
+il codice, che diceva il contrario.
+
+E ciò che ws3 ha trovato è **più grave** di un buco: sulla stessa fonte thai il
+falso **numerico** prende g=0,2 e il falso **semantico** — un claim che afferma il
+contrario della fonte — prende **g=99,87 con `judged=True`, `status=model_claim`**.
+Non un punteggio basso che produce una quarantena recuperabile: **un'ammissione**.
+*(Numeri di ws3, citati come suoi: non li ho rimisurati. Ciò che ho verificato io è
+la discrepanza fra il codice e il registro — `git grep`, `git log`, e l'esecuzione
+qui sotto.)*
+
+### La classe: **un limite PAGATO e non aggiornato**
+
+Il registro conosce «**un limite dichiarato è un DEBITO**» (su 4 misurati, 1
+reggeva). Questa è la forma **speculare**: il debito è stato **pagato** e la
+dichiarazione è rimasta. Fa lo stesso danno al contrario — invece di promettere
+troppo, **nasconde un difetto noto dietro un «non misurato»**.
+
+### E il presidio a guardia guarda un'altra frase
+
+`tests/test_il_docstring_del_giudice_nomina_il_modello_che_gira.py` sorveglia
+**quel docstring** — ed è un buon presidio: legge il base model da
+`benchmark/local_gate_finetune.py`, così cambiare modello lo fa diventare rosso. Ma
+il suo perimetro è:
+
+```python
+def _docstring() -> str:
+    from verimem.local_grounding import local_ce_available
+    return inspect.getdoc(local_ce_available) or ""
+```
+
+e le sue asserzioni riguardano **la frase «the ce is multilingual»**, non il punto
+3. Il test **dichiara di essere locale** («*criterio dichiaratamente SINTATTICO, e
+qui regge per una ragione locale, non generale*»). ⇒ **un presidio onesto sul
+proprio perimetro non è un presidio sul fatto**: la riga sorvegliata è corretta, e
+quella accanto no.
+
+### Il dato accessorio, col verso giusto (NON un rosso)
+
+Eseguito `python -m verimem.cli doctor` su questa macchina, riga reale:
+
+```
+✓ moat-judge  local CE gate model installed — the grounding moat is ON with
+no llm (multilingual); 9561 of 14471 stored facts entailment-judged (66.1%)
+```
+
+Ero partito convinto che «**(multilingual)**» fosse la frase che il prodotto stesso
+ha dichiarato falsa il 25/08 (`vocab_size 128100`, mDeBERTa ne ha ~251k),
+sopravvissuta su una superficie utente. **Il verso è più stretto**: quella
+dichiarazione riguarda il **vocabolario**, e il docstring curato distingue
+esplicitamente «*vocabulary is a fact about the MODEL, separation is a fact about
+BEHAVIOUR*». Il **comportamento** è misurato, da ws3, e **regge su cinque scritture
+non latine su sei**. ⇒ «multilingual» non è falsa come descrizione operativa.
+**Quel che resta, e che porto a chi decide senza chiamarlo difetto**: è un **✓
+verde** su una popolazione in cui **una scrittura misurata rovescia la garanzia**.
+Un utente thailandese legge ✓ e «multilingual»; per la sua lingua il moat, misurato,
+ammette a 99,87 il contrario della fonte.
+*(Stessa forma di LANT-19 di ws7, che aveva stampato questa identica riga —
+«(multilingual)» compreso — chiudendola 🟢 su un'ALTRA domanda: se «moat ON»
+arrivasse senza la sua copertura. La copertura c'era, e la risposta era giusta. **La
+parola è passata sotto gli occhi di tutti perché la cella rispondeva a un'altra
+domanda** — classe ⑤ del registro, in forma nuova: il dato era già pubblicato.)*
+
+### Cosa NON prova
+
+Non ho rimisurato il thai: i 99,87 sono di ws3 (banco `31448d73`, porta pubblica,
+fuori pytest). Non ho misurato **quante** scritture non latine esistano oltre le sei
+del suo banco, né se il difetto thai sia della scrittura senza spazi (ws3 lo dichiara
+come **ipotesi non misurata**). Non ho toccato il codice: **io misuro, non curo.**
+
+### Per chi decide (io misuro, non curo)
+
+Tre cose separate, tutte sul **testo** e nessuna sul comportamento:
+1. `local_grounding.py:450` dice «nessuna misura» di una cosa misurata dal 25/08 e
+   pubblicata su origin. **Il file è stato toccato ieri.**
+2. Chi legge quel docstring per decidere *dove guardare* viene mandato a rifare un
+   banco che esiste, e **non viene mandato** sull'unico difetto noto (thai).
+3. Il presidio che sorveglia quel docstring copre la frase accanto, e lo dichiara.
