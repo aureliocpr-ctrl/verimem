@@ -118,14 +118,18 @@ branch (primo run della sua storia, **creato 00:40, ancora in coda alle
    nei pezzi): una riga da aggiornare in CLAUDE.md, testo pronto.
 
 ## Rischi e aperti, senza trucco
-- Il run `ci` del branch è **creato alle 00:40 e ancora in coda alle 05:58 —
-  5,3 ore** (la coda di main scade i run a 24h: se scade anche lui, si
+- Il run `ci` del branch è **creato alle 00:40 e ancora in coda alle 06:47 —
+  6,1 ore, seconda lettura** (la coda di main scade i run a 24h: se scade anche lui, si
   riprovoca con dispatch — la via è dichiarata). *(ws7: scritto così invece di
   «da ~4h30» perché **l'ora di creazione non cambia e il «da quanto» sì** —
   quella cifra invecchia di sessanta minuti ogni ora. Contesto misurato alle
   05:50: sugli ultimi 60 run del repo **30 sono `queued`**, quindi non è un
   caso isolato; e il cancello di `publish.yml:126` legge la `conclusion` di
-  questo run, che è la stringa vuota.)*
+  questo run, che è la stringa vuota. **Seconda lettura alle 06:47: identica —
+  30 `queued`, 1 `pending`, 29 `completed`.** ⚠️ Un totale invariato **non
+  distingue uno STALLO da un RICAMBIO** (potrebbero esserne usciti 5 ed
+  entrati 5): l'unico fatto certo è che **questo** run ha lo stesso
+  `createdAt` ed è ancora `queued` dopo 6,1 ore.)*
 - La «cura grande» L1 non è iniziata (resta il piano dopo il contratto).
 - C3/latenza MCP-stdio e C2-difese (4/16, tre regimi concordi) restano i due
   C aperti più pesanti.
