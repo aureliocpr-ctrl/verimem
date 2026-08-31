@@ -109,8 +109,57 @@ recall ci sono le mie quattro query di verifica**, che ho fatto io poco prima
 (togliendole il quadro non cambia in modo apprezzabile, ma vanno dichiarate) ·
 il campione è il traffico di **una manciata di istanze che lavorano di notte**,
 non di utenti.
-📌 **Va rifatta domani** su qualche ora di traffico: `banchi/ws6-best-reali-dal-journal.py`
-con la finestra che parte dalle 02:52:23 e la soglia 0,8781.
+### ⑥-bis Rifatta mezz'ora dopo: 71,2% — e il campione ero io
+
+Il limite dichiarato qui sopra si è avverato **in trenta minuti**. Rifatta la
+misura al crescere del campione:
+
+| campione | quota sotto il pavimento |
+|---|---|
+| **stima** dai 2887 `best` storici (`53`) | 97,8% |
+| misura n=72, 25 minuti | 87,5% |
+| misura n=111, 41 minuti | **71,2%** |
+
+**Sedici punti in meno in mezz'ora.** Prima di dare un terzo numero ho misurato
+**se converge** — la quota su finestre crescenti oscillava fra **69% e 88%**
+prima di assestarsi — e soprattutto ho guardato **come è distribuito il
+traffico**:
+
+```
+letture per intervallo di 10 minuti, dal ricalcolo:
+02:52   72  ← il 59% del totale in DIECI minuti
+03:02    1
+03:12   36
+03:22    1
+03:32   13
+```
+
+**Il traffico è a raffiche, e la prima raffica erano i miei banchi.** Stavo
+misurando **il mio stesso traffico di test** e chiamandolo «traffico reale».
+
+🔧 **Il journal non dice chi ha fatto la query** (`surface` è `unknown` su tutte
+le 137 letture), **ma `build` lo approssima**: è l'hash del codice, e le istanze
+lavorano su versioni diverse. Identificato il mio (`d147f3c3`) eseguendo una
+recall e leggendo il campo:
+
+| popolazione | n | sotto il pavimento | mediana |
+|---|---|---|---|
+| tutte | 142 | 106 = 74,6% | 0,8620 |
+| **le MIE** (`d147f3c3`) | 31 | 27 = **87,1%** | 0,8629 |
+| **le ALTRE istanze** | 111 | 79 = **71,2%** | 0,8558 |
+
+**Le mie letture stanno sedici punti più in basso delle altre** — coerente: fra
+le mie ci sono le query fuori dominio con cui ho verificato l'avviso (l'ulivo, la
+carbonara). ⇒ **il numero da citare è 71,2%, non 87,5% e tantomeno 97,8%.**
+
+⚠️ **E anche il 71,2% non è «il traffico degli utenti»**: `build` non separa per
+istanza (due valori dominano con 60 e 34 letture), e comunque sono **istanze che
+lavorano di notte su questo repo**. È traffico *non mio*, che è cosa diversa da
+traffico *reale*.
+📌 **Sesta volta stanotte che il campione spiega il numero.** Qui l'avevo
+dichiarato come limite prima di pubblicare — e il limite si è avverato mezz'ora
+dopo, che è il motivo per cui i limiti si dichiarano.
+🔎 `banchi/ws6-la-stima-converge.py` (curva + buchi del traffico).
 📌 **Una sola esecuzione** per il costo di 18,44 s, e su questa macchina.
 
 🔁 **E il costo è UNA TANTUM — verificato subito dopo.** Rieseguito lo stesso
