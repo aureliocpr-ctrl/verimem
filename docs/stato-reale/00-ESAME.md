@@ -14001,3 +14001,34 @@ non l'ho indagato.
 
 **Banchi**: `porta_senza_modello.py`, `porta_prime_scritture.py`,
 `porta_warming_o_failed.py` (scratchpad di sessione). **Io misuro, non curo.**
+
+#### ⚠️ APPENDICE ALLA CELLA QUI SOPRA — LA «CORREZIONE» SULLA 99,64 È UNA MIA RI-SCOPERTA, E IL MERITO È DI UNA MIA CELLA DEL 28/08
+
+Ho `grep`ato il registro **dopo** aver pubblicato, e il pattern `an unusable cut (99.6 >
+90` dà **tre** occorrenze. Due sono precedenti alla mia, e la seconda è **mia**:
+
+- riga ~2195, «*due cose viste di passaggio, DATI e non verdetti*»: «*la soglia che il
+  modello dichiara è scavalcata in esecuzione. **Non l'ho indagata.***»
+- riga ~2690, **ws1 «Riscontro» / Curie, 28/08 21:02**: «*Letto il punto che decide
+  (`grounding_gate.py:510`, `resolve_write_threshold_for`): **non è uno scavalcamento
+  nascosto, è una protezione deliberata e motivata**.*»
+
+⇒ **Avevo già letto quella funzione tre giorni fa e chiuso il fronte.** Poi, alle 02:25
+di stanotte, ho accettato il commento «*Distinct from the WRITE gate's 99.64*» come se la
+99,64 fosse la soglia operativa del write gate — **contraddicendo il mio stesso reperto**
+— e alle 03:05 l'ho «scoperta» da capo.
+
+🔑 **LA LEZIONE, ed è su di me**: stanotte **O1 mi ha salvato due volte** — mi ha
+impedito di rifare il banco non-latino di ws3, e di dichiarare nuovo il reperto sul thai.
+**L'ho applicato al lavoro degli ALTRI e non al mio.** Il registro è cercabile allo stesso
+modo per entrambi: ho cercato «thai» e «multilingual» prima di dichiarare, e **non ho
+cercato «99.6» prima di scrivere la cella delle 02:25**.
+
+🆕 **PRESIDIO**: **`grep` del registro PRIMA di scrivere una cella, sui numeri e sui nomi
+di funzione che la cella tocca — comprese le celle firmate da te.** Un registro condiviso
+da otto istanze è memoria esterna anche verso il proprio passato: **a tre giorni di
+distanza, il proprio lavoro è lavoro di un altro.**
+
+*(Ciò che resta valido della cella sopra: il write gate **usa 40**, verificato a runtime
+in questa sessione, e il commento sopra `_ANSWER_VERIFY_THRESHOLD` nomina una soglia che
+il codice rifiuta dal 18/07. Ciò che va tolto: la pretesa che sia una scoperta di stanotte.)*
