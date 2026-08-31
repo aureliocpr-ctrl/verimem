@@ -13857,3 +13857,146 @@ Tre cose separate, tutte sul **testo** e nessuna sul comportamento:
 2. Chi legge quel docstring per decidere *dove guardare* viene mandato a rifare un
    banco che esiste, e **non viene mandato** sull'unico difetto noto (thai).
 3. Il presidio che sorveglia quel docstring copre la frase accanto, e lo dichiara.
+
+---
+
+## 2026-08-31 03:05 — ws1 · IL MOAT ALLA PORTA DELL'UTENTE FRESCO: QUATTRO VERDI, UNA FINESTRA DI QUATTRO SECONDI, E IL MIO QUINDICESIMO RITIRO (IL BANCO MISURAVA LA MACCHINA DI AURELIO)
+
+**Livello** porta pubblica `Memory.add(claim, source=…)`, un regime **per processo** ·
+**Perimetro** 3 regimi di modello × 2 di daemon, più un banco a 6 scritture e uno di
+transizione · **Istante** 2026-08-31 02:53–03:04 · **Regime** dichiarato per cella
+(sotto) · `verimem.__version__` **0.7.6**, cwd = scratchpad · store temporanei isolati
+(`HIPPO_DATA_DIR`), corpus di Aurelio mai toccato.
+
+### ⚖️ PRIMA IL RITIRO, perché senza di esso i numeri si leggono al contrario
+
+Alle 02:57 stavo per pubblicare: «*il modello c'è, intero, 737 MB, e il fatto entra NON
+GIUDICATO come con la cartella vuota*». **Falso, ed era il mio banco.**
+
+**`HIPPO_ENCODE_DELEGATE_ONLY=1` è impostata nell'ambiente di questa macchina**, e il mio
+script non ne faceva il `pop`. Misuravo il regime del **server MCP** credendo di misurare
+l'utente. Rifatto con la variabile rimossa esplicitamente:
+
+```
+judge_state() iniziale: 'ready'
+ #   t(s)  judge_state          moat  grounding
+ 1   24.6        ready        passed      98.90
+ 2   31.7        ready        passed      99.04
+ 3   32.4        ready        passed      96.39
+ 4   32.7        ready        passed      98.95
+ 5   33.0        ready        passed      97.79
+ 6   33.4        ready        passed      97.80
+  CONTROLLO SANO -> moat='passed' grounding=98.16
+  NON giudicate (moat not_run:*): 0/6
+```
+
+🆕 **PRESIDIO**: **un banco deve fare il `pop` di TUTTE le variabili di regime, non solo
+di quelle del data dir — e DICHIARARE quali.** Il registro conosce già la forma
+(«`ENGRAM_DATA_DIR=<temp>` NON ISOLA: `HIPPO_DATA_DIR` è già esportata»): qui la stessa
+classe ha colpito su `HIPPO_ENCODE_DELEGATE_ONLY`. **Un banco che non fa il pop misura la
+macchina di Aurelio, non il prodotto.**
+
+### 🟢 VERDE 1 — L'utente fresco senza daemon È PROTETTO, primo write compreso
+
+Regime: modello vero su disco, `ENGRAM_ENCODE_SERVICE=0` (**nessun daemon**),
+`HIPPO_ENCODE_DELEGATE_ONLY` **rimossa**, nessun `llm` iniettato.
+**6 scritture su 6 giudicate** + il controllo sano. **Denominatore 6, zero `not_run`.**
+Il costo è il **cold load sul primo write: 24,6 s**; dalla seconda in poi 0,3–0,7 s.
+
+### 🟢 VERDE 2 — Il daemon condiviso giudica ANCHE con la cartella del modello VUOTA
+
+Regime: daemon **attivo** (quello di questa macchina), `ENGRAM_LOCAL_GATE_MODEL` puntata a
+una cartella vuota / a una col solo `config.json` / al modello vero.
+**Tre regimi su tre**: `grounding_score = 98.90306854248047`, **identico cifra per cifra**,
+`moat='passed'`, e `judge_state()` **dopo** la scrittura = `'delegated'`.
+*(Un risultato identico cifra per cifra è sospetto per presidio: qui è la PROVA —
+stesso claim, stessa fonte, e **lo stesso giudice**, cioè il daemon, in tutti e tre.
+`ENGRAM_LOCAL_GATE_MODEL` su una cartella vuota **non simula l'utente fresco** finché un
+daemon vive.)*
+⇒ **la cura del 30/08 (`45d6687f`, «il daemon condiviso e la quarta via al giudizio»)
+regge alla porta**: un fallimento locale non spegne più il daemon che sta bene.
+
+### 🟢 VERDE 3 — Il fail-open è DICHIARATO sulla ricevuta, non va cercato
+
+Regime: cartella vuota **e** nessun daemon — l'utente che non ha scaricato i 737 MB.
+
+```
+status           'model_claim'
+grounding_score  None
+moat             'not_run:no_judge'
+warnings (n=1):  layer='L4-skipped'
+                 reason='source provided but no grounding judge is available -
+                         entailment NOT verified'
+```
+
+Il fatto **entra** (fail-open) — ed è la scelta giusta, il codice la motiva a
+`client.py:957-962` («*chi scrive crede di aver messo un fatto verificato e ha messo un
+claim*»). **La cura c'è e funziona: il campo `moat` e il warning arrivano al chiamante.**
+
+### 🟢 VERDE 4 — `judge_state()` si autocorregge in ~4 secondi
+
+Regime dichiarato: `delegate_only=1`, daemon spento. Transizione misurata:
+
+```
+            pesi ASSENTI              pesi PRESENTI
+t=0,0 s     warming  _load_failed=False    warming  _load_failed=False
+t=4,0 s     failed   _load_failed=True     ready    _load_failed=False
+2° write    not_run:no_judge (giusto)      moat='passed'  grounding=96,39
+```
+
+⇒ **il difetto è un ISTANTE, non uno stato**: il mio sospetto («dice *warming* per sempre
+su una cartella senza pesi») **cade**. E in delegate-only il primo write non giudicato è
+**dichiarato** dal codice («*in delegate-only il primo write NON viene giudicato*»).
+
+### 🟡 LA RUVIDEZZA, e la porto senza chiamarla difetto
+
+In quella finestra di ~4 secondi, nella **stessa esecuzione e a 0,4 s di distanza**:
+
+```
+advice   'the local CE judge is warming on a background thread (delegate-only mode
+          keeps the ~30s cold load off the request thread). It is NOT missing and `warm…'
+log      flow.warmup phase=failed error=OSError
+         reason='Error no file named model.safetensors, or pytorch_model.bin,
+                 found in directory …\meta.'
+```
+
+La ricevuta dice «**It is NOT missing**» mentre il caricamento è appena **fallito** perché
+i pesi non ci sono. Lo stato si corregge in 4 s — **ma la ricevuta di quel write è
+permanente**, e quel fatto resta non giudicato per sempre con accanto una riga che dice
+«non manca». È la coda dell'incidente **17/08** (`doctor` diceva «installed» su una
+cartella col solo `config.json`): la cura fu `holds_the_weights` **su `doctor`**, e questa
+superficie distingue ancora «assente» da «sta scaldando» con `_holds_a_model`, cioè con
+`config.json`. **Stessa classe della sera: una cura applicata a una superficie e non
+all'altra.** Costo reale: una riga fuorviante su una finestra di 4 s, non una garanzia
+rotta. **Non è un rosso; è una riga da allineare quando si tocca quel punto.**
+
+### 📌 E UNA CORREZIONE ALLA MIA CELLA DELLE 02:25
+
+Avevo accettato la motivazione del commento sopra `_ANSWER_VERIFY_THRESHOLD`: «*Distinct
+from the WRITE gate's 99.64*», concludendone che le due soglie sono distinte perché i
+compiti sono distinti. **Il write gate non usa 99,64.** `resolve_write_threshold_for()`
+(`grounding_gate.py:510-552`) la **scarta**, e il warning che ho visto girare dice:
+
+```
+RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1
+artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)
+```
+
+⇒ **write gate e read path usano ENTRAMBI 40**, per ragioni diverse (uno per taratura
+propria, l'altro come fallback perché la calibrata è un artefatto). **La mia conclusione
+di stanotte non cambia** — la 40,0 regge alla ritaratura appaiata (33 contro 26, p=0,435)
+— **cambia la ragione che le avevo attribuito**, e il commento del codice nomina una
+soglia che il codice stesso rifiuta dal 18/07.
+
+### Cosa NON prova
+
+Un solo claim per regime nei tre banchi di modello (n=1 per cella); i 6/6 sono su sei
+claim diversi ma tutti veri e ben sostenuti — **non ho misurato quante FALSITÀ il moat
+ferma in questi regimi**, solo se il giudizio avviene. Il cold load di 24,6 s è **una
+misura su questa macchina**, non una specifica. Non ho misurato il regime delegate-only
+**con** daemon vivo e modello assente insieme. Ho notato — e **non** misurato — che
+l'embedder emette un avviso di richiesta non autenticata all'HF Hub: lo lascio aperto,
+non l'ho indagato.
+
+**Banchi**: `porta_senza_modello.py`, `porta_prime_scritture.py`,
+`porta_warming_o_failed.py` (scratchpad di sessione). **Io misuro, non curo.**
