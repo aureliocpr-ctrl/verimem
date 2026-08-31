@@ -131,6 +131,24 @@ def main() -> int:
     # ⇒ La differenza decide la cura: A si unisce, B NON si puo' riparare
     #   aggiungendo un `|` — lo si farebbe sembrare completo mentendo.
     righe_t = testo.splitlines()
+    # 🔴 31/08 05:27 — IL NUMERO ROBUSTO VA STAMPATO PER PRIMO, e la
+    # classificazione A/B dichiarata INDICATIVA. Misurato: le celle che non
+    # chiudono con la barra sono **10** in quattro commit consecutivi
+    # (5209dabe, 39b9ec0b, 108dd620, HEAD) — STABILE. Ma il referto e' passato
+    # da «3 su piu' righe + 2 troncate» a «2 + 8» senza che nessuna di quelle
+    # celle fosse toccata.
+    # ⇒ La causa e' QUI: A e B si distinguono guardando la riga SUCCESSIVA, e
+    #   in un file scritto da otto istanze in parallelo basta che qualcuno
+    #   inserisca una cella vicino perche' la stessa riga cambi classe.
+    # ⇒ 🔑 **Un criterio che guarda il CONTESTO e' instabile dove il contesto
+    #   e' scritto da altri.** Il numero che non dipende dal vicinato — «la
+    #   riga non chiude» — e' quello su cui si puo' ragionare.
+    non_chiuse = [RIGA_CELLA.match(r).group(0).strip("| ")
+                  for r in righe_t
+                  if RIGA_CELLA.match(r) and not r.rstrip().endswith("|")]
+    if non_chiuse:
+        print(f"📏 {len(non_chiuse)} celle NON CHIUDONO con la barra "
+              f"(numero robusto, non dipende dalle righe vicine)")
     A, B = [], []
     for i, r in enumerate(righe_t):
         if not (RIGA_CELLA.match(r) and not r.rstrip().endswith("|")):
@@ -172,6 +190,9 @@ def main() -> int:
     if B:
         print(f"🔴 {len(B)} celle TRONCATE (manca l'ultima colonna, il REGIME):")
         print(f"     {' '.join(B[:14])}{' …' if len(B) > 14 else ''}")
+        print("   ⚠️ la separazione fra le due classi guarda la riga SUCCESSIVA:")
+        print("      in un file scritto in parallelo la stessa cella puo' cambiare")
+        print("      classe senza essere toccata. Il numero sopra e' quello robusto.")
         print("   ⇒ NON e' un difetto di forma: il testo e' stato tagliato in scrittura")
         print("     e con esso il regime. Chiudere la riga con un `|` la fa sembrare")
         print("     completa e MENTE. O si recupera il regime, o si dichiara che manca.")
