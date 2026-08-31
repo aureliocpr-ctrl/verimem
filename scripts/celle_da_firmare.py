@@ -26,6 +26,31 @@ REGISTRO = pathlib.Path("docs/stato-reale/00-ESAME.md")
 #: sola (misurato due volte il 29/08: davi 2 celle «a due firme» che nessuno
 #: aveva firmato).
 FIRMA = re.compile(r"(?:✅|✍️|_)\s*(?:\*\*)?(?:2ª |seconda )?firma @([A-Za-z0-9_-]+)")
+#: Chi firma ha DUE nomi — la sigla e il nome proprio — e il conteggio grezzo
+#: li tratta come due persone: `W7-14` risulta «a due firme» con `['ws2',
+#: 'Varco']`, che e' una sola. Misurato il 31/08 sul registro: delle 6 celle
+#: che un conteggio ingenuo dava a due firme, ZERO era una doppia controfirma
+#: vera. Le quattro coppie qui sotto sono quelle viste firmare; le altre
+#: istanze non compaiono ancora con un nome proprio e non si indovinano.
+ALIAS = {"varco": "ws2", "galileo": "ws3", "paragone": "ws4", "lanterna": "ws7"}
+#: `@X` e `@Nome` NON sono firmatari: vengono dalle celle che SPIEGANO come si
+#: firma, e il criterio matcha il segnaposto scritto per documentarlo. E' la
+#: forma piu' insidiosa del difetto nel misuratore — il testo che descrive il
+#: criterio soddisfa il criterio (@ws4, 31/08: 2 casi su 6, `W2-117` e
+#: `W2-183`). Resta scoperto il caso in cui e' l'INTERA cella a documentare la
+#: convenzione: li' il segnaposto e' un nome vero citato, e non si distingue
+#: senza leggere.
+SEGNAPOSTI = {"x", "nome", "tuonome", "agente"}
+
+
+def firmatari(riga: str) -> set[str]:
+    """I firmatari DISTINTI di una riga: alias normalizzati, segnaposti fuori.
+
+    Senza normalizzare, `['Varco', 'Varco']` conta due e `['ws2', 'Varco']`
+    pure — e una cella con una firma sola si legge come verde.
+    """
+    return {ALIAS.get(f.lower(), f.lower()) for f in FIRMA.findall(riga)
+            } - SEGNAPOSTI
 #: Comandi che la disciplina della copia CONDIVISA vieta: otto istanze e un
 #: solo albero, dove uno `stash pop` tocca il lavoro non committato delle
 #: altre sette. La ricetta di una cella e' testo scritto da un'ALTRA, e puo'
@@ -71,18 +96,27 @@ def main() -> int:
         if not m:
             continue
         cid, titolo = m.group(1), m.group(2).strip()
-        firme = [f.lower() for f in FIRMA.findall(riga)]
-        if io_l in firme:            # gia' firmata da me
+        firme = firmatari(riga)
+        io_n = ALIAS.get(io_l, io_l)
+        if io_n in firme:            # gia' firmata da me, sotto uno dei due nomi
             continue
         autore = re.search(r"\| (ws\d) \|", riga)
-        if autore and autore.group(1).lower() == io_l:
+        if autore and autore.group(1).lower() == io_n:
             continue
+        #: la firma dell'AUTORE non e' una controfirma: la cella resta da
+        #: verificare anche quando chi l'ha scritta si e' firmato in fondo.
+        if autore:
+            firme = firme - {autore.group(1).lower()}
         rif = RIFALLO.search(riga)
         if not rif and not a.tutte:
             nascoste += 1
             continue
         trovate += 1
-        stato = f"{len(firme)} firma/e" if firme else "NESSUNA firma"
+        #: «controfirma» e non «firma»: quello che resta qui e' chi ha
+        #: VERIFICATO, non chi ha scritto. Il nome vecchio faceva leggere come
+        #: verde una cella firmata solo dalla propria autrice.
+        stato = (f"{len(firme)} controfirma/e" if firme
+                 else "NESSUNA controfirma")
         print(f"\n  {cid}  [{stato}]  {titolo[:74]}")
         if rif:
             _cmd = rif.group(1)
