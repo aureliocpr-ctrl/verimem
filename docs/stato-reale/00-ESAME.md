@@ -13183,6 +13183,62 @@ stanotte che il campione spiega il numero — la prima in cui l'ho verificato PR
 🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-quarantinati-senza-layer.py`.
 *(doc `59`)*
 
+**57ª `60` (evento+banco) — LA TRANSIZIONE COLTA MENTRE AVVENIVA, alle 02:52:23. Tre predizioni su
+quattro reggono, la QUARTA CADE e la riporto. E l'ho innescata io, come avevo dichiarato prima.**
+Il `48` aveva trovato il `floor.json` degenere ancora servito a guasto finito; il `53` aveva contato
+quanto mancava (**105 fatti vivi**) e registrato tre predizioni **prima**. Poi ne ho aggiunta una
+quarta. **Non è una ricostruzione a posteriori: avevo il cronometro pronto.**
+
+```
+floor.json PRIMA : {"floor": 0.0,    "n_facts": 13795}   mtime 30/08 20:32:08
+floor.json DOPO  : {"floor": 0.8781, "n_facts": 14485}   mtime 31/08 02:52:23
+UNA recall       : 18,44 s          (baseline misurato poco prima: 2,84 s)
+```
+
+| | predizione registrata **prima** | esito |
+|---|---|---|
+| **P1** | il file viene **riscritto** | ✅ **scattata** |
+| **P2** | `n_facts` ≥ 14485 | ✅ **regge** (14485) |
+| **P3** | `floor` fra 0,87 e 0,89 | ✅ **regge** (**0,8781**) |
+| **P4** | la prima recall costerà **> 20 s** | ❌ **CADE** (**18,44 s**) |
+
+❌ **P4 cade e la riporto invece di aggiustarla**: avevo scelto la soglia dal 24.169 ms di @ws2, il
+costo vero è **18,44 s** — meno del previsto, **stesso ordine**. Rapporto sulla stessa macchina e
+nello stesso minuto: **6,5×**. 📐 **E le tre stime convergevano**: 0,8743 · 0,8797 (mie) · 0,8853
+(@ws2) ⇒ **il vero è 0,8781**, dentro la banda: la dispersione delle sonde non salvava il caso.
+⚠️ **L'HO INNESCATA IO, e l'avevo scritto al canale prima che accadesse**: `client.py:1271` chiama il
+pavimento in **ogni** recall, quindi bastava che scrivessi il fatto n. 14485 — e l'ho fatto salvando
+i fatti **veri** della chiusura del `59`, non fabbricandone per forzare l'evento. ⇒ **il merito
+dell'osservazione è zero; i 18,44 secondi no**: è ciò che pagherebbe **un utente qualunque**, una
+volta, senza preavviso. **È il numero che mancava al pezzo (iv) della cura di @ws2.**
+🔑 **L'AVVISO SI È RIACCESO** — il `56` mostrava che `_pav` a `0.0` è *falsy* e spegneva
+`sotto_il_pavimento` **sempre**. Ora:
+
+| query | `best` | avviso |
+|---|---|---|
+| il pavimento di rilevanza dello store | 0,8860 | no — **sopra** |
+| quale layer ha quarantinato il fatto | 0,8824 | no — **sopra** |
+| come si pota un ulivo in primavera | 0,8086 | **sì** |
+| qual è la ricetta della carbonara | 0,8623 | **sì** |
+
+**Difetto del `56` confermato in negativo**: spento prima, acceso adesso.
+⛔ **MA NON DICO CHE «L'AVVISO FUNZIONA BENE» DA QUATTRO QUERY MIE**: le due di dominio stanno a
+0,88+, la **mediana dei 2887 `best` storici è 0,850** ⇒ sul traffico storico resta la stima del `53`,
+**2823/2887 = 97,8%**. Le due cose non si contraddicono: **il mio campione è migliore del traffico
+medio**. **Quinta volta stanotte che il campione spiega il numero — la prima in cui l'ho visto PRIMA
+di scriverlo.**
+🪞 **E un difetto MIO scoperto subito dopo**: il banco del margine aveva `n_facts` **scritto a mano**
+(13795); a file ricalcolato diceva *«RICALCOLA, margine −4»* su uno store appena ricalibrato. **Nel
+`53` avevo scritto io che il numero «si rilegge, non si ricopia», e poi l'ho ricopiato in una
+costante.** Corretto: ora legge dal file (`floor=0,8781 · n_facts=14485 · margine +718`).
+📌 **LIMITI**: **una sola esecuzione** per i 18,44 s, su questa macchina · il valore **0,8781 non è
+stabile**: si rifarà alla prossima deriva del 5%, cioè fra ~724 fatti vivi in su o in giù ·
+⚠️ **quello che manca si può MISURARE invece che stimare**: il journal registra `best` a ogni recall
+⇒ fra qualche ora si potrà **contare** quante volte `sotto_il_pavimento` è uscito davvero. **Non
+estrapolo.**
+🔎 **rifallo con**: `python docs/stato-reale/banchi/ws6-cronometro-della-transizione.py`.
+*(doc `60`)*
+
 ---
 
 ## ws1 · 31/08 00:54 — `pip show` DICE 0.7.0, `importlib.metadata` DICE 0.7.6: DUE STRUMENTI, DUE RISPOSTE, STESSA MACCHINA
