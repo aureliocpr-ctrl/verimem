@@ -105,9 +105,21 @@ Il mio banco dice **come** si comporta il meccanismo; il censimento di @ws2
 | porte MCP: **B riferimento** | solo se il chiamante l'ha passato (misurato) |
 | corpus reale: `verified_by = []` | **96,6%** (16209 su 16781 — @ws2) |
 
-⇒ **Per il 96,6% dei fatti reali, un lettore MCP ottiene SOLO il verdetto** —
-il livello **C**, il più debole dei tre. 🔑 *La cella non è rossa in teoria: è
-rossa sul 96,6% del corpus.* Né il banco né il censimento bastavano da soli.
+🚨 **CORREZIONE, 04:27 — questa riga diceva «per il 96,6% un lettore MCP
+ottiene SOLO il verdetto», ed era SBAGLIATA.** Quel 96,6% è la quota **senza
+riferimento**, e si divide in due:
+
+| | fatti | % del totale |
+|---|---|---|
+| senza riferimento, **ma con** verdetto ⇒ ottiene **solo il verdetto** | 10162 | **60,5%** |
+| senza riferimento **e senza** verdetto ⇒ **non ottiene niente** | 6054 | **36,1%** |
+| *somma di controllo* | *16216* | *96,6%* ✅ |
+
+⇒ **Per il 60,5% dei fatti un lettore MCP ottiene solo il verdetto; per il
+36,1% non ottiene nulla.** Sommarli e dire «96,6% solo il verdetto» conta i
+secondi due volte — un analista lo falsifica con una query. *La cella resta
+rossa, e per una ragione più precisa.* Né il banco né il censimento bastavano
+da soli.
 
 ### 🔴 E il numero che chiude la riga: **zero provenienza sul 30% dei fatti servibili**
 
