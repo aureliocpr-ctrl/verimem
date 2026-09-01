@@ -122,8 +122,13 @@ diversamente — la cura dei decimali (`b12e9823`) mostra che cambia.
 `proposition`, `grounding_span`, `grounding_score` e `quarantined_by` sulla
 stessa riga. Il disaccordo fra strati del §② **non è un'inferenza**: sono due
 campi dello stesso record.
-⚠️ **Non dico che `L4.1` vada spento**: il [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md) mostra cosa costa stringere un
-trigger senza misurare l'altro lato, e qui l'altro lato non l'ho misurato.
+✅ **L'altro lato ORA è misurato** (§④-bis) e dice il contrario di quello che il
+titolo originale lasciava intendere: **`L4.1` prende ciò che il moat non può
+vedere**, almeno 3 volte su 7. ⇒ **Non solo non dico che vada spento: i dati
+dicono che serve.**
+⚠️ **Sette casi anche di là**: la sua *precisione* resta non quantificata, e
+questo documento non la quantifica. Dice che i falsi positivi esistono (§②) e che
+i veri positivi pure, **entrambi letti**.
 
 ---
 *Nessun banco: una query in sola lettura e otto casi letti a mano.*
