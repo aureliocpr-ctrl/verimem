@@ -54,11 +54,30 @@ allarme.
 📌 **La forma è quella già in registro**: *«un referto su una grandezza che si
 muove va datato»*. Questo lo è: **02/09 01:24**.
 
-## ⑤ Cosa NON prova
+## ④-bis Il limite che avevo dichiarato, chiuso due minuti dopo: **il campo discrimina**
 
-⚠️ **Non ho verificato che l'attribuzione sia CORRETTA**: ho misurato che il
-campo è **popolato**, non che nomini davvero lo strato che ha deciso. Sono due
-cose diverse, e la seconda richiede un A/B fra un write e la sua ricevuta.
+Avevo scritto «ho misurato che il campo è popolato, non che l'attribuzione sia
+corretta». Verificato su uno store **temporaneo** (`HIPPO_DATA_DIR` prima degli
+import, mai lo store di Aurelio), quattro scritture con esiti attesi diversi:
+
+| caso | status | `quarantined_by` |
+|---|---|---|
+| numero che la fonte non contiene | `quarantined` | **`moat`** (grounding 0,77) |
+| claim non sostenuto dalla fonte | `quarantined` | **`moat`** (grounding 0,56) |
+| auto-claim **senza fonte** | `quarantined` | **`L1`** ← strato diverso |
+| vero **e** sostenuto *(controllo positivo)* | `model_claim` | **`None`** |
+
+⇒ ✅ **Tre esiti, tre etichette diverse, e il controllo positivo resta vuoto.**
+Il campo non è un'etichetta uniforme appiccicata a ogni quarantena: **nomina
+strati diversi per cause diverse**, e tace dove non c'è quarantena.
+
+🔎 **Un dato inatteso che NON dichiaro come correzione**: il decimale italiano
+(`176,6`) **non** è stato quarantinato, mentre il registro porta *«decimali con
+la virgola → quarantina»*. ⚠️ Ma la mia fonte conteneva `176.6` **col punto**,
+quindi non è il caso puro — il moat può aver trovato la corrispondenza
+semantica. **Serve un test mirato prima di toccare quella riga.**
+
+## ⑤ Cosa NON prova
 ⚠️ **I 1909 storici restano ciechi** e non sono ricostruibili: chi analizza il
 corpus di maggio-luglio non saprà mai chi ha fermato quei fatti.
 ✅ **Quello che regge**: le cinque righe per mese e il conteggio sulle 24 ore.
