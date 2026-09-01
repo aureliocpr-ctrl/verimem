@@ -16101,3 +16101,74 @@ cinque run.
     ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=1" --jq '.workflow_runs[0].id')
     gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
       --jq '.jobs[]|"\(.status)/\(.conclusion // "-")  \(.name)  runner=\(.runner_name // "NESSUNO")"'
+
+---
+
+## 2026-09-01 20:38 — ws1 · **CIRCOSCRIVO LA MIA CELLA DELLE 20:25, VENTI MINUTI DOPO**: il daemon **PUÒ** servire il gate (`_default_gate_fn` esiste), quindi i miei 19 s valgono per **un regime solo**. E il «*warm proattivo alla quindicesima*» misura una finestra che il prodotto dichiara ma **non nel regime in cui la dichiara**
+
+**Livello** lettura di sorgente (`encode_service.py:184-210`), **nessuna esecuzione** ·
+**Perimetro** confronto fra ciò che ho pubblicato alle 20:15 e 20:25 e ciò che il codice
+dice · **Istante** 2026-09-01 20:33–20:38 · **Regime** solo lettura: **Aurelio è al PC e
+sta scrivendo**, niente carichi · **Autorità**: mandato riferito, con due verifiche
+indipendenti dichiarate in chat (@ws3 19:16, @ws4 19:19), **non verificata da me** ·
+**0.7.6**.
+
+### 🔴 QUELLO CHE HO SCRITTO ALLE 20:25 È INCOMPLETO, E LO PORTO IO
+
+Avevo scritto: «*`warmup` è **un altro processo**, lascia la cache su disco, non i moduli
+importati nel processo che scriverà*», nominando il daemon solo come ipotesi non misurata.
+**Il codice dice di più**: `encode_service.py:184` definisce **`_default_gate_fn`**, che
+importa `get_local_judge()._ensure_scorer()` e risponde a `gate_pairs` sul protocollo. Il
+suo docstring, dell'autore:
+
+> «*Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola. … era
+> rimasto fuori quando il reranker è entrato nel daemon (`93cfdf28`), ma il mestiere è
+> identico e la ragione anche.*»
+
+⇒ **il gate PUÒ essere servito dal daemon**, e `warmup --daemon` è default. ⇒ **i miei
+19 s sono il costo di UN REGIME: quello SENZA delega** (nei banchi ho **poppato**
+`HIPPO_ENCODE_DELEGATE_ONLY`, che sulla macchina di Aurelio è invece **impostata a `1`**).
+**Non ho misurato il regime con delega**, ed è quello in cui gira il canale MCP.
+
+### 📌 E IL «WARM ALLA QUINDICESIMA» NON MISURA LA FINESTRA CHE IL PRODOTTO DICHIARA
+
+Il docstring prosegue — ed è il pezzo che conta per il rilascio:
+
+> «*sull'audit log **256 processi su 293 fanno UNA chiamata e muoiono**, quindi ogni
+> respawn ricomincia il warm da zero e c'è sempre una **finestra iniziale in cui il moat
+> non gira**. Un processo che vive solo dentro quella finestra non lo esegue mai — e il
+> prodotto ammette senza giudicare, che è esattamente ciò che esiste per non fare.*»
+
+**Sembrava che il mio numero desse finalmente la misura di quella finestra. Non la dà**, e
+la ragione è doppia: (a) le mie 20 scritture erano **senza `source`**, quindi il moat non
+avrebbe girato comunque, e ciò che ho visto è il warm **proattivo**, non la finestra del
+giudizio; (b) la finestra descritta è **sul canale MCP**, cioè **con delega** — l'altro
+regime. ⇒ **quello che ho misurato è: il warm proattivo non parte prima della quindicesima
+scrittura, in regime senza delega e senza source.** Un processo che scrive meno di quindici
+volte non lo innesca mai — **il che è coerente con «256 su 293 fanno una chiamata e
+muoiono», ma non lo dimostra**, perché quei processi stanno nell'altro regime.
+
+### Il limite del 28/08 resta aperto, e ora so PERCHÉ è difficile
+
+La mia cella del **28/08 19:45** («*il moat sul canale MCP: dal 2,2% al 98,6%*») dichiarava:
+«*non attribuisco il salto a `_default_gate_fn` per prova diretta, solo per coincidenza di
+epoca e di meccanismo descritto*». **Quel limite non è pagato**, e stasera ho scoperto che
+il banco per pagarlo deve girare **nel regime con delega e con source** — due condizioni
+che nessuno dei miei banchi ha mai avuto insieme.
+
+**Il banco che lo chiuderebbe**, per chi ha la macchina libera: `HIPPO_ENCODE_DELEGATE_ONLY=1`
++ daemon attivo + scritture **con `source`** ⇒ leggere `judged` e `grounding_score` **sulle
+prime scritture**. Se le prime N tornano `judged=False` **pur avendo una source**, la
+finestra è misurata e il 2,2% ha la sua spiegazione diretta.
+
+### Cosa NON prova
+
+**Non ho eseguito nulla in questo giro.** Non so se il client **usi davvero** il daemon per
+il gate nel percorso di scrittura: so che `_default_gate_fn` **esiste** e che il commento
+indica `try_local_score` come «*l'unico punto che interroga il daemon*» — **il collegamento
+effettivo non l'ho verificato**, e nel registro c'è già (riga ~2377) un reperto secondo cui
+sotto `_delegate_only()` quel percorso **ritorna `None`** e «*il warm asincrono non atterra
+mai*»: se è ancora vero su `0.7.6`, la delega **non** salverebbe i 19 s ma produrrebbe un
+difetto peggiore. **Non l'ho rimisurato oggi e non lo do per vero.**
+
+**Io misuro, non curo.**
