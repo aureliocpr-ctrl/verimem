@@ -17547,3 +17547,71 @@ ripetuto sull'artefatto di `#2653`**, ed è una riga.
       md=[n for n in z.namelist() if n.endswith('METADATA')][0]; \
       print(chr(10).join(l for l in z.read(md).decode().splitlines() \
       if l.startswith('Version:') or ('Requires-Dist' in l and 'mcp' in l.lower())))"
+
+---
+
+## W8-49 — Il `CHANGELOG` di 0.7.1: **due affermazioni su quattro non reggono come scritte**
+
+🚪 **Cancello: ⑤ `controlla_promesse` / verità di ciò che pubblichiamo.**
+⚠️ **Non curo il `CHANGELOG`** (non-curo): **verifico e riporto.** È il documento che
+l'utente legge, e queste righe sono state scritte alle 23:59 del 01/09.
+
+### ✅ Le due che reggono — verificate
+
+- **«Dependency now pins `mcp>=1.0.0,<2`»** → **vero, e più forte di come è scritto**: il
+  `METADATA` del wheel della CI lo porta in **tutti e tre i rami** (base, `mcp-only`,
+  `full`) — `W8-48`.
+- **«The release branch now carries the same publish gates as `main`»** → **vero**:
+  `publish.yml` identico, 305 righe, `controlla_registro` ×9 — `W8-41`.
+
+### ⚠️ ① «Version strings aligned across **all four surfaces** … **enforced by tests**»
+
+    tests/test_version_single_source.py — cosa confronta:
+      23:  (_ROOT / "pyproject.toml")
+      35:  assert verimem.__version__ == pv
+      39:  (_ROOT / ".claude-plugin" / "plugin.json")
+
+⇒ Il test ne verifica **TRE**. **`STATE.md` non compare in alcun assert.** L'allineamento
+delle quattro superfici è **vero**; **«enforced by tests» copre tre su quattro.**
+
+📌 **Correggo anche me stessa**: in `W8-37` e `W8-41` ho scritto «il test confronta **due**
+posti». **Sono tre** — `verimem.__version__` è alla riga 35 e mi era sfuggito. **Chi ha
+usato quel mio numero lo aggiorni.** 🔑 È la seconda volta stanotte che sbaglio *contando*
+ciò che un test guarda: la prima aveva prodotto la cura giusta lo stesso, questa no.
+
+### 🔴 ② «verified by an install-from-scratch smoke … (resolves `mcp` 1.29.1, `Server.list_tools` present)»
+
+Log del job `wheel install-from-scratch (ubuntu-latest)` di `#2557` — **tutte** le righe che
+nominano `mcp`:
+
+    proc = subprocess.Popen([exe, "mcp"], stdin=subprocess.PIPE,
+    print("MCP stdout protocol-pure OK")
+    MCP stdout protocol-pure OK
+
+⇒ Il job verifica che `verimem mcp` produca **stdout protocol-pure** — **un controllo forte
+e buono**. **Ma non verifica «resolves mcp 1.29.1» né «`Server.list_tools` present»**:
+quelle stringhe **non compaiono nel log**.
+
+🔑 **L'affermazione non è falsa: è mal attribuita.** Quella prova esiste ed è stata eseguita
+**a mano** da @lead-audit il 30/08. Il changelog la presenta come esito dello smoke
+**automatico**, e chi la cerca nel log **non la trova**.
+📌 Stessa forma di `W8-35`: **«eseguito a mano» non è «installato nel workflow»** — e ora la
+distinzione è finita su un documento pubblico invece che in un messaggio interno.
+
+### ✍️ Riformulazioni proposte
+
+- «…all four surfaces (`pyproject`, `__version__`, `STATE.md`, `plugin.json`); **three of
+  them enforced by tests**.»
+- «…verified by an install-from-scratch smoke (**MCP stdout protocol-purity checked in
+  CI**; `mcp` 1.29.1 and `Server.list_tools` **confirmed manually on 2026-08-30**).»
+
+⚖️ **Gravità: bassa ma pubblica.** Nessuna delle due inganna sul prodotto — il pin c'è, le
+versioni sono allineate. **Ma sono esattamente le frasi che un analista verifica**, ed è il
+criterio che ci siamo dati: *nessuno deve poter dire «afferma cose che non fa»*.
+
+    rifallo con:
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:CHANGELOG.md" | head -30
+    grep -nE '_ROOT / |__version__' tests/test_version_single_source.py
+    ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=5" --jq '[.workflow_runs[]|select(.run_number==2557)][0].id')
+    J=$(gh api ".../actions/runs/$ID/jobs?per_page=40" --jq '[.jobs[]|select(.name|test("wheel.*ubuntu"))][0].id')
+    gh api ".../actions/jobs/$J/logs" | grep -i mcp
