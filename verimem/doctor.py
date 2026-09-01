@@ -85,6 +85,21 @@ RIMEDIO_LLM = (
     "configure an llm server-side)")
 
 
+#: LA STESSA FRASE PER IL CHECK E PER IL COMANDO CHE SI ROMPE. `doctor`
+#: diagnostica gia' `mcp 2.x` con FAIL e rimedio, ma chi lancia `verimem mcp`
+#: su un'installazione rotta non arriva mai al doctor: riceve un traceback
+#: (`AttributeError: 'Server' object has no attribute 'list_tools'`) e non ha
+#: modo di sapere che la causa e' una libreria e la cura una riga di pip.
+#: Stessa ragione di `AVVISO_SENZA_GIUDICE`: una frase sola, o le copie
+#: divergono — ed e' gia' successo su questa esatta diagnosi, misurata due
+#: volte (26 e 27/08) e scritta in un posto solo.
+AVVISO_MCP_2X = (
+    "mcp {v} — 2.x removed the low-level API this server is built on, so "
+    "`verimem mcp` will not start")
+
+RIMEDIO_MCP_2X = 'pip install "mcp<2"'
+
+
 def _misura(byte: int) -> str:
     for unita, soglia in (("GB", 1e9), ("MB", 1e6), ("KB", 1e3)):
         if byte >= soglia:
@@ -427,10 +442,8 @@ def run_doctor() -> list[dict[str, Any]]:
         except ValueError:
             _major = -1
         if _major >= 2:
-            add("mcp", FAIL,
-                f"mcp {_v_mcp} — 2.x removed the low-level API this server is "
-                f"built on, so `verimem mcp` will not start",
-                fix='pip install "mcp<2"')
+            add("mcp", FAIL, AVVISO_MCP_2X.format(v=_v_mcp),
+                fix=RIMEDIO_MCP_2X)
         elif _major < 0:
             add("mcp", WARN, f"mcp {_v_mcp} — cannot read its major version")
         else:

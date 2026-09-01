@@ -1204,6 +1204,28 @@ def _agente_per_l3():
     return VerimemAgent.build()
 
 
+def _diagnosi_mcp_2x() -> str | None:
+    """La frase del `doctor` sulla rottura di `mcp` 2.x, se e solo se la
+    versione installata la giustifica; altrimenti ``None``.
+
+    La frase NON si riscrive qui: e' la stessa costante che il doctor mette nel
+    suo referto. Due copie della stessa diagnosi divergono, e su questa e' gia'
+    successo — misurata due volte (26 e 27/08) e tenuta in un posto solo.
+    """
+    try:
+        from .doctor import AVVISO_MCP_2X, RIMEDIO_MCP_2X, _versione_di_mcp
+        versione = _versione_di_mcp()
+        if not versione:
+            return None
+        major = int(str(versione).split(".")[0])
+    except Exception:  # noqa: BLE001 — una diagnosi non fa cadere un comando
+        return None
+    if major < 2:
+        return None
+    return (AVVISO_MCP_2X.format(v=versione)
+            + "\n  fix: " + RIMEDIO_MCP_2X)
+
+
 def _open_memory():
     """Factory hook (monkeypatchable in tests): the architecture-A entry —
     a THIN client when VERIMEM_SERVER_URL points at a running memory server,
@@ -2192,7 +2214,24 @@ def mcp():
     # events on a corpus with 438 real MCP write calls.
     if os.environ.get("ENGRAM_FLOW_SURFACE", "").strip() in ("", "cli"):
         os.environ["ENGRAM_FLOW_SURFACE"] = "mcp"
-    from .mcp_server import main as mcp_main
+    # LA DIAGNOSI ESISTE GIA', E NON ARRIVAVA A CHI SERVE. Con `mcp` 2.x
+    # l'import di questo modulo esplode (`AttributeError: 'Server' object has
+    # no attribute 'list_tools'`) e l'utente riceveva un traceback su una
+    # libreria di cui non sa nulla — mentre `verimem doctor` la diagnostica da
+    # sempre, con il rimedio. Ma chi lancia il server non passa dal doctor.
+    # Il caso e' attuale: `pip install verimem` prende oggi `mcp 2.1.1`.
+    try:
+        from .mcp_server import main as mcp_main
+    except Exception as exc:  # noqa: BLE001 — si rilancia se non e' quel caso
+        _msg = _diagnosi_mcp_2x()
+        if _msg is None:
+            # ⚖️ NESSUNA DIAGNOSI FABBRICATA: se la versione installata non
+            # giustifica la spiegazione, l'errore vero deve arrivare intatto.
+            # Incolpare la 2.x davanti a qualunque import fallito
+            # mascherebbe un bug diverso con una storia plausibile.
+            raise
+        console.print(f"[red]✗ {_msg}[/]")
+        raise typer.Exit(code=1) from exc
     mcp_main()
 
 
