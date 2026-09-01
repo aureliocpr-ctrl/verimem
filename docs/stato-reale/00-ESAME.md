@@ -18261,6 +18261,18 @@ invece che taciuto**.
 ⚠️ **Non eseguo**: README, registro e `CHANGELOG` sono nel mio non-curo e il ramo di
 rilascio non è mio. **Porto la posizione e i numeri.**
 
+    rifallo con:  una raccomandazione non si «rifà» con un comando — si rifà
+    ricontrollando le misure su cui poggia. Sono queste, tutte con il loro comando
+    nella cella indicata:
+      W8-48  il pin mcp<2 nel METADATA, su tutti e tre i rami
+      W8-47  veto ④ EXIT=0 sull'artefatto della CI (wheel e sdist) + i 440 file
+      W8-41  build e wheel install-from-scratch success · publish.yml del branch
+      W8-52  il numero di copertina e la ricetta verso un banco inesistente
+      W8-50  README del branch: 4 avvisi contro 16
+      W8-53  test_il_pacchetto_ha_cio_che_promettiamo assente dal branch
+      W8-49  le due affermazioni del CHANGELOG
+    ⇒ **Se una di quelle sette cade, la raccomandazione va rifatta**, non aggiustata.
+
 ---
 
 ## W8-55 — Verificata **la mia stessa raccomandazione** prima di lasciarla
