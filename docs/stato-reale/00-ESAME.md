@@ -17862,3 +17862,85 @@ promessa non mantenuta.
     rifallo con:
     grep -oE '^\| G[0-9]+ \| \*\*[^*]{0,60}' RELEASE_GATE.md
     grep -ci 'head_branch\|hotfix' RELEASE_GATE.md
+
+---
+
+## 2026-09-02 00:41 — ws1 · 🟢 **LA PROMESSA ROSSA È SALVABILE, E LA CURA HA UN NOME: il gate VEDE i numeri dove il retrieval è cieco — `99,64` contro `11,14`, delta 88,5.** Ma **uno su dieci sfugge**, ed è un denominatore inventato
+
+**Livello** `try_local_score(source, fact)` — **il gate nel suo mestiere**: giudicare se una
+source sostiene un fatto · **Perimetro** 10 casi, ognuno = *(source verbatim dallo store,
+proposizione VERA, la stessa con **una cifra cambiata**)* · **Istante** 2026-09-02 00:35–00:38 ·
+**Regime** `ENGRAM_GROUNDING_BACKEND`/`_THRESHOLD`/`HIPPO_ENCODE_DELEGATE_ONLY` poppate,
+RAM 11,74 GB, **`claim ram/giudice` preso e rilasciato** (`4c4e42e61f47`) · **Autorità**:
+ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**È la prova che avevo dichiarato mancante alle 00:33** («*se il gate distingua i numeri non
+lo so, ed è la prova che direbbe se «portare il gate su `search`» sia una cura vera*»).
+
+### 🟢 Il numero — e la predizione, scritta prima, REGGE
+
+| | |
+|---|---|
+| media proposizioni **VERE** | **99,64** |
+| media proposizioni **FALSE** (una cifra cambiata) | **11,14** |
+| **delta** | **88,50** *(soglia dichiarata prima: > 20 ⇒ separa)* |
+| casi in cui la vera batte la falsa | **9 / 10** |
+
+⚠️ **La media delle vere coincide per caso con `99.64`, che è la soglia di calibrazione
+storica del modello**: sono due cose diverse. I valori individuali sono `99,91 · 99,82 ·
+99,38 · 99,80 · 99,70 · 99,98 · 99,91 · 99,24 · 98,80 · 99,85`, la cui media è 99,639.
+**Non leggetela come la soglia.**
+
+**Il contrasto col retrieval è la cosa che conta**, sugli **stessi identici numeri**:
+
+| | domanda/proposizione vera | con una cifra cambiata | distanza |
+|---|---|---|---|
+| **retrieval** (similarità) | 0,9097 | **0,9095** | **0,0002** |
+| **gate** (cross-encoder) | **99,64** | **11,14** | **88,50** |
+
+⇒ **il retrieval non guarda i numeri, il gate sì.** «*Il wheel verimem-**0.9.4** contiene 440
+file*» prende **0,77** dal gate (la vera: 99,91); «*gli alias sono **sette***» prende 0,66
+(la vera: 99,38); «*la prima chiamata dura **24169 ms***» prende 0,85 (la vera: 99,80).
+
+### 🎯 COSA SIGNIFICA PER LA DECISIONE
+
+**«Portare il gate su `search`» è una cura VERA, non un'ipotesi.** ⇒ La promessa
+«*abstention instead of hallucination*» **è mantenibile sulla porta più usata**, ma **non con
+un pavimento sul punteggio** (che alle 00:24 perdeva 2 risposte su 12 e prendeva 4 invenzioni
+su 8): **con il giudice**. Il costo da mettere sul piatto è quello che il prodotto già
+conosce: **~19 s di warm una volta per processo** *(`flow.warmup elapsed_ms=19087.5`,
+osservato in questo stesso banco)* e **758 MB per processo** *(misura di @ws5)*.
+
+### 🔴 E IL CASO CHE SFUGGE — uno su dieci, e non è banale
+
+| | source | proposizione | punteggio |
+|---|---|---|---|
+| vera | «*Dei **372** artefatti json … **128** sono classificati NUDO*» | «128 su **372**» | 99,24 |
+| **falsa** | *(la stessa)* | «128 su **999**» | **99,96** ❌ |
+
+⇒ **la falsa prende più della vera.** Il gate riconosce «128», «NUDO», «artefatti json» e
+conclude *entailment*, **senza verificare il denominatore**. ⇒ **il gate vede i numeri che
+sono il SOGGETTO dell'affermazione, e può non vedere quelli di CONTORNO.** Su dieci casi è
+capitato una volta, e proprio su un denominatore — che è **la forma con cui si mente meglio
+con le statistiche**.
+
+### Cosa NON prova
+
+**Dieci casi**: `9/10` ha un intervallo largo, e **un solo caso avverso non dice quanto sia
+frequente quella forma** — servirebbe un banco fatto di soli denominatori. **Le dieci
+proposizioni false le ho scritte io**, cambiando una cifra: come per il banco precedente, la
+scelta è mia. **Non ho misurato il gate DENTRO `search`**: ho misurato `try_local_score` da
+solo, e *«il gate separa»* **non equivale a** *«una `search` che lo chiama si comporterebbe
+così»* — in mezzo ci sono il retrieval (che sceglie i candidati) e la soglia. **Se il
+retrieval non porta il fatto giusto, il gate non ha nulla da giudicare**: la cura vera è
+la **composizione** dei due, e **non l'ho misurata**. **Un solo modello, una macchina, un
+giro.**
+
+📌 **Un'osservazione di contorno, e la lascio come domanda**: qui `flow.warmup` dichiara
+`elapsed_ms=19087.5` e i timestamp confermano **19,1 s** — mentre ieri sera avevo misurato
+che lo stesso campo dichiarava **1,9 s su 19,1 reali**. **Non le riconcilio**: può dipendere
+da cosa era già importato nel processo. **Chi ha in mano quel filone lo verifichi; io non ho
+rimisurato il caso di ieri.**
+
+**Banco**: `porta_gate_vede_i_numeri.py`, dati in `gate_numeri.json` (scratchpad).
+**Io misuro, non curo.**
