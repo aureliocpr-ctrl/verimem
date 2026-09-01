@@ -73,9 +73,32 @@ FIRMA_B = re.compile(r"^\| ([A-Za-z0-9-]+) \| \*{0,2}[^|]{0,14}?SECONDA FIRMA\b"
 #: dentro il titolo di una cella B, CHI viene verificato: un ID di cella e'
 #: attribuibile, uno SHA di commit no — la cella firmata non e' nominata.
 BERSAGLIO = re.compile(r"\b(LANT-\d+|W\d-\d+)\b")
+#: Uno SHA nel titolo e' un bersaglio LEGITTIMO — il contratto dice «SECONDA
+#: FIRMA su <ID|SHA>» — ma NON identifica una cella: `5ea77b6d` e' nominato da
+#: quattro celle diverse, e attribuire la controfirma a tutte e quattro
+#: gonfierebbe il contratto. Quindi si riconosce (non e' un errore di chi l'ha
+#: scritta) e si tiene da parte, invece di contarla o di tacerla.
+SHA_BERSAGLIO = re.compile(r"\b([0-9a-f]{8})\b")
 
 
-def controfirme_b(righe: list[str]) -> tuple[dict[str, set[str]], list[str]]:
+def autore_di(riga: str) -> str:
+    """Chi ha SCRITTO la cella: l'ottava colonna, non un `| wsN |` cercato a caso.
+
+    Il regex `\\| (ws\\d) \\|` perdeva ogni autore che non si chiami `wsN` —
+    `lead-audit` fra questi — e con lui la controfirma che aveva dato
+    (`LANT-145` su `LANT-122`, misurato 02/09 01:20). Misurate anche le
+    conseguenze dell'altro verso: **34 celle hanno autore non-`wsN` e ZERO
+    portano la firma del proprio autore**, quindi il difetto non stava
+    producendo autofirme contate come controfirme. Restava latente.
+    """
+    campi = riga.split("|")
+    if len(campi) < 9:
+        return ""
+    a = campi[7].strip().lower()
+    return ALIAS.get(a, a)
+
+
+def controfirme_b(righe: list[str], con_sha: bool = False):
     """Le controfirme in convenzione B, indicizzate per cella BERSAGLIO.
 
     Ritorna anche l'elenco delle celle B che NON si sono potute attribuire, e
@@ -96,18 +119,26 @@ def controfirme_b(righe: list[str]) -> tuple[dict[str, set[str]], list[str]]:
     """
     per_cella: dict[str, set[str]] = {}
     orfane: list[str] = []
+    su_sha: list[tuple[str, str]] = []
     for riga in righe:
         m = FIRMA_B.match(riga)
         if not m:
             continue
-        aut = re.search(r"\| (ws\d) \|", riga)
+        aut = autore_di(riga)
         bersagli = set(BERSAGLIO.findall(m.group(2)))
-        if not aut or not bersagli:
+        if not bersagli:
+            sha = SHA_BERSAGLIO.findall(m.group(2))
+            (su_sha.append((m.group(1), sha[0])) if sha
+             else orfane.append(m.group(1)))
+            continue
+        if not aut:
             orfane.append(m.group(1))
             continue
         for b in bersagli:
-            per_cella.setdefault(b, set()).add(aut.group(1).lower())
-    return per_cella, orfane
+            per_cella.setdefault(b, set()).add(aut)
+    return (per_cella, orfane, su_sha) if con_sha else (per_cella, orfane)
+
+
 #: Comandi che la disciplina della copia CONDIVISA vieta: otto istanze e un
 #: solo albero, dove uno `stash pop` tocca il lavoro non committato delle
 #: altre sette. La ricetta di una cella e' testo scritto da un'ALTRA, e puo'
@@ -155,7 +186,7 @@ def main() -> int:
     #: Misurato il 30/08 sulle celle W2: 47 scartate su 108 (43,5%), e
     #: chi chiedeva le firme — io — non lo sapeva.
     nascoste = 0
-    b_per_cella, b_orfane = controfirme_b(righe)
+    b_per_cella, b_orfane, b_su_sha = controfirme_b(righe, con_sha=True)
     for riga in righe:
         m = CELLA.match(riga)
         if not m:
@@ -167,13 +198,13 @@ def main() -> int:
         io_n = ALIAS.get(io_l, io_l)
         if io_n in firme:            # gia' firmata da me, sotto uno dei due nomi
             continue
-        autore = re.search(r"\| (ws\d) \|", riga)
-        if autore and autore.group(1).lower() == io_n:
+        autore = autore_di(riga)
+        if autore and autore == io_n:
             continue
         #: la firma dell'AUTORE non e' una controfirma: la cella resta da
         #: verificare anche quando chi l'ha scritta si e' firmato in fondo.
         if autore:
-            firme = firme - {autore.group(1).lower()}
+            firme = firme - {autore}
         rif = RIFALLO.search(riga)
         if not rif and not a.tutte:
             nascoste += 1
@@ -214,12 +245,21 @@ def main() -> int:
         print(f"  📋 convenzione B: {len(b_per_cella)} celle risultano "
               f"verificate da una cella «SECONDA FIRMA» dedicata, e sono "
               f"gia' escluse da questo elenco.")
+    if b_su_sha:
+        #: NON e' un errore di chi le ha scritte: il contratto ammette lo SHA.
+        #: Ma uno SHA non nomina UNA cella, e attribuirle a tutte quelle che lo
+        #: citano gonfierebbe il contratto — cosa peggiore del non contarle.
+        print(f"  ⚠️  {len(b_su_sha)} celle «SECONDA FIRMA» valide ma su SHA, "
+              "non su un ID di cella — "
+              + ", ".join(f"{c} su {s}" for c, s in b_su_sha)
+              + ". Sono controfirme REALI e il contratto le ammette, ma non "
+              "dicono QUALE riga verificano: chi le ha scritte aggiunga anche "
+              "l'ID, e la cella passa a due firme.")
     if b_orfane:
         print(f"  ⚠️  {len(b_orfane)} celle «SECONDA FIRMA» NON attribuibili "
-              f"— {', '.join(b_orfane)} — perche' nominano uno SHA invece di "
-              "un ID, o non portano l'autore come `| wsN |`. Sono "
-              "controfirme REALI che non contano per nessuna cella: chi le "
-              "ha scritte aggiunga l'ID del bersaglio nel titolo.")
+              f"— {', '.join(b_orfane)} — perche' non nominano ne' un ID ne' "
+              "uno SHA, o non portano l'autore nell'ottava colonna. Sono "
+              "controfirme REALI che non contano per nessuna cella.")
     if nascoste:
         _quota = 100 * nascoste / (trovate + nascoste)
         print(f"  ⚠️  {nascoste} celle NON mostrate: non dicono come "
