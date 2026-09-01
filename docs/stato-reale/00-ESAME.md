@@ -16588,3 +16588,74 @@ regge e si può usare per decidere.
     ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=1" --jq '.workflow_runs[0].id')
     gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
       --jq '.jobs[]|"\(.status)/\(.conclusion // "-")  \(.name)"'
+
+---
+
+## 2026-09-01 21:12 — ws1 · **PAGO IL LIMITE ②(a) DI UN'ORA FA, E IL VERSO È L'OPPOSTO DI QUELLO CHE IL REGISTRO GUARDA**: sul corpus PICCOLO `max(1, n_salvato)` domina e il pavimento si ricalcola **quasi a ogni scrittura** — e la cache che dovrebbe attutirlo **è in-process**, quindi non tocca i processi che muoiono subito
+
+**Livello** lettura di sorgente (`client.py:2500, 2631-2653, 1316-1327`) + ispezione di un
+wheel con `zipfile`, **nessuna esecuzione del prodotto** · **Perimetro** il secondo
+meccanismo del pavimento, dichiarato e non letto nella mia cella delle 20:50 ·
+**Istante** 2026-09-01 21:03–21:12 · **Regime** sola lettura, **zero RAM** (RAM risalita a
+**9,72 GB**; ordine di Aurelio delle 20:42) · **Autorità**: ordine diretto di Aurelio +
+audit chiesto da @lead-audit · **0.7.6**.
+
+**Paga il limite dichiarato alle 20:50**: «*`_FLOOR_CACHE_TTL_S = 300` non l'ho letto: c'è
+un secondo meccanismo che potrebbe cambiare la frequenza effettiva*».
+
+### ① LA CACHE È IN-PROCESS ⇒ NON ATTUTISCE NIENTE PER CHI MUORE SUBITO
+
+`client.py:2631-2634`: `cached = getattr(self, "_floor_cache", None)` … `if cached and now
+- cached[0] < self._FLOOR_CACHE_TTL_S: return cached[1]`. È un attributo **dell'istanza**,
+non un file. ⇒ i 300 s valgono **dentro un processo vivo**. Incrociato con ciò che il
+prodotto dichiara di sé (`encode_service.py:184`: «**256 processi su 293 fanno UNA chiamata
+e muoiono**»), **la cache non tocca il caso dominante**: ogni processo riparte da zero,
+rilegge il file e, se il drift è superato, **ricalcola**. ⇒ **il limite è pagato e la
+risposta è: no, il TTL non cambia la frequenza per il canale MCP.**
+
+### ② E SUL CORPUS PICCOLO LA SOGLIA NON È IL 5%: È `max(1, …)`
+
+La condizione (`client.py:2652`) è `abs(n - n_salvato) <= max(1, n_salvato) * _FLOOR_DRIFT`.
+Il registro la usa già (riga ~11074) **sul corpus grande** — «*mancano quasi seicento
+fatti*». **Nell'altro verso il termine che comanda è `max(1, …)`:**
+
+| `n_salvato` | soglia = `max(1,n)·0,05` | ricalcolo ogni |
+|---|---|---|
+| **20** | **1,0** | **~2 scritture** |
+| 100 | 5,0 | ~6 scritture |
+| 200 | 10,0 | ~11 scritture |
+| 8 000 | 400 | 400 scritture |
+| 13 795 | **689,8** | ~690 scritture *(già a registro)* |
+
+⇒ **la riga «200 fatti» che avevo lasciato vuota nella tabella delle 20:50 ora ha la sua
+frequenza** (~11 scritture), **derivata dal codice**. Il **costo** per evento su quel corpus
+**resta non misurato**: una frequenza dedotta non è un costo misurato.
+
+### ③ E IL COMMENTO DEL PRODOTTO DICE UNA COSA PIÙ SERIA DELLA FREQUENZA
+
+`client.py:1320`, dell'autore: «*Misurato sul banco: **su uno store piccolo
+`_auto_relevance_floor()` vale `0.0`***». ⇒ se è ancora vero, per chi ha appena installato
+il pavimento **non separa nulla** — non è «più economico», è **inattivo**, e la garanzia che
+lo riguarda vale solo da una certa dimensione in poi. ⚠️ **Questo è affermato dall'autore,
+non misurato da me**: lo riporto come dichiarazione del prodotto e **non lo conto fra i miei
+numeri**. È il banco che vale la pena fare per primo quando la macchina è libera.
+
+### 📌 E un pezzo che paga metà del limite della cella delle 20:58
+
+Ho ispezionato gli artefatti in `dist/` con `zipfile`, **senza rete**: **`verimem-0.7.5-py3-none-any.whl`
+(13/08) contiene `_gate_via_daemon` 4 volte** e `setdefault("HIPPO_ENCODE_DELEGATE_ONLY")`
+una; `verimem-0.5.0` non ha nemmeno `local_grounding.py`. ⇒ **la cura viaggia in un
+artefatto reale costruito dopo il 01/08**: il buco è confinato alla **0.7.0 e precedenti**.
+
+### Cosa NON prova
+
+**Non ho un artefatto proveniente da PyPI** — e questa parte del limite **resta aperta**: il
+registro (righe ~13642-13646) aveva già stabilito che l'installazione è **editable** e che
+il wheel in cache sta sotto `wheels/`, cioè è una **build locale**, non sotto `http-v2/`.
+⚠️ **Ho ri-percorso quella verifica prima di rileggerla**: il presidio «leggi le occorrenze
+che il `grep` trova» mi ha fermata **dopo** aver speso il giro, non prima. **Il costo era
+già speso, e lo dichiaro invece di spacciare la ripetizione per conferma.** Non ho misurato
+il **costo** del ricalcolo su nessun corpus piccolo, e non ho verificato lo `0.0` del
+commento. La tabella è **derivata dalla formula**, non osservata.
+
+**Io misuro, non curo.**
