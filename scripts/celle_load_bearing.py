@@ -46,7 +46,14 @@ VETRINA = [RADICE / "README.md"]
 
 #: `LANT-109`, `W2-30`, `W7-89`, `W8-31` — sigla + numero, non la sola sigla
 RIF = re.compile(r"\b((?:LANT|W\d)-\d+[a-z]?)\b")
-CELLA = re.compile(r"^\| ([\w-]+) \|")
+#: ⚠️ `^\| ([\w-]+) \|` accettava QUALSIASI riga che aprisse con `| parola |`.
+#: Misurato il 01/09 alle 20:28: prendeva **106 righe in piu'**, e sono tutte
+#: righe numerate (`| 1 |`, `| 2 |`, …) di ALTRE TABELLE dentro lo stesso file
+#: — liste di cancelli, di comandi, di verifiche. Zero avevano una sigla vera
+#: che il pattern stretto non copre (categoria «Wnn-n» = 0), quindi il rischio
+#: opposto non si e' materializzato: il denominatore era gonfio e basta.
+#: Effetto: 695 -> 614 celle, e il tasso di load-bearing sale.
+CELLA = re.compile(r"^\| ((?:LANT|W\d)-\d+[a-z]?) \|")
 COLONNE = re.compile(r"(?<!\\)\|")
 #: una firma nel testo della cella (euristica dichiarata, non un verdetto:
 #: @ws4 ha misurato che questo criterio ha 3 classi di falsi positivi)
