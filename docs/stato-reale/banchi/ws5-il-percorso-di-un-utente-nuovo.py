@@ -139,6 +139,17 @@ def main():
     env.pop("ENGRAM_DATA_DIR", None)
     env.pop("VERIMEM_DATA_DIR", None)
 
+    # ⚠️ IL REGIME VA DICHIARATO, non lasciato all'ambiente: un giro col daemon
+    # condiviso caldo e uno senza differiscono di un caricamento del modello, e
+    # il prodotto stesso lo quantifica in `embedding.py` («pay ~20-32s»). Senza
+    # questa riga i due giri sono indistinguibili nell'output.
+    daemon = env.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower()
+    spento = daemon in {"0", "false", "no", "off"}
+    print("  REGIME: daemon condiviso %s  ·  store %s"
+          % ("DISABILITATO (ENGRAM_ENCODE_SERVICE=%s)" % daemon if spento
+             else "ABILITATO (default)", os.path.basename(store)))
+    print()
+
     print("  %-14s %-7s %9s  %s" % ("passo", "exit", "durata", "cosa vede l'utente"))
     print("  " + "-" * 92)
     esiti = []
