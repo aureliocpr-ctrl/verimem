@@ -117,13 +117,22 @@ def main():
     if quar_vivi != quar_tutti:
         print("  ⇒ Le due cifre rispondono a due domande diverse, e per «lo stato di oggi»")
         print("    la cifra giusta e' quella dei VIVI.")
-    l113 = dict(righe).get("L1.13", 0)
-    print("\n  `L1.13` come CAUSA REGISTRATA della quarantena: %d su %d quarantinati."
-          % (l113, quar_tutti))
-    print("  ⇒ In `W5-16` ho misurato che SCATTA su 3 conteggi su 3 — vero, ma «scattare»")
-    print("    e «essere la causa registrata» sono due cose diverse, e questa e' la")
-    print("    seconda. Il costo sul corpus e' **piu' piccolo** di quanto la cella lasci")
-    print("    intendere, e la cella va letta con questo numero accanto.")
+    d = dict(righe)
+    # ⚠️ `chi_ha_quarantinato` restituisce la FAMIGLIA, non il detector (reperto
+    # `c5299add`): `L1.13` non compare mai col suo nome, confluisce in `L1`.
+    senza = d.get("(nessuna)", 0)
+    print("\n  `L1.13` come causa registrata: %d — e non compare col suo nome perche'"
+          % d.get("L1.13", 0))
+    print("     `chi_ha_quarantinato` aggrega nella FAMIGLIA: `L1` conta %d su %d."
+          % (d.get("L1", 0), quar_tutti))
+    print("  ⇒ In `W5-16` ho misurato che SCATTA su 3 conteggi su 3, ed e' vero — ma")
+    print("    «scattare» e «essere la causa della quarantena» sono due cose diverse,")
+    print("    e sul corpus la famiglia INTERA ne spiega %d." % d.get("L1", 0))
+    print("  🪞 Il mio reperto e' un MECCANISMO SENZA FREQUENZA: reale, e piccolo.")
+    print("\n  E il buco noto resta: %d su %d senza causa (%.0f%%); sui %d con causa,"
+          % (senza, quar_tutti, 100.0 * senza / quar_tutti if quar_tutti else 0,
+             quar_tutti - senza))
+    print("     `moat` ne spiega %d." % d.get("moat", 0))
 
 
 main()
