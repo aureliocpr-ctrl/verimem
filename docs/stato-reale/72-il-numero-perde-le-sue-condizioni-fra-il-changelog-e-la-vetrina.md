@@ -84,6 +84,41 @@ numero ce l'abbia.
 verificato **leggendo**: tre `grep` esatti su tre stringhe, e il confronto con la
 riga del CHANGELOG.
 
+## ④-bis Il secondo numero che ho guardato ha la stessa forma — e stavolta il costo
+
+Proseguendo **a lettura** (dopo che i criteri automatici sono caduti), il numero
+accanto: `README.md:83-85`.
+
+> A two-threshold band … cutting that entity-substitution escape from
+> **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
+> facts (measured)
+
+`CHANGELOG.md:561`, la stessa misura:
+
+> Measured safe (**over-review 1/19 on hard true classes**; entity-substitution
+> escape 6.2%→1.8% with 0 new false-blocks)
+
+| | README | CHANGELOG |
+|---|---|---|
+| il beneficio (`6.2% → 1.8%`) | sì | sì |
+| il costo che vale **zero** (false-blocks) | sì | sì |
+| il costo che **non** vale zero (`over-review 1/19`) | **0 occorrenze** | sì |
+| un banco per questa cifra | **nessuno** | — |
+
+🔑 **La forma è precisa: la vetrina dichiara il costo che è zero e omette quello
+che non lo è.** Non è falso — trattenere per revisione **non è** bloccare, e
+«zero false-blocks» resta vero. È una **selezione**: dei due costi misurati,
+arriva in vetrina solo quello nullo.
+
+⚠️ **Il meccanismo, però, è dichiarato**: «held for review» compare una volta nel
+README (riga 89) — ma nella **cascata di escalation**, come fallback quando
+l'adjudication fallisce, non come **costo della banda**. Chi legge sa che il
+trattenimento esiste; non sa che **un caso vero difficile su diciannove** ci
+finisce per effetto della banda accesa di default.
+
+📌 **Due numeri guardati, due volte la stessa forma** — e sono **due su due**,
+non «il N% della pagina»: il denominatore è due, e lo dico invece di gonfiarlo.
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
