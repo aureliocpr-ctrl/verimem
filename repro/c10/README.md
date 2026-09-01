@@ -43,8 +43,29 @@ versione da cui i numeri provengono (`pyproject.toml`, invariata dal 21/08).
 ## 🔴 Il pezzo che decide se un terzo può riprodurre: il giudice
 
 Il moat non usa un modello scaricato per nome da HuggingFace: usa un
-**cross-encoder locale**, `local_gate_ce_v2`, **~746 MB** (`model.safetensors`
-737,7 + `tokenizer.json` 8,3), che `verimem warmup` scarica.
+**cross-encoder locale**, `local_gate_ce_v2`, che `verimem warmup` scarica.
+
+⚠️ **Correzione del 02/09 00:36, contro quello che avevo scritto io.** Avevo
+messo «~746 MB» come se fosse il costo del warmup: **è solo il gate**.
+`verimem warmup --help` lo dichiara — *«WITH NO OPTIONS THIS TAKES THREE
+MODELS, not one»* — e la tabella in `verimem/cli.py` (misurata 19/08) dà
+embedder **1082**, gate **746**, reranker stage-2 **470** ⇒ **il default sfiora
+i 2,3 GB, tre volte quello che avevo scritto.**
+
+🔑 **E il numero non lo ricablo qui**: il codice porta già la lezione che ho
+appena ripetuto — *«un numero cablato in una frase invecchia da solo: il 21/08
+la descrizione diceva ~1.1 GB, il solo embedder, mentre il comando ne prendeva
+TRE»*. ⇒ **chi vuole il totale lo legge da `_WARMUP_DI_DEFAULT` in `cli.py`,
+oppure lo fa stampare al comando** (l'help dice che il totale esce prima che
+qualcosa venga scaricato). ⚠️ **E quel totale somma due metodi di misura
+diversi**: i due modelli HF sono download cronometrati su cache vuota, il gate
+è la **cartella su disco** — lo dichiara `cli.py` e lo ripeto qui perché chi
+rifà il conto deve saperlo.
+
+⇒ Per il solo C10 **basterebbe il gate**: `--no-gate` lo salta (e non è quello
+che vogliamo), ma l'embedder e il reranker il banco non li esercita. Non ho
+verificato se `warmup` permetta di prendere **solo** il gate: se serve
+risparmiare 1,5 GB in CI, è la prima cosa da guardare.
 
 **Senza quel modello il gate parte in stato `warming` e AMMETTE TUTTO**: si
 ottengono `0/300` veri fermati e `0/300` falsi fermati in 26 secondi — numeri
