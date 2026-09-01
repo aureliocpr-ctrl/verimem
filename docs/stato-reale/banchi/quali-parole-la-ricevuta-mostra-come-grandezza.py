@@ -138,7 +138,27 @@ def main() -> int:
     print("\n  == LA RIGA CHE CONTA")
     tot_c = sum(dal_claim.values())
     col_c = sum(n for t, n in dal_claim.items() if t in candidati)
-    if col_c == 0:
+    # ⚠️ DUE ZERI DIVERSI, e prima erano stampati uguali (curato 02/09 da
+    #    @ws2 controfirmando W7-84). I candidati si costruiscono con
+    #    `t not in _GRAMMATICA`: dopo la cura `35286f24` gli ausiliari sono
+    #    DENTRO la lista, l'insieme e' VUOTO e il conteggio e' zero
+    #    qualunque cosa dica il corpus. Chi eseguiva il banco oggi leggeva
+    #    «la lista monolingue non costa nulla» — l'OPPOSTO del vero: con la
+    #    lista pre-cura ripresa da git il conteggio e' 239 su 3765 (6,3%).
+    #    Un banco che misura «cosa cambierebbe SE» non e' rieseguibile dopo
+    #    il se, e deve dirlo invece di stampare un verde.
+    if not candidati:
+        print("     ⚪ **NON MISURABILE ORA**: la lista dei candidati e'"
+              " VUOTA perche' gli")
+        print("     ausiliari sono gia' DENTRO `_GRAMMATICA` — la cura"
+              " `35286f24` e' applicata.")
+        print("     Questo zero e' prodotto dalla cura, NON dal corpus:"
+              " non e' una prova")
+        print("     che il difetto non ci fosse. Per rimisurarlo serve la"
+              " lista pre-cura")
+        print("     (`git show 35286f24^:verimem/vicinato_del_valore.py`):"
+              " 239 su 3765 il 02/09.")
+    elif col_c == 0:
         print("     🟢 **ZERO**: nessun ausiliare compare come grandezza."
               " Il mio caso")
         print("     delle 19:02 era isolato e **la lista monolingue non"
