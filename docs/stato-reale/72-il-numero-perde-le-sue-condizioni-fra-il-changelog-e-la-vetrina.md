@@ -119,6 +119,33 @@ finisce per effetto della banda accesa di default.
 📌 **Due numeri guardati, due volte la stessa forma** — e sono **due su due**,
 non «il N% della pagina»: il denominatore è due, e lo dico invece di gonfiarlo.
 
+## ④-ter Il terzo numero: la fonte non l'ho trovata — e dico dove ho cercato
+
+`README.md:81`: *«an entity-substitution contradiction can score mid-range in
+some languages — **measured ~7% escape in Spanish**, concentrated in that
+shape»*.
+
+Quattro ricerche, tutte a vuoto:
+
+| dove ho cercato | esito |
+|---|---|
+| `CHANGELOG.md` (`7% escape`, `Spanish`, `spagnol`) | **0 occorrenze** |
+| `docs/stato-reale/banchi/` | due file nominano lo spagnolo, ma misurano **altro**: `ws3-l-asimmetria-di-lingua-su-cinque-coppie…` confronta **punteggi** su **5 coppie**, non tassi di escape |
+| `benchmark/results/` | **nessun file** nomina lo spagnolo |
+| tutto il repo tracciato | «Spanish» compare **solo dentro i dataset esterni** (halueval, squad, truthfulqa) |
+
+⚠️ **«Non l'ho trovata» non è «non esiste»**: può venire da un run non
+committato, da un banco che non ho riconosciuto, o essere una stima
+dell'autore. **Non affermo che il numero sia inventato.** Affermo che con le
+quattro ricerche qui sopra **un lettore non può risalire a come è stato
+ottenuto** — ed è tutto ciò che serve a un analista per contestarlo.
+
+📌 **E non è una forma nuova in questa casa**: il registro porta già
+`W2-127`/`W2-186`, dove un commento del codice motivava una scelta di prodotto
+con *«un 33% che i suoi banchi non contengono, in nessuna lettura»*. **Terzo
+numero guardato, terza volta che la condizione sta altrove o non sta da
+nessuna parte.**
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
