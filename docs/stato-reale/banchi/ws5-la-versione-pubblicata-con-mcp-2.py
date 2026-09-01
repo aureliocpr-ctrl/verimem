@@ -31,6 +31,37 @@ Quell'import e' il test che @ws1 aveva chiesto per la `C7`, ed e' la porta che
 Un import riuscito non prova che una sessione MCP completa vada a buon fine; un import
 fallito prova che non ci arriva nemmeno.
 
+🔴🔴 ESITO — **la porta principale del pacchetto PUBBLICATO non parte, oggi**::
+
+    sonda                            A: pip install verimem      B: wheel 0.7.1
+    mcp installato                   2.1.1                       1.29.1
+    verimem installato               0.7.0                       0.7.1
+    import mcp.server                ok                          ok
+    import helper_types (lowlevel)   ok                          ok
+    import verimem.mcp_server        🔴 AttributeError            ok
+
+    AttributeError: 'Server' object has no attribute 'list_tools'
+
+E LA PROVA END-TO-END, il comando che un utente lancia::
+
+    verimem mcp   (0.7.0 pubblicata + mcp 2.1.1)   AttributeError … EXIT=1
+    verimem mcp   (wheel 0.7.1 + mcp 1.29.1)       mcp_preload_using_shared_daemon
+
+⇒ **Chi scrive `pip install verimem` oggi riceve `verimem 0.7.0` + `mcp 2.1.1`, e il
+comando `verimem mcp` NON PARTE.** E' la porta che `pyproject.toml` chiama «*MCP server
+— the HEADLINE use (verimem mcp for Claude Code / Cursor)*».
+
+✅ **E il tetto e' esattamente cio' che separa i due casi**: con `mcp<2` arriva la
+`1.29.1` e il server parte. ⇒ **La 0.7.1 non e' solo «una versione in piu'»: e' la
+riparazione di un prodotto pubblicato che oggi e' rotto.**
+
+🪞 **E l'analisi statica mi aveva portata fuori strada, due volte.** Avevo guardato il
+wheel di `mcp 2.1.1` e concluso che mancasse `mcp/types.py`, poi che mancasse
+`SamplingMessage`: **entrambe le letture erano sbagliate**, perche' nella 2.x
+`mcp-types` e' **un pacchetto separato** (`mcp-types-2.1.1`, installato accanto) e i
+simboli stanno li'. ⇒ La rottura vera e' un'ALTRA: `Server.list_tools`, un metodo
+dell'API server. **Il test vero ha corretto due volte quello che il wheel suggeriva.**
+
 SOLA LETTURA sui due venv gia' creati; non installa e non modifica nulla.
 ⚖️ PUNTI DEBOLI: una macchina, un Python (3.13.12); e i due venv differiscono per **due**
 cose insieme (la versione di verimem **e** quella di mcp), quindi un fallimento in A non
