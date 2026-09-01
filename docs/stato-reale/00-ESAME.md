@@ -18180,3 +18180,68 @@ misurata.
 
 **Banco**: `porta_composizione.py`, dati in `composizione.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-54 — 🎯 **RACCOMANDAZIONE DI RILASCIO su `0.7.1`** (da capofila)
+
+🚪 **Tutti e otto i cancelli + G1-G10.**
+
+### La posizione, in una riga
+
+**Il prodotto è pubblicabile. La sua documentazione no** — e le tre cure che servono sono
+piccole, note e **non toccano il codice**.
+
+### ✅ Cosa REGGE — verificato sull'artefatto, non sul sorgente
+
+| | verifica | cella |
+|---|---|---|
+| La cura **funziona** | `mcp<2` nel `METADATA`, **tutti e tre i rami** (base, `mcp-only`, `full`) | `W8-48` |
+| Il pacchetto è **pulito** | 440 file, un solo estraneo; veto ④ `EXIT=0` su wheel **e** sdist | `W8-47` |
+| Si **costruisce e installa** | `build` + `wheel install-from-scratch` **success su windows e ubuntu** | `W8-41` |
+| I **gate del branch** | `publish.yml` identico a `main`, fail-closed intatto, il gate stampa cosa accetta | `W8-41` |
+
+⇒ **Chi installa `0.7.1` riceve un pacchetto che ripara ciò che dice di riparare.**
+
+### 🔴 Cosa NON regge — tutto nella documentazione, tutto sul ramo
+
+| difetto | cella |
+|---|---|
+| **Numero di copertina** `recall@5 = 0.87` → ricetta verso un banco **inesistente**, senza la nota del 28/08 | `W8-52` |
+| **Vetrina**: README del branch = 22 luglio, **4 avvisi contro 16** (manca «against `mem0 2.0.4`») | `W8-50` |
+| **Presidio**: `test_il_pacchetto_ha_cio_che_promettiamo` **assente** — manca il test **del tetto `mcp<2`** | `W8-53` |
+| **CHANGELOG**: «enforced by tests» copre 3 su 4; «resolves mcp 1.29.1» non è nel log CI | `W8-49` |
+
+🔑 **Il filo comune**: **un hotfix che riparte da un tag vecchio eredita la documentazione e
+i presidi di allora.** È una **proprietà**, non un difetto del processo — e finora non era
+dichiarata da nessuna parte.
+
+### 📋 Le tre cure, in ordine di costo
+
+1. **Una stringa** — la nota del registro sul branch ⇒ il numero di copertina torna
+   rigenerabile.
+2. **Tre righe** — nel README del branch i **soli** avvisi su *come è stata fatta la misura*
+   («against `mem0 2.0.4`», «measured on Windows/Python 3.13», «our own corpus, not a
+   bench»). **Non** quelli che circoscrivono numeri di `main`: sarebbero misure di un
+   prodotto diverso.
+3. **Un file** — `tests/test_il_pacchetto_ha_cio_che_promettiamo.py` sul branch. **È un
+   test**: non tocca il prodotto, non cambia il wheel, non invalida il verde.
+
+⚠️ **Il costo vero**: nessuna modifica il codice spedito, **ma tutte cambiano lo sha** ⇒
+**serve un run nuovo**, e oggi la coda è ~43 ore stimate. I due run già in fila diventano
+superflui.
+
+### ⚖️ La decisione, posta onestamente
+
+- **Pubblicare senza le cure** → pacchetto buono, **ma la vetrina afferma un numero che non
+  sappiamo rigenerare** e il confronto col concorrente perde la sua versione: è ciò che il
+  contratto vieta.
+- **Fare tutte e tre** → un altro giro di coda.
+- **Via di mezzo** → solo la (1), e le altre dichiarate.
+
+📌 **Raccomandazione: (1) + (3) in un solo commit, la (2) dichiarata nel `CHANGELOG`.** Un
+solo giro di coda, il difetto grave chiuso, il presidio portato, **e ciò che resta è detto
+invece che taciuto**.
+
+⚠️ **Non eseguo**: README, registro e `CHANGELOG` sono nel mio non-curo e il ramo di
+rilascio non è mio. **Porto la posizione e i numeri.**
