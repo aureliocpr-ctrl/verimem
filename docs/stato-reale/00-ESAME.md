@@ -15299,3 +15299,89 @@ Il run del branch `hotfix/0.7.1` ha atteso **34,0 ore**, non ~22: `#2262`, creat
       printf "%-12s %s\n" "$s" "$(gh api "$B?status=$s&per_page=1" --jq .total_count)"; done
     gh api "$B?status=cancelled&per_page=100" \
       --jq '[.workflow_runs[]|select(.created_at>="2026-08-31")]|.[0:5][]|"\(.run_number) \(.created_at) \(.updated_at)"'
+
+---
+
+## 2026-09-01 19:30 — ws1 · IL QUADRO DI DECISIONE POGGIA SU **UNA SOLA MIA MISURA**, E QUELLA MISURA HA UN LIMITE DI REGIME CHE HO DICHIARATO IO. NON LE INVENTO UNA SECONDA FIRMA
+
+**Livello** censimento delle firme sulle celle load-bearing, lettura pura · **Perimetro**
+`quadro-decisione-versione-30-08.md` + `00-ESAME.md` + `punto-del-mattino-31-08.md` ·
+**Istante** 2026-09-01 19:22-19:30 · **Regime** **lettura pura, nessun modello, nessuna
+rete**; RAM 4,27 GB · **Autorità**: mandato **riferito** da @lead-audit (barra vuota alle
+19:22, non verificato direttamente) · `verimem.__version__` **0.7.6**.
+
+Applica il criterio del punto del mattino: «**due firme esigibili sulle celle load-bearing
+(citate da report/vetrina/quadro), il resto dichiarato**».
+
+### Il censimento, col denominatore
+
+`grep "ws1"` sui documenti di sintesi: **21 file** mi citano. Ma il criterio dice
+**report/vetrina/quadro**, e il documento su cui si decide il tag è uno solo. Nel
+**quadro-decisione-versione-30-08.md** i miei dati citati sono **UNO**:
+
+```
+riga 16:  (mcp risolto 1.29.1, `Server.list_tools` presente, EXIT=0 — ws1, 29/08).
+```
+
+### Che cos'è quella cella, e che cosa dichiara di sé
+
+È **C7 — smoke pre-tag su `v0.7.6`: VERDE** (registro, ~riga 6429): `git archive v0.7.6` →
+venv → `python -m build` → install del wheel → avvio del server, con
+`mcp 1.29.1` · `Server.list_tools True` · `EXIT 0`.
+**Ha quattro limiti che ho scritto io prima che qualcuno usasse il dato**:
+
+```
+① verificato IL PUNTO CHE SI ROMPEVA, non l'intero server (non messo in ascolto,
+   tool non invocati)
+② suite NON eseguita
+③ 805 commit fra i due tag: altri difetti NON cercati — dice «il difetto noto non
+   c'è più», NON «la 0.7.6 è sana»
+④ REGIME: la venv conteneva anche `build` (serviva per il wheel), quindi NON È VERGINE
+```
+
+### ⚠️ E la seconda firma: NON L'HO TROVATA
+
+Il punto del mattino afferma, per il treno 0.7.1: «*Wheel costruito e verificato
+SULL'ARTEFATTO: veto identificativi EXIT=0, **smoke da venv vergine EXIT=0** (`mcp 1.29.1`
+risolto)*». **Se quello smoke esiste, paga esattamente il mio limite ④.** Ma:
+
+```
+grep "smoke" 00-ESAME.md | grep -i "0.7.1|wheel|hotfix"   ->  NESSUN RISULTATO
+grep -i "smoke" punto-del-mattino-31-08.md                ->  UNA riga, l'affermazione
+grep -n "vergine" 00-ESAME.md                             ->  la venv vergine è MIA
+                                                              (27/08, verimem==0.7.0,
+                                                               mcp 2.1.1)
+```
+
+⇒ **Non sto dicendo che quello smoke non sia stato fatto.** Sto dicendo che **non l'ho
+trovato come cella di registro**, mentre il criterio esige la firma *lì*. ⚠️ **E il
+misuratore potrebbe essere il mio**: il registro ha 600+ celle e formati vari, il mio grep
+cerca tre parole. **Chi l'ha eseguito lo colleghi e la questione si chiude in una riga.**
+
+### 📌 Il dato da consegnare, che è proprio quello che il fronte chiedeva
+
+**La cella load-bearing del quadro è, per quanto ho potuto verificare, a UNA firma** — la
+mia — **con un limite di regime dichiarato dall'autore stesso**. La lettura giusta è quella
+del punto: **«misure mai riviste, non falsità»**. Ma sul documento che decide il tag, una
+misura singola con «venv non vergine» scritto accanto è **il primo posto dove guarderebbe
+un analista ostile**, e vale la pena chiuderlo prima.
+
+### Che cosa NON posso fare io, e chi può
+
+Avevo **offerto lo smoke in regime stretto (~400 s)** nella cella stessa, e nessuno l'ha
+raccolto. **Non posso rifarlo ora**: uno smoke da venv vergine richiede `pip install`,
+cioè **rete**, e ho il vincolo «niente rete». ⇒ **Serve una delle istanze senza quel
+vincolo**: `python -m venv` pulita → install del wheel `hotfix/0.7.1` → `mcp`,
+`Server.list_tools`, `import mcp_server`, `EXIT`. **Cinque righe di output e la cella
+load-bearing del quadro passa a due firme, col regime che al mio mancava.**
+
+### Cosa NON prova
+
+Ho censito **il quadro**, non il report né tutta la vetrina: gli altri 20 documenti che mi
+citano **non li ho classificati** (alcuni sono cronache, non sintesi). **Non ho verificato
+se le altre mie celle citate altrove abbiano due firme**: questo giro copre **il documento
+di massima leva sul rilascio**, e lo dichiaro come parziale. Il conteggio «21 file» è di
+`grep -rln "ws1"`, quindi include ogni menzione, anche non-load-bearing.
+
+**Firme su questa cella**: ws1 (censimento). **Non ne rivendico altre.**
+**Io misuro, non curo.**
