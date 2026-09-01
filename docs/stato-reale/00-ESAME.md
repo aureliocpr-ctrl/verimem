@@ -15536,3 +15536,78 @@ mentre alla riga 48 **conferma**: «*[02h] — quelle reggono davvero sul pacche
 
 📌 Non ho toccato il canale con questo: è un dettaglio che non cambia una decisione, e una
 riga sul bus sarebbe rumore. **Sta qui perché era un mio debito dichiarato.**
+
+---
+
+## W8-37 — Tre reperti della ripresa: **due rossi spiegati, e uno era mio da correggere**
+
+🚪 **Cancelli: ① `ci` verde (VETO) · ④ integrità di ciò che spediamo.**
+
+### ① `plugin.json` è l'unico disallineato — non ci sarà un terzo giro
+
+Il run `#2557` sul branch `hotfix/0.7.1` (job `ubuntu-latest / py3.12`):
+
+    = 1 failed, 7686 passed, 34 skipped, 17 deselected, 1 xfailed in 548.18s =
+    FAILED tests/test_version_single_source.py::test_version_strings_do_not_drift
+
+Ho chiesto **al test** dove guarda, invece di indovinare: confronta **due** posti soltanto,
+`pyproject.toml` (riga 23) e `.claude-plugin/plugin.json` (righe 39, 49). Nel branch:
+
+    pyproject.toml              version = "0.7.1"      ✅
+    .claude-plugin/plugin.json  "version": "0.7.0"     ❌  ← l'unico
+    verimem/__init__.py         __version__ = "0.7.1"  ✅
+
+Gli altri `0.7.0` del branch sono **commenti** che citano la versione pubblicata.
+⇒ **Una riga, e il run successivo non ha più nulla su cui cadere** per la coerenza di
+versione. **Non lo tocco io**: il versioning è fuori dal mio perimetro.
+
+### ② `soggetto_valore`: una cura del gate scritta, testata e **mai collegata**
+
+Il 39° modulo di `test_nessun_modulo_nasce_irraggiungibile` è
+`verimem/soggetto_valore.py` (nato il 28/08 da `6ccc832d`, 213 righe, espone
+`avviso_soggetto_valore(proposition, source)`):
+
+    occorrenze fuori dal file stesso, in verimem/ engram/ hippoagent/:  ZERO
+    lo usa solo:  tests/test_soggetto_valore.py
+
+⇒ **Il rosso è vero**, ed è la forma «una capacità spenta non emette segnale», variante
+*mai collegata*.
+📌 **Correggo la portata di un mio numero**: in `W8-33` ho contato «+1798 righe di cure» fra
+l'ultimo verde e HEAD e le ho usate come argomento per non rilasciare dal 25 agosto.
+**213 di quelle righe non fanno nulla in produzione.** «Righe scritte» ≠ «righe attive».
+
+### ③ 🪞 `test_la_fonte_si_legge_intera`: **avevo alzato la voce, e avevo torto**
+
+Avevo segnalato: «999 non viene segnalato come assente ⇒ il gate può lasciar passare un
+numero inventato». **Falso.** La prova diretta sulla funzione:
+
+    MUTO       Il riepilogo e' alla riga 999.   ·   Vedi pagina 999.
+    SEGNALATO  Il valore e' 999.  ·  Il totale e' 999.  ·  Sono 999 unita.
+    SEGNALATO  La versione e' 999.  ·  Il riepilogo e' alla linea 999.
+
+⇒ Il prodotto **esclude di proposito i numeri-RIFERIMENTO** (`riga`, `pagina`): indicano una
+posizione, non affermano una quantità. Su ogni claim che afferma un valore, `999` **viene
+segnalato**. **Il test arma il presidio con `"…alla riga 999."`, cioè proprio un caso
+escluso per disegno.**
+
+⇒ **Il rosso è un falso allarme.** Cura: una riga nel test — un claim che *affermi* un
+valore. Nessun lavoro sul prodotto.
+🔎 Reperto minore: **`linea 999` è SEGNALATO, `riga 999` no** ⇒ la lista delle
+parole-riferimento non copre i sinonimi. Forma nota: «liste incomplete».
+
+### 🪞 La lezione, ed è la seconda volta in due giorni
+
+Il mio allarme dichiarava il limite giusto — «non ho provato end-to-end» — e **quel limite
+conteneva la falsificazione della tesi**. L'ho eseguito tre minuti dopo aver pubblicato.
+🔑 **Un limite dichiarato va eseguito PRIMA di alzare la voce, non dopo.**
+
+### 📌 Nota di stato sulla CI
+
+`#2557` alle 19:34 aveva un job concluso (1 failed) e uno ancora aperto; alle 19:49 il run
+risulta **di nuovo `queued`**. ⇒ **«ho letto il log di un job» ≠ «il run è concluso»**:
+sono due affermazioni diverse e vanno tenute distinte.
+
+    rifallo con:
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.claude-plugin/plugin.json" | grep -i version
+    git grep -l 'soggetto_valore' -- 'verimem/*' 'engram/*' 'hippoagent/*' | grep -v soggetto_valore.py
+    python -c "from verimem.valore_non_nella_fonte import valori_non_nella_fonte as V; F=\"Il totale e' 2556.\"; [print(('SEGNALATO' if [a.valore for a in V(c,F)] else 'MUTO'), c) for c in ['Alla riga 999.', \"Il valore e' 999.\"]]"
