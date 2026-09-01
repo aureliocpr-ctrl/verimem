@@ -17735,3 +17735,66 @@ poggia su *2 risposte perse e 4 invenzioni su 8*, ed è indipendente da questa s
 
 **Banco**: `porta_numeri_vs_parole.py`, dati in `numeri_vs_parole.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-50 — 🪟 Pubblicare `0.7.1` dal branch **rimette sulla vetrina i difetti curati in agosto**
+
+🚪 **Cancello: ⑦ ciò che l'utente legge** · ⑤ `controlla_promesse`.
+⚠️ **Non curo il `README`** (non-curo): **verifico e riporto il criterio.**
+
+La pagina PyPI di `0.7.1` sarà il `README.md` **del commit taggato**, cioè del branch — e il
+branch parte dal **22 luglio**.
+
+    README branch (hotfix/0.7.1)   484 righe    4 avvisi   ultimo tocco 2026-07-22 (304565bd)
+    README main                    746 righe   16 avvisi   ultimo tocco 2026-08-30 (e57bd373)
+    numeri pubblicizzati (percentuali):  branch 8  ·  main 10
+
+⇒ **Rapporto avvisi/numeri: 1,6 su `main`, 0,5 sul branch.** Gli avvisi **sono** le
+circoscrizioni dei numeri: toglierli lascia i numeri, e **un numero senza il suo limite
+promette più di quanto misura**.
+
+### 🔴 Fra i dodici mancanti
+
+    **Known limit, measured on our own corpus, not on a bench.** Same-source evolution
+    ⚠️ **`0.739` is the exception and we say so**
+    > 0.7.0 is still the latest on PyPI — so they hold by construction; re-measured on
+    ⚠️ **The competitor column was measured against `mem0 2.0.4`**
+    Measured on Windows with Python 3.13; on Linux the `torch` wheel differs...
+    Three limits belong next to those numbers. **Length**: they are measured on short...
+
+🚨 **Il quarto è un difetto che avevamo già trovato e curato**: il confronto col concorrente
+**senza dirne la versione**. È in memoria (`la-vetrina-pubblicata-non-e-quella-che-scriviamo.md`:
+«su PyPI c'è la v0.7.0 … **zero dei sei avvisi** che le circoscrivono»). **Sta per succedere
+di nuovo — stavolta lo sappiamo prima del tag.**
+
+### ⚖️ Perché la soluzione ovvia è sbagliata
+
+**Non si può copiare il `README` di `main` sul branch**: parte di quei sedici avvisi
+circoscrive **numeri di `main`**, misurati su codice che `0.7.1` **non contiene**. Spedirli
+sarebbe scambiare un'imprecisione con una peggiore — **dichiarare misure di un prodotto
+diverso da quello che si installa**.
+
+🎯 **La distinzione che rende la cosa decidibile** — alcuni avvisi riguardano il **codice**,
+altri **come è stata fatta la misura**, e i secondi valgono per qualunque versione riporti
+quei numeri:
+
+| avviso | riguarda | sul branch? |
+|---|---|---|
+| «against `mem0 2.0.4`» | la **misura** | **portare** |
+| «measured on Windows with Python 3.13 / su Linux il torch wheel differisce» | la **misura** | **portare** |
+| «measured on our own corpus, not on a bench» | la **misura** | **portare** |
+| «re-measured on…», «`0.739` is the exception» | numeri di `main` | lasciare fuori |
+
+⇒ **Portare sul branch SOLO gli avvisi che circoscrivono numeri già presenti nel suo
+README.** Sono pochi, identificabili uno per uno, e **non introducono alcuna affermazione su
+codice non spedito**.
+
+📌 È il punto in cui un analista direbbe **«afferma cose che non fa»** — il criterio che ci
+siamo dati per il rilascio.
+
+    rifallo con:
+    for R in hotfix/0.7.1 main; do printf "%-14s " "$R"; \
+      MSYS_NO_PATHCONV=1 git show "origin/$R:README.md" | grep -ciE '⚠|caveat|measured on|this number|limitation'; done
+    comm -23 <(git show origin/main:README.md | grep -iE '⚠|measured on' | sort) \
+             <(git show origin/hotfix/0.7.1:README.md | grep -iE '⚠|measured on' | sort)
