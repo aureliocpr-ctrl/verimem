@@ -825,8 +825,13 @@ def search_docs(
     from .document_index import DocumentIndex
     hits = DocumentIndex().search(query, k=k)
     nascosti = getattr(hits, "nascosti", 0)
+    # ⚠️ IL PRIMA DEL TAGLIO, per lo stesso motivo per cui i chunk nascosti si
+    # contano: una lista accorciata dalla soglia si legge identica a una lista
+    # intera, e l'assenza dell'avviso si legge come «non ha tagliato».
+    _n_prima = len(hits)
     if min_score > 0:
         hits = [h for h in hits if float(h.get("score") or 0.0) >= min_score]
+    _sotto_soglia = _n_prima - len(hits)
     if not hits:
         # «NESSUN RISULTATO» E «TUTTO NASCOSTO» ERANO LA STESSA RIGA, ed e'
         # il caso in cui la differenza conta di piu': un documento con dentro
@@ -837,6 +842,15 @@ def search_docs(
                 f"no results — but {nascosti} chunk(s) were HIDDEN because "
                 "they carry injection signals. The document is indexed: rerun "
                 "with the audit path (include_flagged) to inspect them.")
+        elif _sotto_soglia:
+            # LA CAUSA GIUSTA. Qui c'era «index empty or no match», che in
+            # questo ramo dice il falso due volte: l'indice non e' vuoto e il
+            # match c'era — l'ha tolto la soglia che ha chiesto chi cerca. Chi
+            # legge concludeva che il corpus non sa rispondere.
+            console.print(
+                f"no results above --min-score {min_score}: "
+                f"{_sotto_soglia} chunk(s) matched and were cut by the "
+                "threshold. Lower it to see them.")
         else:
             console.print("no results (index empty or no match)")
         raise typer.Exit(0)
@@ -844,6 +858,10 @@ def search_docs(
         console.print(
             f"[yellow]note:[/yellow] {nascosti} chunk(s) hidden (injection "
             "signals) — results below are PARTIAL")
+    if _sotto_soglia:
+        console.print(
+            f"[yellow]note:[/yellow] {_sotto_soglia} chunk(s) below "
+            f"--min-score {min_score} — results below are PARTIAL")
     # LA STESSA NORMALIZZAZIONE DEL RECUPERO, non una seconda scritta a mano.
     # Qui c'era `query.lower().split()`, e la differenza non era cosmetica:
     # l'anteprima si ancorava a una parola che il recupero aveva GIA' scartato.

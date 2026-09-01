@@ -77,6 +77,53 @@ def test_senza_min_score_non_taglia_niente(con_indice):
 
 
 def test_se_il_taglio_svuota_lo_dice(con_indice):
+    """🪞 RAFFORZATA il 2026-09-01 alle 22:20: la cella si chiamava gia' cosi'
+    e verificava solo `"no results" in out` — cioe' passava col messaggio «no
+    results (index empty or no match)», che qui e' una CAUSA SBAGLIATA: l'indice
+    non e' vuoto e il match c'era, l'ha tolto la soglia che l'utente ha chiesto.
+
+    🔑 Un presidio col nome giusto che non verifica quel nome e' peggio della
+    sua assenza: chi lo legge crede che il caso sia coperto. Ora la cella
+    pretende che il messaggio nomini la SOGLIA."""
     con_indice(0.4, 0.3)
     out = _cerca("una domanda qualunque", "--min-score", "0.9")
     assert "no results" in out, out
+    basso = out.lower()
+    assert "0.9" in out and ("min-score" in basso or "threshold" in basso), (
+        "il comando dice «no results» senza nominare la soglia che ha tolto "
+        f"tutto: chi legge conclude che il corpus non sa rispondere.\n{out}")
+    assert "index empty" not in basso, (
+        "il messaggio attribuisce il vuoto a un indice vuoto o a un match "
+        f"mancante, mentre la causa e' il taglio:\n{out}")
+
+
+def test_un_taglio_PARZIALE_si_dichiara_come_gia_fa_quello_per_injection(
+        con_indice):
+    """IL GEMELLO DEL DIFETTO CURATO SULLA PORTA (`92333f82`), trovato con lo
+    sweep «chi altro taglia per punteggio?».
+
+    ⚠️ E il controllo positivo sta a due centimetri, nella STESSA funzione: i
+    chunk nascosti per injection vengono dichiarati sia quando svuotano
+    («were HIDDEN») sia quando no («results below are PARTIAL»). Il taglio per
+    `--min-score` non diceva niente in nessuno dei due casi.
+
+    ⇒ Una lista accorciata dell'80%% si legge identica a una lista intera, e
+    l'assenza dell'avviso si legge come «non ha tagliato»."""
+    con_indice(0.884, 0.757, 0.4)
+    out = _cerca("quanto costa il piano", "--min-score", "0.8")
+    assert "0.884" in out, out
+    basso = out.lower()
+    assert "partial" in basso or "parziale" in basso, (
+        "due chunk su tre sono stati tolti dalla soglia e la lista non lo "
+        f"dichiara, mentre per i chunk nascosti lo fa:\n{out}")
+    assert "2" in out, f"non dice QUANTI ne ha tolti:\n{out}"
+
+
+def test_CONTROLLO_senza_taglio_nessun_avviso_di_parzialita(con_indice):
+    """⚠️ LA POPOLAZIONE OPPOSTA: un avviso sempre acceso e' rumore con l'aria
+    di un dato. Se nulla e' stato tolto, la lista non deve dirsi parziale."""
+    con_indice(0.884, 0.757)
+    out = _cerca("quanto costa il piano")
+    basso = out.lower()
+    assert "partial" not in basso and "parziale" not in basso, (
+        f"la lista si dichiara parziale senza che sia stato tolto nulla:\n{out}")
