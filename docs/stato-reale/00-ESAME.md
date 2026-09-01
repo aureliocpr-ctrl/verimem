@@ -15761,3 +15761,72 @@ questo banco). Non ho verificato se il warmup parta **anche** quando nessuna scr
 mai una `source` per tutto il processo — qui era così, ma il trigger esatto non l'ho isolato.
 
 **Banchi**: `porta_picco.py` (scratchpad), output `picco.out`. **Io misuro, non curo.**
+
+---
+
+## W8-38 — I 5 rossi di `main`, letti uno per uno: **quattro sono righe nei test, uno solo tocca il prodotto**
+
+🚪 **Cancelli: ① `ci` verde (VETO) · ⑤ `controlla_promesse`.**
+
+`W8-31` li aveva **contati**. Questa cella li ha **letti**.
+
+| rosso | verdetto | cura | prodotto? |
+|---|---|---|---|
+| `test_repro_registry_g4` | **XPASS(strict)**: il test passa | togliere una riga `xfail` | no |
+| `test_la_ricetta_del_numero_deve_esistere` | **XPASS(strict)**: il test passa | togliere una riga `xfail` | no |
+| `test_la_fonte_si_legge_intera` | **falso allarme** (W8-37 §③) | un claim che *affermi* un valore | no |
+| `test_nessun_banco_nuovo_ignora_l_esito…` | **falso negativo del guardiano** | una riga in `ANCORA_CIECHI` | no |
+| `test_nessun_modulo_nasce_irraggiungibile` | 🔴 **rosso vero** | collegare o togliere `soggetto_valore` | **sì** |
+
+### ① I due `XPASS(strict)`: una buona notizia travestita da rosso
+
+    8/8 claims backed by artifacts
+    8/8 claims regenerable by their command
+    8/8 claims whose value is actually compared
+    2 failed, 6 passed          ← i due «failed» sono [XPASS(strict)]
+
+⇒ **I test passano.** A renderli rossi è il loro stesso `@pytest.mark.xfail(strict=True)`,
+il cui `reason` è **obsoleto in due punti**: dice «@ws5 ha indicato `longmemeval_runner.py`,
+**non verificato**» e «**APERTO** dal 2026-08-25». Ma `benchmark/repro_all.py:49-57`
+dichiara: *«Il modulo `benchmark.lme_retrieval_bench` NON esiste e non è mai esistito: il
+banco si chiama `longmemeval_runner` … "fusion ON": **RISOLTO il 28/08**»*.
+
+🔑 **La promessa «ogni numero che pubblichiamo è rigenerabile» è mantenuta oggi su tutte e
+otto le voci del registro.** Il buco aperto il 25/08 è chiuso dal 28. **Nessuno l'aveva
+detto** perché **due `xfail` non tolti facevano sembrare aperto un problema risolto**: un
+presidio che continua a suonare dopo la cura.
+⇒ Il `reason` stesso prescrive la cura: *«Diventa XPASS(strict) da sé quando il banco torna,
+e allora questa riga va TOLTA: è il lavoro per cui è qui»*. **Owner dichiarato: @ws7.**
+
+### ② Il banco `l120` non è cieco — il guardiano usa un criterio sintattico
+
+    120:  proc = subprocess.run([sys.executable, "-c", _FIGLIO], capture_output=True, …)
+    123:  for riga in (proc.stdout or "").splitlines():
+    128:      f"…stdout:\n{proc.stdout[-1500:]}\nstderr:\n{proc.stderr[-1500:]}"
+
+Non legge `returncode`, ma **verifica per comportamento** e, se il figlio muore, l'assert
+**stampa stdout e stderr**: il traceback arriva. È il caso che il guardiano prevede nel
+proprio messaggio, e la cura è la riga in `ANCORA_CIECHI` che il guardiano stesso chiede.
+📌 Forma nota: **un criterio sintattico su un fenomeno semantico sbaglia in entrambe le
+direzioni**. Qui sbaglia in negativo.
+
+### 🎯 Cosa significa per la data del rilascio
+
+**Quattro rossi su cinque non richiedono lavoro sul prodotto**: due righe da togliere, un
+claim da cambiare, una riga da aggiungere a una lista. **Resta `soggetto_valore`**, e la
+scelta è binaria: collegarlo a una superficie **oppure** toglierlo e abbassare
+`IRRAGGIUNGIBILI_NOTI` da 38.
+
+⇒ **`main` è molto più vicino al verde di quanto dicesse il conteggio dei rossi.** Non l'ho
+scoperto sommando: **leggendo ogni rosso**. 🔑 Un conteggio di rossi non è una misura di
+distanza dal verde — **i rossi non hanno tutti lo stesso peso, e quattro di questi cinque
+pesano una riga**.
+
+⚠️ **Non ne curo nessuno**: due sono di @ws7 (owner dichiarato nel `reason`), uno è prodotto
+e richiede mandato, gli altri due appartengono a chi li ha scritti. **Porto la
+classificazione e il costo.**
+
+    rifallo con:
+    python -m pytest tests/test_repro_registry_g4.py tests/test_la_ricetta_del_numero_deve_esistere.py -q --no-header -p no:randomly -rX
+    grep -n -A8 "lme_retrieval_bench" benchmark/repro_all.py
+    grep -nE "subprocess|returncode|stdout" tests/test_l120_si_disarma_quando_il_daemon_c_e.py
