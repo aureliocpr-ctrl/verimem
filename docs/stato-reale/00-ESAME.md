@@ -15830,3 +15830,39 @@ classificazione e il costo.**
     python -m pytest tests/test_repro_registry_g4.py tests/test_la_ricetta_del_numero_deve_esistere.py -q --no-header -p no:randomly -rX
     grep -n -A8 "lme_retrieval_bench" benchmark/repro_all.py
     grep -nE "subprocess|returncode|stdout" tests/test_l120_si_disarma_quando_il_daemon_c_e.py
+
+## 2026-09-01 20:08 — ws6/Aldo · PEZZO (iii) IN `main`: IL PAVIMENTO STIMATO **MENTRE L'ENCODER È FREDDO** NON SI PERSISTE PIÙ — E LA GUARDIA È SUL **DEGRADO**, NON SUL VALORE
+
+**Cura**: `verimem/client.py::_auto_relevance_floor` · **test**: `tests/test_il_pavimento_stimato_nel_degrado_si_persisteva.py` (4 casi) · verificato su origin **per contenuto**.
+
+**La catena** — ogni anello era già documentato altrove nel repo, nessuno li aveva messi in fila:
+
+```
+estimate_relevance_floor  misura chiamando sm.recall su 32 sonde
+recall degradato          assegna score 0.0 a TUTTI (hits_2t = [(f, 0.0) …])
+⇒ 32 sonde a zero         danno un quantile a zero
+⇒ e quello zero           — che vuol dire NON MISURATO — finiva su disco,
+                            e ci restava finché il corpus non derivava del 5%
+```
+
+**Il RED è di produzione, non costruito**: `{"floor": 0.0, "n_facts": 13795}` è rimasto dalle **20:32:08 del 30/08 alle 02:52:23 del 31/08** — sei ore. E **quattordicimila fatti non sono «uno store troppo piccolo per misurare»**, che è l'unico caso in cui la stima documenta lo zero come risposta legittima. ⚠️ Lo zero salvato non è inerte: è **falsy**, quindi dove lo si controlla con un `if` non vale «pavimento a zero» ma «pavimento assente».
+
+### ⚠️ Deviazione dal mandato letterale — la dichiaro perché è una scelta
+
+Il pezzo era formulato come *«guardia **anti-degenere** in scrittura»*, cioè una guardia sul **valore**. L'ho scritta sul **degrado**. `estimate_relevance_floor` documenta lo `0.0` come risposta **voluta** quando lo store è troppo piccolo (*«a floor guessed from nothing would be worse than none»*): **un veto sullo zero avrebbe chiuso anche quella strada, che è corretta.** La guardia sul degrado separa i due casi senza introdurre bandiere: il contatore `_recall_degraded_count` **esisteva già** ed era **già letto** da `client.recall` per l'identica ragione — dodicesima istanza di «il meccanismo c'è, il chiamante non lo alimenta». Chi ha argomenti per il veto sul valore li porti: la cura è di due righe.
+
+### Il ciclo, falsificato senza `git stash` (l'albero è di otto)
+
+```
+guardia disattivata : 2 failed, 2 passed   <- cadono i due che la coprono
+guardia attiva      : 4 passed
+regressione         : 16 passed sui quattro file del pavimento (145s)
+```
+
+I due che restano **verdi** disattivandola sono il fail-open e **il presidio**: è così che so che il presidio è un presidio e non un doppione del test della cura.
+
+### Cosa NON prova
+
+⚠️ **Questa guardia da sola non basta, e il limite lo avevo già misurato**: chiude la strada per cui ci siamo arrivati **noi** — la persistenza — **non la classe**. Il docstring di `guardian` dice «1 fatto → 0.0, 6 fatti → 0.9166»: **un tenant nuovo lo zero se lo calcola al volo** e non ha nessun file da non persistere. I pezzi (ii)/(iv)/(v) partano da lì. · **Non ho eseguito `critic-orchestrator`**: fa `git stash` per testare pre-fix, ed è l'incidente E1 in immunizzazione su un albero condiviso — chi lo esegue **da solo** lo faccia. · Sotto pytest l'embedder è lo **stub SHA-256**: quello che i test verificano è la **logica della guardia** (scrive / non scrive), non il valore numerico del pavimento.
+
+**Firme su questa cella**: ws6 (cura + test). **Non ne rivendico altre.** Il RED viene dal [60](60-la-transizione-del-pavimento-colta-mentre-avveniva.md), che è mio: **una cura firmata solo da chi ha trovato il difetto ha una firma sola**, e va controfirmata.
