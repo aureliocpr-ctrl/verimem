@@ -15,10 +15,33 @@ ATTESO="benchmark/results/c10_heldout_intero.json"
 NUOVO="${OUT:-/tmp/c10_riprodotto.json}"
 TOLL="${TOLL:-1.0}"   # punti percentuali di scarto ammessi
 
-echo "== 1/4  integrita' degli ingressi"
+echo "== 0/5  la data dir e' isolata? (gli alias sono TRE, non uno)"
+python - <<'PY'
+import os
+#: `verimem/_compat.py:168` — l'ordine E' la precedenza, verificato 02/09:
+#:     _ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
+#: Il banco pinna il PRIMO, quindi isola anche se gli altri due puntano allo
+#: store reale. Ma se qualcuno ne esporta altri con valori DISCORDI il prodotto
+#: avvisa su **stderr** — invisibile a chi redirige (segnalazione @ws8, 00:06).
+#: Qui lo diciamo PRIMA, su stdout, che e' dove l'operatore guarda.
+ALIAS = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
+messi = {a: os.environ[a] for a in ALIAS if os.environ.get(a)}
+if not messi:
+    print("   nessun alias esportato: il banco pinnera' il suo store temporaneo. OK")
+elif len(set(messi.values())) == 1:
+    print(f"   {len(messi)} alias, stesso valore: {next(iter(messi.values()))}. OK")
+else:
+    print("   ⚠️  ALIAS DISCORDI — il banco pinna HIPPO_DATA_DIR (che VINCE),")
+    print("       ma se leggi i risultati con un altro strumento potresti guardare")
+    print("       uno store diverso da quello su cui il banco ha scritto:")
+    for a, v in messi.items():
+        print(f"          {a} = {v}")
+PY
+
+echo "== 1/5  integrita' degli ingressi"
 sha256sum -c repro/c10/MANIFEST.sha256
 
-echo "== 2/4  il giudice locale c'e'?"
+echo "== 2/5  il giudice locale c'e'?"
 if ! python - <<'PY'
 import sys
 try:
@@ -43,11 +66,11 @@ then
     exit 3
 fi
 
-echo "== 3/4  esecuzione (~70 min, popolazione INTERA, nessun campionamento)"
+echo "== 3/5  esecuzione (~70 min, popolazione INTERA, nessun campionamento)"
 python benchmark/c10_falsita_servite_vs_mem0.py \
     --popolazione truthfulqa --n 300 --out "$NUOVO"
 
-echo "== 4/4  confronto con l'artefatto versionato"
+echo "== 4/5  confronto con l'artefatto versionato"
 python - "$ATTESO" "$NUOVO" "$TOLL" <<'PY'
 import json, sys
 atteso, nuovo, toll = json.load(open(sys.argv[1])), json.load(open(sys.argv[2])), float(sys.argv[3])
