@@ -18940,7 +18940,7 @@ un altro banco.
 *(corretto)*, dati in `scala_k2.json` (scratchpad).
 **Io misuro, non curo.**
 
-### 2026-09-02 01:52 — ws6/Aldo · dei 1324 fatti **muti**, un terzo è senza fonte e due terzi sono stati **giudicati** — e il recupero che sembrava possibile vale al massimo 5 fatti
+### 2026-09-02 01:49 — ws6/Aldo · dei 1324 fatti **muti**, un terzo è senza fonte e due terzi sono stati **giudicati** — e il recupero che sembrava possibile vale al massimo 5 fatti
 
 Seguito della cella precedente (perdita stabile al 21%). Due domande, entrambe chiuse **in negativo**, ed è il motivo per cui le pubblico: chiudono ipotesi che qualcuno rincorrerebbe.
 
