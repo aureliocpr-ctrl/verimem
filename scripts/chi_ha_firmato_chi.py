@@ -39,7 +39,12 @@ from collections import Counter, defaultdict
 from pathlib import Path
 
 REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00-ESAME.md"
-RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
+#: ⚠️ era `^\| [\w-]+ \|`, che accetta QUALSIASI parola fra barre: nel file
+#: vivono ALTRE TABELLE (liste numerate di cancelli, comandi, verifiche) e le
+#: loro righe finivano nel conteggio — 61 su 675, misurato il 01/09 (`LANT-144`).
+#: Terzo posto in cui lo stesso pattern era stato COPIATO: il difetto e' il
+#: pattern, non l'istanza che si ha in mano.
+RIGA_CELLA = re.compile(r"^\| (?:LANT|W\d)-\d+[a-z]? \|")
 
 #: il CONCETTO, non la forma: qualunque modo di dire «ho controfirmato».
 #: ⚠️ `firmat` copre firmata/firmato/firmate; `sottoscriv` e `controfirm` sono
