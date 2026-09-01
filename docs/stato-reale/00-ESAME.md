@@ -19003,3 +19003,71 @@ Il claim **sintetizza un intervallo** dalle tre date che la fonte elenca. Il giu
 ⚠️ **Otto su 633, con seme dichiarato: nessun tasso.** · ❌ **Non ho ri-eseguito il gate**: leggo il verdetto registrato, e il gate cambia (la cura `b12e9823` lo dimostra). · ⚠️ **Non dico che `L4.1` vada spento**: il 69 misura cosa costa stringere un trigger senza guardare l'altro lato, e qui l'altro lato non l'ho guardato.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 02:02 — ws1 · 🟢🟢 **PAGO IL LIMITE PIÙ GROSSO DEL FILONE E LA CURA REGGE ANCHE NEL CASO REALISTICO: con DOMANDE vere, `0` falsi rifiuti su 10 e il retrieval porta la source giusta `10` volte su `10`.** La mia predizione era pessimista ed è caduta
+
+**Livello** composizione dei pezzi veri — **`search(DOMANDA, k=1)`** sceglie la source,
+`try_local_score` giudica, soglia `40.0` · **Perimetro** 10 casi, **la query è una DOMANDA**
+(«*Quanti file contiene il wheel verimem 0.7.1?*»), non una proposizione · **Istante**
+2026-09-02 01:56–02:00 · **Regime** variabili poppate, RAM 7,39 GB, **`claim ram/giudice`
+preso e rilasciato** (`2576f0c401fb`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite che avevo dichiarato alle 00:49**, e che era **il più grosso del filone**:
+«*come query ho usato le proposizioni, quasi identiche ai fatti ⇒ il retrieval ha avuto vita
+facile; nel prodotto vero la query è una DOMANDA: con quelle il retrieval può portare source
+sbagliate e i falsi rifiuti SALIREBBERO*».
+
+### 🟢 Il numero — e la condizione d'uscita era scritta prima
+
+| | |
+|---|---|
+| **falsi rifiuti** *(risposta vera bocciata)* | **0 / 10** — *condizione dichiarata: ≤1 ⇒ la cura regge* ✅ |
+| — di cui per **source sbagliata** | **0** |
+| **source diversa** dall'attesa | **0 / 10** |
+| invenzioni **passate** | **1 / 10** |
+| secondi | 42,1 |
+
+⚖️ **La mia predizione — «*2-4 falsi rifiuti su 10, peggio del caso facile*» — È CADUTA**, e
+la ragione che le avevo dato («*una domanda condivide meno lessico col fatto*») **non regge
+alla misura**: con queste dieci domande **il retrieval ha portato la source attesa ogni
+volta**.
+
+⇒ **Lo `0/10` delle 00:49 NON era un artefatto delle query facili**: **si riproduce con
+domande vere.** ⇒ **la cura col giudice regge nel caso realistico**, ed è la cosa che
+mancava per dire che la promessa rossa è mantenibile.
+
+### 🔴 E il buco resta esattamente dov'era
+
+L'unica invenzione che passa è **sempre la stessa**: «*gli artefatti json classificati NUDO
+sono 128 su **999***» → **99,96** (la vera: 99,24), **con la source giusta**. ⇒ **quattro
+banchi diversi, stesso caso**: non è il retrieval, non è la forma della query, **è il gate
+che non guarda il denominatore.**
+
+### 🎯 Il quadro completo per chi decide — tutto misurato da me stanotte
+
+| | risposte vere perse | invenzioni bloccate |
+|---|---|---|
+| `search` **oggi** | 0 | **0 / 10** |
+| `search` **+ pavimento** | **2 / 12** | 4 / 8 |
+| `search` **+ gate**, query = proposizione | 0 / 10 | 9 / 10 |
+| **`search` + gate, query = DOMANDA** | **0 / 10** | **9 / 10** |
+| *(sui soli rapporti)* | — | **1 / 10** ❗ |
+
+⇒ **la cura è pronta da misurare, non da ipotizzare**, e va consegnata **con l'avviso sui
+rapporti**, che è l'unica cosa che non regge.
+
+### Cosa NON prova
+
+**Le dieci domande le ho scritte io a partire dai fatti**, quindi sono **favorevoli al
+retrieval per costruzione**: un utente che non conosce lo store formula diversamente, e
+**quello resta non misurato** — è il limite che sostituisce quello appena pagato, e va detto
+così. **`answer()` non l'ho esercitata**: la generazione della risposta è **surrogata** dalle
+mie proposizioni (senza `llm` non c'è altro modo), quindi ho misurato **retrieval + gate**,
+non la porta intera. **10 casi**: `0/10` ha un intervallo largo. **I fatti sono del nostro
+store** e li ho scelti io. **Non ho misurato la latenza** come tale: i 42,1 s sono il giro
+completo, warm compreso.
+
+**Banco**: `porta_comp_domande.py`, dati in `comp_domande.json` (scratchpad).
+**Io misuro, non curo.**
