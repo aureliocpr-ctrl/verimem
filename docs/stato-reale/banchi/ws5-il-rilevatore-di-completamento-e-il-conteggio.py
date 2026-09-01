@@ -59,9 +59,42 @@ significa** «becca 68 confabulazioni» — significa «**tocca** 68 claim», e 
 quei 68 fossero conteggi **non lo sappiamo**. E' la forma «*classe senza
 denominatore*»: il numeratore c'era, la popolazione no.
 
-🔑 **④ A VETARE NON E' `L1.13` DA SOLO, E' LA COPPIA CON `L4.2`.** `P3` ha `L1.13` e
-**passa**; `N1`-`N3` hanno `L1.13` **e** `L4.2` e cadono. E `L4.2` non compare quando il
-numero **precede** il sostantivo. ⇒ Riscrivendo lo stesso dato con il numero davanti::
+🪞 **④ AVEVO SCRITTO «a vetare e' la COPPIA `L1.13`+`L4.2`». E' SBAGLIATO, e la misura
+che lo smonta e' nella tabella `R` qui sotto**: `R4` cade con **solo** `L1.13`. Rifatto
+l'isolamento con tre controlli **senza** parole di completamento::
+
+    SENZA la parola (controlli)                    esito   ground  layer
+    e  «Nella coda ci sono 895 run in attesa.»     passa     99.6  -
+    f  «I run in attesa sono 895.»                 passa     99.8  L4.2
+    g  «… 895 run in attesa lasciati da me.»       passa     99.8  -
+
+    CON «conclusi»
+    a  numero prima, di terzi                      passa     99.8  L1.13,
+                                                                   L1-domain-precision-observe
+    b  numero prima, DA ME                         CADE      99.6  L1.13
+    c  numero dopo, di terzi                       CADE     100.0  L1.13, L4.2
+    d  numero dopo, DA ME                          CADE     100.0  L1.13, L4.2
+
+✅ `f` **prova che `L4.2` da solo NON veta** (c'e', e il fatto passa a 99.8) — che e'
+esattamente cio' che `vicinato_del_valore.py` dichiara. ✅ `g` prova che **«da me» da
+solo non veta**. ⇒ **A vetare e' `L1.13`**, e il fatto passa **solo quando compare
+`L1-domain-precision-observe`**, il marcatore che tiene l'hit **advisory**.
+
+🔑 **LA CATENA, e chiude il limite che avevo dichiarato**: **la forma del claim decide
+l'attribuzione · l'attribuzione decide il declassamento · il declassamento decide se
+`L1.13` veta.** Il declassamento compare **solo in `a`** — numero davanti **e** fatto di
+terzi; basta togliere uno dei due (`b` «da me», `c` numero dopo) e sparisce. Lo dice il
+prodotto stesso nel pannello di `trust`: «*the subject reads as a third-party
+professional fact, so the L1 keyword hit was kept advisory […] attribution=agent_claim
+— reads as the agent's own*».
+
+✅ **E cosi' `b` mostra che il presidio FUNZIONA**: «*42 job conclusi **da me***» viene
+vetato a grounding 99.6, ed e' giusto che lo sia.
+
+⇒ **La raccomandazione delle 21:23 regge, con la ragione corretta**: il numero davanti
+paga **perche' fa leggere il claim come fatto di terzi**, non perche' zittisce `L4.2`.
+
+📌 Riscrivendo lo stesso dato con il numero davanti::
 
     R1 numero prima, VERO       «Nella coda ci sono 42 job conclusi.»    passa   99.8
     R2 numero prima, SCAMBIO    «… 895 job conclusi.»                    CADE     7.9  L4.2
