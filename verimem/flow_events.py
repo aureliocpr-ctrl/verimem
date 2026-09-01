@@ -250,6 +250,44 @@ def _build() -> str:
     return _BUILD
 
 
+_RUN: str | None = None
+
+
+def _run() -> str:
+    """DA QUALE ESECUZIONE viene questo evento — una volta per processo.
+
+    Il fratello di :func:`_build`, per la stessa ragione e su un altro asse:
+    quello dice da quale CODICE viene una riga, questo da quale PROCESSO.
+
+    IL CASO CHE LO HA RESO NECESSARIO, misurato il 2026-09-02 sul journal di
+    casa: sulla superficie ``mcp`` il caricamento del giudice registra **686
+    ``start`` e 5 ``ready``**, contro 77 e 67 della CLI. Il dato e' netto e
+    **non si puo' interpretare**, perche' «686 avvii» ha due letture opposte —
+    *un processo che riparte 686 volte* oppure *686 processi che partono una
+    volta* — e nessun campo permetteva di distinguerle. Con piu' istanze che
+    lavorano insieme, gli eventi di processi diversi si mescolano nello stesso
+    file e ogni pattern temporale diventa inattribuibile.
+
+    ⚠️ NON E' IL PID DA SOLO: i pid si riciclano, e due esecuzioni successive
+    possono riceverne lo stesso. L'impronta lega il pid all'ISTANTE di avvio,
+    cosi' due esecuzioni restano distinte anche quando il sistema riusa il
+    numero. Ed e' un'impronta corta come le altre due — questo campo finisce
+    in file che ci scambiamo — non un numero che dice quale processo di quale
+    macchina: risponde a «e' lo stesso di prima?», non a «chi sei».
+    """
+    global _RUN
+    if _RUN is None:
+        try:
+            import hashlib
+            import time as _t
+            seme = f"{os.getpid()}-{_t.time()}"
+            _RUN = hashlib.blake2s(seme.encode("utf-8"),
+                                   digest_size=4).hexdigest()
+        except Exception:  # noqa: BLE001 — un'impronta non rompe un'emissione
+            _RUN = "unknown"
+    return _RUN
+
+
 def _ambient() -> dict[str, Any]:
     # "unknown", not "sdk": the old default was the NAME OF A REAL SURFACE,
     # so 9357 of 9603 real-corpus writes claimed "sdk" while 438 MCP write
@@ -267,6 +305,10 @@ def _ambient() -> dict[str, Any]:
         # meta' della stessa domanda — QUALE memoria, QUALE codice — e oggi
         # tre indagini si sono fermate sulla seconda meta' mancante.
         "build": _build(),
+        # E la terza: QUALE ESECUZIONE. Senza, «686 avvii del giudice» puo'
+        # essere un processo che riparte 686 volte o 686 processi che partono
+        # una volta — due storie opposte, indistinguibili dallo stesso dato.
+        "run": _run(),
     }
     actor = (os.environ.get("VERIMEM_ACTOR", "").strip()
              or os.environ.get("ENGRAM_ACTOR", "").strip())
