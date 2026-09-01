@@ -38,6 +38,27 @@
 #   USO:   bash scripts/smoke_utente_wsl.sh /percorso/al/verimem-X.Y.Z-py3-none-any.whl
 #   da:    una shell WSL (Ubuntu), NON da PowerShell e NON da Git Bash.
 #
+# ═══ DOVE SI PRENDE IL WHEEL CANDIDATO — e come si sbaglia ═══
+# Non va costruito a mano: il wheel giusto e' quello che la CI ha gia' costruito
+# per IL COMMIT CHE SI PUBBLICA. Il job `build (sdist + wheel)` lo carica come
+# artefatto `dist`.
+#
+#     gh run list --workflow=ci.yml --branch=hotfix/0.7.1 --limit 5
+#     gh api "repos/:owner/:repo/actions/runs/<ID>/artifacts" --jq '.artifacts[].name'
+#     gh run download <ID> -n dist -D /tmp/dist    # poi passa /tmp/dist/*.whl
+#
+# ⚠️ LA TRAPPOLA, ed e' concreta: piu' run dello stesso branch hanno artefatti, e
+# **quello pronto non e' quello giusto**. Misurato il 02/09 alle 00:08:
+#
+#     #2557 (commit ff29d7ea)  artefatti: 1  →  dist, 4455781 byte, NON scaduto
+#     #2653 (commit 08f38256)  artefatti: 0  →  ancora in coda
+#
+# `#2557` e' il run in cui `plugin.json` diceva ancora `0.7.0`: il suo wheel e'
+# **pronto e sbagliato**. `#2653` porta la correzione e non ha ancora prodotto
+# nulla. Chi ha fretta scarica quello che c'e'. ⇒ **Il passo 4 stampa la versione
+# installata: confrontala con quella che stai per taggare, e se non combacia
+# FERMATI** — e' l'unico controllo che intercetta questo errore prima di PyPI.
+#
 # =============================================================================
 
 set -u
@@ -118,6 +139,23 @@ cd "$HOME" || exit 3   # fuori dal sorgente: e' il punto dell'esercizio
 python -c "import verimem, sys; print('  versione installata:', verimem.__version__)" 2>/tmp/smoke_import.log
 riga 4 "import verimem fuori dal repo" $?
 [ -s /tmp/smoke_import.log ] && tail -3 /tmp/smoke_import.log
+
+# ── PASSO 4b — LA VERSIONE INSTALLATA E' QUELLA CHE STAI PUBBLICANDO? ────────
+# Un commento che dice «confrontala» e' una speranza; questo e' un presidio.
+# Passa la versione attesa come SECONDO argomento e il passo diventa un veto:
+#   bash scripts/smoke_utente_wsl.sh /tmp/dist/verimem-0.7.1-py3-none-any.whl 0.7.1
+# Senza il secondo argomento il controllo NON gira e lo dichiara — cosi' nessuno
+# scambia «non verificato» per «verificato».
+ATTESA="${2:-}"
+if [ -n "$ATTESA" ]; then
+  INSTALLATA="$(python -c 'import verimem; print(verimem.__version__)' 2>/dev/null)"
+  [ "$INSTALLATA" = "$ATTESA" ]
+  riga 4b "versione installata ($INSTALLATA) == attesa ($ATTESA)" $?
+else
+  echo "  PASSO 4b  versione attesa NON indicata: il controllo non e' stato eseguito."
+  echo "            ⚠️ NON e' un OK. Rilancia col secondo argomento se stai per pubblicare."
+  ESITI+=("4b:non-eseguito")
+fi
 
 # ── PASSO 5 — L'ISOLAMENTO SI VERIFICA GUARDANDO DOVE FINISCE IL FILE ────────
 # Non basta aver impostato le variabili: si scrive e si guarda il percorso reale.
