@@ -15868,3 +15868,87 @@ I due che restano **verdi** disattivandola sono il fail-open e **il presidio**: 
 ⚠️ **Questa guardia da sola non basta, e il limite lo avevo già misurato**: chiude la strada per cui ci siamo arrivati **noi** — la persistenza — **non la classe**. Il docstring di `guardian` dice «1 fatto → 0.0, 6 fatti → 0.9166»: **un tenant nuovo lo zero se lo calcola al volo** e non ha nessun file da non persistere. I pezzi (ii)/(iv)/(v) partano da lì. · **Non ho eseguito `critic-orchestrator`**: fa `git stash` per testare pre-fix, ed è l'incidente E1 in immunizzazione su un albero condiviso — chi lo esegue **da solo** lo faccia. · Sotto pytest l'embedder è lo **stub SHA-256**: quello che i test verificano è la **logica della guardia** (scrive / non scrive), non il valore numerico del pavimento.
 
 **Firme su questa cella**: ws6 (cura + test). **Non ne rivendico altre.** Il RED viene dal [60](60-la-transizione-del-pavimento-colta-mentre-avveniva.md), che è mio: **una cura firmata solo da chi ha trovato il difetto ha una firma sola**, e va controfirmata.
+
+---
+
+## 2026-09-01 20:15 — ws1 · IL PICCO È **AL CONTEGGIO**, NON AL TEMPO (predizione mia caduta) — E I «16,6 s SENZA EVENTI» CHE HO PUBBLICATO ALLE 20:00 **SONO L'IMPORT DI `torch`, CHE ERA NEL MIO STESSO OUTPUT DUE RIGHE SOPRA**. ⇒ `elapsed_ms` del `flow.warmup` dichiara **il 10%** del costo che innesca
+
+**Livello** porta pubblica `Memory.add`, log `flow.*` a INFO + stdout · **Perimetro** 20
+scritture, regime `off`, **stesse identiche coppie SNLI** del banco delle 19:58, unica
+differenza `time.sleep(2.0)` fra le scritture · **Istante** 2026-09-01 20:09–20:10 ·
+**Regime** tutte le variabili poppate, `ENGRAM_LOCAL_NLI_MODEL` su un nome inesistente,
+RAM 9,9 GB · **Autorità**: mandato **riferito**; ⚠️ **la barra NON è più vuota** — alle
+20:03 e ancora alle 20:07 contiene, *in composizione*, «*bro sei fermo*» (segnalato sul
+canale alle 20:08) · **0.7.6**.
+
+**Paga il confondente dichiarato alle 20:00** («*non so se cada sempre alla scrittura 15 o
+dipenda dal tempo trascorso — i due sono confusi in questo banco*»).
+
+### ⚖️ La predizione era scritta prima, ed è CADUTA (seconda volta in due giri)
+
+Avevo predetto: «*è il **tempo** — un warm proattivo parte tipicamente da un timer o dal
+completamento di un'altra inizializzazione, non da un contatore di scritture*», con la
+soglia esplicita: se è il tempo il picco deve cadere intorno alla **#02–#03**.
+
+| | banco 19:56 (nessuna pausa) | banco 20:09 (pausa 2 s) |
+|---|---|---|
+| scrittura col picco | **#15** | **#15** |
+| **istante** in cui quella scrittura parte | **t = 5,0 s** | **t = 35,8 s** |
+| durata del picco | **19 137,3 ms** | **19 090,7 ms** |
+| picco minore | #10 (921,6 ms) | **#10** (1 142,5 ms) |
+
+⇒ **stessa scrittura, stessa durata (−0,2%), a sette volte il tempo trascorso.** È il
+**conteggio**, e lo conferma il picco minore, che cade alla **#10** in entrambi. **La mia
+predizione è falsificata.**
+
+### 🔴 E ORA LA CORREZIONE ALLA MIA CELLA DELLE 20:00 — due punti, li porto io
+
+**(a) «*i 16,6 s che precedono `phase=start` NON HANNO EVENTI*» è FALSO.** L'evento c'era,
+**nel mio stesso output, due righe sopra quella che ho citato** (`picco.out` riga 49):
+
+```
+19:56:14.639  W0901 … torch\utils\flop_counter.py:29] triton not found …
+19:56:18.869  flow.warmup  phase=start   what=moat-judge
+```
+
+Ho letto la riga del warmup e **non quella immediatamente precedente**. Il difetto era nel
+lettore, non nello strumento. *(In più il mio handler su `StringIO` non ha mai catturato
+nulla — `structlog` scrive su stdout — e il conteggio finale «occorrenze di warmup: 0» lo
+denuncia: le righe le vedevo **perché erano su stdout**, non perché il buffer funzionasse.)*
+
+**(b) Il titolo «il picco ERA il warmup del moat-judge» è troppo largo.** Il warmup
+**dichiarato** è **2 s su 19**: sta **dentro** il picco, alla fine. **La scomposizione**,
+identica nei due banchi:
+
+| tratto | 19:56 | 20:09 |
+|---|---|---|
+| inizio #15 → riga `torch` | **12,39 s** | **12,19 s** |
+| riga `torch` → `phase=start` | 4,23 s | 4,36 s |
+| `phase=start` → `phase=ready` (**`elapsed_ms`**) | **1,93 s** | **2,00 s** |
+| `phase=ready` → `flow.write` | 0,58 s | 0,54 s |
+| **totale** | **19,13 s** | **19,09 s** |
+
+### 📌 IL REPERTO NUOVO, PER CHI DECIDE
+
+**`elapsed_ms=1925,2` / `1992,0` è il 10% del costo reale.** Il cronometro parte a
+`phase=start`, cioè **dopo** che `torch` e le sue dipendenze sono già stati importati —
+che è il tratto grosso (**12,2–12,4 s**, poi altri ~4,3 s prima di `phase=start`, e infine
+il caricamento dei pesi, `Loading weights: 202/202`, che è ciò che `elapsed_ms` misura).
+⇒ **chi legge `elapsed_ms` per stimare l'impatto del warmup sbaglia di un fattore dieci**,
+e lo sbaglia in un log che sembra fatto apposta per essere letto così. Il numero non è
+falso: misura il caricamento dei pesi. **È l'unità a non essere quella che il nome
+suggerisce** — e questa è la quarta volta in una settimana che inciampo, o faccio
+inciampare, sulla differenza fra un pezzo interno e il costo alla porta.
+
+### Cosa NON prova
+
+**Non ho cronometrato l'import di `torch` direttamente**: deduco che i 12,2–12,4 s siano
+l'import dal fatto che **l'unica riga in quel tratto è di `torch`** e che prima della #15
+`torch` non aveva mai scritto nulla. Non ho isolato **perché** proprio la **#15**: il
+conteggio è dimostrato, il **meccanismo** (una soglia a 16 fatti? il primo consolidamento?
+un indice che si ricostruisce?) **no**. n=2 banchi, **una macchina sola**, un solo regime.
+Il picco minore alla #10 lo riporto come **conferma del conteggio**, non come fenomeno
+misurato: non l'ho indagato. Non ho verificato se un `warmup` esplicito prima del lavoro
+sposti o annulli il picco.
+
+**Banchi**: `porta_picco_pausa.py`, output `picco_pausa.out` (scratchpad). **Io misuro, non curo.**
