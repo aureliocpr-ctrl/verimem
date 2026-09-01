@@ -15611,3 +15611,75 @@ sono due affermazioni diverse e vanno tenute distinte.
     MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.claude-plugin/plugin.json" | grep -i version
     git grep -l 'soggetto_valore' -- 'verimem/*' 'engram/*' 'hippoagent/*' | grep -v soggetto_valore.py
     python -c "from verimem.valore_non_nella_fonte import valori_non_nella_fonte as V; F=\"Il totale e' 2556.\"; [print(('SEGNALATO' if [a.valore for a in V(c,F)] else 'MUTO'), c) for c in ['Alla riga 999.', \"Il valore e' 999.\"]]"
+
+---
+
+## 2026-09-01 19:55 — ws1 · IL COSTO DEL MOAT SEMANTICO: **23,5 s UNA VOLTA, +26 ms A SCRITTURA**. IL DEFAULT «SOLO SE IL MODELLO C'È» HA UNA RAGIONE REALE MA **MODESTA** — E NON È IL TEMPO DI ESECUZIONE
+
+**Livello** porta pubblica `Memory.add`, cronometro attorno alla chiamata · **Perimetro**
+40 scritture per regime (20 coppie SNLI, **stesso filtro jaccard ≤0,34** del banco che ha
+prodotto il 12/30) · **Istante** 2026-09-01 19:47–19:52 · **Regime** un processo per
+regime, tutte le variabili poppate, RAM 8,4→7,1 GB · **Autorità**: mandato **riferito**
+(barra vuota anche alle 19:47) · `verimem.__version__` **0.7.6**, cwd = scratchpad.
+
+**Paga l'ultimo limite del reperto SNLI** («*non ho misurato il costo in TEMPO*», 31/08 05:25).
+
+### ⚠️ PRIMA IL DIFETTO DEL MIO MISURATORE, perché cambia la lettura
+
+Avevo scritto il presidio «**separa il cold load dal regime**» e **l'ho applicato male**:
+ho assunto che il cold load fosse **la prima scrittura**. **Non lo è.** La serie completa:
+
+```
+off       picchi >1500 ms alle scritture:  0 (2 774 ms)              · 15 (19 549 ms)
+enforce   picchi >1500 ms alle scritture:  0 (2 530 ms) · 1 (23 524 ms) · 15 (2 927 ms)
+```
+
+⇒ **il picco alla scrittura 1 esiste SOLO in `enforce`**: è il caricamento del
+DeBERTa-large, che scatta alla **seconda scrittura dello stesso topic** — la prima che
+invoca L3 (prima non ci sono siblings da confrontare). **La prima scrittura in assoluto
+costa uguale nei due regimi** (2,5 contro 2,8 s): quella è inizializzazione comune.
+
+### Il numero, con i picchi isolati invece che mediati
+
+| | `off` | `enforce` |
+|---|---|---|
+| cold load **attribuibile al layer L3** | — | **23,5 s** (scrittura 1, assente in `off`) |
+| **mediana a regime** (esclusi i picchi) | **108,5 ms** *(n=38)* | **134,1 ms** *(n=37)* |
+| p95 a regime | 446,9 ms | 423,1 ms |
+
+⇒ **+25,6 ms sulla mediana, cioè +24%.** ✅ **P-COLD confermata** («decine di secondi»:
+23,5 s).
+
+### ⚠️ E LA PARTE DELLA MIA PREDIZIONE CHE NON REGGE — la scrivo per prima
+
+Avevo predetto «delta piccolo in assoluto ma **grande in rapporto**», appoggiandomi al
+«*~13 ms*» del percorso lessicale (commento a `anti_confab_gate.py:2077`). **Il confronto
+non si può fare**: alla porta la mediana `off` è **108,5 ms**, non 13 — perché `add()` fa
+molto altro (embedding, store, L1, moat). **Il 13 ms è un pezzo interno, non l'unità che
+misuro io.** ⇒ «+24% sulla porta» è **moderato**, non «grande in rapporto»: **P-REGIME
+regge solo a metà**, e la metà che cade è quella che avevo dedotto accostando due unità
+diverse — lo stesso errore che ho ritirato due volte questa settimana.
+
+### 📌 PER CHI DECIDE — e il verso è contro la mia aspettativa
+
+Pensavo che il costo giustificasse fortemente il default «`enforce` solo se il modello c'è».
+**Il costo ricorrente è basso** (+26 ms a scrittura). ⇒ **la ragione forte del default NON
+è il tempo di esecuzione: è il download da ~1,6 GB** che `warmup` non fa. Detto altrimenti:
+**chi ha già il modello paga pochissimo per tenere acceso un layer che prende 7
+contraddizioni in più su 30** (`p=0,0233`, zero falsi allarmi). **Il costo vero sta prima
+dell'esecuzione, non dentro.**
+
+### Cosa NON prova
+
+**Il picco alla scrittura 15 (19,5 s in `off`, 2,9 s in `enforce`) NON so attribuirlo**:
+c'è in **entrambi** i regimi, quindi **non è il layer semantico**, ma non ho isolato che
+cosa sia (candidati non verificati: il gate CE, l'embedder, una soglia interna). **Lo
+dichiaro come non spiegato invece di ipotizzare.** n=37-38 per regime **su una macchina
+sola**, con p95 ~430 ms: la varianza è alta e questi sono **ordini di grandezza, non
+specifiche**. Il costo è misurato **su topic da 2 fatti**: con topic grandi il layer
+confronta più siblings (`_live_topic_siblings(limit=200)`) e **il delta crescerebbe** —
+non l'ho misurato. Nessun confronto appaiato scrittura-per-scrittura: i due regimi girano
+in **processi diversi**, quindi le due serie non sono appaiate.
+
+**Banchi**: `porta_costo.py`, dati in `costo_{off,enforce}.json` (scratchpad).
+**Io misuro, non curo.**
