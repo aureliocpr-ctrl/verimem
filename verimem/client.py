@@ -1216,9 +1216,19 @@ class Memory:
         # un motivo che non ha nulla a che vedere con l'evidenza — l'encoder era
         # lento — e chi legge non ha modo di distinguerlo da un'astensione vera.
         # Trovato usando il prodotto sul corpus vero: `[0.00]` su ogni riga.
+        # ⚠️ IL PRIMA DEL TAGLIO SI CONSERVA, e il motivo e' il pezzo (i) del
+        # blocco CURA-PAVIMENTO: senza questi due valori l'avviso a valle non
+        # puo' dire ne' QUANTI ne ha tagliati ne' quanto valeva il migliore —
+        # `out` e' stato riassegnato e il prima e' perso. Il massimo ricalcolato
+        # dopo varrebbe `0.0` su una lista vuota, cioe' un numero INVENTATO: il
+        # punteggio migliore esisteva, era solo sotto la soglia.
+        _n_prima = len(out)
+        _best_prima = max((float(i.get("score") or 0.0) for i in out),
+                          default=0.0)
         if min_relevance and not _degradato:
             pavimento = float(min_relevance)
             out = [i for i in out if float(i.get("score") or 0.0) >= pavimento]
+        _tagliati = _n_prima - len(out)
         # E IL DEGRADO SI DICHIARA, sempre: un ranking per parole chiave che si
         # spaccia per un ranking per somiglianza è la stessa classe di difetto
         # che questo prodotto passa la notte a curare.
@@ -1267,22 +1277,75 @@ class Memory:
         # La taratura del pavimento dipende dal corpus: come veto perderebbe un
         # fatto vero, come avviso costa un avviso. Chi vuole il taglio ha
         # `min_relevance`, che continua a funzionare esattamente come prima.
+        # PEZZO (i) — L'AVVISO MANCAVA PROPRIO DOVE SERVE DI PIU'.
+        #
+        # La condizione era `if out and _pav and …`: con `out` VUOTO l'avviso
+        # non usciva, cioe' **quando il pavimento aveva tagliato tutto**. Il
+        # commento qui sopra dice «SI DICHIARA, NON SI TAGLIA … chi vuole il
+        # taglio ha `min_relevance`»: le due funzioni sono pensate come
+        # alternative, e nel caso `min_relevance="auto"` si ANNULLAVANO a
+        # vicenda — chi chiedeva il taglio automatico perdeva la dichiarazione,
+        # che era il punto. RED di produzione (corpus reale, pavimento 0.8781
+        # dopo il ricalcolo automatico delle 02:52 del 2026-08-31): una domanda
+        # senza risposta serviva ZERO fatti e TACEVA.
+        #
+        # ⚠️ Il difetto era INVISIBILE prima di quel ricalcolo: col pavimento a
+        # 0.0000 il filtro non scattava e `out` non si svuotava mai. C'era da
+        # sempre, e nessun banco poteva vederlo.
+        #
+        # 🔑 DUE `out` VUOTI, DUE SIGNIFICATI, e il criterio li separa senza
+        # bandiere: `_best_prima` e' `0.0` quando la ricerca non ha trovato
+        # NULLA (nessun taglio, nessun avviso) ed e' `> 0` quando qualcosa
+        # c'era ed e' stato tagliato. Dire «ho tagliato tutto» dove non si e'
+        # tagliato niente sarebbe il difetto opposto: rumore al posto del
+        # silenzio.
+        # ⚠️⚠️ LA TERZA FACCIA, e la lettura del codice NON la mostrava: l'avviso
+        # era ancorato al pavimento AUTO, non a quello che ha davvero TAGLIATO.
+        # Misurato sul banco: su uno store piccolo `_auto_relevance_floor()`
+        # vale `0.0`, quindi con `min_relevance=0.99` che taglia tutto la
+        # condizione `if _pav and …` resta FALSA e la porta tace lo stesso. E
+        # quando entrambi sono attivi (auto 0.8781, esplicito 0.5) l'avviso
+        # riporterebbe **la soglia che non ha morso**. ⇒ La soglia da dichiarare
+        # e' quella APPLICATA: `min_relevance` se ha tagliato, il pavimento
+        # calibrato quando non si e' tagliato niente e i risultati si servono
+        # comunque.
         try:
             _pav = self._auto_relevance_floor()
-            _best = max((float(i.get("score") or 0.0) for i in out), default=0.0)
         except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
             return Risultati(out, trattenuti=self._trattenuti_safe(query))
+        _soglia = (float(min_relevance) if (_tagliati and min_relevance)
+                   else (float(_pav) if _pav else 0.0))
+        _tutto_tagliato = not out and _tagliati > 0
+        _nota = (
+            ("la soglia di rilevanza calibrata su questo corpus ha TAGLIATO "
+             f"tutti i {_tagliati} risultati trovati: nessuno la superava, "
+             "quindi probabilmente la risposta NON e' in memoria. Qui sotto "
+             "non c'e' niente perche' e' stato tagliato, non perche' la "
+             "ricerca non abbia prodotto nulla.")
+            if _tutto_tagliato else
+            ("nessun risultato supera la soglia di rilevanza "
+             "calibrata su questo corpus: probabilmente la "
+             "risposta NON e' in memoria. I risultati sono qui "
+             "sotto, non tagliati — decidi tu."))
         return Risultati(
             out,
             trattenuti=self._trattenuti_safe(query),
             sotto_il_pavimento=(
-                {"pavimento": round(float(_pav), 4),
-                 "score_migliore": round(_best, 4),
-                 "nota": ("nessun risultato supera la soglia di rilevanza "
-                          "calibrata su questo corpus: probabilmente la "
-                          "risposta NON e' in memoria. I risultati sono qui "
-                          "sotto, non tagliati — decidi tu.")}
-                if out and _pav and _best < float(_pav) else None),
+                {"pavimento": round(_soglia, 4),
+                 "score_migliore": round(_best_prima, 4),
+                 "tagliati": _tagliati,
+                 "nota": _nota}
+                # ⚠️ LA GUARDIA E' IL CONTEGGIO, NON IL PUNTEGGIO, e la prima
+                # stesura sbagliava proprio qui: usare `_best_prima` come prova
+                # che «qualcosa c'era» rompe il caso in cui i risultati ci sono
+                # e valgono `0.0` — col ranking DEGRADATO (o sotto lo stub dei
+                # test) ogni score e' `0.0`, e quello zero significa
+                # «similarita' NON MISURATA», non «nessuna similarita'». Con la
+                # guardia sbagliata l'avviso spariva da un caso che funzionava
+                # da prima: `test_il_recall_rispondeva_anche_quando_non_sapeva`
+                # e' diventato rosso e l'ha detto.
+                if _soglia and _n_prima and _best_prima < _soglia
+                else None),
         )
 
     def count(self, *, query: str | None = None, topic: str | None = None,
