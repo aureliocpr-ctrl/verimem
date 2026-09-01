@@ -73,18 +73,61 @@ def test_e_lo_fa_SENZA_ricalcolare(mem, tmp_path, monkeypatch):
 def test_il_corpus_che_CRESCE_lo_invalida(mem, tmp_path):
     """⚠️ IL PRESIDIO CHE CONTA. Il pavimento è calibrato SU QUEL corpus: se il
     corpus cambia in modo sostanziale e il valore resta congelato, serviamo un
-    pavimento sbagliato per sempre — che è peggio di uno lento."""
+    pavimento sbagliato per sempre — che è peggio di uno lento.
+
+    🪞 AGGIORNATA il 2026-09-02 alle 01:06 da chi ha tolto il ricalcolo dalla
+    lettura, e la frase qui sopra — che NON è mia — è l'obiezione a cui quella
+    cura doveva rispondere prima di poter esistere. Va detto per intero.
+
+    IL FATTO NUOVO che questa cella non poteva conoscere: il ricalcolo non
+    stava in un ramo raro, stava nel percorso di OGNI `search` (l'avviso di
+    rilevanza chiama `_auto_relevance_floor()` fuori da ogni `if`). Quindi
+    «uno lento» non era una lettura lenta ogni tanto: erano **24169 ms sul
+    corpus vero dentro una ricerca qualunque**, anche una che non chiedeva
+    nessun pavimento.
+
+    ⚖️ LA RISPOSTA NON È «congeliamolo», che sarebbe ignorare l'obiezione:
+    l'invalidazione **c'è ancora e si osserva qui** (`_floor_stantio`), e il
+    rimedio è ESPLICITO e arrivato nello stesso commit — `verimem doctor` lo
+    dichiara con il rimedio, `verimem warmup` lo ricalcola dove il costo è
+    atteso. Il banco che lo prova è
+    `tests/test_il_pavimento_vecchio_lo_dice_il_doctor.py`.
+
+    ⚠️ E LA CELLA PUÒ ANCORA FALLIRE: se la cura avesse spento l'invalidazione
+    invece di spostarne l'effetto, `_floor_stantio` resterebbe False e questa
+    diventerebbe rossa. Se chi l'ha scritta non è d'accordo con lo scambio, il
+    posto per dirlo è il canale: la decisione è di chi mantiene questa porta,
+    non di chi passa.
+    """
     mem._auto_relevance_floor()
+    assert getattr(mem, "_floor_stantio", None) is False, (
+        "appena calcolato non può essere vecchio: la premessa non regge")
     for i in range(60):
         mem.add(f"Il deposito Z-{i:03d} ha {200 + i} metri quadrati.",
                 topic="az/dep")
     m2 = Memory(str(tmp_path / "s.db"))
     dati = json.loads((tmp_path / "s.db.floor.json").read_text(encoding="utf-8"))
     n_salvato = dati["n_facts"]
+
     m2._auto_relevance_floor()
+
+    assert getattr(m2, "_floor_stantio", None) is True, (
+        "il corpus è cresciuto e il pavimento non risulta invalidato: la cura "
+        "ha spento l'invalidazione invece di spostarne l'effetto")
+    fermo = json.loads((tmp_path / "s.db.floor.json").read_text(encoding="utf-8"))
+    assert fermo["n_facts"] == n_salvato, (
+        "la LETTURA ha ricalcolato e riscritto il file: è il costo che doveva "
+        "uscire dal percorso di chi cerca")
+
+    # E IL RIMEDIO ESISTE DAVVERO, che è ciò che rende accettabile lo scambio:
+    # una capacità che nessuno chiama non è una risposta all'obiezione.
+    from verimem.relevance_floor import rinfresca_se_stantio
+    rifatto, _ = rinfresca_se_stantio(m2)
+    assert rifatto is True
     dopo = json.loads((tmp_path / "s.db.floor.json").read_text(encoding="utf-8"))
     assert dopo["n_facts"] > n_salvato, (
-        "il corpus e' cresciuto e il pavimento non e' stato ricalcolato")
+        "il rinfresco esplicito non ha aggiornato il pavimento: allora sì che "
+        "resterebbe congelato per sempre")
 
 
 def test_un_file_illeggibile_non_rompe_nulla(mem, tmp_path):

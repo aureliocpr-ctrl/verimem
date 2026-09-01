@@ -617,6 +617,31 @@ def warmup(
                 "[dim]· shared encode daemon spawning in the background "
                 "(warms from cache in ~20s; all MCP servers then share it)[/]"
             )
+    # IL PAVIMENTO DI RILEVANZA — l'ultimo costo capace di smentire la riga che
+    # segue. La lettura non lo ricalcola piu' (24169 ms sul corpus vero di
+    # 14382 fatti, e la chiamata sta nel percorso di OGNI `search`): serve il
+    # valore persistito anche quando il corpus e' cresciuto. Qualcuno pero'
+    # deve rinfrescarlo, e questo comando esiste apposta — qui il costo e'
+    # atteso e annunciato, non e' una sorpresa dentro una ricerca.
+    try:
+        from .client import Memory as _Mem
+        from .relevance_floor import rinfresca_se_stantio
+        # `Memory()` SENZA argomenti, come ogni altro comando di questa CLI:
+        # `CONFIG` si costruisce all'import e non vede una data-dir impostata
+        # dopo — la trappola che `doctor.py:157` documenta gia'.
+        _mem_pav = _Mem()
+        console.print("Checking the relevance floor…")
+        t3 = time.time()
+        _rifatto, _pav = rinfresca_se_stantio(_mem_pav)
+        if _rifatto:
+            console.print(f"[green]✓ relevance floor recomputed[/] "
+                          f"{_pav:.4f} in {time.time() - t3:.1f}s "
+                          "(the corpus had grown past the drift)")
+        else:
+            console.print(f"[green]✓ relevance floor current[/] {_pav:.4f}")
+    except Exception as exc:  # noqa: BLE001 — il pavimento non fa cadere il warmup
+        console.print(f"[dim]· relevance floor skipped ({type(exc).__name__}: "
+                      f"{exc}) — recall still works[/]")
     console.print("[bold green]Warmup complete — Verimem recall will be instant.[/]")
 
 

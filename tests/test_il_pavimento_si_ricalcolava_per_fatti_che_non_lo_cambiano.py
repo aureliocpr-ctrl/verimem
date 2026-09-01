@@ -97,14 +97,32 @@ def test_i_fatti_quarantinati_NON_innescano_il_ricalcolo(memoria, monkeypatch):
         "24169 ms misurati")
 
 
-def test_CONTROLLO_i_fatti_SERVIBILI_lo_innescano_ancora(memoria, monkeypatch):
+def test_CONTROLLO_i_fatti_SERVIBILI_lo_INVALIDANO_ancora(memoria, monkeypatch):
     """⚠️ LA POPOLAZIONE OPPOSTA, e senza di essa la cura sarebbe un disastro
     silenzioso: se smettesse di invalidare del tutto, il pavimento resterebbe
-    fermo su un corpus che cambia — un valore vecchio servito come calibrato."""
+    fermo su un corpus che cambia — un valore vecchio servito come calibrato.
+
+    🪞 AGGIORNATA il 2026-09-02 alle 00:29, e va detto perche' modificare un
+    proprio test per farlo passare e' la cosa piu' pericolosa che esista.
+    **La garanzia non e' cambiata, e' cambiato DOVE si osserva.** Prima
+    l'invalidazione si vedeva come un ricalcolo dentro la lettura; ma quel
+    ricalcolo costa 24169 ms sul corpus vero e stava nel percorso di OGNI
+    `search`, quindi lo pagava chi stava solo cercando. Ora la lettura serve il
+    valore che ha e alza `_floor_stantio`: l'invalidazione c'e' ancora, e a
+    ricalcolare e' chi ha il costo atteso (`verimem warmup`).
+
+    ⚠️ LA CELLA PUO' ANCORA FALLIRE, ed e' l'unica cosa che la rende una
+    verifica: se la cura avesse spento l'invalidazione — invece di spostarne
+    l'effetto — `_floor_stantio` resterebbe False e questa cella diventerebbe
+    rossa. Il contrasto col caso dei quarantinati (cella sopra) regge il
+    reperto del pezzo (iv): li' NON deve alzarsi, qui si'.
+    """
     memoria.add("Il canone del contratto Rossi e' 900 euro al mese.",
                 source="Contratto Rossi: canone 900 euro al mese.",
                 topic="iv/ok")
     memoria._auto_relevance_floor()
+    assert getattr(memoria, "_floor_stantio", None) is False, (
+        "appena calcolato non puo' essere stantio: la premessa non regge")
 
     memoria.add("La penale del contratto Bianchi e' 250 euro.",
                 source="Contratto Bianchi: penale 250 euro.", topic="iv/ok")
@@ -115,9 +133,12 @@ def test_CONTROLLO_i_fatti_SERVIBILI_lo_innescano_ancora(memoria, monkeypatch):
     memoria._floor_cache = None
     memoria._auto_relevance_floor()
 
-    assert ricalcoli[0] == 1, (
+    assert getattr(memoria, "_floor_stantio", None) is True, (
         "due fatti SERVIBILI non hanno invalidato il pavimento: la cura ha "
         "spento l'invalidazione invece di correggerne la popolazione")
+    assert ricalcoli[0] == 0, (
+        "la LETTURA ha ricalcolato: l'invalidazione deve marcare il valore "
+        "come vecchio, non far pagare 24 secondi a chi sta cercando")
 
 
 def test_il_file_persistito_dichiara_QUALE_popolazione_ha_contato(memoria):

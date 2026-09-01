@@ -1394,6 +1394,68 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception as e:  # noqa: BLE001 — un doctor non crolla su un check
         add("confidence-vs-verifica", WARN, f"probe failed: {e}")
 
+    # -- relevance-floor -------------------------------------------------------
+    # IL PAVIMENTO SERVITO E' VECCHIO? La lettura non lo ricalcola piu' (la
+    # stima costa 24169 ms sul corpus vero di 14382 fatti, e la chiamata sta
+    # nel percorso di OGNI `search`): serve il valore persistito anche quando
+    # il corpus e' cresciuto oltre la deriva del 5%. Il prezzo di quella scelta
+    # e' che il valore puo' restare indietro, e senza qualcuno che lo DICA
+    # «appena misurato» e «vecchio di sei ore» sono indistinguibili — e'
+    # successo davvero: `{"floor": 0.0}` e' rimasto dalle 20:32 del 30/08 alle
+    # 02:52 del 31/08 su quasi quattordicimila fatti.
+    #
+    # ⚠️ QUI SI LEGGE SOLTANTO: un JSON e un COUNT su una connessione `mode=ro`.
+    # Ricalcolare vorrebbe dire caricare il cross-encoder e aspettare 24
+    # secondi, cioe' rompere le due promesse di questo comando — nessun modello
+    # e circa due secondi. Il doctor dice che serve; `warmup` lo fa.
+    try:
+        from ._compat import data_dir
+        _db = data_dir() / "semantic" / "semantic.db"
+        _fj = _db.with_suffix(_db.suffix + ".floor.json")
+        if not _db.exists():
+            add("relevance-floor", OK, "nessuno store da esaminare")
+        elif not _fj.exists():
+            add("relevance-floor", OK,
+                "not computed yet — the first recall will estimate it once")
+        else:
+            import json as _js
+            _d = _js.loads(_fj.read_text(encoding="utf-8"))
+            _val, _n_salv = float(_d["floor"]), int(_d["n_facts"])
+            _metrica = str(_d.get("n_metric", "?"))
+            _con = sqlite3.connect(f"file:{_db}?mode=ro", uri=True)
+            try:
+                _n_ora = int(_con.execute(
+                    "SELECT COUNT(*) FROM facts WHERE superseded_by IS NULL "
+                    "AND (status IS NULL OR status != 'quarantined')"
+                ).fetchone()[0] or 0)
+            finally:
+                _con.close()
+            _deriva = abs(_n_ora - _n_salv) > max(1, _n_salv) * 0.05
+            _eta = f"floor {_val:.4f} computed on {_n_salv} facts, now {_n_ora}"
+            if _metrica != "servibili":
+                add("relevance-floor", WARN,
+                    f"{_eta} — saved with an older metric ({_metrica!r}), so it "
+                    "cannot be compared with the current count",
+                    "verimem warmup")
+            elif _deriva:
+                add("relevance-floor", WARN,
+                    f"{_eta} — the corpus grew past the 5% drift, so recall is "
+                    "served a stale floor (reads no longer recompute it: that "
+                    "cost 24s inside a query)",
+                    "verimem warmup")
+            elif _val == 0.0:
+                # LO ZERO NON E' INERTE: e' falsy, quindi dove lo si controlla
+                # con un `if` non vale «pavimento a zero», vale «nessun
+                # pavimento» — e l'astensione resta spenta senza dirlo.
+                add("relevance-floor", WARN,
+                    f"{_eta} — a floor of 0.0 disables the relevance abstention "
+                    "(it is falsy, so every check reads it as «no floor»)",
+                    "verimem warmup")
+            else:
+                add("relevance-floor", OK, f"{_eta} — current")
+    except Exception as e:  # noqa: BLE001 — a doctor never crashes on a check
+        add("relevance-floor", WARN, f"unreadable: {e}")
+
     return checks
 
 

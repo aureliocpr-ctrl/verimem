@@ -234,3 +234,35 @@ def estimate_relevance_floor(sm, *, n_probes: int = 32, quantile: float = 0.95,
     maxima.sort()
     idx = min(len(maxima) - 1, max(0, round(quantile * (len(maxima) - 1))))
     return round(maxima[idx], 4)
+
+
+def rinfresca_se_stantio(mem) -> tuple[bool, float]:
+    """Ricalcola il pavimento se il corpus e' cresciuto oltre la deriva.
+
+    Restituisce ``(ha_ricalcolato, valore)``.
+
+    PERCHE' ESISTE, e perche' NON sta dentro una lettura. La stima costa
+    24169 ms sul corpus vero di 14382 fatti (misura di casa, una esecuzione),
+    e la chiamata che la innesca sta nel percorso di OGNI ``search``: l'avviso
+    di rilevanza chiede il pavimento fuori da ogni ``if``. Finche' il ricalcolo
+    stava li', **la prima ricerca dopo una crescita del 5% pagava 24 secondi**
+    — anche una ricerca che non chiedeva nessun pavimento e non tagliava
+    niente.
+
+    Ora la lettura serve il valore persistito anche quando e' vecchio, e alza
+    ``_floor_stantio``. Questa funzione e' l'altra meta': la chiama chi ha il
+    costo ATTESO — ``verimem warmup``, un daemon, una manutenzione — dove 24
+    secondi sono annunciati e non sorprendono nessuno.
+
+    ⚠️ L'OBIEZIONE A CUI RISPONDE, scritta da chi ha fatto il pavimento
+    persistito: *«se il corpus cambia in modo sostanziale e il valore resta
+    congelato, serviamo un pavimento sbagliato per sempre — che e' peggio di
+    uno lento»*. E' giusta, ed e' il motivo per cui questa funzione esiste
+    **nello stesso commit** della cura: senza un rimedio, «non ricalcolare in
+    lettura» diventa «congelato per sempre». Il rimedio e' esplicito, il
+    ``doctor`` dice quando serve, e il ``warmup`` lo esegue.
+    """
+    val = mem._auto_relevance_floor()
+    if not getattr(mem, "_floor_stantio", False):
+        return False, val
+    return True, mem._auto_relevance_floor(rinfresca=True)
