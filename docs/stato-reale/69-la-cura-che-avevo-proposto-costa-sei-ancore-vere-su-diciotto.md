@@ -89,6 +89,37 @@ lista di preposizioni gliela dà.
 documenta — *«liste monolingue»* — moltiplicata per ogni lingua che il prodotto
 accetta.
 
+## ④-bis La terza via — allargare il pool invece di stringere il trigger — è falsificata
+
+`recall_as_of` prende `k×6` risultati e **poi** filtra. Ipotesi ragionevole: se
+il pool fosse più largo, i fatti **vecchi** che stanno oltre quella soglia
+sopravvivrebbero, e la lettura migliorerebbe **senza toccare il trigger**.
+Misurata il 02/09 alle 01:19, `k=10` contro `k=34` (pool da 60 a 204, ×3,4):
+
+```
+domande datate provate                              :  8
+serviti con pool 60                                 : 72
+serviti con pool 204 (troncati a 10, confronto equo): 80   (+11%)
+domande con PIÙ risultati                           :  1
+domande in cui il FATTO GIUSTO torna grazie al pool  :  0
+```
+
+⛔ **Zero recuperi.** E il motivo è quello che il [67](67-la-data-nella-domanda-spegne-la-risposta.md) aveva già isolato: i fatti che
+rispondono sono **nati dopo** la data della domanda, quindi **non sono «oltre
+k» — sono esclusi per contratto**. Nessuna dimensione di pool li riporta.
+
+⇒ 🔑 **Il ventaglio si chiude per ESCLUSIONE, non per assunzione:**
+
+| via | esito |
+|---|---|
+| stringere il **trigger** | ❌ costa **6 ancore vere su 18** (§③) |
+| allargare il **pool** | ❌ **0 recuperi** su 8 domande (qui) |
+| **dichiarare** l'ancoraggio | ✅ fatto — e il rimedio che suggerisce riporta il fatto al **rango 1**, 3 su 3 ([70](70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md) §⑤-bis) |
+
+⚠️ **Otto domande sono poche**, e il `+11%` di risultati serviti dice che il pool
+qualcosa aggiunge — solo **non la risposta**. Chi volesse riaprire la via deve
+mostrare un recupero, non un aumento di volume.
+
 ## ⑤ Allora la cura qual era? Quella già fatta
 
 Il danno del falso ancoraggio è **una risposta vuota**; il danno del mancato
