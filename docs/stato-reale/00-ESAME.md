@@ -18854,3 +18854,87 @@ perdita totale      3616   = 21%
 ⚠️ **Il 21% resta una perdita reale**: 3616 fatti scritti non tornano a chi li chiede, e 1324 sono **muti per quarantena** — scritti, conservati, invisibili al recall di default. Stabile non vuol dire piccolo. · ⚠️ **Il corpus è il nostro**, otto istanze su una macchina. · ⚠️ Misura **datata** perché la grandezza si muove: 02/09 01:46.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 01:57 — ws1 · **CIRCOSCRIVO LA MIA CELLA DI DODICI MINUTI FA: il punteggio non «dipende da `k`» in generale — succede a UN documento su 20 e SOLO a `k=2`.** E dichiaro che il mio primo banco di stanotte misurava la cosa sbagliata
+
+**Livello** `Memory.search` sullo store vivo, `k ∈ {1,2,4,8,10}`, **3 query, 20 documenti
+tracciati** · **Perimetro** ogni documento visto a `k=10`, seguito attraverso tutti i `k` ·
+**Istante** 2026-09-02 01:46–01:55 · **Regime** variabili poppate, RAM 7,26 GB, **`claim
+ram/embedder` preso e rilasciato** (`b3bef0133c2b`) · **Autorità**: ordine di Aurelio delle
+00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 01:45** («*UNA query… non so come scali con `k`*»).
+
+### ⚠️ PRIMA IL DIFETTO DEL MIO BANCO, perché cambia cosa vale il risultato
+
+Il primo tentativo (`porta_scala_k.py`) tracciava **il documento in posizione 0** e ha dato
+**escursione 0,0000 su 3 query su 3** — sembrava che il fenomeno non esistesse. **Ma il caso
+delle 01:45 riguardava un documento in posizione 1-2**: avevo scelto **il bersaglio
+sbagliato**, e il banco non poteva vedere quello che cercava. **L'ho riscritto** tracciando
+**tutti** i documenti. *(Il primo banco una cosa vera l'ha detta: **il punteggio del primo
+risultato è stabile rispetto a `k`**, 3/3.)*
+
+### Il numero, col banco corretto
+
+| | |
+|---|---|
+| documenti in **posizione 0** col punteggio che si muove | **0 / 3** |
+| documenti in **altre posizioni** col punteggio che si muove | **1 / 17** |
+
+**L'unico caso è quello già noto**, e la serie completa lo circoscrive:
+
+```
+«Il censimento trova 34 righe in 17 moduli e 22 con una MISURA…»
+   k=2  → 0.9074      (posizione 1)
+   k=4  → 0.8767      (posizione 3)
+   k=8  → 0.8767
+   k=10 → 0.8767
+```
+
+⇒ **il punteggio è stabile da `k=4` in su: si muove SOLO passando a `k=2`.**
+
+### 🔴 QUINDI CIRCOSCRIVO QUELLO CHE HO SCRITTO ALLE 01:45
+
+Avevo scritto: «*il punteggio non è una proprietà del documento rispetto alla query: dipende
+da quanti risultati chiedi*» e «*due `search` con `k` diversi non danno punteggi
+confrontabili*». **Troppo largo.** L'enunciato che regge alla misura è:
+
+> **In un caso su venti, a `k=2`, il punteggio di un documento differisce di `0,0307` da
+> quello che lo stesso documento ha per ogni `k ≥ 4`. Il primo risultato non si muove mai.**
+
+⇒ **la preoccupazione «ogni soglia e ogni filtro sono toccati» NON regge**: chi lavora con
+`k ≥ 4` — e il default del prodotto è `k=5` — **vede punteggi stabili**. ⚠️ **Chi usa `k=2`
+sì**, e resta un comportamento da spiegare.
+
+**Ipotesi, non verificata**: a `k=2` il pool è così piccolo che il rerank si comporta
+diversamente o non entra affatto. **Non ho letto il codice**, e con `k=1` il documento non
+compare proprio (non è confrontabile).
+
+### 📌 E la sequenza, per intero — è il quarto movimento e va letta tutta
+
+| ora | cosa ho detto | righello |
+|---|---|---|
+| 01:27 | il primo può avere score più basso del secondo | `k=2` |
+| 01:36 | non si riproduce, vale millesimi | `k=4` ⚠️ *(righello diverso)* |
+| 01:45 | entrambi veri: **dipende da `k`** | `k=2` **e** `k=4` |
+| **01:57** | **succede a 1 documento su 20 e solo a `k=2`** | **`k` = 1,2,4,8,10 su 20 documenti** |
+
+**Ogni passo ha ristretto il perimetro con una misura, e nessuno è stato una ritrattazione a
+parole.** Ma **il numero pubblicato alle 01:45 era più largo del dato**, e questa cella lo
+riporta alla sua taglia.
+
+### Cosa NON prova
+
+**3 query, 20 documenti, una macchina, un processo.** `1/17` **non è un tasso**: con altre
+query il conto cambia. **Non ho provato `k=3`** — il salto interessante è fra 2 e 4, e non
+l'ho stretto. **`k=1` non è confrontabile** perché il documento non compare. **Non ho letto
+il codice del rerank**: «a `k=2` il pool è troppo piccolo» **resta un'ipotesi**. **Non so se
+il documento che si muove abbia qualcosa di speciale** (è l'unico dei 20 che compare in
+posizioni molto diverse fra i `k`): **potrebbe essere la posizione, non il `k`**, e sarebbe
+un altro banco.
+
+**Banchi**: `porta_scala_k.py` *(sbagliato, tenuto per onestà)* e `porta_scala_k2.py`
+*(corretto)*, dati in `scala_k2.json` (scratchpad).
+**Io misuro, non curo.**
