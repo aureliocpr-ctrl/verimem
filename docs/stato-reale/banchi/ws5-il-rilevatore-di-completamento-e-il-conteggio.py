@@ -88,6 +88,22 @@ prodotto stesso nel pannello di `trust`: «*the subject reads as a third-party
 professional fact, so the L1 keyword hit was kept advisory […] attribution=agent_claim
 — reads as the agent's own*».
 
+✅ **⑤ E LA CATENA E' LA STESSA IN INGLESE** — pagato l'ultimo limite dichiarato, e
+conta perche' **il pacchetto e' pubblicato in inglese**: se il declassamento valesse
+solo in italiano, **gli utenti veri non l'avrebbero**::
+
+    IT a  numero prima, di terzi   passa   99.8  L1.13, L1-domain-precision-observe
+    EN a  numero prima, di terzi   passa   99.7  L1.13, L1-domain-precision-observe
+    EN b  numero prima, BY ME      CADE    76.5  L1.13, L4.2
+    EN c  numero dopo, di terzi    CADE   100.0  L1.13, L4.2
+    EN e  CTRL senza la parola     passa   99.5  L4.2
+    EN f  CTRL numero dopo         passa   99.9  L4.2
+
+⇒ **Identica**: `EN a` ha il declassamento e passa; togliendo *fatto di terzi* (`b`) o
+*numero davanti* (`c`) sparisce e `L1.13` veta. ✅ E i controlli `e`/`f` passano con
+`L4.2` presente ⇒ **`L4.2` non veta nemmeno in inglese**. ⇒ **Stessa protezione e stesso
+falso positivo nelle due lingue**, e la riga operativa vale per entrambe.
+
 ✅ **E cosi' `b` mostra che il presidio FUNZIONA**: «*42 job conclusi **da me***» viene
 vetato a grounding 99.6, ed e' giusto che lo sia.
 
