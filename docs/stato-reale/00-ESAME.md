@@ -17368,3 +17368,46 @@ non è «identico», ed è una riga di comando.
     python scripts/controlla_registro.py /tmp/dist/verimem-*.whl ; echo "EXIT=$?"
     python -c "import zipfile,collections; z=zipfile.ZipFile('/tmp/dist/verimem-0.7.1-py3-none-any.whl'); \
       n=z.namelist(); print(len(n), collections.Counter(x.split('/')[0] for x in n))"
+
+## 2026-09-02 00:15 — ws6/Aldo · CASE-STUDY n.1 CHIUSO: la dichiarazione usciva solo sul vuoto e copriva **0 casi su 3** — ora ne copre **3 su 3**, e uno serviva 2 fatti scartandone **58**
+
+**Documenti**: [70](70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md) · **cura**: `51762dd4` · **banco**: `banchi/ws6-quante-letture-mute-parlano-ora.py` · verificato su origin per contenuto.
+
+Il filone «le letture non trovano» ([61](61-il-punteggio-separa-benissimo-e-per-questo-l-avviso-ha-ragione.md) → [67](67-la-data-nella-domanda-spegne-la-risposta.md) → [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md) → `70`) si chiude misurando **la cura**, non raccontandola.
+
+### La misura che mancava
+
+`letto_al_passato` usciva solo con `out` **vuoto**. Sui tre casi che il `67` aveva misurato come spenti dal routing:
+
+| | prima | dopo (`51762dd4`) |
+|---|---|---|
+| `758425daf047` | n=10 · dichiarazione **NESSUNA** | n=10 · **SI** — `scartati=10`, 19/08/2026 |
+| `0ebe9e824198` | n=2 · dichiarazione **NESSUNA** | n=2 · **SI** — `scartati=58`, 18/07/2026 |
+| `3e74902dc247` | n=10 · dichiarazione **NESSUNA** | n=10 · **SI** — `scartati=44`, 31/07/2026 |
+
+⇒ **0/3 → 3/3.** E sui 16 fatti retrospettivi del campione **non esisteva una sola risposta vuota**: la condizione non aveva mai occasione di accendersi.
+
+📌 **Il secondo caso spiega perché serviva**: **due** risultati serviti, **cinquantotto** scartati. Chi leggeva riceveva due fatti senza sapere che la data nella sua domanda ne aveva esclusi 58 — fra cui quello che rispondeva. 🔑 **È peggio del vuoto**: il vuoto è onesto, una risposta parziale è **plausibile e sbagliata**.
+
+### Due cose che il ciclo ha imposto, e nessuna era prevista
+
+1. 🪞 **Il presidio ha bocciato la mia prima versione**: contavo *tutti* gli scarti e `test_senza_scarti_non_si_dichiara_niente` è diventato rosso. Un fatto **già superseduto** a quella data è escluso perché **il time travel funziona**. ⇒ *«più recente della data»* è il fraintendimento da segnalare, *«già ritirato a quella data»* è la funzione. Si conta solo il primo.
+2. La nota all'utente è **doppia**: dire «a quell'istante non c'era nulla» è falso quando i risultati sono serviti — ed è il caso più frequente.
+
+```
+condizione vecchia (not out) : 1 failed, 13 passed   ← cade solo il caso non-vuoto
+condizione nuova (scartati)  : 14 passed
+regressione time-travel      : 25 passed
+```
+
+I **5 test originali** della dichiarazione restano verdi in **entrambe** le versioni: la cura tocca esattamente il caso scoperto.
+
+### Cosa NON prova
+
+⚠️ Il conteggio è un **«almeno»**: `recall_as_of` smette di esaminare gli hit appena ne ha `k` validi. Dichiarato nel codice e nel campo. · ⚠️ **Il fatto giusto resta PERSO** in tutti e tre: la cura **lo dichiara, non lo recupera** — e la strada del recupero non è stringere il trigger (`69`: costa 6 ancore vere su 18). · ⚠️ Campione mio: fatti vivi con data nel testo, domande costruite dal loro testo. **Il traffico reale resta non misurabile** — il journal non registra le query.
+
+### Il valore del filone, in una riga
+
+Tre cambiamenti in `main` e **due raccomandazioni ritirate dopo averle misurate**, una delle quali mia. 🔑 **Nessuno dei due ritiri sarebbe avvenuto senza un banco**: «stringere il trigger» sembrava ovvio e costava 6 su 18; «adesso la porta lo dichiara» sembrava chiuso e copriva 0 su 3. Entrambe le volte l'evidenza era a due comandi di distanza.
+
+**Firme su questa cella**: ws6 (misura + cura + test). **Non ne rivendico altre**: `letto_al_passato` è di chi l'ha scritta, e questa ne estende la condizione.
