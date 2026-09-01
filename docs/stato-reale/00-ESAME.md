@@ -18745,3 +18745,72 @@ handle). Unset the ones you did not mean.
 ⚠️ **Quattro regole non sono un tasso**, e le ho scelte io fra le più leggere da testare — le più costose (stub dell'embedder, journal che ruota, indice condiviso) **non le ho toccate**. · ⚠️ Su ciascuna ho riprodotto **il regime che la regola descrive**, non varianti: è la cautela che sui decimali per poco mi sfuggiva.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 01:45 — ws1 · 🔴🔴 **LO SCORE DELLO STESSO DOCUMENTO CAMBIA A SECONDA DI QUANTI RISULTATI CHIEDI: `0,9074` con `k=2`, `0,8767` con `k=4`.** Stessa query, stesso istante, stesso processo — e **ripristina l'allarme che avevo ridimensionato io nove minuti fa**
+
+**Livello** `Memory.search` sullo store vivo · **Perimetro** **una query**, `k=2` e `k=4`
+**nello stesso processo**, e **nei due ordini** (prima 2 poi 4, e viceversa) · **Istante**
+2026-09-02 01:38–01:42 · **Regime** variabili poppate, RAM 7,32 GB, **`claim ram/embedder`
+preso e rilasciato** (`7292252993f8`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga la prova diretta che avevo dichiarato mancante alle 01:36**, e il disegno **isola `k`**:
+stesso corpus, stesso istante, stesso stato del rerank ⇒ **l'ipotesi «il corpus si muove» non
+può spiegare la differenza.**
+
+### 🔴 Il fatto, verbatim — **lo stesso documento, due punteggi**
+
+```
+k=2   [0] 0.88    Nel banco del criterio a coppia la predizione e ferma in t…
+      [1] 0.9074  Il censimento trova 34 righe in 17 moduli e 22 con una MIS…
+
+k=4   [0] 0.88    Nel banco del criterio a coppia la predizione e ferma in t…
+      [1] 0.8773  Nella riga del risultato compaiono 9 passed e 23 warnings.
+      [2] 0.8767  Il censimento trova 34 righe in 17 moduli e 22 con una MIS…   <- LO STESSO
+      [3] 0.877   Nella bisezione le prime 22 righe piu la prova danno 99.97
+```
+
+⇒ **`0,9074` contro `0,8767` sullo stesso fatto: 307 decimillesimi.** **Identico nei due
+ordini di chiamata** (prima `k=2` o prima `k=4`): **non è l'ordine, ed è riproducibile.**
+
+⚖️ **La mia predizione — «*i primi due di `k=4` sono identici ai due di `k=2`*» — CADE**, ed
+era la predizione giusta da scrivere: la sua caduta **isola la causa**.
+
+### 🎯 Cosa significa, e non è l'inversione
+
+**Il punteggio non è una proprietà del documento rispetto alla query: dipende da quanti
+risultati sono stati chiesti.** ⇒ **due `search` con `k` diversi non producono punteggi
+confrontabili**, e un valore letto con un `k` **non si può citare** accanto a uno letto con
+un altro. Per un prodotto che espone `score` come misura di pertinenza, questo tocca **ogni
+soglia, ogni filtro e ogni confronto** costruiti su quel campo — **compresi i miei**.
+
+**Ipotesi sul meccanismo, NON verificata**: il rerank **normalizza sul pool restituito**, e
+con meno candidati la normalizzazione cambia. *(Il registro ha già la classe: «su una metrica
+normalizzata togliere le parole vuote ALZA il punteggio».)* **Non ho letto il codice.**
+
+### 🔁 E RIPRISTINA L'ALLARME CHE AVEVO RIDIMENSIONATO IO — terzo movimento in un'ora
+
+| ora | cosa ho detto | con che righello |
+|---|---|---|
+| **01:27** | «il primo può avere score più basso del secondo: `0,8800` contro `0,9074`» | **`k=2`** |
+| **01:36** | «l'ampiezza non si riproduce, vale millesimi» | **`k=4`** ⚠️ |
+| **01:45** | **entrambi veri: l'ampiezza dipende da `k`** | `k=2` **e** `k=4` insieme |
+
+⇒ **il ridimensionamento delle 01:36 l'ho fatto con un righello diverso da quello della
+misura originale** — la classe di errore che ho scritto io nei presidi (**«se rimisuri un
+numero, usa lo stesso righello»**) e che ho applicato ad altri e non a me. ⇒ **L'allarme delle
+01:29 era corretto per `k=2`**, e chi l'aveva preso sul serio **aveva ragione**.
+
+### Cosa NON prova
+
+**UNA query.** Non so se il fenomeno valga su tutte, né come scali con `k` (non ho provato
+`k=1`, `k=8`, `k=10`). **Non ho letto il codice del rerank**: «normalizza sul pool» **resta
+un'ipotesi**, e potrebbe essere un altro stadio a riscalare. **Non ho verificato se cambia
+anche l'INSIEME** dei documenti (a `k=4` compaiono due fatti che a `k=2` non ci sono: è
+atteso, ma **se a `k=2` mancasse un documento che a `k=4` sta primo**, sarebbe un difetto
+diverso e non l'ho cercato). **Non so quale dei due punteggi sia "quello giusto"** — **non è
+una domanda che questo banco può decidere**.
+
+**Banco**: `porta_k_isolato.py`, dati in `k_isolato.json` (scratchpad).
+**Io misuro, non curo.**
