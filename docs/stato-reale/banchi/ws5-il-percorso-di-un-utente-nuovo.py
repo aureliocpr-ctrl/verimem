@@ -88,11 +88,36 @@ comunque il moat attivo**, che e' il cuore della promessa.
 `verimem/__init__.py:38`. **Solo il candidato al rilascio ne soffre.** Se esce cosi',
 ogni utente che chiede «che versione ho?» sente il nome della **precedente**.
 
-🔴 **E UN LIMITE GROSSO DELLA PROVA, che dichiaro perche' cambia i numeri**: il venv
-"vergine" **si e' agganciato al daemon di encoding gia' caldo sulla macchina** —
-`doctor` lo dice: «*shared encode daemon warm on :50296*». ⇒ **I 4.5s del `remember` e
-gli 1.6s del `recall` NON sono i tempi di un utente**, che quel daemon non ce l'ha e
-paga il caricamento del modello. **Il percorso e' provato; la sua VELOCITA' no.**
+✅ **IL LIMITE E' STATO PAGATO: TRE REGIMI, e il terzo e' quello dell'utente vero.**
+Il primo giro era contaminato due volte — dal **daemon gia' caldo** sulla macchina e
+dalle **nove variabili** del prodotto che la nostra sessione esporta e che il venv
+eredita (fra cui `HIPPO_ENCODE_DELEGATE_ONLY=1`, che faceva **crashare** `remember` con
+un traceback, e `HIPPO_DATA_DIR` puntato allo store principale)::
+
+    regime                              --help  doctor  remember  recall   stats
+    ① env della sessione, daemon ON      2.0s    6.3s     4.5s    1.6s     1.5s
+    ② env PULITO, daemon ON              1.6s    5.4s    11.9s    1.4s     1.4s
+    ③ env PULITO, daemon SPENTO          1.8s    5.5s    16.8s    3.7s     1.5s
+       ← l'utente vero
+
+🔑 **IL NUMERO CHE SERVIVA: la prima scrittura di un utente costa 16.8s**, non 4.5.
+E fra ① e ② ci sono **2.6 volte** a parita' di daemon: **l'ambiente della nostra
+sessione cambia i tempi**, non solo il daemon.
+
+✅ **E il recall SENZA daemon trova comunque il fatto, degradando in modo ANNUNCIATO**::
+
+    - La coda della CI contiene 149 run in attesa. [0.00]
+    encode exceeded 2.0s budget → degrading (save defers / recall falls back to
+    keyword); kicking the encode daemon
+
+⇒ Il prodotto prova l'encode, supera il budget di 2s, **degrada al keyword search**,
+**lo dichiara**, e prova a **riavviare il daemon**. Il fatto giusto torna lo stesso.
+**Non e' un difetto: e' un degradamento progettato e detto ad alta voce.**
+
+⚠️ **Il residuo, ed e' la classe che conosco**: accanto al risultato corretto c'e'
+**`[0.00]`**. Chi legge quel numero capisce «nessuna corrispondenza», mentre significa
+«trovato per keyword, non per vettore» — **un numero vero che inganna**, e sotto
+qualunque floor di `ignorance`.
 
 🪞 **E un mio errore di misura, sullo stesso tema di ieri**: rieseguendo `doctor` a mano
 ho letto `EXIT=0` — ma era l'exit di `grep`, non di `verimem`. **«`| tail` maschera
