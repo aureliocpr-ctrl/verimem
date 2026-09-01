@@ -73,10 +73,61 @@ e il suo commento lo dice:
 scartati, e la dichiarazione esca quando quel numero è `> 0`, non quando `out` è
 vuoto. **Il vuoto è un caso particolare di quello.**
 
+## ④-bis Fatta — `51762dd4`, alle 00:12
+
+La cura di §④ **è in `main`**. `recall_as_of` conserva quanti risultati ha
+escluso **perché più recenti della data**, sullo stesso canale già usato per il
+degrado (un contatore sull'oggetto, letto dal chiamante: nessuna firma
+cambiata), e la condizione della dichiarazione è passata da `not out` a
+`_scartati_dal_tempo`.
+
+**Due cose che il ciclo ha imposto, e nessuna delle due l'avevo prevista:**
+
+1. 🪞 **Il presidio ha bocciato la prima versione.** Contavo *tutti* gli scarti,
+   e `test_senza_scarti_non_si_dichiara_niente` è diventato rosso: un fatto
+   **già superseduto** a quella data è escluso perché il time travel
+   **funziona** — mostra ciò che era vivo allora. ⇒ Le due cause di scarto sono
+   diverse: *«più recente della data»* è il fraintendimento da segnalare, *«già
+   ritirato a quella data»* è la funzione. **Ora si conta solo la prima.**
+2. **La nota consegnata a chi legge è diventata doppia**: dire *«a
+   quell'istante non c'era nulla»* è falso quando i risultati sono stati
+   serviti — ed è il caso più frequente.
+
+```
+condizione vecchia (`not out`) : 1 failed, 13 passed  ← cade solo il caso non-vuoto
+condizione nuova (`scartati`)  : 14 passed
+regressione time-travel/bitemporale : 25 passed
+```
+
+⇒ **I 5 test originali della dichiarazione restano verdi in entrambe le
+versioni**: la cura tocca esattamente il caso scoperto e non tocca il resto.
+
 ## ⑤ Cosa NON prova
 
-❌ **Non ho implementato la cura di §④**: la propongo con il suo precedente, non
-l'ho scritta né misurata.
+⚠️ **Il conteggio è un «almeno»**: `recall_as_of` smette di esaminare gli hit
+appena ne ha `k` validi, quindi oltre quel punto non sa quanti altri avrebbe
+scartato. È dichiarato così nel codice e nel campo.
+✅ **I tre casi del §② rimisurati sul corpus vero alle 00:15**, stesso store,
+stesse domande:
+
+```
+758425daf047   n=10   fatto giusto PERSO   dichiarazione SI (scartati=10, 19/08/2026)
+0ebe9e824198   n= 2   fatto giusto PERSO   dichiarazione SI (scartati=58, 18/07/2026)
+3e74902dc247   n=10   fatto giusto PERSO   dichiarazione SI (scartati=44, 31/07/2026)
+```
+
+> **Da 0/3 a 3/3**, e le date sono quelle chieste (18/07, non 19/07: la
+> correzione del fuso regge sul corpus vero).
+
+📌 **Il secondo caso è quello che spiega perché serviva**: **due** risultati
+serviti e **cinquantotto** scartati. Chi leggeva riceveva due fatti e non aveva
+modo di sapere che la data nella sua domanda ne aveva esclusi 58 — fra cui
+quello che rispondeva.
+
+⚠️ **Quello che ancora NON è cambiato**: il fatto giusto resta **PERSO** in tutti
+e tre. La cura non lo fa tornare — **lo dichiara**. Chi cerca il recupero
+guarda il `69`: stringere il trigger costa 6 ancore vere su 18, quindi la strada
+non è quella.
 ⚠️ **`0/3` e `0/16` sono su un campione mio** — fatti vivi il cui testo contiene
 una data in forma «D mese AAAA», con la domanda costruita dal loro stesso testo.
 **Non è il traffico reale**, che resta non misurabile: il journal non registra
