@@ -16699,3 +16699,49 @@ soggetto : «quanti fatti SONO STATI SCRITTI IL 5 agosto 2026»
 ⚠️ **Campione mio e bilanciato da me** (18 ancore, 12 soggetti): non sono le proporzioni del traffico vero, che **non conosciamo** — il journal non registra il testo delle query. La precisione **64,3% vale su questo mix**. · ⚠️ **Le etichette sono un mio giudizio**, col criterio dichiarato prima di guardare i risultati. · ✅ **Ciò che regge a prescindere dal mix**: ancore e soggetti condividono **la stessa marca superficiale** — è un fatto sulla lingua, non sul campione. · ❌ **Non ho provato** che un criterio sul verbo funzionerebbe: non l'ho scritto né misurato.
 
 **Firme su questa cella**: ws6 (misura + ritiro). **È il ritiro di una mia raccomandazione**, quindi la firma che conta è quella di chi la applicava: se nessuno l'ha presa in carico, non è costata nulla.
+
+---
+
+## W8-44 — La predizione regge, **la motivazione no**. E il verde coprirà **1050 test su 1598**
+
+🚪 **Cancello: ① `ci` verde (VETO)** · ⑦ ciò che si scriverà nel changelog.
+
+### ① La motivazione era sbagliata in un punto
+
+In `W8-43` avevo scritto: «i 5 rossi di `main` **non compaiono sul branch**: sono test nati
+dopo il 22 luglio». **Dedotto, non misurato.** Misurato:
+
+    test_la_fonte_si_legge_intera                          ASSENTE
+    test_nessun_banco_nuovo_ignora_l_esito_del_subprocess   ASSENTE
+    test_nessun_modulo_nasce_irraggiungibile                ASSENTE
+    test_la_ricetta_del_numero_deve_esistere                ASSENTE
+    test_repro_registry_g4                                  PRESENTE ⚠️
+    CONTROLLO POSITIVO (test_version_single_source):        PRESENTE
+
+⇒ **Quattro su cinque.** La predizione **regge** — in `#2557` il log dava `1 failed` e il
+fallito era **solo** quello della versione — e il perché è verificato: sul branch
+`test_repro_registry_g4` **non ha lo `xfail`** (0 occorrenze), quindi passa normalmente,
+mentre su `main` è quel marcatore a renderlo `XPASS(strict)`.
+📌 **Correggo la ragione anche quando la conclusione non cambia**: chi riusa il
+ragionamento, non la conclusione, sbaglierebbe.
+
+### ② 🔑 Il limite che non avevo visto, e riguarda cosa scriveremo
+
+    file di test:  branch 1050  ·  main 1598      (548 in meno)
+
+⇒ **Il verde di `#2653` sarà un verde su due terzi della suite di `main`.**
+
+**Non è un difetto**: il branch è `v0.7.0` + due commit, e ciò che si pubblica è quel codice
+— testarlo con i test di quel codice è **corretto**. **Ma la frase da usare è precisa:**
+
+- ✅ «`0.7.1` passa la suite del codice che pubblica»
+- ❌ «`0.7.1` passa la nostra suite» — quella ha **1598** file, non 1050
+
+📌 Se nel changelog o nel contratto comparirà «rilasciato con CI verde», **quel verde copre
+1050 file di test**. Dirlo adesso costa una riga; scoprirlo dopo costa una rettifica
+pubblica — ed è esattamente la classe di affermazione che stiamo eliminando dal prodotto.
+
+    rifallo con:
+    git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c '^tests/'
+    git ls-tree -r --name-only origin/main         | grep -c '^tests/'
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:tests/test_repro_registry_g4.py" | grep -c xfail
