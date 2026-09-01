@@ -138,6 +138,29 @@ casi misurati hanno `out` **pieno**. La copertura zero su quella popolazione non
 ✅ **E la cura non è sbagliata**: fa quello che dichiara di fare, con **zero
 rumore** misurato. È **parziale**, e il caso che copre non è quello frequente.
 
+## ⑤-bis Il consiglio che la nota dà all'utente **funziona** — 3 su 3, al rango 1
+
+Un avviso che dichiara un problema e suggerisce un rimedio sbagliato è peggio di
+nessun avviso. La nota dice: *«se la data era l'OGGETTO della domanda, rifalla
+senza `as_of` o togli la data»*. **L'ho seguito io, sulle tre letture rotte:**
+
+```
+3e74902dc247   scartati=44   TROVATO rango 1
+0ebe9e824198   scartati=58   TROVATO rango 1
+758425daf047   scartati=10   TROVATO rango 1
+```
+
+> ✅ **3 su 3, e tutte e tre al PRIMO POSTO.** Il rimedio non riporta il fatto
+> «da qualche parte nella lista»: lo riporta in cima.
+
+📌 **E dice una cosa sul prodotto sotto**: senza il routing temporale la memoria
+risponde a queste domande **perfettamente**. Il difetto era **tutto** nel
+routing — conferma indipendente della tesi del [67](67-la-data-nella-domanda-spegne-la-risposta.md), stavolta ottenuta seguendo
+il consiglio invece che misurando il rango.
+
+⚠️ **Tre casi**, gli stessi tre di §②. Non è un tasso: è la verifica che il
+rimedio suggerito non sia un vicolo cieco.
+
 ## ⑥ Cosa vale, per il prodotto
 
 Il filone in quattro documenti ha prodotto **tre cambiamenti in `main`** —
