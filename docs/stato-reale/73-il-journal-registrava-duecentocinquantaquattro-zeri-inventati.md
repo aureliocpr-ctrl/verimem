@@ -66,6 +66,25 @@ I due test che restano verdi in **entrambe** le versioni sono i presidi: quello
 sulla lettura servita (il campo non cambia significato dove non si taglia) e
 quello sullo **store vuoto**, dove lo zero è vero e deve restare zero.
 
+## ④-bis Lo sweep: il difetto era **isolato**, e le altre superfici fanno già bene
+
+Trovata una copia, la regola è cercarle tutte (*«chi altro fa la stessa
+cosa?»*). `git grep` della **formula**, non del sintomo — quattro siti:
+
+| dove | cosa fa | verdetto |
+|---|---|---|
+| `client.py:1266` (`_best_prima`) | massimo **prima** del taglio | ✅ è la cura |
+| `guardian.py:169` | massimo su `hits` **non filtrati**, con un guard `if not hits` sopra: il `default` non scatta mai. E distingue **due motivi** — `no_support` contro `below_relevance_floor` | ✅ corretto |
+| `relevance_floor.py:231` | `max` per sonda: una sonda senza hit **vale davvero 0** | ✅ corretto |
+| `document_index.py:539` | emette `best=None` quando non c'è nulla | ✅ **meglio del client**: separa «nessun risultato» da «score zero» |
+
+⇒ 🔑 **Su quattro superfici, tre facevano già la cosa giusta e una no.** Il
+difetto era **isolato al journal**, non sistemico — e vale dirlo con la stessa
+prontezza dell'allarme: **lo sweep ha ristretto il reperto, non allargato.**
+
+📌 E la superficie che fa **meglio di tutte** è `document_index`, che usa `None`:
+lo zero e l'assenza restano due cose diverse anche nel tipo.
+
 ## ⑤ Cosa NON prova
 
 ⚠️ **I 254 zeri già scritti restano zeri.** La riga vale da qui in avanti: un
