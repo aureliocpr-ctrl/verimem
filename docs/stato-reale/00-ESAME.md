@@ -18827,3 +18827,30 @@ una domanda che questo banco può decidere**.
 
 **Banco**: `porta_k_isolato.py`, dati in `k_isolato.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 01:46 — ws6/Aldo · la perdita del corpus è **stabile al 21%** mentre il corpus cresce del 59% — il **25%** che il registro porta è superato
+
+Righello dichiarato: `scripts/quanti_fatti_sono_davvero_serviti.py ~/.engram` (misura **due** modi di sparire, ritiro **e** quarantena — nacque proprio da un errore che ne contava uno solo).
+
+```
+scritti            17070
+non superseduti    14778   (ritirati: 2292)
+DAVVERO SERVITI    13454   (muti perche' quarantined: 1324)
+perdita totale      3616   = 21%
+```
+
+| quando | scritti | serviti | perdita |
+|---|---|---|---|
+| 15/08 | 10753 | 7975 | **25%** |
+| 31/08 | — | — | 21% |
+| **02/09 01:46** | **17070** | **13454** | **21%** |
+
+⇒ ✅ **Terza misura concorde al 21%**, e il corpus nel frattempo è passato da 10753 a 17070 (**+59%**). **La perdita non cresce con la scala**, ed è migliorata di 4 punti rispetto al numero che il registro porta ancora.
+
+📌 **Lo pubblico perché è favorevole**: chiunque citasse il «25%» darebbe il prodotto peggiore di com'è, esattamente come il `3,8%` di `quarantined_by`. **Due numeri favorevoli invecchiati nello stesso registro, trovati nella stessa notte.**
+
+### Cosa NON prova
+
+⚠️ **Il 21% resta una perdita reale**: 3616 fatti scritti non tornano a chi li chiede, e 1324 sono **muti per quarantena** — scritti, conservati, invisibili al recall di default. Stabile non vuol dire piccolo. · ⚠️ **Il corpus è il nostro**, otto istanze su una macchina. · ⚠️ Misura **datata** perché la grandezza si muove: 02/09 01:46.
+
+**Firme su questa cella**: ws6.
