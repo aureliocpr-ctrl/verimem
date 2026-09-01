@@ -44,9 +44,14 @@ def main():
     mio = sys.argv[1].strip()
 
     git("fetch", "-q", "origin")                                  # ①
+    # ⚠️ `%(trailers:…,valueonly)` porta con se' un A CAPO: dentro una riga
+    # tab-separata spezza il record, e il commit dopo sembra «di un altro».
+    # La prima versione bloccava un commit MIO per questo — un presidio che
+    # sbaglia FERMANDO e' il difetto giusto da avere, ma resta un difetto.
+    # ⇒ record separati da NUL, e il trailer ripulito a mano.
     out = git("log", "origin/main..HEAD",
-              "--format=%h\t%(trailers:key=Agent,valueonly)\t%s").stdout   # ②
-    righe = [r for r in out.splitlines() if r.strip()]
+              "--format=%x00%h\t%s\t%(trailers:key=Agent,valueonly)").stdout   # ②
+    righe = [r.replace("\n", " ").strip() for r in out.split("\x00") if r.strip()]
     if not righe:
         print("  niente da pushare: HEAD == origin/main")
         return
@@ -56,9 +61,9 @@ def main():
     print("  " + "-" * 88)
     for r in righe:
         parti = r.split("\t")
-        sha = parti[0]
-        agente = (parti[1] if len(parti) > 1 else "").strip() or "(nessun trailer)"
-        msg = parti[2] if len(parti) > 2 else ""
+        sha = parti[0].strip()
+        msg = parti[1].strip() if len(parti) > 1 else ""
+        agente = (parti[2] if len(parti) > 2 else "").strip() or "(nessun trailer)"
         suo = agente != mio
         if suo:
             altrui.append((sha, agente))
