@@ -1,6 +1,6 @@
 # 72 — Un numero perde le sue tre condizioni fra il CHANGELOG e la vetrina, e i due criteri che ho scritto per misurarlo erano tutti e due sbagliati
 
-*ws6/Aldo — 2 settembre 2026, 00:29. Audit su un numero pubblico **non mio**,
+*ws6/Aldo — 2 settembre 2026, 00:26 (letta, non stimata). Audit su un numero pubblico **non mio**,
 scelto perché è l'unico della lista che nessun documento di `stato-reale`
 citava.*
 

@@ -17615,3 +17615,44 @@ criterio che ci siamo dati: *nessuno deve poter dire «afferma cose che non fa»
     ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=5" --jq '[.workflow_runs[]|select(.run_number==2557)][0].id')
     J=$(gh api ".../actions/runs/$ID/jobs?per_page=40" --jq '[.jobs[]|select(.name|test("wheel.*ubuntu"))][0].id')
     gh api ".../actions/jobs/$J/logs" | grep -i mcp
+
+## 2026-09-02 00:26 — ws6/Aldo · IL NUMERO DEL GIUDICE LOCALE ARRIVA IN VETRINA **SENZA IL TAGLIO A CUI È MISURATO** — e i due criteri che ho scritto per capire se fosse un caso isolato erano **tutti e due sbagliati**
+
+**Documento**: [72](72-il-numero-perde-le-sue-condizioni-fra-il-changelog-e-la-vetrina.md) · commit `48d520bf` · numero **non mio**, scelto perché è l'unico della lista che nessun documento di `stato-reale` citava.
+
+`README.md:87`: *«AUROC **0.858** vs the CE's 0.829, **2.3%** misconception escape vs **~18%**, fully offline»*. Un guadagno di separazione di **+0,029** accompagnato da una fuga che scende **di 7,8 volte** lascia aperta una domanda: **a quale taglio?**
+
+**Il CHANGELOG ce l'ha, tutta** (`CHANGELOG.md:459`): banco nominato (`benchmark/local_llm_judge_bench.py`, esiste, 112 righe), campione (**TruthfulQA heldout n=600**) e soprattutto **«at the precision cut»**.
+
+| condizione | CHANGELOG | occorrenze nel README |
+|---|---|---|
+| `n=600` | sì | **0** |
+| `local_llm_judge_bench` | sì | **0** |
+| «precision cut» | sì | **0** |
+
+⇒ E il `~18%` del CE, **dieci righe più su nello stesso README**, è dichiarato *«at the **default** cut»*. **Due tagli diversi presentati come un rapporto.** ⚠️ **Non è un errore né un'esagerazione**: il numero è vero e le sue condizioni sono scritte — in un file che quasi nessuno apre.
+
+### 🪞 I due criteri che ho scritto per misurarlo, caduti entrambi
+
+Volevo dire se fosse **un'eccezione** o **la norma** della pagina.
+
+```
+per RIGA      : 44 righe con numeri, 33 senza banco = 75%   ⛔ il markdown AVVOLGE
+                le frasi: la fonte finisce sulla riga dopo
+per PARAGRAFO : il paragrafo del 2.3% "cita un banco" = SI  ⛔ ma quel banco
+                appartiene a un ALTRO numero dello stesso blocco
+```
+
+> **Per-riga troppo stretto, per-paragrafo troppo largo**, e il fenomeno è semantico: *«questa cifra ha la SUA fonte?»*. È la forma già in registro — *un criterio sintattico su un fenomeno semantico sbaglia in entrambe le direzioni* — commessa **due volte di seguito** mentre ne verificavo un'altra.
+
+⇒ **Non consegno nessun tasso sulla pagina.** Quello che regge sono **tre `grep` esatti** e la riga del CHANGELOG: letture, non inferenze.
+
+### La cura ha già il suo precedente, dieci righe più su
+
+Il numero dell'escape esterno porta con sé *«(1.8% was the 2026-07-18 run; the same command today reports 5.4%)»*. 📌 **Basterebbe portare in vetrina le parole che il CHANGELOG ha già**: *«at the precision cut, TruthfulQA heldout n=600»*.
+
+### Cosa NON prova
+
+❌ **Non ho eseguito `local_llm_judge_bench.py`** (serve un server ollama col modello scaricato, non verificato disponibile): **non ho riprodotto né `0.858` né `2.3%`**. Dico dove sono dichiarati e cosa manca in vetrina, non che siano giusti o sbagliati. · ❌ **Non ho stabilito se sia eccezione o norma**: i due criteri sono caduti e non ne ho scritto un terzo.
+
+**Firme su questa cella**: ws6. Il numero è di chi l'ha misurato; io ho confrontato due file.
