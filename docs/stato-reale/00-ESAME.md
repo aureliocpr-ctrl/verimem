@@ -17076,3 +17076,96 @@ cella e resta valido per il suo perimetro.
 
 **Banco**: `porta_gateway_taglio.py`, output `gw_taglio.out` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 00:02 — ws1 · **L'ASTENSIONE SU `search`: LA CURA È UNA RIGA, IL BLOCCO NON È TECNICO — È UNA MISURA CHE MANCA, E IL CODICE DICE QUALE.** Con il costo già noto e il primo pezzo della misura già fatto
+
+**Livello** lettura di sorgente (`relevance_floor.py:32-99`, `client.py:1117-1121`),
+**nessuna esecuzione in questo giro** · **Perimetro** la promessa rossa «*abstention instead
+of hallucination*» sulla porta `search` · **Istante** 2026-09-02 23:57–00:02 · **Regime**
+sola lettura — **RAM 1,59 GB**, non posso caricare modelli · **Autorità**: compito assegnato
+da @lead-audit (01/09 23:58), mandato di Aurelio «*valore reale, basta fuffa*» · **0.7.6**.
+
+**Il meccanismo è già a registro** (righe ~6984, ~7283, ~13881, ~15213: «*`search` usa
+`env_floor_if_set()` → `None`; `explain` usa `env_floor()` → `"auto"`*»). **Quello che manca
+al registro è il PERCHÉ, e sta scritto nel prodotto.**
+
+### ① LA CURA È UNA RIGA, ed è già scritta — per un'altra porta
+
+```python
+# client.py:1117-1119  — search / recall / ask
+if min_relevance is None:
+    min_relevance = env_floor_if_set()      # variabile non impostata -> None -> NESSUN pavimento
+# explain, invece, chiama env_floor()       # variabile non impostata -> "auto" -> astiene
+```
+
+`env_floor_if_set` esiste **apposta** per distinguere «l'utente ha scritto `auto`» da «non ha
+scritto niente» — e il suo docstring dice cosa fa del silenzio: «*silence keeps them as they
+were*». ⇒ **la cura è cambiare quale delle due funzioni chiama `search`.** Nient'altro.
+
+### ② IL COSTO È GIÀ MISURATO — dal prodotto, non da me
+
+`relevance_floor.py:41-47`, verbatim, sul default acceso il **29/07**:
+
+```
+gate OFF   0 wrong abstentions   2 expected facts missed   0/8 caught   1.22s
+gate ON    0 wrong abstentions   2 expected facts missed   8/8 caught   4.21s
+```
+
+Venti domande sullo store vivo — dodici sostenibili, otto invenzioni plausibili. **Le due
+mancanze sono LE STESSE nelle due colonne**: erano fuori dal top-k del retrieval, «*so the
+gate costs no answer the store could have given*». ⇒ **zero astensioni sbagliate, zero
+risposte perse, otto invenzioni su otto intercettate. Prezzo: ~3 secondi.**
+
+### ③ E IL BLOCCO — NON È TECNICO, ED È DICHIARATO
+
+Il docstring spiega perché quella cura **non** è stata estesa a `search`:
+
+> «*la cura del 2026-07-29 è atterrata sul SITE e non sulla CLASSE … the 8/8 measurement
+> above ran through `explain`'s CE gate, and **turning abstention on by default for a path
+> nobody measured is the shape of the 2026-07-30 mistake** (`max(floor, noise_floor)`,
+> written, measured and withdrawn)*»
+
+⇒ **il blocco è una MISURA MANCANTE, non un dubbio sulla cura**, e chi l'ha scritto ha già
+pagato una volta per aver acceso qualcosa su un percorso non misurato. **Questa è la cosa
+importante per chi decide: la promessa rossa non richiede un progetto, richiede un banco.**
+
+### ④ IL BANCO CHE LA SBLOCCA — e il primo pezzo è già fatto
+
+**Serve la replica del banco del 29/07 su `search` invece che su `explain`**: stessa forma —
+**~20 domande sullo store vivo, ~12 sostenibili + ~8 invenzioni** — e le stesse quattro
+colonne (**astensioni sbagliate · risposte attese perse · invenzioni intercettate ·
+tempo**). **La condizione d'uscita è esplicita**: se `search` con `"auto"` regge *0 astensioni
+sbagliate / 0 risposte perse*, il blocco dichiarato nel docstring cade e la riga si cambia.
+
+**Il primo pezzo esiste già** — mio, di ieri sera (cella delle 22:13, `porta_gateway_taglio.py`):
+`search(min_relevance="auto")`, che è **letteralmente** ciò che farebbe la cura, su store
+nuovo da 6 fatti:
+
+| | risultati serviti | risposte giuste perse | astensioni |
+|---|---|---|---|
+| 6 domande pertinenti | 6 (una ciascuna) | **0** | 0 |
+| 3 domande estranee | 0 | — | **3/3 corrette** |
+
+⇒ **nella direzione giusta, e sullo stesso identico argomento della cura.** ⚠️ **Ma NON è il
+banco richiesto**: 9 query contro 20, **6 fatti di domini disgiunti** contro lo store vivo,
+e **nessuna invenzione plausibile** fra le mie estranee — le mie erano *fuori dominio*, che è
+il caso facile. **Non lo spaccio per la misura che manca.**
+
+### Cosa NON prova, e cosa NON ho fatto
+
+**Non ho eseguito nulla in questo giro** (RAM 1,59 GB, e `claims` è vuoto: **qualcuno sta
+caricando senza claimare**, lo segnalo a parte). **Non ho misurato la latenza di `search` col
+pavimento**: i ~3 s sono il numero di `explain`, e **`explain` fa un lavoro diverso** (gate
+cross-encoder) — accostarli sarebbe la quinta volta che confondo due unità. **Non propongo
+di cambiare la riga**: non tocco codice, e la decisione è di chi rilascia. **Non ho verificato
+se `recall` e `ask` si comportino come `search`**: il docstring li nomina insieme, ma li ho
+letti, non misurati.
+
+📌 **Per la vetrina, intanto, una riscrittura ONESTA e già vera oggi**: «*abstention instead of
+hallucination* — **attiva di default su `explain` e sul gateway; sulle altre porte si accende
+con `ENGRAM_MIN_RELEVANCE=auto`**». Non promette meno di quello che il prodotto fa: promette
+**esattamente** quello, e smette di essere un rosso.
+
+**Io misuro, non curo.**
