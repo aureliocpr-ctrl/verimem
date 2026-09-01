@@ -95,8 +95,15 @@ VENV="$(mktemp -d)/venv"
 python3 -m venv "$VENV"; riga 2a "creazione del venv vergine" $?
 # shellcheck disable=SC1090
 . "$VENV/bin/activate"
+# ⚠️ Gli alias della data dir sono TRE, non due: `HIPPO_DATA_DIR` (che vince ed
+# e' la maniglia esplicita di isolamento), `ENGRAM_DATA_DIR` e `VERIMEM_DATA_DIR`.
+# Se se ne imposta solo una parte, il prodotto stesso avvisa —
+# «DATA_DIR aliases disagree … Unset the ones you did not mean» — e l'avviso e'
+# corretto: le altre due restano puntate allo store reale. Qui si pinnano tutte
+# e tre, cosi' l'isolamento non dipende da quale nome il codice legge per primo.
 export HIPPO_DATA_DIR="$(mktemp -d)/engram-smoke"
 export ENGRAM_DATA_DIR="$HIPPO_DATA_DIR"
+export VERIMEM_DATA_DIR="$HIPPO_DATA_DIR"
 mkdir -p "$HIPPO_DATA_DIR"
 echo "  store di prova: $HIPPO_DATA_DIR"
 
