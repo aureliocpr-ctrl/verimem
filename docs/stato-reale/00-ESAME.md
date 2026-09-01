@@ -16246,3 +16246,75 @@ differenza fra un controllo e una speranza.
     for s in cancelled failure success; do gh api "$B?status=$s&per_page=100" \
       --jq '.workflow_runs[]|"\(.created_at) \(.updated_at)"'; done   # e calcola le differenze
     python docs/stato-reale/banchi/a-che-punto-e-il-rilascio.py
+
+---
+
+## 2026-09-01 20:50 — ws1 · **AUDIT DEL NUMERO DI @ws4 (18,44 s): L'ARITMETICA REGGE, LA FRASE CHE LO ACCOMPAGNA NO.** Non è «**una volta**»: il ricalcolo del pavimento si ripete **ogni 5% di crescita del corpus** — e per uno store piccolo è **più frequente**, non meno
+
+**Livello** aritmetica sul referto altrui + lettura di sorgente (`client.py:2504-2510`),
+**nessuna esecuzione** · **Perimetro** la cella `57ª 60` di @ws4 (registro riga ~13313) ·
+**Istante** 2026-09-01 20:39–20:50 · **Regime** solo lettura, **zero RAM** (ordine di
+Aurelio delle 20:42: «*massima potenza però non contendetevi la ram, lavorate
+coordinati*») · **Autorità**: audit chiesto da @lead-audit alle 20:55 — «*prendi un numero
+non tuo*» · **0.7.6**.
+
+⚠️ **Verificato sulla SUA versione**: la cella di @ws4 è del **31/08 02:52**; io leggo il
+codice di **oggi**. Se `_FLOOR_DRIFT` è cambiato in mezzo, l'audit vale per HEAD, non per
+il suo istante — **non l'ho verificato sul suo commit**.
+
+### ✅ L'ARITMETICA REGGE — lo dico per primo
+
+| controllo | esito |
+|---|---|
+| `18,44 / 2,84` = 6,493 ⇒ dichiarato «**6,5×**» | ✅ **corretto** |
+| `P4` («> 20 s») contro **18,44 s** ⇒ dichiarata **caduta** | ✅ **coerente**, e riportata invece che aggiustata |
+| tre stime `0,8743 · 0,8797 · 0,8853` contro il vero `0,8781` | ✅ **dentro la banda**, come scritto |
+
+**E il metodo è migliore del numero**: la predizione era registrata **prima**, il
+cronometro era pronto, e @ws4 dichiara di aver innescato lui l'evento salvando **fatti
+veri**, non fabbricandone. Non ho trovato nulla da correggere qui.
+
+### 🔴 QUELLO CHE NON REGGE È L'ESTENSIONE, e sta in una frase sola
+
+@ws4 scrive: «*è ciò che pagherebbe un utente qualunque, **una volta**, senza preavviso*».
+Il codice (`client.py:2504-2507`), **verbatim**:
+
+> «*Di quanto deve cambiare il corpus perché il pavimento vada ricalcolato. È la
+> calibrazione DI QUEL corpus: finché il corpus è quello, il valore è quello. **5% su 8000
+> fatti = 400 scritture.*** » — `_FLOOR_DRIFT = 0.05`
+
+⇒ **il ricalcolo NON è un evento unico: è periodico**, con periodo pari al **5% del
+conteggio**. Il registro ha già il numero su questo store (riga ~11238): salvato **13 795**,
+soglia **689,8**. ⇒ su quel corpus i 18,44 s tornano **ogni ~690 scritture**, non «una
+volta». *(Il meccanismo era già a registro: **non me lo attribuisco**. Il collegamento col
+numero di @ws4 non c'era.)*
+
+### 📌 E IL VERSO È CONTROINTUITIVO — è la parte che serve a chi decide
+
+«Utente qualunque» e «14 485 fatti» non sono la stessa popolazione, e la dipendenza va
+**in due direzioni opposte**:
+
+| corpus | soglia di ricalcolo (5%) | frequenza | costo per evento |
+|---|---|---|---|
+| **200 fatti** (installazione giovane) | **10 scritture** | **alta** | ⚠️ **non misurato** |
+| 8 000 fatti *(esempio del commento)* | 400 scritture | media | ⚠️ non misurato |
+| **14 485 fatti** *(lo store di casa)* | **~724 scritture** | **bassa** | **18,44 s** *(misurato da @ws4)* |
+
+⇒ **chi ha appena installato incontra il ricalcolo molto più spesso** (ogni 10 scritture
+su 200 fatti), **ma quasi certamente paga molto meno** per volta. **I 18,44 s sono il
+costo del corpus grande, alla frequenza del corpus grande**: trasportarli all'«utente
+qualunque» prende il **costo** del caso raro e la **sorpresa** del caso frequente, che sono
+due popolazioni diverse.
+
+### Cosa NON prova
+
+**Non ho misurato il costo del ricalcolo in funzione di `n`**: dal `_FLOOR_DRIFT` deduco la
+**frequenza**, non il **costo** — che il costo cali su corpus piccoli è **atteso, non
+misurato**, e finché non lo è la riga «200 fatti» resta vuota per una ragione. **Non ho
+verificato `_FLOOR_CACHE_TTL_S = 300`**: c'è un secondo meccanismo (una cache a 5 minuti)
+che potrebbe cambiare la frequenza effettiva, e non l'ho letto. **Non correggo il numero
+di @ws4 e non ne chiedo il ritiro**: è misurato bene ed è utile — chiedo che la frase «una
+volta» diventi «**una volta ogni 5% di crescita del corpus**», che è più forte, non più
+debole, perché rende il costo **ricorrente e prevedibile** invece che aneddotico.
+
+**Io misuro, non curo.**
