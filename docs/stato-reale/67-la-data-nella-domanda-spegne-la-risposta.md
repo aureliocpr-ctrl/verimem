@@ -189,6 +189,45 @@ Nel caso A `recall_as_of` **ha già restituito zero hit**, quindi `_n_prima` val
 sa perché**, che è esattamente il difetto che il pezzo (i) andava a chiudere —
 per l'altra porta.
 
+### ⑥-bis Chiuso mentre scrivevo — e la verifica sul corpus ha trovato altro
+
+**Aggiornamento delle 20:20, e ritiro l'«aperto» di due paragrafi sopra.** Il
+commit `5f84f8a5` ha aggiunto a `Risultati` il campo **`letto_al_passato`**: la
+porta ora dichiara quando ha **dedotto** la data dalla domanda e a quell'istante
+non c'era nulla. Avevo il test RED già scritto per la stessa cura: **l'ho
+buttato**, perché quella copre tutto il mio **e in più** distingue l'`as_of`
+passato a mano dall'`as_of` dedotto, che io non avevo separato.
+
+Ho fatto invece ciò che quel test non può: **provarla sul corpus vero**, dove i
+test girano sullo stub SHA-256.
+
+```
+A. la query di questo documento (data dedotta, vuoto)  n=0  letto_al_passato=SI
+B. stessa domanda, routing spento                      n=6  letto_al_passato=no
+C. data dedotta MA il passato contiene qualcosa        n=6  letto_al_passato=no
+```
+
+✅ Funziona, controllo negativo compreso. **Ma la data dichiarata era il giorno
+dopo quella chiesta** — il caso A rispondeva `19/07/2026` a una domanda che dice
+«il **18** luglio 2026»:
+
+| la domanda nomina | l'avviso dichiarava |
+|---|---|
+| il 18 luglio 2026 | **19/07/2026** |
+| al 5 agosto 2026 | **06/08/2026** |
+| al 2026-01-31 | **01/02/2026** ← cambia anche il **mese** |
+
+🔑 **La giuntura**: `extract_as_of` costruisce l'ancora a **fine giornata UTC**
+con `tzinfo` esplicito; la formattazione la rileggeva con `fromtimestamp(as_of)`
+**senza fuso** — e a est di Greenwich le 23:59:59 UTC sono già domani. Nessuno
+dei due pezzi sbaglia da solo. ⚠️ E colpiva **lo scopo stesso dell'avviso**, che
+esiste perché chi legge riconosca *la data che ha scritto*.
+
+Curato in `6d79f676`, con la falsificazione che dice anche una cosa sui test
+esistenti: **senza la cura cadono 3 e i 5 originali restano tutti verdi** — che
+non coprissero questo caso non l'ho dedotto leggendoli, l'ho misurato togliendo
+la cura.
+
 ## ⑦ Che cosa è provato e che cosa no
 
 ✅ **Provato**: l'A/B a quattro bracci (§①) · la catena nel codice (§②, righe
