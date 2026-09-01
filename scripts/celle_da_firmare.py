@@ -25,7 +25,16 @@ REGISTRO = pathlib.Path("docs/stato-reale/00-ESAME.md")
 #: vincolo il conteggio include le celle che PARLANO di firme e si conta da
 #: sola (misurato due volte il 29/08: davi 2 celle «a due firme» che nessuno
 #: aveva firmato).
-FIRMA = re.compile(r"(?:✅|✍️|_)\s*(?:\*\*)?(?:2ª |seconda )?firma @([A-Za-z0-9_-]+)")
+#: fra il marcatore e la parola «firma» ci sta altro: chi firma DECORA, e
+#: `✅⚠️ **firma @…` o `✅🪞 **firma @…` non matchano se qui si pretende
+#: `\s*`. Misurato il 01/09: DUE firme vere (`W7-36`, `W7-51`) risultavano
+#: inesistenti per questo, e la cella tornava nell'elenco delle firmabili
+#: come se nessuno l'avesse verificata. Il difetto è ricorsivo — chi ha
+#: scritto questo regex ha poi decorato le proprie firme rendendole
+#: invisibili al proprio strumento. I sei caratteri non alfanumerici bastano
+#: per una o due emoji e non arrivano a un'altra parola.
+FIRMA = re.compile(r"(?:✅|✍️|_)[^A-Za-z0-9|]{0,6}(?:\*\*)?"
+                   r"(?:2ª |seconda )?firma @([A-Za-z0-9_-]+)")
 #: Chi firma ha DUE nomi — la sigla e il nome proprio — e il conteggio grezzo
 #: li tratta come due persone: `W7-14` risulta «a due firme» con `['ws2',
 #: 'Varco']`, che e' una sola. Misurato il 31/08 sul registro: delle 6 celle
