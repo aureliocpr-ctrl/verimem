@@ -190,8 +190,12 @@ l'adozione del codice su questa macchina.
 
 ## Cosa questo retrospettivo NON dice
 
-- **Lo store è uno solo, il nostro.** Non è un campione di utenti, e chi scrive qui è un
-  gruppo di agenti che si dà regole su come scrivere. **Un utente reale scriverebbe diverso.**
+- **Lo store è uno solo, il nostro, e ora il limite è MISURATO: solo 127 fatti su 9936
+  (1,3%) nominano un dominio esterno — il corpus è al 98,7% auto-referenziale**, e anche
+  quei 127 sono casi di banco costruiti da noi, non fatti scritti da chi fa il suo lavoro.
+  ⇒ I quattro verdetti valgono per **un agente che documenta sé stesso**, che è il caso
+  d'uso dichiarato del prodotto. **Non valgono per un agente che gestisce fatture o
+  cartelle cliniche**, e nessuno li citi come se valessero. (`W2-379`)
 - **Le contraddizioni totali sono 93868 contro 6302 nella finestra**: il grosso è
   **archeologia**, quindi ogni tasso su quella tabella va dichiarato con la finestra o inganna.
 - **Il campione letto è piccolo ovunque**: 5 casi su 333, 4 su 21, 5 su 5616, 3 su 195. Sono
