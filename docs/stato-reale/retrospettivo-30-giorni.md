@@ -100,12 +100,23 @@ Dei **333** fatti sostituiti:
 | avevano una voce nel registro undo | **228** |
 | **annullati** | **0** |
 | finestra di annullamento **scaduta** | 26 |
-| **recuperabili adesso** | **202 annullabili**, di cui **~178 davvero recuperabili** |
+| **recuperabili adesso** | **202**, e l'`undo` su quelli riesce **60 volte su 60** |
 
 L'ultima riga non è una deduzione: `undo` è stato provato **dalla porta MCP su una copia
-consistente dello store**, su un campione di 25 casi reali — **22 riusciti, 3 falliti**, con
-`superseded_by` tornato `NULL` su 22. **Il tasso è 88%, non 100%.** La causa dei 3 falliti
-non è nota. (`W2-380`)
+consistente dello store**, con un banco a **due popolazioni nella stessa esecuzione**:
+
+| | tentati | riusciti | cosa risponde la porta |
+|---|---|---|---|
+| voce con **TTL vivo** | 60 | **60** | `action: restored` |
+| voce con **TTL scaduto** | 20 | **0** | `action: expired` |
+
+**Separazione totale: non esiste un fallimento che non sia una scadenza.** (`W2-381`)
+
+> **Il primo tentativo aveva dato 88% e io l'avevo attribuito al prodotto.** Era il mio
+> filtro: contava le voci vive **senza** escludere le scadute, cioè un criterio **più largo
+> di quello con cui i 202 erano stati contati**. ⇒ **Quando verifichi una cella, il primo
+> controllo è che il tuo filtro sia lo stesso che la cella usava.** (`W2-380`, ritirata in
+> `W2-381`)
 
 **La riga «0 usi su 343» non era una curiosità sull'ergonomia: era il conto di un danno che
 stava maturando.** Il prodotto sa tornare indietro, l'ha registrato 228 volte per questi
@@ -206,3 +217,5 @@ l'adozione del codice su questa macchina.
 - **Il campione letto è piccolo ovunque**: 5 casi su 333, 4 su 21, 5 su 5616, 3 su 195. Sono
   **indizi con la direzione, non tassi**, e ogni cella lo dichiara.
 - **La causa del buco di venti giorni non è nota.** Il documento dice cosa **non** è.
+- **Una delle quattro celle è stata corretta al rialzo**: la reversibilità vale 202 fatti, non 178.
+  **Il verdetto 🟡 «inerte» non cambia: funziona e non la usa nessuno.**
