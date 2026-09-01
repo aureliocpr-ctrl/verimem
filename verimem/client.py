@@ -1294,9 +1294,27 @@ class Memory:
                 for item in out:
                     item["hidden_records"] = [
                         h for h in nascosti if h["text"] != item.get("text")]
+        # ⚠️ IL `best` DEL JOURNAL SI PRENDE DAL PRIMA DEL TAGLIO, e il motivo e'
+        # scritto trenta righe piu' su, nel commento del pezzo (i): «il massimo
+        # ricalcolato dopo varrebbe 0.0 su una lista vuota, cioe' un numero
+        # INVENTATO». Quella cura ha sistemato l'AVVISO e ha lasciato indietro
+        # QUESTA riga, che calcolava lo stesso numero sulla stessa lista gia'
+        # riassegnata (`out` e' filtrato alla riga del pavimento, sopra).
+        #
+        # Misurato sul journal reale, entrambe le parti (`events.jsonl` +
+        # `.jsonl.1`): 2499 `flow.recall`, di cui 254 vuote (10.2%), e TUTTE E
+        # 254 con `best = 0` — per costruzione, non per misura. Chi analizza il
+        # journal per capire perche' una lettura non ha risposto legge quegli
+        # zeri come «non ha trovato nulla», mentre parte di quelle letture
+        # AVEVA trovato ed e' stata tagliata.
+        #
+        # 🔑 Due punti calcolavano lo stesso valore, uno e' stato curato e
+        # l'altro no: `_best_prima` e `_tagliati` esistono gia' e sono in
+        # scope: la cura non aggiunge stato, usa quello che c'e'.
+        # ⚠️ I 254 zeri gia' scritti restano: questa riga vale da qui in avanti.
         _emit_flow("flow.recall", kind="search", n=len(out),
-                   best=round(max((float(i.get("score") or 0.0)
-                                   for i in out), default=0.0), 4))
+                   best=round(float(_best_prima), 4),
+                   tagliati=_tagliati)
         # «NON LO SO» DETTO SULLA PORTA CHE LA GENTE APRE.
         #
         # Misurato su un corpus aziendale controllato: su 15 domande
