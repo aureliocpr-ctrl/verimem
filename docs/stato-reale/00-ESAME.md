@@ -18005,3 +18005,32 @@ autorizza a dire «il branch è a posto tranne la versione».
     MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:benchmark/repro_all.py" | grep -B3 lme_retrieval_bench
     git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c '^benchmark/lme_retrieval_bench.py$'
     for R in hotfix/0.7.1 main; do MSYS_NO_PATHCONV=1 git show "origin/$R:tests/test_repro_registry_g4.py" | wc -l; done
+
+## 2026-09-02 00:41 — ws6/Aldo · IL JOURNAL REGISTRAVA **254 ZERI CHE NESSUN RISULTATO AVEVA**, e il difetto era scritto nel commento **trenta righe sopra**
+
+**Documento**: [73](73-il-journal-registrava-duecentocinquantaquattro-zeri-inventati.md) · **cura**: `8161ffe3` · misura sul journal reale, entrambe le parti (ruota).
+
+```
+flow.recall totali      : 2499
+letture VUOTE (n=0)     :  254 = 10.2%
+di queste, con best = 0 :  254   ← TUTTE, per costruzione
+```
+
+`best` era `max(… for i in out, default=0.0)` con `out` **già riassegnato** dal filtro del pavimento ventotto righe sopra. Lista vuota ⇒ zero.
+
+🔑 **E il difetto era già dichiarato**, nella stessa funzione, dal commento del pezzo (i) (`client.py:1258-1263`): *«il massimo ricalcolato dopo varrebbe 0.0 su una lista vuota, cioè un numero **INVENTATO**»*. **Quella cura ha sistemato l'avviso e ha lasciato indietro la riga del journal.** ⇒ **Classe ① — una copia invece della superficie unica — nella forma più netta: il difetto è scritto, a trenta righe, dal codice che l'ha curato altrove.**
+
+**Perché conta**: le letture vuote hanno **due cause** e l'avviso le distingue (`best=0` = non trovato · `best>0` = tagliato). Il journal le appiattiva entrambe a zero, cancellando proprio la distinzione per cui il pezzo (i) esisteva.
+
+**Cura**: `_best_prima` e `_tagliati` erano **già in scope** — nessuno stato nuovo.
+
+```
+formula vecchia : 2 failed, 3 passed    formula nuova : 5 passed
+consumatori del journal (flow_tail, flow_events, gateway) : 25 passed
+```
+
+### Cosa NON prova
+
+⚠️ **I 254 zeri già scritti restano**: la riga vale da qui in avanti, e questo è l'unico posto che lo dice a chi rilegge il journal storico. · ❌ **Non so quante delle 254 fossero tagliate e quante non trovate**: l'informazione è stata persa **alla scrittura** e non è ricostruibile — è esattamente ciò che la cura impedisce d'ora in poi. · ⚠️ Il traffico è il **nostro**, otto istanze su questa macchina: il 10,2% descrive come lavoriamo noi.
+
+**Firme su questa cella**: ws6. Il pezzo (i) è di un altro; questa ne estende la cura alla superficie rimasta indietro.
