@@ -149,6 +149,12 @@ def controfirme_b(righe: list[str], con_sha: bool = False):
 VIETATO = re.compile(r"git\s+(stash|checkout\s+--|reset|clean|push)"
                      r"|--no-verify|rm\s+-rf|requalify\s+--apply", re.I)
 
+#: il segmento TESTUALE della ricetta: tutto cio' che sta fra «rifallo con»
+#: e il separatore che precede le firme. Serve perche' una ricetta e' una
+#: FRASE — «la query in coda a X, o il conteggio su Y» — e ridurla al primo
+#: backtick ne cambia il senso.
+RICETTA = re.compile(r"🔎\s*\*{0,2}(?:rifallo con|Rifallo con)\*{0,2}:?\s*"
+                     r"([^|]{0,300}?)(?=\s·\s✅|\s·\s✍️|\s\||$)")
 RIFALLO = re.compile(r"🔎\s*\*{0,2}(?:rifallo con|Rifallo con)\*{0,2}[^`]*`([^`]+)`")
 #: gli ID del registro NON sono di una forma sola: accanto a `W2-57` ci sono
 #: `LANT-41` e le celle NUMERICHE (`| 12 |`). Misurato il 30/08: le numeriche
@@ -227,7 +233,29 @@ def main() -> int:
             # il backtick veniva da prima della riga stessa.
             _q = riga.lower().find("rifallo con")
             _d = riga.find("`" + _cmd + "`", _q) - _q if _q >= 0 else 999
-            if 0 <= _d <= 70:
+            #: UNA ricetta puo' offrire DUE vie, e questo script ne mostrava
+            #: sempre una: la prima. `W7-65` diceva «la query in coda a X — O
+            #: il conteggio diretto su Y», e la via buona era la SECONDA:
+            #: chi legge esegue quella che vede, e io ho eseguito il banco
+            #: sbagliato e contestato la cella per una ricetta che era giusta
+            #: (02/09 01:35). Peggio: il testo che QUALIFICAVA il primo
+            #: backtick — «la query IN CODA A» — spariva, e un riferimento
+            #: veniva stampato come un comando da lanciare. Quindi quando le
+            #: vie sono piu' d'una si stampa la frase, non il backtick.
+            _seg = RICETTA.search(riga)
+            #: `_pezzi` NON e' il numero delle vie: sono le coppie di
+            #: backtick, e su `W7-65` ne conta 3 dove le vie sono 2 (il terzo
+            #: e' un pezzo della seconda). Serve come TRIGGER — una ricetta
+            #: con piu' riferimenti e' una frase, non un comando — e il
+            #: numero non si stampa, perche' un numero che non so contare
+            #: e' peggio di nessun numero.
+            _pezzi = _seg.group(1).count("`") // 2 if _seg else 1
+            if _seg and _pezzi > 1:
+                print(f"      ↪ {_seg.group(1).strip()[:200]}")
+                print("      ⓘ  la ricetta e' una FRASE e offre piu' di una "
+                      "via: leggila. La prima non e' sempre quella che "
+                      "riproduce la cella.")
+            elif 0 <= _d <= 70:
                 print(f"      $ {_cmd[:110]}")
             else:
                 # niente falso `$`: si stampa cio' che la cella DICE.
