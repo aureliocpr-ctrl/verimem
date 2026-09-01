@@ -164,14 +164,37 @@ cambiato**, e il numero pubblicato non descrive più ciò che il prodotto fa.
 l'aritmetica interna torna, e l'ambiguità del doppio `48` era già stata corretta.
 **Il numero era vero quando è stato scritto.**
 
-🔴 **Ma oggi lo stesso comando dà cifre diverse, e in direzione peggiore**:
+> 🪞 **CORREZIONE del 02/09 01:16, e non è mia: è dell'osservatore**, che ha
+> rieseguito **lo stesso file** (md5 `5a110ed2…`) in modo indipendente e conferma
+> `26/48` e `9/48`. Ma ha guardato **una colonna che io non avevo confrontato**:
+> i **veri rifiutati** sono **scesi da 9 a 7** mentre i falsi ammessi salivano da
+> 25 a 26.
+>
+> ⇒ ⛔ **«In direzione peggiore» è una lettura sbagliata, e la ritiro.** Il gate
+> è diventato **più permissivo**: ammette un falso in più **e** rifiuta due veri
+> in meno. Non è «peggio»: è **uno spostamento della soglia operativa**, con un
+> costo e un beneficio, e chiamarlo peggioramento nasconde metà del
+> movimento.
+> 🔑 **La forma dell'errore è mia e la nomino**: avevo confrontato **la sola
+> colonna che peggiorava**. È «misura entrambe le popolazioni» applicata alle
+> **colonne** invece che alle righe — e il mio stesso banco stampava i veri
+> rifiutati, che ho letto e non ho confrontato.
 
-| | 25/08 | 01/09 |
-|---|---|---|
-| falsità ammesse | 25/48 | **26/48** |
-| IT | 13/24 | **14/24** |
-| EN | 12/24 | 12/24 |
-| divergenze IT/EN | 8/48 | **9/48** |
+🔴 **Oggi lo stesso comando dà cifre diverse**, e il movimento è **doppio**:
+
+| | 25/08 | 01-02/09 | verso |
+|---|---|---|---|
+| falsità **ammesse** | 25/48 | **26/48** | +1 ← costo |
+| veri **rifiutati** | **9/48** | **7/48** | −2 ← beneficio |
+| IT (ammesse) | 13/24 | **14/24** | +1 |
+| EN (ammesse) | 12/24 | 12/24 | invariato |
+| divergenze IT/EN | 8/48 | **9/48** | +1 |
+
+⇒ **Le due colonne si muovono in verso opposto**: il gate lascia passare **un
+falso in più** e trattiene **due veri in meno**. Questo è **più permissivo**, e
+va detto così — non «peggiore». *(La riga dei veri rifiutati viene
+dall'osservatore, che aveva il valore del 24/08 che a me mancava; il `7/48` di
+oggi è nel mio run e l'avevo stampato senza confrontarlo.)*
 
 📌 **La forma della cura esiste già nel README stesso**, dieci righe più su
 (§④-bis): *«1.8% was the 2026-07-18 run; the same command today reports 5.4%»*.
