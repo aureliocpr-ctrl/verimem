@@ -109,6 +109,27 @@ def main() -> int:
         print(f"  {a.cella} contiene gia' '{a.se_manca}': non tocco niente")
         return 0
 
+    # 🔴🪞 01/09 19:49 — LA GUARDIA CHE MANCAVA, e me l'ha insegnata un difetto
+    # MIO: il 31/08 ho appeso a `LANT-130` un testo che conteneva un pipe NUDO,
+    # e la cella si e' spezzata in due colonne — la sua colonna autrice non si
+    # leggeva piu'. **Quella cella era LOAD-BEARING**: la legge Aurelio.
+    # ⇒ Il controllo sull'invarianza delle colonne (piu' sotto) NON bastava:
+    #   conta con `COLONNE`, che ha il lookbehind e **non vede gli escape**, e
+    #   contava solo cio' che il MIO righello vede. Il markdown conta i pipe
+    #   NUDI. **Una guardia che misura col proprio righello non protegge da chi
+    #   legge con un altro.**
+    # ⇒ Qui si rifiuta il testo PRIMA di toccare il file, e la cura non e' un
+    #   escape: e' non usare il carattere. Venti minuti dopo aver riparato
+    #   `LANT-130` stavo per rifarlo — quindi non e' disciplina, e' lo
+    #   strumento che deve dire di no.
+    if "|" in testo:
+        nudi = testo.count("|") - testo.count("\\|")
+        print(f"  il testo da appendere contiene {testo.count('|')} barre "
+              f"({nudi} NUDE): spezzerebbero la cella. NON tocco niente.")
+        print("     Riformula senza il carattere — un escape NON basta: il")
+        print("     markdown lo rende, ma gli altri script contano i pipe nudi.")
+        return 1
+
     col = COLONNE.split(riga)
     # 🔴 31/08 08:22 — TOLTA LA SOGLIA FISSA «>= 10 colonne», su misura di
     # @ws4: `LANT-34` ha 10 pipe e `LANT-109` ne ha 9 — **il numero di colonne
