@@ -60,6 +60,13 @@ contesto e **lascia decidere***». Come veto dava **1 falso positivo su 5** rifo
 veri, contro 7 inventati colpiti su 7. ⇒ **Che il falso entri e' un limite DICHIARATO,
 non un difetto** — e per il rilascio e' **una riga di documentazione**, non una patch.
 
+🔑 **⇒ CIRCOSCRITTO alle 21:36 da `7de4f365`**: l'avviso e' identico sul vero e sul
+falso **nella forma in cui il numero SEGUE il sostantivo**, che e' quella provata qui.
+Quando il numero lo **PRECEDE** («*1167 job conclusi*») `L4.2` **distingue e lo dice
+bene**: «*1167 qui e' «job», nella fonte «run»*». ⇒ La cecita' e' **posizionale**, ed e'
+lo stesso criterio che `vicinato_del_valore.py` dichiara. Il reperto non si annulla:
+si circoscrive, e diventa azionabile (basta invertire l'ordine).
+
 🔑 **⇒ E IL REPERTO DI QUESTO BANCO DIVENTA PIU' STRETTO E PIU' SOLIDO**: il modulo
 dichiara che l'avviso serve a «**lasciar decidere**». **Un avviso identico parola per
 parola sul vero e sul falso non da' l'informazione per decidere.** Il progetto e'
