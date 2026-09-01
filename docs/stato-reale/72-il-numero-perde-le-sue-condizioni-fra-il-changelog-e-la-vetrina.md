@@ -146,6 +146,46 @@ con *«un 33% che i suoi banchi non contengono, in nessuna lettura»*. **Terzo
 numero guardato, terza volta che la condizione sta altrove o non sta da
 nessuna parte.**
 
+## ④-quater Altri due, e il denominatore vero della pagina
+
+@ws4 ha rifatto il censimento con un criterio scritto prima: **34 claim
+numerici**, non 136 — e l'audit ne aveva coperti **4, il 12%**. Ne restano
+trenta. Ne prendo due, sempre **a lettura**.
+
+### `AUROC 0.96–0.97` (riga 53) — ✅ **a posto, e va detto**
+
+> «With an injected llm judge it reaches AUROC **0.96–0.97** (sonnet, on
+> **SNLI** held-out; on out-of-distribution TruthfulQA/HaluEval it is
+> **~0.81–0.90**, and the free CE ~0.82 — *the honest field numbers*,
+> `docs/EVIDENCE-external-2026-07-19.md`)»
+
+Ha il **regime** (`sonnet`, SNLI held-out), dichiara da sé il **degrado fuori
+distribuzione**, confronta col default, e **cita il file** — che esiste (113
+righe) e **contiene `n=100`**. ⇒ **Il lettore può risalire.** È il numero più
+alto della pagina, quindi il più citabile, ed è anche uno dei meglio
+circostanziati. **Nessun rilievo.**
+
+### «The residual **~2%**» (riga 95) — ❌ fonte non trovata, e un'ipotesi
+
+> «An air-gapped box with ollama thus gets the full moat with no network. **The
+> residual ~2%** scores high and still needs a full llm judge.»
+
+Nessuna condizione, e **non è nel CHANGELOG**. Le occorrenze di «residual» nel
+repo sono altre cose (`residual_copies`, `residual_after_filter` in un banco
+sulle contraddizioni).
+
+🔎 **Ipotesi, e la dichiaro come tale**: il contesto è la cascata del judge
+ollama, il cui escape è **2,3%** — il `~2%` potrebbe essere **quello stesso
+numero arrotondato**. Se è così **non è una misura nuova**, e presentarlo con
+un'altra parola («residual») fa contare al lettore **due grandezze dove ce n'è
+una**. ⚠️ **Non lo affermo**: chi ha scritto la riga lo sa in un secondo, e la
+cura è una parentesi.
+
+📌 **Bilancio dell'audit a lettura, cinque numeri**: due con le condizioni
+altrove (`2.3%`, `6.2%→1.8%` — **portate in vetrina**, `acbc5800`), uno **a
+posto** (`0.96–0.97`), due **senza fonte trovata** (`~7% Spanish`, `~2%
+residual`).
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
