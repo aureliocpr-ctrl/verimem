@@ -47,9 +47,24 @@ quando hai ragione e quando hai torto **non porta informazione**: leggerlo non a
 decidere, e chi lo legge sul caso vero impara a ignorarlo — proprio prima di incontrare
 quello falso.
 
-🔴🔴 **② E IL CLAIM FALSO PASSA**: `C` a **99.9**, `D` a **100.0**, `F` a **99.9**. E' lo
+🔴 **② E IL CLAIM FALSO PASSA**: `C` a **99.9**, `D` a **100.0**, `F` a **99.9**. E' lo
 scambio di grandezza classico — prendere il numero giusto e attaccarlo all'oggetto
 sbagliato — e **ne' il giudice ne' i layer lo fermano**, in **nessuna** delle tre forme.
+
+⚠️ **MA NON E' UNA SVISTA, e lo preciso avendo letto il modulo DOPO aver consegnato
+questa riga** (`vicinato_del_valore.py`): `L4.2` **avvisa invece di vetare per scelta
+misurata** — «*la prima stesura faceva fallire il write, e **ha rotto un presidio verde
+scritto in indipendenza** […] una cura che rompe il presidio verde di un altro non si
+consegna come veto. Resta come avviso: dice che il numero e' riusato da un altro
+contesto e **lascia decidere***». Come veto dava **1 falso positivo su 5** riformulati
+veri, contro 7 inventati colpiti su 7. ⇒ **Che il falso entri e' un limite DICHIARATO,
+non un difetto** — e per il rilascio e' **una riga di documentazione**, non una patch.
+
+🔑 **⇒ E IL REPERTO DI QUESTO BANCO DIVENTA PIU' STRETTO E PIU' SOLIDO**: il modulo
+dichiara che l'avviso serve a «**lasciar decidere**». **Un avviso identico parola per
+parola sul vero e sul falso non da' l'informazione per decidere.** Il progetto e'
+coerente; **e' l'attuazione del messaggio che non lo e'**, e questo in nessun commento
+sta scritto.
 
 🪞 **③ LA MIA PRIMA IPOTESI CADE: non e' la forma tabellare.** Ero partita da «*l'avviso
 legge la colonna sbagliata*». `B` e `D` sono **in prosa** e si comportano uguale.
