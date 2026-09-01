@@ -18467,3 +18467,68 @@ e non nel giudice. **Non ho toccato la composizione**: qui è `try_local_score` 
 
 **Banco**: `porta_denominatori.py`, dati in `denominatori.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 01:18 — ws1 · **IL «MIGLIORAMENTO» DELLA COMPOSIZIONE SUI DENOMINATORI È ILLUSORIO: 9/10 sfuggite diventano 7/10, ma ENTRAMBE le prese in più sono per SOURCE SBAGLIATA — cioè per un difetto, non per una difesa.** E una risposta vera viene bocciata dallo stesso difetto
+
+**Livello** composizione `search(k=1)` + `try_local_score`, soglia `40.0` · **Perimetro** le
+**stesse 10 coppie di denominatori** della cella delle 01:09, stavolta **con la source scelta
+dal retrieval** invece che data da me · **Istante** 2026-09-02 01:12–01:16 · **Regime**
+variabili poppate, RAM 8,28 GB, **`claim ram/giudice` preso e rilasciato** (`3378a972287f`) ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+### Il numero grezzo sembra un miglioramento
+
+| | gate **da solo** *(01:09)* | **composizione** *(qui)* |
+|---|---|---|
+| denominatori falsi **sfuggiti** | **9 / 10** | **7 / 10** |
+| risposte vere **bocciate** | — | **1 / 10** |
+| source **diversa** dall'attesa | — | vera **1**, falsa **3** |
+
+⚖️ **Le mie predizioni**: «*8-10 sfuggite*» **CADE** (7); «*source attesa in ≥8/10*» **regge
+sulla vera** (9/10) **ma non sulla falsa** (7/10).
+
+### 🔴 MA GUARDANDO **CHI** CADE, IL MIGLIORAMENTO SPARISCE
+
+Le due prese in più rispetto al gate isolato sono i casi **6** e **9**, ed **entrambe hanno
+`source DIVERSA`**:
+
+| # | punteggio falsa | source | cosa è successo davvero |
+|---|---|---|---|
+| 2 | **4,17** | attesa | **presa legittima** — il gate ha visto il denominatore *(la stessa delle 00:41: riproducibile)* |
+| 6 | 1,32 | **DIVERSA** | il gate ha giudicato **un altro fatto**: boccia per la ragione sbagliata |
+| 9 | 0,45 | **DIVERSA** | idem — **e la VERA dello stesso caso è bocciata a 0,90** |
+
+⇒ **le prese "vere" restano UNA su dieci, esattamente come col gate isolato.** Il passaggio
+da 9 a 7 **non è una difesa che si aggiunge: è il retrieval che sbaglia bersaglio**, e per
+due volte su tre l'errore è capitato su una proposizione falsa — un caso fortunato, non un
+meccanismo.
+
+**E lo stesso difetto costa**: al caso 9 il retrieval porta una source sbagliata anche sulla
+**vera**, e il gate la boccia a **0,90** ⇒ **1 falso rifiuto su 10**, che nella composizione
+delle 00:49 (con query «facili») era **0 su 10**.
+
+### 🎯 Cosa cambia per la cura
+
+**Niente, in meglio.** La cura col giudice **resta migliore del pavimento** *(00:24: 2 perse
+su 12 e 4 invenzioni su 8)*, e **resta cieca sui rapporti**: **1 presa legittima su 10, sia
+da sola sia composta**. ⇒ **l'avviso da consegnare con la cura non si attenua misurando la
+composizione: si conferma.**
+
+📌 **E la composizione porta un costo che con le query facili non si vedeva**: quando la query
+è una proposizione *insolita* — qui «*Gli alias nominati nel warning sono 3 su 3*» — **il
+retrieval sbaglia fatto e il giudizio diventa rumore in entrambe le direzioni.**
+
+### Cosa NON prova
+
+**Dieci coppie da cinque fatti**, quindi **non indipendenti**: `7/10` e `1/10` non sono tassi.
+**Non ho letto QUALE source sbagliata** il retrieval abbia scelto nei tre casi — so che
+differisce dall'attesa sui primi 40 caratteri, **non che sia irrilevante**: potrebbe essere un
+fatto legittimo che dice la stessa cosa, e allora la lettura cambia. **È la verifica che
+manca a questa cella**, e la lascio scritta. **Il confronto 9/10 → 7/10 è fra due banchi
+miei**, con le stesse proposizioni ma **stadi diversi**: è appaiato per costruzione, non per
+disegno statistico. **Un solo giro per caso**, nessuna ripetizione.
+
+**Banco**: `porta_denom_composizione.py`, dati in `denom_composizione.json` (scratchpad).
+**Io misuro, non curo.**
