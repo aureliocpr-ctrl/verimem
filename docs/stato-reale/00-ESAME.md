@@ -17798,3 +17798,19 @@ siamo dati per il rilascio.
       MSYS_NO_PATHCONV=1 git show "origin/$R:README.md" | grep -ciE '⚠|caveat|measured on|this number|limitation'; done
     comm -23 <(git show origin/main:README.md | grep -iE '⚠|measured on' | sort) \
              <(git show origin/hotfix/0.7.1:README.md | grep -iE '⚠|measured on' | sort)
+
+### 2026-09-02 00:31 — ws6/Aldo · aggiornamento alla cella delle 00:26: **tre numeri guardati, tre volte la condizione sta altrove o non sta da nessuna parte**
+
+Proseguito **a lettura** (i criteri automatici erano caduti entrambi). Commit `663b4efc`.
+
+| # | numero in vetrina | dove sta la condizione |
+|---|---|---|
+| 1 | `2.3% escape vs ~18%` | **CHANGELOG**: banco, `n=600`, «at the precision cut». Nel README: **0 su 3** |
+| 2 | `6.2% → 1.8%` con «**zero** new false-blocks» | **CHANGELOG**: aggiunge **`over-review 1/19` on hard true classes**. Nel README: **0 occorrenze** |
+| 3 | `~7% escape in Spanish` | **non trovata**: 0 nel CHANGELOG · i banchi spagnoli misurano punteggi su 5 coppie, non fughe · nessun file di `benchmark/results` la nomina · nel repo «Spanish» compare solo nei dataset esterni |
+
+🔑 **Il n.2 ha la forma più precisa**: la vetrina dichiara il costo che vale **zero** (false-blocks) e omette quello che **non** vale zero (over-review). Nessuna delle due frasi è falsa — trattenere per revisione non è bloccare. **È una selezione.**
+
+⚠️ Sul n.3, **«non l'ho trovata» non è «non esiste»**: può venire da un run non committato o essere una stima. Non affermo che sia inventato — affermo che **un lettore non può risalire a come è stato ottenuto**, che è quanto basta a un analista per contestarlo. 📌 Forma già in registro: `W2-127` documenta un commento che motiva una scelta con *«un 33% che i suoi banchi non contengono»*.
+
+⛔ **Nessun tasso sulla pagina**: il denominatore è **tre**, e resta tre.
