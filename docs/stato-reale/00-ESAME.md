@@ -16883,3 +16883,57 @@ completa con le ore**, non due punti: è l'errore che ho fatto tre volte oggi.
 servono»**.
 
     rifallo con: il comando qui sopra, ripetuto, annotando ora e valore
+
+---
+
+## 2026-09-01 21:36 — ws1 · **INCASSO @ws6 E PRECISO IL MIO VERDE DI UNDICI MINUTI FA**: unite le tre misure, il pavimento **parte altissimo e scende**. Lo `0.0` esiste **solo a un fatto**, e il rischio sul piccolo è l'**opposto** di quello che temevo
+
+**Livello** composizione di tre misure già su origin, **nessuna esecuzione mia in questo
+giro** · **Istante** 2026-09-01 21:36, a ridosso della chiusura · **Regime** sola lettura ·
+**Autorità**: ordine diretto di Aurelio (20:42) · **0.7.6**.
+
+### La serie completa, e non è di nessuno di noi tre da solo
+
+| fatti nello store | pavimento | chi l'ha misurato |
+|---|---|---|
+| **1** | **`0.0`** — *per costruzione*: `_MIN_FACTS = 2`, zero sonde | **@ws6** (`eac32344`, 21:14) |
+| **6** | **0,9166** | **@ws6** |
+| **20** | 0,8662 | ws1 (`094ab695`, 21:25) |
+| **60** | 0,8711 | ws1 |
+| **14 485** | 0,8781 | **@ws4** (31/08) |
+
+⇒ **il pavimento parte altissimo sui corpus minuscoli e scende, stabilizzandosi intorno a
+0,87.** La curva è **monotona decrescente** da 6 in su, e piatta da 20 in poi.
+
+### 🔴 Cosa cambia per me — due precisazioni, e le porto io
+
+**(a) Il mio limite era già stato pagato prima che lo dichiarassi.** Alle 21:25 ho scritto:
+«*NON ho provato SOTTO i 20 fatti: è lì che il commento potrebbe avere ragione*». **@ws6
+l'aveva misurato undici minuti prima** (21:14), sulla **funzione pura, senza modelli** — un
+righello più economico del mio e sullo stesso fenomeno. **Lo 0.0 del commento
+`client.py:1320` esiste, ma solo a UN fatto e per costruzione**: non è il degrado che
+temevo, è la definizione di `_MIN_FACTS`.
+
+**(b) Il verso del rischio è l'opposto di quello che avevo scritto.** Io temevo un pavimento
+**inattivo** su store nuovo; @ws6 mostra che a 6 fatti vale **0,9166** — e il rischio è che
+**tagli troppo**. ⇒ **il mio «verde» resta valido dove l'ho misurato (da 20 fatti in su:
+attivo e stabile), e NON si estende sotto**: fra 2 e ~10 fatti il pavimento è **più alto di
+quello del corpus maturo**, e nessuno di noi tre ha misurato **che cosa taglia** a quel
+livello.
+
+**Credito**: la serie esiste perché @ws6 ha guardato l'estremo basso con la funzione pura,
+@ws4 l'estremo alto sul corpus di casa, io il mezzo alla porta. **Nessuno dei tre banchi da
+solo mostra la curva.**
+
+### Cosa NON prova
+
+**Non ho rieseguito le misure di @ws6 e @ws4**: le compongo, e una composizione non è una
+verifica — se una delle due cade, cade la curva. I tre banchi usano **righelli diversi**
+(funzione pura senza modelli · porta `Memory` · store di casa) e **corpora diversi**: la
+monotonia potrebbe essere un artefatto del confronto fra righelli, non una proprietà del
+prodotto. **Nessuno ha misurato quanto il pavimento alto TAGLI davvero** su uno store da
+6 fatti: `0,9166` è un valore, non un effetto — e sull'SDK il pavimento **non filtra**
+(è permissivo per scelta dichiarata), quindi l'effetto dipende **dalla porta**. **È la
+misura che manca**, e la lascio scritta per chi riprende.
+
+**Io misuro, non curo.**
