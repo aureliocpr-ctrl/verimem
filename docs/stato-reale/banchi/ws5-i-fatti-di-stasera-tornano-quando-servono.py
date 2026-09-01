@@ -54,18 +54,35 @@ su **3 su 3** risponde **`answerable`** — che nel modulo significa, alla lette
 «*not ignorance (counted for the honest denominator)*» (`ignorance_map.py:18`).
 ⇒ **Il prodotto dichiara di saper rispondere proprio dove non ha risposto.**
 
-🔑 **③ LA CAUSA E' UN NUMERO, ed e' il prodotto stesso a stamparlo**: `floor=0.800`
-(dichiarato) contro `noise_floor=0.872` (**misurato dal prodotto su se stesso**), e la
-riga dice `decide 0.800`. ⇒ **Decide con una soglia che sta SOTTO il rumore che ha
-appena misurato.** Nella banda 0.800-0.872 chiama «rispondibile» cio' che per sua
-stessa definizione e' la zona dove «*un vicino qualunque ha lo stesso punteggio di un
-match vero*» — e infatti **stampa quell'avviso**, giusto, accanto al verdetto
-sbagliato. 🪞 E' la forma «**un campo stampato e non letto e' un campo assente**»:
-qui il campo e' letto dall'utente e **non dalla decisione**.
+⛔ **③ LA DIAGNOSI CHE AVEVO SCRITTO QUI E' RITIRATA, e la ritiro con la fonte in
+mano.** Avevo scritto che «*decide con un floor sotto il rumore che misura*» e che
+«*manca il confronto fra due numeri*», e stavo per proporre `max(floor, noise_floor)`.
+**Ho letto `ignorance_map.py` prima di proporla, e c'era gia' la risposta**::
 
-⇒ **E la classe giusta ESISTE GIA'**: `below_floor` — «*hits exist, none clears the
-floor*» — con una cura dichiarata. ⇒ **Non manca un concetto, manca il confronto fra
-i due numeri**, che sono entrambi gia' in mano al comando.
+    «Per qualche ora e' stata `max(floor, noise_floor)`, ed era SBAGLIATO —
+     misurato sul corpus vero lo stesso giorno, 2026-07-30 […]: con quella regola
+     SETTE domande su otto che il corpus sa rispondere uscivano come ignoranza,
+     e le `answerable` erano ZERO.»
+
+    «`estimate_relevance_floor` e' il 95o percentile dei MASSIMI di sonde
+     scramblate […]: quel numero e' alto per costruzione (0.87) e NON e' «il
+     livello sotto cui non c'e' informazione». Usarlo come soglia taglia via i
+     match semantici veri: una domanda che RIFORMULA un fatto vale ~0.78.»
+
+⇒ Il confronto **c'e' ed e' calibrato**; e il `caveat` **non e' un avviso ignorato
+dalla decisione: e' la cura di quel difetto**, scelta apposta («*la risposta si da' ma
+CON L'AVVERTENZA, invece di essere dichiarata rispondibile senza riserve*»).
+
+🔑 **E il codice spiega il reperto ① meglio di come lo spiegassi io**: «*una domanda
+che riformula un fatto vale ~0.78*». I tre casi mancati hanno `best` 0.87, 0.86, 0.84
+— **ma quel best e' un ALTRO fatto**, non quello atteso. ⇒ **`ignorance` guarda il
+punteggio del migliore, non se il migliore e' la risposta**: dice `answerable` perche'
+*qualcosa* ha risposto bene, mentre la cosa giusta non c'era.
+
+⇒ **E' un limite INERENTE al comando, non un difetto da curare** — la mappa non puo'
+sapere quale fosse il fatto atteso. ⚠️ Resta vero che **`answerable` significa «c'e' un
+vicino sopra soglia», NON «hai la risposta»**: chi lo legge come garanzia si sbaglia, e
+se qualcosa va scritto va scritto **li'**, non nella soglia.
 
 REGIME: **sola lettura** dello store principale (nessuna scrittura) · **un solo
 processo** per tutte le query, come da protocollo RAM misurato alle 20:47 (il giudice
@@ -202,9 +219,15 @@ def main():
         if detti_rispondibili:
             print("  🔴 %d su %d casi NON RISPOSTI sono classificati `answerable`, che nel"
                   % (len(detti_rispondibili), len(classi)))
-            print("     modulo significa «*not ignorance*» ⇒ il prodotto dice di saper")
-            print("     rispondere proprio dove non ha risposto. La classe giusta")
-            print("     (`below_floor`) ESISTE gia': a mancare e' il confronto col rumore.")
+            print("     modulo significa «not ignorance» ⇒ il comando dice di saper")
+            print("     rispondere dove la risposta ATTESA non e' uscita.")
+            # ⛔ NON e' «manca il confronto col rumore»: quella cura e' stata provata
+            # il 2026-07-30 e ritirata con una misura (7 domande su 8 diventavano
+            # ignoranza). `ignorance` guarda il punteggio del MIGLIORE, non se il
+            # migliore sia la risposta attesa — e' un limite inerente, non un difetto.
+            print("     ⚠️ NON e' una soglia da alzare (provato e ritirato il 30/07):")
+            print("        guarda il punteggio del MIGLIORE, non se il migliore e' la")
+            print("        risposta. `answerable` = «c'e' un vicino sopra soglia».")
 
 
 main()
