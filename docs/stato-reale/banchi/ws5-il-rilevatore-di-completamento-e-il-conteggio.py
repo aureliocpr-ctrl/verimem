@@ -59,16 +59,31 @@ significa** «becca 68 confabulazioni» — significa «**tocca** 68 claim», e 
 quei 68 fossero conteggi **non lo sappiamo**. E' la forma «*classe senza
 denominatore*»: il numeratore c'era, la popolazione no.
 
-⚠️ **④ Un'osservazione che NON so spiegare e che lascio tale**: `P3` («*il lavoro e'
-concluso*») ha `L1.13` e **passa** a 98.6, mentre `N1`-`N3` hanno `L1.13` e cadono. ⇒
-`L1.13` da solo non sempre veta; nei conteggi compare in coppia con `L4.2`. **Non ho
-isolato quale delle due decida**, e non lo deduco.
+🔑 **④ A VETARE NON E' `L1.13` DA SOLO, E' LA COPPIA CON `L4.2`.** `P3` ha `L1.13` e
+**passa**; `N1`-`N3` hanno `L1.13` **e** `L4.2` e cadono. E `L4.2` non compare quando il
+numero **precede** il sostantivo. ⇒ Riscrivendo lo stesso dato con il numero davanti::
 
-⇒ **NON PROPONGO LA CURA.** La forma naturale sarebbe distinguere la parola che
-**qualifica un sostantivo contato** («N run completati») da quella che **predica uno
-stato** («il task e' completato») — ma e' una distinzione **sintattica su un fenomeno
-semantico**, e stasera ho misurato due volte che quei criteri sbagliano in **entrambe**
-le direzioni (`W5-10`, `W5-11`). Porto il reperto e la rilettura del numero.
+    R1 numero prima, VERO       «Nella coda ci sono 42 job conclusi.»    passa   99.8
+    R2 numero prima, SCAMBIO    «… 895 job conclusi.»                    CADE     7.9  L4.2
+    R3 numero prima, INVENTATO  «… 7777 job conclusi.»                   CADE     0.4  L4.1
+    R4 numero prima, CONFAB     «… 42 job conclusi DA ME.»               CADE    99.6  L1.13
+
+✅ **E i tre presidi reggono tutti**, che e' l'unica ragione per cui questa riga si puo'
+consegnare: il **vero passa**, lo **scambio cade** (`L4.2`), il **numero inventato cade**
+(`L4.1`), e l'**auto-affermazione cade** (`L1.13`). ⇒ **Non e' un modo per aggirare il
+gate: e' la stessa informazione scritta in una forma su cui il gate non sbaglia.**
+
+🔑 **⑤ E `R4` mostra perche' `L1.13` E' INDISPENSABILE**: «*42 job conclusi **da me***»
+ha grounding **99.6** — il giudice lo approva — e a fermarlo c'e' **solo `L1.13`**.
+⇒ **Lo stesso layer e' l'unica difesa in un caso e l'unico falso positivo in un altro.**
+Chiunque proponga di toccarlo deve avere tutte e due le righe.
+
+⇒ **NON PROPONGO LA CURA AL CODICE.** La forma naturale sarebbe distinguere la parola
+che **qualifica un sostantivo contato** da quella che **predica uno stato** — ma e' una
+distinzione **sintattica su un fenomeno semantico**, e stasera ne ho misurate due che
+sbagliano in **entrambe** le direzioni (`W5-10`, `W5-11`). ⇒ **La cosa utile subito e'
+la forma di scrittura**, non una patch: **numero davanti al sostantivo**, quattro
+controlli fatti.
 
 REGIME: build corrente · store TEMPORANEO (`HIPPO_DATA_DIR`) · `ground_write=True` ·
 porta `run_validation_gate` · **un solo processo** (protocollo RAM delle 20:47) ·
@@ -106,6 +121,14 @@ CASI = [
     ("N3 test finiti 812", "I test finiti sono 812.", FONTE_DATI, False),
     # CONTROLLO — stessa forma, stessa fonte, NESSUNA parola di completamento
     ("C1 run in attesa 895", "I run in attesa sono 895.", FONTE_DATI, False),
+    # ── LA FORMA CHE NON CADE, e i tre controlli che dicono se e' sicuro usarla ──
+    # `L1.13` scatta sulla parola in TUTTE le forme; a vetare e' la COPPIA con
+    # `L4.2`, che non compare quando il numero PRECEDE il sostantivo. Prima di
+    # consigliare quella forma bisogna sapere se lascia passare anche il falso.
+    ("R1 numero prima, VERO", "Nella coda ci sono 42 job conclusi.", FONTE_DATI, True),
+    ("R2 numero prima, SCAMBIO", "Nella coda ci sono 895 job conclusi.", FONTE_DATI, True),
+    ("R3 numero prima, INVENTATO", "Nella coda ci sono 7777 job conclusi.", FONTE_DATI, True),
+    ("R4 numero prima, CONFAB", "Nella coda ci sono 42 job conclusi da me.", FONTE_DATI, True),
 ]
 
 
@@ -131,7 +154,9 @@ def main():
                  ("%.1f" % g) if g is not None else "None",
                  ", ".join(det) or "-", "SI" if deve else "no", segno))
 
-    pos = [k for k in scatta if k.startswith("P")]
+    # gli `R` non entrano nel conteggio pos/neg: rispondono a un'altra domanda
+    # (la forma riformulata resta sicura?), e si leggono dalla tabella.
+    pos = [k for k in scatta if k.startswith("P") and not k.startswith("R")]
     neg = [k for k in scatta if k.startswith("N")]
     ctrl = [k for k in scatta if k.startswith("C")]
     n_pos = sum(1 for k in pos if scatta[k])
