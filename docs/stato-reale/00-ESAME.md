@@ -16454,3 +16454,48 @@ editable su codice di sviluppo di un'epoca diversa — **il meccanismo** è lo s
 atterri: il «256 su 293» è del prodotto, su un audit log di casa.
 
 **Io misuro, non curo.**
+
+---
+
+## W8-42 — Il branch **non è privilegiato**, e il presidio scritto un'ora fa aveva un difetto
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### ① Chiuso il limite che avevo dichiarato — il dato ce l'avevo già
+
+Avevo scritto di `#2557`: «1h30 contro una mediana di 43,93h — **è UN caso**, non so se il
+branch venga servito prima di `main`. **Da rifare al prossimo run**».
+
+    i due run del branch hotfix/0.7.1:
+      #2557  2026-09-01T17:12:03Z -> 18:42:12Z              durata  1.5 ore
+      #2262  2026-08-30T22:40:52Z -> 2026-09-01T08:40:10Z   durata 34.0 ore
+
+⇒ **Il branch non è privilegiato.** L'1h30 dipendeva dalla **coda vuota** delle 19:12, non
+dal ramo. ⇒ **Nessuna scorciatoia «passa dal branch»**: la proposta-B resta motivata dal
+volume su `main`.
+📌 Non serviva aspettare un run nuovo: **il secondo caso esisteva già**, e non l'avevo
+guardato. La domanda giusta non era «rifacciamolo domani» ma «quanti casi ho **adesso**».
+
+### ② 🪞 Il presidio che ho scritto alle 20:18 confondeva due grandezze
+
+Stampava **44,1 ore** per `#2262`, la cui durata reale è **34**. Calcolava per **tutti**
+l'intervallo `creazione → istante della misura`: per un run vivo è l'**attesa**, per uno
+concluso è un numero senza significato — contava fino a oggi.
+
+    prima:  #2262  completed/failure   44.1 ore          ← creazione → adesso
+    ora:    #2262  completed/failure   durata 34.0 ore   ← creazione → chiusura
+            #2557  completed/failure   durata  1.5 ore
+            (per un run ancora vivo l'etichetta diventa «in attesa da»)
+
+🔑 **«Quanto ci ha messo» e «da quanto aspetta» sono due domande diverse**: stamparle con la
+stessa etichetta le confonde, ed è esattamente l'errore che il banco doveva impedire.
+
+📌 **Il difetto l'ho trovato USANDO il banco per rispondere a una domanda, non
+rileggendolo.** Un numero plausibile — 44 invece di 34 — non salta all'occhio finché non lo
+si confronta con la fonte. È la lezione di `verimem doctor`: **lo strumento si collauda
+adoperandolo**, e un presidio scritto contro un errore può contenerne un altro.
+
+    rifallo con:
+    python docs/stato-reale/banchi/ws8-eta-di-un-run.py hotfix/0.7.1
+    gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=5" \
+      --jq '.workflow_runs[]|"#\(.run_number) \(.created_at) -> \(.updated_at)"'
