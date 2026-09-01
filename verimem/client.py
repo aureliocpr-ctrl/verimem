@@ -2558,9 +2558,25 @@ class Memory:
         import json as _json
         import time as _time
 
+        # ⚠️ LA DERIVA CONTA CIO' CHE LA STIMA PUO' VEDERE, e prima non era
+        # cosi'. `count()` ha `include_quarantined=True` e veniva chiamata senza
+        # argomenti, mentre `estimate_relevance_floor` misura passando da
+        # `sm.recall`, che i quarantinati NON li restituisce (misurato
+        # 2026-09-01: store da 2 fatti, `k=10`, torna 1 riga — con k maggiore
+        # del corpus l'assenza non puo' essere un effetto di ranking).
+        # ⇒ Un fatto quarantinato non puo' spostare il pavimento e faceva
+        # avanzare l'orologio dell'invalidazione lo stesso: si pagava un
+        # ricalcolo intero — 24169 ms misurati — per un fatto che non cambia il
+        # risultato. Il corpus SERVIBILE resta invalidante, ed e' quello che
+        # sposta il valore davvero.
         n = -1
         try:
-            n = int(self.semantic.count())
+            n = int(self.semantic.count(include_quarantined=False))
+        except TypeError:  # una versione del contatore senza quel parametro
+            try:
+                n = int(self.semantic.count())
+            except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
+                pass
         except Exception:  # noqa: BLE001 — un conteggio fallito non blocca
             pass
 
@@ -2573,6 +2589,16 @@ class Memory:
         if n >= 0:
             try:
                 d = _json.loads(f.read_text(encoding="utf-8"))
+                # ⚠️ MIGRAZIONE DICHIARATA: un file scritto prima di questa cura
+                # porta un `n_facts` contato su TUTTE le righe. Confrontarlo col
+                # conteggio dei soli servibili metterebbe a confronto due
+                # popolazioni diverse — che e' il difetto stesso, spostato di un
+                # passo. Senza il marcatore il file non e' confrontabile: si
+                # paga UN ricalcolo per store, una volta, e poi il file e'
+                # coerente. `KeyError` sul marcatore assente cade nell'except
+                # sotto, che gia' significa «si ricalcola».
+                if str(d["n_metric"]) != "servibili":
+                    raise ValueError("pavimento salvato con un'altra metrica")
                 salvato, n_salvato = float(d["floor"]), int(d["n_facts"])
                 if abs(n - n_salvato) <= max(1, n_salvato) * self._FLOOR_DRIFT:
                     self._floor_cache = (now, salvato)
@@ -2585,8 +2611,10 @@ class Memory:
         self._floor_cache = (now, val)
         if n >= 0:
             try:
-                f.write_text(_json.dumps({"floor": val, "n_facts": n}),
-                             encoding="utf-8")
+                f.write_text(
+                    _json.dumps({"floor": val, "n_facts": n,
+                                 "n_metric": "servibili"}),
+                    encoding="utf-8")
             except Exception:  # noqa: BLE001 — non poter scrivere non è un errore
                 pass
         return val
