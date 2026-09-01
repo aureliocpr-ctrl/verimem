@@ -1,4 +1,4 @@
-# 75 — Ho letto otto quarantene: il moat approva al 99,98% e un altro strato ferma lo stesso fatto
+# 75 — Ho letto otto quarantene, e leggendo l'altra popolazione ho ritirato la mia stessa lettura
 
 *ws6/Aldo — 2 settembre 2026, 01:51 (letta). Seguito della misura sulla perdita
 del corpus: dei 1324 fatti muti, **879 una fonte ce l'hanno e sono stati
@@ -67,6 +67,49 @@ un binario.
 | **quarantena giusta** | 1 — claim `40 falsi su 300 / 88 veri su 300` contro una fonte che dice `"falsi_ammessi": 8.0, "veri_persi": 9.5`: **i numeri non corrispondono** |
 | **classe nota** («se conti o componi tu, il grounding crolla») | 4 — es. *«quattro file contengono…»* con la fonte che elenca quattro file (`0.3`); *«le tre mutazioni danno EXIT=1 … la suite torna a EXIT=0 con 11 passed»* con la fonte che mostra entrambi gli esiti (`0.3`) |
 | **discutibile** | 1 — orari nel claim che la fonte non porta |
+
+## ④-bis ⛔ L'ALTRA POPOLAZIONE RIBALTA IL TITOLO — e la correzione è di venti minuti dopo
+
+Avevo dichiarato come limite: *«non ho misurato quanti falsi `L4.1` ferma
+giustamente»*. **L'ho misurato**, leggendo sette quarantene di `L4.1` che hanno
+lo span della fonte — tutte con grounding **95,6-100**, cioè tutte «approvate dal
+moat e fermate dallo strato».
+
+**Almeno tre su sette sono GIUSTE, e per la stessa ragione:**
+
+```
+claim  «…del log della cella ubuntu py3.12 del run 32580644376…»   g=100.0
+fonte  «log ubuntu/py3.12 (job 97049363821) Segmentation fault…»
+       ⇒ la fonte dà il JOB, il claim dà un RUN id che non c'è
+
+claim  «Il run 2262 e' stato creato il … ed e' stato chiuso il …»   g=99.5
+fonte  «creato 2026-08-30T22:40:52Z chiuso 2026-09-01T08:40:10Z = 34.0 ORE»
+       ⇒ le date ci sono, il «2262» NO
+
+claim  «Alle 22:04 i run cancelled sono 1340 e i success sono 98»    g=99.9
+fonte  «queued 149 · in_progress 4 · completed 2557 · cancelled 1340 · success 98»
+       ⇒ 1340 e 98 ci sono, «22:04» NO
+```
+
+> 🔑 **`L4.1` non contraddice il moat: guarda una cosa diversa.** Il moat giudica
+> il **senso complessivo** — e ha ragione, il claim *nel suo insieme* è
+> sostenuto. `L4.1` controlla **i numeri uno per uno** — e ha ragione anche lui:
+> **c'è dentro un numero che la fonte non contiene.**
+
+⇒ ⛔ **Ritiro la lettura del §②.** «Due strati in disaccordo» descrive il
+sintomo, non il meccanismo: **non è un conflitto, è una divisione del lavoro** —
+e su tre casi su sette lo strato deterministico prende **esattamente** ciò che il
+giudice semantico non può vedere.
+
+📌 **Il §② resta un caso reale** (l'intervallo «fra il 05 e il 08» **derivato**
+da tre date che la fonte elenca è più discutibile di un run id inventato) — **ma
+è un caso, non la regola**, e il titolo di questo documento lo faceva sembrare la
+regola.
+
+🪞 **La forma dell'errore è la più nota che questa casa abbia**: avevo letto
+**solo** i casi che sembravano sbagliati. *Sui soli negativi ogni criterio sembra
+rotto.* L'ho commessa mentre chiudevo un limite che avevo dichiarato io — e
+chiuderlo è ciò che l'ha fatta vedere.
 
 ## ⑤ Cosa NON prova
 
