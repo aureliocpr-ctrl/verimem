@@ -246,11 +246,19 @@ class Risultati(list):
     `search` ha una quantità di consumatori che la iterano e ne fanno `len()`.
     """
 
-    __slots__ = ("sotto_il_pavimento", "trattenuti")
+    __slots__ = ("sotto_il_pavimento", "trattenuti", "letto_al_passato")
 
     def __init__(self, iterable=(), *, sotto_il_pavimento=None,
-                 trattenuti=None) -> None:
+                 trattenuti=None, letto_al_passato=None) -> None:
         super().__init__(iterable)
+        #: ``{quando, quando_leggibile, nota}`` quando la domanda e' stata
+        #: interpretata DA SOLA come una domanda sul passato, il filtro
+        #: temporale ha svuotato il risultato e chi legge non ha modo di
+        #: saperlo. ⚠️ CAMPO SEPARATO DA `sotto_il_pavimento` APPOSTA: sono due
+        #: cause diverse dello stesso vuoto — la soglia che taglia e il tempo
+        #: che non contiene nulla — e un solo segnale per due significati e'
+        #: il difetto che questo modulo passa il tempo a curare.
+        self.letto_al_passato = letto_al_passato
         #: ``{pavimento, score_migliore, nota}`` quando nessun risultato supera
         #: la soglia di rilevanza; ``None`` quando almeno uno la supera.
         self.sotto_il_pavimento = sotto_il_pavimento
@@ -1114,9 +1122,17 @@ class Memory:
         if with_history == "auto":
             from .temporal_context import wants_history
             with_history = wants_history(query)
+        # ⚠️ SI RICORDA CHE LA DATA E' STATA DEDOTTA, NON PASSATA. Chi scrive
+        # `as_of=<istante>` sa di aver chiesto il passato; chi scrive una
+        # domanda in cui compare una data NO — e la regola che la estrae accetta
+        # l'articolo «il», quindi «cosa e' successo IL 18 luglio», dove la data
+        # e' il SOGGETTO, diventa «cosa sapevamo AL 18 luglio». Se poi a quella
+        # data non c'era nulla, il chiamante riceve `[]` senza un motivo.
+        _as_of_dedotto = False
         if as_of == "auto":
             from .temporal_context import extract_as_of
             as_of = extract_as_of(query)
+            _as_of_dedotto = as_of is not None
         # IL DEGRADO SI CONTA PRIMA E DOPO. Quando l'encoder non risponde entro
         # il budget, `SemanticMemory.recall` cade sul ramo keyword e assegna
         # `score 0.0` a TUTTI i risultati — un numero che non è una misura di
@@ -1327,9 +1343,29 @@ class Memory:
              "calibrata su questo corpus: probabilmente la "
              "risposta NON e' in memoria. I risultati sono qui "
              "sotto, non tagliati — decidi tu."))
+        # La dichiarazione del viaggio nel tempo: solo se la data l'ha DEDOTTA
+        # la porta e il passato interrogato non conteneva nulla.
+        _al_passato = None
+        if _as_of_dedotto and not out and as_of is not None:
+            import datetime as _dt
+            try:
+                _leggibile = _dt.datetime.fromtimestamp(
+                    float(as_of)).strftime("%d/%m/%Y")
+            except Exception:  # noqa: BLE001 — una data illeggibile non fa cadere nulla
+                _leggibile = str(as_of)
+            _al_passato = {
+                "quando": float(as_of),
+                "quando_leggibile": _leggibile,
+                "nota": ("la domanda nomina una data, quindi e' stata letta "
+                         f"come «cosa risultava AL {_leggibile}» — e a "
+                         "quell'istante non c'era nulla. Se invece la data era "
+                         "l'OGGETTO della domanda («cosa e' successo quel "
+                         "giorno»), rifalla senza `as_of` o togli la data."),
+            }
         return Risultati(
             out,
             trattenuti=self._trattenuti_safe(query),
+            letto_al_passato=_al_passato,
             sotto_il_pavimento=(
                 {"pavimento": round(_soglia, 4),
                  "score_migliore": round(_best_prima, 4),
