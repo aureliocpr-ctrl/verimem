@@ -125,7 +125,14 @@ RIFALLO = re.compile(r"🔎\s*\*{0,2}(?:rifallo con|Rifallo con)\*{0,2}[^`]*`([^
 #: (ws6 16, ws8 6, ws5 5). Riconoscendo un solo formato questo elenco le
 #: teneva fuori TUTTE, cioe' nascondeva proprio il lavoro che aveva piu'
 #: bisogno di essere offerto. Un marcatore non marca chi non lo conosce.
-CELLA = re.compile(r"^\| ((?:[A-Z]+\d*-)?\d+) \| ([^|]*)\|")
+#: e c'e' una QUARTA forma, segnalata da @ws4 il 01/09: l'ID con SUFFISSO
+#: letterale (`W7-20b`), che nasce quando una cella viene spezzata in due
+#: dopo essere stata scritta. Sul registro ne esiste UNA sola, e il regex
+#: senza suffisso la perdeva in silenzio — poco, ma e' esattamente il tipo di
+#: cella che nessuno rivede, perche' non compare in nessun elenco. Il
+#: suffisso e' di UNA lettera: allargarlo di piu' farebbe entrare righe che
+#: celle non sono.
+CELLA = re.compile(r"^\| ((?:[A-Z]+\d*-)?\d+[a-z]?) \| ([^|]*)\|")
 
 
 def main() -> int:
