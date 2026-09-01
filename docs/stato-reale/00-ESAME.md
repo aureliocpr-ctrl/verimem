@@ -17010,3 +17010,68 @@ costruzione di @ws6 resta suo e non l'ho toccato.
 
 **Banco**: `porta_effetto_pavimento.py`, output `effetto_pav.out` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-01 22:13 — ws1 · 🟢🟢 **SULLA PORTA CHE FILTRA, IL PAVIMENTO FA ESATTAMENTE IL SUO MESTIERE: 39 risultati rumorosi tolti su 45, ZERO risposte giuste perse.** Sei pertinenti → **un risultato ciascuna**; tre estranee → **vuoto**
+
+**Livello** `Memory.search(..., min_relevance="auto")`, **cioè letteralmente la chiamata del
+gateway** (`gateway.py:1206` e `:1266` passano `_gateway_min_relevance()`, default `"auto"`;
+`client.py:1120` lo risolve con `_auto_relevance_floor()`) · **Perimetro** store **nuovo** da
+**6 fatti**, 6 query pertinenti + **3 estranee (controllo negativo)** · **Istante**
+2026-09-01 22:07–22:12 · **Regime** variabili poppate e dichiarate, **`HIPPO_DATA_DIR`
+impostata PRIMA dell'import** *(il prodotto me l'aveva rimproverato un'ora fa in
+`observability.py:307`)*, RAM 10,0 GB, **`claim ram/modelli` preso e rilasciato**
+(`4a67107569bf`) · **Autorità**: ordine diretto di Aurelio (20:42) · **0.7.6**.
+
+**Paga il limite dichiarato alle 21:58** («*sull'SDK il pavimento non filtra … sulle porte
+che filtrano l'effetto è un taglio vero, e lì non l'ho misurato*»).
+
+### 🟢🟢 Il numero, con il pavimento a **0,8387**
+
+| | SDK (permissivo) | **gateway (filtra)** | tolti | query vuote |
+|---|---|---|---|---|
+| **6 pertinenti** | 30 risultati | **6** — *uno per query* | 24 | **0 / 6** |
+| **3 estranee** | 15 risultati | **0** | 15 | **3 / 3** ✅ |
+
+**Perché funziona, visibile nei punteggi**: primo risultato **0,84–0,90** · secondari
+**0,69–0,78** · estranee **0,66–0,71**. **Il pavimento cade nel vuoto fra il primo e il
+secondo**, e quel vuoto è largo ~0,07. ⇒ **su ogni domanda pertinente il gateway serve la
+risposta e butta i quattro rumorosi; su ogni domanda fuori dominio si astiene del tutto.**
+**39 risultati tolti su 45, e nessuna risposta giusta persa.**
+
+### ⚖️ Le predizioni erano scritte prima, e **reggono entrambe** — la prima volta stasera
+
+**P1** («*toglie la maggior parte dei risultati oltre il primo, lasciandone spesso uno*») →
+**sempre uno, 6 query su 6**. **P2** («*sulle estranee il gateway torna vuoto*») → **3/3**.
+*(Stasera ne avevo sbagliate sei di fila: lo scrivo perché il conto dev'essere completo nei
+due versi.)*
+
+### 📌 E una REPLICA INTERNA del reperto delle 21:58, più stretta del confronto con @ws6
+
+Alle 21:58 avevo mostrato che il pavimento dipende dai testi confrontando i miei **0,852**
+con lo **0,9166** di @ws6. **Qui lo replico dentro il mio stesso banco**, con una differenza
+minima:
+
+```
+6 fatti, testi + suffisso "(record N)"   ->  0,852     (banco delle 21:52)
+6 fatti, testi PURI                      ->  0,8387    (questo banco)
+```
+
+⇒ **stesso numero di fatti, stessi identici enunciati, cambia solo un suffisso di sette
+caratteri: 0,0133 di pavimento.** La dipendenza dal contenuto **non è un artefatto del
+confronto fra istanze**: si vede anche fra due banchi miei, e conferma il ritiro della curva.
+
+### Cosa NON prova
+
+**Non ho alzato il gateway HTTP**: ho riprodotto **la sua chiamata**, che è la stessa riga
+del codice, ma **il servizio ha altro attorno** (auth, tenant, `as_of`) e non l'ho
+esercitato. **9 query, 6 fatti**: sono ordini di grandezza, **non tassi** — «0/6» e «3/3»
+hanno intervalli larghi. **I testi sono enciclopedici in inglese e i sei fatti sono di
+domini disgiunti**: è il caso *facile*, e su un corpus con fatti simili fra loro il vuoto
+fra primo e secondo punteggio **si stringerebbe** — non l'ho misurato ed è la prova che
+manca. **Non ho toccato il caso degenere** (pavimento `0.0` persistito), che è un'altra
+cella e resta valido per il suo perimetro.
+
+**Banco**: `porta_gateway_taglio.py`, output `gw_taglio.out` (scratchpad).
+**Io misuro, non curo.**
