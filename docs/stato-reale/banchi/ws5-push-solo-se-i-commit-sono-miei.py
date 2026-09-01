@@ -26,7 +26,12 @@ COSA FA::
 Chi si affida a `%an` vede otto istanze come una sola persona.
 
 USO:  python docs/stato-reale/banchi/ws5-push-solo-se-i-commit-sono-miei.py <TuoAgente>
-      python …/ws5-push-solo-se-i-commit-sono-miei.py TARA
+      python …/ws5-push-solo-se-i-commit-sono-miei.py TARA [percorsi,separati,da,virgola]
+
+⚠️ **E il trailer da solo NON basta**: il 02/09 alle 01:23 un commit che non avevo
+scritto portava `Agent: TARA`, con `VERIMEM_AGENT` **assente** dall'ambiente (shell e
+registro). ⇒ Il controllo guarda **anche i file toccati**: se un commit esce dal
+perimetro dell'istanza, si ferma comunque.
 """
 import subprocess
 import sys
@@ -42,6 +47,9 @@ def main():
         print("uso: python %s <NomeAgente>   (es. TARA)" % sys.argv[0])
         raise SystemExit(2)
     mio = sys.argv[1].strip()
+    # il PERIMETRO: i percorsi che questa istanza tocca. Un commit che esce di qui
+    # non e' suo, e il trailer non basta a smentirlo (reperto del 02/09 01:23).
+    perimetro = sys.argv[2].split(",") if len(sys.argv) > 2 else ["banchi/ws5-", "00-ESAME"]
 
     git("fetch", "-q", "origin")                                  # ①
     # ⚠️ `%(trailers:…,valueonly)` porta con se' un A CAPO: dentro una riga
@@ -57,23 +65,34 @@ def main():
         return
 
     altrui = []
-    print("  %-10s %-12s %s" % ("commit", "agente", "messaggio"))
-    print("  " + "-" * 88)
+    print("  %-10s %-10s %-40s %s" % ("commit", "agente", "messaggio", "verdetto"))
+    print("  " + "-" * 96)
     for r in righe:
         parti = r.split("\t")
         sha = parti[0].strip()
         msg = parti[1].strip() if len(parti) > 1 else ""
         agente = (parti[2] if len(parti) > 2 else "").strip() or "(nessun trailer)"
-        suo = agente != mio
+        # ⚠️ IL TRAILER NON BASTA: il 02/09 alle 01:23 un commit che NON avevo
+        # scritto portava `Agent: TARA`, e `VERIMEM_AGENT` non era nell'ambiente.
+        # ⇒ il righello solido sono i FILE: se un commit tocca qualcosa fuori dal
+        # mio perimetro, non e' mio, qualunque cosa dica il trailer.
+        tocca = [f for f in git("show", "--stat=200", "--name-only", "--format=",
+                                sha).stdout.splitlines() if f.strip()]
+        fuori = [f for f in tocca if not any(p in f for p in perimetro)]
+        suo = agente != mio or bool(fuori)
+        motivo = ""
+        if agente != mio:
+            motivo = "🔴 trailer «%s»" % agente[:10]
+        elif fuori:
+            motivo = "🔴 tocca %s" % fuori[0][-34:]
         if suo:
-            altrui.append((sha, agente))
-        print("  %-10s %-12s %s %s" % (sha, agente[:12], msg[:56],
-                                       "🔴 NON TUO" if suo else ""))
+            altrui.append((sha, agente, motivo))
+        print("  %-10s %-10s %-40s %s" % (sha, agente[:10], msg[:40], motivo or "✔ mio"))
 
     if altrui:                                                    # ③
         print("\n  ⛔ NON PUSHO: %d commit non tuoi davanti a origin." % len(altrui))
-        for sha, agente in altrui:
-            print("     %s di %s" % (sha, agente))
+        for sha, agente, motivo in altrui:
+            print("     %s  %s" % (sha, motivo or ("di " + agente)))
         print("  ⇒ Chi li ha scritti potrebbe volerli amendare o verificare prima.")
         print("     Aspetta che li pushi lui, oppure chiediglielo sul canale.")
         raise SystemExit(1)
