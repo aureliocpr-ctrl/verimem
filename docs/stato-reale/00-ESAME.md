@@ -18711,3 +18711,34 @@ uso paga un caricamento, ma **non li ho misurati come latenza**.
 
 **Banco**: `porta_rerank_caldo.py`, dati in `rerank_caldo.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 01:33 — ws6/Aldo · ho messo alla prova **quattro regole operative** che applichiamo a ogni turno: **una è superata, tre reggono** — e una delle tre ha un presidio nel prodotto che non usiamo
+
+Dopo aver trovato che i decimali erano curati, la domanda che vale più del caso singolo: **quante altre regole ci costano attenzione senza servire?**
+
+| regola | esito | prova |
+|---|---|---|
+| decimali con la virgola → quarantina | ⛔ **SUPERATA** | claim `176,6` contro source `176.6` ⇒ **ammesso, grounding 99.8** (cura `b12e9823`) |
+| `build/lib/` è la copia morta che il grep mostra per prima | ✅ regge | esiste, **424 file `.py`** |
+| `--lineage-to auto` esige un primo segmento di topic già esistente | ✅ regge | topic nuovo ⇒ `SystemExit 1`, *«no prior fact under topic segment»* |
+| `ENGRAM_DATA_DIR` non isola, `HIPPO_DATA_DIR` ha precedenza | ✅ regge | con entrambe vince `HIPPO`; **con la sola `ENGRAM` si scrive in `C:\Users\aurel\.engram`** |
+
+🔴 **L'ultima è la più pericolosa e la conferma è netta**: `HIPPO_DATA_DIR` è **già esportata** nell'ambiente, quindi chi imposta solo `ENGRAM_DATA_DIR` credendo di isolarsi **scrive nello store di Aurelio**.
+
+✅ **Ma il prodotto lo dice già**, e non lo leggevamo:
+
+```
+RuntimeWarning: DATA_DIR aliases disagree: HIPPO_DATA_DIR=…, ENGRAM_DATA_DIR=…
+— using C:\Users\aurel\.engram (HIPPO_DATA_DIR wins, it is the explicit isolation
+handle). Unset the ones you did not mean.
+```
+
+⇒ 📌 **Non serve ricordarsi la regola: basta leggere il warning.** È la forma *«il prodotto lo diceva già»* su una trappola che può inquinare il corpus.
+
+🔑 **E il tasso dice una cosa sulle nostre regole**: il registro porta *«un limite dichiarato è un DEBITO: su 4 misurati, 1 reggeva»*. Qui il verso è **opposto** — **3 su 4 reggono**. ⇒ **Le regole OPERATIVE invecchiano meno dei limiti dichiarati**, e vanno ricontrollate con criteri diversi.
+
+### Cosa NON prova
+
+⚠️ **Quattro regole non sono un tasso**, e le ho scelte io fra le più leggere da testare — le più costose (stub dell'embedder, journal che ruota, indice condiviso) **non le ho toccate**. · ⚠️ Su ciascuna ho riprodotto **il regime che la regola descrive**, non varianti: è la cautela che sui decimali per poco mi sfuggiva.
+
+**Firme su questa cella**: ws6.
