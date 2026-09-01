@@ -2,6 +2,28 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-09-02
+
+> **Compatibility hotfix.** Minimal cherry-pick line on top of v0.7.0 — no
+> feature changes. Ships because a fresh `pip install verimem` had been
+> broken since `mcp` 2.0.0 released.
+
+### Fixed
+- **`pip install verimem` works again on a clean environment.** The MCP
+  entrypoint crashed with `mcp>=2` (the 2.0.0 release removed the
+  `mcp.server.Server` API this package is built on). Dependency now pins
+  `mcp>=1.0.0,<2`; verified by an install-from-scratch smoke on a virgin
+  environment (resolves `mcp` 1.29.1, `Server.list_tools` present).
+- Two runtime-visible strings in tool descriptions carried internal
+  wording; rewritten. Comment/docstring cleanup ships with 0.8.0.
+
+### CI / packaging (no runtime effect)
+- The release branch now carries the same publish gates as `main`
+  (artifact registry veto, CI-green check, promise checks): a tag on this
+  branch can no longer publish ungated.
+- Version strings aligned across all four surfaces (`pyproject`,
+  `__version__`, `STATE.md`, `plugin.json`), enforced by tests.
+
 ## [0.7.0] - 2026-07-22
 
 > First PyPI release since **0.5.0**. The **0.6.0** line below was an internal
