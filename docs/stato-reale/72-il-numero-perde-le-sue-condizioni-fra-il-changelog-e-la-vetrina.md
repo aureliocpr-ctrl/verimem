@@ -186,6 +186,42 @@ altrove (`2.3%`, `6.2%→1.8%` — **portate in vetrina**, `acbc5800`), uno **a
 posto** (`0.96–0.97`), due **senza fonte trovata** (`~7% Spanish`, `~2%
 residual`).
 
+## ④-quinquies Altri cinque, e il quadro si capovolge
+
+Undici claim guardati in tutto. Questi cinque, letti in blocco:
+
+| riga | esito |
+|---|---|
+| **69** | ✅ *«the 2026-07-18 run had **0** numeric escapes … re-running **the same command** on 2026-08-25 reports **4** (one per language) and exits 1. **Run it yourself before trusting either number.**»* |
+| **102** | ✅ *«0% false-block (**re-measured 2026-08-25**: still 0.0%, **112/112** entailed admitted)»* — data, denominatore, file citato |
+| **106** | ✅ *«AUROC 0.829, and **at the default cut** ~24% … ~18% … (74% of those scoring ≥80, the plausible-inference blind spot)»* — dichiara il **taglio** e scompone il punto cieco |
+| **116** | ⚠️ **non è un claim numerico**: `100 €`/`150 €` sono un **esempio d'uso**, non una misura. Da togliere dal censimento |
+| **143** | ✅ *«covers **70 of the 171**. The remaining 101 have no syntactic shape»* — numeratore, denominatore e il limite del criterio |
+
+> 🔑 **La riga 69 porta lo standard migliore dell'intera pagina** — due date, due
+> valori, *lo stesso comando*, e **l'invito esplicito a rieseguirlo prima di
+> fidarsi**. Più forte della 101, che si ferma a mostrare i due numeri.
+
+## ④-sexies Il bilancio, e va detto con la prontezza di un allarme
+
+Su **11 claim numerici guardati** (dei 34 censiti da @ws4):
+
+```
+a posto, condizioni in vetrina                       :  6
+condizioni SOLO nel CHANGELOG → portate in vetrina   :  2   (acbc5800)
+fonte NON trovata                                    :  2   (~7% Spanish · ~2% residual)
+non è un claim numerico                              :  1   (l'esempio 100/150 €)
+```
+
+⇒ ⛔ **Ritiro l'impressione che i primi due casi davano.** La pagina **non è
+uniformemente fragile**: la maggioranza dei claim guardati dichiara regime,
+campione o fonte, e **cinque righe** applicano lo standard senza che nessuno
+glielo abbia chiesto. **I due numeri senza fonte restano due**, e vanno chiusi —
+ma sono l'eccezione, non la regola.
+
+📌 **Denominatore onesto**: 11 su 34, e li ho scelti io fra quelli che il
+criterio segnalava. **Restano 23 non guardati.**
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
