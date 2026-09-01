@@ -75,8 +75,8 @@ def test_il_corpus_che_CRESCE_lo_invalida(mem, tmp_path):
     corpus cambia in modo sostanziale e il valore resta congelato, serviamo un
     pavimento sbagliato per sempre — che è peggio di uno lento.
 
-    🪞 AGGIORNATA il 2026-09-02 alle 01:06 da chi ha tolto il ricalcolo dalla
-    lettura, e la frase qui sopra — che NON è mia — è l'obiezione a cui quella
+    🪞 AGGIORNATA il 2026-09-02 alle 00:26 (ora letta dal commit, non
+    stimata) da chi ha tolto il ricalcolo dalla lettura, e la frase qui sopra — che NON è mia — è l'obiezione a cui quella
     cura doveva rispondere prima di poter esistere. Va detto per intero.
 
     IL FATTO NUOVO che questa cella non poteva conoscere: il ricalcolo non

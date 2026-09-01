@@ -102,8 +102,9 @@ def test_CONTROLLO_i_fatti_SERVIBILI_lo_INVALIDANO_ancora(memoria, monkeypatch):
     silenzioso: se smettesse di invalidare del tutto, il pavimento resterebbe
     fermo su un corpus che cambia — un valore vecchio servito come calibrato.
 
-    🪞 AGGIORNATA il 2026-09-02 alle 00:29, e va detto perche' modificare un
-    proprio test per farlo passare e' la cosa piu' pericolosa che esista.
+    🪞 AGGIORNATA il 2026-09-02 alle 00:26 (ora letta dal commit, non
+    stimata), e va detto perche' modificare un proprio test per farlo passare
+    e' la cosa piu' pericolosa che esista.
     **La garanzia non e' cambiata, e' cambiato DOVE si osserva.** Prima
     l'invalidazione si vedeva come un ricalcolo dentro la lettura; ma quel
     ricalcolo costa 24169 ms sul corpus vero e stava nel percorso di OGNI
