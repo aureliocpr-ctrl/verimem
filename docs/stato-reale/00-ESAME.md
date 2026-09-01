@@ -16940,3 +16940,71 @@ prodotto. **Nessuno ha misurato quanto il pavimento alto TAGLI davvero** su uno 
 misura che manca**, e la lascio scritta per chi riprende.
 
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-01 21:58 — ws1 · 🟢 **IL PAVIMENTO FA IL SUO LAVORO: 0 su 6 pertinenti tagliate, 3 su 3 estranee segnalate, in ENTRAMBI i regimi.** 🔴 **E CIRCOSCRIVO LA MIA CURVA DI VENTI MINUTI FA: a 6 fatti misuro `0,852`, non lo `0,9166` di @ws6 — il pavimento dipende dai TESTI, non solo dalla dimensione**
+
+**Livello** porta `Memory.search` (SDK) + `_auto_relevance_floor()` · **Perimetro** due store
+**nuovi** (6 e 60 fatti), **le stesse 9 query** in entrambi: 6 **pertinenti** + 3 **estranee**
+(controllo negativo) · **Istante** 2026-09-01 21:52–21:58 · **Regime** variabili poppate e
+dichiarate (erano attive `HIPPO_ENCODE_DELEGATE_ONLY='1'` e `ENGRAM_DATA_DIR`), RAM 9,85 GB,
+**`claim ram/modelli` preso e rilasciato** (`128b60b470ea`) · **Autorità**: ordine diretto di
+Aurelio (20:42); ⚠️ **la chiusura prevista per le ~21:45 non è arrivata e il gruppo non si è
+fermato** (9 commit dopo le 21:35), **ripresa segnalata sul canale** · **0.7.6**.
+
+**Paga la misura che avevo dichiarato mancante alle 21:36** («*`0,9166` è un valore, non un
+effetto*»).
+
+### 🟢 IL VERDE — e va detto per primo
+
+| store | pavimento | **pertinenti**: avviso acceso | **estranee** (controllo negativo) |
+|---|---|---|---|
+| **6 fatti** | **0,852** | **0 / 6** | **3 / 3** ✅ |
+| **60 fatti** | 0,8573 | 2 / 6 | **3 / 3** ✅ |
+
+**Punteggi migliori** — pertinenti `0,85–0,90`, estranee `0,72–0,73`. ⇒ **il pavimento cade
+nel mezzo e separa le due popolazioni**: non taglia le domande pertinenti e **segnala tutte
+e tre le estranee, in entrambi i regimi**. **Su uno store da sei fatti la garanzia funziona,
+misurata sull'effetto e non sul valore.**
+
+### ⚖️ Le due predizioni erano scritte prima, e sono cadute entrambe
+
+**P1** («*a 6 fatti l'avviso si accende quasi sempre*») → **0/6**: cade.
+**P2** («*a 60 si accende molto meno*») → **2/6 contro 0/6**: cade **al contrario**, si
+accende **di più** sullo store grande.
+
+### 🔴 E LA CURVA CHE HO PUBBLICATO ALLE 21:36 VA CIRCOSCRITTA — È IL LIMITE CHE AVEVO DICHIARATO IO
+
+Avevo composto `1 → 0.0` · `6 → 0,9166` *(@ws6)* · `20 → 0,8662` *(mia)* · `60 → 0,8711`
+*(mia)* · `14 485 → 0,8781` *(@ws4)* e scritto «**parte altissimo e scende**», dichiarando
+però: «*i tre banchi usano righelli diversi e corpora diversi: la monotonia potrebbe essere
+un artefatto del confronto*». **Era fondato, e l'ho verificato da sola:**
+
+```
+6 fatti, testi di @ws6   ->  0,9166
+6 fatti, i MIEI testi    ->  0,852     <-- stessa dimensione, 0,065 di differenza
+```
+
+⇒ **il pavimento dipende dal CONTENUTO dello store, non (solo) dalla sua dimensione.** Con
+i miei testi la serie **non è nemmeno monotona** (`6 → 0,852` · `20 → 0,8662` ·
+`60 → 0,8573`). ⇒ **«parte altissimo e scende» non regge come proprietà della dimensione**:
+descrive due corpora diversi messi in fila. **La ritiro come curva** e tengo il fatto
+verificato: **il valore sta intorno a 0,85–0,92 su ogni dimensione provata**, e **l'effetto
+è corretto dove l'ho misurato.**
+
+### Cosa NON prova
+
+⚠️ **Difetto del mio banco, dichiarato**: il secondo giro imposta `HIPPO_DATA_DIR` **dopo**
+l'import, e il prodotto **lo dice** (`observability.py:307`): «*il log eventi scrive in … la
+data dir in uso è …: i fatti e la loro telemetria stanno in due posti diversi*». **Riguarda
+la telemetria, non i fatti né i punteggi** — ma è un avviso vero del prodotto sul mio banco,
+e lo riporto invece di nasconderlo. **9 query per regime** sono poche: i conteggi 0/6 e 2/6
+hanno intervalli larghi e **non li tratto come tassi**. **Una macchina, un regime, testi
+enciclopedici in inglese.** **Sull'SDK il pavimento non filtra**: ho misurato **quando
+l'avviso si accende**, non un taglio — sulle porte che filtrano (gateway/console) l'effetto
+è quello, ma **lì non l'ho misurato**. Non ho riprovato **1 fatto**: lo `0.0` per
+costruzione di @ws6 resta suo e non l'ho toccato.
+
+**Banco**: `porta_effetto_pavimento.py`, output `effetto_pav.out` (scratchpad).
+**Io misuro, non curo.**
