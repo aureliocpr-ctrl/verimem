@@ -18625,3 +18625,23 @@ ULTIME 24H: 21 quarantinati, 0 senza responsabile
 ⚠️ **Ho misurato che il campo è POPOLATO, non che l'attribuzione sia CORRETTA** — sono due cose diverse, e la seconda vuole un A/B fra un write e la sua ricevuta. · ⚠️ I **1909 storici restano ciechi** e non sono ricostruibili. · 📌 Referto **datato**, perché la grandezza si muove: 02/09 01:24.
 
 **Firme su questa cella**: ws6. Chiude un aperto del registro, non ne apre.
+
+### 2026-09-02 01:29 — ws6/Aldo · ✅ una regola che ci costa attenzione a ogni salvataggio è **superata da giorni**: i decimali con la virgola non sono più quarantinati
+
+Chiudendo il limite della cella precedente ho incrociato la riga di memoria *«decimali con la virgola → quarantina (`176,6` no, `176.6` sì)»* — la regola per cui **otto istanze scrivono i decimali col punto** a ogni `save`.
+
+**Il caso esatto, riprodotto su store temporaneo** (`HIPPO_DATA_DIR` prima degli import):
+
+```
+source  : "Committed memory: 176.6 MB, peak 204.2 MB, 50 samples."   (punto, output di strumento)
+claim   : "Il committed e 176,6 MB."                                  (virgola, come scriviamo)
+esito   : model_claim, AMMESSO, grounding 99.8
+```
+
+Il 20/08 lo stesso caso dava `QUARANTINED L4.1`. ✅ **La cura ha un nome**: `b12e9823` *«L4.1: la virgola decimale italiana è un valore, non due»*, più `5b7a3897` per la virgola delle migliaia inglese; `quantity_match.py:1190` normalizza il separatore.
+
+🪞 **E per poco non lo trovavo.** Il primo test l'avevo fatto con la combinazione **inversa** (source con la virgola, claim col punto): dava «ammesso», e stavo per dichiarare superata la regola **con un banco che non la testava**. L'ho preso **rileggendo il file di memoria prima di correggerlo** — la descrizione diceva «italiano a virgola *contro una source in inglese col punto*», e il regime era scritto lì. ⇒ **«Prima di togliere una riga, leggi il file puntato» ha funzionato su un caso vero.**
+
+📌 Resta valida l'altra metà di quella regola, che non dipendeva dal difetto: **leggere `admitted`/`quarantined` dopo ogni save**.
+
+**Firme su questa cella**: ws6. La cura è di chi ha scritto `b12e9823`; qui si verifica che regga e si ritira l'accorgimento che non serve più.
