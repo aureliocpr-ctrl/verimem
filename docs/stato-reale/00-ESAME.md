@@ -16770,3 +16770,71 @@ Consegnando il pezzo (iii) ho ripetuto due volte, come limite, che *«un tenant 
 🪞 **La forma**: è la quinta volta stasera che un mio enunciato si restringe quando lo misuro invece di citarlo. Il docstring di `guardian` l'avevo **letto**, non **eseguito** — e questo repo ha una lezione apposta: *un campo stampato e non letto è un campo assente*; qui era un numero **letto e non verificato**.
 
 **Firme su questa cella**: ws6. Misura in sola lettura, funzione pura, nessun modello caricato.
+
+---
+
+## 2026-09-01 21:25 — ws1 · 🟢 **VERDE, E DUE MIE PREDIZIONI CADUTE NELLO STESSO COLPO**: su uno store da **20 fatti** il pavimento vale **0,8662** — **non `0.0`**. La garanzia è attiva fin dall'inizio, e il valore è **stabile su tre ordini di grandezza di corpus**
+
+**Livello** porta interna `Memory._auto_relevance_floor()` + `search()` come controllo ·
+**Perimetro** store **nuovo** in temp, 20 e 60 scritture, 7 topic · **Istante**
+2026-09-01 21:17–21:24 · **Regime** tutte le variabili poppate e **dichiarate in output**
+(sulla macchina erano attive `HIPPO_ENCODE_DELEGATE_ONLY='1'` e
+`ENGRAM_DATA_DIR='C:\Users\aurel\.engram'`), RAM 8,99 GB, **`claim ram/modelli` preso e
+rilasciato** (`3997d79a3718`) come da ordine di Aurelio delle 20:42 · **Autorità**: ordine
+diretto di Aurelio · **0.7.6**, cwd = scratchpad.
+
+**Verifica un'affermazione del prodotto che alle 21:12 avevo riportato senza contarla.**
+
+### ⚖️ Le predizioni erano scritte prima, e sono cadute tutte e due
+
+`client.py:1320` dice, dell'autore: «*Misurato sul banco: **su uno store piccolo
+`_auto_relevance_floor()` vale `0.0`***». Avevo predetto `0.0` a 20 fatti (**P1**) e a 60
+(**P2**), e scritto che se fosse vero «*il pavimento non separa nulla: è INATTIVO*».
+
+| | predetto | **misurato** | file del pavimento |
+|---|---|---|---|
+| **20 fatti** | `0.0` | **`0.8662`** ❌ | `{"floor": 0.8662, "n_facts": 20, "n_metric": "servibili"}` |
+| **60 fatti** | `0.0` | **`0.8711`** ❌ | `{"floor": 0.8711, "n_facts": 60, "n_metric": "servibili"}` |
+
+**Controllo positivo acceso** (senza, non saprei se sto misurando un banco muto):
+`min_relevance=0.99` → **0 risultati**, senza soglia → **5**. La porta risponde.
+
+### 🟢 IL VERDE, E VA DETTO PER PRIMO
+
+**Il pavimento è attivo già a venti fatti.** E il valore è **notevolmente stabile**:
+
+```
+20 fatti      0,8662
+60 fatti      0,8711
+14 485 fatti  0,8781   (lo store di casa, misura di @ws4 del 31/08)
+```
+
+⇒ **tre ordini di grandezza di corpus, 0,012 di scarto.** Chi ha appena installato riceve
+**la stessa separazione** che riceve chi ha quattordicimila fatti. È esattamente ciò che la
+calibrazione automatica promette di fare, e **lo fa**.
+
+### 🔴 E RITIRO LA PREOCCUPAZIONE CHE AVEVO SCRITTO TREDICI MINUTI FA
+
+Alle 21:12 avevo scritto: «*se è ancora vero, per chi ha appena installato il pavimento non
+separa nulla: è INATTIVO, non «più economico»*». **L'ho misurato: non è vero, e la ritiro.**
+Avevo fatto la cosa giusta — non contarla fra i miei numeri perché era affermata e non
+misurata — ma **averla scritta come «se è vero» le ha dato comunque un peso che non aveva.**
+
+**Non accuso il commento di essere falso**: diceva «misurato sul banco», e può essere stato
+vero in un'altra epoca o in un altro regime. ⚠️ **Un indizio, che riporto come ipotesi non
+verificata**: il file salvato porta `"n_metric": "servibili"`, e il codice (`client.py:2640`)
+descrive quella come una **migrazione dichiarata** rispetto a un `n_facts` contato «su TUTTE
+le righe» — **il commento potrebbe precedere quella migrazione**. Non l'ho verificato.
+
+### Cosa NON prova
+
+**Una sola macchina, un solo regime, due dimensioni (20 e 60).** Non ho provato **sotto** i
+20 fatti, dove la stima potrebbe davvero degenerare — **è lì che il commento potrebbe avere
+ragione**, e non l'ho guardato. Non ho misurato il **costo** del ricalcolo (limite ②(b)
+**ancora aperto**): questo banco legge il valore, non lo cronometra. I fatti sono **frasi
+enciclopediche in inglese**, non il traffico reale di un utente: la stima del pavimento
+dipende dalla distribuzione delle somiglianze, e con testi diversi il numero può cambiare.
+**La frequenza del ricalcolo derivata alle 21:12 resta derivata**, non osservata.
+
+**Banco**: `porta_pavimento_piccolo.py`, output `pavimento_piccolo.out` (scratchpad).
+**Io misuro, non curo.**
