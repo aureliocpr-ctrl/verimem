@@ -86,6 +86,25 @@ meccanismo.** Se il fenomeno fosse rumore, colpirebbe entrambe le popolazioni.
 🔴 **E le tre letture spente erano tutte al RANGO 1.** Il routing temporale non
 degrada la classifica: **toglie la risposta migliore.**
 
+## ③-bis Il cerchio si chiude: l'«ALTRO» del banco precedente era tutto qui
+
+Il banco `banchi/ws6-ranking-o-assenza.py`, che ha aperto questo giro, separava
+le letture che non trovano in due cause con cure opposte. Su 24 domande con
+risposta nota, `k=200`:
+
+```
+entro i primi 10                     : 22 = 91.7%
+fra 11 e 200 → IL RANKING LO NASCONDE :  0 =  0.0%
+non torna affatto → ALTRO             :  2 =  8.3%
+```
+
+Quei due erano `0ebe9e824198` e `758425daf047`. **Sono esattamente due dei tre
+che il routing temporale spegne.**
+
+⇒ **Zero casi curabili col ranking, e l'«ALTRO» non era né copertura né
+embedding: era il time travel.** Per questa popolazione il filone «letture che
+non trovano» ha una causa sola, e ha un nome.
+
 ## ④ La funzione non è rotta — misurata sulla popolazione per cui esiste
 
 Il braccio che mancava al mio banco, e senza il quale avrei accusato una
