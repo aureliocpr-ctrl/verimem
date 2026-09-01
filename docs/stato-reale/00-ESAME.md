@@ -16503,3 +16503,43 @@ adoperandolo**, e un presidio scritto contro un errore può contenerne un altro.
     python docs/stato-reale/banchi/ws8-eta-di-un-run.py hotfix/0.7.1
     gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=5" \
       --jq '.workflow_runs[]|"#\(.run_number) \(.created_at) -> \(.updated_at)"'
+
+## 2026-09-01 21:01 — ws6/Aldo · UN NUMERO DEL README **NON DESCRIVE PIÙ IL PRODOTTO DI OGGI** — e la domanda che l'audit precedente lasciava aperta ha una risposta
+
+**Documento**: [68](68-il-numero-pubblico-non-si-riproduce-e-la-domanda-aperta-ha-risposta.md) · **banco**: `banchi/ws6-il-tasso-rieseguito.py` · commit `836ef224`, verificato su origin per contenuto.
+
+`README.md:74-76`, misurato il 25/08: *«25 of 48 unsupported claims admitted — IT 54.2%, EN 50.0% … 8 of the 48 IT/EN pairs get the OPPOSITE verdict»*.
+
+⚠️ **L'audit precedente** ([`la-vetrina-e-stata-corretta-quattordici-volte.md`](la-vetrina-e-stata-corretta-quattordici-volte.md)) ha già corretto l'ambiguità del doppio `48` e dichiara di aver lavorato *«leggendo nel codice, senza eseguirlo»*. **Non l'ho rifatto: l'ho eseguito.**
+
+| | 25/08 pubblicato | 01/09 rieseguito |
+|---|---|---|
+| falsità ammesse | 25/48 | **26/48** |
+| IT | 13/24 (54,2%) | **14/24 (58,3%)** |
+| EN | 12/24 (50,0%) | 12/24 (50,0%) ← identico |
+| divergenze IT/EN | 8/48 | **9/48** |
+
+### La domanda aperta, chiusa
+
+L'audit si chiudeva testualmente su: *«quante delle 8 cadano sui falsi **non è scritto da nessuna parte**. Se cadessero tutte lì il tasso sui falsi sarebbe 8/24 = 33%»*.
+
+> **6 delle 9 cadono sui falsi, 3 sui veri** — `F-INV` da sola ne fa 4. ⇒ **L'ipotesi del 33% non si avvera**: sui falsi sono **6/24 = 25,0%**. E il «true and false alike» che il README già scrive è **confermato dai dati**, non solo dedotto dal codice.
+
+### Il controllo che decide, fatto PRIMA di pubblicare
+
+Due cause spiegavano la differenza: **(a)** il prodotto è cambiato · **(b)** il banco non isola — dichiara «corpus VUOTO» ma il suo `store_largo` nel repo **è popolato** (2,8 MB, con `dreams/` dentro). Ho eseguito lo stesso banco anche su una **copia** dello store popolato, senza toccare l'originale di nessuno:
+
+```
+corpus VUOTO    : 26/48 ammesse, 9/48 divergenze
+corpus POPOLATO : 26/48 ammesse, 9/48 divergenze
+```
+
+⇒ **Identici in ogni cifra: (b) falsificata.** E il banco non ha sorgenti di casualità né campionamento nel CE ⇒ **non è varianza**. **Resta il codice.**
+
+### Cosa NON prova
+
+✅ **Il README non ha sbagliato**: la riga è **datata**, l'aritmetica interna torna, l'ambiguità era già corretta — **il numero era vero quando è stato scritto**. · ❌ **Non ho bisecato**: non attribuisco il cambiamento a nessun commit (in mezzo c'è la banda a due soglie, **non verificata**). · ❌ **Una falsità ammessa in più su 48 è un caso solo**: la direzione si guarda, la grandezza no. · 📌 **La cura ha già la sua forma dieci righe più su**, sull'escape: *«1.8% was the 2026-07-18 run; the same command today reports 5.4%»*.
+
+🪞 **Due rilievi che ho ritirato da solo prima di scriverli**: *«l'avviso non è arrivato sulla vetrina pubblicata»* — falso, `v0.7.0` (22/07) e `v0.7.6` (24/08) sono entrambi **precedenti** al commit che aggiunge il numero; e *«l'audit aritmetico del README non trova incoerenze»* — **il denominatore era 1**, un verde su una riga sola, cioè una misura che non c'era.
+
+**Firme su questa cella**: ws6 (esecuzione + controllo). **Non ne rivendico altre** — il rilievo sull'ambiguità del `48` è di chi ha scritto la vetrina-quattordici-volte, non mio.
