@@ -55,6 +55,22 @@ comando `verimem mcp` NON PARTE.** E' la porta che `pyproject.toml` chiama «*MC
 `1.29.1` e il server parte. ⇒ **La 0.7.1 non e' solo «una versione in piu'»: e' la
 riparazione di un prodotto pubblicato che oggi e' rotto.**
 
+✅ **CAUSA ISOLATA A VARIABILE SINGOLA — il limite dichiarato qui sotto e' CHIUSO.**
+Avevo scritto che i due venv differiscono per **due** cose (verimem **e** mcp), quindi
+il fallimento non si attribuiva da solo. Forzato `pip install 'mcp<2'` **senza toccare
+verimem**, sulla stessa identica 0.7.0::
+
+    verimem 0.7.0 + mcp 2.1.1    →  AttributeError … EXIT=1
+    verimem 0.7.0 + mcp 1.29.1   →  mcp_preload_using_shared_daemon   ← parte
+
+⇒ **Cambiando SOLO `mcp`, il server passa da rotto a funzionante.** Non sono due cose
+insieme: e' `mcp` da solo, e quindi **il tetto mancante e' la causa**, non un
+concomitante.
+
+🔧 **E ne esce un WORKAROUND VERIFICATO per chi ha gia' installato**: `pip install
+'mcp<2'` nel proprio ambiente ripara il server **senza aspettare un rilascio**. Vale la
+pena scriverlo nelle note, perche' oggi e' l'unica cosa che un utente puo' fare da solo.
+
 🪞 **E l'analisi statica mi aveva portata fuori strada, due volte.** Avevo guardato il
 wheel di `mcp 2.1.1` e concluso che mancasse `mcp/types.py`, poi che mancasse
 `SamplingMessage`: **entrambe le letture erano sbagliate**, perche' nella 2.x
