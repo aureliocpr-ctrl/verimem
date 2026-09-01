@@ -18975,3 +18975,30 @@ QUARANTINATI VIVI (i muti che pesano sulla perdita) : 1324
 ⚠️ **Non ho ri-giudicato i 5 candidati**: dico che sono al massimo cinque, non che passerebbero. · ⚠️ **La virgola nel testo non prova che fosse la causa** della quarantena: è il criterio con cui li ho cercati, non un verdetto. · ⚠️ **Non ho stabilito se gli 879 con fonte siano stati fermati giustamente** — è la domanda che resta, ed è più grande di questa cella.
 
 **Firme su questa cella**: ws6.
+
+## 2026-09-02 01:52 — ws6/Aldo · **IL MOAT APPROVA AL 99,98% E `L4.1` FERMA LO STESSO FATTO** — otto quarantene lette, due strati in disaccordo totale
+
+**Documento**: [75](75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md) · commit `5a95755c` · **633** quarantinati vivi hanno sia il punteggio sia lo span della fonte: sono gli unici su cui si può dire se il verdetto regga. Otto campionati e **letti**, claim contro fonte.
+
+**Il caso che vale il documento** — `ab9799f8b2e5`, `grounding 99.98`, `quarantined_by = L4.1`:
+
+```
+CLAIM  «…hanno ultimo commit fra il 2026-07-05 e il 2026-07-08.»
+FONTE  README:510 … ultimo commit 2026-07-08
+       README:511 … ultimo commit 2026-07-06
+       README:513 … ultimo commit 2026-07-05
+```
+
+Il claim **sintetizza un intervallo** dalle tre date che la fonte elenca. Il giudice semantico dà **99,98 su 100**; `L4.1` lo quarantina lo stesso perché gli estremi non compaiono come tali.
+
+> 🔑 **Il fatto è fermato con il punteggio più alto possibile addosso.** Non è un giudizio incerto: è un **disaccordo fra strati**, e vince il deterministico contro un'approvazione al 99,98%. La classe *«L4.1 quarantina a grounding ~100 se conti tu»* è in registro — **questo ne è la forma più netta: non «il punteggio si abbassa», ma «il punteggio è pieno e il fatto cade»**.
+
+**Il secondo** — `b07292a63513`, `grounding 0.235`, `by = moat`: ora, data, `completed=1167` e `queued=895` sono **tutti nella fonte**; l'unica aggiunta è «run ci». ✅ La quarantena è difendibile, ⚠️ **il punteggio no**: 0,2 su 100 per due parole su un claim altrimenti letterale. ⇒ **Il moat non gradua**, e chi legge `grounding_score` per sapere *quanto* un fatto è fondato riceve un numero quasi binario.
+
+**Gli altri sei**: 1 quarantena **giusta** (i numeri del claim non corrispondono alla fonte) · 4 della classe nota (conti o componi tu ⇒ il punteggio crolla) · 1 discutibile.
+
+### Cosa NON prova
+
+⚠️ **Otto su 633, con seme dichiarato: nessun tasso.** · ❌ **Non ho ri-eseguito il gate**: leggo il verdetto registrato, e il gate cambia (la cura `b12e9823` lo dimostra). · ⚠️ **Non dico che `L4.1` vada spento**: il 69 misura cosa costa stringere un trigger senza guardare l'altro lato, e qui l'altro lato non l'ho guardato.
+
+**Firme su questa cella**: ws6.
