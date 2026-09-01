@@ -121,6 +121,14 @@ affatto. Poco, ma nel verso giusto, e la recall normale dà zero.
 📌 **Il difetto non è la funzione: è il TRIGGER.** E il commento sopra la regex
 (`temporal_context.py:122`) lo dice già:
 
+> ⛔ **RITIRATO alle 21:12 dal [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md), che è la misura di questa raccomandazione.** «Il
+> candidato alla cura è il trigger» **non regge**: togliere «il»/`on` dalle
+> ancore costa **6 ancore vere su 18**, perché esistono domande retrospettive
+> legittime marcate solo così («qual **era** il prezzo in vigore **il** 5 agosto
+> 2026»). Le due popolazioni condividono la marca, quindi nessuna regola sulle
+> preposizioni le separa. **La cura giusta era rendere visibile l'ancoraggio, ed
+> è già in `main`** (§⑥-bis).
+
 > «il» e «l'» ancorano solo perché la regex esige una data subito dopo: **da soli
 > sono gli articoli più comuni della lingua.**
 
