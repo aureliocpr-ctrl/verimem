@@ -18535,3 +18535,67 @@ disegno statistico. **Un solo giro per caso**, nessuna ripetizione.
 
 **Banco**: `porta_denom_composizione.py`, dati in `denom_composizione.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 01:27 — ws1 · **PAGO LA VERIFICA CHE MI MANCAVA: le source scelte parlano D'ALTRO, quindi la mia lettura regge.** 🆕 **Ma cercandolo ho trovato un'altra cosa: il PRIMO risultato di `search` può avere un punteggio PIÙ BASSO del secondo — `0,8800` davanti a `0,9074`**
+
+**Livello** `Memory.search(k=2)` sullo store vivo, **stampa del testo scelto** · **Perimetro**
+i 3 casi che nella cella ㉕ avevano dato `source DIVERSA` · **Istante** 2026-09-02 01:21–01:25 ·
+**Regime** variabili poppate, RAM 7,52 GB, **`claim ram/embedder` preso e rilasciato**
+(`41235e1d93ca`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite che avevo dichiarato alle 01:18**: «*non ho letto QUALE source sbagliata il
+retrieval abbia scelto: potrebbe essere un fatto legittimo che dice la stessa cosa, e allora
+la mia lettura cambia*». **Avevo scritto prima i tre esiti possibili. È il (b).**
+
+### ✅ Le source scelte parlano D'ALTRO — la lettura della ㉕ REGGE
+
+| caso | query | source scelta dal retrieval |
+|---|---|---|
+| 6 | «*…22 su **806***» | «*La cella **W8-12** occupa 108 righe*» |
+| 7 | «*…22 su **29***» | «*Nel banco del criterio a coppia la predizione è ferma in tutte e 22 le righe*» |
+| 9 | «*Gli alias… sono 3 su 3*» | «*Con **due alias su tre** il warning DATA_DIR è presente…*» |
+
+⇒ **nessuna dice la stessa cosa dell'attesa.** Il gate stava davvero giudicando **un altro
+fatto**, quindi «*boccia per la ragione sbagliata*» **non va ammorbidito**: resta.
+📌 **Il caso 9 è il più istruttivo**: la query parla di *quanti* alias, la scelta di *quando
+compare il warning* — **stesso vocabolario, domanda diversa.** Ed è il caso in cui la
+proposizione **vera** era stata bocciata a **0,90**.
+
+### 🆕 E CERCANDO QUESTO NE HO TROVATO UN ALTRO, che non stavo cercando
+
+**Caso 7**, output verbatim:
+
+```
+SCELTA0  [0.8800] Nel banco del criterio a coppia la predizione e ferma in tutte e 22 le righe.
+SCELTA1  [0.9074] Il censimento trova 34 righe in 17 moduli e 22 con una MISURA nel contesto.
+```
+
+⇒ **il PRIMO risultato ha `score` 0,8800 e il SECONDO 0,9074.** **L'ordine di `search` non
+segue il campo `score` che `search` stesso restituisce.** *(Caso 6: 0,8762 davanti a 0,8759 —
+lì l'ordine torna, ma per **tre decimillesimi**.)*
+
+**La spiegazione più probabile è il reranker**, e il prodotto la nomina: nello stesso banco
+il log ha stampato «*rerank cold-load exceeded 0.25s cold budget → keeping bi-encoder
+order*». ⇒ **l'ordine è del rerank, il campo `score` è del bi-encoder: due unità diverse
+nello stesso oggetto.** ⚠️ **Questa è un'ipotesi, non l'ho verificata nel codice.**
+
+**Perché conta per chi usa il prodotto**: chi scrive `results[0]["score"]` credendo di
+leggere «il punteggio del migliore» **può leggere un numero più basso di quello del secondo**,
+e chi ordina o filtra su quel campo **riordina diversamente da come il prodotto ha deciso**.
+⚠️ **I miei banchi di stanotte usano `max(score)`**, che è insensibile all'ordine: **non li
+tocca** — ma è un caso, non una precauzione che avevo preso.
+
+### Cosa NON prova
+
+**Tre casi**, e il fenomeno dell'ordine l'ho visto **in uno solo** (il 6 è al limite dei
+decimillesimi): **non so quanto sia frequente**. **Non ho letto il codice del rerank**: la
+spiegazione è dedotta da una riga di log e **va verificata** — se il `score` fosse aggiornato
+dal rerank in altri percorsi, la lettura cambia. **Non ho provato con `k` grandi** né con il
+rerank **caldo**: quella riga di log dice che era **freddo** e che l'ordine del bi-encoder è
+stato mantenuto, quindi **potrei aver misurato proprio il caso degradato** — e allora il
+difetto sarebbe transitorio, non strutturale. **È la verifica che lascio scritta.**
+
+**Banco**: `porta_quale_source.py`, output `quale_source.out` (scratchpad).
+**Io misuro, non curo.**
