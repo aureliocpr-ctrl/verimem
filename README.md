@@ -82,9 +82,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   A two-threshold band (**on by default**, `VERIMEM_CE_BAND_ENFORCE=0` reverts) holds
   the CE's uncertain middle zone, cutting that entity-substitution escape from
   **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
-  facts (measured) — and the band **escalates to one llm adjudication** OFFLINE-FIRST instead of parking
+  facts, at the cost of **over-review 1/19 on hard true classes** (measured; the band
+  *holds for review*, it does not block) — and the band **escalates to one llm adjudication** OFFLINE-FIRST instead of parking
   the write: a local **ollama** judge (auto-detected; default `qwen2.5:7b-instruct` —
-  measured **AUROC 0.858 vs the CE's 0.829**, 2.3% misconception escape vs ~18%, fully
+  measured **AUROC 0.858 vs the CE's 0.829** and 2.3% misconception escape **at its
+  precision cut** vs the CE's ~18% at the default cut — `benchmark/local_llm_judge_bench.py`,
+  TruthfulQA heldout **n=600** — fully
   offline) is preferred, then a `claude` CLI on PATH (subscription, no key), else the
   write is held for review. The verdict admits (judge-of-record `local-band`/`claude-band`
   on the receipt) or blocks; any escalation failure falls back to held-for-review, an
