@@ -210,7 +210,16 @@ def main() -> int:
               f"rifarle ({_quota:.0f}% del totale). Non sono firmabili da "
               "nessuno finche' non portano una riga `🔎 rifallo con`. "
               "Vedile con --tutte.")
-    print("  Rifai il banco, poi aggiungi in fondo alla cella:")
+    #: «in fondo alla cella» e' AMBIGUO e ha rotto undici celle il 01/09:
+    #: chi lo legge appende dopo il `|` di chiusura, la riga smette di
+    #: chiudere e l'ultima colonna — il REGIME — non si rende piu'. Il
+    #: contenuto resta (le pipe restano 9, la mediana delle celle sane), ma
+    #: `conta_celle_esame.py` la conta fra le TRONCATE, dove finisce insieme
+    #: alle righe a cui il regime manca DAVVERO: stesso sintomo, due cause,
+    #: due cure diverse. L'istruzione qui sotto dice il posto esatto.
+    print("  Rifai il banco, poi aggiungi la firma DENTRO l'ultima colonna,")
+    print("  cioe' PRIMA del `|` che chiude la riga (non dopo: la riga deve")
+    print("  continuare a finire con `|`):")
     print(f"      ✅ **firma @{a.io} <ora>** — rifatta, <cosa hai ottenuto>.")
     print("  ⚠️ Se i numeri NON tornano scrivilo lo stesso: ritirare vale piu' che confermare.")
     return 0
