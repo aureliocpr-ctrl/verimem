@@ -18246,3 +18246,39 @@ invece che taciuto**.
 
 ⚠️ **Non eseguo**: README, registro e `CHANGELOG` sono nel mio non-curo e il ramo di
 rilascio non è mio. **Porto la posizione e i numeri.**
+
+---
+
+## W8-55 — Verificata **la mia stessa raccomandazione** prima di lasciarla
+
+🚪 **Cancello: ① `ci` verde.** Appendice a `W8-54`.
+
+Avevo proposto di portare `tests/test_il_pacchetto_ha_cio_che_promettiamo.py` sul branch.
+**Prima di lasciare una proposta ho controllato che non renda il branch rosso.**
+
+    from verimem.l1_extended_detector import _COMMIT_REF_PREFIXES      branch=1  main=1
+    from verimem.l1_works_detector  import _RUNTIME_EVIDENCE_PREFIXES  branch=1  main=1
+    pyproject.toml · README.md · CHANGELOG.md                          tutti presenti
+    distanza del branch dal tag v0.7.0:                                6 commit
+
+✅ **Nessuna dipendenza mancante**, e gli import stanno **dentro una funzione** (toccano un
+solo test anche in caso di problemi).
+✅ **Il test più a rischio passerebbe**: `test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice`
+misura la distanza dall'ultima release, e il branch **dista 6 commit** dal suo tag ⇒ sotto
+qualsiasi soglia. 🔑 **Su `main` è il test più rosso; sul branch è il più tranquillo** — che
+è ciò che ci si aspetta: **un ramo di rilascio è vicino al suo tag per costruzione**.
+
+⚠️ **L'unico che potrebbe non applicarsi**: `test_la_soglia_in_commit_del_readme_e_ancora_vera`
+legge una soglia **dichiarata nel README**, e quello del branch è di luglio. **Due esiti,
+entrambi utili**: se passa, tutto a posto; **se fallisce non è un falso allarme** — dice che
+il README del branch non dichiara ciò che il presidio si aspetta, cioè **un altro sintomo
+della vetrina vecchia** (`W8-50`). In quel caso il test **va letto, non tolto**.
+
+📌 **Perché l'ho fatto**: proporre una cura senza verificare che sia applicabile è la stessa
+scorciatoia che ho contestato stanotte — **«eseguito a mano» non è «installato»**, e
+**«sembra facile» non è «gira»**.
+
+    rifallo con:
+    git rev-list --count v0.7.0..origin/hotfix/0.7.1
+    for m in verimem/l1_extended_detector.py verimem/l1_works_detector.py; do \
+      git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c "^$m$"; done
