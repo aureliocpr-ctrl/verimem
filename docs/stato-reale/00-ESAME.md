@@ -17412,3 +17412,90 @@ I **5 test originali** della dichiarazione restano verdi in **entrambe** le vers
 Tre cambiamenti in `main` e **due raccomandazioni ritirate dopo averle misurate**, una delle quali mia. 🔑 **Nessuno dei due ritiri sarebbe avvenuto senza un banco**: «stringere il trigger» sembrava ovvio e costava 6 su 18; «adesso la porta lo dichiara» sembrava chiuso e copriva 0 su 3. Entrambe le volte l'evidenza era a due comandi di distanza.
 
 **Firme su questa cella**: ws6 (misura + cura + test). **Non ne rivendico altre**: `letto_al_passato` è di chi l'ha scritta, e questa ne estende la condizione.
+
+---
+
+## 2026-09-02 00:24 — ws1 · 🔴 **LA MISURA CHE MANCAVA ORA C'È, E DICE NO: su `search` il pavimento costa 2 risposte vere su 12 e prende solo 4 invenzioni su 8 — e le 4 che sfuggono sono quelle che cambiano un NUMERO.** Il blocco dichiarato nel docstring era giustificato, e ora si sa **perché**
+
+**Livello** `Memory.search` sullo **STORE VIVO** (`CONFIG.semantic_db`, 13 420 servibili),
+**sola lettura** · **Perimetro** 20 domande — **12 sostenibili** derivate da fatti reali
+estratti con SQL + **8 invenzioni PLAUSIBILI** (stesso dominio e lessico, un solo dettaglio
+variato) · **Istante** 2026-09-02 00:17–00:22 · **Regime** `ENGRAM_MIN_RELEVANCE` e
+`ENGRAM_GATEWAY_MIN_RELEVANCE` poppate (erano **non impostate**), RAM 10,84 GB, **`claim
+ram/embedder` preso e rilasciato** (`8f8e126b4698`; scope distinto da `ram/giudice` di @ws3,
+nessuna contesa) · **Autorità**: compito di @lead-audit + ordine di Aurelio delle 00:00 ·
+**0.7.6**.
+
+**È la replica, su `search`, del banco del 29/07 che girava su `explain`** — la misura che
+`relevance_floor.py` indica come condizione per estendere il default.
+
+### 🔴 IL NUMERO, e la condizione d'uscita NON è soddisfatta
+
+| | `search` **oggi** | `search` **con la cura** |
+|---|---|---|
+| **risposte attese perse** (su 12) | **0** | **2** |
+| **invenzioni intercettate** (su 8) | **0** | **4** |
+| secondi | 24,79 | **18,33** |
+
+**Confronto col banco del 29/07 su `explain`**: `0 perse · 8/8 prese`. ⇒ **su `search` la
+stessa cura perde risposte vere e prende metà delle invenzioni.** La condizione che avevo
+dichiarato prima di eseguire («*0 astensioni sbagliate e 0 risposte perse*») **non regge**:
+**il blocco scritto nel docstring era giustificato.**
+
+### 📌 E LA RAGIONE È STRUTTURALE — è il pezzo che vale più del verdetto
+
+Le quattro invenzioni **intercettate** cambiano una **parola**; le quattro **passate**
+cambiano un **numero**:
+
+| invenzione | cosa varia | best | esito |
+|---|---|---|---|
+| celle firmate da **ws9** | una parola | — | **presa** ✅ |
+| artefatti **yaml** | una parola | — | **presa** ✅ |
+| caso **R7** | una parola | — | **presa** ✅ |
+| esattamente **tre** chiamate | una parola | — | **presa** ✅ |
+| wheel **0.7.2** *(vero: 0.7.1)* | un numero | **0,9274** | **passa** ❌ |
+| mese **2026-09** *(vero: 08)* | un numero | 0,9050 | **passa** ❌ |
+| wheel della **0.6.0** | un numero | 0,8941 | **passa** ❌ |
+| il **quarto** alias *(sono tre)* | un numero | 0,8813 | **passa** ❌ |
+
+**La domanda vera e la sua invenzione gemella hanno punteggi separati da tre millesimi**:
+`0,9306` contro `0,9274`. ⇒ **l'embedder non codifica la differenza numerica**, e un
+pavimento è una soglia **su quel punteggio**: non può separare ciò che il punteggio non
+distingue. Separa bene le invenzioni che cambiano un **token lessicale**, che sono le più
+facili.
+
+⇒ **Per un prodotto di memoria verificata questa è la parte che conta**: le invenzioni che
+sfuggono sono **quelle su numeri e versioni**, cioè **la classe più pericolosa** — «quanti
+file ha il wheel 0.7.2» riceve i fatti del 0.7.1 con punteggio 0,93.
+
+### 🎯 COSA SIGNIFICA PER LA PROMESSA ROSSA
+
+**La promessa «*abstention instead of hallucination*» NON si può mantenere su `search`
+cambiando quella riga.** Non perché la cura sia rischiosa in astratto — **perché è misurata
+e non funziona lì**: `explain` astiene bene perché ha un **gate cross-encoder** che giudica
+il contenuto; `search` ha solo la **similarità**, e la similarità non vede i numeri.
+⇒ **la scelta non è «accendere o no il default»: è «portare il gate su `search`, o riscrivere
+la promessa».** La riscrittura onesta che avevo proposto alle 00:02 **resta valida e ora ha
+una misura sotto**: «*attiva di default su `explain` e sul gateway; sulle altre porte si
+accende con `ENGRAM_MIN_RELEVANCE=auto`*» — **e chi la accende deve sapere che su `search`
+costa ~17% di risposte vere e intercetta metà delle invenzioni.**
+
+📌 **Un dato controintuitivo, e va nel verso buono**: con il pavimento il giro è **più
+veloce** (18,33 s contro 24,79) — meno risultati da comporre. **La cura non costa tempo:
+costa richiamo.**
+
+### Cosa NON prova
+
+**20 domande, una macchina, uno store solo** — e **le 12 sostenibili le ho scritte io a
+partire dai fatti**, quindi sono *favorevoli al retrieval* per costruzione: su domande poste
+da un utente vero le perse potrebbero essere di più. **Le 8 invenzioni sono le mie**: ho
+scelto io quali dettagli variare, e il fatto che i numeri passino e le parole no **potrebbe
+dipendere da come le ho costruite** — la controprova (più invenzioni numeriche, più
+lessicali, contate separatamente) **non l'ho fatta**. **Non ho misurato il gate su `search`**:
+dico che `explain` ce l'ha e `search` no, **non** che portarlo lì funzionerebbe. **Le 2 perse
+sono entrambe domande composte** («*e in quanti moduli?*», «*su 311 … una sola chiamata*»):
+**può essere la struttura della domanda, non il pavimento** — non l'ho isolato. **I secondi
+sono di un giro solo per regime**, non una misura di latenza.
+
+**Banco**: `porta_astensione_search.py`, dati in `astensione_search.json` (scratchpad).
+**Io misuro, non curo.**
