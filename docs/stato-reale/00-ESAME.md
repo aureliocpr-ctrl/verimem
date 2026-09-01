@@ -18330,3 +18330,61 @@ misurato l'artefatto, @ws5 ha misurato l'utente** — e per decidere una data se
 seconda.
 
     rifallo con: board `rilascio/pubblicato-rotto` (ws5) + `rilascio/stato-CI` (ws8)
+
+---
+
+## W8-57 — Il run che conta porta tutte le cure · e **ritiro il mio allarme su `#75`**
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### ① `#2716` è il run giusto — verificato, non assunto
+
+In `W8-56` ho raccomandato «pubblicare al primo verde» **senza controllare su quale commit
+arriverà**. Controllato:
+
+    1e293f4b discende da 08f38256 (plugin.json curato)?   SI
+    plugin.json a 1e293f4b:                                "version": "0.7.1"
+
+    catena del branch:
+      53ec00c7  i 4 file di infrastruttura (il binario porta il cancello)
+      ff29d7ea  versione «su tutte e tre le superfici»   ← quella incompleta
+      08f38256  la QUARTA superficie (plugin.json)       ← la cura
+      1e293f4b  changelog                                ← HEAD, gira in #2716
+
+⇒ **`#2716` porta tutte e quattro le cure**, e il gate cerca il verde sul commit **taggato**.
+⇒ **`#2653` è superfluo**: gira su un antenato. Nella coda attuale quel posto vale ore —
+**non lo cancello io**, ma chi ha i permessi lo valuti.
+
+### ② ⛔ Ritiro il mio allarme su `#75 security`
+
+Avevo scritto (23:58): «`in_progress` dall'8 luglio ⇒ se è appeso davvero, **cancellarlo
+libera capacità**». **Controllati i suoi job:**
+
+    #75 security — job totali: 5
+      completed/success  ruff (security rules)      ·  completed/success  safety check
+      completed/success  CodeQL (Python)            ·  completed/success  pip-audit
+      completed/success  bandit (low+low report)
+
+⇒ **Tutti e cinque conclusi**, l'8 luglio. **Non occupa alcun runner: cancellarlo non
+libererebbe nulla.** La mia frase era sbagliata e la ritiro.
+
+**Ma il difetto resta, di natura diversa**: è **uno stato che mente** — `in_progress` da 56
+giorni per un run i cui job sono finiti ⇒ **ogni conteggio di `in_progress` è sovrastimato
+di 1, da due mesi.**
+
+🪞 **E l'ho usato io per primo**: alle 23:58 ho pubblicato «`in_progress` su tutti i workflow:
+**5**». La diagnosi della saturazione **regge** — l'avevo costruita sui job dei **quattro**
+run di `ci`, contati uno per uno — **ma il numero che ho pubblicato includeva un fantasma**:
+su un sistema saturo, dove serve a stimare la capacità, **è un errore del 25%**.
+
+⇒ **Va chiuso lo stesso**, ma per **igiene del misuratore**, non della coda.
+
+📌 **La forma, vista tre volte stanotte**: **un numero vero letto al livello sbagliato.**
+`in_progress` al livello del **run** dice 5; al livello dei **job** dice che uno dei cinque
+non sta facendo nulla. **Il livello a cui misuri decide il verdetto.**
+
+    rifallo con:
+    git merge-base --is-ancestor 08f38256 1e293f4b && echo "la cura c'e'"
+    ID=$(gh api "repos/:owner/:repo/actions/runs?status=in_progress&per_page=20" \
+         --jq '[.workflow_runs[]|select(.name=="security")][0].id')
+    gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=30" --jq '.jobs[]|"\(.status)/\(.conclusion)"'
