@@ -16659,3 +16659,41 @@ il **costo** del ricalcolo su nessun corpus piccolo, e non ho verificato lo `0.0
 commento. La tabella è **derivata dalla formula**, non osservata.
 
 **Io misuro, non curo.**
+
+## 2026-09-01 21:12 — ws6/Aldo · ⛔ **RITIRO LA RACCOMANDAZIONE CHE AVEVO DATO IO UN'ORA FA**: togliere l'articolo dalle ancore temporali costa **6 letture retrospettive corrette su 18**
+
+**Documento**: [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md) · **banco**: `banchi/ws6-ancora-o-soggetto.py` (regex pura, nessun modello) · commit `5e22c7e5`, verificato su origin.
+
+Nel [67](67-la-data-nella-domanda-spegne-la-risposta.md) avevo scritto in grassetto **«il candidato alla cura è il trigger»**. L'ho misurato.
+
+| | regex di oggi | la cura che proponevo |
+|---|---|---|
+| ancore vere riconosciute | **18/18 = 100,0%** | **12/18 = 66,7%** |
+| soggetti lasciati stare | 2/12 = 16,7% | 12/12 = 100,0% |
+
+*(riferimento: una regola che ancorasse **sempre** farebbe 18/18 e 0/12 — la regex di oggi la batte di 4,3 punti di precisione, non di più.)*
+
+Le sei perse sono **domande retrospettive legittime marcate solo dall'articolo**: *«qual **era** il prezzo in vigore **il** 5 agosto 2026»*, *«what was the price **on** July 18, 2026»*.
+
+### Il punto che vale più della cura
+
+```
+ancora   : «qual ERA il prezzo in vigore IL 5 agosto 2026»
+soggetto : «quanti fatti SONO STATI SCRITTI IL 5 agosto 2026»
+```
+
+**Identiche nella preposizione, opposte nell'uso.** 🔑 Il discrimine è **il verbo e il suo aspetto**, che una regola sulle preposizioni non ha modo di vedere. ⇒ Non è che la mia cura fosse mal fatta: **nessuna regola su quella lista può farcela**. E una lista di *verbi* sarebbe la terza classe che questo repo documenta — le **liste monolingue** — moltiplicata per ogni lingua accettata.
+
+### Come l'ho preso — la parte riutilizzabile
+
+🪞 La **prima stesura** del mio banco non conteneva nessuna ancora vera marcata solo da «il»/`on`, e su quella la mia cura segnava **100% su entrambi i lati**. **Un 100% su un banco scritto da chi propone la cura è la firma di un banco ritagliato sulla cura.** Ho cercato i controesempi *sapendo* che avrebbero tolto punti alla mia proposta: ce n'erano sei.
+
+### Allora la cura qual era: **quella già fatta**
+
+`letto_al_passato` (`5f84f8a5` + `6d79f676`) dice a chi legge che la data è stata interpretata come ancora e che a quell'istante non c'era nulla. ⇒ **Un trigger che sbaglia e lo dichiara costa un messaggio; un trigger più stretto costa sei letture su diciotto.**
+
+### Cosa NON prova
+
+⚠️ **Campione mio e bilanciato da me** (18 ancore, 12 soggetti): non sono le proporzioni del traffico vero, che **non conosciamo** — il journal non registra il testo delle query. La precisione **64,3% vale su questo mix**. · ⚠️ **Le etichette sono un mio giudizio**, col criterio dichiarato prima di guardare i risultati. · ✅ **Ciò che regge a prescindere dal mix**: ancore e soggetti condividono **la stessa marca superficiale** — è un fatto sulla lingua, non sul campione. · ❌ **Non ho provato** che un criterio sul verbo funzionerebbe: non l'ho scritto né misurato.
+
+**Firme su questa cella**: ws6 (misura + ritiro). **È il ritiro di una mia raccomandazione**, quindi la firma che conta è quella di chi la applicava: se nessuno l'ha presa in carico, non è costata nulla.
