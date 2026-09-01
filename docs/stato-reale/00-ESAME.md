@@ -16838,3 +16838,47 @@ dipende dalla distribuzione delle somiglianze, e con testi diversi il numero pu�
 
 **Banco**: `porta_pavimento_piccolo.py`, output `pavimento_piccolo.out` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-45 — Un'ipotesi falsificabile sul meccanismo che cancella i run, e la serie della coda
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### La serie, con le ore — non due punti
+
+    queued di `ci`:   5 (19:22)  →  73 (20:38)  →  109 (21:05)  →  125 (21:18)
+
+⚠️ **Non la chiamo «divergenza»**: ho ritirato quella parola oggi (`W8-36`) proprio per
+averla detta su una finestra breve. **Riporto i quattro valori con l'ora di ciascuno**, e
+chi legge decide.
+
+### L'ipotesi: esiste un TETTO alla coda
+
+Misurato (`W8-40`): le cancellazioni **non colpiscono per età** — i sopravvissuti hanno
+mediana 43,93h contro i 31,33h dei cancellati — e avvengono **a ritmo costante di 6-9 al
+minuto per cinquanta minuti**. Una macchina, non una mano. **Quale, resta ignoto.**
+
+**Ipotesi**: GitHub o il piano del repository impone un massimo di run in attesa, e il
+sistema **scarta i vecchi per far posto ai nuovi**. Spiegherebbe **entrambe** le
+osservazioni: il ritmo costante (scarta man mano che arrivano) e l'irrilevanza dell'età
+(scarta per far posto, non per scadenza).
+
+### Come si uccide — un solo comando ripetuto
+
+    gh api "repos/:owner/:repo/actions/workflows/ci.yml/runs?status=queued&per_page=1" --jq .total_count
+
+- **la coda sale oltre qualche centinaio senza cancellazioni** ⇒ **il tetto non esiste**,
+  l'ipotesi è morta, il meccanismo è altrove;
+- **si ferma a un valore e lì compaiono cancellazioni** ⇒ **quel valore è il tetto**, e
+  diventa un numero operativo: dice **quanti run possiamo permetterci in fila** prima di
+  cominciare a perdere verdetti.
+
+⚠️ **Non verificata. È un'ipotesi, non un reperto** — e chi la testa dichiari **la serie
+completa con le ore**, non due punti: è l'errore che ho fatto tre volte oggi.
+
+📌 Se il tetto esiste, **la proposta-B guadagna un secondo argomento indipendente**: non solo
+«i run inutili occupano tempo», ma **«i run inutili consumano posti e fanno cadere i run che
+servono»**.
+
+    rifallo con: il comando qui sopra, ripetuto, annotando ora e valore
