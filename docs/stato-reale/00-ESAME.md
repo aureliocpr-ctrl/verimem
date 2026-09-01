@@ -17311,3 +17311,60 @@ wheel è rotto.
       printf "%-8s EXIT=%s\n" "$c" "$?"; done
     python -c "import os,tempfile; d=tempfile.mkdtemp(); os.environ['HIPPO_DATA_DIR']=d; \
       from verimem.config import CONFIG; print(CONFIG.data_dir)"   # e GUARDA stderr
+
+---
+
+## W8-47 — Il veto ④ eseguito sull'**artefatto vero della CI**, e cosa contiene il pacchetto
+
+🚪 **Cancello: ④ registro pulito nel wheel (VETO).** Colma il limite dichiarato in `W8-40`.
+
+In `W8-40` avevo scritto: «il banco costruisce da **questo albero**, non dall'artefatto
+della CI ⇒ *«④ passa» vale per il wheel che costruisco io, non è la prova che passi in CI*».
+**Il job `build` carica un artefatto `dist`: l'ho scaricato e ci ho eseguito il veto.**
+
+    verimem-0.7.1-py3-none-any.whl   1 657 624 byte
+    verimem-0.7.1.tar.gz             2 826 902 byte
+
+    controlla_registro.py sul WHEEL della CI   EXIT=0   «Nessun identificativo di sessione»
+    controlla_registro.py sull'SDIST della CI  EXIT=0   «Nessun identificativo di sessione»
+
+⇒ **Il veto passa sull'artefatto che finirebbe su PyPI**, non su una mia ricostruzione.
+Le occorrenze restanti sono `[Aurelio]` in commenti di direttiva — la categoria che il veto
+conta e lascia passare.
+
+### 📦 Cosa c'è dentro, e la differenza fra wheel e sdist
+
+    wheel: 440 file → 432 verimem/ · 6 dist-info · 1 engram · 1 hippoagent
+           file estranei (test/docs/md/yml/sh): 1 → verimem/webui/vendor/README.md
+    sdist: contiene anche i test (es. tests/test_anti_confabulation_shipped_warning.py)
+
+⇒ **Il wheel è pulito**: un solo file «estraneo», il README di una libreria vendorizzata,
+**necessario** per l'attribuzione. **L'sdist contiene i test** — normale e corretto, è il
+sorgente completo, **ma va saputo**: chi installa da sdist riceve anche la suite.
+
+🔎 **Controllo incrociato sul filtro**: `verimem/test_isolation.py` *sarebbe* stato catturato
+dal criterio (contiene `/test`) e **non compare** — corretto, è nato il 29/08 e il branch
+parte dal 22/07. Il filtro non «non ha trovato nulla»: non c'era nulla da trovare.
+
+### 🪞 Un collegamento che ho fatto e verificato prima di pubblicarlo — era sbagliato
+
+Vedendo `test_anti_confabulation_shipped_warning.py` nell'sdist ho pensato: «ecco il test che
+presidia l'avviso spedito col prodotto» (il `RuntimeWarning` sulla soglia, `W8-46 §③`).
+**L'ho aperto: riguarda tutt'altro** — i claim che contengono le parole
+`SHIPPED|MERGED|WIRED|DEPLOYED` senza un riferimento a commit.
+⇒ **Il reperto `W8-46 §③` resta com'era: non è presidiato da quel test.**
+📌 **È la stessa forma dell'errore `search`/`recall` di un'ora fa: fidarsi di un nome.**
+Stavolta il nome l'ho aperto **prima** di dirlo, e la correzione non è mai arrivata al
+canale. **La differenza fra i due casi non è l'attenzione: è l'ordine.**
+
+⚠️ **Limite**: è l'artefatto di `#2557`, cioè il commit con `plugin.json` a `0.7.0`. Il
+contenuto dei file di prodotto non cambierà con la correzione (una stringa in un JSON), **ma
+il controllo va rifatto sull'artefatto di `#2653` prima di pubblicare**: «quasi identico»
+non è «identico», ed è una riga di comando.
+
+    rifallo con:
+    ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=5" --jq '[.workflow_runs[]|select(.run_number==2653)][0].id')
+    gh run download "$ID" -n dist -D /tmp/dist
+    python scripts/controlla_registro.py /tmp/dist/verimem-*.whl ; echo "EXIT=$?"
+    python -c "import zipfile,collections; z=zipfile.ZipFile('/tmp/dist/verimem-0.7.1-py3-none-any.whl'); \
+      n=z.namelist(); print(len(n), collections.Counter(x.split('/')[0] for x in n))"
