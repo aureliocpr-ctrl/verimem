@@ -18106,3 +18106,75 @@ file di test**: non tocca il prodotto, non cambia il wheel, non invalida il verd
     git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c test_il_pacchetto_ha_cio_che_promettiamo
     comm -13 <(git show origin/hotfix/0.7.1:tests/test_il_pacchetto_ha_cio_che_promettiamo.py 2>/dev/null | grep -oE '^def test_[a-z_0-9]+' | sort) \
              <(git show origin/main:tests/test_il_pacchetto_ha_cio_che_promettiamo.py | grep -oE '^def test_[a-z_0-9]+' | sort)
+
+---
+
+## 2026-09-02 00:49 — ws1 · 🟢🟢 **LA CURA REGGE DA CAPO A FONDO, non solo il componente: retrieval + gate insieme fanno `0` risposte perse su 10 e bloccano `9` invenzioni su 10.** Contro il pavimento, che ne perdeva 2 su 12 e ne bloccava 4 su 8
+
+**Livello** **composizione dei due pezzi veri del prodotto** — `search(k=1)` sceglie la
+source, `try_local_score(source_scelta, proposizione)` la giudica, soglia **`40.0`** (la
+`_ANSWER_VERIFY_THRESHOLD` che `answer()` usa) · **Perimetro** i 10 casi del banco delle
+00:41, **20 giudizi** · **Istante** 2026-09-02 00:44–00:47 · **Regime** variabili di
+grounding e delega poppate, RAM 7,54 GB, **`claim ram/giudice` preso e rilasciato**
+(`d7f6b32bf449`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite che avevo dichiarato alle 00:41**: «*ho misurato `try_local_score` DA SOLO,
+non il gate DENTRO `search` … se il retrieval non porta il fatto giusto il gate non ha nulla
+da giudicare*».
+
+⚠️ **Correzione al disegno, dichiarata**: volevo usare `answer()`, che compone già i due
+pezzi. **Non si può**: `answer()` richiede un `llm` e qui non ce n'è (nessuna rete). Ho quindi
+composto **le due funzioni vere del prodotto**, non un surrogato.
+
+### 🟢 Il numero — e le due predizioni, scritte prima, REGGONO entrambe
+
+| | |
+|---|---|
+| media **VERE** | **99,17** |
+| media **FALSE** | **11,14** |
+| **delta** | **88,03** *(P1 dichiarata: > 50)* ✅ |
+| **falsi rifiuti** (vera sotto 40) | **0 / 10** *(P2 dichiarata: ≤ 2)* ✅ |
+| — di cui per **source sbagliata dal retrieval** | **0** |
+| **invenzioni passate** (falsa sopra 40) | **1 / 10** |
+| secondi | 35,3 *(20 search + 20 giudizi ⇒ ~1,8 s a coppia)* |
+
+**Il retrieval ha portato la source attesa in TUTTI e venti i casi** — il rischio che avevo
+nominato («*una vera bocciata perché il retrieval gli ha messo davanti il fatto sbagliato*»)
+**non si è materializzato qui**, e l'ho contato separatamente apposta.
+
+### 📊 Il confronto che serve a chi decide — le tre vie, misurate tutte da me stanotte
+
+| | risposte vere perse | invenzioni bloccate |
+|---|---|---|
+| `search` **oggi** (nessuna astensione) | 0 | **0** |
+| `search` **+ pavimento** *(00:24)* | **2 / 12** | 4 / 8 *(50%)* |
+| `search` **+ gate** *(questa cella)* | **0 / 10** | **9 / 10 *(90%)*** |
+
+⇒ **la cura col giudice non è solo migliore: è migliore su ENTRAMBI gli assi.** Non perde
+richiamo *e* blocca il doppio. **La promessa «*abstention instead of hallucination*» è
+mantenibile sulla porta più usata**, e ora è misurata **da capo a fondo**, non a pezzi.
+
+### 🔴 E il caso che sfugge è SEMPRE LO STESSO — quindi il limite è isolato
+
+L'unica invenzione che passa è **«*gli artefatti json classificati NUDO sono 128 su 999*»**
+(**99,96**, contro 99,24 della vera) — **identica al banco delle 00:41**. ⇒ **non è il
+retrieval**: la source scelta era quella giusta (`src ok`). **È il gate che non guarda il
+denominatore.** Il limite ha una forma precisa e sta in un punto solo, e questo lo rende
+**affrontabile** invece che diffuso.
+
+### Cosa NON prova
+
+⚠️ **Il limite più importante, e riguarda il realismo del banco**: come query ho usato **le
+proposizioni**, che sono quasi identiche ai fatti nello store ⇒ **il retrieval ha avuto vita
+facile, e lo `0 su 10` di falsi rifiuti va letto così.** Nel prodotto vero la query è **una
+domanda** («*quanti file…*»), non un'affermazione: con quelle il retrieval può portare source
+sbagliate e i falsi rifiuti **salirebbero**. **Questo banco misura la composizione nel caso
+favorevole al retrieval.** **10 casi**, `9/10` e `0/10` hanno intervalli larghi. **Le
+proposizioni false le ho scritte io** (terza volta che lo dichiaro in tre banchi). **Il costo
+è ~1,8 s a coppia più il warm del giudice**, e **non l'ho confrontato con la latenza attuale
+di `search`**: dire «quanto rallenta» richiede un A/B che non ho fatto. **`answer()` non l'ho
+esercitata**: è lei la porta che fa questo lavoro nel prodotto, e senza `llm` resta non
+misurata.
+
+**Banco**: `porta_composizione.py`, dati in `composizione.json` (scratchpad).
+**Io misuro, non curo.**
