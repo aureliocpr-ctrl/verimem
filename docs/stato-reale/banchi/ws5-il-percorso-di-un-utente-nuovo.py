@@ -48,6 +48,57 @@ IL PERCORSO, nell'ordine in cui lo farebbe chi ha appena installato::
 ⇒ Per ognuno: **esce a zero? quanto ci mette? e cosa stampa a un utente che non conosce
 il prodotto?** L'ultima colonna e' quella che questo banco esiste per guardare.
 
+🟡 ESITO — **il percorso funziona in tutti e cinque i passi, e nel secondo il prodotto
+dichiara la versione SBAGLIATA**::
+
+    INSTALLAZIONE   7m27s (con cache pip) · 74 pacchetti · torch 2.13.0
+                    mcp 1.29.1 (il tetto `<2` della 0.7.1 ha retto)
+                    comandi installati: verimem.exe, hippo.exe
+
+    passo          exit    durata   cosa vede l'utente
+    ① --help        0       2.0s    l'elenco dei comandi, leggibile
+    ② doctor        1       6.3s    🔴 «verimem 0.7.0» — ma e' installata la 0.7.1
+    ③ remember      0       4.5s    admitted id=7b3f0216b8b2 topic=user
+    ④ recall        0       1.6s    ritrova il fatto appena scritto a 0.87
+    ⑤ stats         0       1.5s    admitted: 1 · quarantined: 0
+
+✅ **IL PERCORSO REGGE**: si installa, si scrive, si rilegge, e il fatto torna al primo
+posto con 0.87. Un utente che segue il quickstart **arriva in fondo**.
+
+🟢 **E `doctor` fa esattamente quello che dichiara**: l'`exit 1` non e' un difetto — sono
+i **due avvisi** (`! offline`, `! llm`), e il suo help lo documenta («*0 all-ok · 1
+warnings · 2 failures*»). ✅ Nota che vale per il prodotto: «*local CE gate model
+installed — the grounding moat is ON with no llm*» ⇒ **chi installa senza chiave API ha
+comunque il moat attivo**, che e' il cuore della promessa.
+
+🔴 **IL DIFETTO, ed e' nel comando che si usa per primo**: `doctor` stampa
+**`verimem 0.7.0`** su un'installazione **0.7.1**. Isolato su tre fonti::
+
+    pip show / importlib.metadata   0.7.1
+    verimem.__version__             0.7.0   ← discordante
+    doctor                          0.7.0   (legge __version__)
+
+    wheel                      METADATA   __version__
+    0.7.0 PUBBLICATA (PyPI)     0.7.0       0.7.0     OK
+    0.7.1 (hotfix branch)       0.7.1       0.7.0     🔴 DISCORDANTI
+    0.7.5 (dist, 13/08)         0.7.5       0.7.5     OK
+    main adesso                 0.7.6       0.7.6     OK
+
+⇒ Nel branch la versione e' stata alzata in `pyproject.toml` e **non** in
+`verimem/__init__.py:38`. **Solo il candidato al rilascio ne soffre.** Se esce cosi',
+ogni utente che chiede «che versione ho?» sente il nome della **precedente**.
+
+🔴 **E UN LIMITE GROSSO DELLA PROVA, che dichiaro perche' cambia i numeri**: il venv
+"vergine" **si e' agganciato al daemon di encoding gia' caldo sulla macchina** —
+`doctor` lo dice: «*shared encode daemon warm on :50296*». ⇒ **I 4.5s del `remember` e
+gli 1.6s del `recall` NON sono i tempi di un utente**, che quel daemon non ce l'ha e
+paga il caricamento del modello. **Il percorso e' provato; la sua VELOCITA' no.**
+
+🪞 **E un mio errore di misura, sullo stesso tema di ieri**: rieseguendo `doctor` a mano
+ho letto `EXIT=0` — ma era l'exit di `grep`, non di `verimem`. **«`| tail` maschera
+l'exit code» ce l'ho scritto in memoria**, e l'ho rifatto. Il valore giusto (1) viene
+dal banco, che usa `subprocess` e non una pipe.
+
 REGIME: venv vergine su Windows creato con `python -m venv`, wheel **0.7.1** locale da
 `dist_hotfix/`, CWD **fuori dal repo**, `HIPPO_DATA_DIR` temporaneo. Nessun modello
 pre-scaricato: e' la condizione di un utente al primo avvio.
