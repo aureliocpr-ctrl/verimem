@@ -17944,3 +17944,64 @@ rimisurato il caso di ieri.**
 
 **Banco**: `porta_gate_vede_i_numeri.py`, dati in `gate_numeri.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-52 — 🔴 **Il numero di copertina di `0.7.1` non è rigenerabile**, e nella sua versione nessun test se ne accorge
+
+🚪 **Cancello: ⑤ `controlla_promesse`** · G4 «Benchmarks reproducible» · G6 «README claim audit».
+
+### La catena, tutta verificata
+
+    README del branch, riga 22:
+      «session-level **recall@5 = 0.87** (judge-free, full 500 questions)»   ← in VETRINA
+
+    la sua ricetta nel registro del branch:
+      "claim": "LongMemEval-S recall@5 0.8745 fusion ON (full 500)"
+      comando → benchmark.lme_retrieval_bench
+
+    benchmark/lme_retrieval_bench.py nel branch:   ASSENTE
+    la nota correttiva del 28/08 nel registro:     branch 0  ·  main 1
+    test_repro_registry_g4.py:                     branch 21 righe · main 33 righe
+
+⇒ **Il numero in cima al README pubblicato punta a un banco che non esiste**, e nel branch
+**manca la nota** che su `main` lo spiega («il modulo `lme_retrieval_bench` NON esiste e non
+è mai esistito: il banco si chiama `longmemeval_runner`»).
+
+### 🔑 Perché `#2557` non l'ha rilevato
+
+Il test **esiste** sul branch, ma è **la versione del 22 luglio**:
+
+    branch (21 righe):  test_registry_entries_well_formed   → claim/artifact/command/cost/value_at
+                        test_every_claim_backed_by_artifact → cmd_verify() == 0
+    main   (33 righe):  + il test che verifica che il MODULO del comando ESISTA
+
+⇒ **Sul branch il test controlla la FORMA delle voci, non l'esistenza di ciò che nominano.**
+📌 Forma nota — **una capacità spenta non emette segnale**, variante *«il presidio non esiste
+ancora nel ramo che stiamo per pubblicare»*. **Il run è pulito perché nessuno guarda**, non
+perché non ci sia nulla da vedere. È la ragione per cui un `1 failed` sul branch non
+autorizza a dire «il branch è a posto tranne la versione».
+
+### ⚖️ I criteri, con la lettura giusta
+
+- **G4** → **NON soddisfatto per `0.7.1`**: una delle otto ricette non è eseguibile e il
+  registro del branch non lo dichiara.
+- **G6** → il numero di copertina è **fra quelli non rigenerabili**.
+- ✅ **Su `main` lo stesso criterio REGGE**: `8/8 rigenerabili`, `8/8 col valore confrontato`
+  (`W8-38`). ⇒ **Il difetto è del ramo di rilascio, non del prodotto.**
+
+### 🎯 Tre vie, tutte brevi — nessuna è mia
+
+1. **Portare sul branch la nota correttiva del registro** (il banco si chiama
+   `longmemeval_runner`) ⇒ la ricetta torna vera.
+2. **Togliere quel numero dal README del branch** ⇒ non si pubblicizza ciò che non si
+   rigenera.
+3. **Dichiararlo nel `CHANGELOG`** ⇒ posizione esplicita invece che silenzio.
+
+⚠️ **Non tocco né `README` né registro** (non-curo): porto la catena e i comandi.
+
+    rifallo con:
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:README.md" | sed -n '22p'
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:benchmark/repro_all.py" | grep -B3 lme_retrieval_bench
+    git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c '^benchmark/lme_retrieval_bench.py$'
+    for R in hotfix/0.7.1 main; do MSYS_NO_PATHCONV=1 git show "origin/$R:tests/test_repro_registry_g4.py" | wc -l; done
