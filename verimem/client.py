@@ -246,10 +246,12 @@ class Risultati(list):
     `search` ha una quantità di consumatori che la iterano e ne fanno `len()`.
     """
 
-    __slots__ = ("sotto_il_pavimento", "trattenuti", "letto_al_passato")
+    __slots__ = ("sotto_il_pavimento", "trattenuti", "letto_al_passato",
+                 "tagliati_dal_pavimento")
 
     def __init__(self, iterable=(), *, sotto_il_pavimento=None,
-                 trattenuti=None, letto_al_passato=None) -> None:
+                 trattenuti=None, letto_al_passato=None,
+                 tagliati_dal_pavimento=None) -> None:
         super().__init__(iterable)
         #: ``{quando, quando_leggibile, nota}`` quando la domanda e' stata
         #: interpretata DA SOLA come una domanda sul passato, il filtro
@@ -262,6 +264,24 @@ class Risultati(list):
         #: ``{pavimento, score_migliore, nota}`` quando nessun risultato supera
         #: la soglia di rilevanza; ``None`` quando almeno uno la supera.
         self.sotto_il_pavimento = sotto_il_pavimento
+        #: ``{pavimento, tagliati, rimasti, score_migliore, nota}`` quando il
+        #: pavimento ha tolto dei fatti; ``None`` quando non ne ha tolto
+        #: nessuno.
+        #:
+        #: ⚠️ NON E' UN DOPPIONE DI `sotto_il_pavimento`, ed e' nato da un
+        #: difetto misurato: quell'avviso esce solo se il MIGLIORE e' sotto la
+        #: soglia, cioe' solo quando il pavimento ha portato via TUTTO. Una
+        #: lettura che perde quattro fatti su cinque e conserva il migliore non
+        #: diceva niente — chi legge vedeva una risposta buona senza sapere che
+        #: il materiale sotto era stato ridotto, e l'assenza del campo si legge
+        #: come «non ha tagliato».
+        #:
+        #: ⚖️ I DUE SIGNIFICATI RESTANO SEPARATI: `sotto_il_pavimento` e'
+        #: un'ASTENSIONE («non mi fido di niente di quello che ho»), questo e'
+        #: un DATO («ho tolto N di M»). Nello stesso campo sarebbero un solo
+        #: segnale per due significati, e l'astensione — che vale perche' e'
+        #: rara — diventerebbe rumore.
+        self.tagliati_dal_pavimento = tagliati_dal_pavimento
         #: ``{quanti, nota}`` quando il gate ha TRATTENUTO fatti sull'argomento
         #: chiesto; ``None`` quando non ce n'e' nessuno (2026-08-08).
         #:
@@ -1378,6 +1398,20 @@ class Memory:
             out,
             trattenuti=self._trattenuti_safe(query),
             letto_al_passato=_al_passato,
+            # IL TAGLIO SI DICHIARA SEMPRE CHE AVVIENE, non solo quando ha
+            # tolto tutto. La guardia e' `_tagliati`, cioe' il fatto che
+            # qualcosa sia stato tolto — indipendente da come e' andata al
+            # migliore, che e' la domanda a cui risponde l'avviso qui sotto.
+            tagliati_dal_pavimento=(
+                {"pavimento": round(_soglia, 4),
+                 "tagliati": _tagliati,
+                 "rimasti": len(out),
+                 "score_migliore": round(_best_prima, 4),
+                 "nota": (f"il pavimento {round(_soglia, 4)} ha tolto "
+                          f"{_tagliati} fatti su {_n_prima}: la risposta si "
+                          f"regge su {len(out)}. Se ti serve il materiale "
+                          "intero, rifai la lettura con `min_relevance=0`.")}
+                if _tagliati else None),
             sotto_il_pavimento=(
                 {"pavimento": round(_soglia, 4),
                  "score_migliore": round(_best_prima, 4),
