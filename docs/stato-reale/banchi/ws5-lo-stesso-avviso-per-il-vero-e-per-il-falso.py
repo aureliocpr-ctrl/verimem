@@ -14,22 +14,28 @@ come «parola accanto» un frammento della colonna precedente o la lettera di ri
 caso in cui `L4.2` **deve** scattare — senza, «scatta troppo» non e' distinguibile da
 «scatta».
 
-L'INCROCIO 2x2, stessa informazione, stesso numero::
+L'INCROCIO, stessa informazione, stesso numero — **tre forme x {vero, falso}**::
 
                         claim CORRETTO              claim SCAMBIATO
     fonte TABELLARE     A  L4.2 non dovrebbe        C  L4.2 DEVE scattare
     fonte PROSA         B  L4.2 non dovrebbe        D  L4.2 DEVE scattare
+    soggetto ADIACENTE  E  L4.2 non dovrebbe        F  L4.2 DEVE scattare
 
-🔴🔴 ESITO — **tre reperti, e la mia ipotesi di partenza e' fra i falsificati**::
+⇒ `E` ed `F` pagano il limite che questo stesso banco aveva dichiarato: li' il soggetto
+e' **attaccato al numero** («*Ammessi 14304.*»), senza verbo in mezzo.
+
+🔴🔴 ESITO — **tre coppie su tre identiche, e DUE mie letture falsificate**::
 
     caso                     esito    ground   layer
     A tabellare, VERO        passa      99.9   L4.2
     B prosa, VERO            passa     100.0   L4.2
     C tabellare, FALSO       passa      99.9   L4.2
     D prosa, FALSO           passa     100.0   L4.2
+    E adiacente, VERO        passa      99.7   L4.2
+    F adiacente, FALSO       passa      99.9   L4.2
 
     A: «... 14304 qui e' «(nessuna parola accanto)», nella fonte «quarantinati»»
-    C: «... 14304 qui e' «(nessuna parola accanto)», nella fonte «quarantinati»»   ← IDENTICA
+    C: identica ad A          E: identica ad A          F: identica ad A
     B: «... 14304 qui e' «(nessuna parola accanto)», nella fonte «(solo parole
         grammaticali accanto)»»
     D: identica a B
@@ -41,16 +47,22 @@ quando hai ragione e quando hai torto **non porta informazione**: leggerlo non a
 decidere, e chi lo legge sul caso vero impara a ignorarlo — proprio prima di incontrare
 quello falso.
 
-🔴🔴 **② E IL CLAIM FALSO PASSA**: `C` a **99.9** e `D` a **100.0**. E' lo scambio di
-grandezza classico — prendere il numero giusto e attaccarlo all'oggetto sbagliato — e
-**ne' il giudice ne' i layer lo fermano**, in nessuna delle due forme.
+🔴🔴 **② E IL CLAIM FALSO PASSA**: `C` a **99.9**, `D` a **100.0**, `F` a **99.9**. E' lo
+scambio di grandezza classico — prendere il numero giusto e attaccarlo all'oggetto
+sbagliato — e **ne' il giudice ne' i layer lo fermano**, in **nessuna** delle tre forme.
 
-🪞 **③ LA MIA IPOTESI CADE: non e' la forma tabellare.** Ero partita da «*l'avviso legge
-la colonna sbagliata*». `B` e `D` sono **in prosa** e si comportano uguale. ⇒ La causa
-sta nel lato **claim**: «*14304 qui e' (nessuna parola accanto)*» in **tutti e quattro**
-i casi. In «Gli ammessi sono 14304» il soggetto non e' adiacente al numero — c'e' il
-verbo in mezzo — quindi il layer non trova mai il contesto che dovrebbe confrontare, e
-**i due claim gli sembrano lo stesso claim**.
+🪞 **③ LA MIA PRIMA IPOTESI CADE: non e' la forma tabellare.** Ero partita da «*l'avviso
+legge la colonna sbagliata*». `B` e `D` sono **in prosa** e si comportano uguale.
+
+🪞 **③-bis E CADE ANCHE LA SPIEGAZIONE CHE AVEVO DATO AL POSTO SUO.** Avevo scritto: «*in
+«Gli ammessi sono 14304» il soggetto non e' adiacente al numero — c'e' il verbo in mezzo
+— quindi il layer non trova il contesto*». **Falsificata da `E` ed `F`**: li' il soggetto
+e' **attaccato al numero** («*Ammessi 14304.*») e il layer dice **lo stesso**
+«*(nessuna parola accanto)*», con la stessa identica stringa sul vero e sul falso.
+⇒ **Non e' una lacuna sintattica su una costruzione particolare: il lato claim non
+estrae il contesto nemmeno quando la parola e' letteralmente accanto al numero.**
+🔑 E la lezione e' che la mia spiegazione l'avevo consegnata **prima di questo
+controllo**, quando pagarlo e' costato tre minuti.
 
 ⚠️ **④ E sulla tabella il contesto estratto e' l'OPPOSTO del significato**: la riga e'
 `ammessi (status != quarantined)  14304`, e il layer riporta «*nella fonte
@@ -75,9 +87,9 @@ REGIME: build corrente · store TEMPORANEO (`HIPPO_DATA_DIR`) · `ground_write=T
 porta `run_validation_gate` · daemon attivo, nessun `None` nel grounding.
 ⚖️ PUNTI DEBOLI: un claim per cella; la fonte tabellare e' **la mia** (l'output di un
 banco), non una tabella qualunque; misuro la **stringa** dell'avviso, che puo' cambiare
-senza che cambi il verdetto; e **non ho provato la forma in cui il soggetto E' adiacente
-al numero** («*i quarantinati 14304*») — che direbbe se il layer si sveglia quando il
-contesto c'e'.
+senza che cambi il verdetto; e le tre forme provate non esauriscono l'italiano —
+**resta non provato** un claim in cui il contesto sia una parola PIENA subito prima del
+numero in una frase ordinaria (qui «Ammessi 14304.» e' un frammento, non una frase).
 
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-lo-stesso-avviso-per-il-vero-e-per-il-falso.py <dir-temp>
 """
@@ -113,6 +125,12 @@ CASI = [
     ("B prosa, VERO", VERO, PROSA, "non dovrebbe"),
     ("C tabellare, FALSO", FALSO, TABELLARE, "DEVE"),
     ("D prosa, FALSO", FALSO, PROSA, "DEVE"),
+    # E ed F pagano il limite dichiarato: qui il soggetto E' ADIACENTE al numero,
+    # senza verbo in mezzo. Se il layer distingue E da F, il difetto e' circoscritto
+    # («non copre la frase con il verbo interposto»); se non distingue nemmeno qui,
+    # non e' una lacuna sintattica: il confronto non funziona.
+    ("E adiacente, VERO", "Ammessi 14304.", TABELLARE, "non dovrebbe"),
+    ("F adiacente, FALSO", "Quarantinati 14304.", TABELLARE, "DEVE"),
 ]
 
 
@@ -153,20 +171,24 @@ def main():
         return
     # ⚠️ Il confronto che conta non e' «scatta o no»: e' se il messaggio DIFFERISCE
     # fra il claim vero e quello falso. Se e' identico, l'avviso non porta informazione.
-    for forma, vero, falso in (("tabellare", "A", "C"), ("prosa", "B", "D")):
+    for forma, vero, falso in (("tabellare", "A", "C"), ("prosa", "B", "D"),
+                               ("adiacente", "E", "F")):
         if vero in spieg and falso in spieg:
             uguale = spieg[vero] == spieg[falso]
             print("  %s %-10s: avviso sul VERO e sul FALSO %s"
                   % ("🔴" if uguale else "🟢", forma,
                      "IDENTICO parola per parola" if uguale else "DIVERSO"))
-    if passa.get("C") or passa.get("D"):
-        quali = [k for k in ("C", "D") if passa.get(k)]
+    if any(passa.get(k) for k in ("C", "D", "F")):
+        quali = [k for k in ("C", "D", "F") if passa.get(k)]
         print("  🔴🔴 E IL CLAIM FALSO PASSA (%s): lo scambio di grandezza non e' fermato"
               % ", ".join(quali))
         print("       ne' dal giudice ne' dai layer.")
     if scatta.get("A") and scatta.get("B"):
-        print("  🪞 La forma tabellare NON e' la causa: succede anche in prosa ⇒ il difetto")
-        print("     e' sul lato CLAIM, dove il contesto del numero non viene mai trovato.")
+        print("  🪞 La forma tabellare NON e' la causa: succede anche in prosa.")
+    if spieg.get("E") == spieg.get("F") and "E" in spieg:
+        print("  🪞 E nemmeno la distanza soggetto-numero: con il soggetto ATTACCATO al")
+        print("     numero l'avviso e' ancora identico ⇒ il lato claim non estrae il")
+        print("     contesto in nessuna delle tre forme.")
 
 
 main()
