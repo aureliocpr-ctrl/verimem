@@ -31,6 +31,35 @@ ferme**, ed e' l'unico pezzo della direttiva che resta scoperto.
 ⚠️ E **non** giudica la qualita' delle risposte: verifica che i comandi partano, che una
 scrittura sia ammessa e che la lettura la ritrovi. E' uno **smoke**, non un banco.
 
+✅ ESEGUITA DAVVERO — **uno script di procedura mai eseguito non e' una procedura**::
+
+    pip install verimem              exit 0 in 415s
+    installati                       verimem 0.7.0 · mcp 2.1.1
+    REGIME                           daemon acceso · store nuovo · cwd fuori dal repo
+
+    passo               exit    durata   esito letto
+    --help                0      3.1s
+    doctor                1      5.7s
+    remember (vero)       0     40.6s    ammesso        ✔
+    remember (falso)      0     25.2s    quarantinato   ✔
+    recall                0      1.8s    trova il fatto ✔
+    stats                 0      1.8s
+    mcp (server)          1      4.2s    🔴 NON PARTE
+
+    VERDETTO: il vero e' ammesso ✔ · il falso e' quarantinato ✔
+              🔴 PASSI ROTTI: mcp (server)
+
+🔑 **Ha riprodotto il reperto della porta MCP da sola**, partendo da zero e senza
+sapere cosa cercare: e' la prova che la procedura **funziona come procedura**, non solo
+come racconto di cio' che avevo gia' trovato a mano.
+
+✅ **E il verdetto e' della forma giusta**: non dice «funziona» ne' «e' rotto» — dice
+**quale passo cade**. Chi la esegue dopo un publish sa cosa scrivere nelle note.
+
+📌 **Due numeri per chi legge**: l'installazione costa **7 minuti** (415s, con la cache
+di pip gia' calda) e la **prima scrittura decine di secondi** — non il «2-second
+quickstart» dell'help.
+
 RIPRODUCI:  python docs/stato-reale/banchi/ws5-verifica-da-utente-dopo-un-publish.py <dir> [versione]
 """
 import os
