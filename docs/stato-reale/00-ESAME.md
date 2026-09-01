@@ -16032,3 +16032,70 @@ plausibilmente allora il modello non era in cache, ma **non l'ho misurato** e la
 
 **Fonti**: `local_grounding.py:175-219`, `cli.py:486-543`, banchi `porta_picco{,_pausa}.py`.
 **Io misuro, non curo.**
+
+---
+
+## W8-39 — Il treno aspetta **due job senza runner**, e la fila davanti è fatta dei nostri commit
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### ① La fotografia delle 20:21 — perché `#2557` non finisce
+
+    #2557 — i job
+      completed/failure   test (ubuntu 3.10/3.11/3.12/3.13, macos, windows)
+      completed/SUCCESS   build (sdist + wheel)                        ✅
+      queued/-            wheel install-from-scratch (windows-latest)  runner=NESSUNO
+      queued/-            wheel install-from-scratch (ubuntu-latest)   runner=NESSUNO
+
+    in_progress in quel momento:  ci #2565 #2564 #2563 #2562 #2561 #2560  ← tutti su main
+    queued su TUTTI i workflow: 57
+
+⇒ **`build` è verde: il pacchetto si costruisce.** Restano due job del terzo livello della
+catena `needs:` (`test → build → wheel`), **entrambi senza runner assegnato**, mentre sei
+run di `ci` su `main` occupano i runner.
+
+🔑 **Il run che decide il rilascio è in fila dietro ai nostri commit.** Non è una
+previsione: è una fotografia. È l'argomento della proposta-B, osservato invece che dedotto.
+
+⚠️ **La precisazione che rende onesta la proposta**: `paths-ignore` **non** rende più veloci
+i due job in attesa. Garantisce che **la fila davanti al treno sia fatta di run che servono
+a qualcosa** — oggi, per il 78,7%, non lo è.
+
+### ② 🪞 Un mio numero pubblicato, ritirato: «2h11m» era UTC contro locale
+
+Alle 19:24 avevo scritto «sei job in corso da **2h11m**, fuori dal profilo noto».
+
+    created_at (UTC): 2026-09-01T17:12:03Z
+    ora locale 20:13   ·   ora UTC 18:13
+
+⇒ Il run era stato creato alle **19:12 locali**: alle 19:23 aveva **undici minuti**. Il job
+ha girato `548.18s` di pytest, **9 minuti**, dentro il profilo. **Non c'era nessuna anomalia
+da spiegare.** Terza volta che confondo UTC e orologio locale.
+
+### ③ Il presidio, perché la regola scritta non era bastata
+
+    docs/stato-reale/banchi/ws8-eta-di-un-run.py
+
+La regola «le date dell'API sono UTC» era **già** nella mia lista, e l'ho **riletta prima di
+sbagliare**. ⇒ 🔑 **Una regola riletta e non applicata vale zero: il presidio è uno
+strumento che fa il conto, non una nota in più.**
+Il banco stampa l'istante della misura **in entrambi i fusi** — un'età senza il suo istante
+inganna quanto un rapporto senza finestra — e distingue **attesa in coda** da **lentezza dei
+test**: sopra il tetto di ~45 min è la prima, e ieri le avevo confuse in una frase sola.
+
+    misurato alle 20:18 locali  (18:18 UTC)
+    #  2557  queued/-            09-01 17:12 UTC   09-01 19:12      66 min
+    #  2262  completed/failure   08-30 22:40 UTC   08-31 00:40      43.6 ore
+
+### 📌 Nota di metodo, e la applico a me
+
+Se sostengo che i commit di documentazione ritardano il rilascio, **le mie celle sono parte
+del problema**: ognuna accende un run completo. ⇒ Da qui in avanti **accorpo i reperti in
+una cella sola** invece di scriverne una per pezzo. Costa una riga di disciplina e vale
+cinque run.
+
+    rifallo con:
+    python docs/stato-reale/banchi/ws8-eta-di-un-run.py hotfix/0.7.1
+    ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=1" --jq '.workflow_runs[0].id')
+    gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
+      --jq '.jobs[]|"\(.status)/\(.conclusion // "-")  \(.name)  runner=\(.runner_name // "NESSUNO")"'
