@@ -383,6 +383,24 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
             # La condizione resta com'era: spegnerla qui farebbe cadere due
             # presidi che pretendono questo avviso, e una taratura non si
             # impone da un ramo solo.
+            #
+            # ⚠️⚠️ E `if hits` QUI E' CORRETTO — non e' la stessa cosa che
+            # nell'SDK, dove la condizione gemella era un difetto (curato il
+            # 2026-09-01: con `out` svuotato dal pavimento l'avviso non usciva
+            # proprio dove serviva). La differenza sta due righe sopra:
+            #
+            #     SDK   `out` e' cio' che si SERVE, e `min_relevance` puo'
+            #           averlo svuotato  ⇒  vuoto = «ho tagliato tutto»
+            #     qui   `hits` viene da una ricerca PROPRIA (`sem.recall(k=3)`)
+            #           su cui NESSUN pavimento e' applicato
+            #           ⇒  vuoto = «non ho trovato», e non c'e' nessun `best`
+            #              da confrontare con la soglia
+            #
+            # ⇒ Chi confronta le due superfici e vede la stessa forma NON
+            # replichi qui la cura dell'SDK: curerebbe un difetto che questa
+            # porta non ha, e l'avviso comincerebbe a dichiarare un taglio mai
+            # avvenuto — cioe' il difetto opposto. Verificato leggendo la
+            # chiamata, non dedotto dalla somiglianza.
             if hits and best < pav:
                 out["sotto_il_pavimento"] = {
                     "pavimento": round(pav, 4),
