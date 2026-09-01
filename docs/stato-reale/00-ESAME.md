@@ -17236,3 +17236,75 @@ diverso da `superseded_by IS NULL AND status!='quarantined'` il mio `n` non sare
 **ho preso il criterio dal registro, non l'ho letto oggi nel codice.**
 
 **Io misuro, non curo.**
+
+---
+
+## W8-46 — La prova da utente vero: **consegnata, e già corretta due volte da me stessa**
+
+🚪 **Cancello: prerequisito di OGNI publish** (direttiva di Aurelio 01/09) · ④ integrità.
+
+    scripts/smoke_utente_wsl.sh
+
+Dieci passi: backup verificato → venv vergine → `pip install` dal wheel candidato → import
+fuori dal repo → **prova dell'isolamento** → write con source → recall → `doctor` →
+`verimem mcp` → ripristino. Ogni passo stampa `PASSO n: OK|FALLITO (EXIT=k)`, col codice
+d'uscita letto **subito dopo il comando e mai attraverso una pipe**.
+
+### ① 🔴 Il primo errore, trovato tre minuti dopo averlo consegnato
+
+    verimem save     EXIT=0
+    verimem search   EXIT=2      ← NON esiste
+    verimem recall   EXIT=0      ← e' questo
+    verimem doctor   EXIT=0   ·   verimem mcp   EXIT=0
+
+Il passo 7 usava **`search`**: **sarebbe fallito a ogni esecuzione**, cioè proprio prima di
+una pubblicazione. 🔑 **È lo stesso errore che lo script serve a intercettare**: un nome
+**ricordato** invece che **verificato**. L'ho trovato invocando i cinque comandi uno per uno
+e leggendo `EXIT` — dopo che il parsing di `--help`, provato prima, mi aveva restituito la
+parola «every» (misuratore rotto, metodo cambiato).
+
+### ② 🔑 Il secondo: gli alias della data dir sono **TRE**, non due
+
+    RuntimeWarning: DATA_DIR aliases disagree:
+      HIPPO_DATA_DIR=...\Temp\tmpf5umbmia · ENGRAM_DATA_DIR=C:\Users\aurel\.engram
+      · VERIMEM_DATA_DIR=C:\Users\aurel\.engram
+      — using ...tmpf5umbmia (HIPPO_DATA_DIR wins, it is the explicit isolation handle).
+
+Avevo pinnato solo due variabili: **la terza restava puntata allo store reale**.
+✅ **Due cose buone del prodotto**: l'avviso **nomina tutte e tre**, dice **quale vince e
+perché**, e suggerisce l'azione; e `HIPPO_DATA_DIR` **vince davvero** (verificato:
+`CONFIG.data_dir` punta alla temporanea, `isolata? True`).
+⚠️ **Ma l'avviso è su `stderr`**: in uno script con l'output rediretto **non si vede**. Chi
+isola con due su tre lascia una porta aperta e non lo scopre.
+📌 La nostra memoria dice «`ENGRAM_DATA_DIR` non isola, `HIPPO_DATA_DIR` ha precedenza» —
+**vero e incompleto**: non nomina `VERIMEM_DATA_DIR`.
+
+### ③ 🟡 Un reperto collaterale per il rilascio, con la sua gravità dichiarata
+
+A ogni scrittura col giudice locale compare:
+
+    anti_confab_gate.py:2430: RuntimeWarning: local grounding judge ships an unusable cut
+    (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40
+
+⇒ **Spediamo un modello la cui soglia è dichiarata inutilizzabile**, e il codice la scavalca
+col taglio validato **40**. ✅ **Il comportamento è corretto e documentato.** Non ho trovato
+`filterwarnings` che lo sopprima ⇒ **l'utente lo vede**.
+⚖️ **Gravità: bassa** — Python mostra un `RuntimeWarning` **una volta per location per
+processo**, non a ogni write. **Ma è tra le prime righe che un utente nuovo legge**, e
+«unusable» si legge come «rotto». ⚠️ **Non lo curo**: `anti_confab_gate.py` è nel mio
+non-curo. Lo porto a chi lo possiede.
+
+### ⚠️ Il limite che conta
+
+**Non ho eseguito la procedura.** Verificati i **presupposti** — `bash -n` EXIT=0,
+`CONFIG.data_dir` esistente e sensibile alle env, i cinque comandi, `wsl.exe` presente
+(278528 byte) — **ma il percorso completo in WSL non è mai girato.** ⇒ **Chi la lancia per
+primo fa la prima esecuzione**: se un passo cade, guardi il log prima di concludere che il
+wheel è rotto.
+
+    rifallo con:
+    bash -n scripts/smoke_utente_wsl.sh
+    for c in save search recall doctor mcp; do python -m verimem.cli $c --help >/dev/null 2>&1; \
+      printf "%-8s EXIT=%s\n" "$c" "$?"; done
+    python -c "import os,tempfile; d=tempfile.mkdtemp(); os.environ['HIPPO_DATA_DIR']=d; \
+      from verimem.config import CONFIG; print(CONFIG.data_dir)"   # e GUARDA stderr
