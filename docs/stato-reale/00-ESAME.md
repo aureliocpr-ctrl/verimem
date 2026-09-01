@@ -15956,3 +15956,79 @@ misurato: non l'ho indagato. Non ho verificato se un `warmup` esplicito prima de
 sposti o annulli il picco.
 
 **Banchi**: `porta_picco_pausa.py`, output `picco_pausa.out` (scratchpad). **Io misuro, non curo.**
+
+---
+
+## 2026-09-01 20:25 — ws1 · **LA CURA DEL 05/08 HA TOLTO LA BUGIA DI UN LIVELLO E L'HA LASCIATA A QUELLO SOPRA**: `elapsed_ms` copre **2 s su 19,1**, e i **16,6 s** che lo precedono **non sono attribuiti da nessun evento**. L'`--help` di `warmup` promette il **download**, non l'**import**
+
+**Livello** codice (`local_grounding.py:175-219`) + i due banchi alla porta `Memory.add` ·
+**Perimetro** lettura del sorgente + scomposizione già pubblicata (`605816c2`) ·
+**Istante** 2026-09-01 20:18–20:25 · **Regime** nessun carico nuovo: **solo lettura**,
+perché Aurelio è al PC e sta scrivendo · **Autorità**: mandato **riferito**; ⚠️ **la barra
+è cambiata alle 20:18** — Aurelio sta componendo un messaggio («*ti invio il suo
+resoconto sono 2 messaggi*»), segnalato sul canale · **0.7.6**.
+
+**O1 pagata**: cercato prima nel registro (`41 secondi`, `elapsed_ms`, `_ensure_scorer`).
+L'unica occorrenza di `_ensure_scorer` è su **un altro tema** (il warm asincrono che non
+atterra sotto `_delegate_only`); «41 secondi» era un **falso positivo** (`lastActivityAt`).
+
+### 🪞 IL CODICE AVEVA GIÀ IMPARATO QUESTA LEZIONE — UNA VOLTA
+
+`local_grounding.py:181`, commento dell'autore, **verbatim**:
+
+> «*flow.warmup va QUI e non nel costruttore: misurato 2026-08-05, `LocalGroundingJudge()`
+> ritorna in 0.1ms e i 41 secondi si spendono in questa riga. Un evento "ready" emesso dal
+> costruttore dichiarava pronto un giudice che non aveva ancora caricato niente — cioè
+> esattamente la bugia che l'osservabilità serve a togliere.*»
+
+**La cura è giusta e ha funzionato al suo livello.** Ma `t0 = time.time()` è preso **dopo**
+`_emit_flow(phase="start")` e cronometra **solo** `make_finetuned_scorer(...)`. E la
+scomposizione misurata ieri sera dice dove sta il costo:
+
+| tratto | 19:56 | 20:09 | c'è un evento? |
+|---|---|---|---|
+| inizio scrittura #15 → riga `torch` | 12,39 s | 12,19 s | **no** |
+| riga `torch` → `phase=start` | 4,23 s | 4,36 s | **no** |
+| `phase=start` → `phase=ready` = **`elapsed_ms`** | 1,93 s | 2,00 s | sì |
+| `phase=ready` → `flow.write` | 0,58 s | 0,54 s | sì |
+
+⇒ **16,6 s su 19,1 non sono coperti da alcun evento.** Chi legge il giornale vede
+«*warmup: 1,9 s*» e ha pagato **19,1 s**. ⚠️ **Il difetto NON è che il cronometro parte
+tardi dentro il blocco** — `elapsed_ms` misura correttamente ciò che dichiara. È che
+**quei 16,6 s accadono PRIMA che il blocco venga raggiunto** (la riga di `torch` precede
+`phase=start` di 4,3 s) **e nessuno li racconta**. La forma è la stessa che l'autore ha
+tolto il 05/08: **un numero che sembra il costo e non lo è.** È sopravvissuta **un livello
+più su**, dove la cura non arrivava.
+
+### 📌 E L'`--help` DI `warmup` È PIÙ PRECISO DI COME VERRÀ LETTO
+
+Letto **prima** di predire (le mie ultime due predizioni sono cadute per aver dedotto):
+
+> «*Run this ONCE after install … so the first real recall is instant instead of silently
+> **downloading** model weights in the background on the first query*» · «*WITH NO OPTIONS
+> THIS TAKES THREE MODELS … the embedder, the **moat gate** (`--no-gate` skips it) and the
+> stage-2 reranker*»
+
+⇒ **`--gate` è default: il moat gate È incluso.** La promessa però è sul **download**, e
+**i miei 19 s non erano download**: giravo **offline con la cache già piena**
+(`Loading weights: 202/202` legge da disco in **2 s**). ⇒ **l'help non promette che la
+prima scrittura sia veloce dopo `warmup`** — promette che non scarichi. Un lettore che
+esegue `warmup` e si aspetta la prima scrittura pronta **paga comunque import e init nel
+proprio processo**, perché `warmup` è **un altro processo** e ciò che lascia è la cache su
+disco. *(La sola via per cui potrebbe annullarli è il **daemon condiviso**, `--daemon`
+default — vedi sotto: **non l'ho misurato**.)*
+
+### Cosa NON prova
+
+**NON ho eseguito `verimem warmup` seguito dal banco**: caricherebbe **tre modelli** mentre
+Aurelio è al PC e sta scrivendo, e il vincolo operativo viene prima del mio fronte. ⇒ **la
+domanda «il daemon condiviso tiene caldo il gate fra processi?» resta APERTA**, ed è
+l'unica che potrebbe ribaltare il paragrafo qui sopra. **Non ho cronometrato l'import di
+`torch`**: deduco i 12,2 s dal fatto che l'unica riga in quel tratto è sua. **Non so cosa
+accada nei 4,3 s** fra la riga di `torch` e `phase=start`: nessun evento, e non ipotizzo.
+**Non ho spiegato perché il commento dica 41 s dove io misuro 2 s** per lo stesso tratto —
+plausibilmente allora il modello non era in cache, ma **non l'ho misurato** e la macchina
+è diversa. n=2 banchi, una macchina, un regime.
+
+**Fonti**: `local_grounding.py:175-219`, `cli.py:486-543`, banchi `porta_picco{,_pausa}.py`.
+**Io misuro, non curo.**
