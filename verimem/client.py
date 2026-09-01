@@ -2643,7 +2643,41 @@ class Memory:
                 pass
 
         from .relevance_floor import estimate_relevance_floor
+
+        # ⚠️ IL DEGRADO SI CONTA ANCHE QUI, e pesa piu' che nella recall.
+        # `estimate_relevance_floor` misura passando da `sm.recall`, e sul ramo
+        # keyword ogni risultato vale `score 0.0` (`hits_2t = [(f, 0.0) …]`):
+        # 32 sonde a zero danno un quantile a zero, e quello zero non e'
+        # «nessun rumore», e' «rumore NON MISURATO». Ha la forma di una misura
+        # e non lo e' — la stessa distinzione di
+        # `test_il_pavimento_tagliava_un_ranking_degradato`, che pero' cura la
+        # LETTURA: una lettura degradata riguarda una query, un pavimento
+        # degradato PERSISTITO riguarda tutte quelle che seguono, finche' il
+        # corpus non deriva del 5%.
+        #
+        # RED di produzione, dallo store vero: `{"floor": 0.0, "n_facts":
+        # 13795}` e' rimasto dalle 20:32:08 del 2026-08-30 alle 02:52:23 del
+        # 2026-08-31 — SEI ORE su quasi quattordicimila fatti. E tredicimila
+        # fatti non sono «uno store troppo piccolo per misurare», che e' l'unico
+        # caso in cui lo zero e' documentato come scelta.
+        # ⚠️ Lo zero salvato non e' inerte: e' FALSY, quindi dove lo si
+        # controlla con un `if` non vale «pavimento a zero», vale «nessun
+        # pavimento».
+        #
+        # 🔑 LA GUARDIA E' SUL DEGRADO, NON SULLO ZERO: `estimate_relevance_floor`
+        # dichiara `0.0` come risposta legittima quando lo store e' troppo
+        # piccolo, e quella strada deve restare aperta — un veto sul valore
+        # chiuderebbe anche quella. Il contatore esiste da prima ed e' gia'
+        # letto in `recall` per l'identica ragione: qui non lo leggeva nessuno.
+        _deg_stima = getattr(self.semantic, "_recall_degraded_count", 0) or 0
         val = estimate_relevance_floor(self.semantic)
+        if (getattr(self.semantic, "_recall_degraded_count", 0) or 0
+                ) > _deg_stima:
+            # Ne' su disco ne' in cache: la prossima chiamata ritenta, che e'
+            # cio' che serve quando il daemon si scalda. Fail-open come tutto
+            # il percorso — il valore si RESTITUISCE lo stesso, non si
+            # CONSOLIDA.
+            return val
         self._floor_cache = (now, val)
         if n >= 0:
             try:
