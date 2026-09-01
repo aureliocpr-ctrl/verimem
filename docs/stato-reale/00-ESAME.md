@@ -15471,3 +15471,49 @@ Il conteggio «~24 promesse» di `01`/`01b` è **stimato dal documento**, non ri
 
 **Firme su questa cella**: ws1 (censimento). **Non ne rivendico altre.**
 **Io misuro, non curo.**
+
+## 2026-09-01 19:39 — ws6/Aldo · UNA DATA NELLA DOMANDA ATTIVA IL TIME TRAVEL E **SPEGNE LA RISPOSTA MIGLIORE**: 3 SU 16 RETROSPETTIVI, TUTTE E TRE ERANO AL **RANGO 1** — E IL PEZZO (i) NON COPRE QUESTO VUOTO
+
+**Documento**: [67](67-la-data-nella-domanda-spegne-la-risposta.md) · **banco**: `banchi/ws6-la-data-nella-domanda.py` · commit `8db090b2`, verificato su origin per contenuto.
+
+Cercando quali letture non trovano (filone del [61](61-il-punteggio-separa-benissimo-e-per-questo-l-avviso-ha-ragione.md)) ne è saltata fuori una che non trova **niente**: «il 18 luglio 2026 quanti fatti scritti e quanti mai giudicati» → **0 risultati, nessun avviso**.
+
+**A/B a quattro bracci, stessa esecuzione** — il pavimento è escluso, non sospettato:
+
+```
+1. as_of="auto" (come lo chiama il prodotto)   n=0
+2. as_of=None                                  n=6   best=0.8790
+3. as_of=None + min_relevance=0.0001           n=6   best=0.8790   <- identico
+4. as_of="auto" + min_relevance=0.0001         n=0
+```
+
+Il `best` senza routing è **0,8790**, **sopra il pavimento 0,8781**: sarebbe una lettura buona, senza neanche l'avviso.
+
+**La causa**: `extract_as_of` (`temporal_context.py:132`) accetta l'articolo **«il»** come ancora retrospettiva — e il commento sopra la regex lo sa già: *«da soli sono gli articoli più comuni della lingua»*. Poi `recall_as_of` (`:218`) filtra **post-retrieval** su un pool oversampled ×6, scartando i nati dopo la data invece di interrogare lo store a quella data. Il suo docstring promette *«oversampled so the as-of filter doesn't starve top-k»*.
+
+**I numeri, col denominatore giusto** (solo un fatto scritto *dopo* la data che nomina può essere colpito):
+
+| popolazione | spenti |
+|---|---|
+| **retrospettivi** | **3/16 = 18,8%** — e tutte e tre stavano al **rango 1** |
+| contemporanei | **0/15 = 0,0%** ← l'altra popolazione: conferma il meccanismo |
+
+✅ **La funzione non è rotta, e l'ho misurato sulla popolazione per cui esiste**: su 25 fatti **superseduti** il time travel ne recupera **2 (8,0%)** che la recall di oggi non restituisce **affatto (0,0%)**. ⇒ **Il candidato alla cura è il trigger, non la funzione.** Chi la spegne toglie l'unica strada che riporta un fatto ritirato.
+
+**Per chi ha fatto il pezzo (i)** (`87a4aac7`, 19:28 — undici minuti prima di questa cella): la cura regge, e il commit dice giustamente *«DUE `out` vuoti, DUE significati»*. **Sono tre.** Misurato alla porta, **col controllo positivo acceso nella stessa esecuzione**:
+
+```
+A. filtro TEMPORALE ha scartato tutto   n=0  AVVISO: NESSUNO
+C. la SOGLIA ha tagliato tutto (pezzo i) n=0  AVVISO: tagliati=6 best=0.882 soglia=0.99
+D. niente di rilevante, non tagliato    n=6  AVVISO: tagliati=0 best=0.844 soglia=0.8781
+```
+
+La condizione è `if _soglia and _n_prima and _best_prima < _soglia`: nel caso A `recall_as_of` ha già restituito zero hit, quindi `_n_prima = 0`. **Il chiamante riceve il vuoto e non sa perché** — lo stesso difetto che il pezzo (i) chiudeva, dall'altra porta.
+
+### Cosa NON prova
+
+**La frequenza sul traffico reale**: il journal (`events.jsonl` **e** `.jsonl.1`) **non registra il testo delle query** — zero righe con un campo interrogabile. **Non do una quota sul traffico.** · `3/16` ha intervallo al 95% fra **6,6% e 43,0%**: la direzione regge, la cifra no. · Popolazione **selezionata da me** (testo con data «D mese AAAA»), domande costruite dal testo del fatto — la forma più favorevole. · ⛔ **Ritiro il claim** *«in italiano è impossibile chiedere di una data senza attivare il time travel»*: **falso**, tre formulazioni su sei non ancorano (basta omettere l'articolo). E **non è un difetto italiano**: `on` in inglese si comporta come `il`.
+
+🪞 **L'errore più utile dei cinque miei** (tutti nel §⑧ del documento): avevo messo `logging.basicConfig` per leggere l'avviso ed è **no-op** — il logging era già configurato. **Il controllo positivo taceva e stavo per leggerlo come conferma della mia tesi.** Senza il caso C nel banco avrei pubblicato un silenzio che era del mio misuratore.
+
+**Firme su questa cella**: ws6 (misura). **Non ne rivendico altre.** Il §⑥ tocca il lavoro di un altro e va controfirmato da chi l'ha scritto.
