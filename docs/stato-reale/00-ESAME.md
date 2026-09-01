@@ -17656,3 +17656,77 @@ Il numero dell'escape esterno porta con sé *«(1.8% was the 2026-07-18 run; the
 ❌ **Non ho eseguito `local_llm_judge_bench.py`** (serve un server ollama col modello scaricato, non verificato disponibile): **non ho riprodotto né `0.858` né `2.3%`**. Dico dove sono dichiarati e cosa manca in vetrina, non che siano giusti o sbagliati. · ❌ **Non ho stabilito se sia eccezione o norma**: i due criteri sono caduti e non ne ho scritto un terzo.
 
 **Firme su questa cella**: ws6. Il numero è di chi l'ha misurato; io ho confrontato due file.
+
+---
+
+## 2026-09-02 00:33 — ws1 · **LA CONTROPROVA CONFERMA LA RAGIONE E FALSIFICA LA MIA SOGLIA: una domanda inventata che cambia solo una CIFRA vale `0,9095` contro `0,9097` della domanda vera — DUE DECIMILLESIMI.** E passano anche i numeri **assurdi**
+
+**Livello** `Memory.search(min_relevance="auto")` sullo **STORE VIVO**, sola lettura ·
+**Perimetro** **32 domande**: le stesse **12 sostenibili** del banco delle 00:24 + **10
+invenzioni SOLO NUMERICHE** (varia una cifra, nessuna parola) + **10 SOLO LESSICALI** (varia
+una parola, nessun numero) · **Istante** 2026-09-02 00:26–00:31 · **Regime** variabili di
+soglia poppate (erano non impostate), RAM 11,09 GB, **`claim ram/embedder` preso e
+rilasciato** (`46fb975a98f8`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite che avevo dichiarato alle 00:24**: «*le 8 invenzioni sono le mie: il fatto
+che i numeri passino e le parole no potrebbe dipendere da come le ho costruite*».
+
+### Il numero, con le due popolazioni contate SEPARATAMENTE
+
+| | preso dal pavimento |
+|---|---|
+| risposte attese **perse** | **2 / 12** ← *identico al banco delle 00:24, stesse domande: **riproducibile*** |
+| invenzioni **NUMERICHE** intercettate | **3 / 10** |
+| invenzioni **LESSICALI** intercettate | **6 / 10** |
+
+**best medio sui non vuoti**: sostenibili **0,9097** · **numeriche 0,9095** · lessicali 0,8962.
+
+### ⚖️ La mia predizione: metà regge, metà cade — e la riporto
+
+Avevo scritto prima di eseguire: «*numeriche ≤ 3/10 **e** lessicali ≥ 7/10 ⇒ strutturale
+confermata*». **Numeriche 3/10: regge al limite. Lessicali 6/10: CADE.** ⇒ **il pavimento
+non è granché nemmeno sulle invenzioni lessicali**: ne prende il 60%. Sul totale delle venti
+invenzioni ne intercetta **9**, cioè **il 45%**, perdendo **il 17% delle risposte vere.**
+
+### 📌 MA IL SEGNALE FORTE NON È IL CONTEGGIO — È IL PUNTEGGIO
+
+**Sostenibili `0,9097` contro numeriche `0,9095`: due decimillesimi.** Le lessicali stanno
+0,0135 più in basso. ⇒ **la differenza fra una domanda vera e la stessa domanda con una
+cifra cambiata, per il retrieval, NON ESISTE.** Un pavimento è una soglia su quel punteggio:
+non può separare due cose che il punteggio colloca nello stesso punto. **La ragione
+strutturale della cella delle 00:24 è confermata, e con un righello migliore del conteggio.**
+
+### 🔴 E NON È PROSSIMITÀ NUMERICA — passano anche i numeri ASSURDI
+
+Questo lo credevo e **era sbagliato**: pensavo che `0.7.2` passasse perché *vicino* a
+`0.7.1`. Le sette numeriche che passano dicono altro:
+
+| domanda inventata | il vero è | best |
+|---|---|---|
+| wheel verimem **0.9.4** | 0.7.1 | **0,9175** |
+| artefatti json su **999** | 372 | 0,9050 |
+| artefatti json su **145** | 372 | 0,9073 |
+| i **sette** alias della data dir | **tre** | 0,8945 |
+| mese **2026-05** | 2026-08 | 0,9097 |
+
+⇒ **una versione che non è mai esistita e un denominatore inventato di sana pianta ricevono
+lo stesso punteggio del fatto vero.** Non è che il modello confonde numeri **vicini**: **non
+li guarda**. ⇒ per una memoria verificata questo è il punto: **la porta più usata non ha
+alcun modo, sul suo canale, di distinguere «quanti file ha il wheel 0.7.1» da «…0.9.4».**
+
+### Cosa NON prova
+
+**Le 20 invenzioni sono ancora mie**, e stavolta il rischio è l'opposto: **potrei aver
+scelto lessicali più "lontane" delle numeriche** e misurare la mia scelta di parole. Ho
+provato a difendermi cambiando **una sola** unità per lato (una cifra / una parola), **ma non
+ho un criterio oggettivo di distanza lessicale**: chi rifà il banco con parole più vicine
+(sinonimi stretti) potrebbe far scendere anche il 6/10. **Un solo store, una macchina, un
+giro per popolazione.** **Il best medio è calcolato sui non vuoti**: le vuote non hanno
+punteggio, quindi il confronto `0,9097 / 0,9095` riguarda **le domande che passano**, non
+tutte. **Non ho misurato il gate cross-encoder su queste stesse domande**: se il gate
+distingua i numeri **non lo so**, e resta la prova che deciderebbe se «portare il gate su
+`search`» sia una cura vera. **Non ho toccato il verdetto sulla promessa rossa**: quello
+poggia su *2 risposte perse e 4 invenzioni su 8*, ed è indipendente da questa spiegazione.
+
+**Banco**: `porta_numeri_vs_parole.py`, dati in `numeri_vs_parole.json` (scratchpad).
+**Io misuro, non curo.**
