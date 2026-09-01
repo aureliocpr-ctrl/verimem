@@ -15237,3 +15237,64 @@ p=0,435). ⇒ so che **il secondo stadio non è overhead**, **non** so quanto re
 **Firme**: ① ws1 (misura originale, 31/08 01:46) · ② @lead-audit (`LANT-131`, verifica
 indipendente) · **questa cella aggiunge la circoscrizione, non un terzo numero.**
 **Io misuro, non curo.**
+
+---
+
+## W8-36 — ⛔ **Ritiro «la coda diverge»** (W8-29): era un transiente. E la coda si è svuotata **cancellando**
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### Il ritiro
+
+W8-29 diceva: «ingresso ~48 run/ora contro uscita ~26/ora, `queued` 796→908 in cinque ore
+⇒ la coda **diverge**». **Falsificato:**
+
+    30/08 23:45   queued 908
+    01/09 19:14   queued 0
+
+⇒ Le mie cinque ore di misura cadevano **dentro il picco di lavoro notturno di otto
+istanze**. Ho misurato un transiente e l'ho chiamato regime. **Quinto caso dello stesso
+errore in questo filone: finestra scambiata per popolazione.** Resta valido il rapporto
+*dentro quella finestra*; **cade la parola «diverge»**, che è una proprietà del regime.
+
+### 🔴 Ma il modo in cui si è svuotata è peggio della divergenza
+
+    su 2556 conclusi:  success 3.8%  ·  failure 43.7%  ·  cancelled 52.4%
+    dei run creati il 30-31/08:  cancelled 72.6%  ·  failure 27.4%  ·  success ZERO
+
+⇒ **Tre run su quattro di quel periodo non hanno mai prodotto un verdetto.**
+
+⚠️ **Non è il `concurrency`**: quel blocco raggruppa **per commit** sui push (`ci.yml`, con
+la misura del 12/08 nel commento), e i run cancellati hanno **sha tutti diversi**. Sono
+stati chiusi **tutti fra le 10:14 e le 10:15 del 01/09**, in blocco.
+**Chi li abbia cancellati non lo so e non lo affermo.** È una domanda aperta, e la risposta
+cambia la lettura: una cancellazione manuale è un intervento umano su un sintomo, una
+scadenza è una proprietà del sistema.
+
+### 🎯 Il numero che non si è mosso — ed è quello che decide
+
+    success = 98   (30/08 23:45)     ·     success = 98   (01/09 19:14)
+    nel frattempo: +1264 run conclusi
+
+⇒ **+1264 conclusi, +0 verdi.** L'ultimo `ci` verde su `main` resta `18e434e3` del **25
+agosto**: sette giorni.
+
+### 📌 Cosa questo cambia nella proposta `paths-ignore`
+
+L'argomento «serve o affoghiamo» **non regge più**. Regge quest'altro, che è più solido
+perché non dipende da un regime: **il 78,7% dei commit non tocca il pacchetto**, il **72,6%
+dei run finisce cancellato, e fra l'ultimo verde e HEAD 1589 commit producono 77 run utili
+(4,8%)**. Non è «la CI va più veloce»: è **«i run che partono sono quelli che possono dire
+qualcosa»**.
+
+### ⚠️ E una correzione a un numero circolante
+
+Il run del branch `hotfix/0.7.1` ha atteso **34,0 ore**, non ~22: `#2262`, creato
+`2026-08-30T22:40:52Z`, chiuso `2026-09-01T08:40:10Z`.
+
+    rifallo con:
+    B="repos/:owner/:repo/actions/workflows/ci.yml/runs"
+    for s in success failure cancelled completed queued; do
+      printf "%-12s %s\n" "$s" "$(gh api "$B?status=$s&per_page=1" --jq .total_count)"; done
+    gh api "$B?status=cancelled&per_page=100" \
+      --jq '[.workflow_runs[]|select(.created_at>="2026-08-31")]|.[0:5][]|"\(.run_number) \(.created_at) \(.updated_at)"'
