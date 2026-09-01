@@ -141,10 +141,15 @@ riga 6 "write con source (il gate deve girare)" $?
 [ -s /tmp/smoke_write.log ] && tail -4 /tmp/smoke_write.log
 
 # ── PASSO 7 — RECALL: quello che ho scritto torna indietro? ──────────────────
+# ⚠️ Il comando e' `recall`, NON `search`: la prima versione di questo script
+# usava `search` — che NON esiste (`EXIT=2`, comando sconosciuto) — e il passo
+# sarebbe fallito a ogni esecuzione, cioe' proprio prima di una pubblicazione.
+# L'ho scoperto invocando i comandi uno per uno invece di fidarmi del nome che
+# ricordavo: e' lo stesso errore che questo script serve a intercettare.
 python - <<'PY' 2>/tmp/smoke_recall.log
 import sys
 from verimem.cli import main
-sys.argv = ["verimem", "search", "run conclusi"]
+sys.argv = ["verimem", "recall", "run conclusi"]
 try:
     main()
 except SystemExit as e:
