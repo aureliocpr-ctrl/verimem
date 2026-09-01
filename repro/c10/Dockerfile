@@ -22,8 +22,27 @@ WORKDIR /repro
 # subprocess, sys, tempfile, pathlib): verificato leggendo gli import. Tutto
 # cio' che serve davvero arriva da verimem, e da li' il torch/transformers che
 # il giudice locale carica pigramente.
-# ⚠️ Pinnare la versione ESATTA: i numeri pubblicati sono della 0.7.6.
-RUN pip install --no-cache-dir "verimem==0.7.6"
+#
+# 🔴 NON si puo' fare `pip install verimem==0.7.6`: su PyPI c'e' la **0.7.0 del
+# 22 luglio** (misura di @ws5, 02/09 00:05) e il lavoro di agosto non e'
+# pubblicato. Pinnare 0.7.6 farebbe fallire la build con «no matching
+# distribution» — e pinnare 0.7.0 riprodurrebbe un ALTRO codice.
+# ⇒ L'unica via onesta e' installare **dal sorgente al commit dichiarato**
+#    nell'artefatto (`benchmark/results/c10_heldout_intero.json`, campo
+#    `commit`), che e' anche cio' che `reproduce.sh` confronta.
+ARG VERIMEM_COMMIT
+RUN test -n "$VERIMEM_COMMIT" || (echo "passa --build-arg VERIMEM_COMMIT=<sha>, \
+il commit scritto nell'artefatto che vuoi riprodurre" && false)
+RUN pip install --no-cache-dir \
+    "verimem @ git+https://github.com/aureliocpr-ctrl/verimem@${VERIMEM_COMMIT}"
+
+# Le versioni delle dipendenze pesanti stanno in requirements.lock, generato
+# da `genera_lock.py` LEGGENDO IL CODICE ESEGUITO e non i metadati installati
+# (sulla macchina d'origine i metadati dicevano 0.7.0 e il codice era 0.7.6).
+COPY repro/c10/requirements.lock /tmp/requirements.lock
+RUN pip install --no-cache-dir -r /tmp/requirements.lock || \
+    echo "ATTENZIONE: il lock non si installa qui (build torch nightly/cu128): \
+i numeri restano confrontabili solo se le versioni coincidono davvero"
 
 # Il moat ha bisogno del suo cross-encoder locale (~746 MB: model.safetensors
 # 737.7 + tokenizer.json 8.3). SENZA, il gate parte in stato «warming» e
