@@ -624,12 +624,16 @@ def warmup(
     # deve rinfrescarlo, e questo comando esiste apposta — qui il costo e'
     # atteso e annunciato, non e' una sorpresa dentro una ricerca.
     try:
-        from .client import Memory as _Mem
         from .relevance_floor import rinfresca_se_stantio
-        # `Memory()` SENZA argomenti, come ogni altro comando di questa CLI:
-        # `CONFIG` si costruisce all'import e non vede una data-dir impostata
-        # dopo — la trappola che `doctor.py:157` documenta gia'.
-        _mem_pav = _Mem()
+        # `_open_memory()` E NON `Memory()`: e' la factory che usa il resto
+        # della CLI, ed e' dichiarata «monkeypatchable in tests». Con la
+        # costruzione diretta questo blocco (a) apriva lo store REALE anche
+        # sotto pytest, dove l'embedder e' uno stub SHA-256 e il pavimento
+        # scritto sarebbe spazzatura sul corpus vero, e (b) ignorava
+        # `VERIMEM_SERVER_URL`, cioe' rinfrescava il pavimento dello store
+        # embedded mentre il corpus sta sul server. Una copia della logica di
+        # apertura invece della superficie unica.
+        _mem_pav = _open_memory()
         console.print("Checking the relevance floor…")
         t3 = time.time()
         _rifatto, _pav = rinfresca_se_stantio(_mem_pav)
