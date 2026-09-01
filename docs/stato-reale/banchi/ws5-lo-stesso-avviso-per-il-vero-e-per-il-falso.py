@@ -100,11 +100,22 @@ NON e' cieco*». ⇒ **Qui c'e' il controesempio**: stesso tipo di scambio, `g=9
 — e chi decide sul cut deve avere tutti e due i casi, non uno solo.
 
 ⇒ **PER LA DECISIONE**: in **sei casi su sei** `L4.2` non ha distinto il vero dal falso,
-e in **tre su tre** il falso e' passato. **Che cosa manchi al confronto non lo so** —
-l'ipotesi «e' la tabella» e l'ipotesi «e' la distanza» sono cadute tutte e due, e non ne
-propongo una terza senza misurarla. ⇒ La domanda che porto e' **se il gate debba
-dichiarare questa classe come NON COPERTA**, invece di emettere un avviso che suona come
-una diagnosi ed e' identico quando hai ragione e quando hai torto.
+e in **tre su tre** il falso e' passato. ⚠️ **Le mie prime due ipotesi sulla causa sono
+cadute** («e' la tabella», «e' la distanza soggetto-numero»); la terza **non l'ho
+indovinata, l'ho letta**: e' **la POSIZIONE del numero rispetto al sostantivo**, e sta
+scritta in `vicinato_del_valore.py` — «*un identificativo SEGUE il suo sostantivo, una
+quantita' lo PRECEDE*». In tutti e sei i casi qui sopra il numero **segue**, e il
+criterio tace; invertendo l'ordine **parla, e ha ragione** (`7de4f365`).
+
+⇒ **Quindi la domanda per il rilascio non e' piu' «dichiarare la classe non coperta»**:
+la classe **e' coperta**, ma **solo in una delle due forme in cui si scrive la stessa
+frase**. ⇒ Cio' che va scritto e' **quella condizione**, non un limite generale — e nel
+frattempo **la riformulazione la aggira senza costo** (`4fe3e4e5`, quattro controlli).
+
+🪞 **E la lezione di processo, la piu' cara di stasera**: ho fatto **tre giri di banco**
+per cercare una causa che stava **in un commento del modulo**. Il rapporto misurato su
+di me: **quattro volte su quattro**, cio' che stavo per proporre era gia' scritto li'
+dentro (censimento in `8c2604f5`: 34 righe in 17 moduli).
 
 REGIME: build corrente · store TEMPORANEO (`HIPPO_DATA_DIR`) · `ground_write=True` ·
 porta `run_validation_gate` · daemon attivo, nessun `None` nel grounding.
