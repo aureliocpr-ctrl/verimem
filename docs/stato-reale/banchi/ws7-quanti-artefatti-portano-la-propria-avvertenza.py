@@ -108,6 +108,33 @@ def main() -> int:
     print("     (classe ③ «liste monolingue» — trovata perche' il banco stampa")
     print("      le chiavi invece di limitarsi a contarle)")
 
+    #: --- il DEBITO del limite dichiarato, pagato invece che lasciato ---
+    #: `LANT-150` diceva «cerco per nome di CHIAVE, quindi chi dichiara il
+    #: limite dentro un VALORE lo conto come nudo: il 34,4% e' un TETTO».
+    #: Un limite dichiarato e' un debito: qui lo pago. Cerco nel TESTO INTERO
+    #: dei soli nudi le parole con cui un artefatto si avvisa da solo.
+    PAROLE = ("mock", "not a result", "nothing in here", "caveat", "preliminar",
+              "wip", "draft", "toy", "sanity", "smoke", "non e' una misura",
+              "nota:", "attenzione", "avvertenza", "placeholder", "fixture")
+    con_avviso, nomi = 0, []
+    for cartella in CARTELLE:
+        if not cartella.exists():
+            continue
+        for p in sorted(cartella.glob("*.json")):
+            if p.name not in {n for n, _ in nudi}:
+                continue
+            t = p.read_text(encoding="utf-8", errors="replace").lower()
+            if any(w in t for w in PAROLE):
+                con_avviso += 1
+                nomi.append(p.name)
+    print(f"\n  💰 DEBITO PAGATO — fra i {len(nudi)} nudi, quanti si avvisano")
+    print(f"     dentro un VALORE invece che in una chiave: {con_avviso}")
+    if nomi:
+        print(f"     {', '.join(n[:34] for n in nomi[:6])}"
+              f"{' …' if len(nomi) > 6 else ''}")
+    veri = len(nudi) - con_avviso
+    print(f"  ⇒ NUDI VERI: {veri}  (il tetto era {len(nudi)})")
+
     print("\n  ⇒ un artefatto NUDO non e' sbagliato: e' leggibile solo da chi")
     print("    apre anche il codice. Il rimedio misurato costa QUATTRO PAROLE.")
     return 0
