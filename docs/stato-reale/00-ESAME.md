@@ -17500,3 +17500,48 @@ sono di un giro solo per regime**, non una misura di latenza.
 
 **Banco**: `porta_astensione_search.py`, dati in `astensione_search.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-48 — **L'hotfix ripara davvero**: il pin `mcp<2` è nell'artefatto, su tutti e tre i rami
+
+🚪 **Cancello: ④ integrità di ciò che spediamo.**
+
+L'hotfix `0.7.1` esiste per **una ragione sola**: `mcp 2.0.0` ha rimosso l'API su cui il
+server è costruito, e `0.7.0` chiede `mcp` senza tetto. **Era stato verificato il
+`pyproject` — che è un'altra cosa dal pacchetto.** Letto il `METADATA` dentro il wheel
+prodotto dalla CI:
+
+    Version: 0.7.1
+    Requires-Dist: mcp<2,>=1.0.0
+    Requires-Dist: mcp<2,>=1.0.0; extra == "mcp-only"
+    Requires-Dist: mcp<2,>=1.0.0; extra == "full"
+    (totale Requires-Dist: 47)
+
+### 🔑 Perché guardare tutti e tre i rami cambia il verdetto
+
+**Se il tetto fosse stato solo nella dipendenza base**, `pip install verimem[full]` — il
+comando che digita chi installa sul serio — **avrebbe risolto di nuovo a `mcp 2.x`**, e
+l'hotfix sarebbe stato inutile **proprio per gli utenti più attenti**. Il pin c'è in tutte
+e tre le varianti: **nessun percorso di installazione lascia passare la versione rotta.**
+
+⇒ È il primo controllo di questa serie che riguarda **l'efficacia** del rilascio e non la
+sua **ammissibilità**. Gli otto cancelli dicono «si può pubblicare»; questo dice
+**«pubblicarlo serve a qualcosa»**. Sono due domande diverse, e finora avevamo risposto solo
+alla prima.
+
+📌 **La forma generale**: `pyproject.toml` è ciò che **dichiariamo**, il `METADATA` del wheel
+è ciò che **`pip` legge**. Verificare il primo e chiamarlo verifica del secondo è la stessa
+scorciatoia per cui «il veto passa sul wheel che costruisco io» non era «il veto passa in
+CI» (`W8-40` → `W8-47`).
+
+⚠️ **Limite**: è l'artefatto di `#2557` (`plugin.json` a `0.7.0`). Il `Requires-Dist` non
+cambia con quella correzione — tocca un JSON, non le dipendenze — **ma il controllo va
+ripetuto sull'artefatto di `#2653`**, ed è una riga.
+
+    rifallo con:
+    gh run download <ID> -n dist -D /tmp/dist
+    python -c "import zipfile; z=zipfile.ZipFile('/tmp/dist/verimem-0.7.1-py3-none-any.whl'); \
+      md=[n for n in z.namelist() if n.endswith('METADATA')][0]; \
+      print(chr(10).join(l for l in z.read(md).decode().splitlines() \
+      if l.startswith('Version:') or ('Requires-Dist' in l and 'mcp' in l.lower())))"
