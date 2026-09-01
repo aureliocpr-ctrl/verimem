@@ -222,6 +222,44 @@ ma sono l'eccezione, non la regola.
 📌 **Denominatore onesto**: 11 su 34, e li ho scelti io fra quelli che il
 criterio segnalava. **Restano 23 non guardati.**
 
+## ④-septies I due blocchi più esposti sono i più onesti della pagina
+
+**La tabella delle contraddizioni** (righe 11-26) — il cuore della promessa —
+non porta solo i denominatori (`0/10 IT`, `1/10 IT, 2/10 EN`, `8/10–9/10`): le
+mette accanto **tre limiti dichiarati**.
+
+- **Length**: misurate su fonti **corte**, e aggiungere frasi non pertinenti alza
+  il punteggio del giudice — *«one case went **9.6 → 35.9** against a cut of 40»*.
+- **Script**: fuori da IT/EN **degrada** e lo quantifica lingua per lingua — ZH e
+  JA come EN, **KO 3, AR 5, HI 7, e Thai fallisce del tutto a 10/10**; la
+  negazione fuori IT/EN è *«still unmeasured»*.
+- **Figures**: *«the 8/10–9/10 above is an **average over two halves that behave
+  in opposite ways**»* — cioè **dichiara che il proprio numero migliore
+  nasconde due popolazioni**.
+
+🔑 **È l'opposto di una vetrina che nasconde**: il blocco che vende la garanzia
+principale è anche quello che elenca dove la garanzia cade, **con i numeri del
+fallimento**.
+
+**`recall@5` e `QA-accuracy`** (righe 40-46) — i numeri più «da leaderboard»
+della pagina:
+
+> *«**not** third-party reproduced, and **not** the GPT-4 judge the public
+> leaderboards use, so these are **not** a like-for-like ranking against them»* ·
+> `recall@5 = 0.87` (**judge-free, full 500 questions**) · `QA-accuracy = 0.81`
+> (**n=150**, Claude judge) · metodo in `docs/BENCHMARKS.md`
+
+E chiude ridimensionandosi da sé: *«That's good retrieval — **but the reason to
+choose Verimem is the layer above it**»*.
+
+⇒ **Campione, giudice, fonte, non-comparabilità e ridimensionamento**, tutto
+sulla stessa riga. **Nessun rilievo.**
+
+📌 **Bilancio aggiornato — ~19 claim guardati, i problemi restano DUE**
+(`~7% Spanish`, `~2% residual`). ⇒ Per l'operazione concessionario la frase da
+non scrivere è *«i numeri del README non sono tracciabili»*: **su diciannove
+guardati, due sono contestabili.**
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
