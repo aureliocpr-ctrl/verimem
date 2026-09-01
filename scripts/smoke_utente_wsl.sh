@@ -29,6 +29,22 @@
 # sullo store Windows attraverso il mount. Il passo 2 lo verifica guardando DOVE
 # finisce il file, non quali variabili sono impostate.
 #
+# ═══ COSA E' GIA' STATO PROVATO DI QUESTO SCRIPT, E COSA NO ═══
+# Il 02/09 alle 00:15 i passi 5, 6 e 7 sono stati eseguiti in uno store isolato
+# (tutte e tre le variabili pinnate su una temporanea), senza WSL e senza
+# installare nulla:
+#
+#     PASSO 5  lo store effettivo e' quello di prova   OK
+#     PASSO 6  write con source (il gate gira)         OK
+#     PASSO 7  recall  ->  "I run conclusi sono 2557. [0.83] moat 98.1"   OK
+#
+# ⇒ Il cuore del percorso utente — isolamento, scrittura col gate, recall — non
+# e' una promessa: gira. **Restano non provati** i passi che richiedono WSL e
+# un'installazione vera: backup (1), venv (2), `pip install` (3), import dopo
+# installazione (4/4b), `doctor` (8), `mcp` (9), ripristino (10).
+# Chi lancia la procedura per intero e' ancora il primo a farlo: se cade un
+# passo fra quelli, guardi il log prima di concludere che il wheel e' rotto.
+#
 # ═══ COME LEGGE GLI ESITI ═══
 # Ogni passo stampa una riga `PASSO n: OK|FALLITO (EXIT=k)`. Nessun passo e'
 # giudicato dal suo output testuale: si legge il codice d'uscita, letto SUBITO
