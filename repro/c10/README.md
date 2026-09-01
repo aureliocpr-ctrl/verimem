@@ -12,10 +12,17 @@ OUT=/tmp/x.json TOLL=0.5 bash repro/c10/reproduce.sh    # tolleranza più strett
 | pezzo | stato |
 |---|---|
 | `MANIFEST.sha256` | ✅ **hash reali, calcolati e verificati** (3/3 OK) |
-| `reproduce.sh` | ✅ scritto, **step 1 e 2 provati**; step 3-4 no (costano 70 min) |
+| `reproduce.sh` — sintassi | ✅ `bash -n` passa e **tutti e 3 i blocchi Python compilano** (02/09 01:29) |
+| `reproduce.sh` — esecuzione | ✅ step **0, 1, 2 provati**; step 3-4 no (costano 70 min) |
 | `Dockerfile` | ⚠️ **scritto ma mai costruito né eseguito** |
-| lock delle dipendenze | ⚠️ **assente**: vedi «il lock che non c'è» |
+| `requirements.lock` | ✅ generato da `genera_lock.py`, che legge il codice **eseguito** e non i metadati |
 | seeds | ✅ **non servono**, e non è una scorciatoia: vedi sotto |
+
+⚠️ **`bash -n` dice che lo script PUÒ girare, non che FUNZIONI**: è il controllo
+minimo che separa «scritto» da «eseguibile», e prima del 02/09 non era stato
+fatto — un pack con un errore di sintassi sarebbe stato inutile senza che
+nessuno lo sapesse, perché il primo a scoprirlo sarebbe stato chi prova a
+riprodurre, cioè esattamente la persona che non deve inciampare.
 
 ---
 
