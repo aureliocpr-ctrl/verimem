@@ -100,7 +100,12 @@ Dei **333** fatti sostituiti:
 | avevano una voce nel registro undo | **228** |
 | **annullati** | **0** |
 | finestra di annullamento **scaduta** | 26 |
-| **recuperabili adesso** | **202** |
+| **recuperabili adesso** | **202 annullabili**, di cui **~178 davvero recuperabili** |
+
+L'ultima riga non è una deduzione: `undo` è stato provato **dalla porta MCP su una copia
+consistente dello store**, su un campione di 25 casi reali — **22 riusciti, 3 falliti**, con
+`superseded_by` tornato `NULL` su 22. **Il tasso è 88%, non 100%.** La causa dei 3 falliti
+non è nota. (`W2-380`)
 
 **La riga «0 usi su 343» non era una curiosità sull'ergonomia: era il conto di un danno che
 stava maturando.** Il prodotto sa tornare indietro, l'ha registrato 228 volte per questi
