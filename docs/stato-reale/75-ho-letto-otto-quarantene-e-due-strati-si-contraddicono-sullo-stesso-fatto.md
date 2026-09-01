@@ -111,6 +111,55 @@ regola.
 rotto.* L'ho commessa mentre chiudevo un limite che avevo dichiarato io — e
 chiuderlo è ciò che l'ha fatta vedere.
 
+## ④-ter Il fenomeno **ha già un nome nel prodotto**, è **quantificato**, ed era **già stato trovato il 16/08**
+
+Salvando il fatto di questo documento, **il fatto è stato quarantinato da
+`L4.1`** — mentre descriveva `L4.1`. L'evento del journal porta un campo che non
+avevo notato:
+
+```
+grounding_score=98.9   layers=['L4.1']   withheld_despite_judge=True
+```
+
+**`withheld_despite_judge`** — il prodotto ha **un nome** per «lo strato ha
+trattenuto contro il parere del giudice», e lo **registra a ogni scrittura**.
+
+```
+flow.write nel journal (entrambe le parti) : 4648
+  con withheld_despite_judge = TRUE        :  150 = 3.2%
+  L4.1 90 · L4.2 49 · L1.15 24 · L1.16 19 · L1.10 19 · L1.20 12 · store-screen 6 · …
+```
+
+⇒ ✅ **Il limite «la precisione resta non quantificata» si chiude a metà**: **non
+so quanti di quei 150 siano sbagliati**, ma so **quanti sono** — il 3,2% delle
+scritture, e `L4.1` ne fa 90.
+
+🔑 **E il prodotto lo aveva già trovato**, `anti_confab_gate.py:2512`:
+
+> «Misurato il 16/08 usando il prodotto: fonte «SEI combinazioni», claim «6
+> combinazioni», **tre casi con `withheld_despite_judge=True` e grounding
+> 99,3-99,9 — il layer tratteneva un fatto VERO mentre il giudice era
+> contento**.»
+
+**Stesso pattern, stesso intervallo di grounding, trovato due settimane fa** — e
+**curato per un caso specifico** (il numero che la fonte scrive a parole). La
+strategia della cura è dichiarata:
+
+> «⚖️ **DECLASSA, non ammette**: il valore esce dal veto ed entra in un **AVVISO
+> col suo nome** … *un avviso non ha bisogno della popolazione opposta, **un veto
+> sì***.»
+
+📌 **Proposta, non cura**: l'**intervallo derivato** del §② («fra il 2026-07-05 e
+il 2026-07-08» da tre date che la fonte elenca) è **un altro caso della stessa
+famiglia**, non ancora coperto. La strada già battuta dal prodotto sarebbe
+**declassarlo da veto ad avviso**. ⚠️ **Non la implemento**: la regola scritta lì
+dice che *un veto esige la popolazione opposta*, e la popolazione opposta
+dell'intervallo derivato **non l'ho misurata** — è la stessa cautela che il [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md)
+ha pagato con 6 ancore vere su 18.
+
+🪞 **E l'ironia è il dato**: il fatto che descrive il fenomeno **è caduto nel
+fenomeno**, con grounding 98,9. Non l'ho costruito: è successo salvando.
+
 ## ⑤ Cosa NON prova
 
 ⚠️ **Otto casi, scelti con un seme, su 633.** Non do nessun tasso: do due casi
