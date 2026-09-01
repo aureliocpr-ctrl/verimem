@@ -235,19 +235,47 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
     hits = sm.recall(query or "", k=max(k * 6, k), deep=True,
                      include_superseded=True, include_beliefs=include_beliefs)
     out: list[tuple] = []
+    # ⚠️ QUANTI NE SCARTA E' L'UNICA COSA CHE IL CHIAMANTE NON PUO' RICOSTRUIRE.
+    # Questa funzione filtra e restituisce solo i sopravvissuti: chi la chiama
+    # vede una lista e non sa se sia corta perche' la memoria non sa, o perche'
+    # il tempo ha tolto proprio la risposta. Misurato sul corpus reale (doc 70):
+    # sui 3 casi in cui il filtro toglie il fatto giusto la risposta NON e'
+    # vuota (10, 2 e 10 risultati), quindi una condizione basata sul vuoto tace
+    # in tutti e tre — e su 16 fatti retrospettivi non esiste una sola risposta
+    # vuota. Il vuoto e' un CASO PARTICOLARE dello scarto, non il caso comune.
+    # 🔑 Il canale e' quello gia' usato per il degrado (`_recall_degraded_count`,
+    # letto in `client.recall` prima e dopo): un contatore sull'oggetto, nessuna
+    # firma cambiata, nessun chiamante da aggiornare.
+    scartati = 0
     for hit in hits:
         f = hit[0]
         born = getattr(f, "asserted_at", None)
         born = float(born) if born is not None else float(
             getattr(f, "created_at", 0.0) or 0.0)
         if born > when:
+            scartati += 1
             continue                      # not yet asserted at `when`
         died = _died_event_ts(sm, f)
         if died is not None and died <= when:
+            # ⚠️ QUESTO SCARTO NON SI CONTA, ed e' il presidio
+            # `test_senza_scarti_non_si_dichiara_niente` ad averlo detto: un
+            # fatto gia' SUPERSEDUTO a quella data e' escluso perche' il time
+            # travel FUNZIONA — mostra cio' che era vivo allora. Contarlo
+            # farebbe uscire la dichiarazione su un'ancora nel futuro, dove
+            # non c'e' niente da dichiarare. Le due cause di scarto sono
+            # diverse: «piu' recente della data» e' il fraintendimento da
+            # segnalare, «gia' ritirato a quella data» e' la funzione.
             continue                      # already superseded by `when`
         out.append(hit)
         if len(out) >= k:
             break
+    # ⚠️ E' un «ALMENO»: il ciclo si ferma appena raggiunge k, quindi gli hit
+    # oltre quel punto non vengono nemmeno esaminati. Dichiararlo come conteggio
+    # esatto sarebbe un numero piu' preciso di quanto la funzione sappia.
+    try:
+        sm._as_of_scartati = scartati
+    except Exception:  # noqa: BLE001 — un contatore non fa cadere una lettura
+        pass
     return out
 
 

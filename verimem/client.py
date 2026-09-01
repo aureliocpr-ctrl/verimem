@@ -1160,10 +1160,13 @@ class Memory:
         # (`_recall_degraded_count`, nato apposta perché «il degrado cold-encode
         # era invisibile al caller») e nessuno lo leggeva da qui.
         _deg_prima = getattr(self.semantic, "_recall_degraded_count", 0) or 0
+        _scartati_dal_tempo = 0
         if as_of is not None:
             from .temporal_context import recall_as_of
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k,
                                 include_beliefs=include_beliefs)
+            _scartati_dal_tempo = int(
+                getattr(self.semantic, "_as_of_scartati", 0) or 0)
         else:
             hits = self.semantic.recall(query, k=k, deep=deep,
                                         include_beliefs=include_beliefs)
@@ -1364,9 +1367,25 @@ class Memory:
              "risposta NON e' in memoria. I risultati sono qui "
              "sotto, non tagliati — decidi tu."))
         # La dichiarazione del viaggio nel tempo: solo se la data l'ha DEDOTTA
-        # la porta e il passato interrogato non conteneva nulla.
+        # la porta e il filtro temporale HA TOLTO QUALCOSA.
+        #
+        # ⚠️ ERA `not out`, cioe' SOLO SULLA RISPOSTA VUOTA — e il caso vero non
+        # e' vuoto. Misurato sul corpus reale (doc 70) sui tre casi che il 67
+        # aveva misurato come spenti dal routing:
+        #     758425daf047  n=10  fatto giusto PERSO  dichiarazione NESSUNA
+        #     0ebe9e824198  n= 2  fatto giusto PERSO  dichiarazione NESSUNA
+        #     3e74902dc247  n=10  fatto giusto PERSO  dichiarazione NESSUNA
+        # Zero su tre; e sui 16 fatti retrospettivi del campione non esiste UNA
+        # SOLA risposta vuota, quindi la condizione non aveva mai occasione di
+        # accendersi.
+        #
+        # 🔑 E il caso non-vuoto e' PEGGIO del vuoto: il vuoto e' onesto («non ho
+        # trovato niente»), dieci fatti da cui il filtro ha tolto proprio quello
+        # che rispondeva sono una risposta PLAUSIBILE E SBAGLIATA, senza nessun
+        # segnale per chi legge. ⇒ La condizione e' lo SCARTO; il vuoto ne e' un
+        # caso particolare (se ha tolto tutto, ne ha tolto almeno uno).
         _al_passato = None
-        if _as_of_dedotto and not out and as_of is not None:
+        if _as_of_dedotto and _scartati_dal_tempo and as_of is not None:
             import datetime as _dt
             try:
                 # ⚠️ IN UTC, COME L'ANCORA E' COSTRUITA. `extract_as_of` fissa
@@ -1388,11 +1407,28 @@ class Memory:
             _al_passato = {
                 "quando": float(as_of),
                 "quando_leggibile": _leggibile,
-                "nota": ("la domanda nomina una data, quindi e' stata letta "
-                         f"come «cosa risultava AL {_leggibile}» — e a "
-                         "quell'istante non c'era nulla. Se invece la data era "
-                         "l'OGGETTO della domanda («cosa e' successo quel "
-                         "giorno»), rifalla senza `as_of` o togli la data."),
+                # ⚠️ «ALMENO»: `recall_as_of` smette di esaminare gli hit appena
+                # ne ha k validi, quindi oltre quel punto non sa quanti altri
+                # avrebbe scartato. Dire un numero esatto sarebbe piu' preciso
+                # di quanto la misura sia.
+                "scartati": _scartati_dal_tempo,
+                # DUE CASI, DUE NOTE. Dire «non c'era nulla» dove i risultati
+                # sono stati serviti sarebbe falso — ed e' il caso PIU'
+                # frequente (doc 70: 0 risposte vuote su 16 retrospettivi).
+                "nota": (
+                    ("la domanda nomina una data, quindi e' stata letta come "
+                     f"«cosa risultava AL {_leggibile}» — e a quell'istante non "
+                     "c'era nulla. Se invece la data era l'OGGETTO della "
+                     "domanda («cosa e' successo quel giorno»), rifalla senza "
+                     "`as_of` o togli la data.")
+                    if not out else
+                    ("la domanda nomina una data, quindi e' stata letta come "
+                     f"«cosa risultava AL {_leggibile}»: almeno "
+                     f"{_scartati_dal_tempo} risultato/i sono stati esclusi "
+                     "perche' PIU' RECENTI di quella data — quello che cerchi "
+                     "puo' essere fra quelli. Se la data era l'OGGETTO della "
+                     "domanda («cosa e' successo quel giorno»), rifalla senza "
+                     "`as_of` o togli la data.")),
             }
         return Risultati(
             out,
@@ -2607,8 +2643,14 @@ class Memory:
                          "vedono con la quarantena; ma non ti vengono serviti "
                          "come veri.")}
 
-    def _auto_relevance_floor(self) -> float:
-        """Il pavimento auto-calibrato, PERSISTITO e invalidato sul corpus.
+    def _auto_relevance_floor(self, *, rinfresca: bool = False) -> float:
+        """Il pavimento auto-calibrato, PERSISTITO e servito senza ricalcoli.
+
+        ``rinfresca=True`` forza la stima ignorando cache e file: lo chiede
+        chi ha il costo atteso (`doctor`, un warmup, un daemon), MAI una
+        lettura. Una lettura serve il valore persistito anche quando il
+        corpus e' cresciuto oltre la deriva, e in quel caso lascia
+        `_floor_stantio` a True per chi deve decidere se rinfrescare.
 
         ⚠️ ERA CACHED PER-ISTANZA CON UN TTL DI 5 MINUTI, e costava 57 secondi
         alla prima chiamata. Misurato sul corpus vero (8058 fatti) e
@@ -2664,11 +2706,11 @@ class Memory:
 
         cached = getattr(self, "_floor_cache", None)
         now = _time.time()
-        if cached and now - cached[0] < self._FLOOR_CACHE_TTL_S:
+        if cached and not rinfresca and now - cached[0] < self._FLOOR_CACHE_TTL_S:
             return cached[1]
 
         f = self._floor_file()
-        if n >= 0:
+        if n >= 0 and not rinfresca:
             try:
                 d = _json.loads(f.read_text(encoding="utf-8"))
                 # ⚠️ MIGRAZIONE DICHIARATA: un file scritto prima di questa cura
@@ -2682,9 +2724,29 @@ class Memory:
                 if str(d["n_metric"]) != "servibili":
                     raise ValueError("pavimento salvato con un'altra metrica")
                 salvato, n_salvato = float(d["floor"]), int(d["n_facts"])
-                if abs(n - n_salvato) <= max(1, n_salvato) * self._FLOOR_DRIFT:
-                    self._floor_cache = (now, salvato)
-                    return salvato
+                # 🔑 LA LETTURA NON RICALCOLA, NEMMENO QUANDO IL VALORE E'
+                # VECCHIO. Qui la deriva faceva cadere nel ricalcolo, e il
+                # ricalcolo sta nel percorso di OGNI `search` (l'avviso di
+                # rilevanza lo chiama fuori da ogni `if`): significa che la
+                # prima ricerca dopo una crescita del 5% pagava la stima —
+                # 24169 ms sul corpus vero di 14382 fatti, dentro la richiesta
+                # di chi stava solo cercando.
+                #
+                # ⚖️ Un pavimento vecchio e' un'approssimazione di quello
+                # nuovo; 24 secondi dentro una lettura sono un guasto. Quindi
+                # si serve quello che c'e' e si DICHIARA che e' vecchio: il
+                # ricalcolo lo chiede chi ha il costo atteso, con
+                # `rinfresca=True`.
+                #
+                # ⚠️ Dichiararlo non e' un ornamento: `{"floor": 0.0}` e'
+                # rimasto sul corpus vero dalle 20:32 del 30/08 alle 02:52 del
+                # 31/08 — sei ore — e nulla diceva che fosse vecchio. Senza
+                # questo stato, «appena misurato» e «vecchio di sei ore»
+                # restano indistinguibili.
+                self._floor_stantio = bool(
+                    abs(n - n_salvato) > max(1, n_salvato) * self._FLOOR_DRIFT)
+                self._floor_cache = (now, salvato)
+                return salvato
             except Exception:  # noqa: BLE001 — file assente/corrotto: si ricalcola
                 pass
 
@@ -2725,6 +2787,10 @@ class Memory:
             # CONSOLIDA.
             return val
         self._floor_cache = (now, val)
+        # APPENA STIMATO: qualunque cosa dicesse il file, ora il valore e' di
+        # questo corpus. Senza questa riga un rinfresco lascerebbe acceso il
+        # segnale che deve spegnere.
+        self._floor_stantio = False
         if n >= 0:
             try:
                 f.write_text(
