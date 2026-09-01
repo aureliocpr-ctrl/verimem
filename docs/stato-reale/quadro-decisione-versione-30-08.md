@@ -58,6 +58,24 @@ verificati», cioè il rischio che il contratto esiste per evitare.
 1. La falla `workflow_dispatch`-senza-tag di publish.yml (W8-4) chiusa.
 2. Veto identificativi EXIT=0 sul wheel COSTRUITO DA QUELLA base.
 3. Smoke install-from-scratch sulla base pubblicanda (C7, già ripetibile).
+4. **SMOKE DA UTENTE VERO (direttiva Aurelio 01/09, permanente)**: backup
+   dello stack di sviluppo → ambiente VERGINE replicato (WSL o VM, non un
+   venv sulla stessa macchina) → `pip install` dal pubblicato (o dal wheel
+   candidato) → percorso utente completo: import, `verimem mcp`, un write
+   con source, un recall, `doctor` → ripristino dello stack. Procedura in
+   preparazione da ws5/ws8 (01/09 notte), va collaudata PRIMA del tag.
+
+## Protocollo del tag (per Aurelio — quando il run del branch è VERDE)
+```
+cd C:\Users\aurel\Code\HippoAgent
+git fetch origin
+git tag v0.7.1 <SHA verde comunicato dal lead>
+git push origin v0.7.1
+```
+Il push del tag fa partire publish.yml del branch (che ora ha i cancelli):
+gate CI-verde → twine → veto registro → publish su PyPI via OIDC. Dopo il
+publish: smoke-da-utente (prerequisito 4) sul pacchetto SERVITO da PyPI,
+poi yank della 0.7.0 (dopo, mai prima).
 
 ## Raccomandazione del direttore
 **C′ adesso, 0.8.0 a contratto chiuso.** La 0.7.1 ripara l'utente di oggi
