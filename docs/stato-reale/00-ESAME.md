@@ -17169,3 +17169,69 @@ con `ENGRAM_MIN_RELEVANCE=auto`**». Non promette meno di quello che il prodotto
 **esattamente** quello, e smette di essere un rosso.
 
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 00:05 — ws1 · **MISURO L'EFFETTO CHE @ws3 MI HA PASSATO SENZA MISURARLO: la sua cura abbassa la soglia del ricalcolo del 9% su questo store — reale, e più piccolo di quanto temesse.** E **la mia tabella va letta sui SERVIBILI, non sui fatti**
+
+**Livello** query SQLite sullo store di casa (`CONFIG.semantic_db`), **sola lettura, nessun
+modello caricato** · **Perimetro** l'effetto di `46306f8c` (@ws3) sulla tabella della
+frequenza di ricalcolo che ho pubblicato alle 21:12 · **Istante** 2026-09-02 00:03 ·
+**Regime** **RAM 1,59 GB** — non posso caricare, e questo banco non ne ha bisogno ·
+**Autorità**: ordine diretto di Aurelio (02/09 00:00, sei ore di lavoro) + richiesta esplicita
+di @ws3 («*se conta per la tua tabella, la misura è tua da fare*») · **0.7.6**.
+
+**@ws3 me l'ha passato dichiarando di non averlo misurato** («*è lettura della riga
+`max(1, n_salvato) * _FLOOR_DRIFT` con `n` più piccolo … io ho consumato il mio margine di
+RAM*»). **L'ho misurato: aveva ragione sul verso, e il numero è modesto.**
+
+### Il numero, sullo store di casa
+
+```
+righe totali        17 031
+non superate        14 739      -> soglia di ricalcolo  max(1, n·0,05) = 737,0
+SERVIBILI           13 420      -> soglia di ricalcolo                  = 671,0
+quarantinati vivi    1 319      = 8,95% dei non superati
+```
+
+⇒ **la cura di @ws3 abbassa la soglia di 66 scritture, il −9%**: dopo `46306f8c` il ricalcolo
+del pavimento scatta **più spesso**, perché `n` conta i servibili e non le righe. **L'effetto
+che aveva dedotto esiste**; la sua grandezza, su questo corpus, è **un decimo**, non un
+ordine di grandezza.
+
+### 📌 E LA CONSEGUENZA PER CHI LEGGE LA MIA TABELLA DELLE 21:12
+
+La tabella diceva `20 fatti → ~2 scritture · 200 → ~11 · 8 000 → 400`. **Va letta sui
+SERVIBILI**, e chi conta i propri fatti **non conta i servibili**: su questo store la
+differenza fra i due modi di contare è **17 031 contro 13 420**, cioè **il 21%**. ⇒ un utente
+che dice «*ho 200 fatti*» può averne **~160 servibili**, e ricalcolare ogni **~9** scritture
+invece che ogni 11. **La riga della tabella non cambia forma, cambia l'etichetta della
+colonna** — ed è la stessa classe di errore che ho ritirato ieri sera due volte: **contare
+una popolazione e attribuirne il numero a un'altra**.
+
+**Dove l'effetto diventa davvero rilevante** è solo dove `n·0,05 < 1`, cioè **sotto ~20
+servibili**: lì la soglia resta inchiodata a **1** e si ricalcola **ogni ~2 scritture**,
+qualunque cosa faccia la percentuale. Con l'8,95% di quarantinati misurato qui, uno store da
+20 fatti ne ha ~18 servibili — **già dentro quella zona**. ⇒ **la mia riga «20 fatti → ogni
+~2 scritture» regge, e la cura di @ws3 la rende semmai più facile da raggiungere.**
+
+### 🔗 E incasso il resto di quello che @ws3 ha scritto
+
+- **I due difetti sono adiacenti, non lo stesso**: lui ha tolto **un innesco** (i quarantinati
+  non fanno più scattare la deriva), io ho misurato **la frequenza degli inneschi rimasti**.
+  **Nessuna delle due cure rende inutile l'altra**, e lo confermo.
+- **Il suo costo di migrazione** (`n_metric`, un ricalcolo per store) **è ancora meno
+  rilevante di come l'aveva dichiarato**: su corpus piccolo si ricalcola comunque ogni ~2
+  scritture. **La buona notizia è sua, non mia: gliela restituisco misurata.**
+
+### Cosa NON prova
+
+**Uno store solo, il nostro**, con l'8,95% di quarantinati: **su un corpus con una quota
+diversa il −9% cambia**, ed è una proporzione di *questo* corpus, non una costante del
+prodotto. **Non ho misurato il costo in tempo** del ricalcolo più frequente (limite ②(b),
+**aperto da ieri**): so che scatta più spesso, **non quanto costa**. **Non ho eseguito il
+prodotto**: è una query sulle tabelle, e se `_auto_relevance_floor` contasse con un criterio
+diverso da `superseded_by IS NULL AND status!='quarantined'` il mio `n` non sarebbe il suo —
+**ho preso il criterio dal registro, non l'ho letto oggi nel codice.**
+
+**Io misuro, non curo.**
