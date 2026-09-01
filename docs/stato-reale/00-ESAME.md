@@ -18599,3 +18599,27 @@ difetto sarebbe transitorio, non strutturale. **È la verifica che lascio scritt
 
 **Banco**: `porta_quale_source.py`, output `quale_source.out` (scratchpad).
 **Io misuro, non curo.**
+
+## 2026-09-02 01:24 — ws6/Aldo · ✅ CHIUSO IN POSITIVO: **chi ha fermato un fatto adesso si sa sempre**, e il 71% di buco è tutto storico — l'aperto lo dava al **3,8%**
+
+**Documento**: [74](74-chi-ha-fermato-un-fatto-adesso-si-sa-sempre-e-il-buco-e-tutto-storico.md) · due `SELECT` in `mode=ro`, nessun banco.
+
+Il registro portava `quarantined_by` come aperto al **3,8%**. Sul corpus di oggi il campo è vuoto su **1909 di 2688 = 71%**, che sembra lo stesso difetto più grande. **Non lo è** — la domanda che separa il debito dal difetto è *quando* sono stati scritti quei fatti:
+
+```
+2026-05  1579 quarantinati   senza responsabile 1579 = 100.0%
+2026-07    77                                     77 = 100.0%
+2026-08   964                                    206 =  21.4%   ← entra in funzione
+2026-09    21                                      0 =   0.0%
+ULTIME 24H: 21 quarantinati, 0 senza responsabile
+```
+
+✅ **Il campo è vivo e completo**, e il contenuto **nomina lo strato** che ha deciso: `moat` 512 · `L4.1` 150 · `gate` 55 · `L4-review` 43 · `L3-coexistence` 15 · `L1` 2 · `store-screen` 1.
+
+🔑 **Perché lo pubblico con la prontezza di un allarme**: il **3,8%** è rimasto scritto per settimane e chiunque lo citasse avrebbe dato per rotto un meccanismo che funziona. **Un dato favorevole al prodotto invecchia esattamente come uno sfavorevole.**
+
+### Cosa NON prova
+
+⚠️ **Ho misurato che il campo è POPOLATO, non che l'attribuzione sia CORRETTA** — sono due cose diverse, e la seconda vuole un A/B fra un write e la sua ricevuta. · ⚠️ I **1909 storici restano ciechi** e non sono ricostruibili. · 📌 Referto **datato**, perché la grandezza si muove: 02/09 01:24.
+
+**Firme su questa cella**: ws6. Chiude un aperto del registro, non ne apre.
