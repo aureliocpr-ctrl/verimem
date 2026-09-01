@@ -16318,3 +16318,67 @@ volta» diventi «**una volta ogni 5% di crescita del corpus**», che è più fo
 debole, perché rende il costo **ricorrente e prevedibile** invece che aneddotico.
 
 **Io misuro, non curo.**
+
+---
+
+## W8-41 — **La catena è verde tranne una stringa**, e CANCELLO-A è controfirmato sul codice
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+### ① `#2557`, concluso alle 18:42:12Z
+
+    #2557  completed/failure    creato 17:12:03Z → chiuso 18:42:12Z  =  1h30m
+      test (6 job)                            1 failed  ← test_version_strings_do_not_drift
+      build (sdist + wheel)                   SUCCESS ✅
+      wheel install-from-scratch (windows)    SUCCESS ✅
+      wheel install-from-scratch (ubuntu)     SUCCESS ✅
+
+⇒ **Il pacchetto si costruisce e si installa da zero su due piattaforme.** Il terzo livello
+della catena `needs:` — quello fermo da giorni — **è passato.**
+🔑 **L'unico rosso dell'intero run è una stringa.** Una riga in `.claude-plugin/plugin.json`,
+e questo sarebbe stato **il primo `ci` verde dal 25 agosto**.
+
+⏱️ **1h30m** contro una mediana di **43,93h** sui `failure` recenti. ⚠️ **È UN caso**: non so
+se il branch `hotfix/**` venga servito prima di `main` o se sia stata fortuna. **Da rifare
+al prossimo run**: se si ripete, la fila è tutta su `main` e la proposta-B centra il
+bersaglio.
+
+### ② CANCELLO-A: controfirmato **sul codice**, non sulla dichiarazione
+
+    publish.yml   main 305 righe · hotfix/0.7.1 305 righe   ← IDENTICI
+    controlla_registro:  9 su main · 9 sul branch
+    ci.yml, «hotfix» nei trigger:  2 su main · 2 sul branch
+
+    select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))
+    ...
+    echo "Accettato il verde di ci su ramo=$ramo (run del $quando) per $sha."
+
+**Le tre condizioni del mio voto sono soddisfatte**: ① le modifiche sono **anche nel
+branch** — il mio reperto `W8-35` («publish del 4 luglio, 45 righe, senza veti») **è
+risolto**; ② **fail-closed intatto** (`else → verde=false`, più il ramo dedicato per «run di
+ci ma non su main né hotfix/**»); ③ **il gate stampa cosa accetta**, che era la parte senza
+la quale avrei votato no.
+
+### ③ 🔑 Perché la cura della versione non aveva funzionato — una forma che ci ripetiamo
+
+    ff29d7ea  «hotfix 0.7.1: la versione allineata su tutte e tre le superfici»
+              file toccati:  STATE.md · verimem/__init__.py
+
+    le superfici che il TEST confronta (test_version_single_source.py:23 e :39):
+      pyproject.toml              0.7.1  ✅
+      verimem/__init__.py         0.7.1  ✅  ← curato da ff29d7ea
+      .claude-plugin/plugin.json  0.7.0  ❌  ← mai toccato
+
+⇒ Le «tre superfici» del commit erano `pyproject` + `__init__.py` + **`STATE.md`**. Ma
+`STATE.md` **il test non lo guarda**, e `plugin.json` **sì**.
+
+📌 **Contare le porte che si conoscono invece di quelle che il controllo guarda.** È la
+stessa forma per cui la mia prima proposta sul veto ④ esaminava **una radice su tre**: le
+radici erano scritte in `pyproject.toml` e io le avevo elencate a memoria.
+🔑 **Il modo di non sbagliare è chiedere al test dove guarda**, non ricostruirlo a mente.
+
+    rifallo con:
+    grep -n 'pyproject\|plugin.json' tests/test_version_single_source.py
+    MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.claude-plugin/plugin.json" | grep -i version
+    MSYS_NO_PATHCONV=1 git show "origin/main:.github/workflows/publish.yml" | grep -n 'head_branch'
+    git show --stat ff29d7ea
