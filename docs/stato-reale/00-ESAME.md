@@ -17814,3 +17814,51 @@ Proseguito **a lettura** (i criteri automatici erano caduti entrambi). Commit `6
 ⚠️ Sul n.3, **«non l'ho trovata» non è «non esiste»**: può venire da un run non committato o essere una stima. Non affermo che sia inventato — affermo che **un lettore non può risalire a come è stato ottenuto**, che è quanto basta a un analista per contestarlo. 📌 Forma già in registro: `W2-127` documenta un commento che motiva una scelta con *«un 33% che i suoi banchi non contengono»*.
 
 ⛔ **Nessun tasso sulla pagina**: il denominatore è **tre**, e resta tre.
+
+---
+
+## W8-51 — **Due elenchi di criteri di rilascio che non si parlano**, e per `0.7.1` il primo cambia significato
+
+🚪 **Cancello: tutti e otto** + `RELEASE_GATE.md`.
+
+    RELEASE_GATE.md (ultimo tocco 2026-08-28, PRIMA di CANCELLO-A):
+      G1 Full test suite green · G2 Install-from-scratch · G3 Crash durability
+      G4 Benchmarks reproducible by one command · G5 Property-based invariants
+      G6 README claim audit · G7 Name / PyPI identity · G8 Fresh-env model download
+      G9 Cross-platform CI · G10 Multilingual validation
+    menziona «head_branch»: 0    ·    menziona «hotfix»: 0
+
+⇒ **Non è obsoleto dopo CANCELLO-A**: non descrive affatto il meccanismo del gate — descrive
+**la qualità del prodotto**. I miei otto cancelli descrivono **i controlli meccanici del
+workflow**. **Due elenchi ortogonali, e nessuno dei due cita l'altro.**
+
+### 🔴 Il rischio è simmetrico
+
+**Passare gli otto cancelli non implica soddisfare G1-G10, e viceversa.** Il workflow non sa
+cosa sia `G6 README claim audit`; `RELEASE_GATE.md` non sa che esiste un veto sul registro.
+⇒ **Un rilascio può essere meccanicamente ammissibile e sostanzialmente non pronto**, e
+nessuno dei due documenti se ne accorgerebbe. È la forma «due superfici che non si
+conoscono», la stessa per cui le «tre superfici di versione» del commit non erano quelle che
+il test guarda (`W8-41`).
+
+### 🎯 Per `0.7.1` almeno tre criteri vanno riletti
+
+- **G1 «Full test suite green»** → **oggi NON soddisfatto** (ultimo run concluso del branch:
+  `1 failed`). E quando il verde arriverà sarà su **1050 file di test contro i 1598 di
+  `main`** (`W8-44`): **«full suite» per `0.7.1` significa la suite del 22 luglio.**
+- **G6 «README claim audit»** → il README del branch ha **4 avvisi contro 16** (`W8-50`):
+  l'audit di agosto **è su un altro file**.
+- **G2 «Install-from-scratch»** → ✅ **regge**: `wheel install-from-scratch` è `success` su
+  windows **e** ubuntu in `#2557`, verificato sul log.
+
+### 📌 Cosa serve, e non è curare i documenti
+
+**Prima del tag, qualcuno dichiari quali dei G1-G10 valgono per `0.7.1` e con quale
+lettura.** Un hotfix che riparte dal 22 luglio **non può soddisfarli nello stesso senso** di
+un rilascio da `main`. Tre righe in fondo al `CHANGELOG` bastano, e **trasformano
+un'ambiguità in una posizione dichiarata** — che è la differenza fra un limite e una
+promessa non mantenuta.
+
+    rifallo con:
+    grep -oE '^\| G[0-9]+ \| \*\*[^*]{0,60}' RELEASE_GATE.md
+    grep -ci 'head_branch\|hotfix' RELEASE_GATE.md
