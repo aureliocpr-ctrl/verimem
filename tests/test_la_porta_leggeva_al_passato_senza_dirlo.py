@@ -103,11 +103,29 @@ def test_la_data_nella_domanda_viene_letta_come_un_AL_e_la_porta_lo_dice(memoria
 
 def test_la_data_interpretata_e_LEGGIBILE_non_un_timestamp(memoria):
     """⚠️ Un epoch non aiuta nessuno a vedere il fraintendimento: chi legge deve
-    riconoscere la data che ha scritto nella domanda."""
+    riconoscere la data che ha scritto nella domanda.
+
+    🪞 RAFFORZATO il 2026-09-01 alle 20:24, DOPO che un difetto e' passato di
+    qui: la prima stesura asseriva `"2019" in quando_leggibile`, cioe' l'ANNO —
+    e la data dichiarata **slittava di un giorno** (`19/07/2019` invece di
+    `18/07/2019`) senza che questa cella se ne accorgesse. Causa, trovata e
+    curata da chi ha rifatto la misura sul corpus vero (`6d79f676`): l'ancora e'
+    costruita in **UTC** (`23:59:59`) e veniva riletta in ora **LOCALE** — a est
+    di Greenwich e' gia' il giorno dopo.
+
+    🔑 LA LEZIONE E' SUL PRESIDIO, NON SULLA CURA: **quando un avviso serve a
+    far RICONOSCERE un valore, il test deve verificare QUEL valore, non una sua
+    parte.** Verificavo la componente che cambia di meno (l'anno) invece di
+    quella che l'avviso esiste per mostrare (il giorno) — e su «al 2026-01-31»
+    sarebbe cambiato anche il MESE, su un 31/12 anche l'anno.
+    """
     ris = memoria.recall(DOMANDA, k=10, as_of="auto")
     avviso = getattr(ris, "letto_al_passato", None)
     assert avviso is not None
-    assert "2019" in str(avviso.get("quando_leggibile", "")), avviso
+    assert avviso.get("quando_leggibile") == "18/07/2019", (
+        f"la porta dichiara {avviso.get('quando_leggibile')!r} per una domanda "
+        "che dice «il 18 luglio 2019»: chi legge non riconosce la data che ha "
+        "scritto, che e' l'unico scopo di questo avviso")
 
 
 def test_CONTROLLO_se_il_passato_CONTIENE_qualcosa_nessun_avviso(memoria):
