@@ -18389,3 +18389,80 @@ non sta facendo nulla. **Il livello a cui misuri decide il verdetto.**
     ID=$(gh api "repos/:owner/:repo/actions/runs?status=in_progress&per_page=20" \
          --jq '[.workflow_runs[]|select(.name=="security")][0].id')
     gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=30" --jq '.jobs[]|"\(.status)/\(.conclusion)"'
+
+---
+
+## 2026-09-02 01:09 — ws1 · 🔴🔴 **CIRCOSCRIVO IL MIO VERDE DI VENTI MINUTI FA: sui DENOMINATORI il gate ne lascia passare 9 su 10 — e fra queste ci sono impossibilità aritmetiche come «432 su 57».** Quantifica `W7-94` di @ws7 su una forma precisa
+
+**Livello** `try_local_score(source, fact)` · **Perimetro** **10 coppie che cambiano SOLO il
+denominatore** («X su N» con N falso), da 5 fatti reali dello store · **Istante**
+2026-09-02 01:02–01:06 · **Regime** variabili di grounding poppate, RAM 8,45 GB, **`claim
+ram/giudice` preso e rilasciato** (`f41dacda0bb0`) · **Autorità**: ordine di Aurelio delle
+00:00 · **0.7.6**.
+
+**Paga il fronte che avevo aperto io alle 00:49** («*il caso che sfugge era un denominatore:
+se ne sfuggono molte, il limite ha una forma precisa*»).
+
+### 🔴 Il numero, e la mia predizione è caduta NEL VERSO PEGGIORE
+
+Avevo dichiarato prima: **condizione d'uscita ≥3/10 ⇒ è una forma**, e predetto **3-6**.
+
+| | |
+|---|---|
+| **denominatori falsi SFUGGITI** | **9 / 10** |
+| — con il denominatore **accanto** al numeratore nella source | 3 / 4 |
+| — con il denominatore **lontano o assente** | **6 / 6** |
+| l'unico **preso** | «262 su **742**» → **4,17** *(lo stesso preso alle 00:41: riproducibile)* |
+
+⇒ **non è un caso singolo: è una forma, e quasi totale.** L'ipotesi che avevo scritto prima
+(«*sfuggono i lontani più dei vicini*») **regge nella direzione ma spiega poco**: 6/6 contro
+3/4 — sfuggono comunque quasi tutti.
+
+### 🔴🔴 E il pezzo che non mi aspettavo: passano le IMPOSSIBILITÀ ARITMETICHE
+
+| proposizione falsa | perché è impossibile | punteggio |
+|---|---|---|
+| «I file che stanno in verimem sono **432 su 57**» | 432 > 57 | **99,89** |
+| «I processi con una sola chiamata sono **262 su 98**» | 262 > 98 | **64,23** |
+
+⇒ **una parte più grande del totale prende 99,89.** Non è che il gate «sbaglia il
+denominatore»: **non verifica la coerenza aritmetica interna della proposizione**, nemmeno
+quando è palese.
+
+### 🔗 Questo QUANTIFICA un reperto che c'era già — credito a @ws7
+
+`W7-94`: «*un numero identico fra claim e fonte **tira il verdetto verso l'ammissione**»*.
+**È esattamente il meccanismo**: il **128** identico alla source tira all'ammissione, e il
+**999** falso non pesa abbastanza per contrastarlo. **Non è un reperto nuovo: è la sua misura
+su una forma precisa** — *i rapporti* — **dove vale 9 volte su 10**.
+
+### 🎯 E CIRCOSCRIVE IL MIO VERDE DELLE 00:49, che va letto con questa accanto
+
+Avevo pubblicato: «*retrieval+gate: 0 risposte perse su 10, **9 invenzioni su 10 bloccate***».
+**Quel 9/10 era su invenzioni GENERICHE** (versioni, date, nomi, quantità). **Sui
+denominatori il conto si rovescia: 1 bloccata su 10.**
+
+| tipo di invenzione | bloccate dal gate |
+|---|---|
+| generiche *(00:41 e 00:49)* | **9 / 10** |
+| **rapporti «X su N»** *(questa cella)* | **1 / 10** |
+
+⇒ **la cura col giudice resta migliore del pavimento su entrambi gli assi** — quello non
+cambia — **ma ha un buco che ha una forma, e la forma è proprio quella di cui questo prodotto
+vive**: percentuali, proporzioni, «tot su tot». ⇒ **se la cura si consegna, questo avviso va
+consegnato con lei.**
+
+### Cosa NON prova
+
+⚠️ **Il registro avverte su questo esatto errore** (`W2-125`: «*stavo per accusare il gate di
+fare aritmetica per un TRONCAMENTO CHE MI ERO DATA DA SOLA*»), quindi lo dico chiaro: **le
+dieci proposizioni le ho scritte io**, e una formulazione goffa può far passare una falsa per
+ragioni mie, non del gate. **Difesa che ho messo**: due casi sono **impossibilità aritmetiche
+palesi**, che nessuna formulazione salva — e passano. **10 coppie da 5 fatti soli**: i fatti
+si ripetono, quindi i casi **non sono indipendenti** e il `9/10` non è un tasso su una
+popolazione. **Non ho misurato la forma «percentuale»** (`29,8%` contro `64,1%`) se non in un
+caso. **Non ho provato il gate con la source riscritta** perché il difetto stia nella source
+e non nel giudice. **Non ho toccato la composizione**: qui è `try_local_score` da solo.
+
+**Banco**: `porta_denominatori.py`, dati in `denominatori.json` (scratchpad).
+**Io misuro, non curo.**
