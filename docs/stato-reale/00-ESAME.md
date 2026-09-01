@@ -16383,3 +16383,74 @@ radici erano scritte in `pyproject.toml` e io le avevo elencate a memoria.
     MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:.claude-plugin/plugin.json" | grep -i version
     MSYS_NO_PATHCONV=1 git show "origin/main:.github/workflows/publish.yml" | grep -n 'head_branch'
     git show --stat ff29d7ea
+
+---
+
+## 2026-09-01 20:58 — ws1 · 🔴 **LA CURA CHE «RENDE GIUDICATA LA PRIMA SCRITTURA INVECE DI AMMETTERLA AL BUIO» NON È NELLA VERSIONE PUBBLICATA.** Il tag `v0.7.0` è del **22/07**, la cura è del **01/08** — e sul canale MCP la delega **la accende il prodotto stesso**
+
+**Livello** confronto fra il tag `v0.7.0` e HEAD, **solo `git`**, nessuna esecuzione ·
+**Perimetro** `local_grounding.py` (blocco `_delegate_only`) + `mcp_server.py` ·
+**Istante** 2026-09-01 20:50–20:58 · **Regime** sola lettura, **zero RAM** (RAM libera
+scesa a **5,29 GB**: altre istanze stanno caricando, ordine di Aurelio delle 20:42) ·
+**Autorità**: ordine diretto di Aurelio (20:42) + audit chiesto da @lead-audit · **0.7.6**.
+
+### La catena, tutta verificabile con `git`
+
+| | |
+|---|---|
+| tag **`v0.7.0`** (la versione che risulta pubblicata) | **2026-07-22**, `be1635dc` |
+| commit che introduce `_gate_via_daemon` | **2026-08-01**, `962aa616` — «*il giudice del moat vive nel daemon: **da 0 su 5 a 5 su 5 giudicati***» |
+| commit che lo rende resistente a un load fallito | **2026-08-30**, `9c7b7101` |
+| `_gate_via_daemon` dentro **`v0.7.0`** | **0 occorrenze** |
+
+**`v0.7.0`**, `local_grounding.py:331-333` — **verbatim dal tag**:
+
+```python
+if judge._scorer is None and not judge._load_failed and _delegate_only():
+    warm_local_judge_async()
+    return None            # ← nessuno chiede al daemon: non c'è nulla da chiedere
+```
+
+**HEAD (0.7.6)**, stesso punto: prima **interroga il daemon**, e solo se tace ripiega su
+`warm_local_judge_async(); return None`.
+
+### 📌 E LA DELEGA NON È UNA SCELTA DELL'UTENTE: LA ACCENDE IL PRODOTTO
+
+`verimem/mcp_server.py:15424` — e **la riga è già nella `v0.7.0`**:
+
+```python
+os.environ.setdefault("HIPPO_ENCODE_DELEGATE_ONLY", "1")
+```
+
+⇒ **chi collega Verimem come server MCP è SEMPRE in regime di delega**, senza averlo
+chiesto. ⇒ nella versione pubblicata quel ramo è **sempre attivo**, e finché il giudice non
+è caricato **in-process** `try_local_score` restituisce `None`: **la scrittura è ammessa
+senza giudizio**. Il docstring di `_gate_via_daemon` (su HEAD) dice cosa fa la cura
+mancante: «*è ciò che rende giudicata la **PRIMA** scrittura invece di ammetterla al buio*».
+
+**Perché è la finestra a contare, e non un caso di bordo**: il prodotto stesso, in
+`encode_service.py:184`, registra che «**256 processi su 293 fanno UNA chiamata e
+muoiono**». Un processo che fa una chiamata sola **vive interamente dentro la finestra**:
+il `warm_local_judge_async()` che parte non fa in tempo ad atterrare. E i miei banchi di
+stasera danno l'ordine di grandezza dell'attesa: **~19 s** solo per avere il giudice pronto
+in-process, in regime **senza** delega.
+
+**Credito**: il meccanismo su HEAD è terreno di @ws3 — `_have_judge` non elenca il daemon
+fra le vie al giudizio (`banchi/ws3-la-guardia-che-decide-se-c-e-un-giudice-non-conosce-il-daemon.py`).
+**Il mio pezzo è un altro**: non *come si comporta oggi*, ma **che cosa ha in mano chi
+installa**.
+
+### ⚠️ Cosa NON prova — e il limite è grosso, lo metto in grassetto
+
+**NON HO RETE: non ho verificato che cosa ci sia oggi su PyPI.** Ho verificato **il tag
+`v0.7.0` in questo repo**, e mi appoggio alla nota di gruppo secondo cui la versione
+pubblicata è la 0.7.0 (memoria «*la vetrina pubblicata non è quella che scriviamo*»). **Se
+su PyPI c'è un artefatto diverso dal tag, questa cella cade** — ed è la stessa richiesta
+che faccio da stamattina: **cinque righe in una venv vergine** e si sa. **Non ho eseguito
+la `v0.7.0`**: il difetto è letto nel sorgente del tag, non osservato girando. **Il 2,2%
+del `doctor` NON è la prova di questa cella**: è misurato sullo store di casa, che gira in
+editable su codice di sviluppo di un'epoca diversa — **il meccanismo** è lo stesso, il
+**numero** no. **Non so quanti processi MCP reali vivano abbastanza** perché il warm
+atterri: il «256 su 293» è del prodotto, su un audit log di casa.
+
+**Io misuro, non curo.**
