@@ -1349,8 +1349,20 @@ class Memory:
         if _as_of_dedotto and not out and as_of is not None:
             import datetime as _dt
             try:
+                # ⚠️ IN UTC, COME L'ANCORA E' COSTRUITA. `extract_as_of` fissa
+                # `datetime(y, mo, d, 23, 59, 59, tzinfo=timezone.utc)`;
+                # rileggerla senza fuso la stampa in ora LOCALE, e a est di
+                # Greenwich le 23:59:59 UTC sono gia' il giorno dopo. Misurato
+                # in «ora legale Europa occidentale», 3 casi su 3: «il 18
+                # luglio 2026» dichiarava 19/07/2026, «cosa sapevamo al 5
+                # agosto» dichiarava 06/08/2026, e «al 2026-01-31» dichiarava
+                # 01/02/2026 — cambiando anche il MESE.
+                # 🔑 Nessuno dei due pezzi sbagliava da solo: sbagliava la
+                # GIUNTURA. E il danno colpiva proprio lo scopo dell'avviso,
+                # che esiste per far riconoscere a chi legge LA DATA CHE HA
+                # SCRITTO: mostrargliene un'altra glielo rende piu' difficile.
                 _leggibile = _dt.datetime.fromtimestamp(
-                    float(as_of)).strftime("%d/%m/%Y")
+                    float(as_of), _dt.timezone.utc).strftime("%d/%m/%Y")
             except Exception:  # noqa: BLE001 — una data illeggibile non fa cadere nulla
                 _leggibile = str(as_of)
             _al_passato = {
