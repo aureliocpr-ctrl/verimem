@@ -15157,3 +15157,83 @@ garanzia sulle etichette deve fare su TruthfulQA l'ispezione che ho fatto su Hal
 **è un lavoro di un'ora e lo dichiaro come aperto, non come fatto.**
 
 **Banchi**: nessuno nuovo — lettura dei due `.jsonl` e conteggio. **Io misuro, non curo.**
+
+---
+
+## 2026-09-01 19:25 — ws1 · FIRMA SULLA QUARTA PROMESSA (`LANT-130`/`LANT-131`, load-bearing): IL NUMERO REGGE, MA IL **DENOMINATORE DELLA MATRICE NON È 4** — E LA CORREZIONE È MIA, DI DUE ORE DOPO LA MISURA CHE AVETE CITATO
+
+**Livello** registro, controfirma su cella altrui · **Perimetro** `LANT-130` (vetrina, 4
+promesse del Summary) e `LANT-131` (verifica indipendente) · **Istante** 2026-09-01
+19:15-19:25 · **Regime** lettura pura, nessun modello, **RAM 1,42 GB** (Aurelio al PC:
+nessun banco) · `verimem.__version__` **0.7.6**.
+
+**Autorità**: ripresa del lavoro su **mandato RIFERITO** da @lead-audit (01/09 19:15,
+«ordine di Aurelio: si riparte, convergenza-rilascio»). La barra di Aurelio era **vuota**
+al controllo delle 19:14: **non l'ho verificato direttamente**, e lo dichiaro.
+
+### ✍️ FIRMA ① — il numero citato in vetrina è mio ed è misurato
+
+`LANT-130` attribuisce a me: «*`abstention instead of hallucination` → 🔴 NON regge su
+`search` (@ws1: 18 sonde su 18 servite contro 1 su 18 di `explain`)*». **Confermo:** è la
+mia misura del 31/08 01:46 — 114 domande + 18 sonde, corpus 401 frasi di terzi (HaluEval),
+`ENGRAM_MIN_RELEVANCE` non impostata, `verimem 0.7.6`. E confermo che la cella riporta
+**anche l'attenuante giusta** («differenza di contratto **documentata** nel docstring»):
+`search` usa `env_floor_if_set()`, `explain` usa `env_floor()` → `"auto"`. **Due porte, due
+contratti, per scelta scritta.**
+
+### ✍️ FIRMA ② — già esiste, ed è di @lead-audit: va CONTATA
+
+`LANT-131` è una **verifica indipendente** su corpus diverso (3 fatti italiani contro 401
+frasi inglesi): «*`search` 5/5 sonde servite, non astiene mai, come il suo 18/18*», e
+dichiara con rigore «**confermo la direzione, non il valore**» (la magnitudine su `explain`
+differisce: 1/18 contro 2/5, n troppo piccolo). ⇒ **La cella load-bearing HA le sue due
+firme.** Lo scrivo perché il censimento delle 07:05 nota che le controfirme in
+**convenzione B** (cella propria) lo script **non le conta ancora**: questa è una di
+quelle, e va nel numeratore quando il verificatore A-oppure-B sarà pronto.
+
+### ⚠️ MA IL DENOMINATORE DELLA MATRICE NON È 4 — e la correzione è MIA
+
+`LANT-130` dichiara il perimetro «**porte pubbliche SDK** (`search` · `ask` · `explain` ·
+`search_documents`)» e cita il mio lavoro **delle 01:45**. **Alle 02:02 ho ritirato proprio
+quel conteggio**, e la cella che lo fa è nel registro:
+
+```
+il mio «quattro porte» veniva da  git grep "def \(recall\|ask\|search\|explain\|remember\)"
+— UN GREP SU NOMI CHE AVEVO DECISO IO.
+Contate dalla CLASSE (awk da `class Memory` + grep "^    def "): ~38 metodi pubblici.
+```
+
+⇒ **Chi ha scritto `LANT-130` non poteva saperlo leggendo solo la cella delle 01:45**: il
+ritiro è successivo. **La correzione è mia e la porto io.**
+
+🔑 **E la porta che mancava è proprio quella del claim**: `client.py:1423`, **`answer()`** —
+docstring: «*Grounding-verified answering — **the anti-hallucination read-path**… If either
+stage fails, **abstain (NO ANSWER)** rather than serve a probable hallucination*».
+
+### Che cosa cambia e che cosa NO — il verso esatto, per l'analista ostile
+
+- **NON cambia il 🔴 su `search`**: 18/18 è misurato, confermato indipendentemente, e la
+  porta che porta il nome della ricerca non astiene. **Quella riga regge.**
+- **CAMBIA il denominatore**: la matrice «promessa × porta» **non ha 4 colonne**, ne ha
+  ~38 di cui ne conosciamo **tre misurate** (`search`, `ask`, `explain`) più **una
+  dichiarata e non misurabile qui** (`answer`, richiede un `llm`; O4 vieta le API esterne).
+- **CADE l'insinuazione implicita** che il prodotto prometta astensione senza avere una
+  porta per farla: **ce l'ha, e la dichiara nel docstring**. Il reperto difendibile è più
+  stretto e più preciso: **il Summary non dice SU QUALE SUPERFICIE vale la promessa.**
+
+⇒ **Proposta a chi tiene la vetrina** (io misuro, non curo): la ④ resta **🔴 su `search`**,
+ma la riga andrebbe letta «*non su `search`; regge su `explain`; **dichiarata** su
+`answer()`, non verificabile senza llm*». Un analista ostile che apre `client.py` trova
+`answer()` in un minuto: **meglio che lo trovi già scritto da noi.**
+
+### Cosa NON prova
+
+**Non ho misurato `answer()`**: richiede un `llm`. Ho misurato **il suo primo stadio**
+(31/08 02:25, locale, senza llm) — a soglia 40,0 ammette **104/113** risposte vere e
+**54/113** allucinate, e **nessuna soglia separa meglio** (33 contro 26 su 59 discordi,
+p=0,435). ⇒ so che **il secondo stadio non è overhead**, **non** so quanto recuperi.
+**Non ho ricontato le ~38 porte oggi**: il numero è del 31/08 02:02 e resta quello.
+
+**Firme**: ① ws1 (misura originale, 31/08 01:46) · ② @lead-audit (`LANT-131`, verifica
+indipendente) · **questa cella aggiunge la circoscrizione, non un terzo numero.**
+**Io misuro, non curo.**
