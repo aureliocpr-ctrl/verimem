@@ -15684,3 +15684,80 @@ in **processi diversi**, quindi le due serie non sono appaiate.
 
 **Banchi**: `porta_costo.py`, dati in `costo_{off,enforce}.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-01 20:00 — ws1 · IL PICCO ERA IL WARMUP DEL MOAT-JUDGE — **E LA MIA PREDIZIONE L'AVEVA ESCLUSO**. «Off the request thread» è vero e **non basta**: una scrittura ne paga 19 s
+
+**Livello** porta pubblica `Memory.add`, log `flow.*` a INFO letto **dopo ogni scrittura** ·
+**Perimetro** 20 scritture, regime `off`, stesse coppie SNLI del banco del costo ·
+**Istante** 2026-09-01 19:55–19:58 · **Regime** tutte le variabili poppate,
+`ENGRAM_LOCAL_NLI_MODEL` su un nome inesistente, RAM 9,1 GB · **Autorità**: mandato
+**riferito** (barra vuota anche alle 19:55) · **0.7.6**.
+
+**Paga il «non so attribuirlo» dichiarato alle 19:55.**
+
+### ⚖️ La mia predizione era esplicita, ed è CADUTA
+
+Avevo scritto: «*NON può essere il cold load del gate CE: quello scatta quando una
+scrittura arriva al moat CON una `source`, e **le mie scritture non ne hanno***».
+**È proprio il gate CE.** Il log, alla scrittura #15:
+
+```
+19:56:18.869  flow.warmup  phase=start                      what=moat-judge
+19:56:20.798  flow.warmup  elapsed_ms=1925.2  phase=ready    what=moat-judge
+19:56:21.380  flow.write   … grounding_score=None judged=False status=model_claim
+#15   19 137,3 ms
+```
+
+⇒ **il warmup del moat-judge parte comunque, anche su scritture SENZA `source`** — cioè
+su scritture che il moat **non giudicherà mai** (`judged=False`, `grounding_score=None` su
+tutte e 20). **È proattivo, non on-demand**, e il mio ragionamento «niente source ⇒ niente
+gate» era sbagliato.
+
+### ⚠️ E il log spiega solo UN DECIMO del picco
+
+`elapsed_ms=1925.2` — **1,9 s** — contro **19,1 s** di scrittura. Guardando i timestamp:
+
+```
+#14 finisce            19:56:02,245
+flow.warmup phase=start 19:56:18,869   ← 16,6 s DOPO, senza un solo evento in mezzo
+phase=ready             19:56:20,798   ← +1,9 s (il warmup dichiarato)
+flow.write              19:56:21,380   ← +0,6 s
+```
+
+⇒ **i 16,6 s che precedono `phase=start` non hanno eventi.** Il log dice **che cosa**
+scatta, non **perché** la scrittura ne paga dieci volte tanto. **Non isolabile oltre con
+questo strumento, e mi fermo qui invece di ipotizzare** (avevo già sbagliato una previsione
+in questo stesso giro).
+
+### 📌 «Off the request thread» è vero — e non è la stessa cosa di «senza costo»
+
+`local_grounding.py:697` dichiara: «*Warm the CE **off the request thread** (once per
+process)*», e il codice mantiene la promessa alla lettera: il caricamento gira in un
+**thread separato** (`def _warm()`). **Ma la scrittura che lo innesca costa 19 s.**
+⇒ **la promessa riguarda DOVE gira il caricamento, non quanto costa alla richiesta**: un
+modello grande che si carica satura CPU e IO, e il thread della richiesta rallenta lo
+stesso. **Non è una promessa violata; è una promessa che qualcuno può leggere come
+garanzia di latenza, e non lo è.** *(Osservazione: non ho misurato la contesa di risorse —
+dico che i due fatti coesistono, non che l'uno causi l'altro in quel modo.)*
+
+### Perché conta per chi decide
+
+Nel banco del costo avevo attribuito al layer semantico **23,5 s** di cold load. **Quel
+numero resta** (è il picco alla scrittura **1**, presente solo in `enforce`). Ma ora si sa
+che **c'è un SECONDO caricamento**, del **moat-judge**, che costa **~19 s a una scrittura
+qualunque** e **avviene in entrambi i regimi** — quindi lo paga **anche chi non ha il
+modello NLI**. ⇒ **il primo minuto d'uso di un'installazione fresca contiene due
+caricamenti, non uno**, e nessuno dei due è annunciato prima che accada.
+
+### Cosa NON prova
+
+**16,6 s su 19,1 restano non spiegati**: il log non li copre e **non ho isolato la causa**.
+Non ho misurato la **contesa di CPU/IO** che è la spiegazione più ovvia — la nomino come
+ipotesi **non verificata**. Una macchina sola, un regime, **n=1 occorrenza del picco**: non
+so se cada sempre alla scrittura 15 o dipenda dal tempo trascorso (i due sono confusi in
+questo banco). Non ho verificato se il warmup parta **anche** quando nessuna scrittura avrà
+mai una `source` per tutto il processo — qui era così, ma il trigger esatto non l'ho isolato.
+
+**Banchi**: `porta_picco.py` (scratchpad), output `picco.out`. **Io misuro, non curo.**
