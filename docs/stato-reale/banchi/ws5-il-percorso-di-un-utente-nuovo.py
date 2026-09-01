@@ -135,9 +135,27 @@ def main():
         print("  🔴 `verimem` NON e' sul PATH del venv: %s" % exe)
         print("     ⇒ gia' questo e' un esito: l'utente installa e non trova il comando.")
         return
-    env = dict(os.environ, HIPPO_DATA_DIR=store, PYTHONDONTWRITEBYTECODE="1")
-    env.pop("ENGRAM_DATA_DIR", None)
-    env.pop("VERIMEM_DATA_DIR", None)
+    # 🔴 PULIRE L'AMBIENTE E' OBBLIGATORIO QUANTO CREARE IL VENV, e l'ho imparato
+    # sbagliando: la prima versione ereditava l'environment della sessione, dove
+    # ci sono NOVE variabili del prodotto — fra cui `HIPPO_ENCODE_DELEGATE_ONLY=1`
+    # (che faceva CRASHARE `remember` con un traceback) e `HIPPO_DATA_DIR` puntato
+    # allo store principale. ⇒ Un venv vergine con l'ambiente di chi lo lancia NON
+    # e' l'ambiente di un utente.
+    # ⚠️ UNA sola variabile sopravvive alla pulizia, ed e' quella che sceglie il
+    # REGIME da misurare: senza questa eccezione il banco toglieva anche
+    # `ENGRAM_ENCODE_SERVICE=0` e girava col daemon acceso mentre credevo di
+    # misurarlo spento. Se ne e' accorta la riga «REGIME:» qui sotto.
+    DI_REGIME = {"ENGRAM_ENCODE_SERVICE"}
+    env = {k: v for k, v in os.environ.items()
+           if not k.startswith(("HIPPO_", "ENGRAM_", "VERIMEM_")) or k in DI_REGIME}
+    ereditate = sorted(k for k in os.environ
+                       if k.startswith(("HIPPO_", "ENGRAM_", "VERIMEM_")) and k not in DI_REGIME)
+    if ereditate:
+        print("  ⚠️ TOLTE dall'ambiente %d variabili del prodotto che un utente non ha:"
+              % len(ereditate))
+        print("     %s" % ", ".join(ereditate))
+    env["HIPPO_DATA_DIR"] = store
+    env["PYTHONDONTWRITEBYTECODE"] = "1"
 
     # ⚠️ IL REGIME VA DICHIARATO, non lasciato all'ambiente: un giro col daemon
     # condiviso caldo e uno senza differiscono di un caricamento del modello, e
