@@ -16543,3 +16543,47 @@ corpus POPOLATO : 26/48 ammesse, 9/48 divergenze
 🪞 **Due rilievi che ho ritirato da solo prima di scriverli**: *«l'avviso non è arrivato sulla vetrina pubblicata»* — falso, `v0.7.0` (22/07) e `v0.7.6` (24/08) sono entrambi **precedenti** al commit che aggiunge il numero; e *«l'audit aritmetico del README non trova incoerenze»* — **il denominatore era 1**, un verde su una riga sola, cioè una misura che non c'era.
 
 **Firme su questa cella**: ws6 (esecuzione + controllo). **Non ne rivendico altre** — il rilievo sull'ambiguità del `48` è di chi ha scritto la vetrina-quattordici-volte, non mio.
+
+---
+
+## W8-43 — 🔮 **Predizione agli atti su `#2653`**, scritta prima dell'esito
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+`plugin.json` è stato curato — `"version": "0.7.1"`, commit `08f38256` «la QUARTA superficie
+di versione» — e **`#2653` è in coda su quel commit** (in attesa da 6 minuti alle 20:57).
+
+### La predizione
+
+**`#2653` sarà VERDE, `0 failed`** — cioè **il primo `ci` verde su questo repository dal 25
+agosto**.
+
+Poggia su quattro fatti misurati, non su speranze:
+- in `#2557` l'**unico** test fallito era `test_version_strings_do_not_drift`
+  (`1 failed, 7686 passed`), ed è quello curato adesso;
+- `build (sdist + wheel)` era **SUCCESS**;
+- `wheel install-from-scratch` era **SUCCESS su windows E ubuntu**;
+- i **5 rossi di `main`** (`W8-31`, `W8-38`) **non compaiono sul branch**: sono test nati
+  dopo il 22 luglio, e il branch parte da lì.
+
+### Come si falsifica — e cosa dirò in ciascun caso
+
+- **rosso DIVERSO da quello della versione** ⇒ il mio modello del branch è **incompleto**:
+  esiste un test che `#2557` non ha eseguito, o sensibile al commit nuovo. **Lo dichiaro.**
+- **mai concluso / cancellato** ⇒ **terzo verdetto perso**, e conferma della proposta-B.
+- **verde** ⇒ il cancello ① si apre per la prima volta in otto giorni; restano ⑧ (trusted
+  publisher, non verificabile da qui) e la decisione umana sul tag.
+
+⏱️ **Sui tempi, per chi legge dopo**: lo stesso branch ha impiegato **1,5 ore** con la coda
+vuota e **34 ore** con la coda piena. Alle 20:38 c'erano **73 run in coda**. ⇒ **L'esito non
+è atteso in serata**, e chi lo dà per fatto sta scommettendo, non misurando.
+
+📌 **Scritta prima perché una previsione pubblicata dopo il fatto non vale niente.** Se
+sbaglio, il valore è la correzione; se ho ragione, il valore è che il modello del branch
+regge e si può usare per decidere.
+
+    rifallo con:
+    python docs/stato-reale/banchi/ws8-eta-di-un-run.py hotfix/0.7.1
+    ID=$(gh api ".../ci.yml/runs?branch=hotfix/0.7.1&per_page=1" --jq '.workflow_runs[0].id')
+    gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
+      --jq '.jobs[]|"\(.status)/\(.conclusion // "-")  \(.name)"'
