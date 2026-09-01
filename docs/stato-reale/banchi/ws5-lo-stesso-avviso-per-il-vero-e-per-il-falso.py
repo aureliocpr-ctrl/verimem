@@ -77,11 +77,12 @@ NON e' cieco*». ⇒ **Qui c'e' il controesempio**: stesso tipo di scambio, `g=9
 `g=100.0`, passa. **Il moat becca quello scambio su quella popolazione e non su questa**
 — e chi decide sul cut deve avere tutti e due i casi, non uno solo.
 
-⇒ **PER LA DECISIONE**: non e' una cura all'avviso. `L4.2` **non ha in mano
-l'informazione** per distinguere `A` da `C`, perche' guarda l'adiacenza e in italiano il
-soggetto non e' adiacente al numero. **La domanda vera e' se il gate debba dichiarare
-questa classe come non coperta**, invece di emettere un avviso che suona come una
-diagnosi.
+⇒ **PER LA DECISIONE**: in **sei casi su sei** `L4.2` non ha distinto il vero dal falso,
+e in **tre su tre** il falso e' passato. **Che cosa manchi al confronto non lo so** —
+l'ipotesi «e' la tabella» e l'ipotesi «e' la distanza» sono cadute tutte e due, e non ne
+propongo una terza senza misurarla. ⇒ La domanda che porto e' **se il gate debba
+dichiarare questa classe come NON COPERTA**, invece di emettere un avviso che suona come
+una diagnosi ed e' identico quando hai ragione e quando hai torto.
 
 REGIME: build corrente · store TEMPORANEO (`HIPPO_DATA_DIR`) · `ground_write=True` ·
 porta `run_validation_gate` · daemon attivo, nessun `None` nel grounding.
