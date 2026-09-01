@@ -73,15 +73,27 @@ def main() -> int:
         print("  (nessun run su questo branch — e il comando e' riuscito: EXIT=0)")
         return 0
 
-    print(f"  {'run':>7}  {'stato':<22} {'creato UTC':<17} {'creato locale':<15} eta'")
+    print(f"  {'run':>7}  {'stato':<22} {'creato UTC':<17} {'creato locale':<15} tempo")
     for r in run:
         creato = dt.datetime.fromisoformat(r["created_at"].replace("Z", "+00:00"))
-        eta = _eta_minuti(r["created_at"], adesso)
+        # Per un run CONCLUSO il numero utile e' la DURATA (created -> updated);
+        # per uno ancora vivo e' l'ETA' (created -> adesso). Stamparli con la
+        # stessa etichetta e' come confondere «quanto ci ha messo» con «da
+        # quanto aspetta»: il difetto e' stato trovato usando questo banco, che
+        # dava 44,1 ore a un run durato 34 perche' misurava fino a oggi.
+        concluso = r["status"] == "completed"
+        fine = (
+            dt.datetime.fromisoformat(r["updated_at"].replace("Z", "+00:00"))
+            if concluso
+            else adesso
+        )
+        minuti = (fine - creato).total_seconds() / 60
         stato = f"{r['status']}/{r['conclusion'] or '-'}"
-        ore = f"{eta:.0f} min" if eta < 90 else f"{eta / 60:.1f} ore"
+        quanto = f"{minuti:.0f} min" if minuti < 90 else f"{minuti / 60:.1f} ore"
+        etichetta = "durata" if concluso else "in attesa da"
         print(
             f"  #{r['run_number']:>6}  {stato:<22} {creato:%m-%d %H:%M} UTC   "
-            f"{creato.astimezone():%m-%d %H:%M}      {ore}"
+            f"{creato.astimezone():%m-%d %H:%M}      {etichetta} {quanto}"
         )
 
     print("\n  ⚠️ Il tetto noto di un run e' ~45 min (windows 45,0 · ubuntu 17,5 ·")
