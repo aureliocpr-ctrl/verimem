@@ -81,7 +81,16 @@ def main() -> int:
 
     rotti = sorted(i for i in citate if i not in esistenti)
     vive = {i: v for i, v in citate.items() if i in esistenti}
-    con_firma = {i for i in vive if FIRMA.search(COLONNE.split(esistenti[i])[6])}
+    #: ⚠️ la firma NON sta in una colonna a indice fisso. Misurato il 01/09
+    #: alle 20:16: le 366 righe firmate del registro distribuiscono la firma su
+    #: DODICI indici diversi ({8: 48, 9: 265, 10: 16, 11: 19, 12: 4, …}), perche'
+    #: le righe hanno da 10 a 40 colonne — chi scrive mette barre nel testo. La
+    #: firma sta nell'ULTIMA colonna reale (il regime), non nel verdetto.
+    #: Cercarla in `[6]` la vedeva quasi mai. Tengo il vecchio ACCANTO al nuovo
+    #: nella stessa esecuzione: un A/B cosi' e' immune allo scorrere del file.
+    con_firma_vecchio = {i for i in vive
+                         if FIRMA.search(COLONNE.split(esistenti[i])[6])}
+    con_firma = {i for i in vive if FIRMA.search(esistenti[i])}
 
     print(f"  registro: {len(esistenti)} celle")
     print(f"  celle LOAD-BEARING (citate da un documento che si legge): "
@@ -89,6 +98,9 @@ def main() -> int:
     print(f"     di cui con una firma nel testo (euristica): {len(con_firma)}"
           f"  = {100*len(con_firma)/max(1,len(vive)):.1f}% delle load-bearing")
     print(f"     SENZA: {len(vive) - len(con_firma)}")
+    print(f"     ⚠️ col vecchio criterio (solo colonna [6], il VERDETTO): "
+          f"{len(con_firma_vecchio)} — differenza "
+          f"{len(con_firma) - len(con_firma_vecchio):+d}")
     print()
     per_doc: dict[str, int] = defaultdict(int)
     for i, ds in vive.items():
