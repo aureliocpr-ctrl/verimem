@@ -27,6 +27,10 @@ REGISTRO = Path(__file__).resolve().parent.parent / "docs" / "stato-reale" / "00
 
 #: una riga-cella: `| <id> | <domanda> | ... |` con almeno le nove colonne.
 RIGA_CELLA = re.compile(r"^\| [\w-]+ \|")
+#: la sigla VERA di una cella del registro: `LANT-n` o `Wn-n`, con l'eventuale
+#: suffisso di lettera. Serve a separare le celle dalle righe delle altre
+#: tabelle che vivono nello stesso file.
+RIGA_CELLA_VERA = re.compile(r"^\| (?:LANT|W\d)-\d+[a-z]? \|")
 #: 🔴 31/08 02:40 — SEPARARE LE COLONNE CON `split("|")` E' SBAGLIATO.
 #: @ws2 (02:32) ha trovato che un `|` NON escapato dentro una cella la TRONCA
 #: alla scrittura, senza errore. Il complemento: un `\|` ESCAPATO **non**
@@ -61,6 +65,23 @@ def main() -> int:
         if RIGA_CELLA.match(r) and len(COLONNE.split(r)) >= 10
     ]
     conto = Counter(verdetto(r) for r in celle)
+
+    #: ⚠️ il pattern LARGO accetta qualunque riga che apra con una parola fra
+    #: barre, e nel file ci sono ALTRE TABELLE (liste numerate di cancelli, di
+    #: comandi, di verifiche) che hanno un verdetto nella stessa colonna: quelle
+    #: righe finivano nel semaforo. Stesso difetto curato il 01/09 alle 20:28 in
+    #: `celle_load_bearing.py` — era una COPIA dello stesso pattern, e curarne
+    #: una sola avrebbe lasciato in piedi il numero che pubblico piu' spesso.
+    #: Stampo il vecchio ACCANTO al nuovo: la differenza dev'essere leggibile.
+    strette = [r for r in celle if RIGA_CELLA_VERA.match(r)]
+    if len(strette) != len(celle):
+        spurie = Counter(verdetto(r) for r in celle if not RIGA_CELLA_VERA.match(r))
+        print(f"⚠️  il pattern largo contava {len(celle)} righe, quelle con una "
+              f"sigla vera sono {len(strette)} — {len(celle)-len(strette)} "
+              f"venivano da ALTRE TABELLE del file")
+        print(f"     e portavano con se' questi verdetti: "
+              f"{dict(sorted(spurie.items(), key=lambda kv: -kv[1]))}")
+    celle, conto = strette, Counter(verdetto(r) for r in strette)
 
     ids = [RIGA_CELLA.match(r).group(0).strip("| ") for r in celle]
     doppi = sorted(k for k, v in Counter(ids).items() if v > 1)
