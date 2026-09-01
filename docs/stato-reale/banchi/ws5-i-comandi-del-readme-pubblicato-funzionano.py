@@ -50,6 +50,20 @@ accanto al comando dice::
 dichiarati nel `METADATA` (`ann, audit, byok, dev, documents, full, mcp-only, server,
 tui, vision`): manca **una riga nel README**, non una funzionalita'.
 
+✅ **E LA CURA E' DIMENSIONATA, non ipotizzata**: eseguito
+`pip install 'verimem[server]'` — **8.3 secondi, quattro pacchetti** (fastapi, httptools,
+watchfiles, websockets) — i due comandi **funzionano**::
+
+    verimem console        exit 124 (= il timeout del banco: ERA IN ESECUZIONE), 0 traceback
+                           «(personal mode, loopback only)»
+    verimem gateway serve  exit 124, 0 traceback
+                           «Uvicorn running on http://127.0.0.1:8377»
+
+⇒ Sono **server**: restano attivi, e il mio `timeout` li ha interrotti — che e' la prova
+che partivano. ⇒ **La cura e' una riga nel README** (`pip install 'verimem[server]'`
+accanto a quei comandi), e costa all'utente **otto secondi**. Non e' una funzionalita'
+mancante: e' una riga di testo.
+
 🪞 **E questo banco ha sbagliato TRE volte prima di dire il vero**, ogni volta in modo
 che sarebbe passato inosservato::
 
