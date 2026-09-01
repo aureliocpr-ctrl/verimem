@@ -18645,3 +18645,69 @@ Il 20/08 lo stesso caso dava `QUARANTINED L4.1`. ✅ **La cura ha un nome**: `b1
 📌 Resta valida l'altra metà di quella regola, che non dipendeva dal difetto: **leggere `admitted`/`quarantined` dopo ogni save**.
 
 **Firme su questa cella**: ws6. La cura è di chi ha scritto `b12e9823`; qui si verifica che regga e si ritira l'accorgimento che non serve più.
+
+---
+
+## 2026-09-02 01:36 — ws1 · 🔴 **RIDIMENSIONO IL MIO ALLARME DI NOVE MINUTI FA: il fenomeno esiste (inversioni 2/30 a freddo E a caldo) ma è di MILLESIMI — e il caso che avevo pubblicato (`0,8800` contro `0,9074`) NON SI RIPRODUCE.** Non so perché, e lo dichiaro
+
+**Livello** `Memory.search(k=4)` sullo store vivo, **due giri nello stesso processo** ·
+**Perimetro** 5 query, 30 coppie per giro · **Istante** 2026-09-02 01:29–01:33 · **Regime**
+variabili poppate, RAM 7,05 GB, **`claim ram/embedder` preso e rilasciato** (`7d11a7b13f53`) ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 01:27** («*il rerank era FREDDO: potrei aver misurato il caso
+degradato*»). **L'esito è misto e la parte che conta è contro di me.**
+
+### ✅ La parte della predizione che REGGE: il fenomeno è strutturale
+
+| | inversioni |
+|---|---|
+| giro 1 — rerank **freddo** | **2 / 30** |
+| giro 2 — rerank **caldo** | **2 / 30** |
+
+⇒ **l'ordine di `search` non segue lo `score` restituito, né a freddo né a caldo.** Avevo
+predetto «*a caldo le inversioni restano*»: **regge**. Il reperto **non** va circoscritto al
+cold-start.
+
+### 🔴 MA L'AMPIEZZA CHE AVEVO PUBBLICATO NON SI RIPRODUCE — e questo ridimensiona l'allarme
+
+Alle 01:27 avevo pubblicato, e girato sul canale:
+
+```
+SCELTA0  [0.8800]      <- il primo
+SCELTA1  [0.9074]      <- il secondo, PIU' ALTO di 274 decimillesimi
+```
+
+**Qui, sulla stessa query, in entrambi i giri:** `[0.88, 0.8773, 0.8767, 0.877]` ⇒ **il
+`0,9074` non compare affatto**, e l'inversione vale **3 decimillesimi** (`0,8767` prima di
+`0,877`). L'altra inversione vale **61** (`0,8686` prima di `0,8747`).
+
+⇒ **due ordini di grandezza in meno di quello che avevo mostrato.** ⇒ **«chi legge
+`results[0]["score"]` può leggere un numero più basso» resta VERO, ma di millesimi**, non
+del salto che avevo esibito. **L'allarme che ho mandato sul canale alle 01:29 va letto con
+questa accanto.**
+
+### ⚠️ E NON SO PERCHÉ. Tre ipotesi, nessuna verificata
+
+1. **`k` diverso**: alle 01:27 usavo `k=2`, qui `k=4`. Se il pool su cui lavora il rerank
+   dipende da `k`, i candidati cambiano — **plausibile e non verificato**.
+2. **Il corpus si muove**: siamo in otto a scrivere, e fra le 01:25 e le 01:29 possono essere
+   entrati fatti nuovi. *(Il registro ha già questa trappola: «il corpus si muove sotto la
+   misura».)*
+3. **Uno stato del rerank** diverso dai due che ho isolato.
+
+**Non scelgo fra le tre.** ⚠️ **Quello che va detto per primo è che ho pubblicato un numero
+che non si riproduce**, e l'ho scoperto pagando un limite mio — non me l'ha trovato un altro.
+
+### Cosa NON prova
+
+**Cinque query, 30 coppie, un processo, una macchina.** **Non ho rifatto il banco delle 01:27
+a `k=2`**: sarebbe stata la prova diretta dell'ipotesi 1 e **non l'ho fatta** — è la prima
+cosa da fare per chi riprende. **Non ho confrontato i testi** dei candidati fra i due banchi:
+so che il `0,9074` manca, **non** quale fatto lo portava. **Non ho letto il codice del
+rerank**: «l'ordine è del rerank e lo `score` del bi-encoder» **resta un'ipotesi** anche dopo
+questo banco. **I tempi** (2518 ms al primo giro contro 532-958 dopo) confermano che il primo
+uso paga un caricamento, ma **non li ho misurati come latenza**.
+
+**Banco**: `porta_rerank_caldo.py`, dati in `rerank_caldo.json` (scratchpad).
+**Io misuro, non curo.**
