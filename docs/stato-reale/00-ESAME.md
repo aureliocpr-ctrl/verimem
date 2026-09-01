@@ -18034,3 +18034,75 @@ consumatori del journal (flow_tail, flow_events, gateway) : 25 passed
 ⚠️ **I 254 zeri già scritti restano**: la riga vale da qui in avanti, e questo è l'unico posto che lo dice a chi rilegge il journal storico. · ❌ **Non so quante delle 254 fossero tagliate e quante non trovate**: l'informazione è stata persa **alla scrittura** e non è ricostruibile — è esattamente ciò che la cura impedisce d'ora in poi. · ⚠️ Il traffico è il **nostro**, otto istanze su questa macchina: il 10,2% descrive come lavoriamo noi.
 
 **Firme su questa cella**: ws6. Il pezzo (i) è di un altro; questa ne estende la cura alla superficie rimasta indietro.
+
+---
+
+## W8-53 — 🔴 **Il presidio del tetto `mcp<2` non è nel branch**: l'hotfix ripara, ma non porta ciò che impedisce di ri-rompersi
+
+🚪 **Cancello: ③ `twine check` · ⑤ promesse · G1.**
+
+### Il quadro generale, col suo limite
+
+    file di test che differiscono fra branch e main:            651
+    di cui PIÙ RICCHI su main (rafforzati dopo il 22/07):       611
+    file di test che esistono SOLO su main:                     553
+
+⚠️ **«Più righe» non è «presidio più forte»**: 611 è un **limite superiore**, non una misura
+— criterio sintattico su fenomeno semantico. **Non affermo che 611 presidi siano più
+deboli.** Ma **due** li ho guardati, scelti col criterio «circoscrive qualcosa di pubblico»,
+ed **entrambi hanno prodotto un reperto**.
+
+### 🔴 Il secondo: il file **non è più corto, è ASSENTE**
+
+    tests/test_il_pacchetto_ha_cio_che_promettiamo.py
+      hotfix/0.7.1   righe=0     funzioni test=0     (file assente)
+      main           righe=711   funzioni test=11
+
+Gli otto test mancanti sono **i presidi del rilascio**:
+
+    test_i_comandi_che_il_readme_insegna_esistono
+    test_i_prefissi_di_provenance_che_suggeriamo_sono_accettati
+    test_il_server_mcp_si_importa
+    test_il_wheel_contiene_i_comandi_del_repo
+    test_il_wheel_passa_il_controllo_che_pypi_fa_prima_di_accettarlo      ← twine
+    test_la_soglia_in_commit_del_readme_e_ancora_vera
+    test_la_versione_dichiarata_non_e_troppo_lontana_dal_codice
+    test_le_dipendenze_che_pubblichiamo_hanno_un_tetto_dove_serve         ← IL TETTO
+
+### 🔑 L'ultimo è nato da questo stesso incidente — e non è nel ramo che lo ripara
+
+Docstring del test su `main`:
+
+    """Una dipendenza senza tetto pubblica un prodotto che si romperà da solo.
+    Il caso vero, e non è ipotetico: `verimem 0.7.0` su PyPI chiede `mcp>=1.0.0` senza
+    limite superiore. `mcp 2.0.0` ha rimosso `Server.list_tools`, che il nostro server…
+    """
+
+⇒ **`0.7.1` porta la cura** (`mcp<2` nel `METADATA`, tutti e tre i rami — `W8-48`) **ma non
+il presidio che impedisce di perderla.** Se domani il tetto sparisse dal branch, **nessun
+test lo fermerebbe**, e il prossimo hotfix ripartirebbe da lì con la stessa dinamica.
+
+📌 **La forma, e vale oltre questo rilascio**: **una cura viaggia col codice, il suo presidio
+no** — a meno che non lo si porti apposta. È la variante «ramo di rilascio» di *un presidio
+che non esiste non emette segnale*.
+
+### ⚖️ Due mancanze che toccano l'utente
+
+- **`test_il_wheel_passa_il_controllo_che_pypi_fa_prima_di_accettarlo`** → il cancello ③
+  esiste **nel workflow**, quindi non siamo scoperti; **ma la rete locale manca**, e chi
+  lavora sul branch se ne accorge solo pubblicando.
+- **`test_i_comandi_che_il_readme_insegna_esistono`** → è **letteralmente** l'errore che ho
+  fatto io stanotte con `verimem search` (`W8-46`). **Su `main` un test lo impedisce; sul
+  branch no.**
+
+### 🎯 Proposta, piccola
+
+**Portare quel file sul branch** (o almeno i due test su tetto e comandi del README). **È un
+file di test**: non tocca il prodotto, non cambia il wheel, non invalida il verde. Trasforma
+«l'hotfix ripara» in **«l'hotfix ripara e resta riparato»**.
+⚠️ **Non lo faccio io**: file altrui su un ramo di rilascio, serve mandato.
+
+    rifallo con:
+    git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c test_il_pacchetto_ha_cio_che_promettiamo
+    comm -13 <(git show origin/hotfix/0.7.1:tests/test_il_pacchetto_ha_cio_che_promettiamo.py 2>/dev/null | grep -oE '^def test_[a-z_0-9]+' | sort) \
+             <(git show origin/main:tests/test_il_pacchetto_ha_cio_che_promettiamo.py | grep -oE '^def test_[a-z_0-9]+' | sort)
