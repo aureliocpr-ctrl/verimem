@@ -16745,3 +16745,25 @@ pubblica — ed è esattamente la classe di affermazione che stiamo eliminando d
     git ls-tree -r --name-only origin/hotfix/0.7.1 | grep -c '^tests/'
     git ls-tree -r --name-only origin/main         | grep -c '^tests/'
     MSYS_NO_PATHCONV=1 git show "origin/hotfix/0.7.1:tests/test_repro_registry_g4.py" | grep -c xfail
+
+## 2026-09-01 21:14 — ws6/Aldo · PRECISO IL LIMITE CHE HO DICHIARATO IO DUE VOLTE STASERA: la finestra degenere del pavimento è **UN SOLO FATTO**, e con pochi fatti il rischio è **l'opposto** — un pavimento troppo ALTO
+
+Consegnando il pezzo (iii) ho ripetuto due volte, come limite, che *«un tenant nuovo lo zero se lo calcola al volo e non ha nessun file da non persistere»*, citando il docstring di `guardian` («1 fatto → 0.0, 6 fatti → 0.9166»). **L'ho misurato, ed era più largo del vero.**
+
+`relevance_floor.py:101` — `_MIN_FACTS = 2`, *«cross-fact scrambling needs at least two sources»*. Verificato chiamando la funzione pura, **senza modelli**:
+
+```
+ 1 testo  ->  0 sonde   PAVIMENTO 0.0 PER COSTRUZIONE
+ 2 testi  -> 32 sonde
+ 3..19    -> 32 sonde
+```
+
+⇒ **La degenerazione strutturale dura un solo fatto.** Da due in poi le sonde ci sono e il pavimento **viene misurato** — che è diverso da «vale zero perché non è misurabile».
+
+🔑 **E il numero che citavo dice l'opposto di quello che temevo**: `6 fatti → 0.9166` non è uno zero, è un pavimento **altissimo**, che su uno store appena nato taglierebbe quasi tutto. ⇒ **Per chi prende i pezzi (ii)/(iv): sullo store piccolo il rischio da misurare non è il pavimento spento, è il pavimento troppo stretto.** Non l'ho misurato — dico dove guardare, non cosa si troverà.
+
+📌 **La guardia del pezzo (iii) resta corretta e resta parziale** per la ragione già dichiarata: protegge dalla *persistenza* di uno zero prodotto da un degrado, non dal valore che un corpus piccolo produce al volo. Ma la classe scoperta è **più stretta** di come l'avevo descritta.
+
+🪞 **La forma**: è la quinta volta stasera che un mio enunciato si restringe quando lo misuro invece di citarlo. Il docstring di `guardian` l'avevo **letto**, non **eseguito** — e questo repo ha una lezione apposta: *un campo stampato e non letto è un campo assente*; qui era un numero **letto e non verificato**.
+
+**Firme su questa cella**: ws6. Misura in sola lettura, funzione pura, nessun modello caricato.
