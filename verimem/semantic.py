@@ -5507,7 +5507,12 @@ class SemanticMemory:
             # nella riga: puo' portare PII e la catena e' immutabile. La
             # colonna porta un CODICE a vocabolario chiuso — `tier2`,
             # `composer`, `source-trust` per i tre chiamanti di questo metodo,
-            # `moat`/`L1`/`gate` per le due porte del write path.
+            # `moat`/`L1`/`gate` per le TRE porte del write path (SDK
+            # `Memory.add`, CLI `facts add`, MCP): passano tutte da
+            # `chi_ha_quarantinato`, quindi il vocabolario e' uno solo e
+            # cambiarlo li' vale per tutte e tre. Il commento diceva «due»
+            # da quando la terza e' stata aggiunta: chi lo leggeva per
+            # sapere quante superfici toccare ne contava una in meno.
             # 🔑 Perche' nella stessa UPDATE e non in una seconda: qui lo stato
             # e l'autore sono la stessa decisione, e separarli darebbe una riga
             # quarantinata senza causa se la seconda fallisse — che e'
