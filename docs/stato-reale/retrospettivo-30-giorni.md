@@ -60,6 +60,17 @@ che sbaglia: è chi scrive che gli chiede di giudicare due cose come una.**
 → `W2-371`. **Limite:** «vero» significa *sostenuto dalla fonte secondo il giudice*, non vero
 nel mondo. Se il giudice sbaglia, sbagliano entrambe le popolazioni insieme.
 
+> **⚠️ Circoscritto il 02/09 alle 02:34 da un contro-esempio che ho fabbricato io.** Salvando
+> i risultati di un altro banco ho scritto **quattro fatti con la stessa source**: tre hanno
+> preso **99,98**, e quello che asseriva un'**assenza** — *«i falsi non fermati da nessuno sono
+> 0»* — ha preso **0,15 ed è stato quarantinato dal moat**. Il fatto è vero e la fonte lo
+> sostiene alla lettera.
+>
+> Non è la classe dei 21 letti sopra (frasi con più affermazioni): è **una sola affermazione,
+> sostenuta, fermata**. ⇒ **«zero falsi positivi su 512» resta vero come misura del passato e
+> non è una garanzia**: dice che questa forma è rara nei nostri write, non che il presidio la
+> gestisca. (`W2-390`)
+
 ---
 
 ## (b) La memoria erode dopo — ed è il case-study che vale
@@ -217,5 +228,7 @@ l'adozione del codice su questa macchina.
 - **Il campione letto è piccolo ovunque**: 5 casi su 333, 4 su 21, 5 su 5616, 3 su 195. Sono
   **indizi con la direzione, non tassi**, e ogni cella lo dichiara.
 - **La causa del buco di venti giorni non è nota.** Il documento dice cosa **non** è.
+- **Il verdetto (a) ha un contro-esempio noto**, prodotto in laboratorio e non trovato nel
+  corpus: le **asserzioni di assenza** vengono fermate. Una, misurata. (`W2-390`)
 - **Una delle quattro celle è stata corretta al rialzo**: la reversibilità vale 202 fatti, non 178.
   **Il verdetto 🟡 «inerte» non cambia: funziona e non la usa nessuno.**
