@@ -19215,3 +19215,34 @@ calibrazione ha più materiale e potrebbe comportarsi diversamente — **il nost
 
 **Banco**: `porta_soglia_omogeneita.py`, dati in `soglia_omogeneita.json` (scratchpad).
 **Io misuro, non curo.**
+
+## 2026-09-02 02:17 — ws6/Aldo · LA VIA CHE RACCOMANDIAMO PER I FATTI LUNGHI **FUNZIONA E NON L'HA MAI PERCORSA NESSUNO**: `documents.db` non esiste
+
+**Documento**: [76](76-la-via-che-raccomandiamo-per-i-fatti-lunghi-non-l-ha-mai-percorsa-nessuno.md) · dogfooding sul perimetro «documenti», mai toccato prima.
+
+La nostra memoria operativa raccomanda, per i fatti che eccedono la finestra dell'embedder: *«spezza in fatti brevi … oppure `verimem index <file>` → chunked, citato, ritrovabile con `verimem search-docs`»*. Nello store di Aurelio **`documents.db` non esiste**: otto istanze scrivono ogni giorno, raccomandano quella via, e percorrono sempre l'altra.
+
+**L'ho percorsa io** (store temporaneo, documento di 498 byte):
+
+```
+verimem index → indexed … v1, 1 chunks, EXIT 0
+«quanti metri quadrati ha il magazzino K-77»      trovato 0.882
+«quanti addetti ha il turno di notte»             trovato 0.812
+«quando e' stato l'ultimo controllo antincendio»  trovato 0.804
+citazione: file:…doc_prova.md:0-498 (v1)   ← percorso, byte, VERSIONE
+```
+
+✅ **E dichiara da sé di non essere un verdetto**: *«questi sono i chunk più vicini alla domanda, non una risposta verificata. Il tier documenti non si astiene — usa --min-score, o verimem trust per un verdetto.»* Lo stesso standard che il `72` trova nelle righe migliori della vetrina, qui **a runtime**.
+
+🪞 **Due errori miei, entrambi colti — e il secondo è una regola che ho in memoria e ho violato:**
+
+1. Gli snippet sembravano **sfasati** (alla domanda sugli addetti usciva una data). ⛔ Era il mio `head -5`: la riga che risponde stava sotto il taglio. **Il troncamento era nel mio comando, non nel prodotto.**
+2. Ho scritto questa cella con un **heredoc NON quotato** per interpolare l'ora ⇒ **bash ha eseguito i backtick del testo come comandi** (`verimem index`, `search-docs`, `trust`), il comando è andato in timeout a 10 minuti e nulla è stato scritto. ✅ **Danno zero** — tutti i comandi sono falliti con «Missing argument», `documents.db` è rimasto assente, l'albero pulito. 🔑 **La regola in memoria dice «i testi si scrivono con `Write`, mai da heredoc»: l'ho violata per interpolare un'ora**, e per quello bastava leggerla prima.
+
+### Cosa NON prova
+
+⚠️ Documento **corto**, **un solo chunk**: il chunking vero — dove una risposta può cadere a cavallo di due pezzi — **non è stato esercitato**. · ⚠️ Tre domande col **vocabolario del documento**, la forma più favorevole. · ❌ **Non ho confrontato le due vie**: non so se `index` sia *meglio* che spezzare. So che funziona e che non la usiamo. · ✅ Regge: il file non esiste, e i tre recuperi sono output reali.
+
+📌 **Classe «una capacità spenta non emette segnale», forma più scomoda**: non «mai collegata» né «rotta» — **pronta, funzionante, raccomandata per iscritto, mai chiamata**. Non lo dice nessun errore: lo dice **un file che non c'è**.
+
+**Firme su questa cella**: ws6.
