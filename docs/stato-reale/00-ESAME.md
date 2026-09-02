@@ -19877,3 +19877,88 @@ guardare il righello», e stanotte l'ho quasi mancata.
     python -c "import re,pathlib; t=pathlib.Path('docs/stato-reale/00-ESAME.md').read_text(encoding='utf-8'); \
       b=re.split(r'\n## (W8-\d+)', t); c={b[i]:b[i+1] for i in range(1,len(b),2)}; \
       print(sum(1 for k,v in c.items() if int(k.split('-')[1])>=46 and 'rifallo con' in v))"
+
+---
+
+## 2026-09-02 03:05 — ws1 · 🟢🔴 **SPEGNERE IL PAVIMENTO SI PUÒ: il giudice ferma `9` domande fuori dominio su `10`, e il bilancio è `+6` risposte vere contro `−1` invenzione.** Ma il caso che passa prende **99,97** e la sua unica differenza dalla fonte è **IL SOGGETTO**
+
+**Livello** `search(k=1)` **a pavimento spento** + `try_local_score` (soglia 40,0) sullo
+**STORE VIVO** · **Perimetro** **10 domande fuori dominio in DUE popolazioni** — 5 *lontane*
+(altro dominio e altro lessico) e 5 **vicine** (stesso lessico dello store, **referente
+diverso**, e la risposta inventata **ruba il numero** al fatto che verrà pescato) · **Istante**
+2026-09-02 03:02–03:05 · **Regime** variabili poppate, RAM 5,90 GB libera, **`claim
+ram/giudice`** (`1edd56b43964`) preso e rilasciato · **Autorità**: ordine di Aurelio delle
+00:00 · **0.7.6**.
+
+**Paga il debito che avevo dichiarato in pubblico alle 02:55**: «*non ho misurato il costo di
+spegnere il pavimento; finché non ho quel numero è una diagnosi, non una raccomandazione*».
+
+### Il numero — e per la prima volta stanotte la predizione è centrata
+
+| popolazione | **fermate dal giudice** | col pavimento acceso erano vuote |
+|---|---|---|
+| **A) lontane** | **5 / 5** | 5 / 5 |
+| **B) vicine** *(il caso difficile)* | **4 / 5** | 5 / 5 |
+| **totale** | **9 / 10** | 10 / 10 |
+
+⚖️ **Predicevo A `5/5`, B `2-4/5`, totale `7-9`: uscito `5`, `4`, `9`.** ⇒ condizione d'uscita
+`≥8` ⇒ **spegnere il pavimento è proponibile**, e lo scrivo come raccomandazione **con il suo
+prezzo scritto accanto**.
+
+### 🟢 Il bilancio, sulle stesse porte e con lo stesso righello
+
+| | pavimento **acceso** | pavimento **spento** |
+|---|---|---|
+| risposte vere perse *(domande spogliate, 02:45)* | **6 / 10** | **1 / 10** ¹ |
+| invenzioni che passano *(domande fuori dominio)* | 0 / 10 | **1 / 10** |
+
+¹ *il residuo che il giudice non recupera, misurato alle 02:50.*
+
+⇒ **sei risposte vere recuperate contro una invenzione lasciata passare.** ⚠️ **E quella
+invenzione il pavimento la fermava**: spegnerlo **non è gratis**, costa **esattamente quel
+caso**, e chi scrive la vetrina deve poterlo dire.
+
+### 🔴 Il caso che passa, ed è più grave di come l'avevo classificato
+
+```
+giudice 99.97   PASSA
+  inventata: I messaggi di posta hanno il 29.8 per cento di span telegrafici.
+  source   : Nel mese 2026-08 gli ammessi hanno 29.8 per cento di span telegrafici e i
+             quarantinati da MOAT il 27.3 per cento.
+```
+
+**La frase inventata cambia UNA sola cosa rispetto alla fonte: il SOGGETTO.** Numero,
+predicato e unità sono identici. Il giudice dà **99,97** — indistinguibile da un fatto vero.
+
+⇒ **non è cecità ai denominatori: è cecità al SOGGETTO**, e la prima è un caso particolare
+della seconda. *(Il mio caso dei denominatori — «128 su 999» contro «128 su 372» → 99,96 —
+cambia il denominatore; questo cambia chi compie l'azione. Stesso punteggio, stesso meccanismo:
+**il giudice conferma ciò che la fonte contiene letteralmente e non controlla DI CHI si
+parla**.)*
+
+📌 **Gli altri nove sono fermati bene, e per la ragione giusta**: quando la fonte pescata non
+contiene il numero della frase inventata, il punteggio è **0,17–6,16** — perfino sul mutuo
+(`35,03`), che è il più alto dei fermati, resta sotto soglia. ⇒ **il giudice sbaglia SOLO
+quando la fonte contiene alla lettera il numero e il predicato**: la sua condizione di
+fallimento è **precisa e nominabile**, non un rumore diffuso.
+
+🔗 **Convergenza da segnalare, senza citarla come mia**: le due celle immediatamente sopra
+questa su `origin` (`bd6d0291`, `a78f9b1a`) misurano **lo stesso giudice su fonti lunghe e
+tabellari** e trovano che si rovescia. **Non le ho rimisurate**, quindi non ne riporto i
+numeri — ma il mio caso arriva **da una porta diversa** (domande fuori dominio a pavimento
+spento) e cade nello stesso punto: **il giudice guarda la superficie della frase**.
+
+### Cosa NON prova
+
+**Dieci domande fuori dominio, cinque per popolazione, un solo store.** `9/10` **non è un
+tasso**, e **le domande «vicine» le ho costruite io per essere difficili**: sono un banco
+avversario, non un campione di traffico reale — **la frequenza con cui un utente vero
+produrrebbe quel caso non la conosco**. **Il bilancio «+6 / −1» mette insieme due banchi
+diversi** (domande spogliate e domande fuori dominio): è un confronto fra **popolazioni
+distinte**, e va letto come ordine di grandezza, non come rapporto. **La risposta inventata è
+un surrogato dichiarato della generazione**, non un llm. **Non ho misurato cosa succede con
+`ENGRAM_GATEWAY_MIN_RELEVANCE` a valori intermedi** — ho confrontato solo acceso contro
+spento.
+
+**Banco**: `porta_costo_pavimento.py`, dati in `costo_pavimento.json` (scratchpad).
+**Io misuro, non curo.**
