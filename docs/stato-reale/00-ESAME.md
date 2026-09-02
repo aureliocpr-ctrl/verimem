@@ -21726,9 +21726,34 @@ che si chiama Verimem questo non è un difetto fra i difetti: è la promessa.
 
 1. **Non ho eseguito** una chiamata MCP con `validate="off"` o `force_persist=True`: non
    posso installare né avviare il server. **Lettura statica del flusso.**
-2. L'effetto «*gate never runs*» per `validate="off"` è descritto dal commento su `main`;
-   **dentro il treno** ho una descrizione interna solo per `force_persist` («overrides
-   everything»). **È il punto più debole di questa cella e lo dichiaro per primo.**
+2. ~~L'effetto «*gate never runs*» per `validate="off"` è descritto dal commento su `main`;
+   **dentro il treno** ho una descrizione interna solo per `force_persist`.~~
+   **CHIUSO alle 05:22, e a sfavore del misuratore: il limite cadeva dalla parte della
+   tesi.** Un limite dichiarato è la lista dei comandi da eseguire — questa l'avevo
+   eseguita **dopo** aver alzato la voce, e la pubblico come se fosse un allarme perché è
+   favorevole. Nel treno la prova non è un docstring, è il **codice**:
+
+       1e293f4b:verimem/anti_confab_gate.py:967   # Fast path: off → never gate.
+       1e293f4b:verimem/anti_confab_gate.py:968   if level == "off":
+       1e293f4b:verimem/anti_confab_gate.py:969       return GateResult(action="persist")
+
+   E tre righe sotto, **nel treno**, c'è la politica che decide la questione:
+
+       # Security fix 2026-06-02: token-gated. writer_role is client-
+       # spoofable via MCP arguments, so the bypass now requires a
+       # server-side secret (verify_trusted_writer, fail-closed when the
+       # ENGRAM_HOOK_TOKEN env is unset or the token is absent/wrong).
+
+   ⇒ **Il progetto conosceva già questa classe di problema** — «*client-spoofable via MCP
+   arguments*» — e per `writer_role` l'ha risolta col token. `4a37b09d` estendeva **la
+   stessa regola** a `validate` e `force_persist`; è quella che manca. Nel treno dunque
+   **uno dei tre campi è protetto e due no**; su `main` tutti e tre. Non è una lettura
+   severa di chi guarda da fuori: è **la politica di sicurezza del progetto, applicata a
+   un campo su tre**.
+   ⚠️ **Decimo errore mio nel misuratore, nello stesso minuto**: per stampare il contorno
+   della riga giusta avevo ripreso il primo match di un regex **più largo** di quello che
+   aveva trovato la riga — e ho letto la **354** (un'altra funzione) credendo fosse la
+   **968**. Il numero che conta va riletto con il pattern che l'ha prodotto.
 3. `84` è un limite superiore, non una stima (il filtro esclude 5 su 89).
 4. **Il conteggio giusto è 89, non 88**: la prima versione usava `--oneline`, che abbrevia
    lo SHA, e il regex ancorato perdeva una riga. **Nono errore mio nel misuratore**, e come
