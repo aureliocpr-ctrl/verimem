@@ -19525,3 +19525,72 @@ derives_from            1     0.0%
 ⚠️ **Non dico che accenderla sia giusto**: la misura dice che il difetto esiste, non che questa sia la cura migliore né che il ramo `contests` non abbia costi propri — **non l'ho misurato acceso**. · ⚠️ Il `274/340` è su **una finestra di sette giorni**, il `30/30` su un **campione letto**, non un tasso. · ✅ Regge: il testo del docstring è quello di oggi, e la misura è pubblicata dal 31/08.
 
 **Firme su questa cella**: ws6. La decisione è di chi la prende.
+
+---
+
+## 2026-09-02 02:47 — ws1 · 🔴🔴 **IL PAVIMENTO NON MISURA SE LA RISPOSTA C'È: MISURA SE LA DOMANDA SOMIGLIA A COME IL FATTO È SCRITTO.** Sullo store vivo: `1/10` perse con le parole dello store, `6/10` senza i suoi nomi propri, **`10/10` riformulando con parole proprie**
+
+**Livello** `Memory.search` con e senza `min_relevance="auto"` sullo **STORE VIVO**
+(`CONFIG.semantic_db`, 14 801 fatti) · **Perimetro** **le stesse 10 domande** in **tre
+versioni**, con **due domande lasciate identiche** fra la prima e la seconda come controllo
+interno · **Istante** 2026-09-02 02:42–02:46 · **Regime** variabili poppate, RAM 6,79 GB
+libera, **`claim ram/embedder`** (`285bd3bf711c`) · **Autorità**: ordine di Aurelio delle
+00:00 · **0.7.6**.
+
+**Chiude il «perché» che avevo riaperto alle 02:36** — e paga il limite che avevo dichiarato
+alle 02:28: «*le domande le ho scritte io a partire da fatti reali: sono favorevoli al
+retrieval per costruzione, quindi il `1/10` è ottimistico*». **Ora so di quanto.**
+
+### 🔴 Il numero, e la predizione cade in ENTRAMBI i bracci nel verso peggiore
+
+| braccio | **perse** | best medio | |
+|---|---|---|---|
+| **(1) originali** — con numeri e nomi propri | **1 / 10** | **0,9063** | sopra il pavimento |
+| **(2) spogliate** — tolte **solo** le ancore, **lessico identico** | **6 / 10** | 0,8748 | il pavimento cade **in mezzo** |
+| **(3) parafrasi** — ancore tolte **e** lessico riscritto | **10 / 10** | 0,8333 | tutto sotto |
+
+*(pavimento auto-calibrato dello store vivo: **0,8805**)*
+
+⚖️ **Predicevo (2) 3-5 e (3) 6-8: sono 6 e 10 su 10.**
+
+### ✅ Il controllo interno è pulito, e serviva
+
+Le domande `[4]` e `[9]` **non hanno ancore**, quindi in (2) sono **identiche** all'originale.
+Danno **lo stesso identico punteggio** in entrambi i bracci (`0,8521` e `0,8991`). ⇒ **il
+banco non ha rumore**: la differenza fra (1) e (2) viene **solo** dalle parole che ho tolto.
+
+### 📌 Perché il disegno ha tre bracci e non due
+
+Spogliare una domanda **riscrivendola** cambierebbe **due cose insieme** — l'ancora **e** il
+lessico — e la sola parafrasi costa già moltissimo *(misura del 31/08 in memoria: vocabolario
+del dominio 91,7% contro sinonimi 20,8%)*. **Il braccio (2) toglie solo le ancore e lascia
+ogni altra parola al suo posto**: è il solo che isola una variabile. Il braccio (3) serve come
+**estremo**, e va letto per quello che è — **due variabili insieme**.
+
+### 🎯 Cosa significa per il prodotto, e questo è il punto
+
+> **Con il pavimento acceso, `search` su uno store reale risponde a chi già conosce le parole
+> esatte con cui il fatto è stato scritto.** Nove domande su dieci se le formuli col lessico
+> dello store; **quattro su dieci** se togli i suoi nomi propri; **zero su dieci** se la
+> riformuli a parole tue.
+
+⇒ **è esattamente la modalità di chi NON ricorda il fatto** — cioè il motivo per cui si tiene
+una memoria. ⚠️ **E ribalta la lettura del mio `1/10` delle 02:28**: non era una buona notizia
+sul prodotto, era una buona notizia **sulle mie domande**.
+⚠️ **Direzione coerente con la misura del 31/08** (`91,7%` contro `20,8%` sui sinonimi), ma
+**quella era su un'altra porta e un altro banco**: la cito come *stessa direzione*, **non**
+come confronto numerico — **righelli diversi**.
+
+### Cosa NON prova
+
+**10 domande, un solo store, una macchina**: `1`, `6` e `10` non sono tassi. **Le parafrasi le
+ho scritte io** e potrei averle fatte **più distanti del necessario** — un utente reale
+starebbe probabilmente fra (2) e (3), e **dove esattamente non lo so**. **Il braccio (3) ha
+due variabili** e non regge da solo: la conclusione poggia su **(2)**, che ne ha una. **Non ho
+misurato la stessa cosa col GIUDICE al posto del pavimento** — e il giudice è la via che nel
+mio filone dell'astensione regge (`0/10` perse, `9/10` bloccate): **se anche il giudice
+tagliasse le domande parafrasate, l'avviso varrebbe per la cura che ho proposto**, e questo
+non lo so.
+
+**Banco**: `porta_ancoraggio.py`, dati in `ancoraggio.json` (scratchpad).
+**Io misuro, non curo.**
