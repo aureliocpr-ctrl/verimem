@@ -59,7 +59,46 @@ macchina**: prima di dichiarare il bersaglio mancato per sempre andrebbe rimisur
 macchina scarica. Con il p95 a 1 worker che varia del 92%, un bersaglio fissato al
 decimo di secondo misura il rumore quanto il pool.
 
-⇒ **Cosa consegno come raccomandazione**: **pool a 2 worker**, perche' e' gratis in
+🪞🔴 **SECONDA ESECUZIONE (21:49, CPU 29% invece di 68%) — LA RACCOMANDAZIONE CADE**::
+
+                  esecuzione 1 (CPU 68%)      esecuzione 2 (CPU 29%)
+    worker      p50      p95   giud/s       p50      p95   giud/s
+    1        1,546s  2,664s     4,7      1,283s  1,707s     5,8
+    2        0,929s  1,404s     7,4      1,153s  2,115s     4,6
+    4        1,011s  1,809s     6,8      1,165s  1,617s     6,0
+
+    varianza del p95 fra le due esecuzioni:  1 worker 56%  ·  2 worker 51%  ·  4 worker 12%
+    il «guadagno» che avevo misurato:        -47%
+
+⇒ **A 2 worker il p95 passa da 1,404s a 2,115s: da MIGLIORE a PEGGIORE.** ⇒ **La
+differenza fra configurazioni e' piu' piccola della differenza fra due esecuzioni della
+stessa configurazione**: con due punti il rumore domina il segnale, e **«pool a 2 worker»
+va RITIRATO**.
+📌 E a 2 worker il **max** e' **5,988s** contro un p95 di 2,115: una richiesta ha aspettato
+quasi sei secondi. Instabilita' vera, non solo dispersione.
+
+🪞 **L'ERRORE MIO, e non e' «i numeri ballano»**: nella prima stesura avevo gia' scritto
+l'avvertenza giusta — «*il valore assoluto non e' stabile, il RAPPORTO dentro la stessa
+esecuzione e' il dato solido*» — **e poi ho raccomandato 2 worker proprio su quel
+rapporto**. Avevo la premessa e ne ho tratto la conclusione sbagliata: **se il rumore
+muove i tempi del 50%, muove anche i loro rapporti.** Un rapporto misurato una volta non
+e' piu' solido di un valore misurato una volta.
+
+✅ **COSA SOPRAVVIVE**, perche' confermato in ENTRAMBE le esecuzioni::
+
+    la memoria non cambia col pool:  +9 e +14 MB su ~1900   (due misure concordi)
+
+⚠️ E il **-67% del daemon contro 8 giudici separati** e' misurato **una volta sola**: la
+memoria e' molto piu' stabile della latenza e le due esecuzioni la confermano, ma sta
+sullo stesso piano metodologico e va detto.
+
+⇒ **Per dire qualcosa sul pool servono N ripetizioni per configurazione**, non una. Con
+la varianza al 50%, distinguere un guadagno del 20% dal rumore vuole almeno 5 giri per
+configurazione (~45 minuti di macchina). Senza quelli, la conclusione onesta e' **«su
+questa macchina il pool non mostra un guadagno misurabile»**.
+
+--- (la raccomandazione della PRIMA esecuzione, ora ritirata) ---
+⇒ ~~Cosa consegno come raccomandazione~~: **pool a 2 worker**, perche' e' gratis in
 memoria, dimezza il p95 e aumenta il throughput del 57%. **Non 4.** E il bersaglio <1s
 resta aperto: con il pool A non si raggiunge qui, e il pool B (N istanze del giudice)
 costerebbe ~640 MB di modello per worker — a quel punto il conto della memoria, che era
