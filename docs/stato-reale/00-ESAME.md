@@ -22023,3 +22023,79 @@ scade e si disattiva.
 
 **Banchi**: `scripts/banco_rerank_controllato.py`, `scripts/banco_lingua_store_vivo.py`.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 19:51 — ws1 · ⛔ **T2.1 È GIÀ REALIZZATA: l'embedder attuale È `multilingual-e5-base`, il modello che la ricerca proponeva come cura.** E tre spiegazioni del divario IT/EN cadono una dopo l'altra — resta un `16×` nella dimensione della sottopopolazione
+
+**Livello** lettura di `verimem/config.py` **più `CONFIG` a runtime** e query SQL in sola
+lettura sullo store vivo · **Perimetro** intero store (17 268 fatti con `embedding_model`) e il
+campione 60-300 caratteri · **Istante** 2026-09-02 19:46–19:51 · **Regime** nessun modello
+caricato per le query SQL · **Lingua**: è l'oggetto della misura · **Autorità**: mandato di
+ricerca via lead-audit · **0.7.6**.
+
+### ⛔ Il confronto proposto non esiste: sono lo stesso modello
+
+```
+verimem/config.py:74   _DEFAULT_EMBEDDING_MODEL = "intfloat/multilingual-e5-base"
+CONFIG a runtime       embedding_model = 'intfloat/multilingual-e5-base'   dim = 768
+```
+⇒ **T2.1 chiedeva «attuale contro mE5-base»: l'attuale È mE5-base.** La predizione della
+ricerca — «*recall EN da 50% a ≥75% con mE5-base*» — **è già realizzata**: lo stiamo usando, e
+l'inglese misurato oggi è al **93,3-100%**.
+📌 **La migrazione è del 04/06 e il codice ne dichiara l'effetto**: «*GO-LIVE e5 2026-06-04:
+e5-base 768d (MRR 0.466→0.710 +52% MISURATO e2e)*» — **numero del codice, non mio, non
+verificato da me.**
+⇒ **resterebbe solo mE5-small (384d), che è un DOWNGRADE** *(MIRACL 60,8 contro 62,3)*, e
+**richiederebbe di rivettorializzare 17 268 fatti**. **Non l'ho scaricato: non c'è nulla da
+guadagnare.**
+
+⚠️ **Trappola per chiunque tenti uno scambio di embedder** *(`config.py:76-83`)*: modello e
+dimensione sono **due env indipendenti**, e puntare `HIPPO_EMBEDDING_MODEL` a un modello con
+dim ≠ 768 lasciando `HIPPO_EMBEDDING_DIM` non impostata **azzera in silenzio TUTTO il recall
+semantico** — ogni vettore ha la lunghezza sbagliata e viene scartato dal filtro, **senza
+errore**. Per i modelli in `_KNOWN_MODEL_DIMS` la dim si deriva da sola; **per uno sconosciuto
+c'è solo un warning**.
+
+### 🔬 Tre spiegazioni del divario IT/EN, tutte falsificate qui
+
+| ipotesi | misura | esito |
+|---|---|---|
+| **l'embedder è debole sull'italiano** | è già `mE5-base`, 768d, verificato a runtime | ⛔ **non applicabile** |
+| **i fatti italiani sono più lunghi** | IT mediana **214** car. / 27 parole · EN **257** / 33 | ⛔ **falsificata**: gli inglesi sono più **lunghi** e vanno **meglio** |
+| **una parte dei fatti italiani è legacy MiniLM e «esce dal recall»** | `embedding_model`: **17 268 su 17 268** sono `e5-base`, **100% in entrambe le lingue** | ⛔ **falsificata**: nessun fatto legacy |
+| **la sottopopolazione italiana è più omogenea** | sovrapposizione lessicale media IT **0,0084** · EN **0,0189** | ⛔ **falsificata al contrario**: l'**inglese** è più omogeneo e va **meglio** |
+
+⇒ **quattro ipotesi, quattro cadute**, e tre erano mie.
+
+### 📌 Quello che resta, misurato ma NON isolato
+
+```
+fatti nel campione 60-300 caratteri:   ITALIANO 8558      INGLESE 534
+```
+⇒ **un fatto inglese ha ~16 volte meno concorrenti nella propria lingua.** ⚠️ **Non lo dichiaro
+come causa**: il recall cerca su **tutto** lo store, non solo dentro la propria lingua, quindi
+«meno concorrenti nella propria lingua» è **un'ipotesi sulla competizione fra vicini
+semantici**, non un fatto misurato. **Per isolarla servirebbe un banco a parità di dimensione
+di sottopopolazione**, che non ho fatto.
+
+### 🎯 Conseguenza per la catena
+
+**L'anello T2.1 si chiude senza scaricare nulla**, e la ricerca esterna non aveva torto sul
+modello: **aveva ragione tre mesi in ritardo.** ⇒ **la domanda utile non è più «quale
+embedder», ma «perché una sottopopolazione 16 volte più grande recupera peggio»**, e quella è
+la stessa famiglia del reperto delle 02:24 sull'omogeneità — **con il verso da rifare**, visto
+che qui l'omogeneità va nella direzione opposta.
+
+### Cosa NON prova
+
+**Le sottopopolazioni sono definite da un'euristica di parole funzionali**, non da un
+classificatore: una frase italiana che cita molto codice inglese finisce fra le inglesi, e il
+`?` (1 759 fatti) resta fuori da entrambe. **La sovrapposizione lessicale non è la similarità
+semantica**: è un proxy grezzo su token ≥4 lettere, 3 000 coppie, seed 0. **Il `+52%` del
+GO-LIVE e5 è dichiarato dal codice e non l'ho verificato.** **Il `16×` è un rapporto fra
+conteggi nello stesso range di lunghezza**, non una misura di competizione nel recall.
+
+**Banchi/query**: `scripts/banco_rerank_controllato.py` per i numeri di recall; le query SQL di
+questa cella sono riportate per esteso nel messaggio di consegna.
+**Io misuro, non curo.**
