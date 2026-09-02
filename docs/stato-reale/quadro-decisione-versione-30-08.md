@@ -115,3 +115,24 @@ CI-verde `success`, build-and-publish `success`; PyPI serve `0.7.1`
 campi indipendenti — lead su WSL Ubuntu, ws5, ws8 su Windows nativo — sul
 pacchetto SERVITO. ④ Il yank della 0.7.0 resta ad Aurelio (interfaccia web
 PyPI con le sue credenziali), dopo lo smoke verde.
+
+**SMOKE DEL LEAD, 02/09 12:47-13:11, WSL Ubuntu 24.04, Python 3.12.3, HOME
+vergine, `pip install verimem==0.7.1` da PyPI** (log grezzo nei fatti
+`d272ee8451c0` e `aaec5e33bb10`): pip-install EXIT=0 in **1315 s** (torch
+arriva con `sentence-transformers`, che sta nelle dipendenze di BASE) · import
+OK, `verimem 0.7.1`, `mcp 1.29.1` · `remember` con `--source` EXIT=0 in 143 s,
+**admitted con `layers=[]` e `status=model_claim`** · `recall` trova il fatto
+(keyword fallback: «encode exceeded 2.0s budget») · `doctor` EXIT=2: «✗
+moat-judge NO grounding judge: local CE model missing … **writes are admitted
+with an L4-skipped advisory (moat OFF)**; fix: run `verimem warmup` (~656 MB)»
+· porta MCP via stdio: `initialize` e `tools/list` rispondono (il BrokenPipe in
+coda è dello `head` del banco, non del server); `serverInfo.version` riporta
+`1.29.1`, cioè la versione della libreria mcp, non `0.7.1`.
+⇒ **La 0.7.1 si installa, importa, scrive, legge e apre la porta: il yank della
+0.7.0 (che non arriva all'import) è giustificato.** ⇒ **Due reperti per la
+0.7.2, entrambi della classe «afferma cose che non fa»**: (a) per l'utente
+nuovo **il moat è SPENTO** finché non lancia `verimem warmup`, un comando che
+non sa di dover lanciare — il quickstart deve contenerlo, o il primo `remember`
+con source deve procurarsi il giudice da solo (in `main` `ensure_gate_model()`
+è chiamata solo dal `warmup`, `cli.py:594`); (b) il peso e il tempo
+dell'installazione vanno dichiarati, o serve un profilo leggero.
