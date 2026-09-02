@@ -21742,3 +21742,84 @@ che si chiama Verimem questo non è un difetto fra i difetti: è la promessa.
 
 **Firme su questa cella**: ws8. Il fatto 1 è di ws2 (`W2-391`), controfirmato; il fatto 2 e
 il ribaltamento sono miei.
+
+---
+
+## 2026-09-02 05:15 — ws1 · 📋 **CONSEGNA DELLA NOTTE — `33` celle, `30` banchi, `9` titoli che annunciano un mio ritiro.** Numeri **contati**, non ricordati
+
+**Livello** consuntivo · **Perimetro** le mie celle su `origin` fra le 00:00 e le 05:15 del
+2026-09-02 · **Istante** 2026-09-02 05:14–05:15 · **Regime** conteggi da `git show
+origin/main` e da `find` sullo scratchpad, **nessuna cifra scritta a memoria** · **Autorità**:
+ordine di Aurelio delle 00:00 *(sei ore fino alle ~06:00)*.
+
+**Il metodo di questo consuntivo lo devo a @ws4**, che alle 05:06 ha corretto il proprio
+scrivendo: «*«sette ritiri» erano RICORDATI, non contati — e un consuntivo è proprio il posto
+dove si ricorda invece di contare*». **Ho contato tutto prima di scrivere**, e i numeri sono
+risultati **più grandi** di quelli che avevo in testa.
+
+| | contato con |
+|---|---|
+| **33** celle mie su `origin` stanotte | `grep -c '^## 2026-09-02 0[0-5]:.. — ws1'` |
+| **9** titoli con RITIRO / CORREGGO / RIDIMENSIONO / ABBANDONO | `grep -cE` sui titoli |
+| **30** banchi `porta_*.py` creati dopo mezzanotte | `find -newermt` |
+| **29** file di dati `.json` | `find -newermt` |
+
+⚠️ **Il `9` conta la PAROLA nel titolo, non il ritiro sostanziale**: una correzione senza
+quella parola non è contata, e un titolo che la usa per enfasi lo è. **È un criterio
+sintattico su un fenomeno semantico — la mia classe ricorrente — e lo dichiaro invece di
+ripulirlo a mano.**
+
+### ✅ Cosa REGGE, e in quale lingua
+
+| reperto | lingua | stato |
+|---|---|---|
+| **la porta ammette 5 frasi su 10 col soggetto scambiato** *(vere 10/10)* | **inglese** | il numero per la vetrina |
+| le stesse, alla porta | italiano | 9/10 |
+| **il pavimento scarta 6 risposte su 10 che il retrieval aveva messo al PRIMO posto** | italiano | mai rifatto in inglese |
+| **il giudice riconosce il dato attribuito al gruppo sbagliato fra quelli che la fonte nomina** *(1,13 · 0,67 · 0,70 · 0,99)* | italiano | l'unica riga sopravvissuta a tutte le rimisure |
+| **nessuna configurazione del gate chiude il buco** *(default/strict/strict+enforce fermano la STESSA)* | italiano | |
+| **lo store vivo è 75,8% IT · 14,0% EN · 10,2% non classificabile** su 17 149 fatti | — | euristica dichiarata |
+| **`judged = _gs is not None`** ⇒ le 9 false ammesse lo portano tutte | — | letto nel codice |
+
+### 🔁 Cosa è CIRCOSCRITTO da me stesso
+
+- **Tutti i numeri della notte sono in ITALIANO** e il prodotto è pubblicato in inglese: sugli
+  stessi dieci casi il gate ne ferma **quattro invece di uno** *(04:34)*. **Solo la porta l'ho
+  rifatta in inglese.**
+- **Cinque spiegazioni del fenomeno centrale, cinque cadute** *(contrari · entrambi-nella-fonte
+  · sigle-e-date · voce passiva · —)*. **Resta «decide la formulazione», e non ho proposto la
+  sesta.**
+- **Il caso `VESTITO`, stessa fonte, tre formulazioni: `98,05` · `0,70` · `99,13`.**
+- **Due miei limiti nominavano l'oggetto sbagliato**: il «journal» *(è un log di crash
+  recovery)* e «uno strato guarda senza fermare» *(l'osservazione è l'inverso)*.
+
+### 🔓 Cosa resta APERTO, con nome e cognome
+
+1. **Le sei varianti di posizione in inglese** — in italiano `1,13` e `0,67` sono la riga
+   sopravvissuta, **in inglese non l'ho mai verificata**.
+2. **Il pavimento in inglese** — il `6/10` è il numero più grave che ho, ed è italiano.
+3. **La divergenza con @ws5 sul passivo** *(suo `0/5`, mio `1/8`)*: **non si spiega con la
+   lingua**, perché i miei casi erano già italiani. **Aperta.**
+4. **Datare l'asimmetria IT/EN**: @ws3 alle 05:08 mi passa il metodo *(EN costante su 7 punti,
+   IT che salta con `5ea77b6d`)*. **Non l'ho eseguito** — se l'asimmetria ha una data, non è
+   una proprietà del modello ma il prezzo di una cura.
+5. **`L4-review` ferma sopra la soglia**: `74,71` con soglia `40`, **osservato su UN caso**.
+
+### 📌 E il limite delle 05:06 è pagato: chi ferma le cinque fermate inglesi
+
+```
+[2] 30,88 moat   [3] 0,73 moat   [5] 1,61 moat   [6] 0,25 moat   [9] 74,71 L4-review
+```
+⇒ **quattro su cinque sono del moat e stanno tutte sotto la soglia 40; una sola è di
+`L4-review` e sta SOPRA.** La presunzione che avevo dichiarato era corretta, e ora è verificata.
+
+### Cosa NON prova
+
+**Questo consuntivo non misura: conta.** Il `33` include celle di ogni peso — un banco da venti
+minuti e una lettura di codice contano uno ciascuna. **Il `30` banchi non equivale a 30 misure
+indipendenti**: molti riusano le stesse dieci frasi, quindi **i miei reperti hanno meno
+popolazioni di quante ne suggerisca il conteggio**. **Nessuno dei numeri di questa cella
+riguarda la qualità del lavoro**, solo la sua quantità — e stanotte **nove titoli su
+trentatré annunciano che avevo sbagliato**.
+
+**Io misuro, non curo.**
