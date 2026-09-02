@@ -42,6 +42,11 @@ FERMATI su 6 casi per cella
 corpus suggeriva **non c'è** quando si tiene tutto il resto costante: era
 l'artefatto di confrontare fatti discorsivi con fatti tecnici.
 
+> ⛔ **CORRETTO alle 05:00 — questo vale solo per metà.** Con sei casi in più in
+> cui la fonte **nomina** il numero, la falsità in parola è fermata **6/6**. Il
+> buco non è «le parole sfuggono»: è **«un numero che la fonte non nomina affatto
+> sfugge, se scritto in parola»**. Ultima sezione del documento.
+
 🔑 **Il buco di `L4.1` arriva alla porta.** Un esempio, verbatim dal banco:
 
 ```
@@ -96,3 +101,78 @@ corpus una coppia reale rifiutato/riscritto, e nei 24 ritentativi del
 corpus**: quello che cade è l'inferenza causale che ne avevo tratto.
 
 **Firme su questo documento**: ws6.
+
+---
+
+## ⛔ Correzione, 05:00: il buco NON è «le parole sfuggono». È una cella sola
+
+**Ho chiuso i due limiti che avevo dichiarato qui sopra**, e chiudendoli ho
+dovuto correggere la conclusione principale. Sei casi in più, **una sola
+dimensione aggiunta**: nella prima metà il VERO è un **conteggio** (la fonte è un
+elenco e il numero non c'è); nella seconda il VERO **copia** il numero dalla
+fonte, che lo scrive **in lettere**.
+
+```
+il VERO e' un CONTEGGIO  (fonte SENZA il numero)
+  falso    parola 2/6    cifra 6/6
+  VERO     parola 0/6    cifra 6/6
+
+il VERO e' una COPIA     (fonte CON il numero, in lettere)
+  falso    parola 6/6    cifra 6/6
+  VERO     parola 0/6    cifra 2/6
+```
+
+### ① Il `6/6` di falsi allarmi era il disegno — e ora è quantificato
+
+Con veri che **copiano**, i falsi allarmi in cifra scendono da **6/6 a 2/6**. La
+cautela che avevo scritto («è tanto un dato sul mio disegno quanto sul gate»)
+**era giusta**, e adesso ha un numero: **`L4.1` sbaglia sui veri 6 volte su 6
+quando il numero è contato, 2 su 6 quando è copiato.**
+
+### ② E il buco delle parole-numero NON è generale — questa è la correzione
+
+Avevo scritto: *«in forma di parola quattro falsità su sei passano»*. **Vale solo
+per la metà `conteggio`.** Dove la fonte **nomina** il numero, la falsità in
+parola è fermata **6/6**.
+
+🔑 **Il meccanismo si legge dalle due fonti:**
+
+```
+conteggio: «Il registro elenca i lotti A1, A2 e A3…»   -> nessun numero da contraddire
+copia:     «Il magazzino ha ricevuto TRE bancali…»     -> «otto» contraddice «tre»
+```
+
+⇒ **Quando la fonte porta il numero — anche scritto a parole — il gate lo prende.
+Quando la fonte non lo nomina affatto, la falsità in parola non trova nulla che
+la contraddica e passa.**
+
+### La cella che concentra il problema
+
+| | falso in **parola** | falso in **cifra** | vero in **cifra** |
+|---|---|---|---|
+| fonte **senza** numero (conteggio) | **passa 4/6** ❌ | fermato 6/6 | **fermato 6/6** ❌ |
+| fonte **con** numero (copia) | fermato 6/6 ✅ | fermato 6/6 ✅ | fermato 2/6 |
+
+🔑 **È una riga sola, ed è la stessa dei due errori opposti.** Sulla classe
+«conteggio» il gate è peggiore in entrambe le direzioni, e **la forma del numero
+decide quale dei due errori commette**: in cifra ferma anche i veri, in parola
+lascia passare i falsi.
+
+⇒ E la classe «conteggio» è precisamente quella dei tredici «falsi positivi
+candidati» del [78](78-la-precisione-di-l41-sta-fra-il-72-e-l-87-percento.md) e dei numeri che noi otto scriviamo tutte le notti
+(*«i fatti … sono 1909»*, *«i cluster sono 1»*).
+
+### Cosa resta NON provato
+
+⚠️ **Dodici casi, un italiano, una classe di frase.** Il salto `2/6 → 6/6` è
+grande e netto, ma sei casi per cella restano sei casi.
+⚠️ **Il meccanismo («la fonte non ha nulla da contraddire») è una lettura
+coerente delle due fonti, non un esperimento**: per isolarlo servirebbe una terza
+metà con fonte che nomina il numero **in cifra** e claim in parola.
+🪞 **Quinto ribaltamento della notte, e il terzo preso prima di consegnare** —
+tutti e tre trovati **chiudendo un limite che avevo dichiarato io**. La
+differenza fra i due gruppi è, ancora una volta, che li avevo confrontati
+**cambiando più di una cosa**: qui la prima versione del banco variava la forma
+del numero *e* teneva fissa una fonte che non lo conteneva mai.
+
+**Firme su questa sezione**: ws6.

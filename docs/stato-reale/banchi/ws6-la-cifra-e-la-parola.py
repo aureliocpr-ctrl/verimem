@@ -51,28 +51,53 @@ CASI = [
 PAROLA_CIFRA = {"due": "2", "tre": "3", "quattro": "4", "cinque": "5",
                 "sette": "7", "otto": "8", "nove": "9", "dieci": "10"}
 
+# ── SECONDA META', aggiunta alle 04:58 per chiudere il limite piu' serio della
+# prima: nei casi qui sopra il VERO e' sempre un CONTEGGIO, cioe' proprio la
+# classe che `L4.1` ferma per costruzione. Qui il VERO **COPIA** il numero dalla
+# fonte. Se il `6/6` di falsi allarmi fosse una proprieta' dello strato, dovrebbe
+# ripresentarsi; se era il disegno, deve sparire. UNA sola dimensione in piu'.
+CASI_COPIA = [
+    ("Il magazzino ha ricevuto tre bancali il 9 giugno.",
+     "I bancali ricevuti dal magazzino sono {n}.", "tre", "otto"),
+    ("Il verbale registra cinque presenti alla riunione.",
+     "I presenti registrati nel verbale sono {n}.", "cinque", "nove"),
+    ("La squadra e' composta da quattro operai.",
+     "Gli operai della squadra sono {n}.", "quattro", "dieci"),
+    ("Il modulo e' importato da tre file del pacchetto.",
+     "I file che importano il modulo sono {n}.", "tre", "sette"),
+    ("Il verbale cita due sedi dell'azienda.",
+     "Le sedi citate nel verbale sono {n}.", "due", "sette"),
+    ("Nel magazzino restano due pallet.",
+     "I pallet rimasti in magazzino sono {n}.", "due", "otto"),
+]
+
 m = Memory()
 print("LO STESSO CLAIM, DUE FORME DEL NUMERO — una sola variabile\n")
 print("%-34s %-6s %-9s %-11s %s" % ("frase", "forma", "verita'", "esito", "chi ferma"))
 print("-" * 92)
 
 conta = {}
-for i, (fonte, tmpl, vero, falso) in enumerate(CASI, 1):
-    for verita, val in (("VERO", vero), ("falso", falso)):
-        for forma in ("parola", "cifra"):
-            n = val if forma == "parola" else PAROLA_CIFRA[val]
-            prop = tmpl.format(n=n)
-            r = m.add(prop, topic="ws6/cifra-parola-%d" % i, source=fonte)
-            st = (r.get("status") or "?") if isinstance(r, dict) else "?"
-            qb = ",".join(str(w.get("layer","?")) for w in (r.get("warnings") or [])) if isinstance(r, dict) else "-"
-            conta[(verita, forma)] = conta.get((verita, forma), 0) + (1 if st == "quarantined" else 0)
-            print("%-34s %-6s %-9s %-11s %s" % (prop[:34], forma, verita, st, qb))
-    print()
+for gruppo, casi in (("conteggio", CASI), ("copia", CASI_COPIA)):
+    print("\n=== il VERO e' un %s ===" % gruppo.upper())
+    for i, (fonte, tmpl, vero, falso) in enumerate(casi, 1):
+        for verita, val in (("VERO", vero), ("falso", falso)):
+            for forma in ("parola", "cifra"):
+                n = val if forma == "parola" else PAROLA_CIFRA[val]
+                prop = tmpl.format(n=n)
+                r = m.add(prop, topic="ws6/cp-%s-%d" % (gruppo, i), source=fonte)
+                st = (r.get("status") or "?") if isinstance(r, dict) else "?"
+                qb = ",".join(str(w.get("layer","?")) for w in (r.get("warnings") or [])) if isinstance(r, dict) else "-"
+                k = (gruppo, verita, forma)
+                conta[k] = conta.get(k, 0) + (1 if st == "quarantined" else 0)
+                print("%-34s %-6s %-9s %-11s %s" % (prop[:34], forma, verita, st, qb))
 
 print("=" * 92)
 print("FERMATI su 6 casi per cella:")
-for verita in ("falso", "VERO"):
-    print("  %-6s   parola %d/6   cifra %d/6" % (verita, conta.get((verita, "parola"), 0),
-                                                 conta.get((verita, "cifra"), 0)))
+for gruppo in ("conteggio", "copia"):
+    print("  il VERO e' un %s:" % gruppo)
+    for verita in ("falso", "VERO"):
+        print("    %-6s   parola %d/6   cifra %d/6"
+              % (verita, conta.get((gruppo, verita, "parola"), 0),
+                 conta.get((gruppo, verita, "cifra"), 0)))
 print("\n  falso: piu' alto e' meglio (il gate deve fermare)")
 print("  VERO : piu' basso e' meglio (sono i falsi allarmi)")
