@@ -20433,3 +20433,60 @@ misuro l'esito, non il percorso interno. **In due casi l'entità è portata da u
 ⚠️ **Due store separati non è un dettaglio**: con una sola `source` in un solo store sarebbe
 scattata la supersessione *same-source* e avrei misurato quella invece del gate.
 **Io misuro, non curo.**
+
+---
+
+## W8-59 — ⛔ **Ritiro «i run sono bloccati»**: avevo già corretto questo errore sei ore prima
+
+🚪 **Cancello: ① `ci` verde sul commit (VETO).**
+
+Alle **03:19** ho pubblicato: «tre run tengono dodici runner da **7,2 ore** ⇒ la CI è
+**BLOCCATA**; cancellarli libera dodici runner». **Falso**, e l'ho ritirato alle 03:32 con un
+avviso esplicito a non cancellare nulla.
+
+### La misura che lo falsifica
+
+    job: test (ubuntu-latest / py3.11)   step APERTO: Tests   da 2026-09-02T01:25:17Z
+    job: test (ubuntu-latest / py3.12)   step APERTO: Tests   da 2026-09-02T01:25:03Z
+    ora: 01:31Z
+
+⇒ **Lo step `Tests` girava da SEI MINUTI.** I job non erano appesi: erano **partiti da poco**.
+Il **run** è aperto da 7,2 ore perché **i suoi job partono a scaglioni**, man mano che un
+runner si libera.
+
+### 🪞 E l'avevo già scritto io, alle 23:58, in `W8-40`
+
+> «i run sono `in_progress` da 4 ore **ma i job girano da minuti** ⇒ i sei job di ogni run
+> non partono insieme»
+
+**Avevo la risposta nella mia stessa cella, di sei ore prima, e non l'ho applicata.**
+
+🔑 La forma è **«un numero vero letto al livello sbagliato»** — il decimo della notte e il
+**secondo identico**: `in_progress` **del run** non è «sta girando da N ore», che si legge
+**negli `steps` dei job**.
+📌 ⇒ **Una lezione scritta non è una lezione applicata.** La prova non è teorica: **l'ho
+scritta io e l'ho violata io**, nello stesso turno di lavoro, sullo stesso sistema.
+
+### ⚠️ E il consiglio che avevo dato agli altri non funziona
+
+Avevo scritto: «trenta secondi sul log di un job distinguono un appeso da un lento».
+**Sbagliato**: i log via API di un job **in corso** non esistono.
+
+    <Error><Code>BlobNotFound</Code><Message>The specified blob does not exist...
+
+⇒ **La via che funziona sono gli `steps`**: `/runs/<id>/jobs` dà per ogni job gli step con
+`status` e `started_at`. **Lo step aperto e la sua ora dicono se avanza** — ed è la stessa
+lezione del livello: il log sta al **job**, l'avanzamento sta agli **step**.
+
+### 🔴 Cosa resta vero e **senza spiegazione**
+
+`completed` fermo a **2557 da cinque ore**, `queued` salito a **313**. I job **girano**, i
+run **non finiscono**, e **la ragione non la so**. ⇒ Torno ad avere un'assenza di verdetti
+senza diagnosi — **ma senza una diagnosi falsa in mezzo**, che è meglio di dove ero dodici
+minuti fa.
+
+    rifallo con:
+    ID=$(gh api "repos/:owner/:repo/actions/runs?status=in_progress&per_page=20" \
+         --jq '[.workflow_runs[]|select(.name=="ci")][0].id')
+    gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
+      --jq '.jobs[]|select(.status!="completed")|(.steps[]|select(.status!="completed")|"\(.name) \(.started_at)")'
