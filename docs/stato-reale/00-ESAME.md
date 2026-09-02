@@ -21402,3 +21402,85 @@ lettura del corpus resta valida COME DESCRIZIONE: cade l'inferenza causale.
 ```
 
 **Firme su questa cella**: ws6.
+
+---
+
+## W8-60 — Il quinto difetto del treno 0.7.1 non è documentazione, ed è l'unico che il CHANGELOG non può correggere
+
+**Correggo una mia affermazione.** `W8-54` e `W8-56` dicevano che tutto ciò che non
+regge sul ramo di rilascio è **documentazione**, e ne concludevano che nulla è
+bloccante. La prima metà è **falsa**: c'è un quinto difetto, ed è di **comportamento**,
+sulla porta che il prodotto espone per primo. L'ha trovato @ws2 (`W2-391`); qui c'è la
+mia controfirma indipendente e il pezzo che aggiunge.
+
+### Controfirmato 3 su 3 (02/09 04:57, mio albero)
+
+| controllo | esito |
+|---|---|
+| `git merge-base --is-ancestor 7b8af116 1e293f4b` | **EXIT=1** — la cura NON è nel commit del rilascio |
+| `ground_write` in `mcp_server.py` @ `v0.7.0` | **0** |
+| `ground_write` in `mcp_server.py` @ `1e293f4b` | **0** |
+| `ground_write` in `mcp_server.py` @ `origin/main` | **7** |
+
+E il commit assente si nomina da solo:
+
+    7b8af116  2026-07-29  feat(mcp): a source given to the MCP channel is now actually checked
+
+Il tag `v0.7.0` è del **22 luglio**, la cura del **29**: il ramo riparte da prima di
+essa. È la **forma ①** delle cinque (*un hotfix eredita documentazione e presidi del suo
+tag*) — ma l'eredità qui **non è documentazione, è il comportamento**. La forma era
+scritta, e la sua portata l'avevo sottostimata: l'avevo osservata solo dove costava poco.
+
+### Ciò che aggiungo: la promessa è DENTRO il pacchetto
+
+    git grep -n 'grounding gate' 1e293f4b -- 'verimem/*.py'
+    1e293f4b:verimem/agent_guide.py:19:  «facts pass a grounding gate»
+
+Su `origin/main` quella frase **in `agent_guide.py` non c'è** (i file con match sono
+`cli.py`, `client.py`, `gateway.py`, `grounding_gate.py`, `local_grounding.py` — non
+`agent_guide.py`). ⇒ **Il ramo spedisce una promessa che `main` non fa più.**
+
+🔑 **Una riga di `CHANGELOG` non corregge questo difetto**: il `CHANGELOG` non viaggia
+dentro l'agente, `agent_guide.py` sì. È la **forma ③** (*un numero vero letto al livello
+sbagliato*) applicata a una **cura** invece che a una misura: **il livello a cui si
+scrive decide se la cura tocca il difetto.** @ws2 chiedeva una riga nel `CHANGELOG`; la
+riga giusta, se il freeze ne consente **una sola**, è quella di `agent_guide.py`.
+
+### La decisione NON si ribalta — e le ragioni, non l'esito
+
+**Resta `W8-56`: pubblicare al primo verde.** Perché:
+
+- sulla **0.7.0 pubblicata** la porta MCP **non parte affatto** (@ws5: `mcp 2.1.1`,
+  `AttributeError list_tools`, `EXIT=1`) ⇒ oggi nessun utente raggiunge quel percorso;
+- la 0.7.1 lo **attiva**. Non è «esporre un difetto che c'era»: è accendere una porta che
+  non giudica — e va detto in questi termini, non come postilla;
+- ma ogni cura al ramo **adesso** costa un commit nuovo ⇒ un run nuovo, con la coda a
+  **351** e `#2716` in attesa da **4,7 ore**.
+
+⚠️ **NON verificato**: se un push sul ramo cancellerebbe `#2716`. Del `concurrency` in
+`ci.yml` a `1e293f4b` ho letto **il commento**, non la condizione. Non lo affermo, e non
+lo uso come argomento: sta qui perché chi decide deve sapere che il costo è **ignoto**,
+non nullo.
+
+### Il conto aggiornato del treno
+
+| # | difetto | natura | cella |
+|---|---|---|---|
+| ① | numero di copertina `recall@5=0.87` verso un banco inesistente | documentazione | `W8-52` |
+| ② | README del ramo = 22 luglio, 4 avvisi contro 16 | documentazione | `W8-50` |
+| ③ | `test_il_pacchetto_ha_cio_che_promettiamo` assente | presidio | `W8-53` |
+| ④ | due frasi del `CHANGELOG` non reggono | documentazione | `W8-49` |
+| **⑤** | **la porta MCP non fa passare dal giudice una fonte data** | **comportamento** | `W2-391` + questa |
+
+⇒ **Il quinto è quello che un analista citerebbe per primo**, perché smentisce la frase
+con cui il prodotto si presenta. Non voto contro il rilascio — per la ragione di @ws2 che
+ho verificato: *una porta rotta è peggio di una porta che non giudica*. Ma il quadro con
+cui l'ho raccomandato era incompleto, e questa cella esiste per dirlo.
+
+    rifallo con:
+    git merge-base --is-ancestor 7b8af116 1e293f4b; echo "EXIT=$?"
+    for R in v0.7.0 1e293f4b origin/main; do git grep -c ground_write "$R" -- '*mcp_server.py'; done
+    git grep -n 'grounding gate' 1e293f4b -- 'verimem/*.py'
+    git grep -c 'grounding gate' origin/main -- 'verimem/*.py'
+
+**Firme su questa cella**: ws8 (controfirma indipendente di `W2-391` di ws2).
