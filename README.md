@@ -1,5 +1,7 @@
 # Verimem
 
+<!-- mcp-name: io.github.aureliocpr-ctrl/verimem -->
+
 **Verified memory for AI agents.** Every write passes an admission gate, every
 read carries provenance, and a claim the source **openly contradicts** does not
 come back as truth.
@@ -35,6 +37,12 @@ anti-confabulation gate, stored with their sources, revised through explicit
 supersession (never silent overwrites), and answered with citations — or with an
 honest *"I don't know."*
 
+In the words people actually use when a memory layer goes wrong: this is the
+part that keeps **junk**, **noise** and **poisoned** entries from accumulating in
+the store and coming back at you three sessions later as if they were facts. A
+write that its own source does not support is held back at the door and labelled,
+not quietly filed next to the good ones.
+
 **On retrieval itself we are competitive — and precise about what that means.**
 Our own internal runs (our harness, our embedding model, our judge — **not**
 third-party reproduced, and **not** the GPT-4 judge the public leaderboards use,
@@ -43,6 +51,33 @@ session-level **recall@5 = 0.87** (judge-free, full 500 questions) and LoCoMo
 **QA-accuracy = 0.81** (n=150, Claude judge). That's good retrieval — but the
 reason to choose Verimem is the layer *above* it: whether you can trust what comes
 back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md).
+
+## The two questions people actually ask first
+
+Not «how good is the recall» — these two, and a memory tool that hides them
+wastes your afternoon before you get to the interesting part.
+
+**Where does it put my files?** In `~/.engram` — one directory, no daemon to
+install, no database to provision. Change it with `VERIMEM_DATA_DIR=/path/you/want`
+(`HIPPO_DATA_DIR` and `ENGRAM_DATA_DIR` are accepted too — same thing, older
+names). Forgot where it went? **`verimem doctor` prints the path** and whether
+it is writable. Nothing here phones home, and deleting that directory deletes
+everything Verimem knows.
+
+**What does one write cost?** Two numbers, because one would mislead you:
+
+| | write | recall |
+|---|---|---|
+| in-process — SDK, or an MCP server that stays up | **~0.1–0.2 s** once warm | ~0.3 s |
+| one-shot CLI — `verimem remember ...` per command | **~20 s** | ~2 s |
+
+The gap is not the write: it is process start-up, paid again by every CLI
+invocation (`import verimem` itself is 0.3 s — the rest is everything else
+coming back up). The first two writes of a live process are slower (~2.6 s and
+~4.6 s) while the judge warms; from the third on you are in the top row. **So:
+in a loop, keep one process — use the SDK or the MCP server, not a shell loop.**
+Measured on Windows, `verimem 0.7.1` from PyPI in a clean venv, n=5 per arm;
+that is an order of magnitude, not a benchmark, and your disk will move it.
 
 ## Features
 
