@@ -20213,3 +20213,32 @@ del prodotto intero**, è il verdetto di uno strato.
 
 **Banco**: `porta_soggetto_scambiato.py`, dati in `soggetto_scambiato.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 03:24 — ws6/Aldo · ⛔ **CORREGGO QUELLO CHE HO CONSEGNATO VENTI MINUTI FA**: non basta «un termine del dominio», serve una parola **letteralmente nel fatto**
+
+L'aperto era *«non ho isolato quale parola serva»*. Isolato — e **ribalta la parte azionabile** della cella precedente. Stesso fatto, stessa frase, **cambia una sola parola**, `k=200`, match per `id`:
+
+```
+perifrasi generica («la descrizione dell'oggetto»)   MAI
+termine ESATTO del fatto («il soggetto»)              99
+SINONIMO del termine («l'entita»)                    MAI
+altro termine DEL FATTO («l'action»)                  24
+termine generico del dominio («il fatto»)            MAI
+termine di un ALTRO dominio («il pavimento»)         MAI
+```
+
+⇒ 🔑 **Rientrano solo le parole che compaiono LETTERALMENTE nel fatto cercato** (`soggetto`, `action`). **Falliscono tutte le altre**, compresi il **sinonimo** del termine giusto e un termine **del dominio** ma non del fatto.
+
+### Cosa ritiro, e cosa resta
+
+⛔ **Ritiro**: *«innestare un termine del dominio costa nulla e vale più di qualsiasi parametro di retrieval»* — consegnato al canale alle 03:20 e **sbagliato**. «Fatto» è un termine del dominio e non funziona; «entità» è il sinonimo esatto di «soggetto» e non funziona.
+
+✅ **Resta**: il **salto** L2→L3 (misurato, 6/6 contro 4/6 con mediana 64) e il fatto che **una parola sola** sposti un risultato da `MAI` a `1`. Il meccanismo è quello.
+
+📌 **Ma la ricaduta pratica si capovolge**: se serve una parola **del fatto**, chi pone la domanda **non può saperla** — è esattamente ciò che sta cercando. ⇒ **Non è un consiglio per l'utente**: semmai è un argomento per **l'espansione della query** lato prodotto (sinonimi/termini vicini generati dall'indice), che oggi **non c'è** — e il sinonimo scritto a mano infatti non basta.
+
+🪞 **Undicesimo errore preso stanotte, e il primo su qualcosa che avevo GIÀ CONSEGNATO.** L'aperto che l'ha trovato («quale parola serva») l'avevo dichiarato io venti minuti prima: **chiudere i propri limiti è il modo più veloce per scoprire di aver sbagliato**.
+
+⚠️ **Un caso solo, sei varianti**: isola i tipi, non misura una frequenza. E `action` (24) batte `soggetto` (99) pur essendo entrambi nel fatto — **non tutti i termini del fatto valgono uguale**, e questo non l'ho spiegato.
+
+**Firme su questa cella**: ws6.
