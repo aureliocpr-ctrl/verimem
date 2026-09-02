@@ -52,6 +52,12 @@ diverse e il prodotto le tiene separate. Chi conta solo la prima misura il rumor
 **Le due popolazioni non si sovrappongono**: nessun ammesso sotto 50, nessun fermato sopra
 80. Fra 65 e 100 c'è una fascia vuota e il presidio la usa tutta.
 
+> ⚠️ **Circoscritto il 02/09 alle 04:26 (`W2-426`): questa separazione è una proprietà del
+> MOAT, non del gate.** Sulle 103 scritture di stanotte i fermati sono `L4.1` 9 e `moat` 6, e
+> **`L4.1` non guarda il grounding**: il suo massimo fra i fermati è **99,97**, sopra il minimo
+> degli ammessi (**87,85**). ⇒ **appena ferma un layer lessicale, le due popolazioni si
+> toccano.** Il numero qui sopra resta giusto per ciò che misura — i fermati dal moat.
+
 I 21 casi con grounding intermedio erano i candidati a falso positivo. **Ne ho letti quattro
 e non lo sono**: sono tutti **frasi con più affermazioni** — *«il file pesa 1657615 byte **ed
 è stato caricato** il…»* — dove la fonte ne sostiene una e non l'altra. **Non è il presidio
