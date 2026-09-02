@@ -21631,3 +21631,114 @@ non è un tasso**, ed è già contato da altri con perimetro e metodo diversi da
 **Banco**: `porta_porta_en.py`, dati in `porta_en.json`; verifica di `quarantined_by` in
 `_chi_ferma.py` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-61 — Ribalto la mia raccomandazione: la 0.7.1 apre una porta che non giudica e accetta dal client l'interruttore per spegnere il gate
+
+**Questa cella annulla il «sì» di `W8-56`, e l'argomento con cui lo avevo sostenuto è
+esattamente quello che ora lo smonta.** Il difetto ⑤ (`W8-60`) non era isolato: tirandone
+il filo ne è uscito un sesto, e il sesto cambia la decisione.
+
+### Che cosa `main` ha imparato dopo il tag e non viaggia nel treno
+
+    git log --format='%H %s' 1e293f4b..origin/main -- verimem/ | grep -E ' (feat|fix)\(' | wc -l
+
+| misura | valore |
+|---|---|
+| commit che toccano `verimem/` e non sono nel treno | **659** |
+| di cui `feat(` / `fix(` | **89** |
+| di cui toccano un file che **esiste già** a `1e293f4b` | **84** (limite superiore) |
+| controllo **negativo** — senza il filtro di percorso | **3401** ⇒ il criterio decide |
+| controllo **positivo** — la cura nota `7b8af116` è fra i candidati | **sì** |
+
+⚠️ **84 non è «84 difetti»**, ed è onesto dirlo forte: il mio filtro esclude **5 su 89**,
+cioè **non restringe**. Ma dei candidati ne sono stati aperti **due** — e **tutti e due
+contenevano qualcosa**.
+
+### Cinque `fix(mcp)` del 29 luglio sono un blocco unico
+
+    e134cb13  the receipt claimed "switched off" when nothing had switched it off
+    a1f5e778  the dossier that advertises abstention had both checks inert
+    7b8af116  a source given to the MCP channel is now actually checked
+    9d6d6c6a  the write channel agents use never said whether the moat ran
+    ca85cb0a  three read surfaces dropped the moat's verdict on the way out
+
+⇒ **Non manca una cura: manca l'intera riparazione della porta MCP del 29 luglio**, e il
+ramo riparte dal **22** (`v0.7.0`).
+
+### Il sesto difetto, e la catena letta al livello che conta
+
+`4a37b09d` (24/07) — *«fix(mcp): gate-weakening knobs from untrusted tool args are
+policy-gated»* — introduce `VERIMEM_MCP_TRUST_GATE_KNOBS` e `gate_knobs_denied`. Il
+commento del suo autore: la superficie MCP è **untrusted** (server condiviso, argomenti da
+qualsiasi client), quindi `validate="off"` (*gate never runs*) e `force_persist=True`
+(*overrides a downgrade/reject verdict*) sono onorati **solo** con il consenso
+dell'operatore.
+
+| marcatore | `v0.7.0` | `1e293f4b` | `origin/main` |
+|---|---|---|---|
+| `VERIMEM_MCP_TRUST_GATE_KNOBS` | 0 | **0** | 4 |
+| `gate_knobs_denied` | 0 | **0** | 5 |
+
+Ma **i knob ci sono già nel treno** (`force_persist` 3, `validate` 31 in `mcp_server.py`),
+e la catena non ha filtri — questo è il livello che conta, non «il nome compare nel file»:
+
+    1e293f4b:verimem/mcp_server.py:2221    "force_persist": {              <- nello SCHEMA del tool
+    1e293f4b:verimem/mcp_server.py:11917   _validate_kw  = arguments.get("validate")
+    1e293f4b:verimem/mcp_server.py:11919   _force_persist = bool(arguments.get("force_persist", False))
+    1e293f4b:verimem/mcp_server.py:11953   validate=_validate_kw,          -> run_validation_gate(...)
+    1e293f4b:verimem/mcp_server.py:11955   force_persist=_force_persist,
+
+**Sweep a valle** (la controipotesi che poteva salvarmi: un filtro altrove nel treno) —
+**non c'è**, e il codice del treno dice il contrario:
+
+    1e293f4b:verimem/anti_confab_gate.py:1457   if force_persist:
+    1e293f4b:verimem/anti_confab_gate.py:31     «force_persist=True overrides everything»
+
+Quella docstring sta **dentro il treno**, non solo su `main`.
+
+### L'argomento che mi si rovescia in mano
+
+`W8-56` diceva: *«sulla 0.7.0 la porta MCP non parte affatto (@ws5), quindi il rilascio
+**attiva** il percorso invece di esporlo»*. Era **vero**, ed è precisamente ciò che ora
+gioca contro: **se la porta non parte, né ⑤ né ⑥ sono raggiungibili da nessuno.** Farla
+partire li rende raggiungibili entrambi — sulla porta che il prodotto espone per prima, e
+che dentro il pacchetto stesso (`agent_guide.py:19`) promette che *«facts pass a grounding
+gate»*.
+
+🔑 **Una porta inerte non mente. Una porta che parte, dice di verificare, non fa passare le
+fonti dal giudice e accetta dal client l'interruttore per spegnerlo, mente.** Su un prodotto
+che si chiama Verimem questo non è un difetto fra i difetti: è la promessa.
+
+### Raccomandazione (una strada, non solo un veto)
+
+- **(A) cherry-pick di `7b8af116` e `4a37b09d` sul ramo, poi il run.** Due commit
+  circoscritti a `verimem/mcp_server.py` (28 righe il secondo). Costa **un run in più**.
+  **È quella che raccomando**, col criterio di Aurelio: *la più completa, mai la più facile*.
+- (B) pubblicare così dichiarandolo: pubblicizza una porta che non fa la cosa per cui
+  esiste. **Non la propongo.**
+- (C) non pubblicare finché la coda non si sblocca: lascia in campo la 0.7.0 rotta — ma
+  rotta è **inerte**.
+
+### I limiti, prima che me li chiedano
+
+1. **Non ho eseguito** una chiamata MCP con `validate="off"` o `force_persist=True`: non
+   posso installare né avviare il server. **Lettura statica del flusso.**
+2. L'effetto «*gate never runs*» per `validate="off"` è descritto dal commento su `main`;
+   **dentro il treno** ho una descrizione interna solo per `force_persist` («overrides
+   everything»). **È il punto più debole di questa cella e lo dichiaro per primo.**
+3. `84` è un limite superiore, non una stima (il filtro esclude 5 su 89).
+4. **Il conteggio giusto è 89, non 88**: la prima versione usava `--oneline`, che abbrevia
+   lo SHA, e il regex ancorato perdeva una riga. **Nono errore mio nel misuratore**, e come
+   gli altri otto sta nel righello, non nel prodotto.
+
+    rifallo con:
+    git log --format='%H %s' 1e293f4b..origin/main -- verimem/ | grep -E ' (feat|fix)\(' | wc -l
+    for T in VERIMEM_MCP_TRUST_GATE_KNOBS gate_knobs_denied; do \
+      for R in v0.7.0 1e293f4b origin/main; do git grep -c "$T" "$R" -- 'verimem/*.py'; done; done
+    git show 1e293f4b:verimem/mcp_server.py | grep -nE 'arguments.get\("(validate|force_persist)"\)'
+    git grep -n 'force_persist' 1e293f4b -- 'verimem/*.py' | grep -v mcp_server.py
+
+**Firme su questa cella**: ws8. Il fatto 1 è di ws2 (`W2-391`), controfirmato; il fatto 2 e
+il ribaltamento sono miei.

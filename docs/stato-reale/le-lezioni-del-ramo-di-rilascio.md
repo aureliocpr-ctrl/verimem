@@ -19,6 +19,17 @@
 | i presidi | **611 file di test più ricchi** su `main`, **553 assenti** dal branch | `W8-53` |
 | le note correttive | quella sul banco mancante è del **28/08** ⇒ **non c'è** | `W8-52` |
 | i test del rilascio | `test_il_pacchetto_ha_cio_che_promettiamo` **assente** (0 righe vs 711) | `W8-53` |
+| **il comportamento** | **la porta MCP non fa passare dal giudice una fonte data**: `ground_write` in `mcp_server.py` conta **0** a `1e293f4b` e **7** su `main` | `W8-60` |
+
+⚠️ **La riga in grassetto è arrivata dopo, e ha corretto questa stessa sezione.** Per un
+giorno e mezzo ho scritto — in `W8-54`, in `W8-56` e qui — che il ramo eredita
+«documentazione e presidi», e ne ho concluso che **nulla era bloccante**. L'ultima riga
+dice che eredita anche **il comportamento**: la cura `7b8af116` del **29 luglio**
+(*«feat(mcp): a source given to the MCP channel is now actually checked»*) non è antenata
+di `1e293f4b`, perché il tag `v0.7.0` è del **22 luglio**. ⇒ **La forma era giusta e il
+suo perimetro no**, e l'ho ristretto proprio dove costava di più: avevo cercato l'eredità
+solo fra i testi, che è dove sapevo già di trovarla. Trovata da @ws2 (`W2-391`),
+controfirmata 3/3 da me.
 
 🔑 **Non è un difetto del processo: è una proprietà.** Un ramo di hotfix *deve* riprendere
 dal codice in produzione — è ciò che lo rende un hotfix. **Ma va dichiarato**, perché ogni
@@ -28,6 +39,28 @@ quel ramo: «full suite» lì vuol dire **1050 file di test contro 1598**.
     rifallo con:
     for R in <branch> main; do git show "origin/$R:README.md" | grep -ciE '⚠|measured on'; done
     git diff --numstat origin/<branch> origin/main -- tests/ | awk '$1>$2' | wc -l
+    # e la riga che mi mancava — l'eredita' del COMPORTAMENTO (eseguita, non proposta):
+    git log --format='%H %s' <head-del-ramo>..origin/main -- verimem/ | grep -E ' (feat|fix)\(' | wc -l
+    git merge-base --is-ancestor <cura-nota> <head-del-ramo>; echo "EXIT=$?"
+
+🔑 **Il comando che chiude la forma è il terzo, e per un giorno e mezzo non l'ho scritto.**
+I primi due contano *testi*; solo l'ultimo chiede **quali cure del prodotto sono nate dopo
+il tag**. ⇒ Su un ramo di hotfix, la domanda da fare per prima non è «che cosa dice di
+diverso», è **«che cosa ha imparato `main` da allora, e quanto di quello viaggia qui»**.
+
+Eseguito su `1e293f4b` il 02/09 alle 05:10 — **659** commit toccano `verimem/` e non sono nel
+treno, **89** sono `feat(`/`fix(`, **84** toccano un file che a `1e293f4b` esiste già (limite
+superiore: il filtro esclude solo 5 su 89, quindi **non restringe**). Controllo negativo: senza
+il filtro di percorso sono **3401**, quindi il criterio decide qualcosa. Controllo positivo: la
+cura nota `7b8af116` **è** fra i candidati — un criterio che non ritrova il caso che l'ha
+generato non serve a niente.
+
+⚠️ **Due errori miei in questa riga sola**, perché valgono più del numero: ① la prima versione
+usava `--oneline`, che **abbrevia lo SHA**, e il regex ancorato perdeva una riga — davo **88**
+invece di **89**; ② avevo scritto qui la ricetta con `v<tag>..origin/main` mentre **avevo
+eseguito** `<head-del-ramo>..origin/main`: la **forma ⑤ di questo stesso documento**
+(«eseguito a mano» non è «installato»), addosso a chi l'ha scritta. La riga sopra è ora
+quella che ho davvero eseguito.
 
 ---
 
