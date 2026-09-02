@@ -19644,3 +19644,81 @@ last 24h  182 facts  velocity 7.58/h  orphans 0%
 ⚠️ **Nessuna tendenza non è «nessun cambiamento»**: otto giorni con questa varianza non possono escludere una deriva piccola. Per quella serve il banco fisso. · ⚠️ Il `digest` è stato eseguito una volta, non l'ho confrontato con nulla. · ❌ **La domanda sul tier episodi resta aperta**: il digest non ne dipende, quindi non risponde.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 02:50 — ws1 · 🟢🔴 **IL COLLO DI BOTTIGLIA NON È L'ASTENSIONE, È IL RETRIEVAL: con domande a parole proprie il fatto scelto è SBAGLIATO `10` volte su `10`, e il giudice lo riconosce ogni volta.** La mia condizione d'uscita è scattata, e il conteggio per stadio dice che il limite non è del giudice
+
+**Livello** `search(domanda, k=1)` + `try_local_score` (**soglia 40,0**) sullo **STORE VIVO** ·
+**Perimetro** **gli stessi 10 casi** di `porta_comp_domande.py` — domanda, fatto atteso,
+risposta vera, risposta falsa — con la **domanda nelle tre versioni** delle 02:45 · **Istante**
+2026-09-02 02:47–02:50 · **Regime** variabili poppate, **`claim ram/giudice`** (`f78e5be08299`),
+66,5 s totali · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il debito che avevo dichiarato sul canale alle 02:46**: «*non ho misurato il giudice
+sulle domande parafrasate; finché non l'ho fatto la cura non è pronta per la vetrina*».
+
+### Il numero, con i due stadi contati separatamente
+
+| braccio | source **sbagliata** | **falsi rifiuti** | *di cui per source sbagliata* | invenzioni passate |
+|---|---|---|---|---|
+| **(1) originali** | **0 / 10** | **0 / 10** | 0 | 1 / 10 |
+| **(2) spogliate** | 1 / 10 | **1 / 10** | 1 | 1 / 10 |
+| **(3) parafrasi** | **10 / 10** | **9 / 10** | **9** | 1 / 10 |
+
+⚖️ **Predicevo (3) 4-7 falsi rifiuti: sono 9.** ⇒ **la condizione d'uscita che avevo scritto
+(«≥5 ⇒ la cura col giudice ha lo stesso limite del pavimento») È SCATTATA, e la registro
+così.** Ma il conteggio per stadio — **previsto nel disegno prima di eseguire, non aggiunto
+dopo** — dice **di chi** è il limite.
+
+### 🟢 Il giudice non sbaglia mai: è il retrieval a non trovare
+
+Nei nove falsi rifiuti la risposta vera prende **0,21–0,40** contro la source scelta. **È il
+punteggio giusto**: quella source *davvero* non la contiene. ⇒ **il giudice sta facendo il suo
+mestiere**, e sta **trasformando un errore silenzioso del retrieval in un'astensione** — cioè
+esattamente la promessa in vetrina. Senza di lui il sistema **avrebbe risposto usando il fatto
+sbagliato**.
+
+**E il confronto con il pavimento, a parità di domande, è netto:**
+
+| domande | pavimento: risposte perse | **giudice: risposte perse** |
+|---|---|---|
+| ancorate | 1 / 10 | **0 / 10** |
+| **spogliate** | **6 / 10** | **1 / 10** |
+| a parole proprie | 10 / 10 | 9 / 10 |
+
+⇒ **sulle spogliate il giudice ne perde UNA dove il pavimento ne perde SEI.** **Il giudice è
+la via migliore, e questo banco la rafforza invece di indebolirla.**
+
+### 🔴 Quello che resta rosso, e non è l'astensione
+
+**Con domande a parole proprie il retrieval porta il fatto sbagliato `10` volte su `10`.**
+⇒ **curare l'astensione non serve se il retrieval non trova**: la promessa «astensione invece
+di allucinazione» **è mantenuta anche nel caso peggiore** — ma l'utente riceve **nove rifiuti
+su dieci**. **Promessa mantenuta, utilità no**, e sono due fatti separati che vanno detti
+insieme.
+
+📌 **Due dettagli che il banco stampa e che vale la pena leggere:**
+- **L'invenzione passata è `1/10` in TUTTI E TRE i bracci, ed è sempre lo stesso caso**: «*128
+  su 999*» contro una source che dice «*128 su 372*» → **99,96**. ⇒ **la cecità ai
+  denominatori non dipende da come è formulata la domanda** — è la stessa che avevo trovato
+  all'01:56, e ora ha una conferma su tre popolazioni diverse.
+- **Un solo caso di source sbagliata NON produce un rifiuto** (`[2]` della parafrasi): la vera
+  prende 93,02 **e la falsa 40,09**, sopra soglia. ⇒ **una source sbagliata può sembrare di
+  supportare entrambe**: è il modo in cui questo schema può fallire in silenzio, e con dieci
+  casi ne ho visto uno.
+
+### Cosa NON prova
+
+**Dieci casi, un solo store, una macchina, `k=1`.** Con `k=5` il fatto giusto potrebbe essere
+in posizione 2-5 e il quadro cambierebbe: **non l'ho misurato**, ed è la prova che manca per
+dire «il retrieval non trova» invece di «il retrieval non mette al primo posto». **Le
+parafrasi le ho scritte io** e potrebbero essere più distanti di quelle di un utente reale.
+**La vera e la falsa sono un surrogato dichiarato della generazione**, non un llm: il gate e
+il retrieval sono i pezzi veri, la generazione no. **La soglia 40,0 è quella di `answer()`**,
+non l'ho variata.
+
+**Banco**: `porta_giudice_ancoraggio.py` *(i casi sono estratti dagli altri due banchi, non
+ricopiati: un controllo positivo verifica che le domande coincidano e ferma l'esecuzione se
+no)*, dati in `giudice_ancoraggio.json` (scratchpad).
+**Io misuro, non curo.**
