@@ -1,0 +1,15 @@
+{
+  "name": "verimem",
+  "owner": {
+    "name": "Aurelio Capriello",
+    "email": "aureliocpr@gmail.com",
+    "url": "https://github.com/aureliocpr-ctrl/verimem"
+  },
+  "plugins": [
+    {
+      "name": "verimem",
+      "source": ".",
+      "description": "Persistent memory for Claude Code with a write-time admission gate: a fact is admitted only if the source you give it actually supports the claim."
+    }
+  ]
+}

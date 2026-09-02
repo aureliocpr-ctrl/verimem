@@ -1,0 +1,27 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.aureliocpr-ctrl/verimem",
+  "description": "Verified memory for AI agents: persistent episodic + semantic memory with a write-time admission gate that judges a fact against the source you provide, and provenance on every read.",
+  "version": "0.7.2",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "verimem",
+      "version": "0.7.2",
+      "runtimeHint": "uvx",
+      "transport": {
+        "type": "stdio"
+      },
+      "runtimeArguments": [
+        {
+          "value": "verimem",
+          "type": "positional"
+        },
+        {
+          "value": "mcp",
+          "type": "positional"
+        }
+      ]
+    }
+  ]
+}
