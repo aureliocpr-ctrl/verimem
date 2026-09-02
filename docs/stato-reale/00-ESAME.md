@@ -22395,3 +22395,79 @@ due file su 43.** **Non ho contato le righe**, solo i file. **Non ho rimosso nul
 voto.**
 
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 20:49 — ws1 · ✅⚖️ **LA CURVA DEL PAVIMENTO: il criterio d'accensione È SODDISFATTO, ma da una finestra larga `13` millesimi — `0,833`-`0,845`, ottimo `0,839` (`5,8%` di risposte vere perse, `10/10` fuori dominio zittiti). E le TRE stime che `auto` ha prodotto stanno TUTTE FUORI da quella finestra**
+
+**Livello** `Memory.search` sullo **STORE VIVO**, sola lettura, **rerank OFF** · **Perimetro**
+40 fatti italiani + 40 inglesi + 10 query fuori dominio, `k=10` · **Istante** 2026-09-02
+20:46–20:49 · **Regime** una passata, poi simulazione delle soglie; due ordini ·
+**Autorità**: obiezione di @lead-audit alla mia chiusura delle 20:32, **accolta** ·
+**0.7.6**.
+
+### 🔁 Prima: la mia formulazione delle 20:32 era sbagliata, e la correggo
+
+Avevo chiuso R10 con «accendere non conviene». **@lead-audit ha obiettato che il
+meccanismo funziona e il VALORE è sbagliato — ha ragione**, e la distinzione non è
+verbale: «non conviene» chiude la strada, «è tarato male» la apre. ⇒ **la domanda giusta
+non era acceso/spento ma «esiste un valore che separa le due popolazioni?».**
+
+### La curva, e il controllo che poteva fermarla
+
+⚖️ **La simulazione riproduce ESATTAMENTE la misura diretta delle 20:32** a `0,8805`
+*(IT `24/38`, EN `14/31`, fuori dominio `10/10`)* ⇒ non sta misurando un'altra cosa.
+
+```
+soglia    TOTALE perse      fuori-dominio zittiti
+0.825      2/69 ( 2,9%)      4/10
+0.831      3/69 ( 4,3%)      7/10
+0.833      4/69 ( 5,8%)      8/10   <-- entra nel criterio
+0.839      4/69 ( 5,8%)     10/10   <-- OTTIMO
+0.845      5/69 ( 7,2%)     10/10   <-- ultimo che passa
+0.847      7/69 (10,1%)     10/10   <-- esce
+0.8805    38/69 (55,1%)     10/10   <-- il pavimento di oggi
+```
+⇒ **criterio soddisfatto** *(perse `<=10%` E zittiti `>=80%`)* **nella finestra
+`0,833`-`0,845`**, larga **13 millesimi**.
+
+### ⚖️ La mia predizione è FALSIFICATA, e di parecchio
+
+Avevo scritto *«un valore esiste, fra `0,78` e `0,80`»*. **A `0,78`-`0,80` i fuori-dominio
+zittiti sono `0/10`**: quelle soglie non tolgono NIENTE. Il valore sta **quattro-sei
+centesimi più su**. ⇒ **avevo ragione sull'esistenza e torto sulla posizione**, e la
+posizione era la parte che serviva.
+
+### 🔴 Il reperto che decide COME andrebbe acceso, se si accende
+
+```
+stime prodotte da `auto` sullo stesso store:   0,8797  ·  0,8805  ·  0,8853
+finestra che soddisfa il criterio:             0,833   -  0,845
+```
+⇒ **tutte e tre stanno FUORI**, sopra il bordo alto; e la loro escursione — `5,6`
+millesimi — è **quasi metà della finestra**. ⇒ **`auto` sbaglia due volte: è tarato fuori
+E oscilla.** Se un valore va acceso, **va acceso come NUMERO FISSO** *(`0,839`)*, **non
+come `auto`**.
+
+### ⚠️ Il limite che avevo scritto PRIMA di eseguire, e che pesa sul verdetto
+
+**Le 10 query fuori dominio le ho scelte io lontane per costruzione** *(cucina, botanica,
+calcio, meteo)*. ⇒ **il `100%` di zittiti misura una separazione facile.** Il caso vero è
+la **domanda VICINA a cui lo store non sa rispondere** — stesso dominio, nessun fatto che
+la copra — **e quella popolazione nel banco NON C'È.** ⇒ **il criterio è soddisfatto sul
+materiale che ho, e il materiale che ho è la metà facile del problema.** Prima di
+accendere un default, quella misura va fatta.
+
+### Cosa NON prova
+
+**Uno store, un istante, un embedder, `k=10`, 69 domande vere e 10 finte.** La curva è
+**simulata** da una passata: legittima perché il pavimento taglia dopo il top-k
+(`client.py:1267`) e il controllo a `0,8805` lo conferma, **ma resta una simulazione** —
+l'accensione vera va misurata accendendo. **La griglia fine deriva dalla stessa passata
+della griglia grossa**, quindi la ripetibilità è quella già verificata sui due ordini, non
+una nuova. **`0,839` è il migliore SU QUESTA griglia**: un passo più fine sposterebbe la
+cifra. **Non ho acceso nulla.**
+
+**Banco**: `scripts/banco_curva_pavimento.py` *(criterio, predizione e controllo che ferma
+nel docstring, scritti prima)*.
+**Io misuro, non curo.**
