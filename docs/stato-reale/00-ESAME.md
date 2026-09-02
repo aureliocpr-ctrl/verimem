@@ -20122,3 +20122,94 @@ Seguito immediato della cella precedente. Il salto `L2 → L3` diceva che **un t
 ⚠️ **Due casi**: è una dimostrazione di **meccanismo**, non un tasso — e sono i due che avevo già in mano perché fallivano. · ❌ **Non ho isolato quale parola serva**: ho usato «soggetto» perché è il termine del fatto, ma non ho provato sinonimi né termini vicini. · ⚠️ Il rango 43 **non è una risposta servita**: entra nel pool, non nei primi dieci.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 03:24 — ws1 · 🔴🔴🔴 **È UNA CLASSE, NON UN CASO: `9` frasi su `10` che cambiano solo DI CHI SI PARLA passano il giudice, e con gli STESSI punteggi delle vere.** Compresa un'inversione di senso — «i respinti» al posto de «gli ammessi» prende **99,95**
+
+**Livello** `try_local_score(fatto_vero, frase)` (**soglia 40,0**), il giudice nel suo mestiere
+proprio · **Perimetro** i **10 fatti veri** dello store già usati stanotte *(campi `attesa` di
+`porta_comp_domande.py`, estratti con `exec`, non ricopiati)*, ciascuno con **la frase vera**
+*(controllo positivo)* e **la frase che cambia solo l'entità di cui si parla**, tenendo
+**numero, predicato e unità identici** · **Istante** 2026-09-02 03:22–03:24 · **Regime**
+variabili poppate, RAM 6,23 GB, **`claim ram/giudice`** (`3bd46a2b6001`) preso e rilasciato ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il fronte aperto alle 03:05**, dove UNA frase su dieci aveva passato il giudice
+cambiando solo il soggetto. **Un caso non è una classe: ora lo è.**
+
+### ✅ Il controllo positivo regge, quindi il banco conclude
+
+| | |
+|---|---|
+| **frasi VERE sopra soglia** | **10 / 10** ✅ |
+| **frasi col soggetto SCAMBIATO che passano** | **9 / 10** 🔴 |
+
+⚖️ **Predicevo 6-9: è 9.** ⇒ condizione d'uscita `≥7` ⇒ **è una CLASSE, e va accanto ai
+denominatori.**
+
+### 🔴 Non è un «quasi passa»: i due gruppi sono INDISTINGUIBILI
+
+```
+frasi vere            98,80 … 99,98
+frasi scambiate       98,05 … 99,98      (nove su dieci; la decima 4,49)
+punteggi scambiate: 4,49 · 98,05 · 99,07 · 99,30 · 99,32 · 99,67 · 99,90 · 99,95 · 99,96 · 99,98
+```
+
+⇒ **il giudice assegna a una frase che parla di un'altra cosa lo stesso punteggio che assegna
+al fatto vero.** Non c'è una soglia che possa separarli: **non è una calibrazione da
+correggere, è una distinzione che il giudice non fa.**
+
+### 🔴 Il caso peggiore è un'INVERSIONE DI SENSO, non solo un soggetto diverso
+
+```
+99,95   scambiata: Nel mese 2026-08 i RESPINTI hanno 29.8 per cento di span telegrafici.
+        fonte    : Nel mese 2026-08 gli AMMESSI hanno 29.8 per cento di span telegrafici
+                   e i quarantinati da MOAT il 27.3 per cento.
+```
+
+**«Ammessi» e «respinti» sono opposti**, e la fonte contiene **entrambi i gruppi con due
+numeri diversi**: la frase scambiata prende il numero dell'uno e lo attribuisce all'altro.
+**99,95.** ⇒ **non è cecità al soggetto in senso stretto: è cecità a QUALE dei due gruppi
+nominati dalla fonte appartiene il numero** — e questo è il modo in cui un riassunto sbagliato
+si presenta nella vita reale.
+
+### 📌 L'unico fermato, e NON so spiegare perché proprio quello
+
+```
+ 4,49   scambiata: I quarantinati da L1 hanno il 27.3 per cento di span telegrafici.
+        fonte    : ... e i quarantinati da MOAT il 27.3 per cento.
+```
+
+**È la STESSA fonte del caso precedente**: uno scambio passa a 99,95, l'altro cade a 4,49.
+**Ho provato due spiegazioni e sono cadute entrambe**: «*il giudice regge quando il soggetto
+vero è nominato accanto al numero*» cade sul caso `[3]` *(la fonte nomina
+`hippo_facts_recall` e `hippo_dream_status` passa con 99,67)*; «*regge quando i due soggetti
+sono nomi propri distinti*» cade sullo stesso caso. ⇒ **il dato è osservato e non spiegato**,
+e lo lascio così invece di inventarne una terza.
+
+### 🎯 Cosa significa
+
+> **Il controllo di fondatezza conferma che la fonte contiene quel numero e quel predicato. Non
+> controlla che li stia attribuendo alla stessa cosa.** Su dieci frasi costruite cambiando solo
+> l'entità, nove passano — con gli stessi punteggi dei fatti veri.
+
+⇒ **i denominatori** («128 su 999» contro «128 su 372» → 99,96, trovato all'01:56 e
+riconfermato in tre popolazioni) **sono un caso particolare di questo**. ⚠️ E il perimetro è
+proprio quello che il prodotto promette di proteggere: **è il gate nel suo mestiere, non una
+porta di contorno**.
+
+### Cosa NON prova
+
+**Dieci fatti, un solo store, una macchina, soglia 40,0 non variata.** `9/10` **non è un
+tasso**: **le frasi scambiate le ho scritte io** perché fossero difficili — un modello che
+riassume produrrebbe questi errori con una frequenza che **non conosco**. **In due casi (`[7]`,
+`[8]`) l'entità è portata da un aggettivo** («json»→«yaml», «NUDO»→«VESTITO») invece che dal
+sostantivo: cambia comunque l'oggetto di cui si parla, ma **non è una sostituzione del soggetto
+grammaticale** e l'ho dichiarato nel banco. **Non ho misurato se un altro strato a valle
+(`L4.1`, `L1`) fermerebbe queste frasi**: misuro `try_local_score` **da solo**, e altri sul
+canale riportano che `L4.1` interviene dove il moat cade — **quindi questo NON è il verdetto
+del prodotto intero**, è il verdetto di uno strato.
+
+**Banco**: `porta_soggetto_scambiato.py`, dati in `soggetto_scambiato.json` (scratchpad).
+**Io misuro, non curo.**
