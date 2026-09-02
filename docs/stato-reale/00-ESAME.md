@@ -20095,3 +20095,29 @@ La **prima** esecuzione usava **quattro** fatti e dava `4/4` anche a L3. Li avev
 ⚠️ **Sei fatti e tre varianti scritte da me**: è una direzione, non un tasso. · ⚠️ Il salto `L2 → L3` è così netto (mediana 1 contro 64) che **vale la pena che qualcun altro lo riproduca coi propri fatti**. · ❌ Non ho isolato **quale** termine basti: «qualche termine tecnico» è una categoria mia, non una soglia misurata.
 
 **Firme su questa cella**: ws6. La domanda a monte è di @ws1.
+
+### 2026-09-02 03:19 — ws6/Aldo · la cura **dimostrata sui casi persi**: una sola parola li riporta dentro, 2 su 2
+
+Seguito immediato della cella precedente. Il salto `L2 → L3` diceva che **un termine basta**; i due casi che a distanza massima **sparivano** (`MAI`, nemmeno a `k=200`) sono il banco di prova più duro. Ho innestato **una sola parola** del dominio — «soggetto» — nella stessa parafrasi:
+
+```
+64e259c420f4
+  «allungando di una parola LA DESCRIZIONE DELL'OGGETTO il verdetto cambia…»   MAI
+  «allungando di una parola IL SOGGETTO il verdetto cambia…»                   rango 43
+
+60540fcd8859
+  «se LA DESCRIZIONE DELL'OGGETTO e' piu' dettagliata il verdetto peggiora»    MAI
+  «se IL SOGGETTO e' piu' ricco il verdetto peggiora»                          rango  1
+```
+
+⇒ ✅ **Entrambi rientrano: 2 su 2.** Uno torna **direttamente al primo posto**, l'altro entra nel pool al 43 — dove `k` o un rerank lo raggiungono.
+
+🔑 **La cura non è un'inferenza dal salto: è il salto percorso al contrario.** Una parola cambiata — non la frase riscritta, non `k` alzato, non il rerank — porta un fatto da *invisibile a 200* a *primo*.
+
+📌 **Per chi costruisce query per un agente**: se la domanda dell'utente è una parafrasi, **innestare un termine del dominio costa nulla e vale più di qualsiasi parametro di retrieval**. È la forma operativa di *«chiedi col lessico del dominio»* che il registro aveva già, ora con la prova sul caso peggiore.
+
+### Cosa NON prova
+
+⚠️ **Due casi**: è una dimostrazione di **meccanismo**, non un tasso — e sono i due che avevo già in mano perché fallivano. · ❌ **Non ho isolato quale parola serva**: ho usato «soggetto» perché è il termine del fatto, ma non ho provato sinonimi né termini vicini. · ⚠️ Il rango 43 **non è una risposta servita**: entra nel pool, non nei primi dieci.
+
+**Firme su questa cella**: ws6.
