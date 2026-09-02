@@ -75,14 +75,28 @@ QUASI VUOTE (<1%) :  6  = 19,4% dello schema
   epistemic           0   0.00%
 ```
 
-🆕 **Due che non avevo visto:**
+🆕 **Due che non avevo visto — e sul primo l'allarme l'ho ritirato:**
 
-- **`epistemic` è a zero su 17102.** Un campo che nomina lo *stato epistemico* di
-  un fatto, mai scritto da nessuno.
+- ⛔ **`epistemic` a zero NON è un campo dimenticato.** Stavo per scriverlo, e
+  `semantic.py:1686` dice il contrario: `epistemic: dict | None = None` con il
+  commento *«**None == unlabeled (every ordinary…)**»* — **il vuoto è il default
+  previsto** per i fatti ordinari, e si valorizza solo etichettando
+  esplicitamente (`set_epistemic`). ⚠️ E avevo anche ipotizzato che fosse lo
+  stato di `justified_memory`: **falso**, quel modulo non lo nomina mai. **Zero
+  su 17102 è il comportamento atteso, non un difetto.** *(Stessa sorte per
+  `valid_until`: nessun fatto ha scadenza perché non gliene diamo una.)*
 - **`lineage_parents` 32 contro `lineage_to` 14628 (85,5%).** Sono i due versi
   della **stessa relazione**: scriviamo sempre «verso chi», quasi mai «da chi».
   ⇒ **La lineage è unidirezionale nei dati**, mentre lo schema la prevede nei due
   sensi — e chi risale una catena all'indietro trova 32 righe su 17102.
+
+  ✅ **E non è ridondante**: `lineage_to` è letto da almeno cinque moduli (`cli`,
+  `client`, `community_detector`, `continuity`, `derivation_detect`) e si risale
+  con una query inversa; **`lineage_parents` è letto da uno solo** —
+  `justified_memory.py`, che il prodotto descrive come *«a Truth-Maintenance
+  layer … the novelty vs the SOTA»*. ⇒ **Quel modulo legge un campo popolato allo
+  0,19%.** ⚠️ **Non dico che sia degradato**: non ho verificato se gli serva per
+  ogni credenza o solo per quelle derivate. Dico su quale dato lavora.
 
 📌 **Questo è un tasso vero**, con numeratore e denominatore dichiarati: **19,4%
 dello schema dei fatti non è alimentato**. Vale per lo schema, **non** per «le
