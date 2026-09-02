@@ -20994,3 +20994,81 @@ contraddirlo a torto — è lui stesso a dirlo, e lo rispetto)*. **Non so perch�
 
 **Banco**: `porta_passivo.py`, dati in `passivo.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 04:34 — ws1 · 🔴🔴 **TUTTI I MIEI NUMERI DI STANOTTE SONO IN ITALIANO, E IL PRODOTTO È PUBBLICATO IN INGLESE: gli stessi dieci casi passano `9/10` in italiano e `6/10` in inglese.** Il caso su cui avevo costruito il filone — `ammessi`→`respinti` — **in inglese è FERMATO** (`99,95` → `1,61`)
+
+**Livello** `try_local_score(fonte, frase)` (soglia 40,0) · **Perimetro** **le stesse dieci
+frasi scambiate** del banco delle 03:24 **con le loro fonti, tradotte in inglese** mantenendo
+la stessa relazione e la stessa sostituzione, più **le dieci vere in inglese** come controllo
+positivo · **Istante** 2026-09-02 04:32–04:34 · **Regime** variabili poppate, RAM 6,20 GB,
+**`claim ram/giudice`** (`1b755b3628e6`) preso e rilasciato · **Autorità**: ordine di Aurelio
+delle 00:00 · **0.7.6**.
+
+**Paga un limite che NON avevo mai dichiarato in nessuna delle nove celle di stanotte**: ogni
+mio banco è in italiano. **L'ho visto solo perché @ws5 ha ritirato la sua formulazione dicendo
+che era misurata solo in italiano** — il merito della domanda è suo.
+
+### Il numero, con il controllo positivo a `10/10`
+
+| | |
+|---|---|
+| **vere in inglese ammesse** | **10 / 10** ✅ *(il giudice non boccia l'inglese)* |
+| scambiate che passano **in italiano** *(03:24)* | **9 / 10** |
+| scambiate che passano **in inglese** | **6 / 10** |
+
+⚖️ **Predicevo 4-7: è 6.** ⇒ condizione d'uscita **intermedia**, e la dichiaro come tale: **la
+direzione è netta, la misura è di dieci casi.**
+
+### 🔴 I tre che cambiano, e uno è il caso su cui ho costruito il filone
+
+```
+#2  «gli alias della cartella dei log …»      IT 99,96  passa   EN 30,88  FERMATA
+#3  «hippo_dream_status … 61585 ms»           IT 99,67  passa   EN  0,73  FERMATA
+#5  «i respinti hanno 29.8 per cento …»       IT 99,95  passa   EN  1,61  FERMATA
+```
+
+⚠️ **Il `#5` è l'esempio che ho pubblicato quattro volte stanotte come «inversione di senso che
+passa a 99,95».** **In inglese è fermato a `1,61`.** ⇒ **la mia frase più citata vale nella
+lingua in cui non è scritto il prodotto.**
+
+### 🎯 Cosa questo fa a tutto il mio filone
+
+**Non lo cancella: lo circoscrive**, e va detto in ogni riga che ne è uscita.
+
+> **I numeri che ho misurato stanotte (9/10 alla porta, 9/10 sul giudice, i punteggi
+> 98–99,98) sono in ITALIANO. Sugli stessi dieci casi tradotti in inglese il gate ne ferma
+> quattro invece di uno.**
+
+⇒ **la vetrina è in inglese**, quindi **la riga che avevo dato per la vetrina descriveva il
+comportamento in una lingua diversa da quella del prodotto pubblicato.** ⚠️ **Non ho rifatto
+in inglese gli altri banchi** *(porta, configurazioni, posizione, contrari, passivo)*: quindi
+**so che la lingua cambia il quadro, non di quanto lo cambi su ciascuno di essi.**
+
+### 🔗 Una correzione a @ws5, e riguarda me
+
+Mi ha scritto: «*sui tuoi 8 casi **inglesi** l'ipotesi passiva probabilmente non si
+riprodurrà*». ⚠️ **I miei otto casi non sono inglesi: sono italiani** — «*Il censimento perde
+34 righe*», «*I quarantinati da MOAT hanno il 29.8 per cento di span telegrafici*». ⇒ **il mio
+`1/8` sul passivo era già in italiano**, cioè **nella sua stessa lingua**, e la differenza fra
+il suo `0/5` e il mio `1/8` **non si spiega con la lingua**. Resta una divergenza vera fra due
+perimetri.
+✅ **Ma il suo reperto di fondo si conferma sul mio perimetro, con casi diversi dai suoi**:
+**l'inglese ferma di più.** Lui su 10 inversioni (5 IT + 5 EN) trova 3 e 7 fermate; io su 10
+casi miei trovo **1 fermata in italiano e 4 in inglese**. **Due perimetri indipendenti, stessa
+direzione.**
+
+### Cosa NON prova
+
+**Dieci casi, sei fonti, una macchina, soglia 40,0.** `6/10` e `9/10` **non sono tassi**.
+**Le traduzioni le ho fatte io**: una resa diversa può cambiare il punteggio, ed è
+**esattamente il fenomeno che sto misurando** — la formulazione decide, quindi **la mia stessa
+traduzione è una formulazione fra le tante**. **Non ho ritradotto gli altri banchi**, quindi
+il «vale per l'italiano» è **dimostrato su questo banco e ipotizzato sugli altri**. **Non so
+perché l'inglese fermi di più** — e non lo invento: sarebbe la quinta spiegazione in tre ore.
+**Non ho misurato la lingua della FONTE separatamente da quella della FRASE**: qui le ho
+tradotte entrambe insieme, quindi **le due variabili restano confuse**.
+
+**Banco**: `porta_lingua.py`, dati in `lingua.json` (scratchpad).
+**Io misuro, non curo.**
