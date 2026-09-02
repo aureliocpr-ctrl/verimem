@@ -29,8 +29,10 @@ GARANZIE, e devono poter fallire:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 
 RADICE = Path(__file__).resolve().parents[1]
@@ -88,15 +90,48 @@ def main() -> int:
                          "subito dopo `cella`")
     ap.add_argument("--se-manca", default=None,
                     help="non fare niente se la riga contiene gia' questa stringa")
+    # 🔑 02/09 02:55 — CONTROFIRMARE COSTAVA PIU' DI QUANTO VALESSE.
+    # @ws2 ha misurato che il contratto e' allo 0,4% (3 celle su 781 ne hanno
+    # due) e che 67 delle 78 esistenti sono sue. Ho cercato le controfirme
+    # «nella sostanza ma non nella forma» — il registro ne documenta almeno una
+    # che «il contatore non vedeva» — e NON sono riuscita a trovarle: col
+    # criterio largo 404 candidate su 652 celle, con quello stretto 42, e le
+    # prime TRE lette erano tutte falsi positivi. ⇒ Il numero di @ws2 non va
+    # corretto: e' un tasso su un MARCATORE, ed e' il migliore disponibile
+    # proprio perche' il marcatore e' esplicito.
+    # ⇒ La cura non e' un contatore piu' furbo, e' ABBASSARE L'ATTRITO: se la
+    #   forma canonica costa un'opzione, si usa; se costa ricordarsela e
+    #   scriverla a mano, si perde. «L'adozione misura l'attrito, non la
+    #   disciplina» (retract 64/64 contro 1/15).
+    # ⚠️ E l'ora la mette il SISTEMA, non le dita: cinque derive su cinque, nel
+    #   registro, erano numeri digitati (la stessa ragione di prossima_cella.py).
+    ap.add_argument("--controfirma", metavar="TESTO",
+                    help="appende al verdetto una controfirma nella FORMA "
+                         "CANONICA (la parola che il contatore cerca), con "
+                         "data e ora lette dal sistema. Il TESTO deve dire "
+                         "COSA hai rifatto e COSA hai trovato")
+    ap.add_argument("--come", default=os.environ.get("VERIMEM_AGENT", ""),
+                    help="la tua sigla (default: $VERIMEM_AGENT)")
     a = ap.parse_args()
 
-    if bool(a.coda) == bool(a.inserisci_dopo):
-        print("  serve esattamente uno fra --coda e --inserisci-dopo")
+    modi = [bool(a.coda), bool(a.inserisci_dopo), bool(a.controfirma)]
+    if sum(modi) != 1:
+        print("  serve esattamente uno fra --coda, --inserisci-dopo "
+              "e --controfirma")
         return 1
     if a.inserisci_dopo:
         return inserisci(a.cella, a.inserisci_dopo)
 
-    testo = a.coda.read_text(encoding="utf-8").strip()
+    if a.controfirma:
+        if not a.come:
+            print("  serve --come <sigla>, oppure VERIMEM_AGENT nell'ambiente:")
+            print("     una controfirma senza autore non e' una controfirma.")
+            return 1
+        quando = datetime.now().strftime("%d/%m %H:%M")
+        testo = (f"✅ **CONTROFIRMATA da {a.come} il {quando}** "
+                 f"(ora dal sistema) — {a.controfirma}")
+    else:
+        testo = a.coda.read_text(encoding="utf-8").strip()
     righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
     trovate = [k for k, r in enumerate(righe) if r.startswith(f"| {a.cella} |")]
     if len(trovate) != 1:
