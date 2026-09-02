@@ -95,8 +95,25 @@ QUASI VUOTE (<1%) :  6  = 19,4% dello schema
   con una query inversa; **`lineage_parents` è letto da uno solo** —
   `justified_memory.py`, che il prodotto descrive come *«a Truth-Maintenance
   layer … the novelty vs the SOTA»*. ⇒ **Quel modulo legge un campo popolato allo
-  0,19%.** ⚠️ **Non dico che sia degradato**: non ho verificato se gli serva per
-  ogni credenza o solo per quelle derivate. Dico su quale dato lavora.
+  0,19%.**
+
+  ✅ **Limite chiuso alle 03:09, e ridimensiona il rilievo.** `justified_memory.py:151,166`:
+  `lineage_parents` è **uno di tre alias** — *«`derives_from` / `depends_on` /
+  `lineage_parents`»* — e serve a **una cosa sola**, dichiarata nel commento a
+  `:139`: *«`lineage_parents` → **dependency cascade**»*, dentro quello che la
+  riga `:141` chiama *«**Read-only audit** (reports what WOULD retract) — **no
+  store mutation**»*.
+
+  ⇒ **Non serve a ogni credenza**: gli altri due trigger del ciclo di vita
+  (`superseded_by` → retract, `valid_until` → stale) sono indipendenti, e
+  `superseded_by` è popolato al **13,4%**. **La cascata di dipendenza** è la sola
+  parte senza materiale — e tutti e tre gli alias sono vuoti (`derives_from` 1,
+  `lineage_parents` 32, `depends_on` **non è nemmeno una colonna**).
+
+  🔑 **La causa non è il modulo: siamo noi.** Una cascata di dipendenza ha bisogno
+  che qualcuno **dichiari da quale fatto un altro dipende**, e noi non lo facciamo
+  mai. ⇒ Settima istanza della forma, e la più netta: **la funzione è pronta, il
+  dato lo deve fornire chi scrive, e nessuno lo fornisce.**
 
 📌 **Questo è un tasso vero**, con numeratore e denominatore dichiarati: **19,4%
 dello schema dei fatti non è alimentato**. Vale per lo schema, **non** per «le
