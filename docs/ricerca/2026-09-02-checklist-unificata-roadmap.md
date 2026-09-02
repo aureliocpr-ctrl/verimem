@@ -2,7 +2,7 @@
 
 > ## ✍️ Controfirma ws6 — 02/09/2026 19:51
 >
-> **30 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
+> **38 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -33,8 +33,23 @@
 > righe) fa davvero faiss HNSW con `add` incrementale, `trusted_writer.py` (46) è
 > una verifica `hmac.compare_digest`. **Nessuno dei due è uno stub.**
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **30 righe su 113**. Le
-> restanti 83 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑤ Secondo giro (20:06), altre 8 righe, tutte sulle FATTO** — scelte lì perché
+> l'errore è asimmetrico: un «NON FATTO» sbagliato si scopre provando, un «FATTO»
+> sbagliato dice ad Aurelio che ha qualcosa che non ha. **Nessuna cade.** I cinque
+> conteggi di righe (`backup.py` 545, `undo_log.py` 334, `sandbox.py` 953,
+> `hot_reload.py` 216, `resource_monitor.py` 220) sono **esatti al numero**; `A3`
+> ha 13 file in `dashboard_routes/` meno `__init__.py` = **12 moduli**, come
+> dichiarato; `A21` ha davvero `tenants/<id>/memory.db` (`gateway.py:13`).
+> **`A13` è verificata fino in fondo**: `pytest tests/test_hot_reload.py` →
+> **9 passed, EXIT=0**, cioè 9 dichiarati = 9 trovati = 9 che passano.
+>
+> 📐 **E sui test la checklist è CONSERVATIVA, non gonfiata**: dichiara 11 test per
+> `backup` dove io ne conto 31, e 44 per `sandbox` dove ne conto 58. Il
+> ricercatore conta il file principale, io sommo ogni file che importa il modulo:
+> due criteri legittimi, e il suo è il più stretto. **Nessuna correzione.**
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **38 righe su 113**. Le
+> restanti 75 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
