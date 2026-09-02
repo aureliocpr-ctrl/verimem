@@ -79,3 +79,60 @@ def test_il_master_non_supera_la_confidenza_di_un_fatto_giudicato(store_isolato)
         f"di fiducia e' invertita rispetto alla verifica, e la confidence pesa sul "
         f"ranking del recall."
     )
+
+
+def test_il_ripiego_scatta_se_il_cluster_punta_a_fatti_spariti(store_isolato):
+    """Il ramo di ripiego: nessuna confidenza da ereditare.
+
+    ⚠️ Il caso «un figlio con `confidence` NULL» **non può prodursi**: la colonna
+    ha un vincolo `NOT NULL` e un UPDATE a NULL solleva `IntegrityError`
+    (verificato: `NOT NULL constraint failed: facts.confidence`). Il ramo `else`
+    resta però raggiungibile per un'altra strada, e questa è reale: il cluster
+    porta `fact_ids` che al momento della persistenza **non esistono più** —
+    cancellati fra il rilevamento e la scrittura. Allora la query non torna
+    righe, la lista è vuota, e il master deve valere il default di classe (0.5),
+    non un numero inventato e non un errore.
+    """
+    from verimem import Memory
+    from verimem.consolidation import _persist_master
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import Fact
+
+    m = Memory()
+    _ep, fact_id, _e = _persist_master(
+        m.semantic,
+        EpisodicMemory(),
+        # id che non esistono: il cluster e' stato rilevato e poi svuotato
+        {"topic_prefix": "test/ripiego", "fact_count": 2,
+         "fact_ids": ["ffffffffffff", "eeeeeeeeeeee"]},
+        {"topic": "test/ripiego/auto-MASTER",
+         "proposition": "AUTO-CLUSTER-MASTER test/ripiego — auto-consolidated entry point organizing 2 sub-facts"},
+    )
+    master = m.semantic.get(fact_id)
+    assert master is not None, "il master dev'essere scritto anche senza figli leggibili"
+    assert float(master.confidence) == float(Fact.confidence), (
+        f"senza confidenze da ereditare il master deve valere il default di classe "
+        f"({Fact.confidence}), non {master.confidence}"
+    )
+    assert float(Fact.confidence) == 0.5, (
+        "controllo del controllo: se il default di classe cambiasse, l'assert "
+        "sopra confronterebbe un valore con se stesso e non misurerebbe piu' nulla"
+    )
+
+
+def test_la_colonna_confidenza_non_ammette_il_nulla(store_isolato):
+    """Perche' il caso «figlio con confidenza NULL» non e' nel test qui sopra."""
+    import sqlite3
+
+    from verimem import Memory
+
+    m = Memory()
+    r = m.add("I bancali ricevuti sono tre.", topic="test/vincolo",
+              source="Il magazzino ha ricevuto tre bancali.")
+    con = sqlite3.connect(str(m.semantic.db_path))
+    try:
+        with pytest.raises(sqlite3.IntegrityError):
+            con.execute("UPDATE facts SET confidence = NULL WHERE id = ?", (r["id"],))
+            con.commit()
+    finally:
+        con.close()

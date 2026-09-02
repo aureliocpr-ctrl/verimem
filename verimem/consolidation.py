@@ -497,7 +497,11 @@ def _persist_master(
     # reference it before the Episode is stored — letting the unique-index
     # guard on the Fact abort a lost race with no Episode side effect.
     # La confidenza del master NON si inventa: si eredita dal piu' debole dei
-    # fatti che aggrega. Un nodo che riassume N fatti non puo' essere piu'
+    # fatti che aggrega. MIN, NON MEDIA: la media di un fatto solido e uno
+    # fragile darebbe un numero che non descrive nessuno dei due e che sale
+    # aggiungendo ingredienti buoni a un cluster che ne ha uno cattivo. Il
+    # minimo e' l'unica scelta che non puo' promettere piu' di quanto il
+    # materiale sostenga, ed e' quella conservativa nel verso giusto. Un nodo che riassume N fatti non puo' essere piu'
     # affidabile della sua parte peggiore, e questo fatto non passa dal gate
     # (`sm.store` diretto, non `Memory.add`): nessuno ne ha confrontato il testo
     # con una fonte, quindi `grounding_score` resta NULL.
