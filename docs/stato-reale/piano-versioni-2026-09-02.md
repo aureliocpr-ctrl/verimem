@@ -118,6 +118,17 @@ forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
     6 predizioni su 8 smentite, 2 smentite hanno cambiato una decisione (int8, loop asyncio).
     Budget delle regole: una regola nuova sostituisce o assorbe una vecchia — a
     saturazione una regola in testa vale zero (fatto `ca3ee11debaf`).
+11. **Fra pari, tre cose diverse** (dalla discussione lead↔ws3 del 02/09 sera, su richiesta
+    di Aurelio: «parlate e discutete tra voi, non sono direttive mie»): l'**assegnazione**
+    (chi guarda cosa) si accetta, salvo conflitto dichiarato — negoziarla riporta
+    all'assemblea; la **premessa** di un mandato (ciò che chi assegna assume) si verifica
+    PRIMA di spendere, e se cade lo si dice invece di procedere; la **predizione** si
+    falsifica misurando. Chi assegna separa premessa e predizione per iscritto. Righello:
+    giri spesi prima di scoprire una premessa falsa, contati nel registro — bersaglio zero
+    (il 02/09: tre premesse cadute, zero giri sprecati, perché sono state misurate prima).
+    **`main` rosso è di tutti**: chi pusha su `main` rosso adotta un rosso; le giunture
+    (strato↔porta, cura↔cura, commit↔ramo) non hanno un proprietario perché il loro
+    proprietario è un test o un gancio, e il lead legge il segnale aggregato.
 
 ## Assegnazioni al 02/09 22:25 (fino a nuovo ordine)
 | chi | cosa, nell'ordine |
