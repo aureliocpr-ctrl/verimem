@@ -66,12 +66,13 @@ torna 8, ed è mezz'ora.
 ⚠️ **Il risultato principale non dipende da quella ipotesi**: `9 → 10` confronta
 due prodotti con **lo stesso banco nella stessa forma**, e il tipo che cambia è
 nominato.
-❌ **Non ho stabilito QUALE degli 11 commit abbia cambiato l'esito su `stato`**,
-né se sia stato un effetto voluto di una cura o una regressione. Serve una
-bisezione, che è il passo naturale successivo e non l'ho fatto.
+✅ **~~Non ho stabilito quale degli 11 commit abbia cambiato l'esito su
+`stato`~~** — **chiuso alle 04:37 con una bisezione, sezione qui sotto.**
 ⚠️ **Le tre righe che reggono sono verificate su un'esecuzione ciascuna**, non su
-ripetizioni: se il banco avesse una variabilità come quella che l'`8 → 9`
-suggerisce, un singolo passaggio non la vedrebbe.
+ripetizioni. Per la quarta il controllo è stato fatto: **due corse sullo stesso
+prodotto danno `10/10 IT` e `9/10 EN` identiche, stessi tipi** ⇒ il banco è
+deterministico, e questo rende la bisezione sensata (e l'`8 → 9` più strano, non
+meno).
 
 ## L'A/B «allora contro oggi» è praticabile — e la trappola che nasconde
 
@@ -97,3 +98,57 @@ se non viene dalla radice chiesta** — senza quel controllo positivo avrebbe lo
 stesso difetto silenzioso che evita.
 
 **Firme su questo documento**: ws6.
+
+---
+
+## La bisezione: un commit solo, e la sua giustificazione ha qui un controesempio
+
+**04:37 — cinque esecuzioni**, ogni volta un worktree creato e rimosso, ogni
+volta con la provenienza di `verimem` stampata prima di eseguire:
+
+```
+671d151f  26/08         9/10 IT      <- il punto di partenza
+e3ecd7f1  28/08 23:44   9/10 IT
+fa850457  29/08 20:06   9/10 IT      <- «igiene commenti»: non cambia nulla, come dev'essere
+2f909a65  30/08         9/10 IT      <- il PARENT del commit sotto
+5ea77b6d  30/08 13:44  10/10 IT      <- QUI
+c1e6dac1  30/08 16:33  10/10 IT
+HEAD      02/09        10/10 IT
+```
+
+⇒ **`5ea77b6d` è il commit**, isolato contro il proprio parent: una sola
+variabile fra `9/10` e `10/10`. Il suo titolo dice già cosa fa:
+
+> `L1.20 dichiara e non trattiene: il detector semantico di self-claim resta acceso e in ricevuta, ma perde il veto`
+
+E il banco, **prima** di quel commit, mostra chi fermava il caso:
+
+```
+stato   IT  falso   quarantined   -   L1.20        <- prima:  L1.20 e nessun altro
+stato   IT  falso   admitted      -   -            <- dopo:   passa
+```
+
+🔑 **`L1.20` fermava quella falsità DA SOLO.** La giustificazione registrata nel
+commit è: *«Come veto il beneficio è ZERO — dove ferma, i lessicali fermano
+già»*. **Qui non fermava nessun altro, e tolto il veto la falsità passa.**
+
+### E la decisione non era sbagliata: la sua misura non poteva vedere questo
+
+⚠️ **Va detto per intero, perché la lettura facile sarebbe ingiusta.** Il commit
+dichiara la popolazione su cui ha misurato — *«ZERO su tre popolazioni
+indipendenti (80 handoff: L1.13 68 volte, L1.15 40, L1.20 2)»* — ed è una
+popolazione di **handoff reali**. Il banco qui è **avversariale**: dieci
+contraddizioni costruite apposta. Sono davvero due popolazioni diverse, e la
+misura del commit resta valida su quella che ha misurato.
+
+⇒ **Il costo non è un errore della decisione: è ciò che quella misura non poteva
+vedere.** E adesso ha un numero: **un caso su dieci in italiano**, il tipo
+`stato`, nella classe «contraddizione non menzionata».
+
+📌 **Cosa questo NON dice**: che il veto vada rimesso. `L1.20` come veto ha un
+costo documentato nel commit (*«un claim VERO quarantinato a grounding 99.72»*),
+e questo banco misura **una** classe avversariale, non l'equilibrio fra le due
+popolazioni. La decisione su cosa farne è collegiale, e questo documento porta il
+dato che le mancava, non la conclusione.
+
+**Firme su questa sezione**: ws6.

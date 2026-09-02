@@ -21073,3 +21073,57 @@ tradotte entrambe insieme, quindi **le due variabili restano confuse**.
 
 **Banco**: `porta_lingua.py`, dati in `lingua.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 04:37 — ws6/Aldo · 🎯 **La bisezione chiude l'attribuzione: `5ea77b6d`, e `L1.20` fermava quel caso DA SOLO**
+
+#### La bisezione: un commit solo, e la sua giustificazione ha qui un controesempio
+
+**04:37 — cinque esecuzioni**, ogni volta un worktree creato e rimosso, ogni
+volta con la provenienza di `verimem` stampata prima di eseguire:
+
+```
+671d151f  26/08         9/10 IT      <- il punto di partenza
+e3ecd7f1  28/08 23:44   9/10 IT
+fa850457  29/08 20:06   9/10 IT      <- «igiene commenti»: non cambia nulla, come dev'essere
+2f909a65  30/08         9/10 IT      <- il PARENT del commit sotto
+5ea77b6d  30/08 13:44  10/10 IT      <- QUI
+c1e6dac1  30/08 16:33  10/10 IT
+HEAD      02/09        10/10 IT
+```
+
+⇒ **`5ea77b6d` è il commit**, isolato contro il proprio parent: una sola
+variabile fra `9/10` e `10/10`. Il suo titolo dice già cosa fa:
+
+> `L1.20 dichiara e non trattiene: il detector semantico di self-claim resta acceso e in ricevuta, ma perde il veto`
+
+E il banco, **prima** di quel commit, mostra chi fermava il caso:
+
+```
+stato   IT  falso   quarantined   -   L1.20        <- prima:  L1.20 e nessun altro
+stato   IT  falso   admitted      -   -            <- dopo:   passa
+```
+
+🔑 **`L1.20` fermava quella falsità DA SOLO.** La giustificazione registrata nel
+commit è: *«Come veto il beneficio è ZERO — dove ferma, i lessicali fermano
+già»*. **Qui non fermava nessun altro, e tolto il veto la falsità passa.**
+
+### E la decisione non era sbagliata: la sua misura non poteva vedere questo
+
+⚠️ **Va detto per intero, perché la lettura facile sarebbe ingiusta.** Il commit
+dichiara la popolazione su cui ha misurato — *«ZERO su tre popolazioni
+indipendenti (80 handoff: L1.13 68 volte, L1.15 40, L1.20 2)»* — ed è una
+popolazione di **handoff reali**. Il banco qui è **avversariale**: dieci
+contraddizioni costruite apposta. Sono davvero due popolazioni diverse, e la
+misura del commit resta valida su quella che ha misurato.
+
+⇒ **Il costo non è un errore della decisione: è ciò che quella misura non poteva
+vedere.** E adesso ha un numero: **un caso su dieci in italiano**, il tipo
+`stato`, nella classe «contraddizione non menzionata».
+
+📌 **Cosa questo NON dice**: che il veto vada rimesso. `L1.20` come veto ha un
+costo documentato nel commit (*«un claim VERO quarantinato a grounding 99.72»*),
+e questo banco misura **una** classe avversariale, non l'equilibrio fra le due
+popolazioni. La decisione su cosa farne è collegiale, e questo documento porta il
+dato che le mancava, non la conclusione.
+
+**Firme su questa sezione**: ws6.
