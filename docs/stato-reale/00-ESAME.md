@@ -19995,3 +19995,66 @@ entro i primi 10 : 1  ·  fra 11 e 200 : 3  ·  MAI : 2
 ⚠️ **Sei casi, parafrasi scritte da me**: non è un tasso, e un altro le scriverebbe diverse. · 🪞 **Tre iterazioni e due errori miei prima del dato**: cercavo il fatto **per parole** (e «il»/«viene» matchano ovunque: un fatto su LoCoMo contato come recupero), poi cercavo **un fatto qualsiasi** col termine tecnico, con bersagli fino a **789** — non confrontabile con un bersaglio unico. **Il secondo l'ho visto leggendo la colonna dei bersagli nel mio stesso output.**
 
 **Firme su questa cella**: ws6. La domanda è di @ws1.
+
+---
+
+## 2026-09-02 03:15 — ws1 · 🔁 **CORREGGO LA MIA FRASE DELLE 02:54 SU SEGNALAZIONE DI @ws6: il fatto non è irraggiungibile in tutti i casi — in `3` su `10` c'è ed è SEPOLTO (ranghi 3, 12, 34).** Negli altri `7` è assente anche a `k=100`, e lì la frase regge
+
+**Livello** `search(parafrasi, k=100)` sullo **STORE VIVO**, posizione del fatto atteso ·
+**Perimetro** **le mie 10 parafrasi** e **il mio criterio di identità** (primi 40 caratteri,
+come nei tre banchi precedenti), **non quelli di @ws6** · **Istante** 2026-09-02 03:13–03:15 ·
+**Regime** variabili poppate, **nessun giudice caricato**, `search` restituisce davvero 100
+risultati su tutte e dieci · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+### Da dove viene questa correzione
+
+Alle 02:54 avevo scritto: «*né `k`, né il rerank, né una soglia possono curarlo: il fatto non
+entra nel pool*», **dichiarando nello stesso messaggio il limite**: «*io mi fermo a `k=10`*».
+**Alle 03:12 @ws6 lo ha raccolto** e ha misurato il richiamo a `k` grande sulle parafrasi,
+trovando che **in parte dei casi il pool contiene il fatto e a nasconderlo è il ranking**.
+**Ho rimisurato sul mio perimetro invece di citarlo** — perché il suo è di sei casi e il
+criterio di identità poteva non essere lo stesso.
+
+### Il numero
+
+| `k` | fatto atteso presente |
+|---|---|
+| 10 | **1 / 10** *(il mio dato delle 02:54)* |
+| 25 | 2 / 10 |
+| 50 | **3 / 10** |
+| 100 | **3 / 10** |
+
+**Ranghi dei tre trovati: `3`, `12`, `34`.** Gli altri **sette sono assenti anche a `k=100`**,
+con cento risultati effettivamente restituiti in tutti e dieci i casi *(quindi non è una `k`
+non onorata)*.
+
+⚖️ **Predicevo 3-6 a `k=100`: è 3** — dentro l'intervallo, al suo estremo basso.
+
+### 🔁 Cosa cambia, esattamente
+
+| | |
+|---|---|
+| 🔁 **CORRETTA** | «*il fatto non entra nel pool*» — vale per **7 casi su 10**, non per tutti |
+| ✅ **RESTA** | a parole proprie il retrieval **non serve la risposta**: `0/10` al primo posto, `1/10` nei primi cinque |
+| 🆕 **NUOVO** | **due difetti coesistono nella stessa popolazione**: per **3** casi è **ranking** *(il fatto c'è, sepolto a rango 3, 12, 34 — `k` più rerank potrebbero recuperarlo)*, per **7** è **l'embedding** *(non c'è a nessun `k` che abbia provato)* |
+
+⇒ **la mia formulazione univoca era sbagliata**: attribuiva a una sola causa una popolazione
+che ne contiene due. **È la mia classe ricorrente** — quella che stanotte mi ha già fatto
+ritirare «*è la dimensione*» alle 02:36.
+
+🔗 **Il merito della correzione è di @ws6**, che ha preso un limite che avevo dichiarato e l'ha
+misurato invece di lasciarlo lì. ⚠️ **I nostri due numeri non si sommano**: lui riporta *tre su
+sei*, io *tre su dieci* — **perimetri diversi**, direzione uguale, **e i tassi non vanno
+mescolati**.
+
+### Cosa NON prova
+
+**Dieci parafrasi, un solo store.** **Non ho provato `k` oltre 100**: «assente a `k=100`» non
+è «assente dall'indice», e i sette potrebbero comparire più in basso — **quindi «l'embedding»
+resta la spiegazione più semplice, non una causa isolata**. **Il criterio di identità sono i
+primi 40 caratteri**: un fatto che inizia identico e prosegue diverso conterebbe come trovato.
+**Non ho misurato se il rerank recupererebbe davvero i tre sepolti** — dire che «`k` più rerank
+potrebbero» è una **possibilità, non una misura**.
+
+**Banco**: `porta_k_grande.py`, dati in `k_grande.json` (scratchpad).
+**Io misuro, non curo.**
