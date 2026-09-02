@@ -24,6 +24,22 @@ import sqlite3
 #: layers filter, so neither is load-bearing alone).
 _CURATED = ("superseded_by IS NULL "
             "AND status NOT IN ('orphaned', 'quarantined', 'user_belief')")
+#: LA STESSA VISTA, ma con i RITIRATI dentro quando il chiamante li chiede.
+#: `_CURATED` era una COSTANTE, quindi il ranklist lessicale non poteva MAI
+#: contenere un fatto ritirato — nemmeno se il chiamante passava
+#: `include_superseded=True` al recall, perche' il flag si fermava prima e la
+#: fusione RRF combinava la lista densa (che lo conteneva) con questa (che no).
+#: Misurato il 02/09: la porta MCP serviva il sostituto e NON il ritirato,
+#: mentre il motore chiamato direttamente lo serviva.
+#: ⚠️ Lo stato resta filtrato in entrambi i casi: qui si apre il RITIRO, non la
+#: quarantena — un fatto che il gate ha fermato non torna per questa via.
+
+
+def vista(include_superseded: bool = False) -> str:
+    """La clausola WHERE della vista curata, con o senza i ritirati."""
+    if not include_superseded:
+        return _CURATED
+    return "status NOT IN ('orphaned', 'quarantined', 'user_belief')"
 
 #: Informative-token guard (2026-07-07, fact a2217252f9ad): sotto questo numero
 #: di righe FTS il filtro df non si applica (contratto storico invariato).
@@ -172,7 +188,8 @@ def _ensure_fts(conn: sqlite3.Connection) -> None:
     conn.commit()
 
 
-def bm25_fact_ids(query: str | None, db_path, *, limit: int = 20) -> list[str]:
+def bm25_fact_ids(query: str | None, db_path, *, limit: int = 20,
+                  include_superseded: bool = False) -> list[str]:
     """Return fact ids ranked by BM25 over their proposition, best first.
 
     Fail-soft: ``[]`` on empty query / no tokens / any sqlite or FTS error.
@@ -189,7 +206,7 @@ def bm25_fact_ids(query: str | None, db_path, *, limit: int = 20) -> list[str]:
             rows = conn.execute(
                 "SELECT facts_fts.fact_id FROM facts_fts "
                 "JOIN facts ON facts.id = facts_fts.fact_id "
-                f"WHERE facts_fts MATCH ? AND facts.{_CURATED} "
+                f"WHERE facts_fts MATCH ? AND facts.{vista(include_superseded)} "
                 "ORDER BY bm25(facts_fts) LIMIT ?",
                 (expr, int(max(1, limit))),
             ).fetchall()
