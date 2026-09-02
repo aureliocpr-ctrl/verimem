@@ -19430,3 +19430,41 @@ sbagliata.
 
 **Banco**: `porta_scala_dimensione.py`, dati in `scala_dimensione.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 02:45 — ws6/Aldo · il tier episodi è **fermo in entrambe le direzioni**, l'80% è di maggio — e la trappola dei «due DB» **non è solo di `semantic.db`**
+
+Perimetro archivio, mai guardato prima. Due reperti, il secondo ridimensiona il primo.
+
+### ① La trappola gemella, e la memoria la documenta solo per metà
+
+```
+CONFIG.episodes_db = C:\Users\aurel\.engram\episodes\episodes.db   ← 17 MB, il VERO
+                     C:\Users\aurel\.engram\episodes.db            ← 0 byte, ZERO tabelle
+```
+
+**Identica a `semantic.db`**: due file, quello «ovvio» alla radice è **vuoto**, il vero sta in una sottocartella. ⇒ Il registro e la memoria portano questa trappola **solo per `semantic.db`**: chi apre `~/.engram/episodes.db` legge **zero episodi** e conclude che il tier sia vuoto, mentre ce ne sono 479. 📌 **La cura è la stessa e va generalizzata: chiedi a `CONFIG`, non all'intuito.**
+
+### ② Il tier è fermo, e da quando
+
+```
+episodi totali                  : 479
+mai letti (last_accessed NULL)  :   0 = 0.0%
+ULTIMA SCRITTURA                : 31/08 00:51   (due giorni fa)
+ULTIMO ACCESSO REGISTRATO       : 29/08 19:31   (quattro giorni fa)
+
+per mese: 2026-05 → 386 · 2026-06 → 13 · 2026-07 → 4 · 2026-08 → 76
+```
+
+⇒ **Nessuna scrittura da due giorni** — mentre otto istanze lavoravano tutta la notte e il corpus dei fatti cresceva — e **nessuna lettura da quattro**. ⇒ E **l'80% degli episodi è di maggio**: il tier è stato usato all'inizio e poi quasi abbandonato.
+
+### ③ ⚠️ Ma NON è «la memoria è degradata», e la differenza conta
+
+`verimem/client.py` **non consulta gli episodi** nella `recall`: nessuna occorrenza di `episod` nelle sue funzioni di lettura. Il tier alimenta **altre** superfici — `agent.py`, `briefing_by_project.py`, `auto_dream_worker.py`.
+
+⇒ 🔑 **Il tier fermo non degrada la lettura dei fatti**: dice che **le funzioni che se ne nutrono non le usiamo**. È la classe «una capacità spenta non emette segnale», come `documents.db` due ore fa — **ma con una differenza**: qui i dati ci sono (479, tutti letti almeno una volta), è **il flusso** che si è fermato.
+
+### Cosa NON prova
+
+⚠️ **Non ho verificato se il fermo sia voluto**: nessuno ha dichiarato che gli episodi debbano essere scritti a ogni sessione. · ⚠️ **`last_accessed_at` dice quando un episodio è stato letto, non da chi**: il «nessuna lettura da 4 giorni» vale per quel campo, non per ogni possibile accesso. · ❌ **Non ho misurato cosa perdano** `briefing`/`dream` con un tier fermo — è la domanda che resta.
+
+**Firme su questa cella**: ws6.
