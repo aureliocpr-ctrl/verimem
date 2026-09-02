@@ -22,7 +22,37 @@ PORTA: **CLI su `main` installato** — la piu' sfavorevole alla mia ipotesi, pe
 li' che il gate ferma di piu' (nel banco precedente la CLI fermava R1 e R3 e lasciava
 passare solo R2).
 
-🔴 ESITO — **non era rumore: la passiva non viene fermata MAI**::
+🪞🔴 ESITO DEFINITIVO (A/B **nella stessa esecuzione**, 04:38) — **la mia conclusione
+era vera solo in ITALIANO, e il reperto grosso e' un altro**::
+
+    lingua   veri ammessi   attive fermate   passive fermate   divario
+    IT            5/5            3/5              0/5             3
+    EN            5/5            4/5              3/5             1
+
+⇒ **L'effetto-passiva e' forte in italiano e quasi assente in inglese** (4 contro 3 su
+cinque coppie non e' distinguibile dal rumore).
+⚠️⚠️ **E LA PRIMA VERSIONE DI QUESTO BANCO LEGGEVA L'AGGREGATO**: «7 attive contro 3
+passive ⇒ la passiva e' il confine». **Falso**: somma due popolazioni che si comportano
+in modo diverso. E' **la stessa forma che @ws4 ha registrato in `W7-31`** — «*la lettura
+AGGREGATA dice il contrario di quella per strato*» — commessa da me, sul mio banco,
+poche ore dopo averla letta. ⇒ Il verdetto ora **stampa per lingua e rifiuta di
+aggregare**.
+
+📏 **IL REPERTO PIU' SOLIDO, perche' non dipende dalla forma** — inversioni fermate in
+totale (attive + passive)::
+
+    IT   3 su 10          EN   7 su 10
+
+⇒ **Il gate ferma piu' del DOPPIO delle inversioni in inglese che in italiano.**
+✅ **Confermato indipendentemente da @ws1 alle 04:36**, su una sua popolazione diversa
+(soggetto scambiato): «*9/10 passano in IT, 6/10 in EN*» — stessa direzione, e con in
+piu' un suo caso citato quattro volte che **in inglese e' fermato (1,61)**.
+⇒ Due misure indipendenti, due popolazioni, stessa direzione.
+✅ **Controllo positivo: 10 veri su 10 ammessi**, in entrambe le lingue — zero falsi
+allarmi, e va detto con la stessa forza.
+
+--- (il primo giro, solo italiano, che aveva portato alla conclusione troppo forte) ---
+🔴 **non era rumore: la passiva non viene fermata MAI** (IT)::
 
     #   VERO      ATTIVA    PASSIVA   fonte
     1   ammesso   fermato   ammesso   Il gate di ws3 ha respinto 12 fatti di ws4…
@@ -57,7 +87,34 @@ import subprocess
 import sys
 import tempfile
 
+# ⚠️ DUE LINGUE, e non per completezza: il prodotto e' documentato in INGLESE, e i
+# reperti di @ws1 e @ws4 sono in inglese. Una misura solo italiana direbbe di una
+# lingua che i suoi utenti non usano — e «lista monolingue» e' una delle forme in cui
+# ci siamo gia' sbagliati. Le coppie EN sono le stesse IT, tradotte.
 # (fonte, claim VERO, inversione ATTIVA, inversione PASSIVA)
+COPPIE_EN = [
+    ("The gate of ws3 rejected 12 facts from ws4 during the night shift.",
+     "The gate of ws3 rejected 12 facts.",
+     "The gate of ws4 rejected 12 facts from ws3.",
+     "ws3 had 12 facts rejected by the gate of ws4."),
+    ("Reviewer Bianchi rejected the proposal from Rossi in committee.",
+     "Bianchi rejected the proposal from Rossi.",
+     "Reviewer Rossi rejected the proposal from Bianchi.",
+     "Bianchi had the proposal rejected by Rossi."),
+    ("The payment service declined the request from customer Neri.",
+     "The service declined the request from Neri.",
+     "Customer Neri declined the request from the payment service.",
+     "The payment service had the request declined by customer Neri."),
+    ("The Milan team beat the Turin team 3 to 1.",
+     "Milan beat Turin 3 to 1.",
+     "The Turin team beat the Milan team 3 to 1.",
+     "Milan was beaten by the Turin team 3 to 1."),
+    ("The compiler reported 7 errors in the module written by Verdi.",
+     "The compiler reported 7 errors.",
+     "The module by Verdi reported 7 errors in the compiler.",
+     "The compiler had 7 errors reported by the module of Verdi."),
+]
+
 COPPIE = [
     ("Il gate di ws3 ha respinto 12 fatti di ws4 durante il turno di notte.",
      "Il gate di ws3 ha respinto 12 fatti.",
@@ -104,49 +161,82 @@ def main():
     if not os.path.exists(os.path.join(venv, "Scripts", "verimem.exe")):
         print("  🔴 venv assente: %s" % venv)
         return
-    print("  %-4s %-9s %-9s %-9s  %s" % ("#", "VERO", "ATTIVA", "PASSIVA", "fonte"))
-    print("  " + "-" * 92)
-    att_ferm = pas_ferm = veri_ok = 0
-    righe = []
-    for i, (fonte, vero, attiva, passiva) in enumerate(COPPIE, 1):
-        v = una(venv, vero, fonte)
-        a = una(venv, attiva, fonte)
-        p = una(venv, passiva, fonte)
-        veri_ok += (v == "ammesso")
-        att_ferm += (a == "fermato")
-        pas_ferm += (p == "fermato")
-        righe.append((i, v, a, p, fonte))
-        print("  %-4d %-9s %-9s %-9s  %s" % (i, v, a, p, fonte[:44]))
+    solo = sys.argv[2].upper() if len(sys.argv) > 2 else ""
+    lingue = [("IT", COPPIE), ("EN", COPPIE_EN)]
+    if solo in ("IT", "EN"):
+        lingue = [x for x in lingue if x[0] == solo]
 
-    n = len(COPPIE)
-    print("\n=== SINTESI ===")
+    print("  %-4s %-6s %-9s %-9s %-9s  %s"
+          % ("#", "lingua", "VERO", "ATTIVA", "PASSIVA", "fonte"))
+    print("  " + "-" * 96)
+    att_ferm = pas_ferm = veri_ok = 0
+    per_lingua = {}
+    righe = []
+    for lang, coppie in lingue:
+        av = pv = vv = 0
+        for i, (fonte, vero, attiva, passiva) in enumerate(coppie, 1):
+            v = una(venv, vero, fonte)
+            a = una(venv, attiva, fonte)
+            p = una(venv, passiva, fonte)
+            vv += (v == "ammesso"); av += (a == "fermato"); pv += (p == "fermato")
+            righe.append((i, lang, v, a, p, fonte))
+            print("  %-4d %-6s %-9s %-9s %-9s  %s" % (i, lang, v, a, p, fonte[:40]))
+        per_lingua[lang] = (vv, av, pv, len(coppie))
+        veri_ok += vv; att_ferm += av; pas_ferm += pv
+        print()
+
+    n = sum(len(c) for _l, c in lingue)
+    print("=== SINTESI ===")
+    # ⚠️ per LINGUA prima che aggregata: un aggregato mescola due popolazioni e puo'
+    # nascondere che una delle due si comporti all'opposto.
+    for lang, (vv, av, pv, tot) in per_lingua.items():
+        print("  %s   veri ammessi %d/%d · attive fermate %d/%d · passive fermate %d/%d"
+              % (lang, vv, tot, av, tot, pv, tot))
+    print("  --")
     print("  claim VERI ammessi (controllo positivo): %d su %d" % (veri_ok, n))
     print("  inversioni ATTIVE  fermate:              %d su %d" % (att_ferm, n))
     print("  inversioni PASSIVE fermate:              %d su %d" % (pas_ferm, n))
 
     print("\n=== VERDETTO ===")
+    # ⚠️⚠️ IL VERDETTO SI LEGGE PER LINGUA, MAI AGGREGATO. La prima versione di questo
+    # banco sommava IT+EN e concludeva «7 attive contro 3 passive ⇒ la passiva e' il
+    # confine»: FALSO, perche' mescola due popolazioni che si comportano in modo
+    # diverso (IT 3-vs-0, EN 4-vs-3). E' la stessa forma che @ws4 ha registrato in
+    # `W7-31` — «la lettura AGGREGATA dice il contrario di quella per strato».
     if veri_ok < n:
         print("  ⚠️ IL CONTROLLO POSITIVO NON REGGE (%d/%d veri ammessi): un banco in cui" % (veri_ok, n))
         print("     cadono anche i veri non misura la forma, misura la severita'.")
-    elif att_ferm - pas_ferm >= 3:
-        print("  🔴 LA VOCE PASSIVA E' IL CONFINE: %d attive fermate contro %d passive."
-              % (att_ferm, pas_ferm))
-        print("     ⇒ Riscrivere la stessa falsita' al passivo la fa passare. Non e'")
-        print("        cecita' alle relazioni: e' sensibilita' alla FORMA.")
-    elif att_ferm == pas_ferm:
-        print("  🪞 NESSUNA DIFFERENZA (%d e %d): il mio caso singolo era RUMORE." % (att_ferm, pas_ferm))
-        print("     L'ipotesi «la voce passiva» si ritira qui, prima di essere pubblicata.")
-    else:
-        print("  🟡 differenza piccola (%d attive contro %d passive): su cinque coppie non"
-              % (att_ferm, pas_ferm))
-        print("     basta a chiamarla classe. Serve una popolazione piu' grande, oppure")
-        print("     la spiegazione e' un'altra.")
+        return
+    forte = [l for l, (_v, av, pv, t) in per_lingua.items() if av - pv >= 3]
+    debole = [l for l, (_v, av, pv, t) in per_lingua.items() if 0 <= av - pv <= 1]
+    for lang, (_v, av, pv, tot) in per_lingua.items():
+        verso = ("🔴 la passiva AZZERA la difesa" if av - pv >= 3
+                 else "🟡 differenza di %d: su %d coppie non e' distinguibile dal rumore"
+                      % (av - pv, tot))
+        print("  %s   attive %d/%d · passive %d/%d   %s" % (lang, av, tot, pv, tot, verso))
+    if forte and debole:
+        print("  ⇒ **L'EFFETTO NON E' LO STESSO NELLE DUE LINGUE**: forte in %s, quasi"
+              % ", ".join(forte))
+        print("     assente in %s. Un aggregato direbbe «la passiva e' il confine» e" % ", ".join(debole))
+        print("     nasconderebbe proprio questo.")
+    if len(per_lingua) > 1:
+        tot_ferm = {l: (av + pv) for l, (_v, av, pv, _t) in per_lingua.items()}
+        tot_casi = {l: 2 * t for l, (_v, _a, _p, t) in per_lingua.items()}
+        righe = ["%s %d/%d" % (l, tot_ferm[l], tot_casi[l]) for l in per_lingua]
+        print("\n  📏 INVERSIONI FERMATE IN TOTALE (attive + passive): %s" % " · ".join(righe))
+        vals = sorted(per_lingua, key=lambda l: tot_ferm[l])
+        if tot_ferm[vals[-1]] >= 2 * max(tot_ferm[vals[0]], 1):
+            print("     ⇒ 🔴 il gate ferma piu' del DOPPIO delle inversioni in %s che in %s."
+                  % (vals[-1], vals[0]))
+            print("        La difesa e' molto piu' debole nella lingua in cui il prodotto")
+            print("        non e' stato costruito — ed e' un reperto piu' solido")
+            print("        dell'effetto-passiva, perche' non dipende dalla forma.")
     # stampa CHI cade: un conteggio non si riconosce a occhio, un elenco si'
-    diverse = [(i, a, p, f) for i, _v, a, p, f in righe if a != p]
+    diverse = [(i, l, a, p, f) for i, l, _v, a, p, f in righe if a != p]
     if diverse:
         print("\n  le coppie in cui attiva e passiva DIVERGONO:")
-        for i, a, p, f in diverse:
-            print("    #%d  attiva=%-9s passiva=%-9s  %s" % (i, a, p, f[:46]))
+        for i, l, a, p, f in diverse:
+            print("    #%d %s  attiva=%-9s passiva=%-9s  %s" % (i, l, a, p, f[:44]))
 
 
 main()
