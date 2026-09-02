@@ -5,7 +5,7 @@
 > **38/113 verificate · 1 correzione di stato (S6) · dello spot-check del lead,
 > 4 imprecisioni su 5 erano del lead e non del ricercatore.**
 >
-> **55 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
+> **60 righe verificate, 2 stati corretti, 9 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -77,8 +77,21 @@
 > non è `"off"`. Un default vuoto non dice da solo se una cosa è accesa: bisogna
 > leggere cosa ne fa il codice, e qui è stato fatto.
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **55 righe su 113**. Le
-> restanti 58 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑧ Quinto giro (21:30), 5 righe NON FATTO — e qui la SECONDA correzione di
+> stato.** Le ho scelte per l'errore asimmetrico rovesciato: una voce dichiarata
+> mancante che invece esiste **nasconde** una capacità che il prodotto ha.
+> **`A6` è sbagliata su entrambi i punti** che afferma: la cartella
+> `verimem/migrations/` **esiste** (181 righe di framework di migrazioni SQLite
+> versionate, con `_schema_version`, ladder di upgrade e transazione con
+> rollback), e Alembic **è nominato** — per spiegare perché è stato escluso.
+> Le altre quattro reggono: nessun sqlcipher, nessuna ABC `EmbeddingProvider`,
+> nessuna cartella `core/`, 391 moduli piatti. E `A9` regge anche se «postgres»
+> compare in sei file: sono **frasi di esempio nei commenti** (*«The deployment
+> uses PostgreSQL 16.»*), non un backend — il mio allarme era un falso positivo,
+> il terzo della stessa forma oggi.
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **60 righe su 113**. Le
+> restanti 53 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
@@ -191,7 +204,7 @@
 | A3 | Spezzare `dashboard.py` (2338 righe) in route | R05-12/13 §4.1 | **FATTO** | `verimem/dashboard_routes/` — 12 moduli (auth, chat, episodes, events, health, layout, lineage, memory_map, settings, skills, welcome, active_memory) | |
 | A4 | Config in `pydantic-settings`, via i 65 `os.environ` sparsi | R05-12/13 §4.2 | **NON FATTO** | `pydantic-settings` è solo una dipendenza (`pyproject.toml:71`); la config resta dataclass + `os.environ` diffusi (330 righe di `os.environ`/`getenv` in `verimem/*.py`, conteggio del lead) | 11 env censite nel README + decine di `getenv` nei moduli |
 | A5 | Registro dei provider in YAML + comando diagnostico | R05-12/13 §4.3, R06-02P Fronte A | **FATTO** | `providers.yaml` + `provider_registry`; fix prefissi Groq `aa20eb8`; `verimem providers` | Il doppio registro divergente è chiuso |
-| A6 | Migrazioni versionate (Alembic) sui DB SQLite | R05-12/13 §4.5, R06-06E B4 | **NON FATTO** | nessuna cartella `migrations/`, nessun alembic | Lo schema si versiona a mano (`ensure_schema_version`, v6→v13+): funziona, ma non è quello che chiedevano |
+| A6 | Migrazioni versionate (Alembic) sui DB SQLite | R05-12/13 | **FATTO, in altro modo** ⇐ *corretto da ws6* | ⚠️ **La riga diceva «nessuna cartella `migrations/`, nessun alembic»: è sbagliata su entrambi i punti.** Esiste `verimem/migrations/__init__.py`, **181 righe**: un framework di migrazioni SQLite **versionate** — tabella `_schema_version` per DB, `ensure_schema_version()` che applica in ordine le migrazioni da `current+1` al target, **tutto in una transazione con rollback**, e `tests/test_migrations.py`. Alembic **è nominato**, e proprio per dire perché è stato escluso: *«Alembic è ottimo per uno schema centralizzato, ma Engram ha TRE DB SQLite con cicli di vita indipendenti … un framework di 100 righe senza dipendenze è auditabile, Alembic ne aggiunge 3»* | La capacità chiesta (migrazioni versionate) **c'è**; lo strumento indicato dalla roadmap no, ed è una scelta documentata nel codice, non una mancanza |
 | A7 | Modelli tipizzati su ogni body FastAPI e su ogni `inputSchema` MCP | R05-12/13 §4.6, R06-02P §8 | **NON FATTO** | quantificato il 05/06: `_SCHEMAS_BY_TOOL` copre **11 / 227 tool = 4%**; 203 hanno uno schema ma non è applicato → gap 192 | Il fix (auto-derivare dagli inputSchema) è pianificato e mai eseguito |
 | A8 | Atomicità dello storage skill + `rebuild_index_from_files()` | R05-12/13 §4.4 | **MAI GUARDATO** | ✅ **ws6 conferma, con una trappola evitata**: `git grep` dà 2 file e `git log -S` 5 commit, ma **sono tutti DOCUMENTI** — la roadmap che la chiede e la checklist stessa; i «5 commit» sono due release e la checklist. **Nel codice non esiste**, e nessun test la nomina | |
 | A9 | Backend Postgres | R07-18 §2.3, R07-22 WS5.3 | **NON FATTO** | nessun modulo postgres/psycopg | Era esplicitamente condizionale («solo se il bench 50k mostra che SQLite non regge»): la condizione non è stata verificata |
