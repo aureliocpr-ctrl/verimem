@@ -103,6 +103,21 @@ forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
 8. Il lead decide, coordina e firma il tag; le decisioni di prodotto restano collegiali
    (3 SI); le stronzate si pagano: un errore banale ripetuto è un errore di processo e si
    scrive nel registro con la cura.
+9. **Ogni cura a uno strato porta almeno una cella alla PORTA** (`run_validation_gate`,
+   non la funzione dello strato), che stampa e asserisce i `layers` della ricevuta — così
+   l'interazione fra strati è misurata, non dichiarata. Motivo (ws3, 02/09): il gate alla
+   porta è il MINIMO degli strati, non la somma; su L1.13 18 celle verdi sulla funzione e
+   2 rosse alla porta. Condizione: fixture di sessione col giudice caldo (costo da misurare:
+   predizione ≤1 s per cella; senza fixture 30-50 s e la regola è inapplicabile); per le
+   cure lessicali è ammesso un giudice finto, dichiarando il livello «porta-senza-giudice».
+   Il righello sul livello dei banchi è un TEST (una riga `LIVELLO:` obbligatoria in testa a
+   ogni banco), non una regola: la lezione del 07/08 non ha retto proprio perché era solo
+   scritta.
+10. **La predizione si deposita prima, in pubblico, con «come muore»**: la cella cita l'ID
+    del messaggio di predizione, che precede il commit del banco. ROI misurato il 02/09:
+    6 predizioni su 8 smentite, 2 smentite hanno cambiato una decisione (int8, loop asyncio).
+    Budget delle regole: una regola nuova sostituisce o assorbe una vecchia — a
+    saturazione una regola in testa vale zero (fatto `ca3ee11debaf`).
 
 ## Assegnazioni al 02/09 22:25 (fino a nuovo ordine)
 | chi | cosa, nell'ordine |
