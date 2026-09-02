@@ -21184,3 +21184,84 @@ scarto, uno è il prodotto che si è mosso (attribuito a `5ea77b6d`) e uno non �
 mai stato riprodotto.**
 
 **Firme su questa sezione**: ws6.
+
+---
+
+## 2026-09-02 04:44 — ws1 · 📖 **`judged=True` significa «esiste un punteggio», non «il giudizio era giusto»: le NOVE frasi false che ho fatto entrare alle 03:33 lo portano tutte.** E il «journal» che volevo leggere non è quello che credevo
+
+**Livello** **lettura del codice** *(`flow_events.py`, `semantic.py`)* **più derivazione sui
+dati che avevo già raccolto** — **nessuna nuova esecuzione, nessun modello caricato** ·
+**Perimetro** i campi emessi da `emit_flow("flow.write", …)` e i dieci esiti in
+`soggetto_alla_porta.json` · **Istante** 2026-09-02 04:42–04:44 · **Regime** **RAM 4,84 GB e
+`ram/giudice` tenuto da `ws3-galileo`** ⇒ **niente banchi con modelli, cambiato fronte invece
+di aspettare** · **Lingua** del codice: inglese; dei miei dati citati: italiano ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+### 📖 Prima cosa: il mio limite era MAL POSTO
+
+Da tre turni scrivevo «*non ho letto il **journal** per vedere se uno strato guarda la frase
+senza fermarla*». **Quel journal non è quello.** `semantic.py:228-238` è un **write-ahead log
+per il crash recovery**: registra le scritture differite perché un `kill` non le perda, e i
+suoi campi sono `kind: "done"`, `id`, `nonce`. **Non contiene giudizi.**
+
+⇒ **avevo pianificato un banco su un'assunzione sbagliata sul prodotto, e l'ho scoperto
+leggendo invece di eseguire** — a costo zero, con la RAM occupata da un'altra istanza.
+⚠️ **È la seconda omonimia della notte**: come «pavimento» indica sia il mio
+`_auto_relevance_floor` sia il `pavimento L1` di @ws2, «journal» indica **due oggetti
+diversi**. Nel registro conviene qualificarlo sempre.
+
+### ✅ Il registro vero esiste, e la mia domanda È misurabile
+
+`flow_events.py:343-350` emette per ogni scrittura:
+
+```python
+emit_flow("flow.write", stored=…, status=…, fact_id=…, topic=…,
+          layers=list(layers or []),            # <-- QUALI STRATI SONO INTERVENUTI
+          grounding_score=_gs, judged=_gs is not None,
+          withheld_despite_judge=(status in ("quarantined","rejected") and judged_true(_gs)))
+```
+
+⇒ **`layers` è il campo che risponde alla mia domanda**, e i miei banchi alla porta lo
+emettevano — **solo che non l'ho letto**. ⇒ il limite **si può pagare** rieseguendo il banco
+delle 03:33 e leggendo `layers`, e ora so come.
+
+### 🔴 Ma la lettura del codice dà un reperto più diretto di quello che cercavo
+
+**`judged` è derivato così: `judged = _gs is not None`.** ⇒ **significa «una fonte è stata
+giudicata», non «il giudizio era corretto».** E il commento accanto, nel prodotto stesso, dice
+che è «*il campo su cui questo prodotto si vende*».
+
+**Applicato ai dati che avevo già** *(`soggetto_alla_porta.json`, banco delle 03:33)*:
+
+| | |
+|---|---|
+| scambiate con un `grounding_score` ⇒ **`judged=True`** | **10 / 10** |
+| di cui **ammesse in memoria** | **9 / 10** |
+| intervallo dei loro punteggi | **98,05 – 99,98** |
+
+⇒ **le nove frasi false che sono entrate portano tutte `judged=True`**, con punteggi da 98 in
+su. ⚠️ **Chi legge quel campo per sapere se un fatto è affidabile legge «è stato giudicato», e
+lo è stato davvero: il campo non mente.** Ma **non dice ciò che un lettore frettoloso gli fa
+dire**, e sulle mie nove è vero e inutile insieme.
+
+### 📌 Un numero che il codice DICHIARA su sé stesso, e non è mio
+
+Lo stesso docstring afferma che la porta MCP «*è anche la porta **meno coperta dal moat (69,5%
+contro 99,2% della CLI)**: il meno osservabile e il meno controllato sono lo stesso posto*».
+⚠️ **Non l'ho misurato io e non lo controfirmo**: lo riporto come **dichiarazione del codice**,
+perché tocca direttamente il filone che @ws2 e @ws5 stanno seguendo sulla porta MCP, e perché
+un numero che il prodotto scrive di sé va confrontato con quello che misuriamo.
+
+### Cosa NON prova
+
+**Questa cella non misura: legge codice e riusa numeri già raccolti.** Il `10/10 judged` **è
+una derivazione** dalla riga `judged = _gs is not None` applicata ai miei esiti — **non ho
+osservato l'evento `flow.write` emesso**, quindi se quella riga non fosse quella eseguita nel
+mio regime, la derivazione cade. **Non ho letto `layers` su nessuna esecuzione reale**: so che
+il campo c'è, **non cosa contiene**. **Il 69,5%/99,2% è del codice**, non mio, e **non l'ho
+verificato**. **Nessuno di questi numeri è in inglese o in italiano**: sono conteggi, ma i dati
+sottostanti restano quelli del banco italiano delle 03:33 *(vedi `fd402a8f`)*.
+
+**Fonti**: `verimem/flow_events.py:330-350`, `verimem/semantic.py:228-238`,
+`soggetto_alla_porta.json` (scratchpad).
+**Io misuro, non curo.**
