@@ -2,6 +2,23 @@
 
 <!-- mcp-name: io.github.aureliocpr-ctrl/verimem -->
 
+> # ⚠️ Run `verimem warmup` before your first write
+>
+> **Until you do, the gate has no judge — and it lets claims through without
+> checking them against the source you gave it.** It does not fail loudly: the
+> write is stored, the command exits 0, and only the receipt shows what
+> happened (`layers=[]`, no `grounding_score`). That is the opposite of what
+> this page promises, and it is one command away:
+>
+> ```bash
+> verimem warmup      # 746 MB (711 MiB), 13–27 s, once — no account, no key
+> verimem doctor      # says whether the judge is there, and where your data lives
+> ```
+>
+> With the model in place the same write comes back `layers=['L4-grounding']`
+> and a false claim is **stopped**. Without it, it is **admitted**. If you only
+> read one line of this README, read this one.
+
 **Verified memory for AI agents.** Every write passes an admission gate, every
 read carries provenance, and when the evidence isn't there the system abstains
 instead of guessing.
