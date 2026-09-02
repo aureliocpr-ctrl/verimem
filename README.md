@@ -95,8 +95,9 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   write is held for review. The verdict admits (judge-of-record `local-band`/`claude-band`
   on the receipt) or blocks; any escalation failure falls back to held-for-review, an
   unreadable verdict never admits (`VERIMEM_BAND_LLM=0` opts out). An air-gapped box with
-  ollama thus gets the full moat with no network. The residual ~2% scores high and still needs
-  a full llm judge. A third
+  ollama thus gets the full moat with no network. That residual — the same **1.8%** above, not a
+  second measurement, and it is a Spanish entity-substitution — scores high and still needs
+  a full llm judge (`docs/EVIDENCE-external-2026-07-19.md`). A third
   measured limit: the CE **hard-rejects true facts that require arithmetic or a
   unit/date conversion** ("0.5 g" ⊢ "500 mg", "two weeks before March 20" ⊢
   "March 6") or a low-resource language — those need an llm judge too. The moat is

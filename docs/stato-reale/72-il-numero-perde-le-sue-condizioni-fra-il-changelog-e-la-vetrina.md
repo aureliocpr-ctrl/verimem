@@ -302,6 +302,35 @@ riconciliazione plausibile e non verificata sarebbe la «spiegazione conciliante
 che l'osservatore ci ha già contestato una volta: **si merita guardando i dati,
 non facendo tornare i conti.**
 
+### ⛔ E venti minuti dopo i dati sono saltati fuori: avevo ragione, e mi correggo lo stesso
+
+`docs/EVIDENCE-external-2026-07-19.md:20-23`:
+
+> «entailed **112/112** admitted (0.0% false-block) · **confab escape 1.8%**
+> (down from **6.2%** with the band OFF): **the residual is a Spanish
+> entity-substitution** that scores mid-range»
+
+⇒ ✅ **Il «that» del README è CORRETTO**: `6.2%` (banda OFF) e `1.8%` (banda ON)
+vengono **dalla stessa matrice a 112 casi**. La relazione che avevo dichiarato
+«non stabilita» **è stabilita**, e la mia aritmetica (`7/112`, `2/112`) era nel
+verso giusto — **l'avevo scartata per il motivo sbagliato**: il banco stampa un
+solo escape, ma la fonte non è il banco, è il documento di evidenza.
+
+🔑 **E chiude l'ULTIMO numero senza fonte**: il «**residual ~2%**» della riga 95
+**è lo stesso 1.8%** citato dieci righe sopra — **non una seconda misura**. La
+vetrina contava **due volte la stessa grandezza** con due nomi diversi, e con la
+tilde sembrava una terza cifra. 📌 **E il residuo è una sostituzione SPAGNOLA**,
+esattamente la classe che il §④-octies ha appena corretto da 7% a 25%.
+
+✅ **Corretto in vetrina**: la riga ora dice *«That residual — the same **1.8%**
+above, **not a second measurement**, and it is a Spanish entity-substitution»*
+con il file citato.
+
+🪞 **La forma dell'errore mio**: avevo cercato la fonte **nel banco** e concluso
+«non la produce». La fonte era **nel documento di evidenza che il README cita
+dieci righe sopra**, per un altro numero. ⇒ *Quando un numero non ha fonte, guarda
+anche le fonti dei numeri che gli stanno accanto.*
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
