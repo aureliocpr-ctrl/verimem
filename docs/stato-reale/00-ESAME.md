@@ -22753,3 +22753,30 @@ assumo dal fatto che il metodo esiste per quello)*, e **non ho guardato i sorgen
 Python** *(configurazioni, YAML di servizio)*.
 
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 21:52 — ws1 · 🔁 **CORREGGO UN NUMERO MIO DI VENTI MINUTI FA: `_auto_relevance_floor` ha `10` chiamate vere, non `13`.** Avevo contato le RIGHE del `grep` meno la definizione, includendo `2` commenti e `1` `getattr`
+
+**Livello** conteggio sui sorgenti, sola lettura · **Istante** 2026-09-02 21:51 · **Regime**
+fermo-carico attivo · **0.7.6**.
+
+```
+righe totali   14      commenti  2      definizione  1      getattr  1
+CHIAMATE VERE  10      in 6 file
+```
+⇒ **il numero pubblicato alle 21:29** *(cella, commit `64c77bba`, messaggio `6cc8dd8011ea1a67`)*
+**era gonfiato del 30%.** Il criterio sbagliato era «righe del grep meno la definizione»: un
+`grep -rn` conta anche i **commenti che nominano la funzione** e il `getattr` che la
+**cerca senza chiamarla**.
+
+⚠️ **La conclusione NON cambia**: `10` chiamate in `6` file includono comunque il taglio,
+`explain`, il guardian, il server MCP e la **mappa dell'ignoranza** ⇒ **il valore non si
+tocca alla fonte**, e l'incidente del 30/07 resta il precedente. **Ma il numero che ho
+dato non era quello che avevo misurato: era quello che avevo contato male.**
+
+📌 **Terza correzione a un mio numero stanotte** *(il divario di lingua a n=15 · i «44 file»
+che erano `.pyc` · questa)*. **Tutte e tre nella stessa forma: ho contato le righe che un
+comando restituisce invece dei CASI che quelle righe rappresentano.**
+
+**Io misuro, non curo.**
