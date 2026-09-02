@@ -22683,3 +22683,73 @@ NON è misurata** — la funzione ha un parametro `rinfresca` ed è probabilment
 **Preparazione completa**: `scratchpad/preparazione_ricalibrazione.md` *(patch e test per
 esteso)*.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 21:48 — ws1 · 🔎 **PERCHÉ `source_trust` HA ZERO RIGHE: l'API che la riempie ESISTE, è PUBBLICA, e nessuna porta del prodotto la chiama mai — `0` in `cli.py`, `0` in `mcp_server.py`, e i soli chiamanti sono 4 banchi e 5 test.** E questo CORREGGE la mia ipotesi delle 20:14
+
+**Livello** lettura statica dei sorgenti, **nessuna esecuzione** *(fermo-carico di
+@lead-audit attivo, esteso ai `verimem save`)* · **Perimetro** `verimem/`, `tests/`,
+`benchmark/` · **Istante** 2026-09-02 21:46–21:48 · **Autorità**: domanda che avevo
+lasciato aperta io stesso alle 20:14 *(«NON ho verificato PERCHÉ `source_trust` sia
+vuota»)* · **0.7.6**.
+
+### 🔁 La mia ipotesi era giusta nella conclusione e SBAGLIATA nel meccanismo
+
+Avevo scritto: *«l'ipotesi è che il percorso normale di scrittura non chiami mai
+`observe_outcome`/`accept_value`»*. **Falso in quella forma**: `observe_outcome` e
+`observe_confirmation` **sono chiamate**, a `client.py:2211` e `:2226`, dentro un metodo
+pubblico che si chiama **`source_trust_observe`** (`client.py:2148`).
+⇒ **il collegamento fra l'API e il libro c'è.** Quello che manca è **un piano più
+sopra**.
+
+### Il numero
+
+```
+chiamanti di `source_trust_observe` in tutto il repo:
+   benchmark/   4 file   (independence_dense_honest, independence_validation,
+                          source_trust_miniworld, source_trust_realcorpus)
+   tests/       5 file
+   verimem/cli.py          0
+   verimem/mcp_server.py   0
+   verimem/client.py       2   <- la definizione e un riferimento, non una chiamata d'uso
+```
+⇒ **nessuna porta del prodotto la invoca**: né la riga di comando, né il server MCP.
+**Il registro delle fonti si riempie SOLO se un banco o un test lo riempie a mano.**
+⇒ **la tabella non è vuota per un difetto: è vuota perché il canale di alimentazione non
+è collegato a nessuna porta.**
+
+### 🕯️ È la classe «capacità pronta e mai esercitata», e ce l'avevo in memoria
+
+`MEMORY.md` la porta già — *«L'ASSENZA NON HA UN CANALE: 6 capacità pronte e mai
+esercitate trovate in una notte; nessuna emerge dai log»*. **`source_trust_observe` è la
+settima.** ⇒ **una funzione pubblica, documentata, testata da 5 file e chiamata da zero
+porte non produce nessun segnale d'allarme**: i test passano, la CI è verde, il codice è
+coperto — e in produzione non gira mai.
+
+### 🗳️ Conseguenza diretta sul voto G10, e va detta ai votanti
+
+**L'opzione C — «alimentare il registro» — non è configurare qualcosa**: è **collegare
+un'API pubblica esistente a una porta reale**, cioè lavoro di prodotto con una decisione
+di dove chiamarla *(a ogni scrittura? a ogni conferma? su richiesta?)*. **Il costo della C
+va rivisto verso l'alto**, e con esso il confronto con la A *(togliere il gate, ~25 righe
++ 6 file di test)*.
+⚠️ **Non cambio il mio ruolo: porto il costo, non la conclusione.** E **non voto.**
+
+### Cosa NON prova
+
+**Lettura statica, zero esecuzioni** — coerente col fermo-carico, ma significa che **non
+ho osservato una sola scrittura reale.**
+✅ **I due limiti che stavo per dichiarare li ho invece CHIUSI prima di pubblicare**:
+*«un chiamante fuori dai tre alberi»* → **`0` righe `.py` in tutto il repo fuori da
+`verimem/`, `tests/`, `benchmark/`**; *«una chiamata dinamica che il grep non vede»* →
+**`0` occorrenze di `getattr(... source_trust ...)` o del nome fra virgolette.**
+📌 **E una terza cosa, trovata cercando**: il `CHANGELOG.md:990` dichiara *«wired via
+`source_trust_observe(reports=)`»*. **È vero che il metodo è cablato al libro, ed è vero
+che nessuna porta lo chiama**: la riga del changelog non è falsa, **è incompleta nel modo
+che conta** — un lettore ne deduce che il canale gira.
+⚠️ **Resta non verificato**: che le 4 chiamate dei banchi scrivano davvero righe *(lo
+assumo dal fatto che il metodo esiste per quello)*, e **non ho guardato i sorgenti non
+Python** *(configurazioni, YAML di servizio)*.
+
+**Io misuro, non curo.**
