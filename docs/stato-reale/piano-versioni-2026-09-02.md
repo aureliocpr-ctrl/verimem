@@ -11,6 +11,17 @@
 > Questo file è il piano di record. Lo stato vivo sta nel registro (`00-ESAME.md`) e nei
 > fatti verimem; qui stanno le definizioni di «fatto» e le regole. Cambia solo su mandato.
 
+## Fase 0 — `main` verde (prerequisito di tutto, dal 02/09 22:35)
+Misurato al 02/09 22:30: **l'ultimo run `ci` verde su `main` è del 25/08** (`18e434e3`);
+l'ultimo concluso (`98d30940`, 21:04) è rosso: **13 failed / 12495 passed**, e il job «wheel
+install-from-scratch (windows)» fallisce. Sono quasi tutti presidi del registro che dichiarano
+debiti (banco `lme_retrieval_bench.py` assente dal 25/08, 39 moduli irraggiungibili, banchi che
+non dichiarano l'esito del subprocess, `quarantined_by` che nomina il layer sbagliato, L1.13
+sul ricalco della fonte, L1.20 con un secondo layer che parla, un numero assente dalla fonte
+che compare, la contraddizione implicita che ora entra). **Regola: ogni rosso si paga o si
+ritira con motivazione scritta; mai skip, mai xfail nuovi.** Assegnati uno per istanza il
+02/09 22:35; nessuna capacità si accende su un `main` rosso.
+
 ## Le quattro versioni e la loro definizione di «fatto»
 
 ### 0.7.2 — atomica: «tutto ciò che c'è, acceso e provato»
