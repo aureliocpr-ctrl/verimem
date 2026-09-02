@@ -22,7 +22,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 | | | |
 |---|---|---|
 | **controfirme date** | **18** | 17 confermano, 1 non si riproduce (`LANT-32`) |
-| **reperti annunciati / genuinamente nuovi** | **5 / 1** | nuovo: la giuntura sui numerali. Gli altri misurano il meccanismo di temi già aperti (`W2-418`) |
+| **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
 
