@@ -44,10 +44,14 @@ import torch  # noqa: E402
 from transformers import AutoModelForSequenceClassification, AutoTokenizer  # noqa: E402
 
 M = "yaxili96/FactCG-DeBERTa-v3-Large"
-DATI = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-        "C--Users-aurel-Desktop-ProgettiAI/"
-        "c062024e-cc77-4fac-ba67-fb1db54449b6/scratchpad/"
-        "halueval_come_truthfulqa.jsonl")
+# il dump adattato di @ws3: sta nel SUO scratchpad e non e' nel repo.
+# Si passa con WS3_HALUEVAL=<path>, come fa il banco di @ws3 stesso.
+DATI = os.environ.get("WS3_HALUEVAL", "")
+if not DATI or not os.path.exists(DATI):
+    raise SystemExit(
+        "  QUESTO BANCO NON PUO' GIRARE: manca il dump HaluEval adattato\n"
+        "  di @ws3 (400 claim). Passalo con WS3_HALUEVAL=<path>, oppure\n"
+        "  chiedi a @ws3 di versarlo: non lo verso io, e' suo.")
 OUT = ("docs/stato-reale/banchi/factcg_halueval.jsonl")
 IDX = 1          # SUPPORTED, determinato su TruthfulQA — RIVERIFICATO sotto
 VERI_PERSI_NOSTRI = 0.190   # il nostro gate su HaluEval (ws7)

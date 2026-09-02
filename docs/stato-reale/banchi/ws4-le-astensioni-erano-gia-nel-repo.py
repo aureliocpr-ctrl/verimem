@@ -28,13 +28,13 @@ CONTROLLI CHE DEVONO ACCENDERSI:
 """
 import io
 import json
+import os
 import random
 import re
 
 E = "benchmark/data/external/"
-OUT = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-       "C--Users-aurel-Desktop-ProgettiAI/"
-       "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/")
+OUT = "docs/stato-reale/banchi/_out/"   # relativo al repo
+os.makedirs(OUT, exist_ok=True)
 
 # LE CINQUE FORME — scritte da me, dichiarate, e controllate contro il test
 FORME = [

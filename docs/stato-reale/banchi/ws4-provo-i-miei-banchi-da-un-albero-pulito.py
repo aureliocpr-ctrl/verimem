@@ -17,9 +17,8 @@ import os
 import subprocess
 import sys
 
-WT = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-      "C--Users-aurel-Desktop-ProgettiAI/"
-      "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/wt_prova")
+WT = os.environ.get("WS4_WORKTREE", os.getcwd())  # il repo in cui gira,
+# oppure WS4_WORKTREE=<path> per provarne un altro
 PESANTI = ("transformers", "run_validation_gate", "local_grounding",
            "AutoModel", "torch")
 
