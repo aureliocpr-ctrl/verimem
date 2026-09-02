@@ -5,12 +5,38 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 ## [0.7.2] - unreleased
 
 > **Four cures that already existed on `main` and had never reached the release
-> line.** `0.7.1` shipped from a branch cut at the `v0.7.0` tag (22 July), so it
+> line, plus one written for this branch.** `0.7.1` shipped from a branch cut at the `v0.7.0` tag (22 July), so it
 > inherited that tag's code — including gaps fixed on `main` days later. Each
 > item below names the original commit; the date in brackets is when the fix was
-> written, not when it shipped.
+> written, not when it shipped. The fifth cure (the judge fetching itself) was
+> **rewritten by hand against this branch**, not transplanted: the commit on
+> `main` did not apply here, and a hand-written cure and a cherry-pick are not
+> the same thing to anyone reading the diff.
 
 ### Fixed — the write gate
+
+- **The judge fetches itself on the first write that carries a source.** Until
+  now a **missing** model meant the write gate had no judge, and the only way to
+  get one was `verimem warmup` — a command a new user has no reason to know
+  exists. Measured from a user's seat on a fresh machine: `pip install verimem`
+  then `verimem remember "<false claim>" --source "<a source that contradicts
+  it>"` printed `admitted`, exit 0, `layers=[]`. The false claim went in.
+  A **missing** model is now downloaded once (711 MB, 13-27 s) and the load
+  retried; a **broken** one is not — a failed load stays cached as before,
+  because re-downloading over a corrupt model would pay the load cost on every
+  single write. Offline variables are respected (`VERIMEM_OFFLINE` and the other
+  four from `airgap`), so air-gapped installs touch no network and CI downloads
+  nothing.
+
+  Measured on a virgin venv with the wheel built from this branch:
+
+  | | duration | `layers` | outcome |
+  |---|---|---|---|
+  | before | 53.1 s | `[]` | admitted |
+  | after | 82.4 s | `['L4-grounding']` | **stopped** |
+
+  The extra cost is paid **once**: from the second write on, judging costs
+  ~0.2 s.
 
 - **A source given to the MCP channel is now actually judged** (`7b8af116`,
   29 Jul). The channel accepted a `source`, stored the write and answered

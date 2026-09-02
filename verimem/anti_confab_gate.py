@@ -923,6 +923,11 @@ def _is_historical_completion(proposition: str) -> bool:
     return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
 
 
+#: Un solo tentativo di procurarsi il giudice per PROCESSO, non per scrittura: se il
+#: download fallisce, ogni write successiva ripagherebbe l'attesa.
+_GIUDICE_GIA_CERCATO = False
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -1197,6 +1202,37 @@ def run_validation_gate(
     _have_judge = (grounding_llm is not None
                    or _resolve_backend() == "local"
                    or local_ce_available())
+
+    # ⚠️ E SE IL GIUDICE MANCA SOLO PERCHE' NESSUNO L'HA MAI SCARICATO?
+    #
+    # 🔑 LA CURA VA QUI, non solo in `_ensure_scorer`. Il primo innesto l'avevo messo
+    # la', con tre test verdi e RED→GREEN falsificato — e la misura prima/dopo su HOME
+    # vergine ha dato `layers=[]` IDENTICO: quel punto **non viene mai raggiunto**
+    # quando il modello manca, perche' `local_ce_available()` legge il disco e la
+    # guardia qui sopra salta l'intero ramo del giudizio. ⇒ Test verdi non bastano:
+    # il livello a cui si misura decide il verdetto.
+    #
+    # La guardia NON si tocca (risparmia il tentativo di giudizio in un processo senza
+    # giudice): le si aggiunge il caso che le manca — «assente ma scaricabile» — una
+    # sola volta per processo, e solo quando una `source` c'e' davvero.
+    if source and _ground_on and not _have_judge:
+        try:
+            from .local_grounding import (
+                _download_disattivato,
+                ensure_gate_model,
+            )
+            from .local_grounding import (
+                local_ce_available as _lca,
+            )
+            if not _download_disattivato() and not _GIUDICE_GIA_CERCATO:
+                globals()["_GIUDICE_GIA_CERCATO"] = True
+                _preso, _ = ensure_gate_model()
+                if _preso:
+                    _have_judge = _lca()
+        except Exception:
+            # non si rompe una scrittura per un download: si resta al caso di oggi
+            # (ammesso con l'advisory L4-skipped), che e' onesto.
+            pass
     def _emit_l4_skipped() -> None:
         # A sourced write with NO reachable grounding judge — neither an injected
         # llm NOR the local CE (never downloaded, or unloadable at score-time) —
