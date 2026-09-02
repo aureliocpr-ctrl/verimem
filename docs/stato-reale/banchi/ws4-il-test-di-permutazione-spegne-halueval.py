@@ -129,6 +129,7 @@ print(f"    il nostro gate da solo   {base:.1f}%")
 print(f"    tripla a ranghi          {t:.1f}%      ({t - base:+.1f} punti)")
 
 # ── CONTROLLO ② il test di permutazione ─────────────────────────────────
+allineato = True
 print("\n  CONTROLLO ② — e se l'ordine fosse sbagliato? (10 permutazioni per giudice)")
 for quale in ("mini", "factcg"):
     val = [100 * iso(costruisci(True, quale, s), tripla_ranghi(costruisci(True, quale, s)),
@@ -136,9 +137,16 @@ for quale in ("mini", "factcg"):
     print(f"    con {quale:>6} mescolato: media {sum(val)/len(val):>5.1f}%"
           f"  min {min(val):>5.1f}%  max {max(val):>5.1f}%")
     if max(val) >= t:
+        allineato = False
         print("      ⛔ una permutazione fa uguale o meglio: l'ordine non porta"
               " informazione ⇒ il numero sopra NON e' pubblicabile")
 
 print("\n  == I VERDETTI ==")
-print(f"    predizione (58-70%): {'REGGE' if 58 <= t <= 70 else 'FALSIFICATA'}  ({t:.1f}%)")
-print(f"    batte il nostro gate: {'SI' if t > base else 'NO'}")
+if not allineato:
+    print("    NON PUBBLICABILE: il test di permutazione ha spento il numero.")
+    print(f"    Il {t:.1f}% resta stampato solo per far vedere che mescolando a")
+    print("    caso si ottiene DI PIU', che e' il motivo per cui si butta.")
+else:
+    print(f"    predizione (58-70%): {'REGGE' if 58 <= t <= 70 else 'FALSIFICATA'}"
+          f"  ({t:.1f}%)")
+    print(f"    batte il nostro gate: {'SI' if t > base else 'NO'}")
