@@ -21271,3 +21271,62 @@ sottostanti restano quelli del banco italiano delle 03:33 *(vedi `fd402a8f`)*.
 **Fonti**: `verimem/flow_events.py:330-350`, `verimem/semantic.py:228-238`,
 `soggetto_alla_porta.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 04:52 — ws1 · 📊 **LO STORE VIVO NON È MONOLINGUE: `75,8%` italiano, `14,0%` inglese, `10,2%` che l'euristica non sa dire.** ⇒ **`2401` fatti reali stanno nel regime dove il gate ferma di più**, e i miei numeri della notte descrivono il `75,8%`
+
+**Livello** **SQL in sola lettura** sul file del DB — **nessun modello caricato**, né giudice né
+embedder · **Perimetro** tutti i `17 149` fatti con `proposition` non nulla dello **store
+vivo**, path preso **da `CONFIG`** *(trappola nota dei due DB: quello ovvio è vuoto)* ·
+**Istante** 2026-09-02 04:51–04:52 · **Regime** RAM 8,74 GB, **`ram/giudice` tenuto da
+`ws3-galileo`** ⇒ **nessun claim preso da me, perché non carico modelli**, e cambio fronte
+invece di aspettare · **Lingua**: è l'oggetto stesso della misura · **Autorità**: ordine di
+Aurelio delle 00:00 · **0.7.6**.
+
+**Nasce dal reperto delle 04:34** *(`fd402a8f`)*: se la lingua cambia il verdetto del gate,
+**in che lingua è lo store che un utente ha davvero?**
+
+### Il numero
+
+| lingua | fatti | quota |
+|---|---|---|
+| **italiano** | **12 999** | **75,8 %** |
+| **inglese** | **2 401** | **14,0 %** |
+| **incerta** | 1 749 | 10,2 % |
+| totale | **17 149** | |
+
+⚖️ **Predicevo «italiano >70%, inglese fra 10 e 25%»: 75,8% e 14,0% — centrata su entrambi.**
+⇒ **nessuna condizione d'uscita scatta** *(né una lingua >85%, né entrambe >20%)* ⇒ **esito
+intermedio, e lo dichiaro come tale.**
+
+### 📌 Ma il fatto operativo c'è lo stesso
+
+**Lo store non è monolingue.** ⇒ **2 401 fatti reali stanno nel regime in cui il gate ferma di
+più** *(sui miei dieci casi: 4 fermate in inglese contro 1 in italiano)*, e **12 999 in quello
+in cui ferma di meno**. ⇒ **i numeri che ho misurato stanotte descrivono il 75,8% dello store,
+non tutto lo store**, e questa riga va accanto alla precedente invece di sostituirla.
+
+### 📌 E c'è un decimo che non so collocare
+
+**Il 10,2% non ha abbastanza parole funzionali perché l'euristica dica in che lingua sia**:
+sono le frasi **fatte di numeri, sigle e identificatori** — proprio la forma «telegrafica» di
+cui si parla in altri banchi. ⇒ **per un fatto su dieci non so nemmeno in quale dei due regimi
+cada**, e siccome i due regimi danno esiti diversi, **quell'incertezza si propaga a qualunque
+tasso io calcoli sull'intero store.**
+
+### Cosa NON prova
+
+**L'euristica NON è un classificatore di lingua**: conta parole funzionali esclusive *(`il, di,
+che, non, per…` contro `the, of, and, is, are…`)* e assegna la lingua alla maggioranza. **Una
+frase italiana che cita codice inglese può essere contata inglese, e viceversa**; le frasi
+**miste** — frequentissime in questo dominio — **cadono da una parte sola invece che essere
+riconosciute come miste. È una stima grezza e va letta così.** **Non ho misurato se i 2 401
+fatti inglesi si comportino davvero come i miei casi tradotti**: sto **collegando** due misure,
+e il collegamento è un'inferenza, non un dato. **Il totale `17 149` viene da SQL diretto,
+mentre il `14 801` che ho citato alle 02:24 veniva dall'API**: sono **due conteggi diversi** e
+**non li sottraggo** — il corpus si muove mentre si misura e le due cifre non sono
+confrontabili.
+
+**Banco**: `porta_composizione_lingua.py`, dati in `composizione_lingua.json` (scratchpad).
+**Io misuro, non curo.**
