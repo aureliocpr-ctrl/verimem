@@ -64,6 +64,24 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   by a June security fix; it now covers all three fields instead of one.
 - **The CLI asks for the check when it is given a source** (`e9bd575c`, 29 Jul).
 
+⚠️ **Two tests were removed with these two cures, and they were guarding the
+defect.** Both were green on `0.7.1` and both asserted, as expected behaviour,
+exactly what the cures take away:
+
+| removed | it asserted | replaced on `main` by |
+|---|---|---|
+| `test_off_does_not_consult_verifier` | that a write **with a source** is not judged when `ENGRAM_GROUNDING_WRITE` is unset | `test_no_source_does_not_consult_verifier` (no source → nothing to entail, fast path intact) **and** `test_an_operator_can_still_switch_it_off` (an explicit OFF still wins) |
+| `test_validate_off_skips_all_checks` | that `validate="off"` **arriving as a tool argument** bypasses L1 | `test_validate_off_from_a_client_is_refused` (the knob is neutralized and says so in `gate_knobs_denied`) **and** `test_validate_off_honoured_when_the_operator_opts_in` (the escape hatch survives, behind an operator-only env) |
+
+Neither replacement was written for this release: both already existed on
+`main`, added in the same commits as the cures, and were carried over
+unchanged. In each case **one loose assertion became two precise ones** — what
+the old test legitimately protected (the fast path, the operator's switch) is
+still protected, and only the part that protected the defect is gone.
+The scale of that defect is recorded in the replacement's own docstring: the
+store *"reached 6427 facts with 11 grounding scores — an agent that passed real
+evidence got it silently ignored"*.
+
 ### Fixed — what the server says about itself
 
 - **`serverInfo.version` reports Verimem's version, not the MCP library's**
