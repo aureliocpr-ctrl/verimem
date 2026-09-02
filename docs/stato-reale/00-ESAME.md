@@ -22177,3 +22177,81 @@ sub-token e diluisca il segnale **non l'ho misurata**.
 
 **Banco**: `scripts/banco_sinonimo_e_ancoraggio.py`.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 20:14 — ws1 · ⛔ **G10 NON VA ACCESO: è già in osservazione dalla 0.7.0 — e non ha mai osservato niente.** `0` scritture marcate su `17 279`, perché la tabella `source_trust` ha **zero righe** e tutte le `156` fonti restano al valore iniziale `0,500`
+
+**Livello** lettura del codice **più** interrogazione in sola lettura dello store vivo —
+**nessuna scrittura, nessun modello caricato** · **Perimetro** 17 279 fatti, 156 sorgenti
+canoniche, tabelle `source_trust` / `trust_ledger` · **Istante** 2026-09-02 20:12–20:14 ·
+**Regime** `ENGRAM_SOURCE_TRUST` **non impostata**, cioè il default che riceve chi installa ·
+**Autorità**: mandato di ricerca via lead-audit *(voce G10)* · **0.7.6**.
+
+### ⛔ Il flag da accendere è già acceso
+
+```python
+verimem/source_trust.py:73   def observe() -> bool:
+                             # 0.7.0 default flip: unset means OBSERVE - measure, never gate.
+                             return v == ""
+```
+```
+col default:   enabled() = False    observe() = True    soglia = 0.25
+```
+⇒ **G10 chiedeva «accendi in modalità osservazione»: è la modalità predefinita dalla 0.7.0.**
+Come per T2.1, **la cosa da fare risulta già fatta** — ma qui con una differenza che conta.
+
+### 🔴 È acceso e NON osserva niente
+
+| | |
+|---|---|
+| fatti con `verified_by` non vuoto | **17 279 / 17 279** |
+| sorgenti canoniche distinte | **156** |
+| sorgenti con trust **diverso da 0,500** | **0** |
+| **scritture che verrebbero marcate** *(trust < 0,25)* | **0 su 17 279** |
+
+⚖️ **Predicevo «registro vuoto ⇒ zero marcate»: zero.** ⇒ **il meccanismo è attivo, calcola, e
+il suo risultato è costante: nessuna fonte scende mai sotto la soglia.**
+
+### 🔎 La causa, e correggo la mia stessa diagnosi di due minuti prima
+
+Avevo scritto «*il registro delle fonti è fermo al valore di partenza*». **Guardando le tabelle
+la formulazione è imprecisa, e la correggo:**
+```
+trust_ledger:         10 880 righe    <- PIENO
+trust_ledger_totals:     110 righe
+source_trust:              0 righe    <- VUOTA, ed e' QUESTA che serve a G10
+```
+⇒ **esistono due registri con nome simile e solo quello delle FONTI è vuoto.** ⚠️ **Terza
+omonimia che incontro in questo repo** — dopo «pavimento» *(`_auto_relevance_floor` contro
+`pavimento L1`)* e «journal» *(write-ahead log contro registro dei giudizi)*. **Chi legge
+«trust» e trova 10 880 righe conclude che il canale funziona.**
+
+⚠️ **NON ho verificato PERCHÉ `source_trust` sia vuota**: il book espone
+`observe_outcome`/`observe_confirmation`/`accept_value`, e l'ipotesi è che il percorso normale
+di scrittura non li chiami mai — **ipotesi, non misura**. È la domanda successiva.
+
+### 🎯 Conseguenza per la direttiva «niente più default spenti»
+
+**Questo default non è spento: è acceso e muto.** ⇒ la direttiva ha un terzo caso che la
+checklist non prevede — **«acceso, e senza materiale su cui lavorare»** — e per G10 la scelta
+non è fra accendere e rimuovere, ma fra **alimentare il registro delle fonti** e **rimuovere il
+meccanismo**. Con `enabled()=1` oggi il comportamento **non cambierebbe di una scrittura**:
+zero fonti sotto soglia significa zero quarantene in più.
+
+📌 **E c'è un dato che limita quanto il meccanismo potrebbe mai fare**: **17 100 fatti su
+17 279 (99,0%) hanno un'unica sorgente, `user`.** ⇒ anche con il registro alimentato, il
+segnale avrebbe **una sola fonte** su cui discriminare in quasi tutto il corpus.
+
+### Cosa NON prova
+
+**Uno store, un istante, il regime di default.** Il trust `0,500` è **quello che il book
+restituisce per una fonte senza storia**: non ho verificato nel codice che sia il valore
+iniziale dichiarato, l'ho **osservato uguale su tutte e 156**. **`canonical_source` la
+applico io** al contenuto di `verified_by`, e se la sua semantica reale fosse diversa il
+conteggio delle sorgenti cambierebbe. **Non ho misurato cosa accadrebbe con
+`ENGRAM_SOURCE_TRUST=1`**: lo deduco dal fatto che nessuna fonte è sotto soglia, **non l'ho
+eseguito**. **Non ho letto `trust_ledger`**: so solo che ha 10 880 righe e che è un'altra cosa.
+
+**Query**: riportate per esteso nel messaggio di consegna.
+**Io misuro, non curo.**
