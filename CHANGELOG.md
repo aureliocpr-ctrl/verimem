@@ -63,6 +63,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   never silent. This is the same trust rule already applied to `writer_role`
   by a June security fix; it now covers all three fields instead of one.
 - **The CLI asks for the check when it is given a source** (`e9bd575c`, 29 Jul).
+  ⚠️ One test that came with this commit was **adapted, and the code was not**:
+  `test_the_command_named_after_trust_can_run_the_moat` looked for the literal
+  string `--source` in the output of `trust --help`. Rich colours that help, so
+  the option arrives as `\x1b[1;36m-\x1b[0m\x1b[1;36m-source\x1b[0m` — the two
+  dashes separated by an escape sequence, and the literal string is gone. The
+  test passed on Windows (no colour) and failed on ubuntu and macOS in CI, with
+  the option **regularly present** in the help both times. The test now strips
+  ANSI before looking, so it measures the help and not the terminal printing it.
+  Checked in both directions: it passes with and without colour, and it still
+  fails — in both — when `--source` is actually removed from the command.
 
 ### Fixed — what the server says about itself
 

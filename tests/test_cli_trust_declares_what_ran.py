@@ -25,6 +25,8 @@ from the command named after trust.
 """
 from __future__ import annotations
 
+import re
+
 from typer.testing import CliRunner
 
 from verimem.cli import app
@@ -60,8 +62,17 @@ def test_the_command_named_after_trust_can_run_the_moat():
     """--source did not exist, so the headline check was unreachable from the
     command that advertises it."""
     r = runner.invoke(app, ["trust", "--help"])
-    assert "--source" in r.output, (
-        f"no way to give the moat something to check:\n{r.output}"
+    # L'help e' reso da rich, che COLORA le opzioni: `--source` esce come
+    # `\x1b[1;36m-\x1b[0m\x1b[1;36m-source\x1b[0m`, cioe' i due trattini sono
+    # separati da una sequenza ANSI e la stringa letterale non c'e' piu'.
+    # Il test passava su Windows (niente colore) e cadeva su ubuntu e macos in
+    # CI, dove il colore c'e' — sempre con l'opzione REGOLARMENTE PRESENTE
+    # nell'help. Il difetto era nel modo di guardare, non in cio' che si
+    # guardava: si toglie il colore PRIMA di cercare, cosi' il test misura
+    # l'help e non il terminale che lo stampa.
+    nudo = re.sub(r"\x1b\[[0-9;]*m", "", r.output)
+    assert "--source" in nudo, (
+        f"no way to give the moat something to check:\n{nudo}"
     )
 
 
