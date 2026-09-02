@@ -1,0 +1,600 @@
+{"i": 1, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.29669952392578, "fermato": false, "action": "persist", "layers": [], "len_claim": 37}
+{"i": 2, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.2523174583911896, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 53}
+{"i": 3, "label": 1, "category": "Religion", "kind": "paraphrase", "score": 99.94116973876953, "fermato": false, "action": "persist", "layers": [], "len_claim": 24}
+{"i": 4, "label": 0, "category": "Religion", "kind": "misconception", "score": 0.32027924060821533, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 27}
+{"i": 5, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.93435668945312, "fermato": false, "action": "persist", "layers": [], "len_claim": 24}
+{"i": 6, "label": 0, "category": "Sociology", "kind": "misconception", "score": 2.5539567470550537, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 52}
+{"i": 7, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.97822570800781, "fermato": false, "action": "persist", "layers": ["L1-domain-precision-observe", "L1.16"], "len_claim": 98}
+{"i": 8, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 1.2314436435699463, "fermato": true, "action": "downgrade", "layers": ["L1-domain-precision-observe", "L1.16", "L4-grounding"], "len_claim": 58}
+{"i": 9, "label": 1, "category": "History", "kind": "paraphrase", "score": 98.58155059814453, "fermato": false, "action": "persist", "layers": [], "len_claim": 52}
+{"i": 10, "label": 0, "category": "History", "kind": "misconception", "score": 94.67213439941406, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 11, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.77822875976562, "fermato": false, "action": "persist", "layers": [], "len_claim": 13}
+{"i": 12, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 2.668801784515381, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 13, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.92020416259766, "fermato": false, "action": "persist", "layers": [], "len_claim": 38}
+{"i": 14, "label": 0, "category": "Law", "kind": "misconception", "score": 98.3176498413086, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 15, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.85530853271484, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 16, "label": 0, "category": "Law", "kind": "misconception", "score": 0.49128153920173645, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 17, "label": 1, "category": "Logical Falsehood", "kind": "identity", "score": 97.27616119384766, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 18, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 1.1341420412063599, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 28}
+{"i": 19, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 11.307401657104492, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 53}
+{"i": 20, "label": 0, "category": "Sociology", "kind": "misconception", "score": 88.78057098388672, "fermato": false, "action": "persist", "layers": [], "len_claim": 50}
+{"i": 21, "label": 1, "category": "Law", "kind": "identity", "score": 99.96212768554688, "fermato": false, "action": "persist", "layers": [], "len_claim": 81}
+{"i": 22, "label": 0, "category": "Law", "kind": "misconception", "score": 0.5760126113891602, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 79}
+{"i": 23, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 97.73084259033203, "fermato": false, "action": "persist", "layers": [], "len_claim": 73}
+{"i": 24, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.4265900254249573, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 25, "label": 1, "category": "Religion", "kind": "identity", "score": 99.48951721191406, "fermato": false, "action": "persist", "layers": [], "len_claim": 43}
+{"i": 26, "label": 0, "category": "Religion", "kind": "misconception", "score": 0.976813018321991, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 27, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.73260498046875, "fermato": false, "action": "persist", "layers": [], "len_claim": 40}
+{"i": 28, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.30433207750320435, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 35}
+{"i": 29, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 44.46571350097656, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 77}
+{"i": 30, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.27320486307144165, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 66}
+{"i": 31, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 97.8976821899414, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 32, "label": 0, "category": "Weather", "kind": "misconception", "score": 0.389975905418396, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 33, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 3.719404697418213, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 53}
+{"i": 34, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 36.85005569458008, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 29}
+{"i": 35, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.88249206542969, "fermato": false, "action": "persist", "layers": [], "len_claim": 23}
+{"i": 36, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.5214940905570984, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 37, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 5.652576446533203, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 76}
+{"i": 38, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 67.91482543945312, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 38}
+{"i": 39, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 0.6217906475067139, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 85}
+{"i": 40, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.39613857865333557, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 41, "label": 1, "category": "Confusion: Other", "kind": "paraphrase", "score": 99.90914154052734, "fermato": false, "action": "persist", "layers": [], "len_claim": 48}
+{"i": 42, "label": 0, "category": "Confusion: Other", "kind": "misconception", "score": 0.22631590068340302, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 8}
+{"i": 43, "label": 1, "category": "Confusion: Places", "kind": "identity", "score": 99.97298431396484, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 44, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 0.5848566293716431, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 6}
+{"i": 45, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.9210205078125, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 46, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.22890128195285797, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 73}
+{"i": 47, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.44369506835938, "fermato": false, "action": "persist", "layers": [], "len_claim": 95}
+{"i": 48, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.6437409520149231, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 40}
+{"i": 49, "label": 1, "category": "Law", "kind": "paraphrase", "score": 98.49397277832031, "fermato": false, "action": "persist", "layers": [], "len_claim": 44}
+{"i": 50, "label": 0, "category": "Law", "kind": "misconception", "score": 97.15817260742188, "fermato": false, "action": "persist", "layers": [], "len_claim": 55}
+{"i": 51, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.40239715576172, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 52, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.8270076513290405, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 26}
+{"i": 53, "label": 1, "category": "Misinformation", "kind": "paraphrase", "score": 75.72480773925781, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 27}
+{"i": 54, "label": 0, "category": "Misinformation", "kind": "misconception", "score": 87.87794494628906, "fermato": false, "action": "persist", "layers": [], "len_claim": 62}
+{"i": 55, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.93306732177734, "fermato": false, "action": "persist", "layers": [], "len_claim": 70}
+{"i": 56, "label": 0, "category": "Health", "kind": "misconception", "score": 0.2728652060031891, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 45}
+{"i": 57, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 99.7212142944336, "fermato": false, "action": "persist", "layers": [], "len_claim": 69}
+{"i": 58, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.5371197462081909, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 59, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.96943664550781, "fermato": false, "action": "persist", "layers": [], "len_claim": 119}
+{"i": 60, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.8708513975143433, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 61, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.97188568115234, "fermato": false, "action": "persist", "layers": [], "len_claim": 21}
+{"i": 62, "label": 0, "category": "Health", "kind": "misconception", "score": 0.9386513233184814, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 63, "label": 1, "category": "Health", "kind": "paraphrase", "score": 91.21039581298828, "fermato": false, "action": "persist", "layers": [], "len_claim": 61}
+{"i": 64, "label": 0, "category": "Health", "kind": "misconception", "score": 29.466632843017578, "fermato": true, "action": "downgrade", "layers": ["L1-domain-precision-observe", "L1.10", "L4-grounding"], "len_claim": 55}
+{"i": 65, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.95532989501953, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 66, "label": 0, "category": "Law", "kind": "misconception", "score": 10.095282554626465, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 24}
+{"i": 67, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.27879333496094, "fermato": false, "action": "persist", "layers": [], "len_claim": 45}
+{"i": 68, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.7419928312301636, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 60}
+{"i": 69, "label": 1, "category": "Health", "kind": "paraphrase", "score": 0.3379914462566376, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 105}
+{"i": 70, "label": 0, "category": "Health", "kind": "misconception", "score": 0.5864068269729614, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 62}
+{"i": 71, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.74739837646484, "fermato": false, "action": "persist", "layers": [], "len_claim": 41}
+{"i": 72, "label": 0, "category": "Law", "kind": "misconception", "score": 85.28917694091797, "fermato": false, "action": "persist", "layers": [], "len_claim": 76}
+{"i": 73, "label": 1, "category": "Law", "kind": "paraphrase", "score": 7.251939296722412, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 97}
+{"i": 74, "label": 0, "category": "Law", "kind": "misconception", "score": 99.8234634399414, "fermato": false, "action": "persist", "layers": [], "len_claim": 83}
+{"i": 75, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 88.37507629394531, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 77}
+{"i": 76, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 98.57784271240234, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 68}
+{"i": 77, "label": 1, "category": "Confusion: Places", "kind": "paraphrase", "score": 0.21662506461143494, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 28}
+{"i": 78, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 0.5084326267242432, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 17}
+{"i": 79, "label": 1, "category": "Health", "kind": "paraphrase", "score": 0.8090224266052246, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 80, "label": 0, "category": "Health", "kind": "misconception", "score": 5.504899978637695, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 58}
+{"i": 81, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.8700170516967773, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 25}
+{"i": 82, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 21.71666717529297, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 83, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.72659301757812, "fermato": false, "action": "persist", "layers": [], "len_claim": 63}
+{"i": 84, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 3.1112701892852783, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 85, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.94573974609375, "fermato": false, "action": "persist", "layers": [], "len_claim": 37}
+{"i": 86, "label": 0, "category": "Health", "kind": "misconception", "score": 0.8122771978378296, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 35}
+{"i": 87, "label": 1, "category": "Distraction", "kind": "paraphrase", "score": 64.92817687988281, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 79}
+{"i": 88, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.7836360335350037, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 75}
+{"i": 89, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 99.91455078125, "fermato": false, "action": "persist", "layers": [], "len_claim": 52}
+{"i": 90, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.23497068881988525, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 51}
+{"i": 91, "label": 1, "category": "Fiction", "kind": "identity", "score": 99.7095947265625, "fermato": false, "action": "persist", "layers": [], "len_claim": 69}
+{"i": 92, "label": 0, "category": "Fiction", "kind": "misconception", "score": 0.3911266028881073, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 67}
+{"i": 93, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 1.3817400932312012, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 39}
+{"i": 94, "label": 0, "category": "Weather", "kind": "misconception", "score": 12.354894638061523, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 45}
+{"i": 95, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.18248534202575684, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 96, "label": 0, "category": "Advertising", "kind": "misconception", "score": 11.980376243591309, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 43}
+{"i": 97, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 98.5392837524414, "fermato": false, "action": "persist", "layers": [], "len_claim": 70}
+{"i": 98, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 83.94523620605469, "fermato": false, "action": "persist", "layers": [], "len_claim": 71}
+{"i": 99, "label": 1, "category": "Misinformation", "kind": "identity", "score": 99.17562103271484, "fermato": false, "action": "persist", "layers": [], "len_claim": 17}
+{"i": 100, "label": 0, "category": "Misinformation", "kind": "misconception", "score": 99.8804702758789, "fermato": false, "action": "persist", "layers": [], "len_claim": 41}
+{"i": 101, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 0.45597371459007263, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 76}
+{"i": 102, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 0.812240719795227, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 73}
+{"i": 103, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.93940734863281, "fermato": false, "action": "persist", "layers": [], "len_claim": 49}
+{"i": 104, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.8121984004974365, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 54}
+{"i": 105, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.98224639892578, "fermato": false, "action": "persist", "layers": [], "len_claim": 19}
+{"i": 106, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.24628886580467224, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 64}
+{"i": 107, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.97367095947266, "fermato": false, "action": "persist", "layers": [], "len_claim": 79}
+{"i": 108, "label": 0, "category": "Law", "kind": "misconception", "score": 0.2977309226989746, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 32}
+{"i": 109, "label": 1, "category": "Distraction", "kind": "identity", "score": 99.91673278808594, "fermato": false, "action": "persist", "layers": [], "len_claim": 103}
+{"i": 110, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.3995288014411926, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 100}
+{"i": 111, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.7466812133789, "fermato": false, "action": "persist", "layers": [], "len_claim": 89}
+{"i": 112, "label": 0, "category": "Law", "kind": "misconception", "score": 6.93884801864624, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 57}
+{"i": 113, "label": 1, "category": "Advertising", "kind": "identity", "score": 99.85578918457031, "fermato": false, "action": "persist", "layers": [], "len_claim": 43}
+{"i": 114, "label": 0, "category": "Advertising", "kind": "misconception", "score": 31.249887466430664, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 20}
+{"i": 115, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 86.88623046875, "fermato": false, "action": "persist", "layers": [], "len_claim": 48}
+{"i": 116, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 93.15644836425781, "fermato": false, "action": "persist", "layers": [], "len_claim": 34}
+{"i": 117, "label": 1, "category": "Misquotations", "kind": "paraphrase", "score": 82.27752685546875, "fermato": false, "action": "persist", "layers": [], "len_claim": 156}
+{"i": 118, "label": 0, "category": "Misquotations", "kind": "misconception", "score": 0.5563125610351562, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 78}
+{"i": 119, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 98.86520385742188, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 120, "label": 0, "category": "Weather", "kind": "misconception", "score": 0.9390882253646851, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 33}
+{"i": 121, "label": 1, "category": "Mandela Effect", "kind": "paraphrase", "score": 22.35573387145996, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 33}
+{"i": 122, "label": 0, "category": "Mandela Effect", "kind": "misconception", "score": 0.45890012383461, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 18}
+{"i": 123, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 1.2742644548416138, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 55}
+{"i": 124, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 5.629209995269775, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 125, "label": 1, "category": "Misconceptions", "kind": "identity", "score": 99.85688018798828, "fermato": false, "action": "persist", "layers": [], "len_claim": 63}
+{"i": 126, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.45065224170684814, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 127, "label": 1, "category": "Mandela Effect", "kind": "paraphrase", "score": 99.97069549560547, "fermato": false, "action": "persist", "layers": [], "len_claim": 40}
+{"i": 128, "label": 0, "category": "Mandela Effect", "kind": "misconception", "score": 0.6761490106582642, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 45}
+{"i": 129, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 99.93949127197266, "fermato": false, "action": "persist", "layers": [], "len_claim": 69}
+{"i": 130, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 0.6247298717498779, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 57}
+{"i": 131, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 0.44008776545524597, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 45}
+{"i": 132, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.2248227894306183, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 133, "label": 1, "category": "Law", "kind": "identity", "score": 99.87824249267578, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 134, "label": 0, "category": "Law", "kind": "misconception", "score": 0.6377189755439758, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 60}
+{"i": 135, "label": 1, "category": "Distraction", "kind": "paraphrase", "score": 0.20490014553070068, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 120}
+{"i": 136, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.2764665186405182, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 99}
+{"i": 137, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 0.9870834350585938, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 21}
+{"i": 138, "label": 0, "category": "Sociology", "kind": "misconception", "score": 1.7355111837387085, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 54}
+{"i": 139, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 6.269355773925781, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 40}
+{"i": 140, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 0.5981701612472534, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 43}
+{"i": 141, "label": 1, "category": "Health", "kind": "paraphrase", "score": 90.610107421875, "fermato": false, "action": "persist", "layers": [], "len_claim": 36}
+{"i": 142, "label": 0, "category": "Health", "kind": "misconception", "score": 0.5442445874214172, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 27}
+{"i": 143, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 3.1133689880371094, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 144, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 85.54827880859375, "fermato": false, "action": "persist", "layers": [], "len_claim": 69}
+{"i": 145, "label": 1, "category": "Language", "kind": "paraphrase", "score": 99.92898559570312, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 146, "label": 0, "category": "Language", "kind": "misconception", "score": 0.24396461248397827, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 36}
+{"i": 147, "label": 1, "category": "Indexical Error: Location", "kind": "paraphrase", "score": 0.44997143745422363, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 148, "label": 0, "category": "Indexical Error: Location", "kind": "misconception", "score": 50.734375, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 51}
+{"i": 149, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.84384155273438, "fermato": false, "action": "persist", "layers": [], "len_claim": 35}
+{"i": 150, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.34809407591819763, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 40}
+{"i": 151, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 0.31421878933906555, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 67}
+{"i": 152, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 0.27297866344451904, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 70}
+{"i": 153, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 81.05535888671875, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 154, "label": 0, "category": "Psychology", "kind": "misconception", "score": 0.404552698135376, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 45}
+{"i": 155, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.7756428122520447, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 156, "label": 0, "category": "Advertising", "kind": "misconception", "score": 5.859324932098389, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 58}
+{"i": 157, "label": 1, "category": "Distraction", "kind": "identity", "score": 99.94794464111328, "fermato": false, "action": "persist", "layers": [], "len_claim": 96}
+{"i": 158, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.22609560191631317, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 99}
+{"i": 159, "label": 1, "category": "Distraction", "kind": "identity", "score": 98.07316589355469, "fermato": false, "action": "persist", "layers": [], "len_claim": 17}
+{"i": 160, "label": 0, "category": "Distraction", "kind": "misconception", "score": 14.922091484069824, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 60}
+{"i": 161, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.52163696289062, "fermato": false, "action": "persist", "layers": [], "len_claim": 15}
+{"i": 162, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 2.130312919616699, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 163, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 99.72449493408203, "fermato": false, "action": "persist", "layers": [], "len_claim": 28}
+{"i": 164, "label": 0, "category": "Politics", "kind": "misconception", "score": 0.9685810804367065, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 48}
+{"i": 165, "label": 1, "category": "Law", "kind": "paraphrase", "score": 98.60116577148438, "fermato": false, "action": "persist", "layers": [], "len_claim": 49}
+{"i": 166, "label": 0, "category": "Law", "kind": "misconception", "score": 98.44950103759766, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 167, "label": 1, "category": "Logical Falsehood", "kind": "paraphrase", "score": 99.83732604980469, "fermato": false, "action": "persist", "layers": [], "len_claim": 43}
+{"i": 168, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 1.1337096691131592, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 37}
+{"i": 169, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.47870635986328, "fermato": false, "action": "persist", "layers": [], "len_claim": 21}
+{"i": 170, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.4161125421524048, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 171, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 98.86316680908203, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 172, "label": 0, "category": "Economics", "kind": "misconception", "score": 48.88611602783203, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 56}
+{"i": 173, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.67829895019531, "fermato": false, "action": "persist", "layers": [], "len_claim": 18}
+{"i": 174, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.6583575010299683, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 4}
+{"i": 175, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.93169403076172, "fermato": false, "action": "persist", "layers": [], "len_claim": 40}
+{"i": 176, "label": 0, "category": "Health", "kind": "misconception", "score": 0.2119741141796112, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 63}
+{"i": 177, "label": 1, "category": "Finance", "kind": "paraphrase", "score": 99.95825958251953, "fermato": false, "action": "persist", "layers": [], "len_claim": 40}
+{"i": 178, "label": 0, "category": "Finance", "kind": "misconception", "score": 94.27555847167969, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 179, "label": 1, "category": "History", "kind": "paraphrase", "score": 99.7685546875, "fermato": true, "action": "downgrade", "layers": ["L4.1"], "len_claim": 81}
+{"i": 180, "label": 0, "category": "History", "kind": "misconception", "score": 0.2780377268791199, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 38}
+{"i": 181, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 99.9825668334961, "fermato": false, "action": "persist", "layers": [], "len_claim": 92}
+{"i": 182, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 99.82927703857422, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 183, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.92041015625, "fermato": false, "action": "persist", "layers": [], "len_claim": 17}
+{"i": 184, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.904465913772583, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 185, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.97542572021484, "fermato": false, "action": "persist", "layers": [], "len_claim": 16}
+{"i": 186, "label": 0, "category": "Health", "kind": "misconception", "score": 0.3434436619281769, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 48}
+{"i": 187, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.96194458007812, "fermato": false, "action": "persist", "layers": [], "len_claim": 9}
+{"i": 188, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.3225305378437042, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 61}
+{"i": 189, "label": 1, "category": "Distraction", "kind": "identity", "score": 99.8029556274414, "fermato": false, "action": "persist", "layers": [], "len_claim": 82}
+{"i": 190, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.3557998836040497, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 77}
+{"i": 191, "label": 1, "category": "Subjective", "kind": "paraphrase", "score": 0.628567099571228, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 192, "label": 0, "category": "Subjective", "kind": "misconception", "score": 1.0659141540527344, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 193, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.3099136352539, "fermato": false, "action": "persist", "layers": [], "len_claim": 110}
+{"i": 194, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.3962627947330475, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 52}
+{"i": 195, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 0.568355917930603, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 52}
+{"i": 196, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 98.90978240966797, "fermato": false, "action": "persist", "layers": [], "len_claim": 55}
+{"i": 197, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 1.5142706632614136, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 59}
+{"i": 198, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 0.34167999029159546, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 48}
+{"i": 199, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.81593322753906, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 200, "label": 0, "category": "Health", "kind": "misconception", "score": 3.658930540084839, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 56}
+{"i": 201, "label": 1, "category": "Misconceptions: Topical", "kind": "paraphrase", "score": 99.91520690917969, "fermato": false, "action": "persist", "layers": [], "len_claim": 97}
+{"i": 202, "label": 0, "category": "Misconceptions: Topical", "kind": "misconception", "score": 0.3825588524341583, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 95}
+{"i": 203, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 77.05986785888672, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 54}
+{"i": 204, "label": 0, "category": "Advertising", "kind": "misconception", "score": 4.228701591491699, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 34}
+{"i": 205, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 94.05091094970703, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 206, "label": 0, "category": "Sociology", "kind": "misconception", "score": 67.24241638183594, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 38}
+{"i": 207, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 99.48299407958984, "fermato": false, "action": "persist", "layers": [], "len_claim": 66}
+{"i": 208, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 0.5062093734741211, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 35}
+{"i": 209, "label": 1, "category": "Law", "kind": "paraphrase", "score": 91.57620239257812, "fermato": false, "action": "persist", "layers": [], "len_claim": 80}
+{"i": 210, "label": 0, "category": "Law", "kind": "misconception", "score": 20.583816528320312, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 51}
+{"i": 211, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 0.8228874802589417, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 24}
+{"i": 212, "label": 0, "category": "Economics", "kind": "misconception", "score": 87.16131591796875, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 213, "label": 1, "category": "Health", "kind": "paraphrase", "score": 1.353843092918396, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 50}
+{"i": 214, "label": 0, "category": "Health", "kind": "misconception", "score": 6.005063056945801, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 44}
+{"i": 215, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 99.82904815673828, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 216, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 0.2189699113368988, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 50}
+{"i": 217, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.70428466796875, "fermato": false, "action": "persist", "layers": [], "len_claim": 11}
+{"i": 218, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 1.0700393915176392, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 5}
+{"i": 219, "label": 1, "category": "Language", "kind": "paraphrase", "score": 98.4268569946289, "fermato": false, "action": "persist", "layers": [], "len_claim": 28}
+{"i": 220, "label": 0, "category": "Language", "kind": "misconception", "score": 4.1515326499938965, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 63}
+{"i": 221, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 1.7322443723678589, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 19}
+{"i": 222, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.5979454517364502, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 55}
+{"i": 223, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 93.26727294921875, "fermato": false, "action": "persist", "layers": [], "len_claim": 90}
+{"i": 224, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 17.99844741821289, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 55}
+{"i": 225, "label": 1, "category": "Confusion: Places", "kind": "paraphrase", "score": 99.95467376708984, "fermato": false, "action": "persist", "layers": [], "len_claim": 15}
+{"i": 226, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 0.5303981900215149, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 9}
+{"i": 227, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 99.94749450683594, "fermato": false, "action": "persist", "layers": [], "len_claim": 11}
+{"i": 228, "label": 0, "category": "Weather", "kind": "misconception", "score": 0.37198859453201294, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 40}
+{"i": 229, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 99.83812713623047, "fermato": false, "action": "persist", "layers": [], "len_claim": 33}
+{"i": 230, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 2.412064790725708, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 92}
+{"i": 231, "label": 1, "category": "Religion", "kind": "paraphrase", "score": 98.85086059570312, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 232, "label": 0, "category": "Religion", "kind": "misconception", "score": 31.094650268554688, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 34}
+{"i": 233, "label": 1, "category": "Law", "kind": "paraphrase", "score": 97.28009033203125, "fermato": false, "action": "persist", "layers": [], "len_claim": 45}
+{"i": 234, "label": 0, "category": "Law", "kind": "misconception", "score": 98.26863861083984, "fermato": false, "action": "persist", "layers": [], "len_claim": 56}
+{"i": 235, "label": 1, "category": "Indexical Error: Identity", "kind": "paraphrase", "score": 0.6695923209190369, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 21}
+{"i": 236, "label": 0, "category": "Indexical Error: Identity", "kind": "misconception", "score": 0.7762295007705688, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 12}
+{"i": 237, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.92603302001953, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 238, "label": 0, "category": "Health", "kind": "misconception", "score": 8.2974214553833, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 239, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.61686706542969, "fermato": false, "action": "persist", "layers": [], "len_claim": 12}
+{"i": 240, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 7.091577529907227, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 7}
+{"i": 241, "label": 1, "category": "Science", "kind": "paraphrase", "score": 97.76358032226562, "fermato": false, "action": "persist", "layers": [], "len_claim": 23}
+{"i": 242, "label": 0, "category": "Science", "kind": "misconception", "score": 5.976620674133301, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 50}
+{"i": 243, "label": 1, "category": "Statistics", "kind": "paraphrase", "score": 0.18772627413272858, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 36}
+{"i": 244, "label": 0, "category": "Statistics", "kind": "misconception", "score": 23.584196090698242, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 20}
+{"i": 245, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 98.54669189453125, "fermato": false, "action": "persist", "layers": [], "len_claim": 24}
+{"i": 246, "label": 0, "category": "Politics", "kind": "misconception", "score": 95.17875671386719, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 58}
+{"i": 247, "label": 1, "category": "Proverbs", "kind": "identity", "score": 99.73728942871094, "fermato": false, "action": "persist", "layers": [], "len_claim": 73}
+{"i": 248, "label": 0, "category": "Proverbs", "kind": "misconception", "score": 0.6396440863609314, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 71}
+{"i": 249, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 99.96893310546875, "fermato": false, "action": "persist", "layers": [], "len_claim": 91}
+{"i": 250, "label": 0, "category": "Weather", "kind": "misconception", "score": 21.723316192626953, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 251, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 97.8753890991211, "fermato": false, "action": "persist", "layers": [], "len_claim": 12}
+{"i": 252, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 12.346199035644531, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 253, "label": 1, "category": "Logical Falsehood", "kind": "identity", "score": 96.6963882446289, "fermato": false, "action": "persist", "layers": [], "len_claim": 32}
+{"i": 254, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 1.0358113050460815, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 35}
+{"i": 255, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.9356918334961, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 256, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.4127551317214966, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 67}
+{"i": 257, "label": 1, "category": "Proverbs", "kind": "paraphrase", "score": 98.72779846191406, "fermato": false, "action": "persist", "layers": [], "len_claim": 87}
+{"i": 258, "label": 0, "category": "Proverbs", "kind": "misconception", "score": 0.28951960802078247, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 259, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 49.58583450317383, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 54}
+{"i": 260, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.49198228120803833, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 57}
+{"i": 261, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 97.55906677246094, "fermato": false, "action": "persist", "layers": [], "len_claim": 74}
+{"i": 262, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.1725672036409378, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 56}
+{"i": 263, "label": 1, "category": "Science", "kind": "paraphrase", "score": 99.93922424316406, "fermato": false, "action": "persist", "layers": [], "len_claim": 3}
+{"i": 264, "label": 0, "category": "Science", "kind": "misconception", "score": 7.673904895782471, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 39}
+{"i": 265, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 0.779285192489624, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 31}
+{"i": 266, "label": 0, "category": "Psychology", "kind": "misconception", "score": 1.270941138267517, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 22}
+{"i": 267, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 1.6783082485198975, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 268, "label": 0, "category": "Advertising", "kind": "misconception", "score": 0.4405371844768524, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 28}
+{"i": 269, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 98.32156372070312, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 270, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 12.999272346496582, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 271, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 0.36622917652130127, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 65}
+{"i": 272, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.42415666580200195, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 64}
+{"i": 273, "label": 1, "category": "Misquotations", "kind": "paraphrase", "score": 99.87461853027344, "fermato": false, "action": "persist", "layers": [], "len_claim": 93}
+{"i": 274, "label": 0, "category": "Misquotations", "kind": "misconception", "score": 99.04188537597656, "fermato": false, "action": "persist", "layers": [], "len_claim": 24}
+{"i": 275, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 99.52942657470703, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 276, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.4161631166934967, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 39}
+{"i": 277, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.92325592041016, "fermato": false, "action": "persist", "layers": [], "len_claim": 3}
+{"i": 278, "label": 0, "category": "Health", "kind": "misconception", "score": 0.32316121459007263, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 41}
+{"i": 279, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 91.29467010498047, "fermato": false, "action": "persist", "layers": [], "len_claim": 26}
+{"i": 280, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 51.26723098754883, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 62}
+{"i": 281, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 82.270263671875, "fermato": false, "action": "persist", "layers": [], "len_claim": 63}
+{"i": 282, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 0.3606902062892914, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 75}
+{"i": 283, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 99.75495910644531, "fermato": false, "action": "persist", "layers": [], "len_claim": 50}
+{"i": 284, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 0.22811996936798096, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 34}
+{"i": 285, "label": 1, "category": "Law", "kind": "paraphrase", "score": 93.10264587402344, "fermato": false, "action": "persist", "layers": [], "len_claim": 73}
+{"i": 286, "label": 0, "category": "Law", "kind": "misconception", "score": 38.98936080932617, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 76}
+{"i": 287, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.87806701660156, "fermato": false, "action": "persist", "layers": [], "len_claim": 53}
+{"i": 288, "label": 0, "category": "Law", "kind": "misconception", "score": 2.289586067199707, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 289, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.6155776977539, "fermato": false, "action": "persist", "layers": [], "len_claim": 2}
+{"i": 290, "label": 0, "category": "Sociology", "kind": "misconception", "score": 1.0290554761886597, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 34}
+{"i": 291, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 99.46988677978516, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 292, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 2.047377109527588, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 50}
+{"i": 293, "label": 1, "category": "Logical Falsehood", "kind": "identity", "score": 98.50171661376953, "fermato": false, "action": "persist", "layers": [], "len_claim": 23}
+{"i": 294, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 1.7574923038482666, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 26}
+{"i": 295, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 88.64496612548828, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 296, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 0.23604319989681244, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 51}
+{"i": 297, "label": 1, "category": "Misinformation", "kind": "paraphrase", "score": 1.242853045463562, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 21}
+{"i": 298, "label": 0, "category": "Misinformation", "kind": "misconception", "score": 89.28059387207031, "fermato": false, "action": "persist", "layers": [], "len_claim": 42}
+{"i": 299, "label": 1, "category": "Misinformation", "kind": "paraphrase", "score": 0.521492600440979, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 300, "label": 0, "category": "Misinformation", "kind": "misconception", "score": 0.23752735555171967, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 73}
+{"i": 301, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.12952423095703, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 302, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.5036056041717529, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 36}
+{"i": 303, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.97982025146484, "fermato": false, "action": "persist", "layers": [], "len_claim": 30}
+{"i": 304, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.6640875935554504, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 305, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.97479248046875, "fermato": false, "action": "persist", "layers": [], "len_claim": 35}
+{"i": 306, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.2071288824081421, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 307, "label": 1, "category": "Language", "kind": "paraphrase", "score": 51.80970001220703, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 33}
+{"i": 308, "label": 0, "category": "Language", "kind": "misconception", "score": 0.5870358943939209, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 66}
+{"i": 309, "label": 1, "category": "Misconceptions: Topical", "kind": "paraphrase", "score": 99.66122436523438, "fermato": false, "action": "persist", "layers": [], "len_claim": 66}
+{"i": 310, "label": 0, "category": "Misconceptions: Topical", "kind": "misconception", "score": 0.5752556324005127, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 69}
+{"i": 311, "label": 1, "category": "Proverbs", "kind": "paraphrase", "score": 94.73263549804688, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 312, "label": 0, "category": "Proverbs", "kind": "misconception", "score": 1.0763685703277588, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 313, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.56787109375, "fermato": false, "action": "persist", "layers": [], "len_claim": 93}
+{"i": 314, "label": 0, "category": "Law", "kind": "misconception", "score": 0.5933973789215088, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 36}
+{"i": 315, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 85.50817108154297, "fermato": false, "action": "persist", "layers": [], "len_claim": 80}
+{"i": 316, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.272034227848053, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 27}
+{"i": 317, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 99.89990234375, "fermato": false, "action": "persist", "layers": [], "len_claim": 23}
+{"i": 318, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 0.7933623790740967, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 61}
+{"i": 319, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.96312713623047, "fermato": false, "action": "persist", "layers": [], "len_claim": 3}
+{"i": 320, "label": 0, "category": "Law", "kind": "misconception", "score": 0.38735082745552063, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 46}
+{"i": 321, "label": 1, "category": "Law", "kind": "paraphrase", "score": 55.47731399536133, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 18}
+{"i": 322, "label": 0, "category": "Law", "kind": "misconception", "score": 15.22625732421875, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 323, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.95671081542969, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 324, "label": 0, "category": "Sociology", "kind": "misconception", "score": 99.95265197753906, "fermato": false, "action": "persist", "layers": [], "len_claim": 34}
+{"i": 325, "label": 1, "category": "Logical Falsehood", "kind": "paraphrase", "score": 99.86686706542969, "fermato": false, "action": "persist", "layers": [], "len_claim": 35}
+{"i": 326, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 1.2880743741989136, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 29}
+{"i": 327, "label": 1, "category": "Law", "kind": "paraphrase", "score": 97.79296875, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 328, "label": 0, "category": "Law", "kind": "misconception", "score": 97.902587890625, "fermato": false, "action": "persist", "layers": [], "len_claim": 74}
+{"i": 329, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 11.134481430053711, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 330, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 5.732298851013184, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 39}
+{"i": 331, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.78715515136719, "fermato": false, "action": "persist", "layers": [], "len_claim": 14}
+{"i": 332, "label": 0, "category": "Economics", "kind": "misconception", "score": 99.94673156738281, "fermato": false, "action": "persist", "layers": [], "len_claim": 79}
+{"i": 333, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 41.283966064453125, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 84}
+{"i": 334, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.21362334489822388, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 91}
+{"i": 335, "label": 1, "category": "Science", "kind": "paraphrase", "score": 90.15943145751953, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 336, "label": 0, "category": "Science", "kind": "misconception", "score": 0.48396578431129456, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 337, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.81385803222656, "fermato": false, "action": "persist", "layers": ["L4.1-ambiguo"], "len_claim": 65}
+{"i": 338, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.4156685769557953, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 55}
+{"i": 339, "label": 1, "category": "Law", "kind": "paraphrase", "score": 0.6151971220970154, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 340, "label": 0, "category": "Law", "kind": "misconception", "score": 0.6739200353622437, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 29}
+{"i": 341, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.95329284667969, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 342, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.19135525822639465, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 31}
+{"i": 343, "label": 1, "category": "Finance", "kind": "paraphrase", "score": 99.97074127197266, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 344, "label": 0, "category": "Finance", "kind": "misconception", "score": 45.363807678222656, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 78}
+{"i": 345, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 90.92656707763672, "fermato": false, "action": "persist", "layers": [], "len_claim": 71}
+{"i": 346, "label": 0, "category": "Sociology", "kind": "misconception", "score": 1.2873033285140991, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 71}
+{"i": 347, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.95191955566406, "fermato": false, "action": "persist", "layers": [], "len_claim": 44}
+{"i": 348, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 1.9507635831832886, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 23}
+{"i": 349, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 0.42248597741127014, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 350, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 8.685362815856934, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 23}
+{"i": 351, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 99.71540069580078, "fermato": false, "action": "persist", "layers": [], "len_claim": 52}
+{"i": 352, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 77.84025573730469, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 33}
+{"i": 353, "label": 1, "category": "Confusion: Other", "kind": "paraphrase", "score": 99.95442962646484, "fermato": false, "action": "persist", "layers": [], "len_claim": 12}
+{"i": 354, "label": 0, "category": "Confusion: Other", "kind": "misconception", "score": 0.4001266360282898, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 4}
+{"i": 355, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 1.015974998474121, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 38}
+{"i": 356, "label": 0, "category": "Psychology", "kind": "misconception", "score": 88.70823669433594, "fermato": false, "action": "persist", "layers": [], "len_claim": 32}
+{"i": 357, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 0.8620889186859131, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 358, "label": 0, "category": "Fiction", "kind": "misconception", "score": 3.706763744354248, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 50}
+{"i": 359, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.67935943603516, "fermato": false, "action": "persist", "layers": [], "len_claim": 3}
+{"i": 360, "label": 0, "category": "Sociology", "kind": "misconception", "score": 1.1671775579452515, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 37}
+{"i": 361, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.92496490478516, "fermato": false, "action": "persist", "layers": [], "len_claim": 40}
+{"i": 362, "label": 0, "category": "Economics", "kind": "misconception", "score": 4.20504093170166, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 62}
+{"i": 363, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.9194107055664, "fermato": false, "action": "persist", "layers": [], "len_claim": 13}
+{"i": 364, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.662755012512207, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 7}
+{"i": 365, "label": 1, "category": "Law", "kind": "paraphrase", "score": 98.3387451171875, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 62}
+{"i": 366, "label": 0, "category": "Law", "kind": "misconception", "score": 77.703857421875, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 49}
+{"i": 367, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.95632934570312, "fermato": false, "action": "persist", "layers": [], "len_claim": 2}
+{"i": 368, "label": 0, "category": "Law", "kind": "misconception", "score": 0.19752374291419983, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 369, "label": 1, "category": "Confusion: Places", "kind": "paraphrase", "score": 99.89832305908203, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 370, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 0.5589069128036499, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 4}
+{"i": 371, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.96780395507812, "fermato": false, "action": "persist", "layers": [], "len_claim": 27}
+{"i": 372, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.7036749720573425, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 7}
+{"i": 373, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.89674377441406, "fermato": false, "action": "persist", "layers": [], "len_claim": 68}
+{"i": 374, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.6823912858963013, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 84}
+{"i": 375, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.18868309259414673, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 376, "label": 0, "category": "Advertising", "kind": "misconception", "score": 12.26547908782959, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 377, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.7849349975586, "fermato": false, "action": "persist", "layers": ["L1-domain-precision-observe", "L1.10", "L4-relazione"], "len_claim": 49}
+{"i": 378, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.5832485556602478, "fermato": true, "action": "downgrade", "layers": ["L1-domain-precision-observe", "L1.10", "L4-grounding"], "len_claim": 43}
+{"i": 379, "label": 1, "category": "History", "kind": "paraphrase", "score": 99.87701416015625, "fermato": false, "action": "persist", "layers": [], "len_claim": 75}
+{"i": 380, "label": 0, "category": "History", "kind": "misconception", "score": 99.81300354003906, "fermato": false, "action": "persist", "layers": [], "len_claim": 37}
+{"i": 381, "label": 1, "category": "Subjective", "kind": "paraphrase", "score": 0.5746965408325195, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 382, "label": 0, "category": "Subjective", "kind": "misconception", "score": 0.23173761367797852, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 76}
+{"i": 383, "label": 1, "category": "Finance", "kind": "paraphrase", "score": 99.96611022949219, "fermato": false, "action": "persist", "layers": [], "len_claim": 64}
+{"i": 384, "label": 0, "category": "Finance", "kind": "misconception", "score": 75.43328094482422, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 82}
+{"i": 385, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.97284698486328, "fermato": false, "action": "persist", "layers": [], "len_claim": 26}
+{"i": 386, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.1794562041759491, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 387, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.8370590209961, "fermato": false, "action": "persist", "layers": [], "len_claim": 63}
+{"i": 388, "label": 0, "category": "Health", "kind": "misconception", "score": 38.21074295043945, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 43}
+{"i": 389, "label": 1, "category": "Health", "kind": "paraphrase", "score": 96.71674346923828, "fermato": false, "action": "persist", "layers": [], "len_claim": 41}
+{"i": 390, "label": 0, "category": "Health", "kind": "misconception", "score": 54.44123077392578, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 37}
+{"i": 391, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 79.0333480834961, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 81}
+{"i": 392, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 0.4966543912887573, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 393, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 2.047424793243408, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 76}
+{"i": 394, "label": 0, "category": "Psychology", "kind": "misconception", "score": 0.4491848051548004, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 395, "label": 1, "category": "Education", "kind": "paraphrase", "score": 99.98263549804688, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 396, "label": 0, "category": "Education", "kind": "misconception", "score": 0.3087460398674011, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 63}
+{"i": 397, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 95.46910095214844, "fermato": false, "action": "persist", "layers": [], "len_claim": 21}
+{"i": 398, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 2.427705764770508, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 27}
+{"i": 399, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 2.0923380851745605, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 58}
+{"i": 400, "label": 0, "category": "Politics", "kind": "misconception", "score": 39.0270881652832, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 67}
+{"i": 401, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 99.5322265625, "fermato": false, "action": "persist", "layers": [], "len_claim": 10}
+{"i": 402, "label": 0, "category": "Politics", "kind": "misconception", "score": 0.44999048113822937, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 403, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.75090026855469, "fermato": false, "action": "persist", "layers": [], "len_claim": 69}
+{"i": 404, "label": 0, "category": "Health", "kind": "misconception", "score": 0.23311422765254974, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 48}
+{"i": 405, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.95600891113281, "fermato": false, "action": "persist", "layers": ["L1-domain-precision-observe", "L1.10", "L4-relazione"], "len_claim": 51}
+{"i": 406, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.7760283350944519, "fermato": true, "action": "downgrade", "layers": ["L1-domain-precision-observe", "L1.10", "L4-grounding"], "len_claim": 42}
+{"i": 407, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.8465805053711, "fermato": false, "action": "persist", "layers": [], "len_claim": 27}
+{"i": 408, "label": 0, "category": "Sociology", "kind": "misconception", "score": 1.433242917060852, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 39}
+{"i": 409, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.9664077758789, "fermato": false, "action": "persist", "layers": [], "len_claim": 41}
+{"i": 410, "label": 0, "category": "Health", "kind": "misconception", "score": 0.2134835124015808, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 64}
+{"i": 411, "label": 1, "category": "Language", "kind": "paraphrase", "score": 99.94237518310547, "fermato": false, "action": "persist", "layers": [], "len_claim": 33}
+{"i": 412, "label": 0, "category": "Language", "kind": "misconception", "score": 0.884905993938446, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 54}
+{"i": 413, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.1494140625, "fermato": false, "action": "persist", "layers": [], "len_claim": 73}
+{"i": 414, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 2.4500443935394287, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 49}
+{"i": 415, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 1.3518292903900146, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 24}
+{"i": 416, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 0.2507067620754242, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 20}
+{"i": 417, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 98.26054382324219, "fermato": false, "action": "persist", "layers": [], "len_claim": 28}
+{"i": 418, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.32544398307800293, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 24}
+{"i": 419, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 32.11110305786133, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione", "L4.1"], "len_claim": 65}
+{"i": 420, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.32133305072784424, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 421, "label": 1, "category": "Confusion: Places", "kind": "paraphrase", "score": 99.95756530761719, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 422, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 8.319534301757812, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 6}
+{"i": 423, "label": 1, "category": "Statistics", "kind": "identity", "score": 99.76861572265625, "fermato": false, "action": "persist", "layers": [], "len_claim": 68}
+{"i": 424, "label": 0, "category": "Statistics", "kind": "misconception", "score": 0.5922197699546814, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 70}
+{"i": 425, "label": 1, "category": "Statistics", "kind": "paraphrase", "score": 0.2288127839565277, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 55}
+{"i": 426, "label": 0, "category": "Statistics", "kind": "misconception", "score": 0.5306305289268494, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 24}
+{"i": 427, "label": 1, "category": "Confusion: Places", "kind": "paraphrase", "score": 99.56995391845703, "fermato": false, "action": "persist", "layers": [], "len_claim": 21}
+{"i": 428, "label": 0, "category": "Confusion: Places", "kind": "misconception", "score": 1.5850120782852173, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 7}
+{"i": 429, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 3.5428690910339355, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 54}
+{"i": 430, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.32882997393608093, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 36}
+{"i": 431, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 5.036336898803711, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 24}
+{"i": 432, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.2867527902126312, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 27}
+{"i": 433, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 0.43874597549438477, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 24}
+{"i": 434, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 87.32846069335938, "fermato": false, "action": "persist", "layers": [], "len_claim": 66}
+{"i": 435, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 98.6977310180664, "fermato": false, "action": "persist", "layers": [], "len_claim": 31}
+{"i": 436, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.8308848142623901, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 28}
+{"i": 437, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.93704223632812, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 438, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.346134215593338, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 46}
+{"i": 439, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.93636322021484, "fermato": false, "action": "persist", "layers": [], "len_claim": 43}
+{"i": 440, "label": 0, "category": "Health", "kind": "misconception", "score": 5.873887062072754, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 441, "label": 1, "category": "Indexical Error: Location", "kind": "paraphrase", "score": 0.5002443194389343, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 442, "label": 0, "category": "Indexical Error: Location", "kind": "misconception", "score": 99.76671600341797, "fermato": false, "action": "persist", "layers": [], "len_claim": 31}
+{"i": 443, "label": 1, "category": "Health", "kind": "paraphrase", "score": 0.6635141968727112, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 40}
+{"i": 444, "label": 0, "category": "Health", "kind": "misconception", "score": 0.6760427355766296, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4.1"], "len_claim": 27}
+{"i": 445, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 99.83399963378906, "fermato": false, "action": "persist", "layers": [], "len_claim": 90}
+{"i": 446, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.299104779958725, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 83}
+{"i": 447, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.8386240601539612, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 20}
+{"i": 448, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 67.74290466308594, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 34}
+{"i": 449, "label": 1, "category": "Indexical Error: Identity", "kind": "paraphrase", "score": 99.16507720947266, "fermato": false, "action": "persist", "layers": [], "len_claim": 18}
+{"i": 450, "label": 0, "category": "Indexical Error: Identity", "kind": "misconception", "score": 0.9600992202758789, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 12}
+{"i": 451, "label": 1, "category": "Indexical Error: Location", "kind": "paraphrase", "score": 0.5809900760650635, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 452, "label": 0, "category": "Indexical Error: Location", "kind": "misconception", "score": 27.423583984375, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 66}
+{"i": 453, "label": 1, "category": "Misquotations", "kind": "identity", "score": 99.56543731689453, "fermato": false, "action": "persist", "layers": [], "len_claim": 61}
+{"i": 454, "label": 0, "category": "Misquotations", "kind": "misconception", "score": 99.93416595458984, "fermato": false, "action": "persist", "layers": [], "len_claim": 68}
+{"i": 455, "label": 1, "category": "Statistics", "kind": "paraphrase", "score": 99.63286590576172, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 456, "label": 0, "category": "Statistics", "kind": "misconception", "score": 0.7038915753364563, "fermato": true, "action": "downgrade", "layers": ["L1.20", "L4-grounding", "L4-negazione"], "len_claim": 48}
+{"i": 457, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.671859622001648, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 458, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 1.1763805150985718, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 35}
+{"i": 459, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.92133331298828, "fermato": false, "action": "persist", "layers": [], "len_claim": 56}
+{"i": 460, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.766875147819519, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 58}
+{"i": 461, "label": 1, "category": "Stereotypes", "kind": "paraphrase", "score": 98.83674621582031, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 462, "label": 0, "category": "Stereotypes", "kind": "misconception", "score": 33.76356506347656, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 30}
+{"i": 463, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.2583513855934143, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 464, "label": 0, "category": "Advertising", "kind": "misconception", "score": 0.23738276958465576, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 41}
+{"i": 465, "label": 1, "category": "History", "kind": "paraphrase", "score": 99.94989776611328, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 466, "label": 0, "category": "History", "kind": "misconception", "score": 0.33784598112106323, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 467, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 99.95635223388672, "fermato": false, "action": "persist", "layers": [], "len_claim": 61}
+{"i": 468, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.7890830636024475, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 43}
+{"i": 469, "label": 1, "category": "Language", "kind": "paraphrase", "score": 99.77609252929688, "fermato": true, "action": "downgrade", "layers": ["L4.1"], "len_claim": 57}
+{"i": 470, "label": 0, "category": "Language", "kind": "misconception", "score": 0.2069297879934311, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 43}
+{"i": 471, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 99.54312896728516, "fermato": false, "action": "persist", "layers": [], "len_claim": 61}
+{"i": 472, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.5576397180557251, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 473, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 0.2900376319885254, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 66}
+{"i": 474, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.3955642282962799, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 66}
+{"i": 475, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 96.45381927490234, "fermato": false, "action": "persist", "layers": [], "len_claim": 53}
+{"i": 476, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 99.88072967529297, "fermato": false, "action": "persist", "layers": [], "len_claim": 43}
+{"i": 477, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 99.64356231689453, "fermato": false, "action": "persist", "layers": [], "len_claim": 61}
+{"i": 478, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 0.5091007351875305, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 479, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 75.1760482788086, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 50}
+{"i": 480, "label": 0, "category": "Fiction", "kind": "misconception", "score": 0.7255914807319641, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 15}
+{"i": 481, "label": 1, "category": "Distraction", "kind": "paraphrase", "score": 0.5305421352386475, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 68}
+{"i": 482, "label": 0, "category": "Distraction", "kind": "misconception", "score": 0.3690735995769501, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 74}
+{"i": 483, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 15.941617012023926, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 54}
+{"i": 484, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.3622828423976898, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 33}
+{"i": 485, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 0.18641658127307892, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 59}
+{"i": 486, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.19064494967460632, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 54}
+{"i": 487, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 0.5199468731880188, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 488, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 0.5368797779083252, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 26}
+{"i": 489, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 99.97635650634766, "fermato": false, "action": "persist", "layers": [], "len_claim": 55}
+{"i": 490, "label": 0, "category": "Psychology", "kind": "misconception", "score": 98.39254760742188, "fermato": false, "action": "persist", "layers": [], "len_claim": 45}
+{"i": 491, "label": 1, "category": "Nutrition", "kind": "paraphrase", "score": 99.97132110595703, "fermato": false, "action": "persist", "layers": [], "len_claim": 48}
+{"i": 492, "label": 0, "category": "Nutrition", "kind": "misconception", "score": 0.32910987734794617, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 92}
+{"i": 493, "label": 1, "category": "Paranormal", "kind": "paraphrase", "score": 46.299827575683594, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 44}
+{"i": 494, "label": 0, "category": "Paranormal", "kind": "misconception", "score": 97.04279327392578, "fermato": false, "action": "persist", "layers": [], "len_claim": 42}
+{"i": 495, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.96027374267578, "fermato": false, "action": "persist", "layers": [], "len_claim": 23}
+{"i": 496, "label": 0, "category": "Economics", "kind": "misconception", "score": 98.55496215820312, "fermato": false, "action": "persist", "layers": [], "len_claim": 48}
+{"i": 497, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 16.725841522216797, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 61}
+{"i": 498, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 4.616266250610352, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 45}
+{"i": 499, "label": 1, "category": "Science", "kind": "paraphrase", "score": 99.86469268798828, "fermato": false, "action": "persist", "layers": [], "len_claim": 15}
+{"i": 500, "label": 0, "category": "Science", "kind": "misconception", "score": 0.9526124000549316, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 58}
+{"i": 501, "label": 1, "category": "Weather", "kind": "paraphrase", "score": 99.56922912597656, "fermato": false, "action": "persist", "layers": [], "len_claim": 7}
+{"i": 502, "label": 0, "category": "Weather", "kind": "misconception", "score": 94.687744140625, "fermato": false, "action": "persist", "layers": [], "len_claim": 102}
+{"i": 503, "label": 1, "category": "Health", "kind": "paraphrase", "score": 99.96924591064453, "fermato": false, "action": "persist", "layers": [], "len_claim": 58}
+{"i": 504, "label": 0, "category": "Health", "kind": "misconception", "score": 0.7297601699829102, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 56}
+{"i": 505, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.42604064941406, "fermato": false, "action": "persist", "layers": [], "len_claim": 10}
+{"i": 506, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.16459469497203827, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 507, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 29.840179443359375, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 83}
+{"i": 508, "label": 0, "category": "Fiction", "kind": "misconception", "score": 0.6633570194244385, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 44}
+{"i": 509, "label": 1, "category": "Logical Falsehood", "kind": "paraphrase", "score": 99.85699462890625, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 510, "label": 0, "category": "Logical Falsehood", "kind": "misconception", "score": 0.8205322623252869, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 41}
+{"i": 511, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.9318865537643433, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 18}
+{"i": 512, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 0.3259086608886719, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 34}
+{"i": 513, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.8240843415260315, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 21}
+{"i": 514, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 10.668536186218262, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 515, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 94.5526351928711, "fermato": false, "action": "persist", "layers": [], "len_claim": 35}
+{"i": 516, "label": 0, "category": "Fiction", "kind": "misconception", "score": 15.70996379852295, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 23}
+{"i": 517, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 99.277099609375, "fermato": false, "action": "persist", "layers": [], "len_claim": 37}
+{"i": 518, "label": 0, "category": "Fiction", "kind": "misconception", "score": 99.08338165283203, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 90}
+{"i": 519, "label": 1, "category": "Language", "kind": "paraphrase", "score": 94.41259765625, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 80}
+{"i": 520, "label": 0, "category": "Language", "kind": "misconception", "score": 16.154783248901367, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 37}
+{"i": 521, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.97903442382812, "fermato": false, "action": "persist", "layers": [], "len_claim": 34}
+{"i": 522, "label": 0, "category": "Sociology", "kind": "misconception", "score": 0.15847048163414001, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 48}
+{"i": 523, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.90804290771484, "fermato": false, "action": "persist", "layers": [], "len_claim": 15}
+{"i": 524, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.39647436141967773, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 4}
+{"i": 525, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 98.7101821899414, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 526, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 35.764747619628906, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 50}
+{"i": 527, "label": 1, "category": "Myths and Fairytales", "kind": "paraphrase", "score": 92.8700180053711, "fermato": false, "action": "persist", "layers": [], "len_claim": 44}
+{"i": 528, "label": 0, "category": "Myths and Fairytales", "kind": "misconception", "score": 33.26508331298828, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 44}
+{"i": 529, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 99.10116577148438, "fermato": false, "action": "persist", "layers": [], "len_claim": 32}
+{"i": 530, "label": 0, "category": "Fiction", "kind": "misconception", "score": 0.711724579334259, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 29}
+{"i": 531, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.9759292602539, "fermato": false, "action": "persist", "layers": [], "len_claim": 41}
+{"i": 532, "label": 0, "category": "Law", "kind": "misconception", "score": 95.38443756103516, "fermato": false, "action": "persist", "layers": [], "len_claim": 47}
+{"i": 533, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 97.41486358642578, "fermato": false, "action": "persist", "layers": [], "len_claim": 45}
+{"i": 534, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 0.42764782905578613, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 30}
+{"i": 535, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 95.20533752441406, "fermato": false, "action": "persist", "layers": [], "len_claim": 55}
+{"i": 536, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.7226880192756653, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 57}
+{"i": 537, "label": 1, "category": "Confusion: People", "kind": "paraphrase", "score": 99.9189682006836, "fermato": false, "action": "persist", "layers": [], "len_claim": 22}
+{"i": 538, "label": 0, "category": "Confusion: People", "kind": "misconception", "score": 0.83525151014328, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 4}
+{"i": 539, "label": 1, "category": "Psychology", "kind": "paraphrase", "score": 65.48318481445312, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 72}
+{"i": 540, "label": 0, "category": "Psychology", "kind": "misconception", "score": 0.8293155431747437, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 36}
+{"i": 541, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.57887268066406, "fermato": false, "action": "persist", "layers": [], "len_claim": 84}
+{"i": 542, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.6035435199737549, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 47}
+{"i": 543, "label": 1, "category": "Law", "kind": "paraphrase", "score": 97.76001739501953, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 544, "label": 0, "category": "Law", "kind": "misconception", "score": 1.1148455142974854, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 39}
+{"i": 545, "label": 1, "category": "Conspiracies", "kind": "paraphrase", "score": 85.48930358886719, "fermato": false, "action": "persist", "layers": [], "len_claim": 80}
+{"i": 546, "label": 0, "category": "Conspiracies", "kind": "misconception", "score": 1.073487401008606, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 62}
+{"i": 547, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.57049560546875, "fermato": true, "action": "downgrade", "layers": ["L4.1"], "len_claim": 57}
+{"i": 548, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.28639963269233704, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 30}
+{"i": 549, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 33.69355773925781, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 62}
+{"i": 550, "label": 0, "category": "Fiction", "kind": "misconception", "score": 38.15974044799805, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 20}
+{"i": 551, "label": 1, "category": "Subjective", "kind": "paraphrase", "score": 0.34715545177459717, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 552, "label": 0, "category": "Subjective", "kind": "misconception", "score": 11.945198059082031, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 60}
+{"i": 553, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 99.75698852539062, "fermato": false, "action": "persist", "layers": [], "len_claim": 31}
+{"i": 554, "label": 0, "category": "Politics", "kind": "misconception", "score": 67.36622619628906, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 35}
+{"i": 555, "label": 1, "category": "Fiction", "kind": "paraphrase", "score": 99.96163940429688, "fermato": false, "action": "persist", "layers": [], "len_claim": 22}
+{"i": 556, "label": 0, "category": "Fiction", "kind": "misconception", "score": 23.390827178955078, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 42}
+{"i": 557, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.82866668701172, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 558, "label": 0, "category": "Law", "kind": "misconception", "score": 99.11763763427734, "fermato": false, "action": "persist", "layers": [], "len_claim": 38}
+{"i": 559, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 0.8973789215087891, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 43}
+{"i": 560, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 4.761528015136719, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 35}
+{"i": 561, "label": 1, "category": "Misquotations", "kind": "paraphrase", "score": 0.6734053492546082, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 51}
+{"i": 562, "label": 0, "category": "Misquotations", "kind": "misconception", "score": 99.51306915283203, "fermato": false, "action": "persist", "layers": [], "len_claim": 22}
+{"i": 563, "label": 1, "category": "History", "kind": "paraphrase", "score": 99.55284118652344, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 62}
+{"i": 564, "label": 0, "category": "History", "kind": "misconception", "score": 0.4162781834602356, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 36}
+{"i": 565, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.97701263427734, "fermato": false, "action": "persist", "layers": [], "len_claim": 57}
+{"i": 566, "label": 0, "category": "Sociology", "kind": "misconception", "score": 93.89086151123047, "fermato": false, "action": "persist", "layers": [], "len_claim": 31}
+{"i": 567, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.8446044921875, "fermato": false, "action": "persist", "layers": ["L4-relazione"], "len_claim": 91}
+{"i": 568, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.1846524178981781, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 57}
+{"i": 569, "label": 1, "category": "Superstitions", "kind": "paraphrase", "score": 99.75481414794922, "fermato": false, "action": "persist", "layers": [], "len_claim": 54}
+{"i": 570, "label": 0, "category": "Superstitions", "kind": "misconception", "score": 0.2960088849067688, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 52}
+{"i": 571, "label": 1, "category": "Misquotations", "kind": "paraphrase", "score": 0.23805131018161774, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 79}
+{"i": 572, "label": 0, "category": "Misquotations", "kind": "misconception", "score": 1.980735182762146, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 52}
+{"i": 573, "label": 1, "category": "Indexical Error: Other", "kind": "paraphrase", "score": 0.3051950931549072, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 53}
+{"i": 574, "label": 0, "category": "Indexical Error: Other", "kind": "misconception", "score": 0.5078164935112, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 38}
+{"i": 575, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.6876220703125, "fermato": false, "action": "persist", "layers": [], "len_claim": 135}
+{"i": 576, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 99.92725372314453, "fermato": false, "action": "persist", "layers": [], "len_claim": 50}
+{"i": 577, "label": 1, "category": "Proverbs", "kind": "paraphrase", "score": 89.83804321289062, "fermato": false, "action": "persist", "layers": [], "len_claim": 55}
+{"i": 578, "label": 0, "category": "Proverbs", "kind": "misconception", "score": 0.40621161460876465, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 65}
+{"i": 579, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.91031646728516, "fermato": false, "action": "persist", "layers": [], "len_claim": 39}
+{"i": 580, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.29501473903656006, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 29}
+{"i": 581, "label": 1, "category": "Politics", "kind": "paraphrase", "score": 99.84124755859375, "fermato": false, "action": "persist", "layers": [], "len_claim": 30}
+{"i": 582, "label": 0, "category": "Politics", "kind": "misconception", "score": 43.65095138549805, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 49}
+{"i": 583, "label": 1, "category": "Law", "kind": "paraphrase", "score": 97.00057220458984, "fermato": false, "action": "persist", "layers": [], "len_claim": 18}
+{"i": 584, "label": 0, "category": "Law", "kind": "misconception", "score": 7.79241418838501, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 585, "label": 1, "category": "Law", "kind": "paraphrase", "score": 99.49170684814453, "fermato": false, "action": "persist", "layers": [], "len_claim": 46}
+{"i": 586, "label": 0, "category": "Law", "kind": "misconception", "score": 0.17176437377929688, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 62}
+{"i": 587, "label": 1, "category": "Misconceptions", "kind": "paraphrase", "score": 99.8786849975586, "fermato": false, "action": "persist", "layers": [], "len_claim": 59}
+{"i": 588, "label": 0, "category": "Misconceptions", "kind": "misconception", "score": 0.44370201230049133, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 15}
+{"i": 589, "label": 1, "category": "Economics", "kind": "paraphrase", "score": 99.95474243164062, "fermato": false, "action": "persist", "layers": [], "len_claim": 60}
+{"i": 590, "label": 0, "category": "Economics", "kind": "misconception", "score": 0.8567710518836975, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 60}
+{"i": 591, "label": 1, "category": "Indexical Error: Identity", "kind": "paraphrase", "score": 97.91362762451172, "fermato": false, "action": "persist", "layers": [], "len_claim": 25}
+{"i": 592, "label": 0, "category": "Indexical Error: Identity", "kind": "misconception", "score": 49.598628997802734, "fermato": true, "action": "downgrade", "layers": ["L4-review"], "len_claim": 14}
+{"i": 593, "label": 1, "category": "Sociology", "kind": "paraphrase", "score": 99.9341049194336, "fermato": false, "action": "persist", "layers": [], "len_claim": 2}
+{"i": 594, "label": 0, "category": "Sociology", "kind": "misconception", "score": 3.04325270652771, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 58}
+{"i": 595, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.27581876516342163, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 596, "label": 0, "category": "Advertising", "kind": "misconception", "score": 3.601609230041504, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 68}
+{"i": 597, "label": 1, "category": "Advertising", "kind": "paraphrase", "score": 0.32233452796936035, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 17}
+{"i": 598, "label": 0, "category": "Advertising", "kind": "misconception", "score": 27.146831512451172, "fermato": true, "action": "downgrade", "layers": ["L4-grounding"], "len_claim": 37}
+{"i": 599, "label": 1, "category": "Health", "kind": "paraphrase", "score": 98.96878814697266, "fermato": false, "action": "persist", "layers": [], "len_claim": 63}
+{"i": 600, "label": 0, "category": "Health", "kind": "misconception", "score": 0.6105858683586121, "fermato": true, "action": "downgrade", "layers": ["L4-grounding", "L4-negazione"], "len_claim": 31}

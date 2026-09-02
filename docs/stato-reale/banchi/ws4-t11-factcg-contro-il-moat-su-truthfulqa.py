@@ -38,7 +38,7 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer  # no
 
 M = "yaxili96/FactCG-DeBERTa-v3-Large"
 DATI = "benchmark/data/external/truthfulqa_pairs_heldout.jsonl"
-OUT = "factcg_heldout.jsonl"
+OUT = "_ws4_factcg_heldout.jsonl"
 SOGLIA = 0.5
 
 print(f"  carico {M} su CPU…")

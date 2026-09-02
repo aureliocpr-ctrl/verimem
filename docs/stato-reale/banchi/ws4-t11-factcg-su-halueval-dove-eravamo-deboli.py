@@ -48,9 +48,7 @@ DATI = ("C:/Users/aurel/AppData/Local/Temp/claude/"
         "C--Users-aurel-Desktop-ProgettiAI/"
         "c062024e-cc77-4fac-ba67-fb1db54449b6/scratchpad/"
         "halueval_come_truthfulqa.jsonl")
-OUT = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-       "C--Users-aurel-Desktop-ProgettiAI/"
-       "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/factcg_halueval.jsonl")
+OUT = ("docs/stato-reale/banchi/factcg_halueval.jsonl")
 IDX = 1          # SUPPORTED, determinato su TruthfulQA — RIVERIFICATO sotto
 VERI_PERSI_NOSTRI = 0.190   # il nostro gate su HaluEval (ws7)
 FALSI_FERMATI_NOSTRI = 55.0

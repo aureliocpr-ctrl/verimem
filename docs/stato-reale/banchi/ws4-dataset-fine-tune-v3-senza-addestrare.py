@@ -38,9 +38,7 @@ from collections import Counter
 REPO = "C:/Users/aurel/Code/HippoAgent"
 EXT = REPO + "/benchmark/data/external/"
 BANCHI = REPO + "/docs/stato-reale/banchi/"
-OUT = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-       "C--Users-aurel-Desktop-ProgettiAI/"
-       "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/")
+OUT = ("docs/stato-reale/banchi/")
 SEED = 7          # lo stesso di benchmark/local_gate_finetune.py
 QUOTA_VAL = 0.10  # la stessa: VAL stratificata che l'ottimizzatore non vede
 

@@ -29,12 +29,10 @@ import io
 import json
 import random
 
-REPO = "C:/Users/aurel/Code/HippoAgent/"
-S = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-     "C--Users-aurel-Desktop-ProgettiAI/"
-     "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/")
+REPO = ""
+S = "docs/stato-reale/banchi/"   # relativo alla RADICE del repo
 
-mio = [json.loads(x) for x in io.open(S + "factcg_halueval.jsonl", encoding="utf-8")
+mio = [json.loads(x) for x in io.open(S + "_ws4_factcg_halueval.jsonl", encoding="utf-8")
        if x.strip()]
 w = json.load(io.open(REPO + "docs/stato-reale/banchi/_ws3_curva_scores.json",
                       encoding="utf-8"))["halueval-400"]

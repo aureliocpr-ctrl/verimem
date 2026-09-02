@@ -21,13 +21,11 @@ va attribuito a lui.
 import io
 import json
 
-S = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-     "C--Users-aurel-Desktop-ProgettiAI/"
-     "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/wt_base/")
+S = ("docs/stato-reale/banchi/")
 pu = {json.loads(x)["i"]: json.loads(x)
-      for x in io.open(S + "punteggi_heldout.jsonl", encoding="utf-8") if x.strip()}
+      for x in io.open(S + "_ws4_punteggi_heldout.jsonl", encoding="utf-8") if x.strip()}
 fa = {json.loads(x)["i"]: json.loads(x)
-      for x in io.open(S + "factcg_heldout.jsonl", encoding="utf-8") if x.strip()}
+      for x in io.open(S + "_ws4_factcg_heldout.jsonl", encoding="utf-8") if x.strip()}
 
 for i in pu:
     pu[i]["nostro"] = (pu[i].get("score") or 0.0) / 100.0   # 0-100 -> 0-1

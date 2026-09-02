@@ -12,7 +12,7 @@ ottimistica per costruzione, perche' sceglie i pesi conoscendo gia' le risposte.
 Se nemmeno il tetto recupera i 61 a pari falsi, la conclusione vale per QUALSIASI
 regola lineare, incluse quelle che nessuno ha ancora provato.
 
-I DATI: i punteggi di @ws3 sono versionati in `banchi/_ws3_curva_scores.json`
+I DATI: i punteggi di @ws3 stanno in `banchi/_ws3_curva_scores.json` — che quando ho scritto questo banco era UNTRACKED (@ws3 l'ha poi tracciato): avevo scritto «versionati» senza verificarlo, ed era falso
 (`giudice` = il nostro gate 0-100, `minicheck`), i miei di FactCG stanno in
 `factcg_heldout.jsonl`.
 CONTROLLO DI ALLINEAMENTO, obbligatorio: `giudice` di @ws3 e il mio `score` sono
@@ -34,17 +34,27 @@ coincidono i suoi array non sono nel mio ordine e ogni numero sotto e' rumore.
 """
 import io
 import json
+import os
 
-REPO = "C:/Users/aurel/Code/HippoAgent/"
-S = ("C:/Users/aurel/AppData/Local/Temp/claude/"
-     "C--Users-aurel-Desktop-ProgettiAI/"
-     "78ba9444-dd97-498f-bd48-07ca991638a4/scratchpad/")
+REPO = ""
+S = "docs/stato-reale/banchi/"   # relativo alla RADICE del repo
 
 pu = {json.loads(x)["i"]: json.loads(x)
-      for x in io.open(S + "wt_base/punteggi_heldout.jsonl", encoding="utf-8") if x.strip()}
+      for x in io.open(S + "_ws4_punteggi_heldout.jsonl", encoding="utf-8") if x.strip()}
 fa = {json.loads(x)["i"]: json.loads(x)
-      for x in io.open(S + "wt_base/factcg_heldout.jsonl", encoding="utf-8") if x.strip()}
-ws3 = json.load(io.open(REPO + "docs/stato-reale/banchi/_ws3_curva_scores.json",
+      for x in io.open(S + "_ws4_factcg_heldout.jsonl", encoding="utf-8") if x.strip()}
+DIPENDENZA = "docs/stato-reale/banchi/_ws3_curva_scores.json"
+if not os.path.exists(DIPENDENZA):
+    raise SystemExit(
+        "  QUESTO BANCO NON PUO' GIRARE: manca " + DIPENDENZA + ".\n"
+        "  E' il dump dei punteggi di @ws3 (giudice + MiniCheck sui 1000 casi).\n"
+        "  Al 02/09 21:50 quel file esiste nell'albero di lavoro ma NON e' su\n"
+        "  origin/main: @ws3 lo ha tracciato dopo che io avevo scritto questo\n"
+        "  banco, e finche' non e' pushato i numeri di W7-128 non sono\n"
+        "  riproducibili da un clone pulito. Non lo verso io: e' suo, e una\n"
+        "  seconda copia sarebbe due verita' sullo stesso dato.")
+
+ws3 = json.load(io.open(DIPENDENZA,
                         encoding="utf-8"))["truthfulqa-600"]
 
 ordine = sorted(pu)
