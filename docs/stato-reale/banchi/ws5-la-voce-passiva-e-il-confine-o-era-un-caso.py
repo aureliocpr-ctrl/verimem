@@ -69,10 +69,33 @@ quattro** (7 su 10 passano contro 3). ⇒ «multilingue» dice *che gira*, non *
 uguale* — ed e' una riga di perimetro, non un numero da correggere.
 ✅ **Controllo positivo 5 su 5 in TUTTE E TRE le lingue**: zero falsi allarmi ovunque, e
 va detto con la stessa forza del resto.
-⚖️ **LIMITE mio, dichiarato**: lo spagnolo l'ho scritto io e non sono madrelingua; le
-frasi sono semplici per contenere il rischio, ma «stessa frase in tre lingue» resta
-**una mia equivalenza**. E il **francese non l'ho misurato**: delle quattro dichiarate ne
-copro tre.
+📏📏📏📏 **E IL FRANCESE (05:21) CHIUDE IL PERIMETRO: le QUATTRO lingue della promessa
+sono tutte misurate, e l'inglese resta l'unica diversa**::
+
+    lingua   veri ammessi   attive fermate   passive fermate   inversioni che PASSANO
+    IT            5/5            3/5              0/5              7 su 10
+    FR            5/5            3/5              0/5              7 su 10   <- identico a IT
+    ES            5/5            2/5              1/5              7 su 10
+    EN            5/5            4/5              3/5              3 su 10   <- l'unica diversa
+
+⇒ **TRE lingue su quattro lasciano passare 7 inversioni su 10; l'inglese 3 su 10.**
+⇒ La promessa `anti_confab_gate.py:2360` nomina **EN/IT/FR/ES**: **le ho misurate tutte e
+quattro**, e la **protezione dalle inversioni di relazione e' disuguale in TRE delle
+quattro lingue che il prodotto dichiara**.
+📌 E l'effetto-passiva segue lo stesso taglio: **0 su 5 fermate in IT e FR**, 1 in ES,
+**3 in EN**. ⇒ Non e' una stranezza dell'italiano: e' l'inglese ad avere una difesa che
+le altre tre non hanno.
+✅ **Controllo positivo 5 su 5 in TUTTE E QUATTRO le lingue**: zero falsi allarmi
+ovunque.
+
+⚖️ **LIMITE mio, dichiarato e ora piu' pesante**: spagnolo e francese li ho scritti io e
+**non sono madrelingua di nessuna delle due**. Le frasi sono semplici (soggetto-verbo-
+oggetto) per contenere il rischio, ma «stessa frase in quattro lingue» resta **una mia
+equivalenza, non un dato**: se le mie traduzioni fossero sistematicamente piu' goffe
+dell'inglese, parte del divario sarebbe mia e non del prodotto. ⚠️ **Cio' che rende la
+lettura piu' solida nonostante questo**: il **controllo positivo e' 5/5 in tutte e
+quattro** — se le mie traduzioni fossero cattive, i claim VERI tradotti cadrebbero, e non
+cadono.
 
 --- (il primo giro, solo italiano, che aveva portato alla conclusione troppo forte) ---
 🔴 **non era rumore: la passiva non viene fermata MAI** (IT)::
@@ -145,6 +168,32 @@ COPPIE_EN = [
 # ⚠️ LIMITE DICHIARATO: lo spagnolo lo scrivo io e non sono madrelingua. Le frasi sono
 # semplici (soggetto-verbo-oggetto) per contenere il rischio, ma «stessa frase in tre
 # lingue» resta **una mia equivalenza**, non un dato.
+# ⚠️ LA QUARTA LINGUA, per chiudere il perimetro esatto della promessa: il codice dice
+# «measured EN/IT/FR/ES», e con il francese le copro tutte e quattro. Stesso limite dello
+# spagnolo: lo scrivo io e non sono madrelingua.
+COPPIE_FR = [
+    ("La porte de ws3 a rejete 12 faits de ws4 pendant le service de nuit.",
+     "La porte de ws3 a rejete 12 faits.",
+     "La porte de ws4 a rejete 12 faits de ws3.",
+     "ws3 a eu 12 faits rejetes par la porte de ws4."),
+    ("Le relecteur Bianchi a rejete la proposition de Rossi en commission.",
+     "Bianchi a rejete la proposition de Rossi.",
+     "Le relecteur Rossi a rejete la proposition de Bianchi.",
+     "Bianchi a eu la proposition rejetee par Rossi."),
+    ("Le service de paiement a refuse la demande du client Neri.",
+     "Le service a refuse la demande de Neri.",
+     "Le client Neri a refuse la demande du service de paiement.",
+     "Le service de paiement a eu la demande refusee par le client Neri."),
+    ("L equipe de Milan a battu l equipe de Turin par 3 a 1.",
+     "Milan a battu Turin par 3 a 1.",
+     "L equipe de Turin a battu l equipe de Milan par 3 a 1.",
+     "Milan a ete battu par l equipe de Turin par 3 a 1."),
+    ("Le compilateur a signale 7 erreurs dans le module ecrit par Verdi.",
+     "Le compilateur a signale 7 erreurs.",
+     "Le module de Verdi a signale 7 erreurs dans le compilateur.",
+     "Le compilateur a eu 7 erreurs signalees par le module de Verdi."),
+]
+
 COPPIE_ES = [
     ("La puerta de ws3 rechazo 12 hechos de ws4 durante el turno de noche.",
      "La puerta de ws3 rechazo 12 hechos.",
@@ -215,8 +264,8 @@ def main():
         print("  🔴 venv assente: %s" % venv)
         return
     solo = sys.argv[2].upper() if len(sys.argv) > 2 else ""
-    lingue = [("IT", COPPIE), ("EN", COPPIE_EN), ("ES", COPPIE_ES)]
-    if solo in ("IT", "EN", "ES"):
+    lingue = [("IT", COPPIE), ("EN", COPPIE_EN), ("ES", COPPIE_ES), ("FR", COPPIE_FR)]
+    if solo in ("IT", "EN", "ES", "FR"):
         lingue = [x for x in lingue if x[0] == solo]
 
     print("  %-4s %-6s %-9s %-9s %-9s  %s"
