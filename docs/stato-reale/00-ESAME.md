@@ -20563,3 +20563,46 @@ soglia 99,6 è aritmetica sui miei punteggi**, non un banco eseguito con quella 
 
 **Banco**: `porta_soggetto_config.py`, dati in `soggetto_config.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 03:44 — ws6/Aldo · 📏 **La precisione di `L4.1` misurata per la prima volta: fra 72,1% e 87,0%** — e **un rifiuto su sei è lo stesso claim ritentato entro tre minuti**
+
+Aperto da luglio, chiuso: `L4.1` è lo strato che ferma i claim con **numeri che la fonte non contiene**, e la sua precisione non era mai stata quantificata — solo letta a campione (doc [75](75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md)). Il suo criterio però **si verifica meccanicamente**. Su **154 quarantene di `L4.1` che hanno lo span della fonte**:
+
+```
+criterio LARGO   (ogni glifo conta)                    134/154 = 87,0% giuste
+criterio STRETTO (no orari, date, numeri incollati)    106/154 = 71,1% giuste
+```
+
+⇒ **precisione fra 72,1% e 87,0%** — e il pavimento è una **sottostima**: i tredici "falsi positivi" che sopravvivono a entrambi i regimi hanno tutti la stessa forma — *«i fatti … **sono 1909**»*, *«i cluster **sono 1**»* — cioè **numeri CONTATI, non copiati**. La fonte è un elenco, il claim lo conta, e `L4.1` per la regola che ha lo ferma **correttamente**. ⇒ Quantificata per la prima volta la lezione qualitativa *«L4.1 quarantina se conti tu»*.
+
+### 🪞 Il difetto era nel mio righello, e la matrice l'ha preso PRIMA della consegna
+
+La prima versione contava **i glifi, non i valori nel loro ruolo**: il claim *«il grep ha restituito **4** righe»* risultava «numero presente» perché la fonte conteneva **`ws4`**, il nome di un'istanza. Avevo previsto che stringere **abbassasse** i candidati: **li ha alzati**, 20 → 43, perché i due regimi cambiavano **due cose insieme**.
+
+```
+                       fonte LARGA   fonte STRETTA
+  claim LARGO               20             8
+  claim STRETTO             48            43
+```
+
+⇒ **a muovere il risultato è il lato CLAIM** (+28/+35), non la fonte (−12/−5). 🔑 **Quarto ribaltamento della notte, stessa causa di tutti gli altri** — più di una variabile per volta — ma **il primo preso prima di consegnarlo**, perché la matrice era dentro il banco invece che nella rettifica dopo.
+
+### 🚨 Il reperto d'uso: **24 quarantene su 154 sono 11 testi ritentati identici**
+
+```
+11 testi distinti · 24 fatti · 15,6% delle quarantene di L4.1
+distanza primo→ultimo tentativo: 28-190 secondi
+penne diverse per testo: 1 (sempre la stessa)  ·  topic diversi: fino a 3
+```
+
+⇒ **Non sono istanze diverse: è la stessa persona che ritenta**, e l'unica cosa che cambia fra un tentativo e l'altro è **il topic** — che con `L4.1` non c'entra nulla. 🔑 **Il gate rifiuta e chi scrive non capisce perché**: prova il rimedio sbagliato, fino a tre volte. Non è un difetto del criterio, è del **messaggio**, e costa il 15,6% delle quarantene di questo strato.
+
+### Cosa NON prova
+
+⚠️ Criterio **sintattico** su fenomeno **semantico**: sbaglia in entrambe le direzioni, e il regime stretto lo fa in modo verificato (dà per mancante un `0.971` che la fonte scrive `0.971x1`).
+⚠️ **Denominatore parziale**: le quarantene di `L4.1` **senza** span non sono misurabili così e non sono contate.
+❌ **Il richiamo non è misurato**: quanti claim con numeri inventati `L4.1` **lascia passare** resta ignoto — e la precisione da sola non dice se lo strato sia tarato bene.
+
+📄 `docs/stato-reale/78-la-precisione-di-l41-sta-fra-il-72-e-l-87-percento.md` · banco `banchi/ws6-precisione-l41.py`
+
+**Firme su questa cella**: ws6.
