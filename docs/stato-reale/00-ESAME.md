@@ -20690,3 +20690,75 @@ due possono convivere.
 
 **Banco**: `porta_posizione.py`, dati in `posizione.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 04:05 — ws1 · 🔁 **ABBANDONO LA CATEGORIA «CONTRARIO» CHE AVEVO INTRODOTTO UN'ORA FA: contando invece di leggere, i contrari passano `2/2` e le entità estranee `7/7` — non discrimina.** E su sedici casi misurati **non ho una regola che li spieghi tutti**: lo dichiaro invece di inventarla
+
+**Livello** classificazione **sui punteggi già misurati** *(nessuna nuova esecuzione, nessun
+modello caricato)* · **Perimetro** i **10 casi** del banco delle 03:24 più le **6 varianti**
+delle 03:55, **16 casi in tutto** · **Istante** 2026-09-02 04:03–04:05 · **Regime** **RAM 2,81
+GB liberi** *(era 6,84)* e **`ram/giudice` tenuto da `ws3-galileo`** ⇒ **niente caricamento del
+giudice, lavoro a costo zero** · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 03:57**: «*«contrario dello stesso campo» è la mia lettura di
+due casi, non una categoria misurata*» e «*non ho contato se le nove scambiate cadano tutte
+nella categoria «entità estranea»: l'ho letto, non misurato*».
+
+### 🔁 Il conteggio, e la categoria che avevo introdotto NON regge
+
+| tipo di sostituzione | casi | **passano** | punteggi |
+|---|---|---|---|
+| **contrario** dello stesso campo | 2 | **2 / 2** | 99,95 · 98,05 |
+| **entità estranea** alla fonte | 7 | **7 / 7** | 99,90 · 99,98 · 99,96 · 99,67 · 99,32 · 99,30 · 99,07 |
+| **sigla in un modificatore** | 1 | **0 / 1** | 4,49 |
+
+⇒ **i contrari non passano PIÙ degli estranei: passano uguale.** ⇒ **la distinzione
+«contrario» non discrimina e va abbandonata** — l'avevo introdotta alle 03:55 **leggendo due
+casi invece di contarli tutti**, ed è esattamente l'errore che il presidio «stampa *chi* cade»
+serve a evitare.
+
+**La classificazione è MIA e la scrivo per esteso perché sia contestabile**: estranee =
+`registro delle celle`←`wheel`, `cartella dei test`←`wheel`, `cartella dei log`←`data dir`,
+`hippo_dream_status`←`hippo_facts_recall`, `sessioni`←`processi`, `yaml`←`json`,
+`compilatore`←`censimento`; contrari = `respinti`←`ammessi`, `VESTITO`←`NUDO`; modificatore =
+`da L1`←`da MOAT`.
+
+### ⚠️ E ora la parte che conta: NON ho una regola che spieghi tutti e sedici i casi
+
+Ho provato a formularne una e **cade su casi che ho già misurato io**:
+
+| formulazione tentata | spiega | **cade su** |
+|---|---|---|
+| «ferma quando **entrambi** i termini sono nominati dalla fonte» | le varianti 5 e 6 *(1,13 · 0,67)* | la **2** *(`da L1`, 4,49)* e la **3** *(`2026-05`, 2,83)*: nessuno dei due sostituti è nella fonte, eppure sono fermate |
+| «ferma quando il termine sostituito è una **sigla o una data**» | 2 e 3 | il caso `[3]` del primo banco: `hippo_dream_status`←`hippo_facts_recall` sono **identificatori** e **passa a 99,67** |
+
+⇒ **due formulazioni, entrambe cadute su miei dati.** **Non ne propongo una terza**: il dato
+resta **osservato e non spiegato**, come già l'unica frase fermata delle 03:24.
+
+### 🎯 Cosa resta valido per la vetrina — e va SEMPLIFICATO, non arricchito
+
+La riga delle 03:55 **elencava entrambe le categorie**, quindi **non è falsificata** da questo
+conteggio; ma nominare «il contrario» **suggerisce una distinzione che non esiste**. La forma
+che regge sui sedici casi senza spiegarli è:
+
+> **Il controllo riconosce quando un dato viene attribuito al gruppo sbagliato fra quelli che
+> la fonte nomina. Su una sostituzione con un termine che la fonte non nomina, il
+> comportamento non è affidabile: nei casi misurati passa quasi sempre, e le eccezioni non
+> hanno una regola nota.**
+
+⚠️ **«Non affidabile» è più debole di «non riconosce», e più onesto**: due casi su sedici sono
+fermati senza che io sappia perché, e dichiararli come regola sarebbe inventare.
+
+### Cosa NON prova
+
+**Sedici casi, due banchi, nessuna nuova esecuzione**: questa cella **non misura**, **classifica
+misure già fatte** — se la mia classificazione è sbagliata, cambia il conteggio, ed è per
+questo che l'ho scritta per esteso. **Due contrari e sette estranei non sono due popolazioni**:
+sono due manciate, e `2/2` non è un tasso. **Il banco che avevo progettato** — otto coppie
+contrario/estraneo su fonti diverse — **non l'ho eseguito**: la RAM era a 2,81 GB e il giudice
+era preso da un'altra istanza, quindi **la domanda resta aperta su una popolazione vera**, e
+questo conteggio è un surrogato dichiarato.
+
+**Dati**: `soggetto_scambiato.json`, `posizione.json` (scratchpad).
+**Io misuro, non curo.**
