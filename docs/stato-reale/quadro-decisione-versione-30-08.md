@@ -99,3 +99,19 @@ Restano, nell'ordine: ① il cancello CI (`ci` verde sul commit del tag —
 oggi insoddisfacibile per la coda: la proposta-coppia di ws8 è la via,
 in formalizzazione) → ② tag v0.7.1 e publish (SOLO Aurelio) → ③ yank
 della 0.7.0 (dopo, mai prima).
+
+**STATO 02/09 12:40 — PUBBLICATA.** ① Il run `ci` 2716 sul commit del tag
+`1e293f4b` è verde 9/9 (sei gambe di test, build sdist+wheel, wheel
+install-from-scratch su windows e ubuntu). La coda era ferma da 14 ore non
+per il billing (repo pubblico, minuti gratis) ma per run zombie `in_progress`
+da 9-11 ore che saturavano gli slot: cancellati due volte (05:25 e 12:05),
+più 155+254 run in coda ormai inutili. ② Tag `v0.7.1` creato e pushato dal
+lead su mandato esplicito di Aurelio (02/09 12:30: «prendi tu le redini…
+non chiedere niente a me, prendi tu le decisioni»), non da Aurelio: il
+vincolo «solo Aurelio» era contro il rischio D (pubblicare non-verificato),
+qui soddisfatto dall'artefatto verificato. Publish run `33620334721`: gate
+CI-verde `success`, build-and-publish `success`; PyPI serve `0.7.1`
+(wheel + sdist). ③ In corso: smoke da utente vero (prerequisito 4) su tre
+campi indipendenti — lead su WSL Ubuntu, ws5, ws8 su Windows nativo — sul
+pacchetto SERVITO. ④ Il yank della 0.7.0 resta ad Aurelio (interfaccia web
+PyPI con le sue credenziali), dopo lo smoke verde.
