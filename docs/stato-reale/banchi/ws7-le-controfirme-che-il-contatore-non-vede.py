@@ -37,6 +37,15 @@ ESAME = Path(__file__).resolve().parent.parent / "00-ESAME.md"
 
 CELLA = re.compile(r"^\|\s*([A-Z][A-Z0-9]*-\d+)\s*\|")
 FORMA = re.compile(r"controfirm", re.I)
+#: chi FIRMA, non chi ha scritto la cella. Prende sia la forma canonica prodotta
+#: da `aggiorna_cella.py --controfirma` sia le due varianti scritte a mano che
+#: il registro contiene («CONTROFIRMATA da ws2 «Varco»», «2ª firma @Paragone»).
+#: ⚠️ `re.I` NON e' un dettaglio: senza, questo regex non riconosceva
+#: «CONTROFIRMATA» in maiuscolo — cioe' la forma canonica, cioe' NEMMENO LA MIA,
+#: appena scritta. Terzo difetto del righello in questo banco, e il terzo l'ho
+#: visto stampando CHI cade invece del conteggio.
+FIRMATARIO = re.compile(r"controfirmat[ao]\s+(?:da|dal|con)\s+@?(ws[1-8]|"
+                        r"lead-audit)|firma\s+@?(ws[1-8])", re.I)
 #: le sigle delle altre istanze, come compaiono nel registro
 ALTRA = re.compile(r"@?\b(ws[1-8]|lead-audit|W[1-8]-\d+|"
                    r"LANT-\d+|Varco|Paragone|Aldo|Galileo)\b")
@@ -86,8 +95,24 @@ def main() -> int:
             conta_larga[0] += 1
 
         if ha_forma:
+            # 🔴 02/09 03:00 — IL DIFETTO CHE HO TROVATO USANDO LO STRUMENTO.
+            # La prima versione contava `autore`, cioe' la colonna 7: l'autrice
+            # della CELLA. Ma una controfirma la scrive QUALCUN ALTRO sulla
+            # cella di un'altra ⇒ contando cosi', «N controfirme di ws2»
+            # significa «N celle DI ws2 che contengono la parola», che e'
+            # un'affermazione diversa e piu' debole.
+            # L'ho visto perche' ho controfirmato W2-344 e il conto e' salito
+            # a ws2, non a me. ⇒ La sigla non e' l'autrice: per attribuire,
+            # leggi CHI FIRMA, e dichiara «ignoto» quando non c'e'.
+            #: due gruppi alternativi ⇒ findall da' tuple: appiattisco e tolgo
+            #: i vuoti, altrimenti conterei una firma per ogni gruppo che NON
+            #: ha fatto match — un errore che gonfia nella direzione comoda.
+            firmatari = sorted({g for t in FIRMATARIO.findall(r)
+                                for g in (t if isinstance(t, tuple) else (t,))
+                                if g})
+            for f in (firmatari or ["(non attribuibile)"]):
+                autori[f] += 1
             forma.append((cid, autore))
-            autori[autore] += 1
         elif ha_sostanza:
             sostanza_non_forma.append((cid, autore, sorted(altre)[:3]))
 
