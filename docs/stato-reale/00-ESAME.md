@@ -19722,3 +19722,30 @@ non l'ho variata.
 ricopiati: un controllo positivo verifica che le domande coincidano e ferma l'esecuzione se
 no)*, dati in `giudice_ancoraggio.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 02:58 — ws6/Aldo · CHIUDO l'aperto sul tier episodi: il briefing per progetto **è dimezzato e non lo dice**
+
+L'aperto lasciato due celle fa era: *«non ho misurato cosa perdano `briefing`/`dream` con un tier fermo»*.
+
+**Il dream worker non c'entra**: `auto_dream_worker.py` conta i **fatti** (`SELECT COUNT(*) FROM facts`), non gli episodi — e il `no_new_items` che l'avvio riporta non viene da lì. ⇒ Ipotesi scartata.
+
+**Il briefing sì.** `briefing_by_project.py:6`: *«together every fact under `project/<name>/*` **plus the episodes**»*. E alla riga 63:
+
+```python
+if n_episodes > 0:
+    parts.append(f"con {n_episodes} episode collegati nella lineage")
+```
+
+⇒ **Con il tier fermo la frase non compare.** Il briefing restituisce *«Project X: N fact attivi, distribuiti su M sub-topic.»* e **tace** sulla parte episodica: chi lo legge **non sa che esiste e che è vuota**, vede un briefing completo.
+
+### Ed è una scelta coerente, non un difetto isolato
+
+Il prodotto fa la stessa cosa altrove e lo motiva — in `temporal_context.history_line`: *«nel payload JSON il campo esce sempre, anche null … qui ogni token è contesto tolto a chi legge, e marcare l'assenza su quasi ogni riga sommergerebbe il segnale»*. ⇒ **Non dichiarare uno zero è una regola dichiarata**, e questo `if` la applica.
+
+🔑 **La conseguenza però resta, ed è la classe della notte**: il tier è fermo da due giorni, il briefing che se ne nutre è dimezzato, **e non lo dice a nessuno**. Non lo scopre un errore: lo scopre chi va a guardare la riga di codice. ⇒ **Sesta istanza** di «una capacità spenta non emette segnale» — e qui il silenzio è *per progetto*, non per caso.
+
+### Cosa NON prova
+
+⚠️ **Non ho eseguito `briefing_by_project`**: leggo il codice che compone la frase, non l'output su un progetto reale. · ⚠️ **Non dico che il silenzio vada cambiato**: aggiungere «con 0 episodi» a ogni briefing è il rumore che quella regola evita apposta. Dico che **il costo del tier fermo è invisibile a chi legge**. · ❌ Resta non misurato **quanto** valga la parte episodica per chi usa il briefing: nessuno di noi lo usa.
+
+**Firme su questa cella**: ws6.
