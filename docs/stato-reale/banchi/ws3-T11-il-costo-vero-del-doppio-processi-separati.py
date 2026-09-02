@@ -115,24 +115,24 @@ def misura(codice):
 
 
 print("IL COSTO VERO DEL GIUDICE DOPPIO — un processo per configurazione\n")
-print("%-28s %10s %10s %10s" % ("regime", "RSS base", "RSS finale", "secondi"))
+print(f"{'regime':<28} {'RSS base':>10} {'RSS finale':>10} {'secondi':>10}")
 print("-" * 62)
 esiti = {}
 for nome, codice in REGIMI.items():
     v = misura(codice)
     esiti[nome[0]] = v
     if v:
-        print("%-28s %9.0fMB %9.0fMB %9.1fs" % (nome, v[0], v[1], v[2]))
+        print(f"{nome:<28} {v[0]:>8.0f}MB {v[1]:>8.0f}MB {v[2]:>9.1f}s")
     else:
-        print("%-28s %s" % (nome, "errore"))
+        print(f"{nome:<28} {'errore':>10}")
 
 a, b, c = esiti.get("A"), esiti.get("B"), esiti.get("C")
 if a and b and c:
     inc = c[1] - a[1]
     print()
-    print("  costo INCREMENTALE del secondo giudice (C − A): %.0f MB" % inc)
-    print("  MiniCheck da solo (B, runtime incluso):          %.0f MB" % b[1])
-    print("  ⇒ il runtime condiviso vale circa %.0f MB" % (b[1] - inc))
+    print(f"  costo INCREMENTALE del secondo giudice (C − A): {inc:.0f} MB")
+    print(f"  MiniCheck da solo (B, runtime incluso):          {b[1]:.0f} MB")
+    print(f"  ⇒ il runtime condiviso vale circa {b[1] - inc:.0f} MB")
     print()
     if inc < b[1] * 0.9:
         print("  ✅ predizione ① confermata: C−A < B, il runtime non si paga due volte")
@@ -141,6 +141,6 @@ if a and b and c:
     if 1200 <= inc <= 1900:
         print("  ✅ predizione ② confermata (1,2-1,9 GB)")
     else:
-        print("  🔴 predizione ② falsificata: %.0f MB fuori da 1,2-1,9 GB" % inc)
+        print(f"  🔴 predizione ② falsificata: {inc:.0f} MB fuori da 1,2-1,9 GB")
 print("\n⚠️  un giro per regime · misura quanto costa TENERE due giudici,")
 print("   NON la latenza per scrittura (quella dipende dal pool).")
