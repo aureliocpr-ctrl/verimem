@@ -496,10 +496,29 @@ def _persist_master(
     # ep.id is assigned at construction (a fresh uuid), so the Fact can
     # reference it before the Episode is stored — letting the unique-index
     # guard on the Fact abort a lost race with no Episode side effect.
+    # La confidenza del master NON si inventa: si eredita dal piu' debole dei
+    # fatti che aggrega. Un nodo che riassume N fatti non puo' essere piu'
+    # affidabile della sua parte peggiore, e questo fatto non passa dal gate
+    # (`sm.store` diretto, non `Memory.add`): nessuno ne ha confrontato il testo
+    # con una fonte, quindi `grounding_score` resta NULL.
+    #
+    # Prima diceva `confidence=0.85, # high-trust: deterministic auto from real
+    # facts`. Misurato il 02/09 sul corpus di casa: i 144 master portavano 0.85
+    # mentre 10532 fatti GIUDICATI, con una fonte che li sostiene, ne portano
+    # 0.5 — la scala di fiducia era invertita rispetto alla verifica, e la
+    # confidenza pesa sul ranking del recall.
+    # Presidio: tests/test_un_fatto_non_giudicato_non_e_piu_affidabile.py
+    with sm._connect() as _conn:  # noqa: SLF001 — come in `propose_master_node`
+        _righe = _conn.execute(
+            "SELECT confidence FROM facts WHERE id IN ("
+            + ",".join(["?"] * len(cluster["fact_ids"])) + ")",
+            tuple(cluster["fact_ids"]),
+        ).fetchall()
+    _confidenze = [float(r["confidence"]) for r in _righe if r["confidence"] is not None]
     f = Fact(
         proposition=master["proposition"],
         topic=master["topic"],
-        confidence=0.85,  # high-trust: deterministic auto from real facts
+        confidence=min(_confidenze) if _confidenze else Fact.confidence,
         source_episodes=[ep.id],
         verified_by=[f"fact:{fid}" for fid in cluster["fact_ids"]],
         status="model_claim",
