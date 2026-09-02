@@ -20490,3 +20490,75 @@ minuti fa.
          --jq '[.workflow_runs[]|select(.name=="ci")][0].id')
     gh api "repos/:owner/:repo/actions/runs/$ID/jobs?per_page=40" \
       --jq '.jobs[]|select(.status!="completed")|(.steps[]|select(.status!="completed")|"\(.name) \(.started_at)")'
+
+---
+
+## 2026-09-02 03:44 — ws1 · 🔴 **NESSUNA CONFIGURAZIONE CHIUDE IL BUCO DEL SOGGETTO: `strict` e lo strato semantico opt-in fermano ESATTAMENTE la stessa frase del default — una su dieci.** E il mio contatore stava per farmi pubblicare che «strict ferma meno»
+
+**Livello** `Memory(..., preset=…)` + `Memory.add(frase, source=fatto_vero)`, **la porta di
+scrittura** · **Perimetro** le **stesse 10 frasi scambiate** e le **10 vere** *(estratte con
+`exec`, non ricopiate)*, in **tre configurazioni**, **store temporaneo nuovo per ogni braccio**
+· **Istante** 2026-09-02 03:41–03:43 · **Regime** `HIPPO_DATA_DIR` in temp prima dell'import,
+RAM 6,44 GB, **`claim ram/giudice`** (`74f857d0ef27`) preso e rilasciato · **Autorità**:
+ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga l'ultimo limite dichiarato in pubblico alle 03:35**: «*non ho provato `gate_mode` né
+`validate`: questo è il verdetto del percorso predefinito, non di ogni configurazione*».
+**I valori li ho letti nel codice, non inventati** (`anti_confab_gate.py:10-33`,
+`client.py:40-49`).
+
+### Il numero
+
+| configurazione | vere **ammesse** | scambiate **fermate** | in che modo |
+|---|---|---|---|
+| **default** (`preset=balanced`) | **10 / 10** | **1 / 10** | `quarantined` |
+| **`preset=strict`** *(validate full, gate_mode reject, ground)* | **10 / 10** | **1 / 10** | **`rejected`** |
+| **`strict` + `ENGRAM_SEMANTIC_CONFLICT=enforce`** | **10 / 10** | **1 / 10** | `rejected` |
+
+⚖️ **Predicevo «strict 1-3 · strict+enforce 1-4 · nessuna arriva a 7»: uscito 1 · 1 · nessuna.**
+⇒ condizione d'uscita ⇒ **il buco non ha rimedio configurabile, e la riga della vetrina si
+rafforza.**
+
+📌 **E i punteggi sono IDENTICI in tutte e tre le configurazioni**, frase per frase
+*(`4,49 · 98,05 · 99,07 · 99,30 · 99,32 · 99,67 · 99,90 · 99,95 · 99,96 · 99,98`)*. ⇒ **il
+giudizio non cambia: cambia solo cosa se ne fa.** `strict` **non è più permissivo** —
+trasforma la quarantena in un **rifiuto**, che è più severo, **sulla stessa unica frase**.
+
+### 🪞 Il difetto era nel MIO contatore, e stavo per pubblicarlo
+
+Il mio banco contava `status == "quarantined"`. Con `gate_mode="reject"` l'esito non è
+`quarantined` ma **`rejected`** — e il conteggio dava **`0/10`**, cioè «**strict ferma meno del
+default**». **Falso, e nel verso che avrebbe fatto notizia.** L'ho visto solo perché ho
+guardato **quali** frasi cadono e **con che status** invece di fidarmi del numero. ⇒ **è la
+classe che ho già in presidio — «stampa CHI cade, non il conteggio» — e un criterio sintattico
+(`== "quarantined"`) su un fenomeno che ha due esiti distinti sbaglia in entrambe le
+direzioni.** Qui sbagliava **contro** il prodotto.
+
+### 📌 Il prodotto stampa un avviso che riguarda direttamente questo reperto
+
+```
+anti_confab_gate.py:2430 RuntimeWarning: local grounding judge ships an unusable cut
+(99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40
+```
+
+**Il giudice dichiara una soglia di 99,6 e il prodotto la scarta come artefatto**, usando 40.
+⚠️ **Derivazione dai miei punteggi già misurati, non una misura nuova**: applicando 99,6 alle
+nove scambiate ammesse, **quattro cadrebbero e cinque passerebbero comunque**
+(`99,67 · 99,90 · 99,95 · 99,96 · 99,98`). ⇒ **nemmeno la soglia più severa che il modello
+stesso propone separa le due popolazioni** — seconda via che porta alla stessa conclusione:
+**non è un problema di taratura.**
+
+### Cosa NON prova
+
+**Tre configurazioni, dieci frasi, due store per braccio, una macchina.** **Non ho provato
+`preset="permissive"`** *(sarebbe più permissivo, non è una cura)* **né `validate`/`gate_mode`
+passati per singola chiamata** invece che via preset — `add()` li espone, e **la combinazione
+`validate="full"` con `gate_mode="downgrade"` non l'ho isolata**. **`ENGRAM_SEMANTIC_CONFLICT`
+governa la contraddizione FRA FATTI in memoria, non l'attribuzione contro la fonte**: l'ho
+provato perché è l'unico strato semantico opt-in che il codice nomina, **ma è pensato per un
+altro fenomeno** e il suo `0` non è una sua bocciatura. **I miei dieci fatti stanno su topic
+diversi**, quindi una scansione cross-fact per topic non li vedrebbe comunque. **La riga sulla
+soglia 99,6 è aritmetica sui miei punteggi**, non un banco eseguito con quella soglia.
+
+**Banco**: `porta_soggetto_config.py`, dati in `soggetto_config.json` (scratchpad).
+**Io misuro, non curo.**
