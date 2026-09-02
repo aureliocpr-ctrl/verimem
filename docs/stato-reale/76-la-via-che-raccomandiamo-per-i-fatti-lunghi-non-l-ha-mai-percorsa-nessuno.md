@@ -66,6 +66,31 @@ risale al 3 luglio 2026»*. 🪞 **Il troncamento era nel mio comando, non nel
 prodotto** — la stessa forma per cui questo repo ha una regola sui `| tail` che
 mascherano l'exit code.
 
+## ④-bis Il chunking vero, esercitato — e chiude il limite di §⑤
+
+Il limite dichiarato era: *«un documento corto, un solo chunk: il chunking vero
+non l'ho esercitato»*. **Chiuso**, indicizzando un documento **reale e lungo**:
+questo stesso registro dell'audit vetrina — `72-…-vetrina.md`, **14048 byte, 287
+righe** → **22 chunk**.
+
+Quattro domande su **sezioni diverse**, `-k 1`:
+
+| domanda | chunk citato | esito |
+|---|---|---|
+| «quale campione dichiara il changelog per il giudice locale» | `856-1355` → *«## ② Il CHANGELOG ce l'ha, tutta»* | ✅ esatto |
+| «perché il criterio per riga è caduto» | `2059-3002` → la sezione dei due criteri | ✅ esatto |
+| «quanti claim numerici sono stati guardati» | `9691-10599` → *«Su **11 claim numerici guardati**»* | ✅ esatto |
+| «cosa dice la vetrina sul thailandese» | `10599-11595` → il blocco dei tre limiti (`9.6 → 35.9`) | ⚠️ **adiacente**: il Thai sta poco oltre, nello stesso blocco tematico |
+
+⇒ **3 su 4 centrano il chunk, il quarto è nel blocco giusto**, e ogni citazione
+porta **l'intervallo di byte** — si va a verificare nel file senza fidarsi dello
+snippet.
+
+📌 **E l'`--help` dichiara una scelta di progetto** che vale come le altre di
+questo documento: *«`--min-score` … off by default: the right cut depends on your
+corpus and **this command does not guess one**»*. **Non indovina una soglia al
+posto tuo**, e lo scrive.
+
 ## ⑤ Cosa NON prova
 
 ⚠️ **Un documento corto**: 498 byte, **un solo chunk**. Il chunking vero — dove
