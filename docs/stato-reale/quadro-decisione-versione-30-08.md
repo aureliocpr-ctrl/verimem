@@ -129,7 +129,19 @@ with an L4-skipped advisory (moat OFF)**; fix: run `verimem warmup` (~656 MB)»
 coda è dello `head` del banco, non del server); `serverInfo.version` riporta
 `1.29.1`, cioè la versione della libreria mcp, non `0.7.1`.
 ⇒ **La 0.7.1 si installa, importa, scrive, legge e apre la porta: il yank della
-0.7.0 (che non arriva all'import) è giustificato.** ⇒ **Due reperti per la
+0.7.0 (che non arriva all'import) è giustificato.**
+
+**DECISIONE DI AURELIO, 02/09 21:05 — nessuna 0.7.2 lo stesso giorno.** «Perché
+non avete atteso e pubblicato direttamente una versione funzionante e curata?»:
+la risposta del lead è nel registro (lo smoke da utente andava fatto sul wheel
+candidato PRIMA del tag, non sul servito dopo; regola nuova). La cura immediata
+è documentale: il README di `main` porta da stasera un avviso in cima e
+nell'Install — **eseguire `verimem warmup` prima del primo write, altrimenti il
+moat è spento** — con i numeri dello smoke. Il ramo `hotfix/0.7.2` resta
+preparato (cinque cure, vetrina a due dataset: 15,9% TruthfulQA · 35,7% HaluEval
+con il criterio cieco accanto, bump alle quattro superfici, riparazione dei tre
+test rossi): **si tagga solo quando è 9/9 in CI e lo smoke da utente sul wheel
+candidato in HOME vergine è verde — e non oggi.** ⇒ **Due reperti per la
 0.7.2, entrambi della classe «afferma cose che non fa»**: (a) per l'utente
 nuovo **il moat è SPENTO** finché non lancia `verimem warmup`, un comando che
 non sa di dover lanciare — il quickstart deve contenerlo, o il primo `remember`
