@@ -22255,3 +22255,82 @@ eseguito**. **Non ho letto `trust_ledger`**: so solo che ha 10 880 righe e che �
 
 **Query**: riportate per esteso nel messaggio di consegna.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 20:32 — ws1 · ⛔ **R10: accendere l'astensione su `search` NON conviene — costa il `55,1%` delle risposte vere** (`38` su `69`). Il pavimento che il negozio si calibra da solo vale `0,8805` e sta **SOPRA** il punteggio della maggior parte delle domande a cui sa rispondere
+
+**Livello** `Memory.search` sullo **STORE VIVO**, sola lettura, **rerank OFF**
+*(`ENGRAM_RECALL_RERANK=0`, il regime che alle 19:31 ha dato ripetizioni identiche)* ·
+**Perimetro** 40 fatti italiani + 40 inglesi, query = i 6 token più lunghi del fatto, più
+10 query fuori dominio · **Istante** 2026-09-02 20:28–20:31 · **Regime** due esecuzioni con
+ordine invertito, processi separati, `claim ram/embedder 887493e0c7bd` · **Lingua**
+dichiarata per gruppo · **Autorità**: voce R10 del mandato di ricerca via lead-audit ·
+**0.7.6**.
+
+### Il numero, e le due esecuzioni coincidono su OGNI cifra
+
+```
+PAVIMENTO auto = 0,8805                      braccio A = search(q, k=10)  (il default di oggi)
+                                             braccio B = A + il pavimento acceso
+             A trovava     (1) VERE PERSE        (2) RUMORE TOLTO
+ITALIANO      38/40         24/38  = 63,2%        1/2
+INGLESE       31/40         14/31  = 45,2%        9/9  = 100%
+TOTALE                      38/69  = 55,1%       10/11
+fuori dominio (10 query)   A tace 0/10          B tace 10/10 = 100%
+```
+*(ordine `it-en` e ordine `en-it`: stessi identici numeri, riga `RIGA ordine=…` in entrambe)*
+
+⚖️ **Le tre predizioni depositate alle 20:26 sono tutte confermate**: vere perse `> 20%`
+*(55,1%)* · rumore tolto `> 50%` *(10/11)* · fuori dominio `>= 80%` *(100%)*.
+⇒ **Condizione d'uscita scritta prima — «perse >= 20% ⇒ non conviene» — soddisfatta.**
+
+### 🔎 Perché: la soglia sta sopra le risposte, non sotto il rumore
+
+Nei log `flow.recall` del banco, la stessa query due volte:
+```
+best=0.8642  kind=search  n=10  tagliati=0     <- braccio A
+best=0.8642  kind=search  n=0   tagliati=10    <- braccio B, stessa query
+```
+I `best` osservati sulle domande VERE stanno fra `0,809` e `0,864`; il pavimento è
+`0,8805`. ⇒ **non è un filtro che toglie il rumore: è una soglia che passa sopra la testa
+alla maggioranza delle risposte buone.** Il modulo lo dice di sé — *«In-domain scrambling
+is deliberately conservative»* — e su questo store la scelta conservativa alza il pavimento
+**oltre** ciò che deve servire.
+
+### ⚠️ Il precedente, letto PRIMA di misurare, e perché NON lo contraddico
+
+`relevance_floor.env_floor` porta già una misura del 29/07: `0 wrong abstentions` con il
+gate acceso. **Ma quella passava da `explain`, che ha il gate cross-encoder; `search` ha
+solo la distanza coseno.** Lo stesso docstring dichiara che il default non è stato esteso
+perché sarebbe *«a path nobody measured»* — e cita l'incidente del 30/07
+*(`max(floor, noise_floor)`, scritto, misurato e ritirato per aver mutato la mappa
+dell'ignoranza)*. ⇒ **questa cella misura quel percorso**, e il risultato dice che la
+cautela del 29/07 era fondata.
+⚠️ **Non dico «`explain` è meglio di `search`»**: le due misure hanno materiale diverso
+*(20 domande scritte a mano contro 69 query derivate dai fatti)*. **Non sono lo stesso banco
+e non li confronto.**
+
+### 📌 E stavolta il campione piccolo NON mi aveva ingannato
+
+Alle 03:05 avevo dato **6 risposte vere perse su 10**. A `n=69`: **55,1%**. ⇒ **il numero
+regge** — e lo dico perché alle 20:00, sullo stesso turno, ho **ritirato** un reperto
+proprio perché a `n=15` diceva l'opposto che a `n=40`. **Il campione piccolo non sbaglia
+sempre: sbaglia in modo non prevedibile, ed è questo che obbliga a rifare la misura.**
+
+### Cosa NON prova
+
+**Uno store, un istante, un embedder, `k=10`.** Il braccio B riceve il pavimento come
+**numero calcolato una volta**, non la stringa `"auto"` a ogni chiamata: l'equivalenza
+l'ho **controllata** su 8 query — `0` divergenze — ma **solo 2 delle 8 avevano risultati
+non vuoti**, quindi il controllo è passato su due casi, non su otto. **Il divario IT/EN
+sulle perse (63,2% contro 45,2%) NON lo interpreto**: i denominatori sono diversi e sullo
+stesso turno ho già ritirato un divario di lingua. **Il «rumore tolto» italiano è `1/2`:
+un denominatore di due non è un tasso**, e l'ho lasciato in forma di frazione apposta.
+**Le 10 query fuori dominio le ho scritte io** *(cucina, botanica, calcio, meteo)*: sono
+lontane per costruzione, e un fuori-dominio più vicino darebbe un numero peggiore.
+**Non ho misurato `recall` né `ask`**, che leggono la stessa variabile.
+
+**Banco**: `scripts/banco_astensione_search.py` *(predizione e condizione d'uscita nel
+docstring, scritte prima dell'esecuzione)*.
+**Io misuro, non curo.**
