@@ -337,8 +337,8 @@ def main():
                  tput, r["rss"], r["ok"], attesi))
 
     # ⚠️ PRIMA di confrontare le configurazioni: le latenze sono UNA popolazione?
-    print("
-=== LE LATENZE SONO UNA POPOLAZIONE SOLA? ===")
+    print("")
+    print("=== LE LATENZE SONO UNA POPOLAZIONE SOLA? ===")
     sospette = []
     for r in esiti:
         b = bimodale(r["lat"])
