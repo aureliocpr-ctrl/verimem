@@ -20243,3 +20243,44 @@ termine di un ALTRO dominio («il pavimento»)         MAI
 ⚠️ **Un caso solo, sei varianti**: isola i tipi, non misura una frequenza. E `action` (24) batte `soggetto` (99) pur essendo entrambi nel fatto — **non tutti i termini del fatto valgono uguale**, e questo non l'ho spiegato.
 
 **Firme su questa cella**: ws6.
+
+### 2026-09-02 03:33 — ws6/Aldo · **l'espansione dei sinonimi ESISTE**, ha 18 voci di un dominio che non è il nostro, e **non è collegata alla porta principale**
+
+Il perché del sinonimo fallito («entità» per «soggetto» → `MAI`). Cercato prima di dire che l'espansione mancasse: **c'è**, `semantic.py:5003`.
+
+```
+def _expand_query_tokens(self, q_tokens) -> set[str]:
+    """Cycle 166: expand query tokens with synonyms from ``_QUERY_SYNONYMS``."""
+```
+
+**Due difetti distinti, entrambi verificati:**
+
+**① Non è sulla porta che tutti usano.** L'unica chiamata è a `semantic.py:5065`, dentro `recall_hybrid`. `Memory.recall` — la porta di `client.py` — **non la nomina mai** (zero occorrenze di `recall_hybrid` in `client.py`). La usano tre moduli laterali: `proactive_step_injector`, `rank_list_builders`, `time_decay_score`.
+
+**② La lista è di un altro dominio.** `_QUERY_SYNONYMS` ha **18 voci**:
+
+```
+factorial / fattoriale  ·  prime / primo  ·  power / exponent / potenza
+equation / equazione    ·  perfect / perfetta  ·  robustness / reliability / resilience
+```
+
+⇒ **matematica e qualità del software.** E delle parole del mio banco:
+
+```
+contiene «soggetto»  False      contiene «action»  False
+contiene «entita»    False      contiene «fatto»   False
+```
+
+🔑 **Ecco perché il sinonimo non basta**, e non era una proprietà dell'embedding: **sulla porta principale non c'è espansione affatto**, e anche dove c'è, la lista non copre il vocabolario su cui lavoriamo.
+
+📌 **È la classe ③ del registro — «liste monolingue» — in una variante peggiore: lista di un DOMINIO ESTRANEO.** Diciotto voci scritte per un corpus di esercizi matematici, in un prodotto che oggi indicizza misure di gate e di retrieval.
+
+⇒ **Settima capacità pronta e non alimentata**, e la più netta: non «nessuno la chiama», ma **la chiama solo chi non serve, con un dizionario che non c'entra**.
+
+### Cosa NON prova
+
+⚠️ **Non ho verificato che collegarla alla porta principale migliorerebbe qualcosa**: con quelle 18 voci non cambierebbe **nessuno** dei miei casi. La leva sarebbe **il dizionario**, non il collegamento — e un dizionario di sinonimi di dominio **non si scrive a mano** senza rifare la classe ③ in grande.
+⚠️ **`recall_hybrid` potrebbe essere deliberatamente separata**: non ho cercato la ragione della scelta, e il commento «Cycle 166» suggerisce una storia che non ho letto.
+✅ **Regge**: le due letture (zero occorrenze in `client.py`, 18 voci nella lista e nessuna delle quattro parole) sono grep e introspezione, non inferenze.
+
+**Firme su questa cella**: ws6.
