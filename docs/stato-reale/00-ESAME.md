@@ -19750,3 +19750,71 @@ Il prodotto fa la stessa cosa altrove e lo motiva — in `temporal_context.histo
 ⚠️ **Non ho eseguito `briefing_by_project`**: leggo il codice che compone la frase, non l'output su un progetto reale. · ⚠️ **Non dico che il silenzio vada cambiato**: aggiungere «con 0 episodi» a ogni briefing è il rumore che quella regola evita apposta. Dico che **il costo del tier fermo è invisibile a chi legge**. · ❌ Resta non misurato **quanto** valga la parte episodica per chi usa il briefing: nessuno di noi lo usa.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 02:54 — ws1 · 🔴🔴 **IL PAVIMENTO BUTTA VIA RISPOSTE CHE IL RETRIEVAL AVEVA MESSO AL PRIMO POSTO: `9/10` al primo posto, e il pavimento ne perde `6/10`.** E a parole proprie il fatto giusto non è nemmeno fra i primi DIECI
+
+**Livello** `search(domanda, k=10)` sullo **STORE VIVO**, cercando la **posizione del fatto
+atteso** · **Perimetro** le **stesse 10 domande nelle stesse 3 versioni** dei due banchi
+precedenti *(estratte dai loro file, non ricopiate; un controllo positivo verifica che
+coincidano e ferma l'esecuzione se no)* · **Istante** 2026-09-02 02:52–02:54 · **Regime**
+variabili poppate, **nessun giudice caricato** (serve solo il retrieval) · **Autorità**:
+ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga in tre minuti il limite che avevo dichiarato in pubblico sul canale alle 02:52**: «*ho
+misurato solo `k=1`; se il fatto giusto sta in posizione 2-5, «il retrieval non trova» diventa
+«non mette al primo posto», che è un problema diverso*».
+
+### Il numero
+
+| braccio | atteso **al 1º posto** | nei primi 5 | presente entro `k=10` |
+|---|---|---|---|
+| **(1) originali** | **10 / 10** | 10 / 10 | 10 / 10 |
+| **(2) spogliate** | **9 / 10** | **10 / 10** | 10 / 10 |
+| **(3) parafrasi** | **0 / 10** | **1 / 10** | **1 / 10** |
+
+⚖️ **Predicevo «parafrasi: nei primi 5 in 4-6 casi»: è 1.** ⇒ condizione d'uscita `≤3` ⇒
+**«NON TROVA», non «non mette al primo posto»**: **nove volte su dieci il fatto giusto non è
+nemmeno fra i primi DIECI**. Non è ordinamento — è l'**embedding** che non avvicina la domanda
+al fatto. ⇒ **né `k`, né il rerank, né una soglia possono curarlo: il fatto non entra nel
+pool.**
+
+### 🔴🔴 E l'altro braccio ribalta l'attribuzione della cella delle 02:45
+
+**Sulle spogliate il retrieval funziona benissimo**: fatto giusto **al primo posto 9 volte su
+10**, **nei primi 5 dieci volte su dieci**. **E il pavimento ne perdeva `6/10`.**
+
+⇒ **il pavimento non stava rimediando a un retrieval debole: stava scartando il risultato
+GIUSTO, già in cima.**
+
+**I tre stadi, sulle stesse domande, ora si separano puliti:**
+
+| domande | retrieval *(atteso al 1º posto)* | **pavimento perde** | **giudice perde** |
+|---|---|---|---|
+| ancorate | 10 / 10 | 1 / 10 | **0 / 10** |
+| **spogliate** | **9 / 10** | **6 / 10** ❗ | **1 / 10** |
+| a parole proprie | **0 / 10** *(9 assenti dai primi 10)* | 10 / 10 | 9 / 10 |
+
+⇒ **due difetti DISTINTI, e finalmente attribuiti:**
+1. **Sulle spogliate — difetto del PAVIMENTO, puro.** Il fatto è al primo posto e viene
+   scartato lo stesso. **Spegnere il pavimento su `search` recupererebbe sei risposte su dieci
+   senza chiedere niente al retrieval**, perché erano già in cima. *(La manopola esiste:
+   `ENGRAM_GATEWAY_MIN_RELEVANCE`, documentata come «tunable dial».)*
+2. **A parole proprie — difetto dell'EMBEDDING.** Nessuna soglia lo cura, e **il giudice fa la
+   cosa giusta astenendosi** *(cella 02:50)*.
+
+### Cosa NON prova
+
+**Dieci domande, un solo store, una macchina.** **Le parafrasi le ho scritte io**: un utente
+reale starebbe fra la seconda e la terza colonna, e **dove esattamente non lo so** — questa
+misura dà i due estremi, non la distribuzione. **Non ho misurato il costo di spegnere il
+pavimento**: le domande fuori dominio riceverebbero risultati invece del vuoto, e **quanto ne
+fermerebbe il giudice a valle non l'ho provato** — è la misura che serve prima di proporre
+quella manopola come cura, e **finché non c'è, quella riga è una diagnosi, non una
+raccomandazione**. **Il criterio di identità del fatto sono i primi 40 caratteri**, lo stesso
+degli altri due banchi: un fatto che inizia identico e prosegue diverso conterebbe come
+trovato.
+
+**Banco**: `porta_rango_parafrasi.py`, dati in `rango_parafrasi.json` (scratchpad).
+**Io misuro, non curo.**
