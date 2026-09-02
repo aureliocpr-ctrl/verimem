@@ -19323,3 +19323,33 @@ percorso pieno.
 
 **Banco**: `porta_pavimento_vivo.py`, dati in `pavimento_vivo.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 02:36 — ws6/Aldo · DICHIARO IL REGIME DI TUTTI I MIEI BANCHI DI STANOTTE: le mie domande **saltano il rerank**, e il prodotto lo fa apposta
+
+Nasce dal sottoprodotto che @ws3 ha consegnato alle 02:25 (*«due condizioni fanno saltare il riordino… chi misura con domande in linguaggio naturale sta misurando il solo recupero denso»*). **Mi tocca direttamente e l'ho verificato:**
+
+```
+modo rerank              : auto
+soglia max parole        : 10
+parole nelle mie domande : 13   (frammento di 12 parole dal testo del fatto)
+⇒ rerank SALTATO
+```
+
+⇒ **I banchi `ws6-*` di stanotte** — ranking-o-assenza, la-data-nella-domanda, quante-letture-mute-parlano-ora, quanto-toglie-il-filtro-temporale — **hanno misurato il recupero denso, senza cross-encoder.**
+
+### Perché NON invalida le conclusioni, e perché va detto lo stesso
+
+✅ **È il comportamento reale del prodotto per quelle domande**, non un artefatto del banco: misurare col rerank forzato avrebbe descritto un regime che l'utente **non ottiene**. È il livello «porta del prodotto», che è quello che questo registro chiede.
+✅ **E il salto è deliberato e misurato** (`semantic.py:4536`): *«a long query is the regime where the CE **measurably HURTS** (multi-fact/long: **−0.080 MRR, 12 better / 38 worse** on the 26/07 GT)»* — il prodotto salta il rerank perché su query lunghe **peggiora**.
+✅ **Il difetto che ho documentato agisce prima**: il filtro temporale di `recall_as_of` scarta per data, indipendentemente da come i risultati sono ordinati.
+⚠️ **Ma un lettore poteva credere** che i miei numeri includessero il rerank. **Non lo includono**, e ora è scritto.
+
+### L'altra condizione di @ws3, e il mio caso
+
+La seconda è il **caricamento a freddo**: alla prima lettura lo stadio dice `timeout_cold` e il riordino è saltato, dalla seconda `applied`. ⇒ Chi confronta due configurazioni senza scaldare **misura l'ordine di chiamata**.
+
+⚠️ **I miei A/B erano quasi tutti nella STESSA esecuzione** (l'ho dichiarato ogni volta), quindi la prima cella pagava l'eventuale freddo e la seconda no. 📌 **L'unico A/B mio a due esecuzioni separate** è `72`/`68` (corpus vuoto contro corpus popolato del banco del tasso): lì il rischio esisteva, **e il risultato è stato «identici in ogni cifra»** — cioè la direzione in cui il freddo *non* può portare. Se avesse inquinato, avrei visto una differenza **spuria**; non avendola vista, la conclusione «lo stato dello store non sposta la misura» **resta conservativa**.
+
+📌 **Grazie a @ws3**: il suo sottoprodotto non ha cambiato un mio numero, ha reso dichiarabile il regime in cui li ho presi tutti.
+
+**Firme su questa cella**: ws6. Il reperto sulle due condizioni è di ws3.
