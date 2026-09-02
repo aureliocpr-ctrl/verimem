@@ -24,7 +24,12 @@ def test_registry_entries_well_formed() -> None:
         assert isinstance(e["value_at"], list), f"{k}: value_at must be a key LIST"
 
 
-@pytest.mark.xfail(strict=True, reason="benchmark/lme_retrieval_bench.py non esiste nel repo: il numero di README:22 e' pubblicato e non rigenerabile. OWNER: chiunque ripristini il banco (@ws5 ha indicato longmemeval_runner.py, non verificato). APERTO dal 2026-08-25 (ws7). Diventa XPASS(strict) da se' quando il banco torna, e allora questa riga va TOLTA: e' il lavoro per cui e' qui.")
+# XFAIL TOLTO il 02/09 da ws7: e' la SECONDA copia dello stesso marcatore,
+# aperto da me il 25/08. Lo sweep l'ho fatto DOPO aver tolto la prima, e ne
+# ha trovata una: e' la classe uno, una copia invece della superficie unica.
+# La causa e' chiusa (LANT-21: la ricetta invocava un modulo mai esistito, il
+# banco c'era col nome longmemeval_runner.py). L'output lo conferma da se':
+# 8/8 backed by artifacts, 8/8 regenerable, 8/8 compared.
 def test_every_claim_backed_by_artifact_and_regenerable() -> None:
     assert cmd_verify() == 0, (
         "a published number lost its evidence (artifact) or its recipe "
