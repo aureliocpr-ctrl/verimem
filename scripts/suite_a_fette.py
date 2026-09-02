@@ -95,7 +95,17 @@ def main() -> int:
         esiti.append((i, rc, coda[-1] if coda else "(nessun riepilogo)"))
 
     durata = (time.time() - t0) / 60
-    print(f"\n=== {args.fette} fette in {durata:.1f} min ===")
+    #: ⚠️ `args.fette` e' il numero RICHIESTO, non quello concluso:
+    #: stamparlo qui faceva leggere «3 fette in 11.9 min» come un
+    #: completamento anche quando la suite era stata uccisa a meta'
+    #: (reperto @ws3, verificato in `LANT-63`, curato il 02/09 mentre la
+    #: controfirmavo). Lo script SA gia' quali fette non hanno un
+    #: riepilogo — lo stampa riga per riga poco sotto — e qui non lo
+    #: usava. Quando i due numeri coincidono la riga dice quanto prima.
+    concluse = sum(1 for _i, _rc, _riga in esiti
+                   if _riga != "(nessun riepilogo)")
+    print(f"\n=== {concluse} fette CONCLUSE su {args.fette} richieste, "
+          f"in {durata:.1f} min ===")
     peggio = 0
     for i, rc, riga in esiti:
         print(f"  fetta {i}  EXIT={rc}  {riga}")
