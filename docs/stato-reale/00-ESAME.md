@@ -21552,3 +21552,79 @@ che non lo conteneva mai. PIU' DI UNA COSA ALLA VOLTA.
 ```
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 05:04 — ws1 · 🟢🔴 **LA PORTA NELLA LINGUA DEL PRODOTTO: `5/10` ammesse in inglese contro `9/10` in italiano — la riga della vetrina va riscritta col numero inglese.** E una delle fermate è di **`L4-review` a grounding `74,71`**, cioè **sopra la soglia del giudice**
+
+**Livello** `Memory.add(frase, source=fonte)` — **la porta di scrittura**, default, nessuna
+manopola · **Perimetro** le **stesse dieci frasi inglesi** delle 04:34 *(estratte con `exec`
+da `porta_lingua.py`, non ricopiate)*, su **due store temporanei distinti** *(vere e scambiate
+condividono la source: in un solo store scatterebbe la supersessione same-source)* ·
+**Istante** 2026-09-02 05:00–05:04 · **Regime** variabili poppate, `HIPPO_DATA_DIR` in temp
+prima dell'import, RAM 8,68 GB, **`claim ram/giudice`** (`619148fc0e3e`) preso e rilasciato ·
+**Lingua: INGLESE**, cioè quella del prodotto pubblicato · **Autorità**: ordine di Aurelio
+delle 00:00 · **0.7.6**.
+
+**Paga il debito dichiarato alle 04:36**: «*non ho ritradotto gli altri banchi: so che la
+lingua cambia il quadro, non di quanto lo cambi su ciascuno*». **Questo è il banco che tocca
+la vetrina.**
+
+### Il numero, con il controllo positivo a `10/10`
+
+| | ammesse | grounding |
+|---|---|---|
+| **(A) frasi VERE in inglese** | **10 / 10** ✅ | 97,57 – 99,95 |
+| **(B) soggetto scambiato, in inglese** | **5 / 10** | 0,25 – 99,31 |
+| *(le stesse, in italiano, alle 03:33)* | *9 / 10* | *4,49 – 99,98* |
+
+⚖️ **Predicevo 5-7: è 5**, all'estremo basso. ⇒ condizione d'uscita `≤6` ⇒ **la riga della
+vetrina va riscritta col numero inglese.**
+
+⇒ **Nella lingua del prodotto la porta ne ferma CINQUE invece di una.** ⚠️ **Il controllo
+positivo esclude la spiegazione banale**: le dieci frasi vere inglesi sono ammesse tutte, con
+punteggi alti — **la porta non rifiuta l'inglese in quanto tale.**
+
+### 🔴 E una fermata NON è del moat: è di `L4-review`, sopra la soglia
+
+```
+[9] quarantined  g = 74,71  quarantined_by = 'L4-review'   <-- soglia del giudice: 40
+[2] quarantined  g = 30,88  quarantined_by = 'moat'        <-- sotto soglia, corretto
+[0] model_claim  g = 87,36  quarantined_by = None
+[8] model_claim  g = 90,45  quarantined_by = None
+```
+
+⇒ **esiste uno strato che ferma un fatto che il giudice aveva approvato** *(74,71 contro una
+soglia di 40)*, mentre altri a 87 e 90 passano. ⚠️ **È il fenomeno che @ws6 conta dal journal
+come `withheld_despite_judge`** — io lo osservo su un caso singolo e alla porta, **non ne
+rimisuro il tasso e non lo controfirmo.**
+
+### 🔁 E risponde, all'inverso, a una mia domanda di tre turni fa
+
+Chiedevo: «**uno strato GUARDA la frase senza fermarla?**». **L'osservazione dice il
+contrario, ed è più interessante**: **uno strato FERMA dove il giudice avrebbe lasciato
+passare.** ⇒ la domanda giusta non era quella, e il campo che la risolve — `quarantined_by` —
+**era in ogni ricevuta che ho letto stanotte**: l'ho stampato solo adesso.
+
+### 🎯 La riga per la vetrina, con il numero della lingua giusta
+
+> **Alla porta di scrittura, in inglese, cinque frasi su dieci che spostano un dato vero su
+> un'altra entità vengono memorizzate; in italiano nove su dieci. Le frasi vere sono ammesse
+> dieci su dieci in entrambe le lingue.**
+
+⇒ **il difetto resta reale nella lingua del prodotto — metà dei casi — ma è meno grave di
+quanto dicessero i miei numeri italiani, e la differenza va scritta, non arrotondata.**
+
+### Cosa NON prova
+
+**Dieci frasi, due store temporanei, una macchina, regime di default.** `5/10` e `9/10` **non
+sono tassi**. **Le traduzioni le ho fatte io** e — siccome il fenomeno misurato è «la
+formulazione decide» — **la mia traduzione è una formulazione fra le tante**. **Ho verificato
+`quarantined_by` su QUATTRO casi, non su tutti e dieci**: le altre tre fermate hanno grounding
+`0,73`, `1,61`, `0,25`, quindi **presumo** il moat, **ma non l'ho letto**. **Ho tradotto fonte
+e frase insieme**: quale delle due lingue pesi resta indistinto. **`L4-review` su un caso solo
+non è un tasso**, ed è già contato da altri con perimetro e metodo diversi dai miei.
+
+**Banco**: `porta_porta_en.py`, dati in `porta_en.json`; verifica di `quarantined_by` in
+`_chi_ferma.py` (scratchpad).
+**Io misuro, non curo.**
