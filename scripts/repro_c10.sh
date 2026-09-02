@@ -41,11 +41,35 @@ set -u
 RADICE="${REPRO_C10_RADICE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
 cd "$RADICE" || exit 2
 
-DATASET="benchmark/data/external/truthfulqa_pairs_heldout.jsonl"
 MODELLI="${HOME}/.engram/models"
-ATTESO_SERVITO=15.9      # % di falsita' fra i SERVITI (REPORT-30-08)
 TOLLERANZA=3.0           # punti percentuali; vedi NOTA SULLA TOLLERANZA in fondo
-USCITA="benchmark/results/c10_lato_verimem.json"
+
+# ═══ LA POPOLAZIONE E' UN ARGOMENTO, E OGNUNA HA IL SUO ATTESO ═══
+# Il numero di copertina non e' UNO: e' uno PER POPOLAZIONE. Tenere un solo
+# atteso cablato significava, di fatto, che la seconda popolazione non si
+# poteva rifare — e un numero che nessuno puo' rifare e' una dichiarazione.
+#   bash scripts/repro_c10.sh [--secco] [truthfulqa|halueval]
+POPOLAZIONE="truthfulqa"
+for A in "$@"; do case "$A" in truthfulqa|halueval) POPOLAZIONE="$A";; esac; done
+
+case "$POPOLAZIONE" in
+  truthfulqa)
+    DATASET="benchmark/data/external/truthfulqa_pairs_heldout.jsonl"
+    ATTESO_SERVITO=15.9        # REPORT-30-08, righe 29-31
+    FONTE_ATTESO="REPORT-30-08" ;;
+  halueval)
+    DATASET="benchmark/data/external/halueval_qa_heldout.jsonl"
+    # ⚠️ NON ANCORA PUBBLICATO. Finche' resta vuoto questo script MISURA e
+    # STAMPA, ma NON confronta: inventare un atteso per avere un verdetto
+    # verde e' il difetto che questo pack esiste per impedire.
+    ATTESO_SERVITO=""
+    FONTE_ATTESO="(non ancora pubblicato)" ;;
+esac
+
+# Un file d'uscita PER POPOLAZIONE: con un nome solo, il secondo giro
+# sovrascrive il primo e il confronto fra i due dataset diventa impossibile
+# senza che nulla lo segnali. Trovato prima di eseguirlo, non dopo.
+USCITA="benchmark/results/c10_lato_verimem_${POPOLAZIONE}.json"
 
 riga() { printf '  %-9s %-58s %s\n' "$1" "$2" "$3"; }
 
@@ -85,8 +109,13 @@ fi
 # COME il numero viene letto prima di decidere se rifarlo davvero.
 # ⚠️ NON e' una riproduzione: non rimisura nulla. Lo dice, e cambia il verdetto
 #    in una parola diversa, perche' «verificato» e «riletto» non sono sinonimi.
+# `--secco` si cerca in TUTTI gli argomenti, non solo nel primo: da quando la
+# popolazione e' un argomento, `repro_c10.sh halueval --secco` e' una riga che
+# qualcuno scrivera', e leggendo solo $1 la ignoravo in silenzio — eseguendo il
+# banco vero al posto della rilettura. Un'opzione ignorata senza dirlo e' peggio
+# di un'opzione rifiutata.
 SECCO=0
-[ "${1:-}" = "--secco" ] && SECCO=1
+for A in "$@"; do [ "$A" = "--secco" ] && SECCO=1; done
 
 echo
 if [ "$SECCO" = "1" ]; then
@@ -99,7 +128,7 @@ if [ "$SECCO" = "1" ]; then
 else
   riga "PASSO 3" "eseguo il banco su tutte le $RIGHE righe (nessun campionamento)" "..."
   T0=$(date +%s)
-  python benchmark/c10_falsita_servite_vs_mem0.py --popolazione truthfulqa --out "$USCITA"
+  python benchmark/c10_falsita_servite_vs_mem0.py --popolazione "$POPOLAZIONE" --out "$USCITA"
   EXIT_BANCO=$?
   T1=$(date +%s)
   T_ESEC=$((T1 - T0))
@@ -121,6 +150,22 @@ print(f'{100*f/s:.1f}' if s else 'NA')
 
 if [ "$OTTENUTO" = "NA" ] || [ -z "$OTTENUTO" ]; then
   riga "PASSO 4" "non ho potuto leggere il numero da $USCITA" "FERMO"; exit 2
+fi
+
+# --- SENZA UN ATTESO PUBBLICATO NON C'E' VERDETTO, E SI DICE ----------------
+if [ -z "$ATTESO_SERVITO" ]; then
+  echo "  ─────────────────────────────────────────────────────────────────────"
+  echo "    popolazione           : ${POPOLAZIONE}"
+  echo "    misurato qui          : ${OTTENUTO}%   di falsita' fra i SERVITI"
+  echo "    atteso pubblicato     : ${FONTE_ATTESO}"
+  echo "  ─────────────────────────────────────────────────────────────────────"
+  echo "  ⚠️ NESSUN CONFRONTO: per questa popolazione non c'e' un numero"
+  echo "     pubblicato con cui misurarsi. Lo script ha MISURATO e si ferma qui"
+  echo "     invece di inventarsi una soglia — un verde ottenuto scegliendo"
+  echo "     l'atteso dopo aver visto il risultato non e' una verifica."
+  echo "     Quando il numero viene pubblicato, mettilo in ATTESO_SERVITO qui"
+  echo "     sopra e questa corsa diventa falsificabile."
+  exit 0
 fi
 
 DELTA=$(python -c "print(f'{abs($OTTENUTO - $ATTESO_SERVITO):.1f}')")
