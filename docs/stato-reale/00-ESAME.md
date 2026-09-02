@@ -22099,3 +22099,81 @@ conteggi nello stesso range di lunghezza**, non una misura di competizione nel r
 **Banchi/query**: `scripts/banco_rerank_controllato.py` per i numeri di recall; le query SQL di
 questa cella sono riportate per esteso nel messaggio di consegna.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 20:00 — ws1 · ✅🔁 **M2 CHIUSO: il salto lessicale NON esiste sul corpus reale (sinonimo `100%` e `81,2%`). E RITIRO il divario di lingua che avevo dichiarato alle 19:31: passando da 15 a 40 fatti per lingua il verso si INVERTE**
+
+**Livello** `Memory.search` sullo **STORE VIVO**, sola lettura, **rerank OFF**
+*(`ENGRAM_RECALL_RERANK=0`, il regime ripetibile)* · **Perimetro** 40 fatti italiani e 40
+inglesi, query = i 6 token più lunghi del fatto, **due esecuzioni con ordine invertito** ·
+**Istante** 2026-09-02 19:57–20:00 · **Regime** processi separati, `claim ram/embedder` ·
+**Lingua**: è l'oggetto della misura · **Autorità**: mandato di ricerca via lead-audit ·
+**0.7.6**.
+
+### Il numero, e le ripetizioni coincidono (≤1 su 40)
+
+| | IT parola | **IT sinonimo** | IT con ancora | IT senza ancora |
+|---|---|---|---|---|
+| ordine it→en | 37/40 | **14/14** | 12/14 | 25/26 |
+| ordine en→it | 38/40 | **14/14** | 12/14 | 26/26 |
+
+| | EN parola | **EN sinonimo** | EN con ancora | EN senza ancora |
+|---|---|---|---|---|
+| ordine it→en | 31/40 | **13/16** | 17/26 | 14/14 |
+| ordine en→it | 31/40 | **13/16** | 17/26 | 14/14 |
+
+*(l'inglese è identico in tutto fra le due esecuzioni; l'italiano differisce di 1 su 40)*
+
+### ✅ ① Il salto lessicale NON esiste: M2 si chiude
+
+⚖️ **Predicevo «il sinonimo scende sotto il 60% in entrambe»: è `100%` (IT) e `81,2%` (EN).**
+⇒ **condizione d'uscita concordata — sinonimo ≥80% — soddisfatta in entrambe le lingue** ⇒
+**il muro M2 è chiuso.**
+⚠️ **Perimetro onesto**: il dizionario di sinonimi copre **parole comuni**, e solo **14/40**
+fatti italiani e **16/40** inglesi contenevano un token sostituibile. I fatti reali sono
+pieni di identificatori *(`hippo_facts_recall`, `2026-05-11`, `pqc-audit-italia`)* che **un
+sinonimo non ce l'hanno**: quelli sono esclusi, non misurati come «passati».
+
+### 🔁 ② RITIRO il divario di lingua delle 19:31
+
+| campione | metrica | italiano | inglese | verso |
+|---|---|---|---|---|
+| **15** per lingua *(19:31)* | recall@10 | 86,7 % | **100 %** | inglese meglio |
+| **40** per lingua *(qui)* | recall@10 | **92,5-95 %** | 77,5 % | **italiano meglio** |
+
+⇒ **stessa metrica, stesso store, stesso regime: cambiando solo la dimensione del campione il
+verso si inverte.** ⇒ **il «divario di lingua» che avevo dichiarato alle 19:31 — «l'inglese sta
+sopra di 20-33 punti» — NON regge, e lo ritiro.** Era un campione di quindici.
+
+### 🔴 ③ E l'ancoraggio va nel verso OPPOSTO a quello che avevo misurato il 02/09 alle 02:45
+
+```
+query SENZA ancora   IT 96,2-100%    EN 100%
+query CON  ancora    IT     85,7%    EN  65,4%
+```
+⇒ **le query che contengono cifre, underscore o sigle recuperano PEGGIO**, in entrambe le
+lingue e in entrambe le esecuzioni. ⚠️ **Alle 02:45 avevo misurato l'opposto** *(le domande
+con numeri e nomi propri prendevano 0,89-0,93, le altre 0,77-0,82)* — **ma là il livello era
+il punteggio del giudice su una domanda formulata da me, qui è il recall su una query derivata
+dal fatto: due misure diverse, e non le concilio.**
+
+📌 **E questo spiega il ② senza tirare in ballo la lingua**: le query inglesi hanno **29%** di
+token con cifre/MAIUSCOLE contro il **10%** delle italiane *(misurato prima di scrivere il
+banco)*, e le ancorate vanno peggio ⇒ **l'inglese va peggio perché è più ancorato, non perché
+è inglese.** ⚠️ **È una spiegazione coerente con i dati, NON una variabile isolata**: per
+isolarla servirebbe confrontare query ancorate e non ancorate **a parità di lingua e di
+numero**, e i due gruppi qui hanno numerosità diverse (14 contro 26, 26 contro 14).
+
+### Cosa NON prova
+
+**40 fatti per lingua, un solo store, una macchina, rerank spento.** **Il dizionario di
+sinonimi l'ho scritto io** guardando i token frequenti: copre poco più di un terto dei fatti,
+e un dizionario diverso darebbe un altro numero. **«Ancora» è definita sintatticamente**
+*(cifre, underscore, ≥2 maiuscole)*: è un proxy, non una nozione semantica. **I gruppi
+con/senza ancora hanno numerosità sbilanciate** dentro ogni lingua. **Non ho spiegato PERCHÉ
+le ancore peggiorino il recall**: l'ipotesi che un identificatore raro sia spezzato in
+sub-token e diluisca il segnale **non l'ho misurata**.
+
+**Banco**: `scripts/banco_sinonimo_e_ancoraggio.py`.
+**Io misuro, non curo.**
