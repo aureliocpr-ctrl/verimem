@@ -626,39 +626,22 @@ class Memory:
                           "not run this check.",
             })
         action = gate.action
-        # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
-        # default OFF): a source whose persisted two-channel trust sits below
-        # the floor gets QUARANTINED (never rejected — quarantine is
-        # rehabilitable, and the consistency channel must be able to fish the
-        # source back out; TRUST_CORE.md guard-rail).
-        from . import source_trust as _st
-        _st_observe = _st.observe()
-        if (_st.enabled() or _st_observe) and action == "persist":
-            _src = _st.canonical_source(verified_by)
-            _t = self._source_trust_book().trust(_src)
-            if _t < _st.threshold():
-                if _st_observe:
-                    # observe/log-only: surface the low trust but DO NOT gate, so
-                    # the false-block rate is measurable on real tenants first.
-                    warnings.append({
-                        "layer": "SOURCE_TRUST-observe",
-                        "matched_text": _src,
-                        "advice": (
-                            f"source '{_src}' trust {_t:.2f} is below "
-                            f"{_st.threshold():.2f} (observe mode: logged, NOT "
-                            "downgraded — set ENGRAM_SOURCE_TRUST=1 to enforce)"),
-                    })
-                else:
-                    action = "downgrade"
-                    warnings.append({
-                        "layer": "SOURCE_TRUST",
-                        "matched_text": _src,
-                        "advice": (
-                            f"source '{_src}' trust {_t:.2f} is below "
-                            f"{_st.threshold():.2f} — stored quarantined pending "
-                            "corroboration (confirmations by independent sources "
-                            "rehabilitate it)"),
-                    })
+        # IL GATE SU SOURCE-TRUST E' STATO RIMOSSO IL 2026-09-02 (voto G10, 4 SI
+        # su 3 richiesti). Non perche' il meccanismo fosse sbagliato: perche' non
+        # ha mai avuto materiale su cui lavorare. Misurato sul corpus vivo:
+        # 0 scritture marcate su 17 279, 156 sorgenti tutte al valore iniziale
+        # 0.500, tabella `source_trust` con 0 righe (l'omonima `trust_ledger` ne
+        # ha 10 880 — due registri, nomi simili, e solo quello delle FONTI e'
+        # vuoto). La causa sta un piano piu' sopra: `source_trust_observe`,
+        # l'API pubblica che alimenta il libro, e' chiamata da 4 banchi e 5 test
+        # e da ZERO porte del prodotto (0 in `cli.py`, 0 in `mcp_server.py`).
+        # Finche' nessuna porta la chiama il registro resta vuoto, e questo gate
+        # calcola sempre lo stesso risultato: nessuna fonte sotto soglia.
+        # ⚠️ `canonical_source`, `SourceTrustBook` e il resto di
+        # `source_trust.py` RESTANO: sono usati per altro (3 importatori
+        # prendono `canonical_source`, 1 prende `get_book`). Se un giorno il
+        # registro viene alimentato, questo gate si riscrive in ~25 righe con la
+        # misura in mano.
         _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
@@ -2098,15 +2081,12 @@ class Memory:
                      or isinstance(f.get("grounding_score"), bool))
         report["ungrounded_facts"] = _senza
         report["grounding_checked"] = bool(_fatti) and _senza == 0
-        # task #20a: dossier transparency — with source-trust on, every fact
-        # shows its SOURCE's two-channel trust, not just its own status.
-        from . import source_trust as _st
-        if _st.enabled():
-            book = self._source_trust_book()
-            for e in report.get("facts") or []:
-                src = _st.canonical_source(e.get("verified_by"))
-                e["source_trust"] = {"source": src,
-                                     "trust": round(book.trust(src), 4)}
+        # Il campo `source_trust` del dossier (task #20a) e' stato tolto insieme
+        # al gate il 2026-09-02: usciva solo con `ENGRAM_SOURCE_TRUST=1`, e con
+        # il registro delle fonti vuoto avrebbe riportato `0.500` per ognuna.
+        # Misurato prima di toglierlo: scritto in un punto solo, letto da UN
+        # test, e ZERO volte in `cli.py` e `mcp_server.py` — nessuna porta lo
+        # mostrava a nessuno.
         if report.get("abstained"):
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")
