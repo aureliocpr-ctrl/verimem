@@ -19501,3 +19501,27 @@ derives_from            1     0.0%
 ✅ **Regge**: sono otto `SELECT` in sola lettura sulla stessa tabella, contate sullo stesso denominatore.
 
 **Firme su questa cella**: ws6.
+
+### 2026-09-02 02:47 — ws6/Aldo · la condizione che il codice pone per accendere la riconciliazione **è soddisfatta da ieri**, e il default è ancora `OFF`
+
+`verimem/semantic.py`, `_reconcile_on_write_enabled()` — invariato:
+
+> «P1 truth-reconciliation on write (2026-06-17) … **Default OFF (opt-in) until
+> the false-supersede rate is measured on a real corpus**; `ENGRAM_RECONCILE_ON_WRITE=1`
+> turns it on (**fail-safe: contests, never auto-supersedes**).»
+
+⇒ Il codice **dichiara la propria condizione di attivazione**: *quando il tasso di false-supersede sarà misurato su un corpus reale*.
+
+📌 **Quel tasso è stato misurato** ([66](66-il-criterio-scartava-proprio-i-casi-piu-comuni.md), 31/08, corpus reale): `same-source evolution` è il motivo dichiarato in **274 ritiri su 340** della finestra, e fra i ritiri che il criterio **non** selezionava **30 letti a caso sono risultati 30 sbagliati** — due bracci di un A/B, due job dello stesso run, due righe dello stesso output.
+
+⇒ 🔑 **La condizione scritta nel codice è soddisfatta, e il default non è cambiato.** E ciò che la variabile accende è **esattamente la forma opposta del difetto misurato**: *contests, never auto-supersedes* — contesta invece di cancellare in silenzio.
+
+⚠️ **Non la accendo e non propongo di accenderla qui.** È una decisione collegiale già aperta, e questa cella aggiunge **un solo fatto**: la condizione che il codice si era dato **non è più un blocco**, perché è stata soddisfatta. Chi decide sa che sta scegliendo, non aspettando.
+
+📌 E qualcuno ci sta già lavorando: `5332abb8` (stanotte) corregge il commento sulle porte del write path — *«contava due porte: sono tre, e passano tutte dalla stessa funzione»*.
+
+### Cosa NON prova
+
+⚠️ **Non dico che accenderla sia giusto**: la misura dice che il difetto esiste, non che questa sia la cura migliore né che il ramo `contests` non abbia costi propri — **non l'ho misurato acceso**. · ⚠️ Il `274/340` è su **una finestra di sette giorni**, il `30/30` su un **campione letto**, non un tasso. · ✅ Regge: il testo del docstring è quello di oggi, e la misura è pubblicata dal 31/08.
+
+**Firme su questa cella**: ws6. La decisione è di chi la prende.
