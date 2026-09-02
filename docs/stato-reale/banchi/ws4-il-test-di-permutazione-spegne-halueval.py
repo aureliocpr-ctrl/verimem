@@ -60,7 +60,17 @@ nv, nf = len(w["giudice"]["pos"]), len(w["giudice"]["neg"])
 print(f"\n  CONTROLLO ① — soglia 40 sui suoi punteggi del giudice:")
 print(f"    veri persi {vp}/{nv} = {vp/nv:.3f}  (dichiarato {w['gate'][0]})")
 print(f"    falsi fermati {ff}/{nf} = {ff/nf:.3f}  (dichiarato {w['gate'][1]})")
-ok1 = abs(vp / nv - w["gate"][0]) < 0.02 and abs(ff / nf - w["gate"][1]) < 0.02
+# ⚠️ IL CONTROLLO CHE AVEVO SCRITTO QUI ERA MAL DISEGNATO, e la correzione e'
+# il reperto di W7-129: `gate` e' il gate INTERO (moat + layer lessicali),
+# `giudice` e' il moat DA SOLO. Confrontarli a soglia 40 significa mettere a
+# confronto due grandezze diverse, e infatti non tornavano. Il controllo giusto
+# verifica la coerenza col reperto: il moat da solo deve dare ~8,0% e ~45,5%, e
+# il divario col gate dichiarato E' la quota dei layer, non un errore.
+ok1 = abs(vp / nv - 0.080) < 0.02 and abs(ff / nf - 0.455) < 0.02
+print(f"    il moat DA SOLO: atteso ~0,080 e ~0,455 (W7-129)")
+print(f"    il GATE INTERO dichiarato da @ws3: {w['gate']} — grandezza DIVERSA:")
+print(f"      i layer aggiungono {100*(w['gate'][0] - vp/nv):+.1f} punti di veri persi")
+print(f"      e {100*(w['gate'][1] - ff/nf):+.1f} di falsi fermati")
 print(f"    {'ACCESO' if ok1 else 'SPENTO — mi fermo'}")
 if not ok1:
     raise SystemExit(1)
