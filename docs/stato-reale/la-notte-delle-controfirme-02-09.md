@@ -364,33 +364,36 @@ grep -n "va rifatta prima di citarla" docs/stato-reale/00-ESAME.md
 
 ---
 
+| `LANT-44` | 📐 la promessa dell'explain regge per i **soli layer lessicali**: il 77% dei quarantinati storici è del moat |
+| `LANT-52` | ✅ **curata**: 994 e 1785 non sono più nel README — e lì dentro c'era il mio reperto ④ |
+
+---
+
 ## E una cosa trovata per caso, all'ultimo giro
 
-**.** Controllando che il lavoro fosse tutto pushato, On branch main
-Your branch is up to date with 'origin/main'.
-
-Changes not staged for commit:
-  (use "git add <file>..." to update what will be committed)
-  (use "git restore <file>..." to discard changes in working directory)
-	modified:   docs/stato-reale/le-lezioni-del-ramo-di-rilascio.md
-
-Untracked files:
-  (use "git add <file>..." to include in what will be committed)
-	docs/stato-reale/store_largo/
-
-no changes added to commit (use "git add" and/or "git commit -a") ha mostrato
+**`W2-442`.** Controllando che il lavoro fosse tutto pushato, `git status` ha mostrato
 **undici banchi miei, del 22-24/08, mai aggiunti al repository** — e
-, che **è** nel repo, **li nomina dieci volte**.
+`docs/stato-reale/due-porte-garanzie-diverse.md`, che **è** nel repo, **li nomina dieci volte**.
 Chi clonava trovava il documento e non le misure che cita.
 
-**È la forma opposta di **, che conta i banchi che nessun documento nomina: **nessuno dei
+**È la forma opposta di `W7-59`**, che conta i banchi che nessun documento nomina: **nessuno dei
 nostri censimenti guarda i file citati e assenti.** Chiuso: gli undici file sono nel repo,
-aggiunti **com'erano**, con le loro sei segnalazioni , perché sono la prova di quei numeri.
+aggiunti **com'erano**, con le loro sei segnalazioni `ruff`, perché sono la prova di quei numeri.
 
 > **Ho passato la notte a misurare la raggiungibilità del lavoro altrui — gli orfani scendono
-> dal 61,3% al 42,4% () — mentre undici dei miei erano fuori dal repository da undici
-> giorni.** Il comando è ?? "20ïº53"
-?? docs/stato-reale/store_largo/
-?? "mortiïªïª"
-?? "Ã¨"
-?? "ð".
+> dal 61,3% al 42,4% (`W2-407`) — mentre undici dei miei erano fuori dal repository da undici
+> giorni.** Il comando che li mostra è `git status --short` filtrato sulle due domande.
+
+---
+
+## Nota di metodo su questo documento
+
+Questa coda è stata **riscritta due volte**: la prima versione l'ho generata da riga di comando
+e **la shell ha eseguito i backtick del testo**, incollando dentro il documento l'output di
+`git status` e cancellando i riferimenti alle celle. Riparata in tre minuti.
+
+**È la quarta volta nella notte** che un carattere con due significati mi morde — due backtick
+eseguiti dalla shell (`W2-386`, `W2-417`), un `\n` diventato a capo dentro Python (`W2-433`), e
+questa. ⇒ **Il testo che contiene backtick si scrive su file con uno strumento di scrittura, mai
+da riga di comando** — è scritto fra le lezioni di casa, e stanotte l'ho violato quattro volte
+sotto quattro forme diverse.
