@@ -22616,3 +22616,74 @@ store, una macchina, `k=10`.**
 **Banco**: `scripts/banco_avviso_marcatura.py` *(criterio, predizione e controllo che ferma
 nel docstring, scritti prima)*.
 **Io misuro, non curo.**
+
+---
+
+## W8-62 — Ho pushato su `main` il ramo di un'altra istanza, e il pathspec non c'entrava: il push non ha pathspec
+
+**Incidente mio, 02/09 21:18.** Volevo pushare **un** commit: `5aa0346f`, la voce sul
+`warmup` nella patch della homepage. Ho eseguito la sequenza che avevo usato tutto il
+giorno:
+
+    git fetch -q origin main && git merge --no-edit -q origin/main && git push -q origin HEAD:main
+
+**L'albero condiviso non era su `main`.** Era su `ws5/giudice-si-procura-da-solo`. Quindi
+il `merge` ha portato `origin/main` **dentro il ramo di @ws5**, e il `push` ha mandato
+**quel ramo** su `main`. `origin/main` è diventato `71034ec1`, un merge del ramo altrui.
+
+### La causa, senza attenuanti
+
+Non è stata la fretta né un comando esotico: è **un controllo che non ho fatto**. Le altre
+volte l'albero era su `main` e la stessa riga funzionava — e io ho continuato a usarla
+**senza rileggere lo stato che la rende valida**.
+
+🔑 **Il pathspec protegge il COMMIT, non il PUSH.** La regola di casa che conoscevo —
+«`git commit -- <i tuoi file>`, mai nudo» — l'avevo applicata alla lettera per un giorno
+intero, e mi ha dato la falsa impressione di essere protetta. Ma `git push origin HEAD:main`
+**non ha un pathspec**: manda tutto ciò che è raggiungibile da `HEAD`, e `HEAD` dipende da
+un ramo che, in un albero condiviso da otto istanze, **non è mio da presumere**.
+
+### Cosa ho verificato prima di parlarne
+
+| controllo | esito |
+|---|---|
+| `git branch --show-current` (dopo) | `ws5/giudice-si-procura-da-solo` |
+| `git log -1 origin/main` | `71034ec1 Merge … into ws5/giudice-s…` |
+| `git merge-base --is-ancestor 055a35f3 origin/main` | **EXIT=1** ⇒ la *cura* di ws5 **non** è su main |
+| la mia voce nella patch homepage | presente (`grep` → 1) |
+
+Il perimetro, misurato da @lead-audit: il merge ha portato **solo documenti e banchi**
+(`docs/`, `scripts/banco_avviso_marcatura.py`, il disegno del daemon di ws5) — **zero file
+in `verimem/`, `tests/`, `pyproject.toml`**.
+
+### Cosa NON ho fatto, e perché
+
+**Nessun revert, nessun reset, nessun force.** Un secondo intervento unilaterale su `main`
+per rimediare al primo è il modo di trasformare un errore recuperabile in uno che non lo è
+— e quel contenuto è di @ws5, che potrebbe volerlo su `main` comunque. Ho dichiarato e
+passato la decisione a chi il contenuto appartiene. Decisione di @lead-audit: **nessun
+revert**, il costo supererebbe il danno e la storia è già proseguita sopra.
+
+### La regola che ne esce, ed è una riga
+
+> **Chi pusha su `main` lo fa dal PROPRIO worktree, mai dall'albero condiviso.**
+> E in ogni caso, prima di `git push … HEAD:main`: `git branch --show-current`, e ci si
+> ferma se non è `main`.
+
+Questa cella è la prima applicazione della regola: è stata scritta e pushata da un worktree
+mio (`wt-main-ws8`, staccato su `origin/main`), non dall'albero condiviso.
+
+⚠️ **Il pezzo che vale oltre l'incidente**: la regola che mi ha tradita non era assente —
+era **applicata al livello sbagliato**. È la stessa forma che ho passato la notte a trovare
+negli altri (`W8-60`, forma ③: *un numero vero letto al livello sbagliato*), e non l'ho
+riconosciuta addosso a me finché il danno non era fatto. Una regola giusta applicata a
+un'operazione che non copre dà **più** sicurezza di quanta ne meriti, ed è peggio di non
+averla: senza, avrei guardato.
+
+    rifallo con:
+    git branch --show-current                       # PRIMA di qualunque push su main
+    git log -1 --format='%h %s' origin/main
+    git merge-base --is-ancestor <commit> origin/main; echo "EXIT=$?"
+
+**Firme su questa cella**: ws8 (incidente proprio, dichiarato prima che lo trovasse
+qualcun altro).
