@@ -19250,3 +19250,75 @@ citazione: file:…doc_prova.md:0-498 (v1)   ← percorso, byte, VERSIONE
 📌 **Classe «una capacità spenta non emette segnale», forma più scomoda**: non «mai collegata» né «rotta» — **pronta, funzionante, raccomandata per iscritto, mai chiamata**. Non lo dice nessun errore: lo dice **un file che non c'è**.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 02:32 — ws1 · 🟢 **CORREGGO LA REGOLA CHE HO MESSO IN CIRCOLO MEZZ'ORA FA: sullo STORE VIVO — 14 801 fatti, tematico — il pavimento perde `1` risposta su `10`.** Non è l'eterogeneità a salvare: **è la DIMENSIONE**
+
+**Livello** `Memory.search` con e senza `min_relevance="auto"` sullo **STORE VIVO**
+(`CONFIG.semantic_db`) · **Perimetro** **le stesse 10 domande** del banco delle 01:56 (derivate
+da fatti reali) + 3 estranee · **Istante** 2026-09-02 02:24–02:29 · **Regime** variabili
+poppate, RAM 6,69 GB, **`claim ram/embedder` preso e rilasciato** (`219d14f09960`) ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 02:24** («*sei fatti sono pochi: il nostro registro ha
+13 420 servibili ed è tematico, e non l'ho misurato*») — **ed era il limite giusto da pagare.**
+
+### 🟢 Il numero, e la condizione d'uscita era scritta prima
+
+| | |
+|---|---|
+| store | **14 801 fatti**, tematico |
+| pavimento auto | **0,8805** *(vicino al formulaico: 0,8854)* |
+| **risposte vere perse** | **1 / 10** — *condizione dichiarata: `0-1` ⇒ **fenomeno dei corpora piccoli*** |
+| estranee correttamente vuote | **3 / 3** |
+
+⚖️ **Predicevo 2-4 perse: è 1.** ⇒ **la mia predizione cade, e nel verso favorevole al
+prodotto.**
+
+### 📌 E il meccanismo si vede nei punteggi — la regola delle 02:24 era MAL FORMULATA
+
+```
+STORE VIVO  pertinenti  0.8956 … 0.9306   (pavimento 0.8805)   -> passano
+corpus C    pertinenti  0.7870 … 0.8859   (pavimento 0.8854)   -> cadono
+```
+
+**Il pavimento sul vivo è alto quanto quello del corpus formulaico** (0,8805 contro 0,8854) —
+**quindi non è il pavimento a comportarsi diversamente**. **Sono le domande a trovare match
+migliori**: con **14 801 fatti esiste, per ogni domanda, un fatto molto simile**; con **sei**,
+anche il migliore è mediocre.
+
+⇒ **Non è l'eterogeneità a salvare: è la DIMENSIONE.** ⇒ **la regola che ho pubblicato alle
+02:24 — «*affidabile su corpora eterogenei, perde metà su uno tematico*» — descrive un
+confronto fatto A PARITÀ DI SEI FATTI, e non si trasporta.**
+
+**Formulazione corretta, con dentro tutte e quattro le misure:**
+
+> **Il pavimento auto-calibrato taglia risposte vere quando il corpus è PICCOLO** *(6 fatti:
+> `0/6` se eterogeneo, `3/6` se tematico, `5/6` se formulaico)*. **A ~15 000 fatti il
+> problema quasi sparisce** *(`1/10`)*, **anche se il corpus è tematico**, perché ogni domanda
+> trova un match forte. **L'omogeneità peggiora le cose A PARITÀ DI DIMENSIONE; la dimensione
+> le compensa.**
+
+### 📌 Un'osservazione di contorno, dal log
+
+Sullo store vivo **due budget scadono**: «*PPR fusion exceeded 2.00s budget → keeping reranked
+order*» e «*rerank exceeded 3.0s budget → keeping bi-encoder order (steady overrun; counts
+toward the breaker)*». ⇒ **su un corpus di questa taglia il prodotto gira in modalità
+degradata** e lo dichiara. **Non l'ho indagato** — lo lascio a chi tiene quel fronte, ma
+significa che i miei punteggi sul vivo **sono quelli del percorso degradato**, non del
+percorso pieno.
+
+### Cosa NON prova
+
+**10 domande, un solo store**: `1/10` non è un tasso. **Le domande le ho scritte io** a
+partire da fatti reali — sono **favorevoli al retrieval per costruzione**, e su questo store
+grande il vantaggio è probabilmente **maggiore** che sui corpora piccoli, quindi **il `1/10`
+è ottimistico**. **Non ho isolato dimensione e omogeneità**: per farlo servirebbe uno store
+**grande e eterogeneo** (che non ho) — quindi «*è la dimensione*» resta **la spiegazione più
+semplice, non una variabile isolata**. **Non ho misurato dove stia la soglia di dimensione**
+fra 6 e 14 801. **I budget scaduti** rendono questa misura non confrontabile con una fatta a
+percorso pieno.
+
+**Banco**: `porta_pavimento_vivo.py`, dati in `pavimento_vivo.json` (scratchpad).
+**Io misuro, non curo.**
