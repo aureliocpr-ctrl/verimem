@@ -5,7 +5,7 @@
 > **38/113 verificate · 1 correzione di stato (S6) · dello spot-check del lead,
 > 4 imprecisioni su 5 erano del lead e non del ricercatore.**
 >
-> **66 righe verificate, 2 stati corretti, 9 evidenze rafforzate.** Ogni verifica
+> **72 righe verificate, 2 stati corretti, 10 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -101,8 +101,18 @@
 > di migrazioni di schema: materiale che c'è, per un lettore diverso. Rafforza la
 > correzione di `A6` qui sopra.
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **66 righe su 113**. Le
-> restanti 47 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑩ Settimo giro (22:14), 6 righe NON FATTO: zero correzioni, una arricchita.**
+> `errors.py` davvero non esiste; nessun `conf.py` e **zero commit** che nominino
+> sphinx; `saml`, `oidc`, `rbac`, `sqlcipher`: **zero occorrenze** nel package.
+> 🔑 **`Q21` mi ha quasi fatto sbagliare, ed è la lezione del giro**: dice «ultimo
+> tag **pubblicato** `v0.7.1`» e io trovavo `v0.7.6`, quindi stavo per
+> correggerla. Ma `git tag` mostra i tag **locali**: su `origin` gli ultimi sono
+> `v0.5.0`/`v0.7.0`/`v0.7.1`, e `v0.7.6` **non c'è**. La riga era giusta, e ho
+> aggiunto il terzo livello che le mancava — le **release** GitHub si fermano a
+> `v0.7.0` del 22/07, quindi nemmeno `v0.7.1` è pubblicata come release.
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **72 righe su 113**. Le
+> restanti 41 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
@@ -267,7 +277,7 @@
 | Q18 | Riferimento API Sphinx + tutorial da 30 minuti | R05-12/13 7.2 | **NON FATTO** | nessun `conf.py`, nessun commit «sphinx» | Sostituito di fatto da README + `agent_guide` |
 | Q19 | `SECURITY.md`, `SUPPORTED_DEPLOYMENT.md`, `THREAT_MODEL.md` | R05-12/13 7.3 | **A METÀ** | `SECURITY.md` ✔, `docs/SAAS_DEPLOY.md` ✔, `docs/SECURITY_AUDIT_2026-07-11.md` ✔; `THREAT_MODEL.md` **non trovato** | |
 | Q20 | CHANGELOG completo + guida di migrazione | R05-12/13 7.4/7.5 | **A METÀ** | `CHANGELOG.md` esiste ed è dettagliato; nessuna guida di migrazione | |
-| Q21 | Tag v1.0.0 | R05-12/13 7.7 | **NON FATTO** | ultimo tag pubblicato `v0.7.1`; `pyproject` dichiara 0.7.6 | |
+| Q21 | Tag v1.0.0 | R05-12/13 7.7 | **NON FATTO** | ultimo tag pubblicato `v0.7.1`; `pyproject` dichiara 0.7.6 |  ✅ **ws6 conferma, e il quadro è a TRE livelli, non due**: `v0.7.6` esiste **solo in locale**; su `origin` gli ultimi tag sono `v0.5.0`, `v0.7.0`, `v0.7.1`; e le **release GitHub** si fermano a **`v0.7.0` del 22/07** — nemmeno `v0.7.1`, che pure è taggato su origin, è una release pubblicata. Guardando i tag locali si direbbe 0.7.6: è l'errore che stavo per fare io |
 
 ### A.6 — Sonno, sogno, skill (il cuore «neuro»)
 
