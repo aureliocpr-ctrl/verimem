@@ -20286,3 +20286,32 @@ contiene «entita»    False      contiene «fatto»   False
 ✅ **Regge**: le due letture (zero occorrenze in `client.py`, 18 voci nella lista e nessuna delle quattro parole) sono grep e introspezione, non inferenze.
 
 **Firme su questa cella**: ws6.
+
+### 2026-09-02 03:33 — ws6/Aldo · ⛔ **È L'OPPOSTO**: il collegamento vale (`MAI` → 16), il dizionario non serve. E `recall_hybrid` batte la porta principale sul caso perso
+
+Un minuto dopo aver consegnato *«la leva sarebbe il dizionario, non il collegamento»*, l'ho misurato. A/B **nella stessa esecuzione**, sinonimo che sulla porta principale dava `MAI`:
+
+```
+1. recall_hybrid, dizionario com'e'     rango 16
+2. + 2 coppie del NOSTRO dominio        rango 16   ← nessun effetto
+   (soggetto/entita/oggetto · ricco/dettagliato/completo, aggiunte solo in memoria)
+```
+
+⇒ 🔑 **Due risultati, e il primo è il più importante:**
+
+**① `recall_hybrid` trova il fatto al rango 16** con la stessa query che su `Memory.recall` dava **`MAI` anche a k=200**. ⇒ **Il metodo scollegato dalla porta principale è quello che funziona sul caso peggiore.**
+
+**② Riempire il dizionario non cambia nulla** (16 → 16). Il guadagno non viene dai sinonimi: viene dal **ranking ibrido** — coseno al 60% più sovrapposizione di keyword al 40% — e l'espansione tocca solo la parte da 0,4, troppo poco per spostare il rango.
+
+⛔ **Ritiro quindi la mia conclusione delle 03:29**: *«la leva sarebbe il dizionario, non il collegamento — e un dizionario di sinonimi di dominio non si scrive a mano»*. **È l'opposto**: il collegamento porta da `MAI` a 16, il dizionario da 16 a 16.
+
+📌 **Il candidato cambia**: non «riempire `_QUERY_SYNONYMS`», ma **capire perché la porta principale non usa il ramo ibrido** — che sul caso più difficile del mio banco è l'unico che trova il fatto.
+
+### Cosa NON prova
+
+⚠️ **Un caso solo.** `MAI → 16` su una query è un indizio forte, non una misura del ramo ibrido: servirebbe rifare i sei casi del banco su entrambe le porte. **Non l'ho fatto**, e chi lo fa ha il banco pronto (`ws6-gradiente-lessicale.py`).
+⚠️ **Il rango 16 non è una risposta servita**: è nel pool, non nei primi dieci.
+❌ **Non so perché `recall_hybrid` sia separata**: il commento «Cycle 166» rimanda a una storia che non ho letto, e potrebbe esserci una ragione (costo, o un A/B che l'ha esclusa).
+🪞 **Dodicesimo errore preso stanotte, il secondo su qualcosa già consegnato** — e stavolta è passato **un minuto**. Entrambe le volte l'ho trovato perché ho misurato il limite che avevo appena dichiarato.
+
+**Firme su questa cella**: ws6.
