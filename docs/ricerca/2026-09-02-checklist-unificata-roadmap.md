@@ -5,7 +5,7 @@
 > **38/113 verificate · 1 correzione di stato (S6) · dello spot-check del lead,
 > 4 imprecisioni su 5 erano del lead e non del ricercatore.**
 >
-> **60 righe verificate, 2 stati corretti, 9 evidenze rafforzate.** Ogni verifica
+> **66 righe verificate, 2 stati corretti, 9 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -90,8 +90,19 @@
 > uses PostgreSQL 16.»*), non un backend — il mio allarme era un falso positivo,
 > il terzo della stessa forma oggi.
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **60 righe su 113**. Le
-> restanti 53 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑨ Sesto giro (21:56), 6 righe A METÀ e di documentazione: zero correzioni.**
+> Nove file dichiarati su nove esistono (`SECURITY.md`, `docs/SAAS_DEPLOY.md`,
+> `CHANGELOG.md` 2111 righe, i due `auto_dream_*`, `agent_guide.py`, `llms.txt`,
+> `sitemap.xml`, `security.yml`), il job `codeql` è a `security.yml:67` come dice
+> `V5`, e la CLI `agent-guide` è in `cli.py`.
+> **`Q20` regge, con una precisazione utile**: dice «nessuna guida di migrazione»
+> ed è vero **per l'utente** — nessun documento spiega come passare da una
+> versione all'altra. Ma esiste `docs/MIGRATIONS.md`, che documenta il framework
+> di migrazioni di schema: materiale che c'è, per un lettore diverso. Rafforza la
+> correzione di `A6` qui sopra.
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **66 righe su 113**. Le
+> restanti 47 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
