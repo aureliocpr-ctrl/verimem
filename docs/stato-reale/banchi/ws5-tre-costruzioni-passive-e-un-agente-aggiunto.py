@@ -23,6 +23,37 @@ variabile libera: qui diventa la variabile misurata.
 + un claim **VERO** per fonte (popolazione positiva): senza, una forma che ferma tutto
 sembrerebbe la piu' sicura.
 
+🪞 ESITO — **LA MIA IPOTESI E' FALSIFICATA, e il dato che ne esce e' piu' forte**::
+
+    #   VERO      A avere+part  B essere+part  C agente aggiunto  fonte
+    1   ammesso   ammesso       fermato        ammesso            Bianchi / Rossi
+    2   ammesso   ammesso       ammesso        ammesso            gate ws3 / ws4
+    3   ammesso   ammesso       ammesso        ammesso            servizio / Neri
+    4   ammesso   ammesso       ammesso        fermato            Milano / Torino
+    5   ammesso   ammesso       ammesso        ammesso            compilatore / Verdi
+
+    A avere+part        passa 5 su 5
+    B essere+part       passa 4 su 5
+    C agente aggiunto   passa 4 su 5
+    claim VERI ammessi (controllo positivo)   5 su 5
+
+⇒ **Le tre costruzioni si comportano UGUALE** (divario 1 su 5). ⇒ **La costruzione NON
+era la variabile**, e la spiegazione che avevo dato della divergenza fra i miei due
+banchi precedenti — «*avevo cambiato costruzione senza accorgermene*» — **cade**. Era
+un'ipotesi ragionevole e sbagliata.
+
+🔑 **MA IL TOTALE DICE LA COSA CHE CONTA: 13 falsita' di relazione su 15 PASSANO**, in
+qualunque forma passiva, con il controllo positivo a **5 su 5**. ⇒ **Conferma ① della
+matrice** (`080e4e27`: il gate protegge i valori e non le relazioni) su una popolazione
+piu' grande e in modo **piu' netto** — li' erano 3 su 6, qui 13 su 15.
+
+⚠️ **E QUELLO CHE NON SO, dopo aver falsificato la mia spiegazione**: **quale** caso
+venga fermato. Le due celle che cadono (1B e 4C) non hanno in comune la costruzione, e
+la stessa fonte 1 in un altro banco si comportava all'opposto. ⇒ **La variabile e' la
+FONTE, o il caso** — e con cinque fonti non lo distinguo. Lo lascio aperto **nominato**,
+non spiegato: una spiegazione ragionevole l'ho gia' data una volta stanotte, ed era
+falsa.
+
 REGIME: `main` installato (0.7.6), porta CLI, ambiente pulito, store nuovo per claim,
 CWD fuori dal repo, un processo per volta.
 ⚖️ PUNTI DEBOLI: cinque fonti (non dieci), italiano, e «agente aggiunto» richiede una
