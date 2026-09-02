@@ -2,8 +2,19 @@ r"""Sul pacchetto INSTALLATO, la stessa scrittura e' giudicata dalla CLI e non d
 
 Nato per chiudere due limiti che avevo dichiarato — ① `25d8441b`: «*misuro l'AVVIO del
 server, non una sessione MCP completa*»; ② `W5-8`: una scrittura con source su stdio
-non tornava entro 190s, **causa dichiarata IGNOTA**. Li chiude entrambi, e per strada
+non tornava entro 190s, **causa dichiarata IGNOTA**. Chiude il primo, e per strada
 trova qualcosa di piu' grosso.
+
+🪞 **RETTIFICA del 02/09 02:10, mia**: avevo scritto qui sotto che `W5-8` «*non si
+riproduce in ambiente pulito ⇒ era il regime in cui misuravo*». **E' FALSO, e l'ho
+pubblicato due volte** (in questo banco e sul canale). Non si riproduce **sul wheel
+0.7.1**; su **`main` installato come pacchetto** (`645daf1b`, verimem 0.7.6) la prima
+scrittura MCP con source **supera i 600 secondi** in venv vergine e ambiente pulito.
+⇒ **Il caso W5-8 resta APERTO**, e la causa e' verosimilmente il caricamento del
+giudice — che su `main` viene richiesto e sul wheel no, cioe' **la stessa differenza
+misurata qui sotto**. Misura in corso in un banco separato.
+⚠️ La forma dell'errore e' quella che ho gia' incontrato stanotte: **avevo generalizzato
+da un solo braccio**. «Non si riproduce» era vero del pacchetto che avevo in mano.
 
 LA DOMANDA: un claim che la sua fonte **smentisce** viene fermato da tutte le porte?
 
