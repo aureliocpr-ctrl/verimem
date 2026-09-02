@@ -39,7 +39,7 @@ Chi tiene il rilascio decide se e quando.
 > **What the numbers do not say**: this is one English public dataset; short
 > factual claims, not conversation. A different distribution moves both
 > figures — on an Italian corpus whose sources are terminal output the same
-> gate rejects about **18%** of what is already stored. And we do not fully
+> gate rejects about **19%** of what is already stored. And we do not fully
 > know *why* we lose 29.3%: the entailment moat is the first decider in
 > **73 of 88** cases, but a lexical layer had already flagged **68 of those
 > 73** — so «fix the moat» would not recover most of them.
@@ -77,10 +77,15 @@ citabile male:
 - **Il 13,3% e il 15,9% vengono dallo stesso run** di `LANT-109`; il **50,0%**
   è il criterio cieco dello stesso banco. **Non ho rieseguito niente stanotte**:
   cito la cella, che porta gli IC di Wilson stampati dal banco.
-- **Il ~18% italiano** è di `W7-89` (@ws4) ed è **una media appaiata**, corretta
-  dalla stessa cella il 31/08: la stima **pesata** sul corpus è **19,27%**.
-  Nel blocco ho scritto «about 18%» — **se si pubblica, va usato 19%**, o va
-  detto che è appaiata. ⚠️ **Questa riga è l'anello più debole del blocco.**
+- ✅ **CORRETTO il 02/09 alle 01:04**: il **~18% italiano** di `W7-89` (@ws4) è
+  **una media APPAIATA** — il banco tratta le due classi 50/50, ma nel corpus
+  pesano **1,74%** e **98,26%** ⇒ la stima **pesata** è **19,27%**, non 18,42%.
+  **Nel blocco ora c'è «about 19%».** ⚠️ **Lo scarto è 0,85 punti e non cambia
+  il messaggio** («circa un fatto su cinque»), **ma cambia la NATURA del
+  numero**: 18,4% è la media di un disegno costruito per confrontare due
+  classi, non una stima di popolazione — e il punto del mattino l'aveva già
+  citata in buona fede come se lo fosse. ⇒ **Un campione dichiarato non basta:
+  va dichiarato anche l'USO per cui la media è valida.**
 - **Il claim «one third»**: 15,9 contro 50,0 è **0,318** ⇒ «roughly one third»
   regge, ma è un rapporto fra una proporzione **con** intervallo e una **per
   costruzione**: non ha un IC e non va presentato come se ce l'avesse.

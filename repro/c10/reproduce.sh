@@ -57,6 +57,28 @@ except Exception as e:                      # noqa: BLE001
 d = _resolve_model_dir(None)
 ok = holds_the_weights(d)
 print(f"   {d} -> {'presente' if ok else 'ASSENTE'}")
+
+#: ⚠️ QUALE verimem stiamo per misurare? Misurato il 02/09 alle 00:25: uno
+#: script lanciato come `python percorso/file.py` ha la CARTELLA DELLO SCRIPT
+#: come primo `sys.path`, non la radice del repo — quindi con un editable
+#: install altrove vince QUELLO, e il banco misura un altro albero. Il json
+#: del C10 scrive il commit del proprio `cwd`, che in quel caso NON e' il
+#: commit del codice eseguito: la provenienza registrata sarebbe falsa e
+#: invisibile. Qui si stampa il path vero e il commit DI QUEL repo.
+import subprocess, pathlib, verimem
+p = pathlib.Path(verimem.__file__).resolve().parent.parent
+sha = subprocess.run(["git", "log", "-1", "--format=%h"], cwd=p,
+                     capture_output=True, text=True).stdout.strip() or "(non un repo)"
+print(f"   verimem ESEGUITO da {verimem.__file__}")
+print(f"   versione {getattr(verimem, '__version__', '?')} · repo {p} · commit {sha}")
+qui = subprocess.run(["git", "log", "-1", "--format=%h"],
+                     capture_output=True, text=True).stdout.strip()
+if sha != qui:
+    print(f"   ⚠️  IL CODICE NON VIENE DA QUESTO ALBERO: qui siamo a {qui}, il")
+    print("       verimem eseguito e' a un altro commit. Il risultato NON e' del")
+    print("       repo in cui credi di essere. Esegui col repo primo in sys.path")
+    print("       (es. `python -m benchmark.c10_falsita_servite_vs_mem0`) oppure")
+    print("       reinstalla l'editable su QUESTO albero prima di fidarti.")
 sys.exit(0 if ok else 2)
 PY
 then
@@ -67,7 +89,17 @@ then
 fi
 
 echo "== 3/5  esecuzione (~70 min, popolazione INTERA, nessun campionamento)"
-python benchmark/c10_falsita_servite_vs_mem0.py \
+#: ⚠️ `PYTHONPATH="$RADICE"` NON e' decorativo, ed e' la cura di un difetto
+#: misurato il 02/09 alle 00:29. Con `python percorso/file.py` il primo
+#: `sys.path` e' la CARTELLA DELLO SCRIPT (`benchmark/`), non la radice: se
+#: verimem e' installato editable verso un ALTRO albero, vince quello e il
+#: banco misura codice che non e' di questo repo — mentre il json scrive il
+#: commit del cwd, cioe' una provenienza FALSA e invisibile.
+#:   senza PYTHONPATH -> C:\Users\aurel\Code\HippoAgent\verimem\__init__.py
+#:   con  PYTHONPATH  -> C:\Users\aurel\Code\_ws7_tmp_main\verimem\__init__.py
+#: PYTHONPATH viene dopo la cartella dello script ma PRIMA di site-packages,
+#: quindi batte l'editable. Verificato eseguendo le due forme di seguito.
+PYTHONPATH="$RADICE" python benchmark/c10_falsita_servite_vs_mem0.py \
     --popolazione truthfulqa --n 300 --out "$NUOVO"
 
 echo "== 4/5  confronto con l'artefatto versionato"
