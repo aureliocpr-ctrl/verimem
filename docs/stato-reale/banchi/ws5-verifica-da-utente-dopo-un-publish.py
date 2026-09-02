@@ -73,13 +73,64 @@ VERO = "Nella coda ci sono 149 run in attesa."
 FALSO = "Nella coda ci sono 7777 run in attesa."
 
 
-def pulisci(env_extra=None):
-    """L'ambiente di un utente: senza le variabili che la nostra sessione esporta."""
+def pulisci(env_extra=None, home=None):
+    """L'ambiente di un utente: senza le variabili che la nostra sessione esporta.
+
+    ⑦ E con la HOME ISOLATA quando `home` e' dato. Non e' zelo: la scoperta del daemon
+    di encode passa da `DISCOVERY_PATH`, **hardcoded** a `~/.engram/encode_service.json`
+    (`encode_service.py:41`), che NON deriva da `HIPPO_DATA_DIR` (reperto `fdd6df83`).
+    ⇒ Senza HOME pulita, un venv «vergine» parla comunque col daemon dello stack
+    principale, e non stai misurando l'utente: stai misurando noi.
+    """
     env = {k: v for k, v in os.environ.items()
            if not k.startswith(("HIPPO_", "ENGRAM_", "VERIMEM_"))}
     env["PYTHONDONTWRITEBYTECODE"] = "1"
+    if home:
+        env["HOME"] = home
+        env["USERPROFILE"] = home
     env.update(env_extra or {})
     return env
+
+
+SESSIONE_MCP = r'''
+import asyncio, json, os, sys, time
+from mcp import ClientSession, StdioServerParameters
+from mcp.client.stdio import stdio_client
+
+STORE = sys.argv[1]
+FONTE = ("La coda della CI contiene 2557 run completati, 149 run in attesa "
+         "e 3 run in corso.")
+env = dict(os.environ); env["HIPPO_DATA_DIR"] = STORE
+
+async def main():
+    p = StdioServerParameters(command=sys.executable, args=["-m", "verimem.mcp_server"], env=env)
+    t0 = time.time()
+    async with stdio_client(p) as (r, w):
+        async with ClientSession(r, w) as s:
+            await asyncio.wait_for(s.initialize(), 300)
+            print("MCP|initialize|ok|%.1fs" % (time.time() - t0), flush=True)
+            tl = await asyncio.wait_for(s.list_tools(), 120)
+            print("MCP|tools/list|%d strumenti|-" % len(tl.tools), flush=True)
+            # la PRIMA chiamata e' sacrificale: su questa porta non torna (W5-31..34)
+            try:
+                await asyncio.wait_for(s.call_tool("hippo_remember",
+                    {"proposition": "Riscaldamento.", "source": FONTE}), 120)
+            except Exception:
+                pass
+            # il claim FALSO: la fonte dice 3, il claim dice 7777
+            t = time.time()
+            try:
+                res = await asyncio.wait_for(s.call_tool("hippo_remember",
+                    {"proposition": "Nella coda ci sono 7777 run in corso.",
+                     "source": FONTE}), 300)
+                d = json.loads("".join(str(getattr(c, "text", "")) for c in (res.content or [])))
+                print("MCP|write falso|status=%s grounding=%s|%.1fs"
+                      % (d.get("status"), d.get("grounding_score"), time.time() - t), flush=True)
+            except asyncio.TimeoutError:
+                print("MCP|write falso|TIMEOUT|%.1fs" % (time.time() - t), flush=True)
+
+asyncio.run(main())
+'''
 
 
 def esegui(exe, args, env, cwd, tmo=600, stdin_vuoto=True):
@@ -141,9 +192,30 @@ def main():
             vmcp = riga.split(":", 1)[1].strip()
     print("   installati: verimem %s · mcp %s" % (ver, vmcp))
 
-    env = pulisci({"HIPPO_DATA_DIR": store})     # ③
+    # ⑦ HOME isolata: senza, il venv «vergine» parla col daemon dello stack principale
+    home = os.path.join(base, "home")
+    os.makedirs(home, exist_ok=True)
+    env = pulisci({"HIPPO_DATA_DIR": store}, home=home)     # ③ + ⑦
+
+    # l'import da Python e le versioni COME LE VEDE il pacchetto installato, non pip
+    print("⑤ import e versioni dal PACCHETTO (non da `pip show`)")
+    codice = ("import verimem, mcp, sys;"
+              "print('verimem', getattr(verimem,'__version__','?'));"
+              "print('mcp', getattr(mcp,'__version__','?'));"
+              "print('da', verimem.__file__)")
+    t = time.time()
+    r_imp = subprocess.run([os.path.join(venv, "Scripts", "python.exe"), "-c", codice],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=300, env=env, cwd=neutra)
+    print("   exit %s in %.1fs" % (r_imp.returncode, time.time() - t))
+    for riga in (r_imp.stdout or "").splitlines():
+        print("   %s" % riga)
+    if r_imp.returncode != 0:
+        for riga in [x for x in (r_imp.stderr or "").splitlines() if x.strip()][-3:]:
+            print("   🔴 %s" % riga[:110])
+
     daemon = "acceso (default)" if env.get("ENGRAM_ENCODE_SERVICE", "1") != "0" else "spento"
-    print("\n⑥ REGIME: daemon condiviso %s · store nuovo · cwd %s\n"
+    print("\n⑥ REGIME: daemon condiviso %s · store nuovo · HOME isolata · cwd %s\n"
           % (daemon, os.path.basename(neutra)))
 
     passi = [
@@ -175,6 +247,27 @@ def main():
         esiti[nome] = (code, letto)
         print("  %-20s %-9s %7.1fs  %s" % (nome, code, dur, letto))
 
+    # ⑧ LA PORTA MCP DA DENTRO: `verimem mcp` dice solo se il processo PARTE.
+    # Una sessione vera (initialize + tools/list + una scrittura) dice se SERVE.
+    print("\n⑧ sessione MCP via stdio (initialize + tools/list + un claim FALSO)")
+    script = os.path.join(base, "_mcp.py")
+    with open(script, "w", encoding="utf-8") as f:
+        f.write(SESSIONE_MCP)
+    t = time.time()
+    r_mcp = subprocess.run([os.path.join(venv, "Scripts", "python.exe"), "-u", script, store],
+                           capture_output=True, text=True, encoding="utf-8",
+                           errors="replace", timeout=1800, env=env, cwd=neutra)
+    print("   exit %s in %.0fs" % (r_mcp.returncode, time.time() - t))
+    righe_mcp = [x for x in (r_mcp.stdout or "").splitlines() if x.startswith("MCP|")]
+    for x in righe_mcp:
+        p = x.split("|")
+        print("   %-14s %-34s %s" % (p[1], p[2], p[3] if len(p) > 3 else ""))
+    if not righe_mcp:
+        print("   🔴 la sessione MCP non ha prodotto nessuna riga")
+        for x in [y for y in (r_mcp.stderr or "").splitlines() if y.strip()][-4:]:
+            print("      %s" % x[:110])
+    giudizio_mcp = next((x.split("|")[2] for x in righe_mcp if "write falso" in x), "")
+
     print("\n=== VERDETTO ===")
     rotti = [n for n, (c, l) in esiti.items() if "🔴" in l]
     vero_ok = esiti.get("remember (vero)", ("", ""))[1] == "ammesso"
@@ -189,6 +282,17 @@ def main():
         print("     e il server MCP parte.")
     else:
         print("  🟡 i comandi partono ma il gate non distingue come dovrebbe.")
+    # il confronto che conta: la CLI e la porta MCP danno lo STESSO verdetto sul falso?
+    cli_falso = esiti.get("remember (falso)", ("", ""))[1]
+    print("\n  --- le DUE PORTE sullo stesso claim falso ---")
+    print("  CLI: %-14s   MCP: %s" % (cli_falso or "?", giudizio_mcp or "?"))
+    if cli_falso == "quarantinato" and giudizio_mcp and "quarantined" not in giudizio_mcp:
+        print("  🔴 LE DUE PORTE NON CONCORDANO sul pacchetto PUBBLICATO: la CLI ferma il")
+        print("     falso, MCP no. E' `W5-30` misurato sul wheel, ora sul servito da PyPI.")
+    elif cli_falso == "quarantinato" and "quarantined" in (giudizio_mcp or ""):
+        print("  🟢 entrambe le porte fermano il falso: la disparita' di `W5-30` NON si")
+        print("     riproduce su questo pacchetto.")
+
     print("\n  ⚠️ NON coperto: la disinstallazione dallo stack principale (fermerebbe le")
     print("     istanze che lavorano). E' l'unico pezzo della direttiva che resta a mano.")
 
