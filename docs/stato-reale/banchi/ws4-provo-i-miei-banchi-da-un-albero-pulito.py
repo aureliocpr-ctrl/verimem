@@ -29,7 +29,9 @@ esiti = {}
 for b in banchi:
     nome = os.path.basename(b)
     testo = open(b, encoding="utf-8").read()
-    if any(k in testo for k in PESANTI):
+    imports = chr(10).join(r for r in testo.splitlines()
+                           if r.startswith(("import ", "from ")))
+    if any(k in imports for k in PESANTI) or "run_validation_gate(" in testo:
         esiti[nome] = ("in-coda", "carica un modello: serve uno slot")
         print(f"  {nome[:50]:<52} {'IN CODA':<10} carica un modello")
         continue
