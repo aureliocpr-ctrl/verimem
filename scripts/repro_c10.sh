@@ -124,7 +124,21 @@ if [ "$OTTENUTO" = "NA" ] || [ -z "$OTTENUTO" ]; then
 fi
 
 DELTA=$(python -c "print(f'{abs($OTTENUTO - $ATTESO_SERVITO):.1f}')")
+
+# --- QUANTE VARIABILI SEPARANO L'ATTESO DA QUESTA CORSA ----------------------
+# Senza questo blocco il confronto mente per omissione: l'atteso e' stato
+# prodotto su UN commit, e fra quello e HEAD il gate puo' essere cambiato per
+# ragioni legittime. Chi legge «FUORI» deve sapere se sta guardando un numero
+# sbagliato o un prodotto diverso — sono due conclusioni opposte.
+COMMIT_ATTESO=$(python -c "
+import json
+print(json.load(open(r'$USCITA', encoding='utf-8')).get('commit','?'))" 2>/dev/null)
+DIST=$(git rev-list --count "${COMMIT_ATTESO}..HEAD" 2>/dev/null || echo '?')
+DIST_PROD=$(git rev-list --count "${COMMIT_ATTESO}..HEAD" -- verimem/ 2>/dev/null || echo '?')
+
 echo "  ─────────────────────────────────────────────────────────────────────"
+echo "    l'atteso viene dal commit ${COMMIT_ATTESO}; qui siamo $(git log -1 --format=%h)"
+echo "    fra i due: ${DIST} commit, di cui ${DIST_PROD} toccano verimem/"
 echo "    atteso (REPORT-30-08) : ${ATTESO_SERVITO}%   di falsita' fra i SERVITI"
 echo "    ottenuto qui          : ${OTTENUTO}%"
 echo "    scarto                : ${DELTA} punti   (tolleranza ${TOLLERANZA})"
@@ -151,9 +165,19 @@ if [ "$VERDETTO" = "DENTRO" ]; then
 else
   echo "  🔴 il numero pubblicato NON regge qui: scarto ${DELTA} punti."
   echo "     Questo e' il caso interessante, non un errore dello script."
-  echo "     Prima di concludere, guarda: stessa popolazione? stesso commit?"
-  echo "     stesso modello (local_gate_ce vs _v2)? Sono le tre variabili che"
-  echo "     spostano il numero senza che nessuno lo dichiari."
+  echo
+  echo "     ⚠️ PRIMA DI CONCLUDERE «la vetrina mente», nota che ${DIST_PROD} commit"
+  echo "        hanno toccato verimem/ fra l'atteso e questa corsa: una divergenza"
+  echo "        puo' essere un numero sbagliato OPPURE un prodotto cambiato, e sono"
+  echo "        due conclusioni opposte. Il modo di separarle e' rifare la misura"
+  echo "        sul commit dell'atteso:"
+  echo "            git worktree add /tmp/c10-allora ${COMMIT_ATTESO}"
+  echo "            cd /tmp/c10-allora && python benchmark/c10_falsita_servite_vs_mem0.py"
+  echo "        Se ANCHE LI' il numero diverge, allora il difetto e' nella riga"
+  echo "        pubblicata. Se li' regge, il prodotto e' cambiato e la riga e'"
+  echo "        semplicemente VECCHIA — va aggiornata, non ritirata."
+  echo "     Le altre due variabili da controllare: stessa popolazione (truthfulqa,"
+  echo "     non halueval) e stesso modello (local_gate_ce vs local_gate_ce_v2)."
   exit 3
 fi
 
