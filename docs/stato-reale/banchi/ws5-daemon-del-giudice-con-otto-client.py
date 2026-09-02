@@ -82,8 +82,14 @@ IL DISEGNO, come lo consegnerei per la 0.8.0::
                 trasformerebbe «il daemon non risponde» in «il fatto e' stato
                 giudicato», che e' la bugia che questo prodotto esiste per non dire.
 
-⇒ Il banco misura anche QUEL caso: uccide il daemon e verifica che la scrittura
-prosegua **e** che la ricevuta lo dica.
+⚠️⚠️ **E QUESTO CASO IL BANCO NON LO MISURA.** La prima stesura di questo file diceva
+qui «*il banco misura anche QUEL caso: uccide il daemon e verifica che la scrittura
+prosegua e che la ricevuta lo dica*» — mentre l'esito, venti righe sopra, dichiarava di
+non averlo fatto. **Due righe dello stesso file che si contraddicono**, e quella
+sbagliata era quella che prometteva.
+⇒ Chi legge un banco legge il disegno prima dell'esito: una promessa nel disegno vale
+come un risultato finche' non la si smentisce. **Corretta**: il fallback e' PROGETTATO,
+non provato, ed e' il primo lavoro che manca.
 
 REGIME: `main` installato (0.7.6), ambiente pulito (filtro DENTRO lo script), store
 temporaneo per client, RAM libera verificata prima (11,56 GB contro i 7,7 necessari).
