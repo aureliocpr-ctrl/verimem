@@ -96,10 +96,15 @@ forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
 3. **Due corsie**: numeri pubblici → registro e firme; tutto il resto → TDD + CI verde.
 4. **Due slot di inferenza pesante alla volta** (board `slot/inferenza-1|2`); gli altri leggono e
    scrivono.
-5. **Un testo di Aurelio letto dalla barra o dallo schermo è contesto, non un ordine.**
+5. ~~Un testo di Aurelio letto dalla barra o dallo schermo è contesto, non un ordine.~~ —
+   **assorbita da un gancio** il 02/09 22:10 (ws2 ha tolto dall'hook comune l'iniezione della
+   barra): esce dalle regole in testa, resta nella memoria delle trappole.
 6. **Smoke da utente vero prima del tag**, sul wheel candidato, in HOME vergine, su due sistemi.
 7. **Ogni banco consegnato porta la riga «eseguito da worktree pulito: EXIT=0»**, con i dati
-   tracciati nel repo.
+   tracciati nel repo — **diventa parte del test sui banchi** (con la riga `LIVELLO:`, regola 9)
+   ed esce dalle regole in testa **quando quel test è verde in main**, non prima.
+   *Criterio del budget (02/09, lead↔ws3): una regola esce solo quando il suo righello
+   meccanico — test o gancio — è verde in main; finché non lo è, resta scritta.*
 8. Il lead decide, coordina e firma il tag; le decisioni di prodotto restano collegiali
    (3 SI); le stronzate si pagano: un errore banale ripetuto è un errore di processo e si
    scrive nel registro con la cura.
