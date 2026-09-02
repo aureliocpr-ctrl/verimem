@@ -1,5 +1,45 @@
 # Checklist unificata delle roadmap — HippoAgent → Engram → Verimem (02/09/2026)
 
+> ## ✍️ Controfirma ws6 — 02/09/2026 19:51
+>
+> **30 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
+> è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
+> codice), non sui piani.
+>
+> **① Le 5 righe che lo spot-check del lead segnava come dubbie: 4 danno ragione
+> al ricercatore.** `G20` (il «1 commit» erano **i due commit della checklist
+> stessa** — la stringa esiste solo nei documenti scritti oggi), `C4` (le 6
+> `version INTEGER` sono in `migrations/`, `self_model.py`, `skill.py`: **nessuna
+> nello schema `facts`**), `A18` (l'unica occorrenza di `opentelemetry` è un
+> **commento**), `Q9` (**679** con tre criteri indipendenti; il 653 non si
+> riproduce). Su `R5` hanno ragione entrambi: il commit citato è sbagliato, ma il
+> codice marcato `REFUTED` **esiste** ed è `semantic.py:4278`.
+>
+> **② Una sola correzione di stato: `S6`**, da *MAI GUARDATO* ad *A METÀ*. Esiste
+> `verimem/schema_abstraction.py` **con** `tests/test_schema_abstraction.py` (7
+> test) — ma la funzione raggruppa per firma sintattica (prima parola + numero di
+> token), **non** fa trasferimento fra domini: il meccanismo c'è, la capacità no.
+>
+> **③ Le altre 6 MAI GUARDATE e tutte le 5 ABBANDONATE reggono**, con l'evidenza
+> ora scritta per esteso. Su `A8` ho evitato una trappola che avevo io: `git grep`
+> dava 2 file e `git log -S` 5 commit, ma **erano tutti documenti** — la roadmap
+> che la chiede e la checklist stessa.
+>
+> **④ Campione sulle FATTO**: 11 file dichiarati esistono tutti; i 4 conteggi di
+> righe citati (670, 375, 289, 16) sono **esatti**; i 3 flag dichiarati «default
+> ON» lo sono davvero (`v not in ("0","false","off","no")` con default vuoto, e
+> `getenv("ENGRAM_PPR_FUSION","on")` a `semantic.py:2534`). Ho controllato i due
+> file più piccoli perché *file esiste ≠ feature funziona*: `ann_index.py` (90
+> righe) fa davvero faiss HNSW con `add` incrementale, `trusted_writer.py` (46) è
+> una verifica `hmac.compare_digest`. **Nessuno dei due è uno stub.**
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **30 righe su 113**. Le
+> restanti 83 non sono state ricontrollate, e su di esse questa firma non dice
+> nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
+> «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
+> all'intera tabella.
+
+
 > **Mandato di Aurelio (02/09 19:30)**: «una checklist di tutte le roadmap, tutto quello che
 > contengono senza le ripetizioni — da tante voci se ne faccia una — per capire di quello che
 > ho chiesto cosa abbiamo fatto, cosa è irrealizzabile, cosa non abbiamo mai guardato, e
@@ -64,7 +104,7 @@
 | G17 | Consegnare al chiamante il disaccordo interno (`withheld_despite_judge`) | R08-16 (F3) | **A METÀ** | 150/4648 = 3,2% contato nel journal (doc 77); ricevuta sulle 2 porte dal 31/08 | Manca sulla CLI |
 | G18 | Difese contro le iniezioni dentro la fonte citata, multilingue | R07-18 §2.1, R08-16 3.4 | **A METÀ** | `verimem/prompt_injection.py`; `benchmark/redteam_judge_injection.py`, `gate_redteam.py` | Lo screen «ferma E spiega» è il modello comunicativo migliore del prodotto (W2-69); il red-team completo del write path era ancora assegnato |
 | G19 | Il gate è aggirabile con un `INSERT` sqlite diretto | R07-18 gap 1, R07-22 D11 | **NON FATTO ma fattibile** | evidenza di enforcement **non trovata** | È una libreria; il `gateway.py` (HTTP) è la porta che lo chiuderebbe, ma il file resta scrivibile |
-| G20 | Anti-trigger sulle skill + banco FSM col cancello **ΔF1 ≥ 15pp** | M0-05-11 §4-§6 | **MAI GUARDATO** ⚠️ | `git log -S"anti_trigger"` → il ricercatore dice **vuoto**, il lead trova **1 commit**: da leggere (ws6); nessun file FSM nel repo | La claim falsificabile centrale del paper di maggio non è mai stata costruita né falsificata. Era il gate go/no-go della 0.2.0 |
+| G20 | Anti-trigger sulle skill + banco FSM col cancello **ΔF1 ≥ 15pp** | M0-05-11 §4-§6 | **MAI GUARDATO** ⚠️ | ✅ **ws6**: `git log -S"anti_trigger" --all` → **2 commit, ed entrambi sono la checklist stessa** (`b73f51ab`, `3b10bafb`): la stringa esiste solo nei documenti scritti oggi, **non nel codice**. Il ricercatore aveva ragione. Nessun file FSM nel repo | La claim falsificabile centrale del paper di maggio non è mai stata costruita né falsificata. Era il gate go/no-go della 0.2.0 |
 
 ### A.2 — Recall e qualità del retrieval
 
@@ -74,7 +114,7 @@
 | R2 | Reranker cross-encoder sul top-k | R06-02P, R06-09A P0.2b/P0.4 | **A METÀ** | `ENGRAM_RECALL_RERANK` default ON (`9ca0c75`) + length-guard `_rerank_max_doc_chars` | Sulle query lunghe restituisce `"rerank": "skipped_long_query"` — «il rerank che quasi non gira» (doc 40); e il 02/09 ws1 ha misurato che il suo breaker scatta a metà banco e cambia l'esito (IT 20% ↔ 60%) |
 | R3 | Recall ibrido vettore+parole (BM25) | R06-09A P0.3 | **FATTO** | `verimem/bm25_rank.py` + fusion RRF | |
 | R4 | Fusione a 3 segnali (PPR sul grafo) accesa di default | R06-02P MOSSA 1 | **FATTO** | `ENGRAM_PPR_FUSION` default `"on"` (`semantic.py:2534`, flip `1d58be9`) | +7,5pp recall@5 a +40 ms; due leak di isolamento trovati dalla CI e chiusi (`e81392e`, `14b8a1c`) |
-| R5 | De-anisotropia (mean-centering) | R06-09A P0.2 | **ABBANDONATO** ⚠️ | refutato a n=300, McNemar p=0,0003 (R@10 0,777→0,697); il ricercatore cita `3f01065` come «codice marcato REFUTED», ma quel commit è «fix(recall): true centered cosine»: attribuzione da rileggere (ws6) | Il «win» a n=25 era rumore |
+| R5 | De-anisotropia (mean-centering) | R06-09A P0.2 | **ABBANDONATO** ⚠️ | refutato a n=300, McNemar p=0,0003 (R@10 0,777→0,697); ⚖️ **ws6**: il lead ha ragione sul commit (`3f01065` è «fix(recall): true centered cosine», 09/06) e il ricercatore sulla sostanza — **il codice marcato REFUTED esiste ed è `semantic.py:4278`**: «⚠ REFUTED at n=300 … the n=25 'win' was NOISE … R@10 0.777->0.697, p=0.0003 … DEFAULT OFF, do NOT enable». Citazione corretta: il file, non il commit | Il «win» a n=25 era rumore |
 | R6 | Selezione diversificata (MMR) per recuperare in profondità | R07-22 WS2 | **ABBANDONATO/SOSPESO** | `verimem/diversify.py` esiste, testato, **non cablato** — parere avversariale convergente 2/2 (glm-5.2 + deepseek-v4-pro) | Le domande temporali vogliono chunk quasi identici: MMR li tratterebbe come ridondanti |
 | R7 | Indice approssimato (ANN) per la scala | R07-18 gap 6, R07-22 WS5.1 | **FATTO** | `verimem/ann_index.py` (faiss HNSW, `add` incrementale, gating `should_use_ann`), extra `verimem[ann]` | Dormiente sotto soglia; brute-force esatto 0,6/5,9/28,4 ms @10k/100k/500k (SCALE.md) |
 | R8 | Banco onesto a 50k fatti + p95 pubblicati | R07-22 WS5.1, K7 | **A METÀ** | `SCALE.md` + `bench_scale_recall.py` fino a 100k (10/06), `benchmark/ann_recall_scale_bench.py` | I numeri ci sono, la pubblicazione col p95 come chiede K7 no |
@@ -109,7 +149,7 @@
 | A5 | Registro dei provider in YAML + comando diagnostico | R05-12/13 §4.3, R06-02P Fronte A | **FATTO** | `providers.yaml` + `provider_registry`; fix prefissi Groq `aa20eb8`; `verimem providers` | Il doppio registro divergente è chiuso |
 | A6 | Migrazioni versionate (Alembic) sui DB SQLite | R05-12/13 §4.5, R06-06E B4 | **NON FATTO** | nessuna cartella `migrations/`, nessun alembic | Lo schema si versiona a mano (`ensure_schema_version`, v6→v13+): funziona, ma non è quello che chiedevano |
 | A7 | Modelli tipizzati su ogni body FastAPI e su ogni `inputSchema` MCP | R05-12/13 §4.6, R06-02P §8 | **NON FATTO** | quantificato il 05/06: `_SCHEMAS_BY_TOOL` copre **11 / 227 tool = 4%**; 203 hanno uno schema ma non è applicato → gap 192 | Il fix (auto-derivare dagli inputSchema) è pianificato e mai eseguito |
-| A8 | Atomicità dello storage skill + `rebuild_index_from_files()` | R05-12/13 §4.4 | **MAI GUARDATO** | `grep rebuild_index_from_files` → **nessuna occorrenza** | |
+| A8 | Atomicità dello storage skill + `rebuild_index_from_files()` | R05-12/13 §4.4 | **MAI GUARDATO** | ✅ **ws6 conferma, con una trappola evitata**: `git grep` dà 2 file e `git log -S` 5 commit, ma **sono tutti DOCUMENTI** — la roadmap che la chiede e la checklist stessa; i «5 commit» sono due release e la checklist. **Nel codice non esiste**, e nessun test la nomina | |
 | A9 | Backend Postgres | R07-18 §2.3, R07-22 WS5.3 | **NON FATTO** | nessun modulo postgres/psycopg | Era esplicitamente condizionale («solo se il bench 50k mostra che SQLite non regge»): la condizione non è stata verificata |
 | A10 | Backup/restore ufficiale del DB | R05-27 P0b | **FATTO** | `verimem/backup.py` (545 righe), 11/11 test; CLI `backup-all` | VACUUM INTO atomico + rotazione |
 | A11 | Rollback transazionale su forget/supersede | R05-27 P0c | **FATTO** | `verimem/undo_log.py` (334 righe), schema v7, CLI `facts forget --undoable / undo / undo-list` | Limite dichiarato nel CHANGELOG 0.7.5: tiene il testo in chiaro 7 giorni |
@@ -119,7 +159,7 @@
 | A15 | Matrice dei permessi per ogni tool, applicata a runtime | R05-27 P0.5a (X1) | **A METÀ** | `verimem/tool_registry.py` cablato in `_capability_gate` (`mcp_server.py:7807`), fail-closed sugli sconosciuti — ma **`ENGRAM_CAPABILITY_GATE` default `off`** e **22 tool classificati su 251** | Il meccanismo è giusto e spento |
 | A16 | Vista TUI dello stato del gate (tool / effetti / rollback / quarantene) | R05-27 P0.5b (X2) | **NON FATTO** | `verimem/tui.py` esiste ma i pane sono `ChatPane / SkillsPane / EpisodesPane / SettingsPane` — nessuno dei quattro richiesti | |
 | A17 | Dashboard operatore «cosa sta facendo l'agente adesso» | R05-27 P3 | **A METÀ** | dashboard + `memory_map.py` + SSE `events.py` esistono; il pane real-time delle chiamate colorato per rischio non trovato | |
-| A18 | Tracciamento standard OpenTelemetry → SIEM | R05-27 P4a, R06-06E B5 | **NON FATTO** ⚠️ | il ricercatore: 0 occorrenze; il lead ne trova **1** (`grep -ri opentelemetry verimem/ pyproject.toml`): da leggere; nessun export OTLP | Esistono `observability.py` e log JSON, ma non l'export OTLP che serve a entrare in azienda |
+| A18 | Tracciamento standard OpenTelemetry → SIEM | R05-27 P4a, R06-06E B5 | **NON FATTO** ⚠️ | ✅ **ws6**: l'unica occorrenza è un **commento** (`l1_evidence.py:20`, che cita 'opentelemetry' come esempio di nome), non codice. Nessun export OTLP. Il ricercatore aveva ragione nella sostanza | Esistono `observability.py` e log JSON, ma non l'export OTLP che serve a entrare in azienda |
 | A19 | Replay di un'intera sessione | R05-27 P4b, R06-02P | **A METÀ** | `verimem/episode_replay.py` — episodio singolo, non sessione con timeline | |
 | A20 | Astrazione del provider di embedding + comando di migrazione | R05-27 P5 | **NON FATTO** | `embedding.py` singolo, modello via env; nessuna ABC `EmbeddingProvider`, nessun `embedding-migrate` | Il cambio di modello si è fatto lo stesso (04/06), a mano |
 | A21 | Multi-tenant con isolamento forte | R05-27 I1 (posticipato), R06-06E B3, R06-02P R1#3 | **FATTO** | `verimem/gateway.py` — **un DB per tenant** (`tenants/<id>/memory.db`), API key hashate, `gateway_audit.py`, `gateway_backup.py`; 9 test di isolamento | Da «esplicitamente posticipato» il 27/05 a costruito. Il leak trovato dalla CI col flip fusion è chiuso (`e81392e`) |
@@ -145,17 +185,17 @@
 | Q4 | Ascolto su interfaccia non-loopback solo con opt-in esplicito | R05-12/13 1.4 | **FATTO** | `Dockerfile` + `--insecure-bind` + `HIPPO_TRUSTED_NETWORK` | |
 | Q5 | Blocco delle richieste verso le reti interne (fetch e vision) | R05-12/13 1.7 | **FATTO** | `f479038` sul path immagine di vision; `test_ssrf.py` | |
 | Q6 | Esecuzione Python isolata in container | R05-12/13 Sprint 5.1 | **FATTO** | `DockerPythonExecutor` + factory con fallback, 8 test | |
-| Q7 | Chiavi nel portachiavi del sistema operativo | R05-12/13 5.4 | **MAI GUARDATO** | nessuna occorrenza di `keyring`, nessun commit | Le chiavi restano in `user_settings.json` (incoerenza già segnalata il 10/06) |
+| Q7 | Chiavi nel portachiavi del sistema operativo | R05-12/13 5.4 | **MAI GUARDATO** | ✅ **ws6 conferma**: `git grep -i keyring -- 'verimem/*.py'` → **0**. Le chiavi passano da `user_settings.json` (`dashboard_routes/settings.py`, `welcome.py`) | Le chiavi restano in `user_settings.json` (incoerenza già segnalata il 10/06) |
 | Q8 | Registro concatenato di ogni esecuzione di tool | R05-12/13 5.6 | **A METÀ** | catena completa sul write path (`adjudication_log` + `tamper_evidence`); sui tool MCP c'è `_audit_capability_call` ma il gate è default off | |
-| Q9 | Tassonomia delle eccezioni + eliminare i `except` generici | R05-12/13 3.1/3.2/3.5 | **NON FATTO** | `verimem/errors.py` **non esiste** (confermato); `except Exception` nel package: il ricercatore ne conta **653**, il lead **679** (criterio di conteggio diverso; obiettivo v1.0: 0) | |
+| Q9 | Tassonomia delle eccezioni + eliminare i `except` generici | R05-12/13 3.1/3.2/3.5 | **NON FATTO** | `verimem/errors.py` **non esiste** (confermato); `except Exception` nel package: ✅ **ws6 conta 679** con tre criteri indipendenti (`git grep` sui soli file tracciati, `grep -r` su `verimem/`, e `grep -r` escludendo `build/`) — **tutti e tre danno 679**, e `build/` non esiste nemmeno, quindi non è quella la differenza. **Il 653 non si riproduce**; obiettivo v1.0: 0 | |
 | Q10 | WAL + timeout su ogni connessione SQLite | R05-12/13 3.3 | **FATTO** | `verimem/_sqlite_pragma.py` | |
 | Q11 | CI su 3 sistemi × 4 versioni di Python + soglia di copertura 85% | R05-12/13 6.1 | **A METÀ** | matrice confermata (run `ci` 2716 verde 9/9 su win/ubuntu, py3.10-3.13); ma `ci.yml` → **`--cov-fail-under=46`** (confermato dal lead) | La matrice c'è, la soglia è ferma al valore di partenza di maggio (46%), non a 85% né al 90% della v1.0 |
 | Q12 | Prova d'installazione da ambiente vergine | R05-12/13 6.2, R08-16 W2/W7 | **FATTO** | smoke `EXIT=0` su wheel + WSL Ubuntu 24.04 con `pip install verimem==0.7.1` (02/09 12:47-13:11) | Reso direttiva permanente da Aurelio il 01/09 |
 | Q13 | Controllo delle dipendenze vulnerabili in CI | R05-12/13 6.3 | **FATTO** | `.github/workflows/security.yml` contiene `pip-audit` (confermato) | |
-| Q14 | Eseguibile Windows autonomo (PyInstaller) | R05-12/13 6.6 | **MAI GUARDATO** | nessun commit, nessun riferimento | |
+| Q14 | Eseguibile Windows autonomo (PyInstaller) | R05-12/13 6.6 | **MAI GUARDATO** | ✅ **ws6 conferma**: 0 occorrenze di `pyinstaller` o `.spec` in `verimem/` e `pyproject.toml` | |
 | Q15 | Extra pip `[headless]` `[mcp-only]` `[full]` | R05-12/13 6.5 | **FATTO** | `pyproject.toml:86-106` (+ `[audit]`, `[ann]`) | Ma `sentence-transformers` (→ torch) sta nelle dipendenze di base: l'install pesa 3,4 GB e 22 minuti (smoke 02/09) |
 | Q16 | Pubblicazione su PyPI | R05-12/13 6.7, R06-09A P3.1, R08-16 1.1/W7 | **FATTO** | tag `v0.7.1` su `1e293f4b`, publish run `33620334721`, PyPI serve 0.7.1 (wheel+sdist), 02/09 12:40 | Da «PyPI non pubblicato, 0 utenti esterni» (09/06) a pacchetto installabile e verificato dall'utente |
-| Q17 | ADR per i meccanismi di memoria attiva | R05-12/13 7.1 | **MAI GUARDATO** | nessuna cartella ADR; `docs/papers/MEMORY-THESES.md` è altra cosa | |
+| Q17 | ADR per i meccanismi di memoria attiva | R05-12/13 7.1 | **MAI GUARDATO** | ✅ **ws6 conferma**: nessuna cartella ADR nel repo. L'unico file che un grep su «decision-record» pesca è `docs/stato-reale/quadro-decisione-versione-30-08.md`, che è un quadro di rilascio, non un ADR | |
 | Q18 | Riferimento API Sphinx + tutorial da 30 minuti | R05-12/13 7.2 | **NON FATTO** | nessun `conf.py`, nessun commit «sphinx» | Sostituito di fatto da README + `agent_guide` |
 | Q19 | `SECURITY.md`, `SUPPORTED_DEPLOYMENT.md`, `THREAT_MODEL.md` | R05-12/13 7.3 | **A METÀ** | `SECURITY.md` ✔, `docs/SAAS_DEPLOY.md` ✔, `docs/SECURITY_AUDIT_2026-07-11.md` ✔; `THREAT_MODEL.md` **non trovato** | |
 | Q20 | CHANGELOG completo + guida di migrazione | R05-12/13 7.4/7.5 | **A METÀ** | `CHANGELOG.md` esiste ed è dettagliato; nessuna guida di migrazione | |
@@ -170,7 +210,7 @@
 | S3 | Capire e alzare il tasso di promozione delle skill | R06-09A P2.2 | **NON FATTO** | come sopra | |
 | S4 | Daemon di sogno/consolidamento/GC cablati | R06-02P build_next #5 | **A METÀ** | `auto_dream_trigger.py`, `auto_dream_worker.py` esistono | doc 48: «ventitré minuti senza daemon hanno spento una promessa del README» |
 | S5 | Consapevolezza: «so cosa so e cosa non so» (B1) | M0-05-11 §3 | **FATTO** | `hippo_assess_confidence`, `hippo_ignorance_map`, CLI `ignorance` | |
-| S6 | Trasferimento fra domini (B3) | M0-05-11 §10 | **MAI GUARDATO** | `hippo_find_cross_domain_schemas` esiste come tool, nessun banco | Era esplicitamente differito a M4+ |
+| S6 | Trasferimento fra domini (B3) | M0-05-11 §10 | **A METÀ** ⇐ *corretto da ws6* | ✅ **ws6**: non è «mai guardato» — esiste `verimem/schema_abstraction.py` con `find_cross_domain_schemas()` **e** `tests/test_schema_abstraction.py` (7 test, 127 righe, incluso `test_find_cross_domain_schemas`). ⚠️ **Ma non fa quello che il nome promette**: raggruppa i corpi delle skill per template condiviso, con bucket per *prima parola + numero di token* — è una firma **sintattica**, non un trasferimento semantico fra domini | Il meccanismo c'è ed è testato; la capacità che la roadmap chiedeva no. Era esplicitamente differito a M4+ |
 | S7 | Il tier degli episodi vivo e usato | R05-27, R06-02P | **A METÀ** | 479 episodi, **ultima scrittura 31/08, ultimo accesso 29/08, 80% è di maggio** (doc 77) | Costruito, quasi non attraversato |
 
 ### A.7 — Continuità e uso reale della memoria
@@ -180,7 +220,7 @@
 | C1 | Handoff automatico al compact su file, non nel DB | R06-02P Fronte B | **FATTO** | hook pre-compact + session-start; anti-pollution verificato (delta DB = 0, `7123800`) | |
 | C2 | Bonifica e recupero dei quarantinati, zero cancellazioni | R06-02P Fronte C, §9 | **FATTO** | 740 fatti veri recuperati (14/06); retro-cleanup 284 spostati / 7 saltati / 2347 contraddizioni orfane potate (20/07), backup `semantic-pre-retro-cleanup-2026-07-20.db` | Corpus curato 84,4% → 89,8% |
 | C3 | Registro delle capacità interrogabile da un agente esterno | R06-02P backlog 05/06 (mandato Aurelio) | **A METÀ** | `verimem/agent_guide.py` + CLI `agent-guide` | L'idea (un agente non-Claude scopre, usa e si auto-vincola) è realizzata come guida, non come registro namespaced separato dai fatti |
-| C4 | **Versionare invece di ritirare** (`SemanticMemory.supersede()`) | R08-16 2.1 (decisione del 05/08, `62c2a8610c99`) | **NON FATTO ma fattibile** ⚠️ | il ricercatore: «nessuna colonna di versione nello schema `facts`»; il lead trova **6 occorrenze di `version INTEGER`** in `verimem/` — da vedere in quale schema (ws6). `supersede()` (`semantic.py:5664`) resta un ritiro per campo. Il commit `c8aaa889` (02/09) è la **misura** del costo, non l'innesto: 0,21% di costo, +448 fatti (2,6 punti) — ws2 lo sta implementando dal 02/09 sera | 28 giorni dalla decisione, zero innesti fino a oggi. È l'esempio che il piano settembre cita come prova che «il sistema premia la diagnosi e non la cura» |
+| C4 | **Versionare invece di ritirare** (`SemanticMemory.supersede()`) | R08-16 2.1 (decisione del 05/08, `62c2a8610c99`) | **NON FATTO ma fattibile** ⚠️ | ✅ **ws6**: le **6 occorrenze di `version INTEGER`** stanno in `migrations/__init__.py:37`, `self_model.py:20/26/81/87`, `skill.py:135` — **nessuna nello schema `facts`**. Il ricercatore aveva ragione. `supersede()` (`semantic.py:5664`) resta un ritiro per campo. Il commit `c8aaa889` (02/09) è la **misura** del costo, non l'innesto: 0,21% di costo, +448 fatti (2,6 punti) — ws2 lo sta implementando dal 02/09 sera | 28 giorni dalla decisione, zero innesti fino a oggi. È l'esempio che il piano settembre cita come prova che «il sistema premia la diagnosi e non la cura» |
 | C5 | Indice dei documenti come via per i fatti lunghi | R08-16 (implicito), doc 76 | **A METÀ** | `verimem index` + `search-docs` funzionano (22 chunk, citazione al byte) — ma `documents.db` **non esiste** nello store, pur essendo la via raccomandata per iscritto | La capacità c'è, la nostra stessa memoria la raccomanda, e nessuno l'ha mai percorsa |
 
 ### A.8 — Vetrina e onestà pubblica
@@ -207,7 +247,7 @@
 | **A METÀ** | 33 | 29% |
 | **NON FATTO ma fattibile** | 17 | 15% |
 | **ABBANDONATO / IRREALIZZABILE** | 5 | 4% |
-| **MAI GUARDATO** | 7 | 6% |
+| **MAI GUARDATO** | 6 | 5% | ⇐ *era 7: `S6` corretta da ws6 in A METÀ*
 | **non verificabile da qui** | 2 | 2% |
 
 **Le 5 abbandonate, col perché:**
