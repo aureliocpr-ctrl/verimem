@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 03:30
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 03:45
 
-**Ventotto celle (`W2-381` … `W2-408`), sedici controfirme a celle altrui, cinque cure a
+**Trentaquattro celle (`W2-381` … `W2-414`), diciotto controfirme a celle altrui, cinque cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -14,9 +14,9 @@ aveva**. Tre buchi del prodotto sono venuti fuori così, non cercandoli.
 
 | | | |
 |---|---|---|
-| **controfirme date** | **16** | 15 confermano, 1 non si riproduce (`LANT-32`) |
-| **reperti nuovi nati da una controfirma** | **3** | il pavimento `L1`, la soglia tabellare, la giuntura sui numerali |
-| **mie affermazioni ritirate da me** | **4** | tutte con la misura che le smentiva, tutte entro un'ora |
+| **controfirme date** | **18** | 17 confermano, 1 non si riproduce (`LANT-32`) |
+| **reperti nuovi nati da una controfirma** | **5** | il pavimento `L1`, la soglia tabellare, la giuntura sui numerali, i tre presidi scoperti, la scala della plausibilità |
+| **mie affermazioni ritirate da me** | **6** | tutte con la misura che le smentiva; le ultime due entro dieci minuti |
 | **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
 
 ---
@@ -136,7 +136,55 @@ prima di ogni sessione.
 
 ---
 
-## Quattro cose che ho scritto e ritirato io, nella stessa notte
+## ⑤ Per far entrare una falsità non serve contraddire la fonte: basta aggiungere
+
+**`W2-410`, `W2-413`, `W2-414`** — nati dalla convergenza con la classe di @ws1 (9 frasi su
+10 col soggetto scambiato passano il giudice).
+
+**Il caso di @ws1 al gate intero:** claim che attribuisce ai «respinti» il numero degli
+«ammessi» → **`persist`, grounding 99,94, `layers=[]`**. Il vero dà 99,97. **Tre centesimi
+di differenza e nessun presidio parla.** Non è che tre presidi non blocchino: **nessuno dei
+tre si accorge** — il giudice non distingue di chi si parla, `L4.1` trova lo stesso numero,
+e `L4.3` — il layer scritto apposta per la coppia soggetto-valore — **si astiene su 7 scambi
+su 7** che ho costruito, pur **parlando** su altri testi (controllo positivo acceso).
+
+**Poi la serie a variabile singola**, fonte *«Il direttore dei lavori ha firmato il verbale
+del collaudo il 28 marzo»*, cinque claim falsi:
+
+```
+① assurdo    «il COLLAUDO ha firmato il verbale DEL DIRETTORE»   28,32  fermato
+② persona    «il VICEdirettore ha firmato…»                       0,23  fermato
+③ oggetto    «…il verbale DEL SOPRALLUOGO»                       95,08  PASSA
+④ verbo      «ha VISTATO il verbale…»                            94,30  PASSA
+⑤ dettaglio  «…del collaudo DEL LOTTO B»                         98,97  PASSA
+⓪ controllo  claim = fonte                                       99,96  passa
+```
+
+**Il giudice difende il SOGGETTO e non l'OGGETTO**, e **il caso peggiore è il più facile da
+costruire**: un dettaglio aggiunto sta a **una unità** dal claim vero.
+
+> **Equo verso il prodotto:** la promessa del README è *«a claim the source **openly
+> contradicts** does not come back as truth»*. Un claim che **aggiunge** non è contraddetto.
+> **La promessa regge, ed è formulata per coprire esattamente ciò che il prodotto fa** — è un
+> merito di chi l'ha scritta. Ma chi legge «memoria verificata» capisce di più.
+
+**E la regola non ce l'ho, e non la invento:** il caso ② e quello di @ws1 cambiano entrambi
+il soggetto e danno **0,23 contro 99,94**. Ho una curva, non una legge.
+
+---
+
+## Il dato positivo, con la stessa prontezza
+
+**`W2-412`.** Il gate ha **quarantinato un mio fatto** a **0,22** — e aveva ragione: la mia
+proposizione nominava date che la source non conteneva. Riformulato col lessico della source:
+**99,96**. **Stessa misura, stessa source, parole diverse.**
+
+**Insieme ai buchi dà il perimetro vero:** dove il claim **nomina** qualcosa di assente il
+presidio lo prende; dove usa le parole della fonte e cambia il **riferimento**, no.
+
+---
+
+## Sei cose che ho scritto e ritirato io, nella stessa notte
 
 Le lascio perché **il modo in cui sono cadute vale più del numero che portavano**, e perché
 tre su quattro sono **la stessa forma**: un caso singolo trasformato in una proprietà del
@@ -151,6 +199,13 @@ prodotto.
    fermata **tre volte meno** della media. (`W2-390`)
 4. **«Il gate è più permissivo di quanto le celle rosse lascino credere»** — detta al tavolo
    del rilascio → `LANT-31` la smentisce: **`L1.13` blocca eccome**. (`W2-400`)
+5. **«Il tuo caso peggiore è ciò che `L4.3` è progettato per prendere»** — detta a @ws1 e
+   **corretta in tre minuti**: `L4.3` si astiene. (`W2-410`)
+6. **«Il giudice vede le parole che non tornano»** → cercato il controesempio io stessa e
+   trovato in dieci minuti: **prende le relazioni invertite** a 0,44. La tesi è un'altra, ed è
+   quella che **la ricevuta stampa a ogni scrittura**: *«not a check that the fact follows
+   from it»*. **Ci sono arrivata in cinque ore di banchi a una frase che avevo già letto e
+   citato.** (`W2-413`)
 
 > **Il presidio non è «vai più piano»: è che ogni frase della forma «il prodotto fa X» esige
 > il caso che la contraddice, cercato PRIMA di scriverla.** Nessuna delle quattro l'ha trovata
