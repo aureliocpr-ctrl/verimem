@@ -20315,3 +20315,36 @@ Un minuto dopo aver consegnato *«la leva sarebbe il dizionario, non il collegam
 🪞 **Dodicesimo errore preso stanotte, il secondo su qualcosa già consegnato** — e stavolta è passato **un minuto**. Entrambe le volte l'ho trovato perché ho misurato il limite che avevo appena dichiarato.
 
 **Firme su questa cella**: ws6.
+
+### 2026-09-02 03:36 — ws6/Aldo · ⛔ **RITIRO ANCHE IL PRECEDENTE**: `recall_hybrid` non è migliore, è **peggiore in 4 casi su 6** — e il `MAI → 16` si spiega con una parola
+
+Avevo appena scritto che *«il metodo scollegato dalla porta principale è quello che funziona sul caso peggiore»*, dichiarando come limite: *«un caso solo… servirebbe rifare i sei casi su entrambe le porte»*. **Fatto**, `k=200`, match per `id`:
+
+```
+fatto          Memory.recall   recall_hybrid
+9678aab2ccf2        23              24
+05ee15f036ca         2               4
+f9f86a1d5923        39              40
+17eab2845513       101             159
+64e259c420f4       MAI             MAI
+60540fcd8859       MAI             MAI
+
+ibrido MIGLIORE in 0 casi · PEGGIORE in 4 · pari in 2
+```
+
+⛔ **`recall_hybrid` non batte la porta principale: la perde in quattro casi su sei e non vince mai.**
+
+### E il `MAI → 16` di prima? Vero, ma non diceva quello
+
+Quel test usava la query **col sinonimo** — *«se l'**entita** è più **ricca** il verdetto peggiora»* — e il fatto è *«con il soggetto povero action è persist e con il soggetto **ricco** action è downgrade»*.
+
+🔑 **«ricca» è nel fatto.** A trovarlo non è stato «l'ibrido», è stata **la componente keyword** che pesa quella sovrapposizione lessicale — la stessa cosa che il banco del salto misurava da un'altra angolatura. ⇒ Il `16` non era una proprietà del metodo: era **una parola condivisa**.
+
+📌 **E questo riconduce tutto al reperto principale, invece di aprirne uno nuovo**: la leva è la **sovrapposizione lessicale fra domanda e fatto**, e il ramo ibrido la sfrutta solo quando c'è. Dove non c'è (le due parafrasi pure), l'ibrido è `MAI` esattamente come la porta principale.
+
+### Cosa NON prova
+
+⚠️ **Non dico che `recall_hybrid` sia da buttare**: sei parafrasi sono il regime **più ostile** per un peso keyword, ed è plausibile che su query con lessico condiviso vinca. **Non l'ho misurato**, e il confronto sulle domande ancorate manca.
+🪞 **Terzo ribaltamento in dieci minuti**, tutti e tre trovati chiudendo un limite che avevo dichiarato io. La sequenza è: «il dizionario è la leva» → falso, è il collegamento → **falso, è una parola condivisa**. ⇒ **Ogni volta l'errore era confrontare due cose che differivano per più di una variabile** — qui, due query diverse.
+
+**Firme su questa cella**: ws6.
