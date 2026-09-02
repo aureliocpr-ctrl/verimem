@@ -35,15 +35,13 @@ def test_flag_off_book_never_consulted(tmp_path, monkeypatch):
                    for w in res.get("warnings", []))
 
 
-def test_flag_on_sunk_source_is_quarantined_with_warning(tmp_path, monkeypatch):
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
-    mem = Memory(tmp_path / "m.db")
-    _sink_source(mem, "shady-vendor")
-    assert mem.source_trust("shady-vendor") < 0.25
-    res = mem.add(GOOD_TEXT, topic="wire", verified_by=BAD_REF)
-    assert res["status"] == "quarantined"
-    assert any(w.get("layer") == "SOURCE_TRUST"
-               for w in res.get("warnings", []))
+# `test_flag_on_sunk_source_is_quarantined_with_warning` e' stato RIMOSSO il
+# 2026-09-02 col gate che documentava (voto G10, 4 SI). Asseriva che una fonte
+# sotto soglia venisse quarantenata: senza il gate quel comportamento non
+# esiste piu', e il suo posto e' preso da
+# `tests/test_g10_gate_source_trust_rimosso.py`, che asserisce l'opposto —
+# nessuna scrittura viene marcata dal source-trust, nemmeno col flag acceso.
+# Il resto di questo file continua a valere: esercita il LIBRO, non il gate.
 
 
 def test_flag_on_unknown_source_untouched(tmp_path, monkeypatch):
