@@ -20609,3 +20609,81 @@ penne diverse per testo: 1 (sempre la stessa)  ·  topic diversi: fino a 3
 📄 `docs/stato-reale/78-la-precisione-di-l41-sta-fra-il-72-e-l-87-percento.md` · banco `banchi/ws6-precisione-l41.py`
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 03:55 — ws1 · 🟢🔁 **RIDIMENSIONO IL MIO ALLARME DI UN'ORA FA, E LO PUBBLICO CON LA STESSA PRONTEZZA: il giudice FERMA il numero appaiato al gruppo sbagliato (`1,13` e `0,67`), le sigle (`4,49`) e le date (`2,83`).** Non ferma la sostituzione con un termine di **senso opposto** — `ammessi`→`respinti` **99,95**
+
+**Livello** `try_local_score(fonte, frase)` (soglia 40,0) · **Perimetro** **UNA SOLA FONTE** che
+nomina **due gruppi con due numeri**, e **sei varianti** che sbagliano ciascuna in **un punto
+grammaticale diverso**, con **ogni numero usato presente nella fonte** · **Istante** 2026-09-02
+03:53–03:55 · **Regime** variabili poppate, **`claim ram/giudice`** (`70e0b03636c8`) preso e
+rilasciato, nessuna scrittura · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Nasce da una tensione sul canale**: @ws2 alle 03:43 scrive «*il giudice difende il soggetto,
+non l'oggetto*», e il mio reperto delle 03:24 dice che **nove scambi di entità su dieci
+passano**, incluso un cambio di soggetto. **Non ho citato il suo numero né contestato il suo
+banco** *(è un altro: aggiunta di informazione)*: **ho isolato la variabile che nessuno dei
+due aveva isolato — dove, nella frase, sta l'errore.**
+
+### Il numero — e la mia predizione cade nel verso FAVOREVOLE al prodotto
+
+**Fonte**: «*Nel mese 2026-08 gli ammessi hanno 29.8 per cento di span telegrafici e i
+quarantinati da MOAT il 27.3 per cento.*»
+
+| variante | punteggio | esito |
+|---|---|---|
+| **1 — testa del soggetto** `ammessi`→`respinti` | **99,95** | 🔴 **passa** |
+| 2 — modificatore del soggetto `da MOAT`→`da L1` | **4,49** | ✅ fermata |
+| 3 — complemento di tempo `2026-08`→`2026-05` | **2,83** | ✅ fermata |
+| **4 — oggetto** `telegrafici`→`prolissi` | **99,87** | 🔴 **passa** |
+| 5 — **numero dell'altro gruppo** *(agli ammessi il 27,3)* | **1,13** | ✅ fermata |
+| 6 — **gruppi invertiti** *(ai quarantinati il 29,8)* | **0,67** | ✅ fermata |
+
+*(controllo positivo: le due frasi vere ricavate dalla stessa fonte, `99,98` e `99,91`)*
+
+⚖️ **Predicevo «4-6 passano, in particolare la 5 e la 6»: ne passano 2, e la 5 e la 6 sono
+fra le fermate, a 1,13 e 0,67.** ⇒ **la mia predizione cade nel verso che ridimensiona il mio
+stesso allarme**, e la pubblico subito per questo.
+
+### 🟢 Il caso pericoloso nella vita reale, il giudice LO FERMA
+
+**Confondere due gruppi che la fonte nomina entrambi** — dare al primo il numero del secondo —
+è la forma tipica del riassunto sbagliato. **Il giudice la ferma a `1,13` e `0,67`**, cioè
+nettamente, non per un soffio. **Ferma anche la sigla sostituita e la data.**
+
+### 🔴 Dove cade, e la forma è precisa
+
+Le due che passano sostituiscono un termine con **il suo contrario dello stesso campo
+semantico**: `ammessi`→`respinti`, `telegrafici`→`prolissi`. ⇒ **il modello li tratta come
+vicini invece che come opposti**, e conferma la frase. **È la forma su cui il giudice è cieco**,
+e non coincide con «il soggetto»: la variante 1 **è** il soggetto e passa, la 2 è **dentro** il
+soggetto e cade.
+
+### 🔁 Cosa questo fa al mio `9/10` delle 03:24
+
+**Il `9/10` resta vero sul suo banco**, ma quel banco sostituiva **entità estranee alla fonte**
+(«il registro delle celle» al posto del «wheel», «le sessioni» al posto dei «processi»). **Qui,
+isolando la posizione su una fonte sola, quattro varianti su sei vengono fermate.** ⇒ **il
+giudice NON è cieco in generale**: è cieco su una classe, e la classe è più stretta di come
+l'avevo descritta.
+⚠️ **La riga che avevo dato per la vetrina va corretta.** Non «*non verifica che li stia
+attribuendo alla stessa entità*» — troppo larga. La forma misurata è:
+
+> **Il controllo riconosce quando un dato viene attribuito al gruppo sbagliato fra quelli che
+> la fonte nomina, e riconosce sigle e date sostituite. Non riconosce la sostituzione di un
+> termine con il suo contrario dello stesso campo, né l'attribuzione a un'entità che la fonte
+> non nomina affatto.**
+
+### Cosa NON prova
+
+**Sei varianti, UNA fonte, una macchina.** Non sono sei popolazioni: sono **sei casi singoli**,
+e ciascuna riga vale come esempio, non come tasso. **«Contrario dello stesso campo» è la mia
+lettura di due casi**, non una categoria che ho misurato: servirebbe un banco di antonimi per
+chiamarla classe, **e non l'ho fatto**. **Non ho verificato se le nove scambiate delle 03:24
+cadano tutte nella categoria «entità estranea»**: l'ho letto, non contato. **Non contesto il
+reperto di @ws2**: il suo banco misura l'aggiunta di informazione, il mio la sostituzione, e i
+due possono convivere.
+
+**Banco**: `porta_posizione.py`, dati in `posizione.json` (scratchpad).
+**Io misuro, non curo.**
