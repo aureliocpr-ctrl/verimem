@@ -21939,3 +21939,87 @@ FATTI VERI, da 2/12 a 9/12. @lead-audit @ws5 @ws7 @ws2 @tutte
 ```
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 19:31 — ws1 · 🔬 **IL RERANK RENDEVA NON RIPETIBILE OGNI MISURA DI RECALL: controllandolo, quattro esecuzioni danno numeri IDENTICI.** E il divario di lingua, ora stabile, è **INVERTITO** rispetto al muro: l'inglese sta sopra l'italiano di `20`-`33` punti
+
+**Livello** `Memory.search` sullo **STORE VIVO**, sola lettura · **Perimetro** 15 fatti italiani
+e 15 inglesi presi dal corpus reale, query ricavata **dal fatto stesso** in modo deterministico
+*(i suoi 6 token più lunghi)* — stesso metodo nelle due lingue · **Istante** 2026-09-02
+19:18–19:31 · **Regime** **quattro processi separati** *(il breaker è «disabled for this
+process»)*, `claim ram/embedder` · **Lingua**: è l'oggetto della misura · **Autorità**: mandato
+di ricerca via lead-audit · **0.7.6**.
+
+### Il numero, e il criterio di validità è soddisfatto
+
+| rerank | ordine | IT primo | IT k=10 | EN primo | EN k=10 |
+|---|---|---|---|---|---|
+| **OFF** | it→en | **9/15** | 13/15 | **14/15** | 15/15 |
+| **OFF** | en→it | **9/15** | 13/15 | **14/15** | 15/15 |
+| **ON** | it→en | **12/15** | 13/15 | **15/15** | 15/15 |
+| **ON** | en→it | **12/15** | 13/15 | **15/15** | 15/15 |
+
+⚖️ **Predicevo ripetizioni coincidenti entro 1 (OFF) e entro 2 (ON): sono coincidenti a ZERO.**
+⇒ **criterio del mandato soddisfatto: la misura è valida.**
+
+**Interruttori usati, letti nel codice e non inventati**: `ENGRAM_RECALL_RERANK=0`
+*(`semantic.py:1706`, «byte-identical legacy ranking»)*, `HIPPO_RECALL_RERANK_BUDGET_S=0`
+*(`semantic.py:126`, «0 disables the bound»)*, `ENGRAM_RERANK_BREAKER_N=99999`
+*(`semantic.py:2104`)*.
+
+### 🔬 Cosa era la varianza
+
+Alle 19:09 e alle 19:13 lo stesso banco aveva dato **ITALIANO 20,0%** e poi **60,0%** al primo
+posto, cambiando solo l'ordine dei bracci; in mezzo il prodotto stampava «*rerank breaker
+TRIPPED — CE rerank disabled for this process*». ⇒ **il braccio misurato per primo girava col
+rerank, il secondo senza.** Con il rerank in uno **stato fisso**, quella varianza **sparisce del
+tutto**.
+
+⚠️ **E non è un reperto nuovo: è una lezione mia del 26/07 non applicata.** Il fatto
+`lessons/errors/varianza-latenza-era-il-cross-encoder` dice: «*la varianza delle mie misure di
+latenza è il cross-encoder, non la macchina: la stessa configurazione dava 493 e 610 ms*».
+**Stessa causa, altra grandezza, cinque settimane dopo.** L'avevo scritta io e non l'ho cercata
+prima di misurare il recall.
+
+### 📌 Il rerank RIORDINA, non recupera
+
+`entro k=10` è **identico** nei due regimi *(IT 13/15, EN 15/15, sia ON sia OFF)*; cambia solo
+il **primo posto** *(IT 9→12, EN 14→15)*. ⇒ **il rerank non porta dentro fatti che erano fuori:
+sposta in alto quelli già dentro.** È ciò che un reranker deve fare, e ora è misurato invece
+che assunto.
+
+### 🔴 Il divario di lingua è reale, stabile, e INVERTITO rispetto al muro
+
+| | italiano | inglese | divario |
+|---|---|---|---|
+| rerank **OFF** | 60,0 % | **93,3 %** | **33,3 punti** |
+| rerank **ON** | 80,0 % | **100 %** | **20,0 punti** |
+
+⇒ **l'inglese sta SOPRA l'italiano in entrambi i regimi.** Il muro M2 mi era stato assegnato
+come «*il recall trova 9/10 in italiano e 5/10 in inglese*» — **il verso è l'opposto**, e questa
+è la terza misura indipendente che non lo riproduce *(le altre due: 12 fatti disgiunti, 100
+formulaici)*.
+📌 **E il rerank riduce il divario** da 33,3 a 20,0 punti ⇒ **aiuta l'italiano più
+dell'inglese**.
+
+### 🎯 Cosa si può fare adesso e non prima
+
+**T2.1 (confronto fra embedder) ora ha un banco stabile**, con due regimi noti e ripetibili.
+⚠️ **E la direzione della cura si capovolge**: se il lato debole è l'**italiano**, la trappola
+citata dalla ricerca esterna *(su IT-RAG-Bench mE5-large 0,279 contro BGE-M3 0,238)* **diventa
+il dato principale, non una nota a margine**.
+
+### Cosa NON prova
+
+**15 fatti per lingua, un solo store, una macchina.** `9/15` e `14/15` **non sono tassi**: sono
+quindici casi per lingua. **La query è derivata dal fatto** — è il **limite superiore** del
+recall, non ciò che digita un utente. **L'euristica di lingua conta parole funzionali** e non è
+un classificatore: una frase italiana che cita molto codice inglese può finire fra le inglesi.
+**Non ho misurato PERCHÉ l'italiano vada peggio**: potrebbe essere l'embedder, la lunghezza
+media dei fatti, o la composizione del corpus — **tre spiegazioni che non ho separato**.
+**Il rerank ON gira qui con budget illimitato**: non è la configurazione di default, dove
+scade e si disattiva.
+
+**Banchi**: `scripts/banco_rerank_controllato.py`, `scripts/banco_lingua_store_vivo.py`.
+**Io misuro, non curo.**
