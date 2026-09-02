@@ -98,8 +98,23 @@ def main():
         raise SystemExit(1)
 
     r = git("push", "origin", "main")                             # ④
-    print("\n  ✅ tutti e %d i commit sono tuoi — pushato." % len(righe))
-    print("  %s" % (r.stdout or r.stderr or "").strip().splitlines()[-1:] or "")
+    # ⚠️ (!) LA PRIMA VERSIONE STAMPAVA «pushato» SENZA GUARDARE L'ESITO: il 02/09 alle
+    # 13:20 un push respinto per non-fast-forward («Note about fast-forwards») e' stato
+    # annunciato come riuscito. E' esattamente il difetto che questo script esiste per
+    # evitare — un controllo che RACCONTA invece di VERIFICARE — commesso qui dentro.
+    # ⇒ ora si legge il codice di uscita, e il fallimento dice cosa fare.
+    if r.returncode != 0:
+        print("\n  🔴 IL PUSH E' FALLITO (exit %d) — NON e' stato pubblicato niente."
+              % r.returncode)
+        for riga in (r.stderr or r.stdout or "").strip().splitlines()[-4:]:
+            print("     %s" % riga[:110])
+        if "fast-forward" in (r.stderr or "") or "rejected" in (r.stderr or ""):
+            print("  ⇒ origin e' avanti: `git pull --rebase origin main`, poi RIESEGUI")
+            print("     questo script (che ricontrollera' l'autore di ogni commit).")
+        raise SystemExit(1)
+    print("\n  ✅ tutti e %d i commit sono tuoi — pushato (exit 0)." % len(righe))
+    for riga in (r.stderr or r.stdout or "").strip().splitlines()[-2:]:
+        print("     %s" % riga[:110])
 
 
 main()
