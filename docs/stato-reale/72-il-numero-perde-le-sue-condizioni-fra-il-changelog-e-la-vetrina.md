@@ -260,6 +260,48 @@ sulla stessa riga. **Nessun rilievo.**
 non scrivere è *«i numeri del README non sono tracciabili»*: **su diciannove
 guardati, due sono contestabili.**
 
+## ④-octies ⛔ IL `~7% Spanish` HA UNA FONTE, E DICE UN NUMERO **3,5 VOLTE PEGGIORE**
+
+Avevo chiuso quel numero con *«fonte non trovata in quattro ricerche»*,
+dichiarando che «non trovata» non è «non esiste». **@ws4 l'ha trovata** e ha
+chiuso il vuoto. **Riletta da me prima di toccare la vetrina**,
+`docs/EVIDENCE-stress-2026-07-18.md` §D (banco `moat_multilingual_matrix.py`):
+
+```
+| EN | 28/28 | 0 |
+| IT | 27/28 | 1 |   ← una fuga è ITALIANA
+| FR | 28/28 | 0 |
+| ES | 21/28 | 7 |   ← 7/28 = 25,0%
+| total | 104/112 | 7.1% |
+```
+
+⇒ **«~7% escape in Spanish» era falso in due modi**: il 7,1% è il **totale
+cross-lingua** (8 su 112, e una fuga è **italiana**), e il tasso **spagnolo** è
+**25%**. Chi leggeva capiva «su cento scambi in spagnolo ne sfuggono sette»:
+**ne sfuggono venticinque**. **La vetrina rendeva il difetto 3,5 volte più
+piccolo della sua stessa fonte.**
+
+✅ **Corretto** (`0c6be55c`): la riga ora porta `25% escape in Spanish (7 of 28)`,
+dichiara che il 7,1% è il totale su EN/IT/FR/ES, dice che **una fuga è italiana**
+e cita documento e banco.
+
+### La riconciliazione che NON ho fatto, e perché
+
+Tre righe sotto, il README dice *«cutting **that** entity-substitution escape from
+**6.2% → 1.8%** on the moat matrix»*. `moat_multilingual_matrix.py` è l'unico
+banco «matrix», e l'aritmetica tornava **perfettamente**: `7/112 = 6,25%` (le
+sole fughe spagnole sul denominatore intero) e `2/112 = 1,79%`.
+
+⛔ **L'ho verificata invece di scriverla, e non regge**: il banco stampa **un solo**
+escape — `tot['esc']/n_bad`, cioè il **totale** — e **non produce un 6.2%**. ⇒ Il
+`6.2%` viene da un'altra misura, e **la relazione fra i due numeri legati da
+«that» resta non stabilita.**
+
+🔑 **Un'aritmetica che torna non è una prova.** Aggiungere alla vetrina una
+riconciliazione plausibile e non verificata sarebbe la «spiegazione conciliante»
+che l'osservatore ci ha già contestato una volta: **si merita guardando i dati,
+non facendo tornare i conti.**
+
 ## ⑤ La cura, e il precedente
 
 La forma esiste già nel README, dieci righe più su: il numero dell'escape
