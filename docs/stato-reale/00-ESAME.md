@@ -22815,3 +22815,78 @@ del mio, non meno — ma resta un secondo corpus, non una popolazione.
 **Ramo**: `ws1/avviso-ricalibrato` · **in `main`**: `95c1bbf2` *(G10 `3dad8bf4` + avviso
 `7ccf1e0c`)*.
 **Io misuro, non curo** — e quando la misura dice di non accendere, non accendo.
+
+---
+
+## W8-63 — Il wheel su Windows si installa: a cadere è il nostro test, e il byte che lo uccide è un'emoji che ci siamo messi da soli
+
+**Priorità zero del 02/09 sera.** Su `main` il job `wheel install-from-scratch
+(windows-latest)` è `failure` mentre il gemello `ubuntu-latest` è `success` — stesso
+wheel, stesso commit. Diagnosi chiusa **senza eseguire nulla in locale**: `gh api` per i
+log e lettura dei sorgenti.
+
+### Non è l'installazione
+
+Lo step che cade è **`MCP stdio purity — initialize handshake`**, il terzo. I due
+precedenti — installazione del wheel in un venv vergine e SDK smoke — sono **passati**.
+Dal log del job `100383919068`:
+
+    File "<stdin>", line 13, in <module>
+    File "...\Lib\encodings\cp1252.py", line 23, in decode
+    UnicodeDecodeError: 'charmap' codec can't decode byte 0x8f in position 4814
+
+### La causa: una parola mancante nel workflow
+
+    proc = subprocess.Popen([exe, "mcp"], stdin=subprocess.PIPE,
+                            stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                            text=True)          # ← manca encoding=
+
+`text=True` **senza `encoding=`** usa `locale.getpreferredencoding(False)`: **cp1252** su
+Windows, **UTF-8** su Linux. Il server emette UTF-8 corretto; è il lettore a cambiare fra
+i due sistemi operativi. Ecco perché un job è verde e l'altro no **a parità di artefatto**.
+
+### La prova, numerica, senza avviare il server
+
+La risposta `initialize` porta `VERIMEM_AGENT_GUIDE` nel campo `instructions`:
+
+| misura | valore |
+|---|---|
+| lunghezza della guida | **7800 caratteri**, 7850 byte UTF-8, una riga JSON sola |
+| caratteri non-ASCII distinti | **3** — il trattino lungo e `⚠️` |
+| byte non mappabili in cp1252 | **uno solo: `0x8f`** |
+| il byte dell'errore in CI | **`0x8f`** |
+
+`0x8f` è l'ultimo byte del variation selector `U+FE0F`, cioè della emoji `⚠️`. Il test
+muore sul primo byte che la sua tabella non contiene, e quel byte **ce lo siamo messo noi**.
+
+### La cura, e come si falsifica
+
+    text=True, encoding="utf-8", errors="replace"
+
+Non è mia da applicare (`.github/` è fuori dal mio perimetro). **Falsificabile**: con la
+cura il job deve passare su **entrambi** i sistemi. Se passasse su Windows e cadesse su
+ubuntu, questa diagnosi è sbagliata.
+
+### 🔑 La cosa che vale più della cura
+
+Il difetto è nel **nostro test**, non nel prodotto — ma il byte viene da un carattere che
+abbiamo scelto noi per le `instructions`. Il protocollo MCP impone UTF-8, quindi un client
+conforme legge bene e **non violiamo la specifica**. Però ogni client Windows scritto con
+lo stesso errore del nostro test si rompe **sul nostro handshake**: non causiamo il difetto
+altrui, ne **massimizziamo la probabilità**. Se le `instructions` debbano restare ASCII
+pure è una scelta di robustezza verso il mondo reale, non un obbligo — e va presa da chi
+decide il prodotto.
+
+⚠️ **E una nota su chi misura**: il nostro test è, alla lettera, *un client MCP scritto
+male*. Lo abbiamo usato per mesi come prova che la porta fosse pura, e nel farlo abbiamo
+provato anche — senza saperlo — che un client sciatto non regge il nostro handshake su
+Windows. Il presidio ha detto una verità in più di quella che gli avevamo chiesto.
+
+    rifallo con:
+    gh api repos/:owner/:repo/actions/jobs/100383919068/logs | grep -A6 Traceback
+    MSYS_NO_PATHCONV=1 git show origin/main:.github/workflows/ci.yml | grep -n -A3 'Popen(\[exe'
+    python -c "import pathlib,re; s=pathlib.Path('verimem/agent_guide.py').read_text(encoding='utf-8'); \
+      g=re.search(r'VERIMEM_AGENT_GUIDE\s*=\s*(?:r?\"\"\")(.*?)\"\"\"', s, re.S).group(1); \
+      print(len(g), sorted({hex(x) for x in g.encode('utf-8') if x>127 and bytes([x]).decode('cp1252','ignore')==''}))"
+
+**Firme su questa cella**: ws8.
