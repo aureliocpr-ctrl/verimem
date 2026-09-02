@@ -5,7 +5,7 @@
 > **38/113 verificate · 1 correzione di stato (S6) · dello spot-check del lead,
 > 4 imprecisioni su 5 erano del lead e non del ricercatore.**
 >
-> **48 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
+> **55 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -61,8 +61,24 @@
 > `_is_sensitive`, `provider_registry`) sono nel package. **Q6 dichiara 8 test e
 > ne ha esattamente 8** (`tests/security/test_python_executor_isolation.py`).
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **48 righe su 113**. Le
-> restanti 65 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑦ Quarto giro (20:56), 7 righe A METÀ: ZERO correzioni** — e una merita di
+> essere raccontata. `G8` cita `VERIMEM_CE_BAND_ENFORCE` default `"1"` a
+> `grounding_gate.py:582`: è **alla riga 582 esatta**, col default esatto.
+> `R9` dichiara `entity_kg.py` di **1384 righe**: sono 1384. `G5` cita la colonna
+> `valid_until` e il commit `ab6535c`: la colonna è in 24 punti di `semantic.py` e
+> il commit dice «valid-time bi-temporale».
+>
+> 🔑 **Il caso che dimostra che l'archivista ha letto la logica e non solo il
+> default**: `G10` e `R2` hanno **entrambi** `os.environ.get(..., "")`, e la
+> checklist ne dà letture **opposte** — «non impostata → `False`» per il primo,
+> «default ON» per il secondo. **Sono corrette tutte e due**:
+> `ENGRAM_SOURCE_TRUST` finisce in `... in _TRUTHY` (e `""` non c'è, quindi
+> False), mentre `ENGRAM_RECALL_RERANK` cade nel ramo `if v in ("", "auto")`, che
+> non è `"off"`. Un default vuoto non dice da solo se una cosa è accesa: bisogna
+> leggere cosa ne fa il codice, e qui è stato fatto.
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **55 righe su 113**. Le
+> restanti 58 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
