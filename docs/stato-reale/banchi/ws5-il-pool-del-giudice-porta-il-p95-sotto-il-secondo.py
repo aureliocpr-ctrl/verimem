@@ -214,6 +214,36 @@ print("CL|%s|%s|%d|%.3f" % (ET, json.dumps(lat), ok, time.time() - t_start), flu
 '''
 
 
+def bimodale(lat):
+    """Le latenze sono UNA popolazione o DUE? Perche' la mediana di una miscela non
+    dice niente — e sarebbe la terza volta che ci casco.
+
+    Lezione `dfe9425ca057` (26/07): «*il thread che carica il cross-encoder tiene lo slot
+    per piu' di 24 query e OGNI query salta il rerank … quando invece il CE arriva a
+    girare, quelle query pagano +2067 ms. Le due popolazioni si mescolano dentro la stessa
+    misura e la mediana balla*». Riguardava il read path, quindi qui e' un'IPOTESI, non un
+    trasferimento — ma la si controlla invece di darla per esclusa.
+
+    Il criterio, deliberatamente grezzo: si ordina, si cerca il salto piu' grande fra due
+    valori consecutivi, e lo si confronta con la dispersione tipica. Un salto che vale
+    piu' di un terzo dell'intervallo totale, con almeno 3 valori da entrambe le parti,
+    e' una firma di due gruppi — non una prova, un allarme che chiede di guardare.
+    """
+    if len(lat) < 8:
+        return None
+    x = sorted(lat)
+    salti = [(x[i + 1] - x[i], i) for i in range(len(x) - 1)]
+    salto, i = max(salti)
+    ampiezza = x[-1] - x[0]
+    if ampiezza <= 0:
+        return None
+    if salto > ampiezza / 3.0 and (i + 1) >= 3 and (len(x) - i - 1) >= 3:
+        return {"salto": salto, "sotto": i + 1, "sopra": len(x) - i - 1,
+                "confine": (x[i] + x[i + 1]) / 2,
+                "med_sotto": x[i // 2], "med_sopra": x[i + 1 + (len(x) - i - 1) // 2]}
+    return None
+
+
 def pct(v, q):
     if not v:
         return 0.0
@@ -305,6 +335,25 @@ def main():
         print("  %-8d %8.3fs %8.3fs %8.3fs %10.1f %11.1f %6d/%d"
               % (w, pct(r["lat"], .5), pct(r["lat"], .95), max(r["lat"]),
                  tput, r["rss"], r["ok"], attesi))
+
+    # ⚠️ PRIMA di confrontare le configurazioni: le latenze sono UNA popolazione?
+    print("
+=== LE LATENZE SONO UNA POPOLAZIONE SOLA? ===")
+    sospette = []
+    for r in esiti:
+        b = bimodale(r["lat"])
+        if b:
+            sospette.append(r["worker"])
+            print("  🔴 %d worker: DUE GRUPPI — %d richieste sotto %.3fs (mediana %.3f) e"
+                  % (r["worker"], b["sotto"], b["confine"], b["med_sotto"]))
+            print("     %d sopra (mediana %.3f), separati da un salto di %.3fs"
+                  % (b["sopra"], b["med_sopra"], b["salto"]))
+        else:
+            print("  ✅ %d worker: una sola popolazione (nessun salto dominante)" % r["worker"])
+    if sospette:
+        print("  ⇒ Dove ci sono due gruppi la MEDIANA NON descrive niente: mescola due")
+        print("     regimi. Il confronto fra configurazioni qui sotto va letto sapendo")
+        print("     che almeno una riga misura una miscela.")
 
     # IL CONTROLLO: se non sono tutte giudicate, i percentili non sono di giudizi
     incompleti = [r for r in esiti if r["ok"] != attesi]
