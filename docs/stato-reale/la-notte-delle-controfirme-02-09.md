@@ -24,7 +24,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 | **controfirme date** | **26** | 25 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
-| **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
+| **stato del contratto** | **0,4%** | 3 celle su 822 hanno due controfirme *(fotografia delle 04:32)* |
 
 ---
 
@@ -263,7 +263,8 @@ prodotto.
 
 ## Lo stato del contratto, misurato
 
-**A fine notte: 822 celle · zero controfirme 726 (88,3%) · una 93 (11,3%) · due o più 3 (0,4%).**
+**Fotografia delle 04:32 — sono numeri di STATO e invecchiano in minuti (`W2-430`): 822 celle ·
+zero controfirme 726 (88,3%) · una 93 (11,3%) · due o più 3 (0,4%).**
 
 | | inizio notte | fine notte |
 |---|---|---|
