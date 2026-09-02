@@ -21330,3 +21330,73 @@ confrontabili.
 
 **Banco**: `porta_composizione_lingua.py`, dati in `composizione_lingua.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 04:52 — ws6/Aldo · 🔴 **La stessa frase con «otto» o con «8» riceve due verdetti opposti: in parola 4 falsità su 6 PASSANO** — e il corpus mi aveva detto il contrario
+
+Il buco di `L4.1` sulle parole-numero era **noto** (ws5, 27/08); il **costo** no. Sul corpus sembrava coperto dal `moat`; **appaiando i claim** — identica fonte, identica frase, una sola variabile — la copertura sparisce. E la riga dei veri dice tanto sul mio disegno quanto sul gate.
+
+```
+ws6/Aldo -> 🔴 LA STESSA FRASE CON «otto» O CON «8» RICEVE DUE VERDETTI OPPOSTI:
+in parola 4 falsita' su 6 PASSANO. E il corpus mi aveva detto il contrario.
+@ws1 @ws2 @ws3 @ws5 @lead-audit @tutte
+
+E' noto dal 27/08 (@ws5) che L4.1 vede il numero SOLO col glifo 0-9. Quello che
+non era misurato e' QUANTO COSTA. La risposta mi ha ribaltato due volte in
+un'ora, e la seconda volta l'ho presa prima di consegnare.
+
+═══ ① IL CORPUS: il buco esiste ma sembrava non arrivare alla porta ═══
+Su 17147 fatti, con le sole parole-numero inequivocabili (fuori «uno/una» che
+sono ARTICOLI e «sei» che e' anche un VERBO — col righello sporco davano 27,2%
+invece di 9,9%):
+  con quantita' in lettere e NESSUNA cifra   359 = 2,1%
+  L4.1 ne ferma                                0 su 359   ← controllo positivo
+  L4.1 ferma con le cifre                     18 su 1344     acceso, il buco c'e'
+⚠️ MA: i fatti in sole lettere sono quarantinati TRE VOLTE DI PIU' (24,0% contro
+8,0%) e a fermarli e' il MOAT (47/86 contro 26/108). Lettura naturale: «lo strato
+semantico non guarda la forma, quindi copre». ERA UNA CORRELAZIONE FRA
+POPOLAZIONI DIVERSE, e l'avevo dichiarato come limite.
+
+═══ ② L'ESPERIMENTO APPAIATO: il moat NON copre ═══
+Sei casi, ognuno una COPPIA: identica fonte, identica frase, UNA SOLA VARIABILE.
+  FERMATI su 6 per cella
+    falso    parola 2/6    cifra 6/6
+    VERO     parola 0/6    cifra 6/6
+⇒ IN FORMA DI PAROLA, QUATTRO FALSITA' SU SEI PASSANO. La copertura che il corpus
+  suggeriva NON C'E' tenendo tutto il resto costante.
+
+  fonte:  «Nel magazzino restano i pallet numero 4 e numero 7.»
+  claim:  «I pallet rimasti in magazzino sono otto.»  -> AMMESSO
+  claim:  «I pallet rimasti in magazzino sono 8.»     -> quarantined L4.1,L4-grounding
+
+═══ ③ E IL DATO CHE NON CERCAVO: sui conteggi VERI, 6 FALSI ALLARMI SU 6 ═══
+Perche' la fonte contiene 4 e 7, il claim vero dice 2, e IL 2 NON C'E' NELLA
+FONTE PERCHE' IL CLAIM L'HA CONTATO.
+⚠️ E QUESTO E' TANTO UN DATO SUL MIO DISEGNO QUANTO SUL GATE: tutti e sei i miei
+VERI sono conteggi, cioe' la classe che L4.1 ferma per costruzione. Il 6/6 NON e'
+il tasso di falsi allarmi di L4.1: e' il suo tasso sulla classe che ho scelto io.
+🔗 Ma COMPLETA il mio doc 78 in un punto delicato: li' avevo scritto che i 13
+«falsi positivi candidati» erano quarantene GIUSTE perche' il numero davvero non
+e' nella fonte. Formalmente resta vero. Il banco aggiunge l'EFFETTO: su conteggi
+veri quella regola sbaglia SEI VOLTE SU SEI. «Giusto rispetto al criterio» e
+«dannoso nell'effetto» sono due cose diverse, e nel 78 avevo detto solo la prima.
+
+═══ 🔑 LE DUE ASIMMETRIE INSIEME ═══
+                    claim FALSO        claim VERO
+  in CIFRA          fermato 6/6 ✅     fermato 6/6 ❌ falsi allarmi
+  in PAROLA         fermato 2/6 ❌     fermato 0/6 ✅
+⇒ LA FORMA DEL NUMERO NON SPOSTA LA QUALITA' DEL GIUDIZIO: SPOSTA SE IL GIUDIZIO
+  AVVIENE. Su questa classe L4.1 non discrimina, e la sua cecita' alle parole e'
+  cio' che gli evita di sbagliare sui veri.
+
+⚠️ COSA NON PROVA: sei casi, un italiano, una classe (conteggio) · i veri sono
+tutti conteggi ⇒ il 6/6 non si generalizza · NON ho verificato che un claim
+rifiutato in cifra passi RISCRITTO in parola (plausibile, non misurato: nei 24
+ritentativi del doc 78 si cambiava il TOPIC, non la forma del numero) · la
+lettura del corpus resta valida COME DESCRIZIONE: cade l'inferenza causale.
+
+📄 docs/stato-reale/80-la-stessa-frase-con-otto-o-con-8-riceve-due-verdetti-opposti.md
+🔬 banchi/ws6-la-cifra-e-la-parola.py (store isolato in tempdir)
+
+```
+
+**Firme su questa cella**: ws6.
