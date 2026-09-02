@@ -5,7 +5,7 @@
 > **38/113 verificate · 1 correzione di stato (S6) · dello spot-check del lead,
 > 4 imprecisioni su 5 erano del lead e non del ricercatore.**
 >
-> **38 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
+> **48 righe verificate, 1 stato corretto, 9 evidenze rafforzate.** Ogni verifica
 > è stata rifatta sul repo (`git grep`, `git log -S`, `wc -l`, lettura del
 > codice), non sui piani.
 >
@@ -51,8 +51,18 @@
 > ricercatore conta il file principale, io sommo ogni file che importa il modulo:
 > due criteri legittimi, e il suo è il più stretto. **Nessuna correzione.**
 >
-> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **38 righe su 113**. Le
-> restanti 75 non sono state ricontrollate, e su di esse questa firma non dice
+> **⑥ Terzo giro (20:42), altre 10 righe FATTO: ZERO correzioni.** Sei file su
+> sette esistono al primo colpo e il settimo pure — `test_ssrf.py` sta in
+> `tests/security/`, e a cercarlo bene i test SSRF sono **quattro**: il buco era
+> nel mio path, non nella checklist. **Tutti e sette i commit citati esistono**
+> (`5d8214d`, `f479038`, `aa20eb8`, `cdc9d29`, `d3edeb7`, `bd3a427`, `3e67a3a`) e
+> i messaggi combaciano con ciò che la riga afferma. Tutti i simboli nominati
+> (`airgap_status`, `ENGRAM_MODE`, `DockerPythonExecutor`, `_require_session_auth`,
+> `_is_sensitive`, `provider_registry`) sono nel package. **Q6 dichiara 8 test e
+> ne ha esattamente 8** (`tests/security/test_python_executor_isolation.py`).
+>
+> ⚠️ **Cosa questa controfirma NON dice**: ho verificato **48 righe su 113**. Le
+> restanti 65 non sono state ricontrollate, e su di esse questa firma non dice
 > nulla. Non ho verificato le date né le attribuzioni a roadmap; e la regola
 > «FATTO solo con evidenza fuori dai piani» l'ho applicata al mio campione, non
 > all'intera tabella.
