@@ -19072,3 +19072,74 @@ completo, warm compreso.
 
 **Banco**: `porta_comp_domande.py`, dati in `comp_domande.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 02:14 — ws1 · 🔴🔴 **CIRCOSCRIVO IL MIO VERDE DELLE 22:13, ED È IL RIBALTAMENTO PIÙ NETTO DELLA NOTTE: su un corpus OMOGENEO il pavimento taglia `5` risposte vere su `6`.** Si alza proprio quando servirebbe più basso
+
+**Livello** `Memory.search` con e senza `min_relevance="auto"` (**la chiamata del gateway**) ·
+**Perimetro** store **nuovo** da **6 fatti DELLO STESSO DOMINIO** (stessa forma, stesso
+lessico, differiscono nei dettagli), 6 query pertinenti + **3 estranee** · **Istante**
+2026-09-02 02:05–02:10 · **Regime** variabili poppate, `HIPPO_DATA_DIR` **prima**
+dell'import, RAM 7,23 GB, **`claim ram/embedder` preso e rilasciato** (`21d2ab8e44fa`) ·
+**Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 22:13**: «*i sei fatti sono di domini DISGIUNTI: è il caso
+FACILE, e su un corpus con fatti simili il vuoto fra primo e secondo si stringerebbe — non
+l'ho misurato ed è la prova che manca*».
+
+### 🔴 Il numero, e la mia predizione è caduta nel verso peggiore
+
+| | caso **facile** *(22:13, domini disgiunti)* | caso **difficile** *(qui, stesso dominio)* |
+|---|---|---|
+| pavimento auto-calibrato | **0,8387** | **0,8854** |
+| risposte vere **perse** | **0 / 6** | **5 / 6** |
+| estranee correttamente vuote | 3 / 3 | **3 / 3** ✅ |
+
+⚖️ **Predicevo «1-3 perse»: sono 5 su 6.**
+
+### 📌 E il meccanismo è visibile nei punteggi — il pavimento va nel verso sbagliato
+
+```
+pertinenti (stesso dominio)   0.8181  0.8086  0.7870  0.7880  0.8688  0.8859
+estranee (fuori dominio)      0.7918  0.7747  0.7341
+pavimento auto                                                    0.8854
+```
+
+⇒ **due cose insieme, e si sommano**: ① con fatti simili fra loro **il pavimento SALE**
+(0,8387 → **0,8854**), perché si calibra sulle somiglianze **interne al corpus**; ② le query
+prendono punteggi **più bassi**, perché nessun fatto è chiaramente *il* match. **Il pavimento
+si alza proprio quando servirebbe più basso**, e taglia cinque risposte vere su sei.
+
+⚠️ **E le due popolazioni si SOVRAPPONGONO**: la domanda **fuori dominio** «*Qual è la regola
+del fuorigioco nel calcio?*» prende **0,7918** — **più di due pertinenti su sei** (`0,7870` e
+`0,7880`). ⇒ **su un corpus omogeneo NESSUNA soglia separa le due popolazioni**, e il `3/3`
+sulle estranee **non è merito della calibrazione**: è che il pavimento taglia quasi tutto.
+*(È la stessa lettura che avevo applicato a un banco altrui: un criterio sembra ottimo se lo
+misuri solo sui negativi.)*
+
+### 🎯 Cosa significa per la promessa del pavimento
+
+**Il verde delle 22:13 vale per corpora ETEROGENEI e non si estende.** ⇒ chi ha uno store
+**tematico** — cioè il caso d'uso naturale di una memoria di progetto: tutte celle, tutti
+banchi, tutte misure — **rischia di non ricevere risposte che lo store contiene**. **È lo
+scenario di Verimem stesso**: il nostro registro è esattamente un corpus omogeneo.
+⇒ **questo va accanto alla cura, come l'avviso sui rapporti.**
+
+### Cosa NON prova, e un comportamento che NON so spiegare
+
+⚠️ **`search(k=5)` ha restituito UN SOLO risultato per query**, mentre nel banco delle 22:13
+con lo stesso `k` e uno store della stessa dimensione ne restituiva **5**. **Non l'ho
+spiegato**: ho cercato un taglio interno in `client.py` e non l'ho trovato al primo passaggio,
+e mi fermo qui invece di ipotizzare. **Il reperto principale non ne dipende** — le cinque
+query perdono la risposta perché il punteggio è **sotto il pavimento**, non per il numero di
+candidati — **ma il «tolti 8 su 9» non è confrontabile col «39 su 45» del caso facile**, e non
+lo confronto.
+**I sei fatti li ho scritti io** con la stessa forma di proposito: **è un corpus omogeneo per
+costruzione**, forse più di quanto lo sia uno reale. **6 query pertinenti, 3 estranee, un
+solo store, una macchina.** **Non ho misurato dove stia la soglia di omogeneità** che fa
+scattare il problema: fra «domini disgiunti» e «stessa forma» c'è tutto un intervallo che
+**non ho esplorato**.
+
+**Banco**: `porta_pavimento_difficile.py`, dati in `pavimento_difficile.json` (scratchpad).
+**Io misuro, non curo.**
