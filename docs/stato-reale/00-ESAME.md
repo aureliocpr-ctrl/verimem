@@ -19818,3 +19818,59 @@ trovato.
 
 **Banco**: `porta_rango_parafrasi.py`, dati in `rango_parafrasi.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## W8-58 — I dodici «rifallo con» eseguiti · e **stavo per rompere un comando giusto**
+
+🚪 **Cancello: ⑤ promesse / verità del registro.**
+
+@ws2 aveva eseguito i «rifallo con» delle sue celle; **io non l'avevo mai fatto sulle mie.**
+Fatto, in **due passaggi distinti** — perché sono due verifiche diverse.
+
+### ① I comandi girano · ② riproducono il numero della cella
+
+    W8-50  avvisi README branch     atteso    4  →     4
+    W8-50  avvisi README main       atteso   16  →    16
+    W8-52  lme_retrieval_bench      atteso    0  →     0
+    W8-53  test_il_pacchetto…       atteso    0  →     0
+    W8-53  file di test nel branch  atteso 1050  →  1050
+    W8-55  distanza dal tag v0.7.0  atteso    6  →     6
+    W8-46  bash -n dello script                EXIT=0
+    W8-46  i 5 comandi CLI          save=0 search=2 recall=0 doctor=0 mcp=0
+    W8-51  criteri G in RELEASE_GATE            10
+    W8-51  menzioni hotfix/head_branch           0
+    W8-57  1e293f4b discende da 08f38256        SI
+
+⇒ **12 su 12.** I reperti su cui poggia la raccomandazione (`W8-56`) sono **riproducibili da
+chiunque**, non affermati da me.
+🔑 **«Il comando esce senza errore» non è «il comando dà il numero della cella»**: un `grep`
+che non trova nulla esce `1` ed è corretto; uno che trova **la cosa sbagliata** esce `0` e
+mente. **Solo il secondo passaggio verifica il reperto.**
+
+### 🪞 E l'episodio che vale più del risultato
+
+Nel primo audit avevo letto **`6`** dove `W8-49` dice **«tre superfici»**, e l'ho annunciato
+come un difetto della cella: *«un comando che sembra smentire la cella è peggio di nessun
+comando»*. **Stavo per correggerla.**
+
+Sono andata a leggere il testo esatto prima di toccarlo:
+
+    rifallo con:
+    grep -nE '_ROOT / |__version__' tests/test_version_single_source.py
+
+⇒ Il comando della cella **stampa le righe numerate** — chi lo esegue **vede** le tre
+superfici (23 `pyproject`, 35 `__version__`, 39 `plugin.json`) e le conta guardando.
+**È corretto.** Il `6` veniva dal **mio** pattern d'audit (`grep -cE …`), che **conta le
+occorrenze** e in cui `plugin.json` compare due volte.
+
+📌 **Il difetto era nel righello dell'audit, non in quello della cella** — la nona volta
+stanotte che il problema è nel misuratore. **E se avessi «curato» senza leggere, avrei rotto
+un comando giusto per sistemare un errore mio.**
+🔑 **Prima di curare, leggere ciò che si sta per curare** — vale quanto «prima di misurare,
+guardare il righello», e stanotte l'ho quasi mancata.
+
+    rifallo con:
+    python -c "import re,pathlib; t=pathlib.Path('docs/stato-reale/00-ESAME.md').read_text(encoding='utf-8'); \
+      b=re.split(r'\n## (W8-\d+)', t); c={b[i]:b[i+1] for i in range(1,len(b),2)}; \
+      print(sum(1 for k,v in c.items() if int(k.split('-')[1])>=46 and 'rifallo con' in v))"
