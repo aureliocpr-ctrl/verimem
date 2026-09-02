@@ -68,6 +68,27 @@ elif ! ruff check $STAGED_PY; then
     exit 1
 fi
 
+# --- ogni .py staged deve almeno COMPILARE, ovunque stia ---------------------
+#
+# 2026-09-02 22:00 (ws5): un banco in docs/stato-reale/banchi/ e' entrato in
+# main senza compilare, perche' i TARGETS del lint sono `verimem tests scripts`
+# e i banchi stanno in docs/. Un banco che non compila e' un numero che nessuno
+# puo' rifare. Qui non si linta docs/ (470 file mai lintati: sarebbe un muro),
+# si chiede il minimo: py_compile su OGNI .py staged, in qualunque cartella.
+# Costa millisecondi e ferma esattamente la classe misurata.
+STAGED_ANY_PY=$(git diff --cached --name-only --diff-filter=ACMR | grep -E '\.py$' || true)
+if [ -n "$STAGED_ANY_PY" ]; then
+    for f in $STAGED_ANY_PY; do
+        [ -f "$f" ] || continue
+        if ! python -m py_compile "$f" 2>/tmp/precommit_compile_err.txt; then
+            echo ""
+            echo "pre-commit BLOCKED: $f non compila —"
+            head -5 /tmp/precommit_compile_err.txt
+            exit 1
+        fi
+    done
+fi
+
 # --- il cancello del publish, sulle sole righe che stai AGGIUNGENDO ---------
 #
 # 2026-08-28: il veto di `publish.yml` (scripts/controlla_registro.py) e' un
