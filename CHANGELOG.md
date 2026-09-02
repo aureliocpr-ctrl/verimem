@@ -2,6 +2,82 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.2] - unreleased
+
+> **Four cures that already existed on `main` and had never reached the release
+> line.** `0.7.1` shipped from a branch cut at the `v0.7.0` tag (22 July), so it
+> inherited that tag's code — including gaps fixed on `main` days later. Each
+> item below names the original commit; the date in brackets is when the fix was
+> written, not when it shipped.
+
+### Fixed — the write gate
+
+- **A source given to the MCP channel is now actually judged** (`7b8af116`,
+  29 Jul). The channel accepted a `source`, stored the write and answered
+  `ok: true` without ever asking the moat whether the source supported the
+  claim: the fallback was the `ENGRAM_GROUNDING_WRITE` environment variable,
+  **which nothing in the source tree sets**. Measured on the published `0.7.1`:
+  a claim its source contradicts came back `status=model_claim`,
+  `grounding_score=None`, `layers=[]` — admitted. The same write on `main`
+  reports `judged=True` with a score. An explicit `ENGRAM_GROUNDING_WRITE=0`
+  still wins: whoever switched the moat off keeps it off.
+  ⚠️ **Ported in adapted form, and this matters for anyone reading the diff.**
+  The original commit also carried two lines belonging to a different feature
+  (`claimant=_MCP_PRINCIPAL` and `documents=LazyDocumentStore()`, from the
+  evidence-before-belief work): `_MCP_PRINCIPAL` is undefined on this line and
+  `verimem/evidence_independence.py` does not exist here. Those two lines were
+  left out. What ships is the grounding decision, not the principal stamping.
+- **Gate-weakening knobs are no longer honoured from untrusted tool arguments**
+  (`4a37b09d`, 24 Jul). The MCP surface is shared and its arguments come from
+  any client, yet `validate="off"` (which returns `persist` before any check
+  runs) and `force_persist=True` (which the gate documents as overriding
+  everything) were taken straight from the request. They are now neutralised
+  unless the operator opts in through `VERIMEM_MCP_TRUST_GATE_KNOBS`, and the
+  response says which ones were refused (`gate_knobs_denied`) — observable,
+  never silent. This is the same trust rule already applied to `writer_role`
+  by a June security fix; it now covers all three fields instead of one.
+- **The CLI asks for the check when it is given a source** (`e9bd575c`, 29 Jul).
+
+### Fixed — what the server says about itself
+
+- **`serverInfo.version` reports Verimem's version, not the MCP library's**
+  (`068a60d9`, 9 Aug). A client asking "which Verimem am I talking to" was told
+  `1.29.1` — a number that moves when the transport library is upgraded and
+  never was a Verimem version. Verified on this branch: `server.version` and
+  `verimem.__version__` now agree.
+  ⚠️ This fix ships **without a test**: nothing would turn red if it regressed.
+
+### Documentation
+
+- **The judge model is 746 MB, not 656.** The directory is 746 058 368 bytes
+  (711 MiB — same bytes, different unit). The README said 656.
+  ⚠️ **The old figure still appears in `verimem/cli.py` (the `warmup` help and a
+  comment) and in `verimem/doctor.py` (two messages).** A user reads 656 there
+  and downloads 746. The test that keeps this figure aligned across surfaces
+  exists on `main` and is **not** on this line.
+- **The README now answers the two questions people ask before the benchmarks**:
+  where the files go (`~/.engram`, changeable with `VERIMEM_DATA_DIR`, and
+  `verimem doctor` prints the path) and what a write costs — with **two**
+  numbers, ~0.1–0.2 s in a live process against ~20 s per one-shot CLI
+  invocation, because the gap is process start-up and a single number misleads
+  in both directions.
+- Install size and time are stated up front (~1.0–1.2 GB packages, ~2.3 GB
+  models, ~3.3 GB total), with a warning that **without the judge model the
+  guarantee at the top of the page does not apply**.
+- A note on `[0.7.1]` below: its line *"resolves `mcp` 1.29.1,
+  `Server.list_tools` present"* attributed to CI a check whose strings are not
+  in the CI log. The claim itself has since been **verified** by an
+  install-from-scratch smoke on Windows (`mcp` 1.29.1, `Server.list_tools`
+  present). It was the attribution that was wrong, not the fact.
+
+### Packaging / distribution
+
+- `server.json` (MCP registry, schema 2025-12-11) and
+  `.claude-plugin/marketplace.json` are added, with
+  `scripts/controlla_manifesti_distribuzione.py` checking both against the
+  schema and verifying that the `mcp-name` line in the README matches the
+  server name — the proof of ownership the registry requires for a PyPI package.
+
 ## [0.7.1] - 2026-09-02
 
 > **Compatibility hotfix.** Minimal cherry-pick line on top of v0.7.0 — no
