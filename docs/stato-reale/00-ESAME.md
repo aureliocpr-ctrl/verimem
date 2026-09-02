@@ -19468,3 +19468,35 @@ per mese: 2026-05 → 386 · 2026-06 → 13 · 2026-07 → 4 · 2026-08 → 76
 ⚠️ **Non ho verificato se il fermo sia voluto**: nessuno ha dichiarato che gli episodi debbano essere scritti a ogni sessione. · ⚠️ **`last_accessed_at` dice quando un episodio è stato letto, non da chi**: il «nessuna lettura da 4 giorni» vale per quel campo, non per ogni possibile accesso. · ❌ **Non ho misurato cosa perdano** `briefing`/`dream` con un tier fermo — è la domanda che resta.
 
 **Firme su questa cella**: ws6.
+
+### 2026-09-02 02:45 — ws6/Aldo · il prodotto espone **otto dimensioni per fatto** e ne alimentiamo **quattro**: `worked_example` e `derives_from` sono a **1 su 17098**
+
+Nasce dalla terza istanza in una notte della stessa forma (`documents.db` mai creato, tier episodi fermo, `withheld_despite_judge` contato e mai letto). La tesi da misurare era: **usiamo una fetta stretta di ciò che c'è.** Censimento su **17098** fatti, `mode=ro`:
+
+```
+verified_by         17098   100.0%
+confidence_tier     10632    62.2%
+trigger_keywords     1254     7.3%
+applicable_when      1246     7.3%
+asserted_at             1     0.0%
+valid_until             0     0.0%
+worked_example          1     0.0%
+derives_from            1     0.0%
+```
+
+⇒ **Quattro campi su otto sono a 0,0%.**
+
+📌 **`asserted_at` è già in registro** (`LANT-133`: la dimensione «quando è successo» esiste, nessuna porta la popola, tutte la accettano dal chiamante — e **quell'unico fatto valorizzato l'abbiamo scritto noi per provare che si poteva**). Non lo rivendico come nuovo.
+
+🆕 **Nuovi qui**: `worked_example` **1/17098** e `derives_from` **1/17098**. Sono campi dello schema dei fatti — l'esempio d'uso e la derivazione — e **non li ha mai riempiti nessuno**, noi compresi.
+
+🔑 **La forma, alla terza istanza della notte**: non «il prodotto è rotto», ma **capacità pronte che nessun uso reale esercita**. ⇒ Quelle dimensioni sono provate **solo dai test**, e un difetto lì non emette nessun segnale: non c'è traffico che lo attraversi.
+
+### Cosa NON prova
+
+⚠️ **Un campo vuoto non è per forza un difetto**: `valid_until` (scadenza di un fatto) può essere legittimamente inutile per il nostro uso. Il censimento dice **cosa non è esercitato**, non cosa manca.
+⚠️ **Non ho verificato quale funzione legga ciascun campo**: senza quello non so cosa perda il prodotto a tenerli vuoti — è la stessa domanda lasciata aperta sul tier episodi.
+⚠️ **Il corpus è il nostro**, otto istanze su una macchina: un utente con un flusso diverso li riempirebbe. **Ma è anche l'unico corpus vero che abbiamo**, ed è quello su cui misuriamo tutto il resto.
+✅ **Regge**: sono otto `SELECT` in sola lettura sulla stessa tabella, contate sullo stesso denominatore.
+
+**Firme su questa cella**: ws6.
