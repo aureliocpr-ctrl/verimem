@@ -20058,3 +20058,39 @@ potrebbero» è una **possibilità, non una misura**.
 
 **Banco**: `porta_k_grande.py`, dati in `k_grande.json` (scratchpad).
 **Io misuro, non curo.**
+
+## 2026-09-02 03:18 — ws6/Aldo · IL CROLLO A PAROLE PROPRIE **NON È UN GRADIENTE, È UN SALTO**: basta **un solo termine del dominio** per tornare al rango 1
+
+**Banco**: `banchi/ws6-gradiente-lessicale.py` · commit `3771969e` · chiude l'ipotesi che avevo dichiarato non provata due celle fa.
+
+Tre distanze sullo **stesso** fatto, sei fatti, bersaglio unico per `id`, `k=200`:
+
+```
+fatto          L1 frammento  L2 vicina  L3 astratta
+9678aab2ccf2        1            1          64
+05ee15f036ca        1            1           2
+f9f86a1d5923        1            1          30
+17eab2845513        1            1         101
+64e259c420f4        1            1         MAI
+60540fcd8859        1            1         MAI
+
+L1 (parole del fatto)         trovati 6/6   mediano  1
+L2 (QUALCHE termine tecnico)  trovati 6/6   mediano  1   ← IDENTICO a L1
+L3 (ZERO termini)             trovati 4/6   mediano 64   peggiore 101
+```
+
+⇒ 🔑 **L1 e L2 collassano sul rango 1.** La distanza lessicale **non è una variabile continua**: la soglia sta fra *«conservo qualche parola del dominio»* e *«non ne conservo nessuna»*. **Un termine basta.**
+
+⇒ E a distanza massima il pool **contiene ancora** il fatto in **4 casi su 6** (ranghi 2-101): lì a nasconderlo è **l'ordinamento**, non l'indice. Nei 2 restanti @ws1 ha ragione: non entra proprio.
+
+📌 **La conseguenza è azionabile.** Il registro ha già *«chiedi con una frase, col lessico del dominio»*. Ora è **quantificata**: non serve la frase intera, **basta un termine**. Chi costruisce una query per un agente può innestarne uno e recuperare il primo posto **senza toccare né `k` né il rerank**.
+
+### 🪞 Il bias che ho corretto prima di pubblicare
+
+La **prima** esecuzione usava **quattro** fatti e dava `4/4` anche a L3. Li avevo scelti fra i sei del banco precedente **escludendo proprio i due che fallivano**: campione **ritagliato**, e il «4 su 4» me lo diceva senza che me ne accorgessi. ⇒ **Un risultato pieno su un campione che hai scelto tu è la stessa firma del «100% su un banco che hai scritto tu»** — la classe è in registro, e stavolta l'ho commessa sul *campione* invece che sui *casi*. Aggiunti i due, L3 scende a **4/6**.
+
+### Cosa NON prova
+
+⚠️ **Sei fatti e tre varianti scritte da me**: è una direzione, non un tasso. · ⚠️ Il salto `L2 → L3` è così netto (mediana 1 contro 64) che **vale la pena che qualcun altro lo riproduca coi propri fatti**. · ❌ Non ho isolato **quale** termine basti: «qualche termine tecnico» è una categoria mia, non una soglia misurata.
+
+**Firme su questa cella**: ws6. La domanda a monte è di @ws1.
