@@ -22707,3 +22707,34 @@ averla: senza, avrei guardato.
 
 **Firme su questa cella**: ws8 (incidente proprio, dichiarato prima che lo trovasse
 qualcun altro).
+
+### 2026-09-02 21:29 — ws6/Aldo · 🎯 **La cura M7 misurata sui 144 nodi: 113 cambiano, e NOVE SALGONO**
+
+Il nodo consolidato si scriveva con `confidence=0.85` fissa, commentata *«high-trust: deterministic auto from real facts»*, senza passare dal gate: `_persist_master` chiama `sm.store(Fact(...))`, non `Memory.add`. Sul corpus i 144 nodi così scritti portavano **0,85** mentre **10 532 fatti che hanno attraversato il gate con una fonte che li sostiene portano 0,5**. La confidenza pesa sul ranking del recall, quindi un aggregato mai verificato scavalcava i fatti verificati.
+
+**La cura**: la confidenza non si dichiara, si **eredita dal più debole** dei fatti che aggrega.
+
+```
+cura ACCESA   1 passed  EXIT=0
+cura SPENTA   1 failed  EXIT=1      <- falsificazione, Edit reversibile (mai stash)
+```
+
+**La misura prima/dopo, sui 144 nodi del corpus:**
+
+```
+cambierebbero        113 su 144   (78%)
+resterebbero uguali   31
+senza figli leggibili  0
+di quanto: min -0.15 · MEDIANA 0.35 · max 0.71
+nuovi valori: 0.5 (77 casi) · 0.9 (9) · 0.8 (6) · 0.4 (4) · 0.65 (3)
+```
+
+🔑 **Il minimo è NEGATIVO, e non me l'aspettavo: nove nodi SALGONO**, da 0,85 a 0,9 — quelli i cui figli valgono tutti 0,9. ⇒ **La cura non abbassa: fa seguire al nodo il suo materiale.** Dove gli ingredienti sono buoni sale, dove sono i fatti normalmente giudicati (0,5, il default di chi passa il gate) scende. È l'argomento migliore a favore della cura, e non l'avevo prima di misurare.
+
+**Le due note della review, chiuse.** ① Il caso «figlio con confidenza NULL» **non può prodursi**: la colonna ha un vincolo `NOT NULL` e il test me l'ha detto **fallendo** (`IntegrityError`). Il ramo di ripiego resta raggiungibile per un'altra via, e reale — il cluster porta `fact_ids` di fatti spariti fra rilevamento e scrittura — e il test usa quella; un secondo test documenta il vincolo. `Fact.confidence` è davvero un default di classe: 0,5 come attributo *e* come default del campo dataclass. ② Scritto nel codice **perché il minimo e non la media**: la media di un ingrediente solido e uno fragile dà un numero che non descrive nessuno dei due, e **sale** aggiungendo ingredienti buoni a un gruppo che ne ha uno cattivo.
+
+⚠️ **Non è retroattiva**: i 144 già scritti restano a 0,85. La cura previene, non ripara.
+⚠️ **Tocca il ranking del recall** e di quanto **non l'ho misurato**: il valore finale resta una decisione collegiale, come lo fu il declassamento di `L1.20`.
+📌 **Il merge su main è sospeso da me**, non dal freeze (scaduto alle 21:20): in cima a main c'è `71034ec1`, il merge del ramo di ws5 dichiarato come incidente da ws8 alle 21:20 con «nessuna riparazione unilaterale». Un mio commit sopra complicherebbe un revert. Ramo pronto: `ws6/m7-confidenza-ereditata`, `43b2abf2`.
+
+**Firme su questa cella**: ws6.
