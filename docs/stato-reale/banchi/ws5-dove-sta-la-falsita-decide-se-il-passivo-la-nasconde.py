@@ -34,6 +34,39 @@ fonti e va cercato altrove.
 LA MISURA: **tre fonti**, ognuna con due entita' che possono scambiarsi e un numero.
 Per ogni fonte **cinque claim**: un VERO (controllo positivo) e le quattro celle.
 
+🔴 ESITO — **la dimensione che separa e' DOVE STA LA FALSITA', non la forma**::
+
+    #   VERO      rel+attiva   rel+passiva   val+attiva   val+passiva
+    1   ammesso   fermato      fermato       fermato      fermato
+    2   ammesso   ammesso      ammesso       fermato      fermato
+    3   ammesso   fermato      ammesso       fermato      fermato
+
+    ① DOVE STA LA FALSITA'    relazione passa 3 su 6   ·   valore passa 0 su 6
+    ② LA FORMA (nelle rel.)   attiva    passa 1 su 3   ·   passiva passa 2 su 3
+    controllo positivo        3 veri su 3 ammessi
+
+🔑 **① E' IL DATO**: il gate protegge i **valori** in modo perfetto su questo campione
+(0 su 6) e **non protegge le relazioni** (3 su 6). ⇒ **E' qui che passa il confine, ed
+e' cio' che concilia le due misure opposte**: @ws1 provava con **numeri sbagliati** e
+vedeva un gate solido (7/8 fermati); io provavo con **relazioni invertite** e lo vedevo
+bucato (0/5). **Nessuna delle due misure e' sbagliata: erano due popolazioni.**
+
+⚠️ **② NON e' dimostrato**: 2 su 3 contro 1 su 3, su **tre** fonti, **non e'
+distinguibile dal rumore**. ⇒ L'ipotesi «la voce passiva» che avevo pubblicato alle
+04:04 **resta non dimostrata**, e il verdetto del banco ora lo dice invece di
+concludere. 🪞 **La prima versione di questo verdetto concludeva «l'ipotesi regge»**
+sommando le due dimensioni: **e' la terza volta stanotte che un mio verdetto automatico
+e' piu' forte del dato che lo produce.**
+
+📌 **E la forma passiva ESATTA conta**, il che spiega perche' il caso 1 qui e' fermato
+mentre la stessa inversione passava nell'altro banco::
+
+    «Bianchi ha avuto la proposta bocciata da Rossi»            AMMESSA  (avere + part.)
+    «12 proposte di Bianchi sono state respinte dal rev. Rossi»  FERMATA  (essere + part.)
+
+⇒ Ho cambiato costruzione senza accorgermene fra i due banchi. **Non e' un difetto del
+prodotto: e' una variabile che avevo lasciato libera.**
+
 REGIME: `main` installato (0.7.6), porta CLI, ambiente pulito, store nuovo per claim,
 CWD fuori dal repo.
 ⚖️ PUNTI DEBOLI: tre fonti in italiano; «passiva» e' **una** costruzione (con agente
@@ -126,23 +159,34 @@ def main():
         return
     rp_passa, vp_passa = conta["relazione+passiva"], conta["valore+passiva"]
     ra_passa, va_passa = conta["relazione+attiva"], conta["valore+attiva"]
-    if rp_passa >= n - 1 and vp_passa <= 1:
-        print("  🔴 L'IPOTESI REGGE: il passivo fa passare la falsita' di RELAZIONE")
-        print("     (%d su %d) e NON quella di VALORE (%d su %d)." % (rp_passa, n, vp_passa, n))
-        print("     ⇒ Il confine non e' la forma passiva: e' DOVE STA LA FALSITA'.")
-        print("        Il passivo altera la struttura relazionale, non i numeri — e i")
-        print("        due numeri opposti miei e di @ws1 si spiegano con le due")
-        print("        popolazioni, senza che nessuna delle due misure sia sbagliata.")
-    elif rp_passa and vp_passa >= n - 1:
-        print("  🪞 IPOTESI SMENTITA: passa anche `valore+passiva` (%d su %d)." % (vp_passa, n))
-        print("     Il passivo nasconde TUTTO, non solo le relazioni.")
-    elif not rp_passa:
-        print("  🪞 IPOTESI SMENTITA NELL'ALTRO VERSO: `relazione+passiva` NON passa su")
-        print("     queste fonti ⇒ il mio 0/5 dipendeva dalle fonti, non dalla struttura.")
+    # ⚠️ DUE DIMENSIONI, DUE VERDETTI SEPARATI. Un verdetto solo le confonde: la
+    # prima versione diceva «l'ipotesi regge, il passivo fa passare la relazione
+    # (2/3)» — ma 2/3 contro 1/3 su tre fonti non separa niente. Il dato forte e'
+    # l'altra dimensione, e va letto per primo.
+    rel = ra_passa + rp_passa
+    val = va_passa + vp_passa
+    print("  ① DOVE STA LA FALSITA' (la dimensione che separa):")
+    print("     relazione  passa %d su %d        valore  passa %d su %d" % (rel, 2 * n, val, 2 * n))
+    if val == 0 and rel > 0:
+        print("     🔴 il gate protegge i VALORI in modo perfetto su questo campione e")
+        print("        NON protegge le RELAZIONI. ⇒ E' qui che passa il confine, ed e'")
+        print("        cio' che concilia le due misure opposte: chi prova con numeri")
+        print("        sbagliati vede un gate solido, chi prova con relazioni invertite")
+        print("        lo vede bucato. **Nessuna delle due misure e' sbagliata.**")
+    elif val and rel:
+        print("     🟡 passano entrambe le classi: la dimensione non separa su queste fonti.")
     else:
-        print("  🟡 quadro misto: rel+pass %d/%d · val+pass %d/%d · rel+att %d/%d · val+att %d/%d"
-              % (rp_passa, n, vp_passa, n, ra_passa, n, va_passa, n))
-        print("     Tre fonti non bastano a decidere: serve una popolazione piu' grande.")
+        print("     🪞 nessuna classe passa: su queste fonti il gate regge, e il")
+        print("        fenomeno va cercato altrove.")
+    print("  ② LA FORMA (attiva/passiva), DENTRO le relazioni:")
+    print("     attiva passa %d su %d   ·   passiva passa %d su %d" % (ra_passa, n, rp_passa, n))
+    if abs(rp_passa - ra_passa) >= n - 1 and n >= 5:
+        print("     🔴 la forma separa.")
+    else:
+        print("     🟡 differenza di %d su %d fonti: **NON e' distinguibile dal rumore**."
+              % (abs(rp_passa - ra_passa), n))
+        print("        ⇒ L'ipotesi «la voce passiva» resta NON dimostrata qui: serve")
+        print("           una popolazione piu' grande. Il dato di questo banco e' ①.")
 
 
 main()
