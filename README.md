@@ -78,13 +78,13 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
   coin toss, which is why `Memory(llm=...)` is the configuration to use when the
   workload is *what the source did not say*; and an *entity-substitution*
   contradiction (swapping one allergen/product for another) can score mid-range
-  in some languages — measured **25% escape in Spanish (7 of 28)** on the 4-language
-  matrix; the 7.1% often quoted is the **cross-language total** (8 of 112 over EN/IT/FR/ES,
-  and one of those escapes is Italian): `docs/EVIDENCE-stress-2026-07-18.md` §D,
-  `benchmark/moat_multilingual_matrix.py`.
+  in some languages — measured **25% escape on Spanish entity-substitution confabs
+  (7 of 28)**; across the whole 4-language matrix that is **7.1%** (8 of 112 over
+  EN/IT/FR/ES, and one of those escapes is Italian):
+  `docs/EVIDENCE-stress-2026-07-18.md` §D, `benchmark/moat_multilingual_matrix.py`.
   A two-threshold band (**on by default**, `VERIMEM_CE_BAND_ENFORCE=0` reverts) holds
-  the CE's uncertain middle zone, cutting that entity-substitution escape from
-  **6.2% → 1.8%** on the moat matrix with **zero** new false-blocks on entailed
+  the CE's uncertain middle zone, cutting the Spanish entity-substitution escape from
+  **6.2% → 1.8% of all 112 confabs** with **zero** new false-blocks on entailed
   facts, at the cost of **over-review 1/19 on hard true classes** (measured; the band
   *holds for review*, it does not block) — and the band **escalates to one llm adjudication** OFFLINE-FIRST instead of parking
   the write: a local **ollama** judge (auto-detected; default `qwen2.5:7b-instruct` —
