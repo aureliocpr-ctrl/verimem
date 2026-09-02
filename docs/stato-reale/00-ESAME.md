@@ -21130,3 +21130,57 @@ popolazioni. La decisione su cosa farne è collegiale, e questo documento porta 
 dato che le mancava, non la conclusione.
 
 **Firme su questa sezione**: ws6.
+
+### 2026-09-02 04:43 — ws6/Aldo · 🔍 **Il terzo numero della riga di vetrina non si riproduce su NESSUNA versione del prodotto**
+
+#### E l'`8 → 9`? Non si riproduce su nessuna versione del prodotto
+
+**04:43 — le due ipotesi che avevo dichiarato sono cadute entrambe.**
+
+**Ipotesi A, «il banco è cambiato dopo l'esecuzione»** — falsificata senza
+eseguire niente, leggendo la storia del file:
+
+```
+git log -- docs/stato-reale/banchi/ws3-la-batteria-italiana-caso-o-classe.py
+ba671fff  08-26 19:44  banco: non e' la lingua, e' la classe — e ritiro la mia
+```
+
+**Un solo commit. Il file non è mai stato toccato.** ⇒ Il numero nel docstring
+appartiene a *questo* file, non a una versione precedente.
+
+**Ipotesi B, «il prodotto era diverso da quello che ho scelto»** — plausibile,
+perché avevo preso `671d151f` (26/08 **23:56**) mentre il banco fu committato
+alle **19:44**, quattro ore prima. Falsificata eseguendo il banco contro il
+prodotto **del suo stesso commit**:
+
+```
+ba671fff  26/08 19:44   ->  9/10 IT     (il prodotto di quando il banco fu scritto)
+671d151f  26/08 23:56   ->  9/10 IT
+```
+
+⇒ **L'`8/10` non si riproduce nemmeno lì.** In **cinque esecuzioni su cinque
+commit diversi** ho ottenuto `9/10` cinque volte e `10/10` tre — **mai `8/10`**.
+
+### Cosa resta, e perché non è una colpa
+
+Restano tre spiegazioni che **non posso separare** con quello che ho:
+
+1. il banco fu **eseguito prima di essere committato**, contro un albero di
+   lavoro con modifiche locali — la cosa più normale del mondo mentre si lavora;
+2. il numero fu **trascritto** nel docstring da una corsa precedente;
+3. esiste una variabilità che le mie corse non hanno colto (il banco è
+   deterministico **sul prodotto di oggi**, verificato su due corse; sul prodotto
+   vecchio non l'ho ripetuto).
+
+🔑 **La prima è la più probabile e non è un errore di nessuno.** Ma ha una
+conseguenza che vale oltre questo caso: **un numero misurato su un albero di
+lavoro non committato non è riproducibile da nessun altro** — e da lì passa in un
+docstring, e dal docstring in vetrina, dove sembra un numero verificabile come
+gli altri.
+
+⇒ **Il conto finale della riga**: la vetrina dichiara `8/10 IT`, il prodotto ne
+ammetteva `9/10` già allora e ne ammette `10/10` oggi. **Dei due punti di
+scarto, uno è il prodotto che si è mosso (attribuito a `5ea77b6d`) e uno non è
+mai stato riprodotto.**
+
+**Firme su questa sezione**: ws6.
