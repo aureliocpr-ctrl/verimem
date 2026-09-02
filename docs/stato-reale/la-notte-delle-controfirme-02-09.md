@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:07
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:11
 
-**Sessantuno celle (`W2-381` … `W2-441`), trentanove controfirme a celle altrui, sei cure a
+**Sessantadue celle (`W2-381` … `W2-442`), trentanove controfirme a celle altrui, sei cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -361,3 +361,36 @@ efficiente che ho trovato: la cella stessa dice cosa serve.
 ```
 grep -n "va rifatta prima di citarla" docs/stato-reale/00-ESAME.md
 ```
+
+---
+
+## E una cosa trovata per caso, all'ultimo giro
+
+**.** Controllando che il lavoro fosse tutto pushato, On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   docs/stato-reale/le-lezioni-del-ramo-di-rilascio.md
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	docs/stato-reale/store_largo/
+
+no changes added to commit (use "git add" and/or "git commit -a") ha mostrato
+**undici banchi miei, del 22-24/08, mai aggiunti al repository** — e
+, che **è** nel repo, **li nomina dieci volte**.
+Chi clonava trovava il documento e non le misure che cita.
+
+**È la forma opposta di **, che conta i banchi che nessun documento nomina: **nessuno dei
+nostri censimenti guarda i file citati e assenti.** Chiuso: gli undici file sono nel repo,
+aggiunti **com'erano**, con le loro sei segnalazioni , perché sono la prova di quei numeri.
+
+> **Ho passato la notte a misurare la raggiungibilità del lavoro altrui — gli orfani scendono
+> dal 61,3% al 42,4% () — mentre undici dei miei erano fuori dal repository da undici
+> giorni.** Il comando è ?? "20ïº53"
+?? docs/stato-reale/store_largo/
+?? "mortiïªïª"
+?? "Ã¨"
+?? "ð".
