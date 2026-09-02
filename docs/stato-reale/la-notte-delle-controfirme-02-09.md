@@ -1,7 +1,7 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 03:45
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:25
 
-**Trentaquattro celle (`W2-381` … `W2-414`), diciotto controfirme a celle altrui, cinque cure a
-strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
+**Quarantacinque celle (`W2-381` … `W2-425`), venticinque controfirme a celle altrui, cinque cure
+a strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
 ---
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **18** | 17 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **25** | 24 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
@@ -197,7 +197,42 @@ presidio lo prende; dove usa le parole della fonte e cambia il **riferimento**, 
 
 ---
 
-## Sei cose che ho scritto e ritirato io, nella stessa notte
+## ⑥ Il banco del vertice oggi non paga più il suo costo — e la causa ha un commit
+
+**`W2-422`.** Rieseguito `ws7-il-vertice-serve-a-qualcosa.py`: falsi in memoria **7/7 → 2/7**,
+riduzione **71%** — identici al 29/08 — **ma i veri sopravvissuti passano da 2/3 a 3 SU 3.**
+
+**Causa chiusa in dieci minuti.** `vero-3` è scritto *«Il collaudo dell'impianto **`e'`** stato
+completato»*, con l'apostrofo. Il **30/08 alle 18:05**, dopo la sua misura, il commit
+**`c857752e`** aggiunge `e'` all'elenco dei marcatori di verbo — *«`è` c'era, `e'` no»*. Senza,
+il soggetto non veniva estratto, il pavimento non si attivava, `L1.13` bloccava.
+
+> **Il dato del vertice è ora citabile con l'attribuzione: 71% di falso in meno, zero veri
+> persi, e il vero che si perdeva è stato salvato da `c857752e`.** Resta il limite di @ws7,
+> che vale: **non è un agente vero**, i claim sono scritti a mano.
+
+---
+
+## ⑦ La classe che attraversa tre reperti: il prodotto riconosce il proprio dominio
+
+Tre meccanismi diversi, misurati per tre strade, con la **stessa forma**:
+
+| | |
+|---|---|
+| **le teste di dominio** (`W2-402`) | `verifica`, `migrazione`, `modulo` sono **escluse di proposito** perché termini software — e «verifica» in un verbale è un atto di terzi |
+| **il pavimento** (`W2-401`) | riconosce come «fatto professionale di terzi» il soggetto **generico** e non quello circostanziato |
+| **l'evidenza** (`W2-425`) | `pytest:PASS` e `pr:merged` sbloccano; **un verbale firmato dal direttore lavori vale quanto nessuna evidenza** |
+
+⇒ **Il prodotto riconosce il proprio dominio d'origine e tratta il resto come assenza.**
+E il corpus lo conferma dal lato dei dati: **98,7% auto-referenziale** (`W2-379`).
+
+> 🟢 **Ma il difetto è di COPERTURA, non di sicurezza**, e l'ho misurato: `pytest:PASS` disarma
+> `L1.13` e **il giudice ferma comunque il claim falso** (0,38). Un layer si disarma, l'altro
+> regge — che è ciò per cui i due esistono.
+
+---
+
+## Dieci cose che ho scritto e corretto io, nella stessa notte
 
 Le lascio perché **il modo in cui sono cadute vale più del numero che portavano**, e perché
 tre su quattro sono **la stessa forma**: un caso singolo trasformato in una proprietà del
