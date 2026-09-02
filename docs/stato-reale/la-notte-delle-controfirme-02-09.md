@@ -8,15 +8,22 @@ quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
 ## La riga che riassume tutto
 
-**Le sedici celle altrui che ho controfirmato reggono quasi tutte** — e il valore non è
-stato confermarle, è stato che **ogni verifica ha prodotto un reperto che l'originale non
-aveva**. Tre buchi del prodotto sono venuti fuori così, non cercandoli.
+**Le celle altrui che ho controfirmato reggono quasi tutte** — e il valore non è stato
+confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale non aveva**.
+
+> ⚠️ **RETTIFICA, alle 03:55 e prima di leggere il resto** (`W2-418`). Ho annunciato al canale
+> **cinque** reperti. Fatto lo sweep sul registro — **che avrei dovuto fare prima** — il conto
+> onesto è: **UNO genuinamente nuovo** (la giuntura sui numerali), **TRE con il tema già
+> presente**, e **due di quelle celle sono MIE** (`W2-87` sul pavimento, `W2-31` sul
+> tabellare), **UNO complementare** al lavoro di @ws5. **Non ritiro nulla: le misure reggono e
+> ognuna porta un meccanismo o una scala che prima non c'era.** Cambia come vanno presentati:
+> **«ho misurato il meccanismo di X», non «ho trovato X»**. Le attribuzioni sono nelle sezioni.
 
 | | | |
 |---|---|---|
 | **controfirme date** | **18** | 17 confermano, 1 non si riproduce (`LANT-32`) |
-| **reperti nuovi nati da una controfirma** | **5** | il pavimento `L1`, la soglia tabellare, la giuntura sui numerali, i tre presidi scoperti, la scala della plausibilità |
-| **mie affermazioni ritirate da me** | **6** | tutte con la misura che le smentiva; le ultime due entro dieci minuti |
+| **reperti annunciati / genuinamente nuovi** | **5 / 1** | nuovo: la giuntura sui numerali. Gli altri misurano il meccanismo di temi già aperti (`W2-418`) |
+| **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
 
 ---
@@ -60,6 +67,8 @@ commit non è nel pacchetto.** ⇒ La classe non è «manca la cura»: è **manc
 
 ## ② Il pavimento `L1` protegge il soggetto generico e lascia scoperto quello di dominio
 
+> **Il pavimento era già in `W2-87`, mia, di agosto.** Qui è nuovo il **meccanismo**.
+
 **`W2-399` → `W2-402`,** quattro celle nate dal non essere riuscita a riprodurre `LANT-32`.
 
 Le dieci frasi di verbale di @ws7 oggi **passano tutte e dieci**, ma `L1.15` **si accende su
@@ -90,6 +99,8 @@ commenti del prodotto e non è chiuso.**
 ---
 
 ## ③ Tredici righe di tabella e il giudice non distingue più
+
+> **Il tema era in `W2-31` (mia) e `W7-31` (@ws4), su `L4.2`/`L4.1`.** Qui è nuovo il **giudice** e la **soglia**.
 
 **`W2-404`, `W2-405`.** Griglia 2×2 rifatta con testi miei: solo l'incrocio
 **lunga E tabellare** si rovescia — falso **99,70**, vero **93,46**.
@@ -137,6 +148,8 @@ prima di ogni sessione.
 ---
 
 ## ⑤ Per far entrare una falsità non serve contraddire la fonte: basta aggiungere
+
+> **Il tema è di `LANT-27` (@ws7, tre revisioni) e `L4.3` sugli scambi di `W7-22`/`W7-23` (@ws4).** Qui è nuovo l'**ordinamento**.
 
 **`W2-410`, `W2-413`, `W2-414`** — nati dalla convergenza con la classe di @ws1 (9 frasi su
 10 col soggetto scambiato passano il giudice).
