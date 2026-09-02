@@ -20825,3 +20825,84 @@ va al passato E con la data, perche' oggi quel numero non e' piu' vero.
 ```
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 04:13 — ws1 · 🎯 **NON È IL TIPO DI SOSTITUZIONE: la STESSA sostituzione sulla STESSA fonte dà `98,05` in una frase e `0,70` in un'altra.** Otto triple: contrari `4/8`, estranei `6/8` — e **sei triple su otto si comportano uguale sui due bracci**
+
+**Livello** `try_local_score(fonte, frase)` (soglia 40,0) · **Perimetro** **otto triple**, ognuna
+da una fonte **reale** dello store *(prese verbatim dai `CASI` via `exec`)*, che cambiano **una
+sola parola sempre nello stesso slot**: ① **vera** ② **contrario** ③ **entità estranea** ·
+**Istante** 2026-09-02 04:11–04:13 · **Regime** variabili poppate, RAM **11,40 GB**, **`claim
+ram/giudice`** (`54ced3aee0d3`) preso e rilasciato · **Autorità**: ordine di Aurelio delle
+00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 04:05**: «*il banco vero — otto coppie su fonti diverse — non
+l'ho eseguito per la RAM: la domanda resta aperta su una popolazione seria*».
+
+### Il numero, con il controllo positivo a `8/8`
+
+| slot | vera | **contrario** | **estranea** | i due bracci |
+|---|---|---|---|---|
+| dentro / fuori | 99,63 | **0,99** | **22,90** | **concordi** *(fermati)* |
+| prima / ultima | 99,74 | **1,70** | 71,33 | discordi |
+| successive / precedenti | 99,69 | **42,99** ⚠️ | 99,62 | **concordi** *(passano)* |
+| una sola / più di una | 99,34 | 98,94 | 99,72 | **concordi** *(passano)* |
+| ammessi / respinti | 99,96 | **99,94** | **99,94** | **concordi** *(identici!)* |
+| telegrafici / prolissi | 99,96 | 99,72 | 85,74 | **concordi** *(passano)* |
+| NUDO / VESTITO | 99,55 | **0,70** | **0,66** | **concordi** *(fermati)* |
+| trova / perde | 97,95 | **1,95** | 97,88 | discordi |
+| | | **4 / 8** | **6 / 8** | **6 concordi su 8** |
+
+⚖️ **Predicevo «contrari 5-7, estranei 5-7, differenza ≤2»: usciti 4, 6, differenza 2.**
+⇒ condizione d'uscita **intermedia** ⇒ **lo dichiaro e NON lo chiamo classe.**
+
+### 🎯 Il reperto vero, e non è nel conteggio
+
+**Sei triple su otto danno lo stesso esito su entrambi i bracci**: dove il giudice ferma il
+contrario ferma anche l'estraneo, dove passa l'uno passa l'altro. ⇒ **la variabile non è COME
+si sostituisce, ma DOVE.**
+
+**E c'è la prova diretta, perché ho i due numeri:**
+
+```
+STESSA sostituzione  NUDO -> VESTITO,  STESSA fonte:
+  «Gli artefatti VESTITO sono il 34.4 per cento.»    (03:24)   98,05   PASSA
+  «128 artefatti sono classificati VESTITO.»         (04:13)    0,70   fermata
+```
+
+⇒ **la stessa parola sbagliata, contro la stessa fonte, cambia esito di 97 punti a seconda
+della frase che la contiene.** **Non è il tipo di sostituzione. Non è il contrario. Non è
+l'entità estranea.**
+
+### 🔁 Il conto delle mie tre letture su questo punto, in ordine
+
+| | |
+|---|---|
+| **03:55** | «cade sui contrari» — tratta **leggendo 2 casi** |
+| **04:05** | «i contrari non discriminano» — **contando 10 casi** già misurati |
+| **04:13** | **i contrari sono fermati PIÙ degli estranei** *(4/8 contro 6/8)*, ed **è il contrario di quello che avevo scritto alle 03:55** |
+
+⇒ **tre letture, e la terza rovescia la prima.** Il motivo è sempre lo stesso: **avevo chiamato
+«classe» ciò che avevo visto in due casi.**
+
+### ⚠️ Un numero che sta a tre punti dal confine, e va detto
+
+`successive/precedenti` prende **42,99** contro una soglia di **40,0**. ⇒ **il conteggio `4/8`
+poggia su un caso che dista 2,99 punti dal confine**: con soglia 45 i contrari sarebbero
+`3/8`. **Non arrotondo e non lo nascondo dentro il totale.**
+
+### Cosa NON prova
+
+**Otto triple, cinque fonti, una macchina, soglia 40,0 non variata.** `4/8` e `6/8` **non sono
+tassi**: sono otto casi, e uno di essi è al limite. **Le sostituzioni le ho scritte io** —
+«contrario» e «estraneo» sono **miei giudizi linguistici**, non categorie misurate, ed è
+esattamente il difetto che questo banco doveva controllare e che **si ripresenta un livello più
+su**. **Non so quale proprietà della frase decida**: dico che il tipo di sostituzione non è la
+variabile, **non dico quale sia** — sarebbe la quarta formulazione in un'ora, e le prime tre
+sono cadute. **Il confronto 98,05 contro 0,70 è fra due banchi diversi** eseguiti a 49 minuti di
+distanza: stessa fonte e stessa sostituzione, **ma frasi costruite in momenti diversi e per
+scopi diversi**.
+
+**Banco**: `porta_contrari.py`, dati in `contrari.json` (scratchpad).
+**Io misuro, non curo.**
