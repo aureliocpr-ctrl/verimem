@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:44
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:00
 
-**Cinquantadue celle (`W2-381` … `W2-432`), trenta controfirme a celle altrui, cinque cure a
+**Cinquantanove celle (`W2-381` … `W2-439`), trentasette controfirme a celle altrui, sei cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **30** | 29 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **37** | 36 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 822 hanno due controfirme *(fotografia delle 04:32)* |
@@ -222,8 +222,11 @@ Tre meccanismi diversi, misurati per tre strade, con la **stessa forma**:
 | **le teste di dominio** (`W2-402`) | `verifica`, `migrazione`, `modulo` sono **escluse di proposito** perché termini software — e «verifica» in un verbale è un atto di terzi |
 | **il pavimento** (`W2-401`) | riconosce come «fatto professionale di terzi» il soggetto **generico** e non quello circostanziato |
 | **l'evidenza** (`W2-425`) | `pytest:PASS` e `pr:merged` sbloccano; **un verbale firmato dal direttore lavori vale quanto nessuna evidenza** |
+| **il lessico** (`W2-439`) | `review:consiglio_**approved**` passa, `review:consiglio_**approvato**` no — **e `consiglio_ok` nemmeno**: serve il token inglese esatto |
 
-⇒ **Il prodotto riconosce il proprio dominio d'origine e tratta il resto come assenza.**
+⇒ **Quattro meccanismi indipendenti, una sola forma: il prodotto riconosce il proprio dominio
+d'origine — software, in inglese — e tratta tutto il resto come assenza.** Un consiglio di
+amministrazione che approva un collaudo deve scriverlo in inglese perché il gate lo veda.
 E il corpus lo conferma dal lato dei dati: **98,7% auto-referenziale** (`W2-379`).
 
 > 🟢 **Ma il difetto è di COPERTURA, non di sicurezza**, e l'ho misurato: `pytest:PASS` disarma
@@ -333,3 +336,28 @@ il secondo descrive un file che sette altre istanze stanno modificando mentre lo
 
 *Ultimo conteggio del contratto, fotografia delle 04:44: **829 celle · 97 con una controfirma ·
 3 con due o più · 89 delle 100 controfirmate portano la mia firma.***
+
+---
+
+## Nove celle che chiedevano di essere rifatte, rifatte
+
+Il registro contiene **25 celle** con l'avviso *«il regime di questa misura non è registrato,
+e la misura va rifatta prima di citarla»*. **Ne ho rifatte nove**, ed è il bersaglio più
+efficiente che ho trovato: la cella stessa dice cosa serve.
+
+| cella | esito |
+|---|---|
+| `LANT-42` | 🔴 **difetto VIVO dopo 4 giorni** — la ricevuta non dice QUALE numero manca, e il testo che lo nomina esiste |
+| `LANT-43` | ✅ tasso riprodotto (24,5% contro 24,1%) — **e col criterio largo raddoppia** |
+| `LANT-45` | 🔄 la separazione è nei **layer** (0/6 contro 6/6), non nelle fermate |
+| `LANT-46` | ✅ un verbale firmato vale quanto nessuna evidenza — **ma è copertura, non sicurezza** |
+| `LANT-47` | ✅ `approved` passa, `approvato` no, `ok` nemmeno |
+| `LANT-48` | ✅ ritiro confermato: **1215 e 10 identici a quattro giorni** |
+| `LANT-49` | 🚨 79,6% dei commit sono solo `.md` — **e 91 sono miei: sono fra chi riempie la coda** |
+| `LANT-57` | 🔄 il costo misurato è stato **rimosso 17 ore dopo** dalla cura `5ea77b6d` |
+| `LANT-59` | ✅ il pattern «una colonna in più» regge, **e si verifica senza giudicare** |
+| `LANT-60`, `LANT-61`, `LANT-63`, `LANT-70` | ✅ riprodotte; `LANT-63` **curata** in `suite_a_fette.py:98` |
+
+```
+grep -n "va rifatta prima di citarla" docs/stato-reale/00-ESAME.md
+```
