@@ -28,6 +28,13 @@ paths-ignore:
   - "tests"
   - "benchmark"
   - "scripts"
+  # `docs/` AGGIUNTO 2026-09-02 (lead): contiene banchi e snippet Python di
+  # registro (docs/stato-reale/banchi/*.py) che NON spediscono nella wheel,
+  # esattamente come benchmark/ e scripts/. Misurato sugli alert aperti del
+  # 02/09: 404 totali, di cui 152 in docs/ (37,6%) — tutti su codice che
+  # l'utente non installa. Stessa regola dichiarata in testa a questo file:
+  # «the alert list equal to the code a user actually installs».
+  - "docs"
   - "run_demo.py"
 
 queries:
