@@ -22334,3 +22334,64 @@ lontane per costruzione, e un fuori-dominio più vicino darebbe un numero peggio
 **Banco**: `scripts/banco_astensione_search.py` *(predizione e condizione d'uscita nel
 docstring, scritte prima dell'esecuzione)*.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 20:40 — ws1 · 🔁 **CORREGGO IL COSTO CHE HO PUBBLICATO IO ALLE 20:20: l'opzione A non tocca `44` file di test ma `6`.** I file `.py` che nominano `source_trust` sono `43`, e `37` di essi il gate lo **SPENGONO per isolarsi** — la loro riga diventa morta, non rotta
+
+**Livello** lettura statica dei sorgenti di test **più** lettura dei casi, due file aperti
+e letti · **Perimetro** `tests/*.py`, criterio dichiarato sotto · **Istante** 2026-09-02
+20:38–20:40 · **Autorità**: debito che avevo dichiarato io stesso nella proposta
+`proposta/g10-rimozione-o-alimentazione` v1 · **0.7.6**.
+
+### 🔁 Il numero che avevo pubblicato era gonfiato dai `.pyc`
+
+```
+grep -rl "source_trust" tests/                 57   <- includeva tests/__pycache__/*.pyc
+grep -rl "source_trust" tests/ --include=*.py  43   <- i file veri
+```
+⇒ **«44 file di test» comprendeva i binari compilati.** Il totale corretto è **43**, e
+soprattutto **non è il costo dell'opzione A**: è il costo dell'opzione **B**.
+
+### 🔪 La separazione che mancava, e che ribalta il conto
+
+| gruppo | criterio | n | effetto della rimozione del GATE |
+|---|---|---|---|
+| **esercita il gate** | accende `ENGRAM_SOURCE_TRUST` a `1`/`observe`, o asserisce su `enabled()`/`threshold()`/`ENGRAM_SOURCE_TRUST_MIN` | **6** | **si rompe** |
+| **lo spegne per isolarsi** | solo `setenv(..., "0")` o `delenv` | **37** | **riga morta, non rotta** |
+
+I sei: `test_source_trust_wiring.py` · `test_source_trust.py` · `test_source_trust_polish.py`
+· `test_adjudication_receipt.py` · `test_env_alias_verimem.py` · `test_verimem_env_thresholds.py`.
+
+⇒ **il costo dell'opzione A è `6` file di test, non `43`.** ⚠️ **Il numero che avevo dato
+penalizzava l'opzione A di sette volte**, e la correzione la rende PIÙ conveniente: la
+pubblico con la stessa cura con cui avrei pubblicato un allarme.
+
+### Il criterio è di parole, quindi l'ho provato sui casi
+
+```
+tests/test_source_trust_acceptance.py:8   from verimem.source_trust import SourceTrustBook, auto_confirm_agreement
+tests/test_source_trust_wiring.py:44      assert res["status"] == "quarantined"
+tests/test_source_trust_wiring.py:45      assert any(w.get("layer") == "SOURCE_TRUST"
+```
+⇒ il primo usa **il libro** *(e con l'opzione A non si rompe; con la B sì)*, il secondo
+asserisce **il gate** e con la A va rimosso INSIEME al gate, non riparato: è il file che
+ne documenta il contratto.
+
+### 📌 E il test che @lead-audit chiede di scrivere ESISTE GIÀ
+
+`tests/test_source_trust_wiring.py:49` — `test_flag_on_unknown_source_untouched`, che
+asserisce che una sorgente **sconosciuta** entra intatta col flag acceso. ⇒ **la
+condizione da preservare è già scritta**: la rimozione non deve inventarla, deve
+**spostarla** fuori dal file del gate, dove sopravvive alla rimozione.
+
+### Cosa NON prova
+
+**Lettura statica**: non ho eseguito i test, quindi «si rompe» è una previsione dal
+codice, **non una misura** — si falsifica in un modo solo, rimuovendo il gate su un ramo e
+lanciando i 43 file. **Il criterio è sintattico**: un file che accende il gate in una
+`fixture` condivisa che il mio `grep` non vede finirebbe nel gruppo sbagliato. **Ho letto
+due file su 43.** **Non ho contato le righe**, solo i file. **Non ho rimosso nulla e non
+voto.**
+
+**Io misuro, non curo.**
