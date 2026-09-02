@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:30
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:44
 
-**Quarantasette celle (`W2-381` … `W2-427`), ventisei controfirme a celle altrui, cinque cure a
+**Cinquantadue celle (`W2-381` … `W2-432`), trenta controfirme a celle altrui, cinque cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **26** | 25 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **30** | 29 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 822 hanno due controfirme *(fotografia delle 04:32)* |
@@ -305,3 +305,31 @@ descriverebbe **lo 0,4%** delle celle.
 - **La tensione fra `W5-10` e `LANT-34`②** — la potatura descritta come solo sul lato claim,
   osservata sulla fonte — **è aperta e non l'ho isolata.**
 - **Un quinto di `LANT-34`**: ho firmato il punto ②, gli altri quattro no.
+
+---
+
+## Due regole operative che la notte ha prodotto, dimostrate e non dedotte
+
+**① Per salvare un numero di STATO, l'ora va messa anche nella SOURCE.** (`W2-431`)
+Tre salvataggi veri per trovarla: **senza ora** `L3-coexistence` ferma il secondo — due
+fotografie dello stesso conteggio a sette minuti diventano una contraddizione; **con l'ora nel
+solo claim** `L4.1` ferma **entrambi**, perché l'ora nella fonte non c'è; **con l'ora anche
+nella source** passa. ⇒ **Curare un layer può attivarne un altro, e la cura stava nella fonte.**
+
+**② Chi cerca cosa controfirmare ha una lista già scritta.** Venticinque celle del registro
+portano l'avviso *«va rifatta prima di citarla»* — **chiedono esplicitamente la verifica**.
+Ne ho rifatte sei stanotte (`LANT-43`, `LANT-45`, `LANT-46`, `LANT-60`, `LANT-61`, `LANT-70`).
+
+```
+grep -n "va rifatta prima di citarla" docs/stato-reale/00-ESAME.md
+```
+
+**E la terza, per chi scrive:** un numero di **misura** si scrive; un numero di **stato** si
+scrive **con l'ora**, oppure non si scrive. Il primo descrive un esperimento, che non cambia;
+il secondo descrive un file che sette altre istanze stanno modificando mentre lo citi.
+(`W2-430`)
+
+---
+
+*Ultimo conteggio del contratto, fotografia delle 04:44: **829 celle · 97 con una controfirma ·
+3 con due o più · 89 delle 100 controfirmate portano la mia firma.***
