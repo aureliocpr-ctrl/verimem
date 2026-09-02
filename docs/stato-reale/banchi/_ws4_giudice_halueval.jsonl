@@ -1,0 +1,400 @@
+{"i": 1, "label": 1, "score": 99.97964477539062, "fermato": false, "layers": []}
+{"i": 2, "label": 0, "score": 98.90867614746094, "fermato": true, "layers": ["L4.1"]}
+{"i": 3, "label": 1, "score": 99.96857452392578, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 4, "label": 0, "score": 81.13015747070312, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 5, "label": 1, "score": 99.69715881347656, "fermato": false, "layers": []}
+{"i": 6, "label": 0, "score": 0.13886329531669617, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 7, "label": 1, "score": 97.89574432373047, "fermato": false, "layers": []}
+{"i": 8, "label": 0, "score": 99.65707397460938, "fermato": false, "layers": []}
+{"i": 9, "label": 1, "score": 99.54225158691406, "fermato": false, "layers": []}
+{"i": 10, "label": 0, "score": 1.3230258226394653, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 11, "label": 1, "score": 2.3555328845977783, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 12, "label": 0, "score": 0.23154886066913605, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 13, "label": 1, "score": 99.9852066040039, "fermato": false, "layers": []}
+{"i": 14, "label": 0, "score": 94.38909149169922, "fermato": false, "layers": []}
+{"i": 15, "label": 1, "score": 99.9318618774414, "fermato": false, "layers": []}
+{"i": 16, "label": 0, "score": 0.13722608983516693, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 17, "label": 1, "score": 99.7625732421875, "fermato": false, "layers": []}
+{"i": 18, "label": 0, "score": 99.70320129394531, "fermato": false, "layers": []}
+{"i": 19, "label": 1, "score": 99.96942138671875, "fermato": false, "layers": []}
+{"i": 20, "label": 0, "score": 13.963601112365723, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 21, "label": 1, "score": 99.92481231689453, "fermato": false, "layers": []}
+{"i": 22, "label": 0, "score": 98.95060729980469, "fermato": false, "layers": []}
+{"i": 23, "label": 1, "score": 99.95870208740234, "fermato": false, "layers": []}
+{"i": 24, "label": 0, "score": 0.6740394234657288, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 25, "label": 1, "score": 99.70388793945312, "fermato": false, "layers": ["L4.1-ambiguo", "L4.2"]}
+{"i": 26, "label": 0, "score": 4.443724155426025, "fermato": true, "layers": ["L4-grounding", "L4.1-ambiguo", "L4.2"]}
+{"i": 27, "label": 1, "score": 99.93437957763672, "fermato": false, "layers": ["L4.2"]}
+{"i": 28, "label": 0, "score": 73.57296752929688, "fermato": true, "layers": ["L4-review"]}
+{"i": 29, "label": 1, "score": 99.89429473876953, "fermato": false, "layers": []}
+{"i": 30, "label": 0, "score": 0.8548448085784912, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 31, "label": 1, "score": 99.93323516845703, "fermato": false, "layers": []}
+{"i": 32, "label": 0, "score": 0.35152915120124817, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 33, "label": 1, "score": 99.81670379638672, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 34, "label": 0, "score": 55.83034896850586, "fermato": true, "layers": ["L4-review", "L4.1"]}
+{"i": 35, "label": 1, "score": 99.22537231445312, "fermato": false, "layers": []}
+{"i": 36, "label": 0, "score": 99.9659423828125, "fermato": false, "layers": []}
+{"i": 37, "label": 1, "score": 99.97962951660156, "fermato": false, "layers": []}
+{"i": 38, "label": 0, "score": 4.3323445320129395, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 39, "label": 1, "score": 99.97958374023438, "fermato": false, "layers": []}
+{"i": 40, "label": 0, "score": 99.9645004272461, "fermato": false, "layers": []}
+{"i": 41, "label": 1, "score": 91.17049407958984, "fermato": true, "layers": ["L4-relazione", "L4.1"]}
+{"i": 42, "label": 0, "score": 0.26851195096969604, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 43, "label": 1, "score": 99.97628021240234, "fermato": false, "layers": ["L4.1-ambiguo"]}
+{"i": 44, "label": 0, "score": 0.9113869667053223, "fermato": true, "layers": ["L4-grounding", "L4.1-ambiguo"]}
+{"i": 45, "label": 1, "score": 99.97767639160156, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 46, "label": 0, "score": 97.66374969482422, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 47, "label": 1, "score": 99.91869354248047, "fermato": false, "layers": []}
+{"i": 48, "label": 0, "score": 0.27504706382751465, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 49, "label": 1, "score": 99.98420715332031, "fermato": false, "layers": []}
+{"i": 50, "label": 0, "score": 0.16557635366916656, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 51, "label": 1, "score": 99.93497467041016, "fermato": false, "layers": []}
+{"i": 52, "label": 0, "score": 0.35428115725517273, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 53, "label": 1, "score": 4.126841068267822, "fermato": true, "layers": ["L4-grounding", "L4.1", "L4.2"]}
+{"i": 54, "label": 0, "score": 99.89094543457031, "fermato": false, "layers": []}
+{"i": 55, "label": 1, "score": 98.35285186767578, "fermato": false, "layers": []}
+{"i": 56, "label": 0, "score": 99.95146179199219, "fermato": false, "layers": []}
+{"i": 57, "label": 1, "score": 99.95889282226562, "fermato": false, "layers": []}
+{"i": 58, "label": 0, "score": 0.11646081507205963, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 59, "label": 1, "score": 99.97314453125, "fermato": false, "layers": []}
+{"i": 60, "label": 0, "score": 0.2098155915737152, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 61, "label": 1, "score": 99.82611846923828, "fermato": false, "layers": []}
+{"i": 62, "label": 0, "score": 99.953125, "fermato": false, "layers": []}
+{"i": 63, "label": 1, "score": 99.97106170654297, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 64, "label": 0, "score": 0.1380782127380371, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 65, "label": 1, "score": 99.9815673828125, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 66, "label": 0, "score": 0.18666115403175354, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 67, "label": 1, "score": 99.97737121582031, "fermato": false, "layers": []}
+{"i": 68, "label": 0, "score": 93.7396469116211, "fermato": true, "layers": ["L4.1"]}
+{"i": 69, "label": 1, "score": 99.90853881835938, "fermato": false, "layers": []}
+{"i": 70, "label": 0, "score": 99.81694030761719, "fermato": false, "layers": []}
+{"i": 71, "label": 1, "score": 99.97193145751953, "fermato": false, "layers": []}
+{"i": 72, "label": 0, "score": 99.92045593261719, "fermato": false, "layers": []}
+{"i": 73, "label": 1, "score": 99.98316955566406, "fermato": false, "layers": ["L4.2"]}
+{"i": 74, "label": 0, "score": 99.98189544677734, "fermato": false, "layers": ["L4.2"]}
+{"i": 75, "label": 1, "score": 45.16171646118164, "fermato": true, "layers": ["L4-review"]}
+{"i": 76, "label": 0, "score": 99.44861602783203, "fermato": false, "layers": []}
+{"i": 77, "label": 1, "score": 99.97994232177734, "fermato": false, "layers": []}
+{"i": 78, "label": 0, "score": 99.94451141357422, "fermato": false, "layers": []}
+{"i": 79, "label": 1, "score": 99.93607330322266, "fermato": false, "layers": []}
+{"i": 80, "label": 0, "score": 0.5134471654891968, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 81, "label": 1, "score": 99.96485900878906, "fermato": false, "layers": []}
+{"i": 82, "label": 0, "score": 0.18801017105579376, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 83, "label": 1, "score": 99.9627914428711, "fermato": false, "layers": []}
+{"i": 84, "label": 0, "score": 99.97085571289062, "fermato": false, "layers": []}
+{"i": 85, "label": 1, "score": 64.22441101074219, "fermato": true, "layers": ["L4-review"]}
+{"i": 86, "label": 0, "score": 0.3255077302455902, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 87, "label": 1, "score": 99.98419189453125, "fermato": false, "layers": []}
+{"i": 88, "label": 0, "score": 99.65896606445312, "fermato": false, "layers": []}
+{"i": 89, "label": 1, "score": 97.68273162841797, "fermato": false, "layers": []}
+{"i": 90, "label": 0, "score": 0.2471548318862915, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 91, "label": 1, "score": 99.97409057617188, "fermato": false, "layers": []}
+{"i": 92, "label": 0, "score": 99.96150970458984, "fermato": false, "layers": ["L4.2"]}
+{"i": 93, "label": 1, "score": 99.9788589477539, "fermato": false, "layers": []}
+{"i": 94, "label": 0, "score": 99.74810791015625, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 95, "label": 1, "score": 99.97772216796875, "fermato": false, "layers": []}
+{"i": 96, "label": 0, "score": 73.42253875732422, "fermato": true, "layers": ["L4-review"]}
+{"i": 97, "label": 1, "score": 99.95613861083984, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 98, "label": 0, "score": 0.16657018661499023, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 99, "label": 1, "score": 98.07989501953125, "fermato": false, "layers": []}
+{"i": 100, "label": 0, "score": 0.5271270871162415, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 101, "label": 1, "score": 99.78952026367188, "fermato": false, "layers": []}
+{"i": 102, "label": 0, "score": 6.807138919830322, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 103, "label": 1, "score": 99.89971160888672, "fermato": false, "layers": []}
+{"i": 104, "label": 0, "score": 99.51522064208984, "fermato": false, "layers": []}
+{"i": 105, "label": 1, "score": 99.97766876220703, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 106, "label": 0, "score": 99.28802490234375, "fermato": false, "layers": []}
+{"i": 107, "label": 1, "score": 99.97805786132812, "fermato": false, "layers": []}
+{"i": 108, "label": 0, "score": 99.9802017211914, "fermato": false, "layers": []}
+{"i": 109, "label": 1, "score": 99.98057556152344, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 110, "label": 0, "score": 99.26260375976562, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 111, "label": 1, "score": 99.97322845458984, "fermato": true, "layers": ["L4-relazione", "L4.1"]}
+{"i": 112, "label": 0, "score": 99.9842758178711, "fermato": true, "layers": ["L4-relazione", "L4.1"]}
+{"i": 113, "label": 1, "score": 99.97949981689453, "fermato": true, "layers": ["L4.1"]}
+{"i": 114, "label": 0, "score": 98.83325958251953, "fermato": true, "layers": ["L4.1"]}
+{"i": 115, "label": 1, "score": 0.3076213300228119, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 116, "label": 0, "score": 0.3468071222305298, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 117, "label": 1, "score": 99.83893585205078, "fermato": false, "layers": []}
+{"i": 118, "label": 0, "score": 93.0006332397461, "fermato": false, "layers": []}
+{"i": 119, "label": 1, "score": 25.566478729248047, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 120, "label": 0, "score": 1.8352253437042236, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 121, "label": 1, "score": 99.97614288330078, "fermato": false, "layers": []}
+{"i": 122, "label": 0, "score": 0.0937618687748909, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 123, "label": 1, "score": 99.9169921875, "fermato": false, "layers": ["L4.1-ambiguo"]}
+{"i": 124, "label": 0, "score": 2.4725122451782227, "fermato": true, "layers": ["L4-grounding", "L4.1-ambiguo"]}
+{"i": 125, "label": 1, "score": 99.86050415039062, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 126, "label": 0, "score": 0.3525511920452118, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 127, "label": 1, "score": 9.338977813720703, "fermato": true, "layers": ["L4-grounding", "L4.1", "L4.2"]}
+{"i": 128, "label": 0, "score": 99.98214721679688, "fermato": true, "layers": ["L4.1"]}
+{"i": 129, "label": 1, "score": 99.9799575805664, "fermato": false, "layers": []}
+{"i": 130, "label": 0, "score": 95.97003936767578, "fermato": false, "layers": []}
+{"i": 131, "label": 1, "score": 99.54854583740234, "fermato": false, "layers": []}
+{"i": 132, "label": 0, "score": 2.0777459144592285, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 133, "label": 1, "score": 99.95792388916016, "fermato": false, "layers": []}
+{"i": 134, "label": 0, "score": 26.102144241333008, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 135, "label": 1, "score": 99.96481323242188, "fermato": false, "layers": []}
+{"i": 136, "label": 0, "score": 29.261520385742188, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 137, "label": 1, "score": 99.97614288330078, "fermato": false, "layers": []}
+{"i": 138, "label": 0, "score": 99.83983612060547, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 139, "label": 1, "score": 99.95891571044922, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 140, "label": 0, "score": 99.95845031738281, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 141, "label": 1, "score": 99.9703598022461, "fermato": false, "layers": []}
+{"i": 142, "label": 0, "score": 0.28185775876045227, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 143, "label": 1, "score": 99.90693664550781, "fermato": false, "layers": []}
+{"i": 144, "label": 0, "score": 99.97003173828125, "fermato": false, "layers": []}
+{"i": 145, "label": 1, "score": 99.3926010131836, "fermato": false, "layers": []}
+{"i": 146, "label": 0, "score": 0.11221764981746674, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 147, "label": 1, "score": 99.95436096191406, "fermato": false, "layers": []}
+{"i": 148, "label": 0, "score": 0.9456523656845093, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 149, "label": 1, "score": 20.90683364868164, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 150, "label": 0, "score": 15.899825096130371, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 151, "label": 1, "score": 99.131103515625, "fermato": false, "layers": []}
+{"i": 152, "label": 0, "score": 0.16489821672439575, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 153, "label": 1, "score": 99.90443420410156, "fermato": false, "layers": []}
+{"i": 154, "label": 0, "score": 99.97047424316406, "fermato": false, "layers": []}
+{"i": 155, "label": 1, "score": 99.976318359375, "fermato": false, "layers": []}
+{"i": 156, "label": 0, "score": 99.91161346435547, "fermato": false, "layers": []}
+{"i": 157, "label": 1, "score": 99.68818664550781, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 158, "label": 0, "score": 0.12150539457798004, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 159, "label": 1, "score": 99.97052764892578, "fermato": false, "layers": []}
+{"i": 160, "label": 0, "score": 99.376220703125, "fermato": false, "layers": []}
+{"i": 161, "label": 1, "score": 99.94996643066406, "fermato": false, "layers": []}
+{"i": 162, "label": 0, "score": 96.04076385498047, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 163, "label": 1, "score": 99.98352813720703, "fermato": false, "layers": []}
+{"i": 164, "label": 0, "score": 0.1663702428340912, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 165, "label": 1, "score": 99.96524047851562, "fermato": false, "layers": []}
+{"i": 166, "label": 0, "score": 0.13238359987735748, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 167, "label": 1, "score": 99.97867584228516, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 168, "label": 0, "score": 87.84326171875, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 169, "label": 1, "score": 99.9625473022461, "fermato": false, "layers": []}
+{"i": 170, "label": 0, "score": 0.17306026816368103, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 171, "label": 1, "score": 99.84996032714844, "fermato": false, "layers": []}
+{"i": 172, "label": 0, "score": 68.10787200927734, "fermato": true, "layers": ["L4-review"]}
+{"i": 173, "label": 1, "score": 99.9785385131836, "fermato": false, "layers": []}
+{"i": 174, "label": 0, "score": 99.98096466064453, "fermato": false, "layers": []}
+{"i": 175, "label": 1, "score": 99.98330688476562, "fermato": false, "layers": []}
+{"i": 176, "label": 0, "score": 0.2598189413547516, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 177, "label": 1, "score": 99.26260375976562, "fermato": false, "layers": []}
+{"i": 178, "label": 0, "score": 0.11442847549915314, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 179, "label": 1, "score": 99.97296905517578, "fermato": false, "layers": []}
+{"i": 180, "label": 0, "score": 99.9635009765625, "fermato": false, "layers": []}
+{"i": 181, "label": 1, "score": 99.92425537109375, "fermato": false, "layers": []}
+{"i": 182, "label": 0, "score": 0.2463754564523697, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 183, "label": 1, "score": 99.95928192138672, "fermato": false, "layers": []}
+{"i": 184, "label": 0, "score": 0.1659475564956665, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 185, "label": 1, "score": 99.81371307373047, "fermato": false, "layers": []}
+{"i": 186, "label": 0, "score": 99.98188781738281, "fermato": false, "layers": []}
+{"i": 187, "label": 1, "score": 2.89076566696167, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 188, "label": 0, "score": 1.2078938484191895, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 189, "label": 1, "score": 99.91464233398438, "fermato": false, "layers": ["L4.2"]}
+{"i": 190, "label": 0, "score": 99.98033905029297, "fermato": false, "layers": ["L4.2"]}
+{"i": 191, "label": 1, "score": 99.96513366699219, "fermato": false, "layers": []}
+{"i": 192, "label": 0, "score": 0.14591681957244873, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 193, "label": 1, "score": 99.9375991821289, "fermato": false, "layers": []}
+{"i": 194, "label": 0, "score": 0.1449887752532959, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 195, "label": 1, "score": 92.3803482055664, "fermato": false, "layers": []}
+{"i": 196, "label": 0, "score": 0.20817142724990845, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 197, "label": 1, "score": 99.9468002319336, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 198, "label": 0, "score": 0.28974154591560364, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 199, "label": 1, "score": 99.97017669677734, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 200, "label": 0, "score": 99.98290252685547, "fermato": false, "layers": []}
+{"i": 201, "label": 1, "score": 99.97932434082031, "fermato": false, "layers": []}
+{"i": 202, "label": 0, "score": 99.98176574707031, "fermato": false, "layers": []}
+{"i": 203, "label": 1, "score": 99.97462463378906, "fermato": false, "layers": []}
+{"i": 204, "label": 0, "score": 99.8653793334961, "fermato": false, "layers": []}
+{"i": 205, "label": 1, "score": 99.9559326171875, "fermato": false, "layers": []}
+{"i": 206, "label": 0, "score": 99.43328857421875, "fermato": false, "layers": []}
+{"i": 207, "label": 1, "score": 99.98121643066406, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 208, "label": 0, "score": 2.573028802871704, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 209, "label": 1, "score": 99.95794677734375, "fermato": false, "layers": []}
+{"i": 210, "label": 0, "score": 99.97032165527344, "fermato": false, "layers": []}
+{"i": 211, "label": 1, "score": 99.93122863769531, "fermato": false, "layers": []}
+{"i": 212, "label": 0, "score": 99.06255340576172, "fermato": false, "layers": []}
+{"i": 213, "label": 1, "score": 99.98233795166016, "fermato": false, "layers": []}
+{"i": 214, "label": 0, "score": 99.75965881347656, "fermato": false, "layers": []}
+{"i": 215, "label": 1, "score": 99.94576263427734, "fermato": false, "layers": []}
+{"i": 216, "label": 0, "score": 98.5976333618164, "fermato": false, "layers": []}
+{"i": 217, "label": 1, "score": 99.87281036376953, "fermato": false, "layers": ["L4.2"]}
+{"i": 218, "label": 0, "score": 0.10993236303329468, "fermato": true, "layers": ["L4-grounding", "L4.2"]}
+{"i": 219, "label": 1, "score": 0.18456444144248962, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 220, "label": 0, "score": 97.22203826904297, "fermato": false, "layers": []}
+{"i": 221, "label": 1, "score": 99.7164535522461, "fermato": true, "layers": ["L4.1"]}
+{"i": 222, "label": 0, "score": 1.7806450128555298, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 223, "label": 1, "score": 98.69660949707031, "fermato": false, "layers": []}
+{"i": 224, "label": 0, "score": 0.21184927225112915, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 225, "label": 1, "score": 3.746910810470581, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 226, "label": 0, "score": 99.87371826171875, "fermato": false, "layers": []}
+{"i": 227, "label": 1, "score": 99.90840911865234, "fermato": false, "layers": []}
+{"i": 228, "label": 0, "score": 0.13130006194114685, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 229, "label": 1, "score": 99.97652435302734, "fermato": false, "layers": []}
+{"i": 230, "label": 0, "score": 99.9853744506836, "fermato": false, "layers": []}
+{"i": 231, "label": 1, "score": 99.96587371826172, "fermato": false, "layers": []}
+{"i": 232, "label": 0, "score": 0.3035169243812561, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 233, "label": 1, "score": 99.96236419677734, "fermato": false, "layers": []}
+{"i": 234, "label": 0, "score": 99.9677505493164, "fermato": true, "layers": ["L1.10"]}
+{"i": 235, "label": 1, "score": 99.97866821289062, "fermato": false, "layers": []}
+{"i": 236, "label": 0, "score": 99.77607727050781, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 237, "label": 1, "score": 99.94877624511719, "fermato": false, "layers": ["L4.2"]}
+{"i": 238, "label": 0, "score": 0.18643350899219513, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 239, "label": 1, "score": 99.93414306640625, "fermato": false, "layers": []}
+{"i": 240, "label": 0, "score": 99.9736099243164, "fermato": false, "layers": []}
+{"i": 241, "label": 1, "score": 99.97834777832031, "fermato": false, "layers": []}
+{"i": 242, "label": 0, "score": 99.9822769165039, "fermato": false, "layers": []}
+{"i": 243, "label": 1, "score": 99.74977111816406, "fermato": true, "layers": ["L4.1"]}
+{"i": 244, "label": 0, "score": 99.93006134033203, "fermato": true, "layers": ["L4.1"]}
+{"i": 245, "label": 1, "score": 99.95272064208984, "fermato": false, "layers": []}
+{"i": 246, "label": 0, "score": 98.91461181640625, "fermato": false, "layers": []}
+{"i": 247, "label": 1, "score": 2.643052816390991, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 248, "label": 0, "score": 0.1174311488866806, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 249, "label": 1, "score": 92.9028549194336, "fermato": true, "layers": ["L1.10"]}
+{"i": 250, "label": 0, "score": 0.15619143843650818, "fermato": true, "layers": ["L1.10", "L4-grounding", "L4.1"]}
+{"i": 251, "label": 1, "score": 99.91841888427734, "fermato": false, "layers": []}
+{"i": 252, "label": 0, "score": 0.5744178295135498, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 253, "label": 1, "score": 99.9701919555664, "fermato": false, "layers": []}
+{"i": 254, "label": 0, "score": 99.98096466064453, "fermato": false, "layers": []}
+{"i": 255, "label": 1, "score": 98.06928253173828, "fermato": false, "layers": []}
+{"i": 256, "label": 0, "score": 99.30699157714844, "fermato": false, "layers": []}
+{"i": 257, "label": 1, "score": 99.97468566894531, "fermato": false, "layers": []}
+{"i": 258, "label": 0, "score": 0.10399939119815826, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 259, "label": 1, "score": 99.97489929199219, "fermato": true, "layers": ["L4.1"]}
+{"i": 260, "label": 0, "score": 29.721837997436523, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 261, "label": 1, "score": 99.98300170898438, "fermato": false, "layers": []}
+{"i": 262, "label": 0, "score": 44.59000015258789, "fermato": true, "layers": ["L4-review"]}
+{"i": 263, "label": 1, "score": 99.98509979248047, "fermato": false, "layers": []}
+{"i": 264, "label": 0, "score": 99.98217010498047, "fermato": true, "layers": ["L4.1"]}
+{"i": 265, "label": 1, "score": 99.45287322998047, "fermato": false, "layers": []}
+{"i": 266, "label": 0, "score": 0.14269033074378967, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 267, "label": 1, "score": 92.42047119140625, "fermato": false, "layers": []}
+{"i": 268, "label": 0, "score": 95.08390808105469, "fermato": false, "layers": []}
+{"i": 269, "label": 1, "score": 99.66987609863281, "fermato": false, "layers": []}
+{"i": 270, "label": 0, "score": 99.9470443725586, "fermato": false, "layers": []}
+{"i": 271, "label": 1, "score": 99.02804565429688, "fermato": true, "layers": ["L4.1"]}
+{"i": 272, "label": 0, "score": 0.3308366537094116, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 273, "label": 1, "score": 99.90576171875, "fermato": false, "layers": []}
+{"i": 274, "label": 0, "score": 99.93456268310547, "fermato": false, "layers": []}
+{"i": 275, "label": 1, "score": 99.49382781982422, "fermato": false, "layers": []}
+{"i": 276, "label": 0, "score": 99.97265625, "fermato": false, "layers": []}
+{"i": 277, "label": 1, "score": 95.96758270263672, "fermato": false, "layers": []}
+{"i": 278, "label": 0, "score": 99.93545532226562, "fermato": false, "layers": []}
+{"i": 279, "label": 1, "score": 99.90113067626953, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 280, "label": 0, "score": 46.8562126159668, "fermato": true, "layers": ["L4-review"]}
+{"i": 281, "label": 1, "score": 0.3967825174331665, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 282, "label": 0, "score": 0.4097684621810913, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 283, "label": 1, "score": 99.97371673583984, "fermato": false, "layers": []}
+{"i": 284, "label": 0, "score": 0.07842768728733063, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 285, "label": 1, "score": 99.98381042480469, "fermato": false, "layers": ["L4.1-ambiguo"]}
+{"i": 286, "label": 0, "score": 93.13481140136719, "fermato": false, "layers": ["L4.1-ambiguo"]}
+{"i": 287, "label": 1, "score": 99.97854614257812, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 288, "label": 0, "score": 58.46433639526367, "fermato": true, "layers": ["L4-review"]}
+{"i": 289, "label": 1, "score": 99.79713439941406, "fermato": false, "layers": []}
+{"i": 290, "label": 0, "score": 99.96975708007812, "fermato": false, "layers": []}
+{"i": 291, "label": 1, "score": 99.96782684326172, "fermato": true, "layers": ["L1.10"]}
+{"i": 292, "label": 0, "score": 99.98248291015625, "fermato": true, "layers": ["L1.10"]}
+{"i": 293, "label": 1, "score": 99.98176574707031, "fermato": false, "layers": []}
+{"i": 294, "label": 0, "score": 99.95979309082031, "fermato": false, "layers": []}
+{"i": 295, "label": 1, "score": 99.4685287475586, "fermato": true, "layers": ["L4.1", "L4.2"]}
+{"i": 296, "label": 0, "score": 0.29048585891723633, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 297, "label": 1, "score": 99.98004150390625, "fermato": true, "layers": ["L4.1"]}
+{"i": 298, "label": 0, "score": 0.1442902386188507, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 299, "label": 1, "score": 99.98218536376953, "fermato": false, "layers": []}
+{"i": 300, "label": 0, "score": 99.96827697753906, "fermato": false, "layers": []}
+{"i": 301, "label": 1, "score": 99.97856140136719, "fermato": false, "layers": []}
+{"i": 302, "label": 0, "score": 39.742733001708984, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 303, "label": 1, "score": 0.3741195499897003, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 304, "label": 0, "score": 87.5109634399414, "fermato": false, "layers": []}
+{"i": 305, "label": 1, "score": 99.97183990478516, "fermato": false, "layers": []}
+{"i": 306, "label": 0, "score": 0.4930877089500427, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 307, "label": 1, "score": 99.96939086914062, "fermato": false, "layers": []}
+{"i": 308, "label": 0, "score": 0.5074546933174133, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 309, "label": 1, "score": 98.29132080078125, "fermato": false, "layers": []}
+{"i": 310, "label": 0, "score": 99.54827117919922, "fermato": false, "layers": []}
+{"i": 311, "label": 1, "score": 0.9453414678573608, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 312, "label": 0, "score": 0.3642970621585846, "fermato": true, "layers": ["L4-grounding", "L4-negazione", "L4.1"]}
+{"i": 313, "label": 1, "score": 99.97357940673828, "fermato": false, "layers": []}
+{"i": 314, "label": 0, "score": 99.98500061035156, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 315, "label": 1, "score": 57.91276550292969, "fermato": true, "layers": ["L4-review"]}
+{"i": 316, "label": 0, "score": 1.9326475858688354, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 317, "label": 1, "score": 99.91231536865234, "fermato": false, "layers": []}
+{"i": 318, "label": 0, "score": 1.6316890716552734, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 319, "label": 1, "score": 99.97701263427734, "fermato": false, "layers": []}
+{"i": 320, "label": 0, "score": 99.39905548095703, "fermato": false, "layers": []}
+{"i": 321, "label": 1, "score": 99.95536041259766, "fermato": false, "layers": []}
+{"i": 322, "label": 0, "score": 99.88811492919922, "fermato": false, "layers": []}
+{"i": 323, "label": 1, "score": 99.35323333740234, "fermato": false, "layers": []}
+{"i": 324, "label": 0, "score": 58.114200592041016, "fermato": true, "layers": ["L4-review"]}
+{"i": 325, "label": 1, "score": 99.98108673095703, "fermato": false, "layers": []}
+{"i": 326, "label": 0, "score": 0.11019307374954224, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 327, "label": 1, "score": 99.91643524169922, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 328, "label": 0, "score": 98.67557525634766, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 329, "label": 1, "score": 99.97190856933594, "fermato": false, "layers": []}
+{"i": 330, "label": 0, "score": 0.21256610751152039, "fermato": true, "layers": ["L4-grounding", "L4.1", "L4.2"]}
+{"i": 331, "label": 1, "score": 0.10963602364063263, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 332, "label": 0, "score": 99.98216247558594, "fermato": false, "layers": []}
+{"i": 333, "label": 1, "score": 22.93340492248535, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 334, "label": 0, "score": 23.39792251586914, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 335, "label": 1, "score": 99.94775390625, "fermato": false, "layers": ["L4.2"]}
+{"i": 336, "label": 0, "score": 41.38136291503906, "fermato": true, "layers": ["L4-review", "L4.1", "L4.2"]}
+{"i": 337, "label": 1, "score": 99.59674835205078, "fermato": false, "layers": []}
+{"i": 338, "label": 0, "score": 99.96719360351562, "fermato": false, "layers": []}
+{"i": 339, "label": 1, "score": 96.9454116821289, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 340, "label": 0, "score": 0.09077589213848114, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 341, "label": 1, "score": 99.8929443359375, "fermato": false, "layers": []}
+{"i": 342, "label": 0, "score": 99.97686767578125, "fermato": false, "layers": []}
+{"i": 343, "label": 1, "score": 98.98859405517578, "fermato": false, "layers": []}
+{"i": 344, "label": 0, "score": 0.24206581711769104, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 345, "label": 1, "score": 98.6082763671875, "fermato": false, "layers": []}
+{"i": 346, "label": 0, "score": 99.64309692382812, "fermato": false, "layers": []}
+{"i": 347, "label": 1, "score": 99.88591766357422, "fermato": false, "layers": []}
+{"i": 348, "label": 0, "score": 90.2535629272461, "fermato": false, "layers": []}
+{"i": 349, "label": 1, "score": 99.9548110961914, "fermato": false, "layers": []}
+{"i": 350, "label": 0, "score": 88.7778549194336, "fermato": false, "layers": []}
+{"i": 351, "label": 1, "score": 99.9581298828125, "fermato": false, "layers": []}
+{"i": 352, "label": 0, "score": 99.67423248291016, "fermato": false, "layers": []}
+{"i": 353, "label": 1, "score": 99.96039581298828, "fermato": false, "layers": []}
+{"i": 354, "label": 0, "score": 99.9779281616211, "fermato": false, "layers": []}
+{"i": 355, "label": 1, "score": 97.91608428955078, "fermato": false, "layers": ["L4.2"]}
+{"i": 356, "label": 0, "score": 99.31021118164062, "fermato": false, "layers": ["L4.2"]}
+{"i": 357, "label": 1, "score": 99.94792175292969, "fermato": false, "layers": ["L4-relazione"]}
+{"i": 358, "label": 0, "score": 0.5081068873405457, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 359, "label": 1, "score": 99.98082733154297, "fermato": false, "layers": []}
+{"i": 360, "label": 0, "score": 65.48165893554688, "fermato": true, "layers": ["L4-review"]}
+{"i": 361, "label": 1, "score": 99.98197174072266, "fermato": false, "layers": []}
+{"i": 362, "label": 0, "score": 83.53970336914062, "fermato": false, "layers": []}
+{"i": 363, "label": 1, "score": 99.80876159667969, "fermato": false, "layers": ["L4.1-a-parole"]}
+{"i": 364, "label": 0, "score": 99.92298889160156, "fermato": false, "layers": ["L4.1-a-parole"]}
+{"i": 365, "label": 1, "score": 99.94541931152344, "fermato": false, "layers": ["L1-domain-precision-observe", "L1.16", "L4.2"]}
+{"i": 366, "label": 0, "score": 99.96388244628906, "fermato": false, "layers": ["L1-domain-precision-observe", "L1.16", "L4-relazione"]}
+{"i": 367, "label": 1, "score": 99.11173248291016, "fermato": false, "layers": []}
+{"i": 368, "label": 0, "score": 0.11183007061481476, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 369, "label": 1, "score": 99.98013305664062, "fermato": false, "layers": []}
+{"i": 370, "label": 0, "score": 99.97380065917969, "fermato": false, "layers": []}
+{"i": 371, "label": 1, "score": 99.97412872314453, "fermato": false, "layers": []}
+{"i": 372, "label": 0, "score": 0.4693482518196106, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 373, "label": 1, "score": 99.666748046875, "fermato": true, "layers": ["L4.1"]}
+{"i": 374, "label": 0, "score": 22.14885139465332, "fermato": true, "layers": ["L4-grounding", "L4.1"]}
+{"i": 375, "label": 1, "score": 99.96044921875, "fermato": false, "layers": ["L4-relazione", "L4.1-ambiguo"]}
+{"i": 376, "label": 0, "score": 0.27124881744384766, "fermato": true, "layers": ["L4-grounding", "L4.1-ambiguo"]}
+{"i": 377, "label": 1, "score": 99.93871307373047, "fermato": false, "layers": []}
+{"i": 378, "label": 0, "score": 0.2590484023094177, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 379, "label": 1, "score": 23.89506721496582, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 380, "label": 0, "score": 0.7222379446029663, "fermato": true, "layers": ["L4-grounding", "L4-negazione"]}
+{"i": 381, "label": 1, "score": 99.9803695678711, "fermato": false, "layers": []}
+{"i": 382, "label": 0, "score": 99.98470306396484, "fermato": false, "layers": []}
+{"i": 383, "label": 1, "score": 99.98233795166016, "fermato": false, "layers": []}
+{"i": 384, "label": 0, "score": 27.562990188598633, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 385, "label": 1, "score": 99.90974426269531, "fermato": false, "layers": []}
+{"i": 386, "label": 0, "score": 99.95967864990234, "fermato": false, "layers": []}
+{"i": 387, "label": 1, "score": 99.9575424194336, "fermato": false, "layers": []}
+{"i": 388, "label": 0, "score": 97.14159393310547, "fermato": false, "layers": []}
+{"i": 389, "label": 1, "score": 99.98208618164062, "fermato": false, "layers": []}
+{"i": 390, "label": 0, "score": 99.863037109375, "fermato": false, "layers": []}
+{"i": 391, "label": 1, "score": 91.6673812866211, "fermato": false, "layers": ["L4.2"]}
+{"i": 392, "label": 0, "score": 0.3132486939430237, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 393, "label": 1, "score": 99.97676086425781, "fermato": false, "layers": []}
+{"i": 394, "label": 0, "score": 0.14974850416183472, "fermato": true, "layers": ["L4-grounding"]}
+{"i": 395, "label": 1, "score": 99.87403869628906, "fermato": false, "layers": []}
+{"i": 396, "label": 0, "score": 99.97962951660156, "fermato": false, "layers": []}
+{"i": 397, "label": 1, "score": 99.92538452148438, "fermato": false, "layers": ["L4.2"]}
+{"i": 398, "label": 0, "score": 99.59857177734375, "fermato": false, "layers": ["L4.2"]}
+{"i": 399, "label": 1, "score": 99.98336029052734, "fermato": false, "layers": []}
+{"i": 400, "label": 0, "score": 99.98399353027344, "fermato": false, "layers": ["L4-relazione"]}
