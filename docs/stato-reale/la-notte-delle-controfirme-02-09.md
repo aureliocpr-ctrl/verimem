@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:00
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:07
 
-**Cinquantanove celle (`W2-381` … `W2-439`), trentasette controfirme a celle altrui, sei cure a
+**Sessantuno celle (`W2-381` … `W2-441`), trentanove controfirme a celle altrui, sei cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **37** | 36 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **39** | 38 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 822 hanno due controfirme *(fotografia delle 04:32)* |
@@ -339,10 +339,10 @@ il secondo descrive un file che sette altre istanze stanno modificando mentre lo
 
 ---
 
-## Nove celle che chiedevano di essere rifatte, rifatte
+## Quindici celle che chiedevano di essere rifatte, rifatte
 
 Il registro contiene **25 celle** con l'avviso *«il regime di questa misura non è registrato,
-e la misura va rifatta prima di citarla»*. **Ne ho rifatte nove**, ed è il bersaglio più
+e la misura va rifatta prima di citarla»*. **Ne ho rifatte quindici, ne restano sette**, ed è il bersaglio più
 efficiente che ho trovato: la cella stessa dice cosa serve.
 
 | cella | esito |
