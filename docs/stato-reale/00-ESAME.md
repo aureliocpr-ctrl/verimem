@@ -22546,3 +22546,70 @@ falsificabile stampando il primo risultato, e leggendoli nessuno rispondeva davv
 **Banco**: `scripts/banco_fuori_dominio_vicino.py` *(predizione, condizione d'uscita e
 controllo che ferma nel docstring, scritti prima)*.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 21:15 — ws1 · 🔁 **LA «TERZA VIA» È GIÀ IN PRODUZIONE ED È GIÀ ACCESA — e marca il `58,8%` delle risposte VERE.** Il campo `sotto_il_pavimento` esiste in `client.py:1469`, esce nel default, e usa `0,8805`: il criterio si soddisfa **cambiando un numero**, non scrivendo codice
+
+**Livello** `Memory.search` sullo **STORE VIVO** + lettura del sorgente, **sola lettura,
+nessuna modifica al prodotto** · **Perimetro** 80 query vere *(40 IT + 40 EN)*, 17 domande
+vicine, 10 lontane, `k=10` · **Istante** 2026-09-02 21:13–21:15 · **Regime** rerank OFF, un
+processo · **Autorità**: decisione della terza via di @lead-audit, **misurata prima di
+implementarla** · **0.7.6**.
+
+### 🔁 Prima: la cosa da costruire risulta già costruita — **terza volta stanotte**
+
+```python
+client.py:1469   sotto_il_pavimento = {"pavimento": ..., "score_migliore": ...,
+                                       "tagliati": ..., "nota": _nota}
+client.py:1382   "nessun risultato supera la soglia di rilevanza calibrata su questo
+                  corpus: probabilmente la risposta NON e' in memoria. I risultati sono
+                  qui sotto, NON TAGLIATI — decidi tu."
+```
+⇒ **è esattamente la terza via**: la risposta si serve, l'avviso la marca. **E il commento
+del codice usa la stessa argomentazione**: *«come veto perderebbe un fatto vero, come
+avviso costa un avviso»*. ⚠️ **Provato eseguendo, non leggendo** — su VERA, VICINA e
+LONTANA l'avviso esce **su tutte e tre**, con `pavimento 0.8805`.
+📌 Dopo **G10** *(già in osservazione)* e **T2.1** *(embedder già migrato)*, **è la terza
+volta in una notte** che la cosa da fare risulta fatta. **Non è fortuna: è che il
+prodotto è più avanti della sua documentazione, e nessuno lo sta interrogando.**
+
+### Il numero — e il criterio di @lead-audit è soddisfatto dalla sola ricalibrazione
+
+```
+                        VERE marcate     VICINE marcate    LONTANE marcate
+soglia 0,8805 (oggi)    47/80 (58,8%)    17/17 (100,0%)    10/10 (100,0%)
+soglia 0,839  (curva)    3/80 ( 3,8%)     3/17 ( 17,6%)    10/10 (100,0%)
+```
+⚖️ **Le tre predizioni depositate alle 21:15 sono confermate tutte**: vere marcate sopra il
+`50%` a `0,8805` *(58,8%)*, sotto il `6%` a `0,839` *(3,8%)*, vicine poco marcate *(3/17)*.
+⇒ **criterio «lontane 10/10 E vere <= 6%»: SODDISFATTO a `0,839`**, e la modifica sarebbe
+**un numero**, non una funzione.
+
+### 🔴 Ma NON è un miglioramento gratuito, ed è la parte che va in vetrina
+
+```
+oggi     l'avviso prende il 100% delle vicine ... prendendo anche il 58,8% delle vere
+0,839    l'avviso prende il 3,8% delle vere ... e solo il 17,6% delle vicine
+```
+⇒ **si scambia COPERTURA con PRECISIONE.** Oggi l'avviso esce quasi sempre e quindi **non
+informa**: un segnale che si accende su sei risposte buone su dieci è rumore, e il
+commento del codice lo temeva già *(«rumore al posto del silenzio»)*. A `0,839` diventa
+informativo **ma copre meno di un quinto delle domande in tema senza risposta.**
+⚠️ **Dire «ricalibrare migliora» senza il secondo numero sarebbe un numeratore senza il
+suo denominatore.** Vanno pubblicati entrambi.
+
+### Cosa NON prova
+
+**Non ho modificato nulla**: nessun RED, nessun GREEN, nessuna riga toccata — **la
+ricalibrazione è comportamento del prodotto e la decisione non è di chi misura**.
+**`0,839` è tarato su QUESTO corpus** *(e @lead-audit ha già collocato il pavimento
+adattivo per corpus in 0.8.0)*. **La marcatura si misura sul `best`**, la grandezza che
+l'avviso usa davvero *(`client.py:1266` `_best_prima`)*: **è un'altra grandezza rispetto
+alla curva delle 20:49**, che guardava lo score del fatto atteso — i due numeri non si
+confrontano. **17 vicine scritte da me**, «senza risposta» resta un mio giudizio. **Un solo
+store, una macchina, `k=10`.**
+
+**Banco**: `scripts/banco_avviso_marcatura.py` *(criterio, predizione e controllo che ferma
+nel docstring, scritti prima)*.
+**Io misuro, non curo.**
