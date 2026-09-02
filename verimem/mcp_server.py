@@ -2824,6 +2824,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "= tamper, valid_until hard-expire)."
                         ),
                     },
+                    "include_superseded": {
+                        "type": "boolean", "default": False,
+                        "description": (
+                            "Also return facts a LATER WRITE RETIRED. The "
+                            "engine has accepted this since cycle #78 and "
+                            "documents it on recall()'s own signature, but no "
+                            "surface asked for it: measured 2026-09-02, this "
+                            "schema had no such field and seven calls to "
+                            "semantic.recall( out of seven omitted it. "
+                            "NOT a synonym of `as_of` (which answers with what "
+                            "was current AT an instant) nor of `deep` (which "
+                            "lifts age hiding, not retirement): proven the "
+                            "same day on a copy of the store, a retired fact "
+                            "scored 0 hits with `deep` and 1 with this flag. "
+                            "Default False keeps every existing caller "
+                            "byte-identical."
+                        ),
+                    },
                 },
                 "required": ["query"],
             },
@@ -13887,6 +13905,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
             if arguments.get("deep"):
                 _pf["deep"] = True   # v14 archaeology: lift age hiding only
+            if arguments.get("include_superseded"):
+                # I RITIRATI CHE IL GIUDICE SOSTIENE ANCORA. Stessa forma di
+                # `deep` qui sopra — si passa SOLO quando chiesto, cosi' la
+                # firma della chiamata resta invariata per i semantics
+                # mockati che non accettano il kwarg.
+                _pf["include_superseded"] = True
             # Apre la registrazione di COME verra' ordinata questa risposta.
             # Misurato il 30/07: tre chiamate identiche di fila davano insiemi
             # diversi (un fatto dentro a freddo, un altro a caldo) perche' il
