@@ -47,6 +47,28 @@ qualunque forma passiva, con il controllo positivo a **5 su 5**. ⇒ **Conferma 
 matrice** (`080e4e27`: il gate protegge i valori e non le relazioni) su una popolazione
 piu' grande e in modo **piu' netto** — li' erano 3 su 6, qui 13 su 15.
 
+📏📏 **E IN INGLESE (05:05, stesse cinque fonti tradotte) — IL DIVARIO DI LINGUA REGGE
+SU UNA SECONDA POPOLAZIONE**::
+
+    lingua   A avere+part   B essere+part   C agente aggiunto   totale
+    IT           5/5             4/5              4/5           13 su 15   (86,7%)
+    EN           2/5             1/5              3/5            6 su 15   (40,0%)
+    claim VERI ammessi: 5 su 5 in ENTRAMBE le lingue
+
+⇒ **In italiano passa il doppio abbondante delle falsita' di relazione che passano in
+inglese**, con il controllo positivo perfetto da entrambe le parti (nessun falso
+allarme, in nessuna lingua).
+🔗 **Terza conferma dello stesso divario, e la piu' larga**::
+
+    `W5-36`  mia, 5 coppie          IT 7/10 passano   ·  EN 3/10
+    @ws1     sua, 8-10 casi         IT 9/10 passano   ·  EN 6/10
+    questo   mia, 5 fonti × 3 forme IT 13/15 passano  ·  EN 6/15
+
+⇒ **Tre popolazioni, due misuratori indipendenti, stessa direzione.** Il reperto non
+dipende piu' da una scelta di casi.
+⚠️ In inglese `C` (agente aggiunto) passa 3/5 contro `B` 1/5: **un indizio**, non una
+separazione — cinque fonti non bastano, e il verdetto lo dice invece di concludere.
+
 ⚠️ **E QUELLO CHE NON SO, dopo aver falsificato la mia spiegazione**: **quale** caso
 venga fermato. Le due celle che cadono (1B e 4C) non hanno in comune la costruzione, e
 la stessa fonte 1 in un altro banco si comportava all'opposto. ⇒ **La variabile e' la
@@ -97,6 +119,38 @@ FONTI = [
      "7 errori sono stati segnalati dal modulo di Verdi."),
 ]
 
+# ⚠️ LE STESSE CINQUE FONTI IN INGLESE. Non per completezza: `W5-36` ha misurato che il
+# gate ferma piu' del doppio delle inversioni in inglese che in italiano, e **la vetrina
+# del prodotto e' in inglese**. Se le inversioni passano anche qui, il «13 su 15» non e'
+# un fatto dell'italiano — e riguarda gli utenti veri.
+FONTI_EN = [
+    ("Reviewer Bianchi rejected the proposal from Rossi in committee.",
+     "Bianchi rejected the proposal from Rossi.",
+     "Bianchi had the proposal rejected by Rossi.",
+     "The proposal from Bianchi was rejected by Rossi.",
+     "The proposal was rejected by Bianchi."),
+    ("The gate of ws3 rejected 12 facts from ws4 during the night shift.",
+     "The gate of ws3 rejected 12 facts from ws4.",
+     "ws3 had 12 facts rejected by the gate of ws4.",
+     "12 facts from ws3 were rejected by the gate of ws4.",
+     "12 facts were rejected by the gate of ws4."),
+    ("The payment service declined the request from customer Neri.",
+     "The service declined the request from Neri.",
+     "The service had the request declined by customer Neri.",
+     "The request from the service was declined by customer Neri.",
+     "The request was declined by customer Neri."),
+    ("The Milan team beat the Turin team 3 to 1.",
+     "Milan beat Turin 3 to 1.",
+     "Milan had the match lost against Turin 3 to 1.",
+     "Milan was beaten by the Turin team 3 to 1.",
+     "The match was won by the Turin team 3 to 1."),
+    ("The compiler reported 7 errors in the module written by Verdi.",
+     "The compiler reported 7 errors in the module by Verdi.",
+     "The compiler had 7 errors reported by the module of Verdi.",
+     "7 errors of the compiler were reported by the module of Verdi.",
+     "7 errors were reported by the module of Verdi."),
+]
+
 FORME = ["A avere+part", "B essere+part", "C agente aggiunto"]
 
 
@@ -122,28 +176,62 @@ def main():
     if not os.path.exists(os.path.join(venv, "Scripts", "verimem.exe")):
         print("  🔴 venv assente: %s" % venv)
         return
-    print("  %-4s %-9s %-13s %-15s %-18s %s"
-          % ("#", "VERO", FORME[0], FORME[1], FORME[2], "fonte"))
-    print("  " + "-" * 100)
+    solo = sys.argv[2].upper() if len(sys.argv) > 2 else ""
+    lingue = [("IT", FONTI), ("EN", FONTI_EN)]
+    if solo in ("IT", "EN"):
+        lingue = [x for x in lingue if x[0] == solo]
+
+    print("  %-4s %-4s %-9s %-13s %-15s %-18s %s"
+          % ("#", "lg", "VERO", FORME[0], FORME[1], FORME[2], "fonte"))
+    print("  " + "-" * 104)
     passa = {f: 0 for f in FORME}
     veri_ok = 0
-    righe = []
-    for i, (fonte, vero, a, b, c) in enumerate(FONTI, 1):
-        v = una(venv, vero, fonte)
-        veri_ok += (v == "ammesso")
-        es = []
-        for forma, claim in zip(FORME, (a, b, c)):
-            e = una(venv, claim, fonte)
-            passa[forma] += (e == "ammesso")
-            es.append(e)
-        righe.append((i, v, es, fonte))
-        print("  %-4d %-9s %-13s %-15s %-18s %s" % (i, v, es[0], es[1], es[2], fonte[:34]))
+    per_lingua = {}
+    for lang, fonti in lingue:
+        pl = {f: 0 for f in FORME}
+        vl = 0
+        for i, (fonte, vero, a, b, c) in enumerate(fonti, 1):
+            v = una(venv, vero, fonte)
+            vl += (v == "ammesso")
+            es = []
+            for forma, claim in zip(FORME, (a, b, c)):
+                e = una(venv, claim, fonte)
+                pl[forma] += (e == "ammesso")
+                passa[forma] += (e == "ammesso")
+                es.append(e)
+            print("  %-4d %-4s %-9s %-13s %-15s %-18s %s"
+                  % (i, lang, v, es[0], es[1], es[2], fonte[:30]))
+        per_lingua[lang] = (vl, pl, len(fonti))
+        veri_ok += vl
+        print()
 
-    n = len(FONTI)
-    print("\n=== SINTESI — quante volte la falsita' PASSA (su %d fonti) ===" % n)
+    n = sum(len(f) for _l, f in lingue)
+    print("=== SINTESI — quante volte la falsita' PASSA ===")
+    # ⚠️ PER LINGUA PRIMA CHE AGGREGATA: l'aggregato ha gia' mentito una volta stanotte
+    # su questo stesso tema (`W5-36`), e non lo rifaccio.
+    for lang, (vl, pl, tot) in per_lingua.items():
+        det = " · ".join("%s %d/%d" % (f.split()[0], pl[f], tot) for f in FORME)
+        somma = sum(pl.values())
+        print("  %s   %s   →  %d su %d passano   (veri ammessi %d/%d)"
+              % (lang, det, somma, 3 * tot, vl, tot))
     for f in FORME:
-        print("  %-20s passa %d su %d" % (f, passa[f], n))
+        print("  %-20s passa %d su %d (tutte le lingue)" % (f, passa[f], n))
     print("  claim VERI ammessi (controllo positivo): %d su %d" % (veri_ok, n))
+    if len(per_lingua) > 1:
+        tot_p = {l: sum(pl.values()) for l, (_v, pl, _t) in per_lingua.items()}
+        tot_c = {l: 3 * t for l, (_v, _p, t) in per_lingua.items()}
+        ordinate = sorted(per_lingua, key=lambda l: -tot_p[l])
+        alto, basso = ordinate[0], ordinate[-1]
+        print("\n  📏 INVERSIONI CHE PASSANO, PER LINGUA: %s"
+              % " · ".join("%s %d/%d" % (l, tot_p[l], tot_c[l]) for l in per_lingua))
+        if tot_p[alto] - tot_p[basso] >= 3:
+            print("     🔴 il divario di lingua REGGE anche su questa popolazione: passano")
+            print("        %d su %d in %s contro %d su %d in %s."
+                  % (tot_p[alto], tot_c[alto], alto, tot_p[basso], tot_c[basso], basso))
+        else:
+            print("     🪞 nessun divario di lingua qui (%d contro %d): il reperto di `W5-36`"
+                  % (tot_p[alto], tot_p[basso]))
+            print("        NON si estende a questa popolazione, e va detto.")
 
     print("\n=== VERDETTO ===")
     if veri_ok < n:
