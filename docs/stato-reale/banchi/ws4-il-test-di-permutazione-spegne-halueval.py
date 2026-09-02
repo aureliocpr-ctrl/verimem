@@ -60,7 +60,17 @@ nv, nf = len(w["giudice"]["pos"]), len(w["giudice"]["neg"])
 print(f"\n  CONTROLLO ① — soglia 40 sui suoi punteggi del giudice:")
 print(f"    veri persi {vp}/{nv} = {vp/nv:.3f}  (dichiarato {w['gate'][0]})")
 print(f"    falsi fermati {ff}/{nf} = {ff/nf:.3f}  (dichiarato {w['gate'][1]})")
-ok1 = abs(vp / nv - w["gate"][0]) < 0.02 and abs(ff / nf - w["gate"][1]) < 0.02
+# ⚠️ IL CONTROLLO CHE AVEVO SCRITTO QUI ERA MAL DISEGNATO, e la correzione e'
+# il reperto di W7-129: `gate` e' il gate INTERO (moat + layer lessicali),
+# `giudice` e' il moat DA SOLO. Confrontarli a soglia 40 significa mettere a
+# confronto due grandezze diverse, e infatti non tornavano. Il controllo giusto
+# verifica la coerenza col reperto: il moat da solo deve dare ~8,0% e ~45,5%, e
+# il divario col gate dichiarato E' la quota dei layer, non un errore.
+ok1 = abs(vp / nv - 0.080) < 0.02 and abs(ff / nf - 0.455) < 0.02
+print(f"    il moat DA SOLO: atteso ~0,080 e ~0,455 (W7-129)")
+print(f"    il GATE INTERO dichiarato da @ws3: {w['gate']} — grandezza DIVERSA:")
+print(f"      i layer aggiungono {100*(w['gate'][0] - vp/nv):+.1f} punti di veri persi")
+print(f"      e {100*(w['gate'][1] - ff/nf):+.1f} di falsi fermati")
 print(f"    {'ACCESO' if ok1 else 'SPENTO — mi fermo'}")
 if not ok1:
     raise SystemExit(1)
@@ -119,6 +129,7 @@ print(f"    il nostro gate da solo   {base:.1f}%")
 print(f"    tripla a ranghi          {t:.1f}%      ({t - base:+.1f} punti)")
 
 # ── CONTROLLO ② il test di permutazione ─────────────────────────────────
+allineato = True
 print("\n  CONTROLLO ② — e se l'ordine fosse sbagliato? (10 permutazioni per giudice)")
 for quale in ("mini", "factcg"):
     val = [100 * iso(costruisci(True, quale, s), tripla_ranghi(costruisci(True, quale, s)),
@@ -126,9 +137,16 @@ for quale in ("mini", "factcg"):
     print(f"    con {quale:>6} mescolato: media {sum(val)/len(val):>5.1f}%"
           f"  min {min(val):>5.1f}%  max {max(val):>5.1f}%")
     if max(val) >= t:
+        allineato = False
         print("      ⛔ una permutazione fa uguale o meglio: l'ordine non porta"
               " informazione ⇒ il numero sopra NON e' pubblicabile")
 
 print("\n  == I VERDETTI ==")
-print(f"    predizione (58-70%): {'REGGE' if 58 <= t <= 70 else 'FALSIFICATA'}  ({t:.1f}%)")
-print(f"    batte il nostro gate: {'SI' if t > base else 'NO'}")
+if not allineato:
+    print("    NON PUBBLICABILE: il test di permutazione ha spento il numero.")
+    print(f"    Il {t:.1f}% resta stampato solo per far vedere che mescolando a")
+    print("    caso si ottiene DI PIU', che e' il motivo per cui si butta.")
+else:
+    print(f"    predizione (58-70%): {'REGGE' if 58 <= t <= 70 else 'FALSIFICATA'}"
+          f"  ({t:.1f}%)")
+    print(f"    batte il nostro gate: {'SI' if t > base else 'NO'}")

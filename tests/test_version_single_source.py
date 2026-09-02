@@ -43,6 +43,36 @@ def test_version_strings_do_not_drift():
     )
 
 
+def test_mcp_registry_manifest_does_not_drift():
+    """`server.json` is a FIFTH version surface, added with the MCP registry
+    manifest — and the anti-drift gate above did not know about it.
+
+    Measured 2026-09-02 on the 0.7.2 branch: setting `server.json` to `0.7.9`
+    left this file's tests all green, while the same tampering on
+    `pyproject.toml` or `plugin.json` turned them red. A surface nobody checks
+    is a surface that drifts, and this one is read by the public registry: a
+    wrong number there points the registry at an artifact that is not the one
+    we published. The manifest carries the version TWICE (the server's own and
+    the package entry's) and both must equal pyproject.
+    """
+    manifest_path = _ROOT / "server.json"
+    if not manifest_path.exists():
+        # Branches that do not ship the registry manifest are not in violation:
+        # the point is that WHEN it exists it cannot disagree.
+        return
+    pv = _pyproject_version()
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["version"] == pv, (
+        f"server.json version={manifest['version']!r} != pyproject {pv!r}"
+    )
+    for i, pkg in enumerate(manifest.get("packages", [])):
+        if "version" in pkg:
+            assert pkg["version"] == pv, (
+                f"server.json packages[{i}].version={pkg['version']!r} "
+                f"!= pyproject {pv!r}"
+            )
+
+
 def test_plugin_pip_requirement_is_satisfiable():
     pv = _pyproject_version()
     manifest = json.loads(

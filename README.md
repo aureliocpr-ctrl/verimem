@@ -1,5 +1,7 @@
 # Verimem
 
+<!-- mcp-name: io.github.aureliocpr-ctrl/verimem -->
+
 > ## ⚠️ BEFORE FIRST USE — RUN THIS ONCE:
 > ```bash
 > verimem warmup

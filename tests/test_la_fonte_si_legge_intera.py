@@ -46,7 +46,16 @@ CLAIM_A = ("La sezione dichiara come fonte il file "
 FONTE_GIT_GREP = """verimem/cli.py:100:    console.print(intestazione)
 verimem/cli.py-354-    console.print(riepilogo)
 """
-CLAIM_B = "Il riepilogo viene stampato alla riga 354 di verimem/cli.py."
+#: ⚠️ il claim NON puo' essere «… alla riga 354 …»: dal 28/08 (29ab5544) un
+#: numero preceduto da una parola di riferimento non e' piu' una quantita', e
+#: `extract_quantities` restituisce []. Con [] questo test passerebbe SEMPRE,
+#: anche se la cura che deve proteggere sparisse. Serve un claim che il 354 lo
+#: AFFERMI come quantita'.
+CLAIM_B = "Il conteggio riporta 354 elementi."
+#: la stessa fonte col numero CAMBIATO: serve al controllo di discriminazione.
+FONTE_GIT_GREP_SENZA_354 = """verimem/cli.py:100:    console.print(intestazione)
+verimem/cli.py-777-    console.print(riepilogo)
+"""
 
 
 def _assenti(claim: str, fonte: str) -> list[float]:
@@ -65,10 +74,22 @@ def test_un_numero_dopo_il_marcatore_di_provenienza_e_nella_fonte():
 
 def test_un_numero_in_un_riferimento_col_trattino_e_nella_fonte():
     """Caso B: `cli.py-354-` è il formato di `git grep -C`, non un codice
-    prodotto. Il 354 c'è, e il claim che lo cita non lo sta inventando."""
+    prodotto. Il 354 c'è, e il claim che lo cita non lo sta inventando.
+
+    ⚠️ IL SECONDO assert È IL PRESIDIO DEL TEST STESSO. Dal 28/08 questo test
+    è stato VACUO senza che nessuno se ne accorgesse: il claim di allora non
+    produceva più quantità, e `354 not in []` era vero comunque. Ora, se la
+    lettura della fonte smettesse di funzionare, la seconda riga lo direbbe."""
     assenti = _assenti(CLAIM_B, FONTE_GIT_GREP)
     assert 354.0 not in assenti, (
         f"354 e' nella fonte dentro «cli.py-354-» e risulta assente: {assenti}")
+    # DISCRIMINAZIONE: contro una fonte che il 354 NON lo contiene, deve
+    # risultare assente. Senza questo, un [] vuoto farebbe passare il test.
+    altrove = _assenti(CLAIM_B, FONTE_GIT_GREP_SENZA_354)
+    assert 354.0 in altrove, (
+        f"il test e' VACUO: con una fonte SENZA 354 il valore dovrebbe "
+        f"risultare assente e invece abbiamo {altrove}. O il claim non "
+        f"produce piu' quantita', o il layer non guarda piu' la fonte")
 
 
 # ----------------------------------------------------- POPOLAZIONI OPPOSTE --
@@ -76,8 +97,10 @@ def test_un_numero_che_la_fonte_NON_contiene_resta_assente():
     """⚠️⚠️ IL PRESIDIO CHE DECIDE SE LA CURA VALE. Leggere la fonte per intero
     non deve diventare un lasciapassare: un valore che lì non c'è deve restare
     un valore assente, o il layer smette di fare il suo mestiere."""
-    assenti = _assenti("Il riepilogo viene stampato alla riga 999.",
-                       FONTE_GIT_GREP)
+    # ⚠️ NON «alla riga 999»: dal 28/08 quel numero e' un RIFERIMENTO e non
+    # viene estratto come quantita', quindi il presidio misurerebbe
+    # l'estrazione invece del layer. Qui il 999 e' AFFERMATO.
+    assenti = _assenti("Il riepilogo contiene 999 voci.", FONTE_GIT_GREP)
     assert 999.0 in assenti, (
         f"999 non compare da nessuna parte nella fonte e deve restare assente: "
         f"{assenti}")

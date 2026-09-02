@@ -11,6 +11,17 @@
 > Questo file è il piano di record. Lo stato vivo sta nel registro (`00-ESAME.md`) e nei
 > fatti verimem; qui stanno le definizioni di «fatto» e le regole. Cambia solo su mandato.
 
+## Fase 0 — `main` verde (prerequisito di tutto, dal 02/09 22:35)
+Misurato al 02/09 22:30: **l'ultimo run `ci` verde su `main` è del 25/08** (`18e434e3`);
+l'ultimo concluso (`98d30940`, 21:04) è rosso: **13 failed / 12495 passed**, e il job «wheel
+install-from-scratch (windows)» fallisce. Sono quasi tutti presidi del registro che dichiarano
+debiti (banco `lme_retrieval_bench.py` assente dal 25/08, 39 moduli irraggiungibili, banchi che
+non dichiarano l'esito del subprocess, `quarantined_by` che nomina il layer sbagliato, L1.13
+sul ricalco della fonte, L1.20 con un secondo layer che parla, un numero assente dalla fonte
+che compare, la contraddizione implicita che ora entra). **Regola: ogni rosso si paga o si
+ritira con motivazione scritta; mai skip, mai xfail nuovi.** Assegnati uno per istanza il
+02/09 22:35; nessuna capacità si accende su un `main` rosso.
+
 ## Le quattro versioni e la loro definizione di «fatto»
 
 ### 0.7.2 — atomica: «tutto ciò che c'è, acceso e provato»
@@ -46,7 +57,21 @@ Base: **`main`** (non il ramo di luglio: le capacità da accendere vivono in `ma
   VitaminC, WiCE), con veri persi, falsi fermati, falsità servita e **criterio cieco** per riga;
   il confronto con ConsistencyGate se i suoi banchi esistono, altrimenti il reperto.
 - Repro-pack: ogni numero pubblico ha il comando che lo rifà da un ambiente vergine.
-- Registry MCP, marketplace dei plugin, candidatura al leaderboard indipendente (20/09).
+- I file per registry MCP e marketplace si PREPARANO (server.json, riga `mcp-name`, plugin
+  validato) ma non si pubblicano: vedi «Apertura al mondo».
+
+### Apertura al mondo — «solo e solo quando siamo pronti a dire: tutto funziona davvero»
+Direttiva di Aurelio, 02/09 22:40. Nessuna azione verso l'esterno — registry MCP,
+marketplace dei plugin, post, candidature a leaderboard, contatti — prima che il prodotto
+superi, dichiarato da un'istanza diversa dall'autore e riprodotto da un terzo:
+1. i tre no («non dice cose che non fa» · «non siamo bugiardi» · «non è banale») tutti chiusi;
+2. zero bug noti aperti e zero malfunzionamenti misurati sulle tre porte (CLI, MCP, SDK);
+3. installazione da utente vero verde su due sistemi, dal pacchetto pubblicato;
+4. ogni numero pubblico riproducibile con il comando, dal pacchetto pubblicato, in ambiente
+   vergine.
+Il leaderboard indipendente del 20/09 non è una scadenza: se a quella data i quattro punti
+non reggono, si aspetta il ciclo successivo. Aprirsi prima costerebbe l'unica cosa che i
+forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
 
 ### 0.9.0 — «finale come feature»
 - Nessuna feature nuova. Zero bug noti aperti, zero malfunzionamenti misurati, zero
