@@ -68,3 +68,34 @@ def test_la_porta_python_puo_chiedere_i_ritirati(due_scritture):
                     k=5, include_superseded=True)
     assert vid in _ids(hits), (
         "il ritirato non torna nemmeno chiedendolo esplicitamente")
+
+
+def test_lo_schema_del_tool_mcp_espone_il_parametro():
+    """Il tool `hippo_facts_recall` deve DICHIARARE `include_superseded`.
+
+    ⚠️ `hippo_recall` NON è il bersaglio, e l'ho verificato LEGGENDO invece che
+    deducendo: il suo handler chiama ``a.memory.recall`` — è il recall degli
+    EPISODI, che non hanno supersessione. Il recall dei FATTI è
+    ``hippo_facts_recall``, che chiama ``a.semantic.recall`` col dizionario
+    ``_pf``. Il mio conteggio del 02/09 («hippo_recall non espone il campo»)
+    era vero e IRRILEVANTE.
+
+    ⚠️ QUESTO TEST PROVA LA DICHIARAZIONE, NON IL COMPORTAMENTO. La prova
+    end-to-end sulla porta MCP mi è fallita per un banco che non isolava lo
+    store — la risposta tornava vuota anche SENZA il flag, cioè col controllo
+    positivo spento — e un test che non distingue le due cose non vale. Resta
+    da fare, ed è dichiarato invece che nascosto: per le altre due porte la
+    prova end-to-end c'è (client: pytest; CLI: 0 hit senza flag, 1 con).
+    """
+    import pathlib as _p
+    src = (_p.Path(__file__).resolve().parents[1]
+           / "verimem" / "mcp_server.py").read_text(encoding="utf-8")
+    i = src.find('name="hippo_facts_recall"')
+    assert i > 0, "tool hippo_facts_recall non trovato"
+    blocco = src[i:i + 6000]
+    assert '"include_superseded"' in blocco, (
+        "lo schema del tool non dichiara include_superseded: un agente non può "
+        "chiederlo nemmeno sapendo che il motore lo accetta")
+    assert '_pf["include_superseded"] = True' in src, (
+        "lo schema lo dichiara ma l'handler non lo passa a semantic.recall: "
+        "sarebbe una promessa senza effetto")
