@@ -19353,3 +19353,79 @@ La seconda è il **caricamento a freddo**: alla prima lettura lo stadio dice `ti
 📌 **Grazie a @ws3**: il suo sottoprodotto non ha cambiato un mio numero, ha reso dichiarabile il regime in cui li ho presi tutti.
 
 **Firme su questa cella**: ws6. Il reperto sulle due condizioni è di ws3.
+
+---
+
+## 2026-09-02 02:36 — ws1 · 🔁 **RITIRO LA SPIEGAZIONE CHE HO COMMITTATO OTTO MINUTI FA: a omogeneità costante la dimensione NON è la leva — le perse vanno da `5/6` a `6/6` e restano piatte.** Il numero `1/10` resta, il «perché» cade
+
+**Livello** `Memory.search` con e senza `min_relevance="auto"` · **Perimetro** **un solo tipo di
+corpus** (la forma omogenea che perdeva 5/6) a **dimensione crescente 6 → 20 → 60 → 180**, con
+**le stesse 6 query e gli stessi 6 fatti-bersaglio** in tutti e quattro: cambia **solo** quanti
+distrattori della stessa forma ci stanno intorno · **Istante** 2026-09-02 02:30–02:34 ·
+**Regime** variabili poppate, `HIPPO_DATA_DIR` prima dell'import, **`claim ram/embedder`
+preso** · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite che avevo dichiarato alle 02:28**: «*non ho isolato dimensione e omogeneità
+⇒ «è la dimensione» resta la spiegazione più semplice, non una variabile isolata*». **L'ho
+isolata, e mi ha falsificato.**
+
+### 🔁 Il numero, e la mia predizione cade nel verso peggiore
+
+| fatti | pavimento | **perse** | best medio delle 6 query vere |
+|---|---|---|---|
+| **6** | 0,8854 | **5 / 6** | **0,8261** |
+| **20** | 0,8784 | **6 / 6** | 0,7787 |
+| **60** | 0,8656 | **6 / 6** | 0,7711 |
+| **180** | 0,8727 | **6 / 6** | 0,7811 |
+
+⚖️ **Predicevo «perse in calo, 5/6 → 0-2/6»: sono salite a 6/6 e non si muovono più.**
+*(Estranee `3/3` vuote a ogni taglia: ancora una volta **sui soli negativi il pavimento sembra
+perfetto ovunque**.)*
+
+### 📌 E il meccanismo è l'opposto di quello che avevo scritto
+
+**Il pavimento resta fermo** (0,865–0,885) mentre **il punteggio delle query vere CROLLA**
+(0,8261 → 0,7787 già a venti fatti). ⇒ **su un corpus omogeneo aggiungere fatti PEGGIORA le
+cose**: il bersaglio giusto viene **sommerso da distrattori della stessa forma**, e il match
+migliore scende. **Non è la calibrazione a mancare di materiale: è il segnale a diluirsi.**
+
+### 🔁 Cosa ritiro e cosa resta — in modo che nessuno debba indovinarlo
+
+| | |
+|---|---|
+| **RESTA** | sullo **store vivo** (14 801 fatti) le perse sono **`1/10`**, misurate alle 02:24–02:28 |
+| **RESTA** | a parità di **sei** fatti: eterogeneo `0/6` · tematico `3/6` · formulaico `5/6` *(02:24)* |
+| 🔁 **RITIRO** | «**non è l'eterogeneità a salvare, è la DIMENSIONE**» — falsificato qui |
+| ⚠️ **RIAPERTO** | **perché** lo store vivo perde solo `1/10`, visto che il suo pavimento (**0,8805**) lo colloca fra i corpora *omogenei*, vicino al formulaico (0,8854) |
+
+**L'ipotesi che mi resta, e non l'ho misurata**: **non conta l'omogeneità del corpus, conta se
+la DOMANDA ha un ancoraggio che il rumore non può imitare.** Le dieci domande dello store vivo
+contenevano **numeri e nomi propri** («*Quanti file contiene il wheel verimem 0.7.1?*»,
+«*hippo_facts_recall*») e prendevano **0,89–0,93**; le sei query formulaiche prendono
+**0,77–0,82**. ⇒ **è falsificabile spogliando le stesse dieci domande dei loro nomi propri e
+numeri**: se il punteggio crolla, la spiegazione è questa. **Non l'ho ancora fatto.**
+
+### 🔗 @ws3 — verifico la tua causa e ti riporto una correzione
+
+La tua diagnosi delle 02:12 regge nel codice: `scrambled_probes()` costruisce le sonde **dal
+vocabolario dello store**. **Ma il docstring non dice «visto e archiviato»: dice curato.**
+`relevance_floor.py:139-147` descrive proprio il modo di fallire — «*the "noise" band then
+contains signal and the floor eats real queries*» — e lo attribuisce al caso **senza cap**,
+dichiarando la cura (`_MAX_WORDS_PER_FACT = 2`, `_MAX_POOL_FACTS = 200`, `_TOKEN_PIECE = 3`) e
+il test che lo copre. ⇒ **il fenomeno era noto E curato; il mio dato mostra che la cura non
+basta sul corpus omogeneo** — il cap protegge dal *ricostruire un fatto*, non dalla
+*somiglianza di forma fra fatti diversi*, che è esattamente ciò che un corpus formulaico ha.
+**Quella distinzione la dobbiamo alla tua lettura del codice**, non l'avrei trovata misurando.
+
+### Cosa NON prova
+
+**Un solo tipo di corpus, quattro taglie, sei query, una macchina**: dice che la dimensione
+non salva **su un corpus formulaico**, non che non salvi mai. **I distrattori li ho generati
+io** con la stessa formula (`Nel banco del <tema> il valore misurato <cond> e' <numero>`) —
+sono **omogenei per costruzione**, forse più di qualunque store reale. **Non ho misurato un
+indice di omogeneità**: uso il *pavimento* come proxy, ed è un proxy, non una misura
+indipendente. **Non ho spiegato lo `1/10` dello store vivo** — ho solo tolto la spiegazione
+sbagliata.
+
+**Banco**: `porta_scala_dimensione.py`, dati in `scala_dimensione.json` (scratchpad).
+**Io misuro, non curo.**
