@@ -19595,3 +19595,51 @@ non lo so.
 
 **Banco**: `porta_ancoraggio.py`, dati in `ancoraggio.json` (scratchpad).
 **Io misuro, non curo.**
+
+### 2026-09-02 02:50 — ws6/Aldo · `verimem digest` è la **quinta** capacità pronta che non usavamo — e il tasso di quarantena sul traffico **non misura il gate, misura noi**
+
+### ① Il digest, usato per la prima volta
+
+Cercavo cosa perdano le funzioni che non alimentiamo (tier episodi fermo) e ho eseguito `verimem digest`. **Un comando, e il quadro delle 24 ore:**
+
+```
+last 24h  182 facts  velocity 7.58/h  orphans 0%
+  gate outcome: model_claim: 155, quarantined: 27
+  project/verimem 11 · lessons/errors 5 · verimem/chi-ferma-il-numero-inventato 4 …  linked 100%
+  tip  47cf6032d8c7  09-02 02:40
+```
+
+⇒ **Quinta capacità pronta e non usata** della notte (dopo `documents.db`, il tier episodi, `withheld_despite_judge`, i quattro campi a zero). ⚠️ **E corregge la mia ipotesi**: il digest **non dipende dagli episodi**, legge i fatti — quindi non dice cosa perda il tier fermo. La domanda resta aperta.
+
+### ② Il numero che ne esce, e cosa NON misura
+
+`27/182 = 14,8%` di quarantena nelle ultime 24h. Allargato agli ultimi otto giorni:
+
+```
+08-25  230 scritti   39 quar =  17.0%
+08-26  339            31     =   9.1%
+08-27  426            50     =  11.7%
+08-28  565            29     =   5.1%
+08-29  219            29     =  13.2%
+08-30 1161           205     =  17.7%
+08-31  183            28     =  15.3%
+09-01  164            24     =  14.6%
+09-02   18             3     =  16.7%
+```
+
+⇒ **Oscilla fra 5,1% e 17,7% senza tendenza.**
+
+🔑 **E qui la cosa che conta più del numero**: questo **non contraddice** il [68](68-il-numero-pubblico-non-si-riproduce-e-la-domanda-aperta-ha-risposta.md), dove sullo **stesso banco** il gate risultava *più permissivo* (25/48 → 26/48). Sono due grandezze diverse:
+
+| | cosa varia | cosa misura |
+|---|---|---|
+| **banco fisso** (96 casi immutati) | solo il codice | **il gate** |
+| **traffico** (ciò che scriviamo) | il codice **e** i nostri claim | **noi** |
+
+⇒ 📌 **Il tasso di quarantena sul traffico non è un righello del gate.** Un giorno al 5,1% e uno al 17,7% possono avere lo stesso gate e claim diversi — il 30/08, giorno del picco (1161 fatti), è anche quello in cui scrivevamo di più e più in fretta.
+
+### Cosa NON prova
+
+⚠️ **Nessuna tendenza non è «nessun cambiamento»**: otto giorni con questa varianza non possono escludere una deriva piccola. Per quella serve il banco fisso. · ⚠️ Il `digest` è stato eseguito una volta, non l'ho confrontato con nulla. · ❌ **La domanda sul tier episodi resta aperta**: il digest non ne dipende, quindi non risponde.
+
+**Firme su questa cella**: ws6.
