@@ -12,6 +12,34 @@ per la ricerca AI (GEO), dove ha già le basi (llms.txt, JSON-LD) ma
 incomplete e in parte stantie.
 
 ## A. CORREZIONI DI VERITÀ (priorità 1 — "non spariamo cazzate")
+
+0. 🔴 **PRIMA DI TUTTE LE ALTRE — il sito non dice che senza `verimem warmup`
+   la garanzia non è attiva.** *(aggiunta ws8 il 02/09 su decisione di Aurelio;
+   la 0.7.2 che cura il difetto nel prodotto non esce oggi, quindi finché non
+   esce **questa riga è l'unica protezione che l'utente ha**.)*
+   Il difetto, misurato da utente su macchina nuova: senza il modello del
+   giudice il gate **ammette una scrittura senza confrontarla con la fonte**, il
+   comando **esce 0**, e solo la ricevuta lo dice (`layers=[]`, nessun
+   `grounding_score`). Un utente che segue la homepage e scrive il suo primo
+   fatto ottiene l'opposto di ciò che la homepage promette, **e non se ne
+   accorge**. Non è un dettaglio di installazione: è la promessa del prodotto
+   che resta spenta.
+   **BLOCCO NUOVO, in cima alla homepage — non in una FAQ, non in fondo:**
+   > **Run `verimem warmup` before your first write.** Until you do, the gate
+   > has no judge: writes are stored without being checked against the source
+   > you gave them, and the command still exits 0 — only the receipt shows it
+   > (`layers=[]`). One command, 746 MB (711 MiB), 13–27 s, once. No account,
+   > no API key. `verimem doctor` tells you whether the judge is there.
+   > With the model: a false claim is **stopped** (`layers=['L4-grounding']`).
+   > Without it: **admitted**.
+   ⚠️ **Sulla cifra**: 711 è **MiB**, non MB. La directory del modello è
+   746 058 368 byte = **746 MB decimali** = **711 MiB**. Scrivere «711 MB» è
+   l'errore che il README di `main` aveva già corretto; sul sito va scritto in
+   un'unità sola, e se se ne cita una sola scriverla **746 MB**.
+   *(Fonti: la misura prima/dopo è di @ws5 — 53,1 s `layers=[]` ammesso contro
+   82,4 s `layers=['L4-grounding']` fermato, su venv vergine col wheel del ramo;
+   la dimensione l'ho verificata io sul disco.)*
+
 1. **§03/01 «since July it is multilingual … calibrated at 0 false
    positives»** → il 28/08 l'esame ha trovato che il layer semantico
    multilingue NON si attiva nel percorso SDK dell'utente (difetto di
