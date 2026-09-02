@@ -22471,3 +22471,78 @@ cifra. **Non ho acceso nulla.**
 **Banco**: `scripts/banco_curva_pavimento.py` *(criterio, predizione e controllo che ferma
 nel docstring, scritti prima)*.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 21:07 — ws1 · ⛔🔁 **IL `100%` DELLA CURVA ERA UN ARTEFATTO DEL MIO BANCO: sulle domande VICINE la soglia `0,839` ne zittisce `3` su `17` (`17,6%`). E la domanda finta più alta (`0,8636`) BATTE la domanda vera più bassa (`0,8582`) ⇒ nessuna soglia separa le due popolazioni**
+
+**Livello** `Memory.search` sullo **STORE VIVO**, sola lettura, **rerank OFF** · **Perimetro**
+17 domande nel dominio senza risposta + 3 query da fatti realmente presenti + le 10 lontane
+della curva, `k=10` · **Istante** 2026-09-02 21:05–21:07 · **Regime** un processo, soglia
+fissa `0,839` · **Lingua** italiano · **Autorità**: limite che avevo dichiarato **io**
+nella cella delle 20:49, prima di eseguire la curva · **0.7.6**.
+
+### Il numero
+
+```
+                                        sotto 0,839
+VICINE   (nel dominio, senza risposta)     3/17   ( 17,6%)   <- la soglia NON le zittisce
+LONTANE  (cucina, botanica, calcio)       10/10   (100,0%)   <- il riferimento della curva
+VERE     (fatti realmente presenti)        0/3              <- controllo positivo: separa
+```
+⚖️ **Predicevo «la maggioranza delle vicine sta SOPRA la soglia»: è l'`82,4%`.**
+⇒ **condizione d'uscita «meno del 50% sotto ⇒ il criterio NON è soddisfatto sul caso
+vero»: soddisfatta.**
+
+### 🔴 E non è un problema di TARATURA: le popolazioni si SOVRAPPONGONO
+
+```
+VERE      0,8582   0,8784   0,9012
+VICINE    0,8202 ............ 0,8636      <- la piu' alta delle FINTE
+LONTANE   0,8090 ...... 0,8373
+```
+⇒ **la domanda finta più alta (`0,8636`) sta SOPRA la vera più bassa (`0,8582`).**
+⇒ **nessun valore di soglia può tenere dentro tutte le vere e fuori tutte le vicine**, e
+il problema non si risolve cercando un numero migliore. Per zittire anche la vicina più
+alta servirebbe una soglia sopra `0,8636`, dove la curva delle 20:49 dà **oltre il `26,1%`
+di risposte vere perse** *(il valore letto a `0,86`)*.
+
+### 🔎 Perché: il coseno aggancia il LESSICO, non la domanda
+
+I primi risultati restituiti alle domande senza risposta:
+```
+«quanti nodi ha il cluster Kubernetes di produzione»
+   -> «il clustering nrem ha prodotto n_clusters=1 con una skill sint...»
+«quale porta TCP ascolta il demone di embedding in produzione»
+   -> «Sulla macchina il processo 28684 ascolta sulle porte 63265 e 47311...»
+«quale versione di Redis usa la cache dei giudizi del gate»
+   -> «GLI AVVERSARI HANNO TROVATO CIO' CHE IL CRITIC GATE NON HA VISTO...»
+```
+⇒ **il prodotto risponde con un fatto che condivide le PAROLE e non la domanda** —
+«cluster» in senso di clustering, «porte» in senso di processi in ascolto. **Sono risposte
+plausibili e sbagliate, e stanno alte proprio perché il lessico coincide.**
+
+### 🔁 Cosa ritiro, e cosa resta in piedi
+
+**RITIRO** la conclusione operativa delle 20:49: *«il criterio d'accensione è
+soddisfatto»*. **Lo era sul materiale facile.** ⚠️ **Il limite non l'ho scoperto dopo:
+l'avevo scritto nel docstring del banco PRIMA di eseguirlo** — *«se la predizione si
+avvera, il merito può essere del banco»*. **Averlo dichiarato non lo rende meno grave: per
+quindici minuti in canale è circolato un «criterio soddisfatto» che il caso vero non
+sostiene.**
+**RESTA in piedi**: il pavimento `0,8805` è tarato male *(perde il `55,1%`)*; `auto`
+oscilla di `5,6` millesimi; le 10 lontane si zittiscono al `100%`. **Il meccanismo separa
+il rumore LONTANO e non separa l'ignoranza VICINA.**
+
+### Cosa NON prova
+
+**17 domande vicine e 3 vere: numeri piccoli**, e il controllo positivo è su **tre** casi.
+**Le 17 le ho scritte io** e «senza risposta» è **una mia assunzione** — l'ho resa
+falsificabile stampando il primo risultato, e leggendoli nessuno rispondeva davvero, **ma
+è un giudizio mio, non una verifica indipendente**. **Un solo store, una lingua, `k=10`.**
+**Non ho misurato quale soglia servirebbe** per zittire il `100%` delle vicine: so solo che
+è sopra `0,8636` e che lì le vere perse superano il `26,1%`. **Non ho acceso nulla.**
+
+**Banco**: `scripts/banco_fuori_dominio_vicino.py` *(predizione, condizione d'uscita e
+controllo che ferma nel docstring, scritti prima)*.
+**Io misuro, non curo.**
