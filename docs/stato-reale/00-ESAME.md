@@ -20348,3 +20348,83 @@ Quel test usava la query **col sinonimo** — *«se l'**entita** è più **ricca
 🪞 **Terzo ribaltamento in dieci minuti**, tutti e tre trovati chiudendo un limite che avevo dichiarato io. La sequenza è: «il dizionario è la leva» → falso, è il collegamento → **falso, è una parola condivisa**. ⇒ **Ogni volta l'errore era confrontare due cose che differivano per più di una variabile** — qui, due query diverse.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 03:33 — ws1 · 🔴🔴🔴 **IL BUCO DEL SOGGETTO ARRIVA ALLA PORTA: `9` frasi su `10` che cambiano solo di chi si parla vengono AMMESSE con grounding `98,05–99,98`, e nessun campo della ricevuta le distingue dalle vere.** Gli strati a valle non si accendono
+
+**Livello** `Memory.add(frase, source=fatto_vero)` — **la porta di scrittura**, non uno strato
+interno · **Perimetro** le **stesse 10 frasi** delle 03:24 *(estratte con `exec` dai due banchi,
+non ricopiate)* più le **10 frasi vere** come controllo positivo, **su DUE store temporanei
+distinti** · **Istante** 2026-09-02 03:31–03:33 · **Regime** `HIPPO_DATA_DIR` in temp **prima
+dell'import**, poppate `HIPPO_ENCODE_DELEGATE_ONLY=1` e `ENGRAM_DATA_DIR`, **soglie ai
+default, nessuna manopola toccata**, RAM 6,79 GB, **`claim ram/giudice`** (`db4c06daffb4`)
+preso e rilasciato · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il debito che avevo dichiarato in pubblico alle 03:26**: «*ho misurato uno STRATO, non
+il prodotto: se `L4.1` ferma queste frasi il prodotto è protetto e la vetrina non va toccata*».
+**Non le ferma.**
+
+### ✅ Il controllo positivo regge — e già dice qualcosa
+
+| | ammesse | grounding | status |
+|---|---|---|---|
+| **(A) frasi VERE** | **10 / 10** | 98,80 – 99,98 | `model_claim` |
+| **(B) SOGGETTO SCAMBIATO** | **9 / 10** | **98,05 – 99,98** | `model_claim` |
+
+⚖️ **Predicevo 2-5 quarantenate: è 1.** ⇒ condizione d'uscita `≤3` ⇒ **il buco arriva alla
+porta, e la riga va in vetrina.**
+
+### 🔴 La porta riproduce il giudice punto per punto
+
+L'unica frase fermata è **la stessa** che il moat già fermava alle 03:24 — `4,49`,
+`quarantined_by: moat`. **Le altre nove entrano con gli stessi identici punteggi** che avevo
+misurato chiamando `try_local_score` da solo (99,90 · 99,98 · 99,96 · 99,67 · 99,32 · 99,95 ·
+99,30 · 98,05 · 99,07).
+
+⇒ **nessun strato a valle si accende su questa popolazione.** ⚠️ **Non contesto chi ha
+misurato che `L4.1` interviene altrove**: dico che **sul mio perimetro, ai default, non
+interviene** — e i due fatti convivono, perché `L4.1` guarda altri tipi di claim.
+
+### 🔴🔴 E il reperto nuovo: NESSUN CAMPO DELLA RICEVUTA DISTINGUE I DUE GRUPPI
+
+```
+                    status          grounding_score      quarantined_by
+frase VERA          model_claim     98,80 … 99,98        (vuoto)
+soggetto SCAMBIATO  model_claim     98,05 … 99,98        (vuoto)
+```
+
+**Stesso `status`, intervalli sovrapposti, `quarantined_by` vuoto in entrambi.** ⇒ **chi legge
+la memoria dopo non ha modo di sapere quale delle due sta leggendo.** E il fatto falso entra
+**portando un punteggio di fondatezza del 99,90**, cioè **la prova che una fonte è stata
+giudicata e l'ha approvato**.
+
+⚠️ **Nota su `status`**: anche le frasi **vere** entrano come `model_claim`, non come
+`verified`. ⇒ **`status` non è il campo che separa fondato da non fondato in questo regime** —
+lo dico perché una lettura frettolosa potrebbe prendere `model_claim` sulle scambiate per un
+segnale di cautela: **non lo è, ce l'hanno anche le vere.**
+
+### 🎯 Cosa cambia rispetto alle 03:24
+
+| | |
+|---|---|
+| **prima** | reperto su `try_local_score`, **uno strato**: 9/10 passano |
+| **ora** | reperto **sulla porta di scrittura**: 9/10 **ammesse in memoria**, indistinguibili |
+| ⇒ | **la riga della vetrina non è più condizionata**: il prodotto, ai default, memorizza nove frasi su dieci che attribuiscono a un'altra entità il numero della fonte |
+
+### Cosa NON prova
+
+**Dieci frasi, due store temporanei, una macchina, un solo regime — quello di default.**
+`9/10` **non è un tasso**: **le frasi le ho scritte io** perché fossero difficili, e la
+frequenza con cui un modello che riassume le produrrebbe **non la conosco**. **Non ho provato
+altri `gate_mode` né `validate`**: `add()` li espone entrambi e **con altre impostazioni il
+risultato potrebbe cambiare** — quindi questo è il verdetto **del percorso predefinito**, che
+è quello che riceve chi installa e non tocca niente, **non di ogni configurazione possibile**.
+**Non ho letto il journal** per vedere se qualche strato ha *guardato* la frase senza fermarla:
+misuro l'esito, non il percorso interno. **In due casi l'entità è portata da un aggettivo**
+(`json`→`yaml`, `NUDO`→`VESTITO`), dichiarato fin dal banco delle 03:24.
+
+**Banco**: `porta_soggetto_alla_porta.py`, dati in `soggetto_alla_porta.json` (scratchpad).
+⚠️ **Due store separati non è un dettaglio**: con una sola `source` in un solo store sarebbe
+scattata la supersessione *same-source* e avrei misurato quella invece del gate.
+**Io misuro, non curo.**
