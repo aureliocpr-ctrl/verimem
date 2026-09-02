@@ -1,5 +1,21 @@
 # Verimem
 
+> ## ⚠️ BEFORE FIRST USE — RUN THIS ONCE:
+> ```bash
+> verimem warmup
+> ```
+> **Until you do, the judge is not installed and the moat is OFF**: every write
+> with a `source` is admitted **without being checked** (the receipt says so —
+> `layers=[]`, an `L4-skipped` advisory — and `verimem doctor` reports
+> `moat-judge: missing`). `warmup` downloads the local judge model (**711 MB /
+> 746 MB decimal, 13–27 s on a normal connection, no account needed**) — after
+> that every write is judged in ~0.2 s, offline. Measured on the published
+> **0.7.1** package in three clean environments (WSL Ubuntu 24.04 and Windows,
+> 2026-09-02): the first `remember --source` on a fresh install came back
+> `admitted` with no judge. This is a real gap in 0.7.1; the fix (the first
+> gated write fetches the judge by itself) is in the next release. **Run the
+> command.**
+
 **Verified memory for AI agents.** Every write passes an admission gate, every
 read carries provenance, and a claim the source **openly contradicts** does not
 come back as truth.
@@ -280,8 +296,12 @@ back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aurelioc
 
 ## Install
 
+> ⚠️ **After `pip install`, run `verimem warmup` before the first write** — see
+> the banner at the top: without it the judge is missing and the moat is OFF.
+
 ```bash
 pip install verimem
+verimem warmup   # once: downloads the judge (711 MB). Without it, writes are NOT checked.
 ```
 
 <!-- ⛔ RILASCIO — LEGGERE PRIMA DI PUBBLICARE.
