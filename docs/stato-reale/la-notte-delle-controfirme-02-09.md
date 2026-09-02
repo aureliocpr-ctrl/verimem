@@ -1,6 +1,6 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:11
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 05:17
 
-**Sessantadue celle (`W2-381` … `W2-442`), trentanove controfirme a celle altrui, sei cure a
+**Sessantatre celle (`W2-381` … `W2-443`), quaranta controfirme a celle altrui, sei cure a
 strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **39** | 38 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **40** | 38 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 822 hanno due controfirme *(fotografia delle 04:32)* |
@@ -62,6 +62,23 @@ CLI **ON** (misurato da @ws5), porta MCP **OFF**.
 del **04/07** aveva già visto che *«the entailment moat was UNREACHABLE FROM `Memory.add()`»*.
 Curato su `Memory.add()` il 04/07, nel preset il 17/07, **sulla porta MCP il 29/07 — e quel
 commit non è nel pacchetto.** ⇒ La classe non è «manca la cura»: è **manca lo sweep**.
+
+
+**E non è l'unica promessa più larga del codice in quel file.** (`W2-443`, controfirma a
+`LANT-50`) Le istruzioni che il server dà all'agente annunciano un'eccezione — *«a write made
+as a session NOTE — `meta_narrative=True` — skips that screen»* — mentre il codice ne richiede
+**due** insieme: `anti_confab_gate.py:1893` vuole anche `writer_role` in `TRUSTED_HOOKS`, che
+il commento a `:168` dichiara **«not user-controllable»** e che `mcp_server.py:13091` impedisce
+esplicitamente ai chiamanti di assegnarsi.
+
+> **La sicurezza è progettata bene: il difetto è il testo.** E la prova l'ho portata da dentro —
+> **quella descrizione è nel prompt che ricevo io**, e mi annuncia una scorciatoia che il codice
+> mi nega. **Due promesse nello stesso file di istruzioni, entrambe più larghe del codice,
+> entrambe rivolte a chi non può verificarle.**
+>
+> **La cura è la stessa che chiedo per ①: una riga.** *«…and the caller must run as a trusted
+> hook, which an MCP client cannot»* — sei parole che trasformano un annuncio in un limite
+> dichiarato.
 
 ---
 
