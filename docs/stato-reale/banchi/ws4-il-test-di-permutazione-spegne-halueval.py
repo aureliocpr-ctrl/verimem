@@ -27,6 +27,7 @@ DUE CONTROLLI AL POSTO DELLA PROVA MANCANTE:
 """
 import io
 import json
+import os
 import random
 
 REPO = ""
@@ -34,7 +35,16 @@ S = "docs/stato-reale/banchi/"   # relativo alla RADICE del repo
 
 mio = [json.loads(x) for x in io.open(S + "_ws4_factcg_halueval.jsonl", encoding="utf-8")
        if x.strip()]
-w = json.load(io.open(REPO + "docs/stato-reale/banchi/_ws3_curva_scores.json",
+DIP = "docs/stato-reale/banchi/_ws3_curva_scores.json"
+if not os.path.exists(DIP):
+    raise SystemExit(
+        "  QUESTO BANCO NON PUO' GIRARE: manca " + DIP + " (punteggi di @ws3).\n"
+        "  Non lo verso io: e' suo, e due copie sono due verita' sullo stesso\n"
+        "  dato. Il reperto che il banco produce e' comunque gia' misurato e\n"
+        "  scritto in W7-129: mescolando a caso si ottiene DI PIU' (65,8% contro\n"
+        "  62,5%), quindi l'allineamento assunto non porta informazione.")
+
+w = json.load(io.open(DIP,
                       encoding="utf-8"))["halueval-400"]
 
 veri_k = [r for r in mio if r["label"] == 1]

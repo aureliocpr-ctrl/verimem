@@ -25,7 +25,7 @@ import json
 import re
 import sys
 
-FACT = "_ws4_factcg_heldout.jsonl"
+FACT = "docs/stato-reale/banchi/_ws4_factcg_heldout.jsonl"
 DATI = "benchmark/data/external/truthfulqa_pairs_heldout.jsonl"
 IDX = 1  # SUPPORTED, determinato dai dati: media 0,750 sui veri contro 0,647 sui falsi
 
