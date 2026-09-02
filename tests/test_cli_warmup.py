@@ -84,3 +84,50 @@ def test_il_warmup_TOCCA_il_pavimento_e_lo_DICE(monkeypatch, isolated_corpus):
     assert "relevance floor skipped" not in basso, (
         f"il blocco del pavimento e' fallito e l'except l'ha ingoiato — la "
         f"capacita' c'e' solo all'apparenza\n{res.output}")
+
+
+def test_il_warmup_dice_che_il_GIUDICE_si_carica_al_primo_uso(
+        monkeypatch, isolated_corpus):
+    """Dei modelli che `warmup` nomina, il giudice del moat e' l'unico che
+    questo comando **scarica e non carica**: `ensure_gate_model()` procura i
+    pesi, e nessuna riga del comando chiama `_ensure_scorer`.
+
+    Perche' la differenza conta per chi legge l'output: il docstring del
+    comando promette *«so the first real recall is instant»* e nomina il caso
+    MCP («before wiring Verimem into Claude Code»). Per il giudice quella
+    promessa non vale — il caricamento avviene al primo uso, **nel processo
+    che lo usa**, e un server MCP appena avviato lo paga sulla prima scrittura.
+    Misurato il 2026-09-02: `warmup` esce 0 in 21,7s e la prima scrittura MCP
+    resta in timeout.
+
+    ⚠️ Il download e il daemon di encode ATTRAVERSANO il confine di processo
+    (cache su disco, processo condiviso): il comando serve, e la cella non
+    dice il contrario. Dice solo che una delle sue quattro parti non
+    trasferisce cio' che il suo nome lascia credere.
+    """
+    import verimem.local_grounding as lg
+
+    monkeypatch.setattr(emb, "_model", lambda: object())
+    monkeypatch.setattr(emb, "encode",
+                        lambda *_a, **_k: np.ones(8, dtype=np.float32))
+    # i pesi ci sono: si entra nel ramo che oggi dice solo «already installed»
+    monkeypatch.setattr(lg, "holds_the_weights", lambda *_a, **_k: True)
+    # CONTROLLO POSITIVO: se un giorno il comando caricasse davvero il
+    # giudice, questa spia si accende e la cella va riscritta invece che
+    # lasciata a mentire.
+    caricato = {"v": False}
+    monkeypatch.setattr(lg, "make_finetuned_scorer",
+                        lambda *_a, **_k: caricato.__setitem__("v", True))
+
+    res = runner.invoke(cli.app, ["warmup", "--no-daemon"])
+
+    assert res.exit_code == 0, res.output
+    basso = res.output.lower()
+    assert "first use" in basso, (
+        f"il comando non dice che il giudice si carica al primo uso: chi legge "
+        f"crede di aver preparato il terreno anche per il moat\n{res.output}")
+    assert "process" in basso, (
+        f"manca il pezzo che rende la riga azionabile — che il caricamento "
+        f"vale PER PROCESSO\n{res.output}")
+    assert caricato["v"] is False, (
+        "warmup ha caricato il giudice: la riga che avvisa e' diventata falsa")

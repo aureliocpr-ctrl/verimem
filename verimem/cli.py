@@ -608,6 +608,26 @@ def warmup(
             console.print(f"[yellow]· gate model fetch failed "
                           f"({type(exc).__name__}: {exc})[/]")
 
+    if gate:
+        # ⚠️ DEI QUATTRO EFFETTI DI QUESTO COMANDO, IL GIUDICE E' L'UNICO CHE
+        # SI SCARICA QUI E SI CARICA ALTROVE. Embedder e reranker sopra li
+        # carica davvero (`_model()`, `_load_reranker()`); il gate no:
+        # `ensure_gate_model()` procura i PESI e basta, e in tutto il comando
+        # non c'e' una chiamata a `_ensure_scorer`. Senza questa riga, chi
+        # legge «✓ moat gate model ready» crede di aver preparato il terreno
+        # anche per il moat, e il docstring qui sopra glielo conferma
+        # («so the first real recall is instant», e nomina proprio il caso
+        # MCP). Misurato il 2026-09-02: `warmup` esce 0 in 21,7s e la prima
+        # scrittura sul server MCP resta comunque in timeout, perche' quel
+        # caricamento vive nel processo che lo esegue e quel processo e' un
+        # altro. Il download e il daemon di encode invece ATTRAVERSANO il
+        # confine (cache su disco, processo condiviso): il comando serve, e
+        # questa riga circoscrive quale sua parte non trasferisce.
+        console.print(
+            "[dim]  The weights are on disk; the judge itself loads on FIRST "
+            "USE, in whatever process uses it — a freshly started MCP server "
+            "pays that load on its first write, not here.[/]")
+
     if daemon:
         from . import encode_service
         if encode_service.ensure_running():
