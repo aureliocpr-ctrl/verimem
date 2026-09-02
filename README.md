@@ -62,6 +62,43 @@ session-level **recall@5 = 0.87** (judge-free, full 500 questions) and LoCoMo
 reason to choose Verimem is the layer *above* it: whether you can trust what comes
 back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md).
 
+## How much of what you get served is false — on two public datasets, not one
+
+The headline number is **per dataset**, and one dataset alone would be a
+selected one. Both use human labels we did not write:
+
+| | of what is **served**, false | blind-criterion baseline | claims examined | served |
+|---|---|---|---|---|
+| **TruthfulQA** heldout | **15.9%** (40/252) | 51.3 | 600 (300 true / 300 false) | 252 = 42% |
+| **HaluEval** QA heldout | **35.7%** (90/252) | 70.8 | 400 (200 pairs) | 252 = 63% |
+
+**Read the second column or don't read the first.** The blind criterion is a
+rule that never looks at the truth label — 50 means "a coin", and the further
+from 50, the more the *shape* of a claim predicts its label without any judging
+at all. On TruthfulQA it sits at 51.3: the task is honest, the result is the
+gate's. On HaluEval it is **70.8**, so a meaningful share of any score there is
+reachable by form alone. That is exactly why the 35.7% and the 15.9% must not
+be read as "we are twice as bad on HaluEval": the two boards are not equally
+hard, and the column that says so belongs next to the number, not in an
+appendix.
+
+**The two denominators are the same by coincidence, not by construction.**
+162 true served + 90 false = 252 on HaluEval; 212 + 40 = 252 on TruthfulQA. The
+starting populations differ (600 claims against 400), so we serve **42%** of one
+board and **63%** of the other — and serving more is the other side of holding
+back less. The falsity rate and the served share are read together or not at
+all.
+
+Reproduce it yourself, one command per dataset, no network for the data:
+
+```bash
+bash scripts/repro_c10.sh truthfulqa    # 0 = holds · 3 = diverges · 2 = missing prerequisite
+bash scripts/repro_c10.sh halueval
+```
+
+⚠️ The judge model (746 MB) is a prerequisite, and the script says so and stops
+rather than producing a number that looks like this one without it.
+
 ## Features
 
 - **Gated writes with the grounding moat ON by default** — every fact enters as

@@ -62,8 +62,8 @@ case "$POPOLAZIONE" in
     # ⚠️ NON ANCORA PUBBLICATO. Finche' resta vuoto questo script MISURA e
     # STAMPA, ma NON confronta: inventare un atteso per avere un verdetto
     # verde e' il difetto che questo pack esiste per impedire.
-    ATTESO_SERVITO=""
-    FONTE_ATTESO="(non ancora pubblicato)" ;;
+    ATTESO_SERVITO=35.7        # 90/252, misura di ws7 — vedi README
+    FONTE_ATTESO="README (misura ws7)" ;;
 esac
 
 # Un file d'uscita PER POPOLAZIONE: con un nome solo, il secondo giro
