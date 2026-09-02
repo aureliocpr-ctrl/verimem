@@ -51,6 +51,29 @@ piu' un suo caso citato quattro volte che **in inglese e' fermato (1,61)**.
 ✅ **Controllo positivo: 10 veri su 10 ammessi**, in entrambe le lingue — zero falsi
 allarmi, e va detto con la stessa forza.
 
+📏📏📏 **E LO SPAGNOLO (05:14) RISPONDE ALLA DOMANDA CHE CONTA: l'ECCEZIONE E'
+L'INGLESE, non l'italiano**::
+
+    lingua   veri ammessi   attive fermate   passive fermate   inversioni che PASSANO
+    IT            5/5            3/5              0/5              7 su 10
+    ES            5/5            2/5              1/5              7 su 10   <- identico a IT
+    EN            5/5            4/5              3/5              3 su 10
+
+⇒ **Lo spagnolo sta con l'italiano, non con l'inglese.** Il divario non era «l'italiano
+e' debole»: e' **l'inglese a essere l'eccezione**, e la protezione **non e' uniforme**
+nelle lingue che il prodotto dichiara.
+📌 **Cosa fa alla promessa**: `anti_confab_gate.py:2360` dice «*The CE is multilingual
+(measured EN/IT/FR/ES)*». **E' vero che GIRA in quattro lingue.** Su questa popolazione
+la **protezione** dalle inversioni di relazione e' **piu' che dimezzata in due di quelle
+quattro** (7 su 10 passano contro 3). ⇒ «multilingue» dice *che gira*, non *che protegge
+uguale* — ed e' una riga di perimetro, non un numero da correggere.
+✅ **Controllo positivo 5 su 5 in TUTTE E TRE le lingue**: zero falsi allarmi ovunque, e
+va detto con la stessa forza del resto.
+⚖️ **LIMITE mio, dichiarato**: lo spagnolo l'ho scritto io e non sono madrelingua; le
+frasi sono semplici per contenere il rischio, ma «stessa frase in tre lingue» resta
+**una mia equivalenza**. E il **francese non l'ho misurato**: delle quattro dichiarate ne
+copro tre.
+
 --- (il primo giro, solo italiano, che aveva portato alla conclusione troppo forte) ---
 🔴 **non era rumore: la passiva non viene fermata MAI** (IT)::
 
@@ -115,6 +138,36 @@ COPPIE_EN = [
      "The compiler had 7 errors reported by the module of Verdi."),
 ]
 
+# ⚠️ UNA TERZA LINGUA, e per una domanda precisa: il divario IT/EN si legge in due modi
+# opposti — «l'italiano e' debole» oppure «l'inglese e' l'eccezione». Lo spagnolo e' una
+# delle quattro lingue che la promessa del prodotto dichiara («measured EN/IT/FR/ES»):
+# se sta con l'italiano, l'inglese e' l'eccezione e la protezione NON e' uniforme.
+# ⚠️ LIMITE DICHIARATO: lo spagnolo lo scrivo io e non sono madrelingua. Le frasi sono
+# semplici (soggetto-verbo-oggetto) per contenere il rischio, ma «stessa frase in tre
+# lingue» resta **una mia equivalenza**, non un dato.
+COPPIE_ES = [
+    ("La puerta de ws3 rechazo 12 hechos de ws4 durante el turno de noche.",
+     "La puerta de ws3 rechazo 12 hechos.",
+     "La puerta de ws4 rechazo 12 hechos de ws3.",
+     "ws3 tuvo 12 hechos rechazados por la puerta de ws4."),
+    ("El revisor Bianchi rechazo la propuesta de Rossi en la comision.",
+     "Bianchi rechazo la propuesta de Rossi.",
+     "El revisor Rossi rechazo la propuesta de Bianchi.",
+     "Bianchi tuvo la propuesta rechazada por Rossi."),
+    ("El servicio de pago rechazo la solicitud del cliente Neri.",
+     "El servicio rechazo la solicitud de Neri.",
+     "El cliente Neri rechazo la solicitud del servicio de pago.",
+     "El servicio de pago tuvo la solicitud rechazada por el cliente Neri."),
+    ("El equipo de Milan gano al equipo de Turin por 3 a 1.",
+     "Milan gano a Turin por 3 a 1.",
+     "El equipo de Turin gano al equipo de Milan por 3 a 1.",
+     "Milan fue derrotado por el equipo de Turin por 3 a 1."),
+    ("El compilador reporto 7 errores en el modulo escrito por Verdi.",
+     "El compilador reporto 7 errores.",
+     "El modulo de Verdi reporto 7 errores en el compilador.",
+     "El compilador tuvo 7 errores reportados por el modulo de Verdi."),
+]
+
 COPPIE = [
     ("Il gate di ws3 ha respinto 12 fatti di ws4 durante il turno di notte.",
      "Il gate di ws3 ha respinto 12 fatti.",
@@ -162,8 +215,8 @@ def main():
         print("  🔴 venv assente: %s" % venv)
         return
     solo = sys.argv[2].upper() if len(sys.argv) > 2 else ""
-    lingue = [("IT", COPPIE), ("EN", COPPIE_EN)]
-    if solo in ("IT", "EN"):
+    lingue = [("IT", COPPIE), ("EN", COPPIE_EN), ("ES", COPPIE_ES)]
+    if solo in ("IT", "EN", "ES"):
         lingue = [x for x in lingue if x[0] == solo]
 
     print("  %-4s %-6s %-9s %-9s %-9s  %s"
