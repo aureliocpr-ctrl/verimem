@@ -19145,3 +19145,73 @@ scattare il problema: fra «domini disgiunti» e «stessa forma» c'è tutto un 
 
 **Banco**: `porta_pavimento_difficile.py`, dati in `pavimento_difficile.json` (scratchpad).
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 02:24 — ws1 · **LA DEGRADAZIONE DEL PAVIMENTO È GRADUALE, E LA ROTTURA È PRECOCE: basta il TEMA condiviso — con frasi del tutto normali — per perdere METÀ delle risposte.** Tre corpora, tre predizioni scritte prima, tre confermate
+
+**Livello** `Memory.search` con e senza `min_relevance="auto"` (**la chiamata del gateway**) ·
+**Perimetro** **tre store nuovi** da 6 fatti, omogeneità crescente, 6 query pertinenti ciascuno
++ **le stesse 3 estranee** come controllo · **Istante** 2026-09-02 02:16–02:22 · **Regime**
+variabili poppate, `HIPPO_DATA_DIR` prima dell'import, RAM 7,21 GB, **`claim ram/embedder`
+preso e rilasciato** (`e57c73a6a776`) · **Autorità**: ordine di Aurelio delle 00:00 · **0.7.6**.
+
+**Paga il limite dichiarato alle 02:14**: «*fra «domini disgiunti» e «stessa forma» c'è tutto
+un intervallo che non ho esplorato*».
+
+### Il numero — e le tre predizioni reggono tutte
+
+| corpus | pavimento | **risposte vere perse** | popolazioni sovrapposte |
+|---|---|---|---|
+| **A — domini disgiunti** | 0,8387 | **0 / 6** | no |
+| **B — stesso tema, forme diverse** | 0,8513 | **3 / 6** | no |
+| **C — stessa forma** | 0,8854 | **5 / 6** | **sì** |
+
+⚖️ **Predetto prima di eseguire: A 0-1 · B 2-3 · C 5. Uscito: 0 · 3 · 5.** *(Le estranee
+restano `3/3` vuote in tutti e tre: il controllo negativo non distingue i casi, e questo è
+proprio il punto — **misurato solo sui negativi il pavimento sembra perfetto ovunque**.)*
+
+### 📌 IL DATO CHE SERVE ALLA VETRINA: la rottura è PRECOCE
+
+**Il corpus B non è un caso di laboratorio**: sono sei fatti su Verimem scritti in **forme
+diverse** («*Il pavimento si ricalcola quando il corpus cresce del cinque per cento*», «*Chi
+collega Verimem come server MCP finisce sempre in regime di delega*»…). **È come scrive
+chiunque tenga una memoria di progetto.** ⇒ **basta il tema condiviso per perdere metà delle
+risposte**: non serve la ripetitività della forma.
+
+**E il meccanismo in B è diverso da quello in C**, e va detto:
+
+```
+B   estranee  0.7851  0.7874  0.7403        pertinenti  0.8339 … 0.9200      pavimento 0.8513
+C   estranee  0.7918  0.7747  0.7341        pertinenti  0.7870 … 0.8859      pavimento 0.8854
+```
+
+⇒ in **C** le due popolazioni **si sovrappongono** (nessuna soglia può separarle); in **B**
+**sono ancora separate**, ma **il pavimento cade DENTRO le pertinenti** e ne taglia la coda.
+**Sono due difetti diversi**: in B la soglia è *mal posta*, in C *non esiste una soglia
+giusta*.
+
+### 🎯 La regola azionabile, che è quello che mancava
+
+> **Il pavimento auto-calibrato è affidabile su corpora eterogenei. Su uno store tematico
+> perde circa metà delle risposte; su uno store formulaico ne perde cinque su sei.**
+
+⇒ **è la riga da mettere accanto alla promessa**, insieme all'avviso sui rapporti. E per chi
+usa Verimem come memoria di progetto — **cioè il caso d'uso che il prodotto racconta di sé** —
+**la configurazione di default non è quella giusta**: `ENGRAM_GATEWAY_MIN_RELEVANCE` esiste
+apposta ed è documentata come «*tunable dial*».
+
+### Cosa NON prova
+
+**Tre corpora da sei fatti**: `0/6`, `3/6`, `5/6` **non sono tassi**, sono tre punti. **I tre
+corpora li ho scritti io**, e la loro «omogeneità» è un mio giudizio, **non una misura**:
+servirebbe un indice (per esempio la similarità media fra i fatti) per collocare uno store
+reale sulla scala — **non l'ho calcolato, ed è la prova che manca**. **Le query di ogni corpus
+sono derivate dai suoi fatti**, quindi il confronto fra corpora è fra *tre banchi paralleli*,
+non fra tre misure della stessa cosa. **Sei fatti sono pochi**: su uno store grande la
+calibrazione ha più materiale e potrebbe comportarsi diversamente — **il nostro registro ha
+13 420 fatti servibili ed è tematico**, e **non l'ho misurato**. **Non ho provato a spostare
+`ENGRAM_GATEWAY_MIN_RELEVANCE` a mano** per vedere quale valore recupererebbe le perse.
+
+**Banco**: `porta_soglia_omogeneita.py`, dati in `soglia_omogeneita.json` (scratchpad).
+**Io misuro, non curo.**
