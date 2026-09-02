@@ -58,11 +58,41 @@ notte aggiunge il corollario: **l'assenza non ha un canale**. Nessuna delle sei
 avrebbe potuto essere trovata leggendo log, perché non c'è log dove non c'è
 traffico — solo guardando **cosa il prodotto offre** e chiedendo **chi lo usa**.
 
+## ④-bis Il denominatore, per una dimensione: **6 colonne su 31**
+
+Il limite dichiarato sotto era «il denominatore non c'è». **Per lo schema dei
+fatti l'ho fatto**: tutte e 31 le colonne di `facts`, 17102 righe, `mode=ro`.
+
+```
+ALIMENTATE (≥1%)  : 25
+QUASI VUOTE (<1%) :  6  = 19,4% dello schema
+
+  lineage_parents    32   0.19%
+  worked_example      1   0.01%
+  derives_from        1   0.01%
+  asserted_at         1   0.01%
+  valid_until         0   0.00%
+  epistemic           0   0.00%
+```
+
+🆕 **Due che non avevo visto:**
+
+- **`epistemic` è a zero su 17102.** Un campo che nomina lo *stato epistemico* di
+  un fatto, mai scritto da nessuno.
+- **`lineage_parents` 32 contro `lineage_to` 14628 (85,5%).** Sono i due versi
+  della **stessa relazione**: scriviamo sempre «verso chi», quasi mai «da chi».
+  ⇒ **La lineage è unidirezionale nei dati**, mentre lo schema la prevede nei due
+  sensi — e chi risale una catena all'indietro trova 32 righe su 17102.
+
+📌 **Questo è un tasso vero**, con numeratore e denominatore dichiarati: **19,4%
+dello schema dei fatti non è alimentato**. Vale per lo schema, **non** per «le
+capacità del prodotto» — comandi, tier e superfici restano non enumerati.
+
 ## ⑤ Cosa NON prova
 
-⚠️ **Sei non sono un censimento**: non ho enumerato le capacità del prodotto e
-misurato quante siano ferme. Sono sei incontrate lavorando su altro, in una
-notte — il denominatore **non c'è**, e senza denominatore «sei» non è un tasso.
+⚠️ **Sei capacità non sono un censimento**: le ho incontrate lavorando su altro.
+Il denominatore c'è **solo per lo schema** (§④-bis, 6/31); per comandi, tier e
+superfici **non l'ho fatto**, e senza quello «sei» non è un tasso.
 ⚠️ **Il corpus è il nostro**: otto istanze su una macchina, con un flusso di
 lavoro particolare (scriviamo misure, non conversazioni). Un utente diverso ne
 alimenterebbe altre. **Ma è l'unico corpus vero che abbiamo**, ed è quello su cui
