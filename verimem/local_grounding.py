@@ -100,6 +100,24 @@ def _resolve_model_dir(model_dir: str | Path | None) -> Path:
     return DEFAULT_MODEL_DIR
 
 
+def _download_disattivato() -> bool:
+    """True se l'operatore ha chiesto di non toccare la rete.
+
+    Legge la lista CANONICA (`airgap._OFFLINE_FLAGS`: VERIMEM_OFFLINE, HIPPO_OFFLINE,
+    ENGRAM_OFFLINE, HF_HUB_OFFLINE, TRANSFORMERS_OFFLINE) invece di ricopiarne una
+    propria — due liste divergono, e `doctor` promette gia' «*for air-gapped deploys set
+    VERIMEM_OFFLINE=1*». Una cura che scaricasse ignorandola romperebbe quella promessa.
+    L'import e' locale per non creare un ciclo fra i moduli.
+    """
+    import os as _os
+    try:
+        from .airgap import _OFFLINE_FLAGS as _flags
+    except Exception:            # pragma: no cover — se airgap non e' importabile,
+        _flags = ("VERIMEM_OFFLINE",)   # si resta prudenti invece di scaricare
+    return any(str(_os.environ.get(f, "")).strip().lower() in ("1", "true", "yes", "on")
+               for f in _flags)
+
+
 def make_finetuned_scorer(model_dir: str | Path, *, max_length: int = 512,
                           batch_size: int = 32) -> Scorer:
     """Production scorer over the saved binary-head CE: sigmoid(logit)*100 per
@@ -187,10 +205,57 @@ class LocalGroundingJudge:
                     from .flow_events import emit_flow as _emit_flow
                     _emit_flow("flow.warmup", what="moat-judge", phase="start")
                     t0 = time.time()
+                    _gia_procurato = False      # un solo tentativo di download
                     try:
                         self._scorer = make_finetuned_scorer(
                             self.model_dir, max_length=self.max_length)
                     except Exception as exc:
+                        # ASSENTE ≠ ROTTO — e la distinzione e' tutta la cura.
+                        #
+                        # Misurato da utente il 02/09 sul pacchetto 0.7.1 servito da
+                        # PyPI, HOME vergine: `verimem remember <falso> --source <fonte
+                        # che lo smentisce>` stampa `admitted` con EXIT=0 e `layers=[]`.
+                        # Il claim falso entra perche' il modello non c'e' e nessuno lo
+                        # procura: `ensure_gate_model()` era chiamata SOLO da `verimem
+                        # warmup` (`cli.py:594`), che l'utente non sa di dover lanciare.
+                        #
+                        # ⚠️ Perche' NON basta «scarica quando fallisci»: il commento
+                        # qui sotto dice che il fallimento va in cache perche' «un
+                        # modello rotto o assente non deve ripagare il caricamento a
+                        # ogni scrittura». Scaricare anche sopra un modello CORROTTO
+                        # reintrodurrebbe esattamente quel costo. ⇒ Si scarica solo se
+                        # la cartella NON ESISTE, una volta, e poi si ricade nella
+                        # cache di sempre.
+                        #
+                        # Costo misurato (02/09, HOME nuova, una sola esecuzione):
+                        # `ensure_gate_model()` 13,4s per 711,5 MB, contro i 54,1s del
+                        # caricamento che si paga GIA' oggi senza nessuna cura.
+                        if (not _gia_procurato
+                                and not self.model_dir.exists()
+                                and not _download_disattivato()):
+                            _emit_flow("flow.warmup", what="moat-judge",
+                                       phase="fetching", motivo="modello assente")
+                            try:
+                                _preso, _msg = ensure_gate_model(self.model_dir)
+                            except Exception:
+                                _preso, _msg = False, "download fallito"
+                            if _preso:
+                                _gia_procurato = True
+                                try:
+                                    self._scorer = make_finetuned_scorer(
+                                        self.model_dir, max_length=self.max_length)
+                                    self.load_s = round(time.time() - t0, 1)
+                                    _emit_flow("flow.warmup", what="moat-judge",
+                                               phase="ready", procurato=True,
+                                               elapsed_ms=round(
+                                                   (time.time() - t0) * 1000, 1))
+                                    return self._scorer
+                                except Exception:
+                                    # il modello e' stato scaricato e NON si carica
+                                    # lo stesso: si ricade nel percorso di sempre, e
+                                    # l'eccezione originale resta quella che l'utente
+                                    # vede — il download non ha cambiato la diagnosi.
+                                    pass
                         # cache the failure: a broken/absent model must not re-pay
                         # the load attempt on every gated write
                         self._load_failed = True

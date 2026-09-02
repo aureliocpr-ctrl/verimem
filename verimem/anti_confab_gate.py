@@ -1789,6 +1789,13 @@ def _is_historical_completion(proposition: str) -> bool:
     return bool(_HISTORICAL_COMPLETION.search(p)) and bool(_CALENDAR_YEAR.search(p))
 
 
+#: Un solo tentativo di procurarsi il giudice per PROCESSO. Non per scrittura: se il
+#: download fallisce (rete assente, disco pieno) ogni write successiva ripagherebbe
+#: l'attesa, che e' esattamente il costo che la cache del fallimento in
+#: `_ensure_scorer` esiste per evitare.
+_GIUDICE_GIA_CERCATO = False
+
+
 def _advisory_l4_skipped() -> dict[str, str]:
     """L'avviso che finisce nella provenance di un write sourced NON giudicato.
 
@@ -2380,6 +2387,44 @@ def run_validation_gate(
                    or _resolve_backend() == "local"
                    or local_ce_available()
                    or daemon_del_giudice_annunciato())
+
+    # ⚠️ E SE IL GIUDICE MANCA SOLO PERCHE' NESSUNO L'HA MAI SCARICATO?
+    #
+    # Misurato da utente il 02/09 sul pacchetto servito da PyPI, HOME vergine:
+    # `verimem remember <falso> --source <fonte che lo smentisce>` stampa
+    # `admitted` con EXIT=0 e `layers=[]`. Il modello del giudice non c'e' e
+    # `ensure_gate_model()` era chiamata SOLO da `verimem warmup` (`cli.py:594`),
+    # che l'utente non sa di dover lanciare.
+    #
+    # 🔑 E LA CURA VA QUI, non piu' in basso. Il primo innesto l'avevo messo in
+    # `LocalGroundingJudge._ensure_scorer`, con tre test verdi — e la misura
+    # prima/dopo su HOME vergine ha dato `layers=[]` IDENTICO: quel punto **non
+    # viene mai raggiunto** quando il modello manca, perche' la guardia qui sopra
+    # salta l'intero ramo del giudizio. ⇒ Test verdi non bastano: il livello a cui
+    # si misura decide il verdetto.
+    #
+    # La guardia NON si tocca: il commento sopra dice che risparmia 15.453 ms per
+    # write. Le si aggiunge il caso che le manca — «assente ma scaricabile» — una
+    # sola volta per processo, e solo quando una `source` c'e' davvero.
+    if source and _ground_on and not _have_judge:
+        try:
+            from .local_grounding import (
+                _download_disattivato,
+                ensure_gate_model,
+            )
+            from .local_grounding import (
+                local_ce_available as _lca,
+            )
+            if not _download_disattivato() and not _GIUDICE_GIA_CERCATO:
+                globals()["_GIUDICE_GIA_CERCATO"] = True
+                _preso, _ = ensure_gate_model()
+                if _preso:
+                    _have_judge = _lca()
+        except Exception:
+            # non si rompe una scrittura per un download: si resta al caso di
+            # oggi (ammesso con l'advisory L4-skipped), che e' onesto.
+            pass
+
     def _emit_l4_skipped() -> None:
         warnings.append(_advisory_l4_skipped())
 
