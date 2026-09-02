@@ -21,6 +21,46 @@
 #
 # 2. py/undefined-export on `verimem/__init__.py` (3): PEP 562 lazy
 #    exports via module `__getattr__`; names ARE defined at access time.
+#
+# 3. py/path-injection su `verimem/content_pin.py` (102/109/114): e' l'UNICO
+#    dei tredici alert di questo giro in cui il percorso viene da un input
+#    esterno — un riferimento `file.py:12` scritto DENTRO un fatto. Il
+#    contenimento c'e' gia': `_resolve()` risolve sotto la radice e poi fa
+#    `p.relative_to(root)`, restituendo None se il percorso esce (symlink
+#    inclusi, perche' il check e' DOPO resolve()). CodeQL non riconosce un
+#    sanitizzatore applicato dopo `resolve()`, ed e' la stessa ragione per cui
+#    ide.py ha dovuto mettere le sue guardie PRIMA (punto 1).
+#    MISURATO, non dedotto leggendo:
+#    tests/test_il_riferimento_in_un_fatto_non_esce_dalla_radice.py — 13 test,
+#    13 passed: `..`, `..\`, lettera di unita' Windows, UNC, `~`, `~root`,
+#    percorso assoluto e byte nullo tornano TUTTI None, e un controllo POSITIVO
+#    verifica che un percorso legittimo si apra (senza, un `_resolve` che
+#    dicesse sempre None avrebbe passato l'intero file).
+#
+# 4. py/path-injection su `client.py` (2733, 2814), `flow_events.py` (98),
+#    `gateway.py` (1345), `tier_inventory.py` (65, 143, 147): il percorso NON
+#    viene dall'utente. In tutti e sette deriva da `semantic.db_path` o da
+#    `CONFIG.data_dir`, cioe' dalla nostra configurazione:
+#      - `client._floor_file()` = `Path(str(self.semantic.db_path) + ".floor.json")`
+#      - `flow_events` risolve il percorso solo per calcolarne uno `sha256`:
+#        non apre nulla
+#      - `gateway:1345` passa `Path(mem.semantic.db_path).resolve().parent.parent`
+#      - `tier_inventory` compone `root / nome` con `nome` preso dalla costante
+#        interna `_ESCHE`, e `root` da `data_dir` (default `CONFIG.data_dir`)
+#    Un percorso che l'utente non controlla non e' un'iniezione: e' la nostra
+#    configurazione, e se quella e' ostile il problema e' un altro.
+#
+# 5. py/log-injection su `semantic.py` (2757): la riga logga `self.db_path` in
+#    un avviso di transazione lenta. Stessa provenienza del punto 4 — la
+#    configurazione, non l'utente — e il valore non attraversa mai un input
+#    remoto.
+#
+# ws6, 02/09/2026: i tredici alert del giro «percorsi file e log» sono stati
+# letti UNO PER UNO sul codice. Nessuno e' una cura mancata; dodici hanno il
+# percorso dalla configurazione e uno (content_pin) ha il contenimento gia'
+# scritto e ORA MISURATO. Se un domani qualcuno togliesse il `relative_to`,
+# il test del punto 3 diventa rosso: la dismissione ha un presidio, non e' una
+# promessa.
 
 name: verimem-codeql
 
