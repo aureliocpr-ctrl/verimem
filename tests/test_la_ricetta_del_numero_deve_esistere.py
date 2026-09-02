@@ -28,7 +28,17 @@ from benchmark import repro_all
 from benchmark.repro_all import REGISTRY, cmd_verify, command_module
 
 
-@pytest.mark.xfail(strict=True, reason="benchmark/lme_retrieval_bench.py non esiste nel repo: il numero di README:22 e' pubblicato e non rigenerabile. OWNER: chiunque ripristini il banco (@ws5 ha indicato longmemeval_runner.py, non verificato). APERTO dal 2026-08-25 (ws7). Diventa XPASS(strict) da se' quando il banco torna, e allora questa riga va TOLTA: e' il lavoro per cui e' qui.")
+# 🟢 XFAIL TOLTO il 02/09 da ws7, che l'aveva aperto il 25/08. Diceva: «diventa
+# XPASS(strict) da se' quando il banco torna, e allora questa riga va TOLTA».
+# E' successo, ma NON perche' il banco sia tornato: `benchmark/lme_retrieval_bench.py`
+# non esiste tuttora. Il difetto era un altro e la cura e' in `LANT-21`: la
+# ricetta invocava un modulo MAI ESISTITO, mentre il banco c'era e si chiamava
+# `longmemeval_runner.py`. Corretto il nome nel registro, `repro_all --verify`
+# fa 8/8 con EXIT=0 e questo presidio passa da solo.
+# ⚠️ Verificato prima di togliere: il file NON c'e' (ls fallisce) e il registro
+# non lo cita piu' come ricetta — quindi il marcatore non stava piu' presidiando
+# niente. Un xfail che sopravvive alla propria causa smette di essere un debito e
+# diventa un rosso permanente.
 def test_ogni_ricetta_del_registro_e_un_modulo_che_esiste() -> None:
     """Il presidio del DIFETTO: rosso finche' una ricetta manca.
 
