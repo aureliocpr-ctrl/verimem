@@ -22740,3 +22740,77 @@ nuovi valori: 0.5 (77 casi) · 0.9 (9) · 0.8 (6) · 0.4 (4) · 0.65 (3)
 📌 **Il merge su main è sospeso da me**, non dal freeze (scaduto alle 21:20): in cima a main c'è `71034ec1`, il merge del ramo di ws5 dichiarato come incidente da ws8 alle 21:20 con «nessuna riparazione unilaterale». Un mio commit sopra complicherebbe un revert. Ramo pronto: `ws6/m7-confidenza-ereditata`, `43b2abf2`.
 
 **Firme su questa cella**: ws6.
+
+---
+
+## 2026-09-02 22:39 — ws1 · ⛔✅ **RIGA ② DEL PIANO: l'avviso NON si accende a `0,839`, e a impedirlo è una misura fatta dentro la suite. Su un altro corpus le risposte VERE stanno a `0,7715` e `0,603` — sotto la soglia.** In `main`: `95c1bbf2`
+
+**Livello** modifica del prodotto **eseguita, misurata e pushata su `main`**, worktree
+basato su `main` (`ws1/avviso-ricalibrato`) · **Perimetro** `client.py` + 5 test nuovi;
+regressione sui 10 file che toccano `sotto_il_pavimento` · **Istante** 2026-09-02
+22:25–22:39 · **Regime** `claim inferenza/slot cda7ec6fee69`, fermo-carico revocato ·
+**Autorità**: piano di record di Aurelio 22:20, riga ② via lead-audit · **0.7.6**.
+
+### 🔁 Prima: la cosa da fare risultava già fatta — **quarta volta stanotte**
+
+```
+sotto_il_pavimento in verimem/client.py       7 occorrenze   <- l'avviso ESISTE
+sotto_il_pavimento in verimem/mcp_server.py   8   (riga 405: emissione vera)
+sotto_il_pavimento in verimem/cli.py          0              <- IL BUCO E' QUI
+```
+⇒ il piano chiedeva l'avviso «su `search` e sulla porta MCP»: **ci sono entrambi, ed è già
+acceso nel default.** ⇒ **non andava implementato, andava ricalibrato.** 📌 **Il buco vero è
+la CLI**, che nessuno ha chiesto e che è la porta che si usa a mano.
+
+### ⛔ La misura che ha IMPEDITO l'accensione, e viene dalla suite del prodotto
+
+Accendere `0,839` come default ha rotto **6 controlli**, poi **4** dopo la prima cura. Il
+messaggio di uno:
+```
+«chi e' il responsabile della qualita'» segnalata come sotto il pavimento,
+ma la risposta c'è (score 0.7715)          pavimento 0.839  score_migliore 0.7715
+«quanto sono gli interessi di mora»                          score_migliore 0.603
+```
+⇒ **su quel corpus le risposte VERE valgono `0,60`-`0,77`; sul corpus vivo valgono
+`0,858`-`0,90`.** ⇒ **i punteggi non vivono sulla stessa scala fra corpora diversi, e un
+numero fisso non è trasferibile.** ⚠️ **Non è una previsione: è il limite che avevo
+dichiarato alle 21:15 («tarato su QUEL corpus»), misurato al primo tentativo di accensione,
+su un secondo corpus che non ho scelto io.**
+
+### Cosa è entrato in `main`
+
+| | |
+|---|---|
+| `_pavimento_avviso(pav_calibrato)` | senza variabile restituisce **il calibrato** ⇒ comportamento **identico** a prima |
+| `ENGRAM_AVVISO_MIN_RELEVANCE` | l'opt-in per chi ha **rimisurato sul suo corpus** |
+| `_AVVISO_FLOOR_MISURATO = 0.839` | il numero, **documentato coi tre risultati e col suo limite** |
+| **NON toccato** | `_auto_relevance_floor` — 10 chiamate in 6 file |
+
+**5 test nuovi, di cui TRE sono controlli**: il taglio resta sulla soglia di chi lo chiede ·
+**senza variabile nulla cambia** · su un negozio non calibrato l'avviso non compare.
+⚠️ **Il secondo di questi tre non c'era nella prima stesura, ed è quello che ha smascherato
+la cura sbagliata**: senza, avrei consegnato un default che segnala risposte giuste.
+
+### ⚖️ Il numero che resta, e va in vetrina con ENTRAMBE le righe
+
+```
+soglia 0,8805 (oggi)   VERE marcate 47/80 (58,8%)   LONTANE 10/10   VICINE 17/17
+soglia 0,839           VERE marcate  3/80 ( 3,8%)   LONTANE 10/10   VICINE  3/17
+```
+**Oggi l'avviso si accende su sei risposte buone su dieci: non informa.** A `0,839`
+informa, **ma copre meno di un quinto delle domande in tema senza risposta.** ⇒ **si
+scambia copertura con precisione**, e il pavimento **adattivo per corpus** — non un numero
+— è la cura vera *(0.8.0, come già collocato nel piano)*.
+
+### Cosa NON prova
+
+**`63 passed EXIT=0` è sui file che toccano l'avviso e su quelli di G10: NON è la suite
+intera** — una rottura altrove non la vedrei. **`origin/main` era avanzato di 8 commit**:
+ho fatto **merge** *(mai rebase)* e **ri-eseguito i test dopo il merge**, ma solo quelli.
+**Il push su `main` è avvenuto a lavoro verde su quel perimetro, non su tutto.** **La
+misura dei `0,7715`/`0,603` viene da un banco scritto da altri**, il che la rende più forte
+del mio, non meno — ma resta un secondo corpus, non una popolazione.
+
+**Ramo**: `ws1/avviso-ricalibrato` · **in `main`**: `95c1bbf2` *(G10 `3dad8bf4` + avviso
+`7ccf1e0c`)*.
+**Io misuro, non curo** — e quando la misura dice di non accendere, non accendo.

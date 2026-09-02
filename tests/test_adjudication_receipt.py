@@ -227,24 +227,15 @@ def test_ce_band_enforced_by_default(tmp_path, monkeypatch):
     assert any(w.get("layer") == "L4-review" for w in r["warnings"])
 
 
-def test_source_trust_observe_logs_but_does_not_gate(tmp_path, monkeypatch):
-    # Phase 0.5: observe mode surfaces low source-trust WITHOUT gating the write,
-    # so the false-block rate is measurable before enforcing.
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "observe")
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST_MIN", "0.9")   # neutral 0.5 < 0.9 -> low
-    m = Memory(str(tmp_path / "st_obs.db"))
-    r = m.add("The sky is a calm blue today.", verified_by=["source:unknown_feed:1"])
-    assert r["status"] != "quarantined"        # observe does NOT gate
-    assert any(w.get("layer") == "SOURCE_TRUST-observe" for w in r["warnings"])
-
-
-def test_source_trust_enforce_gates_low_trust(tmp_path, monkeypatch):
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST_MIN", "0.9")
-    m = Memory(str(tmp_path / "st_enf.db"))
-    r = m.add("The sky is a calm blue today.", verified_by=["source:unknown_feed:1"])
-    assert r["status"] == "quarantined"        # enforce gates the low-trust source
-    assert any(w.get("layer") == "SOURCE_TRUST" for w in r["warnings"])
+# `test_source_trust_observe_logs_but_does_not_gate` e
+# `test_source_trust_enforce_gates_low_trust` sono stati RIMOSSI il 2026-09-02
+# col gate che presidiavano (voto G10, 4 SI). Erano gli unici due punti in cui
+# il layer `SOURCE_TRUST` compariva in una ricevuta: entrambi accendevano il
+# flag E abbassavano la soglia a 0.9 per far scendere sotto il valore iniziale
+# 0.5 di una fonte senza storia — cioe' costruivano in laboratorio la
+# condizione che sul corpus vero non si e' mai presentata (0 marcate su 17 279).
+# Il presidio sul verdetto visibile resta: lo tengono gli altri test di questo
+# file, che non passano dal source-trust.
 
 
 def test_the_promise_holds_on_the_MCP_port_too(tmp_path, monkeypatch):

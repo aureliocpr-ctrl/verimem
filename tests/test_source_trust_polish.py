@@ -25,19 +25,11 @@ def _fresh(monkeypatch):
     source_trust.reset_book_cache()
 
 
-def test_explain_exposes_source_trust_when_enabled(tmp_path, monkeypatch):
-    _fresh(monkeypatch)
-    monkeypatch.setenv("ENGRAM_SOURCE_TRUST", "1")
-    mem = Memory(tmp_path / "m.db")
-    mem.source_trust_observe(confirmation=["acme-registry", "other-src"])
-    mem.add("The office code of building_7 is kk11aa.", topic="t",
-            verified_by=["source-doc:acme-registry:r1"])
-    report = mem.explain("What is the office code of building_7?", k=3)
-    entries = report.get("facts") or []
-    assert entries, "the fact must be retrievable"
-    st = entries[0].get("source_trust")
-    assert st and st["source"] == "acme-registry"
-    assert st["trust"] > 0.5
+# `test_explain_exposes_source_trust_when_enabled` e' stato RIMOSSO il
+# 2026-09-02 insieme al campo `source_trust` del dossier (voto G10). Quel campo
+# usciva solo con `ENGRAM_SOURCE_TRUST=1` ed era letto da questo test e da
+# nessun altro: zero volte in `cli.py` e in `mcp_server.py`, cioe' nessuna porta
+# lo mostrava a un utente.
 
 
 def test_explain_no_source_trust_when_disabled(tmp_path, monkeypatch):

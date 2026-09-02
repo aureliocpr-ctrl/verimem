@@ -65,6 +65,8 @@ import tempfile
 
 import pytest
 
+from tests._esito import esito
+
 # Il figlio costruisce il regime PRIMA di importare il prodotto, scrive un
 # self-claim e riporta cosa ha visto. Stampa una riga sola, in JSON, così il
 # padre non deve indovinare niente dall'output.
@@ -120,7 +122,13 @@ def _prima_scrittura_senza_delega() -> dict:
     proc = subprocess.run([sys.executable, "-c", _FIGLIO], capture_output=True,
                           text=True, env=env, errors="replace", timeout=900,
                           cwd=tempfile.gettempdir())
-    for riga in (proc.stdout or "").splitlines():
+    # ⚠️ `esito()` dichiara PRIMA com'e' finito il processo: se il figlio muore,
+    # il messaggio dice «PROCESSO-MORTO exit=N» invece di «manca la stringa
+    # ESITO», che e' il difetto misurato il 14/08 e curato una volta sola in
+    # `tests/_esito.py`. Prima qui si leggeva `proc.stdout` senza guardare il
+    # codice d'uscita: un figlio ucciso lasciava un output tronco e il banco
+    # accusava se stesso.
+    for riga in esito(proc).splitlines():
         if riga.startswith("ESITO "):
             return json.loads(riga[6:])
     raise AssertionError(

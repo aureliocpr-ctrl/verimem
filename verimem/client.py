@@ -92,6 +92,59 @@ def _fact_trust_line(h: dict[str, Any]) -> str:
 #: WRITE_DEFAULT_THRESHOLD is 70 and unrelated). Recalibrate on the bench.
 _ANSWER_VERIFY_THRESHOLD = 40.0
 
+#: Pavimento dell'AVVISO `sotto_il_pavimento` — SEPARATO da quello del TAGLIO.
+#: Misurato il 2026-09-02 sul corpus vivo (17 279 fatti): 80 query vere, 17
+#: domande in tema senza risposta, 10 fuori tema.
+#:
+#:     soglia 0,8805 (il calibrato)  VERE marcate 47/80 (58,8%)  LONTANE 10/10  VICINE 17/17
+#:     soglia 0,839  (questa)        VERE marcate  3/80 ( 3,8%)  LONTANE 10/10  VICINE  3/17
+#:
+#: Col calibrato l'avviso si accendeva su SEI RISPOSTE BUONE SU DIECI: un
+#: segnale che esce quasi sempre non informa. ⚠️ NON E' GRATIS: la copertura
+#: sulle domande vicine scende da 17/17 a 3/17 — si scambia copertura con
+#: precisione, e i due numeri vanno detti insieme.
+#: ⚠️ E' UN NUMERO FISSO E NON `auto` di proposito: tre stime del pavimento
+#: calibrato sullo stesso store hanno dato 0,8797 · 0,8805 · 0,8853, cioe'
+#: un'escursione di 5,6 millesimi contro una finestra utile di 13 (0,833-0,845).
+#: Un parametro che oscilla per meta' della finestra che deve centrare non puo'
+#: essere la soglia di un avviso.
+#: ⛔⛔ E NON E' IL DEFAULT, PERCHE' LA MISURA DICE DI NO. Provato ad accenderlo
+#: il 2026-09-02: ha rotto quattro controlli di
+#: `test_il_recall_rispondeva_anche_quando_non_sapeva.py`, dove domande CON
+#: risposta corretta hanno `score_migliore` `0,7715` e `0,603` — molto sotto
+#: `0,839`. Su quel corpus la soglia segnalerebbe come «probabilmente non in
+#: memoria» risposte che ci sono e sono giuste. ⇒ **le due popolazioni di
+#: punteggi non vivono sulla stessa scala fra corpora diversi**, e un numero
+#: fisso non e' trasferibile: sul corpus vivo le vere stanno a 0,858-0,90, su
+#: quel banco a 0,60-0,77. Il pavimento ADATTIVO per corpus e' lavoro 0.8.0;
+#: fino ad allora questo valore e' un OPT-IN documentato, non un default.
+#: Chi ha il corpus giusto lo accende con `ENGRAM_AVVISO_MIN_RELEVANCE=0.839`
+#: dopo aver rimisurato con `scripts/banco_avviso_marcatura.py`.
+_AVVISO_FLOOR_MISURATO = 0.839
+_AVVISO_FLOOR_VAR = "ENGRAM_AVVISO_MIN_RELEVANCE"
+
+
+def _pavimento_avviso(pav_calibrato: float) -> float:
+    """La soglia che l'AVVISO dichiara quando non c'e' stato un taglio.
+
+    Senza la variabile restituisce il pavimento calibrato, cioe' il
+    comportamento di sempre. Con la variabile impostata usa quel valore.
+
+    ⛔ NON tocca `_auto_relevance_floor`, e il motivo e' un conteggio: quella
+    funzione ha 10 chiamate in 6 file — il taglio di `search`, `explain`, il
+    guardian, quattro punti del server MCP e la mappa dell'ignoranza. Spostarne
+    il valore per curare l'avviso le muoverebbe tutte, ed e' l'incidente del
+    2026-07-30: `max(floor, noise_floor)`, scritto, misurato e RITIRATO perche'
+    aveva mutato la mappa dell'ignoranza.
+    """
+    import os
+
+    grezzo = os.environ.get(_AVVISO_FLOOR_VAR, "").strip()
+    if grezzo:
+        from .env_num import finite_or
+        return max(0.0, finite_or(grezzo, _AVVISO_FLOOR_MISURATO))
+    return float(pav_calibrato)
+
 
 #: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
 #: conservativi). Oltre questa soglia l'embedder vede solo la testa del fatto.
@@ -626,39 +679,22 @@ class Memory:
                           "not run this check.",
             })
         action = gate.action
-        # Source-trust consultation (task #17, behind ENGRAM_SOURCE_TRUST=1,
-        # default OFF): a source whose persisted two-channel trust sits below
-        # the floor gets QUARANTINED (never rejected — quarantine is
-        # rehabilitable, and the consistency channel must be able to fish the
-        # source back out; TRUST_CORE.md guard-rail).
-        from . import source_trust as _st
-        _st_observe = _st.observe()
-        if (_st.enabled() or _st_observe) and action == "persist":
-            _src = _st.canonical_source(verified_by)
-            _t = self._source_trust_book().trust(_src)
-            if _t < _st.threshold():
-                if _st_observe:
-                    # observe/log-only: surface the low trust but DO NOT gate, so
-                    # the false-block rate is measurable on real tenants first.
-                    warnings.append({
-                        "layer": "SOURCE_TRUST-observe",
-                        "matched_text": _src,
-                        "advice": (
-                            f"source '{_src}' trust {_t:.2f} is below "
-                            f"{_st.threshold():.2f} (observe mode: logged, NOT "
-                            "downgraded — set ENGRAM_SOURCE_TRUST=1 to enforce)"),
-                    })
-                else:
-                    action = "downgrade"
-                    warnings.append({
-                        "layer": "SOURCE_TRUST",
-                        "matched_text": _src,
-                        "advice": (
-                            f"source '{_src}' trust {_t:.2f} is below "
-                            f"{_st.threshold():.2f} — stored quarantined pending "
-                            "corroboration (confirmations by independent sources "
-                            "rehabilitate it)"),
-                    })
+        # IL GATE SU SOURCE-TRUST E' STATO RIMOSSO IL 2026-09-02 (voto G10, 4 SI
+        # su 3 richiesti). Non perche' il meccanismo fosse sbagliato: perche' non
+        # ha mai avuto materiale su cui lavorare. Misurato sul corpus vivo:
+        # 0 scritture marcate su 17 279, 156 sorgenti tutte al valore iniziale
+        # 0.500, tabella `source_trust` con 0 righe (l'omonima `trust_ledger` ne
+        # ha 10 880 — due registri, nomi simili, e solo quello delle FONTI e'
+        # vuoto). La causa sta un piano piu' sopra: `source_trust_observe`,
+        # l'API pubblica che alimenta il libro, e' chiamata da 4 banchi e 5 test
+        # e da ZERO porte del prodotto (0 in `cli.py`, 0 in `mcp_server.py`).
+        # Finche' nessuna porta la chiama il registro resta vuoto, e questo gate
+        # calcola sempre lo stesso risultato: nessuna fonte sotto soglia.
+        # ⚠️ `canonical_source`, `SourceTrustBook` e il resto di
+        # `source_trust.py` RESTANO: sono usati per altro (3 importatori
+        # prendono `canonical_source`, 1 prende `get_book`). Se un giorno il
+        # registro viene alimentato, questo gate si riscrive in ~25 righe con la
+        # misura in mano.
         _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
@@ -1370,8 +1406,24 @@ class Memory:
             _pav = self._auto_relevance_floor()
         except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
             return Risultati(out, trattenuti=self._trattenuti_safe(query))
+        # ⚠️ QUANDO NON SI E' TAGLIATO, LA SOGLIA DELL'AVVISO E' LA SUA, non il
+        # pavimento calibrato: `_pavimento_avviso()` (misurato, fisso, con la
+        # sua variabile). Il ramo del TAGLIO resta invariato — `min_relevance`
+        # e' la soglia di chi l'ha chiesta e va dichiarata com'e'.
+        # ⚠️⚠️ `if _pav` RESTA, ed e' stato MISURATO che serve. La prima stesura
+        # metteva `_pavimento_avviso()` sempre, e ha rotto SEI test — tutti
+        # controlli, cioe' i test che presidiano il caso in cui l'avviso NON
+        # deve uscire (`..._con_risultati_SOPRA_soglia_nessun_avviso`,
+        # `..._un_vuoto_che_NON_e_un_taglio...`, e quattro parametrizzazioni di
+        # `..._una_domanda_con_risposta_non_viene_segnalata`). Il motivo: su un
+        # negozio piccolo `_auto_relevance_floor()` vale `0.0` perche' non ha
+        # materiale per calibrarsi, e i punteggi vivono su un'altra scala —
+        # confrontarli con `0.839` accende l'avviso su TUTTO. E' il limite
+        # dichiarato accanto alla costante («tarato su QUEL corpus»), che si e'
+        # presentato al primo giro. ⇒ dove il negozio si e' calibrato si usa la
+        # soglia misurata; dove non si e' calibrato, nulla cambia.
         _soglia = (float(min_relevance) if (_tagliati and min_relevance)
-                   else (float(_pav) if _pav else 0.0))
+                   else (_pavimento_avviso(_pav) if _pav else 0.0))
         _tutto_tagliato = not out and _tagliati > 0
         _nota = (
             ("la soglia di rilevanza calibrata su questo corpus ha TAGLIATO "
@@ -2098,15 +2150,12 @@ class Memory:
                      or isinstance(f.get("grounding_score"), bool))
         report["ungrounded_facts"] = _senza
         report["grounding_checked"] = bool(_fatti) and _senza == 0
-        # task #20a: dossier transparency — with source-trust on, every fact
-        # shows its SOURCE's two-channel trust, not just its own status.
-        from . import source_trust as _st
-        if _st.enabled():
-            book = self._source_trust_book()
-            for e in report.get("facts") or []:
-                src = _st.canonical_source(e.get("verified_by"))
-                e["source_trust"] = {"source": src,
-                                     "trust": round(book.trust(src), 4)}
+        # Il campo `source_trust` del dossier (task #20a) e' stato tolto insieme
+        # al gate il 2026-09-02: usciva solo con `ENGRAM_SOURCE_TRUST=1`, e con
+        # il registro delle fonti vuoto avrebbe riportato `0.500` per ognuna.
+        # Misurato prima di toglierlo: scritto in un punto solo, letto da UN
+        # test, e ZERO volte in `cli.py` e `mcp_server.py` — nessuna porta lo
+        # mostrava a nessuno.
         if report.get("abstained"):
             # honest-"I don't know" counter — the read-path half of the odometer
             self._record_trust("abstained")

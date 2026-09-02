@@ -57,7 +57,21 @@ Base: **`main`** (non il ramo di luglio: le capacità da accendere vivono in `ma
   VitaminC, WiCE), con veri persi, falsi fermati, falsità servita e **criterio cieco** per riga;
   il confronto con ConsistencyGate se i suoi banchi esistono, altrimenti il reperto.
 - Repro-pack: ogni numero pubblico ha il comando che lo rifà da un ambiente vergine.
-- Registry MCP, marketplace dei plugin, candidatura al leaderboard indipendente (20/09).
+- I file per registry MCP e marketplace si PREPARANO (server.json, riga `mcp-name`, plugin
+  validato) ma non si pubblicano: vedi «Apertura al mondo».
+
+### Apertura al mondo — «solo e solo quando siamo pronti a dire: tutto funziona davvero»
+Direttiva di Aurelio, 02/09 22:40. Nessuna azione verso l'esterno — registry MCP,
+marketplace dei plugin, post, candidature a leaderboard, contatti — prima che il prodotto
+superi, dichiarato da un'istanza diversa dall'autore e riprodotto da un terzo:
+1. i tre no («non dice cose che non fa» · «non siamo bugiardi» · «non è banale») tutti chiusi;
+2. zero bug noti aperti e zero malfunzionamenti misurati sulle tre porte (CLI, MCP, SDK);
+3. installazione da utente vero verde su due sistemi, dal pacchetto pubblicato;
+4. ogni numero pubblico riproducibile con il comando, dal pacchetto pubblicato, in ambiente
+   vergine.
+Il leaderboard indipendente del 20/09 non è una scadenza: se a quella data i quattro punti
+non reggono, si aspetta il ciclo successivo. Aprirsi prima costerebbe l'unica cosa che i
+forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
 
 ### 0.9.0 — «finale come feature»
 - Nessuna feature nuova. Zero bug noti aperti, zero malfunzionamenti misurati, zero
