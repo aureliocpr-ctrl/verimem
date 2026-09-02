@@ -22616,3 +22616,70 @@ store, una macchina, `k=10`.**
 **Banco**: `scripts/banco_avviso_marcatura.py` *(criterio, predizione e controllo che ferma
 nel docstring, scritti prima)*.
 **Io misuro, non curo.**
+
+---
+
+## 2026-09-02 21:29 — ws1 · 📐 **RICALIBRAZIONE PREPARATA E NON ESEGUITA (fermo-carico attivo) — e il valore NON si tocca alla fonte: `_auto_relevance_floor` ha `13` chiamanti in `6` file, fra cui la mappa dell'ignoranza.** Più una correzione: le vere marcate sono il `3,8%`, non il `5,8%`
+
+**Livello** lettura dei sorgenti, **nessuna esecuzione, nessun file del prodotto
+modificato** · **Perimetro** `verimem/client.py`, `relevance_floor.py`, i chiamanti del
+pavimento · **Istante** 2026-09-02 21:26–21:29 · **Regime** ⛔ **fermo-carico di
+@lead-audit in vigore**: niente pytest, niente embedder, niente banchi · **Autorità**:
+richiesta di @lead-audit *«prepara ora, senza eseguire»* · **0.7.6**.
+
+### 🔁 Correzione al numero che mi è stato riportato
+
+@lead-audit ha scritto *«vere marcate ~5,8%»*. **È `3,8%`** *(`3/80`)*. Il **`5,8%`**
+(`4/69`) era la **curva del TAGLIO** delle 20:49, che guarda **lo score del fatto atteso**;
+l'avviso guarda **`_best_prima`**, il migliore dei risultati *(`client.py:1266`)*.
+⇒ **due grandezze diverse, due denominatori diversi, e nessuno dei due si converte
+nell'altro.** Il numero da mettere nel test è **`3/80`**.
+
+### ⛔ Il reperto che decide la FORMA della modifica
+
+```
+_auto_relevance_floor  ->  13 chiamanti in 6 file
+   cli.py:1344 · client.py:1141 (taglio) · client.py:1370 (avviso) · client.py:2018 (explain)
+   guardian.py:83 · mcp_server.py:261,271,8264,13942 · relevance_floor.py:265,268
+```
+⇒ **ricalibrare alla fonte muoverebbe taglio, `explain`, guardian, quattro punti del
+server MCP e la mappa dell'ignoranza.** È **l'incidente del 2026-07-30** — `max(floor,
+noise_floor)`, scritto, misurato e **ritirato** proprio per aver mutato la mappa. ⇒ **la
+ricalibrazione dev'essere LOCALE all'avviso**: una costante propria, non un cambio della
+funzione condivisa.
+
+### La modifica pronta
+
+Costante accanto a `_ANSWER_VERIFY_THRESHOLD`, con la taratura **dichiarata nel commento**
+*(corpus di 17 279 fatti, i tre numeri, e l'avvertenza che altrove va rimisurata)*, un
+`_pavimento_avviso()` che legge `ENGRAM_AVVISO_MIN_RELEVANCE`, e **una riga** cambiata:
+```python
+_soglia = (float(min_relevance) if (_tagliati and min_relevance)
+           else _pavimento_avviso())          # era: float(_pav) if _pav else 0.0
+```
+
+### I tre test — e il terzo è quello che conta
+
+1. l'avviso dichiara `0.839` e non il calibrato · 2. `ENGRAM_AVVISO_MIN_RELEVANCE`
+sovrascrive · 3. ⚠️ **il TAGLIO resta sul pavimento calibrato**: senza questo terzo, la
+modifica potrebbe spostare anche il taglio **e i primi due passerebbero lo stesso.**
+⚠️ **E una trappola del RED**: su uno store di test `_auto_relevance_floor()` vale `0.0`
+*(misurato il 02/09)*, quindi il rosso sarà «`0.0` invece di `0.839`», **non** «`0.8805`
+invece di `0.839`». **Il test è rosso prima e verde dopo, ma per un valore che non è
+quello di produzione**: va scritto nel docstring o il prossimo lettore crede che il banco
+riproduca il corpus vero.
+
+### Cosa NON prova
+
+**Non ho eseguito NIENTE**: nessun RED, nessun GREEN, **nessun file del prodotto
+toccato**, e **il test non è committato** — un test che non ho potuto far girare non è un
+test verde, e con la CI condivisa fra otto istanze non entra codice non eseguito. **I tre
+numeri attesi non sono previsioni**: sono le misure delle 21:15 sullo stesso corpus e
+sulla stessa soglia; se dopo la modifica differissero, il difetto è nella modifica.
+**L'ipotesi che togliere `_auto_relevance_floor()` da quel ramo faccia risparmiare tempo
+NON è misurata** — la funzione ha un parametro `rinfresca` ed è probabilmente memoizzata:
+**non va dichiarata come beneficio.**
+
+**Preparazione completa**: `scratchpad/preparazione_ricalibrazione.md` *(patch e test per
+esteso)*.
+**Io misuro, non curo.**
