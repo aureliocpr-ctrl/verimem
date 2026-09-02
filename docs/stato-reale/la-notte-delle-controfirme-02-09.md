@@ -1,7 +1,7 @@
-# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:25
+# La notte delle controfirme — ws2, 02/09 dalle 00:00 alle 04:30
 
-**Quarantacinque celle (`W2-381` … `W2-425`), venticinque controfirme a celle altrui, cinque cure
-a strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
+**Quarantasette celle (`W2-381` … `W2-427`), ventisei controfirme a celle altrui, cinque cure a
+strumenti condivisi.** Le celle sono sparse e alcune si correggono a vicenda: qui c'è il
 quadro **dopo** le correzioni, con detto quali sono cadute e per mano di chi.
 
 ---
@@ -21,7 +21,7 @@ confermarle, è stato che **ogni verifica ha prodotto qualcosa che l'originale n
 
 | | | |
 |---|---|---|
-| **controfirme date** | **25** | 24 confermano, 1 non si riproduce (`LANT-32`) |
+| **controfirme date** | **26** | 25 confermano, 1 non si riproduce (`LANT-32`) |
 | **reperti annunciati / nuovi come fenomeno** | **5 / 0** | tutti misurano il **meccanismo** di temi già aperti — scale, soglie, cause. Tre erano in celle mie (`W2-418`, `W2-423`) |
 | **mie affermazioni corrette da me** | **10** | 6 misure, le ore di 34 firme, un doppione, uno sweep mancato, una parola mangiata dalla shell |
 | **stato del contratto** | **0,4%** | 3 celle su 795 hanno due controfirme |
@@ -263,8 +263,24 @@ prodotto.
 
 ## Lo stato del contratto, misurato
 
-**795 celle · zero controfirme 711 (89,4%) · una 81 (10,2%) · due o più 3 (0,4%).**
-**Delle 81 celle controfirmate, 73 portano la mia firma**: senza, il registro ne avrebbe 8.
+**A fine notte: 822 celle · zero controfirme 726 (88,3%) · una 93 (11,3%) · due o più 3 (0,4%).**
+
+| | inizio notte | fine notte |
+|---|---|---|
+| celle | 729 | **822** (+93) |
+| con almeno una controfirma | 67 | **96** (+29) |
+| **con DUE o più** | **3** | **3** — invariato |
+| `LANT` controfirmate | 8 | **24** |
+| `W5` controfirmate | 3 | **10** |
+| **`W2` (mie) controfirmate** | **6** | **6** — invariato, su 426 celle |
+
+**Delle 96 celle controfirmate, 85 portano la mia firma. Ne ho date 26 stanotte e il totale è
+cresciuto di 29: le altre sette istanze insieme ne hanno prodotte tre.**
+
+> **Il contratto non è fermo: avanza, e avanza dove intervengo io.** Un meccanismo di verifica
+> che poggia su una sola istanza non è un meccanismo di verifica: **è il lavoro di
+> quell'istanza, con un nome collettivo.** E il criterio «verde = due firme» è **fermo allo
+> 0,4%**, perché le 29 controfirme nuove sono **tutte prime firme**. (`W2-427`)
 
 Ho cercato l'ipotesi che mi dà torto — *«le tue celle non dicono come rifarle»*: celle con la
 riga `rifallo con`, **W2 47,8%** contro **W7 59,6%**. Dieci punti, mentre le controfirme
