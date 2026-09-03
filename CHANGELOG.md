@@ -116,6 +116,48 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   public API that feeds the ledger is called by **no door of the product**. The
   module is kept; the gate is not.
 
+### Measured — numbers that ship with this release, and what they cost
+
+- **How much of what we serve is false, on two public datasets — 15.9% and
+  35.7%.** Not one number: one **per dataset**, with the blind-criterion
+  baseline beside each, because a single figure from a single board is a
+  selected figure.
+
+  | | of what is **served**, false | blind baseline | claims | served |
+  |---|---|---|---|---|
+  | TruthfulQA heldout | **15.9%** (40/252) | 51.3 | 600 | 252 = 42% |
+  | HaluEval QA heldout | **35.7%** (90/252) | 70.8 | 400 | 252 = 63% |
+
+  **Read the baseline or don't read the rate**: 51.3 is a coin — that result is
+  the gate's; 70.8 means a real share of any score on that board is reachable by
+  *shape* alone. So 35.7 against 15.9 is **not** "twice as bad on HaluEval": the
+  two boards are not equally hard. And the equal denominator is a coincidence
+  (162+90 = 212+40), not a construction — the starting populations differ, so we
+  serve 42% of one board and 63% of the other, and **serving more is the other
+  side of holding back less**. Both redo-able: `scripts/repro_c10.sh <dataset>`.
+
+- **The judge's pool: four workers, and the sub-second target is met** (`fade02f0`,
+  `2c8f9973`). Measured, not designed — 720 judgements per experiment, 3
+  repetitions with the arms rotated, 80/80 in every configuration, on a machine
+  verified quiet before starting.
+
+  | workers | p95 median | range | judgements/s |
+  |---|---|---|---|
+  | 1 | 1.932 s | 0.070 s | 4.1–5.2 |
+  | 2 | 1.436 s | 0.413 s | 6.3–7.2 |
+  | **4** | **0.801 s** | 0.089 s | 10.3–11.2 |
+  | 8 | 0.820 s | 0.109 s | 11.7–13.4 |
+
+  **Two predictions were falsified by their own author**, and that is why the
+  number is worth reading: «4 stays worse than 2» — it wins all three
+  repetitions; and «p95 will not go under 1 s even on a quiet machine» — 0.801 s.
+  Four and eight are **indistinguishable** (0.026 s between medians against
+  ranges of 0.120 and 0.109): past four there is nothing to gain. And it is
+  **one copy of the model, +33 MB** — the variant with N judge instances
+  (~640 MB each) is not needed.
+  ⚠️ **This is a measurement, not a feature of this release**: it is the ground
+  the 0.8.0 "always-warm judge" stands on. Nothing here switches a pool on.
+
 ### Packaging / distribution
 
 - `server.json` (MCP registry, schema 2025-12-11) and
