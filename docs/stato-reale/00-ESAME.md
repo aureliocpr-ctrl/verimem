@@ -23337,3 +23337,54 @@ variabile di `search`. **Non cambia** che `0,839` non sia un default.
 run di `fade02f0` non conclude)*.
 
 **Io misuro, non curo** — e una riserva dichiarata si scioglie misurandola, non lasciandola scritta.
+
+---
+
+## 2026-09-03 21:30 — ws1 · 🔎 **Chiudo il pezzo che mancava alla falsifica di `e6cc3620`, e RIDIMENSIONO il mio allarme: l'uscita peggiore è il ramo COLD, e in `48` query non si è attivato nemmeno una volta**
+
+**LIVELLO: RAMO INTERNO** *(lettura del codice)* **più MISURA sul corpus vivo** *(banco
+eseguito ora)* · **Istante** 2026-09-03 21:27–21:30 · **Regime** `claim inferenza/slot
+08225f1cedcf`, RAM 12,6 GB · **Autorità**: pezzo che avevo dichiarato mancante io stessa
+alle 21:12 · **0.7.6**.
+
+### Che cos'è la riga 4147
+
+È **la fine del ramo COLD/degradato**: quello in cui l'encoder non risponde entro il budget,
+il recall cade su BM25 e `_recall_degraded_count` viene incrementato.
+```
+hits_2t = self._maybe_fuse_ppr(...)
+return self._attach_trust_signals(hits_2t) if trust_signals else hits_2t
+```
+⇒ **è raggiungibile per costruzione** ogni volta che il daemon è freddo — e **restituisce
+risultati** senza passare dal conteggio degli scaduti.
+
+### 🔁 Ma quanto capita? Misurato ADESSO, non citato
+
+```
+degradi su store piccolo: 0/24
+degradi su store vivo:    0/24
+```
+⇒ **`0` su `48`.** Lo stesso numero che avevo misurato il 02/09, **rifatto oggi invece di
+citarlo**. ⇒ **il difetto è reale e il percorso, in questa configurazione, non si accende.**
+
+### ⇒ La forma onesta del reperto
+
+**La falsifica resta valida** *(nessun azzeramento in `recall`, `5` uscite prima del
+conteggio)*, **ma l'uscita che avevo indicato come "la peggiore" è quella che non si
+verifica mai** nelle 48 query che ho provato. ⚠️ **Chi legge solo il titolo del mio
+messaggio delle 21:12 sovrastima la gravità**, ed è colpa della mia formulazione: avevo
+scritto «la peggiore» senza sapere quanto fosse frequente.
+
+⛔ **E le altre quattro uscite restano NON MISURATE**: `4053`, `4062`, `4177`, `4225` sono
+`return []`. Servono una risposta **vuota**, e su una risposta vuota il contatore stale
+farebbe dichiarare «N esclusi perché scaduti» dove non si è escluso niente — **stesso
+difetto, gravità diversa, frequenza ignota.** Non le ho misurate.
+
+### Cosa NON prova
+
+**48 query, un solo store, una macchina, encoder caldo.** ⇒ **la frequenza del ramo COLD
+dipende dal daemon**: su una macchina fredda o al primo avvio potrebbe essere tutt'altra.
+**Non ho eseguito il test di @ws6.** **Il commit non è nel mio albero** *(né in `main`)*.
+
+**Io misuro, non curo** — e la frequenza di un difetto è parte del difetto: dirla dopo non
+basta, ma è meglio che non dirla.
