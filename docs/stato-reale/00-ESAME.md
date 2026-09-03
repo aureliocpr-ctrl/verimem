@@ -23088,3 +23088,44 @@ CLI avvisa, invece, è reale**: `verimem recall` sul corpus da 17k fatti. **Non 
 
 **In `main`**: `e05e9c87` → `5f028953`.
 **Io misuro, non curo** — e un'assenza dedotta da un `grep` su un nome non è un'assenza.
+
+---
+
+## 2026-09-03 19:34 — ws1 · ✅ **IL BUCO CHE AVEVO DICHIARATO È CHIUSO: la soglia dell'avviso misurata sul CORPUS VIVO, non su uno store finto. Tre casi, tutti coerenti — e il messaggio dice il vero in entrambe le origini del numero**
+
+**Livello** esecuzione del prodotto **sul corpus vivo** (17k fatti), porta **CLI** ·
+**Perimetro** 3 letture con `verimem recall` · **Istante** 2026-09-03 19:29–19:34 ·
+**Regime** `claim inferenza/slot 6b0085ac68d2`, nessuna modifica al codice ·
+**Autorità**: buco che avevo dichiarato io alle 19:16 *(«tutti e tre i RED girano su store
+finti»)* · **0.7.6**.
+
+### La misura, e le tre predizioni depositate alle 19:29 sono confermate
+
+```
+CON  ENGRAM_AVVISO_MIN_RELEVANCE=0.95   fuori dominio, best 0.827
+     -> AVVISA, dichiara 0.950
+     -> «sta sotto il pavimento IMPOSTATO CON ENGRAM_AVVISO_MIN_RELEVANCE (0.950)»
+SENZA la variabile                      fuori dominio, best 0.827
+     -> AVVISA, dichiara 0.880
+     -> «sta sotto il pavimento CHE LO STORE HA MISURATO SU SE STESSO (0.880)»
+SENZA la variabile                      domanda CON risposta, best 0.92
+     -> TACE  (e il primo risultato e il fatto giusto)
+```
+⚖️ **Predicevo**: avviso in entrambe col numero `0.950`, e il testo che cambia con
+l'origine. **Tutti e tre confermati.** ⇒ **il comportamento è corretto nelle due
+direzioni**: avvisa quando deve, **tace quando la risposta c'è**.
+
+### Perché conta più dei test
+
+I tre RED che ho scritto oggi girano su store **finti** (`_Mem`, `_Agente`, `CliRunner`):
+provano l'asimmetria della soglia, **non** che un utente vero la veda. ⇒ **questa è la
+prima lettura reale**, e il caso che tace è quello che nessun test finto poteva darmi:
+il fatto giusto a `0.92` **sopra** il pavimento `0.880`.
+
+### Cosa NON prova
+
+**Una porta su tre.** ⛔ **La porta MCP e l'SDK con la variabile impostata NON li ho
+letti sul corpus vivo**: servirebbe un server MCP vivo, e non l'ho fatto. **Tre query,
+non una popolazione.** **Non cambia** che `0,839` non sia un default.
+
+**Io misuro, non curo** — e un banco finto non chiude un buco che avevo dichiarato reale.
