@@ -216,6 +216,29 @@ def _is_domain_professional_fact(proposition: str) -> bool:
         return False
 
 
+# Spostata qui da client.py il 2026-09-03 (lead): `advisory_eligible` (sotto) deve
+# scartare i marcatori di osservazione con la STESSA regola di `_blocking_layers`
+# e `chi_ha_quarantinato`, e il gate non puo' importare client.py (circolare).
+
+def _is_advisory_layer(layer: str) -> bool:
+    """An ``*-observe`` layer (``L3-semantic-observe``, ``SOURCE_TRUST-observe``) is an
+    OBSERVE-mode advisory: it surfaces a would-be block for MEASUREMENT but does not
+    cause the disposition. It must never own a receipt's block reason nor be credited
+    in the trust ledger — otherwise observe mode measures itself as the blocker and its
+    whole purpose (gauge a layer's block rate BEFORE enforcing) is defeated. NB: the
+    layer string ``L3-semantic-observe`` also ``.startswith("L3")`` (rank 0), so without
+    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``.
+
+    ``*-graded`` layers (``L4-grounding-graded``, ``L4-review-graded``, graded
+    admission — design bf5d322) are the same class from the ledger's point of
+    view: they record an ADMISSION decision, never a block, so crediting one as
+    an acting blocker (critic 514cdec3 falsification caveat 4: possible when
+    ANOTHER layer quarantines the same write) would pollute exactly the
+    attribution the pre-registered flip A/B has to read."""
+    s = str(layer)
+    return s.endswith("-observe") or s.endswith("-graded")
+
+
 def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
     """True iff EVERY warning is from the L1 lexical family.
 
@@ -225,7 +248,15 @@ def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
     L1 is the whole story — the invariant that keeps evidence-before-belief
     from degenerating into evidence-instead-of-belief.
     """
-    ws = [w for w in (warnings or []) if isinstance(w, dict)]
+    # 2026-09-03 (lead, falsificazione di un'altra istanza su 0cec6422): un marcatore di
+    # osservazione (`L3-semantic-observe`, nato a monte di questa lettura) NON e'
+    # un avviso e non puo' decidere che «L1 non e' tutta la storia»: chiudeva una
+    # via di AMMISSIONE pur essendo «never a block reason». Si scartano con la
+    # superficie unica; soli marcatori = nessuna storia L1 = False, come la
+    # ricevuta vuota. Presidio: tests/test_un_marcatore_di_osservazione_non_
+    # chiude_la_via_di_ammissione.py
+    ws = [w for w in (warnings or []) if isinstance(w, dict)
+          and not _is_advisory_layer(w.get("layer", ""))]
     if not ws:
         return False
     return all(str(w.get("layer", "")).upper().startswith("L1") for w in ws)
