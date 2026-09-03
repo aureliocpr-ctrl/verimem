@@ -23185,3 +23185,54 @@ prezzo di confrontare ciò che l'utente legge invece di un campo strutturato, e 
 **NON pushato**: silenzio su `main` fino all'annuncio di @lead-audit.
 
 **Io misuro, non curo** — e alla terza volta della stessa forma si smette di curare a mano.
+
+---
+
+## 2026-09-03 20:22 — ws1 · ✅ **TOLGO IL «NON VERIFICATO» A DUE PORTE SU TRE: SDK e MCP letti sul CORPUS VIVO, e concordano con la CLI su soglia e origine.** Resta il server MCP di rete, e lo dico
+
+**LIVELLO: PORTA** — `Memory.search` e `_avvisi_di_lettura` **con codice reale e dati
+reali** *(17k fatti)*, non doppi · **Perimetro** 5 letture, 2 query · **Istante** 2026-09-03
+20:17–20:22 · **Regime** un processo, `rerank=OFF`, `claim inferenza/slot 02df05f9571f` ·
+**0.7.6**.
+
+### Il righello di @ws2 in prima riga, come da regola
+
+```
+IMPORT DA C:\Users\aurel\Code\HA-ws1-main\verimem\__init__.py
+```
+
+### Le tre porte, sul corpus vivo
+
+```
+SDK  senza la variabile    pavimento=0.8805  best=0.8269  origine=calibrata sul corpus
+SDK  con 0.95              pavimento=0.95    best=0.8269  origine=dalla variabile
+SDK  domanda CON risposta  NESSUN AVVISO (10 risultati)
+MCP  senza la variabile    pavimento=0.8805  best=0.8269  origine=calibrata sul corpus
+MCP  con 0.95              pavimento=0.95    best=0.8269  origine=dalla variabile
+CLI  (19:34)               0.880 / 0.950     origine coerente
+```
+⚖️ **Le due predizioni forti sono confermate.** La terza era **dichiarata debole** *(«non so
+da che parte cade»)* e cade dalla parte giusta: **su una domanda con risposta la porta
+TACE**, come la CLI.
+
+### 🔁 Cosa cambia rispetto a ieri
+
+Dal 02/09 dichiaravo «NON VERIFICATO» su SDK e MCP perché i loro banchi erano **doppi**
+*(`_Mem`, `_Agente`)*. ⇒ **il «NON VERIFICATO» si toglie per l'SDK e per la funzione MCP.**
+
+### ⛔ Cosa resta NON VERIFICATO
+
+**Il SERVER MCP di rete.** Qui `_avvisi_di_lettura` è chiamata con un oggetto che espone la
+`SemanticMemory` **vera** — è il percorso di ripiego che il docstring di `_pavimento_di`
+documenta, quindi **codice reale + dati reali** — **ma non è la porta di rete**, e un difetto
+può annidarsi fra la funzione e il protocollo. **Va detto accanto al numero.**
+
+### Cosa NON prova
+
+**Cinque letture, due query.** **Un solo store, un istante, `rerank=OFF`.** **Non cambia**
+che `0,839` non sia un default. **La domanda «con risposta» l'ho scelta io** *(un fatto che
+sapevo esserci)*: non è un campione.
+
+**Banco**: `scripts/banco_sdk_soglia_sul_corpus_vivo.py` *(predizione e condizione d'uscita
+nel docstring, scritte prima)*.
+**Io misuro, non curo** — e due porte su tre verificate non sono tre.
