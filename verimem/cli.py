@@ -1345,11 +1345,30 @@ def _avviso_pavimento(m, hits, query: str) -> None:
         _best = max(float(h.get("score") or 0.0) for h in hits)
     except Exception:  # noqa: BLE001 — una riserva non fa cadere una lettura
         _pavimento = _best = None
-    if (_pavimento and _best is not None and _best < float(_pavimento)):
+    # ⚠️ LA SOGLIA DELL'AVVISO NON È QUELLA DEL TAGLIO, e le TRE porte devono
+    # dichiarare la stessa. `_pavimento_avviso` (client.py) restituisce il
+    # calibrato quando nessuno ha impostato `ENGRAM_AVVISO_MIN_RELEVANCE`, e
+    # quel valore quando c'è. Senza questa riga la variabile valeva su SDK e
+    # porta MCP e NON qui: due porte su tre, cioè lo stesso difetto che questo
+    # blocco è nato per chiudere («`ask` taceva dove `recall` avvisava»), un
+    # piano più su. ⚠️ `if _pavimento` RESTA la guardia: dove il negozio non si
+    # è calibrato i punteggi stanno su un'altra scala.
+    _soglia = _origine = None
+    if _pavimento:
+        from .client import _AVVISO_FLOOR_VAR, _pavimento_avviso
+        _soglia = _pavimento_avviso(float(_pavimento))
+        # ⚠️ E IL TESTO CAMBIA CON L'ORIGINE DEL NUMERO: dire «misurato su se
+        # stesso» accanto a un valore che arriva da una variabile d'ambiente
+        # sarebbe falso — l'utente leggerebbe una taratura del suo corpus dove
+        # c'è una sua impostazione.
+        _origine = ("che lo store ha misurato su se stesso"
+                    if _soglia == float(_pavimento)
+                    else f"impostato con {_AVVISO_FLOOR_VAR}")
+    if (_pavimento and _best is not None and _best < float(_soglia)):
         console.print(
             f"[yellow]⚠[/yellow] [dim]il migliore di questi ({_best:.3f}) sta "
-            f"sotto il pavimento che lo store ha misurato su se stesso "
-            f"({float(_pavimento):.3f}): sono i fatti più vicini alla domanda, "
+            f"sotto il pavimento {_origine} "
+            f"({float(_soglia):.3f}): sono i fatti più vicini alla domanda, "
             f"non necessariamente una risposta. `verimem ignorance "
             f"\"{query}\"` dice cosa manca.[/dim]")
 
