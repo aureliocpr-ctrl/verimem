@@ -136,3 +136,53 @@ def test_la_colonna_confidenza_non_ammette_il_nulla(store_isolato):
             con.commit()
     finally:
         con.close()
+
+
+def test_l_eredita_avviene_davvero_e_non_ripiega_in_silenzio(store_isolato):
+    """Il presidio del FAIL-SOFT: che il ripiego non scatti quando non serve.
+
+    ⚠️ Questo test esiste per un buco che gli altri due non vedono. La lettura
+    delle confidenze è avvolta in un `try/except` perché non deve poter impedire
+    la scrittura del nodo — ma se quel ripiego scattasse SEMPRE (una firma
+    cambiata, uno schema diverso, un errore mangiato), il master varrebbe il
+    default 0.5, che è ancora `<=` della confidenza di un fatto giudicato: gli
+    altri due test **passerebbero comunque**, e la cura sarebbe morta in
+    silenzio.
+
+    Qui il figlio vale **0.9**: il master deve valere 0.9, non 0.5. Se il
+    ripiego scatta, il test diventa rosso e dice esattamente cosa è successo.
+    """
+    import sqlite3
+
+    from verimem import Memory
+    from verimem.consolidation import _persist_master
+    from verimem.memory import EpisodicMemory
+    from verimem.semantic import Fact
+
+    m = Memory()
+    r = m.add("I bancali ricevuti dal magazzino sono tre.", topic="test/eredita",
+              source="Il magazzino ha ricevuto tre bancali il 9 giugno.")
+    alta = 0.9
+    con = sqlite3.connect(str(m.semantic.db_path))
+    con.execute("UPDATE facts SET confidence = ? WHERE id = ?", (alta, r["id"]))
+    con.commit()
+    con.close()
+    assert alta != float(Fact.confidence), (
+        "il valore scelto per il figlio deve DIFFERIRE dal default di classe, "
+        "altrimenti questo test non distingue l'eredita' dal ripiego"
+    )
+
+    _ep, fact_id, _e = _persist_master(
+        m.semantic,
+        EpisodicMemory(),
+        {"topic_prefix": "test/eredita", "fact_count": 1, "fact_ids": [r["id"]]},
+        {"topic": "test/eredita/auto-MASTER",
+         "proposition": "AUTO-CLUSTER-MASTER test/eredita — auto-consolidated entry point organizing 1 sub-facts"},
+    )
+    master = m.semantic.get(fact_id)
+    assert master is not None
+    assert float(master.confidence) == alta, (
+        f"il master vale {master.confidence}: l'eredita' NON e' avvenuta. Se vale "
+        f"{Fact.confidence} il ripiego fail-soft e' scattato quando non doveva — "
+        f"la lettura delle confidenze e' rotta e nessun altro test lo vedrebbe"
+    )
