@@ -23025,3 +23025,66 @@ l'asimmetria fra le due porte.**
 
 **In `main`**: `bef4ac50`.
 **Io misuro, non curo** — e quando l'asimmetria l'ho fatta io, si dice prima del resto.
+
+---
+
+## 2026-09-03 19:16 — ws1 · 🔁 **RITIRO «la CLI non avvisa mai», detta tre volte — la CLI AVVISA. E dentro c'era il difetto vero: era la TERZA porta a non leggere la soglia, e il presidio per trovarla l'avevo scritto io stamattina applicandolo a due porte su tre.** In `main`: `5f028953`
+
+**Livello** esecuzione del prodotto sul **corpus vivo** + modifica **pushata su `main`** ·
+**Perimetro** `verimem/cli.py` *(`_avviso_pavimento`, superficie unica di `recall` e `ask`)*
++ 3 test nuovi; regressione sui 5 file che presidiano l'avviso sulle tre porte ·
+**Istante** 2026-09-03 19:11–19:16 · **Regime** worktree `HA-ws1-main`, merge, push con
+retry, `claim inferenza/slot 0941192c7134` · **0.7.6**.
+
+### 🔁 Il ritiro, prima del resto
+
+Ieri e oggi ho scritto **tre volte** — cella, due messaggi, briefing — che *«`sotto_il_pavimento`
+ha `0` occorrenze in `cli.py`, quindi la riga di comando non mostra MAI l'avviso»*.
+**Eseguito `verimem recall` sul corpus vivo:**
+```
+⚠ il migliore di questi (0.827) sta sotto il pavimento che lo store ha misurato
+  su se stesso (0.880)
+```
+⇒ **la CLI avvisa eccome.** Il conteggio era giusto, **la conclusione no**: la CLI non usa
+quel **campo**, ne costruisce **uno proprio** in `_avviso_pavimento`. ⚠️ **Avevo dedotto
+un'assenza da un `grep` su un NOME**, e il nome non è la cosa.
+
+### Il difetto vero, che il ritiro ha scoperto
+
+```
+SDK   `_pavimento_avviso()`    legge ENGRAM_AVVISO_MIN_RELEVANCE     02/09
+MCP   `_pavimento_avviso()`    legge la variabile                    03/09  bef4ac50
+CLI   `_auto_relevance_floor`  NON la leggeva                        <- qui
+```
+⇒ **due porte su tre.** 🪞 **E il presidio l'ho scritto io stamattina** — *«quando aggiungi
+una variabile a una superficie, `grep` le altre porte che ricostruiscono lo stesso
+campo»* — **e l'ho applicato a due porte su tre.** La regola giusta, fermata a metà.
+
+### 📌 E una cosa che nessun test copriva, ma l'utente sì
+
+Il messaggio diceva **«il pavimento che lo store ha misurato su se stesso»**. Con la soglia
+che arriva da una **variabile d'ambiente** quella frase è **falsa**: l'utente leggerebbe una
+taratura del suo corpus dove c'è una sua impostazione. ⇒ **il testo ora cambia con
+l'origine del numero.** *(Trovato guardando cosa avrebbe letto chi usa il comando, non
+eseguendo un test.)*
+
+### La misura
+
+```
+RED    variabile 0.95, calibrato 0.88, migliore 0.90  -> la CLI TACE   (1 failed su 3)
+GREEN  la CLI dichiara 0.950                          -> 25 passed EXIT=0
+```
+I 25 comprendono i presidi **esistenti** `test_ask_taceva_dove_recall_avvisava` e
+`test_il_recall_rispondeva_anche_quando_non_sapeva`. **La cura è in UN punto**:
+`_avviso_pavimento` era già la superficie unica di `recall` e `ask`.
+
+### Cosa NON prova
+
+**`25 passed` è sui 5 file dell'avviso, non la suite.** **Il RED gira su uno store FINTO**
+*(`CliRunner` + `_Mem`)*: prova l'asimmetria della soglia, **non** una lettura reale con la
+variabile impostata — **quella non l'ho eseguita sul corpus vivo**. **La verifica che la
+CLI avvisa, invece, è reale**: `verimem recall` sul corpus da 17k fatti. **Non cambia** che
+`0,839` non sia un default.
+
+**In `main`**: `e05e9c87` → `5f028953`.
+**Io misuro, non curo** — e un'assenza dedotta da un `grep` su un nome non è un'assenza.
