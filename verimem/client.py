@@ -393,7 +393,15 @@ def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
         return "store-screen"
     if moat == "failed":
         return "moat"
-    if any(str(w.get("layer", "")).startswith("L1") for w in warnings):
+    # 2026-09-03 (lead): `L1-domain-precision-observe` e `L1-domain-advisory-
+    # observe` INIZIANO con «L1» ma sono marcatori di osservazione («surfaced,
+    # never a block reason»): da soli in ricevuta questo ramo rispondeva 'L1' e
+    # nominava decisore chi aveva solo avvisato (misurato: 3 casi su 3). La
+    # superficie unica della convenzione e' `_is_advisory_layer`, e questa
+    # giuntura non ci passava. Presidio:
+    # tests/test_un_marcatore_di_osservazione_non_e_mai_il_decisore.py
+    if any(str(w.get("layer", "")).startswith("L1")
+           and not _is_advisory_layer(w.get("layer", "")) for w in warnings):
         return "L1"
     # ⚠️ «gate» NON E' UN'ETICHETTA MANCANTE: E' UN'ETICHETTA CHE PORTA FUORI
     # STRADA. Il layer che ha deciso e' gia' in mano — `agito` sono i BLOCKING
