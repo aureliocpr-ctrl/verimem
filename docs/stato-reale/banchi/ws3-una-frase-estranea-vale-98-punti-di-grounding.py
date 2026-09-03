@@ -2,6 +2,18 @@
 
     python docs/stato-reale/banchi/ws3-una-frase-estranea-vale-98-punti-di-grounding.py
 
+🔴🔴 CORREZIONE DEL 2026-09-03 alle 20:20, E RIGUARDA IL TITOLO DI QUESTO FILE.
+Il numero qui sotto e' riproducibile e resta vero. La GENERALIZZAZIONE che ne
+avevo tratto no: su TRENTA contraddizioni generate con una regola fissa, la
+stessa zavorra ne libera **ZERO** e sposta il grounding di **+0,7 in mediana**
+(`ws3-trenta-coppie-con-e-senza-frase-estranea.py`). Quindi «una frase estranea
+vale 98 punti» descrive QUESTI claim, non la classe «contraddizione», e chi
+legge il titolo come una proprieta' del gate lo legge come lo avevo scritto io
+— male.
+Un fattore trovato dopo: sullo stesso claim, scrivere «e» invece di «e'» porta
+l'effetto da +31 a +99. Le trenta frasi generate usano tutte la forma corretta
+«e'». Quale caratteristica renda un claim vulnerabile resta APERTO.
+
 ⚠️ Carica il giudice (~30 s la prima scrittura). Il vincolo «un banco alla
 volta» per la RAM e' stato revocato da Aurelio il 2026-09-03 alle 19:15.
 
