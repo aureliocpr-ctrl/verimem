@@ -7791,6 +7791,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             or bool(arguments.get("deep"))
             or bool(arguments.get("include_legacy"))
             or bool(arguments.get("trust_signals"))
+            #: La REST porta solo (query, k): delegarle una recall che chiede i
+            #: RITIRATI restituirebbe la vista di default — cioè esattamente i
+            #: fatti che il chiamante ha chiesto di NON escludere — e la
+            #: risposta non porta modo di accorgersene. È il caso che il
+            #: commento qui sopra descrive («echo it back as if applied»), e
+            #: senza questa riga il filtro nuovo cadeva proprio in quel buco.
+            or bool(arguments.get("include_superseded"))
         )
         _rm = _remote() if not _blocking else None
         if not _blocking and _remote_auth_error:

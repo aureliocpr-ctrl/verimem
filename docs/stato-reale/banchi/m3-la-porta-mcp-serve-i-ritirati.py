@@ -17,16 +17,39 @@ il CONTROLLO POSITIVO prima di credere allo zero.
 from __future__ import annotations
 
 import os
+import pathlib
+import sys
 import tempfile
 
 _D = tempfile.mkdtemp(prefix="m3mcp_")
 os.environ["HIPPO_DATA_DIR"] = _D          # PRIMA dell'import: è tutto il punto
 os.environ.pop("ENGRAM_DATA_DIR", None)
 
+#: ⚠️ E QUESTO BANCO HA GIÀ MENTITO UNA VOLTA PER NON AVERLO.
+#: `python docs/stato-reale/banchi/questo.py` mette in `sys.path[0]` la
+#: directory DELLO SCRIPT — non la radice del repo — quindi `import verimem`
+#: risolve al pacchetto INSTALLATO. Chi lavora nell'albero condiviso non se ne
+#: accorge (installato e repo coincidono); chi lavora in un `git worktree` sì:
+#: il 03/09 alle 19:26 questo banco è tornato ROSSO tre volte di fila mentre
+#: misurava `C:\Users\aurel\Code\HippoAgent` invece del worktree, cioè un
+#: codice SENZA la porta che il banco stava provando. Con la radice giusta in
+#: testa a `sys.path`, alle 19:38, lo stesso banco è verde.
+_ROOT = pathlib.Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(_ROOT))
+
 import asyncio  # noqa: E402
 import json  # noqa: E402
 
+import verimem  # noqa: E402
 from verimem import mcp_server  # noqa: E402
+
+#: IL CONTROLLO CHE DEVE ACCENDERSI: senza, un rosso non distingue «la porta
+#: non serve i ritirati» da «ho misurato un altro albero».
+_QUALE = pathlib.Path(verimem.__file__).resolve()
+if _ROOT not in _QUALE.parents:
+    raise SystemExit(
+        f"⛔ sto per misurare {_QUALE}\n"
+        f"   invece del repo {_ROOT}: il verdetto non direbbe niente.")
 
 VECCHIO = "Il collaudo del lotto B ha rilevato 12 anomalie."
 NUOVO = "Il collaudo del lotto B ha rilevato 15 anomalie."
