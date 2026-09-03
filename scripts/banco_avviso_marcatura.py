@@ -136,6 +136,10 @@ def riga(nome, b, soglia):
 
 def main():
     mem = Memory(CONFIG.semantic_db)
+    # 🔑 DA CHE ALBERO STIAMO LEGGENDO: nel worktree si importa il worktree, da
+    # uno script lanciato altrove si importa l albero condiviso. Un banco che non
+    # lo dichiara puo misurare un codice diverso da quello che credi (@ws2, 03/09).
+    print(f"IMPORT DA {verimem.__file__}", flush=True)
     print(f"verimem {verimem.__version__} | rerank=OFF | k={K} | marcatura = best < soglia",
           flush=True)
 

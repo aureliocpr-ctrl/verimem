@@ -193,6 +193,10 @@ def misura(mem, fatti, queries, nome):
 
 def main():
     n = len(CASI)
+    # 🔑 DA CHE ALBERO STIAMO LEGGENDO: nel worktree si importa il worktree, da
+    # uno script lanciato altrove si importa l albero condiviso. Un banco che non
+    # lo dichiara puo misurare un codice diverso da quello che credi (@ws2, 03/09).
+    print(f"IMPORT DA {verimem.__file__}", flush=True)
     print(f"verimem {verimem.__version__} | {n} fatti, due store monolingui, k={K}", flush=True)
     it_f = [c[0] for c in CASI]
     en_f = [c[3] for c in CASI]

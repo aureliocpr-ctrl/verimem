@@ -415,11 +415,18 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
             # avvenuto — cioe' il difetto opposto. Verificato leggendo la
             # chiamata, non dedotto dalla somiglianza.
             if hits and best < _soglia:
+                # ⚠️ L'ORIGINE DEL NUMERO SI DICHIARA: «calibrata su questo
+                # corpus» accanto a un valore che arriva da
+                # `ENGRAM_AVVISO_MIN_RELEVANCE` e' una frase FALSA in una
+                # ricevuta, e questa e' la porta dell'AGENTE. La frase e' la
+                # stessa superficie unica dell'SDK e della CLI.
+                from .client import _frase_origine_soglia
+                _orig = _frase_origine_soglia(_soglia, pav)
                 out["sotto_il_pavimento"] = {
                     "pavimento": round(_soglia, 4),
                     "score_migliore": round(best, 4),
-                    "nota": ("nessun risultato supera la soglia di rilevanza "
-                             "calibrata su questo corpus: probabilmente la "
+                    "nota": (f"nessun risultato supera la soglia di rilevanza "
+                             f"{_orig}: probabilmente la "
                              "risposta NON e' in memoria. I risultati sono "
                              "qui sotto, non tagliati — decidi tu."),
                 }

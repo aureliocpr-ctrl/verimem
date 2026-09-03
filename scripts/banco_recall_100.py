@@ -147,6 +147,10 @@ def misura(mem, bersagli, queries, nome):
 def main():
     it_f, en_f, it_qp, it_qs, en_qp, en_qs, r_it, r_en = materiale()
     n = len(it_f)
+    # 🔑 DA CHE ALBERO STIAMO LEGGENDO: nel worktree si importa il worktree, da
+    # uno script lanciato altrove si importa l albero condiviso. Un banco che non
+    # lo dichiara puo misurare un codice diverso da quello che credi (@ws2, 03/09).
+    print(f"IMPORT DA {verimem.__file__}", flush=True)
     print(f"verimem {verimem.__version__} | {n} bersagli + {len(r_it)} riempitivi = "
           f"{n + len(r_it)} fatti per store, k={K}", flush=True)
     mem_it = costruisci(it_f, r_it)

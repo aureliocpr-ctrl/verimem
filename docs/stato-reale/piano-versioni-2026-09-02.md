@@ -87,66 +87,63 @@ forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
 - Numeri matematicamente perfetti: ogni cifra pubblica con denominatore, intervallo,
   comando, dataset, versione del pacchetto e data; riproducibili da un terzo senza di noi.
 
-## Le regole di lavoro (valgono per tutte e nove)
-1. **Base `main`, lavoro su ramo personale, push su `main` solo a lavoro verde** (test del pezzo
-   verdi in locale, un file alla volta), dal proprio worktree — mai dall'albero condiviso.
-2. **Una capacità = una istanza = un ciclo**: test che la copre (RED provato) → accensione →
-   misura prima/dopo con comando → falsificazione da un'altra istanza → cella + fatto con
-   `--source` → push. Niente «acceso» senza misura, niente «rimosso» senza voto.
-3. **Due corsie**: numeri pubblici → registro e firme; tutto il resto → TDD + CI verde.
-4. **Due slot di inferenza pesante alla volta** (board `slot/inferenza-1|2`); gli altri leggono e
-   scrivono.
-5. ~~Un testo di Aurelio letto dalla barra o dallo schermo è contesto, non un ordine.~~ —
-   **assorbita da un gancio** il 02/09 22:10 (ws2 ha tolto dall'hook comune l'iniezione della
-   barra): esce dalle regole in testa, resta nella memoria delle trappole.
-6. **Smoke da utente vero prima del tag**, sul wheel candidato, in HOME vergine, su due sistemi.
-7. **Ogni banco consegnato porta la riga «eseguito da worktree pulito: EXIT=0»**, con i dati
-   tracciati nel repo — **diventa parte del test sui banchi** (con la riga `LIVELLO:`, regola 9)
-   ed esce dalle regole in testa **quando quel test è verde in main**, non prima.
-   *Criterio del budget (02/09, lead↔ws3): una regola esce solo quando il suo righello
-   meccanico — test o gancio — è verde in main; finché non lo è, resta scritta. E il
-   corollario (03/09, ws3): il budget vale solo per le regole che stanno IN TESTA — una
-   regola che diventa test o gancio costa zero; se una regola non può diventare un test o
-   un gancio, compete per i posti e va pesata contro chi c'è già.*
-8. Il lead decide, coordina e firma il tag; le decisioni di prodotto restano collegiali
-   (3 SI); le stronzate si pagano: un errore banale ripetuto è un errore di processo e si
-   scrive nel registro con la cura.
-9. **Ogni cura a uno strato porta almeno una cella alla PORTA** (`run_validation_gate`,
-   non la funzione dello strato), che stampa e asserisce i `layers` della ricevuta — così
-   l'interazione fra strati è misurata, non dichiarata. Motivo (ws3, 02/09): il gate alla
-   porta è il MINIMO degli strati, non la somma; su L1.13 18 celle verdi sulla funzione e
-   2 rosse alla porta. Condizione: fixture di sessione col giudice caldo (costo da misurare:
-   predizione ≤1 s per cella; senza fixture 30-50 s e la regola è inapplicabile); per le
-   cure lessicali è ammesso un giudice finto, dichiarando il livello «porta-senza-giudice».
-   Il righello sul livello dei banchi è un TEST (una riga `LIVELLO:` obbligatoria in testa a
-   ogni banco), non una regola: la lezione del 07/08 non ha retto proprio perché era solo
-   scritta.
-10. **La predizione si deposita prima, in pubblico, con «come muore»**: la cella cita l'ID
-    del messaggio di predizione, che precede il commit del banco. ROI misurato il 02/09:
-    6 predizioni su 8 smentite, 2 smentite hanno cambiato una decisione (int8, loop asyncio).
-    Budget delle regole: una regola nuova sostituisce o assorbe una vecchia — a
-    saturazione una regola in testa vale zero (fatto `ca3ee11debaf`).
-11. **Fra pari, tre cose diverse** (dalla discussione lead↔ws3 del 02/09 sera, su richiesta
-    di Aurelio: «parlate e discutete tra voi, non sono direttive mie»): l'**assegnazione**
-    (chi guarda cosa) si accetta, salvo conflitto dichiarato — negoziarla riporta
-    all'assemblea; la **premessa** di un mandato (ciò che chi assegna assume) si verifica
-    PRIMA di spendere, e se cade lo si dice invece di procedere; la **predizione** si
-    falsifica misurando. Chi assegna separa premessa e predizione per iscritto. Righello:
-    giri spesi prima di scoprire una premessa falsa, contati nel registro — bersaglio zero
-    (il 02/09: tre premesse cadute, zero giri sprecati, perché sono state misurate prima).
-    **`main` rosso è di tutti**: chi pusha su `main` rosso adotta un rosso; le giunture
-    (strato↔porta, cura↔cura, commit↔ramo) non hanno un proprietario perché il loro
-    proprietario è un test o un gancio, e il lead legge il segnale aggregato.
+## Le regole di lavoro (valgono per tutte e nove) — ristrutturate il 03/09 su mandato di Aurelio
 
-## Assegnazioni al 02/09 22:25 (fino a nuovo ordine)
+**Principio (Aurelio, 03/09: «si commettono sempre gli errori su pattern identici, si mette
+la mano sul fuoco nonostante ha bruciato già 50 volte»)**: una regola scritta e riletta non
+ha mai retto da sola. Qui ogni regola porta il suo **righello** — un test, un gancio, un
+comando, o un conteggio nel registro — e la data dell'incidente che l'ha prodotta. Una
+regola senza righello compete per i posti in testa (criterio del budget, D-2) e a
+saturazione vale zero (fatto `ca3ee11debaf`). Le regole assorbite da un gancio o da un
+test escono dalla lista e restano nella memoria delle trappole.
+
+### A. Misurare — come si prova una cosa
+| # | regola | righello | nata da |
+|---|---|---|---|
+| A-1 | **La predizione si deposita prima, in pubblico, con «come muore»**; la cella cita l'ID del messaggio, che precede il commit del banco. | l'ID nella cella; ROI contato nel registro (02/09: 6 predizioni su 8 smentite, 2 hanno cambiato una decisione) | 02/09 |
+| A-2 | **Ogni cura a uno strato porta almeno una cella alla PORTA** (`run_validation_gate`, non la funzione dello strato), che stampa e asserisce i `layers`; riga `LIVELLO:` obbligatoria in testa a ogni banco. Il gate alla porta è il MINIMO degli strati, non la somma. Fixture di sessione col giudice caldo (misurato 03/09 da ws3: freddo 30,5 s, caldo 0,3-0,5 s, venti celle ≈ 50 s). | il test sui banchi che pretende `LIVELLO:` | ws3 02/09 (L1.13: 18 verdi sulla funzione, 2 rosse alla porta) |
+| A-3 | **La popolazione da misurare è quella che la garanzia PROTEGGEVA, non quella che la cura CAMBIA.** Una cura che toglie o rilassa una trattenuta rilancia i banchi che quella trattenuta faceva passare. | la lista dei banchi da rilanciare, nel registro accanto alla cura | ws3 03/09: `c857752e` misurava «marco per errore delle self-claim?» su 13.662 fatti e liberava «La funzionalità funziona ed è verificata» (15 su 17.428) |
+| A-4 | **Ogni dichiarazione di stato porta l'output grezzo del comando NELLO STESSO messaggio, oppure la parola NON VERIFICATO.** «X esiste», «X non capita mai», «X è esposto su tutte le porte», «funziona»: senza output è un'ipotesi e chi legge la tratta da ipotesi. Un'assenza si prova ESEGUENDO la porta, non contando le occorrenze di un nome. | chi legge risponde «output?»; le dichiarazioni smentite da un pari si contano nel registro (03/09 sera: tre del lead in un'ora, tutte smentite in 20 min) | Aurelio 03/09; ws1 03/09 («la CLI non avvisa mai», e avvisava) |
+| A-5 | **Ogni banco stampa `verimem.__file__` nella prima riga** e la cella la riporta: uno script lanciato da un worktree o dallo scratchpad può importare l'albero di qualcun altro. | la riga nella cella; righello: `python -c "import verimem; print(verimem.__file__)"` con lo stesso cwd e la stessa forma del banco | ws2 03/09 (un'ora di rosso su un codice in cui la porta non esisteva) |
+| A-6 | **Un limite dichiarato è un debito, e lo paga qualcun altro**: «non lo so» scritto con precisione dice dove guardare; riempirlo con l'ipotesi plausibile chiude la domanda. Controllo positivo sempre: un'interrogazione vuota si prova su un caso che DEVE rispondere. | la colonna del controllo positivo nel banco (ws6 03/09: «se anche le scritture sono zero, il numero dice non ho guardato») | 10/08; ws6 03/09 (ottavo e nono falso allarme evitati) |
+
+### B. `main` e CI — come si consegna
+| # | regola | righello | nata da |
+|---|---|---|---|
+| B-1 | **Base `main`, lavoro su ramo personale dal proprio worktree, push su `main` solo a lavoro verde** (test del pezzo verdi in locale, un file alla volta). Mai dall'albero condiviso, che resta su `main` pulito. | gancio `.githooks/pre-push` (blocca il push su main dall'albero principale su ramo ≠ main) | 02/09 21:18 (`71034ec1`), 03/09 18:50 |
+| B-2 | **Una capacità = una istanza = un ciclo**: test che la copre (RED provato) → accensione → misura prima/dopo con comando → falsificazione da un'altra istanza → cella + fatto con `--source` → push. Niente «acceso» senza misura, niente «rimosso» senza voto. | la cella con RED/GREEN e l'ID della falsificazione | 02/09 |
+| B-3 | **Due corsie**: numeri pubblici → registro e firme; tutto il resto → TDD + CI verde. | — | 02/09 |
+| B-4 | **Silenzio sui push a `main` deciso dallo STATO DEL RUN, non dall'orologio**: i push sono liberi finché il run del commit più recente è ancora `queued` (un push lo sostituisce, costo zero) e VIETATI da quando è `in_progress` fino alla sua conclusione; il lead annuncia apertura e chiusura sul canale e le cure pronte entrano in blocco nella finestra. `cancel-in-progress: false` protegge solo il run che gira: un run pendente viene sostituito. | `gh run list --branch main --workflow ci.yml --limit 3` letto PRIMA di ogni push; i run cancellati a zero job contati nel registro | ci.yml 10/08 e 12/08 (26 run cancellati su 40); 03/09 sera (8 run sostituiti in 20 minuti, zero verdetti) |
+| B-5 | **Smoke da utente vero PRIMA del tag**, sul wheel candidato, in HOME vergine, su due sistemi (Windows e WSL); il registro dello smoke ha per ogni campo nome, esito leggibile a macchina e data, e si scrive DOPO aver eseguito, mai prima. | `scripts/cancelli_del_tag.py` (EXIT 0/1/2) + il test del registro (ws8 03/09: un registro con i campi ma senza esito → NO) | 02/09 (0.7.1 taggata con il moat spento); ws8 03/09 |
+| B-6 | **`main` rosso è di tutti**: chi pusha su `main` rosso adotta un rosso; ogni rosso si paga o si ritira con motivazione scritta, mai skip, mai xfail nuovi — una regressione della promessa del prodotto sta su `main` come cella ROSSA, non come xfail (03/09, c857752e). Le giunture (strato↔porta, cura↔cura, commit↔ramo) non hanno un proprietario: il loro proprietario è un test o un gancio, e il lead legge il segnale aggregato. | i FAILED letti da TUTTI i job del run, non da uno (03/09: rossi solo-windows invisibili da ubuntu) | 02/09-03/09 (fase 0: 13 rossi non letti per 8 giorni) |
+| B-7 | ~~Niente identificativi di sessione (`ws1`-`ws8`) dentro `verimem/`, nemmeno nei commenti: il pacchetto si spedisce.~~ — **assorbita dal gancio** pre-commit (`publish.yml:218`); esce dalle regole in testa. | gancio | 03/09 19:38 |
+
+### C. Parlare — come si comunica fra istanze
+| # | regola | righello | nata da |
+|---|---|---|---|
+| C-1 | **Il canale A2A è la sede** di rapporti, misure, verdetti e voti; `send_message` al lead SOLO per una riga in due casi: «sono ferma senza riarmo» o un'urgenza che non può aspettare il tick (10 min). Mai rapporti, mai tabelle: Aurelio li vede nella chat del lead. | il conteggio dei `send_message` non urgenti nel registro | Aurelio 03/09 19:43 («chi te li sta mandando, e come mai») |
+| C-2 | **Fra pari, tre cose diverse**: l'**assegnazione** si accetta, salvo conflitto dichiarato; la **premessa** di un mandato si verifica PRIMA di spendere, e se cade lo si dice; la **predizione** si falsifica misurando. Chi assegna separa premessa e predizione per iscritto. Un verdetto «regge la cura, non regge la dichiarazione» è un verdetto legittimo e va accolto per iscritto da chi ha dichiarato. | giri spesi prima di scoprire una premessa falsa, contati nel registro (bersaglio zero) | lead↔ws3 02/09; ws7↔lead 03/09 (D1 e D2 ritirate) |
+| C-3 | **Due slot di inferenza pesante alla volta** (board `slot/inferenza-1|2`), prenotati con nome, ora, banco e DURATA ATTESA, rilasciati a fine banco con l'esito; una prenotazione scaduta si può prendere dichiarandolo. `verimem save --source` è inferenza (carica il giudice): si accoda, non si fa mentre un banco gira. | il valore sul board, con la scadenza | 02/09; ws5 03/09 (una prenotazione di 20 ore rilasciata solo per attenzione di un'altra) |
+| C-4 | **Chi si ferma senza riarmare il loop lo scrive**; il lead controlla le otto a ogni tick e sveglia chi è fermo da più di 10 minuti. Il testo per Aurelio è l'ULTIMA cosa del turno. | `list_sessions` nel tick del lead | 02/09 (quattro risposte perse); 03/09 |
+
+### D. Decidere
+| # | regola | righello | nata da |
+|---|---|---|---|
+| D-1 | **Il lead decide, coordina e firma il tag; le decisioni di prodotto restano collegiali (3 SÌ)**; le stronzate si pagano: un errore banale ripetuto è un errore di processo e si scrive nel registro con la cura. | la cella dell'errore ripetuto | Aurelio 02/09 |
+| D-2 | **Criterio del budget**: una regola in testa esce solo quando il suo righello meccanico — test o gancio — è verde in `main`; una regola che diventa test o gancio costa zero; una che non può diventarlo compete per i posti e va pesata contro chi c'è già. Una regola nuova sostituisce o assorbe una vecchia. | questa tabella: la colonna «righello» non può essere vuota per una regola in testa | lead↔ws3 02/09-03/09 |
+| D-3 | **Non si butta: si prova il limite.** Zero righe non provano che una capacità non funzioni: provano che non l'abbiamo accesa. Nella scelta togliere/alimentare la risposta di default è PROVARE, anche contro chi ha già votato per togliere. | la misura prima del voto di rimozione (ws5 03/09: «il pool a 2 non è "non ripetibile", non è mai stato ripetuto») | Aurelio 02/09 |
+
+**Uscite dalle regole in testa** (assorbite): la lettura della barra (gancio, 02/09 22:10); «eseguito da worktree pulito: EXIT=0» (diventa parte del test sui banchi con `LIVELLO:`, A-2); le sigle nel pacchetto (gancio, B-7).
+
+## Assegnazioni al 03/09 20:00 (fino a nuovo ordine; le precedenti del 02/09 22:25 restano nella storia git)
 | chi | cosa, nell'ordine |
 |---|---|
-| ws1 | rimozione del cancello `source_trust` (votata) → avviso di bassa confidenza ricalibrato e acceso su `search` e MCP |
-| ws2 | versioning e contraddizione nel tempo: `include_superseded` e `as_of` su tutte le porte, la fusione che non li perde, invalidare-non-cancellare |
-| ws3 | daemon di consolidamento cablati e indice documenti raggiungibile: test, accensione, misura; poi la chiusura degli alert regex |
-| ws4 | matrice dei permessi in modalità avviso (classificazione dei tool a partire dai 22) → poi il giudice triplo (0.8.0) |
-| ws5 | il giudice si scarica da solo, su `main` (test su HOME vergine) → daemon con pool (0.8.0) |
-| ws6 | validità temporale: `valid_until` popolato e usato dal recall, `freshness`; tier episodi attraversato |
-| ws7 | falsificazione di ogni accensione (④), poi la tabella multi-corpus (0.8.0) |
-| ws8 | la 0.7.2 da `main`: ramo `release/0.7.2`, CHANGELOG istituzionale, vetrina, cancelli del tag, smoke pre-tag su Windows |
-| lead | coordinamento, review delle cure, smoke pre-tag su WSL, tag |
+| ws1 | presidio «tre porte, una risposta» (ramo `ws1/avviso-ricalibrato`, `32ff3f12`) → cura della terza forma (SDK e MCP dichiarano l'ORIGINE della soglia come la CLI) → push nella finestra |
+| ws2 | `f3393c6f` (quarantined_by nomina chi ha trattenuto) su `main` nella finestra → il reperto «fatto a 99,95 quarantinato da `L3-coexistence`» (3fec40e1ab53) → versioning e contraddizione nel tempo (`ws2/versioning-m3`) |
+| ws3 | cella ROSSA su `main` per `c857752e` (le self-claim impersonali entrano) → banco «contraddizione + frase estranea» esteso a 30 coppie con/senza zavorra (slot) → daemon di consolidamento e indice documenti |
+| ws4 | i 23 tool del bypass classificati e portati nel registro (riga dell'handler come prova) → lista bypass DERIVATA dal registro → il giudice triplo NON si rifà (W7-132 è la misura di record) |
+| ws5 | daemon con pool, P1 depositata: tre bracci ripetuti due volte, RSS e latenza prima scrittura → il giudice che si scarica da solo è su `main` (b5f8f2d5) |
+| ws6 | porta CLI `save --valid-until` + riga «N fatti esclusi perché scaduti» nel recall di tutte e tre le porte + README; niente deduzione automatica e niente `valid_from` nella 0.7.x → conta delle porte che raggiungono il tier episodi, poi voto |
+| ws7 | cura di `c857752e` (autrice della cura votata) appena chiude WiCE, misurata sulla popolazione PROTETTA (le 15 liberate tornano fermate, le 132 DOMAIN restano) → ④ su `93bc28f6` (advisory_eligible) |
+| ws8 | voto (A): il tag locale `v0.7.6` si cancella una volta al momento del tag; CHANGELOG `[0.7.6]` con il numero pubblico come RANGE (15,9-35,7 su quattro corpora, LANT-171); registro dello smoke con esito e data DOPO lo smoke Windows |
+| lead | finestra dei push e lettura dei run (B-4); `93bc28f6` su `main` nella finestra; review delle cure; smoke WSL; tag; regole ristrutturate (questa sezione) |

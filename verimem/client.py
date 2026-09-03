@@ -27,7 +27,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from .anti_confab_gate import run_validation_gate
+from .anti_confab_gate import _is_advisory_layer, run_validation_gate  # noqa: F401
 from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
 
@@ -144,6 +144,27 @@ def _pavimento_avviso(pav_calibrato: float) -> float:
         from .env_num import finite_or
         return max(0.0, finite_or(grezzo, _AVVISO_FLOOR_MISURATO))
     return float(pav_calibrato)
+
+
+def _frase_origine_soglia(soglia: float, calibrato: float) -> str:
+    """COME SI CHIAMA il numero che l'avviso dichiara, in una frase sola.
+
+    ⚠️ E' UNA SUPERFICIE UNICA DI PROPOSITO, usata da SDK, porta MCP e CLI.
+    Il 03/09 la stessa forma — *una cura applicata a una superficie sola* — e'
+    comparsa TRE volte in un pomeriggio: la soglia messa solo sull'SDK, poi
+    curata solo su MCP, poi il TESTO dell'origine curato solo sulla CLI. Le
+    prime due sono state curate a mano; questa funzione esiste perche' non ci
+    sia una quarta.
+
+    ⚠️ E NON E' COSMETICA: dire «calibrata su questo corpus» accanto a un valore
+    che arriva da una variabile d'ambiente fa leggere all'utente una taratura
+    del suo store dove c'e' una sua impostazione. E' una frase falsa dentro una
+    ricevuta, in un prodotto cha ha come promessa di dire come fa a sapere le
+    cose. Presidio: `tests/test_tre_porte_una_risposta_sul_pavimento.py`.
+    """
+    if float(soglia) == float(calibrato):
+        return "calibrata su questo corpus"
+    return f"impostata con {_AVVISO_FLOOR_VAR}"
 
 
 #: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
@@ -1433,17 +1454,21 @@ class Memory:
         _soglia = (float(min_relevance) if (_tagliati and min_relevance)
                    else (_pavimento_avviso(_pav) if _pav else 0.0))
         _tutto_tagliato = not out and _tagliati > 0
+        # ⚠️ L'ORIGINE DEL NUMERO SI DICHIARA, e non e' cosmetica: «calibrata su
+        # questo corpus» accanto a un valore che arriva da
+        # `ENGRAM_AVVISO_MIN_RELEVANCE` e' una frase FALSA in una ricevuta.
+        # La frase e' una superficie unica condivisa con la porta MCP e la CLI.
+        _orig = _frase_origine_soglia(_soglia, _pav or 0.0)
         _nota = (
-            ("la soglia di rilevanza calibrata su questo corpus ha TAGLIATO "
+            (f"la soglia di rilevanza {_orig} ha TAGLIATO "
              f"tutti i {_tagliati} risultati trovati: nessuno la superava, "
              "quindi probabilmente la risposta NON e' in memoria. Qui sotto "
              "non c'e' niente perche' e' stato tagliato, non perche' la "
              "ricerca non abbia prodotto nulla.")
             if _tutto_tagliato else
-            ("nessun risultato supera la soglia di rilevanza "
-             "calibrata su questo corpus: probabilmente la "
-             "risposta NON e' in memoria. I risultati sono qui "
-             "sotto, non tagliati — decidi tu."))
+            (f"nessun risultato supera la soglia di rilevanza {_orig}: "
+             "probabilmente la risposta NON e' in memoria. I risultati sono "
+             "qui sotto, non tagliati — decidi tu."))
         # La dichiarazione del viaggio nel tempo: solo se la data l'ha DEDOTTA
         # la porta e il filtro temporale HA TOLTO QUALCOSA.
         #
@@ -3970,24 +3995,9 @@ _BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "L4.1",
                          "SOURCE_TRUST", "L4-skipped")
 
 
-def _is_advisory_layer(layer: str) -> bool:
-    """An ``*-observe`` layer (``L3-semantic-observe``, ``SOURCE_TRUST-observe``) is an
-    OBSERVE-mode advisory: it surfaces a would-be block for MEASUREMENT but does not
-    cause the disposition. It must never own a receipt's block reason nor be credited
-    in the trust ledger — otherwise observe mode measures itself as the blocker and its
-    whole purpose (gauge a layer's block rate BEFORE enforcing) is defeated. NB: the
-    layer string ``L3-semantic-observe`` also ``.startswith("L3")`` (rank 0), so without
-    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``.
-
-    ``*-graded`` layers (``L4-grounding-graded``, ``L4-review-graded``, graded
-    admission — design bf5d322) are the same class from the ledger's point of
-    view: they record an ADMISSION decision, never a block, so crediting one as
-    an acting blocker (critic 514cdec3 falsification caveat 4: possible when
-    ANOTHER layer quarantines the same write) would pollute exactly the
-    attribution the pre-registered flip A/B has to read."""
-    s = str(layer)
-    return s.endswith("-observe") or s.endswith("-graded")
-
+# `_is_advisory_layer` vive nel gate dal 2026-09-03 (lead): e' la superficie unica
+# della convenzione `*-observe` / `*-graded`, e i marcatori nascono li'. Qui e'
+# importata e ri-esportata con lo stesso nome: i chiamanti non cambiano.
 
 def _blocking_layers(warnings: list) -> list[str]:
     """Sorted distinct layers that ACTED on the write — advisory ``*-observe`` layers
