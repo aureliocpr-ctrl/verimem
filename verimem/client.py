@@ -146,6 +146,27 @@ def _pavimento_avviso(pav_calibrato: float) -> float:
     return float(pav_calibrato)
 
 
+def _frase_origine_soglia(soglia: float, calibrato: float) -> str:
+    """COME SI CHIAMA il numero che l'avviso dichiara, in una frase sola.
+
+    ⚠️ E' UNA SUPERFICIE UNICA DI PROPOSITO, usata da SDK, porta MCP e CLI.
+    Il 03/09 la stessa forma — *una cura applicata a una superficie sola* — e'
+    comparsa TRE volte in un pomeriggio: la soglia messa solo sull'SDK, poi
+    curata solo su MCP, poi il TESTO dell'origine curato solo sulla CLI. Le
+    prime due sono state curate a mano; questa funzione esiste perche' non ci
+    sia una quarta.
+
+    ⚠️ E NON E' COSMETICA: dire «calibrata su questo corpus» accanto a un valore
+    che arriva da una variabile d'ambiente fa leggere all'utente una taratura
+    del suo store dove c'e' una sua impostazione. E' una frase falsa dentro una
+    ricevuta, in un prodotto cha ha come promessa di dire come fa a sapere le
+    cose. Presidio: `tests/test_tre_porte_una_risposta_sul_pavimento.py`.
+    """
+    if float(soglia) == float(calibrato):
+        return "calibrata su questo corpus"
+    return f"impostata con {_AVVISO_FLOOR_VAR}"
+
+
 #: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
 #: conservativi). Oltre questa soglia l'embedder vede solo la testa del fatto.
 _LONG_FACT_DEFAULT = 2000
@@ -1433,17 +1454,21 @@ class Memory:
         _soglia = (float(min_relevance) if (_tagliati and min_relevance)
                    else (_pavimento_avviso(_pav) if _pav else 0.0))
         _tutto_tagliato = not out and _tagliati > 0
+        # ⚠️ L'ORIGINE DEL NUMERO SI DICHIARA, e non e' cosmetica: «calibrata su
+        # questo corpus» accanto a un valore che arriva da
+        # `ENGRAM_AVVISO_MIN_RELEVANCE` e' una frase FALSA in una ricevuta.
+        # La frase e' una superficie unica condivisa con la porta MCP e la CLI.
+        _orig = _frase_origine_soglia(_soglia, _pav or 0.0)
         _nota = (
-            ("la soglia di rilevanza calibrata su questo corpus ha TAGLIATO "
+            (f"la soglia di rilevanza {_orig} ha TAGLIATO "
              f"tutti i {_tagliati} risultati trovati: nessuno la superava, "
              "quindi probabilmente la risposta NON e' in memoria. Qui sotto "
              "non c'e' niente perche' e' stato tagliato, non perche' la "
              "ricerca non abbia prodotto nulla.")
             if _tutto_tagliato else
-            ("nessun risultato supera la soglia di rilevanza "
-             "calibrata su questo corpus: probabilmente la "
-             "risposta NON e' in memoria. I risultati sono qui "
-             "sotto, non tagliati — decidi tu."))
+            (f"nessun risultato supera la soglia di rilevanza {_orig}: "
+             "probabilmente la risposta NON e' in memoria. I risultati sono "
+             "qui sotto, non tagliati — decidi tu."))
         # La dichiarazione del viaggio nel tempo: solo se la data l'ha DEDOTTA
         # la porta e il filtro temporale HA TOLTO QUALCOSA.
         #
