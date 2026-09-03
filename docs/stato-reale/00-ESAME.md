@@ -22892,3 +22892,76 @@ Windows. Il presidio ha detto una verità in più di quella che gli avevamo chie
       print(len(g), sorted({hex(x) for x in g.encode('utf-8') if x>127 and bytes([x]).decode('cp1252','ignore')==''}))"
 
 **Firme su questa cella**: ws8.
+
+---
+
+## 2026-09-03 18:50 — ws1 · ✅ **UN ROSSO DI MAIN PAGATO, e non era il difetto tornato: era il test-double rimasto indietro.** E il confronto coi 13 di ieri risponde alla domanda che avevo lasciata aperta: **nessuno dei miei commit ha aggiunto rossi**
+
+**Livello** log di CI + esecuzione locale + modifica **pushata su `main`** · **Perimetro**
+run `33681813637` *(`5de26d9b`, 10 failed / 12523 passed)*, job `ubuntu py3.12` ·
+**Istante** 2026-09-03 18:43–18:50 · **Regime** worktree `HA-ws1-main` su `main`, merge
+*(mai rebase)* · **Autorità**: fase 0 del piano di record, «main verde» · **0.7.6**.
+
+### ✅ La domanda che avevo lasciato aperta ieri: risposta
+
+Ieri avevo scritto *«se domani main è rosso su quei file, il rosso è mio»*. **Verificato**:
+`33cd97c7` **è antenato** di `5de26d9b` ⇒ il mio codice **era dentro** quel run.
+```
+13 rossi ieri  ->  10 oggi
+SPARITI (4):  test_la_fonte_si_legge_intera · test_la_ricetta_del_numero_deve_esistere [XPASS]
+              test_nessun_banco_nuovo_ignora_l_esito_del_subprocess · test_repro_registry_g4 [XPASS]
+NUOVO   (1):  test_persist_master_no_orphan_episode_on_fact_conflict
+```
+⇒ **l'unico nuovo non tocca niente di ciò che ho cambiato**: `0` occorrenze di
+`sotto_il_pavimento`, `source_trust`, `_pavimento_avviso`, `min_relevance`; usa
+`verimem.consolidation`, non il client. ⇒ **G10 e l'avviso non hanno aggiunto rossi.**
+
+### 🔎 Il rosso nuovo: causa, e non è un bug del prodotto
+
+```
+AttributeError: '_FakeSmConflict' object has no attribute '_connect'
+```
+Dal commit **`2f6655b6`** *(«la confidenza di un nodo consolidato si eredita invece di
+essere dichiarata»)* `_persist_master` legge le `confidence` del cluster con
+`sm._connect()` **PRIMA** dello `sm.store(f)` che deve abortire. Il doppio
+`_FakeSmConflict` esponeva **il solo `store`**.
+⇒ **il test moriva di `AttributeError`, e un `AttributeError` non dice nulla su ciò che il
+test presidia**: il rosso *sembrava* il difetto tornato ed era **il doppio rimasto
+indietro**.
+
+📌 **La cura del 02/09 era giusta e il suo RED→GREEN era stato falsificato.** ⇒ **quello
+che un RED→GREEN sulla propria cura NON vede sono i test-double ALTRUI che la nuova
+dipendenza rompe**: un doppio non è tipizzato e **tace finché non lo si esegue**.
+
+### La cura, e il controllo che prima non c'era
+
+Il doppio ora espone `_connect` come context manager su uno `sqlite` in memoria con due
+fatti e le loro `confidence` ⇒ **il test prova ancora esattamente la stessa cosa**.
+🔑 **E ho aggiunto `assert sm.tentativi`**: senza, il giorno in cui `_persist_master`
+abortisse **prima** di arrivare allo `store` — **esattamente quello che è appena
+successo** — questo test resterebbe **VERDE** dichiarando un presidio che non esercita
+più. ⇒ **è la forma del difetto appena trovato, messa a guardia di sé stessa.**
+
+### ⛔ L'`XPASS` che avevo preso in carico: NON lo tocco, ed è un reperto
+
+```
+in CI      test_quarantined_by_dovrebbe_nominare_chi_ha_deciso   XPASS(strict)  -> rosso
+in locale  stesso test                                            xfailed       -> verde
+```
+⇒ **il test passa in CI e fallisce in locale.** Il presidio che avevo scritto ieri
+*(«se uno non passa in locale, non toccarlo: passa solo in CI ed è un'altra storia»)* si
+applica **rovesciato** e vale lo stesso: **togliere il marcatore riparerebbe la CI e
+romperebbe il locale.** ⇒ **è una differenza d'ambiente, non un debito da pagare**, e va
+diagnosticata prima di toccarla. **Lo lascio e lo dichiaro.**
+
+### Cosa NON prova
+
+**Ho eseguito UN test**, non la suite: `1 passed EXIT=0` prima e dopo il merge. **Non ho
+provato l'inversione dell'ordine `sm.store`/`mem.store`** — sarebbe il RED del presidio
+originale, che non ho toccato. **`main` si è mosso tre volte** mentre lavoravo: ho fatto
+`fetch`+`merge` e il push è passato al primo tentativo del terzo giro, **con il test
+rieseguito subito dopo sullo stato pushato**. **Non ho verificato gli altri 9 rossi**: la
+causa che ho trovato vale per questo.
+
+**In `main`**: `4520ac89`.
+**Io misuro, non curo** — e quando il rosso è un doppio rimasto indietro, si dice.
