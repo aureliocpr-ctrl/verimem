@@ -223,6 +223,88 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
         writes_memory=True,
         notes="L2 reconciler apply (mark_orphaned). Undoable via status flip.",
     ),
+    # ---- Cycle 03/09: i DODICI tool piu' CHIAMATI del journal.
+    # Scelti per FREQUENZA e non per elenco: i 20 gia' classificati
+    # coprivano il 38,1% delle chiamate reali, questi ne coprono un altro
+    # 10,6% (misura in docs/stato-reale, cella W7-133). Per ognuno la
+    # classificazione viene dalla descrizione che il tool dichiara di se'
+    # o dalla riga di codice che lo prova, non dal nome.
+    ToolCapability(
+        name="hippo_recall_history",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Answer-with-history recall: legge e arricchisce.",
+    ),
+    ToolCapability(
+        name="hippo_facts_list",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Listing paginato dei fatti. Anche in GATING_BYPASS_LIST.",
+    ),
+    ToolCapability(
+        name="hippo_trust_report",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Dossier delle prove dietro una risposta.",
+    ),
+    ToolCapability(
+        name="hippo_validate_claim",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Handler mcp_server.py:12663-12673: chiama validate_claim e ritorna. Nel modulo le occorrenze di write sono tutte in commenti.",
+    ),
+    ToolCapability(
+        name="hippo_facts_recent",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Ultimi N fatti per created_at. Anche in bypass.",
+    ),
+    ToolCapability(
+        name="hippo_search",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Ricerca per parola chiave sugli episodi.",
+    ),
+    ToolCapability(
+        name="hippo_facts_find_conflicting",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Audit L3 delle contraddizioni: legge.",
+    ),
+    ToolCapability(
+        name="hippo_episode_list",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Listing paginato degli episodi. Anche in bypass.",
+    ),
+    ToolCapability(
+        name="hippo_contradictions_list",
+        capability="READ", risk_level="low",
+        reversibility="yes",
+        notes="Elenca le contraddizioni non risolte.",
+    ),
+    ToolCapability(
+        name="hippo_consolidate",
+        capability="WRITE", risk_level="medium",
+        reversibility="undoable",
+        writes_memory=True,
+        notes="Trigger a sleep consolidation cycle: rielabora e scrive.",
+    ),
+    ToolCapability(
+        name="hippo_contradictions_scan",
+        capability="WRITE", risk_level="medium",
+        reversibility="undoable",
+        writes_memory=True,
+        notes="PERSISTE le contraddizioni trovate — contradiction.py:625 e INSERT OR IGNORE in ContradictionStore.add (:637).",
+    ),
+    ToolCapability(
+        name="hippo_skill_retire",
+        capability="DESTRUCTIVE", risk_level="medium",
+        reversibility="undoable",
+        requires_confirm=True,
+        writes_memory=True,
+        notes="Ritira (archivia) una skill per id. E undoable, quindi la regola DESTRUCTIVE+irreversibile non lo obbligherebbe: la conferma e una scelta PIU prudente della regola, concordata il 03/09.",
+    ),
 )
 
 
