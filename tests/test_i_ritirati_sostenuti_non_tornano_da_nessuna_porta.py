@@ -80,12 +80,20 @@ def test_lo_schema_del_tool_mcp_espone_il_parametro():
     ``_pf``. Il mio conteggio del 02/09 («hippo_recall non espone il campo»)
     era vero e IRRILEVANTE.
 
-    ⚠️ QUESTO TEST PROVA LA DICHIARAZIONE, NON IL COMPORTAMENTO. La prova
-    end-to-end sulla porta MCP mi è fallita per un banco che non isolava lo
-    store — la risposta tornava vuota anche SENZA il flag, cioè col controllo
-    positivo spento — e un test che non distingue le due cose non vale. Resta
-    da fare, ed è dichiarato invece che nascosto: per le altre due porte la
-    prova end-to-end c'è (client: pytest; CLI: 0 hit senza flag, 1 con).
+    ⚠️ QUESTO TEST PROVA LA DICHIARAZIONE, NON IL COMPORTAMENTO — e il
+    comportamento ORA è provato altrove: `docs/stato-reale/banchi/
+    m3-la-porta-mcp-serve-i-ritirati.py`, verde il 03/09 alle 19:38 (il
+    ritirato torna col flag e non senza, col controllo positivo acceso).
+
+    ⚠️⚠️ QUEL BANCO È STATO ROSSO TRE VOLTE PRIMA, E NON PER UN DIFETTO DEL
+    PRODOTTO: `python docs/.../banco.py` mette in `sys.path[0]` la directory
+    dello script, quindi `import verimem` prendeva il pacchetto INSTALLATO —
+    per chi lavora in un `git worktree`, un ALTRO albero, senza la porta che
+    il banco stava provando. Il banco ora se ne difende da solo e si ferma se
+    sta per misurare un albero che non è il suo. La morale che vale oltre
+    questo file: un rosso va classificato PRIMA di essere spiegato, perché
+    «la porta non funziona» e «ho misurato un altro codice» hanno lo stesso
+    colore.
     """
     import pathlib as _p
     src = (_p.Path(__file__).resolve().parents[1]
