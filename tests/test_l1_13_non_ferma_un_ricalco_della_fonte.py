@@ -13,6 +13,14 @@ I due criteri, e stanno insieme perche' da soli non dicono niente:
 
 Misurato prima della cura: 6 dei 7 casi di ws7 fermati, 6 self-claim su 6
 fermati. Dopo: 0 su 7 e 6 su 6.
+
+⚠️ AGGIORNATO IL 2026-09-03, e il titolo di questo file va letto con la
+condizione che il 30/08 gli e' stata aggiunta sotto: L1.13 non ferma un ricalco
+**di una fonte che il chiamante dichiara di terzi**. Se il chiamante non
+dichiara nulla, chi scrive e' l'agente, la sua `source` puo' essere un'eco
+della sua stessa frase (misurato 5 su 5) e il ricalco resta fermato. I test
+diretti qui sotto non passano `provenance` e vedono percio' solo la prima
+meta'; le celle di porta, in fondo, misurano tutte e due.
 """
 
 from __future__ import annotations
@@ -119,21 +127,96 @@ def test_il_confronto_ignora_le_maiuscole():
 # ramo del moat, quindi nessun modello viene caricato (misurato: stessi layer
 # con e senza).
 
-def _layer_alla_porta(claim: str, source: str | None) -> list[str]:
+def _layer_alla_porta(claim: str, source: str | None,
+                      writer_role: str | None = None) -> list[str]:
+    """I layer che la PORTA accende. `writer_role` resta al default (`None`)
+    per chi non lo passa: le celle scritte prima del 30/08 non cambiano.
+    """
     from verimem.anti_confab_gate import run_validation_gate
     g = run_validation_gate(proposition=claim, verified_by=[], topic=None,
-                            agent=None, source=source)
+                            agent=None, source=source, writer_role=writer_role)
     return [str((w or {}).get("layer") or "")
             for w in (getattr(g, "warnings", None) or [])]
+
+
+# ⚖️ CHI SCRIVE decide, e queste due celle sono la stessa domanda nei due versi.
+#
+# Le due celle qui sotto chiedevano che il ricalco NON accendesse L1.13 alla
+# porta CON GLI ARGOMENTI DI DEFAULT, e dal 30/08 sono rosse. Non e' la porta
+# ad essersi rotta: e' la GUARDIA ANTI-ECO di quel giorno (votata 3/3) a dire
+# che quando parla l'agente la sua `source` non e' una testimonianza ma un'eco,
+# e `classify_provenance(None, [])` vale `agent_claim` — misurato, non deve.
+# Quindi con gli argomenti di default il perdono NON si applica, ed e' voluto.
+#
+# Misurato il 2026-09-03 alle 18:49 sul worktree a `5de26d9b`, stesso claim,
+# stessa fonte, al variare del solo `writer_role`:
+#
+#     writer_role         provenienza        ricalco    self-claim
+#     None                agent_claim        FERMA      FERMA
+#     agent_inference     agent_claim        FERMA      FERMA
+#     user                user_input         perdona    FERMA
+#     external_content    external_content   perdona    FERMA
+#     document            external_content   perdona    FERMA
+#     document_ingest     external_content   perdona    FERMA
+#     system_hook         trusted_hook       perdona    FERMA
+#     trusted_hook        trusted_hook       perdona    FERMA
+#
+# ⇒ il ruolo e' un discriminante che funziona nei due versi E NON E' UN
+# INTERRUTTORE: nessun ruolo fa passare la self-claim. Le tre celle qui sotto
+# fissano le tre righe che contano, e la terza e' il controllo che deve
+# accendersi se qualcuno trasformasse il ruolo in una leva per spegnere L1.13.
+#
+# ⛔ IL DEBITO CHE QUESTA CELLA NON CHIUDE, e va detto qui perche' verde non
+# significa risolto: la strada del perdono e' raggiungibile solo DICHIARANDO il
+# ruolo, e nessuna delle due superfici lo dichiara da sola (SDK `None`, MCP
+# `"agent_inference"`: entrambe -> `agent_claim`). Sul corpus vivo, contato in
+# sola lettura il 2026-09-03, i fatti con `writer_role='external_content'` sono
+# **0 su 17.411** (`user` 10.844, `agent_inference` 6.144, `system_hook` 421,
+# `trusted_hook` 2). La cura del 28/08 esiste e funziona: non la percorre
+# nessuno. ⚠️ E quella colonna NON dice cosa ha visto il gate — per un write
+# `meta_narrative` il client la riscrive a `'user'` DOPO il gate, che aveva
+# ricevuto `None`: e' un conteggio di cio' che e' scritto nel fatto, non di cio'
+# che e' stato giudicato.
+
+@pytest.mark.parametrize("claim,fonte", [
+    (RICALCHI_IT[0], FONTE_IT),
+    (RICALCHI_EN[0], FONTE_EN),
+])
+def test_alla_porta_il_ricalco_e_fermato_se_a_scriverlo_e_l_agente(claim, fonte):
+    """Il verso della guardia anti-eco: senza ruolo dichiarato, si ferma."""
+    assert [x for x in _layer_alla_porta(claim, fonte) if x.startswith("L1.13")]
 
 
 @pytest.mark.parametrize("claim,fonte", [
     (RICALCHI_IT[0], FONTE_IT),
     (RICALCHI_EN[0], FONTE_EN),
 ])
-def test_alla_porta_il_ricalco_non_accende_l1_13(claim, fonte):
-    assert not [x for x in _layer_alla_porta(claim, fonte)
+def test_alla_porta_il_ricalco_e_perdonato_se_la_fonte_e_dichiarata_terza(claim, fonte):
+    """Il verso della cura del 28/08 — ed e' QUESTA a sorvegliare la catena.
+
+    Se qualcuno smettesse di inoltrare `source` lungo
+    `run_validation_gate` -> `_l1_warnings` -> detector, il participio non
+    sarebbe piu' trovabile nella fonte, il perdono non scatterebbe e questa
+    cella diventerebbe rossa mentre i test diretti qui sopra resterebbero
+    verdi. E' la ragione per cui la cella di porta esiste.
+    """
+    assert not [x for x in _layer_alla_porta(claim, fonte,
+                                             writer_role="external_content")
                 if x.startswith("L1.13")]
+
+
+@pytest.mark.parametrize("ruolo", [None, "agent_inference", "user",
+                                   "external_content", "document",
+                                   "document_ingest", "system_hook",
+                                   "trusted_hook"])
+def test_alla_porta_il_ruolo_non_e_un_interruttore_per_l1_13(ruolo):
+    """Il controllo che DEVE accendersi: nessun ruolo fa passare la self-claim.
+
+    Senza questa cella la precedente sarebbe soddisfacibile spegnendo il layer.
+    """
+    assert [x for x in _layer_alla_porta(SELFCLAIM_SENZA_FONTE[0], None,
+                                         writer_role=ruolo)
+            if x.startswith("L1.13")], f"il ruolo {ruolo!r} spegne L1.13"
 
 
 @pytest.mark.parametrize("claim", [SELFCLAIM_SENZA_FONTE[0],
