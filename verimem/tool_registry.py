@@ -46,6 +46,11 @@ class ToolCapability:
     mandatory_log: bool = True
     writes_memory: bool = False
     executes_command: bool = False
+    #: salta il gate senza lasciare traccia (efficienza sui READ). Prima
+    #: del 03/09 era una lista a parte in `mcp_server.GATING_BYPASS_LIST`:
+    #: due classificazioni, 5 tool su 28 in comune, e due voci che non
+    #: corrispondevano a nessun tool. Ora la lista DERIVA da qui.
+    gating_bypass: bool = False
     notes: str = ""
 
 
@@ -179,31 +184,31 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
     # ---- READ memory ----
     ToolCapability(
         name="hippo_facts_search",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
     ),
     ToolCapability(
         name="hippo_facts_recall",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
     ),
     ToolCapability(
         name="hippo_recall",
-        capability="READ", risk_level="low",
-        reversibility="yes",
-    ),
-    ToolCapability(
-        name="hippo_chain_show",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
     ),
     ToolCapability(
         name="hippo_undo_list",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
     ),
     ToolCapability(
         name="hippo_retirement_log",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
         notes="retirements as (loser, winner) pairs + "
@@ -212,6 +217,7 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
     # Cycle 15 round 1 — anti-confab scrubber tools.
     ToolCapability(
         name="hippo_anti_confab_scan",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
         notes="L2 reconciler scan over corpus. Read-only.",
@@ -237,6 +243,7 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
     ),
     ToolCapability(
         name="hippo_facts_list",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
         notes="Listing paginato dei fatti. Anche in GATING_BYPASS_LIST.",
@@ -255,6 +262,7 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
     ),
     ToolCapability(
         name="hippo_facts_recent",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
         notes="Ultimi N fatti per created_at. Anche in bypass.",
@@ -273,6 +281,7 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
     ),
     ToolCapability(
         name="hippo_episode_list",
+        gating_bypass=True,
         capability="READ", risk_level="low",
         reversibility="yes",
         notes="Listing paginato degli episodi. Anche in bypass.",
@@ -304,6 +313,106 @@ _INITIAL_CAPS: tuple[ToolCapability, ...] = (
         requires_confirm=True,
         writes_memory=True,
         notes="Ritira (archivia) una skill per id. E undoable, quindi la regola DESTRUCTIVE+irreversibile non lo obbligherebbe: la conferma e una scelta PIU prudente della regola, concordata il 03/09.",
+    ),
+    # ---- Cycle 03/09: i tool che SALTANO il gate.
+    # Erano una lista a parte (`GATING_BYPASS_LIST`, 28 voci di cui solo
+    # 5 anche qui, e due che non erano tool). Ora stanno qui con
+    # `gating_bypass=True` e la lista si deriva. Tutti READ: l'handler
+    # di ciascuno e' stato letto per intero, non a finestra.
+    ToolCapability(
+        name="hippo_chain_facts",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_corpus_size",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_count_by_agent",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_dashboard_overview",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_dashboard_overview_v2",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_document_get",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_document_list",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_document_search",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_document_versions",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_episode_batch_get",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_episode_get",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_facts_topics",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_health",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_skill_describe",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_skill_top",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_skills_recent",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_stats",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_status",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
+    ),
+    ToolCapability(
+        name="hippo_transcript_recall",
+        capability="READ", risk_level="low",
+        reversibility="yes", gating_bypass=True,
     ),
 )
 

@@ -954,38 +954,17 @@ def _rotate_audit_if_needed(path: Path) -> None:
 # Bypass list: known read-only tools we don't gate (efficiency + UX).
 # These are the high-volume safe ops that would otherwise pay an
 # audit-write cost on every recall.
-GATING_BYPASS_LIST: frozenset[str] = frozenset({
-    # Read-only memory queries — high volume, no side effects.
-    "hippo_facts_search",
-    "hippo_facts_recall",
-    "hippo_facts_list",
-    "hippo_facts_recent",
-    "hippo_recall",
-    "hippo_transcript_recall",
-    "hippo_document_list",
-    "hippo_document_versions",
-    "hippo_document_search",
-    "hippo_document_get",
-    "hippo_episode_list",
-    "hippo_episode_get",
-    "hippo_episode_batch_get",
-    "hippo_chain_show",
-    "hippo_chain_latest",
-    "hippo_chain_facts",
-    "hippo_undo_list",
-    "hippo_health",
-    "hippo_stats",
-    "hippo_status",
-    "hippo_dashboard_overview",
-    "hippo_dashboard_overview_v2",
-    # Inspection / list / count tools.
-    "hippo_count_by_agent",
-    "hippo_skill_describe",
-    "hippo_skill_top",
-    "hippo_skills_recent",
-    "hippo_facts_topics",
-    "hippo_corpus_size",
-})
+# La lista DERIVA dalla matrice: `gating_bypass=True` in
+# `tool_registry.REGISTRY`. Prima del 03/09 era scritta a mano qui, ed
+# erano due classificazioni parallele — 28 voci contro 20, cinque in
+# comune, e due nomi che non corrispondevano a nessun tool.
+def _bypass_dal_registro() -> frozenset[str]:
+    from .tool_registry import REGISTRY
+    return frozenset(n for n, c in REGISTRY._caps.items()
+                     if getattr(c, "gating_bypass", False))
+
+
+GATING_BYPASS_LIST = _bypass_dal_registro()
 
 
 def _audit_capability_call(
@@ -2822,6 +2801,24 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "months/years later ('what did the client say in "
                             "March?'). Integrity guards stay (future timestamp "
                             "= tamper, valid_until hard-expire)."
+                        ),
+                    },
+                    "include_superseded": {
+                        "type": "boolean", "default": False,
+                        "description": (
+                            "Also return facts a LATER WRITE RETIRED. The "
+                            "engine has accepted this since cycle #78 and "
+                            "documents it on recall()'s own signature, but no "
+                            "surface asked for it: measured 2026-09-02, this "
+                            "schema had no such field and seven calls to "
+                            "semantic.recall( out of seven omitted it. "
+                            "NOT a synonym of `as_of` (which answers with what "
+                            "was current AT an instant) nor of `deep` (which "
+                            "lifts age hiding, not retirement): proven the "
+                            "same day on a copy of the store, a retired fact "
+                            "scored 0 hits with `deep` and 1 with this flag. "
+                            "Default False keeps every existing caller "
+                            "byte-identical."
                         ),
                     },
                 },
@@ -7773,6 +7770,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             or bool(arguments.get("deep"))
             or bool(arguments.get("include_legacy"))
             or bool(arguments.get("trust_signals"))
+            #: La REST porta solo (query, k): delegarle una recall che chiede i
+            #: RITIRATI restituirebbe la vista di default — cioè esattamente i
+            #: fatti che il chiamante ha chiesto di NON escludere — e la
+            #: risposta non porta modo di accorgersene. È il caso che il
+            #: commento qui sopra descrive («echo it back as if applied»), e
+            #: senza questa riga il filtro nuovo cadeva proprio in quel buco.
+            or bool(arguments.get("include_superseded"))
         )
         _rm = _remote() if not _blocking else None
         if not _blocking and _remote_auth_error:
@@ -13887,6 +13891,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
             if arguments.get("deep"):
                 _pf["deep"] = True   # v14 archaeology: lift age hiding only
+            if arguments.get("include_superseded"):
+                # I RITIRATI CHE IL GIUDICE SOSTIENE ANCORA. Stessa forma di
+                # `deep` qui sopra — si passa SOLO quando chiesto, cosi' la
+                # firma della chiamata resta invariata per i semantics
+                # mockati che non accettano il kwarg.
+                _pf["include_superseded"] = True
             # Apre la registrazione di COME verra' ordinata questa risposta.
             # Misurato il 30/07: tre chiamate identiche di fila davano insiemi
             # diversi (un fatto dentro a freddo, un altro a caldo) perche' il

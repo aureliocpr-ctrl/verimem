@@ -1393,6 +1393,12 @@ def recall_cmd(
     include_beliefs: bool = typer.Option(False, "--include-beliefs", help=(
         "Also return unverified user assertions. They never win a conflict "
         "and are marked as what they are.")),
+    include_superseded: bool = typer.Option(False, "--include-superseded", help=(
+        "Also return facts a later write RETIRED. Different from --as-of, "
+        "which answers with what was current at an instant: this answers with "
+        "everything that has ever held, now. Different from --deep too, which "
+        "reaches memories dormant by freshness, not retired ones. The engine "
+        "has had this since cycle #78; no surface asked for it until now.")),
     min_relevance: str = typer.Option("", "--min-relevance", help=(
         "Floor below which this returns NOTHING instead of the nearest "
         "neighbours: a number, or `auto` to let the store measure it on "
@@ -1454,6 +1460,7 @@ def recall_cmd(
                     with_history=with_history,
                     history_hops=history_hops,
                     include_beliefs=include_beliefs,
+                    include_superseded=include_superseded,
                     min_relevance=pavimento)
     if not hits:
         # Un pavimento che svuota la lista NON è «non ho trovato niente»: sono

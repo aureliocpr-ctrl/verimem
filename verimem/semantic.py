@@ -4134,7 +4134,8 @@ class SemanticMemory:
             hits_2t = self._maybe_fuse_ppr(
                 query, hits_2t, k, topic_prefix=topic_prefix, topic=topic,
                 exclude_legacy=exclude_legacy, min_status=min_status,
-                include_conversational=include_conversational)
+                include_conversational=include_conversational,
+                include_superseded=include_superseded)
             return self._attach_trust_signals(hits_2t) if trust_signals else hits_2t
 
         # Cycle #135 (2026-05-17): hot-path cache for the common case
@@ -4323,7 +4324,8 @@ class SemanticMemory:
                 hits_2t = hits_2t[:k]
             hits_2t = self._maybe_fuse_ppr(
                 query, hits_2t, k,
-                exclude_legacy=exclude_legacy, min_status=min_status)
+                exclude_legacy=exclude_legacy, min_status=min_status,
+                include_superseded=include_superseded)
             # bump-on-recall (no open txn on this cache path -> safe to write).
             # deep = archaeology: a read of the PAST must not refresh
             # last_verified_at, or one time-travel query resurrects dormant
@@ -4490,7 +4492,8 @@ class SemanticMemory:
         hits_2t = self._maybe_fuse_ppr(
             query, hits_2t, k, topic_prefix=topic_prefix, topic=topic,
             exclude_legacy=exclude_legacy, min_status=min_status,
-            include_conversational=include_conversational)
+            include_conversational=include_conversational,
+            include_superseded=include_superseded)
         # bump-on-recall (outside the read txn -> no nested connection).
         # deep = archaeology, read-only w.r.t. freshness (review 5-lenti C3).
         if not deep:
@@ -4816,6 +4819,16 @@ class SemanticMemory:
         *, topic_prefix: str | None = None, topic: str | None = None,
         exclude_legacy: bool = False, min_status: str | None = None,
         include_conversational: bool = False,
+        #: I RITIRATI, quando il chiamante li ha chiesti al recall. Mancava, e
+        #: la lista lessicale della fusione li escludeva per costruzione
+        #: (`bm25_rank._CURATED` era una costante): il flag arrivava a
+        #: `recall()` e si fermava lì. ⚠️ NON è dimostrato che questa fosse la
+        #: causa del caso misurato il 02/09 sulla porta MCP — anzi, i filtri su
+        #: `fused` qui sotto non toccano i superseduti e il fusion «ripesca dal
+        #: corpus INTERO», quindi un ritirato già presente fra i dense hits non
+        #: verrebbe tolto. Resta un buco reale a prescindere: chi chiede i
+        #: ritirati non li avrà mai dalla via lessicale.
+        include_superseded: bool = False,
     ) -> list[tuple[Fact, float]]:
         """Opt-in (ENGRAM_PPR_FUSION): RRF-fuse query-auto-seeded entity-PPR AND
         BM25-lexical into the result AFTER the CE-rerank (the 3-signal fusion;
@@ -4867,7 +4880,8 @@ class SemanticMemory:
             from .bm25_rank import bm25_fact_ids
             from .ppr_seed import fuse_dense_and_ppr, ppr_seeded_fact_ids
             ppr_ids = ppr_seeded_fact_ids(query, self._recall_entity_store())
-            bm25_ids = bm25_fact_ids(query, self.db_path)
+            bm25_ids = bm25_fact_ids(query, self.db_path,
+                                     include_superseded=include_superseded)
             if not ppr_ids and not bm25_ids:
                 return hits
             # live_only=True: gli extra-id PPR/BM25 sono fetchati col MEDESIMO

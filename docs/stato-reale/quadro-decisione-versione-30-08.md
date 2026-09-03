@@ -148,3 +148,10 @@ non sa di dover lanciare — il quickstart deve contenerlo, o il primo `remember
 con source deve procurarsi il giudice da solo (in `main` `ensure_gate_model()`
 è chiamata solo dal `warmup`, `cli.py:594`); (b) il peso e il tempo
 dell'installazione vanno dichiarati, o serve un profilo leggero.
+
+## 03/09 21:57 — primo verdetto verde completo di `main` dal 25 agosto
+
+- **Commit**: `8fca33f0` · run `ci` **33793094834**: `test` ubuntu 3.10/3.11/3.12/3.13 SUCCESS, macos SUCCESS, windows SUCCESS, `build (sdist + wheel)` SUCCESS; i due `wheel install-from-scratch` in corso al momento della scrittura (erano SUCCESS sul run precedente `33785809525`, d0a248a1). Ultimo verde prima di questo: #941, `18e434e3`, 25/08.
+- **Cosa c'è dentro rispetto alla 0.7.1**: fase 0 chiusa (13 rossi pagati o ritirati con motivo, uno per uno, letti da TUTTI i job); la cura di `c857752e` (le self-claim impersonali tornano fermate, i fatti tecnici di terzi restano: 5 su 12.855, ws7); `quarantined_by` che nomina chi ha trattenuto (ws2); i marcatori `*-observe` che non decidono né chiudono (lead, 0cec6422 e 2168ff80); il giudice che si annuncia (ws5, b5f8f2d5); l'avviso di bassa confidenza sulle tre porte con la stessa soglia e la stessa origine (ws1); la validità temporale che morde e si dichiara (ws6, in finestra); il pool del daemon a 4 worker (ws5, fade02f0); le regole di lavoro ristrutturate (lead, 71a21b2d).
+- **Come si è arrivati al verde**: silenzio sui push deciso dallo stato del run (regola B-4), un solo cancellatore e mai un run in corso; il run precedente `fade02f0` è caduto per due guasti di infrastruttura (segfault in `test_hang_watchdog`, timeout di 35 min su runner saturi) e NON conta come verdetto: debito LANT-174.
+- **Prossimo**: finestra di dieci minuti (ordine sul canale, `d98d18d019e70fcc` e successivo), poi il run del candidato al tag; se verde 6/6 + wheel: smoke Windows (ws8) e WSL (lead) sull'artefatto di QUEL commit, `scripts/cancelli_del_tag.py` EXIT=0, `git tag -d v0.7.6` locale mai pubblicato, tag `v0.7.6`, publish. Numero deciso con 3 SÌ (A).

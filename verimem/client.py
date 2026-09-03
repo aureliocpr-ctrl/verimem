@@ -1153,6 +1153,18 @@ class Memory:
                with_history: bool | str = "auto",
                history_hops: int = 5,
                include_beliefs: bool = False,
+               #: I RITIRATI CHE IL GIUDICE SOSTIENE ANCORA. Il motore ce l'ha
+               #: da `cycle #78` — `SemanticMemory.recall()` lo documenta nella
+               #: propria firma — ma NESSUNA porta lo chiedeva: misurato il
+               #: 02/09, `hippo_recall`/`hippo_facts_recall`/`hippo_facts_search`
+               #: con `include_superseded=False` nello schema e sette chiamate a
+               #: `semantic.recall(` su sette che non lo passavano. Una capacita'
+               #: costruita e irraggiungibile e' la stessa forma del moat
+               #: irraggiungibile da `add()` curato il 2026-07-04.
+               #: ⚠️ `deep` NON basta e non e' un sinonimo: raggiunge i dormienti
+               #: della freschezza, non i ritirati (provato il 02/09 su copia
+               #: dello store: 0 hit col ritirato, controllo positivo acceso).
+               include_superseded: bool = False,
                min_relevance: float | str | None = None
                ) -> list[dict[str, Any]]:
         """Recall the top-k facts for ``query``, each with its provenance — the
@@ -1234,7 +1246,8 @@ class Memory:
                 getattr(self.semantic, "_as_of_scartati", 0) or 0)
         else:
             hits = self.semantic.recall(query, k=k, deep=deep,
-                                        include_beliefs=include_beliefs)
+                                        include_beliefs=include_beliefs,
+                                        include_superseded=include_superseded)
         _degradato = (getattr(self.semantic, "_recall_degraded_count", 0) or 0
                       ) > _deg_prima
         out: list[dict[str, Any]] = []

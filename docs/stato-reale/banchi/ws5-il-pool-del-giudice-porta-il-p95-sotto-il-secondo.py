@@ -93,7 +93,7 @@ veri che importano `mcp_server`, store temporaneo per client, RAM verificata pri
 saturazione o back-pressure); e 80 giudizi non sono un carico di produzione.
 
 RIPRODUCI:
-  python docs/stato-reale/banchi/ws5-il-pool-del-giudice-porta-il-p95-sotto-il-secondo.py <venv> [n_client] [n_giudizi] [ripetizioni]
+  python docs/stato-reale/banchi/ws5-il-pool-del-giudice-porta-il-p95-sotto-il-secondo.py <venv> [n_client] [n_giudizi] [ripetizioni] [bracci]
   (ripetizioni=1 e' il banco del 02/09; =3 esegue il protocollo P1 con l'ordine alternato)
 """
 import json
@@ -276,6 +276,22 @@ def un_giro(py, venv, worker, nclient, ngiud):
 ORDINI = [(1, 2, 4), (4, 2, 1), (2, 4, 1)]
 
 
+def ordini_per(bracci):
+    """Tre ordini in cui ogni braccio gira in una posizione diversa.
+
+    ⚠️ I bracci sono un PARAMETRO dal 03/09: erano cablati a (1,2,4), e P1 ha lasciato
+    aperta la domanda «oltre 4 si continua a guadagnare?» che con i bracci fissi non si
+    poteva nemmeno porre. (Avevo scritto altrove che «il banco accetta gia' il
+    parametro»: non era vero — il quarto argomento sono le RIPETIZIONI.)
+
+    Con tre bracci gli ordini sono le tre rotazioni: ognuno gira una volta in prima,
+    una in seconda e una in terza posizione. E' un bilanciamento migliore dei tre
+    ordini cablati di prima, dove il braccio di mezzo capitava due volte in seconda.
+    """
+    a, b, c = bracci
+    return [(a, b, c), (c, a, b), (b, c, a)]
+
+
 def carico_macchina():
     """RAM libera (GB), CPU (%), numero di processi python e loro RSS totale (GB).
 
@@ -321,7 +337,7 @@ def mediana(xs):
     return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
 
 
-def verdetto_p1(esiti, nrip):
+def verdetto_p1(esiti, nrip, atteso=None):
     """Il verdetto del protocollo P1 (docs/stato-reale/ws5-P1-predizione-pool-ripetibile.md).
 
     ⚠️ Qui NON si stampa un numero solo per configurazione. Il difetto che questo blocco
@@ -365,7 +381,10 @@ def verdetto_p1(esiti, nrip):
     # ATTESO sono due cose diverse, e la seconda e' quella che era stata predetta.
     # Il mio banco di prova non l'ha visto perche' in tutti i casi che avevo scritto il
     # vincitore costante era sempre 2: non avevo mai provato «costante ma un altro».
-    ATTESO = 2
+    # ⚠️ NON piu' cablato: l'atteso e' cio' che la raccomandazione CORRENTE dice, e il
+    # 03/09 P1 l'ha spostata da 2 a 4. Un «atteso» cablato in un banco che gira per
+    # giorni misura la predizione di ieri contro i dati di oggi.
+    ATTESO = atteso if atteso is not None else 2
     if len(set(vincitori)) != 1:
         print("     🔴 P1.a CADE: vincitori diversi %s — l'ordine (o il rumore) decide,"
               % vincitori)
@@ -380,11 +399,16 @@ def verdetto_p1(esiti, nrip):
               % (ATTESO, vincitori[0]))
         print("        ⇒ La raccomandazione precedente e' FALSIFICATA, non confermata.")
 
-    print("\n  --- P1.b: il RAPPORTO p95(1)/p95(2) sta fra 1,5 e 2,2? ---")
+    print("\n  --- P1.b: il RAPPORTO p95(%s)/p95(%s) sta fra 1,5 e 2,2? ---"
+          % (min(r["worker"] for r in esiti), ATTESO))
     rapporti = []
     for rip in range(1, nrip + 1):
-        uno = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == 1), None)
-        due = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == 2), None)
+        # il rapporto si legge fra il braccio PIU' PICCOLO e quello atteso: con bracci
+        # (2,4,8) chiedere «1 contro 2» nominerebbe due configurazioni assenti, e il
+        # criterio TACEREBBE invece di dire che non puo' rispondere.
+        pic = min(r["worker"] for r in esiti)
+        uno = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == pic), None)
+        due = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == ATTESO), None)
         if not uno or not due or not pct(due["lat"], .95):
             continue
         q = pct(uno["lat"], .95) / pct(due["lat"], .95)
@@ -399,9 +423,11 @@ def verdetto_p1(esiti, nrip):
               "l'entita' predetta no.")
 
     print("\n  --- P1.d: il RANGE e' minore della differenza fra 1 e 2 worker? ---")
-    if 1 in med and 2 in med:
-        differenza = abs(med[1] - med[2])
-        peggiore = max(rng.get(1, 0), rng.get(2, 0))
+    pic = min(med) if med else None
+    if pic is not None and ATTESO in med and pic != ATTESO:
+        differenza = abs(med[pic] - med[ATTESO])
+        peggiore = max(rng.get(pic, 0), rng.get(ATTESO, 0))
+        print("     confronto: %d worker contro %d" % (pic, ATTESO))
         print("     differenza fra le mediane: %.3fs" % differenza)
         print("     range piu' largo fra i due bracci: %.3fs" % peggiore)
         if peggiore < differenza:
@@ -423,6 +449,11 @@ def main():
     ngiud = int(sys.argv[3]) if len(sys.argv) > 3 else 10
     # 1 = il banco del 02/09, identico e riproducibile. 3 = il protocollo P1.
     nrip = int(sys.argv[4]) if len(sys.argv) > 4 else 1
+    # i BRACCI, dal 03/09: "2,4,8" per la domanda che P1 ha lasciato aperta.
+    bracci = tuple(int(x) for x in sys.argv[5].split(",")) if len(sys.argv) > 5 else (1, 2, 4)
+    if len(bracci) != 3:
+        print("  i bracci devono essere TRE (gli ordini sono le tre rotazioni)")
+        raise SystemExit(2)
     py = os.path.join(venv, "Scripts", "python.exe")
     if not os.path.exists(py):
         print("  🔴 venv assente: %s" % venv)
@@ -461,7 +492,7 @@ def main():
           % ("worker", "p50", "p95", "max", "giudizi/s", "daemon RSS", "giudicate"))
     print("  " + "-" * 76)
     esiti = []
-    for rip, ordine in enumerate(ORDINI[:nrip], 1):
+    for rip, ordine in enumerate(ordini_per(bracci)[:nrip], 1):
         if nrip > 1:
             print("  --- ripetizione %d/%d, ordine dei bracci %s ---"
                   % (rip, nrip, "->".join(str(x) for x in ordine)))
@@ -492,7 +523,7 @@ def main():
     if not esiti:
         return
     if nrip > 1:
-        verdetto_p1(esiti, nrip)
+        verdetto_p1(esiti, nrip, atteso=4 if 4 in bracci else bracci[0])
         return
     base = next((r for r in esiti if r["worker"] == 1), esiti[0])
     print("\n=== LA PREDIZIONE REGGE? ===")

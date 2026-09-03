@@ -165,9 +165,16 @@ def main():
               "interrogare.", flush=True)
         return 2
 
-    tool = cand[0]
+    # ⚠️ ENTRAMBE LE PORTE, e non per completezza: nel dispatcher
+    # `hippo_facts_search` (riga 12667) chiama `_avvisi_di_lettura` con
+    # `ripiego=_ramo`, `hippo_facts_recall` (14016) senza. Due chiamate diverse
+    # alla stessa funzione possono dare due risposte diverse, e provarne una
+    # sola sarebbe la forma «una cura su una superficie sola» applicata alla
+    # misura invece che al codice.
     q = "ricetta carbonara guanciale pecorino uova"
-    for eti, var in (("senza la variabile", None), ("con 0.95", "0.95")):
+    for tool in cand:
+      print(f"porta {tool}", flush=True)
+      for eti, var in (("senza la variabile", None), ("con 0.95", "0.95")):
         sp, grezza = giro(var, tool, q)
         if not sp:
             print(f"  {eti:22} NESSUN `sotto_il_pavimento` NELLA RISPOSTA", flush=True)
