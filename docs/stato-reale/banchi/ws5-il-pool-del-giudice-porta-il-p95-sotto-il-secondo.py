@@ -238,13 +238,117 @@ def un_giro(py, venv, worker, nclient, ngiud):
             "priv": m["priv"], "durata": durata_tot}
 
 
+# Gli ordini delle ripetizioni per il protocollo P1. NON sono tre permutazioni a caso:
+# ogni braccio deve girare in una posizione DIVERSA fra le tre ripetizioni, altrimenti
+# «posizione» ed «effetto del pool» restano confusi esattamente come prima.
+#
+#     ripetizione 1:  1 2 4      il braccio 1 gira 1a, 3a, 3a
+#     ripetizione 2:  4 2 1      il braccio 2 gira 2a, 2a, 1a   <- l'unico fisso in mezzo
+#     ripetizione 3:  2 4 1      il braccio 4 gira 3a, 1a, 2a
+#
+# ⚠️ Il braccio «2» capita due volte in seconda posizione: e' il limite di tre sole
+# ripetizioni su tre bracci, e va DETTO invece di lasciarlo credere bilanciato. Se P1.a
+# regge, questo limite non morde; se «2» vincesse sempre e solo in seconda posizione,
+# servirebbe una quarta ripetizione con 2 in prima o in terza per separarli davvero.
+ORDINI = [(1, 2, 4), (4, 2, 1), (2, 4, 1)]
+
+
+def mediana(xs):
+    s = sorted(xs)
+    n = len(s)
+    if not n:
+        return 0.0
+    return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+
+def verdetto_p1(esiti, nrip):
+    """Il verdetto del protocollo P1 (docs/stato-reale/ws5-P1-predizione-pool-ripetibile.md).
+
+    ⚠️ Qui NON si stampa un numero solo per configurazione. Il difetto che questo blocco
+    esiste per non ripetere e' proprio quello: il 02/09 ho consegnato «2 worker, -47%»
+    da UNA esecuzione, in un banco che nello stesso respiro dichiarava una varianza del
+    92% sul valore assoluto. Un rapporto misurato una volta non e' piu' solido di un
+    valore misurato una volta.
+    """
+    per_worker = {}
+    for r in esiti:
+        per_worker.setdefault(r["worker"], []).append(r)
+
+    print("\n" + "=" * 78)
+    print("=== P1 — IL VERDETTO SU %d RIPETIZIONI ===" % nrip)
+    print("  %-8s %10s %10s %10s %10s   %s"
+          % ("worker", "p95 med", "p95 min", "p95 max", "range", "posizioni"))
+    print("  " + "-" * 74)
+    med = {}
+    rng = {}
+    for w in sorted(per_worker):
+        p95s = [pct(r["lat"], .95) for r in per_worker[w]]
+        med[w] = mediana(p95s)
+        rng[w] = max(p95s) - min(p95s)
+        print("  %-8d %9.3fs %9.3fs %9.3fs %9.3fs   %s"
+              % (w, med[w], min(p95s), max(p95s), rng[w],
+                 ", ".join(str(r["posizione"]) for r in per_worker[w])))
+
+    print("\n  --- P1.a: l'ORDINE cambia il verdetto? ---")
+    vincitori = []
+    for rip in range(1, nrip + 1):
+        della_rip = [r for r in esiti if r["ripetizione"] == rip]
+        if not della_rip:
+            continue
+        v = min(della_rip, key=lambda r: pct(r["lat"], .95))
+        vincitori.append(v["worker"])
+        print("     ripetizione %d: vince %d worker (girava in posizione %d)"
+              % (rip, v["worker"], v["posizione"]))
+    if len(set(vincitori)) == 1:
+        print("     ✅ P1.a REGGE: lo stesso braccio vince in tutte, a ordini diversi.")
+    else:
+        print("     🔴 P1.a CADE: vincitori diversi %s — l'ordine (o il rumore) decide,"
+              % vincitori)
+        print("        non il pool. La raccomandazione di ieri NON e' ripetibile.")
+
+    print("\n  --- P1.b: il RAPPORTO p95(1)/p95(2) sta fra 1,5 e 2,2? ---")
+    rapporti = []
+    for rip in range(1, nrip + 1):
+        uno = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == 1), None)
+        due = next((r for r in esiti if r["ripetizione"] == rip and r["worker"] == 2), None)
+        if not uno or not due or not pct(due["lat"], .95):
+            continue
+        q = pct(uno["lat"], .95) / pct(due["lat"], .95)
+        rapporti.append(q)
+        print("     ripetizione %d: %.2f" % (rip, q))
+    if rapporti and all(1.5 <= q <= 2.2 for q in rapporti):
+        print("     ✅ P1.b REGGE.")
+    elif rapporti and any(q < 1.15 for q in rapporti):
+        print("     🔴 P1.b CADE sotto 1,15: il guadagno non e' distinguibile dal rumore.")
+    elif rapporti:
+        print("     🟡 P1.b fuori dalla forchetta ma sopra 1,15: il guadagno c'e', "
+              "l'entita' predetta no.")
+
+    print("\n  --- P1.d: il RANGE e' minore della differenza fra 1 e 2 worker? ---")
+    if 1 in med and 2 in med:
+        differenza = abs(med[1] - med[2])
+        peggiore = max(rng.get(1, 0), rng.get(2, 0))
+        print("     differenza fra le mediane: %.3fs" % differenza)
+        print("     range piu' largo fra i due bracci: %.3fs" % peggiore)
+        if peggiore < differenza:
+            print("     ✅ P1.d REGGE: la differenza sopravvive alla dispersione.")
+        else:
+            print("     🔴 P1.d CADE: il range COPRE la differenza.")
+            print("        ⇒ Si scrive «su questa macchina il guadagno del pool non e'")
+            print("           distinguibile», col numero accanto — NON «il pool non serve».")
+            print("           Sono due affermazioni diverse e solo la prima e' misurata.")
+    print("=" * 78)
+
+
 def main():
     if len(sys.argv) < 2:
-        print("uso: python %s <venv> [n_client] [n_giudizi]" % sys.argv[0])
+        print("uso: python %s <venv> [n_client] [n_giudizi] [ripetizioni]" % sys.argv[0])
         raise SystemExit(2)
     venv = sys.argv[1]
     nclient = int(sys.argv[2]) if len(sys.argv) > 2 else 8
     ngiud = int(sys.argv[3]) if len(sys.argv) > 3 else 10
+    # 1 = il banco del 02/09, identico e riproducibile. 3 = il protocollo P1.
+    nrip = int(sys.argv[4]) if len(sys.argv) > 4 else 1
     py = os.path.join(venv, "Scripts", "python.exe")
     if not os.path.exists(py):
         print("  🔴 venv assente: %s" % venv)
@@ -256,16 +360,23 @@ def main():
           % ("worker", "p50", "p95", "max", "giudizi/s", "daemon RSS", "giudicate"))
     print("  " + "-" * 76)
     esiti = []
-    for w in (1, 2, 4):
-        r = un_giro(py, venv, w, nclient, ngiud)
-        if r is None:
-            print("  %-8d 🔴 il daemon non e' diventato pronto" % w)
-            continue
-        esiti.append(r)
-        tput = len(r["lat"]) / r["durata"] if r["durata"] else 0
-        print("  %-8d %8.3fs %8.3fs %8.3fs %10.1f %11.1f %6d/%d"
-              % (w, pct(r["lat"], .5), pct(r["lat"], .95), max(r["lat"]),
-                 tput, r["rss"], r["ok"], attesi))
+    for rip, ordine in enumerate(ORDINI[:nrip], 1):
+        if nrip > 1:
+            print("  --- ripetizione %d/%d, ordine dei bracci %s ---"
+                  % (rip, nrip, "->".join(str(x) for x in ordine)))
+        for posizione, w in enumerate(ordine, 1):
+            r = un_giro(py, venv, w, nclient, ngiud)
+            if r is None:
+                print("  %-8d 🔴 il daemon non e' diventato pronto" % w)
+                continue
+            # P1.a si decide su QUESTI due campi: senza sapere in che POSIZIONE
+            # ha girato un braccio, l'effetto d'ordine resta un sospetto e basta.
+            r["ripetizione"], r["posizione"] = rip, posizione
+            esiti.append(r)
+            tput = len(r["lat"]) / r["durata"] if r["durata"] else 0
+            print("  %-8d %8.3fs %8.3fs %8.3fs %10.1f %11.1f %6d/%d"
+                  % (w, pct(r["lat"], .5), pct(r["lat"], .95), max(r["lat"]),
+                     tput, r["rss"], r["ok"], attesi))
 
     # IL CONTROLLO: se non sono tutte giudicate, i percentili non sono di giudizi
     incompleti = [r for r in esiti if r["ok"] != attesi]
@@ -278,6 +389,9 @@ def main():
         print("  ✅ tutte le configurazioni hanno giudicato %d su %d" % (attesi, attesi))
 
     if not esiti:
+        return
+    if nrip > 1:
+        verdetto_p1(esiti, nrip)
         return
     base = next((r for r in esiti if r["worker"] == 1), esiti[0])
     print("\n=== LA PREDIZIONE REGGE? ===")
@@ -311,4 +425,7 @@ def main():
         print("     va rifatto.")
 
 
-main()
+# Protetto perche' il banco va PROVATO prima di fidarsi dei suoi numeri:
+# senza questa riga, importarlo per testare `verdetto_p1` lo farebbe partire.
+if __name__ == "__main__":
+    main()

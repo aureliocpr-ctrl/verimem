@@ -27,7 +27,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-from .anti_confab_gate import run_validation_gate
+from .anti_confab_gate import _is_advisory_layer, run_validation_gate  # noqa: F401
 from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
 
@@ -3995,24 +3995,9 @@ _BLOCK_LAYER_PRIORITY = ("L3", "L4-grounding", "L1", "L4.1",
                          "SOURCE_TRUST", "L4-skipped")
 
 
-def _is_advisory_layer(layer: str) -> bool:
-    """An ``*-observe`` layer (``L3-semantic-observe``, ``SOURCE_TRUST-observe``) is an
-    OBSERVE-mode advisory: it surfaces a would-be block for MEASUREMENT but does not
-    cause the disposition. It must never own a receipt's block reason nor be credited
-    in the trust ledger — otherwise observe mode measures itself as the blocker and its
-    whole purpose (gauge a layer's block rate BEFORE enforcing) is defeated. NB: the
-    layer string ``L3-semantic-observe`` also ``.startswith("L3")`` (rank 0), so without
-    this guard it would out-rank a real L1/L4 block in ``_reason_from_warnings``.
-
-    ``*-graded`` layers (``L4-grounding-graded``, ``L4-review-graded``, graded
-    admission — design bf5d322) are the same class from the ledger's point of
-    view: they record an ADMISSION decision, never a block, so crediting one as
-    an acting blocker (critic 514cdec3 falsification caveat 4: possible when
-    ANOTHER layer quarantines the same write) would pollute exactly the
-    attribution the pre-registered flip A/B has to read."""
-    s = str(layer)
-    return s.endswith("-observe") or s.endswith("-graded")
-
+# `_is_advisory_layer` vive nel gate dal 2026-09-03 (lead): e' la superficie unica
+# della convenzione `*-observe` / `*-graded`, e i marcatori nascono li'. Qui e'
+# importata e ri-esportata con lo stesso nome: i chiamanti non cambiano.
 
 def _blocking_layers(warnings: list) -> list[str]:
     """Sorted distinct layers that ACTED on the write — advisory ``*-observe`` layers
