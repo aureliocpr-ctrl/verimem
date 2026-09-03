@@ -22965,3 +22965,61 @@ causa che ho trovato vale per questo.
 
 **In `main`**: `4520ac89`.
 **Io misuro, non curo** — e quando il rosso è un doppio rimasto indietro, si dice.
+
+---
+
+## 2026-09-03 18:57 — ws1 · 🔁 **LA PORTA MCP DICHIARAVA UNA SOGLIA DIVERSA DALL'SDK — e l'asimmetria l'avevo introdotta IO ieri.** Curata, `22 passed EXIT=0`, in `main`: `bef4ac50`
+
+**Livello** modifica del prodotto **eseguita, RED provato, pushata su `main`** ·
+**Perimetro** `verimem/mcp_server.py` + 3 test nuovi; regressione sui 4 file che presidiano
+avviso e pavimento · **Istante** 2026-09-03 18:53–18:57 · **Regime** worktree `HA-ws1-main`,
+merge *(mai rebase)*, push con retry · **Autorità**: riga ② del piano, «avviso di bassa
+confidenza sulla porta MCP» · **0.7.6**.
+
+### 🔁 Il difetto è mio, e lo dico prima del resto
+
+Ieri ho messo `_pavimento_avviso()` in `client.py` — la soglia dell'avviso, separata da
+quella del taglio, con `ENGRAM_AVVISO_MIN_RELEVANCE`. **Ma la porta MCP non riusa quel
+campo**: `_avvisi_di_lettura` **RICOSTRUISCE** l'avviso con `_pavimento_di(agent)`, che
+legge solo `_auto_relevance_floor`.
+⇒ **chi imposta la variabile la vedeva valere sull'SDK e non sulla porta dell'agente: una
+memoria, due risposte.**
+
+📌 **E il blocco che ho dovuto toccare presidia esattamente quella classe da agosto** — il
+suo docstring dice *«CLI avvisa, SDK avvisa, MCP tace»*. ⇒ **una cura fatta su una
+superficie sola riapre il difetto che un'altra cura aveva chiuso**, e lo riapre **nel punto
+che lo documentava**.
+
+### La misura, e il commento che la chiedeva già
+
+```
+RED    con `ENGRAM_AVVISO_MIN_RELEVANCE=0.95`, calibrato 0.88, migliore 0.90
+       -> la porta MCP TACE (1 failed su 3)
+GREEN  la porta dichiara 0.95            -> 22 passed EXIT=0 sui 4 file di presidio
+```
+📌 Il commento di `mcp_server.py` **dichiarava già la taratura mancante senza il numero**:
+*«quanto spesso questa nota si accenderà NON È DECISO… col pavimento che la stima produce
+scatterebbe su quasi ogni risposta»*. ⇒ **il `58,8%` che ho misurato ieri è quel “quasi
+ogni”**, e ora le due porte lo leggono con la stessa soglia.
+
+### La cura, e ciò che NON tocca
+
+`_soglia = _pavimento_avviso(pav)`, usata sia per il confronto sia per la dichiarazione.
+**Senza variabile `_pavimento_avviso` restituisce il calibrato** ⇒ **default identico**.
+⚠️ **`if pav` resta**: dove il negozio non si è calibrato i punteggi stanno su un'altra
+scala. **Il terzo test presidia proprio quello** — su un negozio non calibrato la porta
+deve tacere **anche con la variabile impostata**; senza, una cura che togliesse la guardia
+passerebbe con gli altri due verdi.
+
+### Cosa NON prova
+
+**`22 passed` è sui 4 file che presidiano avviso e pavimento, non la suite.** **Il RED è
+su un agente FINTO** *(tre attributi: `_auto_relevance_floor`, `.semantic.recall`,
+`.semantic.db_path`)*: prova l'asimmetria della soglia, **non** che un agente MCP reale la
+riceva — quella misura passa da un server vivo e non l'ho fatta. **Non cambia** che `0,839`
+non sia un default: su un altro corpus le domande **con** risposta hanno `score_migliore`
+`0,7715` e `0,603`, sul corpus vivo le vere stanno a `0,858`-`0,90`. **Qui è curata solo
+l'asimmetria fra le due porte.**
+
+**In `main`**: `bef4ac50`.
+**Io misuro, non curo** — e quando l'asimmetria l'ho fatta io, si dice prima del resto.
