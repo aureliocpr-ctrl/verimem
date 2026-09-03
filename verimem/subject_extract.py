@@ -102,6 +102,20 @@ SOFTWARE_HEADS = frozenset({
     "migrazione", "migrazioni", "modulo", "moduli", "servizio", "servizi",
     "verifica", "verifiche", "modifica", "modifiche", "libreria", "librerie",
     "flusso", "flussi", "classe", "classi", "analisi",
+    # 2026-09-03 — TERZA VOLTA DELLA STESSA FORMA, e le prime due stanno qui
+    # sopra: ogni volta che si allarga il riconoscimento del VERBO italiano,
+    # emergono TESTE italiane mancanti. Il 26/08 furono le metriche (commento
+    # sopra); il 30/08 la cura `c857752e` aggiunse `e'` ai marcatori, e da quel
+    # giorno «La funzionalita' funziona ed e' verificata.» e «L'implementazione
+    # e' finita e collaudata.» ENTRANO SERVIBILI (cella rossa 33648de6): con un
+    # marcatore in piu' il soggetto diventa risolvibile, e senza la testa in
+    # questa lista il classificatore le legge come fatti di TERZI.
+    # ⇒ Marcatori e teste sono ACCOPPIATI: chi tocca gli uni misuri le altre.
+    # Non e' una stop-list ad hoc: «funzionalita'» e «implementazione» sono il
+    # registro con cui un agente parla del PROPRIO lavoro, esattamente come
+    # `feature`/`implementation` che sono gia' fra le teste inglesi.
+    "funzionalita", "funzionalità", "funzionalita'",
+    "implementazione", "implementazioni",
 
     "service", "services", "migration", "migrations", "build", "builds",
     "deployment", "deployments", "feature", "features", "endpoint", "endpoints",
@@ -213,6 +227,16 @@ def _subject_tokens(text: str) -> list[str]:
     possessives normalized: "Tom's" -> "tom", so the entity matches its bare
     mention on the other side)."""
     subj = re.sub(r"'s\b", "", subject_of(text))
+    # ⚠️ L'ARTICOLO ELIDATO RESTAVA ATTACCATO AL SOSTANTIVO. La riga sotto
+    # toglie i non-word SENZA separare, quindi «L'implementazione» diventava il
+    # token `limplementazione` — che non e' una parola e non puo' incontrare
+    # NESSUNA testa della lista. Misurato il 2026-09-03 sulla cella rossa
+    # 33648de6: con la sola aggiunta di «implementazione» a SOFTWARE_HEADS il
+    # banco restava 1 failed, perche' il token non ci arrivava mai.
+    # Si toglie l'articolo, non si separa: `_DET` contiene «lo/la/un», non «l»,
+    # quindi separando resterebbe un token spurio «l».
+    subj = re.sub(r"\b(?:l|dell|nell|all|dall|sull|un|quest|quell)'",
+                  " ", subj, flags=re.IGNORECASE)
     toks = [re.sub(r"[^\w-]", "", t).lower() for t in subj.split()]
     return [t for t in toks if t and t not in _DET]
 
