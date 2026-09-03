@@ -38,7 +38,9 @@ from transformers import AutoModelForSequenceClassification, AutoTokenizer  # no
 
 M = "yaxili96/FactCG-DeBERTa-v3-Large"
 DATI = "benchmark/data/external/truthfulqa_pairs_heldout.jsonl"
-OUT = "_ws4_factcg_heldout.jsonl"
+# il dump esce ACCANTO agli altri, non nella cartella da cui parte il comando:
+# lanciato dalla radice scriveva un doppione non tracciato nell'albero.
+OUT = "docs/stato-reale/banchi/_ws4_factcg_heldout.jsonl"
 SOGLIA = 0.5
 
 print(f"  carico {M} su CPU…")
