@@ -3978,7 +3978,24 @@ def _is_advisory_layer(layer: str) -> bool:
     ANOTHER layer quarantines the same write) would pollute exactly the
     attribution the pre-registered flip A/B has to read."""
     s = str(layer)
-    return s.endswith("-observe") or s.endswith("-graded")
+    #: `L3-coexistence` E' DELLA STESSA CLASSE, e lo dichiara nel proprio testo:
+    #: «a contradiction was found but BOTH FACTS ARE KEPT ... both stay servable
+    #: and recall returns them together». Registra una COESISTENZA, non un
+    #: blocco — eppure non finiva ne' in `-observe` ne' in `-graded`, quindi
+    #: `_blocking_layers` lo contava fra chi ha AGITO e, con "L3" al primo posto
+    #: di `_BLOCK_LAYER_PRIORITY`, scavalcava il layer che aveva davvero
+    #: trattenuto.
+    #: Misurato il 03/09 sul caso di `test_quarantined_by_nomina_il_layer_sbagliato`:
+    #: `quarantined_by='L3-coexistence'` mentre a trattenere era `L4-review`
+    #: («borderline grounding in the CE review band»). Chi indaga un rifiuto
+    #: legge quella colonna e trovava il nome di un layer che dichiara di aver
+    #: lasciato passare: non un'etichetta mancante, un'etichetta che dice il
+    #: contrario del vero.
+    #: ⚠️ Vale per la COESISTENZA, non per tutta la famiglia L3:
+    #: `L3-supersession` («the older value is superseded») una decisione la
+    #: prende, e resta un layer che agisce.
+    return (s.endswith("-observe") or s.endswith("-graded")
+            or s == "L3-coexistence")
 
 
 def _blocking_layers(warnings: list) -> list[str]:
