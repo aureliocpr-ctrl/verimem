@@ -1001,11 +1001,19 @@ def _audit_capability_call(
         if arguments.get("_capability_override"):
             override_signals.append("_capability_override")
         signals = ",".join(override_signals) if override_signals else "none"
+        # Le CHIAVI degli argomenti, mai i valori. Senza di esse la riga porta
+        # solo `args_hash`, che non si inverte: da un'impronta non si sa se il
+        # tool e' stato chiamato con `query` o con `fact_id`, e i tool non
+        # ancora nella matrice (230 su 250, misurati il 03/09) resterebbero
+        # classificabili solo a indovinare. I VALORI restano fuori: lo scudo
+        # PII di `_audit` e' deliberato, e un test lo presidia
+        # (`test_i_valori_NON_finiscono_nel_log`).
         _audit(
             name, arguments,
             outcome=f"cap_{decision}",
             error=f"risk={getattr(cap, 'risk_level', '?')} "
                   f"signals={signals} reason={reason[:120]}",
+            detail={"arg_keys": sorted(str(k) for k in arguments)},
         )
     except Exception as exc:  # noqa: BLE001 — audit must never block
         log.warning("mcp_capability_audit_write_failed", error=str(exc))
