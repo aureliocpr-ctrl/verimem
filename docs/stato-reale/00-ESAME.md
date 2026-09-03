@@ -23295,3 +23295,45 @@ l'output grezzo prima di dichiarare.**
 docstring, scritte prima)*.
 **Io misuro, non curo** — e il difetto che temevo non c'era: c'ero io che interrogavo la
 porta sbagliata.
+
+---
+
+## 2026-09-03 20:55 — ws1 · ✅ **Chiuso anche l'ultimo residuo: le DUE porte MCP che emettono l'avviso danno gli STESSI numeri, benché il dispatcher le chiami in modo diverso.** Commit locale, **NON pushato**: silenzio vero attivo
+
+**LIVELLO: PORTA** — server MCP vivo in **JSON-RPC su stdio**, 249 tool, 4 chiamate ·
+**Istante** 2026-09-03 20:52–20:55 · **Regime** un processo per giro, chiuso in `finally`,
+`claim inferenza/slot 8e43474b8761` · **0.7.6**.
+
+```
+porta hippo_facts_recall
+  senza la variabile  {"pavimento": 0.8805, "score_migliore": 0.8269, "nota": "...calibrata su questo corpus..."}
+  con 0.95            {"pavimento": 0.95,   "score_migliore": 0.8269, "nota": "...impostata con ENGRAM_AVVISO_MIN_RELEVANCE..."}
+porta hippo_facts_search
+  senza la variabile  {"pavimento": 0.8805, "score_migliore": 0.8269, "nota": "...calibrata su questo corpus..."}
+  con 0.95            {"pavimento": 0.95,   "score_migliore": 0.8269, "nota": "...impostata con ENGRAM_AVVISO_MIN_RELEVANCE..."}
+```
+
+### La riserva che avevo dichiarato, e come si scioglie
+
+Nel dispatcher le due porte chiamano `_avvisi_di_lettura` **in modo diverso**:
+`hippo_facts_search` *(riga 12667)* passa `ripiego=_ramo`, `hippo_facts_recall` *(14016)*
+no. ⇒ avevo dichiarato che **potevano non comportarsi identiche**, e provarne una sola
+sarebbe stata la forma *«una cura su una superficie sola»* **applicata alla misura invece
+che al codice**. **Misurate entrambe: identiche sull'avviso.**
+
+### Dove siamo, in una riga
+
+**Le tre porte del prodotto — CLI, SDK, MCP — e le due porte MCP dell'avviso, provate sul
+corpus vivo ognuna dal suo protocollo, danno la stessa soglia e la stessa origine.**
+
+### Cosa NON prova
+
+**Quattro chiamate, una query, un solo store.** **Il server gira in locale sullo stesso
+disco**: nessuna prova su un trasporto remoto. **La query fuori dominio l'ho scelta io**:
+non è un campione. **`recall` e `ask` restano mai misurati** benché leggano la stessa
+variabile di `search`. **Non cambia** che `0,839` non sia un default.
+
+📌 **Commit LOCALE, non pushato**: silenzio vero attivo *(nessun push su `main` finché il
+run di `fade02f0` non conclude)*.
+
+**Io misuro, non curo** — e una riserva dichiarata si scioglie misurandola, non lasciandola scritta.
