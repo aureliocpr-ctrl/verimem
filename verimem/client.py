@@ -1264,7 +1264,10 @@ class Memory:
             _scartati_dal_tempo = int(
                 getattr(self.semantic, "_as_of_scartati", 0) or 0)
         else:
-            self.semantic._recall_scaduti = 0  # noqa: SLF001 — come `_as_of_scartati`
+            # L'azzeramento NON sta piu' qui: stava dentro questo `else`, e
+            # quindi il ramo `as_of` sopra non lo toccava affatto. Ora e' la
+            # prima riga di `SemanticMemory.recall` — una superficie sola, che
+            # copre entrambi i rami perche' `recall_as_of` passa da li'.
             hits = self.semantic.recall(query, k=k, deep=deep,
                                         include_beliefs=include_beliefs,
                                         include_superseded=include_superseded)
@@ -1362,7 +1365,27 @@ class Memory:
         # Il pattern e' quello di `_as_of_scartati` (poco sopra): l'attributo
         # e' scritto dalla chiamata appena fatta e si legge subito, prima che
         # qualsiasi altra lettura possa sovrascriverlo.
-        _scaduti = int(getattr(self.semantic, "_recall_scaduti", 0) or 0)
+        # LA DECISIONE STA QUI, dove si sanno i punteggi dei risultati DAVVERO
+        # serviti: uno scaduto conta come «tolto dalla risposta» solo se la sua
+        # somiglianza reggeva il confronto col PEGGIORE dei serviti. Cosi'
+        # l'avviso parla della domanda fatta e non del contenuto dello store —
+        # che era il difetto: con un solo fatto scaduto in casa usciva a ogni
+        # lettura, anche su domande che non lo sfioravano.
+        _sim_sc = list(getattr(self.semantic, "_recall_scaduti_sim", None) or [])
+        _scaduti = 0
+        if _sim_sc:
+            _punteggi = [float(h.get("score") or 0.0) for h in out]
+            if _punteggi:
+                _scaduti = sum(1 for x in _sim_sc if x >= min(_punteggi))
+            else:
+                # ⚠️ RISPOSTA VUOTA: si contano TUTTI, e la prima stesura qui
+                # taceva «perche' senza serviti non c'e' un metro» — cioe'
+                # zittiva esattamente il caso peggiore, quello in cui la
+                # scadenza ha portato via tutto e chi legge vede solo «no facts
+                # found» mentre i fatti c'erano. A risposta vuota un avviso non
+                # puo' essere rumore: non c'e' nulla che possa sembrare una
+                # risposta, e ogni scaduto e' una possibile causa del vuoto.
+                _scaduti = len(_sim_sc)
         _n_prima = len(out)
         _best_prima = max((float(i.get("score") or 0.0) for i in out),
                           default=0.0)

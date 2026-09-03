@@ -81,6 +81,50 @@ def test_senza_scadenze_non_dichiara_nulla(store_isolato):
     )
 
 
+def test_il_conteggio_non_sopravvive_alla_lettura_successiva(store_isolato):
+    """FALSIFICAZIONE DI QUESTA STESSA CURA, portata da un pari (ws1).
+
+    `_recall_scaduti` era un attributo di CLASSE — un valore iniziale, non un
+    reset per chiamata — e `SemanticMemory.recall` ha quattro uscite anticipate
+    PRIMA della riga che lo assegna. Peggio: l'azzeramento che avevo messo in
+    `Memory.search` stava dentro il ramo `else`, quindi una lettura con `as_of`
+    non lo toccava affatto.
+
+    ⇒ Due letture di fila sulla STESSA memoria: la prima trova uno scaduto e lo
+    dichiara giustamente; la seconda — che con la scadenza non c'entra nulla —
+    puo' riportare il numero della prima. Un avviso che compare quando non
+    serve non e' un avviso mancato: e' una bugia, ed e' l'esatto contrario di
+    cio' per cui il campo esiste.
+    """
+    from verimem import Memory
+
+    m = Memory()
+    ieri = time.time() - 86_400
+    m.add(FRASE, topic="test/eco-scaduto", source=FONTE, valid_until=ieri)
+    m.add(ALTRO, topic="test/eco-vivo", source=FONTE_ALTRO)
+
+    primo = m.recall(QUERY, k=10)
+    #: CONTROLLO POSITIVO: se la prima lettura non dichiarasse nulla, la seconda
+    #: non potrebbe ereditare niente e il test passerebbe senza misurare.
+    assert getattr(primo, "esclusi_perche_scaduti", None) is not None, (
+        "la prima lettura non dichiara: non c'e' nulla da ereditare e questo "
+        "test non sta misurando l'eco"
+    )
+
+    #: ⚠️ LA SECONDA DOMANDA E' FUORI TEMA, e la scelta e' quella che rende il
+    #: test capace di distinguere: se chiedessi la STESSA cosa, dopo la cura il
+    #: conteggio sarebbe fresco ma di nuovo 1, e un test che pretende `None`
+    #: fallirebbe su un comportamento GIUSTO. Su una domanda che non pesca
+    #: nulla di scaduto, invece, il valore fresco e' 0 e un 1 puo' venire solo
+    #: dalla chiamata precedente — cioe' esattamente l'eco che si misura.
+    secondo = m.recall("come si regola il termostato della sala macchine", k=10)
+    assert getattr(secondo, "esclusi_perche_scaduti", None) is None, (
+        f"la seconda lettura riporta il conteggio della PRIMA: "
+        f"{getattr(secondo, 'esclusi_perche_scaduti', None)!r}. Il contatore "
+        f"non viene azzerato all'ingresso e sopravvive alla chiamata"
+    )
+
+
 def test_quando_la_scadenza_toglie_un_fatto_il_recall_lo_dichiara(store_isolato):
     """Il caso: due fatti sulla stessa cosa, uno scaduto. La risposta arriva
     (l'altro c'è), ma chi legge deve sapere che sotto ne è stato tolto uno."""

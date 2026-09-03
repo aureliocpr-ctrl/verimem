@@ -3985,14 +3985,17 @@ class SemanticMemory:
         except Exception as exc:  # noqa: BLE001 — recall robustness > bump
             _LOG.warning("bump_on_recall_failed: %s", exc)
 
-    #: Quanti fatti l'ultimo `recall` ha escluso perche' SCADUTI
-    #: (`valid_until` nel passato). Azzerato a ogni chiamata: un contatore
+    #: Le SIMILARITA' dei fatti scaduti che l'ultimo `recall` ha escluso
+    #: (`valid_until` nel passato). ⚠️ QUESTO E' SOLO IL VALORE INIZIALE: il
+    #: reset vero e' la prima riga di `recall`, e il commento che stava qui
+    #: diceva «azzerato a ogni chiamata» — era falso, e un pari l'ha
+    #: falsificato. Un contatore
     #: che non si azzera fa comparire l'avviso su una lettura che non ha
     #: tolto niente, ed e' peggio di non averlo — `Risultati` esiste perche'
     #: «l'assenza del campo si legge come non ha tagliato», e un campo
     #: sempre pieno si legge come niente.
     #: Letto da `Memory.search` col pattern di `_as_of_scartati`.
-    _recall_scaduti = 0
+    _recall_scaduti_sim = ()
 
     def recall(
         self, query: str, k: int = 5, topic: str | None = None,
@@ -4045,6 +4048,16 @@ class SemanticMemory:
         filter is on by default (consistent with cycle #78 contract);
         provenance filters are opt-in.
         """
+        # ⚠️ AZZERATO QUI, ALL'INGRESSO, e non basta il valore di classe:
+        # quello e' un valore INIZIALE, non un reset. Questa funzione ha
+        # quattro uscite anticipate prima della riga che lo assegna, quindi
+        # una lettura che esce presto lasciava in piedi il conteggio di
+        # QUELLA PRECEDENTE — e l'avviso ricompariva su una domanda che non
+        # aveva tolto niente. Un avviso che esce quando non serve non e' un
+        # avviso mancato: e' una bugia, cioe' l'opposto esatto della ragione
+        # per cui il campo esiste. (Falsificazione portata da un pari, 03/09;
+        # presidio: test_il_conteggio_non_sopravvive_alla_lettura_successiva.)
+        self._recall_scaduti_sim = ()
         _validate_min_status(min_status)
         # Robustezza (hunt 2026-06-04): k<=0 -> []. Senza guard, np.argsort(-sims)[:k]
         # con k negativo restituisce N-|k| righe (k=-1 = tutto tranne l'ultima) =
@@ -4271,7 +4284,38 @@ class SemanticMemory:
             # `letto_al_passato`, e che non si ripete qui.
             # Il conteggio e' su TUTTI i candidati esaminati, quindi vale
             # indipendentemente da `deep` e da come e' andato il ranking.
-            self._recall_scaduti = int(np.count_nonzero(view_vu <= now))
+            # ⚠️ NON «quanti scaduti ci sono», MA «quanti sarebbero ENTRATI
+            # NELLA RISPOSTA». La prima stesura contava `view_vu <= now` su
+            # tutta la matrice: un numero vero e inutile, perche' non dipendeva
+            # dalla domanda — con un solo fatto scaduto nello store l'avviso
+            # usciva a OGNI lettura, anche su domande che non lo sfioravano.
+            # Un campo sempre pieno si legge come niente, che e' l'opposto
+            # esatto della ragione per cui esiste (misurato il 03/09 su una
+            # falsificazione portata da un pari: due letture di fila, la
+            # seconda fuori tema, stesso avviso).
+            #
+            # Costa qualcosa SOLO quando degli scaduti ci sono davvero: nel
+            # caso normale e' un `count_nonzero` su una maschera e si esce.
+            # ⚠️ QUI NON SI CONTA: si misura e basta. Chi puo' DECIDERE se uno
+            # scaduto «sarebbe stato servito» e' `Memory.search`, che conosce i
+            # punteggi dei risultati davvero serviti; qui si conoscono solo i
+            # candidati. Due criteri decisi da qui sono caduti per la stessa
+            # ragione: «quanti scaduti ci sono» e' un numero vero e inutile
+            # (usciva a OGNI lettura, anche fuori tema), e «quanti entrerebbero
+            # nei primi k» e' cieco su uno store piccolo, dove tutto entra nei
+            # primi k. Quindi si espone la materia prima e decide chi ha il
+            # contesto. (Falsificazione portata da un pari, 03/09.)
+            _idx_sc = np.nonzero(view_vu <= now)[0]
+            self._recall_scaduti_sim = ()
+            if _idx_sc.size:
+                try:
+                    _s = np.asarray(
+                        embedding.cosine_matrix(q_emb, view_matrix[_idx_sc])
+                    ).reshape(-1)
+                    self._recall_scaduti_sim = tuple(float(x) for x in _s)
+                except Exception:  # noqa: BLE001 — meglio tacere che mentire
+                    # Un avviso sbagliato e' peggio di un avviso assente.
+                    self._recall_scaduti_sim = ()
             if not bool(fresh_mask.all()):
                 fresh_idx = np.nonzero(fresh_mask)[0]
                 if fresh_idx.size == 0:
