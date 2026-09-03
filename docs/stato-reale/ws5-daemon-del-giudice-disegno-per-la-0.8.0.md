@@ -31,7 +31,8 @@ protocollo   una riga JSON per richiesta, una per risposta, terminate da \n
              {"claim": ..., "fonte": ...}  ->  {"g": <punteggio> | null}
 avvio        il primo client che non trova il daemon lo spawna e attende il discovery;
              gli altri si connettono e basta
-pool         2 worker (semaforo sullo stesso scorer) — NON 4
+pool         2 worker (semaforo sullo stesso scorer) — NON 4  ⚠️ UNA SOLA ESECUZIONE,
+             in verifica con la predizione P1 (ws5-P1-predizione-pool-ripetibile.md)
 daemon giù   fallback in-process + DICHIARAZIONE in ricevuta, mai silenzioso
 ```
 
@@ -78,9 +79,31 @@ giudicato», che è esattamente la bugia che questo prodotto esiste per non dire
 stessa forma del difetto che ho misurato da utente stamattina: `remember` stampava
 `admitted` con EXIT 0 mentre il moat era spento, e solo `doctor` lo sapeva.
 
-⛔ **QUESTO RAMO NON È MAI STATO PROVATO.** È progettato, non misurato — e finché non lo
-è, il disegno ha un pezzo che nessuno ha visto funzionare. **È il primo lavoro da fare
-quando il fermo termico viene revocato.**
+✅ **PROVATO il 02/09 alle 22:16** — questa riga diceva «MAI STATO PROVATO» e lo ha
+detto per 21 ore *dopo* che la misura era stata fatta: il banco che la smentisce
+(`ws5-il-fallback-quando-il-daemon-cade.py`, commit `796de341`) era rimasto su un ramo e
+non è mai arrivato su main. Chi leggeva main vedeva un debito che non c'era più. Il banco
+è qui accanto adesso, e l'esito è questo:
+
+| | durata | via | grounding | esito |
+|---|---|---|---|---|
+| 1-4 | 0,158-0,160 s | daemon | 0,53 / 99,24 / 0,53 / 99,67 | 2 fermate, 2 ammesse |
+| | | ⚡ **daemon ucciso** | | |
+| 5 | **16,195 s** | in-process | 0,53 | fermata |
+| 6-8 | 2,192-2,283 s | in-process | 99,24 / 0,53 / 99,67 | corrette |
+
+**Il fallback funziona e GIUDICA**: zero scritture perse, il claim falso resta fermato
+anche in-process, e la ricevuta porta `via` = daemon | in-process, così «ha funzionato»
+non confonde chi ha giudicato.
+
+⚠️ **Ma il daemon che cade non degrada dolcemente**: la prima richiesta dopo la caduta
+passa da **0,159 s a 16,195 s** — cento volte — perché quel client paga il caricamento
+del modello. E ogni client che ricade ne carica **una copia propria**, cioè torna il costo
+di memoria che il daemon esisteva per togliere.
+
+⇒ **Il disegno ha bisogno di una riga che non ho ancora scritto**: cosa fare quando il
+daemon cade sotto carico — riavviarlo dal primo client che se ne accorge, accettare N
+copie, o rifiutare. L'unica opzione esclusa è la scrittura che fallisce.
 
 ---
 
