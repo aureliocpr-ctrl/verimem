@@ -253,6 +253,33 @@ def un_giro(py, venv, worker, nclient, ngiud):
 ORDINI = [(1, 2, 4), (4, 2, 1), (2, 4, 1)]
 
 
+def carico_macchina():
+    """RAM libera (GB), CPU (%), numero di processi python e loro RSS totale (GB).
+
+    Via PowerShell perche' `psutil` non e' fra le dipendenze del prodotto e un banco
+    non deve chiedere di installare nulla per poter misurare.
+    """
+    ps = (
+        "$p=Get-Process python,python3,pythonw -ErrorAction SilentlyContinue;"
+        "$o=Get-CimInstance Win32_OperatingSystem;"
+        "$c=(Get-CimInstance Win32_Processor|Measure-Object -Property LoadPercentage"
+        " -Average).Average;"
+        "'{0} {1} {2} {3}' -f [math]::Round($o.FreePhysicalMemory/1MB,2),$c,"
+        "@($p).Count,[math]::Round((($p|Measure-Object WorkingSet64 -Sum).Sum)/1GB,2)"
+    )
+    try:
+        r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
+                           capture_output=True, text=True, timeout=60)
+        libera, cpu, n, rss = r.stdout.split()
+        return float(libera), int(float(cpu)), int(n), float(rss)
+    except Exception as e:
+        # ⚠️ NON si finge un carico basso quando non lo si sa misurare: si dichiara.
+        # Restituire (99, 0, ...) farebbe passare il criterio d'ingresso in silenzio.
+        print("  ⚠️ carico NON MISURABILE (%s): il criterio d'ingresso non puo' "
+              "decidere e il banco parte comunque — dillo nella cella." % str(e)[:60])
+        return 99.0, 0, 0, 0.0
+
+
 def mediana(xs):
     s = sorted(xs)
     n = len(s)
@@ -353,6 +380,33 @@ def main():
     if not os.path.exists(py):
         print("  🔴 venv assente: %s" % venv)
         return
+    # ── I DUE RIGHELLI, PRIMA DI QUALSIASI NUMERO ───────────────────────────
+    # ① DA DOVE importa il python che misura. Un banco lanciato dentro il repo puo'
+    #    importare `verimem` dall'albero invece che dal pacchetto installato, e allora
+    #    misura codice diverso da quello che credi. Righello istituito sul canale il
+    #    03/09 dopo che due istanze ci sono cadute.
+    # ② SOTTO CHE CARICO. Il 02/09 lo stesso braccio a 1 worker ha dato p95 1,388s e
+    #    2,664s a 23 minuti di distanza, e nessuno dei due banchi registrava la
+    #    condizione: «non ripetibile» era la diagnosi sbagliata di un esperimento di
+    #    cui non si sapeva quale fosse. Un numero senza la sua condizione non si
+    #    confronta con niente.
+    da_dove = subprocess.run(
+        [py, "-c", "import verimem,sys; print(verimem.__file__)"],
+        capture_output=True, text=True, encoding="utf-8", errors="replace")
+    print("  verimem importato da: %s" % (da_dove.stdout or da_dove.stderr).strip())
+    libera_gb, cpu_pct, n_py, rss_py = carico_macchina()
+    print("  carico PRIMA: RAM libera %.1f GB · CPU %d%% · %d processi python "
+          "(%.2f GB RSS)" % (libera_gb, cpu_pct, n_py, rss_py))
+    # ⚠️ RIFIUTA invece di produrre un numero che sembra buono. Una misura di
+    # prestazioni presa su una macchina satura non e' «meno precisa»: e' di un altro
+    # esperimento.
+    if libera_gb < 8.0 or cpu_pct > 50:
+        print("\n  🔴 NON PARTO: serve RAM libera >8 GB e CPU <50%%, misurati "
+              "%.1f GB e %d%%." % (libera_gb, cpu_pct))
+        print("     Il board che dice «slot libero» non basta: il 03/09 alle 19:55")
+        print("     diceva liberi entrambi con 3,4 GB liberi e CPU all'87%.")
+        raise SystemExit(3)
+
     attesi = nclient * ngiud
     print("  %d client x %d giudizi = %d, per ogni configurazione di pool\n"
           % (nclient, ngiud, attesi))
