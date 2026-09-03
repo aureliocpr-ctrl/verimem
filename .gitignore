@@ -100,3 +100,13 @@ benchmark/results/lme_mem0_spread48.json
 
 # VeriAgent (`veri` CLI) local working index — a tool artifact, not source.
 .veri/
+
+# Store di verimem creato dai banchi in docs/stato-reale/ — un artefatto di misura,
+# non sorgente. `ws6-il-tasso-rieseguito.py:23` lo popola
+# (STORE = os.environ.get("WS6_STORE") or os.path.join(BANCO, "store_largo")) e il
+# banco stesso lo dichiara popolato: 2,8 MB. Non essendo ignorato, e' comparso come
+# `?? docs/stato-reale/store_largo/` in `git status` per DIECI GIORNI (creato il
+# 24/08 22:46) in un albero condiviso da otto istanze — cioe' l'albero non risultava
+# mai pulito a nessuno che lo guardasse, ed e' proprio lo stato che si controlla
+# prima di un push su main.
+docs/stato-reale/store_largo/
