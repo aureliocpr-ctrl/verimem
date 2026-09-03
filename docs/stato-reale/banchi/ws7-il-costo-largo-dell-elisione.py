@@ -77,9 +77,45 @@ def main() -> None:
         raise SystemExit("  CONTROLLO POSITIVO SPENTO: il figlio non ammette "
                          "niente. Verdetto: non riproducibile, difetto MIO.")
 
+    # ⚠️ IL FILTRO, e perche' NON e' una scorciatoia. Girare il gate su tutte
+    # le ~12.800 ammesse ha ucciso il banco due volte (03/09 21:01→21:14: file
+    # di uscita a zero byte, processo sparito, nessun traceback). Ma la cura
+    # del 03/09 e' fatta di DUE modifiche entrambe LESSICALI e circoscritte:
+    #   (A) cinque stringhe in piu' in SOFTWARE_HEADS (funzionalita*,
+    #       implementazione*) -> puo' cambiare solo una frase che le contiene;
+    #   (B) l'articolo elidato staccato -> puo' cambiare solo una frase che
+    #       contiene un apostrofo dopo l/dell/nell/all/dall/sull/un/quest/quell.
+    # Una frase senza nessuno dei due produce gli STESSI token, quindi lo
+    # stesso verdetto: non e' una stima, e' una proprieta' del diff.
+    # ⚠️ E NON MI FIDO DELLA MIA DEDUZIONE: sotto, un CAMPIONE DI CONTROLLO fra
+    # gli ESCLUSI viene girato lo stesso. Se anche uno solo cambia verdetto, il
+    # filtro e' sbagliato e il banco lo dice invece di tacere.
+    import random
+    import re as _re
+    _tocca = _re.compile(
+        r"\b(?:l|dell|nell|all|dall|sull|un|quest|quell)'|funzionalit|implementazion",
+        _re.IGNORECASE)
+    candidate = [f for f in ammesse if _tocca.search(f)]
+    esclusi = [f for f in ammesse if not _tocca.search(f)]
+    print(f"  di cui TOCCABILI dal diff      : {len(candidate)} "
+          f"(esclusi {len(esclusi)}: nessun apostrofo elidato, nessuna delle "
+          f"due teste nuove)")
+
     print(f"  braccio OGGI   {oggi}")
-    vo = verdetti(oggi, ammesse)
+    vo = verdetti(oggi, candidate)
     fermate = [f for f, a, _ in vo if fermata(a)]
+
+    # CONTROLLO DEL FILTRO: un campione degli esclusi deve restare ammesso.
+    random.seed(7)
+    campione = random.sample(esclusi, min(400, len(esclusi)))
+    vc = verdetti(oggi, campione) if campione else []
+    traditori = [f for f, a, _ in vc if fermata(a)]
+    print(f"  controllo del filtro: {len(campione)} esclusi riprovati, "
+          f"cambiati {len(traditori)}")
+    if traditori:
+        print("  ⛔ IL FILTRO E' SBAGLIATO: questi esclusi cambiano verdetto")
+        for f in traditori[:5]:
+            print(f"      {f[:100]}")
 
     print()
     print(f"  ⇒ FERMATE OGGI fra quelle che il figlio ammetteva: {len(fermate)}")
@@ -115,6 +151,9 @@ def main() -> None:
     fuori = Path(__file__).with_suffix(".json")
     fuori.write_text(json.dumps(
         {"proposizioni": len(frasi), "ammesse_dal_figlio": len(ammesse),
+         "toccabili_dal_diff": len(candidate), "esclusi_dal_filtro": len(esclusi),
+         "controllo_filtro_campione": len(campione),
+         "controllo_filtro_traditori": len(traditori),
          "fermate_oggi": len(fermate), "elenco": fermate,
          "controllo_positivo_viste": viste},
         ensure_ascii=False, indent=2), encoding="utf-8")
