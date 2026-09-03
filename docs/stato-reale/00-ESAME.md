@@ -23129,3 +23129,58 @@ letti sul corpus vivo**: servirebbe un server MCP vivo, e non l'ho fatto. **Tre 
 non una popolazione.** **Non cambia** che `0,839` non sia un default.
 
 **Io misuro, non curo** — e un banco finto non chiude un buco che avevo dichiarato reale.
+
+---
+
+## 2026-09-03 19:50 — ws1 · 🛡️ **PRESIDIO PERMANENTE «TRE PORTE, UNA RISPOSTA» — e il terzo caso della stessa forma in un pomeriggio, trovato dal presidio stesso.** Ramo `ws1/avviso-ricalibrato`, commit `32ff3f12` **(NON pushato: silenzio su main attivo)**
+
+**LIVELLO: PORTA** — le tre porte del prodotto (`Memory.search`, `_avvisi_di_lettura` della
+porta MCP, `verimem ask` via `CliRunner`), lette **ognuna nella sua forma** e confrontate
+solo sul CONTRATTO *(soglia + origine)*. **Un test che le uniformasse misurerebbe
+l'adattatore, non le porte.**
+**Perimetro** 7 file di presidio · **Istante** 2026-09-03 19:35–19:50 · **Regime** worktree
+su `main`, **nessun push** · **Autorità**: richiesta di @lead-audit delle 19:40 · **0.7.6**.
+
+### Le predizioni, depositate alle 19:35 con ID
+
+| | predizione | attesa | esito |
+|---|---|---|---|
+| **P1** | le tre porte dichiarano la **stessa soglia** | VERDE *(è la cura di oggi)* | ✅ verde |
+| **P1-RED** | manomessa UNA porta, il presidio **morde** | verde su tutte e tre | ✅ 3/3 |
+| **P2** | le tre dichiarano la **stessa origine** | **ROSSA senza manomissioni** | 🔴 rossa |
+
+```
+P2 alla prima esecuzione:
+  {sdk: misurato dallo store, mcp: misurato dallo store, cli: dalla variabile}
+```
+⇒ **terza volta in un pomeriggio della stessa forma** — *una cura applicata a una superficie
+sola*. Le prime due le ho curate a mano *(`bef4ac50`, `5f028953`)*; **la terza l'ha trovata
+il presidio**, che è esattamente il suo scopo.
+
+### 🔁 E dentro lo stesso lavoro ho ritirato un mio falso allarme
+
+Alla prima esecuzione **anche P1 era rossa**: `{sdk 0.95, mcp 0.95, cli 0.9}`. Sembrava un
+difetto del prodotto **ed era il mio LETTORE**: la CLI stampa «il migliore di questi
+**(0.900)** sta sotto il pavimento … **(0.950)**» e la mia regex prendeva **il primo numero
+fra parentesi**, cioè il `best`. ⇒ **corretta la regex, non il prodotto.** ⚠️ Senza guardare
+i valori esatti avrei consegnato «le tre porte divergono ancora».
+
+### La cura, e perché il collante è il test e non la funzione
+
+`_frase_origine_soglia()` in `client.py` è la superficie unica di **SDK e porta MCP**.
+**La CLI tiene la sua frase**: il suo soggetto è maschile *(«il pavimento»)* contro il
+femminile delle altre *(«la soglia»)*, e una stringa unica sarebbe **sgrammaticata**.
+⇒ **tre porte possono scrivere frasi diverse purché dichiarino la stessa ORIGINE**, ed è il
+test a renderlo meccanico. **Unificare la stringa avrebbe unificato la grammatica, non il
+contratto.**
+
+### Cosa NON prova
+
+**`37 passed EXIT=0` è sui sette file dell'avviso, non la suite.** **Le tre letture girano su
+store FINTI**: la lettura reale sul corpus vivo l'ho fatta alle 19:34 **solo sulla CLI**.
+**Il classificatore dell'origine legge il TESTO** *(«impostato con» / «calibrat»)*: se una
+porta cambiasse parole senza cambiare senso, il test diventerebbe rosso a torto — è il
+prezzo di confrontare ciò che l'utente legge invece di un campo strutturato, e lo dichiaro.
+**NON pushato**: silenzio su `main` fino all'annuncio di @lead-audit.
+
+**Io misuro, non curo** — e alla terza volta della stessa forma si smette di curare a mano.
