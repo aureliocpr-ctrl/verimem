@@ -44,7 +44,18 @@ def test_engram_mcp_stdout_is_json_rpc_only() -> None:
          "import sys; sys.argv=['engram','mcp']; "
          "from verimem.cli import app; app()"],
         stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-        stderr=err, text=True, cwd=str(_REPO), env=env)
+        # ⚠️ `text=True` DA SOLO usa `locale.getpreferredencoding()`: su Windows
+        # e' cp1252, e un byte non mappabile fa esplodere il DECODE prima che si
+        # arrivi all'assert. In CI (windows-latest) questo test moriva con
+        # «UnicodeDecodeError: 'charmap' codec can't decode byte 0x8f» mentre in
+        # locale passava, perche' la codepage della macchina e' un'altra.
+        # ⇒ Il fallimento del banco MASCHERAVA il fallimento che il banco esiste
+        # per mostrare — la stessa classe curata in `tests/_esito.py`.
+        # `errors="replace"` NON indebolisce il controllo: un byte sporco
+        # diventa U+FFFD, che non e' JSON-RPC e viene visto dall'assert. Anzi:
+        # se quel byte c'e' davvero, ora il test lo DICE invece di esplodere.
+        stderr=err, text=True, encoding="utf-8", errors="replace",
+        cwd=str(_REPO), env=env)
     try:
         req = {"jsonrpc": "2.0", "id": 1, "method": "initialize",
                "params": {"protocolVersion": "2024-11-05", "capabilities": {},
