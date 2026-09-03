@@ -90,8 +90,23 @@ SOLO_L120 = [
 def test_l120_da_solo_non_trattiene_piu(proposition):
     """Il cuore della ratifica: dove `L1.20` e' l'UNICA ragione, il fatto entra."""
     r = _scrivi(proposition)
+    # 2026-09-03 (lead): la premessa «qui parla SOLO L1.20» era caduta per un
+    # marcatore, non per un veto — `L1-domain-precision-observe`, che il gate
+    # aggiunge quando la domain precision tiene l'hit L1 come avviso (per
+    # convenzione `*-observe`: «surfaced, never a block reason»,
+    # anti_confab_gate.py, blocco `_domain_precision_fp`). Tre celle rosse su
+    # main dal 02/09 (run 33681813637) misuravano quel marcatore, non il
+    # declassamento. Cio' che questo test presidia e' che L1.20 DA SOLO non
+    # trattenga: quindi si guardano i layer che POSSONO trattenere, e i
+    # marcatori di osservazione si lasciano fuori dal confronto — ma si
+    # asserisce che restino avvisi (nessun `*-observe` puo' quarantinare, e lo
+    # status lo conferma sotto). Un lessicale VERO oltre L1.20 (L1.13, L1.15…)
+    # continua a far cadere la premessa, che e' il caso che il messaggio
+    # d'errore descrive.
     layers = [w.get("layer") for w in (r.get("warnings") or []) if isinstance(w, dict)]
-    assert layers == ["L1.20"], (
+    layers_che_trattengono = [
+        layer for layer in layers if not str(layer).endswith("-observe")]
+    assert layers_che_trattengono == ["L1.20"], (
         f"premessa del test caduta: qui deve parlare SOLO L1.20, invece {layers!r}. "
         f"Se un lessicale ha iniziato a prendere questa frase, il test non sta "
         f"piu' misurando il declassamento.")

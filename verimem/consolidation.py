@@ -512,13 +512,27 @@ def _persist_master(
     # 0.5 — la scala di fiducia era invertita rispetto alla verifica, e la
     # confidenza pesa sul ranking del recall.
     # Presidio: tests/test_un_fatto_non_giudicato_non_e_piu_affidabile.py
-    with sm._connect() as _conn:  # noqa: SLF001 — come in `propose_master_node`
-        _righe = _conn.execute(
-            "SELECT confidence FROM facts WHERE id IN ("
-            + ",".join(["?"] * len(cluster["fact_ids"])) + ")",
-            tuple(cluster["fact_ids"]),
-        ).fetchall()
-    _confidenze = [float(r["confidence"]) for r in _righe if r["confidence"] is not None]
+    # FAIL-SOFT, e la ragione e' che questa lettura NON deve poter impedire la
+    # scrittura del nodo: ereditare la confidenza e' un MIGLIORAMENTO del valore,
+    # non un requisito per esistere. Se il conto non si puo' fare — un `sm` che
+    # non espone `_connect` (i doppi dei test), un errore di I/O, uno schema in
+    # migrazione — si ripiega sul default di classe, che e' esattamente il
+    # comportamento precedente a questa cura: nessuna regressione.
+    # Il primo giro NON era fail-soft e ha rotto `test_persist_master_no_orphan`
+    # (AttributeError sul doppio `_FakeSmConflict`, che ha solo `store`): la cura
+    # era giusta e il difetto era averla resa OBBLIGATORIA in un punto che deve
+    # restare capace di scrivere.
+    _confidenze: list[float] = []
+    try:
+        with sm._connect() as _conn:  # noqa: SLF001 — come in `propose_master_node`
+            _righe = _conn.execute(
+                "SELECT confidence FROM facts WHERE id IN ("
+                + ",".join(["?"] * len(cluster["fact_ids"])) + ")",
+                tuple(cluster["fact_ids"]),
+            ).fetchall()
+        _confidenze = [float(r["confidence"]) for r in _righe if r["confidence"] is not None]
+    except (AttributeError, sqlite3.Error, TypeError, KeyError, IndexError):
+        _confidenze = []  # -> Fact.confidence, il default di classe
     f = Fact(
         proposition=master["proposition"],
         topic=master["topic"],
