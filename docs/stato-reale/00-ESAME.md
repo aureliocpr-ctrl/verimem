@@ -23237,3 +23237,58 @@ sapevo esserci)*: non è un campione.
 **Banco**: `scripts/banco_sdk_soglia_sul_corpus_vivo.py` *(predizione e condizione d'uscita
 nel docstring, scritte prima)*.
 **Io misuro, non curo** — e due porte su tre verificate non sono tre.
+
+---
+
+## 2026-09-03 20:47 — ws1 · ✅ **IL «NON VERIFICATO» È TOLTO DEL TUTTO: le TRE porte provate sul corpus vivo, ognuna dal SUO protocollo — server MCP incluso.** E ho quasi gridato a un difetto che non c'era
+
+**LIVELLO: PORTA** — il **server MCP vivo**, parlato in **JSON-RPC su stdio** come farebbe
+un agente vero *(handshake `initialize`, `tools/list`, `tools/call`)*, non la funzione ·
+**Perimetro** 249 tool esposti, 2 chiamate su `hippo_facts_recall` · **Istante** 2026-09-03
+20:33–20:47 · **Regime** un processo per giro, chiuso in `finally`, `claim
+inferenza/slot 2640f06022ab` · **0.7.6**.
+
+```
+IMPORT DA C:\Users\aurel\Code\HA-ws1-main\verimem\__init__.py
+initialize -> OK          tools/list -> 249 tool
+porte che emettono l'avviso: ['hippo_facts_recall', 'hippo_facts_search']
+
+senza la variabile  {"pavimento": 0.8805, "score_migliore": 0.8269,
+                     "nota": "...soglia di rilevanza calibrata su questo corpus..."}
+con 0.95            {"pavimento": 0.95,   "score_migliore": 0.8269,
+                     "nota": "...soglia di rilevanza impostata con ENGRAM_AVVISO_MIN_RELEVANCE..."}
+```
+⚖️ **Le tre predizioni depositate alle 20:33 sono confermate.** ⇒ **condizione d'uscita
+soddisfatta: il «NON VERIFICATO» si toglie anche per il server**, e le tre porte
+*(SDK, MCP, CLI)* sono provate sul corpus vivo **dal loro protocollo**.
+
+### 🪞 Ma il reperto vero è come ci sono quasi cascata
+
+Al primo giro il campo **non usciva**, né senza né con la variabile — cioè **esattamente il
+difetto che avevo dichiarato di temere** *(«fra la funzione e il protocollo un campo può
+sparire»)*. **Stavo per scriverlo.** Ho guardato la risposta grezza:
+```
+{"task": "...", "outcome": "success", "answer_preview": "...", "similarity": 0.799, "when": "2026-05-14"}
+```
+⇒ **sono EPISODI, non fatti.** Il mio banco sceglieva il tool con `"recall" in n.lower()` e
+prendeva `hippo_recall`, **che è la porta della memoria episodica e l'avviso non lo produce
+affatto.** Le porte giuste — lette nel dispatcher, righe `12667` e `14016` — sono
+`hippo_facts_search` e `hippo_facts_recall`.
+
+📌 **È la mia stessa forma di stamattina**, la terza volta oggi: **ho scelto per NOME invece
+che per FUNZIONE.** Prima un'assenza dedotta da un `grep` su un nome *(«la CLI non avvisa»)*,
+poi una regex che leggeva il primo numero fra parentesi, ora un tool scelto perché si
+chiamava «recall». ⇒ **il presidio che ha retto tutte e tre le volte è lo stesso: guardare
+l'output grezzo prima di dichiarare.**
+
+### Cosa NON prova
+
+**Due chiamate, una query, un solo store.** **Ho interrogato `hippo_facts_recall`, non
+`hippo_facts_search`**: sono due porte e ne ho provata una — l'altra **NON VERIFICATA**.
+**Il server gira in locale sullo stesso disco**: nessuna prova su un trasporto remoto.
+**Non cambia** che `0,839` non sia un default.
+
+**Banco**: `scripts/banco_server_mcp_vivo.py` *(predizione e condizione d'uscita nel
+docstring, scritte prima)*.
+**Io misuro, non curo** — e il difetto che temevo non c'era: c'ero io che interrogavo la
+porta sbagliata.
