@@ -2413,9 +2413,15 @@ def run_validation_gate(
                 ensure_gate_model,
             )
             from .local_grounding import (
+                annuncia_download_del_giudice as _annuncia,
+            )
+            from .local_grounding import (
                 local_ce_available as _lca,
             )
             if not _download_disattivato() and not _GIUDICE_GIA_CERCATO:
+                # stesso annuncio dell'altro innesto, dalla stessa funzione: due
+                # messaggi scritti a mano divergerebbero
+                _annuncia()
                 globals()["_GIUDICE_GIA_CERCATO"] = True
                 _preso, _ = ensure_gate_model()
                 if _preso:

@@ -47,7 +47,7 @@ _ENV_MODEL_DIR = "ENGRAM_LOCAL_GATE_MODEL"
 # drops out of sight. A cache dir is neither, so the resolver keeps its own answer.
 DEFAULT_MODEL_DIR = Path.home() / ".cache" / "verimem" / "models" / "local_gate_ce_v2"
 # Where warmup used to put it: still read (never written) so an existing install does
-# not re-download 711 MB after upgrading.
+# not re-download 746 MB after upgrading.
 _LEGACY_MODEL_DIR = Path.home() / ".engram" / "models" / "local_gate_ce_v2"
 _DEFAULT_FOCUS_BUDGET = 1500
 
@@ -98,6 +98,66 @@ def _resolve_model_dir(model_dir: str | Path | None) -> Path:
     if not _holds_a_model(DEFAULT_MODEL_DIR) and _holds_a_model(_LEGACY_MODEL_DIR):
         return _LEGACY_MODEL_DIR
     return DEFAULT_MODEL_DIR
+
+
+#: Il peso del modello del giudice, per l'annuncio. Non e' una stima: e' la somma dei
+#: byte dei 5 file che `ensure_gate_model()` installa, misurata il 02/09:
+#:
+#:     746 058 368 byte  =  746,1 MB decimali  =  711,5 MiB
+#:     (737,7 MB il solo `model.safetensors`, 8,3 MB `tokenizer.json`, il resto ~0)
+#:
+#: ⚠️ IN MB DECIMALI, e l'unita' e' la meta' del numero. Questa costante ha detto «711 MB»
+#: fino al 02/09: 711 e' il valore in MiB, e chi lo leggeva guardando il contatore di rete
+#: del sistema — che conta in MB decimali, come i piani dati — ne vedeva scorrere 746.
+#: Numero vero, unita' sbagliata: la stessa forma che smontiamo nei numeri degli altri.
+#:
+#: Il TEMPO invece non e' una proprieta' del modello ma della rete di chi installa: 13,4 s
+#: nella misura del 02/09 (cioe' ~56 MB/s), che su una linea da 10 MB/s diventano 75 s.
+#: Per questo il messaggio dice «su una connessione veloce» e non promette un numero.
+#: (Il commento precedente diceva «13,4 s su una rete da ~26 MB/s»: i due numeri non
+#: stanno insieme — 711,5/13,4 fa 53, non 26 — e non so quale dei due fosse buono.)
+_PESO_DEL_GIUDICE_MB = 746
+
+
+def annuncia_download_del_giudice() -> None:
+    """Dice all'utente che stiamo scaricando 746 MB, PRIMA di farlo.
+
+    Scaricare tre quarti di giga senza dirlo e' una sorpresa, non una cura: chi lancia
+    `verimem remember` vede il comando fermo una quindicina di secondi e non sa perche'.
+
+    Su **stderr** e non su stdout, perche' stdout porta l'output strutturato dei comandi
+    e chi ne fa il parsing non deve trovarci un avviso. Una riga sola: e' un evento raro,
+    non un log.
+
+    ⚠️ E dice **«una volta sola»**: senza quella parte, «746 MB» sembra un costo che si
+    ripete a ogni scrittura — cioe' esattamente la paura che fa spegnere la cura.
+
+    ⚠️⚠️ E NON PUO' NUOCERE. Questa funzione e' chiamata dentro il blocco `except` di
+    `_ensure_scorer()`, **una riga prima** del download: se solleva, l'eccezione
+    sostituisce quella originale, il modello non viene preso e la cura si spegne —
+    per colpa del messaggio che doveva solo raccontarla. Da qui le due difese:
+
+    · **`print(file=None)` NON tace: stampa su stdout.** Con `pythonw` (un server MCP
+      lanciato da un client GUI) `sys.stderr` E' `None`, e un avviso su stdout
+      inquinerebbe il canale JSON-RPC — lo stesso incidente diagnosticato in CI
+      il 02/09, causato stavolta da noi. Senza un canale nostro: si tace.
+    · **Lo stream puo' esserci ed essere rotto** (chiuso, detached, o con una codifica
+      che non mappa il testo: cp1252 su Windows). Scrivere e' `try`.
+    """
+    import sys as _sys
+    canale = getattr(_sys, "stderr", None)
+    if canale is None:
+        return
+    try:
+        canale.write(
+            f"verimem: scarico il giudice del moat ({_PESO_DEL_GIUDICE_MB} MB, ~15 s "
+            "su una connessione veloce, una volta sola per macchina). Senza, le "
+            "scritture con una fonte sono ammesse SENZA giudizio.\n")
+        canale.flush()
+    except Exception:
+        # Nessun rilancio e nessun log: l'unico canale per dirlo e' proprio quello
+        # che ha appena fallito. Il download prosegue, ed e' cio' che conta.
+        pass
 
 
 def _download_disattivato() -> bool:
@@ -228,13 +288,16 @@ class LocalGroundingJudge:
                         # cache di sempre.
                         #
                         # Costo misurato (02/09, HOME nuova, una sola esecuzione):
-                        # `ensure_gate_model()` 13,4s per 711,5 MB, contro i 54,1s del
+                        # `ensure_gate_model()` 13,4s per 746,1 MB, contro i 54,1s del
                         # caricamento che si paga GIA' oggi senza nessuna cura.
                         if (not _gia_procurato
                                 and not self.model_dir.exists()
                                 and not _download_disattivato()):
                             _emit_flow("flow.warmup", what="moat-judge",
                                        phase="fetching", motivo="modello assente")
+                            # l'evento va nel journal, che l'utente non legge: l'annuncio
+                            # va sullo schermo, PRIMA dei 15 secondi di attesa
+                            annuncia_download_del_giudice()
                             try:
                                 _preso, _msg = ensure_gate_model(self.model_dir)
                             except Exception:
