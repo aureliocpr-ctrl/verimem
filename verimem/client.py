@@ -1371,6 +1371,31 @@ class Memory:
         # l'avviso parla della domanda fatta e non del contenuto dello store —
         # che era il difetto: con un solo fatto scaduto in casa usciva a ogni
         # lettura, anche su domande che non lo sfioravano.
+        # ⚠️⚠️ LIMITE DICHIARATO, e non e' una nota di stile: questo criterio
+        # produce FALSI NEGATIVI, cioe' tace dove dovrebbe parlare. Misurato il
+        # 03/09 su tre domande allo stesso store (un vivo, uno scaduto):
+        #
+        #     A  in tema (DEVE avvisare)   servito 0,8969  scaduto 0,8159
+        #     B  fuori tema (NON deve)     servito 0,7552  scaduto 0,7600
+        #     C  molto fuori tema          servito 0,7577  scaduto 0,7567
+        #
+        # Il confronto e' ANTICORRELATO: nel caso che deve avvisare lo scaduto
+        # sta SOTTO il servito, in quello che non deve sta SOPRA. La ragione e'
+        # gia' scritta in `semantic.py`: questi embedding sono anisotropi,
+        # «every fact sits ~0.80 cos from any query», quindi a quei valori un
+        # confronto fra punteggi vicini e' rumore.
+        #
+        # Tre criteri sono caduti — «quanti scaduti ci sono» (parlava sempre),
+        # «quanti entrerebbero nei primi k» (cieco su store piccoli), e questo.
+        # La grandezza vera sarebbe «il fatto sarebbe comparso nel risultato se
+        # non fosse scaduto», e si ottiene solo RIFACENDO il ranking senza la
+        # maschera: la similarita' e' un proxy, e qui il proxy non regge.
+        #
+        # Si tiene comunque, e per una ragione: fra i due errori possibili
+        # questo TACE invece di mentire, e il caso peggiore — la scadenza che
+        # porta via tutto — resta coperto dal ramo a risposta vuota qui sotto.
+        # Il criterio giusto e' una decisione sul comportamento del prodotto,
+        # non una scelta da fare di straforo: portata al gruppo coi numeri.
         _sim_sc = list(getattr(self.semantic, "_recall_scaduti_sim", None) or [])
         _scaduti = 0
         if _sim_sc:

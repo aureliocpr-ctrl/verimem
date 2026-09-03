@@ -1260,6 +1260,11 @@ def remember_cmd(
     topic: str = typer.Option("user", "--topic", "-t"),
     source: str = typer.Option(None, "--source",
                                help="Source text the fact must be grounded in."),
+    valid_until: str = typer.Option("", "--valid-until", help=(
+        "Until when this fact holds: a date `YYYY-MM-DD` (interpreted as the "
+        "END of that day, local time) or a Unix epoch. After it, the fact stops "
+        "being served — and the recall SAYS so instead of just answering "
+        "shorter.")),
 ) -> None:
     """Store one fact through the full moat — the 2-second quickstart.
 
@@ -1267,10 +1272,42 @@ def remember_cmd(
     (thin client, no model load); otherwise the embedded store. Prints the
     adjudication receipt honestly either way.
     """
+    # LA SCADENZA SI LEGGE PRIMA DI APRIRE LO STORE, e l'ordine e' la cura:
+    # se la si leggesse dopo, una data illeggibile lascerebbe scritto un fatto
+    # SENZA scadenza — cioe' eterno, l'esatto contrario di quel che si e'
+    # chiesto — con un messaggio d'errore su una riga gia' scorsa.
+    _vu = None
+    if valid_until.strip():
+        _grezzo = valid_until.strip()
+        try:
+            _vu = float(_grezzo)
+        except ValueError:
+            try:
+                # ⚠️ FINE GIORNATA E ORA LOCALE, tutti e due voluti. «vale fino
+                # al 31/12» significa che il 31 vale ancora, non che scade a
+                # mezzanotte del 30. E il fuso e' quello di chi scrive: la casa
+                # ha gia' pagato questa lezione al contrario, costruendo in UTC
+                # e rileggendo in locale — «a est di Greenwich le 23:59:59 UTC
+                # sono gia' il giorno dopo», e cambiava anche il MESE.
+                from datetime import datetime as _dtm
+                _d = _dtm.strptime(_grezzo, "%Y-%m-%d")
+                _vu = _dtm(_d.year, _d.month, _d.day,
+                           23, 59, 59).timestamp()
+            except ValueError:
+                console.print(
+                    f"[red]--valid-until non e' una data ne' un epoch: "
+                    f"{_grezzo!r}[/red] — usa `YYYY-MM-DD` (vale fino a FINE "
+                    f"di quel giorno, ora locale) oppure un epoch. "
+                    f"[dim]Il fatto NON e' stato scritto: scriverlo senza la "
+                    f"scadenza che hai chiesto sarebbe peggio che non "
+                    f"scriverlo.[/dim]")
+                raise typer.Exit(2) from None
     m = _open_memory()
     kw = {"topic": topic}
     if source:
         kw["source"] = source
+    if _vu is not None:
+        kw["valid_until"] = _vu
     r = m.add(text, **kw)
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
