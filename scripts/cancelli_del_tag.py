@@ -165,10 +165,29 @@ def c_smoke(e: Esito, pv: str) -> None:
     if not blocco:
         e.cancello("smoke pre-tag dichiarato", False, f"nessun blocco per {pv}")
         return
-    b = blocco.group(1).lower()
+    b = blocco.group(1)
+    # ⚠️ NON basta che il campo sia NOMINATO. La prima versione di questo
+    # cancello cercava la parola «windows» nel blocco, e un registro scritto in
+    # anticipo — con i due campi elencati e nessun esito — l'avrebbe chiuso A
+    # VUOTO. Trovato scrivendo il registro, cioe' PRIMA di usarlo: e' lo stesso
+    # difetto che il gate del rilascio aveva il 02/09, un cancello soddisfatto
+    # da una dichiarazione invece che da un fatto.
+    # Per ogni campo servono TRE cose sulla stessa riga o subito sotto: il nome
+    # del campo, un ESITO leggibile a macchina, e una DATA.
+    ESITO = re.compile(r"EXIT=\d+|\bPASSATO\b|\bFALLITO\b|\bPASS\b|\bFAIL\b", re.I)
+    DATA = re.compile(r"20\d\d-\d\d-\d\d")
     for campo in ("windows", "wsl"):
-        e.cancello(f"smoke dichiarato su {campo}", campo in b,
-                   "presente" if campo in b else "assente")
+        righe = [ln for ln in b.splitlines() if campo.lower() in ln.lower()]
+        if not righe:
+            e.cancello(f"smoke su {campo}", False, "campo non nominato")
+            continue
+        con_esito = [ln for ln in righe if ESITO.search(ln)]
+        con_data = [ln for ln in righe if DATA.search(ln)]
+        e.cancello(f"smoke su {campo}: esito dichiarato", bool(con_esito),
+                   con_esito[0].strip()[:44] if con_esito
+                   else "nominato ma SENZA esito — una dichiarazione non e' una prova")
+        e.cancello(f"smoke su {campo}: data dichiarata", bool(con_data),
+                   "presente" if con_data else "senza data: non si sa su quale wheel")
 
 
 def main() -> int:
