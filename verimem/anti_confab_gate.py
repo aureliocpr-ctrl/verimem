@@ -236,7 +236,23 @@ def _is_advisory_layer(layer: str) -> bool:
     ANOTHER layer quarantines the same write) would pollute exactly the
     attribution the pre-registered flip A/B has to read."""
     s = str(layer)
-    return s.endswith("-observe") or s.endswith("-graded")
+    #: `L3-coexistence` E' DELLA STESSA CLASSE, e lo dichiara nel proprio
+    #: testo: «a contradiction was found but BOTH FACTS ARE KEPT ... both stay
+    #: servable and recall returns them together». Un verdetto che tiene
+    #: entrambi i fatti non ha trattenuto niente, ma comincia per `L3` — rango
+    #: 0 in `_BLOCK_LAYER_PRIORITY` — e quindi scavalcava il layer che aveva
+    #: davvero deciso. REPERTO VIVO (lead-audit, 03/09): il fatto
+    #: `3fec40e1ab53`, approvato dal giudice a 99,95 e quarantinato, portava
+    #: nel journal `layers=['L3-coexistence', 'L4.1']` con
+    #: `withheld_despite_judge=True`: a trattenerlo era `L4.1`, ma la colonna
+    #: nominava la coesistenza. Sui 4 casi che il journal ancora copre (dei 19
+    #: con questa etichetta) la coesistenza non ha MAI deciso da sola: accanto
+    #: c'era sempre un L4 (`L4.1` x3, `L4.2`, `L4-review`).
+    #: ⚠️ VALE PER LA COESISTENZA, NON PER TUTTA LA FAMIGLIA `L3`:
+    #: `L3-supersession` («the older value is superseded») una decisione la
+    #: prende, e resta un layer che agisce.
+    return (s.endswith("-observe") or s.endswith("-graded")
+            or s == "L3-coexistence")
 
 
 def advisory_eligible(warnings: Iterable[dict] | None) -> bool:

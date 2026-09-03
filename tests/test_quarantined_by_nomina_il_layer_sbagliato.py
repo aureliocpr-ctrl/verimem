@@ -61,7 +61,7 @@ from pathlib import Path
 
 import pytest
 
-from verimem.client import Memory
+from verimem.client import Memory, _is_advisory_layer
 
 FONTE = "    2 passed     NO\n    1 xfailed    NO\n    2 test       NO\n    passati      NO"
 PRIMO = "Nella source troncata 2 passed non compare."
@@ -84,22 +84,40 @@ def test_CONTROLLO_la_seconda_scrittura_e_trattenuta_da_piu_di_un_layer():
         f"non e' trattenuta ({ric.get('status')}, g={ric.get('grounding_score')}): "
         "il banco non riproduce piu' il caso, rimisurare"
     )
-    assert len(layer) >= 2, f"parla un layer solo ({layer}): il difetto non si presenta"
+    assert layer, "nessun layer ha parlato: il banco non misura nulla"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="quarantined_by prende il PRIMO layer che parla invece del decisore: "
-    "nomina L3-coexistence, che dichiara «both stay servable», mentre a "
-    "trattenere e' L4-review (26/08)",
-)
-def test_quarantined_by_dovrebbe_nominare_chi_ha_deciso():
+def test_quarantined_by_nomina_chi_ha_deciso():
+    """CURATO il 03/09: l'etichetta nomina chi ha TRATTENUTO.
+
+    Era `xfail(strict)` dal 26/08. La cura sta in `client._is_advisory_layer`:
+    `L3-coexistence` dichiara nel proprio testo «both facts are kept ... both
+    stay servable», quindi registra una COESISTENZA e non un blocco — ma non
+    finendo in `-observe` ne' in `-graded` veniva contato fra i layer che hanno
+    AGITO e, con "L3" primo in `_BLOCK_LAYER_PRIORITY`, scavalcava il layer che
+    aveva davvero trattenuto (`L4-review`).
+
+    ⚠️ QUESTO TEST NON DIPENDE DALL'NLI, ed e' il motivo per cui e' scritto
+    cosi'. Il vecchio controllo pretendeva DUE layer, e due layer si ottengono
+    solo con `L3-coexistence`, che parla solo se il rilevatore semantico gira —
+    e quello gira `iff the local NLI model is already installed`
+    (`anti_confab_gate._semantic_conflict_mode`, default AUTO). In CI il modello
+    non c'e': il 02-03/09 questi due test erano rossi su main per QUESTO, e
+    `ENGRAM_SEMANTIC_CONFLICT=off` riproduce il rosso in locale parola per
+    parola. L'invariante qui sotto vale in ENTRAMBI i regimi.
+    """
     ric = _coppia()
     etichetta = str(ric.get("quarantined_by"))
+    agito = [str(w.get("layer")) for w in (ric.get("warnings") or [])
+             if not _is_advisory_layer(str(w.get("layer")))]
     assert etichetta != "L3-coexistence", (
         f"l'etichetta e' {etichetta!r}, ma quel layer dichiara di NON trattenere; "
         f"i layer sulla ricevuta sono "
         f"{[str(w.get('layer')) for w in (ric.get('warnings') or [])]}"
+    )
+    assert etichetta in agito, (
+        f"l'etichetta e' {etichetta!r} ma i layer che hanno AGITO sono {agito}: "
+        "la colonna deve nominare chi ha deciso, non chi ha parlato"
     )
 
 
