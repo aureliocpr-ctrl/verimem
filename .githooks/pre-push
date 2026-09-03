@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# pre-push — il gancio della giuntura commit↔ramo (piano-versioni, regola 1 e 11).
+#
+# 2026-09-02 21:18: ws8 ha spinto su main il ramo di ws5. Voleva spingere UN
+# commit suo; l'albero condiviso (~/Code/HippoAgent) non era su main ma su
+# `ws5/giudice-si-procura-da-solo`, e `git push origin HEAD:main` ha mandato
+# quel ramo intero su main (71034ec1: solo documenti, per fortuna). Il 03/09
+# alle 18:50 l'albero condiviso era DI NUOVO su un ramo altrui
+# (`ws5/giudice-pulito`). La regola scritta («si pusha su main solo dal
+# proprio worktree») non ha retto in 20 ore: serve il gancio.
+#
+# COSA FA: se il push va a `refs/heads/main` E siamo nell'ALBERO PRINCIPALE
+# (non in un worktree) E il ramo corrente non e' `main`, blocca. Nei worktree
+# personali (`git worktree add`) il push `HEAD:main` resta permesso: e' il
+# flusso corretto. L'albero principale si riconosce senza percorsi assoluti:
+# li' `--git-dir` e `--git-common-dir` coincidono, in un worktree no.
+#
+# Argomenti di git: $1 = nome del remote, $2 = url; su stdin le righe
+# «local_ref local_sha remote_ref remote_sha».
+set -u
+GIT_DIR_=$(git rev-parse --git-dir 2>/dev/null)
+COMMON_=$(git rev-parse --git-common-dir 2>/dev/null)
+BRANCH_=$(git branch --show-current 2>/dev/null)
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$remote_ref" = "refs/heads/main" ] || continue
+    if [ "$GIT_DIR_" = "$COMMON_" ] && [ "$BRANCH_" != "main" ]; then
+        echo ""
+        echo "pre-push BLOCKED: stai spingendo su main dall'ALBERO CONDIVISO mentre"
+        echo "il ramo corrente e' '$BRANCH_'. Il 02/09 questo gesto ha mandato su main"
+        echo "il ramo di un'altra istanza (71034ec1)."
+        echo "Fai cosi': git worktree add ~/Code/hippo-<tuonome> -b push-<tuonome> origin/main"
+        echo "          cherry-pick / commit li', poi: git push origin HEAD:main"
+        echo "L'albero condiviso resta su main, pulito."
+        exit 1
+    fi
+done
+exit 0
