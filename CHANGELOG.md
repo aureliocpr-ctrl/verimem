@@ -2,6 +2,138 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.6] - unreleased
+
+> **The atomic release: everything that was already built, switched on and
+> measured.** Nothing here is a new idea. Every item is either a cure that
+> existed on `main` and had never reached a published artifact, or a capability
+> that was written, tested and then left unreachable — the pattern this release
+> exists to close.
+>
+> ⚠️ **On the number.** The code declares **0.7.6** on all six version surfaces
+> (`pyproject.toml`, `verimem/__init__.py`, `.claude-plugin/plugin.json`,
+> `STATE.md`, and both fields of `server.json`); PyPI's latest is **0.7.1**. The
+> 0.7.2–0.7.5 line was internal and never published. If the release is instead
+> named 0.7.2, this heading is not the only thing to change: all six surfaces
+> must come down with it, and `scripts/cancelli_del_tag.py` now fails until they
+> agree — the cost is measured, not remembered.
+
+### Added — capabilities that existed and were switched on
+
+- **The judge fetches itself on the first write that carries a source**
+  (`e4d04359`). Measured from a user's seat on the **published** package, virgin
+  HOME: a claim its own source contradicts came back `admitted`, `EXIT=0`,
+  `layers=[]` — because `ensure_gate_model()` was called **only** by
+  `verimem warmup`, a command a new user has no reason to run. Two grafts, and
+  the second is the one that matters: `local_grounding._ensure_scorer` separates
+  **missing** (fetch once, retry) from **broken** (keep caching the failure, as
+  before); `anti_confab_gate._have_judge` fetches when the only reason it is
+  absent is that nobody downloaded it. **Falsified**: the first graft alone does
+  *not* cure — three green tests and a before/after on a virgin HOME that stayed
+  identical (`layers` still empty), because the `_have_judge` guard skipped the
+  whole branch.
+- **The judge announces its size before downloading** (`b5f8f2d5`). Without it
+  a first `remember --source` on a new machine sits silent for some fifteen
+  seconds. **RED→GREEN**: `1 failed, 2 passed EXIT=1` → `6 passed EXIT=0`;
+  falsified by removing the announcement (`1 failed`) and putting it back
+  (green); regression across gate, `local_grounding` and fetch/doctor:
+  `30 passed EXIT=0`.
+- **The third attribution layer is connected** (`35287901`). The module had
+  existed since 28 August with **21 green tests**, returned a well-formed
+  advisory, and **nobody called it**: it was the 39th unreachable module and it
+  made the dead-code check fail. Connected, the count drops to 38 and that check
+  goes green. It closes the third cut of one hole: the first layer asks whether
+  the figure is in the source, the second whether it talks about the same
+  quantity, this one whether it is predicated of the same subject — a claim that
+  a deposit is 148 000 against a source where that figure is the contract value
+  passes the first two **by construction**.
+- **A read in the past says so when time removed something**, not only when it
+  left nothing (`51762dd4`). The condition required a completely empty result,
+  and the frequent case is not empty: on the three measured cases where the
+  filter removes the answering fact, the result held **ten, two and ten** facts
+  and the notice fired in **none** of them. Across the sixteen retrospective
+  facts in the sample there is **not one** empty answer — so the old condition
+  had no occasion to fire at all.
+
+### Changed
+
+- **The low-confidence advisory is recalibrated, and the number is in the docs**
+  (`7ccf1e0c`). Found before writing any code: the advisory **already existed**
+  (`client.py`, field `sotto_il_pavimento`), was **already on** by default and
+  already came out of the MCP port (`mcp_server.py:405`) — only `cli.py` lacked
+  it. It did not need implementing, it needed recalibrating. Measured on the
+  live corpus (**17 279 facts**):
+
+  | threshold | true answers flagged | far | near |
+  |---|---|---|---|
+  | 0.8805 (calibrated) | **47/80 (58.8%)** | 10/10 | 17/17 |
+  | 0.839 | **3/80 (3.8%)** | 10/10 | 3/17 |
+
+  At the calibrated value the advisory fires on six good answers out of ten:
+  it does not inform.
+- **Inherited confidence can no longer prevent a write** (`351c525c`). The
+  previous day's cure read group confidences to inherit the minimum, and did so
+  **compulsorily**: an object without the connection method, a read error or a
+  schema mid-migration made the node's write fail — `test_persist_master_no_orphan`
+  was red with an attribute error. The read now falls back to the class default,
+  which is exactly the pre-cure behaviour: inheriting confidence **improves** a
+  value, it is not a requirement for existing.
+
+### Fixed
+
+- **The MCP port declared a different threshold from the SDK** (`bef4ac50`).
+  `client.py` gained `_pavimento_avviso()` — the advisory floor, separate from
+  the cut-off, with `ENGRAM_AVVISO_MIN_RELEVANCE` for whoever re-measured on
+  their own corpus — but the MCP port did not reuse that field: `_avvisi_di_lettura`
+  **rebuilt** the advisory from `_pavimento_di(agent)`, which reads only
+  `_auto_relevance_floor`. Whoever set the variable saw it apply to the SDK and
+  **not** to the agent's door: one memory, two answers. It is the same class of
+  defect that block has guarded since August (CLI warns, SDK warns, MCP silent),
+  **reopened by a cure made on one surface only** — and declared as such by the
+  instance that introduced it.
+- **The Windows leg of `wheel install-from-scratch` was failing on our own test,
+  not on the wheel** (`d993de2a`). The `initialize` handshake step opened the
+  server's stdout with `text=True` and **no `encoding=`**, so it used the system
+  codec: cp1252 on Windows, UTF-8 on Linux. Same wheel, same server, **different
+  reader** — hence one leg red and its twin green. The failing byte, `0x8f`, is
+  the last byte of the variation selector of `⚠️` in the guide we ship as
+  `instructions`: of 7800 characters and 3 non-ASCII, it is the **only** byte
+  cp1252 cannot map. **RED proved** with `PYTHONUTF8=0` (which reproduces the
+  CI console) in `docs/stato-reale/banchi/ws8-il-lettore-in-cp1252.py`: same
+  stdout, without encoding **broken**, with encoding **OK**; in an already-UTF-8
+  environment the bench **refuses to give a verdict** (`EXIT=2`) because there
+  the two arms are identical.
+
+### Removed
+
+- **The source-trust write gate** (`3dad8bf4`), by vote — 4 yes against the 3
+  required (lead-audit, ws2, ws3, ws6). The measure that decided it, on the live
+  corpus of **17 279 facts**: **0** writes ever marked by the gate; **156**
+  canonical sources, all still at their initial 0.500; the `source_trust` table
+  holding **0 rows** (the similarly named `trust_ledger` has 10 880); and
+  `source_trust_observe` called by **4 benches and 5 tests, 0 times in `cli.py`,
+  0 in `mcp_server.py`**. The gate was not wrong — it never had material: the
+  public API that feeds the ledger is called by **no door of the product**. The
+  module is kept; the gate is not.
+
+### Packaging / distribution
+
+- `server.json` (MCP registry, schema 2025-12-11) and
+  `.claude-plugin/marketplace.json`, with `scripts/controlla_manifesti_distribuzione.py`
+  checking both against the schema **and** verifying that the `mcp-name` line in
+  the README matches the server name — the ownership proof the registry requires
+  for a PyPI package.
+- **The version anti-drift gate now knows about `server.json`**, which was a
+  **fifth** surface nobody checked: on 2026-09-02 it read 0.7.2 while the other
+  four read 0.7.6 and the tests stayed green. Both of its version fields are now
+  compared against `pyproject`.
+- **The tag gates are a command, not a list**: `scripts/cancelli_del_tag.py`
+  → `0` closed · `1` at least one open · `2` **not measurable**, which is not
+  green. It exists because on 2026-09-02 the release gate cited as evidence a job
+  that had been `skipped` for over **200 hours**: a list is read and believed.
+- **What you get served, on two public datasets** with the blind-criterion
+  baseline beside each number, and `scripts/repro_c10.sh <dataset>` to redo them.
+
 ## [0.7.5] - 2026-08-09
 
 Over 400 commits since 0.7.0 (published 2026-07-22). The one that decides
