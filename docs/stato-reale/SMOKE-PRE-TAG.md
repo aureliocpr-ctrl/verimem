@@ -14,8 +14,39 @@
 
 ## 0.7.6
 
+> **Due blocchi, e vanno letti come due cose diverse.** Sotto c'è prima lo smoke
+> **valido per il tag**, sul wheel del run **verde 9/9**; più giù la **prova
+> generale** su un run rosso, che è servita a far sbagliare lo strumento quando
+> lo sbaglio non costava niente. Solo il primo conta per i cancelli.
+
+### Smoke valido per il tag — wheel del run VERDE
+
+Run **`33793094834`** (`#3090`, sha **`8fca33f0`**), `completed/success`, **9 job
+su 9**. Wheel `verimem-0.7.6-py3-none-any.whl`,
+**sha256 `76258b0542557fba4325e8c8644c59132b9fb53b14364974ca0f11878f4ea0f1`**.
+
+⚠️ **L'impronta è il legame fra i due bracci.** Lo stesso nome di file esce da
+ogni run: quello della prova generale ha sha256 `f22259a4…`, questo `76258b05…`.
+Un braccio che riporta un'impronta diversa **non ha provato questo pacchetto**, e
+la sua riga non vale — anche se dice `EXIT=0`.
+
+- **windows** — 2026-09-03 22:14, **`EXIT=0`**, 9 passi su 9 (ws8).
+
+  | passo | misura |
+  |---|---|
+  | 7 · una fonte data viene **giudicata** | `grounding_score=99.35625457763672`, `judged=True` |
+  | 8 · un claim che la fonte smentisce è **fermato** | `grounding_score=1.0627778768539429`, `layers=['L4-grounding','L4.1']`, `status=quarantined` |
+  | 9 · il server dichiara la **propria** versione | `server.version=0.7.6` con `mcp=1.29.1` |
+
+  Prerequisiti: importato **dal venv** e non dal repo, versione `0.7.6` uguale
+  all'attesa, tetto `mcp<2` rispettato (`1.29.1`), `pip install` in 393 s.
+
+- **wsl** — *(braccio di @lead-audit; deve riportare lo stesso sha256 `76258b05…`)*
+
+### Prova generale — wheel di un run ROSSO, NON valida per il tag
+
 Wheel: `verimem-0.7.6-py3-none-any.whl`, artefatto `dist` del run **`33785809525`**
-(`#3072`, sha `d0a248a1`).
+(`#3072`, sha `d0a248a1`), **sha256 `f22259a4fbba85542d1935bb2ebb2359f530b3e14cb384f8ad572c696c7d47c6`**.
 ⚠️ Quel run è `completed/failure` **nel complesso** — sei job `test` rossi — ma i
 tre job che producono e provano il pacchetto sono verdi: `build (sdist + wheel)`,
 `wheel install-from-scratch (windows-latest)`, `wheel install-from-scratch
