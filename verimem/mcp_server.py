@@ -954,38 +954,17 @@ def _rotate_audit_if_needed(path: Path) -> None:
 # Bypass list: known read-only tools we don't gate (efficiency + UX).
 # These are the high-volume safe ops that would otherwise pay an
 # audit-write cost on every recall.
-GATING_BYPASS_LIST: frozenset[str] = frozenset({
-    # Read-only memory queries — high volume, no side effects.
-    "hippo_facts_search",
-    "hippo_facts_recall",
-    "hippo_facts_list",
-    "hippo_facts_recent",
-    "hippo_recall",
-    "hippo_transcript_recall",
-    "hippo_document_list",
-    "hippo_document_versions",
-    "hippo_document_search",
-    "hippo_document_get",
-    "hippo_episode_list",
-    "hippo_episode_get",
-    "hippo_episode_batch_get",
-    "hippo_chain_show",
-    "hippo_chain_latest",
-    "hippo_chain_facts",
-    "hippo_undo_list",
-    "hippo_health",
-    "hippo_stats",
-    "hippo_status",
-    "hippo_dashboard_overview",
-    "hippo_dashboard_overview_v2",
-    # Inspection / list / count tools.
-    "hippo_count_by_agent",
-    "hippo_skill_describe",
-    "hippo_skill_top",
-    "hippo_skills_recent",
-    "hippo_facts_topics",
-    "hippo_corpus_size",
-})
+# La lista DERIVA dalla matrice: `gating_bypass=True` in
+# `tool_registry.REGISTRY`. Prima del 03/09 era scritta a mano qui, ed
+# erano due classificazioni parallele — 28 voci contro 20, cinque in
+# comune, e due nomi che non corrispondevano a nessun tool.
+def _bypass_dal_registro() -> frozenset[str]:
+    from .tool_registry import REGISTRY
+    return frozenset(n for n, c in REGISTRY._caps.items()
+                     if getattr(c, "gating_bypass", False))
+
+
+GATING_BYPASS_LIST = _bypass_dal_registro()
 
 
 def _audit_capability_call(
