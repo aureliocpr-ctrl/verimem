@@ -1320,6 +1320,39 @@ def remember_cmd(
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
 
+def _avviso_scaduti(hits) -> None:
+    """Dice quanti fatti la SCADENZA ha tolto dalla risposta, se ne ha tolti.
+
+    `valid_until` morde gia' — la maschera vettoriale toglie il fatto scaduto
+    dal top-k — e l'SDK lo dichiara in `Risultati.esclusi_perche_scaduti`. Ma
+    un campo esiste sull'OGGETTO, non sulla PORTA: misurato eseguendo, questa
+    riga di comando serviva la risposta gia' ridotta e taceva, e l'assenza
+    dell'avviso si legge come «non ha tolto nulla».
+
+    ⚠️ QUI SI LEGGE, NON SI RICALCOLA — e la differenza e' voluta.
+    `_avviso_pavimento` qui sotto ricostruisce il pavimento per conto proprio
+    invece di leggere `hits.sotto_il_pavimento`: e' una SECONDA implementazione
+    della stessa regola, ed e' il motivo per cui cercare i nomi dei campi in
+    questo file non trova niente. Non se ne aggiunge una terza: `hits` e' un
+    `Risultati`, quindi l'attributo si legge da lui.
+
+    ⚠️ E VA CHIAMATA ANCHE SUL RAMO VUOTO. Se la scadenza ha portato via
+    TUTTO, questo comando stampa «no facts found» ed esce: e' il caso peggiore
+    — risposta vuota e nessuna spiegazione — quindi e' una funzione e non un
+    blocco in linea, perche' una copia sarebbe lo stesso difetto un giro dopo
+    (la lezione e' scritta tre righe piu' sotto, per il pavimento).
+    """
+    _av = getattr(hits, "esclusi_perche_scaduti", None)
+    if not _av:
+        return
+    console.print(
+        f"  [yellow]⚠ {_av.get('esclusi', '?')} fatto/i esclusi perche' "
+        f"SCADUTI[/yellow] [dim](valid_until nel passato: non e' il pavimento "
+        f"e non e' una data nella domanda — quei fatti erano dichiarati validi "
+        f"fino a un istante gia' passato. Per vederli lo stesso, chiedili per "
+        f"id o rileggi con `--as-of` a un istante in cui erano validi.)[/dim]")
+
+
 def _avviso_pavimento(m, hits, query: str) -> None:
     """Dice che il migliore sta sotto il pavimento MISURATO, se ci sta.
 
@@ -1477,8 +1510,12 @@ def recall_cmd(
                 f"this question is answerable at all.[/dim]")
         else:
             console.print("[yellow]no facts found[/yellow]")
+        # PRIMA dell'uscita: se la scadenza ha portato via tutto, «no facts
+        # found» da solo e' falso in modo utile a nessuno — i fatti c'erano.
+        _avviso_scaduti(hits)
         raise typer.Exit(0)
     _avviso_pavimento(m, hits, query)
+    _avviso_scaduti(hits)
     for h in hits:
         console.print(riga_di_recall(h))
         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
