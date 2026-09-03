@@ -107,6 +107,38 @@ def test_se_la_scadenza_toglie_TUTTO_la_cli_non_dice_solo_no_facts(monkeypatch):
     )
 
 
+def test_anche_ask_lo_dice_non_solo_recall(monkeypatch):
+    """LA GEMELLA. `ask` e `recall` rispondono alla stessa domanda, e in questo
+    file di comando c'e' gia' la cicatrice: `_avviso_pavimento` e' stata
+    estratta da `recall_cmd` proprio perche' *«le due porte rispondono alla
+    stessa domanda e una sola avvisava, quindi lo stesso store diceva "forse
+    non lo so" o taceva a seconda del comando digitato»*.
+
+    Curare solo `recall` sarebbe quella stessa lezione un giro dopo — e il
+    banco delle porte l'ha misurato: dopo la cura di `recall`, `ask` rispondeva
+    e taceva.
+    """
+    mem = _store(True)
+    monkeypatch.setattr(cli_mod, "_open_memory", lambda *a, **k: mem)
+    #: ⚠️ QUERY DIVERSA, e la ragione e' un reperto a parte: con «quanti pallet
+    #: ospita...» `ask` classifica l'intento come CONTEGGIO ed esce da un ramo
+    #: precedente, stampando «1 fatti ... (intento: conteggio — scan
+    #: dell'intero corpus, non i primi 5)». Quel numero E' filtrato dalla
+    #: scadenza e la riga dichiara di aver guardato tutto: e' un difetto
+    #: PEGGIORE di quello curato qui — li' manca un avviso, li' un numero e'
+    #: falso — e vive su un'altra strada (il conteggio non passa da `search`).
+    #: Non lo si cura di straforo dentro questo test: e' segnato a parte.
+    out = CliRunner().invoke(
+        cli_mod.app, ["ask", "raccontami del deposito di Verona e dei suoi pallet"]).output
+    assert "imballaggi" in out or "Verona" in out, (
+        f"`ask` non risponde: il test non misura l'avviso. Uscita: {out[:300]!r}"
+    )
+    assert "scadut" in out.lower(), (
+        f"`recall` lo dice e `ask` no: lo stesso store risponde in due modi "
+        f"secondo il comando digitato. Uscita: {out[:300]!r}"
+    )
+
+
 def test_senza_scadenze_la_cli_non_dice_nulla(cli_su):
     """CONTROLLO AL ROVESCIO: un avviso che compare sempre non distingue nulla,
     e passerebbe il test sopra senza dire niente a nessuno."""

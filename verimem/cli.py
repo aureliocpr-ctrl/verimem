@@ -1605,15 +1605,28 @@ def ask_cmd(
             console.print(f"   [dim]il conteggio è un AND su tutti i termini:"
                           f"[/dim] {dettaglio}")
         raise typer.Exit(0)
-    risultati = rep.get("results") or []
+    # ⚠️ NIENTE `or []` QUI, e non e' pedanteria: `results` per l'intento FIND
+    # E' il `Risultati` che `Memory.search` rende (client.py, `{"intent": FIND,
+    # "results": self.search(...)}`), e `X or []` su una lista VUOTA la
+    # sostituisce con una lista nuda — buttando via gli avvisi proprio nel caso
+    # in cui servono di piu', quello in cui non e' rimasto niente.
+    risultati = rep.get("results")
+    if risultati is None:
+        risultati = []
     if not risultati:
         console.print("[yellow]no facts found[/yellow]")
+        _avviso_scaduti(risultati)
         raise typer.Exit(0)
     console.print(f"[dim]intento: {intento}[/dim]")
     # Il ramo `count` è già uscito sopra: lì non ci sono punteggi da
     # confrontare col pavimento. Qui siamo in FIND, la stessa domanda
     # che `recall` avvisa.
     _avviso_pavimento(m, risultati, query)
+    # La gemella: `recall` lo dice, e senza questa riga `ask` no — lo stesso
+    # store risponderebbe in due modi secondo il comando digitato, che e'
+    # esattamente il difetto per cui `_avviso_pavimento` qui sopra e' una
+    # funzione condivisa invece di due blocchi.
+    _avviso_scaduti(risultati)
     for h in risultati:
         console.print(riga_di_recall(h))
 
