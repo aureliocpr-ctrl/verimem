@@ -31,39 +31,61 @@ worker e **nessun ulteriore guadagno** a 4, perche' i core finiscono.
 completati per secondo NON sale, non ho migliorato niente — ho solo spalmato l'attesa.
 ⇒ Si misura anche il **throughput** (giudizi/s complessivi), non solo i percentili.
 
-🟡 ESITO — **la predizione regge su tre punti; il bersaglio <1s NON e' centrato**::
+🔴🟢 ESITO DEL 02/09 — **RITIRATO IL 03/09, ERA DI UNA SOLA ESECUZIONE SU MACCHINA
+CARICA**. Diceva: «2 worker dimezza il p95 (-47%), 4 PEGGIORA perche' i core finiscono,
+bersaglio <1s mancato». Le tre ripetizioni del 03/09 a macchina quieta lo ribaltano::
 
-    worker      p50       p95    giudizi/s   daemon RSS   giudicate
-    1        1,546s    2,664s        4,7       1901,7       80/80
-    2        0,929s    1,404s        7,4       1910,7       80/80
-    4        1,011s    1,809s        6,8       1920,8       80/80
+    (02/09, 1 esecuzione)   1: p95 2,664s   2: p95 1,404s   4: p95 1,809s
+    (03/09, 3 ripetizioni)  1: p95 1,932s   2: p95 1,436s   4: p95 0,801s   <- mediane
 
-✅ **memoria invariata**: +9 MB con 2 worker, +19 con 4. Il pool A non costa nulla.
-✅ **p95 non scende sotto 1s**: il migliore e' **1,404s**. Bersaglio mancato.
-✅ **da 2 a 4 non si guadagna, si PERDE** (1,404 -> 1,809): i core finiscono, come
-   previsto. Il pool non moltiplica la CPU.
-🪞 **sbagliavo sull'entita'**: predicevo «meno del 40%», misurato **-47%** con 2 worker.
+🟢 ESITO P1 — **VINCE 4, IL BERSAGLIO <1s E' CENTRATO, E NON E' L'ORDINE**::
 
-📌 **E il guadagno e' VERO, non attesa spalmata**: il throughput sale da **4,7 a 7,4
-giudizi/s** (+57%). Il controllo che avevo messo apposta — «*se il p95 scende ma il
-throughput non sale, ho solo spalmato*» — **non si accende**. ⇒ Due worker sono un
-miglioramento reale a costo zero.
+    worker    p95 med    p95 min    p95 max     range    posizioni   giudizi/s
+    1          1,932s     1,924s     1,994s    0,070s    1, 3, 3       4,1-5,2
+    2          1,436s     1,232s     1,645s    0,413s    2, 2, 1       6,3-7,2
+    4          0,801s     0,720s     0,809s    0,089s    3, 1, 2      10,3-11,2
 
-⚠️⚠️ **MA IL NUMERO ASSOLUTO E' INSTABILE, E VA DETTO PRIMA DEL RESTO**: la stessa
-configurazione a **1 worker** ha dato **p95 1,388s** nel banco precedente (`481a2eb3`,
-21:07) e **2,664s** qui (21:07 dello stesso giorno, macchina piu' carica). ⇒ **Quasi il
-doppio, stesse condizioni nominali.**
-⇒ Il **rapporto** fra le tre configurazioni, misurate nella STESSA esecuzione, e' il dato
-solido; il **valore assoluto** no. ⇒ **«p95 <1s» non e' un criterio stabile su questa
-macchina**: prima di dichiarare il bersaglio mancato per sempre andrebbe rimisurato a
-macchina scarica. Con il p95 a 1 worker che varia del 92%, un bersaglio fissato al
-decimo di secondo misura il rumore quanto il pool.
+    daemon RSS 1399,9 -> 1432,7 MB   (+33 MB da 1 a 4 worker)
+    tutte le configurazioni: 80/80 giudicate, in tutte e tre le ripetizioni
 
-⇒ **Cosa consegno come raccomandazione**: **pool a 2 worker**, perche' e' gratis in
-memoria, dimezza il p95 e aumenta il throughput del 57%. **Non 4.** E il bersaglio <1s
-resta aperto: con il pool A non si raggiunge qui, e il pool B (N istanze del giudice)
-costerebbe ~640 MB di modello per worker — a quel punto il conto della memoria, che era
-il motivo del daemon, va rifatto da capo.
+✅ **P1.d REGGE**: differenza fra le mediane 0,496s > range piu' largo 0,413s.
+🟠 **P1.a META' REGGE E META' CADE**, e vanno lette separate:
+   REGGE la parte che contava — lo stesso braccio vince in posizione 3, 1 e 2, quindi
+   **NON e' l'effetto d'ordine a decidere**, che era il sospetto depositato in P1;
+   CADE la predizione — atteso 2, vince **4**.
+🟡 **P1.b**: rapporto p95(1)/p95(2) = 1,56 / 1,21 / 1,35, sotto la forchetta 1,5-2,2
+   ma sopra 1,15. Il guadagno di 2 su 1 c'e', l'entita' predetta no.
+🔴 **P1.c FALSIFICATA**: predicevo «4 resta peggiore di 2 in tutte e tre». Vince tutte
+   e tre. «I core finiscono» era la spiegazione di un dato che non esisteva.
+🔴 **P1.f FALSIFICATA, ed e' la notizia**: predicevo «il p95 non scende sotto 1s nemmeno
+   a macchina quieta». **0,801s.** Il bersaglio fissato da @lead-audit e' raggiunto dal
+   pool A — una sola copia del modello, +33 MB. Il pool B non serve.
+
+⚠️ **PERCHE' IL 02/09 DICEVA IL CONTRARIO**: non e' cambiato il codice, e' cambiata la
+macchina. Quella misura fu presa mentre altre istanze giravano; questa con RAM libera
+11,3 GB su 31,3 e CPU al 4%, verificate a mano prima di partire. Il p95 a 1 worker passa
+da 2,664s a 1,932s fra le due, e a 4 worker il crollo e' molto piu' grande: **il carico
+non penalizza i bracci in modo uguale**, e proprio il braccio piu' parallelo e' quello
+che una macchina satura punisce di piu'. ⇒ Un banco di prestazioni senza il carico
+registrato accanto non e' impreciso: misura un esperimento diverso ogni volta.
+⇒ Da qui il criterio d'ingresso: il banco RIFIUTA di partire sotto 8 GB liberi o sopra
+il 50% di CPU.
+
+⚠️ **E IL CRITERIO D'INGRESSO NON HA FUNZIONATO IN QUESTA ESECUZIONE**: PowerShell su
+locale italiana stampa «11,38» e `float()` ha sollevato, quindi il banco ha dichiarato
+«carico NON MISURABILE» ed e' partito lo stesso — il presidio anti-silenzio ha retto, il
+criterio no. La condizione era comunque buona (misurata a mano). Curato: la virgola si
+traduce. Il numero riportato sopra viene dalla misura manuale, non dal banco.
+
+⚠️ **E IL VERDETTO STAMPO' «✅ P1.a REGGE»**, che era falso: guardava se il vincitore
+fosse COSTANTE, non se fosse quello ATTESO. Curato, e il caso E del banco che prova il
+verdetto ora lo copre — non c'era perche' nei miei casi finti il vincitore costante era
+sempre 2, e le due proprieta' non si separavano mai.
+
+⇒ **RACCOMANDAZIONE per la 0.8.0: pool a 4 worker**, non 2. p95 0,801s (sotto il
+bersaglio), throughput 10,3-11,2 giudizi/s contro 4,1-5,2, e +33 MB. Resta aperto se
+oltre 4 si continui a guadagnare: **non e' stato misurato** e su questa macchina (20
+core logici) 8 varrebbe la prova.
 
 REGIME: `main` installato (0.7.6), ambiente pulito (filtro DENTRO lo script), 8 client
 veri che importano `mcp_server`, store temporaneo per client, RAM verificata prima.
@@ -71,7 +93,8 @@ veri che importano `mcp_server`, store temporaneo per client, RAM verificata pri
 saturazione o back-pressure); e 80 giudizi non sono un carico di produzione.
 
 RIPRODUCI:
-  python docs/stato-reale/banchi/ws5-il-pool-del-giudice-porta-il-p95-sotto-il-secondo.py <venv> [n_client] [n_giudizi]
+  python docs/stato-reale/banchi/ws5-il-pool-del-giudice-porta-il-p95-sotto-il-secondo.py <venv> [n_client] [n_giudizi] [ripetizioni]
+  (ripetizioni=1 e' il banco del 02/09; =3 esegue il protocollo P1 con l'ordine alternato)
 """
 import json
 import os
@@ -271,7 +294,17 @@ def carico_macchina():
         r = subprocess.run(["powershell", "-NoProfile", "-Command", ps],
                            capture_output=True, text=True, timeout=60)
         libera, cpu, n, rss = r.stdout.split()
-        return float(libera), int(float(cpu)), int(n), float(rss)
+        # ⚠️ LA VIRGOLA. PowerShell formatta secondo la LOCALE della macchina: su una
+        # italiana stampa «11,38», e `float()` solleva. Il 03/09 alle 20:27 questo ha
+        # spento il criterio d'ingresso al primo giro vero del banco — che e' partito
+        # dichiarando «carico NON MISURABILE», quindi il presidio anti-silenzio ha
+        # retto, ma il criterio no. E' la stessa classe gia' pagata dal gate sui numeri
+        # italiani: chi formatta e chi legge non parlano la stessa lingua.
+        virgola = str.maketrans({",": "."})
+        return (float(libera.translate(virgola)),
+                int(float(cpu.translate(virgola))),
+                int(n),
+                float(rss.translate(virgola)))
     except Exception as e:
         # ⚠️ NON si finge un carico basso quando non lo si sa misurare: si dichiara.
         # Restituire (99, 0, ...) farebbe passare il criterio d'ingresso in silenzio.
@@ -326,12 +359,26 @@ def verdetto_p1(esiti, nrip):
         vincitori.append(v["worker"])
         print("     ripetizione %d: vince %d worker (girava in posizione %d)"
               % (rip, v["worker"], v["posizione"]))
-    if len(set(vincitori)) == 1:
-        print("     ✅ P1.a REGGE: lo stesso braccio vince in tutte, a ordini diversi.")
-    else:
+    # ⚠️ DUE DOMANDE, NON UNA — e il 03/09 alle 20:36 questo blocco ne ha risposta una
+    # sola, stampando «P1.a REGGE» mentre la predizione (2 vince) era falsificata: a
+    # vincere era 4. Il codice guardava solo se il vincitore fosse COSTANTE. Costante e
+    # ATTESO sono due cose diverse, e la seconda e' quella che era stata predetta.
+    # Il mio banco di prova non l'ha visto perche' in tutti i casi che avevo scritto il
+    # vincitore costante era sempre 2: non avevo mai provato «costante ma un altro».
+    ATTESO = 2
+    if len(set(vincitori)) != 1:
         print("     🔴 P1.a CADE: vincitori diversi %s — l'ordine (o il rumore) decide,"
               % vincitori)
         print("        non il pool. La raccomandazione di ieri NON e' ripetibile.")
+    elif vincitori[0] == ATTESO:
+        print("     ✅ P1.a REGGE: %d worker vince in tutte, a ordini diversi." % ATTESO)
+    else:
+        print("     🟠 P1.a: META' REGGE e META' CADE, e vanno lette separate.")
+        print("        REGGE la parte che contava: il vincitore e' lo STESSO in tutte e")
+        print("        tre a ordini diversi, quindi NON e' l'effetto d'ordine a decidere.")
+        print("        CADE la predizione: attesi %d worker, vince %d."
+              % (ATTESO, vincitori[0]))
+        print("        ⇒ La raccomandazione precedente e' FALSIFICATA, non confermata.")
 
     print("\n  --- P1.b: il RAPPORTO p95(1)/p95(2) sta fra 1,5 e 2,2? ---")
     rapporti = []

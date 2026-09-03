@@ -10,17 +10,26 @@ di errore che conosca.
 ⇒ Qui i dati sono FINTI e le risposte sono NOTE. Il banco vero gira dopo, e solo se
 questo e' verde.
 
-I quattro casi, scelti perche' ognuno puo' rompere il verdetto in un modo diverso::
+I casi, scelti perche' ognuno puo' rompere il verdetto in un modo diverso::
 
     A  «2» vince in tutte e tre le ripetizioni, a ordini diversi   -> P1.a REGGE
     B  vince un braccio diverso ogni volta                          -> P1.a CADE
     C  «2» vince sempre MA il range copre la differenza             -> P1.a regge, P1.d CADE
     D  il rapporto p95(1)/p95(2) e' 1,02                            -> P1.b CADE
+    E  vince sempre lo stesso braccio ma NON e' quello predetto     -> P1.a META
 
-⚠️ Il caso C e' il piu' importante ed e' quello che un misuratore ingenuo sbaglia: «2»
-vince ogni volta, il verdetto sembra solido, e invece la dispersione entro il braccio e'
-piu' larga della differenza fra i bracci. Un banco che stampasse solo «vince 2» sarebbe
-d'accordo con se stesso e in disaccordo coi dati.
+⚠️ Il caso C e' quello che un misuratore ingenuo sbaglia: «2» vince ogni volta, il
+verdetto sembra solido, e invece la dispersione entro il braccio e' piu' larga della
+differenza fra i bracci. Un banco che stampasse solo «vince 2» sarebbe d'accordo con se
+stesso e in disaccordo coi dati.
+
+⚠️⚠️ Ma il caso E e' quello che mi mancava, e me l'hanno insegnato I DATI VERI: il 03/09
+alle 20:36 il verdetto ha stampato «✅ P1.a REGGE» mentre la predizione (vince 2) era
+falsificata — a vincere era 4. Guardava se il vincitore fosse COSTANTE, non se fosse
+quello ATTESO. Nei casi A/B/C/D il vincitore costante era sempre 2, quindi le due
+proprieta' coincidevano e il difetto non poteva emergere. **Un banco di prova in cui due
+proprieta' diverse non si separano mai non puo' scoprire che il codice le confonde**, ed
+e' la stessa forma del confondente che P1 esiste per separare.
 
 RIPRODUCI:
   python docs/stato-reale/banchi/ws5-il-verdetto-p1-lo-provo-prima-di-fidarmene.py
@@ -90,14 +99,38 @@ CASI = {
            esito(4, 2, 1, 1.82), esito(2, 2, 2, 1.40), esito(1, 2, 3, 1.43),
            esito(2, 3, 1, 1.41), esito(4, 3, 2, 1.79), esito(1, 3, 3, 1.44)],
           {"P1.b": "CADE"}),
+    # E — IL CASO CHE MI MANCAVA, e che i dati veri hanno prodotto il 03/09 alle 20:36.
+    #
+    # Vince SEMPRE lo stesso braccio (quindi non e' l'ordine: la parte di P1.a che
+    # contava REGGE) ma NON e' quello predetto: e' 4, non 2. Il verdetto stampava
+    # «✅ P1.a REGGE» e diceva il falso sulla predizione, perche' guardava solo se il
+    # vincitore fosse COSTANTE.
+    #
+    # ⚠️ Nei casi A/B/C/D il vincitore costante era sempre 2, quindi «costante» e
+    # «atteso» coincidevano e il difetto era invisibile. Un banco di prova in cui due
+    # proprieta' diverse non si separano mai non puo' scoprire che il codice le
+    # confonde: e' la stessa forma del confondente che P1 esiste per separare.
+    "E": ([esito(1, 1, 1, 1.92), esito(2, 1, 2, 1.23), esito(4, 1, 3, 0.72),
+           esito(4, 2, 1, 0.80), esito(2, 2, 2, 1.64), esito(1, 2, 3, 1.99),
+           esito(2, 3, 1, 1.43), esito(4, 3, 2, 0.80), esito(1, 3, 3, 1.93)],
+          {"P1.a": "META"}),
 }
 
 
 def leggi(testo, criterio):
-    """REGGE / CADE / assente per un criterio, dal testo che il verdetto stampa."""
-    riga = [ln for ln in testo.splitlines() if criterio in ln and ("REGGE" in ln or "CADE" in ln)]
+    """REGGE / CADE / META / assente per un criterio, dal testo che il verdetto stampa.
+
+    ⚠️ «META» e' il caso in cui una predizione composta si spezza: la parte sul
+    confondente regge e quella sul valore no. Prima non esisteva, e obbligava a
+    schiacciare quel caso su REGGE o su CADE — cioe' a dire una delle due meta' e
+    tacere l'altra.
+    """
+    riga = [ln for ln in testo.splitlines()
+            if criterio in ln and ("REGGE" in ln or "CADE" in ln)]
     if not riga:
         return "assente"
+    if "META' REGGE e META' CADE" in riga[0]:
+        return "META"
     return "REGGE" if "REGGE" in riga[0] else "CADE"
 
 
@@ -128,7 +161,7 @@ def main():
               % sbagliati)
         print("     Un verdetto plausibile su numeri veri e' l'errore peggiore che ci sia.")
     else:
-        print("  ✅ il misuratore dice il vero su tutti e quattro i casi noti.")
+        print("  ✅ il misuratore dice il vero su tutti e %d i casi noti." % len(CASI))
         print("     ⚠️ Questo NON dice che il pool funzioni: dice che il righello legge.")
     print("=" * 70)
     return 1 if sbagliati else 0

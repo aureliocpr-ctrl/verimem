@@ -31,8 +31,9 @@ protocollo   una riga JSON per richiesta, una per risposta, terminate da \n
              {"claim": ..., "fonte": ...}  ->  {"g": <punteggio> | null}
 avvio        il primo client che non trova il daemon lo spawna e attende il discovery;
              gli altri si connettono e basta
-pool         2 worker (semaforo sullo stesso scorer) — NON 4  ⚠️ UNA SOLA ESECUZIONE,
-             in verifica con la predizione P1 (ws5-P1-predizione-pool-ripetibile.md)
+pool         **4 worker** (semaforo sullo stesso scorer) — misurato su 3 ripetizioni
+             a ordine alternato, macchina quieta: p95 0,801s (bersaglio <1s CENTRATO),
+             throughput 10,3-11,2 giudizi/s contro 4,1-5,2, e +33 MB di RSS
 daemon giù   fallback in-process + DICHIARAZIONE in ricevuta, mai silenzioso
 ```
 
@@ -55,9 +56,22 @@ stare sotto la **data dir**, o si ripete lo stesso equivoco.
 | **2** | **0,929 s** | **1,404 s** | **7,4** | **1910,7 MB** |
 | 4 | 1,011 s | 1,809 s | 6,8 | 1920,8 MB |
 
-Due worker **dimezzano il p95** (−47%) e alzano il throughput del **57%**, a costo di
-**+9 MB**. Quattro **peggiorano**: i core finiscono, il pool non moltiplica la CPU
-(`d4c23855`).
+⛔ **QUESTA TABELLA E' RITIRATA.** Era di **una sola esecuzione, su macchina carica**, e le
+tre ripetizioni del 03/09 a macchina quieta (11,3 GB liberi, CPU 4%) la ribaltano:
+
+| worker | p95 mediana | range | throughput | daemon RSS |
+|---|---|---|---|---|
+| 1 | 1,932 s | 0,070 s | 4,1-5,2 giudizi/s | 1399,9 MB |
+| 2 | 1,436 s | 0,413 s | 6,3-7,2 giudizi/s | 1412,6 MB |
+| **4** | **0,801 s** | 0,089 s | **10,3-11,2 giudizi/s** | 1432,7 MB |
+
+**Quattro worker vincono tutte e tre le ripetizioni**, in posizione 3, 1 e 2 — quindi non
+è l'ordine a deciderlo. E il **bersaglio p95 < 1 s è centrato** (0,801 s) dal pool **A**,
+con una sola copia del modello e **+33 MB**: il pool B non serve.
+
+⚠️ «I core finiscono» era la spiegazione di un dato che non esisteva. Il carico non
+penalizza i bracci in modo uguale, e il braccio più parallelo è quello che una macchina
+satura punisce di più — per questo il 02/09 «4» sembrava il peggiore.
 
 Il pool è **A** — un semaforo sullo stesso scorer, una sola copia del modello. Il pool
 **B** (N istanze del giudice) costerebbe **~640 MB di modello per worker**, e a quel punto
