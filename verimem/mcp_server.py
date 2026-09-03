@@ -359,6 +359,19 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
         pav = _pavimento_di(agent)
         sem = getattr(agent, "semantic", None)
         if pav and sem is not None and query:
+            # ⚠️ LA SOGLIA DELL'AVVISO NON E' QUELLA DEL TAGLIO, e questa porta
+            # deve dichiarare la STESSA che dichiara l'SDK. `_pavimento_avviso`
+            # (client.py) restituisce il calibrato quando nessuno ha impostato
+            # `ENGRAM_AVVISO_MIN_RELEVANCE`, e quel valore quando c'e'. Senza
+            # questa riga la variabile valeva sull'SDK e NON qui: una memoria,
+            # due risposte — la stessa classe di difetto che questo blocco
+            # presidia da agosto («CLI avvisa, SDK avvisa, MCP tace»), riaperta
+            # da una cura fatta su una superficie sola (la mia, il 02/09).
+            # ⚠️ `if pav` RESTA la guardia: dove il negozio non si e' calibrato
+            # i punteggi stanno su un'altra scala e una soglia misurata altrove
+            # accenderebbe l'avviso su tutto.
+            from .client import _pavimento_avviso
+            _soglia = _pavimento_avviso(pav)
             hits = sem.recall(query, k=3)
             best = 0.0
             for h in (hits or []):
@@ -401,9 +414,9 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
             # porta non ha, e l'avviso comincerebbe a dichiarare un taglio mai
             # avvenuto — cioe' il difetto opposto. Verificato leggendo la
             # chiamata, non dedotto dalla somiglianza.
-            if hits and best < pav:
+            if hits and best < _soglia:
                 out["sotto_il_pavimento"] = {
-                    "pavimento": round(pav, 4),
+                    "pavimento": round(_soglia, 4),
                     "score_migliore": round(best, 4),
                     "nota": ("nessun risultato supera la soglia di rilevanza "
                              "calibrata su questo corpus: probabilmente la "
