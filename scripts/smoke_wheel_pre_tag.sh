@@ -35,6 +35,19 @@ RUN_ID="${1:-}"
 ATTESA="${2:-}"
 [ -z "$RUN_ID" ] && { echo "  uso: bash smoke_wheel_windows.sh <run-id> [versione]"; exit 2; }
 
+# Il repository va risolto ORA, finche' siamo ancora dentro il repo: subito sotto
+# si va in una temporanea, e li' `gh` non sa piu' quale repo interrogare — il
+# download fallisce con «no such file or directory» sulla cartella degli
+# artefatti, che sembra un problema di artefatti e invece e' di contesto.
+# Trovato alla prova generale, che serve a questo.
+# Il suffisso `.git` va tolto con una sostituzione SUA: dentro un solo regex il
+# gruppo se lo mangia e REPO diventa «owner/nome.git», che l'API rifiuta con un
+# 404 sugli ARTEFATTI — un errore che sembra «non ci sono artefatti» e invece e'
+# un nome di repository sbagliato. Due sostituzioni, non una furba.
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#^.*[:/]([^/]+/[^/]+)$#\1#; s#\.git$##')"
+[ -z "$REPO" ] && { echo "  ⛔ non riesco a risolvere il repository: lancia dal repo."; exit 2; }
+echo "  repository: $REPO"
+
 BASE="$(mktemp -d)/smoke-wheel"
 STORE="$BASE/store"          # store ISOLATO: mai ~/.engram di Aurelio
 mkdir -p "$BASE" "$STORE" || exit 2
@@ -57,7 +70,7 @@ echo "  store isolato: $STORE   (lo store di Aurelio NON e' toccato)"
 echo "============================================================================"
 
 # --- 1  l'artefatto CANDIDATO, scaricato dalla CI --------------------------
-gh run download "$RUN_ID" --dir art > /dev/null 2>&1
+gh run download "$RUN_ID" -R "$REPO" --dir art 2>&1 | tail -2
 riga 1 "artefatto del run scaricato" $?
 WHEEL="$(find art -name 'verimem-*.whl' | head -1)"
 if [ -z "$WHEEL" ]; then
