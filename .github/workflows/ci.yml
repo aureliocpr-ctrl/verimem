@@ -1127,9 +1127,21 @@ jobs:
           import json, os, subprocess, sys
           exe = os.path.join(os.path.dirname(sys.executable),
                              "verimem.exe" if os.name == "nt" else "verimem")
+          # `encoding="utf-8"` NON e' decorazione: senza, `text=True` usa la
+          # codifica di SISTEMA — cp1252 su windows, utf-8 su linux — e questo
+          # job cadeva SOLO su windows, a parita' di wheel, con
+          #     UnicodeDecodeError: 'charmap' codec can't decode byte 0x8f
+          # Il server emette UTF-8 corretto (lo impone il protocollo MCP su
+          # stdio): era il LETTORE a cambiare fra i due sistemi. Il byte 0x8f e'
+          # l'ultimo del variation selector di ⚠️, che sta nella guida spedita
+          # come `instructions` — l'unico byte della guida che cp1252 non mappa.
+          # RED provato il 2026-09-03 con `PYTHONUTF8=0` (che riproduce la
+          # console della CI): stesso stdout, senza encoding ROTTO, con encoding
+          # OK. `errors="replace"` perche' un byte sporco deve dare una riga
+          # leggibile, non un traceback che nasconde il resto della risposta.
           proc = subprocess.Popen([exe, "mcp"], stdin=subprocess.PIPE,
                                   stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-                                  text=True)
+                                  text=True, encoding="utf-8", errors="replace")
           req = {"jsonrpc": "2.0", "id": 1, "method": "initialize",
                  "params": {"protocolVersion": "2024-11-05", "capabilities": {},
                             "clientInfo": {"name": "ci", "version": "0"}}}
