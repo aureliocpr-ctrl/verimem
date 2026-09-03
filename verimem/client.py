@@ -321,11 +321,12 @@ class Risultati(list):
     """
 
     __slots__ = ("sotto_il_pavimento", "trattenuti", "letto_al_passato",
-                 "tagliati_dal_pavimento")
+                 "tagliati_dal_pavimento", "esclusi_perche_scaduti")
 
     def __init__(self, iterable=(), *, sotto_il_pavimento=None,
                  trattenuti=None, letto_al_passato=None,
-                 tagliati_dal_pavimento=None) -> None:
+                 tagliati_dal_pavimento=None,
+                 esclusi_perche_scaduti=None) -> None:
         super().__init__(iterable)
         #: ``{quando, quando_leggibile, nota}`` quando la domanda e' stata
         #: interpretata DA SOLA come una domanda sul passato, il filtro
@@ -356,6 +357,24 @@ class Risultati(list):
         #: segnale per due significati, e l'astensione — che vale perche' e'
         #: rara — diventerebbe rumore.
         self.tagliati_dal_pavimento = tagliati_dal_pavimento
+        #: ``{esclusi, nota}`` quando dei fatti sono stati tolti dal top-k
+        #: perche' il loro `valid_until` e' passato; ``None`` quando non ne e'
+        #: stato tolto nessuno.
+        #:
+        #: ⚠️ TERZA CAUSA DELLO STESSO VUOTO, e tenuta separata dalle altre
+        #: due apposta. `letto_al_passato` dice che LA DOMANDA e' stata letta
+        #: come una domanda sul passato; `tagliati_dal_pavimento` che la
+        #: SOGLIA ha tolto; questo che IL FATTO aveva una scadenza propria.
+        #: Le tre hanno rimedi diversi — togliere la data, abbassare
+        #: `min_relevance`, e nessuno dei due — quindi un campo solo lascerebbe
+        #: chi legge senza sapere cosa fare.
+        #:
+        #: ⚠️ NON E' UN VETO SUL VETO: il fatto scaduto resta escluso. Questo
+        #: campo lo DICHIARA soltanto, ed e' l'ordine voluto — la riga che
+        #: dichiara viene prima dell'esposizione della scadenza su piu' porte,
+        #: perche' al contrario si darebbe un modo di far sparire fatti senza
+        #: un modo di accorgersene.
+        self.esclusi_perche_scaduti = esclusi_perche_scaduti
         #: ``{quanti, nota}`` quando il gate ha TRATTENUTO fatti sull'argomento
         #: chiesto; ``None`` quando non ce n'e' nessuno (2026-08-08).
         #:
@@ -1245,6 +1264,7 @@ class Memory:
             _scartati_dal_tempo = int(
                 getattr(self.semantic, "_as_of_scartati", 0) or 0)
         else:
+            self.semantic._recall_scaduti = 0  # noqa: SLF001 — come `_as_of_scartati`
             hits = self.semantic.recall(query, k=k, deep=deep,
                                         include_beliefs=include_beliefs,
                                         include_superseded=include_superseded)
@@ -1339,6 +1359,10 @@ class Memory:
         # `out` e' stato riassegnato e il prima e' perso. Il massimo ricalcolato
         # dopo varrebbe `0.0` su una lista vuota, cioe' un numero INVENTATO: il
         # punteggio migliore esisteva, era solo sotto la soglia.
+        # Il pattern e' quello di `_as_of_scartati` (poco sopra): l'attributo
+        # e' scritto dalla chiamata appena fatta e si legge subito, prima che
+        # qualsiasi altra lettura possa sovrascriverlo.
+        _scaduti = int(getattr(self.semantic, "_recall_scaduti", 0) or 0)
         _n_prima = len(out)
         _best_prima = max((float(i.get("score") or 0.0) for i in out),
                           default=0.0)
@@ -1550,6 +1574,16 @@ class Memory:
             out,
             trattenuti=self._trattenuti_safe(query),
             letto_al_passato=_al_passato,
+            esclusi_perche_scaduti=(
+                {"esclusi": _scaduti,
+                 "nota": (f"{_scaduti} fatto/i non sono stati serviti perche' "
+                          "la loro validita' e' SCADUTA (`valid_until` nel "
+                          "passato). Non e' il pavimento e non e' la data "
+                          "nella domanda: quei fatti sono stati dichiarati "
+                          "validi fino a un istante gia' passato. Per vederli "
+                          "lo stesso, chiedili per id o rileggi con "
+                          "`recall_as_of` a un istante in cui erano validi.")}
+                if _scaduti else None),
             # IL TAGLIO SI DICHIARA SEMPRE CHE AVVIENE, non solo quando ha
             # tolto tutto. La guardia e' `_tagliati`, cioe' il fatto che
             # qualcosa sia stato tolto — indipendente da come e' andata al

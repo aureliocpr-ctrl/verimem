@@ -3985,6 +3985,15 @@ class SemanticMemory:
         except Exception as exc:  # noqa: BLE001 — recall robustness > bump
             _LOG.warning("bump_on_recall_failed: %s", exc)
 
+    #: Quanti fatti l'ultimo `recall` ha escluso perche' SCADUTI
+    #: (`valid_until` nel passato). Azzerato a ogni chiamata: un contatore
+    #: che non si azzera fa comparire l'avviso su una lettura che non ha
+    #: tolto niente, ed e' peggio di non averlo — `Risultati` esiste perche'
+    #: «l'assenza del campo si legge come non ha tagliato», e un campo
+    #: sempre pieno si legge come niente.
+    #: Letto da `Memory.search` col pattern di `_as_of_scartati`.
+    _recall_scaduti = 0
+
     def recall(
         self, query: str, k: int = 5, topic: str | None = None,
         *,
@@ -4252,6 +4261,17 @@ class SemanticMemory:
                 fresh_mask = (
                     (view_lv >= _fresh_after) & (view_lv <= now) & (view_vu > now)
                 )
+            # ⚠️ SI CONTA `view_vu <= now` DA SOLO, non `~fresh_mask`: quella
+            # maschera tiene INSIEME due cause diverse dello stesso vuoto —
+            # l'eta' (`view_lv >= _fresh_after`, che nel ramo non-deep taglia
+            # anche fatti vivissimi solo perche' vecchi) e la scadenza
+            # esplicita. Un avviso che dice «scaduti» contando anche i secondi
+            # sarebbe un solo segnale per due significati: e' il difetto che
+            # `Risultati` documenta gia' fra `sotto_il_pavimento` e
+            # `letto_al_passato`, e che non si ripete qui.
+            # Il conteggio e' su TUTTI i candidati esaminati, quindi vale
+            # indipendentemente da `deep` e da come e' andato il ranking.
+            self._recall_scaduti = int(np.count_nonzero(view_vu <= now))
             if not bool(fresh_mask.all()):
                 fresh_idx = np.nonzero(fresh_mask)[0]
                 if fresh_idx.size == 0:
