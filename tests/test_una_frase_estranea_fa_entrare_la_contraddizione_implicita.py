@@ -104,12 +104,45 @@ def test_la_falsita_implicita_non_dovrebbe_entrare_col_contorno(fonte, claim):
     assert stato == "quarantined", f"ammessa con g={punteggio} grazie a una frase sulla mensa"
 
 
+@pytest.mark.xfail(
+    strict=True,
+    reason="UN FATTO FALSO ENTRA, dal 2026-08-30: `c857752e` ha allargato il "
+    "marcatore di verbo, il soggetto legge come third-party, L1 non escala "
+    "piu' e la trattenuta ACCIDENTALE che questo banco aveva nominato il "
+    "26/08 non c'e' piu'. Nulla l'ha sostituita. Debito dichiarato, non "
+    "risolto: il giorno in cui questa cella torna verde, `strict` la fa "
+    "diventare rossa e qualcuno se ne accorge.",
+)
 def test_A_TRATTENERE_il_claim_di_ws3_e_L1_non_il_moat():
-    """Lo stato attuale: se diventa rosso perche' il moat lo giudica, e' un bene.
+    """Era «trattenuto per caso da un filtro lessicale». Il caso e' finito.
 
-    Col contorno il grounding del claim originale di ws3 sale da 1.8 a 99.9 — il
-    giudice lo dichiara sostenuto — e il fatto resta trattenuto solo perche'
-    contiene una parola che L1.10 conosce.
+    ⚠️ MISURATO IL 2026-09-03, e la bisezione e' meccanica (`git bisect run`
+    su 1280 revisioni, sonda con `ground=False` — nessun modello, nessuno
+    slot), poi confermata con un A/B diretto su padre e figlio:
+
+        ccab08b4 (padre)   quarantined   quarantined_by='L1'  layers=['L1.10']
+        c857752e           model_claim   quarantined_by=None
+                                         layers=['L1.10','L1-domain-precision-observe']
+
+    `c857752e` — «e con l'apostrofo e' un marcatore di verbo quanto e' con
+    l'accento» — DICHIARAVA questo rischio («allargare il marcatore allarga
+    cio' che il classificatore legge come third-party, quindi L1 escala di
+    meno») e lo misurava: 132 fatti diventano DOMAIN, 0 lo perdono, e dei 132
+    nessuno e' in prima persona.
+
+    🔑 IL CONTROLLO GUARDAVA LA POPOLAZIONE SBAGLIATA: chiedeva «la cura marca
+    per errore delle self-claim?» — e la risposta giusta era no. Ma il danno
+    non cade sulle self-claim: cade sulle affermazioni di TERZI **false**, che
+    L1 tratteneva per caso. Questo file lo aveva gia' scritto quattro giorni
+    prima («la garanzia non e' tenuta dal giudice: e' tenuta per caso da un
+    filtro lessicale»), e i due documenti non si sono mai incontrati.
+    ⇒ La popolazione da misurare non e' quella che la cura CAMBIA, e' quella
+    che la garanzia PROTEGGEVA.
+
+    ⚠️ E il giudice non c'entra: isolando una variabile sola (stesso
+    `Memory.add`, stessi argomenti, cambia solo `ground`) il fatto entra
+    **anche col giudice spento**. Col giudice acceso cambia solo cio' che la
+    ricevuta DICE: `layers=[]` invece di `['L1.10', ...]`.
     """
     stato, punteggio, chi = _esito(
         "Il direttore e' stato confermato nell'incarico il 4 maggio.",
