@@ -104,7 +104,10 @@ forum ci hanno mostrato non si recupera: la prima impressione di chi ci prova.
    tracciati nel repo — **diventa parte del test sui banchi** (con la riga `LIVELLO:`, regola 9)
    ed esce dalle regole in testa **quando quel test è verde in main**, non prima.
    *Criterio del budget (02/09, lead↔ws3): una regola esce solo quando il suo righello
-   meccanico — test o gancio — è verde in main; finché non lo è, resta scritta.*
+   meccanico — test o gancio — è verde in main; finché non lo è, resta scritta. E il
+   corollario (03/09, ws3): il budget vale solo per le regole che stanno IN TESTA — una
+   regola che diventa test o gancio costa zero; se una regola non può diventare un test o
+   un gancio, compete per i posti e va pesata contro chi c'è già.*
 8. Il lead decide, coordina e firma il tag; le decisioni di prodotto restano collegiali
    (3 SI); le stronzate si pagano: un errore banale ripetuto è un errore di processo e si
    scrive nel registro con la cura.
