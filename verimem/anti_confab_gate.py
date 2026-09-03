@@ -2627,6 +2627,33 @@ def run_validation_gate(
                                "che sostiene questo valore"),
                     "matched_text": _rr,
                 })
+            # L4.3 — LO SCAMBIO DI ATTRIBUZIONE, il terzo taglio dello stesso
+            # buco. L4.1 chiede se il VALORE c'e', L4.2 se parla della stessa
+            # GRANDEZZA, questo se e' predicato dello stesso SOGGETTO: «la
+            # cauzione e' 148000» contro una fonte dove 148000 e' l'importo
+            # contrattuale e la cauzione e' 22000. Il numero c'e' e la grandezza
+            # e' nominata: i due layer sopra tacciono per costruzione.
+            #
+            # PERCHE' ORA (2026-09-03): il modulo esisteva dal 28/08 con 21 test
+            # verdi e non lo chiamava NESSUNO — era il 39esimo modulo
+            # irraggiungibile che faceva fallire
+            # `test_nessun_modulo_nasce_irraggiungibile`. Due misure
+            # indipendenti dicono che il buco e' vivo: il suo docstring (su 12
+            # scambi L4.1 parla 0 volte, e il giudice si sgretola con la
+            # lunghezza della fonte: 7/12 ammessi a 453 caratteri, 10/12 a 930)
+            # e una misura indipendente del 02/09, per un'altra via: 9 frasi su
+            # 10 che cambiano SOLO di chi si parla passano il giudice con gli
+            # stessi punteggi delle vere.
+            #
+            # AVVISO, NON VETO, e per la ragione scritta a ~2928 per L4.2: «una
+            # cura che rompe un presidio verde scritto da un altro non si
+            # consegna». Nasce dichiarando; il passaggio a veto e' una decisione
+            # collegiale come lo fu il declassamento di L1.20.
+            # Presidio: tests/test_l43_arriva_alla_porta.py
+            from .soggetto_valore import avviso_soggetto_valore
+            _l43 = avviso_soggetto_valore(proposition, source)
+            if _l43:
+                warnings.append(_l43)
             # L4-negazione — NON un verdetto, una DICHIARAZIONE, e solo quando
             # il moat ha gia' deciso di bocciare. Il giudice e' un
             # cross-encoder di ENTAILMENT e non ha l'assunzione di mondo
