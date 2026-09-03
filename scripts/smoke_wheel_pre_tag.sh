@@ -78,6 +78,23 @@ riga 3 "pip install <wheel candidato>  ($((T1 - T0))s)" $EX
 [ "$EX" -ne 0 ] && { echo "  ⛔ installazione fallita: i passi seguenti non hanno senso."; exit 2; }
 
 # --- 4  dice la verita' su di se' ------------------------------------------
+# ⚠️ PRIMA della versione: da DOVE viene il pacchetto che stiamo per misurare.
+# Se `import verimem` risolve al SORGENTE DEL REPO invece che al venv, tutti i
+# passi seguenti misurano il codice di lavoro e non il wheel candidato — e lo
+# smoke darebbe VERDE su un artefatto mai provato. Qui si fa `cd` in una
+# temporanea apposta, ma quella e' una protezione IMPLICITA: basta che qualcuno
+# lanci lo script da dentro il repo perche' salti, e nessuno se ne accorgerebbe.
+# (Misurato: con cwd nel repo, `import verimem` risolve a
+#  C:\Users\aurel\Code\HippoAgent\verimem\__init__.py.)
+ORIGINE="$("$PY" -c 'import verimem, pathlib; print(pathlib.Path(verimem.__file__).resolve())' 2>&1)"
+echo "         origine: $ORIGINE"
+case "$ORIGINE" in
+  *"$BASE"*|*site-packages*) EX_ORIG=0 ;;
+  *)                         EX_ORIG=1 ;;
+esac
+riga 3b "il pacchetto importato viene DAL VENV, non dal repo" $EX_ORIG
+[ "$EX_ORIG" -ne 0 ] && { echo "  ⛔ stiamo per misurare il SORGENTE, non il wheel: mi fermo."; exit 2; }
+
 V="$("$PY" -c 'import verimem; print(verimem.__version__)' 2>&1)"; riga 4 "import verimem -> $V" $?
 if [ -n "$ATTESA" ]; then
   [ "$V" = "$ATTESA" ]; riga 4b "versione installata == attesa ($ATTESA)" $?
