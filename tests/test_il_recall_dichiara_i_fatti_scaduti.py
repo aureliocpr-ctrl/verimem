@@ -154,3 +154,23 @@ def test_quando_la_scadenza_toglie_un_fatto_il_recall_lo_dichiara(store_isolato)
     assert avviso.get("esclusi") == 1, (
         f"l'avviso deve dire QUANTI ne ha tolti, non solo che ne ha tolti: {avviso!r}"
     )
+
+
+# ⚠️ QUI C'ERA UNO `xfail(strict=True)` PER IL CASO CHE NON FUNZIONA, ed e'
+# stato tolto dopo averlo eseguito: risultava XPASS. Committarlo avrebbe rotto
+# la CI — che e' ESATTAMENTE il difetto diagnosticato stamattina in un altro
+# file, arrivato fin qui per la stessa strada.
+#
+# La ragione dello XPASS e' il reperto, ed e' piu' grande di questo file:
+# SOTTO PYTEST L'EMBEDDER E' UNO STUB (`encoder: _StubModel`, verificato), e le
+# similarita' non somigliano a quelle del prodotto:
+#
+#     sotto pytest (stub)       servito 0,7144   scaduto 0,3536
+#     CLI vera (modello vero)   servito 0,8969   scaduto 0,8159
+#
+# ⇒ Ogni test che dipende da un confronto fra similarita' — questo compreso —
+# misura lo stub. I test di questo file restano validi perche' verificano che
+# l'avviso ESISTA e sia legato alla domanda, non la taratura di una soglia; ma
+# nessuno di loro puo' dire se il criterio funziona sul prodotto. Quello si
+# vede solo dalla porta vera, e da li' oggi NON funziona (numeri nel commit
+# 28d53170 e in `client.py`).
