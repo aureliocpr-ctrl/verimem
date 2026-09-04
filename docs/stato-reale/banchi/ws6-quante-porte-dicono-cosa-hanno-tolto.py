@@ -108,7 +108,16 @@ for nome, risp, dich, vis in righe:
         nome, "si" if risp else "NO", "SI" if dich else "no", vis))
 
 print("\n  ── LETTURA ──")
-mute = [n for n, risp, dich, _ in righe if risp and not dich]
+# ⚠️ IL CONTEGGIO NON VA NEL MUCCHIO DEI MUTI, e metterlo li' e' stato un mio
+# errore per un giorno intero: quella porta non tace su una scadenza, la
+# scadenza semplicemente NON LA TOCCA (misurato con due processi separati:
+# ask.count vale 1 col fatto scaduto e 1 senza). Ha un difetto suo — dichiarava
+# «scan dell'intero corpus» contando un AND sui termini, curato in 7ae149f1 —
+# ma e' un'altra domanda, e una riga che risponde alla domanda sbagliata
+# inganna chi legge la tabella.
+mute = [n for n, risp, dich, _ in righe
+        if risp and not dich and "CONTEGGIO" not in n]
+_conteggio = [n for n, risp, _, _ in righe if risp and "CONTEGGIO" in n]
 morte = [n for n, risp, _, _ in righe if not risp]
 if morte:
     print("  ⚠️ porte che NON RISPONDONO: %s" % ", ".join(morte))
@@ -118,5 +127,10 @@ if mute:
     print("  ⛔ porte che RISPONDONO e NON DICHIARANO: %s" % ", ".join(mute))
     print("     chi le usa riceve una risposta ridotta dalla scadenza senza")
     print("     alcun modo di accorgersene.")
+if _conteggio:
+    print("  ℹ️ %s: FUORI MISURA, non muta." % ", ".join(_conteggio))
+    print("     la scadenza non tocca quella strada — ask.count vale 1 col")
+    print("     fatto scaduto e 1 senza. Il suo difetto e' un altro (prometteva")
+    print("     lo «scan dell'intero corpus» contando un AND) ed e' curato.")
 if not mute and not morte:
     print("  ✅ ogni porta che risponde dichiara anche cosa ha tolto.")
