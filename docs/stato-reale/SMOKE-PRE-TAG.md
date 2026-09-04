@@ -62,6 +62,8 @@ un'impronta diversa **non ha provato questo pacchetto**, e la sua riga non vale
 
   Prerequisiti: importato **dal venv** (`…/smoke-wheel/.venv/lib/python3.12/site-packages/verimem/__init__.py`), versione `0.7.6` uguale all'attesa, tetto `mcp<2` rispettato (`1.29.1`), `pip install` in 243 s. Ambiente: WSL Ubuntu 24.04, python3 3.12.3; il venv è stato creato senza `ensurepip` (assente e non installabile senza sudo) e popolato con `pip3 --python <venv>/bin/python install pip` tramite uno shim di `python` fuori dallo script, che è quello di `main` intatto (`--wheel`).
 
+- **wsl, wheel SERVITO da PyPI** — 2026-09-04 19:18, **`EXIT=0`**, 9 passi su 9 (lead-audit), dopo il tag. File scaricato con `pip download verimem==0.7.6 --no-deps --no-cache-dir` da `files.pythonhosted.org/packages/4d/1b/0ce11179…/verimem-0.7.6-py3-none-any.whl`, **sha256 `a4c1125ad7140e5c25c09f4ecd3fe21b315ff1e82937a3b1d1ebc631830c1fe1`** — DIVERSO dall'artefatto provato (`a99f64bc…`) perché `publish.yml` ricostruisce il wheel invece di caricare l'artefatto della CI (LANT-175): confronto file per file, 465 file, 0 con contenuto diverso, 465 con solo il timestamp zip diverso. `pip install` in 144 s; passi 7/8/9 identici ai bracci sopra (99,356 · 1,063 quarantined · `server.version=0.7.6`). Un primo tentativo era caduto al passo 3 in 1 s perché il file era stato rinominato: pip esige il nome standard del wheel; lo script installa con `--quiet` e non stampa l'errore di pip (da correggere).
+
 ### Candidato `8fca33f0` — SUPERATO, verde e inutile per questo tag
 
 Run `33793094834` (`#3090`), `completed/success`, 9 job su 9. Wheel
