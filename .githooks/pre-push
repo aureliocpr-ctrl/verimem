@@ -1,28 +1,53 @@
 #!/usr/bin/env bash
-# pre-push — il gancio della giuntura commit↔ramo (piano-versioni, regola 1 e 11).
+# pre-push — il gancio della giuntura commit↔ramo (piano-versioni, regola B-1) e
+# della giuntura push↔run (regola B-4).
 #
-# 2026-09-02 21:18: ws8 ha spinto su main il ramo di ws5. Voleva spingere UN
-# commit suo; l'albero condiviso (~/Code/HippoAgent) non era su main ma su
-# `ws5/giudice-si-procura-da-solo`, e `git push origin HEAD:main` ha mandato
-# quel ramo intero su main (71034ec1: solo documenti, per fortuna). Il 03/09
-# alle 18:50 l'albero condiviso era DI NUOVO su un ramo altrui
-# (`ws5/giudice-pulito`). La regola scritta («si pusha su main solo dal
-# proprio worktree») non ha retto in 20 ore: serve il gancio.
+# BLOCCO 1 (2026-09-02 21:18): ws8 ha spinto su main il ramo di ws5. Voleva
+# spingere UN commit suo; l'albero condiviso (~/Code/HippoAgent) non era su main
+# ma su `ws5/giudice-si-procura-da-solo`, e `git push origin HEAD:main` ha
+# mandato quel ramo intero su main (71034ec1: solo documenti, per fortuna). Il
+# 03/09 alle 18:50 l'albero condiviso era DI NUOVO su un ramo altrui. La regola
+# scritta («si pusha su main solo dal proprio worktree») non ha retto in 20 ore.
 #
-# COSA FA: se il push va a `refs/heads/main` E siamo nell'ALBERO PRINCIPALE
-# (non in un worktree) E il ramo corrente non e' `main`, blocca. Nei worktree
-# personali (`git worktree add`) il push `HEAD:main` resta permesso: e' il
-# flusso corretto. L'albero principale si riconosce senza percorsi assoluti:
-# li' `--git-dir` e `--git-common-dir` coincidono, in un worktree no.
+# BLOCCO 2 (2026-09-04, lead): la regola B-4 — «nessun push su main mentre il
+# run del commit più recente è IN CORSO» — è caduta TRE volte nella sera del
+# 03/09 (8 run sostituiti in 20 minuti, 7 push dopo l'annuncio di silenzio, 3
+# push dopo lo stop). Scritta e annunciata non regge: qui diventa meccanica.
+#   - il run `ci` del commit più recente di origin/main è IN CORSO  -> BLOCCA
+#   - è in coda (queued/pending): un push lo sostituisce a costo zero -> passa
+#   - è concluso                                                    -> passa
+#   - `gh` manca o fallisce: AVVISA e passa (fail-open dichiarato: un gancio che
+#     blocca per un guasto di rete è peggio della regola che presidia)
+#   - VERIMEM_PUSH_ANYWAY=1: passa con avviso (chi lo usa lo dichiara sul canale)
+#   - VERIMEM_PREPUSH_STATUS=<stato>: SOLO per i test del gancio, salta `gh`
 #
+# L'albero principale si riconosce senza percorsi assoluti: lì `--git-dir` e
+# `--git-common-dir` coincidono, in un worktree no.
 # Argomenti di git: $1 = nome del remote, $2 = url; su stdin le righe
 # «local_ref local_sha remote_ref remote_sha».
 set -u
 GIT_DIR_=$(git rev-parse --git-dir 2>/dev/null)
 COMMON_=$(git rev-parse --git-common-dir 2>/dev/null)
 BRANCH_=$(git branch --show-current 2>/dev/null)
+
+stato_del_run_piu_recente() {
+    # Stampa lo status del run `ci` del commit più recente di origin/main, o
+    # "sconosciuto" se non si può leggere.
+    if [ -n "${VERIMEM_PREPUSH_STATUS:-}" ]; then
+        echo "$VERIMEM_PREPUSH_STATUS"; return 0
+    fi
+    command -v gh >/dev/null 2>&1 || { echo "sconosciuto"; return 0; }
+    local out
+    out=$(gh run list --branch main --workflow ci.yml --limit 1 \
+            --json headSha,status --jq '.[0] | "\(.status) \(.headSha[0:8])"' 2>/dev/null) || { echo "sconosciuto"; return 0; }
+    [ -n "$out" ] || { echo "sconosciuto"; return 0; }
+    echo "$out"
+}
+
 while read -r local_ref local_sha remote_ref remote_sha; do
     [ "$remote_ref" = "refs/heads/main" ] || continue
+
+    # BLOCCO 1: albero condiviso su un ramo che non e' main.
     if [ "$GIT_DIR_" = "$COMMON_" ] && [ "$BRANCH_" != "main" ]; then
         echo ""
         echo "pre-push BLOCKED: stai spingendo su main dall'ALBERO CONDIVISO mentre"
@@ -33,5 +58,29 @@ while read -r local_ref local_sha remote_ref remote_sha; do
         echo "L'albero condiviso resta su main, pulito."
         exit 1
     fi
+
+    # BLOCCO 2: il run del commit piu' recente di main e' in corso.
+    stato=$(stato_del_run_piu_recente)
+    case "$stato" in
+        in_progress*)
+            if [ "${VERIMEM_PUSH_ANYWAY:-0}" = "1" ]; then
+                echo "pre-push AVVISO: il run ci del commit piu' recente di main e' IN CORSO ($stato);"
+                echo "                 VERIMEM_PUSH_ANYWAY=1: passo. Dichiaralo sul canale."
+            else
+                echo ""
+                echo "pre-push BLOCKED (regola B-4): il run ci del commit piu' recente di main e'"
+                echo "IN CORSO ($stato). Un push adesso accoda un altro run da ~50 minuti e"
+                echo "sposta il verdetto di tutte: il 03/09 sera e' successo tre volte."
+                echo "Aspetta che concluda (gh run list --branch main --workflow ci.yml --limit 1),"
+                echo "poi spingi. Se il lead ha aperto una finestra per questo pezzo:"
+                echo "  VERIMEM_PUSH_ANYWAY=1 git push origin HEAD:main   (e scrivilo sul canale)"
+                exit 1
+            fi
+            ;;
+        sconosciuto)
+            echo "pre-push AVVISO: non riesco a leggere lo stato del run di main (gh assente o"
+            echo "                 in errore): passo. Leggilo tu prima di spingere."
+            ;;
+    esac
 done
 exit 0
