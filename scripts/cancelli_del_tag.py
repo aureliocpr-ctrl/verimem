@@ -123,6 +123,19 @@ def c_versioni(e: Esito, pv: str, sha: str) -> None:
     t = leggi(".claude-plugin/plugin.json", sha)
     superfici.append((".claude-plugin/plugin.json",
                       json.loads(t).get("version") if t else None))
+    # Una superficie ASSENTE non deve sparire in silenzio.
+    # Provato il 2026-09-04 sul commit 039e0455, che precede l'introduzione di
+    # server.json: il cancello stampava «OK le superfici di versione concordano»
+    # e non una parola sulle due superfici mancanti. Un'assenza si legge come un
+    # verde — la stessa forma per cui server.json, appena nato, resto' fuori dal
+    # presidio e il 2026-09-02 dichiarava 0.7.2 mentre le altre dicevano 0.7.6.
+    # Qui l'assenza APRE il cancello: si tagga il presente, e nel presente
+    # queste cinque superfici esistono tutte.
+    for atteso in ("verimem/__init__.py", ".claude-plugin/plugin.json",
+                   "server.json", "STATE.md"):
+        if leggi(atteso, sha) is None:
+            e.cancello(f"superficie {atteso}", False,
+                       f"assente dal commit {sha[:8]}: non e' concorde, e' sparita")
     t = leggi("server.json", sha)
     if t is not None:
         sj = json.loads(t)
@@ -139,8 +152,11 @@ def c_versioni(e: Esito, pv: str, sha: str) -> None:
     for nome, v in superfici:
         if v is None:
             e.cancello(f"versione in {nome}", None, "non letta")
+    # Il CONTEGGIO va stampato: e' l'unico modo perche' una superficie nuova e
+    # non presidiata si veda. Se domani il numero scende, qualcosa e' sparito.
     e.cancello("le superfici di versione concordano", not diverse,
-               f"pyproject={pv}" + (f" ma {', '.join(sorted(diverse))} altrove" if diverse else ""))
+               f"pyproject={pv}, {len(superfici)} superfici confrontate"
+               + (f" ma {', '.join(sorted(diverse))} altrove" if diverse else ""))
 
 
 def c_changelog(e: Esito, pv: str, sha: str) -> None:
@@ -160,7 +176,7 @@ def c_ci(e: Esito, sha: str) -> None:
     """Il verde deve stare sul commit CHE SI TAGGA, non su un antenato."""
     out, code = sh("gh", "api",
                    f"repos/:owner/:repo/actions/workflows/ci.yml/runs?head_sha={sha}",
-                   "--jq", '[.workflow_runs[] | {n:.run_number, s:.status, c:.conclusion}]')
+                   "--jq", '[.workflow_runs[] | {n:.run_number, s:.status, c:.conclusion, i:.id}]')
     if code != 0:
         e.cancello("CI sul commit del tag", None, f"gh EXIT={code}")
         return
@@ -173,16 +189,23 @@ def c_ci(e: Esito, sha: str) -> None:
     e.cancello("CI verde sul commit del tag", bool(vinc),
                f"#{vinc[0]['n']}" if vinc else f"{len(runs)} run, nessuno success")
     if vinc:
-        out2, code2 = sh("gh", "api",
-                         f"repos/:owner/:repo/actions/workflows/ci.yml/runs?head_sha={sha}",
-                         "--jq", ".workflow_runs[0].id")
-        if code2 == 0 and out2:
-            out3, code3 = sh("gh", "api", f"repos/:owner/:repo/actions/runs/{out2}/jobs",
-                             "--jq", '[.jobs[].conclusion] | {tot:length, ok:(map(select(.=="success"))|length)}')
-            if code3 == 0:
-                d = json.loads(out3)
-                e.cancello("tutti i job del run sono success",
-                           d["tot"] == d["ok"] and d["tot"] > 0, f"{d['ok']}/{d['tot']}")
+        # I job si contano sul run VINCENTE, non su `.workflow_runs[0]`.
+        # Prima era `[0]`, cioe' il piu' RECENTE: finche' c'e' un run solo i due
+        # coincidono — sul candidato 04911425 ce n'e' uno e il 9/9 era giusto —
+        # ma basta un re-run, o un run ancora in corso sullo stesso commit,
+        # perche' il numero stampato («#3097») e il numero contato vengano da
+        # due run DIVERSI, presentati come una misura sola.
+        # ⚠️ Questo difetto NON e' stato osservato: sui run di questo repository
+        # non esiste oggi un commit con un verde e un piu' recente non verde.
+        # E' una cura preventiva, e va letta per quello che e'.
+        idv = vinc[0]["i"]
+        out3, code3 = sh("gh", "api", f"repos/:owner/:repo/actions/runs/{idv}/jobs",
+                         "--jq", '[.jobs[].conclusion] | {tot:length, ok:(map(select(.=="success"))|length)}')
+        if code3 == 0:
+            d = json.loads(out3)
+            e.cancello("tutti i job del run sono success",
+                       d["tot"] == d["ok"] and d["tot"] > 0,
+                       f"{d['ok']}/{d['tot']} del run #{vinc[0]['n']} (id {idv})")
 
 
 def c_manifesti(e: Esito) -> None:
