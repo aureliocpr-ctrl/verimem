@@ -1618,10 +1618,28 @@ def ask_cmd(
     rep = m.ask(query, k=k, topic_prefix=topic or None)
     intento = rep.get("intent", "find")
     if intento == "count":
+        # ⚠️ QUI C'ERA «scan dell'intero corpus», e prometteva una cosa che il
+        # numero non mantiene. Il conteggio E' una scansione (non un top-k, e
+        # quella meta' della frase resta vera e utile), ma su un AND di TUTTI i
+        # termini: basta che un fatto pertinente usi una parola diversa e non
+        # viene contato. Misurato su due fatti che differiscono per UN verbo:
+        #
+        #     termini «pallet ospita il deposito Verona» -> count(AND) = 1
+        #     pallet 2 · ospita 1 · il 0 · deposito 2 · Verona 2
+        #     count() sul corpus = 2
+        #
+        # Il numero non e' sbagliato: e' corretto per cio' che misura. Era la
+        # RIGA a dire un'altra cosa, e chi legge «intero corpus» conclude «di
+        # pallet ne ho uno solo». Un numero vero che inganna si cura nella
+        # frase, non nel calcolo — e costa zero, mentre accendere sempre il
+        # per-termine costa 12,2x (misurato: 3,7 ms l'AND, 45,5 ms i cinque
+        # termini su 400 fatti), che e' la ragione per cui la guardia qui sotto
+        # resta al solo caso zero.
         console.print(f"[green]{rep.get('count', 0)}[/green] "
-                      f"[dim]fatti su «{rep.get('terms', query)}» "
-                      f"(intento: conteggio — scan dell'intero corpus, "
-                      f"non i primi {k})[/dim]")
+                      f"[dim]fatti che contengono TUTTI i termini "
+                      f"«{rep.get('terms', query)}» (conteggio: scansione "
+                      f"completa, non i primi {k} — ma un fatto che dice la "
+                      f"stessa cosa con parole diverse non e' contato)[/dim]")
         # PERCHÉ LO ZERO. `Memory.ask` dichiara già il conteggio per singolo
         # termine quando il totale è zero e i termini sono più d'uno — il
         # conteggio è un AND, e basta una parola che nessun fatto contiene per

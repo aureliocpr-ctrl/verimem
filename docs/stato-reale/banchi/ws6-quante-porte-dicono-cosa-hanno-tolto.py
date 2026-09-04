@@ -77,6 +77,14 @@ env = dict(os.environ)
 #: strade: con «quanti...» classifica l'intento come CONTEGGIO ed esce da un
 #: ramo che non passa mai dagli avvisi. Una cella sola avrebbe misurato una
 #: strada sola e chiamato l'altra col suo nome.
+#:
+#: 🪞 MA LA CELLA «CONTEGGIO» NON MISURA LA SCADENZA, e la prima stesura di
+#: questo banco lo lasciava credere. Verificato il 04/09 con due processi
+#: separati: `ask.count` vale 1 sia col fatto scaduto sia senza; la riduzione
+#: la fa l'AND sui termini, non `valid_until`. La riga resta perche' il difetto
+#: c'e' — «scan dell'intero corpus» su un numero ridotto — ma va letta per
+#: quello che e': una porta che dichiara completezza, non una che tace su una
+#: scadenza.
 FIND = "raccontami del deposito di Verona e dei suoi pallet"
 for cmd in (["recall", QUERY], ["ask", FIND], ["ask", QUERY]):
     try:

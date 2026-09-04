@@ -123,11 +123,16 @@ def test_anche_ask_lo_dice_non_solo_recall(monkeypatch):
     #: ⚠️ QUERY DIVERSA, e la ragione e' un reperto a parte: con «quanti pallet
     #: ospita...» `ask` classifica l'intento come CONTEGGIO ed esce da un ramo
     #: precedente, stampando «1 fatti ... (intento: conteggio — scan
-    #: dell'intero corpus, non i primi 5)». Quel numero E' filtrato dalla
-    #: scadenza e la riga dichiara di aver guardato tutto: e' un difetto
-    #: PEGGIORE di quello curato qui — li' manca un avviso, li' un numero e'
-    #: falso — e vive su un'altra strada (il conteggio non passa da `search`).
-    #: Non lo si cura di straforo dentro questo test: e' segnato a parte.
+    #: dell'intero corpus, non i primi 5)».
+    #:
+    #: 🪞 CORREZIONE (04/09): avevo scritto che quel numero e' «filtrato dalla
+    #: scadenza». E' FALSO, e l'ho verificato con due processi separati e store
+    #: isolati: `ask.count` vale 1 sia col fatto scaduto sia senza, e
+    #: `m.count()` vale 2 in entrambi i casi. La scadenza non c'entra.
+    #: La causa e' l'AND sui termini — «pallet ospita il deposito Verona» —
+    #: che esclude il fatto vivo perche' dice «custodisce» invece di «ospita».
+    #: Il difetto RESTA (la riga dichiara «scan dell'intero corpus» e il numero
+    #: e' 1 su 2 pertinenti) ma ha un'altra causa, ed e' segnato a parte.
     out = CliRunner().invoke(
         cli_mod.app, ["ask", "raccontami del deposito di Verona e dei suoi pallet"]).output
     assert "imballaggi" in out or "Verona" in out, (
