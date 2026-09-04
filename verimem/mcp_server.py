@@ -2858,6 +2858,12 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "byte-identical."
                         ),
                     },
+                    "as_of": {"type": "number",
+                               "description": "epoch seconds: serve i fatti che "
+                                              "erano CORRENTI a quell'istante. "
+                                              "Componibile con topic/min_status, "
+                                              "a differenza del tool dedicato "
+                                              "hippo_recall_as_of."},
                 },
                 "required": ["query"],
             },
@@ -3871,6 +3877,9 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "query": {"type": "string"},
                     "limit": {"type": "integer", "minimum": 1,
                                 "maximum": 200, "default": 20},
+                    "as_of": {"type": "number",
+                               "description": "epoch seconds: solo i fatti che "
+                                              "erano CORRENTI a quell'istante."},
                     "topic": {"type": "string"},
                     "user_id": {"type": "string", "description": (
                         "Multi-tenancy scope: return only this user's facts "
@@ -12647,6 +12656,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 agent_id=_sa, run_id=_sr, cap=500,
             )
             _pf = {"topic_prefix": _search_prefix} if _search_prefix else {}
+            #: LA PORTA GEMELLA, e lo stesso difetto: misurato il 04/09,
+            #: `hippo_facts_search` dava 1 risultato con `as_of=ieri` e 1
+            #: senza, con gli STESSI id. Curarne una sola avrebbe lasciato
+            #: «una capacita' su una porta su due», che e' la forma che questo
+            #: repo ha gia' deciso di non lasciare in piedi. Stessa superficie
+            #: unica `stato_a` di `hippo_facts_recall`: il ciclo NON si copia,
+            #: si chiama.
+            _as_of = arguments.get("as_of")
+            _as_of = float(_as_of) if _as_of is not None else None
+            if _as_of is not None:
+                # senza i ritirati fra i candidati il passato non ha nulla da
+                # restituire: chi era corrente allora oggi e' superseduto.
+                _pf["include_superseded"] = True
             try:
                 # Multi-word UX (2026-06-13, hit in real use): a phrase LIKE only
                 # matches the whole query as a contiguous substring, so a natural
@@ -12684,7 +12706,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     )
                 ][:limit]
             _audit(name, arguments, outcome="ok")
+            _as_of_scartati = 0
+            if _as_of is not None:
+                from .temporal_context import stato_a as _stato_a
+                _tenuti = []
+                for _h in hits:
+                    _f = _h[0] if isinstance(_h, tuple) else _h
+                    _st = _stato_a(a.semantic, _f, _as_of)
+                    if _st == "corrente":
+                        _tenuti.append(_h)
+                    elif _st == "non_ancora":
+                        # solo questo si conta: «gia' ritirato a quella data»
+                        # e' il time travel che funziona, non uno scarto.
+                        _as_of_scartati += 1
+                hits = _tenuti[:limit]
             return _ok({
+                # Un filtro APPLICATO si dichiara — come topic e min_status
+                # qui sotto. Senza, la cura resterebbe invisibile a chi
+                # chiama, che e' il difetto di partenza in un'altra forma.
+                **({"as_of": _as_of,
+                    "as_of_scartati": _as_of_scartati} if _as_of is not None else {}),
                 "query": query,
                 "topic": topic,
                 "include_legacy": include_legacy,
@@ -13928,6 +13969,25 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _pf = {"topic_prefix": _topic_prefix} if _topic_prefix else {}
             if arguments.get("deep"):
                 _pf["deep"] = True   # v14 archaeology: lift age hiding only
+            #: `as_of` CHIESTO QUI E NON AL TOOL DEDICATO: fino al 04/09 questa
+            #: porta lo accettava e lo IGNORAVA — misurato, 1 risultato con
+            #: `as_of=ieri` e 1 senza, gli STESSI id, mentre
+            #: `hippo_recall_as_of` allo stesso istante ne restituiva 0. Una
+            #: porta che accetta un parametro e lo scarta in silenzio e' la
+            #: forma «costruito e spento»: chi chiede il passato riceve il
+            #: presente senza modo di accorgersene.
+            #: ⚠️ NON si delega a `recall_as_of`: non accetta
+            #: topic/min_status/trust_signals, e passarci dentro li PERDEREBBE
+            #: restituendoli nell'eco come applicati — la bugia che il thin
+            #: tier dichiara di voler evitare. Si usa la superficie unica
+            #: `stato_a` DOPO il recall completo.
+            _as_of = arguments.get("as_of")
+            _as_of = float(_as_of) if _as_of is not None else None
+            if _as_of is not None:
+                # il passato vive fra i ritirati e fra i vecchi: senza questi
+                # due la pesca non contiene nemmeno i candidati giusti.
+                _pf["include_superseded"] = True
+                _pf["deep"] = True
             if arguments.get("include_superseded"):
                 # I RITIRATI CHE IL GIUDICE SOSTIENE ANCORA. Stessa forma di
                 # `deep` qui sopra — si passa SOLO quando chiesto, cosi' la
@@ -13958,6 +14018,21 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except ValueError as exc:
                 _audit(name, arguments, outcome="rejected_min_status")
                 return _err(str(exc))
+            _as_of_scartati = 0
+            if _as_of is not None:
+                from .temporal_context import stato_a as _stato_a
+                _tenuti = []
+                for _h in hits:
+                    _st = _stato_a(a.semantic, _h[0], _as_of)
+                    if _st == "corrente":
+                        _tenuti.append(_h)
+                    elif _st == "non_ancora":
+                        # si conta SOLO questo: «gia' ritirato a quella data»
+                        # e' il time travel che funziona, non uno scarto da
+                        # segnalare — ed e' il motivo per cui `stato_a` rende
+                        # tre valori invece di un booleano.
+                        _as_of_scartati += 1
+                hits = _tenuti[:k]
             if _scoped:
                 hits = [
                     h for h in hits
@@ -14044,6 +14119,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok({
                 "query": query,
                 "topic": topic,
+                # Un filtro APPLICATO si dichiara, come gia' fanno topic e
+                # min_status. Il 04/09 la misura diceva «chiavi in piu' nella
+                # risposta: NESSUNA» proprio mentre `as_of` veniva ingoiato:
+                # senza questa riga la cura sarebbe invisibile a chi chiama.
+                **({"as_of": _as_of,
+                    "as_of_scartati": _as_of_scartati} if _as_of is not None else {}),
                 # Il pavimento che ha DAVVERO filtrato questa risposta, o
                 # `null`: una lista corta perche' il corpus e' povero e una
                 # corta perche' un pavimento l'ha tagliata sono due esiti che
