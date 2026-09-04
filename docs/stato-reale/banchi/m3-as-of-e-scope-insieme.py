@@ -14,6 +14,27 @@ prova `as_of` SENZA scope. Un difetto che nasce nella COMBINAZIONE di due
 opzioni non si vede esercitandone una sola — ed e' la ragione per cui la
 falsificazione la fa qualcun altro.
 
+PERCHE' `agent_id` E NON `user_id` — ed e' la ragione per cui la mia prima
+stesura di questo banco NON DISCRIMINAVA (verde anche col difetto rimesso,
+04/09 21:58). La QA l'ha eseguito su tutte e tre le dimensioni:
+
+    scope      SENZA as_of   CON as_of   as_of_scartati
+    user_id            2           2              0      non perde
+    agent_id           2           0              0      PERDE TUTTO
+    run_id             2           0              0      PERDE TUTTO
+
+`user_id` da solo produce un prefisso canonico LEADING, e la pesca e' gia'
+ristretta al tenant nel DB: il taglio anticipato non ha nulla da buttare.
+`agent_id`/`run_id` SENZA `user_id` non sono leading -> oversample +
+post-filtro -> il taglio a `k` prima del post-filtro cancella tutto. Avevo
+costruito il banco sull'unica dimensione PROTETTA: non era un problema di
+ranking indovinato, era la dimensione sbagliata.
+
+⚠️ E la perdita e' MUTA: `as_of_scartati` resta 0 mentre spariscono TUTTI i
+risultati — tecnicamente onesto (nessuno scartato per il tempo) e illeggibile
+per chi chiama, che sente dire «ho applicato as_of, non ho scartato niente,
+non ho trovato niente».
+
 COME ISOLA L'ORDINE DAL TEMPO: `as_of` e' messo un minuto NEL FUTURO, quando
 tutti i fatti esistono gia'. Il filtro temporale non deve quindi togliere
 NIENTE: se il numero cala, e' l'ordine delle operazioni, non il tempo.
@@ -49,7 +70,7 @@ print(f"  verimem misurato: {_QUALE}")
 if _ROOT not in _QUALE.parents:
     raise SystemExit(f"⛔ sto per misurare {_QUALE} invece del repo {_ROOT}.")
 
-UTENTE = "alice"
+AGENTE = "atlas"   # <- agent_id, NON user_id: vedi il perche qui sotto
 QUERY = "politica di rimborso dei clienti"
 K = 2
 
@@ -63,8 +84,8 @@ FUORI = [
 #: in scope, e piu' lontani dalla query: senza il difetto tornano lo stesso,
 #: perche' la pesca e' ampia PROPRIO per lasciarli passare allo scope.
 DENTRO = [
-    "Il rimborso ai clienti di Alice segue la regola dei quattordici giorni.",
-    "Alice gestisce i rimborsi con la stessa politica del negozio.",
+    "Il rimborso ai clienti di Atlas segue la regola dei quattordici giorni.",
+    "Atlas gestisce i rimborsi con la stessa politica del negozio.",
 ]
 
 
@@ -92,7 +113,7 @@ def quanti(r: dict) -> int:
 def main() -> int:
     ag = mcp_server._ag()
     assert "h3scope_" in str(ag.semantic.db_path), "non e' la dir temporanea"
-    topic_dentro = scoped_topic("banco/h3", user_id=UTENTE)
+    topic_dentro = scoped_topic("banco/h3", agent_id=AGENTE)
     print(f"  topic in scope: {topic_dentro}")
 
     from verimem.client import Memory
@@ -108,9 +129,9 @@ def main() -> int:
     dopo = time.time() + 60   # tutti esistono gia': il tempo non deve togliere
 
     senza = asyncio.run(chiama("hippo_facts_recall", {
-        "query": QUERY, "k": K, "user_id": UTENTE}))
+        "query": QUERY, "k": K, "agent_id": AGENTE}))
     con = asyncio.run(chiama("hippo_facts_recall", {
-        "query": QUERY, "k": K, "user_id": UTENTE, "as_of": dopo}))
+        "query": QUERY, "k": K, "agent_id": AGENTE, "as_of": dopo}))
     n_senza, n_con = quanti(senza), quanti(con)
 
     print()
