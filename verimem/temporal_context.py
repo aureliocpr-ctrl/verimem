@@ -215,6 +215,42 @@ def history_line(fact, history: list, *, disputes: list[str] | None = None) -> s
     return line
 
 
+def stato_a(sm, fact, when: float) -> str:
+    """Che cos'era questo fatto all'istante ``when``: la SUPERFICIE UNICA del
+    filtro bi-temporale.
+
+    Rende ``"corrente"``, ``"non_ancora"`` (asserito dopo ``when``) oppure
+    ``"gia_ritirato"`` (un successore lo aveva gia' sostituito a quella data).
+
+    ⚠️ TRE VALORI E NON UN BOOLEANO, e la ragione e' un presidio che esisteva
+    gia': chi chiama deve poter contare gli scarti «non ancora nato» SENZA
+    contare quelli «gia' ritirato», perche' il primo e' un fraintendimento da
+    segnalare al chiamante e il secondo e' il time travel che funziona
+    (`test_senza_scarti_non_si_dichiara_niente`). Un predicato si/no avrebbe
+    fuso le due cause.
+
+    ⚠️ ESTRATTA il 04/09 perche' serviva in TRE punti — `recall_as_of` e le
+    due porte MCP `hippo_facts_recall` / `hippo_facts_search`, che fino a
+    quel giorno accettavano `as_of` e lo IGNORAVANO. Copiare qui il ciclo
+    sarebbe stata la classe di difetto piu' battuta di questo repo: due copie
+    divergono, e la seconda di solito e' quella che nessuno aggiorna.
+
+    ``asserted_at`` con ``created_at`` come ripiego: l'event time non e'
+    scrivibile dalla porta MCP di scrittura (limite dichiarato in
+    `hippo_remember` dal 31/08), quindi per molti fatti l'unico asse
+    disponibile e' il write time.
+    """
+    born = getattr(fact, "asserted_at", None)
+    born = float(born) if born is not None else float(
+        getattr(fact, "created_at", 0.0) or 0.0)
+    if born > when:
+        return "non_ancora"
+    died = _died_event_ts(sm, fact)
+    if died is not None and died <= when:
+        return "gia_ritirato"
+    return "corrente"
+
+
 def recall_as_of(sm, query: str, *, when: float, k: int = 5,
                  include_beliefs: bool = False) -> list[tuple]:
     """Time-travel recall over the bi-temporal store: the facts that were
@@ -248,15 +284,11 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
     # firma cambiata, nessun chiamante da aggiornare.
     scartati = 0
     for hit in hits:
-        f = hit[0]
-        born = getattr(f, "asserted_at", None)
-        born = float(born) if born is not None else float(
-            getattr(f, "created_at", 0.0) or 0.0)
-        if born > when:
+        stato = stato_a(sm, hit[0], when)
+        if stato == "non_ancora":
             scartati += 1
-            continue                      # not yet asserted at `when`
-        died = _died_event_ts(sm, f)
-        if died is not None and died <= when:
+            continue
+        if stato == "gia_ritirato":
             # ⚠️ QUESTO SCARTO NON SI CONTA, ed e' il presidio
             # `test_senza_scarti_non_si_dichiara_niente` ad averlo detto: un
             # fatto gia' SUPERSEDUTO a quella data e' escluso perche' il time
@@ -265,7 +297,10 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
             # non c'e' niente da dichiarare. Le due cause di scarto sono
             # diverse: «piu' recente della data» e' il fraintendimento da
             # segnalare, «gia' ritirato a quella data» e' la funzione.
-            continue                      # already superseded by `when`
+            # ⇒ ED E' PER QUESTO CHE `stato_a` restituisce TRE valori e non un
+            # booleano: un predicato si/no qui cancellerebbe la distinzione
+            # che il presidio protegge.
+            continue
         out.append(hit)
         if len(out) >= k:
             break
