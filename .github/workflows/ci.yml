@@ -165,7 +165,13 @@ jobs:
     # ⚠️ RESTA APERTO l'altro lato, e non lo chiude questo numero: una gamba
     #   SCADUTA e' muta (conclusion `cancelled`, nessuna sintesi). Alzare il
     #   tetto rende l'evento piu' raro, non piu' visibile.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 35 }}
+    # 2026-09-04 (lead): 35 era il tetto e i job ubuntu sani durano 23-30 min (misurato
+    # sugli ultimi 4 run verdi: 23, 24, 27, 28, 28, 29, 30, 30). Con 5 minuti di margine
+    # un runner lento fa cadere un job VERDE per timeout: successo due volte in due
+    # giorni (fade02f0 py3.10 il 03/09, bb93d120 py3.12 il 04/09, entrambi a 35:00
+    # esatti, «The operation was canceled»). 50 lascia il tappo (un hang non aspetta
+    # 6 ore) senza tagliare un run sano. Un job rosso resta rosso.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 50 }}
     strategy:
       fail-fast: false
       matrix:
