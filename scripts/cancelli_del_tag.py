@@ -45,6 +45,47 @@ def sh(*args: str) -> tuple[str, int]:
     return p.stdout.strip(), p.returncode
 
 
+def espandi_sha(sha: str) -> str | None:
+    """Lo sha ABBREVIATO va espanso PRIMA di interrogare l'API, o si legge un
+    verde inesistente al contrario.
+
+    `head_sha=` dell'API di GitHub vuole i 40 caratteri: con uno sha corto NON
+    da' errore, restituisce una LISTA VUOTA. Misurato il 2026-09-04 su questo
+    stesso repository e sullo stesso commit:
+
+        gh run list --commit 04911425                    -> 0
+        gh run list --commit 049114259e5123516d76ee...   -> 3
+
+    Il cancello della CI concludeva percio' «NESSUN run» su un commit che ne
+    aveva tre, uno dei quali verde 9/9. Qui l'errore cadeva dal lato prudente —
+    un cancello aperto per sbaglio si nota — ma resta un misuratore che mente:
+    chi copia lo sha da `git log --oneline` lo copia SEMPRE corto.
+    """
+    out, code = sh("git", "rev-parse", "--verify", f"{sha}^{{commit}}")
+    return out if code == 0 and len(out) == 40 else None
+
+
+def leggi(rel: str, sha: str) -> str | None:
+    """Legge un file DAL COMMIT, non dall'albero di lavoro.
+
+    Prima queste letture erano `(RADICE / rel).read_text()`, e `--sha` governava
+    soltanto l'interrogazione alla CI: il comando diceva «i cancelli sono
+    chiusi» misurando i file che avevo sotto mano, non quelli del commit che si
+    stava per taggare. Provato il 2026-09-04, stesso `--sha`, due alberi:
+
+        albero integro   -> OK  CHANGELOG ha la voce [0.7.6]   171 righe
+        voce rimossa     -> NO  CHANGELOG ha la voce [0.7.6]   assente
+
+    Due verdetti diversi per lo STESSO commit: la firma di un misuratore che
+    misura un'altra cosa. E il caso pericoloso non e' teorico — il registro
+    dello smoke nasce DOPO il commit che si tagga, quindi girando i cancelli dal
+    ramo che lo contiene il cancello «smoke» si sarebbe chiuso su una prova
+    assente dal tag.
+    """
+    out, code = sh("git", "show", f"{sha}:{rel}")
+    return out if code == 0 else None
+
+
 class Esito:
     def __init__(self) -> None:
         self.aperti: list[str] = []
@@ -61,34 +102,37 @@ class Esito:
             self.aperti.append(f"{nome}: {dettaglio}")
 
 
-def versione_di_record() -> str | None:
-    m = re.search(r'(?m)^version\s*=\s*"([^"]+)"',
-                  (RADICE / "pyproject.toml").read_text(encoding="utf-8"))
+def versione_di_record(sha: str) -> str | None:
+    t = leggi("pyproject.toml", sha)
+    if t is None:
+        return None
+    m = re.search(r'(?m)^version\s*=\s*"([^"]+)"', t)
     return m.group(1) if m else None
 
 
-def c_versioni(e: Esito, pv: str) -> None:
+def c_versioni(e: Esito, pv: str, sha: str) -> None:
     """Le superfici che dichiarano la versione devono dire la STESSA cosa.
 
     `server.json` e' la quinta e la piu' recente: il 2026-09-02 diceva 0.7.2
     mentre le altre quattro dicevano 0.7.6, e il presidio non la guardava.
     """
     superfici: list[tuple[str, str | None]] = [("pyproject.toml", pv)]
-    m = re.search(r'__version__\s*=\s*"([^"]+)"',
-                  (RADICE / "verimem" / "__init__.py").read_text(encoding="utf-8"))
+    t = leggi("verimem/__init__.py", sha) or ""
+    m = re.search(r'__version__\s*=\s*"([^"]+)"', t)
     superfici.append(("verimem/__init__.py", m.group(1) if m else None))
-    pj = json.loads((RADICE / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8"))
-    superfici.append((".claude-plugin/plugin.json", pj.get("version")))
-    sj_path = RADICE / "server.json"
-    if sj_path.exists():
-        sj = json.loads(sj_path.read_text(encoding="utf-8"))
+    t = leggi(".claude-plugin/plugin.json", sha)
+    superfici.append((".claude-plugin/plugin.json",
+                      json.loads(t).get("version") if t else None))
+    t = leggi("server.json", sha)
+    if t is not None:
+        sj = json.loads(t)
         superfici.append(("server.json", sj.get("version")))
         for i, pkg in enumerate(sj.get("packages", [])):
             if "version" in pkg:
                 superfici.append((f"server.json packages[{i}]", pkg["version"]))
-    st = (RADICE / "STATE.md")
-    if st.exists():
-        m = re.search(r"(?m)^\|\s*Release\s*\|\s*v?([0-9][0-9.]*)", st.read_text(encoding="utf-8"))
+    t = leggi("STATE.md", sha)
+    if t is not None:
+        m = re.search(r"(?m)^\|\s*Release\s*\|\s*v?([0-9][0-9.]*)", t)
         superfici.append(("STATE.md riga Release", m.group(1) if m else None))
 
     diverse = {v for _, v in superfici if v is not None} - {pv}
@@ -99,8 +143,11 @@ def c_versioni(e: Esito, pv: str) -> None:
                f"pyproject={pv}" + (f" ma {', '.join(sorted(diverse))} altrove" if diverse else ""))
 
 
-def c_changelog(e: Esito, pv: str) -> None:
-    testo = (RADICE / "CHANGELOG.md").read_text(encoding="utf-8")
+def c_changelog(e: Esito, pv: str, sha: str) -> None:
+    testo = leggi("CHANGELOG.md", sha)
+    if testo is None:
+        e.cancello(f"CHANGELOG ha la voce [{pv}]", None, "CHANGELOG.md non e' in questo commit")
+        return
     m = re.search(rf"(?ms)^## \[{re.escape(pv)}\][^\n]*\n(.*?)(?=^## \[|\Z)", testo)
     corpo = (m.group(1).strip() if m else "")
     e.cancello(f"CHANGELOG ha la voce [{pv}]", bool(m),
@@ -147,7 +194,7 @@ def c_manifesti(e: Esito) -> None:
     e.cancello("manifesti + prova di proprieta' PyPI", code == 0, f"EXIT={code}")
 
 
-def c_smoke(e: Esito, pv: str) -> None:
+def c_smoke(e: Esito, pv: str, sha: str) -> None:
     """Non lo esegue: controlla che sia stato DICHIARATO, con esito e autore.
 
     Il piano lo vuole su DUE campi (WSL e Windows) e PRIMA del tag. Una
@@ -155,6 +202,14 @@ def c_smoke(e: Esito, pv: str) -> None:
     due macchine danno esiti diversi (misurato il 2026-09-02: moat MISSING su
     WSL e moat ON su Windows, stesso pacchetto).
     """
+    # ⚠️ QUESTO cancello, e solo questo, legge dall'ALBERO DI LAVORO e non dal
+    # commit. Non e' una svista: lo smoke si esegue SUL WHEEL prodotto dal
+    # commit, quindi il registro nasce per forza DOPO — nessun commit puo'
+    # contenere la prova fatta su se stesso. Il tag conterra' il codice provato;
+    # la prova sta nel commit successivo.
+    # Il rischio che questo apre — un registro verde che parla di un ALTRO
+    # pacchetto — non si chiude leggendo altrove: si chiude PRETENDENDO che il
+    # registro nomini il commit di cui stiamo parlando. E' il cancello qui sotto.
     reg = RADICE / "docs" / "stato-reale" / "SMOKE-PRE-TAG.md"
     if not reg.exists():
         e.cancello("smoke pre-tag dichiarato", False,
@@ -165,7 +220,31 @@ def c_smoke(e: Esito, pv: str) -> None:
     if not blocco:
         e.cancello("smoke pre-tag dichiarato", False, f"nessun blocco per {pv}")
         return
-    b = blocco.group(1)
+    # I campi si cercano SOLO nel sotto-blocco che nomina questo commit, non in
+    # tutta la voce della versione. Il registro contiene anche i candidati
+    # superati — 0.7.6 ne ha gia' due — e ognuno porta la sua riga «windows …
+    # EXIT=0»: cercando nell'intera voce, il cancello di windows si chiuderebbe
+    # con la prova di un ALTRO pacchetto. Il buco l'ha aperto chi scrive (io,
+    # aggiungendo il blocco storico) e non chi legge: e' il caso in cui il
+    # registro migliora e il misuratore peggiora.
+    # Lo sha si cerca nell'INTESTAZIONE del sotto-blocco, non nel suo corpo.
+    # Cercarlo ovunque non regge: il blocco del candidato superato SPIEGA che il
+    # commit da taggare e' un altro e cosi' lo nomina, e con la ricerca larga
+    # risultava pertinente. Provato il 2026-09-04 togliendo la riga `windows`
+    # del candidato: il cancello si chiudeva lo stesso, citando
+    # «- **windows** — 2026-09-03 22:14» — la prova di un ALTRO pacchetto.
+    # E' la forma gia' vista il 2026-09-03: un id cercato come sottostringa
+    # dentro un testo che parla anche di altri id.
+    sezioni = re.split(r"(?m)^(?=### )", blocco.group(1))
+    # `or [""]`: re.split puo' restituire una prima sezione vuota quando il
+    # blocco comincia direttamente con «### », e splitlines() di "" e' [].
+    pertinenti = [s for s in sezioni if sha[:8] in (s.splitlines() or [""])[0]]
+    e.cancello("il registro parla di QUESTO commit", bool(pertinenti),
+               f"cita {sha[:8]}" if pertinenti
+               else f"il blocco {pv} non nomina {sha[:8]}: parla di un altro pacchetto")
+    if not pertinenti:
+        return
+    b = "\n".join(pertinenti)
     # ⚠️ NON basta che il campo sia NOMINATO. La prima versione di questo
     # cancello cercava la parola «windows» nel blocco, e un registro scritto in
     # anticipo — con i due campi elencati e nessun esito — l'avrebbe chiuso A
@@ -194,24 +273,36 @@ def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--sha", default=None, help="il commit che si vuole taggare (default: HEAD)")
     a = ap.parse_args()
-    sha = a.sha
-    if not sha:
-        sha, code = sh("git", "rev-parse", "HEAD")
-        if code != 0:
-            print("  ⛔ non riesco a leggere HEAD"); return 2
-    pv = versione_di_record()
+    sha = a.sha or "HEAD"
+    completo = espandi_sha(sha)
+    if completo is None:
+        print(f"  ⛔ non riesco a risolvere {sha} in un commit di questo repository")
+        return 2
+    sha = completo
+    pv = versione_di_record(sha)
     if not pv:
-        print("  ⛔ non riesco a leggere la versione da pyproject.toml"); return 2
+        print(f"  ⛔ non riesco a leggere la versione da pyproject.toml in {sha[:8]}")
+        return 2
 
+    albero, _ = sh("git", "rev-parse", "HEAD")
+    sporco = len(sh("git", "status", "--porcelain")[0].splitlines())
     print("=" * 74)
-    print(f"  CANCELLI DEL TAG — versione {pv} · commit {sha[:8]}")
+    print(f"  CANCELLI DEL TAG — versione {pv} · commit {sha}")
     print("=" * 74)
+    # Da dove viene ogni numero: le superfici e il CHANGELOG dal COMMIT, il
+    # registro dello smoke e i manifesti dall'ALBERO. Stampato perche' il
+    # 2026-09-04 ho letto un verdetto credendo che riguardasse il commit mentre
+    # riguardava i file che avevo sotto mano.
+    print(f"  superfici e CHANGELOG: letti dal commit {sha[:8]}")
+    print(f"  registro smoke e manifesti: letti dall'albero {albero[:8]}"
+          + (f", con {sporco} file NON committati" if sporco else ", pulito"))
+    print("-" * 74)
     e = Esito()
-    c_versioni(e, pv)
-    c_changelog(e, pv)
+    c_versioni(e, pv, sha)
+    c_changelog(e, pv, sha)
     c_manifesti(e)
     c_ci(e, sha)
-    c_smoke(e, pv)
+    c_smoke(e, pv, sha)
 
     print()
     if e.non_misurati:

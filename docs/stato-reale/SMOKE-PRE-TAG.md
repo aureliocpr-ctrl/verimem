@@ -14,34 +14,68 @@
 
 ## 0.7.6
 
-> **Due blocchi, e vanno letti come due cose diverse.** Sotto c'è prima lo smoke
-> **valido per il tag**, sul wheel del run **verde 9/9**; più giù la **prova
+> **Tre blocchi, e vanno letti come tre cose diverse.** Il primo è lo smoke
+> **valido per il tag**, sul wheel del commit candidato; il secondo è lo stesso
+> smoke su un candidato **superato** — verde, e inutile; il terzo è la **prova
 > generale** su un run rosso, che è servita a far sbagliare lo strumento quando
 > lo sbaglio non costava niente. Solo il primo conta per i cancelli.
+>
+> 🔑 **L'intestazione di ogni blocco porta lo sha del commit, e non è
+> decorazione**: il cancello riconosce il blocco pertinente da lì. Se lo sha
+> stesse solo nella prosa, un blocco che *parla* del candidato senza esserlo
+> verrebbe scambiato per suo — misurato il 2026-09-04, e il cancello si chiudeva
+> con la riga `windows` di un altro pacchetto.
 
-### Smoke valido per il tag — wheel del run VERDE
+### Candidato `04911425` — smoke VALIDO per il tag
 
-Run **`33793094834`** (`#3090`, sha **`8fca33f0`**), `completed/success`, **9 job
-su 9**. Wheel `verimem-0.7.6-py3-none-any.whl`,
-**sha256 `76258b0542557fba4325e8c8644c59132b9fb53b14364974ca0f11878f4ea0f1`**.
+Run **`33802751438`** (`#3097`, sha completo
+`049114259e5123516d76eec8148b5a9ab6f2646b`), `completed/success`, **9 job su 9**,
+zero job non riusciti. Wheel `verimem-0.7.6-py3-none-any.whl`,
+**sha256 `a99f64bc7a4a8267067dede9bb3fcc412f6f9dbdc3a64540f4aa1e1ec4411ee7`**.
 
-⚠️ **L'impronta è il legame fra i due bracci.** Lo stesso nome di file esce da
-ogni run: quello della prova generale ha sha256 `f22259a4…`, questo `76258b05…`.
-Un braccio che riporta un'impronta diversa **non ha provato questo pacchetto**, e
-la sua riga non vale — anche se dice `EXIT=0`.
+⚠️ **L'impronta è il legame fra i due bracci, e cambia a ogni candidato.** Lo
+stesso nome di file esce da ogni run: il candidato di ieri dava `76258b05…`, la
+prova generale `f22259a4…`, questo `a99f64bc…`. Un braccio che riporta
+un'impronta diversa **non ha provato questo pacchetto**, e la sua riga non vale
+— anche se dice `EXIT=0`.
 
-- **windows** — 2026-09-03 22:14, **`EXIT=0`**, 9 passi su 9 (ws8).
+- **windows** — 2026-09-04 18:55, **`EXIT=0`**, 9 passi su 9 (ws8).
 
   | passo | misura |
   |---|---|
-  | 7 · una fonte data viene **giudicata** | `grounding_score=99.35625457763672`, `judged=True` |
+  | 7 · una fonte data viene **giudicata** | `grounding_score=99.35625457763672`, `judged=True`, `status=model_claim` |
   | 8 · un claim che la fonte smentisce è **fermato** | `grounding_score=1.0627778768539429`, `layers=['L4-grounding','L4.1']`, `status=quarantined` |
   | 9 · il server dichiara la **propria** versione | `server.version=0.7.6` con `mcp=1.29.1` |
 
-  Prerequisiti: importato **dal venv** e non dal repo, versione `0.7.6` uguale
-  all'attesa, tetto `mcp<2` rispettato (`1.29.1`), `pip install` in 393 s.
+  Prerequisiti: importato **dal venv** e non dal repo
+  (`…\smoke-wheel\.venv\Lib\site-packages\verimem\__init__.py`), versione
+  installata `0.7.6` uguale all'attesa, tetto `mcp<2` rispettato (`1.29.1`),
+  `pip install` in 391 s.
 
-- **wsl** — *(braccio di @lead-audit; deve riportare lo stesso sha256 `76258b05…`)*
+- **wsl** — 2026-09-04 18:45, **`EXIT=0`**, 9 passi su 9 (lead-audit). Stesso wheel, **sha256 `a99f64bc7a4a8267067dede9bb3fcc412f6f9dbdc3a64540f4aa1e1ec4411ee7`** (scaricato con `gh run download 33802751438 -n dist`).
+
+  | passo | misura |
+  |---|---|
+  | 7 · una fonte data viene **giudicata** | `status=model_claim grounding_score=99.35625457763672` |
+  | 8 · un claim che la fonte smentisce è **fermato** | `status=quarantined grounding_score=1.0627774000167847` |
+  | 9 · il server dichiara la **propria** versione | `server.version=0.7.6 verimem=0.7.6 mcp=1.29.1` |
+
+  Prerequisiti: importato **dal venv** (`…/smoke-wheel/.venv/lib/python3.12/site-packages/verimem/__init__.py`), versione `0.7.6` uguale all'attesa, tetto `mcp<2` rispettato (`1.29.1`), `pip install` in 243 s. Ambiente: WSL Ubuntu 24.04, python3 3.12.3; il venv è stato creato senza `ensurepip` (assente e non installabile senza sudo) e popolato con `pip3 --python <venv>/bin/python install pip` tramite uno shim di `python` fuori dallo script, che è quello di `main` intatto (`--wheel`).
+
+### Candidato `8fca33f0` — SUPERATO, verde e inutile per questo tag
+
+Run `33793094834` (`#3090`), `completed/success`, 9 job su 9. Wheel
+`verimem-0.7.6-py3-none-any.whl`,
+sha256 `76258b0542557fba4325e8c8644c59132b9fb53b14364974ca0f11878f4ea0f1`.
+
+- **windows** — 2026-09-03 22:14, `EXIT=0`, 9 passi su 9 (ws8). Stesse tre
+  misure ai passi 7-8-9, `pip install` in 393 s.
+- **wsl** — *(mai eseguito: il candidato è cambiato prima)*
+
+⚠️ **Questo blocco è verde e non serve a niente per il tag.** Il commit da
+taggare ha un altro sha, e questo wheel un'altra impronta. Resta scritto perché
+un registro che cancella le prove superate insegna a fidarsi dell'ultima riga
+invece che dello sha — l'errore preciso che l'impronta serve a impedire.
 
 ### Prova generale — wheel di un run ROSSO, NON valida per il tag
 
