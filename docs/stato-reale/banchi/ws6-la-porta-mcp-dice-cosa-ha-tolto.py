@@ -80,10 +80,17 @@ VIVO = "Il deposito di Verona custodisce pallet di imballaggi in un'area coperta
 SCADUTO = "Il deposito di Verona ospita quattromilaseicento pallet di ricambi."
 QUERY = "quanti pallet ospita il deposito di Verona"
 
-#: I sinonimi con cui una porta potrebbe dire la stessa cosa senza nominare il
-#: campo. Cercarne uno solo e' l'errore che questo banco esiste per non fare.
-PAROLE = ("scadut", "esclus", "expired", "valid_until", "esclusi_perche_scaduti",
-          "stale", "non serviti", "tolti")
+#: I sinonimi con cui una porta potrebbe DIRE che ha tolto qualcosa.
+#:
+#: 🪞 ⚠️ `valid_until` E' STATO TOLTO DA QUESTA LISTA, ed e' l'errore piu' brutto
+#: che questo banco abbia fatto: `hippo_facts_search` mette nel payload il CAMPO
+#: `"valid_until": 1788458907.22` di ogni fatto — un DATO, non un avviso — e il
+#: banco lo contava come «dichiara SI». Cosi' ho scritto al lead che quella
+#: porta dichiara, ed e' FALSO: non dichiara niente, espone un campo.
+#: Il banco esisteva proprio per non contare identificatori, ed e' caduto nella
+#: versione peggiore — contarne uno DENTRO I DATI.
+PAROLE = ("scadut", "esclus", "expired", "esclusi_perche_scaduti",
+          "non serviti", "non sono stati serviti", "tolti")
 
 m = Memory()
 m.add(VIVO, topic="mcp/vivo")
@@ -117,15 +124,23 @@ for tool, args in (
     except Exception as e:                    # noqa: BLE001 — il banco misura
         testo = "ERRORE: %s" % str(e)[:120]
     risponde = ("pallet" in testo.lower()) or ("Verona" in testo)
+    _serve_scaduto = "ricambi" in testo
     trovate = [p for p in PAROLE if p.lower() in testo.lower()]
+    #: 🔑 «DICHIARA» HA SENSO SOLO SE LA PORTA TOGLIE. Se serve lo scaduto non
+    #: ha nulla da dichiarare, e chiamarla «dichiara SI» mette nella stessa
+    #: colonna due comportamenti opposti. Il dato c'era gia' nella colonna
+    #: accanto e non lo usavo nella lettura.
+    if _serve_scaduto:
+        trovate = []
     print("  %-26s risponde=%-4s dichiara=%s %s" % (
         "MCP %s" % tool, "si" if risponde else "NO",
         "SI" if trovate else "no", ("(%s)" % ", ".join(trovate)) if trovate else ""))
     #: Si guarda anche se il fatto SCADUTO e' stato servito: se la porta MCP lo
     #: servisse, non avrebbe nulla da dichiarare e la cella andrebbe letta al
     #: contrario — «non toglie» invece di «toglie e tace».
-    print("       serve lo scaduto: %s  ·  serve il vivo: %s" % (
-        "SI" if "ricambi" in testo else "no", "SI" if "imballaggi" in testo else "no"))
+    print("       serve lo scaduto: %s  ·  serve il vivo: %s%s" % (
+        "SI" if _serve_scaduto else "no", "SI" if "imballaggi" in testo else "no",
+        "   (non toglie: nulla da dichiarare)" if _serve_scaduto else ""))
 
 print("\n  ── LETTURA ──")
 print("  Il confronto vale solo fra porte che rispondono alla STESSA domanda.")
