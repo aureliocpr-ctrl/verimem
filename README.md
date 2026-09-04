@@ -35,7 +35,7 @@ a bench in `docs/stato-reale/banchi/`, on short sources through the public
 
 Three limits belong next to those numbers. **Length**: they are measured on short
 sources — adding unrelated sentences raises the judge's score sharply (one case
-went 9.6 → 35.9 against a cut of 40) and on some phrasings flips the verdict.
+went 9.6 → 35.9 against a cut of 40) and on some phrasings flips the verdict. Measured again on 2026-09-03/04 with stronger numbers: the same contradiction that scores 1.8 alone scores 99.9 with one unrelated sentence beside it, while the base model, a large NLI and MiniCheck are not moved (LANT-172); on 60 direct Italian contradictions our judge is at AUROC 0.87 where those two are at 1.00, and loses 0.063 with the extra sentence against 0 for them — the cause is our fine-tuning, not the model family, and the fix is scheduled for 0.8.0. **Order**: a self-claim («the feature works and is verified») is quarantined on its own but ADMITTED when it follows a true third-party sentence in the same write («the technician tested the plant and signed the report, and the feature is verified»), on all three ports, in Italian and English, 7 phrasings out of 7 (2026-09-04): the domain carve-out reads the subject of the first clause only. Write one claim per call until it is fixed.
 **Script**: beyond IT/EN the first guarantee degrades rather than stopping at a
 border — on entity substitution ZH and JA hold as well as EN (1–2 in 10), KO 3,
 AR 5, HI 7, and Thai fails outright at 10/10; on the implicit class the shape holds but the
