@@ -81,8 +81,11 @@ def promote_chunk_to_fact(
     # principale del modulo E' il caso d'uso principale del moat.
     chunk_text = str(hit.get("text", "") or "").strip()
     stato = "model_claim"                  # a claim, never laundered truth
-    _trattenuto_da = ""                    # quale layer L1, se e' stato L1
+    _trattenuto_da = ""                    # quale layer ha fermato, se uno ha fermato
     punteggio = None
+    _warnings: list = []                   # gli avvisi del verdetto, per la causa
+    _agito: list[str] = []                 # i layer che hanno BLOCCATO
+    _moat = "passed"                       # il giudice: passed / failed
     try:
         from .anti_confab_gate import run_validation_gate
         verdetto = run_validation_gate(
@@ -135,19 +138,44 @@ def promote_chunk_to_fact(
         # sul router di provenienza (F1 C2), rifatto da un'altra porta.
         # Con `claim`, invece, chi promuove sta DISTILLANDO un'affermazione e se
         # ne fa carico: li' L1 ha giurisdizione, ed e' il caso del vanto.
-        _l1 = [str(w.get("layer")) for w in (verdetto.warnings or [])
-               if claim is not None
-               and str(w.get("layer", "")).startswith("L1")]
-        if verdetto.action == "reject" or _l1 or (
-                isinstance(punteggio, (int, float))
-                and isinstance(_soglia, (int, float))
-                and punteggio < _soglia):
+        from .anti_confab_gate import _is_advisory_layer
+        _warnings = list(verdetto.warnings or [])
+        _layers = [str(w.get("layer", "")) for w in _warnings]
+        # UN MARCATORE `*-observe` NON E' UN LAYER IN PIU': dice che il gate ha
+        # TENUTO gli L1 che accompagna come avviso (precisione di dominio,
+        # default ON dal 22/07: soggetto di terzi). Qui cominciava per «L1» e
+        # veniva contato come blocco — misurato il 04/09 su una copia
+        # dell'indice vivo: 3 frasi VERE su 40 quarantinate con
+        # `L1-domain-precision-observe,L1.10,L1.15`. Su un fatto legale
+        # distillato («settlement resolved») e' il ritorno dell'86,7% di falsi
+        # positivi curato il 21/07, da un'altra porta.
+        _l1_advisory = any(_is_advisory_layer(layer) for layer in _layers
+                           if layer.startswith("L1"))
+        _l1 = [layer for layer in _layers
+               if claim is not None and layer.startswith("L1")
+               and not _is_advisory_layer(layer) and not _l1_advisory]
+        # I LAYER NUMERICI DETERMINISTICI CONTANO COME IL GIUDICE. Stesso
+        # insieme di `anti_confab_gate.has_grounding_fail` (L4-grounding,
+        # L4.1); `L4.2`, `L4.1-ambiguo` e `L4.1-a-parole` restano avvisi, come
+        # nel gate. Misurato il 04/09 sullo stesso banco: 40 frasi reali con
+        # un numero cambiato di +1 promosse contro il LORO chunk, 25 AMMESSE a
+        # 99-100 — e il gate su quelle frasi rispondeva `downgrade` con L4.1
+        # («5», «4 fatto», «443, 1500»). Il verdetto c'era e veniva ignorato:
+        # un valore che la fonte non contiene usciva con la citazione esatta
+        # del documento in `verified_by`.
+        _l4 = [layer for layer in _layers if layer in ("L4-grounding", "L4.1")]
+        _agito = sorted(set(_l1 + _l4))
+        _sotto_taglio = (isinstance(punteggio, (int, float))
+                         and isinstance(_soglia, (int, float))
+                         and punteggio < _soglia)
+        _moat = "failed" if (_sotto_taglio or "L4-grounding" in _layers) else "passed"
+        if verdetto.action == "reject" or _agito or _sotto_taglio:
             stato = "quarantined"
-            if _l1:
-                # Chi promuove deve sapere che e' stato L1 e non il moat: il
-                # punteggio dira' 99.9 e senza il layer la ricevuta sembrerebbe
-                # contraddirsi da sola.
-                _trattenuto_da = ",".join(sorted(set(_l1)))
+            if _agito:
+                # Chi promuove deve sapere che e' stato L1 o L4.1 e non il
+                # moat: il punteggio dira' 99.9 e senza il layer la ricevuta
+                # sembrerebbe contraddirsi da sola.
+                _trattenuto_da = ",".join(_agito)
     except Exception:  # noqa: BLE001 — un gate irraggiungibile non fa passare
         # ... e non fa nemmeno cadere la promozione: resta un `model_claim`
         # senza verdetto, che e' cio' che era prima e che il lettore riconosce
@@ -202,8 +230,25 @@ def promote_chunk_to_fact(
     except Exception as exc:  # noqa: BLE001 — gate rejection is a result, not a crash
         return {"stored": False, "fact_id": None, "citation": citation,
                 "error": f"gate rejected: {exc!s:.120}"}
+    if stato == "quarantined":
+        # CHI HA DECISO, nella colonna che le tre porte del write path gia'
+        # compilano con lo stesso vocabolario (`chi_ha_quarantinato`: moat /
+        # L1 / il layer che ha agito). Il fatto nasce gia' quarantinato dallo
+        # `store()`, quindi `quarantine_fact` sarebbe un no-op: si scrive la
+        # sola causa, e se fallisce si perde la causa, non il fatto. Misurato
+        # il 04/09 nello store di banco: 56 quarantinati su 56 senza autore.
+        try:
+            from .client import chi_ha_quarantinato, persisti_chi_ha_quarantinato
+            persisti_chi_ha_quarantinato(
+                semantic_memory.db_path, fact.id,
+                chi_ha_quarantinato(_moat, _warnings, agito=_agito))
+        except Exception:  # noqa: BLE001 — la causa e' un di piu', il fatto e' scritto
+            pass
     return {"stored": True, "fact_id": fact.id, "citation": citation,
             "error": None, "grounding_note": nota_punteggio,
+            # Il punteggio del giudice esce anche in ricevuta: prima andava
+            # riletto dal fatto (None = mai giudicato, come sempre).
+            "grounding_score": punteggio,
             # Vuoto quando non e' stato L1: cosi' la ricevuta distingue «il
             # moat ha bocciato» da «il documento lo dice ma e' un vanto», che
             # con il solo punteggio erano indistinguibili — 99.98 in ENTRAMBI
