@@ -2,6 +2,18 @@
 
 Quanto costa tenere B, il solo candidato dimostrabilmente migliore del nostro giudice.
 
+🔴 IL 12,30x DI QUESTO BANCO E' SUPERATO — correzione del 2026-09-04 19:24.
+`ws3-P5-il-mio-12x-regge-con-batch-e-fp16.py` ha rimisurato il rapporto sulle
+STESSE 60 coppie e nello STESSO processo: e' **7,81x** senza batch e **4,19x**
+con batch 8, non 12,30x.
+Il difetto sta nell'impianto di QUESTO banco, ed e' mio: qui il tempo per coppia
+si misura ripetendo DIECI VOLTE LA STESSA coppia. Ripetere un input non misura
+la latenza di un giudice, misura il suo percorso caldo su un input solo — e
+avvantaggia il nostro CE piu' di B (169,4 ms qui contro 448,6 ms su coppie tutte
+diverse), gonfiando il rapporto.
+✅ I numeri di MEMORIA di questo banco restano validi: sono RSS a fine processo,
+non dipendono dalla ripetizione. Il costo incrementale di B e' 653 MB.
+
     python docs/stato-reale/banchi/ws3-P4-quanto-costa-tenere-il-giudice-che-vince.py
 
 ⚠️ Carica modelli, tre processi in sequenza. Serve uno slot di inferenza.
