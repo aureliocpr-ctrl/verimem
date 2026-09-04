@@ -12725,7 +12725,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # qui sotto. Senza, la cura resterebbe invisibile a chi
                 # chiama, che e' il difetto di partenza in un'altra forma.
                 **({"as_of": _as_of,
-                    "as_of_scartati": _as_of_scartati} if _as_of is not None else {}),
+                    "as_of_scartati": _as_of_scartati,
+                    # come sulla porta gemella: `as_of` accende da solo la
+                    # pesca fra i ritirati, e un filtro applicato si dichiara.
+                    "include_superseded": bool(_pf.get("include_superseded")),
+                    } if _as_of is not None else {}),
                 "query": query,
                 "topic": topic,
                 "include_legacy": include_legacy,
@@ -14032,7 +14036,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         # segnalare — ed e' il motivo per cui `stato_a` rende
                         # tre valori invece di un booleano.
                         _as_of_scartati += 1
-                hits = _tenuti[:k]
+                #: NIENTE taglio qui. `_recall_k = _scoped_fetch_limit(...)`
+                #: ha pescato di piu' PROPRIO perche' lo scope filtrera' dopo:
+                #: tagliando a `k` adesso si buttano candidati che allo scope
+                #: sarebbero sopravvissuti, e chi chiede `as_of` + `user_id`
+                #: vedrebbe MENO di chi chiede solo `user_id`. La porta gemella
+                #: `hippo_facts_search` faceva gia' l'ordine giusto (scope
+                #: prima, tempo dopo): qui l'ordine l'avevo copiato a mano, e
+                #: copiato male. Trovato dalla QA (ipotesi H3, 04/09)
+                #: LEGGENDO il codice: il mio banco provava `as_of` SENZA
+                #: scope, e un banco che non esercita la combinazione non puo'
+                #: vedere il difetto che nasce nella combinazione.
+                hits = _tenuti
             if _scoped:
                 hits = [
                     h for h in hits
@@ -14042,6 +14057,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         include_shared=_include_shared,
                     )
                 ][:k]
+            else:
+                # Il taglio a `k`: una volta sola, e alla fine. Senza `as_of`
+                # `hits` arriva gia' corto da `recall(k=_recall_k)` e questa
+                # riga non fa nulla; CON `as_of` e senza scope e' l'unico
+                # taglio rimasto, e senza di lui la porta darebbe piu' di `k`.
+                hits = hits[:k]
             _audit(name, arguments, outcome="ok")
             items = []
             for hit in hits:
@@ -14124,7 +14145,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # risposta: NESSUNA» proprio mentre `as_of` veniva ingoiato:
                 # senza questa riga la cura sarebbe invisibile a chi chiama.
                 **({"as_of": _as_of,
-                    "as_of_scartati": _as_of_scartati} if _as_of is not None else {}),
+                    "as_of_scartati": _as_of_scartati,
+                    # I due filtri che `as_of` ACCENDE DA SOLO, col valore
+                    # APPLICATO e non con quello chiesto: una porta che forza
+                    # un filtro senza dirlo e' la stessa bugia che questo pezzo
+                    # cura su `as_of`. (H1 della QA, forma debole: l'eco
+                    # non MENTIVA — non c'era proprio.) Dichiarati solo dentro
+                    # questo ramo, cosi' la risposta ordinaria non cambia di
+                    # una chiave.
+                    "include_superseded": bool(_pf.get("include_superseded")),
+                    "deep": bool(_pf.get("deep"))} if _as_of is not None else {}),
                 # Il pavimento che ha DAVVERO filtrato questa risposta, o
                 # `null`: una lista corta perche' il corpus e' povero e una
                 # corta perche' un pavimento l'ha tagliata sono due esiti che
