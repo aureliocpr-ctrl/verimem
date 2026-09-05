@@ -37,6 +37,14 @@ Le tre vie secondarie, lette il 05/09: passano tutte `source=… ground_write=Tr
 l'azione da sole** leggendo `verdetto.grounding_score` — `document_promote.py:88-94` («quarantina
 quando il moat boccia»), `transcript_promote.py:89-95` (stesso commento, stessa copia),
 `sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`, con una soglia propria). Tre copie della
+decisione (classe ①): il gate calcola, tre chiamanti rifanno. Cura proposta: un solo punto che
+decide (`action` e `quarantined_by` nel verdetto), sei chiamanti che eseguono. Reperto sul canale
+`cd7e0620e764e980`.
+
+Le tre vie secondarie, lette il 05/09: passano tutte `source=… ground_write=True` e poi **decidono
+l'azione da sole** leggendo `verdetto.grounding_score` — `document_promote.py:88-94` («quarantina
+quando il moat boccia»), `transcript_promote.py:89-95` (stesso commento, stessa copia),
+`sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`, con una soglia propria). Tre copie della
 decisione (classe ①): il gate calcola, tre chiamanti rifanno. Cura proposta a Nadia: un solo punto
 che decide (`action` e `quarantined_by` nel verdetto), sei chiamanti che eseguono.
 
