@@ -432,6 +432,43 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
                 }
     except Exception:      # noqa: BLE001 — un avviso non fa cadere una lettura
         pass
+
+    # 2026-09-05 — IL TERZO AVVISO, e arriva per una ragione DIVERSA dagli altri
+    # due. `esclusi_perche_scaduti` dice che la maschera temporale ha tolto dei
+    # fatti dalla risposta; senza, una risposta piu' corta si legge come «non
+    # c'era altro» — la stessa forma dei due qui sopra, un campo piu' in la'.
+    #
+    # ⚠️ NON E' RICOSTRUIBILE COME GLI ALTRI DUE, ed e' il motivo per cui non era
+    # mai arrivato fin qui. `trattenuti` si ricalcola con una seconda
+    # interrogazione e `sotto_il_pavimento` dal punteggio migliore; questo e' un
+    # SOTTOPRODOTTO della chiamata appena fatta — `SemanticMemory.recall` popola
+    # `_recall_scaduti_sim` mentre applica la maschera, e chi arriva dopo non ha
+    # modo di ricostruirlo. Chiamare `search` per riaverlo accoppierebbe i tre
+    # avvisi, che e' esattamente cio' che il commento sopra vieta.
+    #
+    # ⚠️ IL CONTEGGIO, NON IL CRITERIO DELL'SDK. Li' il numero nasce da un
+    # confronto fra similarita' che e' ANTICORRELATO — misurato su tre domande
+    # allo stesso store: in tema servito 0,8969 contro scaduto 0,8159 (tace,
+    # dovrebbe parlare); fuori tema 0,7552 contro 0,7600 (parlerebbe, non
+    # dovrebbe). La ragione sta in `semantic.py` da prima di questo lavoro: gli
+    # embedding sono anisotropi, «every fact sits ~0.80 cos from any query», e a
+    # quei valori un confronto fra punteggi vicini e' rumore. Alla porta
+    # dell'AGENTE si dichiara il DATO — quanti fatti la maschera ha tolto —
+    # perche' o e' giusto o e' un bug, e si prova con due scritture.
+    #
+    # ⚠️ TACE A ZERO come gli altri due (`if n:`): su questo store la colonna
+    # `valid_until` e' popolata su 0 fatti su 17575, quindi oggi la chiave non
+    # compare mai e il costo di questo avviso e' misurato, non stimato.
+    try:
+        _sim_scaduti = getattr(
+            getattr(agent, "semantic", None), "_recall_scaduti_sim", None) or ()
+        n = len(_sim_scaduti)
+        if n:
+            from .client import _nota_scaduti
+            out["esclusi_perche_scaduti"] = {"esclusi": n,
+                                             "nota": _nota_scaduti(n)}
+    except Exception:      # noqa: BLE001 — idem: un avviso non costa una lettura
+        pass
     return out
 
 

@@ -167,6 +167,29 @@ def _frase_origine_soglia(soglia: float, calibrato: float) -> str:
     return f"impostata con {_AVVISO_FLOOR_VAR}"
 
 
+def _nota_scaduti(esclusi: int) -> str:
+    """COSA HA TOLTO LA SCADENZA, in una frase sola, per tutte le porte.
+
+    ⚠️ SUPERFICIE UNICA per lo stesso motivo di `_frase_origine_soglia` qui
+    sopra, e con una prova in piu' che quel motivo e' reale: quella funzione
+    esiste perche' la stessa forma — *una cura applicata a una superficie sola*
+    — era comparsa tre volte in un pomeriggio. Questo avviso e' la QUARTA, e
+    stavolta su un altro campo: nato sull'SDK, arrivato alla CLI, e mai alla
+    porta dell'agente. Nasce estratta invece di essere copiata.
+
+    ⚠️ LA FRASE DICE ANCHE COSA NON E'. Le tre cause di una risposta piu' corta
+    — il pavimento, la data nella domanda, la scadenza — si presentano identiche
+    a chi legge, e senza il «non e'» un avviso viene attribuito alla causa
+    sbagliata. Presidio: `tests/test_tre_porte_una_risposta_sugli_scaduti.py`.
+    """
+    return (f"{esclusi} fatto/i non sono stati serviti perche' la loro "
+            "validita' e' SCADUTA (`valid_until` nel passato). Non e' il "
+            "pavimento e non e' la data nella domanda: quei fatti sono stati "
+            "dichiarati validi fino a un istante gia' passato. Per vederli lo "
+            "stesso, chiedili per id o rileggi con `recall_as_of` a un istante "
+            "in cui erano validi.")
+
+
 #: Il default documentato di `ENGRAM_LONG_FACT_WARN_CHARS` (~512 token
 #: conservativi). Oltre questa soglia l'embedder vede solo la testa del fatto.
 _LONG_FACT_DEFAULT = 2000
@@ -1623,14 +1646,7 @@ class Memory:
             trattenuti=self._trattenuti_safe(query),
             letto_al_passato=_al_passato,
             esclusi_perche_scaduti=(
-                {"esclusi": _scaduti,
-                 "nota": (f"{_scaduti} fatto/i non sono stati serviti perche' "
-                          "la loro validita' e' SCADUTA (`valid_until` nel "
-                          "passato). Non e' il pavimento e non e' la data "
-                          "nella domanda: quei fatti sono stati dichiarati "
-                          "validi fino a un istante gia' passato. Per vederli "
-                          "lo stesso, chiedili per id o rileggi con "
-                          "`recall_as_of` a un istante in cui erano validi.")}
+                {"esclusi": _scaduti, "nota": _nota_scaduti(_scaduti)}
                 if _scaduti else None),
             # IL TAGLIO SI DICHIARA SEMPRE CHE AVVIENE, non solo quando ha
             # tolto tutto. La guardia e' `_tagliati`, cioe' il fatto che
