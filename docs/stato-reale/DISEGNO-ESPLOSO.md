@@ -39,6 +39,9 @@ quando il moat boccia»), `transcript_promote.py:89-95` (stesso commento, stessa
 `sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`, con una soglia propria). Tre copie della
 decisione (classe ①): il gate calcola, tre chiamanti rifanno. Cura proposta a Nadia: un solo punto
 che decide (`action` e `quarantined_by` nel verdetto), sei chiamanti che eseguono.
+Aldo, 05/09 23:33: **il presidio delle scritture (tre porte, una risposta) copre due ingressi su sei**, non
+«due porte su tre» come pubblicato il 04/09; e un giro d'uso reale carica 57 moduli su 391: la
+raggiungibilità statica sovrastima di sei volte ciò che il prodotto esercita davvero.
 
 ## 3. Le giunture dove i difetti sono NATI (settembre), e il presidio
 
