@@ -24,6 +24,7 @@ decisa. Non contiene codice. Le celle vanno scritte prima del codice (RED), poi 
 | N7 | subordinate | 12,7% del corpus; **1,9%** con completamento in coda | `ws3-muro1-fase2-le-subordinate` | residuo reale e piccolo: seconda fase, non prima |
 | N8 | «ed è verificata.» da sola al gate | **passa** («e funziona.» è fermata) | idem N4 | il pezzo corto va giudicato **col soggetto**, altrimenti L1 non lo vede |
 | N9 | la coda letta dall'intero (cura di Iris) | **57,5%** dei veri+coda | idem N4 | l'atomico con soglia 1 la supera (67,5%): il guadagno esiste |
+| N10 | quanto della fonte vede il giudice oggi (`grounding_span`, 7.755 fatti vivi) | **69,5%** una frase sola; media **1,57** frasi; mediana 316 caratteri | `ws3-quanto-della-fonte-vede-il-giudice` | il focus (`select_relevant_span`, budget in caratteri, per rilevanza lessicale al claim) **seleziona già**; il MAX per punteggio è un secondo selettore: vanno composti, non sommati (§2.2). M_visto = 1,57 è il limite inferiore di M per il costo P-G |
 
 ---
 
@@ -91,6 +92,31 @@ S-P-O** (RefChecker) da parser o LLM locale, con decontestualizzazione minima
 (Molecular Facts, DnDScore: 19,11% dei giudizi cambia). Le subordinate (N7, 1,9%) si
 trattano lì. Il tempo 1 deve lasciare l'interfaccia pronta: `decomponi()` restituisce
 una lista di *claim atomici auto-contenuti*, e il gate non sa come sono stati prodotti.
+
+### 2.2 Il MAX sulle frasi e il focus di oggi: due selettori, una regola
+
+Il giudice di oggi **non vede la fonte intera**: `LocalGroundingJudge.coppia` la passa
+a `select_relevant_span(source, fact, budget)` — una selezione **per rilevanza lessicale
+al claim**, con un budget in caratteri da `gate_config.json` — e poi `_entro_la_finestra`
+toglie righe intere dal fondo per stare nella finestra del CE. Il risultato è
+`grounding_span`, e sul corpus vivo (N10) è **una frase sola nel 69,5%** dei casi.
+
+Il MAX del lead è un secondo selettore, **per punteggio del giudice**, su ogni frase. I
+due non si sommano: se il MAX gira *dentro* lo span del focus, nel 69,5% dei casi non
+cambia niente (c'è una frase sola); se gira *sulla fonte intera*, vede frasi che oggi il
+focus scarta — ed è lì che sta il guadagno sulla zavorra in testa (P-b del lead: il CE
+ribalta quando vede due frasi *insieme*) e anche il costo in coppie.
+
+**Decisione**: per ogni claim atomico `c_i`, le frasi candidate sono **tutte le frasi
+della fonte**, ciascuna giudicata **da sola** (mai due insieme: è la condizione del
+ribaltamento); il focus a budget resta come *tetto per frase* (una frase più lunga del
+budget viene ridotta come oggi), non come selettore. `grounding_span` registra la frase
+vincente per ogni claim — quindi diventa una lista, allineata a `claims`.
+**Costo**: N × M coppie con M = frasi della fonte intera; il limite inferiore misurato
+è M_visto = 1,57 (N10), cioè ~3,2 coppie per scrittura composta con fonte, ~0,8× in
+lotto (N2). La cella P-G misura M vero con fonti intere prima di dichiarare il costo.
+**Come muore**: se su P-E (zavorra) il MAX per frase *non* toglie il ribaltamento che il
+focus lascia passare, il secondo selettore non paga e si tiene solo il focus.
 
 ---
 
