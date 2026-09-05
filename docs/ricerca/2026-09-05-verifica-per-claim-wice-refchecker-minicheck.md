@@ -48,6 +48,16 @@ costruiti a livello di frase** — non perché è grande. È un'indicazione per 
 v3.2): la via non è muovere i pesi, è il *dato* d'addestramento. Lo passo, non lo
 eseguo: non è il mio perimetro.
 
+**Precisazione dovuta, perché il nome è già nei miei banchi**: lo scorer **C** di ieri
+(`ws3-P3-la-popolazione-implicita-contro-quattro-scorer`, commit `f3907dd9`) *è*
+`lytang/MiniCheck-DeBERTa-v3-Large`, cioè la variante DeBERTa di MiniCheck. Sulle 30
+contraddizioni implicite **non è risultato distinguibile** dal nostro giudice né dal
+conta-parole (intervallo appaiato che include lo zero); l'unico decidibilmente migliore
+era **B** (`MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli`, +0,2856). Quindi
+«MiniCheck arriva a GPT-4» vale sul *loro* benchmark (LLM-AggreFact, inglese, grounding
+su documento), non sulle nostre implicite in italiano: le varianti **FT5 (770M)** e
+**Bespoke-7B** non le ho misurate, e non le do per migliori.
+
 ---
 
 ## Che cosa questa lettura NON decide
