@@ -36,7 +36,7 @@ eseguire (un test che scrive lo stesso claim dai sei ingressi e confronta le ric
 Le tre vie secondarie, lette il 05/09: passano tutte `source=… ground_write=True` e poi **decidono
 l'azione da sole** leggendo `verdetto.grounding_score` — `document_promote.py:88-94` («quarantina
 quando il moat boccia»), `transcript_promote.py:89-95` (stesso commento, stessa copia),
-`sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`, con una soglia propria). Tre copie della
+`sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`: legge la soglia del verdetto e RIPETE il confronto, non ne inventa una — Aldo, 06/09 00:07, impronta identica 1/1/1 sui tre ingressi). Tre copie della
 decisione (classe ①): il gate calcola, tre chiamanti rifanno. Cura proposta a Nadia: un solo punto
 che decide (`action` e `quarantined_by` nel verdetto), sei chiamanti che eseguono.
 Aldo, 05/09 23:33: **il presidio delle scritture (tre porte, una risposta) copre due ingressi su sei**, non
