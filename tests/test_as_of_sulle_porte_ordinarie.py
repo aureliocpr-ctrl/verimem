@@ -129,8 +129,19 @@ def test_as_of_e_applicato_e_dichiarato(store, tool: str, chiave_k: str) -> None
     assert passato.get("as_of") == _QUANDO, (
         "un filtro applicato si DICHIARA: senza l'eco la cura e' invisibile "
         "a chi chiama, che e' il difetto di partenza in un'altra forma")
-    assert passato.get("as_of_scartati") == 1, (
-        "e dice QUANTI ne ha tolti perche' non erano ancora nati")
+    #: ⚠️ DUE PORTE, DUE RISPOSTE LEGITTIME, e la differenza e' il punto:
+    #: `facts_recall` conta da se' (il filtro e' suo) e deve dire QUANTI;
+    #: `facts_search` ha passato il vincolo allo store e il suo contatore non
+    #: li vede piu': deve dire `None` = «non lo so», MAI `0` = «nessuno».
+    #: Zero sarebbe la perdita muta — il difetto che questo pezzo chiude.
+    _scartati = passato.get("as_of_scartati")
+    if tool == "hippo_facts_search":
+        assert _scartati is None, (
+            "il conteggio e' passato allo store: la porta deve dichiarare "
+            f"«non lo so» (None), non «nessuno» (0). Ha detto: {_scartati!r}")
+    else:
+        assert _scartati == 1, (
+            "e dice QUANTI ne ha tolti perche' non erano ancora nati")
 
 
 # ── ② la pesca affamata ───────────────────────────────────────────────────

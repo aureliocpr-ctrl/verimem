@@ -12742,7 +12742,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # qui sotto. Senza, la cura resterebbe invisibile a chi
                 # chiama, che e' il difetto di partenza in un'altra forma.
                 **({"as_of": _as_of,
-                    "as_of_scartati": _as_of_scartati,
+                    #: ⚠️ `None`, NON `0`. Da quando il vincolo temporale sta
+                    #: nella WHERE dello store, i fatti «non ancora nati» non
+                    #: arrivano piu' al filtro di questa porta: il contatore
+                    #: locale ne vedrebbe ZERO e direbbe «non ho scartato
+                    #: niente» mentre lo store ne ha esclusi sei. Zero e' una
+                    #: RISPOSTA, `None` e' «non lo so»: sono due cose diverse
+                    #: e questo modulo cura da mesi proprio la differenza
+                    #: (`min_relevance` la fa gia' cosi'). Dire zero sarebbe
+                    #: la perdita muta che il pezzo 3 esiste per chiudere.
+                    #: Torna un numero quando lo store sapra' dire quanti ne
+                    #: ha esclusi — pattern gia' in casa, `_recall_degraded_count`.
+                    "as_of_scartati": (None if _pf.get("as_of") is not None
+                                       else _as_of_scartati),
                     # come sulla porta gemella: `as_of` accende da solo la
                     # pesca fra i ritirati, e un filtro applicato si dichiara.
                     "include_superseded": bool(_pf.get("include_superseded")),
