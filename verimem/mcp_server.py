@@ -12713,6 +12713,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             except ValueError as exc:
                 _audit(name, arguments, outcome="rejected_min_status")
                 return _err(str(exc))
+            #: IL NUMERO LO SA LO STORE, E LA PORTA LO CHIEDE. Da quando il
+            #: vincolo temporale sta nella WHERE, i «non ancora nati» non
+            #: arrivano piu' al filtro qui sotto: il contatore locale ne
+            #: vedrebbe zero. Si legge SUBITO dopo la pesca, prima che
+            #: un'altra query sovrascriva l'attributo — stesso pattern di
+            #: `_recall_degraded_count`, letto prima e dopo dalla chiamata.
+            _dallo_store = getattr(a.semantic, "_search_as_of_scartati", None)
             if _scoped:
                 hits = [
                     f for f in hits
@@ -12751,10 +12758,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     #: e questo modulo cura da mesi proprio la differenza
                     #: (`min_relevance` la fa gia' cosi'). Dire zero sarebbe
                     #: la perdita muta che il pezzo 3 esiste per chiudere.
-                    #: Torna un numero quando lo store sapra' dire quanti ne
-                    #: ha esclusi — pattern gia' in casa, `_recall_degraded_count`.
-                    "as_of_scartati": (None if _pf.get("as_of") is not None
-                                       else _as_of_scartati),
+                    #: I due tratti dello stesso scarto SOMMATI: quelli che
+                    #: lo store ha escluso nella WHERE e quelli che il filtro
+                    #: di questa porta ha tolto perche' non ancora nati. Con
+                    #: `as_of` il secondo e' zero (lo store li ha gia' presi),
+                    #: senza `as_of` il primo non esiste: la somma e' esatta
+                    #: in entrambi i casi e non c'e' un ramo da sbagliare.
+                    "as_of_scartati": (
+                        (_as_of_scartati + _dallo_store)
+                        if _dallo_store is not None else None),
+                    #: ⚠️ `None` SOLO come ripiego, e la ricevuta lo DICE:
+                    #: uno store che non espone il contatore (versione vecchia,
+                    #: semantics mockati) fa dichiarare «non lo so», mai
+                    #: «nessuno». Zero e' una risposta, `None` e' l'assenza di
+                    #: risposta: confonderli e' la perdita muta che questo
+                    #: pezzo esiste per chiudere.
+                    **({"as_of_scartati_ignoto": True}
+                       if _dallo_store is None else {}),
                     # come sulla porta gemella: `as_of` accende da solo la
                     # pesca fra i ritirati, e un filtro applicato si dichiara.
                     "include_superseded": bool(_pf.get("include_superseded")),

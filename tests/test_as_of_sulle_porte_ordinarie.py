@@ -134,14 +134,17 @@ def test_as_of_e_applicato_e_dichiarato(store, tool: str, chiave_k: str) -> None
     #: `facts_search` ha passato il vincolo allo store e il suo contatore non
     #: li vede piu': deve dire `None` = «non lo so», MAI `0` = «nessuno».
     #: Zero sarebbe la perdita muta — il difetto che questo pezzo chiude.
-    _scartati = passato.get("as_of_scartati")
-    if tool == "hippo_facts_search":
-        assert _scartati is None, (
-            "il conteggio e' passato allo store: la porta deve dichiarare "
-            f"«non lo so» (None), non «nessuno» (0). Ha detto: {_scartati!r}")
-    else:
-        assert _scartati == 1, (
-            "e dice QUANTI ne ha tolti perche' non erano ancora nati")
+    #: ⚠️ ENTRAMBE devono dire QUANTI — non «non lo so», e mai «nessuno».
+    #: `facts_recall` conta da se'; `facts_search` ha passato il vincolo allo
+    #: store e CHIEDE A LUI il numero (`_search_as_of_scartati`), sommandolo
+    #: al proprio. Il `None` resta solo per uno store che non espone il
+    #: contatore, e in quel caso la risposta porta `as_of_scartati_ignoto`.
+    assert passato.get("as_of_scartati") == 1, (
+        "e dice QUANTI ne ha tolti perche' non erano ancora nati: il numero "
+        "lo sa chi filtra, e la porta lo chiede invece di indovinarlo")
+    assert "as_of_scartati_ignoto" not in passato, (
+        "lo store espone il contatore: il ripiego «non lo so» non deve "
+        "comparire")
 
 
 # ── ② la pesca affamata ───────────────────────────────────────────────────
