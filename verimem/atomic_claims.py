@@ -245,11 +245,22 @@ def _chiudi(pezzo: str) -> str:
     return p if p.endswith((".", "!", "?")) else p + "."
 
 
-def decomponi(testo: str) -> list[str]:
+def decomponi(testo: str, *, eredita_soggetto: bool = True) -> list[str]:
     """La scrittura -> i suoi claim atomici, ognuno una frase chiusa.
 
     Un testo vuoto o di una sola proposizione torna com'e', in una lista di un
     elemento (identita': N=1). Deterministica; non muta l'ingresso.
+
+    DUE FORME, per due layer — misurato il 05/09 sui 200 «<vero> + coda»:
+      · `eredita_soggetto=True` (default): claim AUTO-CONTENUTI, «Il comando
+        warmup e' finito alle 14:53». E' la forma per il moat (un giudice NLI
+        vuole il soggetto) e per la ricevuta che l'utente legge.
+      · `eredita_soggetto=False`: i pezzi NUDI, «E' finito alle 14:53». E' la
+        forma per L1: il rilevatore semantico di self-claim (L1.20) riconosce la
+        forma impersonale, e con un soggetto davanti la carve-out di terzi la
+        ESENTA. Con soggetto L1 ferma 101/200 code, senza 145/200; l'intero 114.
+    Chi innesta nel gate manda la forma nuda a L1 e quella auto-contenuta a L4:
+    lo stesso claim, due grafie, due giudici.
     """
     if not testo or not testo.strip():
         return [testo]
@@ -259,5 +270,6 @@ def decomponi(testo: str) -> list[str]:
     pezzi = _fondi_i_nudi(pezzi)
     if len(pezzi) == 1:
         return [testo.strip()]
-    pezzi = _eredita_il_soggetto(pezzi)
+    if eredita_soggetto:
+        pezzi = _eredita_il_soggetto(pezzi)
     return [_chiudi(p) for p in pezzi]

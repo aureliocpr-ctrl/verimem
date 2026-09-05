@@ -179,3 +179,25 @@ def test_ogni_pezzo_e_una_frase_chiusa_con_la_maiuscola() -> None:
     for p in decomponi("Il tecnico ha collaudato l'impianto e ha firmato il verbale."):
         assert p[0].isupper(), p
         assert p.endswith("."), p
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# DUE FORME per due layer. Misurato il 05/09 sui 200 «<vero> + coda»: con il
+# soggetto ereditato L1 ferma 101/200 (la carve-out di terzi esenta «Aurelio e'
+# verificata»), con la forma NUDA 145/200 (L1.20 riconosce «E' verificata»);
+# l'intero 114. Il moat invece vuole il soggetto. Lo stesso claim, due grafie.
+# ─────────────────────────────────────────────────────────────────────────────
+def test_la_forma_nuda_lascia_la_coda_senza_soggetto() -> None:
+    testo = "Il comando warmup e' iniziato alle 14:50 ed e' finito alle 14:53."
+    con = decomponi(testo)
+    nuda = decomponi(testo, eredita_soggetto=False)
+    assert len(con) == len(nuda) == 2, (con, nuda)
+    assert con[1].lower().startswith("il comando warmup"), con[1]
+    assert nuda[1].lower().startswith("e' finito"), nuda[1]
+
+
+def test_le_due_forme_hanno_lo_stesso_numero_di_claim() -> None:
+    for testo in ("La funzionalita' funziona ed e' verificata.",
+                  "L'implementazione e' finita e collaudata.",
+                  "Il tecnico ha collaudato l'impianto e ha firmato il verbale, e la funzionalita' e' verificata."):
+        assert len(decomponi(testo)) == len(decomponi(testo, eredita_soggetto=False)), testo
