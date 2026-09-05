@@ -25,6 +25,34 @@ mcp_server.py                                    15.531 righe · 248 strumenti
 
 I due che nessuno importa: `orchestration` (58 righe) e `syscall_bridge` (383).
 
+**E «raggiungibile» sovrastima l'uso reale di circa sei volte** — misurato il
+05/09 alle 23:31 eseguendo un percorso d'uso vero dall'SDK (sei scritture,
+`recall`, `search_facts`, `search_facts` con `as_of`, `ask`, `count`, tutti
+riusciti) e guardando `sys.modules` alla fine:
+
+```
+moduli verimem.* caricati dai soli import        37
+moduli verimem.* caricati DOPO il percorso       57
+  di cui raggiungibili staticamente              56
+  raggiungibili ma MAI caricati                 275
+dei 60 non raggiungibili, CARICATI dal percorso   0
+```
+
+Due letture, in direzioni opposte:
+
+- ⬇️ **331 è un limite superiore molto largo.** Un giro completo ne carica 57.
+- ⬆️ **Ma 57 è un limite INFERIORE**: è UN percorso, dall'SDK, in sola lettura.
+  CLI e MCP caricano altro, e una scrittura che passa dal giudice carica il
+  resto. **La verità sta fra 57 e 331**, e nessuna delle due letture da sola la
+  trova.
+- ✅ **Zero dei 60 conferma la chiusura statica dal lato negativo**: se anche uno
+  solo fosse comparso, il grafo degli import sarebbe stato sbagliato.
+
+⚠️ E «caricato» non è «eseguito»: un import può avvenire senza che una sola
+funzione del modulo venga chiamata. Questa misura sposta il confine da «qualcuno
+lo nomina» a «il prodotto lo carica» — un passo avanti, non l'arrivo. Il passo
+dopo è la copertura riga per riga, e **non è stata fatta**.
+
 **Il limite di questa misura, misurato invece che ammesso.** La chiusura è
 statica: un import per nome-stringa non si vede. Quanto pesa qui?
 `grep -rn "importlib|__import__" verimem/*.py` → **2 occorrenze in tutto**, e una
@@ -83,7 +111,18 @@ rosso il giorno in cui lo si cura.
 
 ⚠️ **`ask` FIND resta scoperta**: il campo c'è e il criterio tace.
 
-### G2 — le porte di SCRITTURA: il presidio esiste e copre due porte su tre
+### G2 — le porte di SCRITTURA: il presidio copre DUE ingressi su SEI
+
+> 🔁 **Correzione del 05/09 23:33.** Questa sezione diceva «due porte su tre», e
+> il denominatore era sbagliato. Gli ingressi che scrivono attraverso il gate non
+> sono tre: `grep -rln "run_validation_gate(" verimem/*.py` → `cli.py`,
+> `client.py`, `mcp_server.py`, **`document_promote.py`, `sleep.py`,
+> `transcript_promote.py`** (più il gate stesso). Il presidio confronta
+> `Memory.add` con `hippo_remember`: **due su sei**. Le «tre porte» sono il
+> denominatore del contratto, non quello di chi scrive — e proprio dai tre
+> ingressi mancanti è nato `a499afc8` (la promozione che rifà la decisione del
+> gate per conto suo). Il reperto dei sei ingressi è del CTO; il numero peggiora
+> il mio e resta scritto così.
 
 `tests/test_i_canali_di_scrittura_sono_allineati.py` (30/07) confronta **SDK
 contro MCP** e ha funzionato: il buco che sorvegliava è chiuso. La **CLI non è
