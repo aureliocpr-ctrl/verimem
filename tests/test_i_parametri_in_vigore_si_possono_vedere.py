@@ -81,6 +81,22 @@ class TestLoSpecchioSiRICORDACosaHaCreato:
 class TestIlDoctorDiceLaSogliaInVigore:
 
     def _check(self, monkeypatch, nome="parameters"):
+        # ⚠️ IL REGIME SI FORZA, NON SI SPERA (stessa lezione del file gemello
+        # `test_il_doctor_dichiara_ENTRAMBE_le_soglie.py`): il giudice in vigore
+        # lo decide `_autodetect_provider()` DALL'AMBIENTE, e una chiave di un
+        # provider esterno presente nel processo (in CI c'e', e la guardia di
+        # conftest protegge solo VERIMEM_/ENGRAM_/HIPPO_) lo sposta su quel
+        # provider: la soglia diventa 70 e questa classe cadeva su 4 job del run
+        # 33993804265 (06/09) mentre era verde su ogni macchina di sviluppo.
+        # Qui si chiede «la soglia col giudice LOCALE», quindi le chiavi esterne
+        # si tolgono per la durata del test.
+        from verimem import llm as _llm
+        for _spec in getattr(_llm, "PROVIDERS", {}).values():
+            _k = (_spec or {}).get("env")
+            if _k:
+                monkeypatch.delenv(_k, raising=False)
+        for _k in ("ANTHROPIC_API_KEY", "OLLAMA_HOST"):
+            monkeypatch.delenv(_k, raising=False)
         for ch in doctor.run_doctor():
             if ch["name"] == nome:
                 return ch
@@ -96,6 +112,11 @@ class TestIlDoctorDiceLaSogliaInVigore:
         det = self._check(monkeypatch)["detail"]
         atteso = f"{resolve_write_threshold_for('local'):.0f}"
         assert atteso in det, det
+        # ⚠️ «40» come sottostringa non basta: in locale compariva dentro
+        # ENGRAM_BRIEFING_THRESHOLD=0.40 e il test passava anche col doctor
+        # che diceva «70/100, decided by the openai judge» (06/09, run
+        # 33993804265 rosso su 4 job, verde su ogni macchina di sviluppo).
+        assert "decided by the `local` judge" in det, det
 
     def test_dice_QUALE_giudice_decide_quella_soglia(self, monkeypatch):
         """Senza, il numero non si può interpretare: la stessa installazione
