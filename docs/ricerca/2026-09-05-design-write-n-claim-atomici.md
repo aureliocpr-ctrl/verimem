@@ -129,6 +129,28 @@ lotto (N2). La cella P-G misura M vero con fonti intere prima di dichiarare il c
 **Come muore**: se su P-E (zavorra) il MAX per frase *non* toglie il ribaltamento che il
 focus lascia passare, il secondo selettore non paga e si tiene solo il focus.
 
+### 2.3 Due forme per claim: nuda per L1, auto-contenuta per il moat (misurato 05/09 23:00)
+
+`decomponi()` v1 con l'eredità del soggetto, sui 200 «<vero> + coda»: **101/200** — *peggio
+dell'intero* (114) e dello splitter di ieri a soglia 1 (120). La diagnosi è nei layer:
+«E' completata.» accende `L1.13, L1.20` ed è fermata; «Una directory VUOTA e' completata.»
+accende `L1.13, L1-domain-precision-observe` e **passa**. L1.20 è il rilevatore *semantico*
+di self-claim (`anti_confab_gate.py:1623`): riconosce la forma impersonale, e con un
+soggetto davanti la carve-out di terzi la esenta. **L'eredità del soggetto disattiva il
+rilevatore.** E il 120 di ieri era un effetto della cecità di `subject_of`, che lasciava la
+coda nuda.
+
+**Decisione**: ogni claim atomico ha **due grafie** — la forma nuda (`eredita_soggetto=False`)
+va a **L1**, la forma auto-contenuta va a **L4** e alla ricevuta. Misurato: forma nuda a L1
+**145/200** (il numero più alto finora), controllo sulle 15: 5/5 e 3/10. `claims` porta la
+forma auto-contenuta (quella che l'utente legge); `claims_verdict` registra il layer che ha
+fermato, qualunque grafia abbia letto.
+**Costo**: nessuno — L1 è lessicale e le due grafie costano lo stesso.
+**Come muore**: se P-C (i 5 di ws7) scende sotto 5/5 con la forma nuda, o se P-A sale
+sopra 2,4%, la forma nuda apre più di quanto chiuda.
+**Un buco del gate visto di passaggio, non del decompositore**: «ed è collaudata» è 0/50
+in *tutti* i bracci — L1 non conosce il verbo. Va nel registro come ticket a sé.
+
 ---
 
 ## 3. Che cosa dichiara: la ricevuta (il mio perimetro)
