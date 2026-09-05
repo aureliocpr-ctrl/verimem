@@ -5224,6 +5224,7 @@ class SemanticMemory:
         topic_prefix: str | None = None,
         include_orphaned: bool = False,
         include_beliefs: bool = False,
+        as_of: float | None = None,
     ) -> list[Fact]:
         """FORGIA pezzo #203: keyword/substring search over `proposition`.
 
@@ -5360,6 +5361,33 @@ class SemanticMemory:
                 placeholders = ",".join("?" for _ in allowed)
                 clauses.append(f"status IN ({placeholders})")
                 params.extend(allowed)
+            if as_of is not None:
+                # IL VINCOLO TEMPORALE VA DOVE STA IL DATO, e questa riga e'
+                # l'unica posizione in cui puo' funzionare. `ORDER BY
+                # created_at DESC ... LIMIT ?` qui sotto sceglie i piu' RECENTI:
+                # chi chiede il passato e filtra a valle riceve per costruzione
+                # le righe che il suo filtro scartera' tutte, e il buco cresce
+                # col corpus invece di chiudersi. Misurato sulla porta che
+                # pagina: rendeva ZERO dove il tool dedicato rendeva 2.
+                #
+                # ⚠️ LA REGOLA NON E' NUOVA: e' quella che
+                # `temporal_context.recall_as_of` applica riga per riga —
+                # «nato ≤ when», dove nato e' `asserted_at` (il tempo
+                # dell'EVENTO, quando il fatto era vero) con `created_at` come
+                # ripiego (quando l'abbiamo scritto). Scriverla qui col solo
+                # `created_at` la farebbe sbagliare in silenzio proprio sui
+                # fatti asseriti nel passato e ingeriti dopo, che sono il caso
+                # per cui `asserted_at` esiste.
+                # Presidio della coerenza fra le due:
+                # `tests/test_la_ricerca_per_parola_sa_guardare_al_passato.py`.
+                #
+                # ⚠️ AI RITIRATI NON TOCCA: `superseded_at` non entra qui. Un
+                # fatto gia' superseduto a quella data resta affare del filtro a
+                # valle, che sa distinguere «ritirato» da «non ancora nato» —
+                # due scarti diversi che una WHERE unica confonderebbe in uno,
+                # e il conteggio degli scartati e' un segnale che gia' esce.
+                clauses.append("COALESCE(asserted_at, created_at) <= ?")
+                params.append(float(as_of))
             if clauses:
                 sql += " WHERE " + " AND ".join(clauses)
             sql += " ORDER BY created_at DESC LIMIT ?"
