@@ -77,6 +77,19 @@ PROTETTI_COESISTENZA = [
      "Il progetto Boreale scade ad aprile."),
 ]
 
+#: ⚠️ IL PRESIDIO DELL'ORDINE. Il via del CTO diceva «PRIMA il soggetto»; qui
+#: il soggetto è lo STESSO su entrambi (`subject_of` → 'server') e i due fatti
+#: sono comunque DUE MACCHINE, perché a separarle è un IDENTIFICATORE. Se la
+#: cura mettesse il soggetto prima dei codici, questo caso diventerebbe un
+#: aggiornamento e una delle due macchine sparirebbe dalla memoria.
+#: Misurato prima di scrivere la cura: `codes_in` le separa già, `_entita_diverse`
+#: dice True. L'ordine giusto è: identificatori → soggetto → nomi propri.
+PROTETTI_IDENTIFICATORE = [
+    ("due server con codice",
+     "Il server e' SRV-01.",
+     "Il server e' SRV-02."),
+]
+
 #: Il soggetto è lo stesso e cambia il VALORE dello stesso attributo.
 AGGIORNAMENTI = [
     ("la memoria del server (nessun proper)",
@@ -112,3 +125,20 @@ def test_P2_P3_un_valore_che_cambia_e_un_aggiornamento(nome, vecchio, nuovo):
         f"«{nome}»: il criterio legge il VALORE come un soggetto diverso, quindi "
         "i due fatti coesistono e la memoria serve insieme il dato vecchio e "
         "quello nuovo senza dire quale vale")
+
+
+@pytest.mark.parametrize("nome,vecchio,nuovo", PROTETTI_IDENTIFICATORE,
+                         ids=[c[0] for c in PROTETTI_IDENTIFICATORE])
+def test_P4_un_identificatore_batte_il_soggetto_uguale(nome, vecchio, nuovo):
+    """L'ordine dei rami, reso rosso se qualcuno lo inverte.
+
+    Il soggetto è lo stesso ('server') e i due fatti restano DUE RECORD: a
+    separarli è il codice. Questo test cade se la cura del soggetto viene
+    spostata PRIMA degli identificatori — che è esattamente la forma in cui il
+    via era stato scritto, e la ragione per cui l'ho misurata invece di
+    applicarla alla lettera.
+    """
+    assert _entita_diverse(_f(nuovo), _f(vecchio)) is True, (
+        f"«{nome}»: due macchine con codici diversi sono diventate un "
+        "aggiornamento. Il ramo del soggetto e' stato messo PRIMA degli "
+        "identificatori e una delle due sparisce dalla memoria")

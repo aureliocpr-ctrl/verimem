@@ -1251,6 +1251,47 @@ def _entita_diverse(a: Any, b: Any) -> bool:
     if ma and mb and ma != mb:
         return True
 
+    # 2026-09-06 (T14) — IL SOGGETTO, PRIMA DEI NOMI PROPRI E DOPO GLI
+    # IDENTIFICATORI. Terzo asse della stessa forma: l'AUTORE (ritirato),
+    # l'ENTITA' (i rami qui sopra), e adesso il VALORE.
+    #
+    # IL DIFETTO: i `proper` qui sotto si confrontano OVUNQUE stiano nella
+    # frase, e quando il nome proprio e' il VALORE CHE CAMBIA viene letto come
+    # un record diverso. Misurato il 06/09 con quattro bracci al write-path
+    # (il banco `t14-il-gate-decide-che-coesistono` in docs/stato-reale/banchi):
+    #     «Il fornitore del checkout e' Stripe» -> «...e' Adyen»
+    #     layer L3-coexistence · superseded_by None · in tutti e quattro
+    # Due valori dello stesso attributo restavano vivi insieme, e il recall li
+    # serviva entrambi senza dire quale valesse.
+    #
+    # LA REGOLA: se ENTRAMBE le frasi hanno un soggetto risolvibile ed e' LO
+    # STESSO, quello che cambia dopo e' un valore — non un altro record.
+    # `subject_of` e' la superficie che il prodotto usa gia' per questa
+    # domanda (`subject_extract.py`), non una copia che divergera'.
+    #
+    # ⚠️ L'ORDINE NON E' «PRIMA IL SOGGETTO» IN ASSOLUTO, ed e' misurato:
+    #     «Il server e' SRV-01» / «...e' SRV-02»   subject_of -> 'server' su
+    #     entrambi, ma sono DUE MACCHINE. Sopra, `codes_in` le separa gia'.
+    # Mettere questo ramo prima dei codici le fonderebbe in un aggiornamento.
+    # Gli identificatori decidono per primi; il soggetto decide solo quando
+    # loro hanno taciuto.
+    #
+    # ⚠️ FAIL-SAFE VERSO IL COMPORTAMENTO NOTO: `subject_of` risolve solo con
+    # un marcatore di verbo finito, e la sua lista non copre l'italiano intero
+    # («ospita», «pesa», «scade» non ci sono). Dove non risolve, questo ramo
+    # NON decide e si torna ai `proper` di prima: nessuna coesistenza vera si
+    # muove per un verbo mancante. La popolazione protetta e' misurata cella
+    # per cella in
+    # `tests/test_il_nome_proprio_conta_come_entita_solo_da_soggetto.py`.
+    #
+    # ⚠️ DEBITO T14b, dichiarato e non nascosto: restano fuori i casi in cui il
+    # valore non segue direttamente la copula («Rossi e' seguito da Bianchi»)
+    # e quelli in cui il soggetto non e' risolvibile. Non sono curati qui.
+    from .subject_extract import subject_of
+    _sa, _sb = subject_of(pa), subject_of(pb)
+    if _sa and _sb and _sa.casefold() == _sb.casefold():
+        return False
+
     def _proper(testo: str) -> set[str]:
         """Le ISTANZE nominate dal fatto, piu' il soggetto che apre la frase.
 
