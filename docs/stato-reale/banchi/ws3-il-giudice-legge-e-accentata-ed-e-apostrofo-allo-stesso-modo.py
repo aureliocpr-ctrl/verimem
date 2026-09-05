@@ -64,6 +64,13 @@ e' la conversione, l'ASCII e' l'originale.
   modelli: B/C/A sono addestrati su testi accentati e potrebbero soffrirne meno.
 ⚠️ n=30: +0,04 va letto con il bootstrap appaiato (P3) prima di diventare una
   cura di prodotto. Qui e' la direzione, coerente su 4 celle su 4.
+🔴 RITIRO della «cura a costo zero» (06/09 01:18, banco
+  ws3-la-grafia-sul-corpus-vero-ammessi-e-bocciati): sul corpus vero, 400
+  ammessi e 109 bocciati con span e forme ASCII, la normalizzazione sposta i
+  punteggi di −0,03 [−0,57; +0,47] e +0,44 [−3,11; +4,43], e i 7 ammessi sotto
+  il cut restano 8. Gli ammessi stanno a 97,6 su 100: soffitto. Il +0,04 di
+  questo banco e' vero sulle frasi brevi costruite e NON e' un tasso sul
+  prodotto. La normalizzazione non entra nel design.
 """
 from __future__ import annotations
 

@@ -50,6 +50,10 @@ contro B. Se K3 muore, la pagina del giudice 0.8.0 non puo' citare +0,2856.
 ⚠️ K1 e' indeciso per n=30, non per direzione: sulle 30 dirette era +0,04 su 4
   celle su 4, qui +0,03 con l'intervallo che sfiora lo zero. Il numero che
   decide la cura di prodotto e' su un campione piu' grande, non su queste 30.
+🔴 E su quel campione (06/09 01:18, ws3-la-grafia-sul-corpus-vero-ammessi-e-
+  bocciati: 400 ammessi + 109 bocciati) la grafia NON sposta nulla: −0,03 e
+  +0,44 con intervalli che includono lo zero, nessun verdetto cambiato. K1 si
+  chiude in negativo per il prodotto; K3 (B resta meglio) non ne e' toccata.
 """
 from __future__ import annotations
 
