@@ -168,6 +168,23 @@ def main() -> int:
     b = letto["giudice ASSENTE  + fonte"]
     c = letto["giudice PRESENTE, no fonte"]
 
+    # [0] 05/09 (Galileo): il regime «assente» DEVE essere assente, altrimenti le
+    # prime due righe sono lo stesso regime e ogni verdetto sotto e' un'accusa
+    # senza prova. E' successo: il 04/09 sera questo banco stampava «LA PROMESSA
+    # CADE» con `judge=delegated` in ENTRAMBE le righe — la leva
+    # ENGRAM_LOCAL_GATE_MODEL non rendeva piu' assente il giudice, e il banco
+    # accusava `grounding_score` di non discriminare un caso che non aveva creato.
+    # Un banco che non distingue i bracci non decide.
+    print("\n  [0] CONTROLLO — il regime «assente» e' davvero assente "
+          f"(judge={b['judge']!r} contro {a['judge']!r}): "
+          f"{'SI' if b['judge'] != a['judge'] else 'NO'}")
+    if b["judge"] == a["judge"]:
+        print("      🔴 REGIME NON CREATO: la leva ENGRAM_LOCAL_GATE_MODEL non rende")
+        print("      assente il giudice. Le prime due righe sono LO STESSO regime.")
+        print("      NESSUN VERDETTO sulla promessa: si misurerebbe un'assenza che")
+        print("      non c'e'. Chi riprende deve trovare la leva vera (runtime, ws5).")
+        return 1
+
     print("\n  [1] CONTROLLO — a giudice presente la fonte che NEGA quarantina: "
           f"{'SI' if a['status'] == 'quarantined' else 'NO'}")
     if a["status"] != "quarantined":
