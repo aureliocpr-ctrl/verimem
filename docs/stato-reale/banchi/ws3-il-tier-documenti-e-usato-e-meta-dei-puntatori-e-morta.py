@@ -1,5 +1,12 @@
 """LIVELLO: lo store vivo, in sola lettura — non il gate.
 
+🔴 CORREZIONE del 05/09 (Galileo, su obiezione di ws6 msg ce41086374e70018):
+questa pagina misura la SCRITTURA del tier — 59 documenti, 683 chunk — e la
+chiamava «usato». «Indicizzato» non e' «letto». La lettura e' misurata in
+`ws3-chi-attraversa-il-tier-documents.py` (05/09): `recall`, `search`, `ask`
+fanno ZERO chiamate al tier; solo `search_documents`, per nome, lo legge.
+Il numero di questa pagina resta vero; l'etichetta era sbagliata.
+
 Il tier Documents esiste, e' usato, e meta' dei suoi puntatori non si riapre.
 
     python docs/stato-reale/banchi/ws3-il-tier-documenti-e-usato-e-meta-dei-puntatori-e-morta.py
