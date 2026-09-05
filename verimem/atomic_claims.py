@@ -41,6 +41,14 @@ Ogni regola porta il numero che l'ha decisa (banchi in docs/stato-reale/banchi/)
 Cio' che questo modulo NON fa, e dove lo dice il design: non tratta le
 subordinate (1,9% del corpus, tempo 2); non produce triplette S-P-O (tempo 2:
 parser o LLM); non decontestualizza oltre il soggetto.
+  · LIMITE NOTO, misurato e non curato: la COPULA NUDA — «non e chiaro», la
+    «è» scritta senza accento ne' apostrofo — viene letta come congiunzione e
+    spezzata. Sul corpus vivo e' ~1% dei fatti (188 su 15.378 col righello
+    stretto, 8 copule vere su 10 nel campione letto; banco
+    quanto-corpus-e-scritto-in-ascii-e-quanta-copula-e-nuda, 06/09). La fusione
+    dei nudi ne recupera una parte («chiaro se il modulo…» non ha verbo finito
+    e si fonde). Una regex che distingua «e» copula da «e» congiunzione non
+    esiste senza un parser: tempo 2, come le subordinate.
 """
 from __future__ import annotations
 
