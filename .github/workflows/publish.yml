@@ -19,7 +19,28 @@ on:
   push:
     tags:
       - "v*"
-  workflow_dispatch: {}
+  # 🧪 LA PROVA CHE NON PUBBLICA. Un workflow di rilascio si esegue una volta
+  # sola e nel momento peggiore per scoprire che non funziona: qui si puo'
+  # provare tutto — cancello, download dell'artefatto provato, impronta — e
+  # fermarsi PRIMA di PyPI, che e' l'unico passo irreversibile.
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Prova senza pubblicare: esegue cancello, download e sha256 e si ferma prima di PyPI"
+        type: boolean
+        default: true
+      sha:
+        # ⚠️ SERVE, e il motivo non e' ovvio. `workflow_dispatch` mette in
+        # `github.sha` l'HEAD del ref scelto: provando il workflow da un ramo, il
+        # cancello cercherebbe la CI sull'HEAD del RAMO — che non ha run — e la
+        # prova fallirebbe per il motivo sbagliato, senza dimostrare niente.
+        # Con questo si prova il workflow su un commit REALE gia' rilasciato.
+        # ⚖️ Non e' una scorciatoia per pubblicare un commit arbitrario: e'
+        # ignorato su `push`, e sul dispatch la pubblicazione richiede comunque
+        # `dry_run=false` scelto a mano.
+        description: "Commit su cui provare il cancello (vuoto = HEAD del ref scelto)"
+        type: string
+        default: ""
 
 permissions:
   contents: read
@@ -126,7 +147,10 @@ jobs:
         # accettato (commit, branch, quando). Fail-closed intatto: nessun
         # run resta nessun verde; i rami di PR restano fuori.
         run: |
-          sha='${{ github.sha }}'
+          # Su `push` (il tag) `inputs.sha` non esiste e resta vuoto: si usa
+          # sempre il commit del tag. L'input serve solo alla prova manuale.
+          sha='${{ inputs.sha }}'
+          [ -n "$sha" ] || sha='${{ github.sha }}'
           accettato=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
                     --jq '[.workflow_runs[] | select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))] | .[0] | if . then "\(.conclusion)|\(.head_branch)|\(.updated_at)|\(.id)" else "" end' \
                     2>/dev/null || echo "")
@@ -238,9 +262,12 @@ jobs:
         if: needs.gate.outputs.run_id == '' && needs.gate.outputs.verde == 'true'
         run: |
           echo "::error title=Artefatto provato assente::Il cancello ha dato verde ma "\
-               "non ha un id di run da cui scaricare l'artefatto. Non ricostruisco: "\
-               "il pacchetto pubblicato non sarebbe quello provato. Rilancia la CI sul "\
-               "commit del tag e ritagga, oppure pubblica di proposito con PUBLISH_ANYWAY=1."
+               "non ha un id di run da cui scaricare l'artefatto (conservazione: 14 "\
+               "giorni). Non ricostruisco: il pacchetto pubblicato non sarebbe quello "\
+               "provato. Rilancia la CI sul commit del tag, RIFAI LO SMOKE SUL NUOVO "\
+               "ARTEFATTO — il rerun produce un'impronta diversa e la riga del registro "\
+               "scade con essa — e ritagga; oppure pubblica di proposito con "\
+               "PUBLISH_ANYWAY=1, sapendo che quel pacchetto non e' stato provato."
           exit 1
 
       # ⚠️ L'UNICO caso in cui si costruisce: il bypass dichiarato. Qui il
@@ -375,5 +402,21 @@ jobs:
             echo "::warning::l'sdist esce con identificativi interni (elenco sopra). Il wheel ha gia' superato il veto qui sopra, altrimenti il job sarebbe fermo; questo avviso NON ferma la pubblicazione."
           fi
 
+      # 🧪 QUI SI FERMA LA PROVA. Tutto quello che sta sopra — cancello,
+      # download dell'artefatto provato, impronta, presidi sul wheel — e'
+      # ripetibile e reversibile; questo passo no. La condizione e' scritta al
+      # POSITIVO («pubblica se…») e non al negativo («salta se dry_run»): una
+      # negazione che sbaglia di un carattere pubblica, un'affermazione che
+      # sbaglia non pubblica. Fra i due modi di sbagliare si sceglie quello che
+      # non lascia un pacchetto su PyPI.
+      - name: Prova senza pubblicare — mi fermo qui
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run
+        run: |
+          echo "DRY-RUN: il cancello, il download dell'artefatto provato e l'impronta"
+          echo "sono stati eseguiti. La pubblicazione su PyPI NON parte."
+          echo "Impronta di cio' che sarebbe stato pubblicato:"
+          cat dist-sha256.txt 2>/dev/null || echo "  (nessun dist-sha256.txt: l'artefatto non e' stato scaricato)"
+
       - name: Publish to PyPI (OIDC — no token)
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
         uses: pypa/gh-action-pypi-publish@release/v1
