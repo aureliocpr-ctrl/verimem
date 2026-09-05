@@ -128,6 +128,12 @@ vincente per ogni claim — quindi diventa una lista, allineata a `claims`.
 lotto (N2). La cella P-G misura M vero con fonti intere prima di dichiarare il costo.
 **Come muore**: se su P-E (zavorra) il MAX per frase *non* toglie il ribaltamento che il
 focus lascia passare, il secondo selettore non paga e si tiene solo il focus.
+**Misurato (P-E, 05/09 23:33, `ws3-P-E-il-max-per-frase-contro-il-focus-sulla-zavorra`)**:
+il focus di oggi **non** cura la zavorra — sui 5 casi del lead ferma 2/4 (R2 e P-b restano
+a 99,9: le due frasi stanno nel budget e il CE le vede insieme), il MAX per frase ferma
+**4/4** (1,84) senza perdere il vero. Sui miei 30 con zavorra: AUROC +0,04 (coda) e +0,02
+(testa) a favore del MAX, con n=30 ancora da confermare col bootstrap appaiato. M = 2
+coppie per claim. **Il MAX resta**, come cura mirata dove la zavorra sta dentro il budget.
 
 ### 2.3 Due forme per claim: nuda per L1, auto-contenuta per il moat (misurato 05/09 23:00)
 
