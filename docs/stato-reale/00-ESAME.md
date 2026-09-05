@@ -23400,3 +23400,185 @@ dipende dal daemon**: su una macchina fredda o al primo avvio potrebbe essere tu
 
 **Io misuro, non curo** — e la frequenza di un difetto è parte del difetto: dirla dopo non
 basta, ma è meglio che non dirla.
+
+---
+
+## W8-64 — La 0.7.6 installata da PyPI e usata da utente: dieci attriti, e il più grosso è che la porta MCP tace per quindici minuti
+
+**Cosa ho fatto**: `pip install verimem==0.7.6` da PyPI in un venv vergine, e poi la porta
+MCP parlata col protocollo — non `claude -p`, che sulla CLI figlia dà `Failed to
+authenticate: OAuth session expired`. Store isolato, e a fine esercizio ho riconfrontato
+l'impronta dei 217 file dello store di Aurelio.
+
+### Gli attriti, misurati
+
+| cosa | misura |
+|---|---|
+| installazione | **4m47s**, venv **1160 MB** — di cui torch **539**, verimem **14** |
+| strumenti esposti al client | **249**, di cui **248** col prefisso `hippo_` |
+| come si presenta il server | `{"name":"verimem","version":"0.7.6"}` — nome e strumenti non concordano |
+| descrizioni degli strumenti | «FORGIA #318 — Round 35», «Cycle #137 (2026-05-17)», «P3 minimal» |
+| lingua dell'output | `"ricerca": {"ramo": "or_fallback", "ordinati_per": "created_at DESC"}` |
+| errore di scrittura | `Input validation error: 'proposition' is a required property` — dice cosa manca, **non cosa accetta** |
+| l'audit del prodotto | **non registra le chiamate rifiutate**: i due tentativi malformati non compaiono in `mcp_audit.log` |
+
+### Il difetto grosso: la stessa capacità, due porte, due comportamenti
+
+Stesso claim, stessa fonte, stesso pacchetto, senza daemon condiviso
+(`ENGRAM_ENCODE_SERVICE=0`), store nuovo:
+
+    da CLI   21:57:23 → 21:57:24   = 1,2 secondi
+      L4-skipped - source provided but the grounding judge was still loading -
+      entailment NOT verified for THIS write
+      the local CE judge is warming on a background thread [...] It is NOT missing
+      and warmup will not help. What gets the FIRST write judged is a reachable
+      shared encode daemon; verimem doctor says whether one is.
+
+    da MCP   latency_ms=903030.2746   = 903 secondi (in un altro giro: 313)
+      flow.write  grounding_score=None  judged=False  layers=['L4-skipped']
+                  status=model_claim  stored=True
+
+⇒ ① **MCP attende fino a 903 s per un esito che la CLI consegna in 1,2 s**;
+⑫ **la spiegazione non passa dalla porta MCP**: nel record c'è l'etichetta `L4-skipped`,
+ma il testo che dice *cosa fare* non arriva al client.
+**Delle due, la seconda è peggio**: un'attesa lunga si nota, una spiegazione mancante no.
+
+### Cosa NON è, e l'ho creduto per un'ora
+
+Avevo mandato un urgente: «da PyPI il giudice è un MOCK», avendo visto sullo stderr
+`llm_using_mock reason='no provider available'`. **Falso.**
+`grounding_gate.py::_e_un_giudice_vero` esiste apposta per riconoscere il `MockLLM` — che
+`verimem.llm` costruisce quando non c'è un provider — e passare al CE locale; il docstring
+racconta il difetto già trovato, misurato («152 fatti giudicati su 6572») e curato.
+🔑 **Un warning letto come un verdetto**: `no provider available` descrive l'ambiente, non
+l'esito del giudizio. Avevo l'ipotesi giusta sul **sintomo** e sbagliata sulla **causa** —
+e se non l'avessi ritirata, staremmo curando il `MockLLM` invece del warmup del giudice.
+
+### Cosa questa cella NON dice
+
+- **La misura dei tempi non è quella di un utente vero al primo colpo**: il primo giro
+  girava con `mcp_preload_using_shared_daemon` — il server appena installato ha usato **un
+  daemon già acceso sulla macchina**. Store isolato, processo no. I 313 s vengono da lì;
+  i 903 s dal giro senza daemon.
+- **Non ho letto la risposta immediata della scrittura da MCP**: il client molla prima che
+  arrivi. So che il fatto *riletto* si presenta come `confidence_tier: "unverified"` con
+  `grounding_score: null` — quindi il record **non mente** — ma non so cosa veda l'utente
+  nell'istante in cui salva.
+- **Lo store di Aurelio risulta cambiato** (33 righe di diff), e le differenze che vedo
+  sono `briefing.jsonl` e le cartelle `dreams/auto-*` — cioè Auto-Dream e i miei
+  `verimem save`, che scrivono lì per mandato. **Non ho la prova isolata** che il server
+  dell'esercizio non abbia scritto: scrivo «non provato», non «intatto».
+
+---
+
+## W8-65 — Tre errori di strumento in una notte, tutti con un risultato plausibile
+
+Non è una cella su un difetto del prodotto: è su **come ho misurato**, e le tre volte in
+cui il numero era sbagliato senza sembrarlo. Sta qui perché la stessa forma ci ha già
+morso e continuerà.
+
+**①** `print` bufferizzato + processo ucciso dal timeout = **output perso**. Il file
+conteneva la sola data, e per venti minuti ho creduto che il server non rispondesse senza
+sapere dove si fosse fermato. → `python -u`.
+
+**②** Il timeout del mio client MCP **non poteva scattare**: il ciclo controllava
+l'orologio **dopo** `readline()`, che blocca. La riga «nessuna risposta entro 900s» non è
+mai comparsa e il processo è rimasto appeso 29 minuti. → lettura su thread con coda.
+
+**③** Il conteggio della frequenza dei SIGSEGV, sbagliato **due volte**:
+- cercavo `PASSED` **prima** di `Segmentation fault`, e nel log del `#3102` il test compare
+  **due volte** — crashato nella suite, poi passato nella fase BIS che rilancia il file da
+  solo. **Quando due esiti convivono nello stesso log, chi chiede per primo vince.**
+- la finestra era `<= "2026-09-04T19:54"` e quel run è delle **19:54:31**: confronto fra
+  **stringhe**, la più lunga è maggiore, **l'estremo cadeva fuori**. Usciva `1/16 = 6,2%`.
+
+Il numero vero è **`2/17 = 11,8%`** sui job `ubuntu / py3.12` della finestra 03-04/09.
+
+🔑 **La cura non è stata correggere il confronto.** È stato armare un **controllo
+positivo**: lo strumento sa quali segfault *devono* comparire in quella popolazione e
+**si rifiuta di stampare la percentuale** se non li trova tutti.
+
+    ✓ controllo positivo: tutti i segfault noti di questa popolazione sono comparsi (#3089, #3102)
+    frequenza del crash su questo job: 2/17 = 11.8%
+
+**Uno strumento che non può accorgersi di perdere casi non è un misuratore.** E il tratto
+comune ai tre errori è uno solo: **il risultato sbagliato era sempre plausibile** — 6,2%
+sembra una frequenza ragionevole, un file vuoto sembra un processo lento, un client fermo
+sembra un server lento. È la plausibilità che li fa passare, non la loro rarità.
+
+---
+
+## W8-66 — LANT-175 è entrato: il publish pubblica l'artefatto provato, e la prova che lo dimostra non pubblica niente
+
+**Entrato con la finestra 0 della notte 05-06/09**, commit `3cf6ac7d` («si pubblica
+l'artefatto già provato invece di ricostruirne uno nuovo») e `150e4b69` («una prova che
+esegue tutto e si ferma prima di pubblicare»). Verificato su `origin/main`: il passo
+`Scarica l'artefatto GIA' PROVATO dal run verde` c'è, l'input `dry_run` compare 5 volte,
+l'output `run_id` è nel cancello.
+
+### Il difetto non era «pubblichiamo un pacchetto diverso»
+
+Misurato il 04/09 sulla 0.7.6: fra l'artefatto della CI (`a99f64bc…`) e il wheel servito
+da PyPI (`a4c1125a…`), **465 file, 0 con contenuto diverso** — e **465 voci su 465** con
+una data diversa nello zip (CI `03/09 21:29`, publish `04/09 17:08`), perché
+`publish.yml:176` faceva `checkout` e **ricostruiva**.
+
+⇒ Il codice servito **era** quello provato. Il difetto era che **non potevamo
+dimostrarlo**: il registro dello smoke dichiarava `a99f64bc…` come prova, e chi scaricava
+da PyPI trovava un'altra impronta senza alcun modo di legarla alla nostra. Per un prodotto
+che vende verificabilità, è la riga che non ci possiamo permettere.
+
+### La cura: non ricostruire
+
+Il cancello **sapeva già** quale run aveva dato il verde ed era il solo a saperlo — lo
+buttava via. Ora lo esporta (`outputs.run_id`) e il job di pubblicazione scarica
+quell'artefatto. L'impronta provata e quella servita diventano lo stesso numero **per
+costruzione**, non per fortuna.
+
+Scelte dichiarate: **fail-closed** se l'artefatto è scaduto (conservazione 14 giorni) —
+non si ricostruisce di nascosto, perché un ripiego silenzioso rimetterebbe il difetto che
+la modifica toglie; la build sopravvive **solo** col cancello scavalcato
+(`PUBLISH_ANYWAY`), con un avviso che dice che quel pacchetto non è stato provato; il
+messaggio del caso fail-closed dice anche **«rifai lo smoke sul nuovo artefatto»**, perché
+un rerun produce un'impronta nuova e la riga del registro scade con essa.
+
+### La prova, che non pubblica
+
+Dry-run sul commit della 0.7.6, run `#10` (id `33990957843`), `completed/success`:
+
+    success  Scarica l'artefatto GIA' PROVATO dal run verde   («run verde accettato: 33802751438»)
+    skipped  Build sdist + wheel (SOLO col cancello scavalcato)
+    skipped  L'artefatto provato non c'e' — fermo
+    success  Check artifacts · veto identificativi interni
+    success  Prova senza pubblicare — mi fermo qui
+    skipped  Publish to PyPI (OIDC — no token)
+
+    a99f64bc7a4a8267067dede9bb3fcc412f6f9dbdc3a64540f4aa1e1ec4411ee7  dist/verimem-0.7.6-py3-none-any.whl
+    18841bbae603e5c1f04124668fb15a7d840cf3217ed8cd12e250416f246678fb  dist/verimem-0.7.6.tar.gz
+
+**L'impronta stampata è identica a quella del registro `SMOKE-PRE-TAG.md`.** Se il
+workflow fosse stato attivo il 4 settembre, PyPI servirebbe oggi il file che i due bracci
+hanno provato.
+Misurato in più, e non era ovvio: i presidi sul wheel (`twine check`, il veto sugli
+identificativi interni) **girano sull'artefatto scaricato e passano anche senza il build
+locale**.
+
+### Due cose scritte apposta, e il perché
+
+**La condizione della pubblicazione è al positivo** — `push` OPPURE (`dispatch` E NOT
+`dry_run`) — e non al negativo («salta se dry_run»). Una negazione sbagliata di un
+carattere pubblica; un'affermazione sbagliata non pubblica. Fra i due modi di sbagliare si
+sceglie quello che non lascia un pacchetto su PyPI.
+
+**L'input `sha` non era nella revisione, e senza di lui la falsificazione richiesta non
+era eseguibile**: `workflow_dispatch` mette in `github.sha` l'HEAD del ref scelto, quindi
+provando il workflow da un ramo il cancello avrebbe cercato la CI su una punta senza run,
+fallendo per il motivo sbagliato e senza dimostrare nulla. È ignorato su `push`, e dal
+dispatch la pubblicazione richiede comunque `dry_run=false` scelto a mano.
+
+### Cosa questa cella NON dice
+
+- **Il workflow non è mai stato eseguito in pubblicazione vera**: gira su un tag, e non si
+  tagga per provare un workflow. Il dry-run prova tutto tranne l'ultimo passo.
+- Il caso **fail-closed** (artefatto scaduto) **non è stato provato**: richiederebbe un
+  artefatto oltre i 14 giorni.
