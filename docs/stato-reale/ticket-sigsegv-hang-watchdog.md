@@ -104,3 +104,44 @@ tre run i job `windows-latest` sono falliti per altro). Serve una macchina Linux
 - Non propone la cura: la scelta fra isolare il test, cambiare il modo di
   dumpare, o non armare faulthandler quando ci sono thread nativi, è di chi
   tiene il watchdog.
+
+## 6 · La prova messa in CI il 2026-09-05 — e il numero che mancava
+
+**Il denominatore c'è.** Sui job `test (ubuntu-latest / py3.12)` della finestra,
+contando solo quelli in cui il test è stato **davvero eseguito**:
+
+    job in cui il test e' stato ESEGUITO: 17
+      di cui PASSATO:   15
+      di cui SEGFAULT:   2
+    frequenza del crash su questo job: 2/17 = 11.8%
+    ✓ controllo positivo: tutti i segfault noti sono comparsi (#3089, #3102)
+
+⇒ **circa un job su otto**, non un caso isolato. I 14 job che non arrivano al
+test (cancellati o falliti prima) sono esclusi: contarli come successi avrebbe
+abbassato la frequenza per costruzione.
+
+⚠️ **Due volte, prima di questo numero, il mio misuratore ha mentito** — e
+tutte e due le volte con un risultato *plausibile*, che è la ragione per cui
+sarebbe passato:
+1. cercavo `PASSED` **prima** di `Segmentation fault`, e nel log del `#3102` il
+   test compare due volte: crashato nella suite, poi passato nella fase BIS.
+   Quando due esiti convivono nello stesso log, **chi chiede per primo vince**.
+2. la finestra era `<= "2026-09-04T19:54"` e il `#3102` è delle **19:54:31**:
+   confronto fra **stringhe**, la più lunga è maggiore, e l'estremo cadeva
+   fuori. Usciva `1/16 = 6,2%`.
+
+La cura al misuratore non è stata correggere il confronto: è stato **armare un
+controllo positivo** che sa quali segfault *devono* comparire e si rifiuta di
+stampare la percentuale se non li trova tutti. Uno strumento che non può
+accorgersi di perdere casi non è un misuratore.
+
+**Cosa è entrato in `ci.yml`** (prova, non cura):
+- `--deselect tests/test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump`
+  nello step `Tests`. La copertura non si perde: la fase BIS rilancia quel file
+  da solo nello stesso job.
+- `HIPPO_HANG_TRACE_S: "0"` nell'env — **che da solo non basta**, perché è letta
+  solo da `mcp_server.py:7662` mentre il test passa `budget_s=0.3` scritto nel
+  test. Sta lì perché è comunque giusta per il server sotto CI.
+
+**Il verdetto lo danno i prossimi run**: se passano, l'ipotesi regge; se
+crashano lo stesso, il colpevole è un altro e la riga va tolta.

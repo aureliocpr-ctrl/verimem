@@ -832,6 +832,11 @@ jobs:
       - name: Tests
         env:
           HIPPO_OFFLINE: "1"
+          # Il watchdog degli hang non arma faulthandler nelle chiamate del
+          # server (`mcp_server.py:7662`, «0 = off»). Non tocca il test che
+          # crasha — vedi la nota sotto il comando — ma sotto CI un dump di
+          # tutti i thread non serve a nessuno e costa.
+          HIPPO_HANG_TRACE_S: "0"
         # ⚠️ `-rs` AGGIUNTO 2026-08-14: senza, la riga finale dice «63 skipped»
         # e nient'altro — sessantatre banchi che NON hanno misurato, e nessuno
         # sa quali ne' perche'. La distinzione che serve leggere e' fra «non
@@ -859,6 +864,32 @@ jobs:
         # 🔑 La classe: un'opzione che sembra additiva e invece e' sostitutiva
         # spegne un segnale mentre ne accende un altro — e il segnale spento
         # non da' errore, da' silenzio.
+        # ═══ PROVA, NON CURA — 2026-09-05, ws8 ═══
+        # Il processo muore di SIGSEGV (`exit code 139`) sempre nello stesso
+        # punto: 3939 test passati e poi
+        # `test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump`, su quattro
+        # run (#3089, #3100, #3102, #3104), solo su ubuntu, e lo stesso file da
+        # solo passa. Frequenza misurata sulla gamba `ubuntu / py3.12`:
+        # **2 su 17** job in cui il test e' stato eseguito = 11,8%.
+        # Ticket: docs/stato-reale/ticket-sigsegv-hang-watchdog.md
+        #
+        # ⚠️ QUESTA RIGA NON CURA NIENTE. Toglie il test sospetto dalla suite per
+        # vedere se il crash sparisce: se i prossimi run passano, l'ipotesi
+        # (faulthandler cammina i thread nativi di torch a livello C) regge; se
+        # crashano lo stesso, il colpevole e' un altro e questa riga va tolta
+        # subito. **Il verdetto lo da' il prossimo verde, non questo commento.**
+        #
+        # ⚖️ La copertura NON si perde: la fase BIS qui sotto rilancia quel file
+        # da solo nello stesso job — `9 passed in 64.25s` nel run #3100 — quindi
+        # il test continua a essere eseguito e a proteggere quello che protegge.
+        #
+        # 📌 `HIPPO_HANG_TRACE_S=0` (nell'env qui sopra) NON basta per questo
+        # caso, ed e' bene che sia scritto: quella variabile e' letta solo da
+        # `mcp_server.py:7662` e governa il watchdog delle chiamate del server,
+        # mentre il test chiama `hang_trace(..., budget_s=0.3)` con il budget
+        # SCRITTO NEL TEST. Spegnerla protegge il percorso del server e lascia
+        # intatto quello che crasha. Sta qui perche' e' comunque giusta per il
+        # server sotto CI, non perche' risolva.
         run: >-
           pytest
           -rsfE
@@ -867,6 +898,7 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-fail-under=46
           -m "not slow and not e2e and not perf"
+          --deselect tests/test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump
 
       # 🔑 LA STESSA SONDA, DOPO I TEST — e questa risponde a una domanda che
       # altrimenti resta aperta a congetture.
