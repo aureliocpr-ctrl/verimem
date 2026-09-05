@@ -80,6 +80,11 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       verde: ${{ steps.controlla.outputs.verde }}
+      # 🔑 LANT-175. Il cancello sa GIA' quale run ha dato il verde: era l'unico
+      # a saperlo, e buttava via l'informazione. Esportarlo costa una riga e
+      # permette al job dopo di PUBBLICARE QUELL'ARTEFATTO invece di
+      # ricostruirne uno nuovo dallo stesso commit.
+      run_id: ${{ steps.controlla.outputs.run_id }}
     steps:
       - name: Interroga la CI sul commit di questo tag
         id: controlla
@@ -123,17 +128,24 @@ jobs:
         run: |
           sha='${{ github.sha }}'
           accettato=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
-                    --jq '[.workflow_runs[] | select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))] | .[0] | if . then "\(.conclusion)|\(.head_branch)|\(.updated_at)" else "" end' \
+                    --jq '[.workflow_runs[] | select(.name=="ci" and ((.head_branch=="main") or (.head_branch|startswith("hotfix/"))))] | .[0] | if . then "\(.conclusion)|\(.head_branch)|\(.updated_at)|\(.id)" else "" end' \
                     2>/dev/null || echo "")
           ovunque=$(gh api "repos/${{ github.repository }}/actions/runs?head_sha=$sha" \
                     --jq '[.workflow_runs[] | select(.name=="ci")] | .[0].conclusion // ""' \
                     2>/dev/null || echo "")
-          esito="${accettato%%|*}"
-          resto="${accettato#*|}"; ramo="${resto%%|*}"; quando="${accettato##*|}"
-          echo "commit=$sha  ci accettabile=${esito:-NESSUN RUN su main o hotfix/**}  ramo=${ramo:-n/d}  del=${quando:-n/d}  ci altrove=${ovunque:-nessuno}"
+          # ⚠️ I campi ora sono QUATTRO (l'id del run e' il quarto, LANT-175) e
+          # il taglio va rifatto per posizione: la vecchia riga prendeva
+          # `quando` con `${accettato##*|}`, cioe' «l'ULTIMO campo» — con tre
+          # campi era la data, col quarto sarebbe diventato l'id, e il messaggio
+          # avrebbe stampato un numero al posto di una data senza che nessuno
+          # se ne accorgesse. Un taglio «l'ultimo» e' corretto solo finche'
+          # nessuno aggiunge una colonna.
+          IFS='|' read -r esito ramo quando idrun <<< "$accettato"
+          echo "commit=$sha  ci accettabile=${esito:-NESSUN RUN su main o hotfix/**}  ramo=${ramo:-n/d}  del=${quando:-n/d}  run=${idrun:-n/d}  ci altrove=${ovunque:-nessuno}"
           if [ "$esito" = "success" ]; then
             echo "verde=true" >> "$GITHUB_OUTPUT"
-            echo "Accettato il verde di ci su ramo=$ramo (run del $quando) per $sha."
+            echo "run_id=$idrun" >> "$GITHUB_OUTPUT"
+            echo "Accettato il verde di ci su ramo=$ramo (run $idrun del $quando) per $sha."
           elif [ -z "$esito" ] && [ -n "$ovunque" ]; then
             echo "verde=false" >> "$GITHUB_OUTPUT"
             echo "::error::Su $sha esiste un run di ci (${ovunque}) ma NON su main ne' su "\
@@ -177,8 +189,70 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Build sdist + wheel
+      # ═══ LANT-175 — SI PUBBLICA L'ARTEFATTO PROVATO, NON UNO NUOVO ═══
+      #
+      # Prima qui c'era `python -m build`: il workflow RICOSTRUIVA il pacchetto
+      # dallo stesso commit. Il codice usciva identico — misurato il 2026-09-04
+      # sulla 0.7.6: **465 file, 0 con contenuto diverso** fra l'artefatto della
+      # CI (`a99f64bc…`) e il wheel servito da PyPI (`a4c1125a…`) — ma le due
+      # impronte NON coincidevano: **465 voci su 465** portavano una data
+      # diversa nello zip (CI 03/09 21:29, publish 04/09 17:08).
+      #
+      # ⇒ Il difetto non era «pubblichiamo un pacchetto diverso». Era che **non
+      # potevamo DIMOSTRARE che fosse lo stesso**: il registro dello smoke
+      # dichiarava `a99f64bc…` come prova, e chi scaricava da PyPI trovava
+      # un'altra impronta senza alcun modo di legarla alla nostra prova. Per un
+      # prodotto che vende verificabilita' e' la riga che non ci possiamo
+      # permettere.
+      #
+      # ⚖️ DUE VIE, e perche' questa. (A) non ricostruire: l'impronta provata e
+      # quella servita diventano lo stesso numero PER COSTRUZIONE. (B) build
+      # riproducibile con SOURCE_DATE_EPOCH: rende confrontabile una seconda
+      # build. (A) toglie il pezzo di troppo, (B) lo rende misurabile — e il
+      # debito nasceva proprio da un pezzo di troppo.
+      #
+      # 🔒 FAIL-CLOSED. Se l'artefatto non c'e' (scaduto: la conservazione ha un
+      # limite, e un tag su un commit vecchio la supera) il job SI FERMA con un
+      # messaggio che dice cosa fare. NON ricostruisce di nascosto: un fallback
+      # silenzioso rimetterebbe esattamente il difetto che questo blocco toglie.
+      - name: Scarica l'artefatto GIA' PROVATO dal run verde
+        if: needs.gate.outputs.run_id != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          echo "run verde accettato dal cancello: ${{ needs.gate.outputs.run_id }}"
+          gh run download "${{ needs.gate.outputs.run_id }}" \
+             -R "${{ github.repository }}" -n dist -D dist
+          echo "--- cosa e' stato scaricato, con l'impronta di ogni file ---"
+          ls -la dist/
+          sha256sum dist/* | tee dist-sha256.txt
+          # 🔑 L'IMPRONTA VA STAMPATA QUI. E' l'unico punto in cui esiste sia il
+          # file provato sia il registro pubblico: chi legge questo log puo'
+          # confrontarla con quella che PyPI espone dopo, e con quella scritta
+          # nel registro dello smoke. Senza, resterebbe la parola di qualcuno.
+          test -n "$(ls dist/*.whl 2>/dev/null)" || { echo "::error::nessun wheel nell'artefatto"; exit 1; }
+          test -n "$(ls dist/*.tar.gz 2>/dev/null)" || { echo "::error::nessun sdist nell'artefatto"; exit 1; }
+
+      - name: L'artefatto provato non c'e' — fermo
+        if: needs.gate.outputs.run_id == '' && needs.gate.outputs.verde == 'true'
+        run: |
+          echo "::error title=Artefatto provato assente::Il cancello ha dato verde ma "\
+               "non ha un id di run da cui scaricare l'artefatto. Non ricostruisco: "\
+               "il pacchetto pubblicato non sarebbe quello provato. Rilancia la CI sul "\
+               "commit del tag e ritagga, oppure pubblica di proposito con PUBLISH_ANYWAY=1."
+          exit 1
+
+      # ⚠️ L'UNICO caso in cui si costruisce: il bypass dichiarato. Qui il
+      # cancello e' gia' stato scavalcato a mano, non c'e' nessun run verde da
+      # cui prendere un artefatto, e il warning dice a chiare lettere che questo
+      # pacchetto NON e' stato provato da nessuno.
+      - name: Build sdist + wheel (SOLO col cancello scavalcato)
+        if: needs.gate.outputs.verde != 'true'
+        run: |
+          echo "::warning title=Pacchetto NON provato::Nessun run verde, quindi nessun "\
+               "artefatto provato da pubblicare: questo wheel viene COSTRUITO ORA e non "\
+               "e' il pacchetto su cui e' passata la suite ne' lo smoke."
           python -m pip install --upgrade build
           python -m build
       - name: Check artifacts
