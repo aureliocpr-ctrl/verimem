@@ -33,6 +33,13 @@ L4.1 come il gate, non conta gli avvisi `*-observe`), cioè il gate rifatto una 
 chiamante. **Giuntura da presidiare: un solo gate, sei chiamanti, stessa risposta.** Presidio: da
 eseguire (un test che scrive lo stesso claim dai sei ingressi e confronta le ricevute).
 
+Le tre vie secondarie, lette il 05/09: passano tutte `source=… ground_write=True` e poi **decidono
+l'azione da sole** leggendo `verdetto.grounding_score` — `document_promote.py:88-94` («quarantina
+quando il moat boccia»), `transcript_promote.py:89-95` (stesso commento, stessa copia),
+`sleep.py:512-518` (`_v.action == "reject" or (…soglia…)`, con una soglia propria). Tre copie della
+decisione (classe ①): il gate calcola, tre chiamanti rifanno. Cura proposta a Nadia: un solo punto
+che decide (`action` e `quarantined_by` nel verdetto), sei chiamanti che eseguono.
+
 ## 3. Le giunture dove i difetti sono NATI (settembre), e il presidio
 
 | giuntura | il difetto che ci è nato | livello della misura | presidio |
