@@ -66,8 +66,11 @@ settembre è nato lì. Da misurare, non da dichiarare.
 
 ## 5. Cosa manca a questo documento (debiti dichiarati)
 
-- La mappa vera delle importazioni (chi usa chi) con i ~40 moduli mai importati (inventario 04/09):
-  Aldo, con lo script dell'inventario nel registro.
+- La mappa delle importazioni, misurata da Aldo il 05/09 (AST, non regex; il righello a regex aveva
+  dato 17 e poi 0 prima del 2): dei 391 moduli, **60 non sono raggiungibili dalle porte**: 6 sono entry
+  point (`__main__`), 52 li importano solo test o script, **2 non li importa nessuno**
+  (`orchestration` 58 righe, `syscall_bridge` 383 righe: 441 righe in tutto). Il «~40 mai importati»
+  del 04/09 era il perimetro sbagliato (solo dentro `verimem/`).
 - Per ogni riga «da eseguire»: il test alla porta, con il livello scritto nel nome.
 - Lo store: le tabelle, le migrazioni, il campo `status`/`superseded_by`/`valid_until`: Aldo.
 - Il daemon e il giudice sotto carico (otto client): Tara, `ws5-daemon-del-giudice-disegno-per-la-0.8.0.md`.
