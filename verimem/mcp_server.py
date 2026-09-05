@@ -2859,11 +2859,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                         ),
                     },
                     "as_of": {"type": "number",
-                               "description": "epoch seconds: serve i fatti che "
-                                              "erano CORRENTI a quell'istante. "
-                                              "Componibile con topic/min_status, "
-                                              "a differenza del tool dedicato "
-                                              "hippo_recall_as_of."},
+                               "description": "epoch seconds: serve i fatti che erano CORRENTI a quell'istante. "
+                                              "Componibile con topic/min_status, a differenza "
+                                              "del tool dedicato hippo_recall_as_of. La risposta "
+                                              "dichiara `as_of` e `as_of_scartati`: quanti fatti "
+                                              "sono stati esclusi perche' NON ANCORA nati a "
+                                              "quell'istante — i gia' RITIRATI non si contano, "
+                                              "quelli sono il time-travel che funziona. Lo stesso "
+                                              "numero su entrambe le porte ordinarie; se lo store "
+                                              "non sa dirlo la risposta porta `as_of_scartati_ignoto` "
+                                              "invece di un numero inventato."},
                 },
                 "required": ["query"],
             },
@@ -3878,8 +3883,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "limit": {"type": "integer", "minimum": 1,
                                 "maximum": 200, "default": 20},
                     "as_of": {"type": "number",
-                               "description": "epoch seconds: solo i fatti che "
-                                              "erano CORRENTI a quell'istante."},
+                               "description": "epoch seconds: serve i fatti che erano CORRENTI a quell'istante. "
+                                              "Componibile con topic/min_status, a differenza "
+                                              "del tool dedicato hippo_recall_as_of. La risposta "
+                                              "dichiara `as_of` e `as_of_scartati`: quanti fatti "
+                                              "sono stati esclusi perche' NON ANCORA nati a "
+                                              "quell'istante — i gia' RITIRATI non si contano, "
+                                              "quelli sono il time-travel che funziona. Lo stesso "
+                                              "numero su entrambe le porte ordinarie; se lo store "
+                                              "non sa dirlo la risposta porta `as_of_scartati_ignoto` "
+                                              "invece di un numero inventato."},
                     "topic": {"type": "string"},
                     "user_id": {"type": "string", "description": (
                         "Multi-tenancy scope: return only this user's facts "
