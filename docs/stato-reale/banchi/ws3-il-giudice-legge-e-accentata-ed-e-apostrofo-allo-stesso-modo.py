@@ -50,8 +50,13 @@ e' la conversione, l'ASCII e' l'originale.
     G3 accentata − ASCII col MAX, con zavorra    +0,0378   🔴 FALSIFICATA
 ⇒ G3 e' caduta nel verso che conta: la grafia pesa DA SOLA, anche quando il MAX
   ha tolto la zavorra. Su quattro celle su quattro l'accentata batte l'ASCII di
-  +0,04 / +0,04 / +0,07 / +0,04. Il corpus scrive «e'» 976 volte contro 357 «è»:
-  il giudice lavora sul lato debole nel 73% delle scritture.
+  +0,04 / +0,04 / +0,07 / +0,04. Il corpus scrive «e'» 976 volte contro 357 «è».
+  🔴 CORREZIONE (06/09 00:05, banco ws3-quanto-corpus-e-scritto-in-ascii…): «il
+  giudice lavora sul lato debole nel 73% delle scritture» — scritto qui e nel
+  post 27cde06ecc5d8c43 — era un NUMERATORE SENZA DENOMINATORE: il 73% e' fra le
+  scritture che hanno una copula scritta (976 contro 357). Sul corpus intero i
+  fatti con almeno una forma ASCII sono ~9% (1.372 su ~15.400), quelli con un
+  accento vero 4,7%. La cura vale su quel 9%, non sul 73%.
 ⇒ Cura a costo zero, per il design (2.2 / `coppia()`): normalizzare «e'»->«è»
   (e puo'/da'/sara'/cosi'/piu'/perche') PRIMA del giudice, su fonte e claim
   insieme — una variabile sola, entrambi i lati. E la misura di ieri sui quattro
