@@ -12669,6 +12669,10 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # senza i ritirati fra i candidati il passato non ha nulla da
                 # restituire: chi era corrente allora oggi e' superseduto.
                 _pf["include_superseded"] = True
+                #: e la pesca allargata come sulla porta gemella e come in
+                #: `hippo_recall_as_of` (`k=max(k * 6, k)`): aprire ai ritirati
+                #: senza allargare lascia il filtro ad affamare la top-k.
+                _search_limit = max(_search_limit, limit * 6)
             try:
                 # Multi-word UX (2026-06-13, hit in real use): a phrase LIKE only
                 # matches the whole query as a contiguous substring, so a natural
@@ -13992,6 +13996,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # due la pesca non contiene nemmeno i candidati giusti.
                 _pf["include_superseded"] = True
                 _pf["deep"] = True
+                #: E LA PESCA VA ALLARGATA, non solo aperta ai ritirati.
+                #: `hippo_recall_as_of` lo fa dal principio — `k=max(k * 6, k)`,
+                #: «oversampled so the as-of filter doesn't starve top-k» — e
+                #: queste due porte no: pescavano `k` e filtravano dopo, quindi
+                #: se i primi `k` sono gia' ritirati all'istante chiesto la
+                #: porta rende MENO del dovuto anche con l'ordine giusto.
+                #: Misurato dalla QA il 04/09: `facts_recall` con `as_of` dava
+                #: 0 dove il tool dedicato, stesso istante e stesso k, dava 1.
+                #: Stesso fattore del tool dedicato: se un giorno cambia li',
+                #: deve cambiare qui — ed e' il motivo per cui la riga cita il
+                #: nome della funzione invece di scrivere 6 e basta.
+                _recall_k = max(_recall_k, k * 6)
             if arguments.get("include_superseded"):
                 # I RITIRATI CHE IL GIUDICE SOSTIENE ANCORA. Stessa forma di
                 # `deep` qui sopra — si passa SOLO quando chiesto, cosi' la
