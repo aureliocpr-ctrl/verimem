@@ -33,7 +33,7 @@ a bench in `docs/stato-reale/banchi/`, on short sources through the public
 | contradiction that takes an inference — «the patient died» vs «the patient was discharged» | 0/10 in EN, **3/10 in IT** |
 | a claim the source simply **does not mention** | **8/10 IT, 9/10 EN** |
 
-Limits are measured and listed in [docs/LIMITS.md](docs/LIMITS.md) — length of the source, script/language, how the figures are averaged, and the order of clauses in a write — each with the number and the date. Read them before trusting the numbers above.
+Limits are measured and listed in [docs/LIMITS.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/LIMITS.md) — length of the source, script/language, how the figures are averaged, and the order of clauses in a write — each with the number and the date. Read them before trusting the numbers above.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
