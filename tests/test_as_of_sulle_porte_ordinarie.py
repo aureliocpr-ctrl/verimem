@@ -139,9 +139,21 @@ def test_as_of_e_applicato_e_dichiarato(store, tool: str, chiave_k: str) -> None
                           ("hippo_facts_search", "limit")])
 def test_la_pesca_non_affama_il_filtro(store, tool: str, chiave_k: str) -> None:
     """Con k=1 e i primi k nati dopo l'istante, solo l'oversample salva."""
-    _scrivi(store, "Il conto della societa e' presso la Banca Alfa.",
+    #: ⚠️ IL CORPUS E' SCELTO SULLA CLASSIFICA STAMPATA, non a occhio.
+    #: Sotto pytest l'embedder e' uno STUB: con la formulazione precedente
+    #: («Il conto ... Banca Alfa») il fatto di ALLORA finiva PRIMO nella pesca
+    #: e il filtro non aveva nulla da scartare ⇒ la cella passava anche con
+    #: l'oversample cancellato. La QA l'ha provato con una matrice 5x3: questa
+    #: cella non cadeva a NESSUNA rottura. Misurate cinque formulazioni sotto
+    #: lo stub, questa mette `f-allora` ULTIMO (posizione 5 su 6):
+    #:     pesca STRETTA  k=1  -> ['f-oggi-0']          scartato: 0 risultati
+    #:     pesca LARGA    k*6=6 -> include f-allora     1 risultato, quello giusto
+    #: CINQUE fatti nuovi e non sei: con sei, `f-allora` scivola in settima
+    #: posizione e resta fuori anche dalla pesca allargata — la cella
+    #: fallirebbe con la cura, che e' il difetto opposto e altrettanto inutile.
+    _scrivi(store, "Nel 2019 il conto era in Alfa.",
             id="f-allora", quando=_ALLORA)
-    for i in range(6):
+    for i in range(5):
         _scrivi(store, f"Il conto della societa e' presso la Banca Beta {i}.",
                 id=f"f-oggi-{i}", quando=_OGGI)
     store.supersede("f-allora", "f-oggi-0", principal="test:suite",
@@ -150,8 +162,30 @@ def test_la_pesca_non_affama_il_filtro(store, tool: str, chiave_k: str) -> None:
     q = "banca del conto della societa"
     #: PRECONDIZIONE: con k=1 il primo posto deve andare a un fatto di OGGI,
     #: altrimenti il filtro non ha nulla da scartare e la cella e' cieca.
+    #: ⛔ LA PRECONDIZIONE SI LEGGE SULLA PESCA VERA, non sulla porta senza
+    #: `as_of`: li' `include_superseded` e' spento e un fatto RITIRATO non
+    #: compare affatto, quindi la classifica e' un'altra. Era l'errore della
+    #: correzione precedente — l'assert giusto sull'asse sbagliato.
+    _candidati = [h[0].id for h in store.recall(
+        q, k=1, deep=True, include_superseded=True)]
+    assert _candidati and _candidati[0] != "f-allora", (
+        f"CELLA CIECA: la pesca stretta prende gia' {_candidati}, quindi il "
+        "filtro non ha nulla da scartare e l'oversample non e' esercitato. "
+        "Con questo corpus la cella non puo' vedere il difetto che presidia")
     primo = _chiama(tool, {"query": q, chiave_k: 1})
     assert _quanti(primo) == 1, "il corpus non risponde: cella cieca"
+    #: (l'assert storico sull'ID resta, ma non e' lui ad accendere la cella)
+    #: Se al primo posto c'e' gia' `f-allora`, il filtro temporale non ha
+    #: NULLA da scartare e l'oversample non viene esercitato: l'assert sotto
+    #: passerebbe anche con la cura cancellata. La QA l'ha dimostrato con una
+    #: matrice 5 celle x 3 rotture — questa cella non cadeva a NESSUNA delle
+    #: tre, cioe' non presidiava niente. Contare non basta: la precondizione
+    #: era sul CONTEGGIO mentre il commento chiedeva un ID.
+    assert _ids(primo) != ["f-allora"], (
+        "CELLA CIECA: al primo posto c'e' gia' il fatto di ALLORA, quindi il "
+        "filtro non scarta nulla e l'oversample non e' esercitato. Con questo "
+        "corpus la cella non puo' vedere il difetto che presidia — va "
+        "riscritta, non fatta passare")
 
     passato = _chiama(tool, {"query": q, chiave_k: 1, "as_of": _QUANDO})
     assert _ids(passato) == ["f-allora"], (

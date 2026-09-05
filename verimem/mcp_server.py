@@ -12673,6 +12673,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 #: `hippo_recall_as_of` (`k=max(k * 6, k)`): aprire ai ritirati
                 #: senza allargare lascia il filtro ad affamare la top-k.
                 _search_limit = max(_search_limit, limit * 6)
+                #: IL VINCOLO TEMPORALE VA ALLO STORE, non tenuto qui.
+                #: `search_facts` ordina per `created_at DESC`, quindi chiedendo
+                #: il passato i primi `limit` sono PER COSTRUZIONE quelli che il
+                #: filtro scarta: nessun fattore moltiplicativo chiude il buco e
+                #: cresce col corpus. Misurato dal presidio, cella
+                #: `test_la_pesca_non_affama_il_filtro[hippo_facts_search]`:
+                #: 0 risultati dove `hippo_recall_as_of` ne rende 1.
+                #: Lo store filtra i NON ANCORA NATI nella WHERE (`as_of` nella
+                #: query, `asserted_at` con `created_at` di ripiego); ai RITIRATI
+                #: non tocca — quelli restano al filtro `stato_a` qui sotto, che
+                #: e' la superficie unica delle due porte. Due meta' della stessa
+                #: regola, ognuna dove costa meno.
+                _pf["as_of"] = _as_of
             try:
                 # Multi-word UX (2026-06-13, hit in real use): a phrase LIKE only
                 # matches the whole query as a contiguous substring, so a natural
