@@ -72,5 +72,5 @@ settembre è nato lì. Da misurare, non da dichiarare.
   (`orchestration` 58 righe, `syscall_bridge` 383 righe: 441 righe in tutto). Il «~40 mai importati»
   del 04/09 era il perimetro sbagliato (solo dentro `verimem/`).
 - Per ogni riga «da eseguire»: il test alla porta, con il livello scritto nel nome.
-- Lo store: le tabelle, le migrazioni, il campo `status`/`superseded_by`/`valid_until`: Aldo.
+- Lo store: FATTO da Aldo il 05/09, `86-il-disegno-esploso-lo-store-tabelle-campi-e-chi-li-scrive.md` (21 tabelle di cui 5 vuote per costruzione; 31 colonne in `facts` di cui 6 sotto l'1%; `status` e chi ferma i fatti; chi scrive i campi chiave, in ordine; il difetto del misuratore dichiarato).
 - Il daemon e il giudice sotto carico (otto client): Tara, `ws5-daemon-del-giudice-disegno-per-la-0.8.0.md`.
