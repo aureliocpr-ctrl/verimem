@@ -62,6 +62,21 @@ def _chiama(nome: str, argomenti: dict) -> dict:
     return asyncio.run(_go())
 
 
+def _ids(risposta: dict) -> list[str]:
+    """Gli ID dei fatti restituiti, IN ORDINE.
+
+    ⚠️ Contare non basta: la QA ha dimostrato che asserire «e' tornato UN
+    risultato» lascia passare il caso in cui torna il fatto SBAGLIATO — la
+    cella era cieca proprio sul difetto che doveva presidiare. Si asserisce
+    QUALE, non QUANTI.
+    """
+    for chiave in ("items", "results", "facts", "hits"):
+        valore = risposta.get(chiave)
+        if isinstance(valore, list):
+            return [v.get("id") for v in valore if isinstance(v, dict)]
+    raise AssertionError(f"nessuna lista di risultati in {sorted(risposta)}")
+
+
 def _quanti(risposta: dict) -> int:
     """Quanti fatti sono stati RESTITUITI — dalla struttura, mai dal testo.
 
@@ -139,11 +154,14 @@ def test_la_pesca_non_affama_il_filtro(store, tool: str, chiave_k: str) -> None:
     assert _quanti(primo) == 1, "il corpus non risponde: cella cieca"
 
     passato = _chiama(tool, {"query": q, chiave_k: 1, "as_of": _QUANDO})
-    assert _quanti(passato) == 1, (
+    assert _ids(passato) == ["f-allora"], (
         "LA PESCA AFFAMATA: con k=1 la porta pescava 1 candidato, il filtro "
         "lo scartava perche' nato dopo, e rispondeva VUOTO pur avendo in "
         "archivio il fatto che a quell'istante era corrente. Serve la pesca "
-        "allargata come in hippo_recall_as_of (k*6)")
+        "allargata come in hippo_recall_as_of (k*6). "
+        "L'assert e' sull'ID e non sul CONTEGGIO: la QA ha dimostrato che "
+        "«e' tornato un risultato» passa anche quando torna il fatto "
+        "sbagliato, cioe' la cella era cieca sul difetto che presidia")
 
 
 # ── ③ H3: il taglio prima dello scope ─────────────────────────────────────
@@ -167,6 +185,11 @@ def test_as_of_con_agent_id_non_perde_i_risultati(store) -> None:
     con = _quanti(_chiama("hippo_facts_recall",
                           {"query": q, "k": 2, "agent_id": "atlas",
                            "as_of": _OGGI}))
+    assert set(_ids(_chiama("hippo_facts_recall",
+                            {"query": q, "k": 2, "agent_id": "atlas",
+                             "as_of": _OGGI}))) <= {"f-dentro-0", "f-dentro-1"}, (
+        "e i risultati devono essere quelli DENTRO lo scope, non un numero "
+        "giusto fatto di fatti sbagliati")
     assert con == senza, (
         "H3: il taglio a k avveniva PRIMA del filtro di scope, quindi "
         "`as_of` + `agent_id` perdeva risultati su cui il tempo non aveva "
