@@ -38,6 +38,17 @@ Le tre porte chiamano la stessa funzione:
 
 Il moat (L4) vive dentro la stessa funzione (`anti_confab_gate.py:2750-2904`).
 
+**E i chiamanti sono SEI, non tre** (reperto del lead `cd7e0620e764e980`, misurato su main
+`5d7152d8`): oltre alle tre porte, `document_promote.py:88-94`, `transcript_promote.py:89-95`
+e `sleep.py:512-518` chiamano `run_validation_gate(source=…, ground_write=True)` e poi
+**rifanno la decisione da soli** leggendo `grounding_score` (tre copie della stessa
+regola, una con una soglia propria). L'innesto unico dentro il gate copre anche loro *per
+costruzione*: ricevono `claims`/`claims_verdict` senza saperlo. Ma la loro copia della
+decisione resta un rischio separato — è il ticket a499 di Nadia (un solo punto che decide
+l'azione, i sei chiamanti la eseguono) — e questo design **non lo cura, lo presuppone**:
+la cella P-F va estesa alle tre vie secondarie (stesso claim, stessa fonte, sei ricevute
+confrontate su `claims_verdict`).
+
 **Decisione**: la decomposizione entra **dentro `run_validation_gate`**, prima dei layer
 L1 e prima del moat. Non alle porte. Ragioni:
 1. «una capacità = tre porte, stessa risposta, stesso schema» (ws2): un innesto solo non
