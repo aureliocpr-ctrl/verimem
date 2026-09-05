@@ -146,3 +146,43 @@ def test_P4_senza_as_of_i_chiamanti_di_oggi_non_cambiano(store):
     """
     assert _ids(store.search_facts(_PAROLA, limit=10)) == {
         f"new{i}" for i in range(8)} | {"old0", "old1"}
+
+
+def test_P5_chi_filtra_dice_QUANTI_ne_ha_tolti(store):
+    """La seconda meta' del pezzo: «riceve `as_of` ED ESCLUSI».
+
+    ⚠️ QUESTO TEST ESISTE PER UN DIFETTO CHE HO CREATO IO CURANDONE UN ALTRO, e
+    l'ha trovato la QA sul primo giro. Portando il vincolo temporale nella WHERE,
+    i fatti esclusi non arrivano piu' alla porta — che li contava a valle e
+    pubblicava `as_of_scartati`. Risultato misurato: `as_of_scartati: 0` mentre
+    ne erano stati tolti sei. **Il filtro si e' spostato, la dichiarazione era
+    rimasta indietro**, e la risposta diceva al chiamante una cosa falsa: «non ho
+    tolto niente per il tempo».
+    E' esattamente la forma che questo pezzo esiste per chiudere — un filtro
+    applicato si dichiara — comparsa dentro la cura che la chiude.
+
+    Il nome del pezzo la conteneva gia': «la stessa funzione riceve `as_of` ED
+    ESCLUSI». La prima versione aveva fatto solo la prima meta'.
+    """
+    store.search_facts(_PAROLA, limit=3, as_of=_CONFINE)
+    assert store._search_as_of_scartati == 8, (
+        f"lo store dice di averne esclusi {store._search_as_of_scartati}, ma i "
+        "fatti nati dopo l'istante sono 8: chi filtra deve dire quanti, o la "
+        "porta dichiara zero mentre toglie")
+
+
+def test_P6_senza_as_of_il_contatore_e_zero_e_non_sopravvive(store):
+    """Un contatore che sopravvive alla chiamata dopo dichiara scarti altrui.
+
+    Controllo positivo in due tempi: prima una lettura CON `as_of` che accende
+    il contatore, poi una SENZA che deve spegnerlo. Senza il secondo tempo, un
+    `== 0` passerebbe anche se il contatore non fosse mai stato acceso.
+    E' la stessa forma gia' falsificata dalla QA il 04/09 su
+    `_recall_scaduti_sim`, curata qui prima che morda.
+    """
+    store.search_facts(_PAROLA, limit=3, as_of=_CONFINE)
+    assert store._search_as_of_scartati == 8, "il contatore non si e' acceso"
+    store.search_facts(_PAROLA, limit=3)
+    assert store._search_as_of_scartati == 0, (
+        "il contatore e' sopravvissuto a una chiamata senza `as_of`: la "
+        "prossima lettura dichiarerebbe gli scarti di quella prima")

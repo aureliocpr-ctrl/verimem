@@ -3997,6 +3997,14 @@ class SemanticMemory:
     #: Letto da `Memory.search` col pattern di `_as_of_scartati`.
     _recall_scaduti_sim = ()
 
+    #: Quanti fatti l'ultima `search_facts` ha escluso col vincolo `as_of`.
+    #: Attributo di CLASSE come quello sopra, per la stessa ragione: `getattr`
+    #: su un'istanza che non ha ancora cercato deve trovare 0, non sollevare.
+    #: E DEVE essere immutabile o riassegnato per intero — un mutabile di
+    #: classe sarebbe condiviso fra tutte le istanze (lezione del 04/09, quando
+    #: `_recall_scaduti_sim` era una lista).
+    _search_as_of_scartati = 0
+
     def recall(
         self, query: str, k: int = 5, topic: str | None = None,
         *,
@@ -5386,8 +5394,36 @@ class SemanticMemory:
                 # valle, che sa distinguere «ritirato» da «non ancora nato» —
                 # due scarti diversi che una WHERE unica confonderebbe in uno,
                 # e il conteggio degli scartati e' un segnale che gia' esce.
+                # ⚠️ SI CONTA QUANTI NE TOGLIE, e non e' un di piu': senza, questa
+                # cura ne creerebbe un'altra al posto di quella che chiude.
+                # Prima, il vincolo temporale stava nella PORTA, che scartava i
+                # fatti a valle e li contava (`as_of_scartati`). Portando il
+                # filtro qui, quei fatti non arrivano piu' fin la': la porta
+                # conta 0 in perfetta buona fede e dichiara «non ho tolto
+                # niente per il tempo» mentre ne sono stati tolti sei.
+                # **Il filtro si e' spostato e la dichiarazione era rimasta
+                # indietro** — trovato dalla QA, non da me, sul primo giro della
+                # cura. Chi filtra deve dire quanti: la stessa WHERE lo sa.
+                # Il numero si pubblica come attributo d'istanza, letto subito
+                # dalla chiamata — lo stesso pattern di `_as_of_scartati` in
+                # `temporal_context` e di `_recall_scaduti_sim` qui sopra.
+                _clausole_senza_tempo = list(clauses)
+                _params_senza_tempo = list(params)
                 clauses.append("COALESCE(asserted_at, created_at) <= ?")
                 params.append(float(as_of))
+                _sql_esclusi = "SELECT COUNT(*) FROM facts WHERE " + " AND ".join(
+                    _clausole_senza_tempo
+                    + ["COALESCE(asserted_at, created_at) > ?"])
+                self._search_as_of_scartati = int(conn.execute(
+                    _sql_esclusi,
+                    tuple(_params_senza_tempo + [float(as_of)])).fetchone()[0])
+            else:
+                # ⚠️ AZZERATO A OGNI CHIAMATA SENZA `as_of`: un attributo
+                # d'istanza che sopravvive alla chiamata successiva farebbe
+                # dichiarare a una lettura gli scarti di quella prima. E'
+                # gia' successo su `_recall_scaduti_sim` (04/09, falsificato
+                # dalla QA): la stessa forma, curata prima che morda.
+                self._search_as_of_scartati = 0
             if clauses:
                 sql += " WHERE " + " AND ".join(clauses)
             sql += " ORDER BY created_at DESC LIMIT ?"
