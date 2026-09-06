@@ -143,7 +143,58 @@ siano scritture vere e quanti confronti mal filtrati dal mio grep: **il numero �
 un limite superiore**, e serve solo a dire che non esiste un punto unico che
 decide lo stato di un fatto.
 
-## 6. Il difetto del misuratore, dichiarato
+## 6. Il tier EPISODI — 493 righe, 21 colonne, e tre che non esistono nel codice
+
+Il mandato del livello 3 dice «tier episodi/documenti», e le sezioni sopra
+guardano solo `semantic.db`. Questa è la parte che mancava
+(`episodes/episodes.db`, 17,6 MB — non quello alla radice, che è a 0 byte).
+
+```
+id · task_id · task_text · outcome · tokens_used · skills_used ·
+created_at · summary_embedding · last_accessed_at · access_count ·
+salience_score · pinned                        100,0%
+final_answer                                    98,8%
+dg_embedding · embedding_model                  96,8%
+critique                     6 righe             1,2%
+notes                        2 righe             0,4%
+context_embedding            2 righe             0,4%
+invalidated_at               0                   0,0%   ←
+invalidated_by               0                   0,0%   ←
+invalidation_reason          0                   0,0%   ←
+```
+
+**Le tre a zero sono di una categoria diversa dalle altre**, e la differenza si
+vede solo guardando anche il codice:
+
+```
+grep -rc "<colonna>" verimem/*.py
+  salience_score       33      ← [controllo positivo] il grep sa trovare
+  access_count         21
+  notes                79
+  critique             41
+  context_embedding    21
+  invalidated_at        0      ← nessuna riga di codice la nomina
+  invalidated_by        0
+  invalidation_reason   0
+```
+
+- **NON CABLATE**: le tre dell'invalidazione. Zero nel codice *e* zero nei dati:
+  il tier episodi ha un meccanismo di ritiro **che esiste solo nello schema**.
+  (Le funzioni `invalidate_*` che si trovano riguardano la cache delle skill e
+  gli handle dell'undo-log: altra cosa.)
+- **CABLATE E QUASI MAI ALIMENTATE**: `notes`, `critique`, `context_embedding` —
+  il codice le nomina decine di volte e il campo resta vuoto. È la forma di
+  `valid_until` sui fatti, che era 0 su 17.575 finché una porta di scrittura non
+  ha potuto popolarlo.
+
+⚠️ Il grep è **lessicale**, e `notes` è una parola comune: per le colonne non-zero
+quel numero è un limite superiore. Per gli zeri non cambia nulla — uno zero non
+ha falsi positivi.
+
+⛔ Non è una proposta di togliere le colonne: non è misurato se siano previste
+per una funzione in arrivo, e in questa casa il limite si prova prima di buttare.
+
+## 7. Il difetto del misuratore, dichiarato
 
 Il primo giro di questa pagina ha stampato **una tabella sola** invece di 21:
 iteravo su `cur.execute(...)` e dentro il ciclo rifacevo `cur.execute(...)` sullo
