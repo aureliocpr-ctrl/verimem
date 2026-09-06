@@ -96,6 +96,19 @@ entrambi:**
 una scrittura propria + richiamo 16,2 s. Il giro di lavoro vero, dopo
 l'installazione, **40 secondi** (Giano, seconda esecuzione; 62 s la prima).
 
+> ⚠️ **Queste due prove misurano un percorso che oggi NON prescriviamo più.**
+> Entrambe eseguono `warmup` come secondo passo, perché il README lo dava per
+> obbligatorio. **Il 06/09 quel banner è stato corretto**: `warmup` non è
+> obbligatorio, sposta soltanto *quando* paghi il download. ⇒ **chi installa
+> oggi seguendo il README può saltarlo**, e allora i `28,3 s` escono dal conto
+> ma la prima scrittura con fonte se li riprende dentro — @ws5 ha misurato
+> quella scrittura a **85,7 s** sulla 0.7.6 con la cartella del giudice vuota.
+> 📌 **Non faccio la sottrazione**: i due numeri non sono la stessa grandezza
+> (`warmup` è il solo download, gli 85,7 s includono download, caricamento e
+> giudizio), e sommarli o sottrarli darebbe un terzo numero che nessuno ha
+> misurato. **La prova va rifatta sul percorso nuovo** — è la sola via per dire
+> quanto costa oggi la strada che il README indica.
+
 > 🔍 **Perché due numeri e non uno.** Il primo girava con nove variabili
 > d'ambiente ereditate — due delle quali puntavano a un altro store. Il secondo
 > le toglie tutte. **Non sono in contraddizione, e li teniamo entrambi**: un
@@ -178,7 +191,14 @@ alla riga 397:
 
 **Se scrivi con `source` dalla porta MCP prima che il giudice sia caldo, la
 prima scrittura si blocca a lungo — e può finire senza giudicare.** Misurato fra
-**313 secondi e oltre 15 minuti**. Con il daemon già acceso il fatto arriva
+**313 secondi e oltre 15 minuti**.
+> ⚠️ **QUESTO NUMERO È DI PRIMA DELLE CURE, e finché non lo rimisuriamo va letto
+> così.** Le tre cure di T1 sono in `main` dal 06/09 (`31d4d57f` il tokenizzatore
+> fuori dal lock, `2e13a5b5` il preload che scalda le librerie, `0363a813`
+> l'avvio che dichiara costo e leva) e **nessuno ha rimisurato la porta MCP**.
+> @ws5 ha rimisurato la **CLI** — 85,7 s sul pacchetto 0.7.6 con la cartella del
+> giudice vuota — ma **la CLI non è la porta di questo ticket**. ⇒ *l'attesa di
+> oggi non la sappiamo: sappiamo quella di ieri.* Con il daemon già acceso il fatto arriva
 giudicato (`judged=True`, 99,92); **su una macchina nuova, senza daemon, arriva
 `judged=False`, `layers=['L4-skipped']`, `stored=True`** — cioè hai pagato
 l'attesa e **non hai avuto il controllo**. *(ticket T1, il primo della coda.)*
@@ -273,6 +293,13 @@ scritta perché una misura su un prodotto altrui senza versione non scade mai.
 (misurato su Windows/py3.13). E **38.675 token di contesto per sessione** se lo
 colleghi via MCP — 249 strumenti esposti, ~19% di una finestra da 200k, prima
 che tu scriva una riga.
+> ✅ **I 249 riverificati il 06/09 alle 14:20 su `main` `5e61d333`**, e il modo in
+> cui li ho contati conta quanto il numero: `grep -c "Tool("` ne dà **251**
+> (prende anche righe che non sono definizioni), le definizioni vere sono
+> **249**, i nomi distinti `hippo_`/`verimem_` **248**. Lo scarto di uno fra 249
+> e 248 **non è un errore**: è il ticket `T2a` — un solo strumento non si chiama
+> `hippo_`. ⇒ **il numero pubblicato regge**, e avrei pubblicato 251 se mi fossi
+> fermata al primo righello.
 
 ⚠️ **E quel costo lo paghi quasi tutto per niente**: sui nostri 15.099 usi reali,
 **37 strumenti coprono il 90%** delle chiamate e **102 non sono stati chiamati
@@ -289,7 +316,7 @@ aggiunto un P0 e ne ha reso due più precisi:
 |---|---|---|
 | 🔴 **se l'encode non è raggiungibile il fatto entra SENZA embedding e la ricevuta dice `admitted`** — poi la ricerca risponde *«probabilmente la risposta non è in memoria»* **su un fatto che c'è** | **P0** | **chiunque scriva: 13 fatti in 32 minuti, di cinque di noi** |
 | 🆕 **scrivi con la libreria e rileggi dalla riga di comando: «no facts found», `exit 0`** — e la riga che lo produce era nel nostro Quickstart *(riga corretta il 06/09)* · ✅ **CURATO lo stesso giorno, in entrambe le metà** (main `ab2f45c5`): la riga di comando accetta `--db` **e** `recall` stampa lo store da cui ha letto, nominando il percorso cercato quando non trova nulla — *«un percorso stampato trasforma un mistero in un refuso»*. ⏳ resta la prova da utente | ~~P0~~ → ✅ | **chi segue le nostre istruzioni** |
-| **su una macchina nuova la prima scrittura con fonte via MCP** aspetta fino a **903 s** e può entrare `judged=False`: hai pagato l'attesa e non hai avuto il controllo | **P0** | **la promessa del punto 1, per chi installa oggi** |
+| **su una macchina nuova la prima scrittura con fonte via MCP** aspetta fino a **903 s** e può entrare `judged=False`: hai pagato l'attesa e non hai avuto il controllo · ⚠️ **quel numero è MISURATO PRIMA delle tre cure** (`31d4d57f`, `2e13a5b5`, `0363a813`, tutte in main dal 06/09): **nessuno ha ancora rimisurato questa porta**, quindi non è lo stato di oggi — è l'ultimo stato che abbiamo verificato | **P0** | **la promessa del punto 1, per chi installa oggi** |
 | una self-claim **preceduta da una frase vera** passa il cancello | **P0** | la promessa del punto 1 |
 | **entrambe** le porte MCP accettano `as_of` e **lo ignorano senza dirlo**: chi chiede il passato riceve il presente | **P0** | **curato in `main`** (`db7dfd11`), non ancora in un rilascio |
 | 🆕 **correggi un fatto e il vecchio non viene superato** — e sulla **porta degli agenti** non ricevi **nessun avviso**: `ok:true`, `replaced:false`, `moat: judged 99.8` | **P0 su MCP** · P1 su SDK | **un team che si corregge a vicenda** |
