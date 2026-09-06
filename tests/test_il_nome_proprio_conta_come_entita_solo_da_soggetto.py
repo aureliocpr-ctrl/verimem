@@ -101,6 +101,32 @@ AGGIORNAMENTI = [
     ("IL CASO DI T14: il fornitore cambia",
      "Il fornitore di pagamenti del servizio checkout e' Stripe.",
      "Il fornitore di pagamenti del servizio checkout e' Adyen."),
+    # ⚠️ AGGIUNTI DOPO LA FALSIFICAZIONE DELLA QA (06/09 01:57), e la ragione è
+    # sua: con il solo caso qui sopra, di sette celle **una sola** presidiava la
+    # riga nuova — le altre sei restano verdi anche a cura spenta, perché fanno
+    # un lavoro diverso (popolazione protetta e non-regressione). «Sette celle
+    # verdi» e «una cella che protegge la riga nuova» non sono la stessa cosa, e
+    # chi legge il conteggio domani merita di saperlo.
+    # ⚠️ E TRE DEI QUATTRO CADONO a cura spenta, non quattro: l'avevo scritto
+    # «tutti e quattro» e la falsificazione mi ha corretto nello stesso minuto.
+    # Misurato: con la cura spenta cadono il fornitore, la PERSONA, il SERVIZIO
+    # e il LUOGO — quattro celle in tutto contro l'unica di prima. La TECNOLOGIA
+    # (PostgreSQL → MySQL) resta verde anche senza cura: era già classificata
+    # bene, quindi in questo file è un controllo di non-regressione come il
+    # server e il paziente. **Perché quel caso non passi dal ramo nuovo non
+    # l'ho misurato** e non lo scrivo come se lo sapessi.
+    ("il capo del team (una PERSONA come valore)",
+     "Il capo del team di ricerca e' Marco.",
+     "Il capo del team di ricerca e' Anna."),
+    ("il database di produzione (una TECNOLOGIA come valore)",
+     "Il database di produzione e' PostgreSQL.",
+     "Il database di produzione e' MySQL."),
+    ("la sede legale (un LUOGO come valore)",
+     "La sede legale della societa' e' Milano.",
+     "La sede legale della societa' e' Torino."),
+    ("il gestore del dominio (un SERVIZIO come valore)",
+     "Il gestore del dominio e' Cloudflare.",
+     "Il gestore del dominio e' Route53."),
 ]
 
 
