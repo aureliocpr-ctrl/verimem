@@ -344,12 +344,14 @@ class Risultati(list):
     """
 
     __slots__ = ("sotto_il_pavimento", "trattenuti", "letto_al_passato",
-                 "tagliati_dal_pavimento", "esclusi_perche_scaduti")
+                 "tagliati_dal_pavimento", "esclusi_perche_scaduti",
+                 "nascosti_dalla_freschezza")
 
     def __init__(self, iterable=(), *, sotto_il_pavimento=None,
                  trattenuti=None, letto_al_passato=None,
                  tagliati_dal_pavimento=None,
-                 esclusi_perche_scaduti=None) -> None:
+                 esclusi_perche_scaduti=None,
+                 nascosti_dalla_freschezza=None) -> None:
         super().__init__(iterable)
         #: ``{quando, quando_leggibile, nota}`` quando la domanda e' stata
         #: interpretata DA SOLA come una domanda sul passato, il filtro
@@ -412,6 +414,33 @@ class Risultati(list):
         #: un fatto e' in quarantena perche' non ci si fida, e mostrarlo «per
         #: trasparenza» lo rimetterebbe in circolo dalla porta di servizio.
         self.trattenuti = trattenuti
+        #: ``{nascosti, nota}`` quando la risposta e' VUOTA e la stessa domanda
+        #: fatta in profondita' trova fatti che l'eta' tiene fuori dalla vista
+        #: di default; ``None`` quando non ce ne sono.
+        #:
+        #: LA QUARTA CAUSA. Le altre tre — il pavimento, la data nella domanda,
+        #: la scadenza dichiarata — hanno gia' ognuna il suo campo qui sopra, e
+        #: l'avviso della scadenza arriva a dire esplicitamente «non e' il
+        #: pavimento e non e' una data nella domanda», perche' senza il «non e'»
+        #: un'assenza viene attribuita alla causa sbagliata. Il decay per eta'
+        #: nascondeva fatti senza comparire in quell'elenco: misurato sulla
+        #: porta, un fatto di 365 giorni spariva e l'uscita era «no facts
+        #: found» e basta — la stessa cosa che legge chi non ha mai scritto
+        #: niente.
+        #:
+        #: ⚠️ NON E' UN DOPPIONE DI `esclusi_perche_scaduti`, ed e' misurato che
+        #: i due insiemi non si toccano: un fatto di 365 giorni senza
+        #: `valid_until` e' nascosto qui e non la' (`expired_reason='age'`), un
+        #: fatto di un giorno con `valid_until` passato e' escluso la' e non qui
+        #: (`expired_reason='valid_until'`). Due cause, due campi, due frasi:
+        #: unirle sarebbe «un solo segnale per due significati», che e' il
+        #: difetto che questo prodotto difende altrove.
+        #:
+        #: ⚠️ SI PAGA SOLO QUANDO SI E' GIA' PERSO. La seconda interrogazione
+        #: che lo popola parte unicamente a risposta vuota — cioe' quando
+        #: l'utente non ha ottenuto niente, e il costo di una domanda in piu' e'
+        #: il prezzo di sapere perche'.
+        self.nascosti_dalla_freschezza = nascosti_dalla_freschezza
 
 
 def esito_del_moat(gate, warnings, *, source) -> str:
@@ -1654,6 +1683,16 @@ class Memory:
             esclusi_perche_scaduti=(
                 {"esclusi": _scaduti, "nota": _nota_scaduti(_scaduti)}
                 if _scaduti else None),
+            # LA QUARTA CAUSA, e si chiede solo a mani vuote. Le tre righe qui
+            # sopra e qui sotto leggono contatori che la lettura ha gia'
+            # prodotto; l'eta' no — chi nasconde per freschezza lo fa dentro lo
+            # store e non lascia un numero da leggere. Invece di farglielo
+            # produrre a ogni lettura (che sarebbe far pagare a tutti un avviso
+            # che serve a chi non ha trovato niente), si RICHIEDE lo stesso in
+            # profondita' quando `out` e' vuoto.
+            nascosti_dalla_freschezza=(
+                self._nascosti_per_eta(query, k, deep=deep) if not out
+                else None),
             # IL TAGLIO SI DICHIARA SEMPRE CHE AVVIENE, non solo quando ha
             # tolto tutto. La guardia e' `_tagliati`, cioe' il fatto che
             # qualcosa sia stato tolto — indipendente da come e' andata al
@@ -2794,6 +2833,64 @@ class Memory:
     def _floor_file(self):
         from pathlib import Path
         return Path(str(self.semantic.db_path) + ".floor.json")
+
+    def _nascosti_per_eta(self, query: str, k: int, *, deep: bool) -> dict | None:
+        """Quanti fatti l'ETA' tiene fuori dalla vista, quando non si e' trovato
+        niente.
+
+        Si chiama solo a `out` vuoto: e' l'unico momento in cui la domanda
+        «perche' non c'e' niente» ha un senso, ed e' anche l'unico in cui una
+        seconda interrogazione non fa pagare nessuno che stia gia' ottenendo
+        la sua risposta.
+
+        ⚠️ SI RICHIEDE INVECE DI CONTARE, e la scelta e' voluta. Il decay
+        nasconde dentro lo store e non lascia un contatore da leggere; farglielo
+        produrre a ogni lettura vorrebbe dire cambiare la strada calda per un
+        avviso che serve a chi e' rimasto a mani vuote.
+
+        ⚠️⚠️ SI CHIEDE DUE VOLTE, E LA SECONDA NON E' UNO SPRECO: e' la
+        differenza a essere attribuibile all'eta', non il totale. La prima
+        stesura di questo metodo chiedeva solo in profondita' e, trovando
+        qualcosa, dichiarava la freschezza — ma `deep` solleva SOLO il
+        nascondimento per eta', e se la risposta era vuota per un'altra ragione
+        quella richiesta rende fatti che con l'eta' non c'entrano. Misurato
+        sulla porta vera, su un fatto FRESCO tagliato da `--min-relevance
+        0.99`, usciva:
+
+            ⚠ 1 fatto/i esistono ma la FRESCHEZZA li tiene fuori
+              (... non e' il pavimento ...)
+
+        cioe' la frase affermava il contrario del vero: era il difetto che
+        questa cura chiude, riprodotto un piano piu' su. Le due pesche con lo
+        STESSO `k` isolano la sola variabile che ci interessa.
+
+        Torna ``None`` — cioe' «niente da dichiarare» — quando la lettura era
+        gia' profonda (non c'e' nulla di nascosto da rivelare), quando la
+        profondita' non aggiunge niente (l'assenza ha un'altra causa, e ce l'ha
+        gia' la sua frase) e quando la richiesta fallisce: un avviso non fa
+        cadere una lettura, come per i suoi tre fratelli.
+        """
+        if deep:
+            return None
+        _k = max(int(k or 5), 5)
+        try:
+            normali = self.semantic.recall(query, k=_k, deep=False)
+            profondi = self.semantic.recall(query, k=_k, deep=True)
+        except Exception:  # noqa: BLE001 — un avviso non fa cadere una lettura
+            return None
+        quanti = len(profondi) - len(normali)
+        if quanti <= 0:
+            return None
+        return {
+            "nascosti": quanti,
+            "nota": (f"{quanti} fatto/i esistono ma la FRESCHEZZA li "
+                     "tiene fuori dalla vista di default: sono piu' vecchi "
+                     "dell'emivita del corpus. Non e' il pavimento, non e' una "
+                     "data nella domanda e non e' la scadenza dichiarata "
+                     "(`valid_until`) — nessuno ha detto che smettessero di "
+                     "valere, sono soltanto vecchi. Per vederli rifai la "
+                     "lettura con `--deep`."),
+        }
 
     def _trattenuti_safe(self, query: str | None) -> dict | None:
         """`_conta_trattenuti` blindato NEL CHIAMANTE, non solo al suo interno.
