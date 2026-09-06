@@ -170,6 +170,41 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
             log.warning("mcp_preload_librerie_del_giudice_fallito", error=str(exc))
 
 
+#: Quanto costa il modello del giudice, misurato il 2026-09-06 nel venv del
+#: pacchetto (torch 2.14.0+cpu, modello in ~/.engram/models/local_gate_ce_v2):
+#: RSS 18,0 MB dopo l'import di questo modulo, 504,3 MB dopo il warm. Il numero
+#: sta qui e non in una frase perche' finisce nel log di avvio: chi paga mezzo
+#: giga per processo deve poterlo LEGGERE, non dedurlo.
+_COSTO_DEL_GIUDICE_MB = 486
+
+
+def _dichiara_il_piano_del_giudice(*, log=None) -> None:
+    """Dice all'avvio se il giudice verra' scaldato, quanto costa, e la leva.
+
+    Prima non lo diceva: ``_warm_moat_judge`` logga solo QUANDO parte, quindi
+    per chi non ha ``ENGRAM_GROUNDING_WRITE`` — il caso normale — all'avvio non
+    compariva NESSUNA riga sul giudice. Il silenzio si legge come «tutto a
+    posto», e invece vuol dire che la prima scrittura con fonte si carichera'
+    il modello addosso (12,7 s caldo, 40,1 s al primo giro).
+
+    Vale identica in entrambi i versi: qualunque sia il default, l'avvio
+    dichiara quale e' in vigore e come cambiarlo.
+    """
+    if log is None:
+        return
+    if _deve_scaldare_il_giudice():
+        log.info("mcp_preload_moat_judge_planned",
+                 costo_mb=_COSTO_DEL_GIUDICE_MB,
+                 per_spegnerlo="ENGRAM_GROUNDING_WRITE=0")
+    else:
+        log.info("mcp_preload_moat_judge_skipped",
+                 perche="ENGRAM_GROUNDING_WRITE non e' acceso",
+                 costo_mb_se_acceso=_COSTO_DEL_GIUDICE_MB,
+                 per_accenderlo="ENGRAM_GROUNDING_WRITE=1",
+                 altrimenti="la prima scrittura con fonte carica il modello "
+                            "nel suo thread (12,7 s caldo, 40,1 s freddo)")
+
+
 def preload_embedding(*, log=None) -> threading.Thread | None:
     """Warm the embedding model. Returns the background thread, or None.
 
@@ -178,6 +213,8 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
     """
     if os.environ.get("HIPPO_EAGER_PRELOAD", "1").strip().lower() in _FALSY:
         return None
+
+    _dichiara_il_piano_del_giudice(log=log)
 
     def _run() -> None:
         _scalda_le_librerie_del_giudice(log=log)
