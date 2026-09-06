@@ -1,12 +1,12 @@
-"""NON innestato nel gate: `decomponi()` da una scrittura ai suoi claim atomici.
+"""INNESTATO nel gate dal 06/09 (anti_confab_gate.py, muro 1 pezzo 3a): `decomponi()` da una scrittura ai suoi claim atomici.
 
 E' il «tempo 1» del design «write = N claim atomici, ognuno giudicato»
 (docs/ricerca/2026-09-05-design-write-n-claim-atomici.md, approvato dal lead
 in 1b203709a2be2ed2). Pura, deterministica, nessuna dipendenza esterna, nessun
-modello: prende un testo e restituisce una lista di frasi chiuse. NON e'
-innestata nel gate: l'innesto in `run_validation_gate` e i campi di `GateResult`
-sono un pezzo separato (capo programmatore). Questo modulo non cambia il
-comportamento del prodotto da solo.
+modello: prende un testo e restituisce una lista di frasi chiuse. E'
+innestata nel gate dal 06/09 (lead, 22947ae9 e 13fa323f): la forma NUDA va a L1,
+quella auto-contenuta alla ricevuta, come da design §2.3. Questo modulo da solo
+non decide niente: chi decide e' il gate che lo chiama.
 
 Ogni regola porta il numero che l'ha decisa (banchi in docs/stato-reale/banchi/):
 
