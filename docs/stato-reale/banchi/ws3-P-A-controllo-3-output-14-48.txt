@@ -1,0 +1,134 @@
+IMPORT DA C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_base\verimem\__init__.py
+2026-09-06T14:47:47.309983 [info     ] flow.warmup                    build=5e61d333 phase=start run=f7c4b3a7 store=67712a7ceb5e surface=unknown what=moat-judge
+2026-09-06T14:48:16.161122 [info     ] flow.warmup                    build=5e61d333 elapsed_ms=28802.1 phase=ready run=f7c4b3a7 store=67712a7ceb5e surface=unknown what=moat-judge
+warmup: 29.2 s · banda CE: ON
+soglia del giudice: 99.64130401611328
+
+177 interi rigiudicati con lo span come fonte (giudice vero)
+  crollo giudice   intero sotto soglia  36/96
+  L1 coda nuda     intero sotto soglia   2/34
+  review           intero sotto soglia   9/24
+  L4.1             intero sotto soglia   3/23
+
+P-K6: crolli con l'intero sotto soglia 36/96 (fra questi 16 erano gia' separati da L4.1/L4.2) -> FALSIFICATA
+dettaglio (causa, id, g_prima, intero-con-span):
+  crollo giudice e2348b9e9649 g_prima 99.983 -> 99.959 
+  crollo giudice 662c59ab1803 g_prima 99.976 -> 87.689 SOTTO
+  review         9678aab2ccf2 g_prima 99.918 -> 99.918 
+  review         682eeb16916b g_prima 99.983 -> 99.943 
+  crollo giudice b883cfce83cd g_prima 99.891 -> 99.891 
+  review         1690d67707b9 g_prima 99.977 -> 99.976 
+  crollo giudice c6cfd95b419c g_prima 99.982 -> 99.982 
+  crollo giudice a37debadc2d3 g_prima 98.575 -> 98.575 SOTTO
+  crollo giudice f7aac95a78a5 g_prima 99.892 -> 99.892 
+  crollo giudice 084386dc6e31 g_prima 99.011 -> 99.011 SOTTO
+  crollo giudice cdb22d587104 g_prima 99.950 -> 99.950 
+  crollo giudice 10d84de53bfb g_prima 99.983 -> 99.978 
+  crollo giudice 24978ebd77ad g_prima 99.979 -> 99.980 
+  crollo giudice 774d2c749172 g_prima 99.507 -> 99.916 
+  crollo giudice d40031149466 g_prima 99.979 -> 99.934 
+  crollo giudice 98d56576ab9a g_prima 99.967 -> 99.744 
+  crollo giudice c48f8dce5341 g_prima 99.883 -> 99.883 
+  review         5a13b1ea88a7 g_prima 99.983 -> 99.965 
+  crollo giudice 93c21df9a24f g_prima 99.983 -> 99.983 
+  review         d0b2dc9a9d85 g_prima 99.980 -> 99.980 
+  crollo giudice fc7149bcc03a g_prima 99.372 -> 99.372 SOTTO
+  crollo giudice 85eca8716281 g_prima 99.975 -> 99.975 
+  review         abc41c82250b g_prima 90.961 -> 99.828 
+  crollo giudice a9186a0a3ab9 g_prima 99.974 -> 99.974 
+  crollo giudice 30d0dd137200 g_prima 99.979 -> 99.980 
+  crollo giudice 95ce4125aff7 g_prima 94.194 -> 94.194 SOTTO
+  crollo giudice 6e0d7ca35c7b g_prima 99.826 -> 99.956 
+  crollo giudice e0ae703ce4d3 g_prima 99.985 -> 99.970 
+  crollo giudice 3ce020137e72 g_prima 97.320 -> 97.320 SOTTO
+  crollo giudice c4adf03e8c5d g_prima 99.936 -> 99.936 
+  crollo giudice a9054b788ed7 g_prima 99.984 -> 99.660 
+  review         48ee7f35e363 g_prima 99.961 -> 99.961 
+  crollo giudice 7f01be642b06 g_prima 99.974 -> 99.974 
+  crollo giudice 495cbadd9174 g_prima 99.905 -> 99.905 
+  crollo giudice da877bb52342 g_prima 99.905 -> 99.707 
+  review         822e6d6fba34 g_prima 99.985 -> 57.967 SOTTO
+  review         04222a432973 g_prima 99.003 -> 98.048 SOTTO
+  crollo giudice 251358c2b582 g_prima 99.147 -> 99.147 SOTTO
+  review         2bfd7e4fe754 g_prima 99.985 -> 99.985 
+  crollo giudice 6426f9372d3b g_prima 98.951 -> 98.951 SOTTO
+  crollo giudice da4f5fe18d18 g_prima 99.409 -> 99.409 SOTTO
+  crollo giudice 519e4a5016ee g_prima 96.668 -> 96.668 SOTTO
+  crollo giudice fdb2b9c383d3 g_prima 98.457 -> 98.457 SOTTO
+  crollo giudice 5029b2d0656c g_prima 99.806 -> 99.912 
+  review         4c398be13734 g_prima 99.975 -> 99.975 
+  crollo giudice 5848e129e5c7 g_prima 99.952 -> 99.952 
+  crollo giudice e804ea5a1017 g_prima 99.985 -> 99.983 
+  crollo giudice c08f91197406 g_prima 99.721 -> 99.721 
+  crollo giudice 9d9b1b290af9 g_prima 99.962 -> 99.962 
+  crollo giudice 8107875e7bb9 g_prima 99.904 -> 99.945 
+  crollo giudice d18c63b0301e g_prima 99.985 -> 97.786 SOTTO
+  crollo giudice 8877da6f4d7b g_prima 94.494 -> 68.323 SOTTO
+  crollo giudice 7be603856bfd g_prima 99.415 -> 99.415 SOTTO
+  crollo giudice 0e4705b77259 g_prima 99.984 -> 99.984 
+  crollo giudice 88247a6e7c49 g_prima 99.983 -> 95.438 SOTTO
+  crollo giudice 4e7d56e3aa14 g_prima 91.646 -> 91.646 SOTTO
+  crollo giudice 7d5bfeb87cd7 g_prima 99.941 -> 99.966 
+  crollo giudice 5b9300180c6c g_prima 99.976 -> 99.976 
+  crollo giudice ebdf1518b19c g_prima 99.979 -> 99.979 
+  crollo giudice 4a72ed9978a1 g_prima 99.984 -> 99.984 
+  crollo giudice 9d25c5647d7c g_prima 99.972 -> 99.972 
+  review         0362812f5021 g_prima 99.970 -> 99.970 
+  review         bf7c7fd937a4 g_prima 99.797 -> 99.975 
+  crollo giudice 1353a4fa8eca g_prima 99.984 -> 99.983 
+  review         6f117e0f00d9 g_prima 99.629 -> 99.629 SOTTO
+  crollo giudice d3c692ba63fb g_prima 96.732 -> 96.732 SOTTO
+  crollo giudice 995347dabdee g_prima 99.985 -> 96.704 SOTTO
+  crollo giudice 1233ec813996 g_prima 99.915 -> 3.0805 SOTTO
+  crollo giudice 76426b512c27 g_prima 99.980 -> 99.980 
+  review         860f98ac2a46 g_prima 99.980 -> 99.980 
+  crollo giudice b592964790c0 g_prima 97.405 -> 97.405 SOTTO
+  crollo giudice 36d31a91e8ba g_prima 99.862 -> 84.576 SOTTO
+  crollo giudice 76f3e1cacc02 g_prima 99.911 -> 0.2891 SOTTO
+  crollo giudice b9e3160d3391 g_prima 99.981 -> 99.981 
+  crollo giudice b95486f03741 g_prima 99.654 -> 99.654 
+  crollo giudice c80eeac441e3 g_prima 99.778 -> 0.6349 SOTTO
+  crollo giudice fb52960e9e85 g_prima 99.984 -> 99.984 
+  crollo giudice 7fc6935b98f5 g_prima 99.963 -> 99.963 
+  review         8cbeac2f963d g_prima 99.985 -> 99.121 SOTTO
+  crollo giudice 619be99663d0 g_prima 99.980 -> 5.3595 SOTTO
+  crollo giudice 1c0b4f8c63f4 g_prima 99.871 -> 99.887 
+  review         a542d0edef65 g_prima 92.837 -> 92.837 SOTTO
+  crollo giudice 3107c732a839 g_prima 99.728 -> 99.728 
+  crollo giudice 384618e2404a g_prima 99.802 -> 99.843 
+  review         389b2f0ada27 g_prima 99.966 -> 95.947 SOTTO
+  crollo giudice e9d5622e4950 g_prima 99.983 -> 97.498 SOTTO
+  crollo giudice e5bf78fb0d2e g_prima 99.625 -> 99.625 SOTTO
+  crollo giudice 5612952c9d85 g_prima 99.755 -> 99.839 
+  review         83a6a060b669 g_prima 99.844 -> 99.844 
+  review         9531b5214410 g_prima 99.926 -> 98.915 SOTTO
+  crollo giudice 7c0fd5cbdfbb g_prima 99.984 -> 99.976 
+  crollo giudice 1634f0fbf30f g_prima 99.984 -> 99.984 
+  crollo giudice 3c7efe20ce58 g_prima 99.976 -> 99.980 
+  crollo giudice 79a86493439e g_prima 99.984 -> 99.473 SOTTO
+  crollo giudice 8b6e0b479ef6 g_prima 99.981 -> 99.944 
+  crollo giudice e40f7434a13b g_prima 99.959 -> 99.959 
+  crollo giudice bb8e56061378 g_prima 99.938 -> 99.938 
+  crollo giudice 5a11abc4b0e4 g_prima 99.930 -> 99.930 
+  crollo giudice de7208ad1cbf g_prima 99.979 -> 99.085 SOTTO
+  crollo giudice 2f611ce51f93 g_prima 99.957 -> 99.957 
+  review         efa9cd5e469f g_prima 99.979 -> 99.975 
+  crollo giudice 3b1cd8e150d4 g_prima 99.982 -> 99.982 
+  crollo giudice 71b73f0e4e69 g_prima 99.981 -> 99.498 SOTTO
+  crollo giudice b7d9d2462ab6 g_prima 99.351 -> 99.351 SOTTO
+  crollo giudice 5c8eb4225f2f g_prima 99.946 -> 99.946 
+  crollo giudice 38a2aa7fd7fb g_prima 99.983 -> 99.733 
+  crollo giudice 9e87aef96d48 g_prima 98.980 -> 98.980 SOTTO
+  review         8f2f81637a13 g_prima 99.837 -> 0.2340 SOTTO
+  review         6c1bf77977e6 g_prima 79.811 -> 79.811 SOTTO
+  crollo giudice c3763803a435 g_prima 99.984 -> 99.431 SOTTO
+  crollo giudice ef8440cd8da9 g_prima 99.759 -> 99.759 
+  review         8ad22ddf4880 g_prima 99.856 -> 99.856 
+  crollo giudice ccf336843885 g_prima 99.945 -> 96.084 SOTTO
+  crollo giudice 9a65de2c7e6f g_prima 99.455 -> 99.638 SOTTO
+  crollo giudice ca2634564a97 g_prima 99.959 -> 99.959 
+  crollo giudice 4899fcf2ba3e g_prima 99.905 -> 99.811 
+  crollo giudice 80218f2ba7ee g_prima 99.985 -> 99.972 
+  crollo giudice eedcb4b92f46 g_prima 99.884 -> 42.735 SOTTO
+  crollo giudice d00838856443 g_prima 99.934 -> 99.434 SOTTO
+  crollo giudice 6a3611308b90 g_prima 95.0 -> 99.835 
