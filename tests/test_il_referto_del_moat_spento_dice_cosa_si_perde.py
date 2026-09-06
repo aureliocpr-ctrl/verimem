@@ -66,11 +66,17 @@ def _dice_che_si_perde_qualcosa(testo: str) -> bool:
 
 
 def _commento_del_quickstart() -> str:
-    """Il commento che precede `m = Memory("memory.db")` nel Quickstart."""
+    """Il commento che precede `m = Memory(...)` nel Quickstart.
+
+    Si cerca la FORMA (`m = Memory(`), non l'argomento: il 06/09 il
+    Quickstart è passato da `Memory("memory.db")` a `Memory()` (T16) e il
+    presidio, che cercava la stringa esatta, ha messo main in rosso senza
+    che l'avviso sulla perdita fosse sparito.
+    """
     testo = README.read_text(encoding="utf-8")
     i = testo.find("## Quickstart (Python)")
     assert i > 0, "il README non ha più un Quickstart in Python"
-    j = testo.find('m = Memory("memory.db")', i)
+    j = testo.find('m = Memory(', i)
     assert j > i, "il Quickstart non costruisce più una Memory"
     return testo[i:j]
 

@@ -1,0 +1,20 @@
+{
+  "proposizioni": 17492,
+  "ammesse_dal_figlio": 12855,
+  "toccabili_dal_diff": 780,
+  "esclusi_dal_filtro": 12075,
+  "controllo_filtro_campione": 400,
+  "controllo_filtro_traditori": 0,
+  "fermate_oggi": 5,
+  "elenco": [
+    "Audit READ-ONLY syn-desktop (Tauri+React): l'app e' uno SKELETON non finito, NON un problema architetturale di fondo. L'approccio 'client sottile sopra il motore REPL' (Rust possiede sidecar python clp.agent.syn_desktop_bridge via NDJSON su stdin/stdout) e' SANO e gia' implementato. Il REPL funziona e l'app no perche': (1) i pannelli Macchina/Host/Browser/Memory/Terminal sono read-only viewer passivi che derivano stato da turns[] - nessuna interattivita'; MachinePanel punta hardcoded a ws://localhost:6080/websockify (container che non gira); (2) ChatPanel NON rende markdown (white-space:pre-wrap puro) mentre il REPL ha render premium - regressione nota; (3) BUG command-palette: app_commands() emette {name,desc} ma ChatPanel legge c.args (mai definito) -> comandi multi-arg /models //provider //budget //effort si eseguono al click invece di prefillare; (4) ChatPanel destruttura solo {turns,input,...,commands} e IGNORA providers/effort/pickProvider passati da App.tsx -> selettori morti nel composer; (5) niente HITL bridge (task #3 pending) -> i tool mutanti del danger-gate non hanno UI di approvazione, l'app si blocca o il sidecar gestisce muto; (6) zero test frontend (solo 2 test python sul bridge/adapter), nessun walking-skeleton verificato a schermo (task #5 pending); (7) scaffold non rinominato: Cargo.toml name='tauri-app' desc='A Tauri App' authors=['you'], package.json name='tauri-app', README e' il template Tauri; (8) host_screenshot e start_sidecar hanno path HARDCODED C:/Users/aurel/miniconda3/python.exe e repo clp -> non portabile, fallisce su qualunque altra macchina; (9) host_screenshot lancia un python -c separato (PIL ImageGrab) ad ogni frame ogni 800ms = spawn di processo a 1.25Hz, spreco; (10) lucide-react@1.21.0 e' una major sbagliata (le icone moderne stanno in 0.x) - rischio import rotti runtime. RACCOMANDAZIONE: tenere il modello thin-client (e' corretto), ma chiudere F1 task #3+#5, portare il renderer markdown/streaming del REPL nella ChatPanel, riparare il contratto props (args nei comandi, wiring selettori), de-hardcodare i path via tauri sidecar resource, e rendere i pannelli interattivi o marcarli esplicitamente read-only. Falsificabile: se markdown+HITL+selettori+args fix vengono fatti e l'app resta 'uno schifo', allora il problema e' architetturale; predico che NON lo e'.",
+    "La funzionalita' funziona ed e' verificata.",
+    "L'implementazione e' finita e collaudata.",
+    "La funzionalita' funziona ed e' verificata.",
+    "Sull'SDK l'advice e' completo perche' il Client aggiunge provenance_trusted per conto suo."
+  ],
+  "controllo_positivo_viste": [
+    "La funzionalita' funziona ed e' verificata.",
+    "L'implementazione e' finita e collaudata."
+  ]
+}

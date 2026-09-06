@@ -2,21 +2,24 @@
 
 <!-- mcp-name: io.github.aureliocpr-ctrl/verimem -->
 
-> ## ⚠️ BEFORE FIRST USE — RUN THIS ONCE:
+> ## ⏱️ FIRST GATED WRITE IS SLOW — AND YOU CAN MOVE THE COST:
 > ```bash
 > verimem warmup
 > ```
-> **Until you do, the judge is not installed and the moat is OFF**: every write
-> with a `source` is admitted **without being checked** (the receipt says so —
-> `layers=[]`, an `L4-skipped` advisory — and `verimem doctor` reports
-> `moat-judge: missing`). `warmup` downloads the local judge model (**711 MB /
-> 746 MB decimal, 13–27 s on a normal connection, no account needed**) — after
-> that every write is judged in ~0.2 s, offline. Measured on the published
-> **0.7.1** package in three clean environments (WSL Ubuntu 24.04 and Windows,
-> 2026-09-02): the first `remember --source` on a fresh install came back
-> `admitted` with no judge. This is a real gap in 0.7.1; the fix (the first
-> gated write fetches the judge by itself) is in the next release. **Run the
-> command.**
+> **You do not have to run it.** On a fresh install the first
+> `remember --source` fetches the judge by itself and judges the write —
+> measured 2026-09-06 on the published **0.7.6** package with the judge folder
+> empty (0 bytes) and `warmup` never run: the call came back after **85.7 s**
+> with `grounding_score 99.97`, `moat: judged 100.0`. The moat was **on**.
+> What `warmup` buys you is **when** you pay: it downloads the local judge model
+> (**711 MB / 746 MB decimal, 13–27 s on a normal connection, no account
+> needed**) now, instead of inside your first gated write. After that every
+> write is judged in ~0.2 s, offline.
+>
+> *This box used to say the moat was OFF until you ran `warmup`. That was true
+> of **0.7.1**, where `ensure_gate_model()` was reachable only from `warmup`
+> (`tests/test_ws5_giudice_si_procura_da_solo.py` records the measurement and
+> the fix). The fix shipped; the text did not follow it. Corrected here.*
 
 **Verified memory for AI agents.** Every write passes an admission gate, every
 read carries provenance, and a claim the source **openly contradicts** does not
@@ -33,7 +36,14 @@ a bench in `docs/stato-reale/banchi/`, on short sources through the public
 | contradiction that takes an inference — «the patient died» vs «the patient was discharged» | 0/10 in EN, **3/10 in IT** |
 | a claim the source simply **does not mention** | **8/10 IT, 9/10 EN** |
 
-Limits are measured and listed in [docs/LIMITS.md](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/LIMITS.md) — length of the source, script/language, how the figures are averaged, and the order of clauses in a write — each with the number and the date. Read them before trusting the numbers above.
+Three limits belong next to those numbers. **Length**: they are measured on short
+sources — adding unrelated sentences raises the judge's score sharply (one case
+went 9.6 → 35.9 against a cut of 40) and on some phrasings flips the verdict.
+**Script**: beyond IT/EN the first guarantee degrades rather than stopping at a
+border — on entity substitution ZH and JA hold as well as EN (1–2 in 10), KO 3,
+AR 5, HI 7, and Thai fails outright at 10/10; on the implicit class the shape holds but the
+order does not — there AR is the worst (4 in 5), not HI. Negation alone is
+still unmeasured outside IT/EN; in Thai it fails 6/10. **Figures**: the 8/10–9/10 above is an average over two halves that behave in opposite ways. An added detail that contains a **figure** is caught **0/18** — every case, across EN, ZH, JA, KO, AR and HI — because the check is lexical and looks for the digit in the source, so it has no reason to depend on the script and does not. The same detail **without a figure** slips through **16/18**, and is already 3/3 in English: here there is no gradient to speak of. Read that row as «almost always stopped if there is a number, almost never if there isn't», not as «2 in 10 stopped» (`docs/stato-reale/banchi/ws3-la-seconda-garanzia-fuori-da-it-en.py`; no true claim was wrongly rejected in any script, 0/1 each).
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
@@ -427,7 +437,13 @@ from verimem import Memory
 # below would fail — doctor tells you exactly why. And it costs more than the
 # missing check: with nothing judging them, the second write retracts the first,
 # so the confabulation ends up the only fact left live.
-m = Memory("memory.db")
+m = Memory()   # no argument: the library, the CLI and the MCP server all open the
+               # SAME store. Passing a path — Memory("memory.db") — is relative to
+               # the current directory and only the SDK can receive it: `verimem
+               # recall` would then answer "no facts found" with exit 0 from that
+               # very folder, and none of recall, remember or facts takes a
+               # --db flag to point it back. Known, open:
+               # docs/stato-reale/GRAVITA-DIFETTI.md (T16).
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works
 # with NO llm, in any language (the local CE is the judge):
@@ -439,7 +455,7 @@ assert r["status"] == "quarantined"   # stored but OUT of default recall —
 
 # Pass an llm for the highest-quality judge (and to extract facts from raw
 # conversations); the local CE is the free default when you don't.
-m = Memory("memory.db", llm=my_llm)   # any client with .complete(system, messages)
+m = Memory(llm=my_llm)   # any client with .complete(system, messages)
 
 # Gate presets: "balanced" (default), "strict" (reject on contradiction or
 # failed source-grounding), "permissive" (creative / low-stakes, no quarantine).

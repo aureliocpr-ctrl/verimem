@@ -1,0 +1,81 @@
+{
+  "finestra_s": 900,
+  "variabili_tolte": [
+    "ENGRAM_ADMISSION_GATE",
+    "ENGRAM_BRIEFING_MIN_MATCHED",
+    "ENGRAM_BRIEFING_THRESHOLD",
+    "ENGRAM_DATA_DIR",
+    "ENGRAM_DECAY_ENABLED",
+    "ENGRAM_TELEMETRY_PREFIXES",
+    "HIPPO_DATA_DIR",
+    "HIPPO_ENCODE_DELEGATE_ONLY",
+    "HIPPO_EXPOSE_TOOLS"
+  ],
+  "totale_s": 337.7,
+  "dentro_i_dieci_minuti": true,
+  "passi": [
+    {
+      "passo": "0 · creo il venv",
+      "secondi": 8.5,
+      "exit": 0,
+      "atteso": "pochi secondi",
+      "coda": [],
+      "uscita_intera": ""
+    },
+    {
+      "passo": "1 · pip install verimem (da PyPI)",
+      "secondi": 264.8,
+      "exit": 0,
+      "atteso": "~5 min, ~1.0 GB su disco",
+      "coda": [
+        "[notice] A new release of pip is available: 25.3 -> 26.2.1",
+        "[notice] To update, run: C:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Scripts\\python.exe -m pip install --upgrade pip"
+      ],
+      "uscita_intera": "\n[notice] A new release of pip is available: 25.3 -> 26.2.1\n[notice] To update, run: C:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Scripts\\python.exe -m pip install --upgrade pip\n"
+    },
+    {
+      "passo": "2 · verimem warmup",
+      "secondi": 25.6,
+      "exit": 0,
+      "atteso": "746 MB: il giudice. Senza, il cancello e' SPENTO",
+      "coda": [
+        "✓ relevance floor current 0.0000",
+        "Warmup complete — Verimem recall will be instant."
+      ],
+      "uscita_intera": "warmup will fetch ~2.3 GB across 3 models (embedder + moat gate + reranker). \nUse --no-gate to skip the gate model.\nWarming embedding model intfloat/multilingual-e5-base (dim 768) — first run \ndownloads ~1.1 GB, please wait…\n✓ model ready in 21.6s (vector dim 768)\nWarming cross-encoder reranker (R@1 lever) — first run downloads ~0.5 GB…\n✓ reranker ready in 0.0s\n✓ moat gate model already installed\n  The weights are on disk; the judge itself loads on FIRST USE, in whatever \nprocess uses it — a freshly started MCP server pays that load on its first \nwrite, not here.\n✓ shared encode daemon already running\nChecking the relevance floor…\n✓ relevance floor current 0.0000\nWarmup complete — Verimem recall will be instant.\n\nLoading weights:   0%|          | 0/199 [00:00<?, ?it/s]\nLoading weights: 100%|██████████| 199/199 [00:00<00:00, 5301.25it/s]\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\verimem\\embedding.py:135: FutureWarning: The `get_sentence_embedding_dimension` method has been renamed to `get_embedding_dimension`.\n  _adopt_observed_dim(int(model.get_sentence_embedding_dimension() or 0),\n"
+    },
+    {
+      "passo": "3 · verimem doctor",
+      "secondi": 7.6,
+      "exit": 1,
+      "atteso": "0 su installazione nuova (ticket 8 ritirato)",
+      "coda": [
+        "│     fix: verimem warmup                                                     │",
+        "└─────────────────────────────────────────────────────────────────────────────┘"
+      ],
+      "uscita_intera": "┌────────────────────────────── verimem doctor ───────────────────────────────┐\n│ ✓ version  verimem 0.7.6 · python 3.13.12 · code from                       │\n│ C:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages   │\n│ ✓ mcp  mcp 1.29.1 — below the 2.0 break                                     │\n│ ✓ data-dir  C:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\store        │\n│ (writable=True; stores: semantic/semantic.db 73.7 KB, episodes/episodes.db  │\n│ (assente), skills/skills_index.db (assente))                                │\n│ ✓ daemon  shared encode daemon warm on :60784 (model                        │\n│ intfloat/multilingual-e5-base)                                              │\n│ ✓ moat-judge  local CE gate model installed — the grounding moat is ON with │\n│ no llm (multilingual); no facts in the store this process reads (the one    │\n│ under the data dir above) — a caller that opened Memory(path=…) writes to a │\n│ DIFFERENT store, and this line does not see it                              │\n│ ✓ embedding-model  no vectors stored yet — nothing that a model change      │\n│ could have orphaned                                                         │\n│ ✓ undo-window  no retirements in the last 7 days — nothing to repair and no │\n│ ratio to report                                                             │\n│ ✓ topic-crowding  in the last 7 days every topic carries a single write —   │\n│ nothing to compare and no ratio to report                                   │\n│ ✓ parameters  admission threshold in force: 40/100, decided by the `local`  │\n│ judge (the installed model ships 99.64, ignored as a calibration artifact)  │\n│ — a write scoring below it is quarantined, and a score between 40 and 80    │\n│ does NOT pass either: it goes to the two-threshold band, which escalates to │\n│ one llm adjudication or holds the write for review                          │\n│ (VERIMEM_CE_BAND_ENFORCE=0 turns the band off). Env set by you: 3           │\n│ (ENGRAM_DATA_DIR=C:\\Users\\aurel\\AppData\\L, ENGRAM_FLOW_SURFACE=cli,         │\n│ HIPPO_DATA_DIR=C:\\Users\\aurel\\AppData\\L); 1 more were created by the        │\n│ VERIMEM_/ENGRAM_/HIPPO_ compatibility mirror at import and are NOT your     │\n│ choices                                                                     │\n│ ✓ offline  not offline-pinned — cold model loads may reach the HF Hub       │\n│ (normal outside an air-gapped deploy)                                       │\n│     fix: for air-gapped deploys set VERIMEM_OFFLINE=1 (see `verimem         │\n│ airgap`)                                                                    │\n│ ✓ llm  no llm provider — the moat and recall do not need one; extraction    │\n│ from raw conversations and the llm-judge tier stay off                      │\n│     fix: to turn those on: set an API key (e.g. ANTHROPIC_API_KEY) or run   │\n│ Ollama                                                                      │\n│ ✓ gateway  no gateway keys yet (only needed for the self-host team server)  │\n│ ✓ confidence-vs-verifica  0 fatti giudicati dal moat: troppo pochi per      │\n│ confrontare le confidenze (ne servono 5)                                    │\n│ ! relevance-floor  floor 0.0000 computed on 0 facts, now 0 — a floor of 0.0 │\n│ disables the relevance abstention (it is falsy, so every check reads it as  │\n│ «no floor»)                                                                 │\n│     fix: verimem warmup                                                     │\n└─────────────────────────────────────────────────────────────────────────────┘\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\verimem\\doctor.py:1181: RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)\n  _soglia = resolve_write_threshold_for(_giudice)\n"
+    },
+    {
+      "passo": "4 · il Quickstart, con il suo assert",
+      "secondi": 15.3,
+      "exit": 0,
+      "atteso": "la falsita' non torna: l'utente VEDE la promessa",
+      "coda": [
+        "2026-09-06T01:34:29.217756 [info     ] flow.recall                    best=0.0 build=v0.7.6 kind=search n=0 run=eeee9643 store=27971621f885 surface=unknown tagliati=0",
+        "OK: fermata dal moat grounding 0.69 serviti 0"
+      ],
+      "uscita_intera": "2026-09-06T01:34:17.988568 [info     ] flow.warmup                    build=v0.7.6 phase=start run=eeee9643 store=27971621f885 surface=unknown what=moat-judge\n2026-09-06T01:34:27.846683 [info     ] flow.warmup                    build=v0.7.6 elapsed_ms=9853.7 phase=ready run=eeee9643 store=27971621f885 surface=unknown what=moat-judge\n2026-09-06T01:34:29.121027 [info     ] flow.write                     build=v0.7.6 fact_id=66cd87146dd2 grounding_score=0.6918562650680542 judged=True layers=['L4-grounding'] run=eeee9643 status=quarantined store=27971621f885 stored=True surface=unknown topic=user withheld_despite_judge=False\n2026-09-06T01:34:29.217756 [info     ] flow.recall                    best=0.0 build=v0.7.6 kind=search n=0 run=eeee9643 store=27971621f885 surface=unknown tagliati=0\nOK: fermata dal moat grounding 0.69 serviti 0\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\torch\\jit\\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.\n  warnings.warn(\n\nLoading weights:   0%|          | 0/202 [00:00<?, ?it/s]\nLoading weights: 100%|██████████| 202/202 [00:00<00:00, 4790.67it/s]\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\verimem\\anti_confab_gate.py:2528: RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)\n  _threshold_of_record = resolve_write_threshold_for(_judge_used)\n"
+    },
+    {
+      "passo": "5 · una scrittura SUA, e il richiamo",
+      "secondi": 15.9,
+      "exit": 0,
+      "atteso": "ha capito cosa ci farebbe (passo che ho aggiunto io)",
+      "coda": [
+        "2026-09-06T01:34:45.025084 [info     ] flow.recall                    best=0.8741 build=v0.7.6 kind=search n=1 run=e68ff6e2 store=27971621f885 surface=unknown tagliati=0",
+        "richiamo: ['Il fornitore di pagamenti del checkout e Stripe.']"
+      ],
+      "uscita_intera": "2026-09-06T01:34:33.372365 [info     ] flow.warmup                    build=v0.7.6 phase=start run=e68ff6e2 store=27971621f885 surface=unknown what=moat-judge\n2026-09-06T01:34:43.244168 [info     ] flow.warmup                    build=v0.7.6 elapsed_ms=9867.6 phase=ready run=e68ff6e2 store=27971621f885 surface=unknown what=moat-judge\n2026-09-06T01:34:44.886141 [info     ] flow.entity                    build=v0.7.6 created=[{'id': '68760eccd20a', 'name': 'Stripe', 'type': 'proper'}] edges=0 fact_id=14dd571c3b6a run=e68ff6e2 store=27971621f885 surface=unknown touched=['68760eccd20a']\n2026-09-06T01:34:44.899192 [info     ] flow.write                     build=v0.7.6 fact_id=14dd571c3b6a grounding_score=99.80403900146484 judged=True layers=[] run=e68ff6e2 status=model_claim store=27971621f885 stored=True surface=unknown topic=user withheld_despite_judge=False\nstatus: model_claim grounding: 99.80403900146484\n2026-09-06T01:34:45.025084 [info     ] flow.recall                    best=0.8741 build=v0.7.6 kind=search n=1 run=e68ff6e2 store=27971621f885 surface=unknown tagliati=0\nrichiamo: ['Il fornitore di pagamenti del checkout e Stripe.']\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\torch\\jit\\_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.\n  warnings.warn(\n\nLoading weights:   0%|          | 0/202 [00:00<?, ?it/s]\nLoading weights: 100%|██████████| 202/202 [00:00<00:00, 5269.26it/s]\nC:\\Users\\aurel\\AppData\\Local\\Temp\\iris-uc-9ljbgf6j\\venv\\Lib\\site-packages\\verimem\\anti_confab_gate.py:2528: RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)\n  _threshold_of_record = resolve_write_threshold_for(_judge_used)\n"
+    }
+  ]
+}

@@ -23,7 +23,14 @@ GARANZIE, e devono poter fallire:
   · la riga deve avere almeno 10 colonne PRIMA e **lo stesso numero DOPO**;
   · la riga deve finire con la barra, prima e dopo;
   · `--se-manca` rende l'operazione idempotente: se il testo c'e' gia', esce
-    senza toccare nulla invece di duplicarlo.
+    senza toccare nulla invece di duplicarlo;
+  · 🔑 **e l'albero in cui si scrive**: le quattro garanzie qui sopra sono
+    tutte sul CONTENUTO della riga, e per mesi nessuna ha detto DOVE finiva.
+    Chi lavorava in un worktree scriveva nell'albero dello script con
+    `RC = 0` (misurato da @ws5 il 06/09). Adesso: `--repo` decide, e senza
+    `--repo` la radice git della cartella corrente deve coincidere con
+    quella dello script, **altrimenti ci si ferma nominando i due percorsi**.
+    E la riga di esito dice **dove ha scritto anche quando non sbaglia**.
 """
 
 from __future__ import annotations
@@ -31,19 +38,78 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
 
 RADICE = Path(__file__).resolve().parents[1]
 REGISTRO = RADICE / "docs" / "stato-reale" / "00-ESAME.md"
+
+
+def _radice_del_chiamante() -> Path | None:
+    """La radice git della cwd, o None se la cwd non e' dentro un repo.
+
+    Si DERIVA, non si assume: in un worktree `--show-toplevel` da la radice
+    del worktree, che e' esattamente l'albero che vogliamo distinguere da
+    quello dove sta questo file.
+    """
+    try:
+        out = subprocess.run(["git", "rev-parse", "--show-toplevel"],
+                             capture_output=True, text=True, timeout=30)
+    except Exception:  # noqa: BLE001 — git assente o non eseguibile
+        return None
+    if out.returncode != 0 or not out.stdout.strip():
+        return None
+    return Path(out.stdout.strip()).resolve()
+
+
+def scegli_registro(repo: Path | None) -> Path | None:
+    """Decide in quale albero si scrive, e si RIFIUTA se non e' chiaro.
+
+    🔴 06/09 07:12 — @ws5 Tara ha misurato il difetto: eseguito con la cwd in
+    un worktree, questo script scriveva nell'albero **dove sta il file** e
+    stampava `RC = 0`. Non sbagliava il contenuto: sbagliava l'albero, ed e'
+    peggio, perche' il contenuto era giusto e quindi nessuno se ne accorgeva.
+    Il suo RED: `PRIMA finto=154e1f06 ... DOPO finto=c2681000`, con worktree e
+    condiviso **invariati**.
+
+    ⇒ 🔑 **Il docstring di questo file dichiara quattro GARANZIE e sono tutte
+      sul CONTENUTO della riga: nessuna su DOVE finisce.** Questa e' la quinta.
+
+    Regola: `--repo` vince quando c'e'; senza, la radice del chiamante deve
+    coincidere con quella dello script, altrimenti ci si ferma NOMINANDO I DUE
+    PERCORSI — un errore che dice «sono due» e li mostra si ripara in dieci
+    secondi, un `RC = 0` sbagliato costa la giornata di chi lo legge.
+    """
+    if repo is not None:
+        radice = repo.resolve()
+        if not (radice / "docs" / "stato-reale").is_dir():
+            print(f"  --repo {radice} non ha docs/stato-reale/: mi fermo")
+            return None
+        return radice / "docs" / "stato-reale" / "00-ESAME.md"
+
+    chiamante = _radice_del_chiamante()
+    if chiamante is None:
+        print("  la cartella corrente non e' dentro un repo git, quindi non so")
+        print("     in quale albero vuoi scrivere. Passa --repo <percorso>.")
+        print(f"     (l'albero di questo script sarebbe: {RADICE})")
+        return None
+    if chiamante != RADICE:
+        print("  DUE ALBERI DIVERSI, e non indovino quale intendi:")
+        print(f"     dove lavori tu (radice git della cwd) : {chiamante}")
+        print(f"     dove sta questo script                : {RADICE}")
+        print("     Scegli: --repo <percorso>. Senza, scriverei nell'albero")
+        print("     dello script e il TUO registro resterebbe invariato.")
+        return None
+    return REGISTRO
 #: separa su una barra NON preceduta da backslash (`LANT-132`)
 COLONNE = re.compile(r"(?<!\\)\|")
 #: la colonna del verdetto, contando dalla stringa vuota iniziale
 VERDETTO = 6
 
 
-def inserisci(dopo: str, riga_nuova: Path) -> int:
+def inserisci(dopo: str, riga_nuova: Path, registro: Path) -> int:
     """Inserisce una cella NUOVA subito dopo `dopo`.
 
     🔴 31/08 03:32 — AGGIUNTO PERCHE' LO STRUMENTO COPRIVA META' DEL BISOGNO.
@@ -65,7 +131,7 @@ def inserisci(dopo: str, riga_nuova: Path) -> int:
               f"(ne serve almeno {VERDETTO + 1}): mi fermo")
         return 1
     ident = testo.split("|")[1].strip()
-    righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
+    righe = registro.read_text(encoding="utf-8").splitlines(keepends=True)
     if any(r.startswith(f"| {ident} |") for r in righe):
         print(f"  {ident} esiste gia' nel registro: non lo duplico")
         return 1
@@ -74,9 +140,10 @@ def inserisci(dopo: str, riga_nuova: Path) -> int:
         print(f"  {len(trovate)} righe per {dopo}: mi fermo")
         return 1
     righe.insert(trovate[0] + 1, testo + "\n")
-    REGISTRO.write_text("".join(righe), encoding="utf-8")
+    registro.write_text("".join(righe), encoding="utf-8")
     print(f"  {ident} inserita dopo {dopo} · {len(testo)} char · "
           f"{n_col} colonne · chiude con la barra")
+    print(f"     scritto in: {registro}")
     return 0
 
 
@@ -112,6 +179,11 @@ def main() -> int:
                          "COSA hai rifatto e COSA hai trovato")
     ap.add_argument("--come", default=os.environ.get("VERIMEM_AGENT", ""),
                     help="la tua sigla (default: $VERIMEM_AGENT)")
+    ap.add_argument("--repo", type=Path, default=None, metavar="PERCORSO",
+                    help="l'albero in cui scrivere. Senza, si usa quello di "
+                         "questo script SOLO se coincide con la radice git "
+                         "della cartella corrente; se differiscono ci si "
+                         "ferma nominando i due percorsi")
     a = ap.parse_args()
 
     modi = [bool(a.coda), bool(a.inserisci_dopo), bool(a.controfirma)]
@@ -119,8 +191,12 @@ def main() -> int:
         print("  serve esattamente uno fra --coda, --inserisci-dopo "
               "e --controfirma")
         return 1
+    registro = scegli_registro(a.repo)
+    if registro is None:
+        return 1
+
     if a.inserisci_dopo:
-        return inserisci(a.cella, a.inserisci_dopo)
+        return inserisci(a.cella, a.inserisci_dopo, registro)
 
     if a.controfirma:
         if not a.come:
@@ -132,7 +208,7 @@ def main() -> int:
                  f"(ora dal sistema) — {a.controfirma}")
     else:
         testo = a.coda.read_text(encoding="utf-8").strip()
-    righe = REGISTRO.read_text(encoding="utf-8").splitlines(keepends=True)
+    righe = registro.read_text(encoding="utf-8").splitlines(keepends=True)
     trovate = [k for k, r in enumerate(righe) if r.startswith(f"| {a.cella} |")]
     if len(trovate) != 1:
         print(f"  {len(trovate)} righe per {a.cella}: mi fermo")
@@ -188,9 +264,10 @@ def main() -> int:
         return 1
 
     righe[i] = nuova + "\n"
-    REGISTRO.write_text("".join(righe), encoding="utf-8")
+    registro.write_text("".join(righe), encoding="utf-8")
     print(f"  {a.cella}: {len(riga)} -> {len(nuova)} char · "
           f"{len(col)} colonne invariate · chiude con la barra")
+    print(f"     scritto in: {registro}")
     return 0
 
 

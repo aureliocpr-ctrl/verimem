@@ -1246,12 +1246,55 @@ def _diagnosi_mcp_2x() -> str | None:
             + "\n  fix: " + RIMEDIO_MCP_2X)
 
 
-def _open_memory():
+def _open_memory(db: str | None = None):
     """Factory hook (monkeypatchable in tests): the architecture-A entry —
     a THIN client when VERIMEM_SERVER_URL points at a running memory server,
-    the embedded store otherwise."""
+    the embedded store otherwise.
+
+    ``db`` is the store the caller NAMED (`--db`). It is forwarded to
+    ``open_memory``, which has accepted a path since architecture A: what was
+    missing was this line, not the capability. Seven commands open the store
+    through here, so the option lands on all of them at once instead of being
+    copied seven times — the copy is how `console` and `stats` ended up with
+    `--db` while `recall`, `remember` and `facts` went without it.
+    """
     from .client import open_memory
-    return open_memory()
+    return open_memory(db) if db else open_memory()
+
+
+def _dichiara_store(m, *, motivo: str = "") -> None:
+    """Stampa QUALE store ha risposto, e quanti fatti contiene.
+
+    E' la meta' che rende il difetto NON RIPETIBILE. `--db` da solo cura chi
+    gia' sa di avere due store; chi non lo sa — cioe' chi ha seguito un
+    Quickstart che insegnava un percorso relativo — legge «no facts found»
+    con EXIT=0 e conclude che la memoria e' vuota, non che sta guardando un
+    altro file. Un percorso stampato trasforma un mistero in un refuso.
+
+    La forma non e' inventata qui: `console` la stampa dal suo primo giorno
+    (`store: {mem.semantic.db_path}`). Questa e' la stessa riga, portata dove
+    serve.
+
+    Difensiva come la riga gemella in `status`: con un thin client remoto
+    `semantic` puo' non esserci, e una porta non deve MAI cadere per colpa
+    dell'avviso che doveva aiutare.
+    """
+    sem = getattr(m, "semantic", None)
+    if sem is None:
+        return
+    percorso = getattr(sem, "db_path", None)
+    if not percorso:
+        return
+    try:
+        quanti = sem.count()
+    except Exception:  # noqa: BLE001 -- un conteggio non deve rompere la porta
+        quanti = None
+    coda = f" — {quanti} fatti" if quanti is not None else ""
+    #: UNA etichetta sola. `motivo` SOSTITUISCE «store:», non lo precede:
+    #: «cercato in: store: C:\…» ha due intestazioni per un dato solo, e una
+    #: riga che si scusa due volte si legge peggio di una che dice il fatto.
+    etichetta = motivo or "store:"
+    console.print(f"[cyan]{etichetta}[/cyan] {percorso}{coda}")
 
 
 @app.command("remember")
@@ -1265,6 +1308,10 @@ def remember_cmd(
         "END of that day, local time) or a Unix epoch. After it, the fact stops "
         "being served — and the recall SAYS so instead of just answering "
         "shorter.")),
+    db: str = typer.Option(None, "--db", help=(
+        "The store to write to, when it is not the one this folder resolves "
+        "to. Same option as on `recall`: a fact written where you cannot read "
+        "it back is worse than one not written.")),
 ) -> None:
     """Store one fact through the full moat — the 2-second quickstart.
 
@@ -1302,7 +1349,7 @@ def remember_cmd(
                     f"scadenza che hai chiesto sarebbe peggio che non "
                     f"scriverlo.[/dim]")
                 raise typer.Exit(2) from None
-    m = _open_memory()
+    m = _open_memory(db)
     kw = {"topic": topic}
     if source:
         kw["source"] = source
@@ -1390,6 +1437,43 @@ def _avviso_scaduti(hits) -> None:
         f"id o rileggi con `--as-of` a un istante in cui erano validi.)[/dim]")
 
 
+def _avviso_freschezza(hits) -> None:
+    """Dice quanti fatti l'ETA' tiene fuori dalla vista, se ne tiene.
+
+    LA QUARTA CAUSA. L'avviso qui sopra elenca le altre tre e arriva a dire
+    cosa NON e' («non e' il pavimento e non e' una data nella domanda»),
+    perche' un'assenza senza il «non e'» viene attribuita alla causa sbagliata.
+    Il decay per eta' non era in quell'elenco: misurato sulla porta vera, in
+    processi separati,
+
+        CONTROLLO  fatto fresco          -> esce
+        A.         valid_until passato   -> non esce, e l'avviso lo dice
+        B.         vecchio 365 giorni    -> non esce, e l'uscita e'
+                                            «no facts found» e basta
+
+    cioe' due modi di perdere un fatto e un avviso solo. Chi lo perdeva per
+    eta' leggeva la stessa cosa di chi non ha mai scritto niente.
+
+    ⚠️ QUI SI LEGGE, NON SI RICALCOLA — la stessa regola del fratello qui
+    sopra: `hits` e' un `Risultati` e l'attributo si legge da lui. Una seconda
+    implementazione della stessa domanda e' come sono nate le divergenze fra
+    porte che questo file passa la giornata a chiudere.
+
+    ⚠️ E VA CHIAMATA ANCHE SUL RAMO VUOTO, che qui e' il caso NORMALE e non
+    l'eccezione: il campo si popola proprio quando la risposta e' vuota.
+    """
+    _av = getattr(hits, "nascosti_dalla_freschezza", None)
+    if not _av:
+        return
+    console.print(
+        f"  [yellow]⚠ {_av.get('nascosti', '?')} fatto/i esistono ma la "
+        f"FRESCHEZZA li tiene fuori[/yellow] [dim](sono piu' vecchi "
+        f"dell'emivita: non e' il pavimento, non e' una data nella domanda e "
+        f"non e' la scadenza dichiarata — nessuno ha detto che smettessero di "
+        f"valere, sono soltanto vecchi. Per vederli rifai la lettura con "
+        f"`--deep`.)[/dim]")
+
+
 def _avviso_pavimento(m, hits, query: str) -> None:
     """Dice che il migliore sta sotto il pavimento MISURATO, se ci sta.
 
@@ -1474,6 +1558,12 @@ def recall_cmd(
         "neighbours: a number, or `auto` to let the store measure it on "
         "itself. Default: ENGRAM_MIN_RELEVANCE if you set it, no floor "
         "otherwise.")),
+    db: str = typer.Option(None, "--db", help=(
+        "The store to read, when it is not the one this folder resolves to. "
+        "The SDK has always taken a path (`Memory(\"memory.db\")`); this port "
+        "did not, so the same folder that answered from Python answered "
+        "`no facts found` here. With it, the answer also SAYS which store it "
+        "opened.")),
 ) -> None:
     """Recall the top-k facts for a query — the 2-second read quickstart.
 
@@ -1495,7 +1585,14 @@ def recall_cmd(
     un test — OGNI parametro pubblico di `search` deve avere la sua opzione, e
     il test cade da solo il giorno in cui ne nasce un quinto senza porta.
     """
-    m = _open_memory()
+    m = _open_memory(db)
+    #: CHI NOMINA UNO STORE HA DIRITTO DI VEDERE QUALE E' STATO APERTO. Senza
+    #: questa riga `--db` curerebbe meta' difetto: il comando leggerebbe il
+    #: file giusto, ma un percorso sbagliato di una lettera resterebbe
+    #: indistinguibile da un archivio vuoto — che e' esattamente il modo in
+    #: cui il difetto si e' presentato.
+    if db:
+        _dichiara_store(m)
     quando = None
     if as_of.strip():
         try:
@@ -1547,12 +1644,24 @@ def recall_cmd(
                 f"this question is answerable at all.[/dim]")
         else:
             console.print("[yellow]no facts found[/yellow]")
+            # «NIENTE» E «NIENTE QUI» SONO DUE RISPOSTE DIVERSE, e finora la
+            # porta dava la prima quando la vera era la seconda. Chi seguiva
+            # il Quickstart con un percorso relativo leggeva questa riga e
+            # concludeva che la memoria fosse vuota: lo store aperto era un
+            # altro, e nessuno glielo diceva. Il percorso, col totale accanto,
+            # separa i due casi in una riga — e uno store con 0 fatti si
+            # riconosce a colpo d'occhio da uno con 4000 che non ha quella
+            # risposta.
+            if not db:
+                _dichiara_store(m, motivo="cercato in:")
         # PRIMA dell'uscita: se la scadenza ha portato via tutto, «no facts
         # found» da solo e' falso in modo utile a nessuno — i fatti c'erano.
         _avviso_scaduti(hits)
+        _avviso_freschezza(hits)
         raise typer.Exit(0)
     _avviso_pavimento(m, hits, query)
     _avviso_scaduti(hits)
+    _avviso_freschezza(hits)
     for h in hits:
         console.print(riga_di_recall(h))
         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
@@ -2964,17 +3073,36 @@ def _facts_data_dir() -> Path:
     return CONFIG.data_dir
 
 
-def _facts_sm():
-    """Build a SemanticMemory pointed at the env-resolved corpus."""
+def _facts_sm(db: str | None = None):
+    """Build a SemanticMemory pointed at the corpus.
+
+    ``db`` is the store the caller NAMED (`--db`); without it, the one this
+    folder resolves to from the environment, exactly as before.
+
+    ⚠️ QUESTA E' UNA SECONDA SUPERFICIE, non un doppione di ``_open_memory``:
+    la famiglia `facts` apre lo store da qui e non di la'. Curarne una sola
+    lascerebbe meta' della riga di comando a rispondere dalla cartella
+    corrente mentre l'altra meta' obbedisce a `--db` — che e' peggio di non
+    avere l'opzione, perche' sembra funzionare.
+
+    Un percorso nominato si prende COM'E': chi scrive `--db .../semantic.db`
+    intende quel file, non una cartella in cui cercare un layout. La ricerca
+    sub/flat qui sotto serve a indovinare dentro una data dir, e indovinare
+    dove l'utente e' stato esplicito e' il difetto, non la cura.
+    """
     from .semantic import SemanticMemory
+    if db:
+        scelto = Path(db)
+        scelto.parent.mkdir(parents=True, exist_ok=True)
+        return SemanticMemory(db_path=scelto)
     data = _facts_data_dir()
     # Prefer subdir layout (data/semantic/semantic.db); fall back to
     # legacy flat (data/semantic.db) for older installations.
     sub = data / "semantic" / "semantic.db"
     flat = data / "semantic.db"
-    db = sub if sub.exists() else (flat if flat.exists() else sub)
-    db.parent.mkdir(parents=True, exist_ok=True)
-    return SemanticMemory(db_path=db)
+    db_ = sub if sub.exists() else (flat if flat.exists() else sub)
+    db_.parent.mkdir(parents=True, exist_ok=True)
+    return SemanticMemory(db_path=db_)
 
 
 def _fact_id_resolve(sm, partial: str):
@@ -3012,6 +3140,9 @@ def facts_list(
         False, "--include-shared",
         help="Also surface UNSCOPED/global facts (never other tenants').",
     ),
+    db: str = typer.Option(None, "--db", help=(
+        "The store to read, when it is not the one this folder "
+        "resolves to — same option as on `recall` and `remember`.")),
 ) -> None:
     """List recent facts (verified + model_claim + provisional).
 
@@ -3021,7 +3152,7 @@ def facts_list(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm()
+    sm = _facts_sm(db)
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     if _scoped:
         try:  # fail fast on a malformed scope id
@@ -3113,12 +3244,15 @@ def facts_recall(
         False, "--include-shared",
         help="Also surface UNSCOPED/global facts (never other tenants').",
     ),
+    db: str = typer.Option(None, "--db", help=(
+        "The store to read, when it is not the one this folder "
+        "resolves to — same option as on `recall` and `remember`.")),
 ) -> None:
     """Semantic recall on the cosine of fact embeddings."""
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm()
+    sm = _facts_sm(db)
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _rtopic = topic
     if _scoped and topic:
@@ -3175,12 +3309,15 @@ def facts_search(
         False, "--include-shared",
         help="Also surface UNSCOPED/global facts (never other tenants').",
     ),
+    db: str = typer.Option(None, "--db", help=(
+        "The store to read, when it is not the one this folder "
+        "resolves to — same option as on `recall` and `remember`.")),
 ) -> None:
     """Keyword/substring search over fact propositions (SQL LIKE)."""
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm()
+    sm = _facts_sm(db)
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _stopic = topic
     if _scoped and topic:
@@ -3267,12 +3404,12 @@ def facts_label(
 
 
 @facts_app.command("get")
-def facts_get(fact_id: str) -> None:
+def facts_get(fact_id: str, db: str = typer.Option(None, "--db")) -> None:
     """Show one fact's details (proposition + provenance + status).
 
     Accepts a full id or an unambiguous prefix.
     """
-    sm = _facts_sm()
+    sm = _facts_sm(db)
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")

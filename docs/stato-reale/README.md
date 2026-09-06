@@ -20,6 +20,31 @@ Misurato su `544d27bd`. Le sezioni di dettaglio sono i file numerati qui accanto
 
 ---
 
+> 🧭 **AGGIUNTA 06/09 (Iris, ws7) — questa pagina descrive l'8 agosto, e da allora la
+> cartella è cresciuta di documenti che NON sono «i file numerati qui accanto».** Il README
+> pubblico rimanda qui (`docs/stato-reale/ is where the gap between this README and…`,
+> riga 386 della `v0.7.6`), e chi segue quel link entrava senza un percorso verso il lavoro
+> corrente. **I file si vedono comunque nella lista della cartella** — non erano nascosti —
+> **ma l'indice indirizzava altrove.** Ecco il percorso, dal generale al dettaglio:
+>
+> · 📄 **`SCHEDA-PRODOTTO.md`** — cosa promette il prodotto, a chi serve **e a chi no**, e
+>   la prova in dieci minuti coi tempi misurati. **Se leggi una cosa sola, questa.**
+> · 🧭 **`PERCORSI-UTENTE.md`** — i tre modi d'uso reali, con il criterio di arrivo scritto
+>   *prima* di eseguirli, e cosa blocca ciascuno.
+> · 🩺 **`GRAVITA-DIFETTI.md`** — la scala P0-P4, ogni difetto col suo livello **e la misura
+>   che lo cambierebbe**. È il documento che dice quanto è grave quello che non funziona.
+> · 📖 **`IL-README-DA-UTENTE.md`** — cosa costruisce il README nella testa di chi lo legge.
+> · 🔬 **`LA-PROVA-DELLA-SCHEDA.md`** — come si falsifica la scheda, e perché non possiamo
+>   eseguirla noi.
+> · 🗃️ **`00-ESAME.md`** — il registro dell'esame, una cella per reperto con la sua
+>   evidenza. È la fonte grezza di tutto il resto.
+>
+> ⚠️ **Le note qui sopra restano valide**: i documenti numerati misurano `544d27bd` o il
+> pacchetto, e vanno letti con la loro distanza. Questo blocco non li sostituisce, **dice
+> dove continua il lavoro.**
+
+---
+
 ## ⚠️ Leggi prima questo: abbiamo misurato due cose diverse
 
 **Il pacchetto che si scarica da PyPI è il codice del 22 luglio — 375 commit indietro,

@@ -389,12 +389,11 @@ def test_CON_claim_il_punteggio_NON_e_tautologico_e_si_separa():
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="con un claim distillato il punteggio e' un verdetto vero (99.94 · 99.60 "
-    "· 0.79 · 0.11) ma il dict di ritorno non lo espone: chi promuove deve andare "
-    "a leggere lo store (27/08)",
-)
+# 2026-09-06: era xfail(strict) dal 27/08 («il dict di ritorno non lo espone»).
+# La cura della promozione (d328a574: ascolta L4.1 e il moat, scrive il punteggio
+# nella ricevuta) l'ha fatto PASSARE, e pytest con strict lo contava come rosso
+# (run 34002525998, 5 gambe su 5). Da qui e' un presidio: se la ricevuta della
+# promozione smette di portare il punteggio, questo test torna rosso.
 def test_con_claim_la_ricevuta_dovrebbe_portare_il_punteggio():
     from verimem.document_promote import promote_chunk_to_fact
     from verimem.semantic import SemanticMemory

@@ -134,6 +134,77 @@ def _service_enabled() -> bool:
     return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _FALSY
 
 
+def _scalda_le_librerie_del_giudice(*, log=None) -> None:
+    """Carica le LIBRERIE che il giudice usera', all'avvio e non sotto richiesta.
+
+    ⚠️ Non e' il warm del modello (``_warm_moat_judge``, che legge 746 MB ed e'
+    condizionato a un flag): qui si importano solo le librerie native. Sono due
+    cose diverse e la differenza e' il punto — questo costa 0,3 s, non dipende
+    dal modello e non puo' fallire perche' il modello manca.
+
+    PERCHE' ESISTE, misurato il 2026-09-06 sul server MCP:
+
+      · con una richiesta IN CORSO, nel processo non si carica piu' NESSUNA
+        estensione C — bloccata anche una senza alcun legame con scipy — mentre
+        il GIL resta libero (una sonda continua a stampare per tutti i 121 s);
+      · PRIMA che la richiesta arrivi, lo stesso import passa in 0,5 s;
+      · la prima scrittura con fonte si fermava dentro
+        ``transformers.pytorch_utils`` → ``scipy.linalg._fblas`` e NON TORNAVA
+        (1800,0 s, finestra dichiarata). Caricando la catena qui: 17,3 s di
+        mediana (16,9 · 17,7 · 16,9), e la seconda scrittura 0,1 s.
+
+    ⚠️ Il PERCHE' un import non finisca mentre una richiesta e' in corso resta
+    un'IPOTESI — il loader lock di Windows — e non e' osservabile da Python. La
+    cura non ne dipende: il caricamento va fatto dove il caricamento si puo'
+    fare, cioe' prima di servire.
+
+    Best-effort come tutto il preload: se fallisce, si prosegue. Un warm non fa
+    mai morire il boot.
+    """
+    try:
+        import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
+        if log is not None:
+            log.info("mcp_preload_librerie_del_giudice_pronte")
+    except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
+        if log is not None:
+            log.warning("mcp_preload_librerie_del_giudice_fallito", error=str(exc))
+
+
+#: Quanto costa il modello del giudice, misurato il 2026-09-06 nel venv del
+#: pacchetto (torch 2.14.0+cpu, modello in ~/.engram/models/local_gate_ce_v2):
+#: RSS 18,0 MB dopo l'import di questo modulo, 504,3 MB dopo il warm. Il numero
+#: sta qui e non in una frase perche' finisce nel log di avvio: chi paga mezzo
+#: giga per processo deve poterlo LEGGERE, non dedurlo.
+_COSTO_DEL_GIUDICE_MB = 486
+
+
+def _dichiara_il_piano_del_giudice(*, log=None) -> None:
+    """Dice all'avvio se il giudice verra' scaldato, quanto costa, e la leva.
+
+    Prima non lo diceva: ``_warm_moat_judge`` logga solo QUANDO parte, quindi
+    per chi non ha ``ENGRAM_GROUNDING_WRITE`` — il caso normale — all'avvio non
+    compariva NESSUNA riga sul giudice. Il silenzio si legge come «tutto a
+    posto», e invece vuol dire che la prima scrittura con fonte si carichera'
+    il modello addosso (12,7 s caldo, 40,1 s al primo giro).
+
+    Vale identica in entrambi i versi: qualunque sia il default, l'avvio
+    dichiara quale e' in vigore e come cambiarlo.
+    """
+    if log is None:
+        return
+    if _deve_scaldare_il_giudice():
+        log.info("mcp_preload_moat_judge_planned",
+                 costo_mb=_COSTO_DEL_GIUDICE_MB,
+                 per_spegnerlo="ENGRAM_GROUNDING_WRITE=0")
+    else:
+        log.info("mcp_preload_moat_judge_skipped",
+                 perche="ENGRAM_GROUNDING_WRITE non e' acceso",
+                 costo_mb_se_acceso=_COSTO_DEL_GIUDICE_MB,
+                 per_accenderlo="ENGRAM_GROUNDING_WRITE=1",
+                 altrimenti="la prima scrittura con fonte carica il modello "
+                            "nel suo thread (12,7 s caldo, 40,1 s freddo)")
+
+
 def preload_embedding(*, log=None) -> threading.Thread | None:
     """Warm the embedding model. Returns the background thread, or None.
 
@@ -143,7 +214,10 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
     if os.environ.get("HIPPO_EAGER_PRELOAD", "1").strip().lower() in _FALSY:
         return None
 
+    _dichiara_il_piano_del_giudice(log=log)
+
     def _run() -> None:
+        _scalda_le_librerie_del_giudice(log=log)
         try:
             if _service_enabled():
                 from . import encode_service
