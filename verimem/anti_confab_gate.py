@@ -2510,6 +2510,24 @@ def run_validation_gate(
                         # ═══ LA QUARTA USCITA (2026-09-06): DUE FONTI DICHIARATE
                         # CHE NON CONCORDANO NON SI RITIRANO E NON SI QUARANTINANO.
                         #
+                        # ⚠️ LIMITE DICHIARATO, e va letto prima di contarci sopra:
+                        # NON HO PROVATO che questo ramo si attivi DALLA PORTA. La
+                        # gemella in `_route_evolutions` sì — è quella che il banco
+                        # `il-presidio-con-le-due-colonne.py` esercita su tutti e
+                        # cinque i casi — mentre qui vale l'avvertenza che il ramo
+                        # porta già scritta trenta righe più su per `L3-coexistence`:
+                        # su quel percorso, con `ENGRAM_SEMANTIC_CONFLICT=1`, il
+                        # giudice NLI non dichiarava contraddizione e il loop non ci
+                        # passava. Le due uscite emettono lo STESSO layer, quindi il
+                        # banco non le distingue: per sapere quale ha deciso servirebbe
+                        # strumentarle, e non l'ho fatto.
+                        # ⇒ La cura non dipende da questo ramo: sta qui perché il
+                        # percorso semantico ha il proprio candidato e la propria
+                        # copia della decisione, e lasciarne una sola curata è il
+                        # difetto che questo file racconta due volte. Ma finché non
+                        # è misurata dalla porta, questa metà è una PRECAUZIONE, non
+                        # una capacità dimostrata.
+                        #
                         # Il difetto che chiude, misurato sul corpus: `canonical_source_of`
                         # non leggeva `source_signature`, quindi due firme DIVERSE davano
                         # entrambe `"user"`, «stessa fonte» era vero PER COSTRUZIONE, la
