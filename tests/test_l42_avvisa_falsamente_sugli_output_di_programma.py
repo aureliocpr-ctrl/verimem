@@ -41,7 +41,15 @@ FALSI_CURABILI = [
     pytest.param("Fra gli span troncati i gruppi con lo stesso testo sono 40.",
                  "span identici, SOLO i troncati a 400   gruppi   40 · fatti    97",
                  id="prosa-grandezza-tre-parole-prima"),
+    pytest.param("La cella scende a -3 gradi durante la prova.",
+                 "temperatura cella: -3 gradi\nesito: ok",
+                 id="numero-negativo-col-trattino"),
 ]
+
+#: Il trattino nel lookbehind esclude solo dopo una cifra: un negativo resta un
+#: numero, e un negativo RIUSATO da un'altra grandezza deve ancora avvisare.
+NEGATIVO_RIUSATO = ("Il magazzino registra -3 pallet.",
+                    "temperatura cella: -3 gradi\nesito: ok")
 
 #: «esce» contro «exit» e' TRADUZIONE, non lessico: nessun confronto di token
 #: la vede, e una lista bilingue di verbi e' la classe ③ di questa casa. Resta
@@ -80,6 +88,10 @@ def test_controllo_positivo_l_unita_a_destra_da_entrambe_le_parti_tace() -> None
 def test_controllo_positivo_il_riuso_VERO_continua_a_scattare(claim: str, fonte: str) -> None:
     """I presidi di test_il_numero_c_e_ma_parla_d_altro: una cura che li spegne non entra."""
     assert valori_riusati_da_altro_contesto(claim, fonte)
+
+
+def test_controllo_positivo_il_negativo_riusato_da_altra_grandezza_avvisa() -> None:
+    assert valori_riusati_da_altro_contesto(*NEGATIVO_RIUSATO)
 
 
 def test_controllo_positivo_la_riformulazione_continua_a_tacere() -> None:

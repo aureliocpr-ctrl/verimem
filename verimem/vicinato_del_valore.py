@@ -128,7 +128,10 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
     # «9» si scrive anche «9.0» / «9,0»: un intero con la coda decimale nulla e'
     # lo stesso numero, e si trova.
     forma = re.escape(str(intero)) + (r"(?:[.,]0+)?" if isinstance(intero, int) else "")
-    for m in re.finditer(rf"(?<![\d.,:/-]){forma}(?![\d,]|\.(?=\d))", testo):
+    # Il trattino esclude solo se PRECEDUTO DA UNA CIFRA («2026-09-06», «166-237»):
+    # un numero NEGATIVO («-3 °C», «−12 dB») resta un numero (domanda del lead,
+    # b10984ebf24c24c6; il meno tipografico U+2212 non e' nella classe).
+    for m in re.finditer(rf"(?<![\d.,:/])(?<!\d-){forma}(?![\d,]|\.(?=\d))", testo):
         inizio = max(0, m.start() - _RAGGIO)
         fine = min(len(testo), m.end() + _RAGGIO)
         for sep in ("\n", "|"):
