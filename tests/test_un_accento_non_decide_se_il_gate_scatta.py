@@ -115,7 +115,16 @@ def test_nessun_ALTRO_pattern_del_package_dipende_dall_accento():
     # li' l'accento e' disambiguazione, non dimenticanza. Il costo residuo e'
     # dichiarato: sulla forma nuda il soggetto non si trova, quindi il
     # carve-out non scatta e L1 resta veto — sbaglia in sicurezza.
-    ATTESE = {("composer", "_COPULA_RE"), ("subject_extract", "_VERB_MARK")}
+    # `atomic_claims._RE_AUSILIARE` e `_RE_VERBO` (06/09, Galileo): stessa
+    # ragione, e il modulo la dichiara come limite noto nel suo docstring — in
+    # `decomponi()` la «e» nuda E' il separatore delle coordinate; letta come
+    # verbo, un pezzo senza verbo non verrebbe piu' fuso al precedente. La
+    # copula nuda vale l'1,22% del corpus (188/15.378, misurato il 06/09 alle
+    # 03:40) e viene letta come congiunzione e spezzata; la forma con
+    # l'apostrofo «e'» e' accettata (banco l-apostrofo-spegne-l-eredita-del-
+    # soggetto), e il cricchetto qui toglie l'accento, non aggiunge l'apostrofo.
+    ATTESE = {("composer", "_COPULA_RE"), ("subject_extract", "_VERB_MARK"),
+              ("atomic_claims", "_RE_AUSILIARE"), ("atomic_claims", "_RE_VERBO")}
 
     fuori = []
     for mod in pkgutil.iter_modules(verimem.__path__):
