@@ -2,7 +2,107 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.7.6] - unreleased
+## [0.7.7] - 2026-09-06
+
+### What changes for you
+
+- **`as_of` now bites on the ordinary ports.** Before, a query carrying `as_of`
+  had it **silently ignored** on the two ordinary read paths: you asked for the
+  past and got the present, with nothing saying so. Now the filter reaches the
+  store, applies **before** the cut instead of after it, and works in keyword
+  search too (`as_of` in the `WHERE`). Scope filters apply *before* the cut, and
+  the active filters are declared back to you.
+- **Expiry no longer removes facts in silence.** `recall`, `ask`, the CLI and the
+  agent port now say **how many facts the expiry took out** of the answer — and
+  when a port cannot know, it says **"I don't know"** instead of **"none"**. An
+  amputated answer used to look complete.
+- **Startup now tells you what it is doing with the judge.** It warms the
+  judge's **libraries** rather than the model, the tokenizer import moved out of
+  the judge's lock, and the process **declares at startup** whether it will warm
+  the judge (`486 MB` if it does), what that costs and which knob turns it off —
+  where before, for the ordinary case, the startup log said **nothing at all**
+  about the judge and the silence read as "all fine".
+- **`--valid-until` on the CLI**, so a fact can be given an expiry at write time.
+- **The MCP port now delivers the reply.** A call could hang for good — and the
+  server was not being slow: on the same connection `initialize` answered in
+  **2,0-2,5 s** in every run, so the process was alive and the framing was right;
+  what never arrived was the answer to the call itself. Measured on the
+  **installed executable** with **one variable** (`preload.py`, 23 lines), nine
+  runs in twelve minutes: **3/3 with the fix, 0/3 without it, 3/3 with it again**
+  — plus **4/4** with the judge thread warming alongside and **3/3** with no
+  shared daemon at all, so the fix holds in three configurations. Without it: no
+  answer within 75 s. With it: **10,3-15,4 s**.
+- **Freshness now reads the expiry, not just the age.** `assess_fact_freshness`
+  no longer calls an expired fact `fresh`, `find_stale_facts` lists it, and both
+  say **which of the two reasons** it was (`expired_reason`: `valid_until` or
+  `age`).
+- **Document→fact promotion listens to `L4.1` like the gate does**, and stops
+  counting `*-observe` advisories as if they were verdicts.
+
+### Measured
+
+| what | number | where it comes from |
+|---|---|---|
+| CLI `--help`, median of 3 runs | **1,60 s → 1,49 s** — **no worse** | same A/B, ws1 |
+| SDK `add` with a source | **15,41 s → 18,93 s** (+3,5 s) | same A/B, ws1 — **one run per arm**. ws1 reports it and explicitly **declines to call it a regression**: on that machine the same call has varied by two orders of magnitude. We publish it because it is the uncomfortable half of the same measurement |
+| first write with a source, **MCP port** | **not measured** | ws8 — taken at the end of the day with free RAM and the process count declared; if it is not taken before the tag, this row says "not measured" and no number |
+
+🪞 **The number we are NOT publishing, and why.** An earlier draft of this entry
+carried "the first write with a source goes from 302,0 s to 32,0 s". The author
+of that measurement **withdrew the 302,0 s** the same morning: it turned out to
+be **her client's own timeout**, not the server's response time — six runs across
+three timeout windows showed the observed time was always `window − initialize`.
+The server had in fact served the call in **0,27 s** while the client was still
+waiting. We are leaving the number out rather than restating it more carefully,
+because the honest version of it is "we do not know yet".
+
+### Fixed
+
+- A count that promised the whole corpus **and was counting an AND** — and the
+  expiry had nothing to do with it.
+- The expiry advisory spoke about **the store**, not about **the question** asked.
+- The advisory criterion was a **proxy that does not hold** and was replaced.
+
+### Known limits — what this release does NOT fix
+
+**0.7.7 adds no capability: it makes readable what the product was already doing
+in silence.** The open defects are tracked in
+`docs/stato-reale/GRAVITA-DIFETTI.md`. These are the ones you can run into:
+
+- **D-1** — its fix was reverted the same morning, because it stopped a true
+  third-party fact. Still open.
+- **T14 — the criterion is fixed on the SDK, the P0 on the MCP port is still
+  open**: the piece that would carry it to that port is not in this release.
+- **T16** — open, tracked in the register.
+- **T8-bis — `verimem doctor` keeps warning once it has warned.** The exit code
+  itself is sound and documented (`0 all-ok · 1 warnings · 2 failures`). The
+  moat check behind it compares a **cumulative** ratio of judged facts: writes
+  made while the judge was still loading stay unjudged forever, so the warning
+  does not go back to green on its own.
+- **T24 — `replaced` in the `hippo_remember` receipt is always `False`, by
+  construction.** A public field that does not measure what its name promises,
+  and it explains earlier readings that took it at face value. **Read
+  supersession from the store** (`superseded_by` on the older fact), never from
+  `replaced`.
+- **T25 — with a shared encode daemon, the score and the threshold can come from
+  two different models.** In delegate-only mode the *score* is computed by the
+  shared daemon (its own model) while the *threshold* is read from the local
+  model directory (`ENGRAM_LOCAL_GATE_MODEL`): two models in one return value,
+  and nothing in the receipt says so. Measured A/B with and without delegation
+  on the same input: **97,21 vs 94,92** on `ce_v31`.
+
+### Internal
+
+- CI: the crash that killed the suite at the same point every time is **isolated
+  behind a `--deselect`** while its cause is confirmed — **a probe, not a fix**;
+  the file is still exercised on its own in the same job. Ticket and the measured
+  frequency (**2/17** on the `ubuntu / py3.12` leg) in
+  `docs/stato-reale/ticket-sigsegv-hang-watchdog.md`.
+- Publishing now uploads **the artifact that was tested** instead of rebuilding
+  one (**LANT-175**), with a dry run that performs the gate, the download and the
+  checksum and **stops before PyPI**.
+
+## [0.7.6] - 2026-09-04
 
 > **The atomic release: everything that was already built, switched on and
 > measured.** Nothing here is a new idea. Every item is either a cure that
@@ -12,7 +112,7 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
 >
 > ⚠️ **On the number.** The code declares **0.7.6** on all six version surfaces
 > (`pyproject.toml`, `verimem/__init__.py`, `.claude-plugin/plugin.json`,
-> `STATE.md`, and both fields of `server.json`); PyPI's latest is **0.7.1**. The
+> `STATE.md`, and both fields of `server.json`). ⚠️ **Corretto il 2026-09-06**: questa riga diceva «PyPI's latest is 0.7.1» ed era vera quando fu scritta; la 0.7.6 è stata pubblicata il **2026-09-04**. The
 > 0.7.2–0.7.5 line was internal and never published. If the release is instead
 > named 0.7.2, this heading is not the only thing to change: all six surfaces
 > must come down with it, and `scripts/cancelli_del_tag.py` now fails until they
