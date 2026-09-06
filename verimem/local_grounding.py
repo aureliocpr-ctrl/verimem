@@ -940,7 +940,10 @@ def try_local_score(source: str, fact: str, *,
 #: P-E-il-max-per-frase-contro-il-focus-sulla-zavorra.py): solo punteggiatura.
 #: Spezzare anche sul fine riga (output di programma) e' una variabile in piu',
 #: NON misurata: si prova a RAM ok, una per volta.
-_FRASI = re.compile(r"(?<=[.!?])\s+")
+# il taglio in frasi NON spezza dopo una fila di puntini («quarantinati ..... 2329»):
+# 06/09, sui 54 claim caduti dei 53 record puliti di P-A, 4 hanno lo span con i
+# puntini di conduzione e il MAX per frase li giudicava su pezzi come «12582.»
+_FRASI = re.compile(r"(?<=[^.!?][.!?])\s+")
 
 
 def frasi_della_fonte(source: str) -> list[str]:
