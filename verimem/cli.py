@@ -1294,7 +1294,14 @@ def _dichiara_store(m, *, motivo: str = "") -> None:
     #: «cercato in: store: C:\…» ha due intestazioni per un dato solo, e una
     #: riga che si scusa due volte si legge peggio di una che dice il fatto.
     etichetta = motivo or "store:"
-    console.print(f"[cyan]{etichetta}[/cyan] {percorso}{coda}")
+    #: ⚠️ `soft_wrap=True`, E NON È UN DETTAGLIO DI RESA. Senza, la resa a
+    #: colonne manda a capo DENTRO il percorso — misurato in CI, dove usciva
+    #: `.../semantic/semant\nic.db`. Un percorso spezzato a metà non si copia
+    #: e non si incolla: questa riga esiste perché chi ha sbagliato cartella
+    #: possa PRENDERE il percorso, e un a capo in mezzo al nome del file la
+    #: rende inutile proprio a lui. Il rosso in CI l'ha reso visibile su una
+    #: cella; l'utente col terminale stretto lo pagava in silenzio.
+    console.print(f"[cyan]{etichetta}[/cyan] {percorso}{coda}", soft_wrap=True)
 
 
 @app.command("remember")
@@ -1349,7 +1356,15 @@ def remember_cmd(
                     f"scadenza che hai chiesto sarebbe peggio che non "
                     f"scriverlo.[/dim]")
                 raise typer.Exit(2) from None
-    m = _open_memory(db)
+    #: ⚠️ SENZA ARGOMENTO QUANDO NON C'È `--db`, e la forma conta.
+    #: `_open_memory` è un punto di aggancio che i test sostituiscono
+    #: (`monkeypatch.setattr(vcli, "_open_memory", lambda: _FakeMem())`,
+    #: test_remote_memory.py), e quelle sostituzioni non prendono
+    #: parametri. Chiamarla sempre con un argomento le rompe tutte:
+    #: misurato in CI, `test_cli_remember_and_recall_use_open_memory`
+    #: è caduto per questo. Il percorso si passa solo quando c'è —
+    #: chi non usa `--db` continua a vedere la firma di sempre.
+    m = _open_memory(db) if db else _open_memory()
     kw = {"topic": topic}
     if source:
         kw["source"] = source
@@ -1585,7 +1600,15 @@ def recall_cmd(
     un test — OGNI parametro pubblico di `search` deve avere la sua opzione, e
     il test cade da solo il giorno in cui ne nasce un quinto senza porta.
     """
-    m = _open_memory(db)
+    #: ⚠️ SENZA ARGOMENTO QUANDO NON C'È `--db`, e la forma conta.
+    #: `_open_memory` è un punto di aggancio che i test sostituiscono
+    #: (`monkeypatch.setattr(vcli, "_open_memory", lambda: _FakeMem())`,
+    #: test_remote_memory.py), e quelle sostituzioni non prendono
+    #: parametri. Chiamarla sempre con un argomento le rompe tutte:
+    #: misurato in CI, `test_cli_remember_and_recall_use_open_memory`
+    #: è caduto per questo. Il percorso si passa solo quando c'è —
+    #: chi non usa `--db` continua a vedere la firma di sempre.
+    m = _open_memory(db) if db else _open_memory()
     #: CHI NOMINA UNO STORE HA DIRITTO DI VEDERE QUALE E' STATO APERTO. Senza
     #: questa riga `--db` curerebbe meta' difetto: il comando leggerebbe il
     #: file giusto, ma un percorso sbagliato di una lettera resterebbe
