@@ -134,6 +134,42 @@ def _service_enabled() -> bool:
     return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _FALSY
 
 
+def _scalda_le_librerie_del_giudice(*, log=None) -> None:
+    """Carica le LIBRERIE che il giudice usera', all'avvio e non sotto richiesta.
+
+    ⚠️ Non e' il warm del modello (``_warm_moat_judge``, che legge 746 MB ed e'
+    condizionato a un flag): qui si importano solo le librerie native. Sono due
+    cose diverse e la differenza e' il punto — questo costa 0,3 s, non dipende
+    dal modello e non puo' fallire perche' il modello manca.
+
+    PERCHE' ESISTE, misurato il 2026-09-06 sul server MCP:
+
+      · con una richiesta IN CORSO, nel processo non si carica piu' NESSUNA
+        estensione C — bloccata anche una senza alcun legame con scipy — mentre
+        il GIL resta libero (una sonda continua a stampare per tutti i 121 s);
+      · PRIMA che la richiesta arrivi, lo stesso import passa in 0,5 s;
+      · la prima scrittura con fonte si fermava dentro
+        ``transformers.pytorch_utils`` → ``scipy.linalg._fblas`` e NON TORNAVA
+        (1800,0 s, finestra dichiarata). Caricando la catena qui: 17,3 s di
+        mediana (16,9 · 17,7 · 16,9), e la seconda scrittura 0,1 s.
+
+    ⚠️ Il PERCHE' un import non finisca mentre una richiesta e' in corso resta
+    un'IPOTESI — il loader lock di Windows — e non e' osservabile da Python. La
+    cura non ne dipende: il caricamento va fatto dove il caricamento si puo'
+    fare, cioe' prima di servire.
+
+    Best-effort come tutto il preload: se fallisce, si prosegue. Un warm non fa
+    mai morire il boot.
+    """
+    try:
+        import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
+        if log is not None:
+            log.info("mcp_preload_librerie_del_giudice_pronte")
+    except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
+        if log is not None:
+            log.warning("mcp_preload_librerie_del_giudice_fallito", error=str(exc))
+
+
 def preload_embedding(*, log=None) -> threading.Thread | None:
     """Warm the embedding model. Returns the background thread, or None.
 
@@ -144,6 +180,7 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
         return None
 
     def _run() -> None:
+        _scalda_le_librerie_del_giudice(log=log)
         try:
             if _service_enabled():
                 from . import encode_service
