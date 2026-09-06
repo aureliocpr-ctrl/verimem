@@ -178,28 +178,33 @@ def canonical_source_of(fact: Any) -> str:
     ha mostrata una VERA che il presidio non copriva. Lo stesso presidio, due
     verdetti sbagliati in versi opposti.
     """
+    # I QUATTRO GRADINI, nell'ordine in cui la regola li enuncia. Prima erano in
+    # un ordine diverso dal docstring — due test su `_base` a cavallo del ramo
+    # nuovo — e funzionavano lo stesso: ma un punto che decide quali fatti si
+    # ritirano si legge, e leggerlo non deve costare una simulazione mentale.
+    # ① UNA PENNA DICHIARATA DECIDE, E LA FIRMA NON LA SCAVALCA. La prima
+    # stesura di questa cura tornava la `source_signature` per prima, e rompeva
+    # l'aggiornamento piu' comune che esista: la STESSA fonte
+    # (`verified_by=["source-doc:billing:1"]`) che corregge il proprio valore —
+    # «100 euro» -> «150 euro» — citando ogni volta il testo nuovo come
+    # `source`. Due firme diverse, UNA penna sola: con la firma davanti i due
+    # prezzi restavano entrambi vivi e il recall ne serviva due. L'ha vista
+    # cadere `test_CONTROLLO_quando_supersede_DAVVERO_l_avviso_ci_deve_essere`,
+    # che e' li' esattamente per questo (2026-09-06 08:35).
     _base = canonical_source(getattr(fact, "verified_by", None) or None)
-    if _base == "user":
-        # ⚠️ IL RIPIEGO SU `"user"` NON VUOL DIRE «non ha dichiarato niente»:
-        # `canonical_source` riconosce solo `source-doc:X:...` e `doc:X`, quindi
-        # `['contratto']`, `['Cartella clinica']` e perfino `['commit:abc123']`
-        # finiscono tutti li' dentro — misurato il 06/09. Prima di scendere alla
-        # firma si guarda il `verified_by` GREZZO: se c'e', E' una dichiarazione,
-        # anche in una forma che il canonicalizzatore non sa leggere.
-        _raw = [str(x) for x in (getattr(fact, "verified_by", None) or [])]
-        if _raw:
-            return "vb:" + "|".join(_raw)
     if _base != "user":
-        # ⚠️ UNA PENNA DICHIARATA DECIDE, E LA FIRMA NON LA SCAVALCA. La prima
-        # stesura di questa cura tornava la `source_signature` per prima, e
-        # rompeva l'aggiornamento piu' comune che esista: la STESSA fonte
-        # (`verified_by=["source-doc:billing:1"]`) che corregge il proprio
-        # valore — «100 euro» -> «150 euro» — citando ogni volta il testo nuovo
-        # come `source`. Due firme diverse, UNA penna sola: con la firma davanti
-        # i due prezzi restavano entrambi vivi e il recall ne serviva due.
-        # L'ha vista cadere `test_CONTROLLO_quando_supersede_DAVVERO_l_avviso_ci_deve_essere`,
-        # che e' li' esattamente per questo (2026-09-06 08:35).
         return _base
+    # ② IL RIPIEGO SU `"user"` NON VUOL DIRE «non ha dichiarato niente»:
+    # `canonical_source` riconosce solo `source-doc:X:...` e `doc:X`, quindi
+    # `['contratto']`, `['Cartella clinica']` e perfino `['commit:abc123']`
+    # finiscono tutti li' dentro — misurato il 06/09. Se il `verified_by` GREZZO
+    # c'e', E' una dichiarazione, anche in una forma che il canonicalizzatore non
+    # sa leggere: e' il caso T14 (lo stesso contratto che passa da Stripe ad
+    # Adyen), che senza questo gradino smetteva di ritirare.
+    _raw = [str(x) for x in (getattr(fact, "verified_by", None) or [])]
+    if _raw:
+        return "vb:" + "|".join(_raw)
+    # ③ la firma della source
     _sig = getattr(fact, "source_signature", None)
     if isinstance(_sig, str) and _sig.strip():
         # NIENTE PENNA DICHIARATA: qui `canonical_source` ripiega su `"user"` per
