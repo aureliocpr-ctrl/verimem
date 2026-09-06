@@ -79,20 +79,77 @@ log = get_log()
 _agent: VerimemAgent | None = None
 _agent_lock = threading.Lock()
 
+#: Segnala che il build e' finito (riuscito o no). Chi non costruisce aspetta
+#: QUESTO, non il lock: un lock preso da un build lento non dice niente a chi
+#: aspetta, un Event con budget si'.
+_agent_pronto = threading.Event()
+_agent_in_costruzione = False
+
+#: Quanto una richiesta aspetta l'agent in costruzione prima di rispondere con
+#: un errore leggibile. Mai muta: il caso misurato erano 75 s di silenzio.
+_AGENT_BUILD_BUDGET_S = float(
+    os.environ.get("VERIMEM_AGENT_BUILD_BUDGET_S") or 120.0)
+
 
 def _ag() -> VerimemAgent:
-    """Process-wide agent, built exactly once (double-checked locking).
+    """Process-wide agent, built exactly once, SENZA tenere il lock nel build.
 
-    Without the lock, concurrent first tool calls each saw ``_agent is None``
-    and each ran ``VerimemAgent.build()`` — redundant builds racing on the same
-    SQLite files at the worst moment (a cold reconnect, when the cold-load
-    cliff already makes the server fragile). Mirrors ``embedding._model()``.
+    Il lock esiste perche' senza, chiamate concorrenti vedevano tutte
+    ``_agent is None`` e ognuna eseguiva ``VerimemAgent.build()`` — build
+    ridondanti in corsa sugli stessi file SQLite. Quella garanzia resta.
+
+    ⚠️ COSA E' CAMBIATO, e perche' (misurato il 2026-09-06 con la sonda degli
+    stack, banco end-to-end a 1 giro su 3): prima il lock era tenuto per TUTTA
+    la durata di ``build()``, che carica numpy, scipy e transformers. Il
+    ``self_heal`` di avvio chiama ``_ag()`` su un thread di sfondo, quindi ogni
+    richiesta arrivata DURANTE il build si accodava a `with _agent_lock` —
+
+        la richiesta   mcp_server.py:7878 _call_tool_impl -> _ag -> with _agent_lock
+        chi lo teneva  self_heal.py:114 -> _ag -> agent.py:82 build
+                       -> wake.py:301 -> import numpy.random
+
+    Non era un difetto misterioso: era una CORSA fra l'avvio e la prima
+    chiamata. Se il build finiva prima, il giro passava.
+
+    ADESSO: il build gira FUORI dal lock e si PUBBLICA sotto il lock (una sola
+    assegnazione); chi arriva nel frattempo non costruisce un secondo agent e
+    non aspetta un lock muto — aspetta ``_agent_pronto`` con un budget
+    dichiarato, e se scade riceve un errore che dice cosa sta succedendo.
     """
-    global _agent
+    global _agent, _agent_in_costruzione
+    if _agent is not None:
+        return _agent
+
+    costruisco = False
+    with _agent_lock:
+        if _agent is not None:
+            return _agent
+        if not _agent_in_costruzione:
+            _agent_in_costruzione = True
+            _agent_pronto.clear()
+            costruisco = True
+
+    if costruisco:
+        try:
+            nuovo = VerimemAgent.build()      # <- FUORI dal lock: e' il punto
+            with _agent_lock:                 # <- pubblicazione: un'assegnazione
+                _agent = nuovo
+        finally:
+            _agent_in_costruzione = False
+            _agent_pronto.set()               # sveglia chi aspetta, anche se ho fallito
+        if _agent is None:
+            raise RuntimeError(
+                "verimem: the agent build failed; see the server log")
+        return _agent
+
+    if not _agent_pronto.wait(timeout=_AGENT_BUILD_BUDGET_S):
+        raise RuntimeError(
+            "verimem: server still building the agent after "
+            f"{_AGENT_BUILD_BUDGET_S:.0f}s, retry "
+            "(raise VERIMEM_AGENT_BUILD_BUDGET_S if your machine is slower)")
     if _agent is None:
-        with _agent_lock:
-            if _agent is None:
-                _agent = VerimemAgent.build()
+        raise RuntimeError(
+            "verimem: the agent build failed; see the server log")
     return _agent
 
 
