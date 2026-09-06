@@ -23586,3 +23586,34 @@ dispatch la pubblicazione richiede comunque `dry_run=false` scelto a mano.
   tagga per provare un workflow. Il dry-run prova tutto tranne l'ultimo passo.
 - Il caso **fail-closed** (artefatto scaduto) **non è stato provato**: richiederebbe un
   artefatto oltre i 14 giorni.
+
+### 2026-09-06 08:12 — ws3/Galileo · 🟡 **W3-1 — Il muro del richiamo: stesso fatto, tre query, 0-0-2 — esce solo con le parole del TITOLO, e una citazione ESATTA presa dalla coda della proposizione non basta** *(misurata da ws6/Aldo alle 07:56, msg 6180c13a733088f7; riportata qui perché il muro del richiamo è mio — chi riporta cede, chi misura tiene)*
+
+**Il caso.** Fatto cercato: `project/verimem/0.7.0-moat-ON-default-svolta-2026-07-19` —
+«VERIMEM 0.7.0 SVOLTA 2026-07-19: MOAT CONTRADDIZIONE+EVOLUZIONE ON DI DEFAULT (mandato
+Aurelio 'non cose spente / atomica e perfetta'). HEAD 4d8c8c2.» Serviva a decidere se una
+cura dovesse spegnere un default: **lo ha portato il canale proattivo, il recall no.**
+
+**Le tre query, conteggio delle occorrenze del fatto nella risposta:**
+
+    verimem recall "moat evoluzione ON di default 19 luglio mandato"      -> 0
+    verimem recall "non cose spente atomica e perfetta"                   -> 0
+    verimem recall "MOAT CONTRADDIZIONE EVOLUZIONE ON DI DEFAULT"         -> 2  ✅
+
+**Cosa dice.** Il fatto è ritrovabile: non è perso. Esce **solo** con le parole letterali
+della parte iniziale (il «titolo» della proposizione). La seconda query è una **citazione
+esatta** di sette parole prese dalla coda della proposizione («non cose spente / atomica e
+perfetta» è dentro il fatto parola per parola) e restituisce altro. ⇒ Non è solo
+«parafrasi contro parole del fatto» (la lezione già in casa: 3 parole → 27 %, 7 → 100 %,
+la parafrasi costa 67 punti): **anche una citazione esatta può non bastare, a seconda di
+DOVE sta nel testo**. L'ipotesi che ne segue, falsificabile: l'embedding del fatto è
+dominato dalla testa della proposizione (il titolo in maiuscolo, il nome del topic), e la
+coda pesa poco; il ramo lessicale non la salva perché le parole della coda sono comuni.
+
+**Cosa NON dice.** Un solo fatto, tre query, nessun controllo su un secondo fatto: **non è un
+tasso**. Il verdetto è 🟡 (ritrovabile, ma non con le parole ragionevoli di chi cerca).
+Non l'ho riprodotta io: sotto lo STOP ai banchi (lead, 07:58) il recall carica l'embedder.
+**Come si rifà in trenta secondi**, quando la RAM riapre: le tre righe sopra, contando le
+occorrenze dell'id nella risposta; poi il banco che manca — la stessa citazione esatta presa
+dalla TESTA e dalla CODA di 30 fatti lunghi, una variabile per volta (posizione), con il
+ramo lessicale e quello semantico letti separatamente (`recall_explain`).
