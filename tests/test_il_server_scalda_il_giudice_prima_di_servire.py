@@ -73,22 +73,34 @@ _IL_COLLEGAMENTO = textwrap.dedent("""
 """)
 
 
-def _esegui(codice: str) -> str:
+def _esegui(codice: str) -> tuple[int, str]:
+    """Esegue e restituisce (returncode, output).
+
+    ⚠️ IL `returncode` NON E' UN DETTAGLIO, ed e' il difetto che questo file
+    aveva quando e' entrato in main il 06/09: leggevo solo stdout+stderr, quindi
+    un processo MORTO lasciava l'output tronco e ogni assert riferiva «manca la
+    stringa X» invece di «il processo e' morto» — in CI il messaggio viene pure
+    troncato e la causa sparisce. Il banco di guardia
+    ``test_nessun_banco_nuovo_ignora_l_esito_del_subprocess`` l'ha visto e ha
+    fatto rosso su tre job: aveva ragione. Il codice d'uscita va LETTO e va
+    finire nel messaggio, altrimenti si diagnostica il soggetto per una colpa
+    dello strumento.
+    """
     esito = subprocess.run([sys.executable, "-c", codice],
                            capture_output=True, text=True, timeout=600)
-    return (esito.stdout or "") + (esito.stderr or "")
+    return esito.returncode, (esito.stdout or "") + (esito.stderr or "")
 
 
 def test_la_funzione_di_preload_carica_la_catena_del_giudice():
     """Il pezzo: esiste una funzione che carica la catena, e la carica."""
-    fuori = _esegui(_LA_FUNZIONE)
+    rc, fuori = _esegui(_LA_FUNZIONE)
     assert "PARTENZA-PULITA" in fuori, (
-        f"subprocess partito sporco: il banco non dice niente. {fuori[-300:]}")
+        f"subprocess partito sporco: il banco non dice niente. rc={rc} coda={fuori[-300:]}")
     assert "SCIPY-CARICATO=True" in fuori, (
         "la funzione di preload del giudice non carica la catena (o non esiste): "
         "la prima scrittura con fonte se la caricherà addosso, e a quel punto nel "
         "processo non si carica più nessuna estensione C finché la richiesta non "
-        f"finisce — misurato: non torna in 1800 s. {fuori[-300:]}")
+        f"finisce — misurato: non torna in 1800 s. rc={rc} coda={fuori[-300:]}")
 
 
 def test_il_preload_del_server_la_chiama_anche_in_delegate_only():
@@ -98,10 +110,10 @@ def test_il_preload_del_server_la_chiama_anche_in_delegate_only():
     entrare in `sys.modules` per la via di `sentence_transformers`: se c'è, c'è
     perché il preload lo ha voluto.
     """
-    fuori = _esegui(_IL_COLLEGAMENTO)
+    rc, fuori = _esegui(_IL_COLLEGAMENTO)
     assert "PARTENZA-PULITA" in fuori, (
-        f"subprocess partito sporco: il banco non dice niente. {fuori[-300:]}")
+        f"subprocess partito sporco: il banco non dice niente. rc={rc} coda={fuori[-300:]}")
     assert "SCIPY-CARICATO=True" in fuori, (
         "in delegate-only il preload del server NON carica la catena del giudice. "
         "È l'ambiente del server MCP (HIPPO_ENCODE_DELEGATE_ONLY=1 lo imposta "
-        f"`main()` stesso), cioè proprio quello dove il difetto morde. {fuori[-300:]}")
+        f"`main()` stesso), cioè proprio quello dove il difetto morde. rc={rc} coda={fuori[-300:]}")
