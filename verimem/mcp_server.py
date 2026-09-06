@@ -15723,6 +15723,18 @@ def main() -> None:
                 )
         except Exception as exc:  # noqa: BLE001 — guard must NEVER break startup
             log.warning(f"orphan-reaper skipped: {exc!r}")
+    # Il sorvegliante del hang-watchdog parte QUI, PRIMA di ogni preload, e
+    # l'ordine non e' un dettaglio: prima avviava un thread NUOVO a ogni
+    # chiamata, e il 2026-09-06 il thread di una richiesta e' rimasto fermo
+    # dentro Thread.start() per nove minuti mentre un preload era dentro
+    # `from scipy.linalg import _fblas`. Avviarlo dopo i preload lo
+    # esporrebbe allo stesso blocco: qui non c'e' ancora nessun
+    # caricamento di DLL in corso.
+    try:
+        from ._hang_watchdog import avvia_il_sorvegliante
+        avvia_il_sorvegliante()
+    except Exception as exc:  # noqa: BLE001 - diagnostica, mai il boot
+        log.warning(f"hang-watchdog sentinel not started: {exc!r}")
     from .preload import preload_embedding
     preload_embedding(log=log)
     # Structural-safety trigger (2026-06-13): re-embed any stale (model/dim-

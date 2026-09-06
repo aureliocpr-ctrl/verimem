@@ -56,6 +56,66 @@ _CONTROLLO_S = 0.2
 #: sopravviva alla sua chiamata se qualcosa va storto in mezzo.
 _sorveglianti: list[threading.Event] = []
 
+#: Il percorso che il sorvegliante unico sta guardando (vuoto = niente da fare).
+#: Sostituisce il thread-per-chiamata: `hang_trace` scrive qui invece di
+#: avviarne uno.
+_da_sorvegliare: list[Path] = []
+
+_sorvegliante_unico: threading.Thread | None = None
+_ferma_il_sorvegliante = threading.Event()
+
+
+def _cicla_e_sorveglia() -> None:
+    """Guarda il file corrente, se c'e', e disarma il timer quando sfonda."""
+    while not _ferma_il_sorvegliante.wait(_CONTROLLO_S):
+        try:
+            if not _da_sorvegliare:
+                continue
+            percorso = _da_sorvegliare[-1]
+            if percorso.stat().st_size <= _MAX_FILE_BYTES:
+                continue
+            faulthandler.cancel_dump_traceback_later()
+            with open(percorso, "a", encoding="utf-8") as g:
+                g.write(
+                    f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
+                    f"raggiunto: i dump successivi ripetevano lo stesso "
+                    f"stack e sono stati fermati. Il primo dump qui sopra "
+                    f"e' quello che contiene la diagnosi.\n")
+            _da_sorvegliare.clear()
+        except Exception:  # noqa: BLE001 - mai far fallire la chiamata osservata
+            pass
+
+
+def avvia_il_sorvegliante() -> threading.Thread | None:
+    """Avvia il sorvegliante UNICO. Va chiamata all'avvio del server.
+
+    PERCHE' ESISTE, e perche' proprio all'AVVIO. Misurato il 2026-09-06 sul
+    server MCP con la sonda degli stack (12 dump su 12, nove minuti, frame
+    identici): il thread che serviva una chiamata era fermo dentro
+    `Thread.start()` - cioe' ad AVVIARE il sorvegliante - mentre un thread di
+    preload era dentro `from scipy.linalg import _fblas`, dentro il caricamento
+    di una DLL. Su Windows un thread nuovo non parte finche' quel caricamento
+    non finisce, e `hang_trace` ne avviava uno A OGNI CHIAMATA.
+
+    E il `try/except` che avvolgeva quell'avvio prometteva "never break the
+    call": la promessa non era mantenuta, perche' `Thread.start()` non
+    FALLISCE, si BLOCCA - e un blocco non e' un'eccezione, quindi quella rete
+    di sicurezza era cieca proprio al modo in cui la riga rompeva la chiamata.
+
+    All'avvio i thread partono comunque (preload, self-heal): qui il rischio
+    non si aggiunge, si sposta dove gia' c'era.
+
+    Idempotente: chiamarla due volte non avvia due thread.
+    """
+    global _sorvegliante_unico
+    if _sorvegliante_unico is not None and _sorvegliante_unico.is_alive():
+        return _sorvegliante_unico
+    _ferma_il_sorvegliante.clear()
+    _sorvegliante_unico = threading.Thread(
+        target=_cicla_e_sorveglia, name="hang-trace-cap", daemon=True)
+    _sorvegliante_unico.start()
+    return _sorvegliante_unico
+
 
 def _pota_i_vecchi() -> None:
     """Tiene i ``_MAX_FILES`` trace più recenti. Best-effort come tutto il
@@ -100,27 +160,15 @@ def hang_trace(label: str, budget_s: float):
         # Sorvegliante del tetto: il dump lo scrive faulthandler in C e non si
         # puo' fermare da dentro, quindi lo si guarda da fuori e si disarma il
         # timer quando il file ha sfondato. Daemon: non trattiene il processo.
-        stop = threading.Event()
-        _sorveglianti.append(stop)
-
-        def _sorveglia(percorso=path, ferma=stop):
-            while not ferma.wait(_CONTROLLO_S):
-                try:
-                    if percorso.stat().st_size <= _MAX_FILE_BYTES:
-                        continue
-                    faulthandler.cancel_dump_traceback_later()
-                    with open(percorso, "a", encoding="utf-8") as g:
-                        g.write(
-                            f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
-                            f"raggiunto: i dump successivi ripetevano lo stesso "
-                            f"stack e sono stati fermati. Il primo dump qui "
-                            f"sopra e' quello che contiene la diagnosi.\n")
-                except Exception:  # noqa: BLE001 — mai far fallire la chiamata
-                    pass
-                return
-
-        threading.Thread(target=_sorveglia, name="hang-trace-cap",
-                         daemon=True).start()
+        # ATTENZIONE: QUI NON SI AVVIA PIU' NESSUN THREAD, ed e' il punto
+        # della cura. Si consegna il percorso al sorvegliante UNICO, avviato
+        # una volta sola da `avvia_il_sorvegliante()` all'avvio del server.
+        # Se nessuno l'ha avviato il tetto non viene sorvegliato: la
+        # diagnostica degrada, la chiamata NO — e' il contratto di questo
+        # modulo, "observability only". Il fallback NON deve essere "allora
+        # lo avvio qui": sarebbe il difetto rimesso al suo posto.
+        _da_sorvegliare.clear()
+        _da_sorvegliare.append(path)
     except Exception:  # noqa: BLE001 — tracing is best-effort, never break the call
         if f is not None:
             try:
@@ -134,6 +182,7 @@ def hang_trace(label: str, budget_s: float):
         for s in _sorveglianti:
             s.set()
         _sorveglianti.clear()
+        _da_sorvegliare.clear()
         if armed:
             try:
                 faulthandler.cancel_dump_traceback_later()
