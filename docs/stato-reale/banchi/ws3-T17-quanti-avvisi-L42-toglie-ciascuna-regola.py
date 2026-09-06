@@ -79,7 +79,11 @@ import sys
 
 DB = r"C:\Users\aurel\.engram\semantic\semantic.db"
 _PAROLA = re.compile(r"[^\W\d_]+", re.UNICODE)
-_COMPOSTO = re.compile(r"\d[\d:./-]*\d")
+#: Corretto alle 07:40 (prova della cura sul ramo): la prima versione,
+#: `\d[\d:./-]*\d`, prendeva anche i DECIMALI («97.05»), e un decimale identico
+#: riusato da un altro soggetto (867621d4c810, colli/magazzino) taceva a torto.
+#: Ora: orari, date, rapporti e versioni a tre parti; i decimali restano numeri.
+_COMPOSTO = re.compile(r"\d+(?:[:/-]\d+)+|\d+(?:\.\d+){2,}")
 
 PRESIDI_SCATTANO = [
     ("Ci sono 14 valvole.", "Relazione: sono stati assunti 14 operai nel trimestre."),

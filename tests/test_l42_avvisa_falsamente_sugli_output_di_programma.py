@@ -30,27 +30,41 @@ import pytest
 
 from verimem.vicinato_del_valore import valori_riusati_da_altro_contesto
 
-FALSI_AVVISI = [
-    pytest.param("Il comando esce 2 stampando Usage.", "EXIT=2\nUsage: verimem [OPTIONS]",
-                 id="exit-etichetta-a-sinistra"),
-    pytest.param("Il comando esce 2.", "EXIT=2", id="exit-punto-finale"),
-    pytest.param("The command exits 2.", "EXIT=2", id="exit-inglese"),
+FALSI_CURABILI = [
+    pytest.param("The command exits 2.", "EXIT=2", id="exit-inglese-punto-finale"),
     pytest.param("Il commit ebc2bf74 risulta delle 03:27 del 2026-09-06.",
                  "ebc2bf74 2026-09-06 03:27 test della promozione: la cella diventa un presidio",
                  id="orario-composto"),
     pytest.param("La funzione _list_tools_unfiltered restituisce 249 strumenti.",
                  "STRUMENTI ESPOSTI A RUNTIME: 249\nprimi 3: ['sandbox_exec', 'hippo_run_task']",
                  id="etichetta-valore-riga-successiva"),
+    pytest.param("Fra gli span troncati i gruppi con lo stesso testo sono 40.",
+                 "span identici, SOLO i troncati a 400   gruppi   40 · fatti    97",
+                 id="prosa-grandezza-tre-parole-prima"),
 ]
+
+#: «esce» contro «exit» e' TRADUZIONE, non lessico: nessun confronto di token
+#: la vede, e una lista bilingue di verbi e' la classe ③ di questa casa. Resta
+#: RED dichiarato.
+FALSI_PER_TRADUZIONE = [
+    pytest.param("Il comando esce 2 stampando Usage.", "EXIT=2\nUsage: verimem [OPTIONS]",
+                 id="esce-contro-exit"),
+    pytest.param("Il comando esce 2.", "EXIT=2", id="esce-contro-exit-punto-finale"),
+]
+
+
+@pytest.mark.parametrize("claim,fonte", FALSI_CURABILI)
+def test_lo_stesso_numero_della_stessa_grandezza_non_e_un_riuso(claim: str, fonte: str) -> None:
+    assert not valori_riusati_da_altro_contesto(claim, fonte)
 
 
 @pytest.mark.xfail(
     strict=True,
-    reason="T17 RED dichiarato 06/09: L4.2 avvisa sui numeri in output di programma "
-           "(ETICHETTA: valore, composti, punto finale); cura su VIA, con la misura accanto",
+    reason="T17, limite dichiarato: «esce» e «exit» sono la stessa grandezza in due "
+           "lingue; un confronto di token non lo sa e una lista bilingue non entra",
 )
-@pytest.mark.parametrize("claim,fonte", FALSI_AVVISI)
-def test_lo_stesso_numero_della_stessa_grandezza_non_e_un_riuso(claim: str, fonte: str) -> None:
+@pytest.mark.parametrize("claim,fonte", FALSI_PER_TRADUZIONE)
+def test_la_traduzione_del_verbo_resta_un_limite_dichiarato(claim: str, fonte: str) -> None:
     assert not valori_riusati_da_altro_contesto(claim, fonte)
 
 
