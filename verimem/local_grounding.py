@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import threading
 import time
 from collections.abc import Callable
@@ -935,7 +936,59 @@ def try_local_score(source: str, fact: str, *,
     return score, judge.threshold
 
 
+#: Le frasi di una fonte, ESATTAMENTE come nel banco P-E (docs/stato-reale/banchi/
+#: P-E-il-max-per-frase-contro-il-focus-sulla-zavorra.py): solo punteggiatura.
+#: Spezzare anche sul fine riga (output di programma) e' una variabile in piu',
+#: NON misurata: si prova a RAM ok, una per volta.
+_FRASI = re.compile(r"(?<=[.!?])\s+")
+
+
+def frasi_della_fonte(source: str) -> list[str]:
+    return [f.strip() for f in _FRASI.split(source or "") if f.strip()] or [source or ""]
+
+
+def punteggi_max_per_frase(source: str, claims: list[str], *,
+                           judge: LocalGroundingJudge | None = None,
+                           ) -> list[float] | None:
+    """Muro 1, pezzo 3b-bis: per ogni claim il MAX del punteggio sulle FRASI della fonte, in UN lotto.
+
+    Perche' non il focus per claim (`coppia()` → `select_relevant_span`): nella
+    cella P-E (3d1b5c90) sui 5 casi zavorra del lead il focus ferma <= 2/4
+    falsi — la fonte D+Z entra intera nel budget e il CE ribalta — mentre il
+    MAX per frase ne ferma 4/4 col vero intatto (0/1 perso). E perche' un
+    lotto solo: P6c ha misurato che il lotto satura a 16 coppie, 5,3 ms per
+    coppia contro ~64 una per volta (12x); con 3-4 claim e 5-8 frasi sono
+    20-30 coppie in una chiamata.
+
+    Ritorna ``None`` quando il lotto NON e' disponibile — giudice locale
+    assente o non caricabile, daemon in delega che non risponde — e il
+    chiamante resta sul focus per claim, DICHIARANDOLO nella ricevuta
+    (`claims_verdict[i]["via"]`). Nessuna eccezione esce da qui: la cura
+    degrada, non blocca.
+    """
+    if not source or not claims:
+        return None
+    j = judge or get_local_judge()
+    frasi = frasi_della_fonte(source)
+    try:
+        lotto = [(j._entro_la_finestra(f), c) for c in claims for f in frasi]
+        if j._scorer is None and _delegate_only():
+            grezzi = _gate_via_daemon(lotto)          # il daemon accetta una lista
+            if not grezzi:
+                return None
+        else:
+            grezzi = j._ensure_scorer()(lotto)
+    except Exception:  # noqa: BLE001 — il chiamante degrada al focus, dichiarato
+        return None
+    if len(grezzi) != len(lotto):
+        return None
+    n = len(frasi)
+    return [max(j.normalizza(v) for v in grezzi[i * n:(i + 1) * n])
+            for i in range(len(claims))]
+
+
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
+           "frasi_della_fonte", "punteggi_max_per_frase",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
            "judge_state", "_gate_via_daemon", "daemon_del_giudice_annunciato",
