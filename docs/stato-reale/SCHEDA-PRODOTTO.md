@@ -110,7 +110,7 @@ guarda lo stato.)*
 
 ```bash
 pip install verimem        # ~5 min, ~1.0 GB su disco (74 pacchetti, torch è più di metà)
-verimem warmup             # ← NON SALTARE: 746 MB, il giudice. Senza, il cancello è SPENTO
+verimem warmup             # 746 MB, il giudice. NON è obbligatorio: sposta solo QUANDO paghi
 verimem doctor             # verifica l'installazione — e ti dice QUALE store sta guardando
 python -c "..."            # il Quickstart: scrive una falsità, e l'assert non la ritrova
 ```
@@ -148,11 +148,30 @@ file tuo, resta su **una sola porta**: non mescolare libreria e riga di comando.
 E se la CLI ti dice «no facts found», la prima domanda è **dove ha guardato** —
 `doctor` te lo dice, `recall` ancora no.
 
-🔴 **`warmup` non è un dettaglio ed è il motivo per cui è la seconda riga**:
-finché non lo esegui, ogni scrittura con `source` è ammessa **senza essere
-controllata** (la ricevuta lo dice: `layers=[]`, avviso `L4-skipped`). Il
-prodotto non mente mai su questo, ma **la promessa del punto 1 non vale finché
-non hai eseguito quel comando.**
+🔁🔴 **CORRETTO il 06/09 10:00, ed era una MIA riga falsa.** Diceva: *«finché non
+esegui `warmup`, ogni scrittura con `source` è ammessa senza essere controllata …
+la promessa del punto 1 non vale finché non hai eseguito quel comando»*.
+**Falso**, e misurato: @ws5 Tara, pacchetto **0.7.6** di PyPI, cartella del giudice
+**vuota (0 byte)**, `warmup` **mai eseguito** →
+
+```
+remember con fonte:  85.7 s  TORNATA
+grounding_score:     99.97052764892578
+moat:                judged 100.0
+```
+⇒ **la prima scrittura si procura il giudice da sola e giudica: la promessa del
+punto 1 vale anche senza `warmup`.**
+
+✅ **La riga giusta**: `warmup` **non è obbligatorio, è conveniente** — sposta
+**quando** paghi il download (746 MB) invece di pagarlo dentro la tua prima
+scrittura con fonte. Sulla porta MCP quella prima scrittura è il difetto **T1**,
+e lì il consiglio resta forte: *fallo prima, o il tuo client rinuncia mentre
+aspetta.*
+
+🪞 *Perché lo scrivo invece di limarlo: stamattina ho corretto lo stesso errore
+nel README del prodotto — e questa riga, che è mia, l'ho trovata solo **cercando
+la frase e non il documento**, un'ora dopo. Correggere la vetrina di qualcun
+altro e lasciare la propria è la forma più facile di tutte.*
 
 ⚠️ **Quello che oggi può rompere questi dieci minuti**, scritto qui invece che
 alla riga 397:
@@ -269,7 +288,7 @@ aggiunto un P0 e ne ha reso due più precisi:
 | difetto | livello | dove morde |
 |---|---|---|
 | 🔴 **se l'encode non è raggiungibile il fatto entra SENZA embedding e la ricevuta dice `admitted`** — poi la ricerca risponde *«probabilmente la risposta non è in memoria»* **su un fatto che c'è** | **P0** | **chiunque scriva: 13 fatti in 32 minuti, di cinque di noi** |
-| 🆕 **scrivi con la libreria e rileggi dalla riga di comando: «no facts found», `exit 0`** — e la riga che lo produce era nel nostro Quickstart *(riga corretta il 06/09; il difetto resta)* | **P0** | **chi segue le nostre istruzioni** |
+| 🆕 **scrivi con la libreria e rileggi dalla riga di comando: «no facts found», `exit 0`** — e la riga che lo produce era nel nostro Quickstart *(riga corretta il 06/09)* · ✅ **CURATO lo stesso giorno, in entrambe le metà** (main `ab2f45c5`): la riga di comando accetta `--db` **e** `recall` stampa lo store da cui ha letto, nominando il percorso cercato quando non trova nulla — *«un percorso stampato trasforma un mistero in un refuso»*. ⏳ resta la prova da utente | ~~P0~~ → ✅ | **chi segue le nostre istruzioni** |
 | **su una macchina nuova la prima scrittura con fonte via MCP** aspetta fino a **903 s** e può entrare `judged=False`: hai pagato l'attesa e non hai avuto il controllo | **P0** | **la promessa del punto 1, per chi installa oggi** |
 | una self-claim **preceduta da una frase vera** passa il cancello | **P0** | la promessa del punto 1 |
 | **entrambe** le porte MCP accettano `as_of` e **lo ignorano senza dirlo**: chi chiede il passato riceve il presente | **P0** | **curato in `main`** (`db7dfd11`), non ancora in un rilascio |
@@ -278,8 +297,13 @@ aggiunto un P0 e ne ha reso due più precisi:
 | 🆕 **chiedi il passato con un filtro e il filtro sparisce**: `as_of` **sostituisce** gli altri filtri invece di comporli — i superati non tornano anche se li chiedi, gli scaduti sono esclusi **senza avviso**. Ricevi meno di quello che hai chiesto, e non te lo dice | **P1** | chi usa il viaggio nel tempo, che è una delle righe con cui ci distinguiamo |
 | le porte gemelle divergono su **cinque livelli di contratto** (massimo, nome del parametro, nome del campo, campi della ricevuta) · 248 strumenti su 249 si chiamano `hippo_` · le chiavi dell'output sono in italiano · la CLI non stampa gli id dei fatti · 🆕 **ogni fatto la cui fonte contiene un codice di uscita riceve un avviso falso** che ti dice di correggere, **sotto una ricevuta che accetta** | **P2 / P3** | l'inciampo, non il muro |
 
-> 🔍 **Come sono stati trovati, perché conta più dell'elenco. Due dei sei P0 non li ha
-> trovati una revisione del codice: sono usciti USANDO il prodotto.** Quello sulla
+> 🔍 **Come sono stati trovati, perché conta più dell'elenco. Due P0 non li ha trovati
+> una revisione del codice: sono usciti USANDO il prodotto** — e **uno dei due è stato
+> curato entro la stessa giornata**, il che è la parte che conta.
+> *(Il conteggio: erano **sette** il 05/09, sono **sei** dal 06/09 con la cura di quello
+> sullo store. La frase diceva «due dei sei» quando i sei includevano quel difetto:
+> aggiornata il 06/09 alle 13:25, perché un numero che resta uguale mentre l'insieme
+> cambia è una coincidenza, non una misura.)* Quello sulla
 > correzione che non supera è uscito **eseguendo il percorso «un team su uno store»**, e
 > prima di pubblicarlo **abbiamo falsificato sette volte il banco che lo misurava** — tre
 > dei «difetti» che stavamo per attribuirci erano del nostro strumento, non del prodotto.

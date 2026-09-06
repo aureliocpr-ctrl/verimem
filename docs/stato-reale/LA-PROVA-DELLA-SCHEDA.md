@@ -154,3 +154,29 @@ la pena farla anche una volta sola.
 prodotto** lo blocca, quello è un difetto di prodotto trovato dall'unica persona
 che poteva vederlo senza pregiudizio — e va nel registro con la sua gravità,
 esattamente come gli altri.
+
+---
+
+## Trovare i presidi da eseguire: le TRE direzioni in cui si sbaglia
+
+*06/09, dalla regola di Aurelio delle 10:03 — «nessun push senza aver eseguito i
+test che nominano la cosa toccata, cercandoli per **contenuto** e non per nome».
+In una mattina ho sbagliato le prime due e @ws8 Corrado ha trovato la terza, che
+è la peggiore.*
+
+| # | il criterio | l'errore | misurato |
+|---|---|---|---|
+| ① | la parola **e** l'apertura **sulla stessa riga** | **troppo stretto: PERDE** | 15 file invece di 21 |
+| ② | la parola **e** l'apertura **ovunque nel file** | **troppo largo: ANNACQUA** | 33, di cui 12 non c'entrano |
+| ③ | il **NOME** della cosa invece del suo **USO** | **perde chi la tocca senza nominarla** | il commit di release cambia `__version__`: cercando i sei file per nome ne usciva 21, cercando **chi legge `__version__`** ne uscivano 5, **3 dei quali persi** (@ws8, 10:26) |
+
+**Il criterio giusto non è una formula, è una domanda**: *cosa cambia davvero, e
+chi lo legge?* Per il README è **chi apre `README.md`** (21 file). Per un commit
+di release è **chi usa la versione** (5), non chi nomina i file che la
+contengono.
+
+⚠️ **Come si sa che il criterio ha visto**: un elenco di presidi tutti verdi non
+dice niente finché non si rimette **la cosa sbagliata** e si conta quanti si
+accendono. Il 06/09, con il banner falso rimesso, **0 su 15** si sono accesi —
+ed è così che si è scoperto che il blocco più letto del README non era
+presidiato da nulla.

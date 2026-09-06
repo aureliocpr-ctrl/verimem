@@ -201,7 +201,7 @@ e vuole sapere in dieci minuti se il prodotto fa per lui.
 | # | passo | criterio |
 |---|---|---|
 | 1 | `pip install verimem` | arriva, e sa quanto pesa **prima** di lanciarlo |
-| 2 | `verimem warmup` | sa **perché** deve farlo prima di scrivere |
+| 2 | `verimem warmup` | sa che **non è obbligatorio** e perché conviene farlo prima *(06/09: «deve farlo» era mio ed era falso — senza `warmup` la prima scrittura si procura il giudice da sola, 85,7 s e `moat judged 100.0`; sposta **quando** paghi, non **se** il gate è acceso)* |
 | 3 | `verimem doctor` | gli dice se è a posto, e **quale store** sta guardando |
 | 4 | il Quickstart del README, con il suo `assert` | la falsità non torna: **vede** la promessa |
 | 5 | una scrittura **sua**, con la sua fonte, e un richiamo | ha capito **cosa ci farebbe** |

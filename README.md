@@ -438,12 +438,14 @@ from verimem import Memory
 # missing check: with nothing judging them, the second write retracts the first,
 # so the confabulation ends up the only fact left live.
 m = Memory()   # no argument: the library, the CLI and the MCP server all open the
-               # SAME store. Passing a path — Memory("memory.db") — is relative to
-               # the current directory and only the SDK can receive it: `verimem
-               # recall` would then answer "no facts found" with exit 0 from that
-               # very folder, and none of recall, remember or facts takes a
-               # --db flag to point it back. Known, open:
-               # docs/stato-reale/GRAVITA-DIFETTI.md (T16).
+               # SAME store. Passing a path — Memory("memory.db") — is relative
+               # to the current directory and only the SDK can receive it, so
+               # `verimem recall` run from elsewhere answers "no facts found"
+               # with exit 0 — but it now tells you where it looked. `verimem
+               # recall` prints the store it read from, and names the path it
+               # searched when it finds nothing, which turns a mystery into a
+               # typo. To point the CLI at a second store on purpose, remember,
+               # recall, search, get and list all take --db.
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works
 # with NO llm, in any language (the local CE is the judge):
