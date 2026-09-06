@@ -87,31 +87,103 @@ class ValoreRiusato:
     nella_fonte: str
 
 
+#: Quante parole di contenuto si guardano per lato del numero (T17, 06/09).
+_PAROLE_PER_LATO = 3
+#: Raggio in caratteri entro cui si cercano; un fine riga o una cella di
+#: tabella («|») chiudono il vicinato prima.
+_RAGGIO = 60
+
+
+def _vicinato_grezzo(testo: str, inizio: int, fine: int) -> list[str]:
+    return [t.casefold() for t in _PAROLA.findall(testo[inizio:fine])]
+
+
 def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
-    """I token alfabetici adiacenti a ogni occorrenza del numero.
+    """Le parole DI CONTENUTO vicine a ogni occorrenza del numero.
 
     Ritorna ``(seguenti, precedenti)``. Un numero può comparire più volte: si
     raccolgono tutte le occorrenze, perché al criterio basta che UNA regga lo
     stesso significato per non pronunciarsi.
+
+    T17 (06/09, misurato su 7.974 fatti con span: l'avviso toccava il 50,8% e
+    quasi sempre a torto, banco T17-quanti-avvisi-L42-toglie-ciascuna-regola):
+    · il numero dentro un COMPOSTO — «03:27», «2026-09-06», «3/40» — non e' un
+      numero a se': «27» non si cerca. Prima il lookbehind escludeva cifre,
+      punto e virgola ma non i due punti, il trattino e la barra;
+    · il numero seguito dal PUNTO FINALE («esce 2.») si trova: prima il
+      lookahead lo escludeva e il claim risultava senza parole accanto;
+    · si guardano fino a ``_PAROLE_PER_LATO`` parole di contenuto per lato,
+      SALTANDO la grammatica: in prosa il numero e' preceduto da «sono /
+      risulta / a» e seguito dal punto, e la grandezza sta due-tre parole
+      prima («i gruppi con lo stesso testo sono 40»). Il vicinato si ferma al
+      fine riga e alla cella di tabella;
+    · una parola adiacente a un ALTRO numero e' l'etichetta di quello («Line
+      3 … 22 days»: «line» e' del 3) e non entra nel vicinato di questo;
+    · la forma ETICHETTA: valore dell'output di programma («STRUMENTI ESPOSTI A
+      RUNTIME: 249», «EXIT=2») da' come lato precedente l'etichetta intera.
     """
     intero = int(valore) if float(valore).is_integer() else valore
     seguenti: set[str] = set()
     precedenti: set[str] = set()
-    for m in re.finditer(rf"(?<![\d.,]){re.escape(str(intero))}(?![\d.,])",
-                         testo):
-        dopo = _PAROLA.findall(testo[m.end():m.end() + 40])
-        if dopo:
-            seguenti.add(dopo[0].casefold())
-        prima = _PAROLA.findall(testo[max(0, m.start() - 40):m.start()])
-        if prima:
-            precedenti.add(prima[-1].casefold())
+    # «9» si scrive anche «9.0» / «9,0»: un intero con la coda decimale nulla e'
+    # lo stesso numero, e si trova.
+    forma = re.escape(str(intero)) + (r"(?:[.,]0+)?" if isinstance(intero, int) else "")
+    # Il trattino esclude solo se PRECEDUTO DA UNA CIFRA («2026-09-06», «166-237»):
+    # un numero NEGATIVO («-3 °C», «−12 dB») resta un numero (domanda del lead,
+    # b10984ebf24c24c6; il meno tipografico U+2212 non e' nella classe).
+    for m in re.finditer(rf"(?<![\d.,:/])(?<!\d-){forma}(?![\d,]|\.(?=\d))", testo):
+        inizio = max(0, m.start() - _RAGGIO)
+        fine = min(len(testo), m.end() + _RAGGIO)
+        for sep in ("\n", "|"):
+            j = testo.rfind(sep, inizio, m.start())
+            if j >= 0:
+                inizio = j + 1
+            j = testo.find(sep, m.end(), fine)
+            if j >= 0:
+                fine = j
+        prima_grezze = _vicinato_grezzo(testo, inizio, m.start())
+        dopo_grezze = _vicinato_grezzo(testo, m.end(), fine)
+        # Le parole IMMEDIATAMENTE accanto al nostro numero sono sue, anche se
+        # altrove nel testo stanno accanto a un altro numero («6 casi … 96
+        # casi», «verimem EXIT=0 ⏎ hippoagent EXIT=0»); e la parte decimale
+        # del nostro numero non e' un altro numero.
+        immediate = set(prima_grezze[-1:]) | set(dopo_grezze[:1])
+        etichette_altrui = {
+            t for n in re.finditer(r"\d+(?:[.,]\d+)?", testo)
+            if n.end() <= m.start() or n.start() >= m.end()
+            for t in (_vicinato_grezzo(testo, max(0, n.start() - 12), n.start())[-1:]
+                      + _vicinato_grezzo(testo, n.end(), n.end() + 12)[:1])} - immediate
+        prima = [t for t in prima_grezze
+                 if t not in _GRAMMATICA and t not in etichette_altrui]
+        dopo = [t for t in dopo_grezze
+                if t not in _GRAMMATICA and t not in etichette_altrui]
+        if re.search(r"[:=]\s*$", testo[max(0, m.start() - 3):m.start()]):
+            precedenti |= set(prima)          # l'etichetta intera della riga
+            seguenti |= set(dopo[:1])
+            continue
+        precedenti |= set(prima[-_PAROLE_PER_LATO:])
+        seguenti |= set(dopo[:_PAROLE_PER_LATO])
     return seguenti, precedenti
 
 
+#: Un numero dentro un composto — «03:27», «2026-09-06», «3/40», «2.14.0» — non
+#: e' un numero a se'. Non i decimali semplici («97.05»), che restano numeri.
+_COMPOSTO = re.compile(r"\d+(?:[:/-]\d+)+|\d+(?:\.\d+){2,}")
+
+
+def _prefissi(parole: set[str]) -> set[str]:
+    """Le flessioni non cambiano la grandezza: «exits»/«exit», «strumenti»/«strumento»."""
+    return {p[:4] for p in parole}
+
+
 #: Parole che NON nominano una grandezza: articoli, preposizioni, congiunzioni,
-#: ausiliari, IT ed EN. Serve solo al TESTO della ricevuta — il criterio con cui
-#: `L4.2` decide non la vede, e questo e' voluto: filtrare il criterio
-#: cambierebbe **quali** fatti vengono segnalati, non **come** si raccontano.
+#: ausiliari, IT ed EN. Fino al 06/09 serviva solo al TESTO della ricevuta —
+#: il criterio non la vedeva, «e questo e' voluto: filtrare il criterio
+#: cambierebbe quali fatti vengono segnalati». Era vero, ed era il difetto:
+#: misurato su 7.974 fatti, il criterio prendeva come grandezza il token
+#: adiacente ANCHE quando era grammatica («sono 40», «risulta 3939») e
+#: avvisava sul 50,8% dei fatti (T17). Ora la salta anche nel criterio, con i
+#: numeri nel banco T17-quanti-avvisi-L42-toglie-ciascuna-regola.
 #: ⚠️ La lista e' una scelta dichiarata: una voce in piu' o in meno sposta il
 #: testo mostrato, mai il verdetto.
 #:
@@ -213,18 +285,31 @@ def valori_riusati_da_altro_contesto(
     if not proposition or not source:
         return []
     fuori: list[ValoreRiusato] = []
+    composti_in_fonte = {c for c in _COMPOSTO.findall(proposition) if c in source}
     for _unita, valore in sorted(extract_quantities(proposition),
                                  key=lambda q: q[1]):
+        intero = str(int(valore)) if float(valore).is_integer() else str(valore)
+        if any(re.search(rf"(?<!\d){re.escape(intero)}(?!\d)", c) for c in composti_in_fonte):
+            # T17: il numero sta in un COMPOSTO — orario, data, rapporto,
+            # versione — che la fonte porta tale e quale: e' la stessa
+            # grandezza. NON i decimali («97.05»): un decimale identico puo'
+            # essere riusato da un altro soggetto, misurato (867621d4c810).
+            continue
         claim_dopo, claim_prima = _intorno(proposition, valore)
         fonte_dopo, fonte_prima = _intorno(source, valore)
         if not fonte_dopo and not fonte_prima:
             continue  # valore assente: non è questo il criterio che lo copre
-        if claim_dopo & fonte_dopo:
+        if _prefissi(claim_dopo) & _prefissi(fonte_dopo):
             continue  # stessa grandezza: è una riformulazione, il caso normale
-        if claim_prima & fonte_prima:
+        if _prefissi(claim_prima) & _prefissi(fonte_prima):
             # Il lato che PRECEDE coincide: è lo stesso identificativo
             # («linea 3» in entrambi) e ciò che segue è un verbo, che la
             # riformulazione cambia legittimamente.
+            continue
+        if _prefissi(claim_dopo | claim_prima) & _prefissi(fonte_dopo | fonte_prima):
+            # T17: la grandezza sta a DESTRA nel claim («249 strumenti») e a
+            # SINISTRA nella fonte («STRUMENTI ESPOSTI A RUNTIME: 249»), che e'
+            # la forma di ogni output di programma. I due lati si incrociano.
             continue
         fuori.append(ValoreRiusato(
             valore=valore,
