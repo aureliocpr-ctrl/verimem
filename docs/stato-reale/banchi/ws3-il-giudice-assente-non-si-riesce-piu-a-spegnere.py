@@ -156,7 +156,7 @@ def figlio() -> None:
             "status": r.get("status"),
             "judged": r.get("judged"),
             "grounding_score": r.get("grounding_score"),
-            "judge": r.get("judge"),
+            "judge": __import__("verimem.local_grounding", fromlist=["judge_state"]).judge_state(),
             "layers": [str((w or {}).get("layer") or "?")
                        for w in (r.get("warnings") or [])],
             # tutto cio' che l'utente potrebbe leggere nella ricevuta:
@@ -180,6 +180,7 @@ def braccio(nome: str, n: int, senza_giudice: bool) -> dict:
         # ws3-il-campo-che-distingue-non-giudicato-da-giudicato.py.
         vuota = tempfile.mkdtemp(prefix="gate_model_vuoto_")
         env["ENGRAM_LOCAL_GATE_MODEL"] = vuota
+        env["ENGRAM_ENCODE_SERVICE"] = "0"  # la SECONDA leva: niente daemon condiviso (06/09, da 0363a813: judge=delegated era il daemon)
     p = subprocess.run([sys.executable, str(QUI)], capture_output=True, text=True,
                        env=env, timeout=1800)
     for riga in p.stdout.splitlines():
