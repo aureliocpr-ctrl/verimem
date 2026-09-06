@@ -779,10 +779,7 @@ class Memory:
                                verified_by=verified_by)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
-                    "adjudication": _adj,
-                    "claims": list(getattr(gate, "claims", None) or [text]),
-                    "claims_verdict": list(getattr(gate, "claims_verdict", None) or []),
-                    "decomposed": bool(getattr(gate, "decomposed", False))}
+                    "adjudication": _adj}
         fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
                     grounding_span=getattr(gate, "grounding_span", None),
@@ -1147,12 +1144,6 @@ class Memory:
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
-            # Muro 1, pezzo 3c (06/09): la decomposizione passa dalle tre porte
-            # con lo stesso schema del gate (claims auto-contenuti, il layer
-            # che ha fermato ogni claim, decomposed).
-            "claims": list(getattr(gate, "claims", None) or [text]),
-            "claims_verdict": list(getattr(gate, "claims_verdict", None) or []),
-            "decomposed": bool(getattr(gate, "decomposed", False)),
         }
         # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
         # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
