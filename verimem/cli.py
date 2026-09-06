@@ -4515,6 +4515,17 @@ def facts_add(
                 agito=([] if gate.action == "downgrade" else ["store-screen"]),
             )
             _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
+            # Muro 1, pezzo 3c (06/09): se la scrittura era composta, la
+            # riga dice QUALE claim ha fermato il gate, come le altre porte.
+            if getattr(gate, "decomposed", False):
+                _cl = list(getattr(gate, "claims", None) or [])
+                for _v in (getattr(gate, "claims_verdict", None) or []):
+                    if _v.get("layer"):
+                        _i = int(_v.get("claim", 0))
+                        _txt = _cl[_i] if _i < len(_cl) else ""
+                        console.print(
+                            f"  claim {_i + 1}/{len(_cl)} fermato da "
+                            f"{_v['layer']}: {_txt[:70]!r}")
 
     # Summary
     if inserted:
