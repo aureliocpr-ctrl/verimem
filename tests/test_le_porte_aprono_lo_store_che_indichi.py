@@ -202,3 +202,32 @@ def test_la_porta_dice_quale_store_ha_aperto(due_cartelle) -> None:
     assert Path(db_a).name in esito.stdout, (
         "la risposta non dice quale store ha aperto: chi ha sbagliato "
         "cartella non ha modo di accorgersene, ed e' esattamente il P0")
+
+
+def test_il_percorso_esce_INTERO_e_non_va_a_capo(due_cartelle) -> None:
+    """Un percorso spezzato a meta' non si copia, e serve proprio per quello.
+
+    ⚠️ QUESTA CELLA NASCE DA UN ROSSO IN CI CHE IN LOCALE NON SI VEDEVA. La
+    resa a colonne mandava a capo DENTRO il nome del file:
+
+        assert 'semantic.db' in "store: \\n/tmp/pytest-of-runner/pytest-0/
+        test_la_porta_dice_quale_store0/A/semantic/semant\\nic.db - 1 fatti"
+
+    e la cella qui sopra cadeva o passava a seconda di DOVE cascasse l'a capo,
+    cioe' della lunghezza del percorso della macchina: in locale il punto di
+    rottura finiva altrove e il banco taceva. Un presidio che dipende dalla
+    lunghezza di un path e' un presidio che mente meta' delle volte.
+
+    La cura e' nel PRODOTTO (`soft_wrap=True`), non nell'assert: chi ha
+    sbagliato cartella deve poter PRENDERE quel percorso e rilanciare il
+    comando con `--db`. Questa cella lo presidia dove il difetto vive — la
+    riga stampata — invece che sulla stringa che si cerca dentro.
+    """
+    db_a, _, _ = due_cartelle
+    uscita = _cli("recall", _QUERY, "--k", "5", "--db", str(db_a))
+    riga = next((r for r in uscita.stdout.splitlines() if "store:" in r), None)
+    assert riga is not None, "la riga che dichiara lo store non c'e' piu'"
+    assert str(db_a) in riga, (
+        f"il percorso non sta INTERO sulla sua riga — la resa lo ha spezzato. "
+        f"Riga: {riga!r}. Chi la legge non puo' copiarla, ed e' l'unica cosa "
+        "che questa riga serva a fare")
