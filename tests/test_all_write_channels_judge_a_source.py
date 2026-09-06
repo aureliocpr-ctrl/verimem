@@ -218,3 +218,74 @@ async def test_il_canale_MCP_dice_chi_ha_quarantinato(
         "la porta MCP scrive la riga quarantinata senza autore: e' la porta "
         "da cui scrivono gli agenti, e nel corpus e' quella che ha lasciato "
         "piu' righe mute")
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# LA TERZA INVARIANTE: ogni canale deve CONSERVARE la fonte che dichiara.
+#
+# Le due sopra chiedono «il canale ha GIUDICATO?» e «dice CHI ha
+# quarantinato?». Nessuna chiede «la provenienza e' rimasta scritta?», e per
+# questo il difetto qui sotto e' passato: `facts add` GIUDICA (i test di
+# sopra passano) e non CONSERVA, quindi il presidio era verde su un canale
+# che perdeva meta' del lavoro. E' la forma «il proxy soddisfatto e la
+# grandezza vera no».
+#
+# 🔬 MISURATO sul corpus vivo il 2026-09-06, prima della cura: 345 fatti
+# scritti dal 04/08 al 04/09 hanno un `grounding_score` (quindi una source
+# c'era, e il moat l'ha letta) e NESSUNA `source_signature`. Il 98,0% viene
+# da `cli:local`, la stessa quota di chi la firma ce l'ha (95,0%): non e'
+# una porta esotica, e' il comando che si usa tutti i giorni.
+#
+# ⚠️ E COSTA UNA PROMESSA DEL PRODOTTO: la coesistenza fra fonti distinte
+# (`L3-fonti-distinte`, 6bd8c6ae) esige la firma su ENTRAMBI i fatti. Senza,
+# due misure diverse scritte con `facts add --source` continuano a
+# ritirarsi a vicenda — cioe' proprio il difetto che quella cura chiude.
+#
+# 📌 IL DIFETTO E' UN PATTERN, NON UN CASO: `test_chi_ha_quarantinato_si_sa_
+# anche_domani.py` documenta LO STESSO comportamento su `quarantined_by`.
+# `facts add` costruisce il `Fact` a mano e copia da `Memory.add` UN campo
+# per volta. Confrontati i due punti, i campi che `Memory.add` assegna e
+# `facts add` no sono quattro — `derives_from`, `lineage_to`,
+# `source_signature`, `valid_until` — ma solo `--source` e' un flag che
+# `facts add` OFFRE: gli altri tre non esistono su quel comando, quindi non
+# promettono nulla. Il difetto e' uno, ed e' questo.
+def test_il_canale_CLI_conserva_la_fonte_che_ha_dichiarato(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`facts add --source` giudica il fatto: deve anche lasciarne l'impronta."""
+    import sqlite3
+
+    for v in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.setenv(v, str(tmp_path))
+    from typer.testing import CliRunner
+
+    from verimem.cli import app
+
+    res = CliRunner().invoke(app, [
+        "facts", "add", "-p", PROP, "-t", "parity/cli", "--source", SRC,
+    ])
+    assert res.exit_code == 0, res.output
+
+    con = sqlite3.connect(str(tmp_path / "semantic" / "semantic.db"))
+    try:
+        riga = con.execute(
+            "SELECT grounding_score, source_signature FROM facts "
+            "ORDER BY created_at DESC LIMIT 1").fetchone()
+    finally:
+        con.close()
+    assert riga is not None, f"nessun fatto scritto: {res.output}"
+    punteggio, firma = riga
+
+    # ⚠️ IL CONTROLLO POSITIVO PRIMA DEL BERSAGLIO: se la source non fosse
+    # nemmeno arrivata al gate, l'assenza della firma non direbbe niente —
+    # direbbe solo che non c'era una fonte da conservare.
+    assert punteggio is not None, (
+        "la source non e' nemmeno arrivata al moat: questo banco non misura "
+        f"cio' per cui esiste. Output: {res.output}")
+
+    assert firma, (
+        "`facts add --source` ha fatto GIUDICARE la fonte (grounding_score "
+        f"{punteggio}) ma non ne ha conservato l'impronta: il fatto entra "
+        "senza provenienza e resta fuori dalla coesistenza fra fonti "
+        "distinte. `Memory.add` la scrive in client.py; qui il Fact e' "
+        "costruito a mano e la riga manca.")

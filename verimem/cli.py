@@ -4633,6 +4633,7 @@ def facts_add(
             "legacy_unverified", "orphaned", "quarantined",
         }:
             final_status = "model_claim"
+        from .supersession_policy import source_signature_of
         f = Fact(
             proposition=prop,
             topic=tpc,
@@ -4646,6 +4647,25 @@ def facts_add(
             # chiamerebbe il fatto non giudicato. E' il modo in cui
             # `Memory.add` lo scrive.
             grounding_score=getattr(gate, "grounding_score", None),
+            # ⚠️ E ANCHE L'IMPRONTA DELLA FONTE, per la stessa ragione della riga
+            # sopra — che era li' da sola. Chi ha scritto quel commento guardava
+            # `Memory.add` e ne ha copiato UN campo su due: il punteggio si', la
+            # provenienza no. E' la terza volta che questo `Fact(` costruito a
+            # mano perde un campo che `client.py` scrive: `quarantined_by` lo
+            # racconta `test_chi_ha_quarantinato_si_sa_anche_domani.py`.
+            #
+            # 🔬 COSTO MISURATO sul corpus vivo il 2026-09-06: **345 fatti** dal
+            # 04/08 al 04/09 con un `grounding_score` (la source c'era, il moat
+            # l'ha letta) e nessuna firma; il 98,0% da `cli:local`, la stessa
+            # quota di chi la firma ce l'ha. Senza firma quei fatti restano fuori
+            # dalla coesistenza fra fonti distinte (`L3-fonti-distinte`), che la
+            # esige su ENTRAMBI i lati: due misure diverse scritte cosi'
+            # continuavano a ritirarsi a vicenda.
+            #
+            # 📌 Non e' una quinta copia della regola: `source_signature_of` e'
+            # la stessa funzione che usa `client.add`, estratta il 06/09 proprio
+            # perche' il calcolo serviva in due posti.
+            source_signature=source_signature_of(src) if src else None,
         )
         # 2026-06-05: embed="auto" so `engram facts add` never cold-blocks
         # ~22s when the encode daemon is down (defers; heal via
