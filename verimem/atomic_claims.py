@@ -57,9 +57,10 @@ import re
 __all__ = ["decomponi", "ha_verbo_finito", "soggetto_di"]
 
 # ── verbi finiti: ausiliari, copule, modali e i verbi piu' frequenti nel corpus.
-# APERTO nel senso che si estende qui, dichiarato, con il numero che lo motiva —
-# non e' una regex sulle desinenze (troppo larga: «mano», «piano») ne' la lista
-# chiusa di _VERB_MARK (troppo stretta: 15,7% di richiamo sui primi pezzi).
+# APERTO nel senso che si estende qui, dichiarato, con il numero che lo motiva.
+# Non basta da sola (e' un tapis roulant: vedi «VERBO PER MORFOLOGIA» sotto, che
+# fa da ripiego quando qui non c'e' niente) e non e' la lista chiusa di
+# _VERB_MARK (troppo stretta: 15,7% di richiamo sui primi pezzi).
 _VERBI_FINITI = (
     # italiano — ausiliari e copule (con la grafia ASCII dell'accento)
     "è|e'|sono|ha|hanno|era|erano|fu|furono|sara'|sarà|saranno|viene|vengono|"
@@ -117,6 +118,146 @@ _RE_COORD = re.compile(r"\s*(?:,\s*ed?\s+|\s+ed?\s+|,\s*and\s+|\s+and\s+|;\s+)",
 _ELISIONI = {"e", "l", "d", "s", "c", "n", "un", "un'", "dall", "dell", "nell", "sull",
              "all", "quell", "coll", "da", "po", "gl", "quest", "sant", "com", "dov",
              "perch", "anch", "senz", "tutt", "mezz", "cinquant", "trent", "vent"}
+
+# ── VERBO PER MORFOLOGIA: il ripiego quando nessun verbo della lista c'e'.
+# La lista sopra insegue (06/09: su 30 code NUOVE ne restavano fuse 16 per altri
+# tredici verbi comuni — lascia, sposta, blocca, cancella, rinvia, raddoppia,
+# dimezza, libera, allunga, riduce, riapre, conoscono, cambia — e l'italiano ne
+# ha migliaia). La regola sulle desinenze nella forma LARGA era troppo larga
+# («mano», «piano»; 2 coordinazioni di aggettivi su 12 spezzate per errore). La
+# forma STRETTA elenca per intero le classi CHIUSE (articoli, preposizioni,
+# congiunzioni, pronomi, avverbi, numerali: sono finite, si possono elencare) e
+# riconosce la classe APERTA — i verbi — dalla desinenza della terza persona con
+# due guardie:
+#   · la parola PRIMA non e' un determinante, una preposizione o un numero
+#     (allora e' un nome: «una scelta», «in memoria», «10 lingue», «il piano»);
+#   · per le desinenze ambigue -a/-e la parola DOPO e' un determinante, un
+#     clitico, un numero, un participio o un avverbio di quantita'/tempo (allora
+#     e' un verbo col suo oggetto: «riduce i rilievi», «lascia inutilizzata…»,
+#     «costa poco», «scade domani»), NON una preposizione ne' la fine del pezzo
+#     (allora e' un aggettivo o un nome: «visibile in skills list», «multilingue
+#     in 10 lingue», «robusta e veloce.»). Le desinenze -ono/-ano (5+ lettere),
+#     -isce/-iscono e i futuri -era'/-ira'/-ranno bastano da sole.
+# Cio' che la regola NON prende, dichiarato: un verbo in -a/-e seguito da una
+# preposizione o da un aggettivo («resta aperto», «vale per Prato», «serve al
+# collaudo»), i verbi in -are/-ale (appare, sale) e i tempi passati: o sono nella
+# lista o il pezzo resta fuso. Predizioni depositate PRIMA del banco cieco di
+# Marie (30 composte + 10 controlli su testo nuovo, 06/09 13:47): >= 80% delle
+# code con verbo fuori lista spezzate, <= 1 controllo su 10 spezzato per errore.
+_ARTICOLI = {"il", "lo", "la", "i", "gli", "le", "un", "uno", "una"}
+_DETERMINANTI = _ARTICOLI | {
+    "questo", "questa", "questi", "queste", "quello", "quella", "quelli", "quelle", "quel",
+    "mio", "mia", "miei", "mie", "tuo", "tua", "tuoi", "tue", "suo", "sua", "suoi", "sue",
+    "nostro", "nostra", "nostri", "nostre", "vostro", "vostra", "vostri", "vostre", "loro",
+    "ogni", "qualche", "alcuni", "alcune", "molti", "molte", "pochi", "poche", "tanti",
+    "tante", "troppi", "troppe", "tutti", "tutte", "tutto", "tutta", "nessun", "nessuna",
+    "nessuno", "vari", "varie", "diversi", "diverse", "altri", "altre", "altro", "altra",
+    "ciascun", "ciascuna", "entrambi", "entrambe", "primo", "prima", "secondo", "seconda",
+    "terzo", "terza", "ultimo", "ultima", "prossimo", "prossima", "nuovo", "nuova",
+    "stesso", "stessa", "stessi", "stesse", "tale", "tali",
+}
+_PREPOSIZIONI = {
+    "di", "a", "da", "in", "con", "su", "per", "tra", "fra", "senza", "sopra", "sotto",
+    "dentro", "fuori", "verso", "oltre", "contro", "presso", "durante", "mediante",
+    "tramite", "circa", "come", "dopo", "entro", "attraverso", "lungo", "salvo", "tranne",
+    "eccetto", "del", "dello", "della", "dei", "degli", "delle", "al", "allo", "alla", "ai",
+    "agli", "alle", "dal", "dallo", "dalla", "dai", "dagli", "dalle", "nel", "nello", "nella",
+    "nei", "negli", "nelle", "sul", "sullo", "sulla", "sui", "sugli", "sulle", "col", "coi",
+}
+_NUMERALI = {
+    "uno", "due", "tre", "quattro", "cinque", "sei", "sette", "otto", "nove", "dieci",
+    "undici", "dodici", "tredici", "quattordici", "quindici", "sedici", "diciassette",
+    "diciotto", "diciannove", "venti", "trenta", "quaranta", "cinquanta", "sessanta",
+    "settanta", "ottanta", "novanta", "cento", "mille", "meta", "mezzo", "mezza",
+    "doppio", "doppia", "milioni", "miliardi",
+}
+_ALTRE_CHIUSE = {  # congiunzioni, pronomi, avverbi: mai un verbo, qualunque desinenza
+    "e", "ed", "o", "od", "ma", "pero", "anche", "neanche", "nemmeno", "neppure", "se",
+    "che", "perche", "poiche", "quindi", "dunque", "mentre", "quando", "finche", "sebbene",
+    "benche", "oppure", "ovvero", "cioe", "ossia", "infatti", "inoltre", "tuttavia",
+    "comunque", "allora", "invece", "siccome", "affinche", "purche", "qualora", "ove",
+    "dove", "ne", "chi", "cui", "quale", "quali", "lo", "la", "li", "le", "ci", "vi", "mi",
+    "ti", "si", "me", "te", "esso", "essa", "essi", "esse", "lui", "lei", "io", "tu", "noi",
+    "voi", "qualcuno", "qualcosa", "niente", "nulla", "ognuno", "chiunque", "non", "piu",
+    "mai", "sempre", "ancora", "gia", "solo", "soltanto", "appena", "quasi", "forse",
+    "oggi", "ieri", "domani", "ora", "adesso", "poi", "qui", "qua", "bene", "male",
+    "meglio", "peggio", "molto", "poco", "tanto", "troppo", "abbastanza", "assai",
+    "piuttosto", "pure", "perfino", "persino", "spesso", "talvolta", "subito", "presto",
+    "tardi", "insieme", "almeno", "proprio", "davvero", "soprattutto", "specie", "ovunque",
+    "altrove", "no", "anzi", "ecco", "ormai", "finora", "tuttora", "altrimenti", "percio",
+    "pertanto", "avanti", "indietro", "dietro", "davanti", "accanto", "lontano", "vicino",
+    "intorno", "via", "cosi", "affatto", "altrettanto",
+}
+_SEGUITO_DA_VERBO = _DETERMINANTI | {  # cio' che segue un verbo e non un aggettivo
+    "lo", "la", "li", "le", "ne", "ci", "si", "mi", "ti", "vi",
+    "poco", "molto", "tanto", "troppo", "bene", "male", "meglio", "peggio",
+    "oggi", "domani", "ieri", "subito", "presto", "tardi", "ora", "adesso", "ormai",
+    "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "domenica",
+    "gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto",
+    "settembre", "ottobre", "novembre", "dicembre", "stamattina", "stasera", "stanotte",
+}
+# forme che non sono mai una terza persona: nomi in -ione/-ore/-anza/-enza, aggettivi
+# in -ale/-ile/-ante, avverbi in -mente, infiniti in -are/-ere/-ire, participi in -ata
+_NON_VERBO_PER_FORMA = ("ione", "ale", "ali", "ile", "ili", "are", "ere", "ire", "ore",
+                        "ori", "mente", "ante", "anti", "anza", "enza", "ata")
+_RE_PAROLA = re.compile(r"[A-Za-zÀ-ÿ]+(?:'[A-Za-zÀ-ÿ]+)?'?|\d+(?:[.,:/]\d+)*")
+_ACCENTI = str.maketrans("àáèéìíòóùú", "aaeeiioouu")
+
+
+def _norma(tok: str) -> str:
+    return tok.lower().rstrip("'").translate(_ACCENTI)
+
+
+def _chiusa(n: str) -> bool:
+    return n in _DETERMINANTI or n in _PREPOSIZIONI or n in _NUMERALI or n in _ALTRE_CHIUSE
+
+
+def _verbo_morfologico(pezzo: str) -> re.Match | None:
+    """Il primo token del pezzo che la morfologia riconosce come verbo finito
+    (regola e guardie nel commento sopra); None se non c'e'."""
+    toks = list(_RE_PAROLA.finditer(pezzo))
+    for k, m in enumerate(toks):
+        t = m.group()
+        nucleo = t.rstrip("'")
+        if not nucleo.isalpha() or len(nucleo) < 3 or (k > 0 and nucleo[0].isupper()):
+            continue
+        basso = nucleo.lower()
+        # l'accento finale scritto come apostrofo («cambiera'», «meta'») o come
+        # lettera: e' un futuro solo in -era'/-ira'; altrimenti non e' una desinenza
+        futuro = basso.endswith(("erà", "irà")) or (t.endswith("'") and basso.endswith(("era", "ira")))
+        if (t.endswith("'") or basso.endswith(("à", "ì", "ù", "ò", "é", "è"))) and not futuro:
+            continue  # lunedi', meta', citta', cosi', pero'
+        n = _norma(t)
+        if _chiusa(n) or n.endswith(_NON_VERBO_PER_FORMA):
+            continue
+        if k > 0:
+            prima = toks[k - 1].group()
+            p = _norma(prima)
+            if (prima.endswith("'") or prima[:1].isdigit() or p in _DETERMINANTI
+                    or p in _PREPOSIZIONI or p in _NUMERALI):
+                continue  # «una scelta», «in memoria», «l'ultima», «10 lingue»
+        if futuro or n.endswith(("isce", "iscono", "ranno")) or (
+                n.endswith(("ono", "ano")) and len(n) >= 5):
+            return m
+        if n.endswith(("a", "e")) and k + 1 < len(toks):
+            dopo = toks[k + 1].group()
+            if (dopo[:1].isdigit() or _norma(dopo) in _SEGUITO_DA_VERBO
+                    or _RE_PARTICIPIO_INIZIALE.match(dopo)):
+                return m
+    return None
+
+
+def _primo_verbo(pezzo: str) -> tuple[int, int] | None:
+    """Posizione del primo verbo finito: prima la lista, poi la morfologia."""
+    m = _RE_VERBO.search(pezzo) or _verbo_morfologico(pezzo)
+    return (m.start(), m.end()) if m else None
+
+
+def _comincia_col_verbo(pezzo: str) -> bool:
+    if _RE_VERBO_INIZIALE.match(pezzo):
+        return True
+    m = _verbo_morfologico(pezzo)
+    return m is not None and m.start() == 0
 
 
 def _zone_protette(testo: str) -> list[tuple[int, int]]:
@@ -176,17 +317,18 @@ def _dentro(pos: int, zone: list[tuple[int, int]]) -> bool:
 
 
 def ha_verbo_finito(pezzo: str) -> bool:
-    """Un pezzo e' un claim solo se ha un verbo finito (lista aperta sopra)."""
-    return _RE_VERBO.search(pezzo) is not None
+    """Un pezzo e' un claim solo se ha un verbo finito: della lista aperta sopra,
+    o riconosciuto dalla morfologia (blocco «VERBO PER MORFOLOGIA»)."""
+    return _primo_verbo(pezzo) is not None
 
 
 def soggetto_di(pezzo: str) -> str:
     """Il testo del pezzo fino al suo primo verbo finito; '' se non c'e' un verbo
     o se il pezzo COMINCIA col verbo (nessun soggetto davanti)."""
-    m = _RE_VERBO.search(pezzo)
-    if not m or m.start() == 0:
+    v = _primo_verbo(pezzo)
+    if not v or v[0] == 0:
         return ""
-    return pezzo[:m.start()].strip().rstrip(",;:")
+    return pezzo[:v[0]].strip().rstrip(",;:")
 
 
 def _spezza(testo: str) -> list[str]:
@@ -225,10 +367,12 @@ def _fondi_i_nudi(pezzi: list[str]) -> list[str]:
     di tre parole, 135 con la soglia a una."""
     out: list[str] = []
     for p in pezzi:
-        if ha_verbo_finito(p) or not out:
+        if _RE_VERBO.search(p) or not out:
             out.append(p)
         elif _RE_PARTICIPIO_INIZIALE.match(p) and _ausiliare_di(out[-1]):
             out.append(f"{_ausiliare_di(out[-1])} {p}")
+        elif _verbo_morfologico(p):  # il ripiego viene DOPO l'ellissi del participio
+            out.append(p)
         else:
             out[-1] = f"{out[-1]} e {p}"
     if len(out) >= 2 and not ha_verbo_finito(out[0]):
@@ -243,7 +387,7 @@ def _eredita_il_soggetto(pezzi: list[str]) -> list[str]:
     out: list[str] = []
     soggetto = ""
     for p in pezzi:
-        if _RE_VERBO_INIZIALE.match(p) and soggetto:
+        if _comincia_col_verbo(p) and soggetto:
             p = f"{soggetto} {p[0].lower() + p[1:]}"
         else:
             s = soggetto_di(p)
