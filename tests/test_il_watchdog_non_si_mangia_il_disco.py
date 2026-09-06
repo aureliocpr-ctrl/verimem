@@ -113,27 +113,38 @@ def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypa
     """
     monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
     monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
+    # ISOLAMENTO VERO: azzerare la variabile NON ferma il thread che un test
+    # precedente ha avviato — misurato il 06/09, questa cella cadeva proprio
+    # per quello. Si prende il riferimento PRIMA, lo si ferma, e lo si
+    # aspetta; il finally rimette l'evento com'era per i test successivi.
+    vivo = w._sorvegliante_unico
     monkeypatch.setattr(w, "_sorvegliante_unico", None)
+    w._ferma_il_sorvegliante.set()
+    if vivo is not None and vivo.is_alive():
+        vivo.join(timeout=5.0)
+    try:
 
-    with w.hang_trace("senza_sorvegliante", 0.05):
-        time.sleep(1.2)
+        with w.hang_trace("senza_sorvegliante", 0.05):
+            time.sleep(1.2)
 
-    file = list(tmp_path.glob("hang-*.txt"))
-    assert file, "nessun trace scritto per una chiamata oltre budget"
-    testo = file[0].read_text(encoding="utf-8", errors="replace")
-    assert "CHIUSURA" in testo, (
-        "senza sorvegliante il tetto non e' stato nemmeno DICHIARATO alla "
-        "chiusura: chi legge un trace enorme non sa perche' lo e'. "
-        + testo[-300:])
+        file = list(tmp_path.glob("hang-*.txt"))
+        assert file, "nessun trace scritto per una chiamata oltre budget"
+        testo = file[0].read_text(encoding="utf-8", errors="replace")
+        assert "CHIUSURA" in testo, (
+            "senza sorvegliante il tetto non e' stato nemmeno DICHIARATO alla "
+            "chiusura: chi legge un trace enorme non sa perche' lo e'. "
+            + testo[-300:])
 
-    # ATTENZIONE, e non e' pignoleria: azzerare `_sorvegliante_unico` NON ferma
-    # un thread che un test precedente abbia gia' avviato — quello continua a
-    # guardare `_da_sorvegliare` e potrebbe applicare il tetto DURANTE la
-    # chiamata. In quel caso la nota qui sopra ci sarebbe lo stesso e questa
-    # cella passerebbe PER LA RAGIONE SBAGLIATA. Se compare anche la nota del
-    # sorvegliante, il banco lo dice invece di far finta di aver misurato.
-    assert "raggiunto: i dump successivi" not in testo, (
-        "nel trace c'e' ANCHE la nota del sorvegliante: un thread avviato da "
-        "un altro test era ancora vivo, quindi questa cella non ha misurato il "
-        "fallback ma il caso opposto. Il verde non vale.\n"
-        + testo[-400:])
+        # ATTENZIONE, e non e' pignoleria: azzerare `_sorvegliante_unico` NON ferma
+        # un thread che un test precedente abbia gia' avviato — quello continua a
+        # guardare `_da_sorvegliare` e potrebbe applicare il tetto DURANTE la
+        # chiamata. In quel caso la nota qui sopra ci sarebbe lo stesso e questa
+        # cella passerebbe PER LA RAGIONE SBAGLIATA. Se compare anche la nota del
+        # sorvegliante, il banco lo dice invece di far finta di aver misurato.
+        assert "raggiunto: i dump successivi" not in testo, (
+            "nel trace c'e' ANCHE la nota del sorvegliante: un thread avviato da "
+            "un altro test era ancora vivo, quindi questa cella non ha misurato il "
+            "fallback ma il caso opposto. Il verde non vale.\n"
+            + testo[-400:])
+    finally:
+        w._ferma_il_sorvegliante.clear()
