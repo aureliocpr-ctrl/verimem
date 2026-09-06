@@ -2511,6 +2511,7 @@ def run_validation_gate(
             fact_grounding_score_ex,
             resolve_write_threshold_for,
         )
+        _i_min: int | None = None   # pezzo 3b: il claim che non regge
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
             # v17: la PROVA accanto al voto. `select_relevant_span` e' pura e
@@ -2531,6 +2532,44 @@ def run_validation_gate(
             # OOM: also RuntimeError) PROPAGATES instead of being laundered into a
             # silent admission (opus review 2026-07-18, findings D + B).
             gscore, _judge_used = None, None
+        # ── Muro 1, pezzo 3b (06/09): IL MOAT GIUDICA OGNI CLAIM, E IL VERDETTO
+        # E' IL MINIMO. Fin qui il giudice vedeva la scrittura come UNA frase, e
+        # l'advice piu' sotto lo confessava («the moat judges them as ONE — a
+        # single unproven piece sinks the rest»): una coda che la fonte non prova
+        # viaggiava attaccata a un fatto vero. Con la decomposizione del pezzo 3a
+        # ogni claim auto-contenuto viene giudicato da solo contro la stessa
+        # fonte, `claims_verdict[i].score` porta il suo punteggio,
+        # `grounding_score` della ricevuta e' il minimo e il layer L4 finisce sul
+        # claim che non regge. N=1 e' identita' (P-D): non si entra qui. Se il
+        # giudizio di un claim fallisce, resta il verdetto dell'intero: la cura
+        # degrada, non blocca. Il MAX sulle frasi della fonte (zavorra) e' il
+        # pezzo 3b-bis. Design: docs/ricerca/2026-09-05-design-write-n-claim-
+        # atomici.md §2.
+        if _decomposed and gscore is not None and len(_claims) > 1:
+            _scores: list[float] = []
+            try:
+                for _c in _claims:
+                    _s_c, _ = fact_grounding_score_ex(grounding_llm, source, _c)
+                    if _s_c is None:
+                        raise NoGroundingJudge("un claim senza punteggio")
+                    _scores.append(float(_s_c))
+            except Exception:  # noqa: BLE001 — degrada al verdetto dell'intero
+                _scores = []
+            if _scores:
+                _i_min = min(range(len(_scores)), key=lambda _k: _scores[_k])
+                for _k, _s in enumerate(_scores):
+                    if _k < len(_claims_verdict):
+                        _claims_verdict[_k]["score"] = _s
+                gscore = _scores[_i_min]
+                try:
+                    from .grounding_gate import select_relevant_span
+                    _gspan = select_relevant_span(
+                        source, _claims[_i_min],
+                        budget=_GROUNDING_SPAN_BUDGET) or _gspan
+                except Exception:      # pragma: no cover — degrada
+                    pass
+        elif gscore is not None and _claims_verdict:
+            _claims_verdict[0]["score"] = float(gscore)
         if gscore is None:
             # The CE was advertised present but could not score → treat as "no
             # judge" RIGHT HERE. The `elif` below is unreachable once this `if`
@@ -2820,8 +2859,18 @@ def run_validation_gate(
                             f"and save the parts this source actually proves; "
                             f"give the others their own source."
                         )
+                    if _i_min is not None:
+                        # pezzo 3b: il claim che non regge, per nome
+                        _pointer = (
+                            f" Claim {_i_min + 1}/{len(_claims)} is the one this "
+                            f"source does not prove: {_claims[_i_min][:80]!r}. "
+                            f"Save the proven parts; give this one its own source.")
+                        if _i_min < len(_claims_verdict):
+                            _claims_verdict[_i_min]["layer"] = "L4-grounding"
                     warnings.append({
                         "layer": "L4-grounding",
+                        **({"claim": _i_min, "claim_text": _claims[_i_min]}
+                           if _i_min is not None else {}),
                         # `.1f` come sopra: «grounding 0» su un valore di 0.37
                         # confonde un giudizio bassissimo con uno assente.
                         "reason": f"source does not entail the proposition "
