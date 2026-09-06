@@ -76,6 +76,14 @@ _VERBI_FINITI = (
     "deve|devono|vuole|vogliono|stampa|stampano|emette|emettono|riceve|ricevono|"
     "pesa|pesano|ospita|ospitano|copre|coprono|perde|perdono|vale|valgono|"
     "spezza|spezzano|scatta|scattano|"
+    # dal CORPUS, 06/09 (40 coordinate « e » non spezzate lette una per una +
+    # 30 code di prova): con questi nove fuori lista il pezzo sembrava senza
+    # verbo, si fondeva alla testa e l'intero passava il moat a 99,8 con la coda
+    # dentro. Erano il 10% delle 3.703 non spezzate (~370 scritture, 3,4% del
+    # corpus). «dura» e' anche aggettivo («la prova dura»): dichiarato, raro.
+    "riguarda|riguardano|dura|durano|scade|scadono|tocca|toccano|interessa|"
+    "interessano|risponde|rispondono|guadagna|guadagnano|compare|compaiono|"
+    "chiede|chiedono|"
     # inglese
     "is|are|was|were|has|have|had|does|do|did|can|could|will|would|should|may|"
     "might|must|runs|ran|fails|failed|passes|passed|returns|returned|shows|showed|"
