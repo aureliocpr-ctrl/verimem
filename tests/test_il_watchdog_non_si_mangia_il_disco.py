@@ -125,3 +125,15 @@ def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypa
         "senza sorvegliante il tetto non e' stato nemmeno DICHIARATO alla "
         "chiusura: chi legge un trace enorme non sa perche' lo e'. "
         + testo[-300:])
+
+    # ATTENZIONE, e non e' pignoleria: azzerare `_sorvegliante_unico` NON ferma
+    # un thread che un test precedente abbia gia' avviato — quello continua a
+    # guardare `_da_sorvegliare` e potrebbe applicare il tetto DURANTE la
+    # chiamata. In quel caso la nota qui sopra ci sarebbe lo stesso e questa
+    # cella passerebbe PER LA RAGIONE SBAGLIATA. Se compare anche la nota del
+    # sorvegliante, il banco lo dice invece di far finta di aver misurato.
+    assert "raggiunto: i dump successivi" not in testo, (
+        "nel trace c'e' ANCHE la nota del sorvegliante: un thread avviato da "
+        "un altro test era ancora vivo, quindi questa cella non ha misurato il "
+        "fallback ma il caso opposto. Il verde non vale.\n"
+        + testo[-400:])
