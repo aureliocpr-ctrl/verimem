@@ -1,4 +1,4 @@
-"""`decomponi()`: da una scrittura ai suoi claim atomici — funzione pura.
+"""NON innestato nel gate: `decomponi()` da una scrittura ai suoi claim atomici.
 
 E' il «tempo 1» del design «write = N claim atomici, ognuno giudicato»
 (docs/ricerca/2026-09-05-design-write-n-claim-atomici.md, approvato dal lead
