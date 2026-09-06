@@ -12,6 +12,24 @@ CONTRACT — observability ONLY:
   * never cancels/returns the call (it only LOGS; fixing is a separate concern),
   * a fast call leaves NO file (the header-only file is cleaned up).
 
+IL TETTO SUI FILE, e quando e' attivo (contratto, 2026-09-06):
+  * il tetto e' attivo MENTRE la chiamata e' in corso SOLO se il
+    sorvegliante e' stato avviato all'avvio del processo
+    (`avvia_il_sorvegliante()`, che `mcp_server.main()` chiama);
+  * altrimenti si applica alla CHIUSURA del contesto: tardi, perche' il
+    file e' gia' cresciuto, ma mai "mai".
+
+PERCHE' NON SI AVVIA UN THREAD PER CHIAMATA. Misurato il 2026-09-06 sul
+server MCP (12 dump su 12, nove minuti, frame identici): il thread che
+serviva una chiamata era fermo dentro `Thread.start()` - ad avviare il
+sorvegliante - mentre un preload era dentro `from scipy.linalg import
+_fblas`, cioe' dentro il caricamento di una DLL. Su Windows un thread
+nuovo non parte finche' quel caricamento non finisce. E il `try/except`
+che avvolgeva quell'avvio prometteva "never break the call": la promessa
+non era mantenuta, perche' `Thread.start()` non FALLISCE, si BLOCCA - e un
+blocco non e' un'eccezione, quindi quella rete di sicurezza era cieca
+proprio al modo in cui la riga rompeva la chiamata.
+
 faulthandler's timer is process-global, so only ONE call is watched at a time
 (a non-blocking lock); concurrent calls run unwatched rather than clobbering the
 timer. With the synchronous MCP dispatch (one tool body on the loop at a time)
@@ -51,10 +69,6 @@ _MAX_FILES = int(os.environ.get("HIPPO_HANG_TRACE_MAX_FILES") or 40)
 #: dump lo scrive faulthandler a livello C e non si può interrompere da dentro.
 _CONTROLLO_S = 0.2
 
-#: I sorveglianti attivi. Solo una chiamata alla volta e' osservata (`_ARMED`),
-#: quindi la lista ha al massimo un elemento — ma tenerla evita che un thread
-#: sopravviva alla sua chiamata se qualcosa va storto in mezzo.
-_sorveglianti: list[threading.Event] = []
 
 #: Il percorso che il sorvegliante unico sta guardando (vuoto = niente da fare).
 #: Sostituisce il thread-per-chiamata: `hang_trace` scrive qui invece di
@@ -179,9 +193,6 @@ def hang_trace(label: str, budget_s: float):
     try:
         yield
     finally:
-        for s in _sorveglianti:
-            s.set()
-        _sorveglianti.clear()
         _da_sorvegliare.clear()
         if armed:
             try:
@@ -195,5 +206,26 @@ def hang_trace(label: str, budget_s: float):
                 if size <= _HEADER_MAX_BYTES and path is not None:
                     path.unlink(missing_ok=True)
             except Exception:  # noqa: BLE001
+                pass
+        # FALLBACK (lead, 06/09 08:40): fuori dal server nessuno ha avviato
+        # il sorvegliante, e senza questo il tetto non si applicherebbe MAI.
+        # Qui si applica alla CHIUSURA: tardi - il file e' gia' cresciuto -
+        # ma mai "mai". Chi vuole il tetto DURANTE la chiamata avvia il
+        # sorvegliante all'avvio del processo.
+        # Sta QUI, dopo cancel_dump_traceback_later() e dopo f.close():
+        # scriverlo prima avrebbe messo la riga in mezzo ai dump ancora
+        # in corso, e il size letto da f.tell() non l'avrebbe vista.
+        if (_sorvegliante_unico is None or not _sorvegliante_unico.is_alive()):
+            try:
+                if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
+                    with open(path, "a", encoding="utf-8") as g:
+                        g.write(
+                            f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
+                            f"superato e rilevato alla CHIUSURA: nessun "
+                            f"sorvegliante era attivo in questo processo, "
+                            f"quindi i dump non sono stati fermati mentre "
+                            f"la chiamata era in corso. Il primo dump qui "
+                            f"sopra e' quello che contiene la diagnosi.\n")
+            except Exception:  # noqa: BLE001 - mai far fallire la chiamata
                 pass
         _ARMED.release()

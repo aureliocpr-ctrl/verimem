@@ -46,6 +46,11 @@ def test_un_file_che_cresce_troppo_smette_e_lo_dichiara(tmp_path, monkeypatch):
     ridumpi più volte, e tetto minuscolo perché scatti."""
     monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
     monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
+    # Dal 06/09 il tetto DURANTE la chiamata richiede il sorvegliante avviato
+    # (prima ne partiva uno per chiamata, e quell'avvio bloccava le richieste
+    # quando un preload stava caricando una DLL). In produzione lo avvia
+    # `mcp_server.main()`; qui lo avvia il banco, di proposito e per iscritto.
+    w.avvia_il_sorvegliante()
     with w.hang_trace("prova_lenta", 0.05):
         time.sleep(1.2)
     file = list(tmp_path.glob("hang-*.txt"))
@@ -92,3 +97,31 @@ def test_potare_non_puo_far_fallire_una_chiamata(tmp_path, monkeypatch):
     w._pota_i_vecchi()          # non deve sollevare
     with w.hang_trace("prova", 30.0):
         pass
+
+
+def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypatch):
+    """Il DEGRADO DICHIARATO: fuori dal server nessuno avvia il sorvegliante.
+
+    Il tetto non si applica piu' durante la chiamata — il file cresce — ma non
+    sparisce: alla chiusura il watchdog lo rileva e lo SCRIVE nel file, cosi'
+    chi legge un trace enorme sa perche' e' enorme.
+
+    ⚠️ ISOLAMENTO OBBLIGATORIO: il sorvegliante e' UNICO E GLOBALE. Se un altro
+    test lo ha avviato prima, questa cella misurerebbe il caso opposto e
+    passerebbe (o cadrebbe) a seconda dell'ordine dei test. Percio' lo si
+    azzera esplicitamente invece di sperare.
+    """
+    monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
+    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
+    monkeypatch.setattr(w, "_sorvegliante_unico", None)
+
+    with w.hang_trace("senza_sorvegliante", 0.05):
+        time.sleep(1.2)
+
+    file = list(tmp_path.glob("hang-*.txt"))
+    assert file, "nessun trace scritto per una chiamata oltre budget"
+    testo = file[0].read_text(encoding="utf-8", errors="replace")
+    assert "CHIUSURA" in testo, (
+        "senza sorvegliante il tetto non e' stato nemmeno DICHIARATO alla "
+        "chiusura: chi legge un trace enorme non sa perche' lo e'. "
+        + testo[-300:])
