@@ -19,11 +19,13 @@ da utente erano già scritti nel README, alla riga 397 di 812.*
 | **D-1** | una self-claim **preceduta da una frase vera** passa il cancello | **P0** | la promessa centrale | aperto |
 | **D-6** | **entrambe** le porte MCP accettano `as_of` e lo ignorano senza dirlo | **P0** | U-A, U-B | **cura IN MAIN** (`db7dfd11` + presidio `79625479`) — **da riverificare, non da riscrivere** |
 | **T10** | la promozione documento→fatto non ascoltava il gate come il gate | **P0 sul codice, ma il ticket ha un problema PRIMA del merito** | U-B | vedi sotto |
-| **T14** | il gate **decide** che i due fatti coesistono (`L3-coexistence`: scambia il **valore che cambia** per un soggetto diverso) — su **MCP il verdetto non arriva affatto**, e **in lettura il terzo riceve 2 fornitori diversi per lo stesso servizio** (*la porta è corretta: senza la relazione quelli sono due fatti distinti*) | **P0 su MCP · P1 su SDK** | U-B, U-A | causa trovata da Aldo; due difetti in fila |
+| **T14** | il gate **decide** che i due fatti coesistono (`L3-coexistence`: scambia il **valore che cambia** per un soggetto diverso) — su **MCP il verdetto non arriva affatto**, e **in lettura il terzo riceve 2 fornitori diversi per lo stesso servizio** (*la porta è corretta: senza la relazione quelli sono due fatti distinti*) | **P0 su MCP · P1 su SDK** | U-B, U-A | causa trovata da Aldo; due difetti in fila · 🔁 **06/09 09:05: la cura ESISTE e NON è in main** — ramo di @ws6 Aldo `6bd8c6ae` (`_entita_diverse` + `subject_of`, `canonical_source_of` nell'ordine penna→firma→`"user"`), **riletta dal lead**: regge, con **una riga da restringere** (`due_fonti_dichiarate_e_diverse` oggi lascia passare il caso «uno anonimo, l'altro con penna dichiarata»; per la 0.7.7 la coesistenza vale **solo fra due anonimi**, il caso misto va a `xfail` strict per la 0.7.8). **Il livello NON cambia finché non entra**: una cura su un ramo non toglie nulla a chi installa |
 | **T16** | il **percorso esplicito lo riceve solo l'SDK** — la CLI non ha `--db` su nessun comando che legge — e risponde `no facts found` **con `exit 0`**: è la riga che il nostro Quickstart insegna | **P0** | U-C, U-A | effetto misurato da me il 06/09 · **causa corretta da Aldo** |
 | **T6** | le chiamate rifiutate per validazione **non entrano** in `mcp_audit.log` — 3 chiamate, 2 righe, e il campo `error` resta `""` | **P1** | U-B | **verificato da me il 06/09** |
 | **T19** | 🔴 **quando l'encode non è disponibile il fatto entra SENZA embedding, la ricevuta dice `admitted` (grounding 99,97), e poi la ricerca risponde «probabilmente la risposta NON è in memoria» — su un fatto CHE C'È**: un'assenza fabbricata, esattamente la risposta che questo prodotto esiste per rendere affidabile | **P0** | U-A, U-B, U-C | picco **26 fatti** in 35 minuti, di cinque di noi (@ws5 Tara) · ✅ **danno CHIUSO alle 04:59: zero muti, tutti RIPARATI** — ma **nessun presidio del prodotto lo aveva segnalato** |
 | **T18** | **il ramo `as_of` SOSTITUISCE i filtri invece di comporli**: `include_superseded` ingoiato (Giano) e **scaduti esclusi senza avviso** (Aldo) sono **due sintomi di una radice sola** — chi chiede il passato riceve **meno** di quello che ha chiesto e non lo sa | **P1** | U-A, U-B | radice unificata dal lead · livello mio · owner Giano+Aldo · **la classe è delimitata**: `min_relevance` e `k` passano (misurato), a cadere sono **i filtri di stato del fatto** |
+| **T23** | **il prodotto calcola le date in DUE FUSI**: `temporal_context` (il motore di `as_of`), `semantic_conflict` e un punto della porta MCP in **UTC**; otto punti rivolti all'utente (CLI, riepiloghi, export) in **fuso locale**. ⇒ a cavallo della mezzanotte **la data su cui il filtro ha deciso e la data che l'utente legge possono essere due giorni diversi**, e le date che legge sono coerenti fra loro: non ha modo di accorgersene | **P1** | U-A, U-B | reperto di @ws1 Marie, **analisi statica, zero processi** · livello mio · ⬆️ **sale a P0 se** si misura che morde sul default di `as_of` (l'unico presidio si chiama già `test_la_data_dichiarata_slittava_di_un_giorno`) · ⬇️ **è zero** per chi gira in UTC |
+| **T20** | **l'avviso della porta MCP su `asserted_at` è più largo del vero**: dichiara *«THIS PORT DOES NOT SET THE EVENT TIME … accepted without error and ignored, measured 2026-08-31»*, ma il **ramo remoto** di `hippo_remember` lo passa (`mcp_server.py:7807`). Un limite dichiarato che spegne una capacità viva è peggio di un limite taciuto: chi legge **rinuncia** | **P2** `[VETRINA]` | U-B | reperto mio, **corretto da me**: la mia riga di ieri («da MCP non si può scrivere il passato») era un'assenza dedotta da **uno** strumento · owner Giano · ⬆️ **sale a P1 se** il ramo locale la perde davvero — allora il difetto è l'**asimmetria fra i due rami**, non l'avviso. **Non l'ho verificato**: il gestore locale cade in un dispatcher che non ho letto |
 | **T15** | l'audit dice **cosa** ma non **chi**: c'è `caller_pid`, non un'identità | **P1** | U-B | misurato dalla porta MCP |
 | **T9** | **gli scaduti muti**: `facts_recall` e `ask` non dichiarano ciò che la scadenza ha tolto, mentre SDK e CLI sì | **P1** | U-A, U-B | cura in disegno (Aldo+Giano, finestra ③) |
 | **T13** | il **SIGSEGV** di `test_hang_watchdog`: 3 run su 10, e `exit 139` non compare nell'API | **P1** `[PROVA]` | nessun percorso — **la prova che diamo** | owner Corrado (CI) |
@@ -33,10 +35,10 @@ da utente erano già scritti nel README, alla riga 397 di 812.*
 | **D-7** | la CLI non stampa gli id dei fatti | **P2** | U-A | aperto |
 | **T11** | la distinzione «verificato / mai verificato» sopravvive nel record in **due campi nulli** — 1.743 fatti su 11.719 | **P2** `[VETRINA]` | U-B | misurato oggi, dichiarato nelle istruzioni MCP |
 | **T12** | le porte gemelle divergono su **tre livelli**: il massimo (50/100), il **nome del parametro** (`k`/`limit`) e il **nome del campo** (`text`/`proposition`) | **P3** | U-A | famiglia di T4 e D-7 |
-| **T17** | `L4.2` avvisa **falsamente su ogni numero in forma `ETICHETTA: valore`** — cioè **su quasi ogni output di programma**, che è precisamente la source che le nostre regole impongono di passare: nel claim cerca l'unità **dopo** il numero, negli output l'etichetta sta **prima** | **P2** `[PROVA]` · **non blocca un percorso, degrada il presidio** | U-A, U-B | 5 prove mie + 2 di @ws4 Nadia · **la classe giusta è sua**: non «orari», **la forma degli output** |
+| **T17** | 🔑 **`L4.2` cerca l'unità SOLO A DESTRA del numero, in ENTRAMBI i testi** — e sbaglia ogni volta che sta a sinistra in uno dei due: `EXIT=2`, `STRUMENTI…: 249`, `03:27` (l'unità è la posizione), *«…quello con i dati 28/100»*. ⇒ ~~avvisa falsamente su **quasi ogni output di programma**~~ 🔁 **CLASSE RISTRETTA dallo stesso @ws2 alle 09:50, venti minuti dopo il reperto**: due suoi fatti con **esattamente** quella forma (`PRIMA_SCRITTURA_CON_FONTE_S=20.6`, `grounding_score=99.68628692626953`) sono **passati** ⇒ **non è «ogni etichetta-valore», e quale sia la classe vera NON è ancora noto** — il livello regge sull'A/B, l'ampiezza no | ⬆️ **P1** *(era `P2 [PROVA]`, **falsificato** il 06/09 09:40)* | U-A, U-B | 5 prove mie + 3 di @ws4 Nadia · 🔴 **@ws2 Giano ha misurato che BLOCCA**, con un A/B a **una variabile sola** (stessa source, cambia solo la forma del numero): «le righe risultano **1**» → `grounding 98.9472`, `layers ['L4.1','L4.2']`, **QUARANTINED**; «le righe risultano **una**» → `grounding 96.9620`, `layers []`, **ammesso**. ⇒ **il fatto trattenuto è sostenuto PIÙ di quello ammesso**, e la mia riga «non blocca un percorso, degrada il presidio» era **sbagliata**. ⚠️ **Aggravante**: la nostra `O3` impone di passare come source l'**output grezzo**, cioè proprio la forma `etichetta valore` su cui il layer inciampa — il difetto colpisce il modo d'uso che prescriviamo. ⬆️ **sale a P0 se** si misura che un fatto trattenuto così fa rispondere alla ricerca un'assenza **senza dichiarare la quarantena** (allora è T19); **resta P1** finché la ricevuta porta `quarantined_by`, che @ws2 legge a ogni salvataggio — **ma è una pratica sua, non un presidio del prodotto** |
 | **T3** | note interne nelle descrizioni (202 strumenti su 249) | **P3** `[VETRINA]` | nessuno | si cura con T2b |
 | **T5** | l'errore non dice cosa **accetta** | **P3** | U-A | aperto |
-| **T8-bis** | `doctor` avvisa per uno **store vuoto** (`relevance-floor` su 0 fatti) ed esce `1` proponendo `verimem warmup`, **che l'utente ha appena eseguito** | **P3** | U-C | 🟢 **già curato su main**, non nel pacchetto |
+| **T8-bis** | 🔑 **l'avviso di `doctor` sulla copertura del giudice non si spegne MAI**: la condizione è `giudicati/totali < 0.5` (`doctor.py:724`) su una grandezza **cumulativa**, e i fatti scritti prima che il giudice fosse pronto restano non giudicati **per sempre**. Chi installa e fa le prime prove si porta dietro un `!` permanente su un comando che il README prescrive **due volte** — e impara a ignorarlo | **P1** | U-C, U-A | ⚠️ **NON curato** (`doctor.py` **invariato** fra `v0.7.6` e main) · 🔁 **formulazione RIFATTA il 06/09 su lettura del codice di @ws8 Corrado**: la mia diceva *«l'exit code non discrimina»* ed **era falsa** — `cli.py:721` dichiara `0/1/2` ed è un contratto pubblico. Avevo letto la causa dal **testo** dell'avviso (*warming*) invece che dalla **condizione**: stessa forma di T17 |
 | **T7** | 1160 MB di venv | **P4 · DICHIARATO** | nessuno | numero da rinfrescare |
 | ~~T8~~ | ~~`doctor` esce 1 su un'installazione che funziona~~ | **RITIRATO** | — | **non è un difetto** |
 
@@ -991,6 +993,22 @@ fatto che la **sua** fonte sostiene la **sua** frase.
 `false`. Dice il *cosa* e non il *perché*: non «non ho rimpiazzato nulla **benché ci fosse
 un candidato**». **La porta ha il posto dove metterlo e non ce lo mette.**
 
+> 🔁🔴 **CORREZIONE del 06/09 09:30 — ed è peggio di così (`T24`, reperto di @ws6 Aldo,
+> `git grep` su tutto il pacchetto).** `replaced` **è sempre `False` PER COSTRUZIONE**:
+> non è un campo generico che dice il *cosa* e non il *perché* — **è un campo che non
+> misura mai niente**, nemmeno quando una supersessione avviene davvero. Un campo
+> pubblico il cui nome promette ciò che il valore non porta.
+> ⚠️ **E questo invalida una MIA prova, non il ticket.** Nei tre bracci che ho misurato
+> alle 06:01 avevo scritto *«`replaced=False` in tutti e tre»* e l'avevo letto come un
+> **verdetto del prodotto**: era **un criterio spento per costruzione, non un risultato
+> falsificato**. T14 regge — lo reggono le sei guardie escluse e il ramo del rango — ma
+> **quella riga non lo provava**.
+> ✅ **Criterio nuovo, dal lead**: la supersessione si legge **dallo STORE**
+> (`superseded_by` sul fatto vecchio), **mai** da `replaced`.
+> 🪞 *Terza volta oggi che leggo il NOME o il TESTO invece della CONDIZIONE (T17, T8-bis,
+> questa). La forma è sempre la stessa: un campo o un messaggio si legge per come è
+> ALIMENTATO, non per come si chiama.*
+
 ### Il livello, e perché sono due
 
 **P0 su MCP · P1 sull'SDK.** Non è un'incoerenza: **la gravità si misura su ciò che
@@ -1137,7 +1155,90 @@ resta dentro.
 
 ---
 
-## T8-bis · **P3** — `doctor` avvisa per uno store vuoto e propone un rimedio che non lo risolve
+## T8-bis · **P1** — due avvisi di `doctor` non si spengono mai, e uno dei due sembra transitorio
+
+> 🔁 **TITOLO RIFATTO il 06/09 08:40.** Diceva *«l'exit code di `doctor` non
+> discrimina»*: **falso**, e l'ha mostrato @ws8 Corrado leggendo il codice —
+> `cli.py:721` dichiara `0 all-ok · 1 warnings · 2 failures`, un contratto pubblico
+> che **discrimina in tre livelli**. Il mio errore: avevo letto la causa dal **testo**
+> dell'avviso (la parola *warming*) invece che dalla **condizione** che lo accende
+> (`_judged / _n < 0.5`, `doctor.py:724`). ⚠️ **È la seconda volta che sbaglio così
+> sullo stesso tipo di oggetto**: su **T17** avevo letto la regola dal testo
+> dell'avviso e @ws4 Nadia trovò nel codice il verso opposto.
+> ⬆️ **E il difetto ne esce PEGGIORE**, non migliore: `_judged / _n` è **cumulativo**,
+> quindi i fatti scritti prima che il giudice fosse pronto restano non giudicati per
+> sempre e **quell'avviso non si spegne da solo**. La cronaca qui sotto conserva il
+> percorso, inclusa la formulazione ritirata.
+
+### 🔁🔴 06/09 07:30 — **la riga «già curato su main» era MIA ed era FALSA**, e il difetto è un altro
+
+**Nato dalla domanda di @ws8 Corrado**, che non trovava il commit da mettere nel CHANGELOG
+della 0.7.7 e **si è rifiutato di inventarlo**. Aveva ragione:
+
+```
+git diff v0.7.6..origin/main -- verimem/doctor.py     ->  INVARIATO
+commit fra v0.7.6 e main che nominano doctor/relevance/floor  ->  nessuno
+```
+
+⇒ **Non c'è nessuna cura in arrivo.** La mia riga prometteva un rilascio che avrebbe
+sistemato una cosa che nessuno aveva toccato.
+
+#### Perché mi ero sbagliata: **due esiti, stessa versione, e ho incolpato la versione**
+
+La mia misura di stanotte diceva *«su main esce 0, sul pacchetto esce 1»*. Rifatta oggi,
+la variabile è un'altra:
+
+```
+① store nuovo, directory vuota      doctor EXIT=0   «nessuno store da esaminare»
+② store creato ma senza recall      doctor EXIT=0   «not computed yet»
+③ store vuoto DOPO un recall        doctor EXIT=1   «floor 0.0000 computed on 0 facts»
+```
+
+⇒ **Non «main o pacchetto»: SE il floor è già stato calcolato**, e si calcola **al primo
+recall**. Su main non l'avevo ancora fatto; sul pacchetto sì.
+🔑 *Quando due esiti hanno la stessa versione, la variabile è un'altra — e attribuirla alla
+versione è un errore che si pubblica.*
+
+#### 🔴 E il difetto vero, che vale più della riga sbagliata
+
+Nel braccio **sano** — floor `0.8554` su 3 fatti, tutti gli altri check verdi — **`doctor`
+esce `1` lo stesso**:
+
+```
+✓ version · ✓ mcp · ✓ data-dir · ✓ daemon · ✓ embedding-model · ✓ undo-window · ✓ topic-crowding
+! moat-judge   local CE gate model installed (state here: warming), but only …
+EXIT=1
+```
+
+⇒ **L'exit code di `doctor` non distingue «installazione rotta» da «installazione appena
+fatta».** È la stessa forma di **T17** — *un verdetto che si accende quasi sempre smette di
+essere letto* — **applicata al comando che il README prescrive DUE VOLTE** (righe 113 e
+432) come verifica dell'installazione.
+
+🪞 **E la prova che funziona così siamo noi**: nella scheda avevo scritto all'utente *«se al
+passo 3 vedi rosso, tira dritto»*. **Avevamo già imparato a ignorarlo — e dentro quelle
+righe ce n'era una che segnala una capacità spenta.**
+
+#### Perché **P1** e non P3, e cosa lo porterebbe a P0
+
+**P1**: il pavimento a `0.0000` **spegne l'astensione per rilevanza** e **non si ricalcola**
+quando arrivano i fatti — il prodotto lo dichiara da sé (*«reads no longer recompute it:
+that cost 24s inside a query»*). Una capacità della prima schermata — *«or with an honest
+«I don't know»»* — resta spenta finché nessuno esegue `warmup`, e **l'unico segnale è
+dentro un comando il cui verdetto abbiamo imparato tutti a scavalcare**.
+
+📏 **La misura per il P0 l'ho FATTA e NON l'ha dimostrato**, quindi resta P1:
+
+```
+ORDINE-A (fatti prima)    floor 0.8554 · domanda estranea -> 3 serviti
+ORDINE-B (recall prima)   floor 0.0000 · domanda estranea -> 3 serviti
+```
+⇒ **La differenza nel pavimento è reale e riprodotta**, ma **nemmeno il braccio sano tace**
+sulla domanda estranea da `verimem recall`: il pavimento non morde su quella porta, e il
+confronto non prova il danno. **Il banco esce `NON MISURATO`, non «uguale».**
+*(Prossimo passo, quando la RAM lo permette: la stessa prova dalla porta MCP, dove la
+risposta porta `sotto_il_pavimento`.)*
+
 
 **Chiuso da Iris il 06/09 01:35**, rieseguendo U-C col banco corretto (il primo troncava
 l'uscita). Pacchetto **0.7.6 da PyPI**, venv vergine, ambiente ripulito, **dopo un `warmup`
@@ -1173,13 +1274,33 @@ il percorso — U-C arriva in fondo in 5,6 minuti.
 Mandare l'utente a rifare il comando che ha appena fatto è peggio che non suggerire niente,
 perché lo fa dubitare di ciò che ha fatto bene.
 
-### 🟢 E la parte migliore: **è già curato su `main`**
+### 🔴 ~~E la parte migliore: è già curato su `main`~~ — **RITIRATA il 06/09: era falsa**
 
-Stesso store vuoto, stesso ambiente pulito, **su `main` `doctor` esce `0`** (verificato dal
-mio banco e, prima, due volte da Tara). ⇒ **La cura esiste e non è nel pacchetto
-pubblicato.** Non serve scrivere codice: serve che entri nel prossimo rilascio.
-📌 **Per chi prepara la prossima versione**: questo è un candidato da smoke — *un utente
-nuovo esegue `doctor` e non deve vedere rosso*, ed è verificabile in un comando.
+*Questa sezione diceva che su `main` `doctor` esce `0` e che bastava aspettare il prossimo
+rilascio. **Non è così**, e la quarta copia della stessa frase l'ho trovata applicando la
+regola che mi ero data: **quando un'affermazione di stato cade, si cerca la FRASE, non il
+documento**.*
+
+```
+git diff v0.7.6..origin/main -- verimem/doctor.py   ->   INVARIATO
+```
+
+⇒ **Non c'è nessuna cura da far entrare.** L'`exit 0` che avevo osservato veniva da un
+**altro stato dello store** (il floor non ancora calcolato), non da un'altra versione — e
+appena il floor si calcola su zero fatti, **anche `main` esce `1`**.
+📌 **Resta valido il suggerimento di smoke**, ma con il criterio giusto: non *«doctor non
+deve vedere rosso»* — bensì **«leggi QUALI righe hanno `!`»**, perché **due** non si
+spengono aspettando: `relevance-floor 0.0000` (astensione spenta) e `moat-judge`
+(copertura cumulativa sotto la metà).
+> 🔁 **Corretto il 06/09 08:40**: questa riga diceva *«quella SOLA segnala una capacità
+> spenta»* e dava `moat-judge` per transitoria. Sono **due**. E la mia parentesi
+> «uscirà `1` anche a installazione sana» presupponeva la formulazione ritirata sopra:
+> @ws8 ha letto che con `_n == 0` la condizione è falsa e **su store vuoto `doctor`
+> esce `0`**. ⚠️ **Questo non torna con la mia misura di stanotte**, dove uno store
+> vuoto dopo un recall dava `EXIT=1` con `floor 0.0000 computed on 0 facts`: il mio `1`
+> può essere venuto dal **pavimento** e non dalla copertura. **Non lo risolvo leggendo**
+> — il controllo che decide è eseguire `doctor` su uno store vuoto e guardare **quale
+> riga** porta il `!`. In attesa di RAM.
 
 🪞 **E la lezione sul mio banco**: la prima esecuzione **troncava l'uscita a due righe** e
 lasciava solo `fix: verimem warmup` — abbastanza per accorgersi che qualcosa non andava,
@@ -1580,6 +1701,51 @@ arrivati **proprio perché avvisavano**; nessuno riporta un salvataggio che è a
 otto**, su cento fatti salvati quanti ricevono un `L4.2` falso. **Non la stimo**: la
 plausibilità è alta *(la forma `ETICHETTA: valore` è la norma negli output)*, ma una ragione
 teorica per cui un tasso dovrebbe essere alto **non è un tasso**.
+
+### 🔁🔴 La regola vera è di @ws4 Nadia, e la mia era un caso particolare — **letto dal testo dell'avviso invece che dal comportamento**
+
+**Terza istanza, 06/09 05:36** (`ff9399aef7459d90`), trovata da lei salvando l'ultimo fatto
+della notte:
+
+```
+CLAIM:  «…il braccio a etichette casuali segna 30/100 astensioni mai viste
+         sbagliate e quello con i dati 28/100.»
+FONTE:  «① scorciatoia: 28/100 astensioni mai viste sbagliate ⛔ HA IMPARATO LA FORMA»
+
+L4.2 — 28 qui e' «prima del numero: dati», nella fonte «astensioni»
+```
+
+🔑 **Qui l'unità sta DOPO nella fonte e PRIMA nel claim — l'esatto contrario dei miei
+casi — e l'avviso scatta lo stesso.**
+
+⇒ **La regola non è** *«nel claim cerca dopo, nella fonte prima»*, come avevo scritto:
+**`L4.2` cerca l'unità SOLO A DESTRA del numero, in ENTRAMBI i testi**, e sbaglia ogni
+volta che l'unità sta a sinistra **in uno qualsiasi dei due**.
+
+```
+EXIT=2                              l'etichetta e' a sinistra   (output)
+STRUMENTI ESPOSTI A RUNTIME: 249    l'etichetta e' a sinistra   (output)
+03:27                               l'unita' e' la POSIZIONE    (orario)
+«…e quello con i dati 28/100.»      l'unita' e' a sinistra      (claim)   <- il verso opposto
+```
+
+#### 🪞 Come ci sono arrivata sbagliando, ed è la forma della notte
+
+**Ho preso il testo dell'avviso per la logica del layer.** Il messaggio dice *«nella fonte:
+prima del numero: exit»* — ma quello è **ciò che l'avviso RIPORTA di aver trovato**, non
+**dove ha cercato**. Nel ticket avevo persino dichiarato *«la causa è dedotta dal
+comportamento e dal testo dell'avviso stesso»*: **la dichiarazione c'era, il caso che la
+falsificava no.** Non ho cercato il verso opposto; l'ha trovato lei **usando il prodotto**.
+
+⇒ È la dodicesima occorrenza di *una rappresentazione della cosa invece della cosa*, e
+stavolta la rappresentazione era **il messaggio d'errore del prodotto che sto misurando**.
+
+#### 📌 Perché questa correzione serve a chi scrive la cura
+
+**Una cura che guardasse solo a sinistra nella FONTE passerebbe i primi due casi e
+fallirebbe il terzo.** I casi riproducibili sono **tre**, e il terzo copre il verso
+opposto: **vanno tutti e tre nel RED.** Tutti `admitted` (grounding 99,9 · 100 · 99,7) —
+**resta rumore, non un blocco**, e il livello resta `P2 [PROVA]`.
 
 ---
 

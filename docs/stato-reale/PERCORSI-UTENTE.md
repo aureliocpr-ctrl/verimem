@@ -236,7 +236,9 @@ assert che cerca l'assenza di una stringa**, qualunque ne sia la ragione. Verifi
 **stato**: `status=quarantined · quarantined_by=moat · grounding=0.69`. **Il prodotto fa la
 cosa giusta; era il mio assert a non misurarla.**
 
-✅ **CHIUSO alle 01:36 come `T8-bis · P3`** (`570f98f5`, e la riga nella scheda con
+🔁 **Aperto come `T8-bis` alle 01:36** — *e il 06/09 alle 07:30 è salito a **P1**: non era
+curato su main, e il difetto vero è che l'exit code di `doctor` non discrimina* (`570f98f5`,
+e la riga nella scheda con
 `fffb56c3`) — *questa sezione l'ha dichiarato «aperto e non chiuso» per tredici minuti
 dopo la chiusura; l'incoerenza l'ha trovata @ws4 Nadia incrociando gli orari dei commit.*
 `verimem doctor` esce **1 sul pacchetto 0.7.6** dopo un warmup riuscito, per
@@ -255,8 +257,11 @@ rotta. **Su `main` esce 0** con lo stesso store e lo stesso ambiente: **già cur
   modo di capire perché. ✅ La riga che funziona su entrambe le porte, misurata, è
   **`Memory()` senza argomento**.
 - *(nient'altro, oggi.)* T7 (1160 MB) è **dichiarato**; **T8 è ritirato** perché il
-  `doctor` che esce 1 lo fa **su uno store vuoto** e la cura è già su main — non perché
-  esca 0 sul pacchetto: **su quello esce 1**, ed è `T8-bis · P3`.
+  `doctor` che esce 1 lo fa **su uno store vuoto** — ⚠️ **e NON è curato su main**
+  (`doctor.py` invariato fra `v0.7.6` e main, verificato il 06/09): il ticket è
+  **`T8-bis · P1`**, e il difetto è che **l'avviso sulla copertura del giudice non si
+  spegne mai** (`giudicati/totali`, cumulativo). *Formulazione rifatta il 06/09: la mia
+  diceva «l'exit code non discrimina» ed era falsa — `cli.py:721` dichiara `0/1/2`.*
 
 ---
 

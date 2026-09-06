@@ -182,10 +182,23 @@ prodotto non tace: **arriva tardi**, quando il tuo client ha già rinunciato.
 >   **Su un'installazione nuova lo store è vuoto per definizione**, il pavimento
 >   di rilevanza si calcola su zero fatti, e `doctor` esce `1` proponendoti **il
 >   comando che hai appena eseguito**. Tutti gli altri check sono verdi.
-> 🟢 **È già curato su `main`**: non serve fare niente, serve che entri nel
-> prossimo rilascio. *(ticket `T8-bis`, **P3**.)*
-> ⇒ **Se al passo 3 vedi rosso e gli altri check sono verdi, tira dritto**: il
-> Quickstart del passo 4 passa, e ci mette 16 secondi.
+> 🔴 **NON è curato** — *e questa riga diceva il contrario fino al 06/09: era mia ed
+> era falsa.* `doctor.py` è **invariato** fra `v0.7.6` e `main`: non c'è niente in
+> arrivo nel prossimo rilascio. *(ticket `T8-bis`, **P1**.)*
+> ⚠️ **E il difetto non è che avvisi: è che due dei suoi avvisi non si spengono da
+> soli, e il prodotto lascia credere il contrario.**
+> ⇒ **NON tirare dritto: leggi QUALE riga avvisa.** Due contano davvero, e nessuna
+> delle due passa aspettando:
+> · `relevance-floor floor 0.0000` — **l'astensione per rilevanza è spenta**, e resta
+>   spenta anche quando arrivano i fatti (*«reads no longer recompute it»*): si rialza
+>   solo con `verimem warmup`.
+> · `moat-judge` — la riga nomina il *warming* e sembra transitoria, ma **la condizione
+>   che l'accende è la copertura** (`giudicati/totali < 0.5`, `doctor.py:724`), che è
+>   **cumulativa**: i fatti che hai scritto prima che il giudice fosse caldo restano non
+>   giudicati per sempre, e quel `!` **non se ne va**.
+> 🔁 *Correzione del 06/09: qui avevo scritto che questa seconda riga «passa da sola,
+> tira dritto». È falso — l'ha dimostrato @ws8 Corrado leggendo il codice. Avevo letto
+> la causa dal testo dell'avviso invece che dalla condizione.*
 
 ---
 
