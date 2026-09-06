@@ -3277,10 +3277,44 @@ def facts_get(fact_id: str) -> None:
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
         raise typer.Exit(1) from None
+    # ⚠️ LA SCADENZA SI DICE QUI, e in ORA LOCALE.
+    # Il recall che toglie un fatto scaduto manda proprio a questo comando
+    # («Per vederli lo stesso, chiedili per id»), e questo comando glielo
+    # consegnava con `status model_claim` — l'aspetto identico a un fatto vivo.
+    # Un fatto scaduto SERVITO senza il suo marchio e' il verso peggiore
+    # dell'invariante: non uno taciuto, uno consegnato.
+    # IL FUSO e' quello di `--valid-until`, che scrive a fine giornata LOCALE
+    # (cli.py, «il fuso e' quello di chi scrive»): mostrarlo in UTC farebbe
+    # slittare il giorno all'utente che l'ha appena scritto — la lezione gia'
+    # pagata al contrario in `client.py:1603`, dove cambiava anche il MESE.
+    # LA RIGA C'E' SOLO SE IL CAMPO C'E': un campo sempre presente si legge
+    # come niente, ed e' la ragione per cui l'avviso del recall conta «quanti
+    # sarebbero entrati» e non «quanti ce ne sono».
+    # ⚠️ E NON FA CADERE LA SCHEDA. Un `valid_until` illeggibile — una stringa,
+    # un timestamp fuori range — farebbe esplodere `float()` o
+    # `fromtimestamp()`, e il comando morirebbe su un campo DECORATIVO mentre
+    # il resto della scheda e' perfettamente leggibile. Il precedente e' a due
+    # moduli di distanza (`client.py`: «una data illeggibile non fa cadere
+    # nulla»), e la prima stesura di questa cura non ce l'aveva.
+    _vu = getattr(f, "valid_until", None)
+    _riga_scadenza = ""
+    if _vu:
+        import time as _t
+        from datetime import datetime as _dtm
+        try:
+            _ts = float(_vu)
+            _quando = _dtm.fromtimestamp(_ts).strftime("%d/%m/%Y %H:%M")
+            _riga_scadenza = (
+                f"[bold]valid_until[/bold] {_quando} (ora locale)"
+                + (" [red]— SCADUTO[/red]" if _ts <= _t.time() else "")
+                + "\n")
+        except Exception:  # noqa: BLE001 — meglio una riga grezza che nessuna scheda
+            _riga_scadenza = f"[bold]valid_until[/bold] {_vu!r} (illeggibile)\n"
     panel_body = (
         f"[bold]id[/bold] {f.id}\n"
         f"[bold]topic[/bold] {f.topic or ''}\n"
         f"[bold]status[/bold] {getattr(f, 'status', '?')}\n"
+        f"{_riga_scadenza}"
         f"[bold]confidence[/bold] {f.confidence:.2f}\n"
         f"[bold]verified_by[/bold] {list(getattr(f, 'verified_by', []))}\n"
         f"\n{f.proposition}"
