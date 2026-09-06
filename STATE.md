@@ -99,7 +99,7 @@ gate on by default, provenance on reads (`engram/client.py`, `examples/sdk_quick
 | `engram/` lines of code | **84,345** | `find engram -name '*.py' \| xargs wc -l` (2026-07-01) |
 | Dev corpus | ~1262 episodes · ~5410 facts · ~324 skills | SessionStart `~/.engram` live (2026-07-01) |
 | Multi-tenant scale | tenant lookup **1270×** (O(N_tenant)), deserialize **3.7×**, ANN crossover ~100k | `SCALE.md` (2026-06-29), commits d1ef0c0 + acc5ee7 |
-| Release | v0.7.6 (codice) — su PyPI la più recente resta la 0.7.0 finché non pubblichiamo | pyproject |
+| Release | v0.7.7 (codice, non ancora taggata) — su PyPI la più recente è la **0.7.6**, pubblicata il 2026-09-04 | pyproject |
 
 **What Engram is NOT (the nuda verità):**
 - **Answer-path "provenance-conditioning" is NOT proven.** An adversarial review found
