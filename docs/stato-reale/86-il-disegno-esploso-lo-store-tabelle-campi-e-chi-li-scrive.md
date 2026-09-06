@@ -81,9 +81,36 @@ worked_example                1     0.0  ←
 ```
 
 🔑 **Sei colonne su trentuno stanno sotto l'1%**: `valid_until`, `asserted_at`,
-`epistemic`, `worked_example`, `derives_from`, `lineage_parents`. Non sono
-«opzionali»: sono **capacità dichiarate nello schema che nessuna porta
-alimenta**. La conseguenza misurata su una di esse: `hippo_justified_audit`
+`epistemic`, `worked_example`, `derives_from`, `lineage_parents`.
+
+> 🔁 **CORREZIONE del 06/09 02:52, e cambia la lettura di questa riga.** Avevo
+> scritto che sono «capacità dichiarate nello schema che nessuna porta alimenta»,
+> cioè un difetto. **Per almeno due delle sei è una SCELTA DI DISEGNO
+> DICHIARATA**, e sta nello schema stesso:
+>
+> ```
+> semantic.py:754   epistemic     «Nullable, additiva, NO backfill:
+>                                  NULL = non etichettato (default)»
+> semantic.py:723   derives_from  «write-path non lo popola
+>                                  (hippo_remember derives_from=...)»
+> ```
+>
+> ⇒ **Uno zero non è sempre un difetto.** Le colonne vuote sono almeno TRE
+> categorie, non una:
+> ① **non cablate** — zero nei dati *e* zero nel codice (le tre
+>    dell'invalidazione degli episodi, §6);
+> ② **cablate e mai alimentate** — il codice c'è, il campo resta vuoto, e
+>    nessuno lo dichiara: qui il difetto c'è (`valid_until` prima che una porta
+>    di scrittura potesse popolarlo);
+> ③ **volutamente vuote** — lo zero è la scelta e il codice la spiega
+>    (`epistemic`, `derives_from`, e `chunks.indexed_by` nel tier documenti:
+>    «absence stays absence, never a default that could read as a vouch nobody
+>    made»).
+>
+> ⚠️ E per le altre quattro — `valid_until`, `asserted_at`, `worked_example`,
+> `lineage_parents` — **non ho verificato con un criterio abbastanza largo**: il
+> mio grep cercava parole precise («Nullable», «no backfill», «default») e non
+> trovarle non prova che la scelta non sia dichiarata altrove. **Non misurato.** La conseguenza misurata su una di esse: `hippo_justified_audit`
 pubblicizza quattro trigger di ritrattazione, e due si reggono su `valid_until` —
 sul corpus vivo davano `would_stale_ids 0`, «non perché il corpus è sano, ma
 perché dai canali che lo riempiono quelle colonne non sono raggiungibili».
