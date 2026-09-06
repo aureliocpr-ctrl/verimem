@@ -226,6 +226,54 @@ def test_route_evolutions_ritira_ancora_quando_la_penna_e_una_sola(monkeypatch):
     assert fonti_distinte == []
 
 
+def test_una_penna_che_il_canonicalizzatore_non_legge_ritira_ancora(monkeypatch):
+    """⚠️ IL BRACCIO T14, CHIESTO DAL LEAD (06/09 09:18): «resta ritirato per la
+    via di prima — canonical uguale → evolution — non per questa funzione:
+    verificalo nel test, deve restare verde».
+
+    È il caso Stripe → Adyen: lo STESSO `verified_by=['contratto']` su entrambi,
+    e due `source` diverse perché il contratto è stato aggiornato. Il gemello
+    sopra usa `source-doc:billing:1`, che `canonical_source` sa leggere; questo
+    usa una penna in forma libera, che ripiega su `"user"` — ed è il caso che il
+    banco T14 esercita davvero.
+
+    🔑 Le due funzioni devono dire la stessa cosa da DUE strade diverse:
+    `due_fonti_dichiarate_e_diverse` esce subito (una penna c'è ⇒ fuori
+    perimetro), e `canonical_source_of` le dà la stessa chiave `vb:contratto`
+    ⇒ `evolution` ⇒ ritiro. Se una sola delle due cambiasse, il fatto finirebbe
+    in quarantena invece che ritirato, e nessun test se ne accorgerebbe."""
+    monkeypatch.setenv("ENGRAM_SUPERSEDE_SAME_SOURCE", "enforce")
+    CONTRATTO = ["contratto"]
+    vecchio = _fatto(firma=source_signature_of("Il contratto indica Stripe"),
+                     penna=CONTRATTO, quando=time.time() - 60,
+                     proposizione="il fornitore del checkout e' Stripe")
+    nuovo = _fatto(firma=source_signature_of("Il contratto aggiornato indica Adyen"),
+                   penna=CONTRATTO,
+                   proposizione="il fornitore del checkout e' Adyen")
+
+    assert due_fonti_dichiarate_e_diverse(nuovo, vecchio) is False, (
+        "fuori perimetro: una penna c'e', anche se in forma libera")
+    assert canonical_source_of(nuovo) == canonical_source_of(vecchio), (
+        "la stessa penna deve dare la stessa chiave, o la relazione non e' "
+        "un'evoluzione e il fatto finisce in QUARANTENA invece che ritirato")
+    assert classify_write_relation(nuovo, vecchio) == "evolution"
+
+    agent = _StoreFinto({"abcdef123456": vecchio})
+    supersede_ids: list[str] = []
+    fonti_distinte: list[str] = []
+    conflitti = _route_evolutions(
+        agent, CONTRATTO, None, ["abcdef123456"], supersede_ids,
+        proposition="il fornitore del checkout e' Adyen",
+        cand_source="Il contratto aggiornato indica Adyen",
+        fonti_distinte=fonti_distinte)
+
+    assert supersede_ids == ["abcdef123456"], (
+        "il braccio T14 deve RITIRARE: è un aggiornamento, non un disaccordo "
+        f"fra fonti. conflitti={conflitti} fonti_distinte={fonti_distinte}")
+    assert fonti_distinte == []
+    assert conflitti == []
+
+
 def test_l_impronta_e_una_sola_regola_per_tutto_il_corpus():
     """`source_signature_of` esiste perche' il calcolo serviva in due posti e la
     seconda copia sarebbe divergita. Se cambia, non combacia piu' con NESSUNA
