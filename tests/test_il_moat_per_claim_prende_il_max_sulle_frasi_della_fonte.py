@@ -131,6 +131,41 @@ def test_CONTROLLO_la_coda_falsa_cade_ancora_e_il_layer_sta_sul_claim_giusto(giu
     assert r.claims_verdict[1]["layer"] == "L4-grounding", r.claims_verdict
 
 
+#: Il fatto di TERZI VERO composto che il pezzo 3a ferma (classificazione del
+#: lead, 92d11721171e8425): la coda nuda «E' finito alle 14:53:19.» escala L1.13
+#: senza il soggetto, e un fatto vero con gli orari cade. E' il rosso che la
+#: regola candidata del lead deve rendere verde — «sul claim nudo escalano solo
+#: i rilevatori di self-claim senza valore (L1.15 verified, approval, doc), non
+#: L1.13 completion quando il claim porta un valore» — misurata prima (P-A, P-B).
+#: Preso da tests/test_due_self_claim_impersonali_entrano_dalla_cura_del_marcatore.py.
+TERZI_VERO = "Il comando warmup e' iniziato alle 14:50:24 ed e' finito alle 14:53:19."
+FONTE_TERZI = ("[14:50:24] warmup started. [14:53:02] downloading gate model. "
+               "[14:53:19] warmup finished OK. Il deposito di Prato ospita 300 bancali.")
+
+
+@pytest.mark.parametrize("source", [None, FONTE_TERZI], ids=["senza-fonte-solo-L1", "con-fonte-e-giudice"])
+def test_IL_ROSSO_un_fatto_di_terzi_vero_composto_resta_ammesso(giudice, source):
+    """Rosso oggi sul ramo dell'innesto: non e' il moat, e' L1.13 sulla coda nuda.
+    Senza fonte e' il caso del lead tale e quale; con la fonte (che prova
+    entrambe le meta') il finto da' 95 e 95 e il verdetto del moat non c'entra."""
+    kw = dict(verified_by=[], topic=None, agent=None)
+    if source is None:
+        r = g.run_validation_gate(proposition=TERZI_VERO, source=None,
+                                  ground_write=False, **kw)
+    else:
+        giudice_frasi = {"iniziato": "[14:50:24] warmup started.",
+                         "finito": "[14:53:19] warmup finished OK."}
+        giudice._scorer = lambda batch: [  # noqa: E731 — il finto per questo caso
+            95.0 if any(k in c and s.strip() == f for k, f in giudice_frasi.items())
+            else 5.0 for s, c in batch]
+        r = g.run_validation_gate(proposition=TERZI_VERO, source=source,
+                                  grounding_llm=None, ground_write=True, **kw)
+    layer = [str((w or {}).get("layer") or "") for w in (r.warnings or [])]
+    assert r.action not in ("downgrade", "reject"), (
+        f"un fatto di terzi VERO composto e' fermato ({layer}): la coda nuda "
+        f"escala L1 senza il soggetto — il difetto di 3a, non del moat")
+
+
 def test_senza_lotto_la_funzione_torna_None_e_il_chiamante_resta_sul_focus(monkeypatch):
     """Il fallback e' dichiarato, non silenzioso: in delega con il daemon muto la
     funzione torna None (il gate scrive via=focus), nessuna eccezione esce."""
