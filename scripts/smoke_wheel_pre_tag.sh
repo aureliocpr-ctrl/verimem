@@ -133,10 +133,32 @@ PY=".venv/Scripts/python.exe"; [ -f "$PY" ] || PY=".venv/bin/python"
 
 # --- 3  installazione DAL WHEEL, non da PyPI -------------------------------
 T0=$(date +%s)
-"$PY" -m pip install --quiet "$WHEEL"
+# `--quiet` resta: il caso normale non deve sporcare il registro. L'output di
+# pip pero' si CATTURA — e la ragione NON e' quella che avevo scritto io.
+#
+# 🪞 06/09: il registro dice «lo script installa con --quiet e non stampa
+# l'errore di pip (da correggere)». L'ho provato con un finto interprete che
+# scrive su stderr ed esce 1: la versione SENZA questa cura lo stampa lo
+# stesso. `--quiet` sopprime l'output informativo, non stderr. Quindi la
+# frase era imprecisa e questa cura non «rivela» niente.
+#
+# Quello che fa davvero, ed e' il motivo per cui resta:
+#  · l'errore esce DOPO la riga di esito e con l'etichetta «pip dice», invece
+#    che prima e mescolato — in un output di nove passi la differenza e' fra
+#    trovarlo e non vederlo;
+#  · chi esegue lo smoke dentro un wrapper che redirige stderr oggi lo perde;
+#    il file resta su disco quando pip fallisce (e' nominato nel messaggio).
+_PIP_LOG="$(mktemp)"
+"$PY" -m pip install --quiet "$WHEEL" >"$_PIP_LOG" 2>&1
 EX=$?; T1=$(date +%s)
 riga 3 "pip install <wheel candidato>  ($((T1 - T0))s)" $EX
-[ "$EX" -ne 0 ] && { echo "  ⛔ installazione fallita: i passi seguenti non hanno senso."; exit 2; }
+if [ "$EX" -ne 0 ]; then
+  echo "  ⛔ installazione fallita: i passi seguenti non hanno senso."
+  echo "     --- pip dice (ultime 20 righe di $_PIP_LOG) ---"
+  tail -20 "$_PIP_LOG" | sed "s/^/     /"
+  exit 2
+fi
+rm -f "$_PIP_LOG"
 
 # --- 4  dice la verita' su di se' ------------------------------------------
 # ⚠️ PRIMA della versione: da DOVE viene il pacchetto che stiamo per misurare.
