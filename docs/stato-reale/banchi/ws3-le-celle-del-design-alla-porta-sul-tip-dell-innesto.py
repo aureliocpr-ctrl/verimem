@@ -209,6 +209,7 @@ def parte_giudice() -> int:
     cambiati = []
     per_layer: dict[str, int] = {}
     n_dec = 0
+    dettaglio: list[dict] = []     # seconda passata (10:05): i cambiati con i claims_verdict
     for i, (fid, prop, span, g_prima) in enumerate(campione):
         r = fermato_alla_porta(prop, span, giudice=True)
         if getattr(r, "decomposed", False):
@@ -218,6 +219,10 @@ def parte_giudice() -> int:
             chiave = "L4" if any(w.startswith("L4") for w in ly) and not any(w.startswith("L1") for w in ly) else ("L1" if any(w.startswith("L1") for w in ly) else "altro")
             per_layer[chiave] = per_layer.get(chiave, 0) + 1
             cambiati.append((fid, prop[:90], ly[:4], g_prima, getattr(r, "grounding_score", None)))
+            dettaglio.append({"id": fid, "prop": prop, "span": span, "g_prima": g_prima,
+                              "g_dopo": getattr(r, "grounding_score", None), "action": getattr(r, "action", None),
+                              "layers": ly, "claims": list(getattr(r, "claims", []) or []),
+                              "claims_verdict": list(getattr(r, "claims_verdict", []) or [])})
         if (i + 1) % 200 == 0:
             print(f"   … {i + 1}/{len(campione)} ({time.perf_counter() - t2:.0f} s), cambiati finora {len(cambiati)}", flush=True)
     n = len(campione)
@@ -227,6 +232,38 @@ def parte_giudice() -> int:
     print("   i primi 12 cambiati (id, claim, layer, grounding prima -> alla porta):")
     for c in cambiati[:12]:
         print(f"      {c[0]} «{c[1]}» {c[2]} {c[3]!s:>6} -> {c[4]}")
+    out = pathlib.Path(os.environ.get("P_A_DETTAGLIO", str(QUI.parents[4] / "p_a_cambiati.json")))
+    out.write_text(json.dumps(dettaglio, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"   dettaglio dei {len(dettaglio)} cambiati scritto in {out}")
+
+    # ---- la classificazione per CAUSA, una per riga ------------------------
+    def causa(d: dict) -> str:
+        ly = set(d["layers"])
+        cv = d["claims_verdict"]
+        crollo = any((v or {}).get("score") is not None and float(v["score"]) < 40 for v in cv)
+        if any(w.startswith("L1") for w in ly):
+            return "L1 sulla coda nuda (3a)"
+        if "L4-grounding" in ly and crollo:
+            return "giudice per claim CROLLA (3b/3b-bis)"
+        if "L4.1" in ly:
+            return "L4.1 per claim (valore non nella fonte)"
+        if "L4.2" in ly:
+            return "L4.2 per claim (T17)"
+        if "L4-negazione" in ly:
+            return "L4-negazione"
+        return "altro: " + ",".join(sorted(ly))[:40]
+    conteggio: dict[str, int] = {}
+    esempi: dict[str, list] = {}
+    for d in dettaglio:
+        k = causa(d)
+        conteggio[k] = conteggio.get(k, 0) + 1
+        esempi.setdefault(k, []).append(d)
+    print("\n   PER CAUSA (la prima che spiega, nell'ordine L1 > crollo > L4.1 > L4.2):")
+    for k, v in sorted(conteggio.items(), key=lambda kv: -kv[1]):
+        print(f"   {v:4d}  {k}")
+        for d in esempi[k][:3]:
+            cv = "; ".join(f"{(c or {}).get('score')!s:>6}/{(c or {}).get('layer')}/{(c or {}).get('via')}" for c in d["claims_verdict"])
+            print(f"         {d['id']} «{d['prop'][:80]}» claims={[c[:40] for c in d['claims']]} verdetti=[{cv}] g {d['g_prima']!s:.5} -> {d['g_dopo']!s:.5}")
     return 0
 
 
