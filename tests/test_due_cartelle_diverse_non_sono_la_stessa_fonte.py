@@ -56,31 +56,18 @@ class _F:
         self.asserted_at = None
 
 
+@pytest.mark.xfail(strict=True, reason=(
+    "IL DIFETTO E' VIVO: due cartelle cliniche distinte risultano «la stessa "
+    "fonte» perche' nessuna delle due ha un verified_by. La cura — leggere la "
+    "source_signature in canonical_source_of — e' stata scritta, misurata e "
+    "RITIRATA il 2026-08-04: colpisce il bersaglio (2 vivi invece di 1) ma "
+    "rompe il presidio qui sotto, e la funzione isolata e' corretta in tutti e "
+    "tre i casi, quindi il comportamento cambia in un punto piu' a valle che "
+    "non e' stato isolato. Una cura che funziona per una ragione che non si sa "
+    "spiegare non si consegna."))
 def test_due_source_diverse_non_sono_la_stessa_fonte():
     """Il cuore: due cartelle cliniche distinte non sono «la stessa fonte», e
-    il secondo paziente non è un aggiornamento del primo.
-
-    ✅ ERA `xfail(strict=True)` DAL 2026-08-04, E DAL 2026-09-06 PASSA
-    (`6bd8c6ae` + `405ff0cd`). Il marker diceva: «la cura è stata scritta,
-    misurata e RITIRATA: colpisce il bersaglio ma rompe il presidio qui sotto,
-    e il comportamento cambia in un punto più a valle che non è stato isolato».
-
-    Il punto a valle è stato isolato il 06/09, ed erano DUE cose:
-      · il presidio misurava «quanti fatti restano vivi» e fondeva due
-        meccanismi diversi — due dei suoi casi erano RITIRI (`L3-supersession`)
-        e uno una QUARANTENA (`L4.1`), che con la supersessione non c'entra;
-      · il caso che «regrediva» era costruito male: valore NUOVO contro una
-        source che ha ancora quello VECCHIO. Non era l'aggiornamento legittimo
-        che la cura rompeva, era un claim che la sua fonte non sostiene.
-
-    ⚠️ E LA REGOLA CHE HA RESO LA CURA CONSEGNABILE ERA GIÀ SCRITTA QUI SOTTO,
-    nel docstring di `test_il_verified_by_continua_a_comandare_quando_c_e`:
-    «la source entra solo dove prima si sarebbe ripiegato sul fallback user».
-    Il 06/09 quella riga è stata riderivata da capo, passando per una
-    regressione vera (la stessa penna che aggiorna il proprio valore smetteva
-    di ritirare) colta da un controllo positivo in un altro file. Leggerla qui
-    sarebbe costato trenta secondi.
-    """
+    il secondo paziente non è un aggiornamento del primo."""
     rossi = _F(source_signature="sha256:cartella-rossi")
     bianchi = _F(source_signature="sha256:cartella-bianchi")
     assert not is_same_source(rossi, bianchi)

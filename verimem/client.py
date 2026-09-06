@@ -828,11 +828,9 @@ class Memory:
         # L'impronta e' un hash: la source puo' essere un log di migliaia di
         # righe, e qui serve solo distinguere due origini, non rileggerle.
         if source and not getattr(fact, "source_signature", None):
-            # ⚠️ IL CALCOLO NON STA PIU' QUI (2026-09-06): serve anche al gate, che
-            # deve firmare il CANDIDATO prima che il fatto esista, e due copie di
-            # una regola di identita' divergono. Vedi `source_signature_of`.
-            from .supersession_policy import source_signature_of
-            fact.source_signature = source_signature_of(source)
+            import hashlib
+            fact.source_signature = "sha256:" + hashlib.sha256(
+                " ".join(str(source).split()).encode("utf-8")).hexdigest()[:16]
         if confidence is not None:
             fact.confidence = float(confidence)
         if valid_until is not None:

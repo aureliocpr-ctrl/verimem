@@ -22,7 +22,7 @@ from typing import Any
 from .source_trust import canonical_source
 
 __all__ = ["canonical_source_of", "declared_identity", "is_same_source",
-           "due_fonti_dichiarate_e_diverse",
+           "source_signature_of",
            "classify_write_relation", "references_fact"]
 
 #: A fact id as written in prose: 12 hex chars, on its own token boundary.
@@ -59,27 +59,43 @@ def references_fact(new_text: Any, old_id: Any) -> bool:
                      str(new_text), re.IGNORECASE) is not None
 
 
+def source_signature_of(source_text: Any) -> str | None:
+    """L'impronta di un TESTO di fonte, o ``None`` se testo non ce n'e'.
+
+    ``"sha256:"`` + i primi 16 hex dello sha256 del testo normalizzato negli
+    spazi. La source puo' essere un log di migliaia di righe: qui serve solo
+    distinguere due origini, non rileggerle.
+
+    ⚠️ SOPRAVVIVE AL REVERT DELLA COESISTENZA (2026-09-06), e non per svista:
+    la cura delle fonti distinte e' tornata indietro perche' rompeva quattro
+    test, ma questa funzione e' ADDITIVA e serve a un'altra cura che resta —
+    `facts add` che conserva l'impronta della fonte che fa giudicare
+    (`cli.py`, commit 522d62ee). Toglierla romperebbe quella.
+
+    🔑 Chi la cambia cambia il significato di «stessa fonte» per TUTTO il
+    corpus gia' scritto: due fatti sono la stessa fonte se le loro impronte
+    coincidono, e un'impronta calcolata con un'altra regola non coincide con
+    nessuna di quelle in archivio.
+    """
+    if source_text is None:
+        return None
+    _t = " ".join(str(source_text).split())
+    if not _t:
+        return None
+    import hashlib
+    return "sha256:" + hashlib.sha256(_t.encode("utf-8")).hexdigest()[:16]
+
+
 def canonical_source_of(fact: Any) -> str:
     """The reputation key of a fact's writer: the ``canonical_source`` of its
-    ``verified_by`` when that names a source, else its ``source_signature``, else
-    ``"user"``.
+    ``verified_by``, and the ``"user"`` fallback when it declares none.
 
-    L'ORDINE E' IL CONTENUTO DELLA REGOLA: una penna DICHIARATA decide, e la
-    firma della source entra solo dove il ``verified_by`` non dice niente —
-    dove cioe' ``canonical_source`` ripiega su ``"user"`` per tutti e «stessa
-    fonte» sarebbe vero per costruzione. Aggiunge risoluzione dentro
-    l'anonimato; non ne toglie a chi si e' dichiarato.
-
-    ⚠️ DAL 2026-09-06 LEGGE ``source_signature``, e la storia di questa riga sta
-    tutta qui sotto perche' e' cambiata tre volte: il docstring prometteva la
-    signature fino al 2026-08-21 senza che il codice la leggesse, la cura che
-    gliela faceva leggere e' stata scritta e RITIRATA il 2026-08-04, e il
-    2026-09-06 la misura che l'aveva fatta ritirare si e' rivelata un misuratore
-    sbagliato (l'ultimo blocco). Chi legge parta dalla riga sopra, non dai
-    paragrafi storici.
-
-    Il comportamento che il docstring prometteva e il codice non aveva, fino al
-    2026-08-21:
+    ⛔ NON LEGGE ``source_signature``, E IL PERCHE' STA QUI SOTTO: la cura che
+    la leggeva e' stata scritta, misurata e RITIRATA il 2026-08-04 perche'
+    rompeva il presidio (i due paragrafi seguenti la raccontano). Questa riga
+    del docstring diceva il contrario fino al 2026-08-21 — ``the
+    source_signature when there is no verified_by`` — e chi la leggeva partiva
+    da un comportamento che il codice non ha:
 
         canonical_source_of(<verified_by=None, source_signature="sha256:AAAA">) -> "user"
         canonical_source_of(<verified_by=None, source_signature="sha256:BBBB">) -> "user"
@@ -134,85 +150,8 @@ def canonical_source_of(fact: Any) -> str:
     FUNZIONE», dove il verdetto isolato diceva il contrario dell'end-to-end.
     Resta il pezzo che CONSERVA l'impronta in ``client.add`` — additivo, non
     cambia comportamento — e il test la documenta come xfail strict.
-
-    ═══ 2026-09-06: LA RIGA SOPRA E' STATA RIMESSA, E LA «REGRESSIONE» NON C'ERA.
-
-    Il presidio del 04/08 misurava **«quanti fatti restano vivi»** e dava 1-1-1 sui
-    tre casi. Rimisurato separando i due meccanismi::
-
-        caso                        vivi  superseded  quarantined  layer
-        source DIVERSE                1        1           0       L3-supersession
-        STESSA source, valore nuovo   1        0           1       **L4.1**
-        nessuna source                1        1           0       L3-supersession
-
-    Il caso di mezzo **non passava dalla supersessione**: `L4.1` lo quarantinava, ed
-    era giusto — la source era quella VECCHIA e il valore nuovo non ci stava dentro.
-    Non era «l'aggiornamento legittimo che la cura rompeva»: era un claim non
-    sostenuto dalla sua fonte. **Un numero che fonde ritiro e quarantena non e' un
-    misuratore**, ed e' per questo che la regressione «non si sapeva spiegare».
-
-    Rifatto BENE — source aggiornata INSIEME al valore, quindi testo e firma diversi
-    — i cinque casi del presidio danno tutti `superseded=1, quarantined=0` dallo
-    stesso ramo. La cura non rompe nulla di misurato, e il difetto che cura e' stato
-    riprodotto in laboratorio: due bracci di un A/B («GRADED_ADMISSION acceso: 296
-    falsi» / «spento: 40 falsi», due source distinte) e il secondo ritira il primo.
-    Sul corpus: **155 ritiri** con `same-source evolution` fra due firme diverse,
-    **0 prima del default ON del 19/07 e 155 dopo**, 153 con grounding >= 85, e
-    **54 sbagliati su 60 letti uno per uno**.
-
-    Il banco: `docs/stato-reale/banchi/il-presidio-con-le-due-colonne.py`.
-
-    ⚠️ MA UNA REGRESSIONE C'ERA, e non era quella: l'ha trovata
-    `test_CONTROLLO_quando_supersede_DAVVERO_l_avviso_ci_deve_essere` mezz'ora
-    dopo. La prima stesura tornava la firma PRIMA di guardare il `verified_by`, e
-    cosi' la stessa penna dichiarata che corregge il proprio valore — «100 euro»
-    -> «150 euro», citando ogni volta il testo nuovo come `source` — smetteva di
-    ritirare: due prezzi vivi, uno vecchio. E' l'aggiornamento piu' comune che
-    esista. Da li' l'ordine attuale, che e' il contenuto della regola: **la penna
-    decide, la firma discrimina solo dentro l'anonimato** — cioe' esattamente
-    dove stanno i 155.
-
-    🔑 Vale la pena dirlo perche' e' la seconda volta in un giorno: il 04/08 la
-    cura fu ritirata per una regressione che il misuratore mostrava e che non
-    c'era; il 06/09 e' stata consegnabile solo perche' un controllo positivo ne
-    ha mostrata una VERA che il presidio non copriva. Lo stesso presidio, due
-    verdetti sbagliati in versi opposti.
     """
-    # I QUATTRO GRADINI, nell'ordine in cui la regola li enuncia. Prima erano in
-    # un ordine diverso dal docstring — due test su `_base` a cavallo del ramo
-    # nuovo — e funzionavano lo stesso: ma un punto che decide quali fatti si
-    # ritirano si legge, e leggerlo non deve costare una simulazione mentale.
-    # ① UNA PENNA DICHIARATA DECIDE, E LA FIRMA NON LA SCAVALCA. La prima
-    # stesura di questa cura tornava la `source_signature` per prima, e rompeva
-    # l'aggiornamento piu' comune che esista: la STESSA fonte
-    # (`verified_by=["source-doc:billing:1"]`) che corregge il proprio valore —
-    # «100 euro» -> «150 euro» — citando ogni volta il testo nuovo come
-    # `source`. Due firme diverse, UNA penna sola: con la firma davanti i due
-    # prezzi restavano entrambi vivi e il recall ne serviva due. L'ha vista
-    # cadere `test_CONTROLLO_quando_supersede_DAVVERO_l_avviso_ci_deve_essere`,
-    # che e' li' esattamente per questo (2026-09-06 08:35).
-    _base = canonical_source(getattr(fact, "verified_by", None) or None)
-    if _base != "user":
-        return _base
-    # ② IL RIPIEGO SU `"user"` NON VUOL DIRE «non ha dichiarato niente»:
-    # `canonical_source` riconosce solo `source-doc:X:...` e `doc:X`, quindi
-    # `['contratto']`, `['Cartella clinica']` e perfino `['commit:abc123']`
-    # finiscono tutti li' dentro — misurato il 06/09. Se il `verified_by` GREZZO
-    # c'e', E' una dichiarazione, anche in una forma che il canonicalizzatore non
-    # sa leggere: e' il caso T14 (lo stesso contratto che passa da Stripe ad
-    # Adyen), che senza questo gradino smetteva di ritirare.
-    _raw = [str(x) for x in (getattr(fact, "verified_by", None) or [])]
-    if _raw:
-        return "vb:" + "|".join(_raw)
-    # ③ la firma della source
-    _sig = getattr(fact, "source_signature", None)
-    if isinstance(_sig, str) and _sig.strip():
-        # NIENTE PENNA DICHIARATA: qui `canonical_source` ripiega su `"user"` per
-        # TUTTI, e «stessa fonte» diventa vero per costruzione — e' la
-        # popolazione dei 155 ritiri. La firma non sostituisce il `verified_by`:
-        # aggiunge risoluzione dove il `verified_by` non ne ha nessuna.
-        return _sig.strip()
-    return _base
+    return canonical_source(getattr(fact, "verified_by", None) or None)
 
 
 #: Le code di `writer_principal` che NON sono un'identita': dicono da quale
@@ -288,117 +227,6 @@ def is_same_source(a: Any, b: Any) -> bool:
     provenienza. Non serve a decidere un ritiro.
     """
     return canonical_source_of(a) == canonical_source_of(b)
-
-
-def source_signature_of(source_text: Any) -> str | None:
-    """L'impronta di un TESTO di fonte, o ``None`` se testo non ce n'e'.
-
-    ``"sha256:"`` + i primi 16 hex dello sha256 del testo normalizzato negli
-    spazi. La source puo' essere un log di migliaia di righe: qui serve solo
-    distinguere due origini, non rileggerle.
-
-    ⚠️ ESISTE PERCHE' IL CALCOLO ERA IN UN POSTO SOLO E SERVIVA IN DUE, e la
-    seconda copia sarebbe stata la classe di difetto piu' frequente che
-    abbiamo — «una copia invece della superficie unica». Il primo posto e'
-    ``client.add``, che l'impronta la CONSERVA sul fatto; il secondo e'
-    ``anti_confab_gate._route_evolutions``, che deve poterla calcolare per il
-    candidato AL VOLO, perche' li' il fatto non e' ancora stato scritto e
-    quello che circola e' il testo della source.
-
-    🔑 Chi la cambia cambia il significato di «stessa fonte» per TUTTO il
-    corpus gia' scritto: due fatti sono la stessa fonte se le loro impronte
-    coincidono, e un'impronta calcolata con un'altra regola non coincide con
-    nessuna di quelle in archivio.
-    """
-    if source_text is None:
-        return None
-    _t = " ".join(str(source_text).split())
-    if not _t:
-        return None
-    import hashlib
-    return "sha256:" + hashlib.sha256(_t.encode("utf-8")).hexdigest()[:16]
-
-
-def due_fonti_dichiarate_e_diverse(a: Any, b: Any) -> bool:
-    """I due fatti DICHIARANO ciascuno la propria fonte, e le due sono diverse.
-
-    ⚠️ DUE CONDIZIONI, NON UNA: le firme devono essere entrambe valorizzate e
-    diverse, **e nessuno dei due deve dichiarare un ``verified_by``**. Il
-    perimetro e' volutamente stretto — la popolazione misurata, non tutti i casi
-    concepibili — e il blocco di commento nel corpo dice quali casi restano
-    fuori e dove vanno a finire.
-
-    ⚠️ NON E' ``not is_same_source(a, b)``, e la differenza e' tutto il punto:
-    quella e' vera anche quando **uno dei due non dichiara niente**, e allora
-    non si sa che le fonti sono diverse — si sa solo che una non c'e'. Qui
-    servono ENTRAMBE valorizzate, come i codici in
-    ``anti_confab_gate._entita_diverse`` e come il presidio in
-    ``hidden_records``: con un lato muto il comportamento resta quello di prima.
-
-    🔑 A COSA SERVE: e' la QUARTA uscita del gate semantico. Fino al 2026-09-06
-    una contraddizione fra due fatti aveva tre esiti — ritiro del vecchio,
-    quarantena del nuovo, coesistenza per entita' diverse — e due misure
-    distinte della STESSA grandezza, prese da due fonti diverse, non entrano in
-    nessuno dei tre: non sono l'una l'aggiornamento dell'altra (le fonti sono
-    due), non sono un'aggressione (entrambe sono dichiarate e verificabili), e
-    non parlano di entita' diverse (l'oggetto misurato e' lo stesso).
-
-    Sul corpus quelle coppie erano **155 ritiri**, 153 con grounding >= 85, e
-    fra loro **le celle di uno stesso banco e i due bracci dei nostri A/B**: il
-    recall serviva un braccio e taceva l'altro. Il banco che riproduce il caso e
-    misura la cura: ``docs/stato-reale/banchi/il-presidio-con-le-due-colonne.py``.
-
-    ⚠️ LEGGE ``source_signature``, NON ``canonical_source_of``: dal 2026-09-06
-    quest'ultima RIPIEGA sul ``verified_by`` e poi su ``"user"``, quindi con due
-    fatti senza firma direbbe «stessa fonte» — che qui e' la risposta giusta ma
-    per la ragione sbagliata, e domani con un ripiego diverso non lo sarebbe
-    piu'. La domanda di questa funzione e' una sola: **hanno DETTO da dove
-    vengono, e hanno detto due cose diverse?**
-    """
-    # ⚠️ IL `verified_by` GREZZO, PRIMA DI CANONICALIZZARLO — e la ragione e' che
-    # `canonical_source` riconosce SOLO `source-doc:X:...` e `doc:X`, e appiattisce
-    # tutto il resto su `"user"`: misurato il 06/09,
-    #
-    #     ['source-doc:billing:1'] -> 'billing'      ['doc:x']          -> 'x'
-    #     ['contratto']            -> 'user'         ['commit:abc123']  -> 'user'
-    #     ['Cartella clinica']     -> 'user'
-    #
-    # cioe' **`commit:` non conta come penna dichiarata**, ed e' la forma di
-    # evidenza piu' comune che abbiamo. Senza questa riga il caso T14 — lo stesso
-    # `verified_by=['contratto']` che aggiorna il proprio contratto da Stripe ad
-    # Adyen — smetteva di ritirare: un aggiornamento VERO letto come due fonti.
-    # Due `verified_by` identici sono la stessa penna qualunque forma abbiano.
-    if (getattr(a, "verified_by", None) or getattr(b, "verified_by", None)):
-        # ⚠️ BASTA UN `verified_by` SU UN LATO SOLO PER USCIRE DAL PERIMETRO, e
-        # la riga stretta e' una DECISIONE, non una conseguenza: la quarta uscita
-        # nasce per una popolazione misurata — i **292 ritiri** in cui NESSUNO dei
-        # due lati dichiara una penna e le due `source_signature` sono diverse
-        # (sul corpus: `verified_by` vuoto su entrambi in **2399 ritiri su 2407**,
-        # cioe' il 99,7%). Fuori di li' non c'e' misura, e una uscita nuova su un
-        # caso non misurato e' un'ipotesi che ritira o tiene in vita fatti veri.
-        #
-        # Cosa resta fuori, e dove:
-        #   · una penna sola su entrambi (`['contratto']`, `['commit:abc']`) — e'
-        #     un AGGIORNAMENTO e deve ritirare: il caso T14, Stripe -> Adyen;
-        #   · due penne diverse — resta il conflitto cross-source di prima
-        #     (quarantena), che e' anche la guardia contro il griefing;
-        #   · una penna su UN lato solo — comportamento invariato. Sul corpus
-        #     sono 6 ritiri su 2407, e di quei 6 con firma su ENTRAMBI: **zero**.
-        #     E' cella xfail per la 0.7.8, non un caso che si decide qui.
-        #
-        # 🔑 Il `verified_by` GREZZO, non `canonical_source`: quest'ultimo
-        # riconosce solo `source-doc:X:...` e `doc:X` e appiattisce il resto su
-        # `"user"` — misurato il 06/09, `['commit:abc123'] -> 'user'`. Chiedere
-        # «canonicalizza a qualcosa?» invece di «c'e'?» lascerebbe fuori dalla
-        # guardia proprio la forma di evidenza piu' comune che abbiamo.
-        return False
-    _a = getattr(a, "source_signature", None)
-    _b = getattr(b, "source_signature", None)
-    if not (isinstance(_a, str) and _a.strip()):
-        return False
-    if not (isinstance(_b, str) and _b.strip()):
-        return False
-    return _a.strip() != _b.strip()
 
 
 def _coerce_ts(v: Any) -> float | None:

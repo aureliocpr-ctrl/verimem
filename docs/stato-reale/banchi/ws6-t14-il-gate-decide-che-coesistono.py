@@ -143,33 +143,6 @@ def _giro_stessa_fonte(nome: str, fonte_b: str, etichetta: str):
 l_div, s_div = _giro_stessa_fonte("fonti_diverse", FONTE_B, "fonti DIVERSE (come sopra)")
 l_ug, s_ug = _giro_stessa_fonte("stessa_fonte", FONTE_A, "STESSA fonte")
 
-# ═══ QUARTO BRACCIO (06/09 09:05) — IL TERZO ERA COSTRUITO MALE ═══
-# Il braccio «STESSA fonte» passa a entrambe le scritture `FONTE_A`, che dice
-# **Stripe**, mentre la seconda proposizione dice **Adyen**: e' un claim che la
-# sua stessa fonte non sostiene, e infatti esce `L4-grounding` — il moat, non la
-# supersessione. Misurava un'altra cosa, e il suo `superseded_by=None` non
-# diceva «la fonte non e' la variabile»: diceva «non e' nemmeno arrivato li'».
-#
-# 🔑 E' LO STESSO DIFETTO DEL CASO 2 DEL PRESIDIO DEL 04/08, che per un mese ha
-# fatto credere a una regressione che non c'era. Rifatto bene: **la fonte si
-# aggiorna INSIEME al valore**, quindi il testo cambia ma la penna resta una.
-FONTE_A_AGGIORNATA = ("Il contratto con il fornitore di pagamenti, aggiornato "
-                      "in corso d'anno, indica Adyen come gestore del checkout.")
-l_agg, s_agg = _giro_stessa_fonte("fonte_aggiornata", FONTE_A_AGGIORNATA,
-                                  "STESSA penna, fonte AGGIORNATA col valore")
-
-print("\n  ── LETTURA DEL QUARTO BRACCIO ──")
-if s_agg:
-    print("  ✅ La stessa penna che aggiorna la propria fonte RITIRA ancora: la")
-    print("     coesistenza vale fra fonti DIVERSE, non fra due versioni di una.")
-elif "L4-grounding" in (l_agg or []):
-    print("  ⚠️ Anche qui il moat interviene prima: il banco non arriva alla")
-    print("     supersessione e su questo asse NON MISURA. Da rifare con una")
-    print("     coppia che il moat lascia passare.")
-else:
-    print(f"  ❌ Non ritira e il moat non c'entra: layer={l_agg}. Da guardare —")
-    print("     la penna e' una sola e dovrebbe essere un aggiornamento.")
-
 print("\n  ── LETTURA DEL TERZO BRACCIO ──")
 if s_ug and not s_div:
     print("  ✅ IPOTESI 5 CONFERMATA: con la stessa fonte il vecchio VIENE ritirato,")

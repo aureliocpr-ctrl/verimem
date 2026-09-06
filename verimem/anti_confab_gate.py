@@ -704,9 +704,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       new_status: str | None = None,
                       claimant: str | None = None,
                       proposition: str | None = None,
-                      cand_ha_source: bool = True,
-                      cand_source: Any = None,
-                      fonti_distinte: list[str] | None = None) -> list[str]:
+                      cand_ha_source: bool = True) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -721,11 +719,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     import types as _ty
 
     from .semantic import _STATUS_RANK
-    from .supersession_policy import (
-        classify_write_relation,
-        due_fonti_dichiarate_e_diverse,
-        source_signature_of,
-    )
+    from .supersession_policy import classify_write_relation
     sm = getattr(agent, "semantic", None) if agent is not None else None
     if sm is None:
         return list(ids)
@@ -745,25 +739,10 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     # con `is_same_source` gia' corretta e venti test verdi, il banco end-to-end
     # restava a «1 vivo su 2» — la funzione sapeva distinguere, il chiamante non
     # le passava di che.
-    # ⚠️ TERZA VOLTA CHE UN CAMPO MANCA A QUESTO CANDIDATO, e le prime due sono
-    # raccontate qui sopra e sotto: `writer_principal` mancava (2026-08-20) e la
-    # `proposition` pure. Dal 2026-09-06 manca(va) `source_signature`, e il modo
-    # in cui si e' visto e' istruttivo: con la cura su `canonical_source_of` — che
-    # la firma la LEGGE — il candidato risultava senza firma e il vecchio con,
-    # quindi «fonti diverse» per ASSENZA invece che per DIFFERENZA. I cinque casi
-    # del presidio passavano da ritiro a QUARANTENA: la stessa perdita, un altro
-    # nome. (Misurato 08:23, banco `il-presidio-con-le-due-colonne.py`.)
-    #
-    # 🔑 LA REGOLA CHE QUESTA FUNZIONE CONTINUA A INSEGNARE: un candidato
-    # SINTETICO e' un fatto FINTO, e ogni campo che chi giudica legge e qui non
-    # c'e' vale `None` IN SILENZIO — cioe' risponde, e risponde la cosa
-    # sbagliata. Chi aggiunge un criterio che legge un campo nuovo deve
-    # aggiungerlo ANCHE qui, o misurera' l'assenza credendo di misurare il campo.
     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
                                asserted_at=asserted_at,
                                writer_principal=claimant,
-                               proposition=proposition or "",
-                               source_signature=source_signature_of(cand_source))
+                               proposition=proposition or "")
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
     for cid in ids:
@@ -806,19 +785,6 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         # tutti anonimi (`cli:local`, `mcp:unbound`, `sdk:local`, NULL), quindi
         # qui non cambia una virgola; morde solo in una memoria multi-utente.
         if old is not None and _entita_diverse(cand, old):
-            continue
-        # ⚠️ LA QUARTA USCITA: DUE FONTI DICHIARATE CHE NON CONCORDANO (2026-09-06).
-        # Distinta dalla terza — che dice «due COSE diverse» — perche' qui la cosa
-        # e' UNA e sono le FONTI a essere due: chi legge deve sapere che c'e'
-        # qualcosa da riconciliare, e con quale delle due domande.
-        # Il difetto che chiude: 155 ritiri sul corpus, 0 prima del default ON del
-        # 19/07 e 155 dopo, 54 sbagliati su 60 letti uno per uno — fra le vittime
-        # le celle di uno stesso banco e i due bracci dei nostri A/B.
-        # Il perimetro e' STRETTO come quello sopra: serve una firma su ENTRAMBI i
-        # lati. Chi scrive senza fonte contro un fatto groundato resta un conflitto.
-        if old is not None and due_fonti_dichiarate_e_diverse(cand, old):
-            if fonti_distinte is not None and cid not in fonti_distinte:
-                fonti_distinte.append(cid)
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
@@ -1072,22 +1038,6 @@ _TESTI_VERDETTO_L3: dict[str, dict[str, str]] = {
         "advice": (
             "this write updates an earlier value from the same source; "
             "the older value is superseded."
-        ),
-    },
-    # ⚠️ NON E' `L3-coexistence`, E LA DIFFERENZA VA DETTA A CHI LEGGE: quello
-    # dichiara «parlano di DUE COSE diverse» (due pazienti, due datacenter, due
-    # record), questo dichiara «parlano della STESSA cosa, e le due FONTI non
-    # concordano». Chi riceve il warning deve poterli distinguere: nel primo
-    # caso non c'e' niente da riconciliare, nel secondo c'e' e tocca a lui.
-    "L3-fonti-distinte": {
-        "reason": "two DECLARED and DIFFERENT sources disagree: both facts are kept",
-        "advice": (
-            "the clashing facts cite DIFFERENT sources, so neither is an update "
-            "of the other and neither is discarded: both stay servable and "
-            "recall returns them together, disagreement visible. If one of the "
-            "two really does supersede the other, retire the old one EXPLICITLY "
-            "(`supersede(old_id, new_id)`) — this store will not guess which of "
-            "two declared sources is right."
         ),
     },
 }
@@ -2162,16 +2112,13 @@ def run_validation_gate(
             # value is an evolution — retire the old, admit the new — not a quarantine.
             _conflicts = ev
             _sup_prima = len(supersede_ids)
-            _fonti_distinte: list[str] = []
             if _supersede_same_source_on() and ev:
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
                                                claimant=claimant,
                                                proposition=proposition,
                                                cand_ha_source=bool(
-                                                   source and str(source).strip()),
-                                               cand_source=source,
-                                               fonti_distinte=_fonti_distinte)
+                                                   source and str(source).strip()))
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
@@ -2185,23 +2132,6 @@ def run_validation_gate(
                 warnings.append({
                     "layer": "L3-supersession",
                     **_TESTI_VERDETTO_L3["L3-supersession"],
-                })
-            elif _fonti_distinte:
-                # LA QUARTA USCITA, e sta PRIMA di `L3-coexistence` di proposito:
-                # sono uscite dallo stesso `continue` ma per ragioni diverse, e il
-                # messaggio che chi legge riceve deve dire QUALE — «due cose
-                # diverse, niente da riconciliare» oppure «una cosa sola, due
-                # fonti che non concordano». Riusare l'altro testo direbbe la
-                # prima cosa in un caso che e' la seconda.
-                #
-                # ⚠️ LIMITE EREDITATO, non introdotto qui: questa e' una catena
-                # `elif`, quindi una scrittura che ritira una coppia E coesiste
-                # con un'altra annuncia solo la prima. Valeva gia' per le tre
-                # uscite precedenti; le coppie multiple su una singola scrittura
-                # sono rare e non le ho misurate.
-                warnings.append({
-                    "layer": "L3-fonti-distinte",
-                    **_TESTI_VERDETTO_L3["L3-fonti-distinte"],
                 })
             elif ev:
                 # ⚠️ IL MESSAGGIO DICHIARAVA UN'AZIONE CHE NON ERA AVVENUTA.
@@ -2266,16 +2196,6 @@ def run_validation_gate(
                     # so a missing model degrades to "no warning", never a crash.
                     from .local_relation import get_local_relation_judge
                     _judge = get_local_relation_judge()
-                # ⚠️ L'IMPORT STA QUI, SOPRA IL PRIMO USO, E NON PIU' IN BASSO CON
-                # GLI ALTRI: sotto ha prodotto un `NameError` che il
-                # `except Exception: pass` di fine blocco — «optional moat must
-                # never crash a write» — ha inghiottito, spegnendo l'INTERO ramo
-                # semantico in silenzio. 12 test rossi con la stessa forma
-                # («nessun warning emesso»), e nessuno che nominasse la causa.
-                # 🔑 Un fail-soft che protegge le scritture nasconde anche gli
-                # errori di chi lo modifica: dentro questo `try` un import va
-                # messo PRIMA di cio' che lo usa, non «con gli altri».
-                from .supersession_policy import source_signature_of
                 # `writer_principal` anche qui: e' il GEMELLO del candidato di
                 # `_route_evolutions`, e curare uno solo dei due lascia intatto
                 # il difetto — la lezione «dopo ogni cura chiedi: chi ALTRO fa
@@ -2285,14 +2205,6 @@ def run_validation_gate(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(), verified_by=verified_by,
                     asserted_at=asserted_at, writer_principal=claimant,
-                    # ⚠️ LO STESSO CAMPO MANCAVA ANCHE QUI, ed e' il secondo
-                    # candidato sintetico del modulo: vedi la nota lunga in
-                    # `_route_evolutions`. Senza, `canonical_source_of` legge
-                    # ASSENZA di firma e non DIFFERENZA, e i due rami che
-                    # decidono la supersessione danno risposte diverse sulla
-                    # stessa coppia — che e' il difetto per cui il presidio del
-                    # 04/08 «non si sapeva spiegare».
-                    source_signature=source_signature_of(source),
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 if _l3_subject_filter():
@@ -2315,7 +2227,6 @@ def run_validation_gate(
                 from .semantic import _STATUS_RANK
                 from .supersession_policy import (
                     classify_write_relation,
-                    due_fonti_dichiarate_e_diverse,
                     references_fact,
                 )
                 _supersede_on = _supersede_same_source_on()
@@ -2487,8 +2398,7 @@ def run_validation_gate(
                           # decide col coseno. Stesso caso, stesse stringhe: dentro pytest
                           # il fatto sopravvive, fuori viene ritirato.
                           # Il banco di questa riga è perciò uno SCRIPT, non un test:
-                          #   docs/stato-reale/banchi/, il banco «il-caso-reale-del-ramo-semantico»
-                          #   (il file porta il prefisso di chi l'ha scritto)
+                          #   docs/stato-reale/banchi/il-caso-reale-del-ramo-semantico.py
                           and not _senza_source_contro_groundato(
                               bool(source and str(source).strip()), _old)):
                         # enforce + ENGRAM_SUPERSEDE_SAME_SOURCE: the same source updated
@@ -2505,65 +2415,6 @@ def run_validation_gate(
                         })
                         if _oid:
                             supersede_ids.append(_oid)
-                    elif (_rel == "conflict" and _old is not None
-                          and due_fonti_dichiarate_e_diverse(_new, _old)):
-                        # ═══ LA QUARTA USCITA (2026-09-06): DUE FONTI DICHIARATE
-                        # CHE NON CONCORDANO NON SI RITIRANO E NON SI QUARANTINANO.
-                        #
-                        # ⚠️ LIMITE DICHIARATO, e va letto prima di contarci sopra:
-                        # NON HO PROVATO che questo ramo si attivi DALLA PORTA. La
-                        # gemella in `_route_evolutions` sì — è quella che il banco
-                        # `il-presidio-con-le-due-colonne.py` esercita su tutti e
-                        # cinque i casi — mentre qui vale l'avvertenza che il ramo
-                        # porta già scritta trenta righe più su per `L3-coexistence`:
-                        # su quel percorso, con `ENGRAM_SEMANTIC_CONFLICT=1`, il
-                        # giudice NLI non dichiarava contraddizione e il loop non ci
-                        # passava. Le due uscite emettono lo STESSO layer, quindi il
-                        # banco non le distingue: per sapere quale ha deciso servirebbe
-                        # strumentarle, e non l'ho fatto.
-                        # ⇒ La cura non dipende da questo ramo: sta qui perché il
-                        # percorso semantico ha il proprio candidato e la propria
-                        # copia della decisione, e lasciarne una sola curata è il
-                        # difetto che questo file racconta due volte. Ma finché non
-                        # è misurata dalla porta, questa metà è una PRECAUZIONE, non
-                        # una capacità dimostrata.
-                        #
-                        # Il difetto che chiude, misurato sul corpus: `canonical_source_of`
-                        # non leggeva `source_signature`, quindi due firme DIVERSE davano
-                        # entrambe `"user"`, «stessa fonte» era vero PER COSTRUZIONE, la
-                        # coppia usciva `evolution` e il ramo sopra RITIRAVA il vecchio.
-                        # **155 ritiri** cosi': 0 prima del default ON del 19/07 e 155
-                        # dopo, 153 con grounding >= 85, **54 sbagliati su 60 letti uno
-                        # per uno**. Fra le vittime: le celle di uno stesso banco (un
-                        # fatto ne ha ritirate tre) e **i due bracci dei nostri A/B** —
-                        # «GRADED_ADMISSION acceso: 296 falsi» archiviato da «spento: 40
-                        # falsi». Il recall serviva un braccio e taceva l'altro.
-                        #
-                        # 🔑 PERCHE' UNA QUARTA USCITA E NON UNA DELLE TRE:
-                        #   · ritirare  → si perde una misura vera, ed e' il difetto;
-                        #   · quarantinare → si perde LA STESSA misura, cambia solo il
-                        #     nome del posto in cui sparisce (e' l'errore che il 04/08
-                        #     fece ritirare la cura precedente: allora la terza uscita
-                        #     non esisteva ancora);
-                        #   · `L3-coexistence` → dichiara «DUE COSE diverse», e qui la
-                        #     cosa e' UNA: sono le fonti a essere due. Riusarlo direbbe
-                        #     a chi legge che non c'e' niente da riconciliare.
-                        # ⇒ Si TIENE tutto e si DICHIARA il disaccordo. La sintesi non
-                        # e' un compito dello store: e' di chi conosce le due fonti.
-                        #
-                        # ⚠️ IL GRIEFING CROSS-SOURCE CONTINUA A QUARANTINARE, e non
-                        # per una guardia in piu' ma per la CONDIZIONE STESSA: serve una
-                        # `source_signature` su ENTRAMBI i lati. Chi scrive senza fonte
-                        # contro un fatto groundato cade nell'`else` come prima, e chi
-                        # una fonte la porta deve comunque passare L4 — il moat verifica
-                        # che quel testo sostenga davvero la proposizione.
-                        warnings.append({
-                            "layer": "L3-fonti-distinte",
-                            **_TESTI_VERDETTO_L3["L3-fonti-distinte"],
-                            "other_fact_id": _oid,
-                        })
-                        # NIENTE in `supersede_ids` e NIENTE in `contradicting_ids`:
-                        # e' esattamente questo che li tiene vivi entrambi.
                     else:
                         # cross-source conflict, OR evolution with supersede OFF: the
                         # conservative default — quarantine the new claim.
