@@ -401,12 +401,34 @@ class LocalGroundingJudge:
 
     def _tokenizzatore(self) -> Any | None:
         """Il tokenizzatore del gate, caricato una volta e riusato. None quando
-        il modello non c'e': il giudice deve poter fallire senza rumore."""
+        il modello non c'e': il giudice deve poter fallire senza rumore.
+
+        ⚠️ L'IMPORT STA FUORI DAL LOCK, e non e' un dettaglio di stile. Prima
+        stava dentro, e misurato il 2026-09-06 sul server MCP significava questo:
+
+            LOCK=False TOK=False TOKFAIL=False   <- prima che la richiesta arrivi
+            LOCK=True  TOK=False TOKFAIL=False   <- per i 120 s successivi, 24 letture
+
+        cioe' il lock veniva preso e non piu' rilasciato mentre il thread era
+        fermo dentro ``from transformers import AutoTokenizer`` — e ogni altra
+        scrittura con fonte che arrivava a questo punto si accodava dietro un
+        IMPORT. Il lock serve a non costruire DUE tokenizzatori: quello che deve
+        proteggere e' ``from_pretrained``, non l'import, che Python serializza
+        gia' da se'.
+
+        ⚠️ Questo NON fa tornare un import che non ritorna: toglie il contagio
+        alle altre scritture, non il blocco. Il blocco lo toglie il preload
+        (``preload.py``), che carica la catena PRIMA che il server serva.
+        """
         if self._tok is None and not self._tok_failed:
+            try:
+                from transformers import AutoTokenizer
+            except Exception:  # noqa: BLE001 — transformers assente: si prosegue
+                self._tok_failed = True
+                return self._tok
             with self._lock:
                 if self._tok is None and not self._tok_failed:
                     try:
-                        from transformers import AutoTokenizer
                         self._tok = AutoTokenizer.from_pretrained(str(self.model_dir))
                     except Exception:  # noqa: BLE001 — assente/corrotto: si prosegue
                         self._tok_failed = True
