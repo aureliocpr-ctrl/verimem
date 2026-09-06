@@ -57,7 +57,31 @@ rifatto il conto **sulla cosa**: i campi nuovi comparsi nelle risposte del prodo
 git diff v0.7.6..origin/main -- verimem/ | grep "^+" | grep -oE '"[a-z_]{4,30}":'
 
 as_of · as_of_scartati · as_of_scartati_ignoto      cosa il filtro temporale ha tolto
-esclusi · expired_reason · gia_ritirato · corrente  cosa è stato tolto, e per quale ragione
+esclusi · corrente · non_ancora                     cosa è stato tolto, e per quale ragione
+```
+
+> 🔁🔴 **CORRETTO il 06/09 alle 14:28, ed è un errore mio della stessa famiglia
+> che passo la giornata a intercettare.** L'elenco qui sopra diceva *«i campi
+> nuovi comparsi nelle RISPOSTE del prodotto»*, e ci avevo messo anche
+> **`expired_reason`** e **`gia_ritirato`**. Verificato su `main` `5e61d333`:
+>
+> ```
+> expired_reason   solo in verimem/time_decay.py
+> gia_ritirato     solo in verimem/temporal_context.py
+> nessuno dei due compare in mcp_server.py, cli.py, memory.py
+> ```
+> ⇒ **sono campi del MOTORE, e non è verificato che arrivino a chi legge.** Li
+> avevo contati nel **diff del codice** e chiamati «campi nelle risposte»: è la
+> stessa scorciatoia — contare dove è comodo e nominare dove serve.
+> 📌 **Non dico che non arrivino**: un dizionario costruito in `time_decay` può
+> essere inoltrato intero senza che la porta nomini il campo. **Il controllo che
+> decide è guardare la risposta vera**, e non l'ho fatto. Intanto li tolgo
+> dall'elenco: **in vetrina resta solo ciò che è verificato**.
+> 🪞 *Il grep che me l'ha fatto notare cercava in due file soli e dava due zeri;
+> se l'avessi pubblicato sarebbe stato un reperto falso. Allargato a `verimem/`,
+> i campi esistono — è il PERCORSO fino all'utente che non è provato.*
+
+```
 non_ancora · quarantined · grounding_score          lo stato del giudizio
 ```
 
