@@ -138,6 +138,7 @@ def parte_giudice() -> int:
     t0 = time.perf_counter()
     get_local_judge()._ensure_scorer()
     print(f"warmup del giudice in-process: {time.perf_counter() - t0:.1f} s")
+    solo_pa = len(sys.argv) > 1 and sys.argv[1] == "pa"   # seconda passata: solo P-A
 
     # ---- P-D: i 120 del P3 (ASCII + accentata), N=1 => identita' ------------
     p3 = carica("ws3-P3-la-popolazione-implicita-contro-quattro-scorer")
@@ -146,6 +147,9 @@ def parte_giudice() -> int:
     for fonte, falso, vero in p3.casi():
         coppie += [(fonte, falso), (fonte, vero)]
     coppie += [(grafie.accentata(f), grafie.accentata(c)) for f, c in coppie[:60]]
+    if solo_pa:
+        coppie = []
+        print("(seconda passata: P-D e P-E saltate, misurate alle 09:49-10:04)")
     t1 = time.perf_counter()
     n_dec = n_id = 0
     scarti = []
@@ -167,6 +171,8 @@ def parte_giudice() -> int:
 
     # ---- P-E: i 5 zavorra del lead, alla porta (N=1 -> focus) e a funzione ---
     pe = carica("ws3-P-E-il-max-per-frase-contro-il-focus-sulla-zavorra")
+    if solo_pa:
+        pe.ZAVORRA = []
     print("\nP-E · i 5 casi zavorra del lead")
     print(f"   {'caso':14s} atteso   porta(score,fermato)   funzione MAX(score,fermato)")
     porta_f = fun_f = 0
