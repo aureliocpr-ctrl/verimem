@@ -252,7 +252,8 @@ def stato_a(sm, fact, when: float) -> str:
 
 
 def recall_as_of(sm, query: str, *, when: float, k: int = 5,
-                 include_beliefs: bool = False) -> list[tuple]:
+                 include_beliefs: bool = False,
+                 include_superseded: bool = False) -> list[tuple]:
     """Time-travel recall over the bi-temporal store: the facts that were
     CURRENT at ``when`` — asserted on/before it (event time, ``asserted_at``
     with ``created_at`` fallback) and not yet superseded by then
@@ -282,6 +283,16 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
     # 🔑 Il canale e' quello gia' usato per il degrado (`_recall_degraded_count`,
     # letto in `client.recall` prima e dopo): un contatore sull'oggetto, nessuna
     # firma cambiata, nessun chiamante da aggiornare.
+    #: ⚠️ `include_superseded` NON e' un doppione della pesca qui sopra (che
+    #: include i ritirati SEMPRE, per avere i candidati): riguarda il FILTRO.
+    #: Senza, si tengono solo i `corrente` a `when` — la risposta alla domanda
+    #: «cosa valeva allora». Con, si tengono anche i `gia_ritirato`: «cosa
+    #: valeva allora, PIU' cio' che a quel punto era gia' stato sostituito».
+    #: Prima questo parametro non arrivava fin qui: `Memory.search` lo accetta
+    #: nella firma pubblica e il ramo `as_of` lo INGOIAVA IN SILENZIO — misurato
+    #: sull'SDK e confermato sulla CLI dalla QA il 06/09. Un parametro accettato
+    #: e ignorato e' il difetto che il pezzo 3 ha chiuso sulle due porte MCP:
+    #: questa e' la terza porta, e da qui passa anche la riga di comando.
     scartati = 0
     for hit in hits:
         stato = stato_a(sm, hit[0], when)
@@ -289,6 +300,15 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
             scartati += 1
             continue
         if stato == "gia_ritirato":
+            if include_superseded:
+                #: CHIESTI ESPLICITAMENTE: chi passa `include_superseded` vuole
+                #: «cosa valeva allora PIU' cio' che a quel punto era gia'
+                #: stato sostituito» — la storia fino a quell'istante. Non si
+                #: conta fra gli scartati nemmeno qui: non e' stato scartato.
+                out.append(hit)
+                if len(out) >= k:
+                    break
+                continue
             # ⚠️ QUESTO SCARTO NON SI CONTA, ed e' il presidio
             # `test_senza_scarti_non_si_dichiara_niente` ad averlo detto: un
             # fatto gia' SUPERSEDUTO a quella data e' escluso perche' il time

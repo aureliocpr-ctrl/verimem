@@ -1282,8 +1282,14 @@ class Memory:
         _scartati_dal_tempo = 0
         if as_of is not None:
             from .temporal_context import recall_as_of
+            #: `include_superseded` INOLTRATO, non ingoiato. Prima questo
+            #: ramo non lo passava e `recall_as_of` non lo accettava: la firma
+            #: pubblica lo prendeva e il risultato lo ignorava, in silenzio.
+            #: Misurato sull'SDK il 06/09 e confermato sulla CLI dalla QA —
+            #: e la CLI passa proprio da qui, quindi guarisce con questa riga.
             hits = recall_as_of(self.semantic, query, when=float(as_of), k=k,
-                                include_beliefs=include_beliefs)
+                                include_beliefs=include_beliefs,
+                                include_superseded=include_superseded)
             _scartati_dal_tempo = int(
                 getattr(self.semantic, "_as_of_scartati", 0) or 0)
         else:
