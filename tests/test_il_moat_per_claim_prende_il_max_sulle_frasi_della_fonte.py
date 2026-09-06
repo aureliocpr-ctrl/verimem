@@ -59,7 +59,10 @@ class _GiudiceCheVedeLeFrasi(lg.LocalGroundingJudge):
         super().__init__()
         self.lotti: list[int] = []
         self._scorer = self._finto
-        self.threshold = 40.0
+
+    @property
+    def threshold(self) -> float:  # nella base e' una property senza setter
+        return 40.0
 
     def _finto(self, batch):  # noqa: ANN001
         self.lotti.append(len(batch))
