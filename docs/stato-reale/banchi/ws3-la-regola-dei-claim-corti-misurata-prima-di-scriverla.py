@@ -36,7 +36,18 @@ PREDIZIONI, depositate in questo commit prima di eseguire:
         e' basso e la regola e' economica; se <= 8, il prezzo e' il muro 1 sui
         claim corti e la regola va accompagnata da un'altra difesa (L1 sulla
         coda nuda, o il terzo stato «review»).
-Uso: python <questo file> a | b   (RAM letta prima; b con lo slot).
+  C (col giudice, slot; aggiunta alle 13:11 dopo la parte A, dichiarata): la
+    via (b) — il claim caduto rigiudicato con l'INTERO COME CONTESTO DELLA
+    PREMESSA: premessa = fonte + la testa (il claim provato), ipotesi = il
+    claim caduto da solo. Il contesto (soggetto, argomento) arriva al giudice
+    senza che la verita' della testa trasporti la coda: la coda falsa del RED
+    3b («ha scaricato 746 MB di modello») deve cadere ancora, perche' ne' la
+    fonte ne' la testa la provano.
+  P-R4  sui 96 crolli, con la premessa allargata almeno 45 tornano >= 40; e la
+        coda falsa del RED 3b resta < 40. Sulle 30 code false corte di B, con
+        la premessa allargata ne restano fermate almeno 20/30 (contro <= 8/30
+        della regola sulla lunghezza).
+Uso: python <questo file> a | b | c   (RAM letta prima; b e c con lo slot).
 Store di Aurelio: SOLO lettura (mode=ro).
 """
 from __future__ import annotations
@@ -216,5 +227,56 @@ def parte_b() -> int:
     return 0
 
 
+def parte_c() -> int:
+    """La via (b): il claim caduto con l'intero come contesto della premessa."""
+    import verimem
+    from verimem.atomic_claims import decomponi
+    from verimem.local_grounding import get_local_judge, punteggi_max_per_frase, try_local_score
+    print("IMPORT DA", verimem.__file__)
+    t0 = time.perf_counter()
+    get_local_judge()._ensure_scorer()
+    print(f"warmup: {time.perf_counter() - t0:.1f} s")
+
+    det = json.loads(JSON_177.read_text(encoding="utf-8"))
+    crolli = [d for d in det if causa(d) == "crollo giudice"]
+    rec = 0
+    righe_out = []
+    for d in crolli:
+        testa = d["claims"][0]
+        caduti = [(c, float(v["score"])) for c, v in zip(d["claims"], d["claims_verdict"], strict=False)
+                  if (v or {}).get("score") is not None and float(v["score"]) < SOGLIA]
+        c, s = caduti[0]
+        contesto = f"{testa} {c}" if c != testa else c
+        premessa = f"{d['span']}\n{testa}" if c != testa else d["span"]
+        r = punteggi_max_per_frase(premessa, [c])
+        nuovo = r[0] if r else (try_local_score(premessa, c) or (None,))[0]
+        rec += nuovo is not None and nuovo >= SOGLIA
+        righe_out.append((d["id"], c[:70], s, None if nuovo is None else round(nuovo, 1), contesto[:0]))
+    print(f"\nC · i {len(crolli)} crolli: claim caduto rigiudicato con premessa = fonte + testa: tornano >= 40 {rec}/{len(crolli)}")
+    print(f"   P-R4 (>= 45): {'REGGE' if rec >= 45 else '🔴 FALSIFICATA'}")
+    for r in righe_out[:10]:
+        print(f"   {r[0]} «{r[1]}» {r[2]:.1f} -> {r[3]}")
+
+    # la coda falsa del RED 3b deve cadere ancora
+    fonte = "$ verimem warmup\n[14:52:10] downloading gate model...\n[14:53:02] warmup finished OK"
+    composta = "Il comando warmup e' finito alle 14:53 e ha scaricato 746 MB di modello"
+    cl = decomponi(composta, eredita_soggetto=True)
+    r = punteggi_max_per_frase(f"{fonte}\n{cl[0]}", [cl[-1]])
+    print(f"   controllo: la coda falsa «{cl[-1]}» con la testa in premessa -> {None if not r else round(r[0], 1)}  "
+          f"{'cade ancora' if r and r[0] < SOGLIA else '🔴 PASSA: la testa trasporta la coda'}")
+
+    # le 30 code false corte di B, con la premessa allargata
+    p3 = carica("ws3-P3-la-popolazione-implicita-contro-quattro-scorer")
+    veri = [(f, v) for f, _x, v in p3.casi()][:30]
+    fermate = 0
+    for (fonte_v, vero), coda in zip(veri, CODE_FALSE_CORTE, strict=True):
+        cl = decomponi(vero.rstrip(".") + coda, eredita_soggetto=True)
+        r = punteggi_max_per_frase(f"{fonte_v}\n{cl[0]}", [cl[-1]])
+        fermate += bool(r) and r[0] < SOGLIA
+    print(f"   le 30 code false corte con la premessa allargata: fermate {fermate}/30  {'REGGE (>= 20)' if fermate >= 20 else '🔴 il contesto trasporta le code false'}")
+    return 0
+
+
 if __name__ == "__main__":
-    sys.exit(parte_a() if (len(sys.argv) < 2 or sys.argv[1] == "a") else parte_b())
+    parte = sys.argv[1] if len(sys.argv) > 1 else "a"
+    sys.exit({"a": parte_a, "b": parte_b, "c": parte_c}[parte]())
