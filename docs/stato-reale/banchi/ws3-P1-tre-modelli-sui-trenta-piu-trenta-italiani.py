@@ -81,6 +81,39 @@ contraddizioni IMPLICITE — che sono il caso dove il nostro gate fallisce
 davvero — ne' sull'inglese, ne' sui casi lunghi, ne' sul costo in RAM e in
 secondi di B e C. Chi legge il vincitore come «il modello migliore» legge piu'
 di quanto c'e' scritto.
+━━ ⚠️ NOTA DI ws4, 2026-09-06: LA RIGA R MISURA IL DAEMON, NON LA CARTELLA ━━
+Il R qui sopra e' CORRETTO — riprodotto il 06/09 alle 10:12 su sei numeri su
+sei (0.8700 / 0.8067 e falsi fermati 21 21 24 26) — ma lo e' per una
+COINCIDENZA che vale la pena scrivere, perche' chi riusa questo banco ci cade.
+
+`punteggi_nostro` chiama `try_local_score`. Con HIPPO_ENCODE_DELEGATE_ONLY=1
+(come gira il server MCP, ed e' l'impostazione di questa macchina) quella
+funzione prende il ramo `_gate_via_daemon` e restituisce IL PUNTEGGIO DEL
+DAEMON CONDIVISO — un processo separato col proprio modello in memoria, che
+non sa niente di ENGRAM_LOCAL_GATE_MODEL — insieme alla SOGLIA letta dalla
+cartella puntata. Qui i due coincidono (il daemon ha il v2, che e' R), quindi
+il numero e' giusto.
+
+⇒ MA LA RIGA R NON E' RIUSABILE PER MISURARE UN ALTRO CE. Puntando
+ENGRAM_LOCAL_GATE_MODEL a un modello diverso si riottiene R, credendo di aver
+misurato l'altro. Misurato il 06/09 alle 10:05, stessa coppia:
+
+    con delega     v2 -> 97.21405029296875   ce_v31 -> 97.21405029296875
+    senza delega   v2 -> 97.21405029296875   ce_v31 -> 94.9189453125
+
+Per misurare un CE diverso serve HIPPO_ENCODE_DELEGATE_ONLY=0.
+Le righe A, B e C NON sono toccate: `punteggi_hf` carica i modelli da se'.
+
+⚠️ E C'E' UN SECONDO STATO, PIU' SILENZIOSO. Se il daemon non risponde
+(`judge_state()` torna "warming", misurato alle 13:03 dello stesso giorno)
+`try_local_score` restituisce None, e la riga
+
+    return float(r[0]) if r is not None else 0.0
+
+mette 0.0 su TUTTI i sessanta casi: AUROC 0.5 e nessun avviso. Chi rilancia
+questo banco con il daemon freddo legge un crollo del nostro giudice che non
+e' avvenuto. Conviene stampare quanti punteggi sono 0.0 prima di leggere la
+tabella.
 """
 from __future__ import annotations
 
