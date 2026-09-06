@@ -1,0 +1,42 @@
+{
+  "store": "C:\\Users\\aurel\\AppData\\Local\\Temp\\iris-ub-g50h_8c_",
+  "regime": "SDK, con fonte (il moat GIRA)",
+  "esiti": [
+    {
+      "passo": "1 due scrittori",
+      "esito": "PASSA",
+      "dettaglio": "anna id=46fd1029565b · bruno id=5d278cddf754"
+    },
+    {
+      "passo": "2 provenienza",
+      "esito": "PASSA",
+      "dettaglio": "campi disponibili: ['superseded_by', 'verified_by', 'writer_principal'] · writer_principal letti: ['anna', 'bruno'] · atteso 'anna'"
+    },
+    {
+      "passo": "3 correzione (senza asserted_at)",
+      "esito": "PASSA",
+      "dettaglio": "campi che parlano di conflitto/supersessione: ['adjudication'] · {'adjudication': {'disposition': 'admitted', 'evidence_class': 'cross_encoder', 'judge': {'backend': 'local', 'model': 'local_gate_ce_v2', 'version': None}, 'score': 99.91865539550781, 'threshold': 40.0, 'margin': 59.9187, 'reason': '', 'confidence_tier': 'high'}}"
+    },
+    {
+      "passo": "3 correzione (con asserted_at)",
+      "esito": "PASSA",
+      "dettaglio": "campi che parlano di conflitto/supersessione: ['adjudication'] · {'adjudication': {'disposition': 'admitted', 'evidence_class': 'cross_encoder', 'judge': {'backend': 'local', 'model': 'local_gate_ce_v2', 'version': None}, 'score': 99.91865539550781, 'threshold': 40.0, 'margin': 59.9187, 'reason': '', 'confidence_tier': 'high'}}"
+    },
+    {
+      "passo": "4 solo il corrente",
+      "esito": "NON PASSA",
+      "dettaglio": "Adyen presente: True · Stripe ancora presente: True"
+    },
+    {
+      "passo": "5 audit",
+      "esito": "NON MISURABILE",
+      "dettaglio": "l'audit e' della porta MCP e questo banco usa l'SDK; file trovati: nessuno (atteso: nessuno)"
+    },
+    {
+      "passo": "6 scadenza dichiarata",
+      "esito": "NON PASSA",
+      "dettaglio": "la risposta nomina la scadenza: False"
+    }
+  ],
+  "criterio_di_arrivo_raggiunto": false
+}

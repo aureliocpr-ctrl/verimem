@@ -1,0 +1,57 @@
+{
+  "regime": {
+    "albero": "2b62983a",
+    "ora": "04:11:20"
+  },
+  "lettura": {
+    "query": "fornitore di pagamenti del checkout",
+    "topic": null,
+    "include_legacy": false,
+    "min_status": null,
+    "items": [
+      {
+        "id": "945290a09926",
+        "proposition": "Il fornitore di pagamenti del servizio checkout e' Adyen.",
+        "topic": "ub4",
+        "confidence": 0.9,
+        "created_at": 1788660704.9066813,
+        "verified_by": [],
+        "status": "model_claim",
+        "meta_narrative": false,
+        "writer_principal": "mcp:unbound",
+        "grounding_score": 99.78882598876953,
+        "confidence_tier": "high"
+      },
+      {
+        "id": "7d91c3431ebf",
+        "proposition": "Il fornitore di pagamenti del servizio checkout e' Stripe.",
+        "topic": "ub4",
+        "confidence": 0.9,
+        "created_at": 1788660704.6890013,
+        "verified_by": [],
+        "status": "model_claim",
+        "meta_narrative": false,
+        "writer_principal": "mcp:unbound",
+        "grounding_score": 99.83602142333984,
+        "confidence_tier": "high"
+      }
+    ],
+    "ricerca": {
+      "ramo": "and",
+      "ordinati_per": "created_at DESC"
+    }
+  },
+  "risposta_correzione": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"id\": \"945290a09926\",\n  \"proposition\": \"Il fornitore di pagamenti del servizio checkout e' Adyen.\",\n  \"topic\": \"ub4\",\n  \"confidence\": 0.9,\n  \"replaced\": false,\n  \"grounding_score\": 99.78882598876953,\n  \"moat\": \"judged 99.8 \\u2014 the source SCORES as supporting this fact: that is the judge's score, not a check that the fact follows from it\",\n  \"deferred\": false,\n  \"status\": \"model_claim\",\n  \"verified_by\": [],\n  \"source_signature\": null,\n  \"anti_confab_warnings\": [],\n  \"gate_knobs_denied\": [],\n  \"adjudication\": {\n    \"disposition\": \"admitted\",\n    \"evidence_class\": \"cross_encoder\",\n    \"judge\": {\n      \"backend\": \"local\",\n      \"model\": \"local_gate_ce_v2\",\n      \"version\": null\n    },\n    \"score\": 99.78882598876953,\n    \"threshold\": 40.0,\n    \"margin\": 59.7888,\n    \"reason\": \"\",\n    \"confidence_tier\": \"high\"\n  }\n}"
+        }
+      ],
+      "isError": false
+    }
+  }
+}

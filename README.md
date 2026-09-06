@@ -427,7 +427,12 @@ from verimem import Memory
 # below would fail — doctor tells you exactly why. And it costs more than the
 # missing check: with nothing judging them, the second write retracts the first,
 # so the confabulation ends up the only fact left live.
-m = Memory("memory.db")
+m = Memory()   # no argument: the library, the CLI and the MCP server all open the
+               # SAME store. Passing a path — Memory("memory.db") — is relative to
+               # the current directory and only the SDK can receive it: `verimem
+               # recall` would then answer "no facts found" with exit 0 from that
+               # very folder, and there is no --db flag to point it back. Known,
+               # open: docs/stato-reale/GRAVITA-DIFETTI.md (T16).
 
 # THE MOAT, live — the reason Verimem exists. Same source, two writes; works
 # with NO llm, in any language (the local CE is the judge):
@@ -439,7 +444,7 @@ assert r["status"] == "quarantined"   # stored but OUT of default recall —
 
 # Pass an llm for the highest-quality judge (and to extract facts from raw
 # conversations); the local CE is the free default when you don't.
-m = Memory("memory.db", llm=my_llm)   # any client with .complete(system, messages)
+m = Memory(llm=my_llm)   # any client with .complete(system, messages)
 
 # Gate presets: "balanced" (default), "strict" (reject on contradiction or
 # failed source-grounding), "permissive" (creative / low-stakes, no quarantine).

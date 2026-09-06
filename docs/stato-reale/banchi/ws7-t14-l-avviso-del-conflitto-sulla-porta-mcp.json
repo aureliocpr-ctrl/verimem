@@ -1,0 +1,15 @@
+{
+  "risposta_correzione": {
+    "jsonrpc": "2.0",
+    "id": 3,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "{\n  \"ok\": true,\n  \"id\": \"7b4da6adf1af\",\n  \"proposition\": \"Il fornitore di pagamenti del servizio checkout e' Adyen.\",\n  \"topic\": \"t14\",\n  \"confidence\": 0.9,\n  \"replaced\": false,\n  \"grounding_score\": 99.78882598876953,\n  \"moat\": \"judged 99.8 \\u2014 the source SCORES as supporting this fact: that is the judge's score, not a check that the fact follows from it\",\n  \"deferred\": false,\n  \"status\": \"model_claim\",\n  \"verified_by\": [],\n  \"source_signature\": null,\n  \"anti_confab_warnings\": [],\n  \"gate_knobs_denied\": [],\n  \"adjudication\": {\n    \"disposition\": \"admitted\",\n    \"evidence_class\": \"cross_encoder\",\n    \"judge\": {\n      \"backend\": \"local\",\n      \"model\": \"local_gate_ce_v2\",\n      \"version\": null\n    },\n    \"score\": 99.78882598876953,\n    \"threshold\": 40.0,\n    \"margin\": 59.7888,\n    \"reason\": \"\",\n    \"confidence_tier\": \"high\"\n  }\n}"
+        }
+      ],
+      "isError": false
+    }
+  }
+}

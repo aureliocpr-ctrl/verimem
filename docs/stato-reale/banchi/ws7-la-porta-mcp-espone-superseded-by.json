@@ -1,0 +1,45 @@
+{
+  "regime": {
+    "albero": "ca28d8cf",
+    "ora": "03:13:41"
+  },
+  "supersede": {
+    "ok": true,
+    "old_id": "593e2233197d",
+    "new_id": "cc03b1d93342",
+    "reason": "",
+    "superseded_at": 1788657232.6781192,
+    "idempotent_noop": false,
+    "undo_op_id": "6fa5213bbf7a495c"
+  },
+  "lettura": {
+    "query": "fornitore di pagamenti del checkout",
+    "topic": null,
+    "include_legacy": false,
+    "min_status": null,
+    "items": [
+      {
+        "id": "cc03b1d93342",
+        "proposition": "Il fornitore di pagamenti del servizio checkout e' Adyen.",
+        "topic": "supby",
+        "confidence": 0.9,
+        "created_at": 1788657232.5887198,
+        "verified_by": [],
+        "status": "model_claim",
+        "meta_narrative": false,
+        "writer_principal": "mcp:unbound",
+        "grounding_score": null,
+        "confidence_tier": "unverified"
+      }
+    ],
+    "ricerca": {
+      "ramo": "and",
+      "ordinati_per": "created_at DESC"
+    },
+    "sotto_il_pavimento": {
+      "pavimento": 0.9088,
+      "score_migliore": 0.9006,
+      "nota": "nessun risultato supera la soglia di rilevanza calibrata su questo corpus: probabilmente la risposta NON e' in memoria. I risultati sono qui sotto, non tagliati — decidi tu."
+    }
+  }
+}

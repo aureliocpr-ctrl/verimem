@@ -1,0 +1,44 @@
+{
+  "righe_registro": [
+    {
+      "ts": 1788647670.8575969,
+      "tool": "hippo_remember",
+      "caller_pid": 29928,
+      "args_hash": "fd0309cbe12e7410",
+      "outcome": "ok_new",
+      "error": "",
+      "latency_ms": 20522.0173
+    },
+    {
+      "ts": 1788647670.8842165,
+      "tool": "hippo_facts_search",
+      "caller_pid": 29928,
+      "args_hash": "152fe13e66684c06",
+      "outcome": "ok",
+      "error": "",
+      "latency_ms": 8.1926
+    }
+  ],
+  "campi": [
+    "args_hash",
+    "caller_pid",
+    "error",
+    "latency_ms",
+    "outcome",
+    "tool",
+    "ts"
+  ],
+  "risposta_rifiutata": {
+    "jsonrpc": "2.0",
+    "id": 4,
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "Input validation error: 100 is greater than the maximum of 50"
+        }
+      ],
+      "isError": true
+    }
+  }
+}
