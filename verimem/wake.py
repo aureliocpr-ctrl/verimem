@@ -298,7 +298,13 @@ class WakeAgent:
         # generator (np.random.default_rng(seed)) to make the selection
         # reproducible for tests / replay; default_rng() seeds from the
         # OS for production runs.
-        self._rng = rng or np.random.default_rng()
+        # `np.random.default_rng()` IMPORTA numpy.random se non e' gia' in
+        # sys.modules: e' il punto in cui la richiesta si fermava nel dump di
+        # T1b (create_module su _bounded_integers). Sotto lo stesso lock degli
+        # altri import pesanti, cosi' si mette in fila invece di incrociarsi.
+        from ._import_lock import lock_import
+        with lock_import():
+            self._rng = rng or np.random.default_rng()
         # Cached on-purpose: the last consideration set, exposed for
         # observability sinks (dashboard / lineage). None until run() fires.
         self.last_consideration: list[Choice] = []

@@ -2519,6 +2519,44 @@ def run_validation_gate(
             # oggi (ammesso con l'advisory L4-skipped), che e' onesto.
             pass
 
+    # 🔑 SE IL GIUDICE STA CARICANDO, LA SCRITTURA LO ASPETTA — misurato il
+    # 06/09 in QA sul commit di release installato (A/B a una variabile,
+    # porta MCP, configurazione di DEFAULT):
+    #
+    #     warm su thread   moat_judge failed (import)  grounding None   judged False
+    #     warm sincrono    moat_judge complete 19,1 s  grounding 98.37  judged True
+    #
+    # Lo stesso identico fatto, con la stessa fonte. Uscire subito con
+    # `L4-skipped` mentre il giudice sta arrivando fa entrare NON VERIFICATO un
+    # fatto che sarebbe stato giudicato 98,37: il prodotto non mente (lo
+    # dichiara), ma non fa il lavoro proprio a chi lo ha chiesto passando una
+    # fonte.
+    #
+    # ⚠️ Si aspetta SOLO lo stato `warming`, cioe' «il modello c'e' e sta
+    # caricando». `absent` (non e' su disco) e `failed` restano L4-skipped
+    # all'istante: aspettare un giudice che non arrivera' sarebbe peggio del
+    # difetto.
+    if source and _ground_on and not _have_judge:
+        try:
+            import time as _t
+
+            from .local_grounding import judge_state as _stato
+            from .local_grounding import local_ce_available as _lca2
+            if _stato() == "warming":
+                _budget = float(
+                    os.environ.get("VERIMEM_JUDGE_WAIT_S") or 60.0)
+                _scadenza = _t.time() + _budget
+                while _t.time() < _scadenza:
+                    if _stato() != "warming":
+                        break
+                    _t.sleep(0.5)
+                # se e' arrivato, da qui in poi la scrittura viene GIUDICATA;
+                # se il budget e' scaduto, `_have_judge` resta falso e si esce
+                # con l'advisory di sempre — mai muti, mai piu' lenti del budget
+                _have_judge = _lca2()
+        except Exception:  # noqa: BLE001 — un'attesa non rompe una scrittura
+            pass
+
     def _emit_l4_skipped() -> None:
         warnings.append(_advisory_l4_skipped())
 

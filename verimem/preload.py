@@ -194,7 +194,9 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
     mai morire il boot.
     """
     try:
-        import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
+        from ._import_lock import lock_import
+        with lock_import():
+            import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
         if log is not None:
             log.info("mcp_preload_librerie_del_giudice_pronte")
     except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
@@ -322,7 +324,9 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
             # 2026-06-06 showed this preload thread holding the lock). Leave the
             # server embedding-less — encode() delegates to the shared daemon and
             # degrades (recall→keyword / save→defer) until the daemon is warm.
-            from . import embedding as _emb
+            from ._import_lock import lock_import
+            with lock_import():
+                from . import embedding as _emb
             if _emb._delegate_only():
                 if log is not None:
                     log.info("mcp_preload_delegate_only_skip_local_warm")

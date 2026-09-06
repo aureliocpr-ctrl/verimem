@@ -182,8 +182,16 @@ def make_finetuned_scorer(model_dir: str | Path, *, max_length: int = 512,
                           batch_size: int = 32) -> Scorer:
     """Production scorer over the saved binary-head CE: sigmoid(logit)*100 per
     (premise, hypothesis) pair. Imports transformers lazily."""
-    import torch
-    from transformers import AutoModelForSequenceClassification, AutoTokenizer
+    # ⚠️ SOTTO IL LOCK DEGLI IMPORT, e SOLO l'import: misurato il 06/09, questo
+    # `from transformers import ...` FALLISCE quando gira su un thread di
+    # sfondo mentre transformers si inizializza altrove
+    # («cannot import name 'AutoModelForSequenceClassification'»), mentre lo
+    # stesso import da solo riesce. Il caricamento dei pesi resta FUORI: dura
+    # 19,1 s e sotto il lock farebbe aspettare le richieste.
+    from ._import_lock import lock_import
+    with lock_import():
+        import torch
+        from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     tok = AutoTokenizer.from_pretrained(str(model_dir))
