@@ -690,7 +690,7 @@ def tiers(
     if json_out:
         console.print_json(data=inv)
         return
-    console.print(f"[dim]data dir[/] {inv['data_dir']}")
+    console.print(f"[dim]data dir[/] {inv['data_dir']}", soft_wrap=True)
     table = Table()
     table.add_column("tier")
     table.add_column("righe")
@@ -709,7 +709,7 @@ def tiers(
         for d in t.get("decoys") or []:
             console.print(f"[yellow]doppione[/] {t['tier']}: {d['path']} "
                           f"— righe {d['rows']}, {d['size_mb']} MB "
-                          f"[dim](non è il tier: contarlo dà un numero falso)[/]")
+                          f"[dim](non è il tier: contarlo dà un numero falso)[/]", soft_wrap=True)
 
 
 @app.command()
@@ -823,7 +823,7 @@ def index(
     try:
         res = DocumentIndex().index_file(path, source_id=source_id)
     except FileNotFoundError:
-        console.print(f"[red]file not found:[/red] {path}")
+        console.print(f"[red]file not found:[/red] {path}", soft_wrap=True)
         raise typer.Exit(1) from None
     except (ValueError, RuntimeError) as e:
         console.print(f"[red]{e}[/red]")
@@ -833,7 +833,7 @@ def index(
                       f"v{res['version']} (0 new chunks)")
         raise typer.Exit(0)
     console.print(f"[green]indexed[/green] {path} -> v{res['version']}, "
-                  f"{res['chunks_indexed']} chunks (source_id={res['source_id']})")
+                  f"{res['chunks_indexed']} chunks (source_id={res['source_id']})", soft_wrap=True)
 
 
 @app.command("search-docs", help="Semantic search over indexed documents, cited on the INDEXED TEXT.")
@@ -1046,7 +1046,7 @@ def console_cmd(
     url = f"http://127.0.0.1:{port}/ui"
     console.print(f"[green]verimem console[/green] → {url}")
     console.print(f"[cyan]store:[/cyan] {mem.semantic.db_path} "
-                  "(personal mode, loopback only)")
+                  "(personal mode, loopback only)", soft_wrap=True)
     if not no_browser:
         import threading
         import webbrowser
@@ -1175,7 +1175,7 @@ def import_cmd(
             list_conversations(export_path),
             match=match, since=since, project=project)
     except FileNotFoundError:
-        console.print(f"[red]file not found:[/red] {export_path}")
+        console.print(f"[red]file not found:[/red] {export_path}", soft_wrap=True)
         raise typer.Exit(1) from None
     except ValueError as e:
         console.print(f"[red]{e}[/red]")
@@ -2023,7 +2023,7 @@ def telemetry_cmd(
                               ensure_ascii=False))
             raise typer.Exit(0)
         console.print(f"[yellow]no audit log at {log_path}[/yellow] — the MCP "
-                      f"server writes it as it serves tools")
+                      f"server writes it as it serves tools", soft_wrap=True)
         raise typer.Exit(0)
     rep = analyze_audit_log(log_path, include_suite=include_suite)
     if as_json:
@@ -3974,7 +3974,7 @@ def facts_backup(
         f"[green]backup ok:[/green] {info.path}\n"
         f"  size: {info.size_bytes/1024:.1f} KB  "
         f"facts: {info.fact_count}  tier: {info.tier}"
-    )
+    , soft_wrap=True)
     if rotate:
         deleted = rotate_backups()
         if deleted:
