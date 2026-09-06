@@ -1,0 +1,105 @@
+# k etichetta — V = provato ALLA LETTERA dallo span (letto sui primi 300-330 caratteri dello span)
+# N = non visibile nello span letto (puo' stare oltre i 300 caratteri: da rileggere sullo span intero)
+# D = contraddetto dallo span, oppure frammento MALFORMATO dalla decomposizione (soggetto perso o spezzato)
+1 N  numeri 71/15 non nello span letto (L4.1 li dice assenti)
+2 N  «0 righe» e' inferenza: lo span mostra version invariata
+3 V  EL -> Greco, mappa codice-lingua
+4 N  frammento senza referente («La fonte» di quale caso?)
+5 V
+6 V
+7 V  negazione da output di script (rate presente? False)
+8 V
+9 V
+10 N  riga con 0 oltre il taglio
+11 D  span: SENZA patch 4 failed, non 1
+12 N  99.805 non nello span letto
+13 V
+14 V
+15 V  «No photos» letterale
+16 V
+17 V
+18 V  letterale, punteggio 27
+19 V
+20 D  frammento malformato («Team i layers…»)
+21 D  span: 11433 passed, non 11398
+22 N
+23 V
+24 V  «1168 -> model_claim» letterale
+25 N
+26 N
+27 V
+28 V
+29 V
+30 V
+31 V  «7 su 7», exit 0 e' inferenza (exit 2 e' del comando inventato)
+32 V  «sei» = EXIT=0: 6 (numero a parole)
+33 V
+34 V
+35 N
+36 V
+37 V  frammento («2 passed.») ma letterale
+38 N  «non parte» e' inferenza dall'errore
+39 D  frammento senza soggetto («E quarantined.»)
+40 N  riga (d) PROSA oltre il taglio
+41 V
+42 N
+43 N  riga windows oltre il taglio
+44 V  20 citate, 0 assenti
+45 V  «ne» = L4-review, dalla testa
+46 N
+47 N
+48 D  il secondo test ha 9 passed, non 5
+49 N
+50 V
+51 V
+52 D  MALFORMATO DALLA DECOMPOSIZIONE: «tre chilobyte e mezzo» spezzato su « e » dentro un claim citato
+53 V
+54 V
+55 V
+56 N
+57 D  frammento malformato
+58 V  letterale, punteggio 24
+59 V
+60 V  semantico (could not convert -> ha sollevato)
+61 N
+62 N
+63 N  riga ci oltre il taglio (la security e' success)
+64 V
+65 V  «(NON AGG.)» x3
+66 N
+67 V
+68 V
+69 N
+70 V
+71 N  lista dei campi oltre il taglio
+72 V
+73 N
+74 V
+75 D  MALFORMATO: «piu' di … e meno di …» spezzato
+76 D  frammento senza soggetto («Esito quarantined.»)
+77 D  frammento senza soggetto («Un quarantined.»)
+78 N  «ammett…» tagliato
+79 N  malformato E valori oltre il taglio
+80 N
+81 V
+82 V  inizio garbled ma i numeri ci sono
+83 V
+84 N
+85 V  letterale, punteggio 25,9
+86 V
+87 D  span: 0 su 16, non su 12
+88 N  terzo controllo oltre il taglio
+89 V
+90 V
+91 V  letterale, punteggio 26
+92 N
+93 V
+94 V
+95 N
+96 V  «5 file · 711 MB»
+97 N
+98 V
+99 V  letterale, punteggio 27,9
+100 V
+101 V
+102 D  span: quantita [100.0], non vuota
