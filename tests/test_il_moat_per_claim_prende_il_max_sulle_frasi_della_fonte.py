@@ -121,8 +121,9 @@ def test_IL_ROSSO_la_coda_vera_con_la_fonte_a_zavorra_regge_col_max_per_frase(gi
     assert r.grounding_score == 95.0, r.grounding_score
     assert r.action == "persist", (r.action, r.warnings)
     assert all(v.get("via") == "max-per-frase" for v in r.claims_verdict), r.claims_verdict
-    # un lotto SOLO: 2 claim x 7 frasi = 14 coppie in una chiamata
-    assert giudice.lotti and max(giudice.lotti) == 2 * len(lg.frasi_della_fonte(FONTE)), giudice.lotti
+    # un lotto SOLO: 2 claim x (8 frasi + l'intero) = 18 coppie in una chiamata
+    # (l'intero sta fra i candidati dal 06/09: la prova su due righe si perdeva)
+    assert giudice.lotti and max(giudice.lotti) == 2 * (len(lg.frasi_della_fonte(FONTE)) + 1), giudice.lotti
 
 
 def test_CONTROLLO_la_coda_falsa_cade_ancora_e_il_layer_sta_sul_claim_giusto(giudice):
