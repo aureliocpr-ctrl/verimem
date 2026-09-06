@@ -2547,12 +2547,26 @@ def run_validation_gate(
         # atomici.md §2.
         if _decomposed and gscore is not None and len(_claims) > 1:
             _scores: list[float] = []
+            # Pezzo 3b-bis (06/09, Galileo su VIA 7ef2c611ec6d3d01): con il
+            # giudice LOCALE ogni claim prende il MAX sulle FRASI della fonte,
+            # in UN lotto — P-E: il focus per claim ferma <= 2/4 falsi zavorra,
+            # il MAX per frase 4/4 col vero intatto; P6c: il lotto costa un
+            # dodicesimo. Senza lotto (giudice iniettato, backend claude, daemon
+            # muto) si resta sul focus per claim, e la ricevuta lo DICHIARA in
+            # `claims_verdict[i]["via"]`.
+            _via = "focus"
             try:
-                for _c in _claims:
-                    _s_c, _ = fact_grounding_score_ex(grounding_llm, source, _c)
-                    if _s_c is None:
-                        raise NoGroundingJudge("un claim senza punteggio")
-                    _scores.append(float(_s_c))
+                if _judge_used == "local":
+                    from .local_grounding import punteggi_max_per_frase
+                    _mpf = punteggi_max_per_frase(source, _claims)
+                    if _mpf is not None and len(_mpf) == len(_claims):
+                        _scores, _via = [float(_s) for _s in _mpf], "max-per-frase"
+                if not _scores:
+                    for _c in _claims:
+                        _s_c, _ = fact_grounding_score_ex(grounding_llm, source, _c)
+                        if _s_c is None:
+                            raise NoGroundingJudge("un claim senza punteggio")
+                        _scores.append(float(_s_c))
             except Exception:  # noqa: BLE001 — degrada al verdetto dell'intero
                 _scores = []
             if _scores:
@@ -2560,6 +2574,7 @@ def run_validation_gate(
                 for _k, _s in enumerate(_scores):
                     if _k < len(_claims_verdict):
                         _claims_verdict[_k]["score"] = _s
+                        _claims_verdict[_k]["via"] = _via
                 gscore = _scores[_i_min]
                 try:
                     from .grounding_gate import select_relevant_span
