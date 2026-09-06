@@ -1,0 +1,2683 @@
+[
+ {
+  "id": "e2348b9e9649",
+  "intero": "Il file verimem-0.7.5-py3-none-any.whl in dist porta data 13/08 alle 14:49, e i commit su origin main successivi sono 71 di cui 15 toccano verimem.",
+  "span": "Misurato da ws8 il 2026-08-15 alle 14:17 nel repo HippoAgent.\nContenuto della cartella dist con data di scrittura e dimensione:\n  verimem-0.5.0-py3-none-any.whl  17/07 16:57  1.538 KB\n  verimem-0.7.5-py3-none-any.whl  13/08 14:49  2.049 KB\nConteggio dei commit su origin main successivi alla costruzione del wheel:\nGli ultimi cinque commit che toccano il pacchetto in quella finestra:",
+  "g_prima": 99.98352813720703,
+  "intero_con_span_oggi": 99.959,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il file verimem-0.7.5-py3-none-any.whl in dist porta data 13/08 alle 14:49.",
+    "score": 99.98287200927734,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I commit su origin main successivi sono 71 di cui 15 toccano verimem.",
+    "score": 6.9829487800598145,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I commit su origin main successivi sono 71 di cui 15 toccano verimem.",
+    "score": 6.9829487800598145
+   }
+  ]
+ },
+ {
+  "id": "662c59ab1803",
+  "intero": "Dopo il dry-run di scripts/release.py pyproject.toml ha 0 righe modificate e version resta 0.7.5.",
+  "span": "=== output REALE di release.py in dry-run ===\nbump: 0.7.5 -> 9.9.9\n(dry-run) would write pyproject.toml with version=9.9.9\n$ git tag -a v9.9.9 -m release v9.9.9\nskipped push - run `git push origin <branch> && git push origin --tags` when ready.\n--- pyproject e' stato toccato? ---\n14:version = \"0.7.5\"\n--- scripts/release.py ---\n16:    7. Push the branch + tag (skipped with --no-push or --dry-run).",
+  "g_prima": 99.9764633178711,
+  "intero_con_span_oggi": 87.689,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Dopo il dry-run di scripts/release.py pyproject.toml ha 0 righe modificate.",
+    "score": 5.895870685577393,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Version resta 0.7.5.",
+    "score": 99.6395263671875,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Dopo il dry-run di scripts/release.py pyproject.toml ha 0 righe modificate.",
+    "score": 5.895870685577393
+   }
+  ]
+ },
+ {
+  "id": "b883cfce83cd",
+  "intero": "Alla porta validate_claim, fuori da pytest e con il modello disponibile, il claim negato in vietnamita, indonesiano, ebraico e greco riceve verdetto contradicted.",
+  "span": "fuori da pytest — local_ce_available = True\ncasi importati: ['VI', 'ID', 'HE', 'EL']\n=== A) col giudice disponibile ===\n  VI  claim NEGATO -> contradicted\n  ID  claim NEGATO -> contradicted\n  HE  claim NEGATO -> contradicted\n  EL  claim NEGATO -> contradicted",
+  "g_prima": 99.89180755615234,
+  "intero_con_span_oggi": 99.891,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Alla porta validate_claim, fuori da pytest e con il modello disponibile, il claim negato in vietnamita, indonesiano, ebraico.",
+    "score": 99.87088775634766,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Greco riceve verdetto contradicted.",
+    "score": 0.2775774896144867,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Greco riceve verdetto contradicted.",
+    "score": 0.2775774896144867
+   }
+  ]
+ },
+ {
+  "id": "c6cfd95b419c",
+  "intero": "Il caso ASCII puro da' 98.503616 e la fonte risulta uguale.",
+  "span": "  memoria non-latino             model_claim       99.880829  []\n  file    non-latino             quarantined        0.680241  fonte DIVERSA\n  file    ASCII puro (controllo) model_claim       98.503616  fonte =\nPYTHONUTF8 = '1'   stdout encoding = utf-8\nPYTHONUTF8 = None   stdout encoding = cp1252",
+  "g_prima": 99.98225402832031,
+  "intero_con_span_oggi": 99.982,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il caso ASCII puro da' 98.503616.",
+    "score": 99.9542236328125,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La fonte risulta uguale.",
+    "score": 21.31723403930664,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La fonte risulta uguale.",
+    "score": 21.31723403930664
+   }
+  ]
+ },
+ {
+  "id": "a37debadc2d3",
+  "intero": "Sul solo jaccard la via B porta i positivi cinesi da 1/5 a 5/5 e i negativi sopra soglia restano 1/5.",
+  "span": "OGGI         | positivi visti 1/5 | NEGATIVI sopra soglia 1/5\nvia B (unigrammi)         | positivi visti 5/5 | NEGATIVI sopra soglia 1/5",
+  "g_prima": 98.57588958740234,
+  "intero_con_span_oggi": 98.575,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Sul solo jaccard la via B porta i positivi cinesi da 1/5 a 5/5.",
+    "score": 89.83386993408203,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I negativi sopra soglia restano 1/5.",
+    "score": 0.6412376165390015,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I negativi sopra soglia restano 1/5.",
+    "score": 0.6412376165390015
+   }
+  ]
+ },
+ {
+  "id": "f7aac95a78a5",
+  "intero": "Sul run bcc35b5c la cella windows py3.12 ha 21 failed e la cella ubuntu py3.12 ne ha 14.",
+  "span": "  windows-latest / py3.12  ->  21 failed, 11617 passed\n  macos-latest / py3.12  ->  14 failed, 11645 passed\n  ubuntu-latest / py3.12  ->  14 failed, 11644 passed",
+  "g_prima": 99.89264678955078,
+  "intero_con_span_oggi": 99.892,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sul run bcc35b5c la cella windows py3.12 ha 21 failed.",
+    "score": 99.96475982666016,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La cella ubuntu py3.12 ne ha 14.",
+    "score": 21.425140380859375,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La cella ubuntu py3.12 ne ha 14.",
+    "score": 21.425140380859375
+   }
+  ]
+ },
+ {
+  "id": "084386dc6e31",
+  "intero": "La lista _EVENT_INDEX_RE ha 62 parole e non contiene rate ne profile.",
+  "span": "  parole nel pattern: 62\n    rate      presente? False\n    profile   presente? False\n    port      presente? True",
+  "g_prima": 99.0118637084961,
+  "intero_con_span_oggi": 99.011,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "La lista _EVENT_INDEX_RE ha 62 parole.",
+    "score": 99.7525863647461,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non contiene rate ne profile.",
+    "score": 24.084693908691406,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Non contiene rate ne profile.",
+    "score": 24.084693908691406
+   }
+  ]
+ },
+ {
+  "id": "cdb22d587104",
+  "intero": "Nel banco con quattro sibling, gli arrivati al giudice sono SIB_SAME, SIB_RENAME e SIB_BARE e i layers dei warning prodotti sono vuoti.",
+  "span": "  === CHIAMATA IDENTICA AL TEST VERDE (4 sibling) ===\n    arrivati al giudice (cio' che il test verde ASSERISCE): ['SIB_SAME', 'SIB_RENAME', 'SIB_BARE']\n    layers dei warning prodotti                           : []\n    _entita_diverse chiamata 3x: [('SIB_SAME', True), ('SIB_RENAME', True), ('SIB_BARE', True)]\n    sibling arrivati: 3   warning L3-semantic: 0\n1 passed in 15.00s",
+  "g_prima": 99.95032501220703,
+  "intero_con_span_oggi": 99.95,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel banco con quattro sibling, gli arrivati al giudice sono SIB_SAME, SIB_RENAME e SIB_BARE.",
+    "score": 99.98429870605469,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I layers dei warning prodotti sono vuoti.",
+    "score": 12.845744132995605,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I layers dei warning prodotti sono vuoti.",
+    "score": 12.845744132995605
+   }
+  ]
+ },
+ {
+  "id": "10d84de53bfb",
+  "intero": "I quarantinati vivi sono 1079 e quelli senza grounding_score sono 471.",
+  "span": "  quarantinati vivi: 1079\n  di cui SENZA grounding_score: 471   (43.7%)\n     retto - 608 righe giudicate su 1079\n  == DOVE CADONO, e i DUE denominatori (controllo 2)\n     sopra tau_hi  : il moat li APPROVAVA e sono trattenuti da\n  == CHI li ferma, per i sopra-soglia\n     insostenibili, sono rimasti senza verdetto. ⇒ Su questi una\n     band escalation che consegna cambierebbe l'esito, e sono la",
+  "g_prima": 99.98374938964844,
+  "intero_con_span_oggi": 99.978,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "I quarantinati vivi sono 1079.",
+    "score": 99.7317886352539,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelli senza grounding_score sono 471.",
+    "score": 1.8301867246627808,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelli senza grounding_score sono 471.",
+    "score": 1.8301867246627808
+   }
+  ]
+ },
+ {
+  "id": "24978ebd77ad",
+  "intero": "Nel mese 2026-08 i fatti quarantinati sono 369 e quelli quarantinati senza punteggio sono 0.",
+  "span": "mese         fatti  giudic.   %giudic. |   quarant.   q.SENZA pt    %q.senza pt\n2026-05       3644        0       0.0% |       1610         1610         100.0%\n2026-06       1446        0       0.0% |         53           53         100.0%\n2026-07       1450      121       8.3% |         76           65          85.5%\n2026-08       3301     3232      97.9% |        369            0           0.0%",
+  "g_prima": 99.97994232177734,
+  "intero_con_span_oggi": 99.98,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel mese 2026-08 i fatti quarantinati sono 369.",
+    "score": 99.95316314697266,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelli quarantinati senza punteggio sono 0.",
+    "score": 4.325557708740234,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelli quarantinati senza punteggio sono 0.",
+    "score": 4.325557708740234
+   }
+  ]
+ },
+ {
+  "id": "774d2c749172",
+  "intero": "Sul banco ristretto senza patch il conto e 1 failed e 5 passed e con patch 6 passed.",
+  "span": "=== worktree PULITO? ===\n0\ne il worktree? True\n=== A) SENZA patch, albero FERMO ===\n============= 4 failed, 8 passed, 23 warnings in 80.42s (0:01:20) =============\n=== B) CON patch, albero FERMO ===\n============= 3 failed, 9 passed, 23 warnings in 82.01s (0:01:22) =============\n============= 4 failed, 8 passed, 23 warnings in 75.19s (0:01:15) =============\n1 failed, 5 passed  ->  6 passed",
+  "g_prima": 99.50729370117188,
+  "intero_con_span_oggi": 99.916,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sul banco ristretto senza patch il conto e 1 failed.",
+    "score": 0.5613183975219727,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "5 passed.",
+    "score": 92.18891906738281,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con patch 6 passed.",
+    "score": 99.91576385498047,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Sul banco ristretto senza patch il conto e 1 failed.",
+    "score": 0.5613183975219727
+   }
+  ]
+ },
+ {
+  "id": "d40031149466",
+  "intero": "Nella controprova di ws4 le stesse parole senza numeri danno 99.985 e i soli numeri senza parole danno 99.805.",
+  "span": "Banco di ws4, messaggio 32c5bf4f51a16a02: la prova e una riga di log e i distrattori sono righe di log, a lunghezza costante di 1400 caratteri. Con zero, una, due e quattro righe estranee il grounding vale 99.985. Con cinque vale 99.877. Con sei vale 0.755. Con nove vale 0.170. Controprova a tre varianti con nove copie ciascuna: numeri piu parole tecniche 0.170, stesse parole senza numeri 99.985, ",
+  "g_prima": 99.97917938232422,
+  "intero_con_span_oggi": 99.934,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nella controprova di ws4 le stesse parole senza numeri danno 99.985.",
+    "score": 96.56670379638672,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I soli numeri senza parole danno 99.805.",
+    "score": 0.7489273548126221,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I soli numeri senza parole danno 99.805.",
+    "score": 0.7489273548126221
+   }
+  ]
+ },
+ {
+  "id": "98d56576ab9a",
+  "intero": "Il comando verimem flow invocato senza sottocomando esce 2 e stampa Usage.",
+  "span": "Eseguito il 2026-08-16 alle 18:15 sul wheel 0.7.5 in un venv nuovo, store\nisolato e cwd neutra.\ncomando                      exit  prima riga significativa\nagent-guide                     0  Verimem is a VERIFIED-memory server for AI agents\nflow                            2  Usage: verimem flow [OPTIONS] COMMAND [ARGS]...\n  non-zero: {'airgap': 1, 'flow': 2}",
+  "g_prima": 99.96763610839844,
+  "intero_con_span_oggi": 99.744,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il comando verimem flow invocato senza sottocomando esce 2.",
+    "score": 96.24488067626953,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il comando verimem flow invocato senza sottocomando stampa Usage.",
+    "score": 0.49111321568489075,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il comando verimem flow invocato senza sottocomando stampa Usage.",
+    "score": 0.49111321568489075
+   }
+  ]
+ },
+ {
+  "id": "c48f8dce5341",
+  "intero": "Fra i fatti del punto cieco quelli davvero senza numeri sono 433 e di questi 57 sono quarantinati.",
+  "span": "=== i 589 del PUNTO CIECO (claim senza cifre, fonte con cifre) ===\n  di cui con un NUMERO SCRITTO A PAROLE: 156  (26.5%)\n  numero A PAROLE (invisibile a L4.1)      156     29   18.6%\n  davvero senza numeri                     433     57   13.2%",
+  "g_prima": 99.88358306884766,
+  "intero_con_span_oggi": 99.883,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Fra i fatti del punto cieco quelli davvero senza numeri sono 433.",
+    "score": 99.9609375,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Di questi 57 sono quarantinati.",
+    "score": 1.36869478225708,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Di questi 57 sono quarantinati.",
+    "score": 1.36869478225708
+   }
+  ]
+ },
+ {
+  "id": "93c21df9a24f",
+  "intero": "Nella richiesta RR-88213 il campo Reason vale Changed mind e il campo foto vale No photos.",
+  "span": "Pagina https://quenbyhome.com/seller/refunds, richiesta RR-88213:\nRequest RR-88213 Final sale\nOrder QH-207755 - Corey Dunlap\n$359.99\nReason: Changed mind\nSummit 3-Burner Propane Grill (clearance)\nDelivered 4 months ago\nCondition: used\nNo return offered\nNo photos\nPolicy: Damaged or defective items can be refunded without a return when photos are provided.",
+  "g_prima": 99.98361206054688,
+  "intero_con_span_oggi": 99.983,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nella richiesta RR-88213 il campo Reason vale Changed mind.",
+    "score": 99.96472930908203,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il campo foto vale No photos.",
+    "score": 0.07665487378835678,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il campo foto vale No photos.",
+    "score": 0.07665487378835678
+   }
+  ]
+ },
+ {
+  "id": "fc7149bcc03a",
+  "intero": "Nel file cli.py senza la cura le righe che ricopiano la finestra di undo sono 4 e con la cura sono 0.",
+  "span": "SENZA la cura : 4 righe ricopiano la finestra\n      7 days. --no-undoable skips that snapshot.\n      expired       - older than 7 days\nCON la cura   : 0 righe ricopiano la finestra",
+  "g_prima": 99.37261962890625,
+  "intero_con_span_oggi": 99.372,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Nel file cli.py senza la cura le righe che ricopiano la finestra di undo sono 4.",
+    "score": 2.58897066116333,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con la cura sono 0.",
+    "score": 99.01530456542969,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nel file cli.py senza la cura le righe che ricopiano la finestra di undo sono 4.",
+    "score": 2.58897066116333
+   }
+  ]
+ },
+ {
+  "id": "85eca8716281",
+  "intero": "La parola 오류가 ha 3 caratteri e la parola 데이터베이스가 ne ha 7.",
+  "span": "   오류가        3 caratteri   SOTTO la soglia 4\n   데이터베이스가    7 caratteri   ok",
+  "g_prima": 99.97532653808594,
+  "intero_con_span_oggi": 99.975,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "La parola 오류가 ha 3 caratteri.",
+    "score": 99.86954498291016,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La parola 데이터베이스가 ne ha 7.",
+    "score": 10.066633224487305,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La parola 데이터베이스가 ne ha 7.",
+    "score": 10.066633224487305
+   }
+  ]
+ },
+ {
+  "id": "a9186a0a3ab9",
+  "intero": "Nello store di Verimem il 30 agosto 2026 i fatti scritti sono 797 e quelli mai giudicati sono 70.",
+  "span": "Il banco stampa che il 30 agosto i fatti scritti sono 797 e che quelli mai giudicati sono 70. Le righe dei tre giorni precedenti dicono che il 27 agosto i fatti sono 440 e i mai giudicati 14, che il 28 agosto i fatti sono 395 e i mai giudicati 9, e che il 29 agosto i fatti sono 389 e i mai giudicati 6.",
+  "g_prima": 99.97432708740234,
+  "intero_con_span_oggi": 99.974,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nello store di Verimem il 30 agosto 2026 i fatti scritti sono 797.",
+    "score": 26.955812454223633,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelli mai giudicati sono 70.",
+    "score": 99.8043441772461,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nello store di Verimem il 30 agosto 2026 i fatti scritti sono 797.",
+    "score": 26.955812454223633
+   }
+  ]
+ },
+ {
+  "id": "30d0dd137200",
+  "intero": "La funzione _build_fact di verimem/mcp_server.py sta alle righe 507-560 e non contiene la stringa confidence_tier.",
+  "span": "=== _build_fact: righe 507-560 (54 righe, confini dall'AST) ===\n   contiene 'confidence_tier' ? -> False\n=== e la funzione che il tier lo CALCOLA: dove vive? ===\norigin/main:verimem/mcp_server.py:8930:                        fact = _build_fact(\norigin/main:verimem/mcp_server.py:12830:                fact = _build_fact(",
+  "g_prima": 99.97974395751953,
+  "intero_con_span_oggi": 99.98,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "La funzione _build_fact di verimem/mcp_server.py sta alle righe 507-560.",
+    "score": 98.89875030517578,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non contiene la stringa confidence_tier.",
+    "score": 4.790133476257324,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Non contiene la stringa confidence_tier.",
+    "score": 4.790133476257324
+   }
+  ]
+ },
+ {
+  "id": "95ce4125aff7",
+  "intero": "Alla porta con le teste uguali team e team i layers restano vuoti.",
+  "span": "  originale                           layers=[]                   L3? False\n  senza il proper 'Stripe'            layers=['L3-semantic']      L3? True\n  senza la data '2025'                layers=[]                   L3? False\n  teste UGUALI (team/team)            layers=[]                   L3? False\n  teste uguali E niente proper/data   layers=['L3-semantic']      L3? True\n",
+  "g_prima": 94.19462585449219,
+  "intero_con_span_oggi": 94.194,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Alla porta con le teste uguali team.",
+    "score": 99.2235107421875,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Team i layers restano vuoti.",
+    "score": 18.19722557067871,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Team i layers restano vuoti.",
+    "score": 18.19722557067871
+   }
+  ]
+ },
+ {
+  "id": "6e0d7ca35c7b",
+  "intero": "Il job 95021399020 chiude con 11 failed e 11433 passed e 9 errors, mentre il job precedente 95009589907 chiudeva con 11 failed e 11398 passed e 9 errors.",
+  "span": "Misurato da ws8 il 2026-08-15 alle 17:24 leggendo con gh api il log del job 95021399020, cioe la gamba ubuntu py3.13 del run 31888603765 del workflow ci creato alle 13:57, in sola lettura e senza eseguire alcuna suite.\nI test marcati FAILED nel log, in ordine alfabetico:\n  = 11 failed, 11433 passed, 64 skipped, 36 deselected, 26 xfailed, 1 xpassed, 7777 warnings, 9 errors in 921.75s (0:15:21) =",
+  "g_prima": 99.82612609863281,
+  "intero_con_span_oggi": 99.956,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il job 95021399020 chiude con 11 failed.",
+    "score": 86.15541076660156,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "11433 passed.",
+    "score": 99.96946716308594,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "9 errors, mentre il job precedente 95009589907 chiudeva con 11 failed.",
+    "score": 99.9220962524414,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "11398 passed e 9 errors.",
+    "score": 0.507842481136322,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "11398 passed e 9 errors.",
+    "score": 0.507842481136322
+   }
+  ]
+ },
+ {
+  "id": "e0ae703ce4d3",
+  "intero": "Il test delle porte da 5 passed e fallisce perche l SDK espone search_documents non classificata i cui hit hanno doc_id e indexed_by e source_id e uri e version.",
+  "span": "AssertionError: l'SDK espone porte non classificate: ['search_documents']. Il README promette la provenienza su OGNI lettura: aggiungile a PORTE se restituiscono hit, a NON_HIT se non sono letture di fatti - ma decidilo, non lasciarle fuori\n  chiavi dell'hit: ['doc_id', 'end', 'flagged', 'indexed_by', 'query_terms', 'query_terms_matched', 'score', 'source_id', 'start', 'text', 'uri', 'version']",
+  "g_prima": 99.98506164550781,
+  "intero_con_span_oggi": 99.97,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il test delle porte da 5 passed.",
+    "score": 0.19371363520622253,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Fallisce perche l SDK espone search_documents non classificata i cui hit hanno doc_id e indexed_by e source_id e uri e version.",
+    "score": 99.95381927490234,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il test delle porte da 5 passed.",
+    "score": 0.19371363520622253
+   }
+  ]
+ },
+ {
+  "id": "3ce020137e72",
+  "intero": "Il file publish.yml alla riga 20 ha tags: e alla riga 22 ha workflow_dispatch.",
+  "span": "   on: -> 3\n   tags: -> 1\n   needs: -> 0\n   environment: -> 0\n   if: -> 0\norigin/main:.github/workflows/publish.yml:18:on:\norigin/main:.github/workflows/publish.yml:20:    tags:\norigin/main:.github/workflows/publish.yml:22:  workflow_dispatch: {}\n",
+  "g_prima": 97.32097625732422,
+  "intero_con_span_oggi": 97.32,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il file publish.yml alla riga 20 ha tags:.",
+    "score": 99.84765625,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Alla riga 22 ha workflow_dispatch.",
+    "score": 2.5391719341278076,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Alla riga 22 ha workflow_dispatch.",
+    "score": 2.5391719341278076
+   }
+  ]
+ },
+ {
+  "id": "c4adf03e8c5d",
+  "intero": "Alla porta Memory.add il claim con 1167 risulta quarantined e quello con 1168 risulta model_claim.",
+  "span": "  -- livello PORTA del prodotto (Memory.add), preset default\n     1167   -> {status: quarantined, grounding_score: 0.6871463060379028}\n     1168   -> {status: model_claim, grounding_score: 99.95601654052734}",
+  "g_prima": 99.93656158447266,
+  "intero_con_span_oggi": 99.936,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Alla porta Memory.add il claim con 1167 risulta quarantined.",
+    "score": 99.9439926147461,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quello con 1168 risulta model_claim.",
+    "score": 1.6790354251861572,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quello con 1168 risulta model_claim.",
+    "score": 1.6790354251861572
+   }
+  ]
+ },
+ {
+  "id": "a9054b788ed7",
+  "intero": "Il file tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py dà 3 failed e 2 passed prima della cura e 6 passed dopo.",
+  "span": "FAILED tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py::test_l_errore_riporta_il_nome_che_ho_scritto[verimem]\nFAILED tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py::test_l_errore_riporta_il_nome_che_ho_scritto[engram]\nFAILED tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py::test_l_audit_conserva_il_nome_ricevuto_quando_e_un_alias",
+  "g_prima": 99.98416900634766,
+  "intero_con_span_oggi": 99.66,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il file tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py dà 3 failed.",
+    "score": 99.68733215332031,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "2 passed prima della cura.",
+    "score": 29.60072135925293,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "6 passed dopo.",
+    "score": 0.13787321746349335,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "2 passed prima della cura.",
+    "score": 29.60072135925293
+   },
+   {
+    "claim": "6 passed dopo.",
+    "score": 0.13787321746349335
+   }
+  ]
+ },
+ {
+  "id": "7f01be642b06",
+  "intero": "Nel banco del riuso della cifra i cinque claim che riusano un numero della fonte su un'altra grandezza risultano tutti admitted e il controllo con la cifra assente risulta quarantined.",
+  "span": "riuso/c model_claim 99.81 | riuso/m model_claim 99.08 | riuso/p model_claim 99.92 | riuso/t model_claim 98.09 | riuso/v model_claim 99.46 | riuso/x quarantined 94.7 | RIUSI AMMESSI: 5 su 5 | controllo OK (777 assente -> quarantined)",
+  "g_prima": 99.974365234375,
+  "intero_con_span_oggi": 99.974,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel banco del riuso della cifra i cinque claim che riusano un numero della fonte su un'altra grandezza risultano tutti admitted.",
+    "score": 99.96664428710938,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il controllo con la cifra assente risulta quarantined.",
+    "score": 7.750981330871582,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il controllo con la cifra assente risulta quarantined.",
+    "score": 7.750981330871582
+   }
+  ]
+ },
+ {
+  "id": "495cbadd9174",
+  "intero": "Con la fonte che scrive SEI, il claim in cifra col valore 6 lascia VETO vuoto, quello col valore 20 lascia VETO 20.0, e i claim scritti a parole non producono quantita nel claim.",
+  "span": "claim in CIFRA, valore giusto  quantita_nel_claim=[(combinaziono, 6.0)] VETO=[]\nclaim in CIFRA, valore FALSO   quantita_nel_claim=[(combinaziono, 20.0)] VETO=[20.0]\nclaim a PAROLE, valore FALSO   quantita_nel_claim=[] VETO=[]\nclaim a PAROLE, valore giusto  quantita_nel_claim=[] VETO=[]\n  frase innocente col verbo      valori_scritti_a_parole=[6.0]",
+  "g_prima": 99.90572357177734,
+  "intero_con_span_oggi": 99.905,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con la fonte che scrive SEI, il claim in cifra col valore 6 lascia VETO vuoto, quello col valore 20 lascia VETO 20.0.",
+    "score": 99.95556640625,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I claim scritti a parole non producono quantita nel claim.",
+    "score": 0.6019178032875061,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I claim scritti a parole non producono quantita nel claim.",
+    "score": 0.6019178032875061
+   }
+  ]
+ },
+ {
+  "id": "da877bb52342",
+  "intero": "I casi L3 presenti nel corpus vivo sono 3 e nessuno ha quarantined_by L3.",
+  "span": "casi L3 presenti nel corpus vivo: 3\n--- ae1136d75e2b  topic=project/verimem/ci-durata-mediana-49-minuti  status=quarantined  quarantined_by=L1\n    Il run concluso piu' recente del workflow ci e' finito 23.3 ore fa.\n--- e60b4097da66  topic=project/verimem/ws1-serie-c9ebec18  status=quarantined  quarantined_by=moat\n    Il run piu' recente del workflow ci si e' concluso 23.3 ore fa.",
+  "g_prima": 99.90509033203125,
+  "intero_con_span_oggi": 99.707,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "I casi L3 presenti nel corpus vivo sono 3.",
+    "score": 99.9351806640625,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Nessuno ha quarantined_by L3.",
+    "score": 0.41121527552604675,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nessuno ha quarantined_by L3.",
+    "score": 0.41121527552604675
+   }
+  ]
+ },
+ {
+  "id": "251358c2b582",
+  "intero": "Le domande senza risposta hanno mediana 0.8055 e quelle con risposta hanno mediana 0.8669.",
+  "span": "  SENZA risposta         n=12  mediana 0.8055  min 0.7760  max 0.8545\n  CON risposta           n=12  mediana 0.8669  min 0.8484  max 0.8860",
+  "g_prima": 99.14735412597656,
+  "intero_con_span_oggi": 99.147,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Le domande senza risposta hanno mediana 0.8055.",
+    "score": 1.4396929740905762,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelle con risposta hanno mediana 0.8669.",
+    "score": 99.71521759033203,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Le domande senza risposta hanno mediana 0.8055.",
+    "score": 1.4396929740905762
+   }
+  ]
+ },
+ {
+  "id": "6426f9372d3b",
+  "intero": "Nel censimento della CLI i comandi registrati di primo livello sono 37 e quelli assenti da --help sono 7, e tutti e 7 rispondono al proprio --help con exit 0.",
+  "span": "REGISTRATI di primo livello: 37 | VISIBILI in --help: 49 | REGISTRATI MA NON IN --help: 7 | benchmark chat code sleep sleep-now tui wake | INVOCABILI: 7 su 7 | comando inventato -> exit 2",
+  "g_prima": 98.95146179199219,
+  "intero_con_span_oggi": 98.951,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Nel censimento della CLI i comandi registrati di primo livello sono 37.",
+    "score": 99.84630584716797,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelli assenti da --help sono 7 e tutti e 7 rispondono al proprio --help con exit 0.",
+    "score": 0.29036203026771545,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelli assenti da --help sono 7 e tutti e 7 rispondono al proprio --help con exit 0.",
+    "score": 0.29036203026771545
+   }
+  ]
+ },
+ {
+  "id": "da4f5fe18d18",
+  "intero": "Dei banchi ws4 sei danno EXIT=0 da un worktree pulito e tre sono in coda per uno slot.",
+  "span": "  EXIT=0: 6  ·  in coda per uno slot: 3  ·  ROTTI: 2\n  con un percorso alla SESSIONE di chi li ha scritti: 8/493 = 1,6%",
+  "g_prima": 99.40946960449219,
+  "intero_con_span_oggi": 99.409,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Dei banchi ws4 sei danno EXIT=0 da un worktree pulito.",
+    "score": 1.4932706356048584,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Tre sono in coda per uno slot.",
+    "score": 94.03106689453125,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Dei banchi ws4 sei danno EXIT=0 da un worktree pulito.",
+    "score": 1.4932706356048584
+   }
+  ]
+ },
+ {
+  "id": "519e4a5016ee",
+  "intero": "In CI il job test ubuntu-latest py3.12 chiude con 5 failed e 12085 passed.",
+  "span": "= 5 failed, 12085 passed, 41 skipped, 39 deselected, 126 xfailed, 35 warnings in 1412.84s (0:23:32) =",
+  "g_prima": 96.66828155517578,
+  "intero_con_span_oggi": 96.668,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "In CI il job test ubuntu-latest py3.12 chiude con 5 failed.",
+    "score": 26.03847312927246,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "12085 passed.",
+    "score": 99.96617126464844,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "In CI il job test ubuntu-latest py3.12 chiude con 5 failed.",
+    "score": 26.03847312927246
+   }
+  ]
+ },
+ {
+  "id": "fdb2b9c383d3",
+  "intero": "Il wheel in dist del repo e' del 13/08 e non contiene la stringa .cache.",
+  "span": "  il wheel che HO misurato io: costruito il 15/08 12:56\n  costruito da HEAD: 42f03411\n  quello in dist/ del repo: 13/08 14:49\n  la CURA 42f03411 (.cache/verimem) e' nel wheel?\n    il MIO   : True\n    dist/    : False",
+  "g_prima": 98.45724487304688,
+  "intero_con_span_oggi": 98.457,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il wheel in dist del repo e' del 13/08.",
+    "score": 99.93107604980469,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non contiene la stringa .cache.",
+    "score": 0.6713360548019409,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Non contiene la stringa .cache.",
+    "score": 0.6713360548019409
+   }
+  ]
+ },
+ {
+  "id": "5029b2d0656c",
+  "intero": "Nel banco del settanta il claim con threshold 88.12345678901234 ha grounding 0.3732 ed esito quarantined.",
+  "span": "ora 12:58:27 · HEAD fe7345b9 17/08 12:55:04 · v0.7.5\nsoglie nel codice: WRITE=70.0 · LOCAL_CE_MOAT=40.0 · DEFAULT(answer)=85.0\ncaso                  grounding  esito         e' 70.0 esatto?\n------------------------------------------------------------------------\nnumero 16 decimali      99.9588  model_claim   no\nnumero SBAGLIATO         0.3732  quarantined   no\nECCEZIONI: 0 su 7",
+  "g_prima": 99.80669403076172,
+  "intero_con_span_oggi": 99.912,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Nel banco del settanta il claim con threshold 88.12345678901234 ha grounding 0.3732.",
+    "score": 8.251065254211426,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Esito quarantined.",
+    "score": 99.80441284179688,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nel banco del settanta il claim con threshold 88.12345678901234 ha grounding 0.3732.",
+    "score": 8.251065254211426
+   }
+  ]
+ },
+ {
+  "id": "5848e129e5c7",
+  "intero": "La stessa domanda sui messaggi mirati costa 0.24 ms con la query indicizzata e 1110.70 ms scandendo i file, e le due vie danno lo stesso numero di messaggi.",
+  "span": "DOMANDA: i messaggi mirati a osservatore nelle ultime 6 ore\n  A) query indicizzata :     0.24 ms  -> 1 messaggi\n  B) scansione dei file:  1110.70 ms  -> 1 messaggi\n  STESSO RISULTATO: True   rapporto: 4557x",
+  "g_prima": 99.95286560058594,
+  "intero_con_span_oggi": 99.952,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "La stessa domanda sui messaggi mirati costa 0.24 ms con la query indicizzata e 1110.70 ms scandendo i file.",
+    "score": 99.97637939453125,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Le due vie danno lo stesso numero di messaggi.",
+    "score": 27.672731399536133,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Le due vie danno lo stesso numero di messaggi.",
+    "score": 27.672731399536133
+   }
+  ]
+ },
+ {
+  "id": "e804ea5a1017",
+  "intero": "Sul worktree e6e4dcd2 con git status vuoto i quattro bersagli danno 2 failed e 2 passed, e i passed sono two_processes_cannot_both_persist_master_for_same_topic e cli_main_dichiara_cli.",
+  "span": "worktree e6e4dcd2, git status --porcelain vuoto:\nFAILED tests/test_query_dispatch.py::test_exclude_executes_set_difference\n============= 2 failed, 2 passed, 22 warnings in 77.71s (0:01:17) =============\n(i due passed erano test_two_processes_cannot_both_persist_master_for_same_topic e test_cli_main_dichiara_cli)\nFAILED tests/test_count_aggregate.py::test_count_total_corpus",
+  "g_prima": 99.98506164550781,
+  "intero_con_span_oggi": 99.983,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sul worktree e6e4dcd2 con git status vuoto i quattro bersagli danno 2 failed.",
+    "score": 99.9560775756836,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "2 passed.",
+    "score": 6.607290267944336,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I passed sono two_processes_cannot_both_persist_master_for_same_topic e cli_main_dichiara_cli.",
+    "score": 99.98113250732422,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "2 passed.",
+    "score": 6.607290267944336
+   }
+  ]
+ },
+ {
+  "id": "c08f91197406",
+  "intero": "Il comando gh api restituisce codice di uscita 0 quando l URL contiene un carattere di controllo e la chiamata non parte.",
+  "span": "riusciti=60 falliti=0  righe=8\n--- errori distinti ---\nparse \"https://api.github.com/repos/aureliocpr-ctrl/verimem/actions/runs/30973140322\\r/jobs?per_page=30\": net/url: invalid control character in URL\n",
+  "g_prima": 99.72190856933594,
+  "intero_con_span_oggi": 99.721,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il comando gh api restituisce codice di uscita 0 quando l URL contiene un carattere di controllo.",
+    "score": 99.905517578125,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La chiamata non parte.",
+    "score": 2.058889150619507,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La chiamata non parte.",
+    "score": 2.058889150619507
+   }
+  ]
+ },
+ {
+  "id": "9d9b1b290af9",
+  "intero": "Nel test dei glifi il caso A ha grounding 38.201839447021484 ed e quarantined.",
+  "span": "ORA 21:44:28 del 30/08\n### A fatto «2»  source «②»  (com'era)   g=38.201839447021484  status=quarantined\n### B fatto «2»  source «2»  (cifra)     g=98.36249542236328   status=model_claim\n### C fatto «②»  source «②»  (simboli)   g=94.97030639648438   status=model_claim\n### D senza numero d'ordine              g=11.466981887817383  status=quarantined",
+  "g_prima": 99.96248626708984,
+  "intero_con_span_oggi": 99.962,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel test dei glifi il caso A ha grounding 38.201839447021484.",
+    "score": 99.96905517578125,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "E quarantined.",
+    "score": 1.4232510328292847,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "E quarantined.",
+    "score": 1.4232510328292847
+   }
+  ]
+ },
+ {
+  "id": "8107875e7bb9",
+  "intero": "Con la prosa che contiene due numeri il layer e' nessuno e il grounding e' 99.1.",
+  "span": "(b) tabellare SENZA la riga della data - un solo numero\n    status=model_claim  grounding= 99.8  layer=['L4.2']\n    status=model_claim  grounding= 99.8  layer=['L4.2']\n(c) tabellare con la grandezza DOPO il numero\n    status=model_claim  grounding= 99.6  layer=(nessuno)\n(d) PROSA con DUE numeri - separa piu-numeri da tabella\n    status=model_claim  grounding= 99.1  layer=(nessuno)",
+  "g_prima": 99.90413665771484,
+  "intero_con_span_oggi": 99.945,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con la prosa che contiene due numeri il layer e' nessuno.",
+    "score": 12.077165603637695,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il grounding e' 99.1.",
+    "score": 99.96034240722656,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Con la prosa che contiene due numeri il layer e' nessuno.",
+    "score": 12.077165603637695
+   }
+  ]
+ },
+ {
+  "id": "d18c63b0301e",
+  "intero": "Sulla gamba windows py3.12 il run cbdf7cc2 riporta 13 failed e 62 skipped mentre il run 0c88e7ae riporta 12 failed e 63 skipped, e in quest ultimo test_ogni_comando_insegnato_dal_readme_esiste risulta SKIPPED.",
+  "span": "Misurato da ws8 il 2026-08-14 sui log della gamba windows-latest py3.12 di due run del workflow ci.yml, scaricati con gh api.\nRun cbdf7cc2 (31718419381), gamba windows py3.12, sommario di pytest:\nRun 0c88e7ae (31817685948), gamba windows py3.12, sommario di pytest:\n  = 12 failed, 11310 passed, 63 skipped, 36 deselected, 26 xfailed, 1 xpassed, 42 warnings, 7 errors in 2000.99s (0:33:20) =",
+  "g_prima": 99.9853286743164,
+  "intero_con_span_oggi": 97.786,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Sulla gamba windows py3.12 il run cbdf7cc2 riporta 13 failed.",
+    "score": 89.53987884521484,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "62 skipped mentre il run 0c88e7ae riporta 12 failed.",
+    "score": 9.353887557983398,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "63 skipped.",
+    "score": 99.9804916381836,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "In quest ultimo test_ogni_comando_insegnato_dal_readme_esiste risulta SKIPPED.",
+    "score": 0.21570944786071777,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "62 skipped mentre il run 0c88e7ae riporta 12 failed.",
+    "score": 9.353887557983398
+   },
+   {
+    "claim": "In quest ultimo test_ogni_comando_insegnato_dal_readme_esiste risulta SKIPPED.",
+    "score": 0.21570944786071777
+   }
+  ]
+ },
+ {
+  "id": "8877da6f4d7b",
+  "intero": "La riga test (windows-latest / py3.12) riporta 21 failed e 10771 passed.",
+  "span": "test (macos-latest / py3.12) -> 20 failed, 10773 passed, 91 skipped\ntest (ubuntu-latest / py3.10) -> 20 failed, 10769 passed, 95 skipped\ntest (ubuntu-latest / py3.11) -> 20 failed, 10772 passed, 92 skipped\ntest (ubuntu-latest / py3.12) -> 20 failed, 10772 passed, 92 skipped\ntest (windows-latest / py3.12) -> 21 failed, 10771 passed, 92 skipped",
+  "g_prima": 94.49414825439453,
+  "intero_con_span_oggi": 68.323,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "La riga test (windows-latest / py3.12) riporta 21 failed.",
+    "score": 0.6181739568710327,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "10771 passed.",
+    "score": 99.97802734375,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La riga test (windows-latest / py3.12) riporta 21 failed.",
+    "score": 0.6181739568710327
+   }
+  ]
+ },
+ {
+  "id": "7be603856bfd",
+  "intero": "Le variabili citate nei fatti recenti sono 20 e quelle presenti nel repo sono 20.",
+  "span": "variabili citate: 20 · ASSENTI da TUTTO il repo: 0",
+  "g_prima": 99.4153060913086,
+  "intero_con_span_oggi": 99.415,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Le variabili citate nei fatti recenti sono 20.",
+    "score": 99.97532653808594,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelle presenti nel repo sono 20.",
+    "score": 1.5066859722137451,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelle presenti nel repo sono 20.",
+    "score": 1.5066859722137451
+   }
+  ]
+ },
+ {
+  "id": "0e4705b77259",
+  "intero": "Nella baseline di eaf32209 il decisore L4-grounding scatta su 300 casi e ne ferma 73, cioe' il 24.3%, mentre L4-review scatta 12 volte e ferma 12.",
+  "span": "Eseguito il 2026-09-02T10:30:06Z sul commit eaf32209 in un worktree detached, con verimem importato dal worktree. Il banco stampa: 88/300 veri fermati (29.3%) in 516s, e 260/300 falsi fermati (86.7%). Nella tabella per decisore: L4-negazione 38 scattato 38 fermati, L4-review 12 e 12, L4.1 6 e 6, L4-grounding 300 scattato 73 fermati 24.3%.",
+  "g_prima": 99.98480987548828,
+  "intero_con_span_oggi": 99.984,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nella baseline di eaf32209 il decisore L4-grounding scatta su 300 casi.",
+    "score": 99.9795150756836,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Ne ferma 73, cioe' il 24.3%, mentre L4-review scatta 12 volte.",
+    "score": 99.95734405517578,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Ne ferma 12.",
+    "score": 0.6279827356338501,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Ne ferma 12.",
+    "score": 0.6279827356338501
+   }
+  ]
+ },
+ {
+  "id": "88247a6e7c49",
+  "intero": "Il wheel verimem-0.7.5 contiene 462 voci e il suo sdist ne contiene 1907.",
+  "span": "Misurato da ws8 il 2026-08-16 fra le 15:29 e le 15:39 nel repo HippoAgent, aprendo gli artefatti della cartella dist con zipfile e tarfile in sola lettura, senza costruire nulla e senza eseguire suite. Gli artefatti sono verimem-0.7.5-py3-none-any.whl e verimem-0.7.5.tar.gz, entrambi datati 13 agosto.\nSDIST, cartelle di primo livello dentro verimem-0.7.5:",
+  "g_prima": 99.98395538330078,
+  "intero_con_span_oggi": 95.438,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il wheel verimem-0.7.5 contiene 462 voci.",
+    "score": 21.562030792236328,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il suo sdist ne contiene 1907.",
+    "score": 2.3523192405700684,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il wheel verimem-0.7.5 contiene 462 voci.",
+    "score": 21.562030792236328
+   },
+   {
+    "claim": "Il suo sdist ne contiene 1907.",
+    "score": 2.3523192405700684
+   }
+  ]
+ },
+ {
+  "id": "4e7d56e3aa14",
+  "intero": "I due test che falliscono solo sul runner windows passano sulla macchina locale con 5 passed e 9 passed.",
+  "span": "tests/test_flow_surface_onesta.py  5 passed in 11.87s  EXIT=0\ntests/test_rerank_breaker.py       9 passed in 25.72s  EXIT=0\n",
+  "g_prima": 91.6465835571289,
+  "intero_con_span_oggi": 91.646,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "I due test che falliscono solo sul runner windows passano sulla macchina locale con 5 passed.",
+    "score": 19.0736026763916,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "9 passed.",
+    "score": 99.92239379882812,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I due test che falliscono solo sul runner windows passano sulla macchina locale con 5 passed.",
+    "score": 19.0736026763916
+   }
+  ]
+ },
+ {
+  "id": "7d5bfeb87cd7",
+  "intero": "Sui run c761c188 e c4d443dc lo step La cache contiene davvero il modello risulta success e lo step Save HuggingFace models cache risulta skipped.",
+  "span": "Misurato da ws8 il 2026-08-15 alle 10:28 UTC con gh api sugli step del job ubuntu-latest py3.11 dei run recenti del workflow ci.yml, leggendo la conclusion dei due step \"La cache contiene davvero il modello?\" e \"Save HuggingFace models cache\", nell ordine verifica poi save:\n  c761c188 10:04Z in_progress  verifica success, save skipped\n  c4d443dc 09:59Z in_progress  verifica success, save skipped",
+  "g_prima": 99.94197082519531,
+  "intero_con_span_oggi": 99.966,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sui run c761c188 e c4d443dc lo step La cache contiene davvero il modello risulta success.",
+    "score": 99.98344421386719,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Lo step Save HuggingFace models cache risulta skipped.",
+    "score": 1.3962358236312866,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Lo step Save HuggingFace models cache risulta skipped.",
+    "score": 1.3962358236312866
+   }
+  ]
+ },
+ {
+  "id": "5b9300180c6c",
+  "intero": "Dopo la cura il registro ha 50 tool e la lista bypass derivata ne ha 28, con 212 passed.",
+  "span": "  registro: 50 tool - bypass DERIVATO: 28\n================ 212 passed, 24 warnings in 128.38s (0:02:08) =================",
+  "g_prima": 99.97611999511719,
+  "intero_con_span_oggi": 99.976,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Dopo la cura il registro ha 50 tool.",
+    "score": 99.95390319824219,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La lista bypass derivata ne ha 28, con 212 passed.",
+    "score": 7.396656036376953,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La lista bypass derivata ne ha 28, con 212 passed.",
+    "score": 7.396656036376953
+   }
+  ]
+ },
+ {
+  "id": "ebdf1518b19c",
+  "intero": "Con trust_signals false gli item hanno 14 campi e con true ne hanno 17.",
+  "span": "  trust_signals=False  campi item: 14 · chiavi risposta: 9\n  trust_signals=True   campi item: 17 · chiavi risposta: 9",
+  "g_prima": 99.97926330566406,
+  "intero_con_span_oggi": 99.979,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con trust_signals false gli item hanno 14 campi.",
+    "score": 99.93745422363281,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con true ne hanno 17.",
+    "score": 1.0426055192947388,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Con true ne hanno 17.",
+    "score": 1.0426055192947388
+   }
+  ]
+ },
+ {
+  "id": "4a72ed9978a1",
+  "intero": "Il claim Il pacchetto pesa tre chilobyte e mezzo ha grounding_score=99.15756225585938.",
+  "span": "### CLAIM: Il pacchetto pesa tre chilobyte.\n   grounding_score=98.7070083618164  status=model_claim\n### CLAIM: Il pacchetto pesa tre chilobyte e mezzo.\n   grounding_score=99.15756225585938  status=model_claim\n### CLAIM: Il documento pesa tre chilobyte.\n   grounding_score=50.0  status=quarantined\n",
+  "g_prima": 99.98470306396484,
+  "intero_con_span_oggi": 99.984,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il claim Il pacchetto pesa tre chilobyte.",
+    "score": 97.82343292236328,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Mezzo ha grounding_score=99.15756225585938.",
+    "score": 31.32012176513672,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Mezzo ha grounding_score=99.15756225585938.",
+    "score": 31.32012176513672
+   }
+  ]
+ },
+ {
+  "id": "9d25c5647d7c",
+  "intero": "Con la variabile spenta il file da 5 passed e 3 skipped, e con HIPPO_TEST_DOCKER uguale a 1 e il daemon non in ascolto da di nuovo 5 passed e 3 skipped.",
+  "span": "A) variabile SPENTA\n5 passed, 3 skipped, 1 warning in 6.88s\nEXIT_A=0\nSKIPPED :109 :130 set HIPPO_TEST_DOCKER=1 to run live Docker tests\nB) HIPPO_TEST_DOCKER=1 docker spento\n5 passed, 3 skipped, 1 warning in 6.49s\nEXIT_B=0\nSKIPPED :103 :117 :138 docker not available",
+  "g_prima": 99.97218322753906,
+  "intero_con_span_oggi": 99.972,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con la variabile spenta il file da 5 passed.",
+    "score": 99.9659652709961,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "3 skipped e con HIPPO_TEST_DOCKER uguale a 1.",
+    "score": 99.96590423583984,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il daemon non in ascolto da di nuovo 5 passed.",
+    "score": 0.2235390543937683,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "3 skipped.",
+    "score": 99.94181060791016,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il daemon non in ascolto da di nuovo 5 passed.",
+    "score": 0.2235390543937683
+   }
+  ]
+ },
+ {
+  "id": "1353a4fa8eca",
+  "intero": "L'ampiezza del ground sul TECNICO e' 99.0 e sul CONTRATTO e' 12.1.",
+  "span": "   lunghezza      TECNICO (reale)            CONTRATTO\n     TECNICO    ground   0.3- 99.3   ampiezza  99.0   0 cambi di verdetto\n     CONTRATTO  ground   0.1- 12.2   ampiezza  12.1   0 cambi di verdetto\n  TECNICO 6000: layers=['L4.1'] withheld_despite_judge=True grounding_score=99.29845428466797\n  CONTRATTO 6000: layers=['L4-grounding', 'L4.1'] grounding_score=0.1590387374162674",
+  "g_prima": 99.98456573486328,
+  "intero_con_span_oggi": 99.983,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "L'ampiezza del ground sul TECNICO e' 99.0.",
+    "score": 99.97775268554688,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Sul CONTRATTO e' 12.1.",
+    "score": 0.8275298476219177,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Sul CONTRATTO e' 12.1.",
+    "score": 0.8275298476219177
+   }
+  ]
+ },
+ {
+  "id": "d3c692ba63fb",
+  "intero": "La stoplist delle parole vuote iniziali non contiene dell e non contiene nell.",
+  "span": "  True   'Del'\n  FALSE  'Dell'\n  True   'Nel'\n  FALSE  'Nell'\n  True   'Sul'\n  FALSE  'Sull'\n  'l'      -> NO\n  'dell'   -> NO\n  'nell'   -> NO\n  'sull'   -> NO\n  'la'     -> SI",
+  "g_prima": 96.73204040527344,
+  "intero_con_span_oggi": 96.732,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "La stoplist delle parole vuote iniziali non contiene dell.",
+    "score": 2.1988837718963623,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non contiene nell.",
+    "score": 99.17706298828125,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La stoplist delle parole vuote iniziali non contiene dell.",
+    "score": 2.1988837718963623
+   }
+  ]
+ },
+ {
+  "id": "995347dabdee",
+  "intero": "Il 2026-08-13 i commit su origin/main sono 35 e quelli che toccano README.md sono 2.",
+  "span": "ISTANTE=2026-08-13 15:34:14\npopolazione: 53 file di test che nominano il README\n=== commit di OGGI (13/08) su origin/main: quanti, e quanti toccano README.md ===\nche toccano README.md: 2\ndc6de6e7 13:22 README: le prove erano additate con link che sulla pagina pubblica sono 404\ndc6de6e7  08-13 13:22  README: le prove erano additate con link che sulla pagina pubblica sono 404",
+  "g_prima": 99.9850845336914,
+  "intero_con_span_oggi": 96.704,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il 2026-08-13 i commit su origin/main sono 35.",
+    "score": 0.2955590486526489,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelli che toccano README.md sono 2.",
+    "score": 99.96761322021484,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il 2026-08-13 i commit su origin/main sono 35.",
+    "score": 0.2955590486526489
+   }
+  ]
+ },
+ {
+  "id": "1233ec813996",
+  "intero": "Fra i file provati test_i_comandi_che_il_readme_insegna_esistono non passa env alla subprocess.run e fallisce, mentre test_la_cartella_dati_promessa_dal_readme e test_log_level_env passano env e non falliscono.",
+  "span": "Misurato da ws8 il 2026-08-14 nella cartella tests del repo HippoAgent, contando i file che contengono subprocess.run e verificando per ciascuno la presenza di returncode oppure check=True:\nDove test_flow_surface_onesta e test_i_comandi_che_il_readme_insegna_esistono sono i due che falliscono solo sulla gamba windows py3.12 del run cbdf7cc2, mentre gli altri passano.",
+  "g_prima": 99.91558837890625,
+  "intero_con_span_oggi": 3.0805,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Fra i file provati test_i_comandi_che_il_readme_insegna_esistono non passa env alla subprocess.run e fallisce, mentre test_la_cartella_dati_promessa_dal_readme.",
+    "score": 99.87352752685547,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Test_log_level_env passano env e non falliscono.",
+    "score": 0.24685652554035187,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Test_log_level_env passano env e non falliscono.",
+    "score": 0.24685652554035187
+   }
+  ]
+ },
+ {
+  "id": "76426b512c27",
+  "intero": "Sui 2329 quarantinati 1728 hanno grounding NULL e 1958 sono senza quarantined_by.",
+  "span": "fatti totali ................. 12582\nquarantinati ................. 2329\n  mai giudicati (grounding NULL) .... 1728  (74.2%)\n  senza quarantined_by ............... 1958  (84.1%)\n  giudicati ......................... 601\n  di cui SOPRA il taglio 40 ......... 250  (41.6% dei giudicati)",
+  "g_prima": 99.98082733154297,
+  "intero_con_span_oggi": 99.98,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sui 2329 quarantinati 1728 hanno grounding NULL.",
+    "score": 24.1953067779541,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "1958 sono senza quarantined_by.",
+    "score": 1.9852064847946167,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Sui 2329 quarantinati 1728 hanno grounding NULL.",
+    "score": 24.1953067779541
+   },
+   {
+    "claim": "1958 sono senza quarantined_by.",
+    "score": 1.9852064847946167
+   }
+  ]
+ },
+ {
+  "id": "b592964790c0",
+  "intero": "Il criterio d'ingresso del banco non ha deciso perche' PowerShell ha stampato 11,38 e la conversione a float ha sollevato.",
+  "span": "⚠️ carico NON MISURABILE (could not convert string to float: '11,38'): il criterio d'ingresso non puo' decidere e il banco parte comunque — dillo nella cella.",
+  "g_prima": 97.40596008300781,
+  "intero_con_span_oggi": 97.405,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il criterio d'ingresso del banco non ha deciso perche' PowerShell ha stampato 11,38.",
+    "score": 99.72274780273438,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La conversione a float ha sollevato.",
+    "score": 0.7177289128303528,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La conversione a float ha sollevato.",
+    "score": 0.7177289128303528
+   }
+  ]
+ },
+ {
+  "id": "36d31a91e8ba",
+  "intero": "Togliendo source dalla chiamata del gate il presidio riporta 2 failed e 18 passed.",
+  "span": "FAILED tests/test_l1_13_non_ferma_un_ricalco_della_fonte.py::test_alla_porta_il_ricalco_non_accende_l1_13[La consegna e' stata fatta il 28 marzo.-Verbale del cantiere. La consegna e' stata fatta il 28 marzo presso il magazzino centrale. La pratica e' stata chiusa il 28 marzo dall'ufficio protocollo. Il collaudo si e' concluso il 28 marzo alla presenza del direttore dei lavori. Il collaudo e' stato",
+  "g_prima": 99.86244201660156,
+  "intero_con_span_oggi": 84.576,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Togliendo source dalla chiamata del gate il presidio riporta 2 failed.",
+    "score": 6.3043317794799805,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "18 passed.",
+    "score": 27.179872512817383,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Togliendo source dalla chiamata del gate il presidio riporta 2 failed.",
+    "score": 6.3043317794799805
+   },
+   {
+    "claim": "18 passed.",
+    "score": 27.179872512817383
+   }
+  ]
+ },
+ {
+  "id": "76f3e1cacc02",
+  "intero": "Sul commit 5be39960 il workflow ci ha conclusion failure e il workflow security ha conclusion success.",
+  "span": "SHA        workflow               status       conclusion  mio?\n66583acc   security               completed    success     unita giapponese\na0fbe104   security               completed    success     gate 3 lingue\n5be39960   security               completed    success     segmentazione CJK\n5be39960   ci                     completed    failure     segmentazione CJK",
+  "g_prima": 99.91178894042969,
+  "intero_con_span_oggi": 0.2891,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Sul commit 5be39960 il workflow ci ha conclusion failure.",
+    "score": 9.225638389587402,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il workflow security ha conclusion success.",
+    "score": 98.28507995605469,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Sul commit 5be39960 il workflow ci ha conclusion failure.",
+    "score": 9.225638389587402
+   }
+  ]
+ },
+ {
+  "id": "b9e3160d3391",
+  "intero": "Dopo l estensione il flip esce in JA, ZH, KO, TR e HI e non esce in TH, mentre su soggetti diversi e frasi identiche non esce in nessuna.",
+  "span": "  JA: ESCE -> あり\n  ZH: ESCE -> 错误\n  KO: ESCE -> 니다\n  TH: None\n  TR: ESCE -> hata\n  HI: ESCE -> सिसटम\n  KO diversi: None\n  TH diversi: None\n  KO identiche: None\n  TH identiche: None",
+  "g_prima": 99.98151397705078,
+  "intero_con_span_oggi": 99.981,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Dopo l estensione il flip esce in JA, ZH, KO, TR e HI.",
+    "score": 99.98163604736328,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non esce in TH, mentre su soggetti diversi.",
+    "score": 99.30107879638672,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Frasi identiche non esce in nessuna.",
+    "score": 1.1751116514205933,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Frasi identiche non esce in nessuna.",
+    "score": 1.1751116514205933
+   }
+  ]
+ },
+ {
+  "id": "b95486f03741",
+  "intero": "Le parole issue message e run danno 2 vivi sul caso del valore che cambia e non sono state aggiunte oggi.",
+  "span": "  issue (preesistente) 3 (ok   ) 2 (NON AGG.)  COSTO\n  message (preesist.)  3 (ok   ) 2 (NON AGG.)  COSTO\n  run   (preesistente) 3 (ok   ) 2 (NON AGG.)  COSTO",
+  "g_prima": 99.65412902832031,
+  "intero_con_span_oggi": 99.654,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Le parole issue message e run danno 2 vivi sul caso del valore che cambia.",
+    "score": 99.67085266113281,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Non sono state aggiunte oggi.",
+    "score": 0.2616046667098999,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Non sono state aggiunte oggi.",
+    "score": 0.2616046667098999
+   }
+  ]
+ },
+ {
+  "id": "c80eeac441e3",
+  "intero": "La cella entita-inventata e' fermata dal solo giudice in italiano e in inglese: non ha nessuna difesa deterministica.",
+  "span": "`unita-cambiata` ho scoperto che la cella **EN era verde per il GIUDICE, non per\nil giudice gli dava 2.1. ⇒ **Un verde che dipende dal giudice non e' una\nLA DOMANDA: per ogni cella VERDE, il falso e' fermato **da un layer** o **dal\nsolo giudice**?\nverde in entrambe le lingue - non ha NESSUNA difesa deterministica.** Il falso\nUna cella difesa **solo** da lui non ha un presidio: ha un punteggio.\n]",
+  "g_prima": 99.77816009521484,
+  "intero_con_span_oggi": 0.6349,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "La cella entita-inventata e' fermata dal solo giudice in italiano.",
+    "score": 0.4458099603652954,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "In inglese: non ha nessuna difesa deterministica.",
+    "score": 65.1464614868164,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La cella entita-inventata e' fermata dal solo giudice in italiano.",
+    "score": 0.4458099603652954
+   }
+  ]
+ },
+ {
+  "id": "fb52960e9e85",
+  "intero": "Le celle con zero controfirme sono 571 e quelle con una sono 33.",
+  "span": "    0 controfirme:  571 (94.5%)\n    1 controfirme:   33 (5.5%)",
+  "g_prima": 99.9841079711914,
+  "intero_con_span_oggi": 99.984,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Le celle con zero controfirme sono 571.",
+    "score": 99.97862243652344,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelle con una sono 33.",
+    "score": 25.906402587890625,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelle con una sono 33.",
+    "score": 25.906402587890625
+   }
+  ]
+ },
+ {
+  "id": "7fc6935b98f5",
+  "intero": "Undici file di banco danno 77 passed e 1 skipped senza la cura e 77 passed e 1 skipped con la cura.",
+  "span": "LATO A: senza cura\n77 passed, 1 skipped, 25 warnings in 143.45s (0:02:23)\nEXIT_A=0\nLATO B: CON la cura a runtime\n77 passed, 1 skipped, 25 warnings in 142.99s (0:02:22)\nEXIT_B=0",
+  "g_prima": 99.96318817138672,
+  "intero_con_span_oggi": 99.963,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Undici file di banco danno 77 passed.",
+    "score": 0.3988338112831116,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "1 skipped senza la cura.",
+    "score": 99.76577758789062,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "77 passed.",
+    "score": 99.86339569091797,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "1 skipped con la cura.",
+    "score": 99.48577880859375,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Undici file di banco danno 77 passed.",
+    "score": 0.3988338112831116
+   }
+  ]
+ },
+ {
+  "id": "619be99663d0",
+  "intero": "I file del repo che nominano wheel-install sono ci.yml e RELEASE_GATE.md.",
+  "span": "19:> e `wheel-install`, che sono il meccanismo con cui G8 e G9 si verificano, sono",
+  "g_prima": 99.9808120727539,
+  "intero_con_span_oggi": 5.3595,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "I file del repo che nominano wheel-install sono ci.yml.",
+    "score": 45.103057861328125,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "I file del repo che nominano wheel-install sono RELEASE_GATE.md.",
+    "score": 0.17346298694610596,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "I file del repo che nominano wheel-install sono RELEASE_GATE.md.",
+    "score": 0.17346298694610596
+   }
+  ]
+ },
+ {
+  "id": "1c0b4f8c63f4",
+  "intero": "Con la cura applicata lo stesso file da 4 passed e test_migrations.py da 12 passed.",
+  "span": "$ python -m pytest tests/test_due_processi_non_rieseguono_la_migrazione.py -q\nSHA: 24ece585\ntests\test_due_processi_non_rieseguono_la_migrazione.py ....             [100%]\n============================== 4 passed in 4.07s ==============================\n$ python -m pytest tests/test_migrations.py -q\n============================= 12 passed in 4.50s ==============================\nEXIT=0\nEXIT=0",
+  "g_prima": 99.87199401855469,
+  "intero_con_span_oggi": 99.887,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con la cura applicata lo stesso file da 4 passed.",
+    "score": 17.042312622070312,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Test_migrations.py da 12 passed.",
+    "score": 99.8608627319336,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Con la cura applicata lo stesso file da 4 passed.",
+    "score": 17.042312622070312
+   }
+  ]
+ },
+ {
+  "id": "3107c732a839",
+  "intero": "In una lettura con fusion applied i tre punteggi sono 0.8440011739730835, 0.8099640011787415 e 0.7804261445999146 e il payload non contiene il campo sotto_il_pavimento.",
+  "span": "La lettura di prova con la domanda sul biglietto ferroviario per Saturno stampa un blocco ranking con rerank uguale a timeout_cold e fusion uguale ad applied, e tre elementi con punteggi 0.8440011739730835, 0.8099640011787415 e 0.7804261445999146. Nel payload della risposta compaiono i campi query, topic, min_relevance, ranking, trattenuti, include_legacy, min_status, trust_signals e items.",
+  "g_prima": 99.72834777832031,
+  "intero_con_span_oggi": 99.728,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "In una lettura con fusion applied i tre punteggi sono 0.8440011739730835, 0.8099640011787415 e 0.7804261445999146.",
+    "score": 99.97352600097656,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il payload non contiene il campo sotto_il_pavimento.",
+    "score": 0.25626692175865173,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il payload non contiene il campo sotto_il_pavimento.",
+    "score": 0.25626692175865173
+   }
+  ]
+ },
+ {
+  "id": "384618e2404a",
+  "intero": "Le dieci esecuzioni di tests/test_rerank_breaker.py hanno tutte EXIT=0 e 17 passed.",
+  "span": "run=1 EXIT=0 ======================= 17 passed, 1 warning in 28.59s ========================\nrun=2 EXIT=0 ======================= 17 passed, 1 warning in 28.49s ========================\nrun=3 EXIT=0 ======================= 17 passed, 1 warning in 28.65s ========================\nrun=4 EXIT=0 ======================= 17 passed, 1 warning in 28.33s ========================\nDONE",
+  "g_prima": 99.8028793334961,
+  "intero_con_span_oggi": 99.843,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Le dieci esecuzioni di tests/test_rerank_breaker.py hanno tutte EXIT=0.",
+    "score": 35.29960632324219,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "17 passed.",
+    "score": 99.97745513916016,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Le dieci esecuzioni di tests/test_rerank_breaker.py hanno tutte EXIT=0.",
+    "score": 35.29960632324219
+   }
+  ]
+ },
+ {
+  "id": "e9d5622e4950",
+  "intero": "Su uno store nuovo l oggetto Risultati ha sotto_il_pavimento None e trattenuti None mentre il log riporta best=0.7661.",
+  "span": "README:152-156 door does with it differs, so: **gateway/console FILTER** - results under the self-calibrated floor are not served at all; **MCP SERVES the results and flags them** - every read carries `sotto_il_pavimento` (floor, best score, and what it means) so the agent has the yardstick, plus `trattenuti`\n  attributi/segnali sull'oggetto: ['sotto_il_pavimento', 'trattenuti']",
+  "g_prima": 99.98351287841797,
+  "intero_con_span_oggi": 97.498,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Su uno store nuovo l oggetto Risultati ha sotto_il_pavimento None.",
+    "score": 58.94590759277344,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Su uno store nuovo l oggetto Risultati ha trattenuti None mentre il log riporta best=0.7661.",
+    "score": 0.3755197823047638,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Su uno store nuovo l oggetto Risultati ha trattenuti None mentre il log riporta best=0.7661.",
+    "score": 0.3755197823047638
+   }
+  ]
+ },
+ {
+  "id": "e5bf78fb0d2e",
+  "intero": "Il dry run di requalify_quarantined ha scansionato 764 fatti e ne ha indicati 265 recuperabili.",
+  "span": "dry-run requalify_quarantined -> {'scanned': 764, 'recoverable': 265, 'promoted': 0, 'dry_run': True}",
+  "g_prima": 99.6255874633789,
+  "intero_con_span_oggi": 99.625,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il dry run di requalify_quarantined ha scansionato 764 fatti.",
+    "score": 99.53951263427734,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Ne ha indicati 265 recuperabili.",
+    "score": 7.847157955169678,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Ne ha indicati 265 recuperabili.",
+    "score": 7.847157955169678
+   }
+  ]
+ },
+ {
+  "id": "5612952c9d85",
+  "intero": "Nel banco degli ambigui il claim pesa piu di due chilobyte ha grounding 0.61 ed esito quarantined mentre pesa meno di dieci chilobyte ha 99.84.",
+  "span": "caso                   grounding  esito         banda\ncopia esatta               99.76  model_claim   alta\nimplicato  piu' di          0.61  quarantined   bassa\nimplicato  meno di         99.84  model_claim   alta\nPREVISIONE: >=2 grigi -> il gate ha una zona di incertezza\n            0-1 grigi -> binario mascherato, il punteggio informa come SEGNO",
+  "g_prima": 99.75525665283203,
+  "intero_con_span_oggi": 99.839,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel banco degli ambigui il claim pesa piu di due chilobyte ha grounding 0.61.",
+    "score": 99.95243835449219,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Esito quarantined mentre pesa meno di dieci chilobyte ha 99.84.",
+    "score": 0.28981709480285645,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Esito quarantined mentre pesa meno di dieci chilobyte ha 99.84.",
+    "score": 0.28981709480285645
+   }
+  ]
+ },
+ {
+  "id": "7c0fd5cbdfbb",
+  "intero": "Nel banco di conferma il caso LUNGH IT+parola+EN uni ha claim falso 1.18 ed esito quarantined.",
+  "span": "LUNGH  IT+parola+IT uni      99.95      81.63      +18.32  model_claim   🔴 PREVISIONE OK\nLUNGH  IT+parola+EN uni      99.92       1.18      +98.74  quarantined   ✅ PREVISIONE OK\nLUNGH  IT+cifra +IT uni      99.87       0.00      +99.87  quarantined   ✅ PREVISIONE OK\nPESO   IT+parola+EN uni      99.20       1.11      +98.10  quarantined   ✅ PREVISIONE OK",
+  "g_prima": 99.98446655273438,
+  "intero_con_span_oggi": 99.976,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel banco di conferma il caso LUNGH IT+parola+EN uni ha claim falso 1.18.",
+    "score": 99.97895050048828,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Esito quarantined.",
+    "score": 0.39897534251213074,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Esito quarantined.",
+    "score": 0.39897534251213074
+   }
+  ]
+ },
+ {
+  "id": "1634f0fbf30f",
+  "intero": "Sulla domanda Il backup contiene i quarantinati il recall restituisce come primo risultato Dentro il file di backup dei fatti ci sono un model_claim e un quarantined.",
+  "span": "«l'anteprima di search-docs» -> 3 risultati, il primo e' L'anteprima di search-docs si ancora al termine di query che compare prima nel\n«Il backup contiene i quarantinati?» -> 3 risultati, il primo e' Dentro il file di backup dei fatti ci sono un model_claim e un quarantined\n«superseded_by su MCP» -> 3 risultati, il primo e' Il campo superseded_by compare fra le chiavi solo del recall SDK",
+  "g_prima": 99.98452758789062,
+  "intero_con_span_oggi": 99.984,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sulla domanda Il backup contiene i quarantinati il recall restituisce come primo risultato Dentro il file di backup dei fatti ci sono un model_claim.",
+    "score": 99.98042297363281,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Un quarantined.",
+    "score": 0.3393964469432831,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Un quarantined.",
+    "score": 0.3393964469432831
+   }
+  ]
+ },
+ {
+  "id": "3c7efe20ce58",
+  "intero": "Il giudice ne ferma una a 15.67 e ammette l'altra a 93.74.",
+  "span": "`respinto` a 0.54 e `rinviato` a 15.67 accanto, `sospeso` poteva benissimo\n    ne passano diversi        → e' una CLASSE, e il gate e' cieco alla\nAvevo scritto la domanda cosi': «*se ne passano diversi e' una CLASSE, e il gate\nstanno nella stessa frase. Il giudice ne ferma una a 15.67 e ammette l'altra a\n93.74. ⇒ **Non e' una soglia da tarare: e' che il punteggio non misura la\npunti.\n\"\"\"\nmain()",
+  "g_prima": 99.97689056396484,
+  "intero_con_span_oggi": 99.98,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il giudice ne ferma una a 15.67.",
+    "score": 99.85581970214844,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il giudice ne ammette l'altra a 93.74.",
+    "score": 21.830562591552734,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il giudice ne ammette l'altra a 93.74.",
+    "score": 21.830562591552734
+   }
+  ]
+ },
+ {
+  "id": "79a86493439e",
+  "intero": "Nel wheel costruito da HEAD dfec9825 le occorrenze di percorsi personali sono zero e quelle di nomi propri e sigle sono zero.",
+  "span": "Misurato da ws8 il 2026-08-16 alle 17:36, costruendo l artefatto con python -m build nella cartella scratchpad e non in dist, partendo da HEAD dfec9825, e aprendolo poi con zipfile e tarfile.\nARTEFATTO NUOVO, costruito da HEAD dfec9825\nD3 NOMI PROPRI E SIGLE",
+  "g_prima": 99.98450469970703,
+  "intero_con_span_oggi": 99.473,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Nel wheel costruito da HEAD dfec9825 le occorrenze di percorsi personali sono zero e quelle di nomi propri.",
+    "score": 99.18831634521484,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Sigle sono zero.",
+    "score": 6.751552104949951,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Sigle sono zero.",
+    "score": 6.751552104949951
+   }
+  ]
+ },
+ {
+  "id": "8b6e0b479ef6",
+  "intero": "Nel banco dei salti la coppia milligrammi verso tonnellate a distanza 3 ha claim falso 1.18 ed esito quarantined.",
+  "span": "classe    fonte          claim falso    dist      VERO      FALSO   penalizz.  esito\nMEMORIA   byte           megabyte          2     99.59       1.12      +98.47  quarantined ✅\nMEMORIA   byte           gigabyte          3     99.59       1.29      +98.29  quarantined ✅\nPESO      milligrammi    tonnellate        3     99.53       1.18      +98.35  quarantined ✅",
+  "g_prima": 99.98125457763672,
+  "intero_con_span_oggi": 99.944,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel banco dei salti la coppia milligrammi verso tonnellate a distanza 3 ha claim falso 1.18.",
+    "score": 1.6730766296386719,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Esito quarantined.",
+    "score": 99.74600982666016,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nel banco dei salti la coppia milligrammi verso tonnellate a distanza 3 ha claim falso 1.18.",
+    "score": 1.6730766296386719
+   }
+  ]
+ },
+ {
+  "id": "e40f7434a13b",
+  "intero": "Il commit 3da269a9 ha 33 passed e ruff All checks passed.",
+  "span": "(a) due su tre, terzo discorde     warning DATA_DIR presente: SI   L4.1 nell output: SI\n(b) tutti e tre concordi (CURA)    warning DATA_DIR presente: no   L4.1 nell output: SI\n33 passed, 1 warning in 15.30s\nAll checks passed!\n3da269a9 test: isolare il terzo alias DATA_DIR, non due su tre",
+  "g_prima": 99.95944213867188,
+  "intero_con_span_oggi": 99.959,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Il commit 3da269a9 ha 33 passed.",
+    "score": 5.844140529632568,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Ruff All checks passed.",
+    "score": 64.32244873046875,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il commit 3da269a9 ha 33 passed.",
+    "score": 5.844140529632568
+   }
+  ]
+ },
+ {
+  "id": "bb8e56061378",
+  "intero": "Con corpo 1.2 s il watchdog produce 4 dump ripetuti e 2743 byte, con corpo 19.0 s ne produce 63 e 35336 byte.",
+  "span": "  corpo   1.2s -> 1 file ·     2743 byte · 4 dump ripetuti\n  corpo  19.0s -> 1 file ·    35336 byte · 63 dump ripetuti",
+  "g_prima": 99.9383544921875,
+  "intero_con_span_oggi": 99.938,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con corpo 1.2 s il watchdog produce 4 dump ripetuti.",
+    "score": 99.85990905761719,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "2743 byte, con corpo 19.0 s ne produce 63 e 35336 byte.",
+    "score": 13.469834327697754,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "2743 byte, con corpo 19.0 s ne produce 63 e 35336 byte.",
+    "score": 13.469834327697754
+   }
+  ]
+ },
+ {
+  "id": "5a11abc4b0e4",
+  "intero": "Nel worktree HippoAgent-ws5 l hook risulta ASSENTE e nel worktree _ws7_tmp_main risulta PRESENTE.",
+  "span": "/c/Users/aurel/Code/HippoAgent-ws5 → hook ASSENTE\n/c/Users/aurel/Code/_ws7_tmp_main → hook PRESENTE",
+  "g_prima": 99.9308853149414,
+  "intero_con_span_oggi": 99.93,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nel worktree HippoAgent-ws5 l hook risulta ASSENTE.",
+    "score": 99.95172882080078,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Nel worktree _ws7_tmp_main risulta PRESENTE.",
+    "score": 2.012629508972168,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Nel worktree _ws7_tmp_main risulta PRESENTE.",
+    "score": 2.012629508972168
+   }
+  ]
+ },
+ {
+  "id": "de7208ad1cbf",
+  "intero": "Il file test_il_gate_puo_solo_bocciare_in_tre_lingue passa da 3 failed 11 passed a 14 passed, e il commit e' a0fbe104.",
+  "span": "FAILED tests/test_il_gate_puo_solo_bocciare_in_tre_lingue.py::test_il_claim_IDENTICO_al_fatto_in_memoria_e_supportato[ZH]\nFAILED tests/test_il_gate_puo_solo_bocciare_in_tre_lingue.py::test_il_claim_IDENTICO_al_fatto_in_memoria_e_supportato[JA]\n======================== 3 failed, 11 passed in 6.11s =========================",
+  "g_prima": 99.97905731201172,
+  "intero_con_span_oggi": 99.085,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il file test_il_gate_puo_solo_bocciare_in_tre_lingue passa da 3 failed 11 passed a 14 passed.",
+    "score": 96.36488342285156,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il commit e' a0fbe104.",
+    "score": 0.14513367414474487,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il commit e' a0fbe104.",
+    "score": 0.14513367414474487
+   }
+  ]
+ },
+ {
+  "id": "2f611ce51f93",
+  "intero": "Con PYTHONUTF8=0 il banco dell aiuto CLI da 1 failed e con PYTHONUTF8=1 da 5 passed.",
+  "span": "A/B nella stessa esecuzione, SHA c2805129 fermo prima e dopo:\n    PYTHONUTF8=0 -> 1 failed  ·  PYTHONUTF8=1 -> 5 passed.\n    Non si vedeva in locale perche la macchina aveva PYTHONUTF8=1.",
+  "g_prima": 99.95751953125,
+  "intero_con_span_oggi": 99.957,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Con PYTHONUTF8=0 il banco dell aiuto CLI da 1 failed.",
+    "score": 25.909412384033203,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con PYTHONUTF8=1 da 5 passed.",
+    "score": 99.39310455322266,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Con PYTHONUTF8=0 il banco dell aiuto CLI da 1 failed.",
+    "score": 25.909412384033203
+   }
+  ]
+ },
+ {
+  "id": "3b1cd8e150d4",
+  "intero": "I fatti con quarantined_by popolato sono 580 e di questi 154 non sono quarantinati.",
+  "span": "  fatti con quarantined_by popolato ...... 580\n  di cui NON quarantinati (vivi) ........ 154\n  di cui quarantinati ................... 426\n  popolazione oggi: 87   (il 25/08 era 62)\n      39  L4.1\n      27  gate\n      12  (non registrato)",
+  "g_prima": 99.98224639892578,
+  "intero_con_span_oggi": 99.982,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "I fatti con quarantined_by popolato sono 580.",
+    "score": 99.10393524169922,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Di questi 154 non sono quarantinati.",
+    "score": 2.0938169956207275,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Di questi 154 non sono quarantinati.",
+    "score": 2.0938169956207275
+   }
+  ]
+ },
+ {
+  "id": "71b73f0e4e69",
+  "intero": "Il banco degli ibridi ha 0 eccezioni su 16 e il banco di conferma ha 0 eccezioni su 12.",
+  "span": "IT str + IT num + IT uni       99.76      87.33      +12.43  model_claim   🔴 noto 87,33 PASSA\nEN str + EN num + IT uni       97.53       0.00      +97.53  quarantined   ✅ ?\nIT str + EN num + IT uni       99.82      85.71      +14.12  model_claim   🔴 ?\nECCEZIONI: 0 su 16\nPREVISIONI: 5 corrette, 1 fallite · ECCEZIONI: 0 su 12",
+  "g_prima": 99.98136138916016,
+  "intero_con_span_oggi": 99.498,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il banco degli ibridi ha 0 eccezioni su 16.",
+    "score": 87.28197479248047,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il banco di conferma ha 0 eccezioni su 12.",
+    "score": 0.6855582594871521,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il banco di conferma ha 0 eccezioni su 12.",
+    "score": 0.6855582594871521
+   }
+  ]
+ },
+ {
+  "id": "b7d9d2462ab6",
+  "intero": "Fra i cinque test selezionati due sono test_tre_eventi_datati_restano_tre con parametri iso e mese_it e tre sono controlli positivi.",
+  "span": "      <Function test_tre_eventi_datati_restano_tre[iso-frasi0]>\n      <Function test_tre_eventi_datati_restano_tre[mese_it-frasi1]>\n      <Function test_CONTROLLO_POSITIVO_l_inglese_continua_a_tenerli_tutti>\n      <Function test_CONTROLLO_POSITIVO_un_valore_che_CAMBIA_si_aggiorna_ancora>\n      <Function test_una_STESSA_data_ripetuta_resta_una_evoluzione>",
+  "g_prima": 99.3518295288086,
+  "intero_con_span_oggi": 99.351,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Fra i cinque test selezionati due sono test_tre_eventi_datati_restano_tre con parametri iso e mese_it.",
+    "score": 99.97169494628906,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Tre sono controlli positivi.",
+    "score": 1.1524628400802612,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Tre sono controlli positivi.",
+    "score": 1.1524628400802612
+   }
+  ]
+ },
+ {
+  "id": "5c8eb4225f2f",
+  "intero": "Le supersessioni non applicate prima del 01-08 23:55 sono 46 e quelle dopo sono 0, mentre le applicate dopo sono 98.",
+  "span": "   NON applicate PRIMA di b417bc08 : 46\n   NON applicate DOPO  b417bc08 ...: 0\n   applicate DOPO b417bc08 ........: 98",
+  "g_prima": 99.94639587402344,
+  "intero_con_span_oggi": 99.946,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Le supersessioni non applicate prima del 01-08 23:55 sono 46.",
+    "score": 99.9232406616211,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quelle dopo sono 0, mentre le applicate dopo sono 98.",
+    "score": 7.995888710021973,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Quelle dopo sono 0, mentre le applicate dopo sono 98.",
+    "score": 7.995888710021973
+   }
+  ]
+ },
+ {
+  "id": "38a2aa7fd7fb",
+  "intero": "Su otto processi zero vanno su e giu' e tutti hanno ampiezza 0.",
+  "span": "8 processi col flag, 5 campioni a 35s (durata 2 min 55s)\n    pid    min    max  ampiezza  andamento\n  11924    190    190         0  piatto\n  13348    125    125         0  piatto\n  22432     98     98         0  piatto\n  27620    304    304         0  piatto\n  32268    267    267         0  piatto\n  32288    277    277         0  piatto\n  processi che vanno SU E GIU': 0 su 8",
+  "g_prima": 99.98389434814453,
+  "intero_con_span_oggi": 99.733,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Su otto processi zero vanno su e giu'.",
+    "score": 99.79185485839844,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Tutti hanno ampiezza 0.",
+    "score": 11.159862518310547,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Tutti hanno ampiezza 0.",
+    "score": 11.159862518310547
+   }
+  ]
+ },
+ {
+  "id": "9e87aef96d48",
+  "intero": "Su PyPI il pacchetto verimem serve la versione 0.7.0 e ha 7 rilasci totali.",
+  "span": "ORA 21:24:57 del 30/08\n  verimem:\n     versione servita : 0.7.0\n     autore           : Aurelio Capriello\n     rilasci totali   : 7",
+  "g_prima": 98.98069763183594,
+  "intero_con_span_oggi": 98.98,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Su PyPI il pacchetto verimem serve la versione 0.7.0.",
+    "score": 25.989356994628906,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Su PyPI il pacchetto verimem ha 7 rilasci totali.",
+    "score": 99.26380920410156,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Su PyPI il pacchetto verimem serve la versione 0.7.0.",
+    "score": 25.989356994628906
+   }
+  ]
+ },
+ {
+  "id": "c3763803a435",
+  "intero": "Nell sdist di verimem-0.7.5 la cartella tests ha 1365 voci e la cartella benchmark ne ha 75, mentre la cartella verimem ne ha 454.",
+  "span": "Misurato da ws8 il 2026-08-16 fra le 15:29 e le 15:39 nel repo HippoAgent, aprendo gli artefatti della cartella dist con zipfile e tarfile in sola lettura, senza costruire nulla e senza eseguire suite. Gli artefatti sono verimem-0.7.5-py3-none-any.whl e verimem-0.7.5.tar.gz, entrambi datati 13 agosto.\nSDIST, cartelle di primo livello dentro verimem-0.7.5:",
+  "g_prima": 99.98410034179688,
+  "intero_con_span_oggi": 99.431,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Nell sdist di verimem-0.7.5 la cartella tests ha 1365 voci.",
+    "score": 74.19703674316406,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La cartella benchmark ne ha 75, mentre la cartella verimem ne ha 454.",
+    "score": 5.492752552032471,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La cartella benchmark ne ha 75, mentre la cartella verimem ne ha 454.",
+    "score": 5.492752552032471
+   }
+  ]
+ },
+ {
+  "id": "ef8440cd8da9",
+  "intero": "Dal pacchetto 0.7.6 la CLI senza flag stampa la riga con 5900 euro e con il flag stampa sia 5100 sia 5900.",
+  "span": "  --- CLI SENZA flag (exit 0) ---\n     | - Il canone del capannone 12 è 5900 euro. [0.89] moat 99.9\n  --- CLI CON --include-superseded (exit 0) ---\n     | - Il canone del capannone 12 è 5100 euro. [0.89] moat 99.9\n     | - Il canone del capannone 12 è 5900 euro. [0.89] moat 99.9",
+  "g_prima": 99.75901794433594,
+  "intero_con_span_oggi": 99.759,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Dal pacchetto 0.7.6 la CLI senza flag stampa la riga con 5900 euro.",
+    "score": 6.5728983879089355,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con il flag stampa sia 5100 sia 5900.",
+    "score": 98.24224853515625,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Dal pacchetto 0.7.6 la CLI senza flag stampa la riga con 5900 euro.",
+    "score": 6.5728983879089355
+   }
+  ]
+ },
+ {
+  "id": "ccf336843885",
+  "intero": "Fra la frase Il costo e' 1.234,56 euro e la frase Il costo e' 1.299,56 euro numeric_conflict restituisce None.",
+  "span": "E  diversi, euro punto   [('euro', 1234.56)]        [('euro', 1299.56)]        ('euro', 1234.56, 1299.56)\nF  diversi, euro ita     [('euro', 56.0)]           [('euro', 56.0)]           None\n  A vs B: stesso contenuto, sola notazione diversa. Se A trova il conflitto\n  e B no, un valore CAMBIATO passa inosservato -> due fatti diversi convivono",
+  "g_prima": 99.9459228515625,
+  "intero_con_span_oggi": 96.084,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Fra la frase Il costo e' 1.234,56 euro.",
+    "score": 78.45283508300781,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La frase Il costo e' 1.299,56 euro numeric_conflict restituisce None.",
+    "score": 9.103554725646973,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La frase Il costo e' 1.299,56 euro numeric_conflict restituisce None.",
+    "score": 9.103554725646973
+   }
+  ]
+ },
+ {
+  "id": "9a65de2c7e6f",
+  "intero": "Con ENGRAM_L1_DOMAIN_ADVISORY spento i V-CIT ammessi sono 12/16 e con ENGRAM_L1_DOMAIN_ADVISORY=1 sono 14/16.",
+  "span": "  CONTROLLO V-CIT ammessi (attesi tutti) 12/16\nEXIT_BASE=0\nnota       EN  F-NEG  no     quarantined       1.0  L4-grounding+L4-negazione\ndoc-api    IT  V-CIT  SI     admitted            -  -\ndoc-api    IT  V-CIT  SI     admitted            -  -\ndoc-api    EN  V-CIT  SI     admitted            -  -\ndoc-api    EN  V-CIT  SI     admitted            -  -\n  CONTROLLO V-CIT ammessi (attesi tutti) 14/16",
+  "g_prima": 99.4554672241211,
+  "intero_con_span_oggi": 99.638,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Con ENGRAM_L1_DOMAIN_ADVISORY spento i V-CIT ammessi sono 12/16.",
+    "score": 99.9790267944336,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Con ENGRAM_L1_DOMAIN_ADVISORY=1 sono 14/16.",
+    "score": 0.2918815314769745,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Con ENGRAM_L1_DOMAIN_ADVISORY=1 sono 14/16.",
+    "score": 0.2918815314769745
+   }
+  ]
+ },
+ {
+  "id": "ca2634564a97",
+  "intero": "Nella cartella models ci sono local_gate_ce e local_gate_ce_v2 e ognuna pesa 711 MB.",
+  "span": "     local_gate_ce/  5 file · 711 MB\n        pesi veri: ['model.safetensors']\n     local_gate_ce_v2/  5 file · 711 MB\n        pesi veri: ['model.safetensors']\n  DEFAULT_MODEL_DIR punta a .engram/models/local_gate_ce_v2\n  esiste e ha pesi: True\nlocal_grounding.py:40:# v1 (local_gate_ce) is kept on disk for comparison.",
+  "g_prima": 99.95922088623047,
+  "intero_con_span_oggi": 99.959,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Nella cartella models ci sono local_gate_ce e local_gate_ce_v2.",
+    "score": 99.97254943847656,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Ognuna pesa 711 MB.",
+    "score": 0.31851136684417725,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Ognuna pesa 711 MB.",
+    "score": 0.31851136684417725
+   }
+  ]
+ },
+ {
+  "id": "4899fcf2ba3e",
+  "intero": "Il file di presidio esteso da' 7 failed e 2 passed con EXIT 1.",
+  "span": "E        +  where ('mb', 82.7, 7.0) = numeric_conflict('Il file pesa 82.7 MB.', 'Il file pesa 82,7 MB.')\nFAILED ..\\..\\AppData\\Local\\Temp\\claude\\C--Users-aurel-Desktop-ProgettiAI\\78ba9444-dd97-498f-bd48-07ca991638a4\\scratchpad\\test_una_cifra_ha_una_lingua.py::test_le_due_notazioni_estraggono_le_stesse_quantita[Il file pesa 82.7 MB.-Il file pesa 82,7 MB.]\n7 failed, 2 passed in 12.83s",
+  "g_prima": 99.90570068359375,
+  "intero_con_span_oggi": 99.811,
+  "fermato_da_layer_deterministico": true,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il file di presidio esteso da' 7 failed.",
+    "score": 99.96700286865234,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "2 passed con EXIT 1.",
+    "score": 0.35477307438850403,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "2 passed con EXIT 1.",
+    "score": 0.35477307438850403
+   }
+  ]
+ },
+ {
+  "id": "80218f2ba7ee",
+  "intero": "Sul caso item-1a la coda jac vale 0.33 e la colonna proposta vale True.",
+  "span": "caso                              coda jac   oggi  proposta  atteso\nCONFLITTO ws6 (Marco/Anna)            1.00   True     False   False\nconflitto italiano                    1.00   True     False   False\nitem-1a (deve restare)                0.33   True      True    True\ndue soggetti veri                     1.00   True     False    None",
+  "g_prima": 99.98587036132812,
+  "intero_con_span_oggi": 99.972,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sul caso item-1a la coda jac vale 0.33.",
+    "score": 99.86697387695312,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "La colonna proposta vale True.",
+    "score": 3.2936666011810303,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "La colonna proposta vale True.",
+    "score": 3.2936666011810303
+   }
+  ]
+ },
+ {
+  "id": "eedcb4b92f46",
+  "intero": "Memory.recall e Memory.search sono lo stesso oggetto funzione e il nome interno e' search.",
+  "span": "SDK: recall e search sono lo STESSO oggetto? True   __name__: search\nfatto scritto: model_claim grounding 99.85\nSDK  m.recall(...)  -> 1 risultati\nSDK  m.search(...)  -> 1 risultati\n--- hippo_recall ---\nSemantic recall over past episodes. Returns the top-k episodes most similar to the query, with their outcomes and final answers\n356a6ea0 guida: recall e le porte dei fatti non sono intercambiabili",
+  "g_prima": 99.88470458984375,
+  "intero_con_span_oggi": 42.735,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Memory.recall e Memory.search sono lo stesso oggetto funzione.",
+    "score": 27.877822875976562,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Il nome interno e' search.",
+    "score": 99.8826904296875,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Memory.recall e Memory.search sono lo stesso oggetto funzione.",
+    "score": 27.877822875976562
+   }
+  ]
+ },
+ {
+  "id": "d00838856443",
+  "intero": "Il claim senza articolo ha grounding 72.08 e quello con articolo ha grounding 97.66.",
+  "span": "  ESATTO  #1    72.08  quarantined   L4-review\n  ESATTO  #2    72.08  quarantined   L4-review\n  ESATTO  #3    72.08  quarantined   L4-review\n  VARIANTE #1    97.66  model_claim   \n  VARIANTE #2    97.66  model_claim   \n  VARIANTE #3    97.66  model_claim\n  B len= 34    99.90  model_claim\n  B len= 97    99.95  model_claim\n    99.95  quarantined   FALSO-agg. senza art.            L1.16",
+  "g_prima": 99.93477630615234,
+  "intero_con_span_oggi": 99.434,
+  "fermato_da_layer_deterministico": false,
+  "pulito": false,
+  "claims": [
+   {
+    "claim": "Il claim senza articolo ha grounding 72.08.",
+    "score": 24.7719783782959,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Quello con articolo ha grounding 97.66.",
+    "score": 1.0816010236740112,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Il claim senza articolo ha grounding 72.08.",
+    "score": 24.7719783782959
+   },
+   {
+    "claim": "Quello con articolo ha grounding 97.66.",
+    "score": 1.0816010236740112
+   }
+  ]
+ },
+ {
+  "id": "6a3611308b90",
+  "intero": "Sulla riga che contiene cli.py col trattino la funzione _senza_identificatori restituisce un testo in cui il numero e stato sostituito da spazi e le quantita sono una lista vuota.",
+  "span": "testo            : verimem/cli.py:100:    console.print(x)\n  claim_span     : 'verimem/cli.py:100:    console.print(x)'\n  senza_identif. : 'verimem/cli.py:100:    console.print(x)'\n  quantita       : [100.0]\ntesto            : verimem/cli.py-354-    console.print(y)\n  claim_span     : 'verimem/cli.py-354-    console.print(y)'\n  senza_identif. : 'verimem/cli.      -    console.print(y)'",
+  "g_prima": 95.0,
+  "intero_con_span_oggi": 99.835,
+  "fermato_da_layer_deterministico": false,
+  "pulito": true,
+  "claims": [
+   {
+    "claim": "Sulla riga che contiene cli.py col trattino la funzione _senza_identificatori restituisce un testo in cui il numero e stato sostituito da spazi.",
+    "score": 99.71977233886719,
+    "via": "max-per-frase"
+   },
+   {
+    "claim": "Le quantita sono una lista vuota.",
+    "score": 0.9741352200508118,
+    "via": "max-per-frase"
+   }
+  ],
+  "caduti": [
+   {
+    "claim": "Le quantita sono una lista vuota.",
+    "score": 0.9741352200508118
+   }
+  ]
+ }
+]
