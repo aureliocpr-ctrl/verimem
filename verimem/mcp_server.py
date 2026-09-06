@@ -13948,6 +13948,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # (LLM or operator) sees what fired and can adjust the
                 # proposition / verified_by before retry.
                 "anti_confab_warnings": _gate_warnings,
+                # Muro 1, pezzo 3c (06/09): stesso schema del gate sulle tre porte
+                # (claims auto-contenuti, il layer che ha fermato ogni claim,
+                # decomposed).
+                "claims": list(getattr(_gate, "claims", None) or [proposition]),
+                "claims_verdict": list(getattr(_gate, "claims_verdict", None) or []),
+                "decomposed": bool(getattr(_gate, "decomposed", False)),
                 # 0.8 WS1: which requested gate-weakening knobs were
                 # refused (empty when none / operator opted in).
                 "gate_knobs_denied": _knobs_denied,
