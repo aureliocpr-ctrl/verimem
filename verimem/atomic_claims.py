@@ -247,14 +247,44 @@ def _verbo_morfologico(pezzo: str) -> re.Match | None:
     return None
 
 
+# ── «passed», «failed», «quarantined», «skipped» dentro una frase ITALIANA sono
+# nomi (l'esito di pytest, lo status del gate), non verbi: 06/09, fra i 102 claim
+# caduti sotto il giudice nei 96 crolli di P-A, 17 avevano come unico verbo una
+# parola in -ed e 14 record su 96 crollavano SOLO per questo («…ed esito
+# quarantined» -> il pezzo nudo «Esito quarantined.» giudicato da solo). Una
+# parola in -ed fa da verbo finito solo se il pezzo ha una parola-funzione
+# inglese; «The test failed and the build passed» restano due claim.
+_RE_INGLESE = re.compile(
+    r"(?<![\w'])(?:the|an|is|are|was|were|of|this|that|it|and|not|to|has|have|had|"
+    r"by|for|with|from|into|than|then|which|when|while|but|their|its|they|we|you|"
+    r"on|at|all|no|each|every|any|some|there|here|only|still|also)(?=\s|$|[.,;:!?])",
+    re.IGNORECASE)
+_RE_ED = re.compile(r"[A-Za-z]{3,}ed$")
+
+
+def _verbo_listato(pezzo: str) -> re.Match | None:
+    """Il primo verbo della lista (o in -ed) che fa davvero da verbo nel pezzo:
+    una forma inglese in -ed conta solo se il pezzo e' inglese."""
+    inglese: bool | None = None
+    for m in _RE_VERBO.finditer(pezzo):
+        if _RE_ED.match(m.group()):
+            if inglese is None:
+                inglese = _RE_INGLESE.search(pezzo) is not None
+            if not inglese:
+                continue
+        return m
+    return None
+
+
 def _primo_verbo(pezzo: str) -> tuple[int, int] | None:
     """Posizione del primo verbo finito: prima la lista, poi la morfologia."""
-    m = _RE_VERBO.search(pezzo) or _verbo_morfologico(pezzo)
+    m = _verbo_listato(pezzo) or _verbo_morfologico(pezzo)
     return (m.start(), m.end()) if m else None
 
 
 def _comincia_col_verbo(pezzo: str) -> bool:
-    if _RE_VERBO_INIZIALE.match(pezzo):
+    m = _verbo_listato(pezzo)
+    if m is not None and m.start() == 0:
         return True
     m = _verbo_morfologico(pezzo)
     return m is not None and m.start() == 0
@@ -367,7 +397,7 @@ def _fondi_i_nudi(pezzi: list[str]) -> list[str]:
     di tre parole, 135 con la soglia a una."""
     out: list[str] = []
     for p in pezzi:
-        if _RE_VERBO.search(p) or not out:
+        if _verbo_listato(p) or not out:
             out.append(p)
         elif _RE_PARTICIPIO_INIZIALE.match(p) and _ausiliare_di(out[-1]):
             out.append(f"{_ausiliare_di(out[-1])} {p}")
