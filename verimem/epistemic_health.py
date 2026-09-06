@@ -27,14 +27,24 @@ _DEFAULT_THRESHOLD = 85.0
 
 @dataclass
 class FactAudit:
-    """Per-fact epistemic verdict. ``grounded``/``fresh`` are None when not checkable
-    (no source to ground against / no freshness signal) — distinct from False."""
+    """Per-fact epistemic verdict. ``grounded``/``fresh``/``contested`` are None when
+    not checkable (no source to ground against / no freshness signal / no contradiction
+    check injected) — distinct from False.
+
+    ``contested`` era ``bool`` con default ``False``, e ``False`` qui significa «NON
+    contestato», cioe' un giudizio POSITIVO che nessuno aveva dato. Con
+    ``contested_fn`` mai passato da nessun chiamante (misurato: 0 occorrenze fuori da
+    questo modulo, controllo positivo ``grounder=`` 1) ogni fatto risultava
+    incontestato e ``uncontested_fraction`` valeva 1.0 SEMPRE. E' la cosa che il
+    prodotto difende esplicitamente altrove — ``document_index``: «absence stays
+    absence, never a default that could read as a vouch nobody made» — e qui l'assenza
+    era diventata proprio un vouch, dentro un numero pubblicato."""
 
     fact_id: str
     has_source: bool
     grounded: bool | None
     fresh: bool | None
-    contested: bool
+    contested: bool | None
 
 
 def _source_of(fact: Any) -> str | None:
@@ -66,7 +76,7 @@ def audit_one(fact: Any, *, grounder: Callable[[str, str], float],
     if src:
         grounded = grounder(src, prop) >= threshold
     fresh = freshness_fn(fact) if freshness_fn else None
-    contested = bool(contested_fn(fact)) if contested_fn else False
+    contested = bool(contested_fn(fact)) if contested_fn else None
     return FactAudit(fact_id=fid, has_source=bool(src), grounded=grounded,
                      fresh=fresh, contested=contested)
 
@@ -88,16 +98,33 @@ def health_report(audits: list[FactAudit]) -> dict[str, Any]:
                          if grounded_audited else None)
     fresh_fraction = (sum(1 for a in fresh_audited if a.fresh) / len(fresh_audited)
                       if fresh_audited else None)
-    uncontested_fraction = sum(1 for a in audits if not a.contested) / n
+    # ⚠️ SOLO GLI AUDIT IN CUI LA CONTESTAZIONE E' STATA DAVVERO CONTROLLATA, come
+    # per `grounded` e `fresh`. Prima si contava `not a.contested` su TUTTI, e con
+    # `contested` a `False` per default il conto era `n/n = 1.0` per costruzione.
+    contested_audited = [a for a in audits if a.contested is not None]
+    uncontested_fraction = (
+        sum(1 for a in contested_audited if not a.contested) / len(contested_audited)
+        if contested_audited else None)
 
     # composite = mean of available component scores. grounded_fraction is weighted by
     # provenance_coverage (an ungrounded-able corpus cannot claim full grounding health).
+    #
+    # ⚠️ E `uncontested_fraction` entra CONDIZIONATO come gli altri due. Prima era
+    # l'unico `append` senza `if`, quindi un 1.0 mai misurato finiva nella media
+    # SEMPRE: su un corpus senza grounding ne' freschezza il composito era
+    # `mean([1.0]) = 1.0`, e quando il grounding c'era veniva comunque mediato verso
+    # l'alto. Misurato sul corpus vero prima della cura:
+    #     limit=2000        composite 0.919   grounded x coverage 0.839
+    #     corpus intero     composite 0.79    grounded x coverage 0.58
+    #     e la formula tornava esatta: (0.922 x 0.629 + 1) / 2 = 0.79
+    # cioe' META' del voto pubblicato era un componente che nessuno aveva misurato.
     components: list[float] = []
     if grounded_fraction is not None:
         components.append(grounded_fraction * provenance_coverage)
     if fresh_fraction is not None:
         components.append(fresh_fraction)
-    components.append(uncontested_fraction)
+    if uncontested_fraction is not None:
+        components.append(uncontested_fraction)
     composite = round(statistics.mean(components), 3) if components else None
 
     return {
@@ -106,7 +133,8 @@ def health_report(audits: list[FactAudit]) -> dict[str, Any]:
         "grounded_fraction": round(grounded_fraction, 3) if grounded_fraction is not None else None,
         "n_grounding_audited": len(grounded_audited),
         "fresh_fraction": round(fresh_fraction, 3) if fresh_fraction is not None else None,
-        "uncontested_fraction": round(uncontested_fraction, 3),
+        "uncontested_fraction": (round(uncontested_fraction, 3)
+                                 if uncontested_fraction is not None else None),
         "composite": composite,
         "ungrounded_fact_ids": [a.fact_id for a in grounded_audited if a.grounded is False],
     }
