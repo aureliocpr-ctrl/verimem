@@ -2891,6 +2891,21 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     "when": {"type": "number",
                               "description": "epoch seconds of the moment to reconstruct"},
                     "k": {"type": "integer", "default": 5},
+                    #: LA CAPACITA' C'ERA E LA PORTA NON LA DICHIARAVA.
+                    #: `recall_as_of` accetta `include_superseded` dal
+                    #: 06/09 (T18) e SDK, CLI e le due porte MCP ordinarie
+                    #: lo espongono; il tool DEDICATO al passato no — cioe'
+                    #: proprio quello dove chi vuole «cosa valeva allora,
+                    #: piu' la storia» non ha nessun altro posto dove
+                    #: chiederlo. Un client MCP legge lo SCHEMA: senza
+                    #: questa riga la capacita' esiste e resta invisibile.
+                    "include_superseded": {
+                        "type": "boolean", "default": False,
+                        "description": (
+                            "also return facts that were ALREADY RETIRED "
+                            "at that moment, after the ones that were "
+                            "current then — never instead of them"),
+                    },
                 },
                 "required": ["query", "when"],
             },
@@ -8422,7 +8437,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             hits = recall_as_of(
                 a.semantic, arguments.get("query", ""),
                 when=float(arguments.get("when", 0.0)),
-                k=int(arguments.get("k", 5)))
+                k=int(arguments.get("k", 5)),
+                # INOLTRATO, non ingoiato: dichiararlo nello schema e non
+                # passarlo qui sarebbe la promessa vuota che T18 ha chiuso
+                # ovunque — un parametro accettato dalla porta e mai arrivato
+                # al filtro. La priorita' la decide `recall_as_of`, che a `k`
+                # stretto serve prima i correnti di allora e i ritirati solo
+                # se avanza spazio.
+                include_superseded=bool(
+                    arguments.get("include_superseded", False)))
             items = []
             for h in hits:
                 f = h[0]
