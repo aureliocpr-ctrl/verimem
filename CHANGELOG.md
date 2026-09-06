@@ -23,6 +23,16 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   where before, for the ordinary case, the startup log said **nothing at all**
   about the judge and the silence read as "all fine".
 - **`--valid-until` on the CLI**, so a fact can be given an expiry at write time.
+- **Two different sources no longer erase each other.** Before, two facts written
+  to the same topic from **different sources** — the two arms of an A/B, two cells
+  of one benchmark — could be read as one updating the other, and the newer one
+  **retired** the older: recall served one arm and stayed silent about the other.
+  Measured on a real corpus: **292 retirements** of that shape, of which **155**
+  came from the write gate and **130** from the nightly consolidation. Now they
+  **coexist** and the receipt says why (`L3-fonti-distinte`). It applies where both
+  facts carry a source and neither declares a `verified_by`: measured 2026-09-06 on
+  `5e61d333`, **62,2% of 14204 servable facts** carry a source signature, and
+  **82,3% of the 334** written in the preceding 24 hours.
 - **The MCP port now delivers the reply.** A call could hang for good — and the
   server was not being slow: on the same connection `initialize` answered in
   **2,0-2,5 s** in every run, so the process was alive and the framing was right;
@@ -63,33 +73,51 @@ because the honest version of it is "we do not know yet".
 - The expiry advisory spoke about **the store**, not about **the question** asked.
 - The advisory criterion was a **proxy that does not hold** and was replaced.
 
-### Known limits — what this release does NOT fix
+### Not solved yet — and what comes next
 
 **0.7.7 adds no capability: it makes readable what the product was already doing
-in silence.** The open defects are tracked in
-`docs/stato-reale/GRAVITA-DIFETTI.md`. These are the ones you can run into:
+in silence.** Each item below says what it does **today** (with the number we
+measured), what is **not yet** true, and the **next step**. Owners and tickets are
+tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
 
-- **D-1** — its fix was reverted the same morning, because it stopped a true
-  third-party fact. Still open.
-- **T14 — the criterion is fixed on the SDK, the P0 on the MCP port is still
-  open**: the piece that would carry it to that port is not in this release.
-- **T16** — open, tracked in the register.
-- **T8-bis — `verimem doctor` keeps warning once it has warned.** The exit code
-  itself is sound and documented (`0 all-ok · 1 warnings · 2 failures`). The
-  moat check behind it compares a **cumulative** ratio of judged facts: writes
-  made while the judge was still loading stay unjudged forever, so the warning
-  does not go back to green on its own.
-- **T24 — `replaced` in the `hippo_remember` receipt is always `False`, by
-  construction.** A public field that does not measure what its name promises,
-  and it explains earlier readings that took it at face value. **Read
-  supersession from the store** (`superseded_by` on the older fact), never from
-  `replaced`.
-- **T25 — with a shared encode daemon, the score and the threshold can come from
-  two different models.** In delegate-only mode the *score* is computed by the
-  shared daemon (its own model) while the *threshold* is read from the local
-  model directory (`ENGRAM_LOCAL_GATE_MODEL`): two models in one return value,
-  and nothing in the receipt says so. Measured A/B with and without delegation
-  on the same input: **97,21 vs 94,92** on `ce_v31`.
+- **D-1 — a fact reported by a third party can be mistaken for a contradiction.**
+  *Today*: the fix was written and **reverted the same morning**, because it also
+  stopped a true third-party fact. *Not yet*: the criterion cannot separate
+  "someone else says X" from "X contradicts what we hold". *Next*: a two-arm bench
+  that keeps the true third-party case green before the criterion ships again.
+- **T14 — the verdict does not reach the MCP port.**
+  *Today*: the criterion is **fixed on the SDK**. *Not yet*: on the MCP port the
+  verdict still does not arrive — the piece that would carry it there was reverted
+  and is **not in this release**. *Next*: re-land that piece with a red test on the
+  MCP port first.
+- **T16 — you could not tell which store a read had opened.**
+  *Today*: `--db` reaches the five ports, and `recall` prints the store it read
+  from, naming the path when it finds nothing. *Not yet*: nothing warns you when
+  the store you opened is not the one you wrote to. *Next*: make the mismatch
+  itself say so.
+- **T8-bis — `verimem doctor` keeps warning once it has warned.**
+  *Today*: the exit code is sound and documented (`0 all-ok · 1 warnings ·
+  2 failures`), and on an empty store `doctor` exits **0**. *Not yet*: the moat
+  check behind it compares a **cumulative** ratio of judged facts, so writes made
+  while the judge was still loading stay unjudged forever and the warning never
+  goes back to green. *Next*: split the state check ("is the judge usable now?")
+  from the coverage figure, and say how many facts are missing.
+- **T24 — `replaced` in the receipt is always `False`.**
+  *Today*: the field never turns true, **by construction** — a public field that
+  does not measure what its name promises, and it explains earlier readings that
+  took it at face value. *Not yet*: there is no field on that port that tells you
+  a retirement happened. *Next*: either the receipt carries `replaced` with the
+  retired ids, or the field is removed and the removal is documented. **Meanwhile,
+  read supersession from the store** (`superseded_by` on the older fact).
+- **T25 — with a shared encode daemon, score and threshold can come from two
+  different models.**
+  *Today*: in delegate-only mode the *score* comes from the shared daemon (its own
+  model) while the *threshold* is read from the local model directory
+  (`ENGRAM_LOCAL_GATE_MODEL`) — two models in one return value, measured A/B with
+  and without delegation on the same input: **97,21 vs 94,92** on `ce_v31`.
+  *Not yet*: nothing in the receipt says which model produced the score. *Next*:
+  compare the requested model with the one the daemon declares, and refuse to
+  delegate when they differ.
 
 ### Internal
 

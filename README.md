@@ -336,6 +336,8 @@ rather than producing a number that looks like this one without it.
 - **Local-first** — SQLite storage, local embeddings, injectable LLM. Runs
   air-gapped (`verimem airgap` verifies zero-egress configuration).
 
+> **Two facts from different sources coexist.** Coexistence needs `source=` on **both** facts; facts written without `source=` still retire each other. Recall shows the two signatures, not the reason — a readable field for that is the next step.
+
 ## Install
 
 > ⚠️ **After `pip install`, run `verimem warmup` before the first write** — see
