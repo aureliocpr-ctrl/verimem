@@ -6509,6 +6509,16 @@ class SemanticMemory:
         # cambia cosa un agente riceve ed e' una decisione di prodotto, da
         # misurare sui briefing veri. Questa riga li rende VISIBILI, e chi
         # vuole tagliare ora ha il campo per farlo.
+        # `valid_until` per la STESSA ragione della riga sopra, e con la stessa
+        # forma: additivo, non filtra, rende visibile una cosa che il payload
+        # taceva. Chi legge questo dizionario non aveva NESSUN modo di sapere
+        # che un fatto e' oltre la sua validita' — e `facts_freshness_check`,
+        # che si serve proprio di qui, chiamava `live` ogni fatto non
+        # superseduto e quindi contava vivo anche uno scaduto. Il campo mancava
+        # a monte: la cecita' non era una scelta di quel modulo.
+        # (Il quartetto dei servibili, 2026-08-04: «superseded_by IS NULL» non
+        # vuol dire vivo. La scadenza e' la terza dimensione, dopo la
+        # supersessione e la quarantena.)
         return {
             "id": fact.id,
             "topic": fact.topic,
@@ -6517,6 +6527,7 @@ class SemanticMemory:
             "grounding_score": getattr(fact, "grounding_score", None),
             "confidence": fact.confidence,
             "created_at": fact.created_at,
+            "valid_until": getattr(fact, "valid_until", None),
             "source_episodes": list(fact.source_episodes),
             "superseded_by": fact.superseded_by,
         }

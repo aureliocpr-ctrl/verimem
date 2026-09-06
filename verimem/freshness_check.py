@@ -65,16 +65,38 @@ def facts_freshness_check(
     now = time.time()
     day = 86400.0
 
-    # Stale = live + older than threshold_days
+    # Stale = live + older than threshold_days OR past its `valid_until`.
+    #
+    # ⚠️ LA SECONDA META' DEL CRITERIO E' NUOVA, e la ragione e' misurata: qui
+    # `live` significava «non superseduto», quindi un fatto oltre la sua
+    # validita' era LIVE — e non compariva fra gli stantii perche' poteva essere
+    # giovanissimo. Il recall lo toglie, questa lista non lo mostra: restava
+    # invisibile proprio a chi fa manutenzione, ed e' la lista che alimenta
+    # `dashboard_overview_v2` e lo strumento `hippo_facts_freshness_check`.
+    # E' la terza superficie della stessa famiglia dopo `assess_freshness` e
+    # `find_stale_facts`; il campo mancava a monte (`summary_topic` non lo
+    # serviva), quindi la cecita' non nasceva in questo modulo.
+    # `reason` dice quale delle due cause ha acceso la riga: senza, la lista
+    # mescolerebbe «vecchio» e «oltre la sua validita'» in un segnale solo.
     stale_facts: list[dict[str, Any]] = []
     for f in live:
         age_days = max(0.0, (now - float(f["created_at"])) / day)
-        if age_days > threshold_days:
+        _oltre_validita = False
+        _vu = f.get("valid_until")
+        if _vu is not None:
+            try:
+                _oltre_validita = float(_vu) <= now
+            except (TypeError, ValueError):
+                # Illeggibile: si comporta come assente e non fa cadere il
+                # rapporto (stessa scelta di `client.py`).
+                _oltre_validita = False
+        if age_days > threshold_days or _oltre_validita:
             stale_facts.append({
                 "id": f["id"],
                 "topic": f["topic"],
                 "created_at": f["created_at"],
                 "age_days": age_days,
+                "reason": "valid_until" if _oltre_validita else "age",
                 "proposition": (f.get("proposition") or "")[:120],
             })
 
