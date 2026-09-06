@@ -139,8 +139,18 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
 
     ⚠️ Non e' il warm del modello (``_warm_moat_judge``, che legge 746 MB ed e'
     condizionato a un flag): qui si importano solo le librerie native. Sono due
-    cose diverse e la differenza e' il punto — questo costa 0,3 s, non dipende
-    dal modello e non puo' fallire perche' il modello manca.
+    cose diverse e la differenza e' il punto: non dipende dal modello e non puo'
+    fallire perche' il modello manca.
+
+    ⚠️ CORRETTO il 06/09: qui c'era scritto «costa 0,3 s», un numero che avevo
+    messo senza misurarlo. Misurato tre volte nel venv del pacchetto:
+
+        import scipy.linalg = 3.77 s      (a freddo)
+        import scipy.linalg = 0.75 s
+        import scipy.linalg = 0.72 s
+
+    A freddo sono 3,77 s, non 0,3: se questo import e' sincrono all'avvio, il
+    primo `initialize` dopo un riavvio li paga.
 
     PERCHE' ESISTE, misurato il 2026-09-06 sul server MCP:
 
@@ -234,8 +244,10 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
     # osservabile da Python — ma la cura non ne dipende: l'import si fa dove
     # si puo' fare, cioe' PRIMA di servire, e una volta sola.
     #
-    # Costa ~2 s e NON carica nessun modello: e' solo `import scipy.linalg`.
-    # Il warm del modello resta in background, dove non fa danno.
+    # NON carica nessun modello: e' solo `import scipy.linalg` (misurato
+    # 3,77 s a freddo, 0,75 e 0,72 a caldo — nel commit precedente avevo
+    # scritto «~2 s», che era una mia stima e non una misura). Il warm del
+    # modello, quello da 746 MB, resta in background dove non fa danno.
     _scalda_le_librerie_del_giudice(log=log)
 
     def _run() -> None:
