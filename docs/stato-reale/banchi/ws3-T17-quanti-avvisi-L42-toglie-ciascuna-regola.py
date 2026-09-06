@@ -39,6 +39,27 @@ PREDIZIONI depositate in questo commit PRIMA di eseguire:
         cura va ripensata; se cade un presidio, la regola che lo spegne non
         entra.
 Store in sola lettura (mode=ro). Nessun modello. Secondi.
+
+ESITO 06/09 06:48 (predizioni in 4fe86ae5), poi tre giri post-hoc fino alle 07:19:
+  [0]  il righello riproduce il prodotto a regole spente: 0 disaccordi su 7.974.
+  P-T1 REGGE: L4.2 avvisa su 4.052/7.974 = 50,8% dei fatti con span.
+  P-T2 🔴 FALSIFICATA: la sola C toglie il 19,8% (predetto >= 25%).
+  P-T3 🔴 FALSIFICATA: A+B+C+D toglie l'85,2% ma B (tutta la riga) SPEGNE un
+       presidio su 3 («Line 3 processed 22 orders» contro «Line 3 ran for 22
+       days»: «line» compare da entrambe le parti) e i tre EXIT restano.
+  POST-HOC dichiarate, una per volta:
+    E  etichetta «:»/«=» sulla riga: da sola toglie 1,2%, con A 4,9%, ACDE 34,8%.
+    P  prefisso di 4 lettere (exits/exit): ACDEP 36,1%, 3 falsi su 5 taciuti.
+    F(k) la prima parola NON grammaticale per lato (letti 14 residui: 9 su 14
+       avevano nel claim «(solo parole grammaticali accanto)»: in prosa il
+       numero e' preceduto da «sono/risulta/a» e seguito dal punto):
+       ACDEPF1 57,2% tolti, presidi 3/3 e 2/2 · ACDEPF2 73,1% ma presidio 2/3
+       · F3 79,4% · F4 82,6%, sempre 2/3: da k=2 «line» entra nel vicinato di
+       entrambi e l'identificativo condiviso spegne l'avviso.
+  CURA CANDIDATA per Giano, con presidi intatti: A+C+D+E+P+F1 — gli avvisi
+  scendono da 4.052 a 1.735 (dal 50,8% al 21,8% dei fatti). I due «esce 2»
+  contro «EXIT=2» restano: esce ≠ exit e' traduzione, non lessico. Il 21,8%
+  residuo NON e' caratterizzato oltre i 14 letti: e' il prossimo campione.
 """
 from __future__ import annotations
 
@@ -77,17 +98,54 @@ def _occorrenze(testo: str, valore: float, punto_finale: bool) -> list[re.Match]
 
 
 def vicinato(testo: str, valore: float, *, stessa_riga: bool, punto_finale: bool,
-             grammatica: frozenset[str]) -> tuple[set[str], set[str]]:
-    """Come `_intorno`, con le due varianti B e D accendibili."""
+             grammatica: frozenset[str], etichetta: bool = False, k: int = 0) -> tuple[set[str], set[str]]:
+    """Come `_intorno`, con le varianti B, D ed E accendibili.
+
+    E (post-hoc, 07:14, dopo che B spegneva un presidio): se sulla riga del
+    numero, subito prima di lui, c'e' «:» o «=» — la forma ETICHETTA: valore
+    dell'output di programma — il lato «prima» e' l'etichetta intera (le parole
+    non grammaticali della riga fino al numero) e il lato «dopo» si ferma al
+    fine riga. Un claim in prosa non ha «:» prima del numero e resta com'e'.
+    """
     dopo: set[str] = set()
     prima: set[str] = set()
     for m in _occorrenze(testo, valore, punto_finale):
+        if etichetta and re.search(r"[:=]\s*$", testo[max(0, m.start() - 3):m.start()]):
+            inizio = testo.rfind("\n", 0, m.start()) + 1
+            fine = testo.find("\n", m.end())
+            fine = len(testo) if fine < 0 else fine
+            prima |= {t.casefold() for t in _PAROLA.findall(testo[inizio:m.start()]) if t.casefold() not in grammatica}
+            d = _PAROLA.findall(testo[m.end():fine])
+            if d:
+                dopo.add(d[0].casefold())
+            continue
         if stessa_riga:
             inizio = testo.rfind("\n", 0, m.start()) + 1
             fine = testo.find("\n", m.end())
             fine = len(testo) if fine < 0 else fine
             dopo |= {t.casefold() for t in _PAROLA.findall(testo[m.end():fine]) if t.casefold() not in grammatica}
             prima |= {t.casefold() for t in _PAROLA.findall(testo[inizio:m.start()]) if t.casefold() not in grammatica}
+        elif k > 0:
+            # F(k), post-hoc 07:19 dopo la lettura di 14 residui: 9 su 14 avevano
+            # nel claim «(solo parole grammaticali accanto)»: in prosa il numero
+            # e' seguito da punto o «e» e preceduto da «sono/risulta/a», e la
+            # grandezza sta 2-4 parole prima. Si prendono le prime k parole NON
+            # grammaticali per lato, entro 60 caratteri e senza passare un fine
+            # riga o una cella di tabella («|»).
+            fine = min(len(testo), m.end() + 60)
+            for sep in ("\n", "|"):
+                j = testo.find(sep, m.end(), fine)
+                if j >= 0:
+                    fine = j
+            inizio = max(0, m.start() - 60)
+            for sep in ("\n", "|"):
+                j = testo.rfind(sep, inizio, m.start())
+                if j >= 0:
+                    inizio = j + 1
+            d = [t.casefold() for t in _PAROLA.findall(testo[m.end():fine]) if t.casefold() not in grammatica]
+            p = [t.casefold() for t in _PAROLA.findall(testo[inizio:m.start()]) if t.casefold() not in grammatica]
+            dopo |= set(d[:k])
+            prima |= set(p[-k:])
         else:
             d = _PAROLA.findall(testo[m.end():m.end() + 40])
             if d:
@@ -113,10 +171,15 @@ def avvisa(claim: str, fonte: str, regole: str, grammatica: frozenset[str], extr
             if any(re.search(rf"(?<!\d){re.escape(intero)}(?!\d)", c) for c in comp_fonte
                    if c in claim):
                 continue
-        cd, cp = vicinato(claim, valore, stessa_riga="B" in regole, punto_finale="D" in regole, grammatica=grammatica)
-        fd, fp = vicinato(fonte, valore, stessa_riga="B" in regole, punto_finale="D" in regole, grammatica=grammatica)
+        k = int(regole[regole.index("F") + 1]) if "F" in regole else 0
+        cd, cp = vicinato(claim, valore, stessa_riga="B" in regole, punto_finale="D" in regole,
+                          grammatica=grammatica, etichetta="E" in regole, k=k)
+        fd, fp = vicinato(fonte, valore, stessa_riga="B" in regole, punto_finale="D" in regole,
+                          grammatica=grammatica, etichetta="E" in regole, k=k)
         if not fd and not fp:
             continue
+        if "P" in regole:  # post-hoc, non depositata: PREFISSO di 4 lettere (exits/exit, strumenti/strumento)
+            cd, cp, fd, fp = ({w[:4] for w in s} for s in (cd, cp, fd, fp))
         if cd & fd or cp & fp:
             continue
         if "A" in regole and (cd | cp) & (fd | fp):
@@ -139,7 +202,7 @@ def main() -> int:
     # [0] il righello riproduce il prodotto quando tutte le regole sono spente
     oggi_prodotto = [bool(valori_riusati_da_altro_contesto(p or "", s or "")) for p, s in righe]
     oggi_mio = [avvisa(p or "", s or "", "", _GRAMMATICA, extract_quantities) for p, s in righe]
-    disaccordi = sum(1 for a, b in zip(oggi_prodotto, oggi_mio) if a != b)
+    disaccordi = sum(1 for a, b in zip(oggi_prodotto, oggi_mio, strict=True) if a != b)
     n_avvisi = sum(oggi_prodotto)
     print(f"[0] riproduzione a regole spente: {disaccordi} disaccordi su {len(righe)} "
           f"({'REGGE' if disaccordi <= len(righe) * 0.01 else '🔴 il righello non riproduce il prodotto: NESSUN VERDETTO'})")
@@ -151,8 +214,11 @@ def main() -> int:
 
     print("\nregola     avvisi rimasti   tolti   presidi (3 scattano / 2 tacciono)   i 5 falsi di T17 taciuti")
     esiti = {}
-    for regole in ("A", "B", "C", "D", "AB", "ABC", "ABCD"):
-        rimasti = sum(1 for (p, s), o in zip(righe, oggi_prodotto) if o and avvisa(p or "", s or "", regole, _GRAMMATICA, extract_quantities))
+    # le prime sette sono le combinazioni depositate; AC/AD/CD/ACD/ACDP/ABCDP sono
+    # POST-HOC (aggiunte dopo il primo esito, 06:48: B spegneva un presidio e i
+    # tre EXIT restavano) e si leggono come esplorazione, non come prova.
+    for regole in ("A", "B", "C", "D", "AB", "ABC", "ABCD", "AC", "AD", "CD", "ACD", "ACDP", "ABCDP", "E", "AE", "ACDE", "ACDEP", "ACDEPF1", "ACDEPF2", "ACDEPF3", "ACDEPF4", "ACDPF2"):
+        rimasti = sum(1 for (p, s), o in zip(righe, oggi_prodotto, strict=True) if o and avvisa(p or "", s or "", regole, _GRAMMATICA, extract_quantities))
         sc = sum(1 for c, f in PRESIDI_SCATTANO if avvisa(c, f, regole, _GRAMMATICA, extract_quantities))
         ta = sum(1 for c, f in PRESIDI_TACCIONO if not avvisa(c, f, regole, _GRAMMATICA, extract_quantities))
         falsi = sum(1 for c, f in FALSI_T17 if not avvisa(c, f, regole, _GRAMMATICA, extract_quantities))
