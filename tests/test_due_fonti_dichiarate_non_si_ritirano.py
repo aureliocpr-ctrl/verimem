@@ -102,7 +102,8 @@ def test_senza_firma_e_senza_penna_il_comportamento_e_quello_di_prima():
     (dict(firma="sha256:aaaa", penna=PENNA), dict(firma="sha256:bbbb", penna=PENNA),
      False, "una penna sola che cita due testi: e' un aggiornamento"),
     (dict(firma="sha256:aaaa", penna=PENNA),
-     dict(firma="sha256:bbbb", penna=ALTRA_PENNA), True, "due penne diverse"),
+     dict(firma="sha256:bbbb", penna=ALTRA_PENNA), False,
+     "due penne diverse: FUORI perimetro, resta il conflitto cross-source"),
     (dict(firma="sha256:aaaa"), dict(firma="sha256:aaaa"), False, "stessa firma"),
     (dict(firma="sha256:aaaa"), dict(), False,
      "una sola firma: non si sa che sono diverse, si sa che una manca"),
@@ -119,13 +120,36 @@ def test_senza_firma_e_senza_penna_il_comportamento_e_quello_di_prima():
     (dict(firma="sha256:aaaa", penna=["commit:abc123"]),
      dict(firma="sha256:bbbb", penna=["commit:abc123"]), False,
      "commit: identico — la forma di evidenza piu' comune che abbiamo"),
+    # ⚠️ IL PERIMETRO E' «NESSUN verified_by SU NESSUNA DELLE DUE» (lead, 06/09
+    # 09:00). Due penne DIVERSE restano il conflitto cross-source di prima —
+    # quarantena — che e' anche la guardia contro il griefing: la quarta uscita
+    # nasce per i 292 ritiri in cui nessuno dei due lati dichiara una penna, e
+    # fuori di li' non c'e' misura.
     (dict(firma="sha256:aaaa", penna=["contratto A"]),
-     dict(firma="sha256:bbbb", penna=["contratto B"]), True,
-     "due verified_by diversi: due penne, anche in forma libera"),
+     dict(firma="sha256:bbbb", penna=["contratto B"]), False,
+     "due penne in forma libera e diverse: fuori perimetro anche loro"),
 ])
 def test_quando_due_fonti_coesistono(nuovo, vecchio, atteso, perche):
     assert due_fonti_dichiarate_e_diverse(
         _fatto(**nuovo), _fatto(**vecchio)) is atteso, perche
+
+
+@pytest.mark.xfail(strict=True, reason=(
+    "NON DECISO — cella aperta per la 0.7.8. Quando UN SOLO lato dichiara una "
+    "penna e ENTRAMBI portano una firma, non sappiamo se sia una coesistenza "
+    "(due fonti davvero diverse) o un'aggressione (chi non si dichiara contro "
+    "un fatto che ha una penna). Oggi vale il comportamento di prima: "
+    "quarantena. E NON e' un caso che il corpus possa arbitrare — misurato il "
+    "2026-09-06 sui 2407 ritiri ricostruibili: `verified_by` su un lato solo = "
+    "6, e di quei 6 con firma su ENTRAMBI = ZERO. Decidere qui vorrebbe dire "
+    "scegliere su una popolazione vuota, che e' come non misurare affatto."))
+def test_una_penna_su_un_lato_solo_resta_da_decidere():
+    """La cella che tiene aperta la domanda invece di chiuderla per comodita'."""
+    nuovo = _fatto(firma="sha256:aaaa")                       # nessuna penna
+    vecchio = _fatto(firma="sha256:bbbb", penna=PENNA)        # penna dichiarata
+    assert due_fonti_dichiarate_e_diverse(nuovo, vecchio) is True, (
+        "il giorno in cui questo passa, la 0.7.8 ha deciso: togliere il marker "
+        "e scrivere QUI la misura che ha deciso")
 
 
 def test_la_relazione_fra_due_misure_distinte_non_e_una_evoluzione():

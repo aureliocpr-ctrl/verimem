@@ -318,9 +318,10 @@ def due_fonti_dichiarate_e_diverse(a: Any, b: Any) -> bool:
     """I due fatti DICHIARANO ciascuno la propria fonte, e le due sono diverse.
 
     ⚠️ DUE CONDIZIONI, NON UNA: le firme devono essere entrambe valorizzate e
-    diverse, **e** il ``verified_by`` non deve gia' riconciliarle. La stessa
-    penna dichiarata che cita due testi (il proprio valore vecchio e quello
-    nuovo) e' UNA fonte, non due: quello e' un aggiornamento e va ritirato.
+    diverse, **e nessuno dei due deve dichiarare un ``verified_by``**. Il
+    perimetro e' volutamente stretto — la popolazione misurata, non tutti i casi
+    concepibili — e il blocco di commento nel corpo dice quali casi restano
+    fuori e dove vanno a finire.
 
     ⚠️ NON E' ``not is_same_source(a, b)``, e la differenza e' tutto il punto:
     quella e' vera anche quando **uno dei due non dichiara niente**, e allora
@@ -362,19 +363,29 @@ def due_fonti_dichiarate_e_diverse(a: Any, b: Any) -> bool:
     # `verified_by=['contratto']` che aggiorna il proprio contratto da Stripe ad
     # Adyen — smetteva di ritirare: un aggiornamento VERO letto come due fonti.
     # Due `verified_by` identici sono la stessa penna qualunque forma abbiano.
-    _va = [str(x) for x in (getattr(a, "verified_by", None) or [])]
-    _vb = [str(x) for x in (getattr(b, "verified_by", None) or [])]
-    if _va and _vb and _va == _vb:
-        return False
-    _ca = canonical_source(getattr(a, "verified_by", None) or None)
-    _cb = canonical_source(getattr(b, "verified_by", None) or None)
-    if _ca == _cb and _ca != "user":
-        # ⚠️ LA STESSA PENNA DICHIARATA CHE CITA DUE TESTI E' UNA FONTE SOLA.
-        # Stessa ragione di `canonical_source_of`, e lo stesso caso che l'ha
-        # scoperta: `verified_by=["source-doc:billing:1"]` che corregge il
-        # proprio prezzo citando ogni volta il testo aggiornato. Le firme sono
-        # due, la fonte una — e senza questa riga la quarta uscita teneva vivi
-        # sia «100 euro» sia «150 euro».
+    if (getattr(a, "verified_by", None) or getattr(b, "verified_by", None)):
+        # ⚠️ BASTA UN `verified_by` SU UN LATO SOLO PER USCIRE DAL PERIMETRO, e
+        # la riga stretta e' una DECISIONE, non una conseguenza: la quarta uscita
+        # nasce per una popolazione misurata — i **292 ritiri** in cui NESSUNO dei
+        # due lati dichiara una penna e le due `source_signature` sono diverse
+        # (sul corpus: `verified_by` vuoto su entrambi in **2399 ritiri su 2407**,
+        # cioe' il 99,7%). Fuori di li' non c'e' misura, e una uscita nuova su un
+        # caso non misurato e' un'ipotesi che ritira o tiene in vita fatti veri.
+        #
+        # Cosa resta fuori, e dove:
+        #   · una penna sola su entrambi (`['contratto']`, `['commit:abc']`) — e'
+        #     un AGGIORNAMENTO e deve ritirare: il caso T14, Stripe -> Adyen;
+        #   · due penne diverse — resta il conflitto cross-source di prima
+        #     (quarantena), che e' anche la guardia contro il griefing;
+        #   · una penna su UN lato solo — comportamento invariato. Sul corpus
+        #     sono 6 ritiri su 2407, e di quei 6 con firma su ENTRAMBI: **zero**.
+        #     E' cella xfail per la 0.7.8, non un caso che si decide qui.
+        #
+        # 🔑 Il `verified_by` GREZZO, non `canonical_source`: quest'ultimo
+        # riconosce solo `source-doc:X:...` e `doc:X` e appiattisce il resto su
+        # `"user"` — misurato il 06/09, `['commit:abc123'] -> 'user'`. Chiedere
+        # «canonicalizza a qualcosa?» invece di «c'e'?» lascerebbe fuori dalla
+        # guardia proprio la forma di evidenza piu' comune che abbiamo.
         return False
     _a = getattr(a, "source_signature", None)
     _b = getattr(b, "source_signature", None)
