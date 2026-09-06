@@ -164,9 +164,31 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
         mediana (16,9 · 17,7 · 16,9), e la seconda scrittura 0,1 s.
 
     ⚠️ Il PERCHE' un import non finisca mentre una richiesta e' in corso resta
-    un'IPOTESI — il loader lock di Windows — e non e' osservabile da Python. La
-    cura non ne dipende: il caricamento va fatto dove il caricamento si puo'
-    fare, cioe' prima di servire.
+    un'IPOTESI — il loader lock di Windows — e non e' osservabile da Python.
+
+    🔑 MA IL MECCANISMO DELLA CURA NON E' UN'IPOTESI, ed e' piu' preciso di
+    «si carica prima invece che durante» (che e' come l'avevo scritto il 06/09
+    alle 13:00, e non bastava a spiegare i fatti). Misurato in un processo
+    pulito:
+
+        import scipy.linalg  ->  numpy.random in sys.modules: True
+                             ->  _bounded_integers caricato : True
+
+    `scipy.linalg` TRASCINA `numpy.random` e `_bounded_integers`, che sono
+    esattamente i moduli dentro cui la richiesta si fermava:
+
+        wake.py:301  np.random.default_rng()
+        -> import numpy.random -> _bounded_integers -> create_module   FERMO
+
+    ⇒ Chiamando questa funzione prima di servire, la richiesta non trova piu'
+    NIENTE da importare: la corsa fra due import non viene vinta, viene
+    ELIMINATA. E' anche il motivo per cui il caso senza daemon da' 3 giri su 3
+    contro una predizione di ≤2 su 3.
+
+    ⚠️ L'effetto dipende quindi da un dettaglio INTERNO di scipy. Presidiato da
+    tests/test_il_preload_carica_anche_numpy_random.py: se una versione futura
+    smettesse di importare numpy.random, quel test cade e dice che qui va
+    aggiunto un import esplicito.
 
     Best-effort come tutto il preload: se fallisce, si prosegue. Un warm non fa
     mai morire il boot.
@@ -243,6 +265,24 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
     # Il perche' resta l'ipotesi del loader lock di Windows e non e'
     # osservabile da Python — ma la cura non ne dipende: l'import si fa dove
     # si puo' fare, cioe' PRIMA di servire, e una volta sola.
+    #
+    # ⚠️ E NON E' SOLO «prima invece che durante»: `import scipy.linalg`
+    # TRASCINA `numpy.random` e `_bounded_integers` — misurato il 06/09 in un
+    # processo pulito:
+    #
+    #     import scipy.linalg  ->  numpy.random in sys.modules: True
+    #                          ->  _bounded_integers caricato : True
+    #
+    # cioe' ESATTAMENTE i moduli dentro cui la richiesta si fermava
+    # (`wake.py:301` -> `import numpy.random` -> `create_module`). Percio' la
+    # cura non vince una corsa fra due import: la ELIMINA, perche' quando la
+    # richiesta arriva non ha piu' niente da importare. E' anche il motivo per
+    # cui il caso senza daemon e' 3 su 3 contro una predizione di ≤2 su 3.
+    #
+    # L'effetto dipende quindi da un dettaglio INTERNO di scipy, ed e'
+    # presidiato da tests/test_il_preload_carica_anche_numpy_random.py: se una
+    # versione futura smettesse di importare numpy.random, quel test cade e dice
+    # che qui va aggiunto un import esplicito.
     #
     # NON carica nessun modello: e' solo `import scipy.linalg` (misurato
     # 3,77 s a freddo, 0,75 e 0,72 a caldo — nel commit precedente avevo
