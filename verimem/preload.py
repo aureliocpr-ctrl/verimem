@@ -216,8 +216,29 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
 
     _dichiara_il_piano_del_giudice(log=log)
 
+    # ⚠️ QUESTO IMPORT NON PUO' STARE SU UN THREAD DI SFONDO — misurato il
+    # 06/09 con la sonda degli stack, banco end-to-end 3 giri:
+    #
+    #     thread di preload   preload.py:165 import scipy.linalg -> _fblas
+    #                         -> <frozen importlib._bootstrap_external>
+    #                            create_module          FERMO
+    #     thread che serve    _call_tool_impl -> _ag -> VerimemAgent.build
+    #                         -> wake.py:301 np.random.default_rng()
+    #                         -> import numpy.random -> _bounded_integers
+    #                         -> create_module          FERMO
+    #
+    # Due import di ESTENSIONI C in parallelo, fermi entrambi dentro
+    # create_module. A/B a una variabile su origin/main d14f0ece pulito:
+    # con il thread di sfondo 0 giri su 3, col warm sincrono 3 giri su 3.
+    # Il perche' resta l'ipotesi del loader lock di Windows e non e'
+    # osservabile da Python — ma la cura non ne dipende: l'import si fa dove
+    # si puo' fare, cioe' PRIMA di servire, e una volta sola.
+    #
+    # Costa ~2 s e NON carica nessun modello: e' solo `import scipy.linalg`.
+    # Il warm del modello resta in background, dove non fa danno.
+    _scalda_le_librerie_del_giudice(log=log)
+
     def _run() -> None:
-        _scalda_le_librerie_del_giudice(log=log)
         try:
             if _service_enabled():
                 from . import encode_service
