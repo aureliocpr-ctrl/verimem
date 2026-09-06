@@ -56,10 +56,20 @@ ESITO 06/09 06:48 (predizioni in 4fe86ae5), poi tre giri post-hoc fino alle 07:1
        ACDEPF1 57,2% tolti, presidi 3/3 e 2/2 · ACDEPF2 73,1% ma presidio 2/3
        · F3 79,4% · F4 82,6%, sempre 2/3: da k=2 «line» entra nel vicinato di
        entrambi e l'identificativo condiviso spegne l'avviso.
-  CURA CANDIDATA per Giano, con presidi intatti: A+C+D+E+P+F1 — gli avvisi
-  scendono da 4.052 a 1.735 (dal 50,8% al 21,8% dei fatti). I due «esce 2»
-  contro «EXIT=2» restano: esce ≠ exit e' traduzione, non lessico. Il 21,8%
-  residuo NON e' caratterizzato oltre i 14 letti: e' il prossimo campione.
+    X  (07:27, dopo altri 14 residui letti) una parola adiacente a un ALTRO
+       numero e' l'etichetta di quello («Line 3 … 22 days»: «line» e' del 3) e
+       non entra nel vicinato: con X i presidi tornano 3/3 anche con k>=2 —
+       ACDEPF2X 69,7% · ACDEPF3X 75,6% · presidi 3/3 e 2/2 · falsi 3/5.
+    G  la sequenza numero-parola-numero identica nella fonte («4 su 24»):
+       +0,7-0,9 punti sopra F1/F2X/F3X. Poco, pulita.
+  CURA CANDIDATA per Giano, con presidi intatti: A+C+D+E+P+F3+X (G facoltativa)
+  — gli avvisi scendono da 4.052 a 989 (dal 50,8% al 12,4% dei fatti), 3 falsi
+  di T17 su 5 taciuti; i due «esce 2» contro «EXIT=2» restano: esce ≠ exit e'
+  traduzione, non lessico. LIMITE: i presidi sono TRE riusi veri; un vicinato a
+  3 parole puo' spegnere riusi veri che tre presidi non vedono — la cura va
+  con una cella in piu' per ogni classe che Giano conosce, non con la mia.
+  Il 12,4% residuo e' letto solo su 14 casi (tabelle, sinonimi come
+  server/mcpServers, grandezza nell'intestazione): non lessicale, si dichiara.
 """
 from __future__ import annotations
 
@@ -98,7 +108,8 @@ def _occorrenze(testo: str, valore: float, punto_finale: bool) -> list[re.Match]
 
 
 def vicinato(testo: str, valore: float, *, stessa_riga: bool, punto_finale: bool,
-             grammatica: frozenset[str], etichetta: bool = False, k: int = 0) -> tuple[set[str], set[str]]:
+             grammatica: frozenset[str], etichetta: bool = False, k: int = 0,
+             escludi_altri: bool = False) -> tuple[set[str], set[str]]:
     """Come `_intorno`, con le varianti B, D ed E accendibili.
 
     E (post-hoc, 07:14, dopo che B spegneva un presidio): se sulla riga del
@@ -144,6 +155,16 @@ def vicinato(testo: str, valore: float, *, stessa_riga: bool, punto_finale: bool
                     inizio = j + 1
             d = [t.casefold() for t in _PAROLA.findall(testo[m.end():fine]) if t.casefold() not in grammatica]
             p = [t.casefold() for t in _PAROLA.findall(testo[inizio:m.start()]) if t.casefold() not in grammatica]
+            if escludi_altri:
+                # X (post-hoc 07:27): una parola adiacente a un ALTRO numero e'
+                # l'etichetta di quello («Line 3 … 22 days»: «line» e' del 3),
+                # e non entra nel vicinato di questo. Cura il presidio EN che
+                # k>=2 spegneva.
+                altri = {t.casefold() for n in re.finditer(r"\d+", testo) if n.start() != m.start()
+                         for t in (_PAROLA.findall(testo[max(0, n.start() - 12):n.start()])[-1:]
+                                   + _PAROLA.findall(testo[n.end():n.end() + 12])[:1])}
+                d = [t for t in d if t not in altri]
+                p = [t for t in p if t not in altri]
             dopo |= set(d[:k])
             prima |= set(p[-k:])
         else:
@@ -172,10 +193,19 @@ def avvisa(claim: str, fonte: str, regole: str, grammatica: frozenset[str], extr
                    if c in claim):
                 continue
         k = int(regole[regole.index("F") + 1]) if "F" in regole else 0
+        if "G" in regole:
+            # G (post-hoc 07:27): il numero sta in una SEQUENZA numero-parola-numero
+            # («4 su 24», «3 failed, 2 passed», «12 di 40») che la fonte porta
+            # identica: la grandezza e' la coppia, e coincide.
+            intero = str(int(valore)) if float(valore).is_integer() else str(valore)
+            seq = [s for s in re.findall(r"\d+(?:[.,]\d+)?\s+\S{1,12}\s+\d+(?:[.,]\d+)?", claim)
+                   if re.search(rf"(?<![\d.,]){re.escape(intero)}(?![\d.,])", s)]
+            if any(re.sub(r"\s+", " ", s).casefold() in re.sub(r"\s+", " ", fonte).casefold() for s in seq):
+                continue
         cd, cp = vicinato(claim, valore, stessa_riga="B" in regole, punto_finale="D" in regole,
-                          grammatica=grammatica, etichetta="E" in regole, k=k)
+                          grammatica=grammatica, etichetta="E" in regole, k=k, escludi_altri="X" in regole)
         fd, fp = vicinato(fonte, valore, stessa_riga="B" in regole, punto_finale="D" in regole,
-                          grammatica=grammatica, etichetta="E" in regole, k=k)
+                          grammatica=grammatica, etichetta="E" in regole, k=k, escludi_altri="X" in regole)
         if not fd and not fp:
             continue
         if "P" in regole:  # post-hoc, non depositata: PREFISSO di 4 lettere (exits/exit, strumenti/strumento)
@@ -217,7 +247,7 @@ def main() -> int:
     # le prime sette sono le combinazioni depositate; AC/AD/CD/ACD/ACDP/ABCDP sono
     # POST-HOC (aggiunte dopo il primo esito, 06:48: B spegneva un presidio e i
     # tre EXIT restavano) e si leggono come esplorazione, non come prova.
-    for regole in ("A", "B", "C", "D", "AB", "ABC", "ABCD", "AC", "AD", "CD", "ACD", "ACDP", "ABCDP", "E", "AE", "ACDE", "ACDEP", "ACDEPF1", "ACDEPF2", "ACDEPF3", "ACDEPF4", "ACDPF2"):
+    for regole in ("A", "B", "C", "D", "AB", "ABC", "ABCD", "AC", "AD", "CD", "ACD", "ACDP", "ABCDP", "E", "AE", "ACDE", "ACDEP", "ACDEPF1", "ACDEPF2", "ACDEPF3", "ACDEPF4", "ACDPF2", "ACDEPF1G", "ACDEPF2X", "ACDEPF3X", "ACDEPF2XG", "ACDEPF3XG"):
         rimasti = sum(1 for (p, s), o in zip(righe, oggi_prodotto, strict=True) if o and avvisa(p or "", s or "", regole, _GRAMMATICA, extract_quantities))
         sc = sum(1 for c, f in PRESIDI_SCATTANO if avvisa(c, f, regole, _GRAMMATICA, extract_quantities))
         ta = sum(1 for c, f in PRESIDI_TACCIONO if not avvisa(c, f, regole, _GRAMMATICA, extract_quantities))
