@@ -1390,6 +1390,43 @@ def _avviso_scaduti(hits) -> None:
         f"id o rileggi con `--as-of` a un istante in cui erano validi.)[/dim]")
 
 
+def _avviso_freschezza(hits) -> None:
+    """Dice quanti fatti l'ETA' tiene fuori dalla vista, se ne tiene.
+
+    LA QUARTA CAUSA. L'avviso qui sopra elenca le altre tre e arriva a dire
+    cosa NON e' («non e' il pavimento e non e' una data nella domanda»),
+    perche' un'assenza senza il «non e'» viene attribuita alla causa sbagliata.
+    Il decay per eta' non era in quell'elenco: misurato sulla porta vera, in
+    processi separati,
+
+        CONTROLLO  fatto fresco          -> esce
+        A.         valid_until passato   -> non esce, e l'avviso lo dice
+        B.         vecchio 365 giorni    -> non esce, e l'uscita e'
+                                            «no facts found» e basta
+
+    cioe' due modi di perdere un fatto e un avviso solo. Chi lo perdeva per
+    eta' leggeva la stessa cosa di chi non ha mai scritto niente.
+
+    ⚠️ QUI SI LEGGE, NON SI RICALCOLA — la stessa regola del fratello qui
+    sopra: `hits` e' un `Risultati` e l'attributo si legge da lui. Una seconda
+    implementazione della stessa domanda e' come sono nate le divergenze fra
+    porte che questo file passa la giornata a chiudere.
+
+    ⚠️ E VA CHIAMATA ANCHE SUL RAMO VUOTO, che qui e' il caso NORMALE e non
+    l'eccezione: il campo si popola proprio quando la risposta e' vuota.
+    """
+    _av = getattr(hits, "nascosti_dalla_freschezza", None)
+    if not _av:
+        return
+    console.print(
+        f"  [yellow]⚠ {_av.get('nascosti', '?')} fatto/i esistono ma la "
+        f"FRESCHEZZA li tiene fuori[/yellow] [dim](sono piu' vecchi "
+        f"dell'emivita: non e' il pavimento, non e' una data nella domanda e "
+        f"non e' la scadenza dichiarata — nessuno ha detto che smettessero di "
+        f"valere, sono soltanto vecchi. Per vederli rifai la lettura con "
+        f"`--deep`.)[/dim]")
+
+
 def _avviso_pavimento(m, hits, query: str) -> None:
     """Dice che il migliore sta sotto il pavimento MISURATO, se ci sta.
 
@@ -1550,9 +1587,11 @@ def recall_cmd(
         # PRIMA dell'uscita: se la scadenza ha portato via tutto, «no facts
         # found» da solo e' falso in modo utile a nessuno — i fatti c'erano.
         _avviso_scaduti(hits)
+        _avviso_freschezza(hits)
         raise typer.Exit(0)
     _avviso_pavimento(m, hits, query)
     _avviso_scaduti(hits)
+    _avviso_freschezza(hits)
     for h in hits:
         console.print(riga_di_recall(h))
         # La storia si chiede e va MOSTRATA: passare il flag e stampare la
