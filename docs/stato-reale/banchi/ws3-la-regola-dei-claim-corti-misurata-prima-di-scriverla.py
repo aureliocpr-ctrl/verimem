@@ -209,7 +209,7 @@ def parte_b() -> int:
     print(f"\n30 code FALSE corte su 30 veri del P3 (parole di contenuto della coda: mediana {sorted(lung)[15]})")
     print(f"   fermate OGGI (MIN sui claim, giudice): {oggi_f}/30 · con la REGOLA N=4: {regola_f}/30")
     print(f"   P-R3 oggi >= 24: {'REGGE' if oggi_f >= 24 else '🔴 (il giudice non ferma nemmeno oggi le code corte)'} · "
-          f"con la regola <= 8: {'REGGE: il prezzo e\' il muro 1 sui claim corti' if regola_f <= 8 else ('la regola e\' economica (>= 20 fermate)' if regola_f >= 20 else 'indeciso')}")
+          f"con la regola <= 8: {'REGGE: il prezzo e il muro 1 sui claim corti' if regola_f <= 8 else ('la regola e economica (>= 20 fermate)' if regola_f >= 20 else 'indeciso')}")
     print(f"   {'coda':60s} N  parole  intero   oggi  regola")
     for r in righe_out[:12]:
         print(f"   {r[0]:60s} {r[1]}  {r[2]:5d}  {r[3]:6.1f} {r[4]:6.1f} {r[5]:7.1f}")
