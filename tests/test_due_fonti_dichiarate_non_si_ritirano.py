@@ -71,6 +71,24 @@ def test_una_penna_dichiarata_decide_e_la_firma_non_la_scavalca():
     assert canonical_source_of(a) == canonical_source_of(b) == "billing"
 
 
+def test_un_verified_by_che_il_canonicalizzatore_non_legge_resta_una_dichiarazione():
+    """⚠️ `canonical_source` riconosce SOLO `source-doc:X:...` e `doc:X`. Misurato
+    il 06/09: `['contratto']`, `['Cartella clinica']` e `['commit:abc123']`
+    tornano tutti `"user"` — cioe' **`commit:` non conta come penna**, ed e' la
+    forma di evidenza piu' comune che abbiamo. Il ripiego su `"user"` non
+    significa «non ha dichiarato niente», e questa e' la riga che lo distingue."""
+    from verimem.source_trust import canonical_source
+    assert canonical_source(["commit:abc123"]) == "user", (
+        "presupposto: se un giorno il canonicalizzatore imparasse `commit:`, "
+        "questo test misurerebbe un caso che non esiste piu'")
+    a = _fatto(firma="sha256:aaaa", penna=["commit:abc123"])
+    b = _fatto(firma="sha256:bbbb", penna=["commit:abc123"])
+    assert canonical_source_of(a) == canonical_source_of(b), (
+        "stesso commit citato due volte: e' la stessa penna, e senza questa "
+        "riga un aggiornamento vero smetteva di ritirare")
+    assert canonical_source_of(a) != "user", "e non deve finire nel bucket di tutti"
+
+
 def test_senza_firma_e_senza_penna_il_comportamento_e_quello_di_prima():
     """Il caso 3 del presidio: nessuno dei due dichiara niente."""
     assert canonical_source_of(_fatto()) == canonical_source_of(_fatto()) == "user"
@@ -90,6 +108,20 @@ def test_senza_firma_e_senza_penna_il_comportamento_e_quello_di_prima():
      "una sola firma: non si sa che sono diverse, si sa che una manca"),
     (dict(), dict(), False, "nessuna firma"),
     (dict(firma="   "), dict(firma="sha256:bbbb"), False, "firma di soli spazi"),
+    # ⚠️ IL `verified_by` CHE `canonical_source` NON SA LEGGERE. Riconosce solo
+    # `source-doc:X:...` e `doc:X`: `['contratto']` e perfino `['commit:abc123']`
+    # ripiegano su `"user"`. Senza il confronto sui GREZZI, la stessa penna che
+    # aggiorna il proprio contratto risultava «due fonti» e smetteva di ritirare
+    # — il caso T14 (Stripe -> Adyen), misurato il 06/09.
+    (dict(firma="sha256:aaaa", penna=["contratto"]),
+     dict(firma="sha256:bbbb", penna=["contratto"]), False,
+     "verified_by identico ma non canonicalizzabile: UNA penna"),
+    (dict(firma="sha256:aaaa", penna=["commit:abc123"]),
+     dict(firma="sha256:bbbb", penna=["commit:abc123"]), False,
+     "commit: identico — la forma di evidenza piu' comune che abbiamo"),
+    (dict(firma="sha256:aaaa", penna=["contratto A"]),
+     dict(firma="sha256:bbbb", penna=["contratto B"]), True,
+     "due verified_by diversi: due penne, anche in forma libera"),
 ])
 def test_quando_due_fonti_coesistono(nuovo, vecchio, atteso, perche):
     assert due_fonti_dichiarate_e_diverse(

@@ -179,6 +179,16 @@ def canonical_source_of(fact: Any) -> str:
     verdetti sbagliati in versi opposti.
     """
     _base = canonical_source(getattr(fact, "verified_by", None) or None)
+    if _base == "user":
+        # ⚠️ IL RIPIEGO SU `"user"` NON VUOL DIRE «non ha dichiarato niente»:
+        # `canonical_source` riconosce solo `source-doc:X:...` e `doc:X`, quindi
+        # `['contratto']`, `['Cartella clinica']` e perfino `['commit:abc123']`
+        # finiscono tutti li' dentro — misurato il 06/09. Prima di scendere alla
+        # firma si guarda il `verified_by` GREZZO: se c'e', E' una dichiarazione,
+        # anche in una forma che il canonicalizzatore non sa leggere.
+        _raw = [str(x) for x in (getattr(fact, "verified_by", None) or [])]
+        if _raw:
+            return "vb:" + "|".join(_raw)
     if _base != "user":
         # ⚠️ UNA PENNA DICHIARATA DECIDE, E LA FIRMA NON LA SCAVALCA. La prima
         # stesura di questa cura tornava la `source_signature` per prima, e
@@ -339,6 +349,23 @@ def due_fonti_dichiarate_e_diverse(a: Any, b: Any) -> bool:
     piu'. La domanda di questa funzione e' una sola: **hanno DETTO da dove
     vengono, e hanno detto due cose diverse?**
     """
+    # ⚠️ IL `verified_by` GREZZO, PRIMA DI CANONICALIZZARLO — e la ragione e' che
+    # `canonical_source` riconosce SOLO `source-doc:X:...` e `doc:X`, e appiattisce
+    # tutto il resto su `"user"`: misurato il 06/09,
+    #
+    #     ['source-doc:billing:1'] -> 'billing'      ['doc:x']          -> 'x'
+    #     ['contratto']            -> 'user'         ['commit:abc123']  -> 'user'
+    #     ['Cartella clinica']     -> 'user'
+    #
+    # cioe' **`commit:` non conta come penna dichiarata**, ed e' la forma di
+    # evidenza piu' comune che abbiamo. Senza questa riga il caso T14 — lo stesso
+    # `verified_by=['contratto']` che aggiorna il proprio contratto da Stripe ad
+    # Adyen — smetteva di ritirare: un aggiornamento VERO letto come due fonti.
+    # Due `verified_by` identici sono la stessa penna qualunque forma abbiano.
+    _va = [str(x) for x in (getattr(a, "verified_by", None) or [])]
+    _vb = [str(x) for x in (getattr(b, "verified_by", None) or [])]
+    if _va and _vb and _va == _vb:
+        return False
     _ca = canonical_source(getattr(a, "verified_by", None) or None)
     _cb = canonical_source(getattr(b, "verified_by", None) or None)
     if _ca == _cb and _ca != "user":
