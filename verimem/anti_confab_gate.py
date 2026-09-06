@@ -2536,7 +2536,13 @@ def run_validation_gate(
     # caricando». `absent` (non e' su disco) e `failed` restano L4-skipped
     # all'istante: aspettare un giudice che non arrivera' sarebbe peggio del
     # difetto.
-    if source and _ground_on and not _have_judge:
+    # ⚠️ NON si mette `and not _have_judge` qui: misurato il 06/09 in QA, senza
+    # daemon di encode `judge_state()` dice `warming` MA `local_ce_available()`
+    # dice True (il modello e' sul disco) — quindi con quella guardia il blocco
+    # non veniva MAI eseguito proprio nella configurazione che deve coprire, e
+    # la scrittura usciva L4-skipped 1,8 s dopo l'avvio del warm. A decidere
+    # dev'essere lo STATO del giudice, non la sua presenza sul disco.
+    if source and _ground_on:
         try:
             import time as _t
 

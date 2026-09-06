@@ -127,3 +127,47 @@ def test_il_budget_dell_attesa_morde(monkeypatch):
         "scaduto il budget la scrittura resta ammessa e DICHIARATA non "
         f"verificata; visti: {_layers(risultato)!r}"
     )
+
+
+def test_aspetta_ANCHE_se_il_giudice_risulta_disponibile_sul_disco(monkeypatch):
+    """Il caso senza daemon di encode, che la prima versione della cura MANCAVA.
+
+    ⚠️ MISURATO il 06/09 in QA, terza configurazione (`ENGRAM_ENCODE_SERVICE=0`),
+    dal log grezzo:
+
+         6,1 s  mcp_preload_delegate_only_skip_local_warm
+        42,8 s  flow.warmup  phase=start  what=moat-judge      <- il warm parte
+        44,6 s  flow.write   grounding_score=None judged=False layers=['L4-skipped']
+
+    La scrittura chiudeva **1,8 s dopo** l'avvio del warm, senza aspettarlo. In un
+    processo pulito con quella variabile:
+
+        judge_state()        = warming
+        local_ce_available() = True      <- il modello E' sul disco
+
+    La prima versione dell'attesa stava dentro `if ... and not _have_judge`, e
+    `_have_judge` viene da `local_ce_available()`: con il modello sul disco quel
+    ramo **non veniva mai eseguito**, proprio nella configurazione che la cura
+    esiste per coprire.
+
+    ⇒ A decidere dev'essere lo **stato** del giudice, non la sua **presenza**.
+    Questa cella tiene separate le due cose: giudice `warming` E disponibile.
+    """
+    partenza = time.time()
+    monkeypatch.setattr(
+        lg, "judge_state",
+        lambda: "warming" if time.time() - partenza < 1.5 else "ready")
+    #: LA DIFFERENZA CON LE ALTRE CELLE: qui e' True fin dall'inizio.
+    monkeypatch.setattr(lg, "local_ce_available", lambda: True)
+    monkeypatch.setenv("VERIMEM_JUDGE_WAIT_S", "20")
+
+    t0 = time.time()
+    _chiama()
+    atteso = time.time() - t0
+
+    assert atteso >= 1.4, (
+        f"non ha aspettato ({atteso:.2f}s) con il giudice `warming` ma gia' "
+        "presente sul disco. E' il caso senza daemon di encode: la scrittura "
+        "esce L4-skipped mentre il giudice sta arrivando, ed e' il difetto "
+        "misurato in QA (warm a 42,8 s, scrittura chiusa a 44,6 s)."
+    )
