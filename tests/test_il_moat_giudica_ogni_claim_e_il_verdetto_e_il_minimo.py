@@ -104,7 +104,9 @@ def test_IL_ROSSO_il_verdetto_e_il_minimo_e_dice_quale_claim_non_regge():
 def test_una_scrittura_composta_tutta_provata_passa_col_minimo_alto():
     """Controllo dall'altro lato: se ogni claim regge, il minimo e' alto."""
     giudice = _GiudicePerClaim()
-    r = _gate("Il comando warmup e' partito alle 14:52 ed e' finito alle 14:53",
+    # la coda NON e' una completion («finito»): il difetto aperto di L1.13
+    # sulla coda nuda e' un altro test; qui decide solo il moat
+    r = _gate("Il comando warmup e' partito alle 14:52 ed e' durato 53 secondi",
               giudice)
     assert r.decomposed is True
     assert [v.get("score") for v in r.claims_verdict] == [95.0, 95.0], (

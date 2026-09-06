@@ -2046,6 +2046,33 @@ def run_validation_gate(
     _claims: list[str] = [proposition]
     _claims_verdict: list[dict[str, Any]] = [{"claim": 0, "layer": None, "score": None}]
     _decomposed = False
+    # La decomposizione si decide QUI, prima del moat (che sta piu' sotto) e
+    # prima dell'escalation di L1 (piu' sotto ancora): il 06/09 alle 09:30 il
+    # calcolo stava accanto all'escalation e il moat, che viene prima nel
+    # flusso, vedeva ancora `_decomposed=False` e giudicava l'intero.
+    _nudi: list[str] | None = None
+    _decompose_env = os.environ.get("VERIMEM_DECOMPOSE", "").strip().lower()
+    _decompose_on = (bool(decompose) if decompose is not None
+                     else _decompose_env not in ("0", "off", "false", "no"))
+    _decompose_ha_senso = (str(writer_role or "") != "external_content"
+                           and not narrative_l1_skip and _l1_ha_giurisdizione)
+    if _decompose_ha_senso:
+        from .atomic_claims import decomponi as _decomponi
+        _nudi = _decomponi(proposition, eredita_soggetto=False)
+        if len(_nudi) > 1 and not _decompose_on and decompose is None:
+            warnings.append({
+                "layer": "decompose-off",
+                "reason": "VERIMEM_DECOMPOSE=0: la scrittura e' composta "
+                          f"({len(_nudi)} claim) ma non e' stata decomposta; "
+                          "L1 ha letto solo l'intero",
+                "advice": "togli VERIMEM_DECOMPOSE=0 per far giudicare ogni "
+                          "claim da L1",
+            })
+        elif len(_nudi) > 1 and _decompose_on:
+            _decomposed = True
+            _claims = _decomponi(proposition, eredita_soggetto=True)
+            _claims_verdict = [{"claim": _i, "layer": None, "score": None}
+                               for _i in range(len(_claims))]
 
     # EVIDENCE-EXISTENCE (buco #2, 2026-06-02 — opt-in via repo_root).
     # I detector L1 verificano il FORMATO di verified_by (un `commit:`-shaped
@@ -3241,27 +3268,7 @@ def run_validation_gate(
     # Interruttore: `decompose` esplicito, altrimenti VERIMEM_DECOMPOSE
     # (default ON, «niente default OFF»); lo spegnimento e' dichiarato nella
     # ricevuta con un warning advisory, mai muto.
-    _decompose_env = os.environ.get("VERIMEM_DECOMPOSE", "").strip().lower()
-    _decompose_on = (bool(decompose) if decompose is not None
-                     else _decompose_env not in ("0", "off", "false", "no"))
-    _decompose_ha_senso = (str(writer_role or "") != "external_content"
-                           and not narrative_l1_skip and _l1_ha_giurisdizione)
-    if _decompose_ha_senso:
-        from .atomic_claims import decomponi as _decomponi
-        _nudi = _decomponi(proposition, eredita_soggetto=False)
-        if len(_nudi) > 1 and not _decompose_on and decompose is None:
-            warnings.append({
-                "layer": "decompose-off",
-                "reason": "VERIMEM_DECOMPOSE=0: la scrittura e' composta "
-                          f"({len(_nudi)} claim) ma non e' stata decomposta; "
-                          "L1 ha letto solo l'intero",
-                "advice": "togli VERIMEM_DECOMPOSE=0 per far giudicare ogni "
-                          "claim da L1",
-            })
-        elif len(_nudi) > 1 and _decompose_on:
-            _decomposed = True
-            _claims = _decomponi(proposition, eredita_soggetto=True)
-            _claims_verdict = []
+    if _decomposed and _nudi is not None and len(_nudi) > 1:
             for _i, _c in enumerate(_nudi):
                 _ws_c = _l1_warnings(_c, _vb_list, source=source,
                                      provenance=_provenienza)
@@ -3275,11 +3282,8 @@ def run_validation_gate(
                     or _domain_advisory
                     or (_l1_domain_precision()
                         and _is_domain_professional_fact(_c)))
-                _claims_verdict.append({
-                    "claim": _i,
-                    "layer": str(_l1_c[0].get("layer")) if _escala_c else None,
-                    "score": None,
-                })
+                if _i < len(_claims_verdict) and _escala_c:
+                    _claims_verdict[_i]["layer"] = str(_l1_c[0].get("layer"))
                 if _escala_c:
                     for _w in _l1_c:
                         _w["claim"] = _i
