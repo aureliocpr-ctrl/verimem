@@ -141,3 +141,27 @@ def test_ogni_opzione_pubblica_o_vale_su_entrambi_i_rami_o_e_rifiutata(
         f"opzioni che valgono SENZA `as_of` e spariscono CON `as_of`: "
         f"{divergenti}. O il ramo `as_of` le inoltra, o la firma le rifiuta "
         "quando c'e' `as_of` — quello che non va bene e' ingoiarle in silenzio")
+
+
+def test_con_poco_spazio_vince_il_corrente_non_il_ritirato(memoria) -> None:
+    """`k=1` + `include_superseded`: deve tornare B, non A.
+
+    ⚠️ QUESTA CELLA NASCE DA UN DIFETTO DELLA CURA STESSA, trovato misurando
+    il punto che avevo indicato alla QA come il piu' debole del mio pezzo:
+    con una passata sola, nell'ordine di rilevanza, un RITIRATO occupava il
+    posto del corrente quando `k` e' piccolo.
+
+        k=1  as_of solo -> ['B']   as_of + include_superseded -> ['A']   🔴
+
+    Chi chiede «cosa valeva allora PIU' la storia» vuole prima di tutto
+    **cosa valeva allora**: se c'e' posto per un fatto solo, quello e' il
+    corrente. La cura fa due passate — i correnti, poi i ritirati se avanza
+    spazio — e questa cella e' il suo RED.
+    """
+    q = "quanto e' il canone"
+    assert _ids(memoria.search(q, k=1, as_of=_ISTANTE_T)) == ["B"], (
+        "CONTROLLO: senza l'opzione, a k=1 torna gia' il corrente")
+    assert _ids(memoria.search(q, k=1, as_of=_ISTANTE_T,
+                               include_superseded=True)) == ["B"], (
+        "con poco spazio ha vinto il RITIRATO: chiedere la storia non deve "
+        "far perdere il valore che a quell'istante era vero")

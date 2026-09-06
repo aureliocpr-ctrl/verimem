@@ -294,6 +294,16 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
     #: e ignorato e' il difetto che il pezzo 3 ha chiuso sulle due porte MCP:
     #: questa e' la terza porta, e da qui passa anche la riga di comando.
     scartati = 0
+    #: ⚠️ DUE PASSATE, E IL CORRENTE HA LA PRECEDENZA. Una passata sola,
+    #: nell'ordine di rilevanza, lascia che un RITIRATO occupi il posto del
+    #: corrente quando `k` e' piccolo: misurato il 06/09 su k=1 con
+    #: `include_superseded`, la risposta era `[A]` — il predecessore — invece
+    #: di `[B]`, che a quell'istante era il valore vero. Chi chiede «cosa
+    #: valeva allora PIU' la storia» vuole prima di tutto **cosa valeva
+    #: allora**: se c'e' spazio per un solo fatto, quello e' il corrente.
+    #: Il difetto era nella mia prima stesura di questa cura, e l'ho trovato
+    #: misurando il punto che avevo indicato alla QA come il piu' debole.
+    posticipati: list[tuple] = []
     for hit in hits:
         stato = stato_a(sm, hit[0], when)
         if stato == "non_ancora":
@@ -305,9 +315,9 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
                 #: «cosa valeva allora PIU' cio' che a quel punto era gia'
                 #: stato sostituito» — la storia fino a quell'istante. Non si
                 #: conta fra gli scartati nemmeno qui: non e' stato scartato.
-                out.append(hit)
-                if len(out) >= k:
-                    break
+                #: Ma si mette IN CODA: entra solo se avanza posto dopo i
+                #: correnti, nell'ordine in cui il ranking l'ha reso.
+                posticipati.append(hit)
                 continue
             # ⚠️ QUESTO SCARTO NON SI CONTA, ed e' il presidio
             # `test_senza_scarti_non_si_dichiara_niente` ad averlo detto: un
@@ -324,6 +334,11 @@ def recall_as_of(sm, query: str, *, when: float, k: int = 5,
         out.append(hit)
         if len(out) >= k:
             break
+    #: i ritirati chiesti, DOPO i correnti e solo se avanza posto
+    for hit in posticipati:
+        if len(out) >= k:
+            break
+        out.append(hit)
     # ⚠️ E' un «ALMENO»: il ciclo si ferma appena raggiunge k, quindi gli hit
     # oltre quel punto non vengono nemmeno esaminati. Dichiararlo come conteggio
     # esatto sarebbe un numero piu' preciso di quanto la funzione sappia.
