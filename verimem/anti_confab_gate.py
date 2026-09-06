@@ -390,6 +390,15 @@ class GateResult:
     #: the admission cut the score was compared to (judge-scale-consistent),
     #: or None when no numeric judge ran. score - threshold = the margin.
     threshold: float | None = None
+    #: Muro 1, pezzo 3a (06/09): la scrittura decomposta nei suoi claim atomici
+    #: (forma AUTO-CONTENUTA, quella che l'utente legge). N=1 -> [proposition].
+    claims: list[str] = field(default_factory=list)
+    #: per ogni claim: il layer L1 che l'ha fermato (o None) e il punteggio del
+    #: moat (None finche' il moat giudica l'intero: pezzo 3b).
+    claims_verdict: list[dict[str, Any]] = field(default_factory=list)
+    #: False quando N=1 (identita'), quando il contenuto e' esterno o quando la
+    #: decomposizione e' spenta: cosi' un chiamante sa se la cura ha agito.
+    decomposed: bool = False
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -1938,6 +1947,7 @@ def run_validation_gate(
     status: str | None = None,
     claimant: str | None = None,
     documents: Any = None,
+    decompose: bool | None = None,
 ) -> GateResult:
     """Evaluate the anti-confab gate; return a ``GateResult``.
 
@@ -2031,6 +2041,11 @@ def run_validation_gate(
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
     advice = ""
+    # Muro 1, pezzo 3a: i campi della decomposizione esistono SEMPRE nella
+    # ricevuta; il blocco che decide sta accanto a `l1_escalates`.
+    _claims: list[str] = [proposition]
+    _claims_verdict: list[dict[str, Any]] = [{"claim": 0, "layer": None, "score": None}]
+    _decomposed = False
 
     # EVIDENCE-EXISTENCE (buco #2, 2026-06-02 — opt-in via repo_root).
     # I detector L1 verificano il FORMATO di verified_by (un `commit:`-shaped
@@ -3147,6 +3162,66 @@ def run_validation_gate(
     # ever speak about the lexical family, and on a server-stamped `claimant`
     # (never a tool argument). Default OFF: the verdict is recorded, the
     # outcome unchanged, so the false-block delta is MEASURED before any flip.
+    # ── Muro 1, pezzo 3a (06/09): LA CODA DI UNA SCRITTURA COMPOSTA VIENE
+    # GIUDICATA DA L1. Misurato il 05/09 (Galileo, N4) e il 06/09 (lead):
+    # «Il comando warmup e' finito alle 14:53 ed e' verificata» passava L1
+    # perche' il soggetto «Il comando warmup» legge come fatto professionale
+    # di terzi (carve-out), mentre la coda nuda «E' verificata.» da sola viene
+    # fermata (L1.15). Con la coda attaccata a un fatto vero L1 fermava 115/200
+    # code, sulle code nude 145/200. Design: docs/ricerca/2026-09-05-design-
+    # write-n-claim-atomici.md §2.3 — la forma NUDA va a L1 (OR sui claim),
+    # quella AUTO-CONTENUTA nella ricevuta. PERIMETRO DICHIARATO: solo L1; il
+    # moat giudica ancora l'intero (P-D identita' per costruzione; il MIN sui
+    # claim e il MAX sulle frasi della fonte sono il pezzo 3b). Un contenuto
+    # esterno non si decompone (P-F: e' un documento, non un'asserzione).
+    # Interruttore: `decompose` esplicito, altrimenti VERIMEM_DECOMPOSE
+    # (default ON, «niente default OFF»); lo spegnimento e' dichiarato nella
+    # ricevuta con un warning advisory, mai muto.
+    _decompose_env = os.environ.get("VERIMEM_DECOMPOSE", "").strip().lower()
+    _decompose_on = (bool(decompose) if decompose is not None
+                     else _decompose_env not in ("0", "off", "false", "no"))
+    _decompose_ha_senso = (str(writer_role or "") != "external_content"
+                           and not narrative_l1_skip and _l1_ha_giurisdizione)
+    if _decompose_ha_senso:
+        from .atomic_claims import decomponi as _decomponi
+        _nudi = _decomponi(proposition, eredita_soggetto=False)
+        if len(_nudi) > 1 and not _decompose_on and decompose is None:
+            warnings.append({
+                "layer": "decompose-off",
+                "reason": "VERIMEM_DECOMPOSE=0: la scrittura e' composta "
+                          f"({len(_nudi)} claim) ma non e' stata decomposta; "
+                          "L1 ha letto solo l'intero",
+                "advice": "togli VERIMEM_DECOMPOSE=0 per far giudicare ogni "
+                          "claim da L1",
+            })
+        elif len(_nudi) > 1 and _decompose_on:
+            _decomposed = True
+            _claims = _decomponi(proposition, eredita_soggetto=True)
+            _claims_verdict = []
+            for _i, _c in enumerate(_nudi):
+                _ws_c = _l1_warnings(_c, _vb_list, source=source,
+                                     provenance=_provenienza)
+                _l1_c = [w for w in _ws_c
+                         if str(w.get("layer", "")).startswith("L1")
+                         and str(w.get("layer", "")) != "L1.20"]
+                _no_dev_c = not _has_dev_context(_c)
+                _escala_c = bool(_l1_c) and not (
+                    (_has_personal_context(_c) and _no_dev_c)
+                    or (_is_historical_completion(_c) and _no_dev_c)
+                    or _domain_advisory
+                    or (_l1_domain_precision()
+                        and _is_domain_professional_fact(_c)))
+                _claims_verdict.append({
+                    "claim": _i,
+                    "layer": str(_l1_c[0].get("layer")) if _escala_c else None,
+                    "score": None,
+                })
+                if _escala_c:
+                    for _w in _l1_c:
+                        _w["claim"] = _i
+                        _w["claim_text"] = _c
+                        warnings.append(_w)
+                    l1_escalates = True
     if l1_escalates and documents is not None and advisory_eligible(warnings):
         from .evidence_independence import independence_verdict
         _iv = independence_verdict(verified_by=list(verified_by or []),
@@ -3246,6 +3321,9 @@ def run_validation_gate(
             grounding_span=_gspan,
             judge=_judge_of_record,
             threshold=_threshold_of_record,
+            claims=_claims,
+            claims_verdict=_claims_verdict,
+            decomposed=_decomposed,
         )
     if force_persist:
         # Caller demands persist; we still surface warnings.
