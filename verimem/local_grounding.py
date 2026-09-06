@@ -973,8 +973,14 @@ def punteggi_max_per_frase(source: str, claims: list[str], *,
         return None
     j = judge or get_local_judge()
     frasi = frasi_della_fonte(source)
+    # L'INTERO sta fra i candidati: la prova di un claim puo' stare su DUE righe
+    # («quarantinati ..... 2329» e «mai giudicati (grounding NULL) .... 1728» per
+    # «Sui 2329 quarantinati 1728 hanno grounding NULL»), e nessuna frase da sola
+    # lo regge (06/09, Nadia: 15 dei 54 caduti puliti di P-A divergono fino a +98
+    # fra il MAX per frase e l'intero). Costa una coppia in piu' per claim.
+    candidati = frasi + ([source.strip()] if len(frasi) > 1 else [])
     try:
-        lotto = [(j._entro_la_finestra(f), c) for c in claims for f in frasi]
+        lotto = [(j._entro_la_finestra(f), c) for c in claims for f in candidati]
         if j._scorer is None and _delegate_only():
             grezzi = _gate_via_daemon(lotto)          # il daemon accetta una lista
             if not grezzi:
@@ -985,7 +991,7 @@ def punteggi_max_per_frase(source: str, claims: list[str], *,
         return None
     if len(grezzi) != len(lotto):
         return None
-    n = len(frasi)
+    n = len(candidati)
     return [max(j.normalizza(v) for v in grezzi[i * n:(i + 1) * n])
             for i in range(len(claims))]
 
