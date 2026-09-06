@@ -6041,13 +6041,28 @@ class SemanticMemory:
             reason: optional human note; a default is synthesised when empty.
 
         Returns:
-            ``{"superseded": [...], "skipped": [...], "missing": [...]}``.
+            ``{"superseded": [...], "skipped": [...], "missing": [...],
+            "fonti_distinte": [...]}``.
               - superseded: ids marked ``superseded_by=new_id``.
               - skipped: present but NOT superseded (equal/higher trust, already
                 superseded, self-reference, or a supersede conflict).
               - missing: ids (incl. ``new_id`` if absent) not found in the DB.
+              - fonti_distinte (2026-09-06): kept alive because the two facts
+                declare DIFFERENT sources and neither declares a ``verified_by``
+                — two distinct measurements, not one updating the other. Its own
+                bucket, not ``skipped``: they are two different "I don't decide",
+                and merging them would label as *handled* something nobody
+                handled. The criterion is
+                ``supersession_policy.due_fonti_dichiarate_e_diverse``, the SAME
+                the gate uses — one surface, not a copy per door.
         """
-        result: dict[str, Any] = {"superseded": [], "skipped": [], "missing": []}
+        # ``fonti_distinte`` (2026-09-06) sta nel SUO secchio e non fra gli
+        # ``skipped``, per la stessa ragione per cui il rango ignoto ha il
+        # proprio in ``heal_contradictions``: sono due «non decido» diversi, e
+        # fonderli e' un'etichetta che porta una conclusione non verificata.
+        result: dict[str, Any] = {"superseded": [], "skipped": [], "missing": [],
+                                  "fonti_distinte": []}
+        from .supersession_policy import due_fonti_dichiarate_e_diverse
         new_fact = self.get(new_id)
         if new_fact is None:
             result["missing"].append(new_id)
@@ -6076,6 +6091,21 @@ class SemanticMemory:
                 continue
             if old_fact.superseded_by:
                 result["skipped"].append(old_id)
+                continue
+            if due_fonti_dichiarate_e_diverse(new_fact, old_fact):
+                # ⚠️ DUE FONTI DICHIARATE E DIVERSE NON SI RITIRANO A VICENDA, e
+                # qui la guardia serve quanto nel gate: questa funzione e'
+                # PUBBLICA e la chiamano sia il consolidamento notturno
+                # (`heal_contradictions`, principal `system:heal`) sia la porta
+                # MCP. Misurato sull'archivio il 2026-09-06: dei 292 ritiri fra
+                # due firme diverse, **130 portano `system:heal`** — il 44% —
+                # cioe' curare il solo gate lasciava aperta una porta su tre.
+                #
+                # 🔑 Il rango di fiducia NON risolve il caso: dice quale dei due
+                # e' piu' attendibile, e due misure DIVERSE non hanno un vincitore
+                # da eleggere — «col graded acceso 296 falsi» e «spento 40 falsi»
+                # sono entrambe vere, e il rango decideva chi cancellare.
+                result["fonti_distinte"].append(old_id)
                 continue
             old_rank = _rango_di_fiducia(old_fact.status)
             if old_rank is None or new_rank <= old_rank:

@@ -525,7 +525,18 @@ def heal_contradictions(
 
     Returns ``{"healed_superseded": [fact_ids], "resolved": [contradiction_ids],
     "skipped_equal_trust": [contradiction_ids], "missing": [contradiction_ids],
-    "skipped_unknown_trust": [contradiction_ids]}``.
+    "skipped_unknown_trust": [contradiction_ids],
+    "skipped_fonti_distinte": [contradiction_ids]}``.
+
+    ``skipped_fonti_distinte`` (2026-09-06) — coppie in cui i due fatti
+    dichiarano SOURCE DIVERSE e nessuno dei due dichiara un ``verified_by``:
+    due misure distinte, non una che aggiorna l'altra. Il rango di fiducia non
+    e' la domanda giusta — dice quale sia piu' attendibile, mentre entrambe
+    possono essere vere — quindi la coppia resta ``unresolved`` come gli
+    equal-trust. Misurato sull'archivio: dei 292 ritiri fra due firme diverse,
+    130 (il 44%) erano stati fatti da qui, con principal ``system:heal``.
+    Criterio: ``supersession_policy.due_fonti_dichiarate_e_diverse``, lo stesso
+    del gate.
 
     ``skipped_unknown_trust`` — coppie in cui almeno un lato ha uno stato che
     ``_STATUS_RANK`` non conosce. Prima finivano nel confronto come rango 0 e
@@ -534,6 +545,7 @@ def heal_contradictions(
     ``semantic._rango_di_fiducia``.
     """
     from .semantic import _rango_di_fiducia
+    from .supersession_policy import due_fonti_dichiarate_e_diverse
 
     if store is None:
         store = ContradictionStore(memory.db_path)
@@ -541,6 +553,7 @@ def heal_contradictions(
     resolved: list[str] = []
     skipped: list[str] = []
     skipped_ignoto: list[str] = []
+    skipped_fonti: list[str] = []
     missing: list[str] = []
     for c in store.list_unresolved(limit=limit):
         fa = memory.get(c.fact_a_id)
@@ -559,6 +572,21 @@ def heal_contradictions(
             # un'etichetta che porta una conclusione non verificata — la
             # classe che questo file esiste per non ripetere.
             skipped_ignoto.append(c.id)
+            continue
+        if due_fonti_dichiarate_e_diverse(fa, fb):
+            # ⚠️ DUE FONTI DICHIARATE E DIVERSE: il rango di fiducia dice quale
+            # dei due e' piu' ATTENDIBILE, e qui non e' la domanda giusta —
+            # «col graded acceso 296 falsi su 300» e «spento 40 falsi su 300»
+            # sono ENTRAMBE vere, e il rango sceglieva solo chi cancellare.
+            # Misurato sull'archivio il 2026-09-06: dei 292 ritiri fra due firme
+            # diverse, **130 portano `system:heal`** — il 44% passa da QUI, non
+            # dal gate. Fra le vittime, i due bracci dei nostri stessi A/B.
+            #
+            # Resta `unresolved`, come gli equal-trust: la contraddizione e' un
+            # DATO che qualcuno deve leggere, non una pratica evasa. E il
+            # criterio e' quello del gate — `due_fonti_dichiarate_e_diverse` —
+            # non una seconda copia che domani direbbe un'altra cosa.
+            skipped_fonti.append(c.id)
             continue
         if ra == rb:
             # Equal trust → we cannot decide which is right; leave for review.
@@ -609,6 +637,7 @@ def heal_contradictions(
         "resolved": resolved,
         "skipped_equal_trust": skipped,
         "skipped_unknown_trust": skipped_ignoto,
+        "skipped_fonti_distinte": skipped_fonti,
         "missing": missing,
     }
 
