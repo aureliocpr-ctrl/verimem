@@ -4656,7 +4656,7 @@ def facts_add(
             #
             # 🔬 COSTO MISURATO sul corpus vivo il 2026-09-06: **345 fatti** dal
             # 04/08 al 04/09 con un `grounding_score` (la source c'era, il moat
-            # l'ha letta) e nessuna firma; il 98,0% da `cli:local`, la stessa
+            # l'ha giudicata) e nessuna firma; il 98,0% da `cli:local`, la stessa
             # quota di chi la firma ce l'ha. Senza firma quei fatti restano fuori
             # dalla coesistenza fra fonti distinte (`L3-fonti-distinte`), che la
             # esige su ENTRAMBI i lati: due misure diverse scritte cosi'
