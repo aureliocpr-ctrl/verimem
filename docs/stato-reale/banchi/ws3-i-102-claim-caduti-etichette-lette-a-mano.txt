@@ -1,18 +1,18 @@
-# k etichetta — V = provato ALLA LETTERA dallo span (letto sui primi 300-330 caratteri dello span)
-# N = non visibile nello span letto (puo' stare oltre i 300 caratteri: da rileggere sullo span intero)
-# D = contraddetto dallo span, oppure frammento MALFORMATO dalla decomposizione (soggetto perso o spezzato)
-1 N  numeri 71/15 non nello span letto (L4.1 li dice assenti)
-2 N  «0 righe» e' inferenza: lo span mostra version invariata
+# k etichetta — V = provato ALLA LETTERA dallo span · D = contraddetto dallo span o frammento MALFORMATO dalla decomposizione
+# S = lo SPAN non lo prova (la prova stava nella fonte intera, non nella finestra conservata: muro M6): il giudice fa bene a bocciarlo
+# 06/09 15:03: prima lettura sui primi 300-330 caratteri dello span (32 N). 07/09 13:25: i 32 N riletti sullo span INTERO → 10 V, 3 D, 19 S.
+1 S  71 e 15 non stanno nello span (il conteggio e' oltre la finestra conservata)
+2 S  «0 righe» e' inferenza: lo span mostra version invariata, non lo dice
 3 V  EL -> Greco, mappa codice-lingua
-4 N  frammento senza referente («La fonte» di quale caso?)
+4 D  frammento senza referente («La fonte» di quale caso?)
 5 V
 6 V
 7 V  negazione da output di script (rate presente? False)
 8 V
 9 V
-10 N  riga con 0 oltre il taglio
+10 V  riga 2026-08: q.SENZA pt 0 (riletto sullo span intero)
 11 D  span: SENZA patch 4 failed, non 1
-12 N  99.805 non nello span letto
+12 S  99.805 non e' nello span (la controprova e' tagliata)
 13 V
 14 V
 15 V  «No photos» letterale
@@ -22,11 +22,11 @@
 19 V
 20 D  frammento malformato («Team i layers…»)
 21 D  span: 11433 passed, non 11398
-22 N
+22 S  lo span e' un AssertionError, il «5 passed» non c'e'
 23 V
 24 V  «1168 -> model_claim» letterale
-25 N
-26 N
+25 S  solo righe FAILED nello span
+26 S  solo righe FAILED nello span
 27 V
 28 V
 29 V
@@ -35,69 +35,69 @@
 32 V  «sei» = EXIT=0: 6 (numero a parole)
 33 V
 34 V
-35 N
+35 S  0.3732 c'e', il threshold 88.123… no
 36 V
 37 V  frammento («2 passed.») ma letterale
-38 N  «non parte» e' inferenza dall'errore
+38 S  «non parte» e' inferenza dall'errore (e riusciti=60 la contraddice in parte)
 39 D  frammento senza soggetto («E quarantined.»)
-40 N  riga (d) PROSA oltre il taglio
+40 V  riga (d) PROSA con DUE numeri: layer=(nessuno) (riletto sullo span intero)
 41 V
-42 N
-43 N  riga windows oltre il taglio
+42 S  il sommario di pytest non nomina il test
+43 V  «test (windows-latest / py3.12) -> 21 failed» (riletto sullo span intero)
 44 V  20 citate, 0 assenti
 45 V  «ne» = L4-review, dalla testa
-46 N
-47 N
+46 S  la lista delle voci e' oltre la finestra
+47 S  idem
 48 D  il secondo test ha 9 passed, non 5
-49 N
+49 V  «verifica success, save skipped» x2 (riletto sullo span intero)
 50 V
 51 V
 52 D  MALFORMATO DALLA DECOMPOSIZIONE: «tre chilobyte e mezzo» spezzato su « e » dentro un claim citato
 53 V
 54 V
 55 V
-56 N
+56 S  il totale dei commit (35) non e' nello span, solo «che toccano README: 2»
 57 D  frammento malformato
 58 V  letterale, punteggio 24
 59 V
 60 V  semantico (could not convert -> ha sollevato)
-61 N
-62 N
-63 N  riga ci oltre il taglio (la security e' success)
+61 S  una riga FAILED sola nello span
+62 S  idem
+63 V  «5be39960 ci completed failure» (riletto sullo span intero)
 64 V
 65 V  «(NON AGG.)» x3
-66 N
+66 S  «entita-inventata» non e' nello span (parla di unita-cambiata)
 67 V
 68 V
-69 N
+69 S  il nome del file non e' nello span
 70 V
-71 N  lista dei campi oltre il taglio
+71 V  la lista dei campi del payload non contiene sotto_il_pavimento (negazione provata per elenco)
 72 V
-73 N
+73 S  «None» e «0.7661» non sono nello span
 74 V
 75 D  MALFORMATO: «piu' di … e meno di …» spezzato
 76 D  frammento senza soggetto («Esito quarantined.»)
 77 D  frammento senza soggetto («Un quarantined.»)
-78 N  «ammett…» tagliato
-79 N  malformato E valori oltre il taglio
-80 N
+78 V  «ne ferma una a 15.67 e ammette l'altra a 93.74» (riletto sullo span intero)
+79 D  malformato («Sigle sono zero.») e lo span ha solo il titolo della sezione
+80 V  «PESO milligrammi tonnellate 3 … 1.18» (riletto sullo span intero)
 81 V
 82 V  inizio garbled ma i numeri ci sono
 83 V
-84 N
+84 S  lo sha non e' nello span
 85 V  letterale, punteggio 25,9
 86 V
 87 D  span: 0 su 16, non su 12
-88 N  terzo controllo oltre il taglio
+88 D  nello span i CONTROLLO_POSITIVO visibili sono 2, non 3
 89 V
 90 V
 91 V  letterale, punteggio 26
-92 N
+92 S  la lista delle cartelle e' oltre la finestra
 93 V
 94 V
-95 N
+95 V  «CONTROLLO V-CIT ammessi 14/16» in coda allo span (riletto sullo span intero)
 96 V  «5 file · 711 MB»
-97 N
+97 V  «7 failed, 2 passed» (riletto sullo span intero)
 98 V
 99 V  letterale, punteggio 27,9
 100 V
