@@ -864,7 +864,14 @@ class Memory:
             # model_claim. A later injection screen inside store() can
             # still flip it to quarantined — the screen is lane-agnostic.
             fact.status = "user_belief"
-        self.semantic.store(fact, embed="sync", purpose=purpose)
+        #: `return_replaced` C'ERA GIA' e questa porta non lo chiedeva. La
+        #: ricevuta dell'SDK non aveva la chiave `replaced`, e chi la leggeva
+        #: con `.get("replaced")` riceveva `None` — indistinguibile da `False`
+        #: per chiunque. E' il difetto che ha prodotto il ticket «replaced e'
+        #: sempre False»: sintomo giusto, causa sbagliata, perche' la porta
+        #: MCP il campo ce l'ha e questa taceva.
+        _sostituito = self.semantic.store(fact, embed="sync", purpose=purpose,
+                                          return_replaced=True)
         # UNO SCREEN DENTRO `store()` HA PARLATO: lo si porta nella ricevuta.
         # `store()` scrive il verdetto sul fatto (stesso veicolo di
         # `routed_to`, letto tre righe piu' sotto) e qui diventa un warning
@@ -1170,6 +1177,13 @@ class Memory:
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
+            #: ⚠️ DICHIARA, NON PROMETTE. `True` quando questa scrittura ha
+            #: SOSTITUITO una riga con lo stesso id; `False` quando ne ha
+            #: creata una nuova. NON dice che due `add` con lo stesso testo
+            #: siano idempotenti: l'id qui non deriva dal contenuto (la porta
+            #: MCP si', ed e' la divergenza aperta del ticket). Un campo che
+            #: c'e' e vale `False` si legge diverso da un campo che manca.
+            "replaced": bool(_sostituito),
             "grounding_score": gate.grounding_score,
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
