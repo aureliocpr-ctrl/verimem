@@ -1,0 +1,39 @@
+IMPORT DA C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\__init__.py
+warmup 18.9 s · moat 40.0 · tau_hi 80.0 · banda ON
+C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\anti_confab_gate.py:2623: RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)
+  and _scores[_i_min] < resolve_write_threshold_for(_judge_used)):
+
+30 composte alla porta del tip candidato: {'REVIEW': 18, 'AMMESSA': 12}
+P-T1: 0 QUARANTENA -> REGGE · REVIEW 17 -> FALSIFICATA (18) · AMMESSA 13 -> FALSIFICATA (12)
+
+ i esito       action     n  punteggi           layer per claim
+ 0 REVIEW      downgrade  2  [98.8, 78.5]       [None, None]  ['L4-review']
+ 1 AMMESSA     persist    2  [97.1, 96.1]       [None, None]  []
+ 2 REVIEW      downgrade  2  [99.0, 0.7]        [None, 'L4-review']  ['L4-review']
+ 3 AMMESSA     persist    2  [98.9, 93.8]       [None, None]  []
+ 4 REVIEW      downgrade  2  [97.3, 76.5]       [None, None]  ['L4-review']
+ 5 REVIEW      downgrade  2  [98.6, 63.0]       [None, None]  ['L4-review']
+ 6 REVIEW      downgrade  2  [94.6, 2.2]        [None, 'L4-review']  ['L4-review']
+ 7 REVIEW      downgrade  2  [99.0, 1.5]        [None, 'L4-review']  ['L4-review']
+ 8 REVIEW      downgrade  2  [93.5, 1.7]        [None, 'L4-review']  ['L4-review']
+ 9 AMMESSA     persist    2  [98.1, 93.8]       [None, None]  []
+10 REVIEW      downgrade  2  [91.1, 0.9]        [None, 'L4-review']  ['L4-review']
+11 REVIEW      downgrade  2  [90.8, 10.9]       [None, 'L4-review']  ['L4-review']
+12 AMMESSA     persist    2  [98.2, 97.8]       [None, None]  []
+13 AMMESSA     persist    1  [98.8]             [None]  []
+14 AMMESSA     persist    2  [97.9, 86.7]       [None, None]  []
+15 REVIEW      downgrade  2  [99.9, 4.4]        [None, 'L4-review']  ['L4-review']
+16 AMMESSA     persist    1  [98.6]             [None]  []
+17 REVIEW      downgrade  2  [77.6, 87.4]       [None, None]  ['L4-review']
+18 AMMESSA     persist    2  [99.4, 97.7]       [None, None]  []
+19 REVIEW      downgrade  2  [99.5, 2.4]        [None, 'L4-review']  ['L4-review']
+20 REVIEW      downgrade  2  [98.3, 1.1]        [None, 'L4-review']  ['L4-review']
+21 REVIEW      downgrade  2  [99.3, 0.5]        [None, 'L4-review']  ['L4-review']
+22 REVIEW      downgrade  2  [93.2, 65.6]       [None, None]  ['L4-review']
+23 REVIEW      downgrade  2  [96.0, 27.9]       [None, 'L4-review']  ['L4-review']
+24 AMMESSA     persist    2  [98.9, 98.7]       [None, None]  []
+25 REVIEW      downgrade  2  [98.8, 1.2]        [None, 'L4-review']  ['L4-review']
+26 AMMESSA     persist    1  [84.6]             [None]  []
+27 REVIEW      downgrade  2  [95.1, 0.8]        [None, 'L4-review']  ['L4-review']
+28 AMMESSA     persist    1  [97.6]             [None]  []
+29 AMMESSA     persist    1  [91.1]             [None]  []
