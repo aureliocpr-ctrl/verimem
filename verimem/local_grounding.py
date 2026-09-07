@@ -298,11 +298,28 @@ class LocalGroundingJudge:
                         # Costo misurato (02/09, HOME nuova, una sola esecuzione):
                         # `ensure_gate_model()` 13,4s per 746,1 MB, contro i 54,1s del
                         # caricamento che si paga GIA' oggi senza nessuna cura.
+                        # ⚠️ ASSENTE = mancano i FILE, non «la cartella non
+                        # esiste». Misurato il 07/09 (banco T1 del lead):
+                        # con ENGRAM_LOCAL_GATE_MODEL su una cartella creata
+                        # e VUOTA, «exists()» diceva presente, il carico
+                        # falliva (tokenizer assente), il fallimento finiva
+                        # in cache e ogni scrittura con fonte entrava non
+                        # giudicata con la ricevuta «on disk but could not be
+                        # loaded» — di una cartella senza un file. E' lo
+                        # stesso criterio con cui `ensure_gate_model` decide
+                        # di NON riscaricare (config.json E i pesi): due
+                        # criteri per «presente» divergevano. Un modello coi
+                        # file che non si carica resta ROTTO e non si
+                        # riscarica (`test_un_modello_CORROTTO_non_si_riscarica`).
+                        _mancano_i_file = not (
+                            _holds_a_model(self.model_dir)
+                            and holds_the_weights(self.model_dir))
                         if (not _gia_procurato
-                                and not self.model_dir.exists()
+                                and _mancano_i_file
                                 and not _download_disattivato()):
                             _emit_flow("flow.warmup", what="moat-judge",
-                                       phase="fetching", motivo="modello assente")
+                                       phase="fetching", motivo="modello assente",
+                                       cartella_esiste=self.model_dir.exists())
                             # l'evento va nel journal, che l'utente non legge: l'annuncio
                             # va sullo schermo, PRIMA dei 15 secondi di attesa
                             annuncia_download_del_giudice()

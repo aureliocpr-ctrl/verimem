@@ -1926,6 +1926,30 @@ def _advisory_l4_skipped() -> dict[str, str]:
                       "before the background load lands.",
         }
     if stato == "failed":
+        # Misurato il 07/09 (banco T1): la riga «on disk» usciva anche per una
+        # cartella del modello ESISTENTE MA VUOTA. La ricevuta dice cio' che
+        # c'e' sul disco invece di presumerlo.
+        try:
+            from .local_grounding import (
+                _holds_a_model,
+                get_local_judge,
+                holds_the_weights,
+            )
+            _dir = get_local_judge().model_dir
+            _file_presenti = _holds_a_model(_dir) and holds_the_weights(_dir)
+        except Exception:
+            _dir, _file_presenti = None, True
+        if not _file_presenti:
+            return {
+                "layer": "L4-skipped",
+                "reason": "source provided but the grounding judge failed to "
+                          "load - entailment NOT verified",
+                "advice": f"no model files (config.json + weights) in {_dir}: "
+                          "the judge was not downloaded in this process "
+                          "(offline flag set, or the download failed). Run "
+                          "`verimem warmup` to fetch it, or `verimem doctor` "
+                          "for the reason.",
+            }
         return {
             "layer": "L4-skipped",
             "reason": "source provided but the grounding judge failed to load - "
