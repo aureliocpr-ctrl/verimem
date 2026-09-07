@@ -227,9 +227,40 @@ def _encode_local(text: str) -> np.ndarray:
     return np.asarray(vec, dtype=np.float32)
 
 
+#: L'ultimo motivo che il DAEMON ha dato per un rifiuto, o ``None`` se nessuno
+#: ha detto niente. Non è telemetria: è l'unico posto in cui quella frase
+#: sopravvive, e da qui la rilegge il messaggio che l'utente vede.
+_ULTIMO_RIFIUTO: str | None = None
+
+
+def ultimo_rifiuto_del_servizio() -> str | None:
+    """Perché il daemon ha rifiutato l'ultima richiesta, se l'ha detto.
+
+    ``None`` quando il daemon non ha parlato — irraggiungibile, spento, o
+    scoperta assente. La distinzione è tutta: «non ha risposto» e «ha risposto
+    che non può» sono due guasti diversi, e finora il prodotto li diceva con la
+    stessa frase.
+    """
+    return _ULTIMO_RIFIUTO
+
+
 def _encode_via_service(text: str) -> np.ndarray | None:
     """Encode via the shared service. Returns None if unavailable so the
-    caller falls back to in-process encoding."""
+    caller falls back to in-process encoding.
+
+    ⚠️ SE IL DAEMON SPIEGA IL RIFIUTO, LA SPIEGAZIONE SI CONSERVA. Misurato il
+    06/09: daemon vivo (porta provata, ACCETTA) che rispondeva
+    ``{'ok': False, 'error': 'AcceleratorError: CUDA error: unknown error'}``,
+    e questa funzione tornava ``None`` come per un daemon spento. Il chiamante
+    diceva «unavailable — finché il daemon non torna», mentre il daemon non se
+    n'era mai andato: la diagnosi mandava a cercare un processo morto ed era
+    l'opposto del vero. L'``error`` è nel CONTRATTO (`test_encode_service.py:73`
+    lo pretende dal daemon); mancava chi lo raccogliesse di qua.
+    """
+    global _ULTIMO_RIFIUTO
+    #: si azzera a OGNI giro: un motivo vecchio riletto come nuovo sarebbe
+    #: peggio dell'assenza, perché chi legge crederebbe di avere una diagnosi.
+    _ULTIMO_RIFIUTO = None
     if not _service_enabled():
         return None
     try:
@@ -262,6 +293,10 @@ def _encode_via_service(text: str) -> np.ndarray | None:
             conn.close()
         if resp and resp.get("ok") and "vec" in resp:
             return np.asarray(resp["vec"], dtype=np.float32)
+        #: HA RISPOSTO E HA DETTO PERCHE': si conserva, invece di uscire come
+        #: se non avesse risposto affatto.
+        if isinstance(resp, dict) and resp.get("error"):
+            _ULTIMO_RIFIUTO = str(resp["error"])
     except Exception:  # noqa: BLE001 — any failure → fall back to local encode
         return None
     return None
@@ -281,6 +316,17 @@ def _encode_one(text: str) -> np.ndarray:
         _adopt_observed_dim(int(vec.shape[-1]), "encode-service vector")
         return vec
     if _delegate_only() and not is_loaded():
+        #: DUE FRASI PER DUE GUASTI. Se il daemon ha spiegato il rifiuto, la
+        #: sua spiegazione va davanti: «unavailable» su un daemon vivo che
+        #: risponde e' una diagnosi FALSA, e manda a cercare un processo morto.
+        _motivo = ultimo_rifiuto_del_servizio()
+        if _motivo:
+            raise EncodeDelegateUnavailable(
+                f"the encode daemon REFUSED this request: {_motivo} — the "
+                "daemon is answering, so restarting it may not help; "
+                "in-process cold-load is disabled "
+                "(HIPPO_ENCODE_DELEGATE_ONLY=1) — caller must degrade"
+            )
         raise EncodeDelegateUnavailable(
             "encode daemon unavailable and in-process cold-load is disabled "
             "(HIPPO_ENCODE_DELEGATE_ONLY=1) — caller must degrade"
