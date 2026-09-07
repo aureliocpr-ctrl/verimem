@@ -898,7 +898,6 @@ jobs:
           --cov-report=term-missing:skip-covered
           --cov-fail-under=46
           -m "not slow and not e2e and not perf"
-          --deselect tests/test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump
 
       # 🔑 LA STESSA SONDA, DOPO I TEST — e questa risponde a una domanda che
       # altrimenti resta aperta a congetture.
