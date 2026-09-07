@@ -2560,32 +2560,30 @@ def run_validation_gate(
     # caricando». `absent` (non e' su disco) e `failed` restano L4-skipped
     # all'istante: aspettare un giudice che non arrivera' sarebbe peggio del
     # difetto.
-    # ⚠️ NON si mette `and not _have_judge` qui: misurato il 06/09 in QA, senza
-    # daemon di encode `judge_state()` dice `warming` MA `local_ce_available()`
-    # dice True (il modello e' sul disco) — quindi con quella guardia il blocco
-    # non veniva MAI eseguito proprio nella configurazione che deve coprire, e
-    # la scrittura usciva L4-skipped 1,8 s dopo l'avvio del warm. A decidere
-    # dev'essere lo STATO del giudice, non la sua presenza sul disco.
-    if source and _ground_on:
-        try:
-            import time as _t
-
-            from .local_grounding import judge_state as _stato
-            from .local_grounding import local_ce_available as _lca2
-            if _stato() == "warming":
-                _budget = float(
-                    os.environ.get("VERIMEM_JUDGE_WAIT_S") or 60.0)
-                _scadenza = _t.time() + _budget
-                while _t.time() < _scadenza:
-                    if _stato() != "warming":
-                        break
-                    _t.sleep(0.5)
-                # se e' arrivato, da qui in poi la scrittura viene GIUDICATA;
-                # se il budget e' scaduto, `_have_judge` resta falso e si esce
-                # con l'advisory di sempre — mai muti, mai piu' lenti del budget
-                _have_judge = _lca2()
-        except Exception:  # noqa: BLE001 — un'attesa non rompe una scrittura
-            pass
+    # ⚠️ QUI C'ERA L'ATTESA DEL GIUDICE, ED E' STATA TOLTA il 07/09 — misurato,
+    # non supposto. `judge_state()` dice `warming` dello stato IN PROCESSO
+    # mentre il giudizio arriva dal daemon: in delegate-only (il default del
+    # server MCP) quello stato non cambia finche' qualcuno non usa il daemon,
+    # e l'attesa impediva proprio quel primo uso. Risultato: scadeva SEMPRE.
+    #
+    #     A/B a una variabile, stesso testo e stessa fonte, in delegate-only:
+    #       senza attesa (v1)                30 s
+    #       attesa con budget 1 s            25 s
+    #       attesa con budget 10 s           32 s
+    #       attesa con budget 60 s (default) 89 s
+    #     grounding_score 99.9327163696289 IDENTICO in tutti e quattro
+    #
+    # ⇒ ~60 s di ritardo alla prima scrittura di ogni processo, e nessun
+    # verdetto comprato in cambio. Senza `HIPPO_ENCODE_DELEGATE_ONLY` lo stato
+    # e' `ready` e l'attesa non partiva nemmeno: il costo lo pagava solo la
+    # configurazione del server.
+    #
+    # NON rimetterla in questa forma. Il problema da curare e' a monte, ed e'
+    # che `judge_state()` dica `warming` quando il giudizio e' delegato e
+    # disponibile (ticket T26b). Il caso che l'attesa voleva coprire — giudice
+    # locale che carica e nessuno che giudichi al posto suo — resta aperto in
+    # T26a: la via e' ripiegare in processo o rifiutare ad alta voce, non
+    # aspettare in silenzio.
 
     def _emit_l4_skipped() -> None:
         warnings.append(_advisory_l4_skipped())
