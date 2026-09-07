@@ -23,16 +23,6 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   where before, for the ordinary case, the startup log said **nothing at all**
   about the judge and the silence read as "all fine".
 - **`--valid-until` on the CLI**, so a fact can be given an expiry at write time.
-- **Two different sources no longer erase each other.** Before, two facts written
-  to the same topic from **different sources** — the two arms of an A/B, two cells
-  of one benchmark — could be read as one updating the other, and the newer one
-  **retired** the older: recall served one arm and stayed silent about the other.
-  Measured on a real corpus: **292 retirements** of that shape, of which **155**
-  came from the write gate and **130** from the nightly consolidation. Now they
-  **coexist** and the receipt says why (`L3-fonti-distinte`). It applies where both
-  facts carry a source and neither declares a `verified_by`: measured 2026-09-06 on
-  `5e61d333`, **62,2% of 14204 servable facts** carry a source signature, and
-  **82,3% of the 334** written in the preceding 24 hours.
 - **The MCP port now delivers the reply.** A call could hang for good — and the
   server was not being slow: on the same connection `initialize` answered in
   **2,0-2,5 s** in every run, so the process was alive and the framing was right;
@@ -118,6 +108,70 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
   *Not yet*: nothing in the receipt says which model produced the score. *Next*:
   compare the requested model with the one the daemon declares, and refuse to
   delegate when they differ.
+
+- **Composite writes ("A and B")** — *today*: the gate judges the sentence as a
+  whole, so a false tail attached to a true head passes: on **30 fresh Italian
+  writes** "<true fact> and <false tail>" carrying the true fact's own source,
+  the whole is admitted **30 times out of 30**; on the corpus, 200 "<true fact>
+  and it is verified" writes stop **115** as a whole and **146** with the
+  per-claim decomposition. The decomposition (`atomic_claims.decomponi`) ships in
+  the package but is **not wired into the gate**; wired on a branch, it changes
+  the verdict of **12.4-12.9%** of already-admitted true composite facts
+  (**99-103 of 800**), most of them the judge collapsing on a short claim.
+  *Not yet*: it cannot tell an unproven half from a true fact that got lost; on
+  the 30 fresh writes it isolates **25** false tails, and the judge then
+  quarantines **13**, holds **4** for review and still admits **8** plausible
+  ones; verbs outside its list are recognised by a morphological rule on a
+  branch, not in the package. *Next*: a third state ("held for review") for the
+  case where the whole passes high and one claim collapses; the wiring comes back
+  only with that, and the judge on short plausible claims is the remaining wall.
+- **Numbers in program output (L4.1 and L4.2)** — *today*: the "value reused for
+  another quantity" warning fires on **16.0%** of sourced facts instead of 50.8%
+  (7,981 facts; measured on stored spans, not full sources), and true reuses are
+  still flagged; L4.1 stops **6.0%** of sourced facts, and in **16 of those 484**
+  (0.2% of sourced facts) the number **is** in the source and the parser does not
+  see it: a time inside an ISO timestamp, "0.40" in a table row, a glued suffix,
+  an arXiv id with "v1", a date inside a tag. *Not yet*: "exits 2" against
+  "EXIT=2" is translation, not matching; composites are not read the same way on
+  the claim side and the source side. *Next*: the same treatment of composites
+  and suffixes on both sides of L4.1, measured on those 484.
+- **Negative facts** — *today*: a negative fact whose source states the absence
+  in prose passes (99.8 in 4 of 5); when the absence is **printed by a script**
+  ("found? False", "NO FIELD") it drops to **0.3-2** even when true; and Italian
+  "Nessun ..." is not recognised as a negation at all. Out-of-source vocabulary
+  separates stopped from admitted with AUROC **0.743**; at equal vocabulary,
+  negations fall **3.5x** more often in the low band (6.9% vs 2.0%). *Not yet*:
+  "nessun/nessuna/mai/niente" in the negation lexicon; the advice does not say
+  "one sentence, in the source's own words". *Next*: one word in the negator
+  regex and one line in the advice; meanwhile, write what the command prints
+  (4 of 4 went from 0.3-32 to 99.4-99.98).
+- **The judge on short claims** — *today*: the cross-encoder rejects claims
+  proven literally by machine output ("1168 -> model_claim" scores 1.7; "No
+  photos" 0.1; "5 files - 711 MB" 0.3): **21 of 30** read by hand among the 96
+  collapses. *Not yet*: reading "label: value". *Next*: a candidate judge, with
+  AUROC measured on 60 Italian pairs.
+
+- **T26a — the MCP server is delegate-only by construction, so a daemon that is
+  not there means an unjudged write, silently.** *Today*: the server starts the
+  shared encode daemon itself, and **with the daemon a sourced write is judged —
+  7 out of 7, grounding 98.37**. But that port delegates **by construction**: if
+  the daemon is missing or fails to start, the write enters **unjudged**, and
+  nothing says so where you read `admitted` — the receipt does carry
+  `layers=['L4-skipped']`, but that is not where a caller looks. Measured on our
+  own corpus: **13 of 275** facts written in the last 24 hours entered that way —
+  **4.7%**, against **66 of 8833** historically (**0.7%**). The CLI, with no
+  flags, judges in-process instead. *Not yet*: there is no in-process fallback
+  and no refusal — **the daemon's failure mode is silent**. *Next*: either fall
+  back to judging in-process when the daemon is unusable, or refuse out loud.
+- **T27 — one test is excluded from the CI suite while its crash is confirmed.**
+  *Today*: `test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump` sits
+  behind a `--deselect` — **a probe, not a fix** — after killing the whole suite
+  at the same point with `exit code 139`, measured at **2 out of 17** runs on the
+  `ubuntu / py3.12` leg; the file is still exercised on its own in the same job,
+  and the suite now reaches the end. *Not yet*: the cause is not confirmed, and a
+  handful of clean runs is not proof of anything. *Next*: the count reaches the
+  threshold fixed **before** starting — **24 consecutive clean jobs**, chosen so
+  that `(1-p)^24 = 0.05` with the measured `p` — or the `--deselect` comes out.
 
 ### Internal
 
