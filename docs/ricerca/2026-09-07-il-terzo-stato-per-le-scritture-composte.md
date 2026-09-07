@@ -14,7 +14,7 @@ falsificare prima di scriverlo.*
 | Il giudice, sulla coda isolata (soglie del prodotto: 40 / 80) | quarantena **13**, review **4**, ammessa **8** su 25 | output 2, 12:33 |
 | Costo dell'innesto sui veri composti già ammessi (P-A, 800 campionati) | **99–103/800 = 12,4–12,9 %** cambiano verdetto; di questi 14 solo per la regola -ed (curata), il resto è il giudice sui claim brevi | controlli 1–5 |
 | Fra i 102 claim caduti letti uno per uno | **68 provati alla lettera** dallo span, 15 malformati/contraddetti, **19 con la prova fuori dalla finestra conservata** (M6) | `ws3-i-102-claim-caduti-etichettati-a-mano.json` |
-| Un giudice migliore (interpolato, Nadia) recupera i claim brevi caduti | **2/39** | Nadia, 06/09 |
+| Un giudice migliore (interpolato, Nadia) recupera i claim brevi caduti | **1/31 = 3,2 %** sui veri (2/39 = 5,1 % contando un frammento malformato) | Nadia, 07/09 13:34 |
 
 Tre fatti seguono da questa tabella:
 
@@ -78,7 +78,7 @@ prima di qualunque push):
 ## Cosa NON risolve, dichiarato
 
 - Le **8 code false ammesse** (giudice a 86–99 su claim plausibili): è M5, e
-  la cura di Nadia non le toglie (2/39). Restano il lavoro del giudice, non
+  la cura di Nadia non le toglie (1/31 sui veri). Restano il lavoro del giudice, non
   della decomposizione.
 - Le **5 code fuse** (verbo + preposizione/aggettivo, «riesce a», «sembra
   pieno»): limite dichiarato della regola morfologica.
