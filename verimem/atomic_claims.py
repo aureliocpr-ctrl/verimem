@@ -212,15 +212,54 @@ def _chiusa(n: str) -> bool:
     return n in _DETERMINANTI or n in _PREPOSIZIONI or n in _NUMERALI or n in _ALTRE_CHIUSE
 
 
-def _verbo_morfologico(pezzo: str) -> re.Match | None:
+# ── il pezzo precedente finisce con una copula e UNA parola («è freddo», «sono
+# vuote», «resta aperta»): il primo token del pezzo dopo « e » e' coordinato a quel
+# predicativo — un altro aggettivo, non un verbo — anche se e' seguito da un
+# determinante («è freddo e forte la mattina» → non «Il vento forte la mattina.»).
+# 07/09: 8 controlli difficili su 10 spezzati per errore senza questa guardia;
+# il prezzo, dichiarato: un verbo fuori lista coordinato a un predicativo («è
+# aperta e affitta la sala») resta fuso. Un verbo DELLA lista si spezza ancora.
+_RE_PREDICATIVO_IN_CODA = re.compile(
+    r"(?<![\w'])(?:è|e'|sono|era|erano|sembra|sembrano|resta|restano|rimane|rimangono|"
+    r"diventa|diventano|pare|paiono)\s+(?:(?:molto|poco|piu'|più|troppo|abbastanza|"
+    r"davvero|ancora|sempre|quasi|ormai)\s+)?([A-Za-zÀ-ÿ]+)\s*$", re.IGNORECASE)
+# ── un determinante seguito da una parola di TEMPO e' un avverbiale («la mattina»,
+# «ogni domenica», «le sere d'estate»), non l'oggetto di un verbo: cio' che lo
+# precede e' un aggettivo («forte la mattina»), non «visita i pazienti». Prezzo,
+# dichiarato: un verbo fuori lista seguito da un tempo («lavora la domenica») resta fuso.
+_TEMPO = {
+    "mattina", "mattino", "mattine", "sera", "sere", "notte", "notti", "giorno", "giorni",
+    "giornata", "giornate", "pomeriggio", "pomeriggi", "settimana", "settimane", "mese",
+    "mesi", "anno", "anni", "inverno", "estate", "autunno", "primavera", "domenica",
+    "domeniche", "lunedi", "martedi", "mercoledi", "giovedi", "venerdi", "sabato", "sabati",
+    "ora", "ore", "volta", "volte", "tanto", "momento", "momenti", "minuto", "minuti",
+    "secondo", "secondi", "attimo", "stagione", "stagioni", "weekend", "vigilia", "festivo",
+    "festivi", "feriale", "feriali", "mezzogiorno", "mezzanotte", "alba", "tramonto",
+}
+
+
+def _coordinato_a_un_predicativo(precedente: str) -> bool:
+    """Il pezzo precedente finisce con copula + una parola che NON e' un participio
+    («è freddo», non «sono arrivati»: quello e' un tempo composto, e cio' che segue
+    « e » puo' essere un verbo — «sono arrivati e rinvia la firma»)."""
+    m = _RE_PREDICATIVO_IN_CODA.search(precedente.strip()) if precedente else None
+    return m is not None and _RE_PARTICIPIO_INIZIALE.match(m.group(1)) is None
+
+
+def _verbo_morfologico(pezzo: str, precedente: str = "") -> re.Match | None:
     """Il primo token del pezzo che la morfologia riconosce come verbo finito
-    (regola e guardie nel commento sopra); None se non c'e'."""
+    (regola e guardie nel commento sopra); None se non c'e'. Con `precedente`
+    (il pezzo prima della coordinata) il primo token NON e' un verbo se il
+    precedente finisce con un predicativo (`_coordinato_a_un_predicativo`)."""
     toks = list(_RE_PAROLA.finditer(pezzo))
+    coordinato_a_predicativo = _coordinato_a_un_predicativo(precedente)
     for k, m in enumerate(toks):
         t = m.group()
         nucleo = t.rstrip("'")
         if not nucleo.isalpha() or len(nucleo) < 3 or (k > 0 and nucleo[0].isupper()):
             continue
+        if k == 0 and coordinato_a_predicativo:
+            continue  # «è freddo e forte la mattina»: «forte» e' un aggettivo coordinato
         basso = nucleo.lower()
         # l'accento finale scritto come apostrofo («cambiera'», «meta'») o come
         # lettera: e' un futuro solo in -era'/-ira'; altrimenti non e' una desinenza
@@ -241,7 +280,10 @@ def _verbo_morfologico(pezzo: str) -> re.Match | None:
             return m
         if n.endswith(("a", "e")) and k + 1 < len(toks):
             dopo = toks[k + 1].group()
-            if (dopo[:1].isdigit() or _norma(dopo) in _SEGUITO_DA_VERBO
+            d = _norma(dopo)
+            if d in _DETERMINANTI and k + 2 < len(toks) and _norma(toks[k + 2].group()) in _TEMPO:
+                continue  # «forte la mattina», «grande ogni domenica»: avverbiale di tempo
+            if (dopo[:1].isdigit() or d in _SEGUITO_DA_VERBO
                     or _RE_PARTICIPIO_INIZIALE.match(dopo)):
                 return m
     return None
@@ -401,7 +443,7 @@ def _fondi_i_nudi(pezzi: list[str]) -> list[str]:
             out.append(p)
         elif _RE_PARTICIPIO_INIZIALE.match(p) and _ausiliare_di(out[-1]):
             out.append(f"{_ausiliare_di(out[-1])} {p}")
-        elif _verbo_morfologico(p):  # il ripiego viene DOPO l'ellissi del participio
+        elif _verbo_morfologico(p, precedente=out[-1]):  # il ripiego viene DOPO l'ellissi del participio
             out.append(p)
         else:
             out[-1] = f"{out[-1]} e {p}"
