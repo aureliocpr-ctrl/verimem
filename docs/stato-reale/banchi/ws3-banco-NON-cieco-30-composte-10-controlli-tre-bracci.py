@@ -164,6 +164,40 @@ CONTROLLI = [
 ]
 SOGLIA_DECOMP = {"A": 50, "B": 60, "C": 80}
 
+# CONTROLLI DIFFICILI (aggiunti alle 12:53, dopo il primo giro): il punto debole
+# NOTO della regola stretta — un aggettivo in -a/-e seguito da un determinante di
+# tempo o da un clitico passa la guardia «la parola dopo e' un determinante» e
+# viene letto come verbo («è forte la mattina» → «Il vento forte la mattina.»).
+# Il primo giro aveva UN solo controllo di questa forma (1/10, spezzato). Qui
+# sono dieci, scritti apposta cosi'. PREDIZIONE (contro la regola, depositata
+# prima di eseguire): il braccio C ne spezza per errore >= 5/10; A e B 0/10.
+CONTROLLI_DIFFICILI = [
+    "Il vento è freddo e forte la mattina.",
+    "La piazza è vuota e grande ogni domenica.",
+    "Il pane è caldo e dolce le prime ore.",
+    "La riunione è lunga e breve ogni tanto.",
+    "Il fiume è lento e verde la sera.",
+    "La cucina è stretta e piena le sere d'estate.",
+    "Il corridoio è buio e umido ogni inverno.",
+    "La musica è bassa e leggera la notte.",
+    "Il cortile è pulito e libero ogni mattina.",
+    "La torre è antica e alta la sua ombra sul paese.",  # forma zoppa, come la scrive un utente di fretta
+]
+
+
+def parte_difficili(wt_a: str, wt_b: str, wt_c: str) -> int:
+    print(f"{len(CONTROLLI_DIFFICILI)} controlli DIFFICILI (aggettivo in -a/-e + determinante di tempo)")
+    for nome, wt in (("A", wt_a), ("B", wt_b), ("C", wt_c)):
+        ac = carica_atomic_claims(wt)
+        errori = [(c, ac.decomponi(c)) for c in CONTROLLI_DIFFICILI if len(ac.decomponi(c)) >= 2]
+        atteso = ">= 5" if nome == "C" else "0"
+        regge = (len(errori) >= 5) if nome == "C" else (len(errori) == 0)
+        print(f"\nbraccio {nome}: spezzati per errore {len(errori)}/{len(CONTROLLI_DIFFICILI)} (predetto {atteso}) -> "
+              f"{'REGGE' if regge else 'FALSIFICATA'}")
+        for c, cl in errori:
+            print(f"   «{c}» -> {cl}")
+    return 0
+
 
 def carica_atomic_claims(wt: str):
     p = pathlib.Path(wt) / "verimem" / "atomic_claims.py"
@@ -268,5 +302,7 @@ if __name__ == "__main__":
         raise SystemExit(parte_decomp(sys.argv[2], sys.argv[3], sys.argv[4]))
     if len(sys.argv) >= 4 and sys.argv[1] == "giudice":
         raise SystemExit(parte_giudice(sys.argv[2], sys.argv[3]))
+    if len(sys.argv) >= 5 and sys.argv[1] == "difficili":
+        raise SystemExit(parte_difficili(sys.argv[2], sys.argv[3], sys.argv[4]))
     print(__doc__)
     raise SystemExit(2)
