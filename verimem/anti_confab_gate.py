@@ -2111,6 +2111,12 @@ def run_validation_gate(
     _claims: list[str] = [proposition]
     _claims_verdict: list[dict[str, Any]] = [{"claim": 0, "layer": None, "score": None}]
     _decomposed = False
+    # TERZO STATO (07/09): l'indice del claim caduto quando l'INTERO passa la
+    # banda del giudice locale — la scrittura va in review col claim nominato,
+    # non in quarantena col MIN (docs/ricerca/2026-09-07-il-terzo-stato-per-le-
+    # scritture-composte.md). `_g_intero` e' il punteggio dell'intero, per la ricevuta.
+    _held_for: int | None = None
+    _g_intero: float | None = None
     # La decomposizione si decide QUI, prima del moat (che sta piu' sotto) e
     # prima dell'escalation di L1 (piu' sotto ancora): il 06/09 alle 09:30 il
     # calcolo stava accanto all'escalation e il moat, che viene prima nel
@@ -2709,6 +2715,20 @@ def run_validation_gate(
                     if _k < len(_claims_verdict):
                         _claims_verdict[_k]["score"] = _s
                         _claims_verdict[_k]["via"] = _via
+                # TERZO STATO (07/09): con il giudice LOCALE e la banda accesa,
+                # se l'INTERO passa la banda (>= tau_hi) e il claim peggiore cade
+                # sotto la soglia, il verdetto della scrittura e' REVIEW col claim
+                # nominato, non quarantena. Misurato sui 102 claim caduti dei 96
+                # «crolli» di P-A: 68 sono pezzi veri provati alla lettera che il
+                # cross-encoder non legge, 19 hanno la prova fuori dalla finestra
+                # conservata — quarantinare sbaglia sette volte su otto; ammettere
+                # lascerebbe passare le 13 code false su 25 che oggi si fermano
+                # (banco del 07/09, 30 composte su testo nuovo: intero AMMESSO 30/30).
+                _g_intero = float(gscore)
+                if (_judge_used == "local" and _ce_band_enforced()
+                        and _g_intero >= _ce_band_tau_hi()
+                        and _scores[_i_min] < resolve_write_threshold_for(_judge_used)):
+                    _held_for = _i_min
                 gscore = _scores[_i_min]
                 try:
                     from .grounding_gate import select_relevant_span
@@ -2941,7 +2961,7 @@ def run_validation_gate(
                                "torna affidabile"),
                     "matched_text": proposition[:120],
                 })
-            if gscore < _threshold_of_record:
+            if gscore < _threshold_of_record and _held_for is None:
                 if _graded_admission():
                     # GRADED ADMISSION (design bf5d322 step 1, env-gated,
                     # DEFAULT OFF): "not proven enough" is not "malicious".
@@ -3055,6 +3075,30 @@ def run_validation_gate(
                         "grounding_score": gscore,
                     })
                     advice = advice or "Source does not entail the claim (semantic grounding)."
+            elif _held_for is not None:
+                # TERZO STATO: l'intero passa la banda, un claim cade. Review col
+                # claim nominato — la ricevuta porta il punteggio dell'intero e
+                # quello del claim, cosi' chi legge vede la discordanza e non un
+                # «grounding 5» su un fatto che il giudice ha appena promosso a 96.
+                _k = _held_for
+                if _k < len(_claims_verdict):
+                    _claims_verdict[_k]["layer"] = "L4-review"
+                warnings.append({
+                    "layer": "L4-review",
+                    "claim": _k,
+                    "claim_text": _claims[_k],
+                    "reason": (f"claim {_k + 1}/{len(_claims)} scores {gscore:.1f}, below the cut "
+                               f"{_threshold_of_record:.0f}, while the whole scores "
+                               f"{_g_intero:.1f}: held for review, not quarantined — the "
+                               f"cross-encoder often fails a short true claim it cannot "
+                               f"read, and the whole may be carrying a false part"),
+                    "advice": (f"save the parts this source proves and give claim "
+                               f"{_k + 1} its own source, or review the held fact: "
+                               f"{_claims[_k][:80]!r}"),
+                    "grounding_score": gscore,
+                    "grounding_score_whole": _g_intero,
+                })
+                advice = advice or "Held for review: one claim of a composite write is not entailed."
             elif (_judge_used == "local" and _ce_band_enforced()
                   and (gscore < _ce_band_tau_hi()
                        or unverified_relation(source, proposition))):
