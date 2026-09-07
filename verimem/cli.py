@@ -1452,6 +1452,34 @@ def _avviso_scaduti(hits) -> None:
         f"id o rileggi con `--as-of` a un istante in cui erano validi.)[/dim]")
 
 
+def _avviso_al_passato(hits) -> None:
+    """Dice che la risposta e' quella di un ALTRO istante, se lo e'.
+
+    LA QUINTA CAUSA, e l'unica che non aveva una porta. `Risultati` dichiara il
+    viaggio nel tempo in `letto_al_passato` da quando esiste il routing
+    temporale; `cli.py` non nominava quel campo in nessun punto — misurato con
+    un grep sul contenuto, zero occorrenze qui e zero in `mcp_server.py`.
+
+    E' la stessa forma che il docstring di `_avviso_scaduti` qui sopra descrive
+    per un altro campo: «un campo esiste sull'OGGETTO, non sulla PORTA», con la
+    differenza che li' era stato curato e qui no. La riga che lo dice piu'
+    chiaramente e' l'avviso della scadenza, che arriva a elencare cosa NON e'
+    stato — «non e' il pavimento e non e' una data nella domanda» — mentre la
+    data nella domanda, quando e' LEI la causa, non si presentava a nessuno.
+
+    ⚠️ QUI SI LEGGE, NON SI RICALCOLA, come per la scadenza: la nota, l'istante
+    e il conteggio arrivano gia' composti dall'SDK. Una seconda frase scritta
+    qui direbbe la stessa cosa con altre parole e divergerebbe al primo
+    ritocco — e' il difetto che questo file evita in tre punti.
+    """
+    _av = getattr(hits, "letto_al_passato", None)
+    if not _av:
+        return
+    console.print(
+        f"  [yellow]⚠ risposta AL {_av.get('quando_leggibile', '?')}"
+        f"[/yellow] [dim]({_av.get('nota', '')})[/dim]")
+
+
 def _avviso_freschezza(hits) -> None:
     """Dice quanti fatti l'ETA' tiene fuori dalla vista, se ne tiene.
 
@@ -1616,7 +1644,29 @@ def recall_cmd(
     #: cui il difetto si e' presentato.
     if db:
         _dichiara_store(m)
-    quando = None
+    # ⚠️ `"auto"` E NON `None`, ed e' la differenza fra rispondere al passato e
+    # rispondere col presente. `Memory.search` ha `as_of="auto"` nella firma
+    # (client.py:1237) e deduce la data dalla domanda solo dentro
+    # `if as_of == "auto"`: passare `None` esplicito — che e' quello che questa
+    # riga faceva ogni volta che `--as-of` mancava — SPEGNE la deduzione. La
+    # porta annullava un default della firma pubblica, e nessuno se ne accorgeva
+    # perche' dall'SDK la stessa domanda funziona.
+    #
+    # Misurato per bisezione, un parametro alla volta sulla stessa `search`,
+    # stesso store, stessa domanda («cosa risultava sul canone al 1 giugno
+    # 2024», catena 2400 -> 2900 -> 3400 con il 3400 asserito nel 2025):
+    #     search(q, k=5)                 primo hit = B   (2900, il corrente di
+    #                                                     allora)
+    #     search(q, k=5, as_of=None)     primo hit = C   (3400, quello di oggi)
+    # Un solo argomento di differenza. E' la stessa classe che
+    # `test_il_routing_temporale_era_spento_di_default` ha gia' curato una volta
+    # su `with_history`: «il routing esisteva, era corretto, e non si accendeva
+    # mai» — curato sulla FIRMA e non sulla PORTA, che continuava a spegnerlo.
+    # La frase giusta e' otto righe piu' sotto, scritta per il caso opposto:
+    # servire il presente a chi ha chiesto il passato e' «una risposta
+    # plausibile e sbagliata, il modo peggiore di sbagliare per un prodotto
+    # costruito per non farlo».
+    quando = "auto"
     if as_of.strip():
         try:
             quando = float(as_of)
@@ -1680,10 +1730,12 @@ def recall_cmd(
         # PRIMA dell'uscita: se la scadenza ha portato via tutto, «no facts
         # found» da solo e' falso in modo utile a nessuno — i fatti c'erano.
         _avviso_scaduti(hits)
+        _avviso_al_passato(hits)
         _avviso_freschezza(hits)
         raise typer.Exit(0)
     _avviso_pavimento(m, hits, query)
     _avviso_scaduti(hits)
+    _avviso_al_passato(hits)
     _avviso_freschezza(hits)
     for h in hits:
         console.print(riga_di_recall(h))
