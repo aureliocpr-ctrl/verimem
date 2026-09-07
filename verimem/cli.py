@@ -4665,6 +4665,25 @@ def facts_add(
             # 📌 Non e' una quinta copia della regola: `source_signature_of` e'
             # la stessa funzione che usa `client.add`, estratta il 06/09 proprio
             # perche' il calcolo serviva in due posti.
+            #
+            # ⚠️ IL VERBO QUI SOPRA E' CAMBIATO PER UN PRESIDIO, non per stile
+            # (2b82497f, 07/09). `test_nessun_numero_altrui_senza_una_misura_nostra`
+            # cerca un numero entro 100 caratteri dal nome di un concorrente, e
+            # nella sua lista c'e' anche il prodotto Letta/MemGPT. Il participio
+            # italiano di «leggere» al femminile singolare e' identico a quel nome
+            # proprio: accanto alla percentuale qui sopra faceva scattare l'accusa.
+            #
+            # Falso positivo, e il presidio ha ragione lo stesso: per un nome
+            # proprio non esiste criterio strutturale, e la lista e' l'unico modo.
+            # Misurato il 2026-09-07: quel participio e i suoi tre fratelli
+            # compaiono 57 volte in 24 file di `verimem/`, e una sola cadeva
+            # dentro la finestra — questa. Le altre 56 restano latenti, e la
+            # prossima si accendera' quando qualcuno ci scrivera' accanto una
+            # cifra: il presidio non e' rumoroso, e' a innesco raro.
+            #
+            # 🔑 E la nota che stai leggendo ha acceso l'accusa una seconda volta,
+            # perche' spiegava il caso citando insieme la parola e la cifra: per
+            # documentare il difetto bisogna scriverlo senza riprodurlo.
             source_signature=source_signature_of(src) if src else None,
         )
         # 2026-06-05: embed="auto" so `engram facts add` never cold-blocks
