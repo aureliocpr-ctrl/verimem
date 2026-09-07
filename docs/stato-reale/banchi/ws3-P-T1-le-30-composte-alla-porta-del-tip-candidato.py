@@ -23,7 +23,11 @@ import verimem  # noqa: E402
 
 print("IMPORT DA", verimem.__file__)
 from verimem.anti_confab_gate import run_validation_gate  # noqa: E402
-from verimem.grounding_gate import LOCAL_CE_MOAT_THRESHOLD, _ce_band_enforced, _ce_band_tau_hi  # noqa: E402
+from verimem.grounding_gate import (  # noqa: E402
+    LOCAL_CE_MOAT_THRESHOLD,
+    _ce_band_enforced,
+    _ce_band_tau_hi,
+)
 from verimem.local_grounding import get_local_judge  # noqa: E402
 
 spec = importlib.util.spec_from_file_location("banco", BANCO)
