@@ -1,0 +1,38 @@
+IMPORT DA C:\Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/538e61e3-9008-4fac-a192-1f26a10f9e05/scratchpad/wt_A\verimem\__init__.py
+warmup 20.2 s · soglia del giudice 99.64130401611328
+
+intero (testa vera + coda falsa) sopra soglia: 0/30 -> P-B5 >= 50%: FALSIFICATA
+testa vera sopra soglia: 3/30 -> P-B4b >= 90%: FALSIFICATA
+code spezzate da C: 25 · di cui cadute sotto soglia: 25 -> P-B4a >= 80%: REGGE
+
+ i  intero   testa    coda   claim di coda
+ 0    98.8    98.8    78.5  Il custode aiuta i fornitori a scaricare.
+ 1    99.5    97.1    96.1  La segretaria spiega la procedura ai nuovi.
+ 2    96.0    99.0     0.7  Il tecnico ripara il bruciatore da solo.
+ 3    99.2    98.9    93.8  Il corriere consegna la posta ai piani.
+ 4    99.2    97.3    76.5  La biblioteca affitta la sala ai privati.
+ 5    99.2    98.6    63.0  Il cuoco compra il pane dal fornaio.
+ 6    98.3    94.6     2.2  Il maestro insegna le tabelline dopo la merenda.
+ 7    98.9    99.0     1.5  Il giardiniere toglie le foglie dai vialetti.
+ 8    98.0    93.5     1.7  La farmacia vende i cerotti a metà prezzo.
+ 9    98.9    98.1    93.8  Il treno delle sei supera la corriera in velocità.
+10    97.5    91.1     0.9  La mensa paga i fornitori ogni mese.
+11    98.3    90.8    10.9  Il portiere ricorda le scadenze ai condomini.
+12    99.4    98.2    97.8  L'ufficio postale manda gli avvisi per posta.
+13    98.8    96.2    None  (fusa)
+14    98.9    97.9    86.7  Il dottore visita i pazienti anche a casa.
+15    98.3    99.9     4.4  Il negozio all'angolo accende le luci alle sei.
+16    98.6    99.9    None  (fusa)
+17    99.0    77.6    87.4  La scuola invita i genitori alla festa.
+18    99.4    99.4    97.7  Il museo guida i visitatori in tre lingue.
+19    99.1    99.5     2.4  Il vicino affida il gatto alla portinaia.
+20    93.9    98.3     1.1  Il sindaco decide le spese da solo.
+21    97.1    99.3     0.5  Il fornaio rompe la tradizione della domenica.
+22    99.0    93.2    65.6  La corriera aspetta gli studenti al bivio.
+23    99.4    96.0    27.9  Il pittore sceglie il colore con la commissione.
+24    99.5    98.9    98.7  Il notaio capisce il dialetto dei clienti.
+25    96.1    98.8     1.2  La squadra vince il torneo estivo.
+26    84.6   100.0    None  (fusa)
+27    98.0    95.1     0.8  Il meccanico restituisce le chiavi la sera.
+28    97.6    98.8    None  (fusa)
+29    91.1    99.2    None  (fusa)

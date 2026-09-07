@@ -206,14 +206,30 @@ def parte_giudice(wt_giudice: str, wt_c: str) -> int:
     import os
     os.environ.pop("HIPPO_ENCODE_DELEGATE_ONLY", None)
     import verimem
+    from verimem.grounding_gate import LOCAL_CE_MOAT_THRESHOLD, _ce_band_enforced, _ce_band_tau_hi
     from verimem.local_grounding import get_local_judge, try_local_score
     print("IMPORT DA", verimem.__file__)
     t0 = time.perf_counter()
     get_local_judge()._ensure_scorer()
-    soglia = float(get_local_judge().threshold)
-    print(f"warmup {time.perf_counter() - t0:.1f} s · soglia del giudice {soglia}")
+    # LE SOGLIE DEL PRODOTTO, non `judge.threshold` (che e' il «threshold» di
+    # gate_config.json, 99,64: la prima esecuzione delle 12:29 lo usava come
+    # soglia e diceva che nemmeno le teste vere passavano — errore del banco,
+    # dichiarato). Il prodotto ammette a >= tau_hi (80), tiene in REVIEW fra il
+    # moat (40) e tau_hi quando la banda e' accesa, quarantina sotto 40.
+    lo, hi, banda = float(LOCAL_CE_MOAT_THRESHOLD), float(_ce_band_tau_hi()), _ce_band_enforced()
+    print(f"warmup {time.perf_counter() - t0:.1f} s · soglie del prodotto: moat {lo} · tau_hi {hi} · banda {'ON' if banda else 'OFF'}"
+          f" (threshold di gate_config, NON usato: {get_local_judge().threshold})")
+
+    def verdetto(g: float | None) -> str:
+        if g is None:
+            return "none"
+        if g >= hi or (not banda and g >= lo):
+            return "AMMESSO"
+        return "REVIEW" if g >= lo else "QUARANTENA"
+
     ac = carica_atomic_claims(wt_c)
-    intero_passa = testa_passa = coda_cade = n_spezzate = 0
+    from collections import Counter
+    v_intero, v_testa, v_coda = Counter(), Counter(), Counter()
     righe = []
     for i in range(len(COMPOSTE)):
         testa, fonte, _coda = COMPOSTE[i]
@@ -223,20 +239,23 @@ def parte_giudice(wt_giudice: str, wt_c: str) -> int:
         claims = ac.decomponi(tutto)
         g_coda = None
         if len(claims) >= 2:
-            n_spezzate += 1
             r = try_local_score(fonte, claims[-1])
             g_coda = None if r is None else float(r[0])
-            coda_cade += g_coda is not None and g_coda < soglia
+            v_coda[verdetto(g_coda)] += 1
         gi = None if g_intero is None else float(g_intero[0])
         gt = None if g_testa is None else float(g_testa[0])
-        intero_passa += gi is not None and gi >= soglia
-        testa_passa += gt is not None and gt >= soglia
+        v_intero[verdetto(gi)] += 1
+        v_testa[verdetto(gt)] += 1
         righe.append((i, gi, gt, g_coda, claims[-1][:50] if len(claims) >= 2 else "(fusa)"))
-    print(f"\nintero (testa vera + coda falsa) sopra soglia: {intero_passa}/{len(COMPOSTE)} -> P-B5 >= 50%: "
-          f"{'REGGE' if intero_passa >= len(COMPOSTE) / 2 else 'FALSIFICATA'}")
-    print(f"testa vera sopra soglia: {testa_passa}/{len(COMPOSTE)} -> P-B4b >= 90%: {'REGGE' if testa_passa >= 27 else 'FALSIFICATA'}")
-    print(f"code spezzate da C: {n_spezzate} · di cui cadute sotto soglia: {coda_cade} -> P-B4a >= 80%: "
-          f"{'REGGE' if n_spezzate and coda_cade >= 0.8 * n_spezzate else 'FALSIFICATA'}")
+    n = len(COMPOSTE)
+    n_sp = sum(v_coda.values())
+    print(f"\nINTERO (testa vera + coda falsa), stessa fonte: {dict(v_intero)} -> P-B5 (ammesso >= 50%): "
+          f"{'REGGE' if v_intero['AMMESSO'] >= n / 2 else 'FALSIFICATA'}")
+    print(f"TESTA vera con la sua fonte: {dict(v_testa)} -> P-B4b (ammessa >= 90%): "
+          f"{'REGGE' if v_testa['AMMESSO'] >= 0.9 * n else 'FALSIFICATA'}")
+    print(f"CODA falsa isolata dal braccio C ({n_sp} spezzate): {dict(v_coda)} -> P-B4a (quarantena >= 80%): "
+          f"{'REGGE' if n_sp and v_coda['QUARANTENA'] >= 0.8 * n_sp else 'FALSIFICATA'}"
+          f" · non ammessa (quarantena + review): {n_sp - v_coda['AMMESSO']}/{n_sp}")
     print(f"\n{'i':>2}  intero   testa    coda   claim di coda")
     for i, gi, gt, gc, c in righe:
         f = lambda v: "  None" if v is None else f"{v:6.1f}"  # noqa: E731
