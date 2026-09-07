@@ -2617,11 +2617,11 @@ def run_validation_gate(
                 # conservata — quarantinare sbaglia sette volte su otto; ammettere
                 # lascerebbe passare le 13 code false su 25 che oggi si fermano
                 # (banco del 07/09, 30 composte su testo nuovo: intero AMMESSO 30/30).
+                # Qui si conserva solo il punteggio dell'intero: la decisione
+                # sta accanto alla soglia risolta (`_threshold_of_record`), per
+                # non risolverla due volte (la risoluzione avvisa se il cut del
+                # modello e' inutilizzabile, e lo farebbe due volte per write).
                 _g_intero = float(gscore)
-                if (_judge_used == "local" and _ce_band_enforced()
-                        and _g_intero >= _ce_band_tau_hi()
-                        and _scores[_i_min] < resolve_write_threshold_for(_judge_used)):
-                    _held_for = _i_min
                 gscore = _scores[_i_min]
                 try:
                     from .grounding_gate import select_relevant_span
@@ -2642,6 +2642,11 @@ def run_validation_gate(
             grounding_val = float(gscore)  # persist the score even when it PASSES
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
+            if (_decomposed and _i_min is not None and _g_intero is not None
+                    and _judge_used == "local" and _ce_band_enforced()
+                    and _g_intero >= _ce_band_tau_hi()
+                    and gscore < _threshold_of_record):
+                _held_for = _i_min  # terzo stato: l'intero passa la banda, un claim cade
             # L4.1 — IL CONTROLLO DETERMINISTICO CHE MANCAVA, e sta QUI perché
             # qui la fonte c'è. Misurato a fonte e giudice invariati:
             #
