@@ -274,16 +274,103 @@ ma la forma che passa non compare da nessuna parte in questa pagina.*
 
 ---
 
+## Righe 466-530 — la coda del Quickstart SDK, il Quickstart MCP, la CLI, la governance
+
+| righe | il claim | dove sta nel codice | chi lo guarda | verdetto |
+|---|---|---|---|---|
+| 466-467 | *«Search — optionally with history context»* → `m.search(...)` | `verimem/client.py` | `tests/test_client_sdk.py` | ✅ |
+| 468 | `m.search(..., as_of=<epoch>)` — la ricerca **a un momento passato** | `as_of` in `client.py`, `gateway.py`, `continuity.py`, `cli.py` | `test_as_of_sulle_porte_ordinarie.py`, `test_deep_recall_asof.py`, `test_il_dato_cancellato_non_riemerge.py` | ✅ |
+| 470-471 | *«Ask HOW the system knows: evidence dossier or an explicit abstention»* → `m.explain(...)` | `def explain` in `client.py`, `gateway.py`, `remote.py` — **tre porte** | `.explain(` in 6 file; l'astensione ha i suoi: `test_abstention_is_on_by_default.py`, `test_abstention_ce_gate.py` | ✅ |
+| 474-488 | il blocco `.mcp.json` da incollare: `"command": "verimem"`, `"args": ["mcp"]`, `VERIMEM_HOSTED`, `VERIMEM_TOOL_NAMESPACE` | il sottocomando esiste: `verimem/cli.py:2524` `def mcp()` | `test_mcp_tool_namespace_brand.py`, `test_verimem_offline_flag.py`, `test_config_data_dir.py` | ✅ |
+| 490-493 | i quattro tool nominati (`verimem_remember`, `verimem_facts_recall`, …) e *«Drop the entry to keep the legacy `hippo_*` names — both dispatch to the same tools»* | `mcp_server.py` (rinomina a runtime) | 🌟 `test_mcp_tool_namespace_brand.py:19` si chiama **`test_verimem_tool_namespace_from_readme_renames`** e asserisce `{"verimem_remember", "verimem_facts_recall"}`; `:36` asserisce che senza la variabile il nome torna `hippo_remember` | ✅ |
+| 495-496 | *«every MCP client receives a usage guide on connect (the `instructions` field of the initialize response)»* | `mcp_server.py:1683` `instructions=VERIMEM_AGENT_GUIDE` | 🌟 `test_agent_guide_single_source.py:12` — **un'uguaglianza**, non una parola cercata: `create_initialization_options().instructions == VERIMEM_AGENT_GUIDE` | ✅ |
+| 497-498 | *«`verimem agent-guide` prints **the same** guide»* | `verimem/agent_guide.py`, `cli.py` | il presidio c'è ma è **più debole di un anello**: `test_cli_agent_guide_prints_the_guide` cerca **quattro token** nell'output (`moat`, `verimem_remember`, `mcpServers`, `abstention`), non l'uguaglianza | ⬜ *(vedi reperto ①)* |
+| 503 | `verimem index contract.pdf` | `cli.py` | `test_i_comandi_che_il_readme_insegna_esistono.py` | ✅ |
+| 504 | `verimem search-docs "…"` — *«passages with file + offset citations»* | `cli.py`, `client.py` | `test_cli_docs.py`, `test_i_documenti_non_passavano_dal_reranker.py`, `test_i_comandi_che_il_readme_insegna_esistono.py` | ✅ |
+| 505-506 | `verimem import conversations.json` — *«imports nothing until you pass `--ids` or `--all`»* | `cli.py`, `import_conversations.py` | il comando sì; **`--ids` non compare in nessuna asserzione** di `test_import_ux.py` (solo `--all-matching`, nel docstring e nel corpo) | ⬜ |
+| 507-508 | `--project` · `--since` · `--all-matching` | `cli.py`, `import_conversations.py` | `test_import_ux.py` | ✅ |
+| 509 | `verimem trust "…" --verified-by ci:main:green` | `cli.py`, `l1_tested_detector.py` | `test_cli_trust.py`, `test_cli_facts_add.py`, `test_il_quarto_canale_di_scrittura.py` | ✅ |
+| 510-513 | `verimem save --asserted-at` e la prosa che spiega **perché**: *«WHEN the fact is true, distinct from when you wrote it — this is what `as_of` travels over»* | `cli.py` | `test_save_puo_dire_quando_e_vero.py` e — col nome del difetto — `test_la_porta_principale_ignora_il_tempo_dell_evento.py` | ✅ |
+| 514 | `verimem airgap` — verifica una **configurazione** a zero uscite | `verimem/airgap.py`, `cli.py`, `doctor.py` | `test_airgap.py`, `test_cli_airgap.py`, `test_airgap_no_egress.py` | ✅ |
+| 515-517 | `verimem airgap --live` — *«PROVE it: audit every socket during a real write+search, exit 0 iff no egress»* | `airgap.py` | `test_airgap_live_probe.py` — **il nome del test è il nome della promessa** | ✅ |
+| 521-524 | *«A fact disappears in TWO ways … the governance surface makes every decision visible and the wrong ones reversible, on every port (SDK, CLI, MCP, HTTP)»* | `cli.py`, `gateway.py` | 🌟 tre presidi, e sono **per porta**: `test_control_room_porte.py`, `test_il_breakdown_esce_da_ogni_porta.py`, `test_mismatch_su_ogni_porta.py` | ✅ |
+| 526-527 | `facts retirement-log --counts` — *«the honest quartet: written / servable / retired / quarantined, formula included»* | `cli.py` | `--counts` compare in **un solo** file: `test_control_room_porte.py` | ✅ |
+| 528-530 | `facts retirement-log` — *«who was retired, by whom, why — with the undo handle when reversible»* | `cli.py` | i presidi del comando ci sono; **la manopola di undo non l'ho seguita fino al comando che la consuma** | ⬜ |
+
+### ① Il presidio più forte della pagina finora — e la ragione per cui è forte
+
+`test_agent_guide_single_source.py:12` non cerca una parola nel testo: **asserisce
+un'uguaglianza fra due oggetti**.
+
+```
+assert m.server.create_initialization_options().instructions == VERIMEM_AGENT_GUIDE
+```
+
+La promessa della riga 495 («ogni client MCP riceve la guida connettendosi») e la
+promessa della 497 («la CLI stampa la stessa guida») non possono divergere in
+silenzio, perché **sono lo stesso oggetto Python**. È la forma che ho chiesto
+tutto il giorno — *una nota non è un presidio* — nella sua versione migliore.
+
+⚠️ **E però l'anello CLI è più debole.** Il ramo `verimem agent-guide` è tenuto
+da `test_cli_agent_guide_prints_the_guide`, che verifica la presenza di **quattro
+token** nell'output. Un comando che stampasse una guida *diversa* contenente
+`moat`, `verimem_remember`, `mcpServers` e `abstention` passerebbe. La parola del
+README è **«the same»**: sul campo MCP è provata, sul ramo CLI è *sorvegliata*.
+*(E c'è una seconda sfumatura: `AGENT_GUIDE_FULL.startswith(VERIMEM_AGENT_GUIDE)`
+dice che la guida della CLI **estende** quella MCP — quindi «the same» è, alla
+lettera, «la stessa più altro».)*
+
+### ② Il quarto allarme falso che non pubblico — e stavolta cercavo il MIO difetto
+
+Avevo il sospetto pronto, e aveva una forma già nota: **il presidio dei comandi
+del README misura al livello del COMANDO, non dell'OPZIONE.** Si legge nel
+codice —
+
+```
+citati = set(re.findall(r"`verimem\s+([a-z][a-z0-9-]{2,})", testo))
+```
+
+— cattura `save`, `import`, `airgap`; **non** cattura `--asserted-at`. Ed è
+**esattamente il livello dove ieri ho trovato T30**: `verimem save … --db` →
+`Error: No such option: --db`. Comando presente, opzione assente: un presidio
+fermo al comando avrebbe detto verde.
+
+Ho contato le opzioni che queste sedici righe insegnano, e sono cinque:
+`--all-matching` → `test_import_ux.py` · `--verified-by` → `test_cli_trust.py` ·
+`--asserted-at` → `test_save_puo_dire_quando_e_vero.py` · `--live` →
+`test_airgap_live_probe.py` · `--counts` → `test_control_room_porte.py`.
+**Cinque su cinque hanno un presidio proprio.** Il buco che stavo per annunciare
+non c'è: la copertura è distribuita, non centralizzata.
+
+Resta **una** riga scoperta e la scrivo perché è vera: `--ids` (riga 505) non
+compare in nessuna asserzione. Un'opzione su sei, non un sistema senza difese.
+
+🔑 **Quarta volta oggi su quattro: la difesa era già scritta.** E stavolta il
+sospetto veniva da un difetto **mio**, trovato ieri, applicato a un presidio
+altrui — cioè dal lato in cui l'errore costa di più: *avrei accusato con
+l'autorità di chi «l'ha già visto succedere».*
+
+### ③ Il blocco è il più sano della pagina, e ha una spiegazione
+
+Quindici ✅ su diciotto claim. Non è che questa parte sia scritta meglio: è che
+**qui il README insegna comandi**, e un comando è una cosa che un test può
+invocare. I ❌ e i ⬜ della prima metà stanno dove il README fa **affermazioni sul
+mondo** — un tasso, un confronto, una garanzia. La differenza fra le due metà
+della pagina non è la cura di chi scrive: è che *una promessa eseguibile si
+presidia da sola, una promessa numerica no.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  465 / 811   (57,3%)
-verdetti:  ✅ 69   ❌ 2   ⬜ 39   (una riga può portare due verdetti su due claim)
+righe lavorate:  530 / 811   (65,4%)
+verdetti:  ✅ 84   ❌ 2   ⬜ 42   (una riga può portare due verdetti su due claim)
 ```
 
-**I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
-cui il prodotto si presenta, e la sua ripetizione dodici righe sotto.
+**I due ❌ restano la riga 24 e la 53-57**, lo stesso difetto: la frase con cui il
+prodotto si presenta, e la sua ripetizione dodici righe sotto.
 
-**Il ⬜ dominante non è pigrizia mia**: è che **i numeri di punta della pagina non
-hanno un presidio**. Hanno i banchi — dichiarati, con il nome del file — ma
-nessun test rilegge il README contro di essi.
+**Dove si concentrano i ⬜**: nei numeri di punta e nei confronti, non nei
+comandi. Le righe 466-530 — sedici comandi e due blocchi da incollare — portano
+**tre** ⬜ su diciotto claim; le prime 465 righe ne portano trentanove.
