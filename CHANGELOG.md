@@ -163,16 +163,17 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
   own corpus: **13 of 275** facts written in the last 24 hours entered that way —
   **4.7%**, against **66 of 8833** historically (**0.7%**). The CLI, with no
   flags, judges in-process instead. *Not yet*: there is no in-process fallback
-  and no refusal — **the daemon's failure mode is silent**.
-  **Root cause found (not yet in this release)**: `sentence_transformers` went
-  through a *different* lock than the other heavy imports, so the guard that
-  was supposed to serialise them did not cover it. The fix, and a receipt that
-  shows the write coming back `judged`, live **on a branch** — measured there:
-  3 runs out of 3 judged, `moat_judge_failed` 0 out of 6, with 8.60 / 7.72 /
-  7.71 GB free (measurements by the author of the fix, not ours).
-  ⚠️ **It is a branch, not this package**: on 0.7.7 the failure mode is still
-  silent. *Next*: the fix lands in the next release, and this entry moves to
-  Fixed only when the commit is on `main`.
+  and no refusal. **FIXED in this release**: the root cause was that
+  `sentence_transformers` went through a *different* lock than the other heavy
+  imports, so the guard meant to serialise them did not cover it. A sourced write
+  on the MCP port now comes back **judged**, and the receipt says so **at the top**
+  instead of leaving it to be read off `layers`. Measured by the author of the fix,
+  with the daemon deliberately stopped and both legs checked before every run:
+  **3 runs out of 3 judged, `moat_judge_failed` 0**.
+  ⚠️ **Two things this does NOT fix**, and both have their own entry: the
+  in-process judge needs memory nobody checks for (**T39**), and in delegate-only
+  mode the first scored call still pays for the tokenizer on the request thread
+  (**T40**).
 - **T27 — one test is excluded from the CI suite while its crash is confirmed.**
   *Today*: `test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump` sits
   behind a `--deselect` — **a probe, not a fix** — after killing the whole suite
