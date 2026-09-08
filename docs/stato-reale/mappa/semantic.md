@@ -44,7 +44,7 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 | 21 | `count` (semantic.py) | quanti fatti ci sono | 12 chiamate qualificate — `cli.py:251` (la riga di stato del prodotto), `client.py:1077` | `tests/test_quanti_fatti_ho.py` | il nome del test è il claim: «quanti fatti ho» | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 20 |
 | 22 | `all` (semantic.py) | tutti i fatti | 14 chiamate qualificate — `anti_confab_gate.py:1386` (il gate legge il corpus), `cli.py:3554` | `tests/test_quanti_fatti_ho.py` · `tests/test_triage_corpus.py` | nessun claim README diretto | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_triage_corpus.py` → `6 passed, 1 warning in 9.45s` EXIT=0 |
 | 23 | `delete` (semantic.py) | cancella un fatto | 5 chiamate qualificate — `cli.py:3582`, `client.py:3909` | `tests/test_cli_facts.py` · `tests/test_timone_non_resuscita_i_cancellati.py` | riga 521 · riga 228 | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_cli_facts.py` → `15 passed, 1 warning in 14.0s` EXIT=0 |
-| 24 | `clear` (semantic.py) | svuota lo store | ⚠️ **1 sola** chiamata qualificata in tutto `verimem/`: `agent.py:103` | `tests/test_audit_mutations.py` · `tests/test_pentest_validation.py` | nessun claim README | **FUNZIONA COME PROMESSO**, limitato — ma con **un solo chiamante** su una funzione che svuota lo store, vale la pena sapere chi è: `agent.py:103`, da aprire nella prossima finestra | `pytest -q tests/test_audit_mutations.py` → `27 passed, 1 warning in 15.15s` EXIT=0 |
+| 24 | `clear` (semantic.py) | svuota lo store | ⚠️ **1 sola** chiamata qualificata in tutto `verimem/`: `agent.py:103` | `tests/test_audit_mutations.py` · `tests/test_pentest_validation.py` | nessun claim README | **FUNZIONA COME PROMESSO**, limitato — e l'unico chiamante è stato **aperto**: vedi «il caso più distruttivo» sotto la tabella | `pytest -q tests/test_audit_mutations.py` → `27 passed, 1 warning in 15.15s` EXIT=0 |
 
 ## Contatore
 
@@ -144,3 +144,48 @@ venga letto come «`supersede()` è presidiata».
 è necessariamente il test che presidia il suo claim, e un test che presidia il
 claim non è necessariamente un test di quella funzione. Vanno guardate e dette
 come due cose diverse.
+
+
+## Il caso più distruttivo del file, e il meglio presidiato
+
+`clear` ha **un solo** chiamante, e aprirlo porta alla catena completa dello
+svuotamento — il caso limite dell'invariante di questo ruolo, «nulla scritto si
+perde»:
+
+```
+cli.py:2589  verimem reset  →  agent.py:99 VerimemAgent.reset()  →
+                                memory.clear · skills.clear · semantic.clear
+                                (principal="system:agent-reset")
+```
+
+Il comando della CLI, **letto per intero**:
+
+```python
+@app.command()
+def reset(yes: bool = typer.Option(False, "--yes")):
+    """Wipe all episodes, skills, semantic facts."""
+    if not yes:
+        confirm = typer.confirm("Wipe ALL memory and skills?", default=False)
+        if not confirm:
+            raise typer.Abort()
+    VerimemAgent.build().reset()
+```
+
+**Tre presidi, non uno:**
+1. la guardia è **doppia** — o il flag `--yes`, o una conferma interattiva con
+   `default=False` (il default nega, non conferma);
+2. lo svuotamento dei fatti finisce nel **registro delle mutazioni**:
+   `tests/test_audit_mutations.py:128` asserisce `r["action"] == "reset"`;
+3. e quello degli episodi pure: `tests/test_audit_mutations_episodic.py:92`.
+
+⇒ **FUNZIONA COME PROMESSO.** L'invariante regge nel senso giusto: si perde solo
+su richiesta esplicita, e con una traccia che resta. Lo scrivo perché una mappa
+che segnala solo i rossi mente per omissione: qui il punto più pericoloso del
+file è anche quello con più guardie, e chi legge deve saperlo prima di
+proporre di irrigidirlo.
+
+Prova: `pytest -q tests/test_audit_mutations.py` → `27 passed, 1 warning in
+15.15s` EXIT=0 · `tests/test_cli_facts.py` → `15 passed in 14.0s` EXIT=0.
+⚠️ Non ho eseguito `verimem reset`: è distruttivo e lo store di casa non è un
+banco. La riga è sostenuta dalla lettura del codice e dai test dell'audit, e
+questo limite è dichiarato.
