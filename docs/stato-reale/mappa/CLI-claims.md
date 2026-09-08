@@ -186,3 +186,69 @@ caso che sbagliava.
 > forma esplicita e perdeva la derivata). **Ogni volta il numero sbagliato era
 > più drammatico di quello vero**: 32 orfani contro 22, 4 opzioni assenti contro
 > 1, e — nell'unico caso in cui il numero riguardava me — 121 ✅ contro 119.
+
+---
+
+## 5. `doctor.py` — la voce che dice all'utente se sta bene, e **chi controlla la voce**
+
+La domanda non è «doctor funziona?». È: **se un check smette di accorgersi del
+guasto e dice `OK` per sempre, chi se ne accorge?** Un check rotto è più
+pericoloso di un check assente — l'assente non dice niente, il rotto dice *«va
+tutto bene»*. È il quarto stato di un test, *il guardiano che mente*, applicato
+al guardiano ufficiale del prodotto.
+
+Righello: `docs/stato-reale/banchi/ws7-quante-diagnosi-di-doctor-un-test-fa-accendere.py`
+
+```
+$ python docs/stato-reale/banchi/ws7-quante-diagnosi-di-doctor-un-test-fa-accendere.py
+doctor.py:                    1478 righe
+file di test che lo invocano: 23
+chiamate add(<nome>, …):      58
+check distinti:               16
+coppie (check, stato):        32
+controllo positivo (2 facce): 'gateway' VISTO · inventato RIFIUTATO
+CHECK CHE NESSUN TEST NOMINA: 0
+EXIT=0
+```
+
+### 🌟 Zero. E i nomi dei test dicono perché
+
+I sedici check — `version` · `mcp` · `data-dir` · `test-leftovers` · `daemon` ·
+`embedding-model` · `gateway` · `llm` · `moat-judge` · `offline` ·
+`parameters` · `relevance-floor` · `topic-crowding` · `trust-rank-coverage` ·
+`undo-window` · `confidence-vs-verifica` — **sono tutti nominati** da almeno uno
+dei 23 file di test che invocano `run_doctor()`.
+
+E quei file non si chiamano come la funzione: si chiamano come **il difetto che
+impediscono**.
+
+```
+test_doctor_esistere_non_e_essere_leggibile.py
+test_il_doctor_diceva_assente_a_un_file_che_c_era.py
+test_doctor_non_certifica_un_modello_che_non_c_e.py
+test_doctor_conta_le_chiavi_invece_di_dedurle.py
+test_il_doctor_misura_invece_di_asserire.py
+test_doctor_vede_la_confidenza_ingannevole.py
+test_i_comandi_che_doctor_suggerisce_esistono.py
+test_il_consiglio_di_doctor_dice_cosa_costa_applicarlo.py
+```
+
+Sono otto modi diversi in cui una diagnosi può **mentire bene**: dire assente
+ciò che c'è, certificare un modello mancante, dedurre un conteggio invece di
+farlo, asserire invece di misurare, suggerire un comando inesistente, dare un
+consiglio senza dirne il prezzo. Ognuno ha il suo file.
+
+⚖️ **Con la stessa prontezza, il limite.** «Nominato» ≠ «tutti i suoi esiti
+provati»: un check con `OK`/`WARN`/`FAIL` risulta coperto anche se un test ne
+prova uno solo, e le coppie (check, stato) sono **32** contro 16 check. Il
+righello sottostima di proposito. Ma la differenza con la CLI resta netta: là 22
+comandi su 88 non sono invocati da nessuno, qui **la superficie diagnostica è
+coperta per intero**.
+
+🔑 ⇒ **Il confronto è la cosa utile.** `doctor.py` e `cli.py` stanno nello stesso
+pacchetto, scritti dalle stesse mani. Uno ha 23 file di test che lo interrogano e
+zero buchi; l'altro ha un quarto dei comandi che nessuno esegue, e il buco è
+concentrato sul `gateway` — cioè **sulla superficie che l'utente tocca per
+ultima, quando installa per una squadra**. Non è una differenza di cura: è che
+`doctor` è nato da una serie di **guasti veri** (i nomi dei suoi test sono la
+cronaca) mentre il gruppo `gateway` non ha ancora avuto il suo incidente.
