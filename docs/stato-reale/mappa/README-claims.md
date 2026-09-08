@@ -97,11 +97,51 @@ che pubblica la propria varianza è più credibile di uno che pubblica il minimo
 
 ---
 
+## Righe 151-215 — la banda, l'evoluzione della stessa fonte, la ricevuta
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 151-156 | la **scala di aggiudicazione**: ollama locale (preferito, offline) → `claude` CLI su PATH (abbonamento, nessuna chiave) → altrimenti **held for review**; *«un verdetto illeggibile non ammette mai»*; `VERIMEM_BAND_LLM=0` esce | `band_escalation.py` (`ENGRAM_BAND_LLM`) + l'alias `_compat.init_env_aliases()` | `test_le_leve_che_il_readme_insegna_hanno_effetto.py` | ✅ **e l'ho verificato dopo aver quasi sbagliato**: vedi il riquadro sotto |
+| 156-158 | *«quel residuo — **lo stesso 1,8%** di sopra, non una seconda misura»* | — | **nessuno** | ⚠️ **⬜ e con un avvertimento**: **venti righe sotto** (165-166) lo stesso README dice che **oggi lo stesso comando riporta 5,4%**, e che l'1,8% era la run del **18/07**. ⇒ *chi legge la riga 145 o la 156 e si ferma lì prende un numero che il testo stesso dichiara superato.* Il README **non mente** — la riga 166 lo dice — ma **il numero comodo sta in cima e la sua scadenza venti righe sotto** |
+| 159-162 | **terzo limite misurato**: il CE **rifiuta fatti veri** che richiedono aritmetica o conversione di unità/date (`0.5 g ⊢ 500 mg`, `two weeks before March 20 ⊢ March 6`) o una lingua a bassa risorsa | — | **nessuno** | ✅ **come dichiarazione** (è un limite scritto, non taciuto) · ⬜ come misura |
+| 163-172 | **certificazione esterna**: 0% false-block (**112/112** ammessi, ri-misurato 25/08) · **5,4% escape** · su **TruthfulQA heldout AUROC 0,829**, e al taglio di default **~24%** dei veri parafrasati rifiutati e **~18%** delle misconception plausibili passano | `docs/EVIDENCE-external-2026-07-19.md` **esiste** | **nessuno** | ✅ **sulla forma — ed è la riga più utile per chi deve scegliere**: *«il giudice CE-only è un filtro di contraddizioni strutturate ad alta precisione, non un rilevatore universale di verità»* · ⬜ sui numeri |
+| 173-175 | `tag_beliefs=True` classifica un'asserzione non verificata come `user_belief`: **conservata ma fuori dal recall di default** finché non la chiedi (`search(..., include_beliefs=True)`) | `tag_beliefs` in **2** file · `include_beliefs` in **5** | **nessuno di specifico** | ✅ **il codice c'è su entrambi i lati** (scrittura e lettura) · ⬜ sul comportamento |
+| 176-194 | **contraddizione fra fatti + evoluzione della stessa fonte, ON per default**: `100 € → 150 €` e il recall dà **solo il corrente**, il vecchio `superseded_by` il nuovo, *«mai una sovrascrittura silenziosa: la riga vecchia resta per la genealogia»* · il rilevatore **lessicale** copre numeri/versioni/date/negazioni · gli **scambi di entità** richiedono il livello **NLI semantico**, che **si accende da sé se il modello è già installato** | `supersession_policy.py` · `anti_confab_gate.py` · `benchmark/evolution_moat_vs_mem0.py` | `test_le_leve_che_il_readme_insegna_hanno_effetto.py` (per le leve) | ✅ **sulla supersessione** (verificata da @ws2 il 06/09 su SDK e MCP: `superseded_by` valorizzato, la lettura serve solo il nuovo) · ⬜ sui numeri della matrice |
+| 195-207 | 🔑 **«limite noto, misurato sul NOSTRO corpus, non su un banco»**: quando due fatti sotto un topic misurano **cose diverse**, il più nuovo ritira uno che era vero — **171 coppie** con entrambi ≥90 dal giudice, **55 lette a mano, nessuna era un aggiornamento legittimo**; le guardie di *forma* coprono **70 su 171**, le altre **101 non hanno forma sintattica**; mitigazione: **un topic per misura**, con il numero — sopravvivenza **2348/2444** su topic usati una volta contro **230/338** su topic riusati | `supersession_policy.py` (le guardie) | **nessuno** | ✅ **ed è il paragrafo più onesto del prodotto**: un limite trovato **sul proprio corpus in produzione**, con quante coppie sono state **lette a mano**, quante la cura copre (**70**) e quante **no** (**101**), e una mitigazione con la sua misura. *Dichiara anche il proprio confine: «ciò che le separa è il significato, e una regola lessicale non lo vede»* |
+| 209-215 | **ogni scrittura torna una ricevuta di aggiudicazione**: `{disposition, evidence_class, judge, score, threshold, margin, reason, confidence_tier}`; *«una quarantena è un verdetto motivato, mai una caduta silenziosa»*; il `confidence_tier` è **la fiducia dello strumento, non un'affermazione di verità** | `confidence_tier` in **6** file · `evidence_class` in **3** | `test_verimem_l4_no_source_advisory.py` | ✅ **i campi esistono** · ⚠️ **ma vedi la riga 24**: sulla porta, `admitted` con `grounding` 99,9x su una self-claim **è** un verdetto motivato… e motivato male |
+
+### 🪞 Il riquadro: quasi consegnavo un allarme falso, e la difesa era nel presidio
+
+Il `grep` diceva che **tre leve insegnate dal README non esistono nel codice**:
+```
+grep -rn "VERIMEM_BAND_LLM|VERIMEM_SEMANTIC_CONFLICT|VERIMEM_SUPERSEDE_SAME_SOURCE" verimem/
+   ->  nessuna riga
+```
+Sembrava il reperto della serata: *«l'utente imposta la leva del README e non spegne niente»*.
+
+**È falso.** `verimem/_compat.py` espone `init_env_aliases()`, chiamata da
+`__init__.py:45`, che **rispecchia `VERIMEM_*` / `HIPPO_*` ↔ `ENGRAM_*`**: nel
+codice le leve si chiamano `ENGRAM_…` e **la forma del README funziona**.
+
+🔑 **E il presidio che lo prova è scritto meglio di come l'avrei scritto io**:
+`test_le_leve_che_il_readme_insegna_hanno_effetto.py` dichiara in testa che la
+verifica ovvia — *imposta `VERIMEM_X`, guarda se compare `ENGRAM_X`* — **passa
+sempre e non prova niente**, e lo dimostra con
+`VERIMEM_QUESTA_NON_ESISTE_DAVVERO=7777`. Quindi misura **l'effetto**
+(`_mode_con(VERIMEM_BAND_LLM="0") == "off"`), non la presenza della stringa.
+
+⇒ **Cercare un nome nel codice non basta quando c'è un livello di alias.** Se
+avessi pubblicato il grep, avrei consegnato un allarme falso su tre righe della
+vetrina — *ed è la seconda volta oggi che la difesa era già scritta da qualcun
+altro, prima della mia accusa.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  150 / 811   (18,5%)
-verdetti:  ✅ 17   ❌ 2   ⬜ 19   (una riga può portare due verdetti su due claim)
+righe lavorate:  215 / 811   (26,5%)
+verdetti:  ✅ 25   ❌ 2   ⬜ 25   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
