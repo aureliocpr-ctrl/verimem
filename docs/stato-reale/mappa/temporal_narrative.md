@@ -1,0 +1,11 @@
+# Mappa di `verimem/temporal_narrative.py` — 3 righe, 168 righe di codice (lead, 09/09 03:22)
+
+Letto per intero. Prova: pytest del lotto F sul tip `20257636` (`105 passed in 31.36s`, EXIT=0, con `tests/test_temporal_narrative.py`). Chiamanti: **nessuno nel prodotto**; solo `scripts/show_narrative.py:103`. La bozza attribuiva a `_now` chiamanti in `semantic.py` e a `_add` un test sul keyword fallback: **falsi positivi del nome**. Ciclo 193 (23/05): la narrazione intorno a un fatto seme lungo `lineage_to` (antecedenti fino a 20 salti, discendenti a un salto), `superseded_by` (revisioni) e lo stesso topic nella finestra di ±30 giorni (contesto). Claim README: nessuna riga (grep su «narrative» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/temporal_narrative.py:28` `_now` | `time.time()` | `reconstruct_narrative` (61) | via il test | - | MAI CHIAMATA dal prodotto (plumbing) | pytest 105 passed |
+| 2 | `verimem/temporal_narrative.py:33` `reconstruct_narrative` | la lista cronologica `{fact_id, ts, age_days, role, edge_to_seed}` con ruoli root/antecedent/descendant/revision/context; DB assente o seme ignoto → `[]`; tetto `max_entries` | `scripts/show_narrative.py:103` | `tests/test_temporal_narrative.py` | - | MAI CHIAMATA dal prodotto (uno script la usa) | pytest 105 passed |
+| 3 | `verimem/temporal_narrative.py:81` `reconstruct_narrative._add` | aggiunge una voce una volta sola | `reconstruct_narrative` (95, 115, 127, 140, 156) | via il test | - | MAI CHIAMATA dal prodotto (plumbing) | pytest 105 passed |
+
+Reperti: (a) **decimo modulo senza chiamante nel prodotto**; la capacità (la storia di un fatto: chi lo ha generato, chi lo ha sostituito, cosa gli stava intorno) è esattamente ciò che `hippo_lineage_trace` e `hippo_fact_supersede_chain` promettono da porte diverse: tre superfici per una domanda, una mai accesa; (b) legge il DB direttamente con `sqlite3` (come `rank_list_builders`), quindi vede anche i fatti quarantenati come «contesto» (nessun filtro sullo status: solo `superseded_by IS NULL` su discendenti e contesto) — T49 nella forma «se qualcuno la accende». Nessun P0.

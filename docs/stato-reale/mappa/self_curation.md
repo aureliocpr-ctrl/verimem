@@ -1,0 +1,11 @@
+# Mappa di `verimem/self_curation.py` — 3 righe, 177 righe di codice (lead, 09/09 03:18)
+
+Letto per intero. Prova: pytest del lotto F sul tip `20257636` (`105 passed in 31.36s`, EXIT=0, con `tests/test_self_curation.py`). Chiamanti: **nessuno in `verimem/`, `scripts/`, `benchmark/`** (`git grep` sugli import del modulo). Ciclo #118 (17/05): la misura sui 232 conflitti vivi aveva falsificato l'auto-supersessione aggressiva (96% ambigui, 0% safe_supersede, 3% falsi positivi del rilevatore), quindi V1 tocca solo la `ContradictionStore`, mai i fatti. Claim README: nessuna riga (grep su «self-curat» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/self_curation.py:43` `classify_contradiction` | il primo secchio che combacia: `dangling` (un fatto manca) > `safe_supersede` (uno è già superseduto) > `newer_wins` (Δetà ≥ 60 g e Δconf ≥ 0,15) > `fp_likely` (boolean_clash, entrambi ≥ 0,9, Δetà ≤ 30 g) > `ambiguous` | le due sotto | `tests/test_self_curation.py` | - | MAI CHIAMATA dal prodotto | pytest 105 passed |
+| 2 | `verimem/self_curation.py:90` `auto_resolve_false_positives` | risolve SOLO i `fp_likely` con nota `auto_fp_complementary`; rapporto scanned/resolved/skipped/dangling | nessuno | `tests/test_self_curation.py` | - | MAI CHIAMATA dal prodotto | pytest 105 passed |
+| 3 | `verimem/self_curation.py:134` `audit_contradictions` | conteggi per secchio e 3 campioni ciascuno, senza mutazioni | nessuno | `tests/test_self_curation.py` | - | MAI CHIAMATA dal prodotto | pytest 105 passed |
+
+Reperti: (a) **modulo intero senza chiamante** (nono della lista: resource_monitor, hot_reload, sos_compensator, recall_usage, codebase_ingest, coding_reflection, betweenness_cache, embedding_quantize, self_curation); il prodotto ha altre superfici per i conflitti (`hippo_contradictions_*`, `hippo_heal_contradictions`, `contradiction.py` mappa di ws6): da decidere se questo è un doppione da togliere o la versione onesta da cablare; (b) `newer_wins` viene PRIMA di `fp_likely` nell'ordine: un falso positivo del rilevatore con 60 giorni di distanza esce «newer_wins» (letto). Nessun P0.
