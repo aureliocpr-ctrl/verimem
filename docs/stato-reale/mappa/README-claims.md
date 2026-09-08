@@ -601,29 +601,119 @@ della promessa.
 
 ---
 
-## 📊 Contatore
+## Righe 741-811 — le cinque porte della cancellazione, l'architettura, la licenza · **FINE DEL README**
 
-⚠️ Il numero lo produce un comando, non io: i cinque contatori prima delle 21:36
-erano contati a mano e sbagliavano **a mio favore** (+9 ✅, +8 ⬜).
+| righe | il claim | dove sta nel codice | chi lo guarda | verdetto |
+|---|---|---|---|---|
+| 743-752 | la tabella delle **cinque porte di cancellazione** e di cosa resta dopo: SDK e `hippo_fact_forget` → *no table*; CLI `facts forget`, `hippo_fact_forget_with_undo`, `hippo_forget_scope` → **`facts_undo_log`** | `facts_undo_log` in `cli.py`, `doctor.py`, `mcp_server.py` · `delete_with_undo` in `semantic.py` · `forget_scope` in `mcp_server.py`, `tool_registry.py` | `test_fact_forget_scope_r3.py`, `test_fact_delete_cascade_r3.py`, `test_multitenancy_b1.py`, `test_decay_prune_undo.py`, `test_flow_forget.py` | ✅ |
+| 754-758 | le tre in fondo tengono la proposizione **in chiaro** per la finestra di undo (7 giorni) — *«è una funzione vera e il default giusto per chi ha sbagliato a digitare un id; è il default sbagliato per una richiesta di cancellazione, **e niente nell'output lo dice**: la CLI stampa `undoable for 7 days`, che si legge come reversibile, non come ancora leggibile in una tabella»* | `cli.py` | `test_doctor_vede_la_finestra_di_riparazione.py`, `test_l_appiglio_mancante_ha_quattro_cause_diverse.py` | 🌟 ✅ **come dichiarazione**: è il prodotto che critica la **propria interfaccia**, dicendo come una frase corretta viene letta male · ⬜ come misura |
+| 760-763 | ⚠️ *«la porta bulk-by-tenant — quella che useresti per "cancella tutto su questo utente" — **è una delle tre che tengono**»*, con le tre vie d'uscita (SDK, aspettare la finestra, cancellare le righe a mano) | `mcp_server.py` (`forget_scope`) | `test_fact_forget_scope_r3.py`, `test_multitenancy_b1.py` | ✅ |
+| 763-765 | 🔑 *«(Measured at the level of the functions those doors call — `semantic.delete_with_undo` vs `Memory.delete` — **not through a live MCP dispatcher**.)»* | `semantic.py`, `client.py` | — | 🌟🌟 ✅ **la riga migliore dell'intero README** — vedi riquadro ① |
+| 767-772 | licenza AGPL-3.0 come ragione per dirlo, e il consiglio per la cancellazione irreversibile: `PRAGMA secure_delete=ON` + `VACUUM`, o media cifrati e distruzione della chiave; *«Do not rely on `forget()` alone for that guarantee: it does not make it»* | `LICENSING.md` **esiste** | `secure_delete` **non compare** in `verimem/` né in `tests/`: è un consiglio sul motore, non una nostra funzione | ✅ *(come consiglio dichiarato)* |
+| 776-787 | il diagramma dell'architettura: estrazione atomica → **admission gate** → store bi-temporale → recall semantico / history / TrustReport | l'intera pipeline | i presidi delle singole tappe, mappati sopra | ✅ |
+| 780 | dentro il diagramma: *«unsupported ones are admitted: **8/10 IT, 9/10 EN**»* | `l1_tested_detector.py` e il gate | il **comportamento** ha dieci test (`test_l120_multilingual_selfclaim.py`), ma il numero `8/10` vive **nel docstring del test**, non in un'asserzione | ✅ sul meccanismo · ⬜ sul numero — *ed è un numero **dentro un disegno ASCII**, il posto della pagina dove nessuno andrà a rileggerlo* |
+| 789-794 | il rename: `import engram` e `import hippoagent` restano come alias (*«same module objects, no duplicated state»*), i **tre prefissi** env sono rispecchiati all'import (*«explicit values never overridden»*), `~/.engram` continua a funzionare, i nuovi default `~/.verimem` | `_compat.py`, `__init__.py`, `config.py` | 🌟 `test_rename_verimem_aliases.py`, `test_env_alias_verimem.py`, `test_hippoagent_shim_alias.py`, `test_memory_method_aliases.py`, `test_config_data_dir.py`, `test_una_sola_data_dir.py` | ✅ |
+| 796-800 | doppia licenza AGPL-3.0 / commerciale, `LICENSING.md`, *«Versions 0.3.x and earlier remain MIT»* | `LICENSING.md` **esiste** | — | ✅ |
+| 802-811 | Contributing: `CONTRIBUTING.md` **esiste**, `git clone …`, `pip install -e ".[dev]"`, `pytest -q` | — | `test_i_comandi_che_il_readme_insegna_esistono.py` (per i comandi `verimem`) | ✅ |
+
+### ① La riga migliore dell'intero README
+
+> *«Measured at the level of the functions those doors call — `semantic.delete_with_undo`
+> vs `Memory.delete` — **not through a live MCP dispatcher**.»*
+
+Sono ventidue parole fra parentesi, in fondo a una nota, e fanno una cosa che
+**nessun'altra riga delle 811 fa**: dicono **a quale livello** la misura è stata
+presa, e quindi **quale domanda resta aperta**. Un lettore che deve fidarsi di
+quella tabella sa esattamente che cosa ha comprato — il comportamento delle
+funzioni — e che cosa no: il comportamento **attraverso il dispatcher vivo**,
+dove un default o un wrapper potrebbero cambiare la porta usata.
+
+In memoria questa lezione ha un costo pagato: *«il livello a cui misuri decide
+il verdetto: regex < funzione pubblica < porta del prodotto ⇒ misura dove il
+prodotto chiama e **DICHIARA** il livello»*. Qui il README la applica a sé
+stesso, senza che nessuno gliel'abbia chiesto, **in una riga che poteva
+tranquillamente omettere**.
+
+⚖️ E vale la pena dire che cosa **non** significa. Non significa che la tabella
+sia verificata alla porta: significa che **sappiamo che non lo è**. È la
+differenza fra un debito iscritto a bilancio e un debito dimenticato — e sul
+resto di questa pagina, dove i numeri non dichiarano quasi mai il proprio
+regime, la differenza si vede.
+
+### ② La cura del mio ⬜ dominante è già scritta in casa, applicata a un numero solo
+
+Il verdetto più frequente della mappa è **⬜ su un numero**: 53 righe. Non perché
+i numeri siano falsi — ne ho verificati sei a mano e coincidono — ma perché
+**nessun test rilegge il README contro il file da cui il numero viene**.
+
+Cercando altro, ho trovato che quel presidio **esiste**:
+
+```
+tests/test_il_readme_e_la_cli_dicono_lo_stesso_peso.py
+    test_la_tabella_dei_pesi_conosce_ancora_il_gate()
+    test_il_readme_dice_lo_stesso_peso_della_cli()
+    test_il_numero_vecchio_non_e_tornato()
+    test_l_unita_di_misura_e_dichiarata()
+    test_anche_il_TOTALE_e_lo_stesso_sulle_due_superfici()
+```
+
+Cinque test che legano **un numero del README** alla superficie che lo produce,
+compreso un test che verifica che **il numero vecchio non sia tornato** e uno che
+verifica che **l'unità di misura sia dichiarata**. Il modello è quello giusto, è
+già nostro, ed è applicato **a una tabella sola**.
+
+🔑 ⇒ La raccomandazione che esce da questa mappa non è «scrivete più test»: è
+**estendere quel file ai numeri di punta**, a partire dai sei che ho verificato a
+mano stasera — sono già tutti in `benchmark/results/` con la chiave dichiarata,
+cioè **il lavoro difficile è fatto**.
+
+### ③ Il README è finito: che cosa dice il conto
+
+Delle 811 righe, i verdetti ❌ sono **tre**, e sono di due nature diverse:
+
+- **due sono lo stesso difetto di comportamento** (README:24 e 53-57): dalla
+  porta, 6 self-claim su 7 precedute da un fatto vero entrano `judged=True`, e
+  il presidio della parità non può vederlo perché usa un **giudice finto**.
+- **uno è un difetto di scrittura** (README:714) che la pagina stessa smentisce
+  cinquanta righe prima, e si cura con una parola.
+
+Tutto il resto della pagina, quando promette un **comando**, funziona: i comandi
+esistono, le opzioni hanno presidi, le difese contro un avversario hanno un test
+ciascuna col nome della promessa. Quando promette un **numero**, il numero è
+quasi sempre vero — l'ho controllato dove il README dà la chiave: 6 su 6 — ma
+**vive senza qualcuno che lo rilegga**.
+
+*Un prodotto che si presenta con 811 righe e ne sbaglia tre non ha un problema di
+onestà. Ha un problema di manutenzione: le sue promesse migliori non hanno
+nessuno che le guardi invecchiare.*
+
+---
+
+## 📊 Contatore — README COMPLETO
+
+⚠️ Il numero lo produce un comando, non io.
 
 ```
 $ python docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py
-coperte fino alla riga 740 / 811   (91.2%)
-righe di claim in tabella:  145
-  con ✅ : 111
+coperte fino alla riga 811 / 811   (100.0%)
+righe di claim in tabella:  155
+  con ✅ : 121
   con ❌ : 3   -> righe del file: [42, 54, 543]
-  con ⬜ : 53
-  che portano SIA ✅ SIA ⬜ (claim diviso in due): 21
+  con ⬜ : 55
+  che portano SIA ✅ SIA ⬜ (claim diviso in due): 23
 
-controllo positivo: 0 righe di claim senza verdetto (su 145).
+controllo positivo: 0 righe di claim senza verdetto (su 155).
+righe di tabella scartate come intestazione: 13
 EXIT=0
 ```
 
-**Il terzo ❌ è entrato adesso** (riga 543 del file = README:714-715, *«every
-claim in this README links to a raw result file»*) ed è il primo che **non
-riguarda il gate**: gli altri due sono la frase con cui il prodotto si presenta
-e la sua ripetizione. Questo si falsifica **senza eseguire niente** — basta
-leggere le righe 664 e 706 della stessa pagina.
+**Le 811 righe sono mappate.** Tre ❌ (righe 42, 54 e 543 di questo file =
+README:24, 53-57, 714-715), 121 ✅, 55 ⬜.
 
-**Nove allarmi falsi cercati e non pubblicati oggi.** Cinque hanno la stessa
-radice: **ho cercato una parola dove dovevo guardare una struttura.**
+⚠️ **Che cosa vale questo 121.** Un ✅ qui dice *«la promessa ha
+un'implementazione e qualcuno la guarda»*, non *«l'ho vista funzionare»*: dove
+ho eseguito, la riga lo dice. E il ⬜ **non è un'accusa**: 55 volte su 155 non
+sono andato abbastanza a fondo, o non esisteva niente da leggere. La forma
+dominante del ⬜ è **un numero senza qualcuno che lo rilegga** — e la cura è già
+scritta in casa, in `tests/test_il_readme_e_la_cli_dicono_lo_stesso_peso.py`,
+applicata a una tabella sola.
