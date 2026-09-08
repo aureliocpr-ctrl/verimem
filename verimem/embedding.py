@@ -48,7 +48,20 @@ def _offline() -> bool:
 
 
 def _load_model():
-    from sentence_transformers import SentenceTransformer
+    # ⚠️ LA CAUSA RADICE DI T26a, e la cura e' questo `with`.
+    # `sentence_transformers` TRASCINA `transformers` (misurato l'08/09:
+    # in un processo pulito `transformers` PRIMA False, DOPO True), mentre il
+    # giudice importa `transformers` sotto `_import_lock`. Questo modulo usava
+    # SOLO il proprio `_MODEL_LOCK` — due lock diversi sullo stesso import, e
+    # un lock serializza solo chi lo prende: i due si incrociavano e il warm
+    # del giudice falliva con «cannot import name
+    # 'AutoModelForSequenceClassification'» (3 giri su 3 senza daemon).
+    # SOLO l'import qui: il caricamento del modello resta fuori, come sempre.
+    # `_MODEL_LOCK` (che il chiamante tiene) sta FUORI e questo DENTRO, mai
+    # l'inverso — vedi `test_sotto_il_lock_ci_vanno_SOLO_import`.
+    from ._import_lock import lock_import
+    with lock_import():
+        from sentence_transformers import SentenceTransformer
 
     model = CONFIG.embedding_model
     try:

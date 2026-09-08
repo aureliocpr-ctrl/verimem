@@ -52,7 +52,12 @@ def _get_embed_model() -> Any:
     """Lazy load sentence-transformer (cycle 387 reuse pattern)."""
     global _EMBED_MODEL
     if _EMBED_MODEL is None:
-        from sentence_transformers import SentenceTransformer
+        # Stesso lock degli altri import pesanti: `sentence_transformers`
+        # trascina `transformers`, che il giudice importa altrove. Solo
+        # l'import — la costruzione del modello resta fuori dal blocco.
+        from ._import_lock import lock_import
+        with lock_import():
+            from sentence_transformers import SentenceTransformer
         _EMBED_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
     return _EMBED_MODEL
 

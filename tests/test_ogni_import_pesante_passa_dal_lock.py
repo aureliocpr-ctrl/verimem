@@ -29,14 +29,36 @@ puo' fare mentre il daemon serve a un'altra misura. Se un giorno il banco senza
 daemon fallisse ancora con tutti gli import sotto lock, l'ipotesi e' falsa e
 questo file resta comunque vero — ma non basta piu'.
 
-⚠️ ESCLUSIONE DICHIARATA: ``sentence_transformers`` NON e' in questa lista, e
-non e' una svista. E' il modello dell'EMBEDDER, ha il suo ``_MODEL_LOCK``, un
-perimetro diverso, e nel caso che stiamo curando (delegate-only senza daemon)
-non viene caricato affatto — ``preload._run`` esce prima. Metterlo qui
-renderebbe questo file rosso su codice che nessuno ha mandato di toccare oggi.
-Il fatto che l'embedder usi un lock DIVERSO da questo resta un nodo aperto:
-``sentence_transformers`` importa ``transformers``, quindi i due lock
-proteggono in parte lo stesso import.
+📌 08/09, IL SEGUITO — E L'ESCLUSIONE CHE AVEVO DICHIARATO ERA LA CAUSA.
+
+Qui c'era scritto che ``sentence_transformers`` restava fuori dalla lista
+perche' «e' l'embedder, ha il suo ``_MODEL_LOCK``, un perimetro diverso». La
+cella (e) rifatta sulla cura dei tre buchi ha dato **ancora
+``moat_judge_failed`` 3 su 3**: quei tre import erano una proprieta' vera e NON
+la causa. La causa e' proprio l'esclusione:
+
+    sentence_transformers  ->  transformers        (misurato: PRIMA False, DOPO True)
+    embedding.py           ->  _MODEL_LOCK         (usa lock_import ZERO volte)
+    local_grounding.py     ->  _import_lock._LOCK
+
+⇒ **due lock diversi sullo stesso import**, e un lock protegge solo chi lo
+prende. Il perimetro che mi ero data conteneva il difetto, e tenerlo fuori
+dalla lista lo rendeva invisibile a questo file.
+
+⚠️ NEL PRODOTTO CI SONO TRE LOCK che avvolgono import pesanti — ``_MODEL_LOCK``
+(embedding), ``_RERANKER_LOCK`` (semantic) e questo. Gli altri due restano
+dove sono: proteggono la COSTRUZIONE dei rispettivi modelli, che e' il loro
+scopo. Cio' che cambia e' che l'import passi anche da ``lock_import``, preso e
+rilasciato DENTRO di loro. L'ordine e' sempre lo stesso —
+``_MODEL_LOCK``/``_RERANKER_LOCK`` fuori, ``lock_import`` dentro, mai
+l'inverso — e per questo non si crea il ciclo che li farebbe aspettare a
+vicenda: verificato che nessun punto tenga ``lock_import`` mentre chiede uno
+degli altri due, ed e' presidiato dalla cella
+``test_sotto_il_lock_ci_vanno_SOLO_import``.
+
+⚠️ Un import scritto in un DOCSTRING non conta, e infatti
+``cross_encoder_rerank.py`` ne ha uno d'esempio che questo file NON segnala:
+l'AST vede il codice, il grep vedrebbe anche la prosa.
 
 ⚠️ NESSUN IMPORT VERO QUI: si legge il SORGENTE con l'AST. Importare davvero
 torch in un test costerebbe i 13,8 s misurati oggi, e su un banco che gira in
@@ -50,8 +72,9 @@ from pathlib import Path
 import verimem
 
 #: I moduli la cui importazione concorrente e' stata misurata fallire.
-#: `sentence_transformers` e' escluso di proposito — vedi il docstring.
-_PESANTI = {"torch", "transformers"}
+#: `sentence_transformers` c'e' perche' TRASCINA `transformers` (misurato
+#: l'08/09): tenerlo fuori nascondeva la causa vera di T26a.
+_PESANTI = {"torch", "transformers", "sentence_transformers"}
 
 #: Il file che DEFINISCE il lock non puo' usarlo su se' stesso.
 _ESENTI = {"_import_lock.py"}
@@ -142,6 +165,54 @@ def test_il_banco_guarda_davvero_dei_file():
                for p in file), (
         "nessun file del pacchetto importa torch/transformers: il banco sta "
         "guardando l'albero sbagliato, e direbbe «tutto a posto» comunque."
+    )
+
+
+def _sotto_il_lock_non_solo_import(sorgente: str) -> list[str]:
+    """Righe dentro un `with lock_import()` che NON sono import."""
+    albero = ast.parse(sorgente)
+    fuori: list[str] = []
+    for nodo in ast.walk(albero):
+        if not (isinstance(nodo, ast.With) and _e_il_nostro_lock(nodo)):
+            continue
+        for stmt in nodo.body:
+            if not isinstance(stmt, (ast.Import, ast.ImportFrom, ast.Pass)):
+                fuori.append(f"riga {stmt.lineno}: {type(stmt).__name__}")
+    return fuori
+
+
+def test_sotto_il_lock_ci_vanno_SOLO_import():
+    """⚠️ LA REGOLA CHE VALE PIU' DI TUTTE, e adesso e' presidiata.
+
+    ``_import_lock`` dice: «IL LOCK SI TIENE SOLO ATTORNO ALL'IMPORT, MAI
+    ATTORNO AL LAVORO». Due ragioni, e la seconda e' nata oggi:
+
+    1. i pesi del giudice sono 746 MB e 19,1 s: sotto il lock, una richiesta
+       che arriva nel frattempo aspetterebbe 19 secondi;
+    2. **e' cio' che rende impossibile il deadlock fra i tre lock del
+       prodotto.** ``_MODEL_LOCK`` e ``_RERANKER_LOCK`` stanno FUORI e
+       ``lock_import`` DENTRO; se dentro questo blocco ci finisse una CHIAMATA,
+       quella chiamata potrebbe chiedere uno degli altri due mentre tiene
+       questo — l'ordine inverso — e i due si aspetterebbero a vicenda. Finche'
+       qui dentro ci sono solo ``import``, l'ordine inverso non e'
+       esprimibile.
+
+    Cioe' la sicurezza non e' affidata a «ho controllato i chiamanti di oggi»:
+    e' affidata a una proprieta' che questa cella misura a ogni giro.
+    """
+    colpevoli: list[str] = []
+    for p in _file_del_pacchetto():
+        for r in _sotto_il_lock_non_solo_import(
+                p.read_text(encoding="utf-8", errors="ignore")):
+            colpevoli.append(f"{p.name} {r}")
+
+    assert colpevoli == [], (
+        "dentro un `with lock_import()` c'e' qualcosa che non e' un import: "
+        + ", ".join(colpevoli)
+        + ".\nUna chiamata li' dentro puo' chiedere _MODEL_LOCK o "
+        "_RERANKER_LOCK mentre tiene questo lock: e' l'ordine inverso, ed e' "
+        "il deadlock che oggi non esiste solo perche' qui dentro ci sono solo "
+        "import. Sposta il lavoro FUORI dal blocco."
     )
 
 

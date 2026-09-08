@@ -302,9 +302,18 @@ class WakeAgent:
         # sys.modules: e' il punto in cui la richiesta si fermava nel dump di
         # T1b (create_module su _bounded_integers). Sotto lo stesso lock degli
         # altri import pesanti, cosi' si mette in fila invece di incrociarsi.
+        # ⚠️ L'IMPORT SOTTO IL LOCK, LA COSTRUZIONE FUORI. Prima qui dentro
+        # c'era l'assegnazione intera, cioe' LAVORO sotto il lock: e' la regola
+        # che `_import_lock` esiste per far rispettare, e questa riga la
+        # violava — l'ho scritta io il 06/09 e l'ha trovata il presidio nuovo,
+        # non io. Una chiamata dentro quel blocco puo' chiedere un ALTRO lock
+        # (_MODEL_LOCK, _RERANKER_LOCK) mentre tiene questo: e' l'ordine
+        # inverso, cioe' il deadlock che non esiste solo finche' li' dentro ci
+        # sono soltanto import.
         from ._import_lock import lock_import
         with lock_import():
-            self._rng = rng or np.random.default_rng()
+            import numpy.random  # noqa: F401 — e' il caricamento, non l'uso
+        self._rng = rng or np.random.default_rng()
         # Cached on-purpose: the last consideration set, exposed for
         # observability sinks (dashboard / lineage). None until run() fires.
         self.last_consideration: list[Choice] = []

@@ -2026,7 +2026,15 @@ def _load_reranker(*, consenti_daemon: bool = True):
     if _RERANKER is None:
         with _RERANKER_LOCK:
             if _RERANKER is None:
-                from sentence_transformers import CrossEncoder
+                # Terzo lock del prodotto (`_RERANKER_LOCK`, gia' preso qui
+                # sopra) e sotto di lui quello degli import: `sentence_
+                # transformers` trascina `transformers`, che il giudice
+                # importa altrove sotto `_import_lock`. L'ordine e' sempre
+                # questo — il lock del modello fuori, quello degli import
+                # dentro — e solo l'import ci sta dentro.
+                from ._import_lock import lock_import
+                with lock_import():
+                    from sentence_transformers import CrossEncoder
                 model = os.environ.get(
                     "ENGRAM_RERANK_MODEL", _DEFAULT_RERANK_MODEL,
                 ).strip() or _DEFAULT_RERANK_MODEL
