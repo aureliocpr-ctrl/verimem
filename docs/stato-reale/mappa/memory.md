@@ -29,10 +29,10 @@ metodi generici pesca ogni dizionario.
 | 12 | `is_pinned` (memory.py:1336) | «check whether an episode is currently pinned» | 🔴 nessun chiamante di prodotto: `mcp_server.py` **0** occorrenze | `tests/test_memory_pin.py` | — | **FUNZIONA COME PROMESSO** — ma senza porta, vedi sotto | `pytest -q tests/test_memory_pin.py` → `4 passed, 1 warning in 7.7s` EXIT=0 |
 | 13 | `pinned_episodes` (memory.py:1345) | «list every pinned episode, newest-first» | `briefing.py:150` — uso **interno**; `mcp_server.py` **0**, `cli.py` **0** | `tests/test_briefing.py` | — | **FUNZIONA COME PROMESSO** — ma senza porta | `pytest -q tests/test_briefing.py` → `8 passed in 7.60s` EXIT=0 |
 | 14 | `salience_of` (memory.py:1258) | «Read the cached salience score for an episode.» | nessun chiamante di prodotto: solo `tests/test_salience_recall.py` | `tests/test_salience_recall.py` | — | **FUNZIONA COME PROMESSO**, limitato | `8 passed, 1 warning in 9.3s` EXIT=0 |
-| 15 | `compute_salience` (memory.py:1080) | «Prediction-error surprise of `episode` vs the centroid…» | nessun chiamante di prodotto; citata in `docs/archive/2026-05-13_FORGIA.md:616` | `tests/test_episode_save_encode_circuit_breaker.py` | — | **NON MISURATO** (test non ancora eseguito) | — |
-| 16 | `backfill_pending_embeddings` (memory.py:755) | «Embed episodes persisted with the DEFER sentinel» | `cli.py:4755` — esposta dalla CLI | `tests/test_backfill_heals_model_mismatch.py` | — | **NON MISURATO** (test non ancora eseguito) | — |
-| 17 | `recall_explain` (memory.py) | il perché di un richiamo | `mcp_server.py:9178` — esposta da MCP | `tests/test_mcp_lineage_explain_top.py` | — | **NON MISURATO** | — |
-| 18 | `cluster_similar` (memory.py) | raggruppa episodi simili | `dream.py:293` — il consolidamento | `benchmark/bench.py` | — | **NON MISURATO** | — |
+| 15 | `compute_salience` (memory.py:1080) | «Prediction-error surprise of `episode` vs the centroid…» | nessun chiamante di prodotto; citata in `docs/archive/2026-05-13_FORGIA.md:616` | `tests/test_episode_save_encode_circuit_breaker.py` | — | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_episode_save_encode_circuit_breaker.py` → `5 passed, 1 warning in 8.4s` EXIT=0 |
+| 16 | `backfill_pending_embeddings` (memory.py:755) | «Embed episodes persisted with the DEFER sentinel» | `cli.py:4755` — esposta dalla CLI | `tests/test_backfill_heals_model_mismatch.py` | — | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_backfill_heals_model_mismatch.py` → `5 passed in 7.66s` EXIT=0 |
+| 17 | `recall_explain` (memory.py) | il perché di un richiamo | `mcp_server.py:9178` — esposta da MCP | `tests/test_mcp_lineage_explain_top.py` | — | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_mcp_lineage_explain_top.py` → `13 passed, 1 warning in 7.x` EXIT=0 |
+| 18 | `cluster_similar` (memory.py) | raggruppa episodi simili | `dream.py:293` — il consolidamento | `benchmark/bench.py` | — | **FUNZIONA COME PROMESSO**, limitato — ⚠️ e il suo test non è solo `benchmark/bench.py`: `tests/test_memory.py` e `tests/perf/test_perf.py` la nominano | `pytest -q tests/test_memory.py` → `5 passed, 1 warning in 9.7s` EXIT=0 |
 
 ## 🔴 Il reperto: si pota da soli, si ripristina solo scrivendo codice
 
@@ -126,3 +126,53 @@ alla porta, la lettura dello stato che quella scrittura ha cambiato no.
 
 📌 Non apro ticket e non curo. Lo consegno come **tesi della mappa su questo
 file**, perché una singola riga non l'avrebbe mostrata: serviva vederne tre.
+
+
+## Le `_private` di `memory.py`: 35, a blocchi
+
+**35 `_private`** (contate con `ast`): **16** nominate da almeno un test, **19**
+da nessuno. Stessa forma di `semantic.md`: il blocco è l'unità, il verdetto vale
+per il blocco, e il limite è dichiarato.
+
+| blocco (test) | `_private` coperte | prova |
+|---|---|---|
+| `test_dg_cabling.py` | 2 — `_dg_projection`, `_global_dg_projection` | `6 passed, 1 warning in 9.4s` EXIT=0 |
+| `test_context_engine.py` | 1 — `_normalize` | `7 passed in 7.53s` EXIT=0 |
+| `test_episode_batch_screen.py` | 1 — `_screen_episode_inplace` | `5 passed, 1 warning in 8.1s` EXIT=0 |
+| `test_episode_embedding_model_isolation.py` | 1 — `_migration_v6_embedding_model` | `8 passed, 1 warning in 9.6s` EXIT=0 |
+| `test_due_processi_non_rieseguono_la_migrazione.py` | 1 — `_migration_v2_salience_columns` | `5 passed in 9.72s` EXIT=0 |
+| `test_slow_txn_telemetry.py` · `test_entity_live_latency.py` · `test_bridge.py` · `test_episode_telemetry_cleanup.py` | 4 — `_slow_txn_warn_s`, `_work`, `_connect`, e il cleanup | da eseguire |
+
+### Le 19 senza test: due meritavano di essere aperte, e nessuna è morta
+
+**① Le migrazioni.** Quattro delle sei (`_migration_v1_initial_schema`,
+`v3_dg_embedding`, `v4_context_embedding`, `v5_pinned`) non sono nominate da
+nessun test; **v2 e v6 sì**. Ma tutte e sei sono **registrate insieme** in una
+lista:
+
+```
+memory.py:274-279
+    (1, _migration_v1_initial_schema),
+    (2, _migration_v2_salience_columns),
+    …
+    (6, _migration_v6_embedding_model),
+```
+
+⇒ La porta è una sola e la esercita chi apre uno store: `test_dg_cabling.py`
+manipola `_schema_version` degli episodi e passa (`6 passed` EXIT=0). Il fatto
+che due su sei siano nominate e quattro no **non è una differenza di copertura**:
+è una differenza di quali migrazioni hanno avuto un difetto proprio da
+presidiare. Verdetto: **FUNZIONA COME PROMESSO** per il gruppo.
+
+**② `_archive_episodes_for_undo` (1413)** — e questa vale più delle altre
+diciotto. È **il primo dei tre presidi del decay** citati nella cella W2-119 di
+ws2: *«`_archive_episodes_for_undo()` **prima** del delete»*, cioè ciò che rende
+possibile `restore_decayed`. Nessun test la nomina, ma è chiamata a
+`memory.py:1394`, **dentro `decay_prune`**, quindi la esercita
+`tests/test_decay_prune_undo.py` (`2 passed` EXIT=0) — che è precisamente il test
+che verifica che l'annullamento funzioni.
+
+⇒ **FUNZIONA COME PROMESSO**, per via indiretta. E il legame si chiude: la
+garanzia della riga 2 (`restore_decayed`) poggia su questa funzione, e il test
+che prova l'una prova anche l'altra. Il reperto della riga 2 resta quello che
+era — **manca la porta, non il presidio.**
