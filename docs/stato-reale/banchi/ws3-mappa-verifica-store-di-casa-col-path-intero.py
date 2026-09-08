@@ -38,7 +38,7 @@ for p in sorted(glob.glob(os.path.join(BASE, "**", "*.db"), recursive=True)):
         for r in con.execute(
                 f"SELECT {', '.join(campi)} FROM facts WHERE created_at > ? "
                 f"ORDER BY created_at DESC LIMIT 8", (ORA - 3600,)):
-            d = dict(zip(campi, r))
+            d = dict(zip(campi, r, strict=False))
             t = time.strftime("%H:%M:%S", time.localtime(float(d["created_at"])))
             print(f"    {t} | {str(d.get('topic'))[:38]:38} | "
                   f"{str(d.get('status'))[:11]:11} | {str(d.get(testo))[:64]}")
