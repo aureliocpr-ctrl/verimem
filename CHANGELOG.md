@@ -92,13 +92,13 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
   while the judge was still loading stay unjudged forever and the warning never
   goes back to green. *Next*: split the state check ("is the judge usable now?")
   from the coverage figure, and say how many facts are missing.
-- **T24 — `replaced` in the receipt is always `False`.**
-  *Today*: the field never turns true, **by construction** — a public field that
-  does not measure what its name promises, and it explains earlier readings that
-  took it at face value. *Not yet*: there is no field on that port that tells you
-  a retirement happened. *Next*: either the receipt carries `replaced` with the
-  retired ids, or the field is removed and the removal is documented. **Meanwhile,
-  read supersession from the store** (`superseded_by` on the older fact).
+- **T24 — the SDK receipt now says whether it replaced something.**
+  *Today*: `Memory.add` returns `replaced` together with the ids it retired
+  (`5bed8cdb`); the MCP port was already idempotent on identical text — the same
+  text written twice returns the same id and stores one row. *Not yet*: the two
+  ports still behave differently on a repeated write — one stores a second row,
+  the other does not, and nothing in the reply says which one you are on.
+  *Next*: make that divergence itself visible in the receipt.
 - **T25 — with a shared encode daemon, score and threshold can come from two
   different models.**
   *Today*: in delegate-only mode the *score* comes from the shared daemon (its own

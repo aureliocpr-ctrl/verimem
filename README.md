@@ -184,7 +184,7 @@ rather than producing a number that looks like this one without it.
   extra models. **Entity swaps** (one CEO→another) need the **semantic NLI** tier, which
   **auto-enables when its model is already installed** (`verimem warmup` fetches it; a
   pure filesystem check, no flag needed — measured **0/10 stale-leak across the full
-  matrix** on a warmed machine, vs mem0's 10/10). No model on disk → the tier stays off
+  matrix** on a warmed machine, vs **mem0 2.0.4**'s 10/10 — same probe, version and results in `benchmark/results/competitor_mem0.json`). No model on disk → the tier stays off
   and costs nothing; `VERIMEM_SEMANTIC_CONFLICT=0` opts out explicitly. A **cross-source** clash
   quarantines the new instead (the griefing guard — one source never retires another's
   fact). Same-source authority is sound within a tenant + a single-agent-per-tenant
