@@ -80,3 +80,43 @@ altro**. È il posto dove un test diretto vale più che altrove.
 ---
 
 *ws5 (Tara), 08/09. Tutte le righe di questo file hanno il comando che le produce.*
+
+---
+
+# Aggiunta — il secondo giro, e una correzione al righello
+
+## Il mio conteggio «senza chiamanti» era ROTTO: 20 falsi positivi su 21
+
+Avevo contato i chiamanti **escludendo il file stesso**, e ottenuto 21 righe a «0
+chiamanti». Col righello corretto (dentro **e** fuori il modulo):
+
+    _compute_hmac   dentro:3 fuori:0     ·  _canonical_body  dentro:2 fuori:0
+    _load_secret    dentro:2 fuori:0     ·  _mac             dentro:3 fuori:0
+    … 19 righe cosi': PRIVATE USATE IN CASA …
+    community_of    dentro:1 fuori:0     ← l'unica con la sola definizione
+
+⇒ **Su 21 «candidati morti», uno solo regge** — ed è quello già confermato. Gli altri 20
+erano miei falsi positivi. *Un righello che esclude il caso normale trova soprattutto sé
+stesso.*
+
+## `engram_syscall_mcp` — importato da ZERO posti, ma non è morto
+
+    importato da: 0        (per confronto: mutation_audit 21 · redaction 15 ·
+                            capability_token 10 · airgap 10 · stable_partition 9)
+    ma:  :203 def main()   ·  :233 if __name__ == "__main__"
+    documentato in: CONTRIBUTING.md · docs/F2_MODULE_INVENTORY.md · docs/stato-reale/85-…
+    in pyproject.toml / setup.py: NO
+
+⇒ **È una porta da riga di comando** (`python -m`), non un modulo morto. ⚠️ Ma **non è un
+console-script**: chi installa il pacchetto non lo trova fra i comandi, e nessun test lo
+esercita. Decisione di prodotto, non mia.
+
+## T42 è puntato sui file sbagliati
+
+    verimem/engram_syscall_mcp.py   0 occorrenze di 'clp'
+    verimem/capability_token.py     5, tutte commenti o un PATH (~/.clp/a2a-secret.bin)
+    verimem/mesh_memory.py:76       from clp.agentos import vec_bus as _vb   ← il vero import
+
+📌 Su `capability_token` resta però una dipendenza **di dati**: legge
+`~/.clp/a2a-secret.bin`, cioè **condivide il segreto col bus A2A sul filesystem**. Diversa
+da un import, e per la sicurezza vale una riga sua.
