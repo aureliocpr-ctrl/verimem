@@ -4,9 +4,27 @@
 
 ## Il claim del README
 
-> `README:292-296` — «**Independence clustering collapses copies/colluders of one feed to a single witness**, so manufactured consensus cannot self-confirm.»
+> `README:462` — «`verified_by` records WHERE the claim came from — it is shown
+> on every read and **cannot be forged into a higher trust status** (**a
+> self-cited receipt never becomes "verified"**; the gate's outcome + provenance
+> are the trust signal, not a self-asserted badge).»
 
-Letto: è esattamente ciò che questo modulo fa («is the cited evidence INDEPENDENT?», docstring `:1`).
+Letto e verificato: il modulo implementa esattamente quel «self-cited receipt
+never becomes verified» — il suo docstring `:19-21` dice «**self-citation IS the
+laundering move** (write the poison, then cite yourself)».
+
+⚠️ **CORREZIONE DI UNA MIA ATTRIBUZIONE, fatta un'ora dopo averla pubblicata.**
+Avevo scritto qui `README:292-296` («*Independence clustering collapses
+copies/colluders of one feed to a single witness, so manufactured consensus
+cannot self-confirm*»), e **non è di questo modulo**: quel clustering è
+implementato in **`source_trust.py:47, 88, 186`** (`grep -rn "cluster"` su
+`verimem/`), che non è nella mia parte. Il nome combaciava — «independence» — e
+mi ero fermata lì.
+
+🔑 **Per attribuire un claim non basta che il modulo sembri farlo: bisogna
+verificare che nessun ALTRO lo faccia.** Un claim ha un solo implementatore, e
+il candidato più ovvio non è sempre quello giusto. È la stessa forma del `grep`
+che trova e non conclude, applicata all'attribuzione.
 
 ## La copertura di esecuzione
 
