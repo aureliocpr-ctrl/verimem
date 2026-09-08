@@ -1,0 +1,33 @@
+IMPORT DA C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\__init__.py
+STORE TEMPORANEO C:\Users\aurel\AppData\Local\Temp\ws3-mappa-0791wxgo
+2026-09-08T20:30:23.596137 [info     ] flow.warmup                    build=7b9e8ca1 phase=start run=878c4831 store=5e21912751f6 surface=unknown what=moat-judge
+Loading weights:   0%|          | 0/202 [00:00<?, ?it/s]Loading weights: 100%|██████████| 202/202 [00:00<00:00, 2224.01it/s]
+2026-09-08T20:31:13.023557 [info     ] flow.warmup                    build=7b9e8ca1 elapsed_ms=49413.2 phase=ready run=878c4831 store=5e21912751f6 surface=unknown what=moat-judge
+  _threshold_of_record = resolve_write_threshold_for(_judge_used)
+Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  61%|██████    | 121/199 [00:00<00:00, 1204.16it/s]Loading weights: 100%|██████████| 199/199 [00:00<00:00, 1280.35it/s]
+  _adopt_observed_dim(int(model.get_sentence_embedding_dimension() or 0),
+2026-09-08T20:31:30.672826 [info     ] flow.entity                    build=7b9e8ca1 created=[{'id': '7b1026e1ca45', 'name': 'Postgres', 'type': 'proper'}] edges=0 fact_id=79e9826df82a run=878c4831 store=5e21912751f6 surface=unknown touched=['7b1026e1ca45']
+2026-09-08T20:31:30.707420 [info     ] flow.write                     build=7b9e8ca1 fact_id=79e9826df82a grounding_score=99.91624450683594 judged=True layers=[] run=878c4831 status=model_claim store=5e21912751f6 stored=True surface=unknown topic=mappa/prova withheld_despite_judge=False
+Loading weights:   0%|          | 0/394 [00:00<?, ?it/s]Loading weights:  11%|█▏        | 45/394 [00:00<00:00, 434.61it/s]Loading weights:  23%|██▎       | 89/394 [00:00<00:00, 434.95it/s]Loading weights:  34%|███▍      | 133/394 [00:00<00:00, 318.80it/s]Loading weights:  45%|████▌     | 178/394 [00:00<00:00, 360.53it/s]Loading weights:  55%|█████▌    | 217/394 [00:00<00:00, 368.68it/s]Loading weights:  68%|██████▊   | 268/394 [00:00<00:00, 408.46it/s]Loading weights:  85%|████████▌ | 335/394 [00:00<00:00, 486.43it/s]Loading weights: 100%|██████████| 394/394 [00:00<00:00, 454.76it/s]
+2026-09-08T20:31:46.152919 [info     ] flow.write                     build=7b9e8ca1 fact_id=42442f558d32 grounding_score=0.6132018566131592 judged=True layers=['L4-grounding'] run=878c4831 status=quarantined store=5e21912751f6 stored=True surface=unknown topic=mappa/prova withheld_despite_judge=False
+
+entailed (README:441 -> admitted)
+   stored = True
+   id = '79e9826df82a'
+   status = 'model_claim'
+   grounding_score = 99.91624450683594
+   layers = []
+
+confab (README:442 -> QUARANTINED)
+   stored = True
+   id = '42442f558d32'
+   status = 'quarantined'
+   grounding_score = 0.6132018566131592
+   quarantined_by = 'moat'
+   layers = ['L4-grounding']
+2026-09-08T20:31:46.337420 [info     ] flow.recall                    best=0.8424 build=7b9e8ca1 kind=search n=1 run=878c4831 store=5e21912751f6 surface=unknown tagliati=0
+
+search('Analytics', k=5) -> 1 hit
+   status='model_claim' score=99.91624450683594 «Analytics runs on Postgres.»
+
+recall e search sono lo stesso oggetto? True
