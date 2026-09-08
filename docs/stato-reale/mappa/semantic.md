@@ -48,7 +48,7 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 
 ## Contatore
 
-**47 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
+**49 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
 tranne la riga 8, che è NON MISURATO per assenza di test — e lo dice.**
 Le caselle «chiamata da» delle righe 10-15 sono state lette col nome
 QUALIFICATO (`.nome(`): il nome nudo, giusto per i callback, su nomi come
@@ -235,3 +235,46 @@ nell'inventario. Sono **NON MISURATO**, e l'elenco sta in
 `_migrate_v1_to_v2` (le migrazioni di schema, che nel mio ruolo pesano più delle
 altre) e `_rango_di_fiducia`, che è la funzione dietro `_STATUS_RANK` — cioè
 dietro la domanda di Galileo sul terzo stato.
+
+
+## Le migrazioni di schema — il pezzo del mio ruolo, e sta in piedi
+
+`_migrate_v0_to_v1` (1089) e `_migrate_v1_to_v2` (1097) erano nell'elenco delle
+48 «che nessun test nomina». Non è codice morto e **non è nemmeno non misurato**:
+sono registrate come **callback**, la stessa forma della riga 7 —
+
+```python
+# semantic.py:2648-2653
+from .migrations import ensure_schema_version
+ensure_schema_version(
+    …
+    (1, _migrate_v0_to_v1),
+    (2, _migrate_v1_to_v2),
+```
+
+e la porta `ensure_schema_version` ha **quattro** file di test dedicati, che ho
+eseguito:
+
+| test | esito |
+|---|---|
+| `test_migrations.py` | `12 passed in 8.46s` EXIT=0 |
+| `test_due_processi_non_rieseguono_la_migrazione.py` | `5 passed in 9.72s` EXIT=0 |
+| `test_la_migrazione_non_committa_il_lavoro_altrui.py` | `4 passed in 9.57s` EXIT=0 |
+| `test_migration_v14_upgrade_path.py` | `5 passed in 9.32s` EXIT=0 |
+
+E il percorso vero — uno store a schema **vecchio** aperto da un binario nuovo —
+è costruito davvero: `test_continuity.py:534` crea la tabella `_schema_version`
+e la stampa a 14, «exactly the live corpus»; `test_dg_cabling.py:199` la porta a
+2 per gli episodi.
+
+⇒ **FUNZIONA COME PROMESSO** per entrambe. I nomi dei tre test dicono da soli
+quali sono i due modi in cui una migrazione fa danno — due processi che la
+rieseguono, e una migrazione che committa il lavoro di un altro — e sono presi
+tutti e due.
+
+📌 **Terza volta oggi che sospetto un buco e trovo il presidio** (dopo
+«the old row stays» e i «4 test» dell'AUDIT-LEDGER). Lo annoto come dato sulla
+mappa, non su di me: in questo file **la copertura è migliore di quanto sembri
+da un grep**, e il metodo che la fa sembrare peggiore è sempre lo stesso — il
+nome cercato con la parentesi, o cercato dove la funzione non è registrata ma
+passata.
