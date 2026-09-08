@@ -66,7 +66,37 @@ erano `neighbors` e `traced_paths`. Cercate, avevano ciascuna un test dedicato
 blocchi toccava. Senza il conto deduplicato avrei chiuso il file a 21 su 23
 credendolo completo.
 
-## Da fare
+## Le `_private`: 12, e sei sono migrazioni registrate
 
-- le `_private` di questo file
-- `entity_extract_lite.py` e `entity_populate.py` (6 funzioni in due file)
+**12 `_private`**: 4 nominate da un test, 8 no. Ma delle 8, **sei sono
+migrazioni** (`_migrate_v1_initial` … `_migrate_v6_entity_attrs`) e sono
+**registrate in una lista** — `entity_kg.py:487`, `(1, _migrate_v1_initial)` e
+seguenti. È la **terza volta** che incontro questa forma: identica in
+`semantic.py:2652`, `memory.py:274-279` e qui.
+
+⇒ Non è un buco di copertura: è il modo in cui questo prodotto registra le
+migrazioni. La porta è una sola (`ensure_schema_version`) e nessun test nomina i
+singoli passi. **Chi mappa gli altri store lo troverà uguale, e può risparmiarsi
+il giro che ho fatto tre volte.**
+
+Le due `_private` vere senza test sono helper interni con chiamanti dentro il
+file: `_rank_facts` (1141, chiamata a 1286 e 1354) e `_row_to_entity` (1378,
+chiamata a 626 e 644). **NON MISURATE** direttamente, esercitate dai loro
+chiamanti.
+
+| blocco | `_private` coperte | prova |
+|---|---|---|
+| `test_entity_kg.py` | `_norm` | `17 passed` EXIT=0 |
+| `test_entity_ppr_graph_cache.py` | `_get_graph` | `3 passed in 8.55s` EXIT=0 |
+| `test_episode_index_cross_process.py` | `_db_data_version` | `3 passed in 8.21s` EXIT=0 |
+| `test_bridge.py` | `_connect` | da eseguire |
+
+## I due file vicini, chiusi
+
+| file | funzioni | pubbliche senza test | prova |
+|---|---|---|---|
+| `entity_extract_lite.py` (252 righe) | 3 (1 pubblica: `extract_entities_lite`) | **0** | `pytest -q tests/test_aperture_e_lato_solo.py` → `24 passed in 8.29s` EXIT=0 |
+| `entity_populate.py` (176 righe) | 3 (3 pubbliche: `entity_kg_path_for`, `populate_entities_for_fact`, +1) | **0** | `pytest -q tests/test_entity_live_latency.py` → `8 passed, 1 warning in 9.2s` EXIT=0 |
+
+⇒ **Il gruppo `entity_*` è chiuso**: 1.813 righe in tre file, 42 funzioni, e
+nessuna pubblica senza test. È il gruppo più coperto dei tre aperti finora.
