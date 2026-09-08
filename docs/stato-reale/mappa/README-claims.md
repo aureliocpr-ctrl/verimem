@@ -172,11 +172,46 @@ qui bastava leggere 210 righe più avanti.*
 
 ---
 
+## Righe 276-340 — la coda delle «Features»
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 277-279 | **import col consenso**: le conversazioni sono **elencate prima**, niente entra senza una selezione esplicita | `import` sulla CLI | **nessuno di specifico** | ⬜ *(il codice c'è; il «niente senza selezione» non è presidiato)* |
+| 280-283 | **auto-memoria opt-in**: `AutoMemory(memory).observe(role, text)` passa dalla **stessa** pipeline delle scritture esplicite · *«opt-in per costruzione: se non la istanzi, non esiste»* | `AutoMemory` (1 file) | **nessuno** | ✅ **la classe esiste** · ✅ **come forma**: «opt-in per costruzione» è verificabile leggendo — non c'è un default che la accende |
+| 284-288 | **contachilometri della fiducia**: `m.trust_stats()` / `verimem stats`, contatori persistenti di ciò che il gate **ha fatto davvero** · *«azioni osservabili, non affermazioni di marketing; nessun testo di fatto finisce nel contatore»* | `trust_stats` (2 file) | **nessuno di specifico** | ✅ **l'API esiste su SDK e CLI** · ✅ **come forma**: la riga dichiara anche **cosa il contatore NON contiene** (il testo), che è una promessa di riservatezza verificabile |
+| 289-291 | **oblio vero**: `delete(purge_history=True)` toglie il fatto **e la sua catena di supersessione**; il dato non riemerge da storia o time-travel | `purge_history` (6 file) | `test_fact_forget_scope_r3.py` | ✅ |
+| 292-299 | **fiducia per fonte, due canali** *(dietro flag)*: reputazione da accordo fra fonti e da esito; **decide il canale più debole** · il clustering di indipendenza **collassa copie e colluders a un solo testimone** · riprodotto su HaluEval, 3/3 semi: un **cartello di 4 id** che si autoconferma a **0,90** scende a **0,20**, le fonti oneste risalgono a **0,95** | `source_trust.py` | **nessuno** *(il grep di `0.90` trova 109 file: è rumore, non presidio)* | ⬜ **NON MISURATO** · ⚠️ **e c'è un fatto che questa mappa deve dire**: `client.py:783-796` documenta che il **gate su source-trust è stato RIMOSSO il 02/09**, misurato *«0 scritture marcate su 17 279, tabella `source_trust` con 0 righe»*. ⇒ **la riga dice «(flag-gated)» e non dice che il registro che la alimenta è vuoto in produzione** |
+| 300-303 | **etichette epistemiche**: `proven` (prova verificabile a macchina) · `unbeaten` (retto fino a un limite dichiarato, **che solo cresce**) · `refuted` (controesempio nominato, assorbente) · *«"retto fino a 10^6" e "provato" non si confondono mai»* | `unbeaten` (7 file) | **nessuno di specifico** | ✅ **le tre etichette esistono nel codice** · ✅ **come forma**: la distinzione fra *provato* e *non ancora smentito* è la cosa che quasi nessun prodotto scrive |
+| 304-313 | **conoscenza derivata, dallo stesso cancello**: l'anello di composizione deriva fatti nuovi dai verificati, li passa **dallo stesso gate**, e ammette i sopravvissuti **firmati** (`actor:composer` — *«le scritture del motore non testimoniano mai per sé stesse»*), **tracciati** (`derives_from`, ritrattabili se un genitore cade) · il demone **rifiuta di comporre** quando le scritture del motore dominano già il flusso recente (*guardia contro l'auto-eco*) | `actor:composer` (3 file) · `derives_from` (7) · `compose_daemon` (1) | **nessuno di specifico** | ✅ **tutti e tre i pezzi esistono** · ✅ **come forma**: *«il motore non testimonia per sé»* e la guardia contro l'auto-eco sono due difese **contro noi stessi**, ed è raro che un prodotto le scriva |
+| 314-326 | **guardiano in lettura**: quando lo store ha una verità meglio garantita sullo stesso soggetto, la lettura **corregge** citando entrambi i fatti (`correct_read` → ACCEPT / CORRECT / ABSTAIN) · con **sonde attive** che costruiscono la domanda che **falsificherebbe** un fatto — *«lo store falsifica sé stesso invece di aspettare che arrivi una contraddizione»* | `correct_read` (2 file) | **nessuno** | ✅ **il codice esiste** · 🔑 **e la riga si limita da sé, con il numero**: *«"lo stesso soggetto" si risolve leggendo una copula, quindi il confronto avviene solo su fatti con quella forma — **7 su 5194 fatti vivi** sul nostro corpus, che è prosa»*, e sul resto la lettura torna **`not comparable — no conflict search ran`**, cioè *«il guardiano dice quando non ha guardato»*. **Una capacità di punta che dichiara di applicarsi allo 0,13% dei casi**: `grep 5194 tests/` → **0 file**, quindi il numero non è presidiato, **ma è scritto** |
+| 327-330 | **mappa dell'ignoranza**: «non lo so» diventa «ecco **cosa** mi manca» — ogni domanda senza risposta è classata (niente prove / sotto il pavimento / prove in quarantena / conflitto vivo) con la fonte concreta che la chiuderebbe | `ignorance_map` (5 file) | **nessuno di specifico** | ✅ **il codice c'è** · ✅ **come forma**: è l'astensione che diventa **azionabile** |
+| 331-335 | **firma di provenienza** *(opt-in)*: un HMAC infalsificabile di **chi parla** dentro il ref di provenienza — *«autenticità del contenuto E del canale, le due metà che nessun filtro deterministico di contenuto può certificare da solo contro un avversario adattivo»* | `provenance` / HMAC | **nessuno di specifico** | ⬜ · ⚠️ **stessa famiglia della riga 227**: descrive una **difesa contro un avversario** e non ha un presidio |
+| 336-338 | **local-first**: SQLite, embedding locali, LLM iniettabile; gira **air-gapped** (`verimem airgap` verifica la configurazione a zero uscite) | `cli.py` (`airgap`) | `test_cli_airgap.py` | ✅ **eseguibile e presidiato** |
+
+### 📌 Il reperto di questo blocco
+
+**La riga 292-299 vende una capacità il cui registro è vuoto in produzione.** Il
+README la marca *(flag-gated)* — corretto — ma **non dice** ciò che il codice
+dichiara di sé a `client.py:783-796`: il gate su source-trust **è stato rimosso
+il 02/09**, con la misura accanto — *«0 scritture marcate su 17 279, `source_trust`
+con 0 righe, `source_trust_observe` chiamata da 4 banchi e 5 test e da **zero
+porte del prodotto**»*. ⇒ **La capacità non è spenta da un flag: non ha mai avuto
+materiale.** *Un lettore che sceglie il prodotto per quel paragrafo compra una
+cosa che nel suo store non succederà.*
+
+🔑 **E il contrappeso, che vale la stessa attenzione**: la riga 322-326 **dichiara
+da sé che il guardiano in lettura si applica a 7 fatti su 5194** — lo **0,13%** —
+e che sul resto risponde *«not comparable — no conflict search ran»*. **Una
+capacità di punta che scrive il proprio ambito con il numero, invece di lasciarlo
+intendere.** *È il modello a cui la riga 292 dovrebbe assomigliare.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  275 / 811   (33,9%)
-verdetti:  ✅ 37   ❌ 2   ⬜ 29   (una riga può portare due verdetti su due claim)
+righe lavorate:  340 / 811   (41,9%)
+verdetti:  ✅ 50   ❌ 2   ⬜ 34   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
