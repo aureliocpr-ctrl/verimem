@@ -1,0 +1,22 @@
+
+========================================================================
+A) update NON sostenuto dalla fonte
+  1. scritto: model_claim | id 32910c11d1c4
+  2. search PRIMA : ["Il canone del capannone 12 e' 5900 euro."]
+  3. update -> stored: True | status: quarantined | supersedes: 32910c11d1c4 | warnings: ['L3', 'L3-semantic']
+  4. search DOPO  : []
+  5. history      : [('model_claim', "Il canone del capannone 12 e' 5900 eur"), ('quarantined', "Il canone del capannone 12 e' 6100 eur")]
+  6. survivability: written 2 servable 0 retired 1 quarantined 1
+  7. il fatto vecchio: status model_claim | superseded_by ced4699fed21
+  >>> fatti serviti su quel contenuto DOPO l'update: 0
+
+========================================================================
+B) update SOSTENUTO dalla fonte
+  1. scritto: model_claim | id 7affee6b4ca2
+  2. search PRIMA : ["Il canone del capannone 12 e' 5900 euro."]
+  3. update -> stored: True | status: model_claim | supersedes: 7affee6b4ca2 | warnings: []
+  4. search DOPO  : ["La consegna del capannone 12 e' prevista per il 3 ma"]
+  5. history      : [('model_claim', "Il canone del capannone 12 e' 5900 eur"), ('model_claim', "La consegna del capannone 12 e' previs")]
+  6. survivability: written 2 servable 1 retired 1 quarantined 0
+  7. il fatto vecchio: status model_claim | superseded_by 35599dce0d1b
+  >>> fatti serviti su quel contenuto DOPO l'update: 1

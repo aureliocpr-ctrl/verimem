@@ -1,0 +1,40 @@
+scritture: model_claim | quarantined
+
+=== T49 ALLA PORTA: get_all() serve i quarantinati?
+  get_all() -> n = 2 | per status: {'quarantined': 1, 'model_claim': 1}
+  >>> il quarantinato compare in get_all(): True
+  per confronto, search('canone capannone') -> 1 risultati serviti
+  e get_all(topic='g/ko') -> 1
+
+=== get / history / update: il fatto e la sua catena
+  get(id) chiavi: ['asserted_at', 'confidence', 'confidence_tier', 'created_at', 'epistemic', 'grounding_score', 'grounding_span', 'id', 'source', 'source_signature', 'status', 'superseded_by']
+  get('id-inesistente'): None
+  update -> stored: True | status: quarantined | supersedes: 987b06606b9f
+  history(id vecchio) -> catena di 2 -> [('model_claim', "Il canone del capannone 12 e' 5900"), ('quarantined', "Il canone del capannone 12 e' 6100")]
+  history(id nuovo)  -> stessa catena? True
+
+=== quarantine_log / restore / label
+  quarantine_log -> 2 righe · prima: {'id': '9175fa97b09c', 'proposition': "Il canone del capannone 12 e' 6100 euro.", 'topic': 'g/ok', 'created_at': '1788900446.2771585', 'status': 'quarantined'}
+2026-09-08T22:47:26.548251 [info     ] fact_restored                  fact_id=50ce40c0c9d4 reason='falso positivo di prova' to_status=model_claim
+  restore(id_quarantinato) -> True
+  status dopo restore: model_claim
+  ora search lo serve? True
+  label(id,'proven',proof=…) -> True
+  label(id,'inventato') -> ValueError kind sconosciuto: 'inventato'. Sono proven | unbeaten | refuted
+
+=== i registri: retirement_log, verdict_mismatches, survivability, tier_inventory
+  retirement_log -> 1 righe · {'loser_id': '987b06606b9f', 'loser_topic': 'g/ok', 'loser_status': 'model_claim', 'loser_created_at': '1788900436.0619996', 'winner_id': '9175fa97b09c', 'superseded_at': '1788900446.5028188'}
+  verdict_mismatches -> chiavi: ['contested_band', 'judged_false_but_served', 'judged_true_but_withheld', 'measured_at', 'thresholds', 'topic']
+  survivability -> {'measured_at': 1788900446.637995, 'written': 3, 'servable': 1, 'retired': 1, 'retired_reversible': 1, 'quarantined': 1, 'judged': 1, 'judged_by_status': [{'status': 'model_claim', 'servable': 1, 'judged': 1}], 'topic': None, 'formula': "servable = superseded_by IS NULL AND status NOT IN ('quarantined') · judged = servable AND grounding_score IS NOT NULL (NULL means never judged, not judged and failed) · ⚠️ the aggregate `judged` MIXES populations with different rules — see judged_by_status: on the real corpus 2026-08-07 `model_claim` was judged 1800/3074 (58.6%) while `user_manual` was 0/2493, so the mixed figure describes neither and makes the gate look worse than it is. Which status comes from which write path is for the write-path owner to say; status is the observable, not the cause · retired_reversible = retired AND a live undo snapshot exists (the size of the repair window: 'retired' alone does not say whether one can be recovered or a thousand)"}
+  tier_inventory -> chiavi: ['data_dir', 'note', 'tiers']
+
+=== epistemic_health e ignorance
+  epistemic_health -> chiavi: ['composite', 'fresh_fraction', 'grounded_fraction', 'n', 'n_grounding_audited', 'n_not_examined', 'n_superseded', 'n_written', 'provenance_coverage', 'sample', 'uncontested_fraction', 'ungrounded_fact_ids']
+  ignorance -> chiavi: ['by_class', 'deciding_floor', 'floor', 'n', 'noise_floor', 'noise_floor_source', 'queries']
+  ignorance (prima voce): [{'query': 'quanto costa il capannone 99?', 'top_score': 0.8393, 'deciding_floor': 0.8, 'class': 'answerable', 'what_would_help': None, 'caveat': "best hit 0.84 sits at or below the store's own measur
+
+=== forget_with_report e delete: dove il fatto resta leggibile
+  forget_with_report -> {'removed': 'True', 'fact_id': '987b06606b9f', 'residual_copies': '[]'}
+  get dopo forget: None
+  delete(id_quarantinato) -> True
+  get_all dopo le due cancellazioni -> 1

@@ -11,9 +11,9 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 59 righe misurate su 80 · 16 claim collegati (README e
+**Contatore**: 74 righe misurate su 80 · 16 claim collegati (README e
 istruzioni del server) · i chiamanti delle tre porte per `add` e `search`
-**letti con la riga** (20:59) · **7 ticket**, di cui tre su promesse pubbliche:
+**letti con la riga** (20:59) · **9 ticket** (T-MAP-8 e un CANDIDATO P0), di cui quattro su promesse pubbliche:
 T-MAP-4 (un claim del README falso a metà), T-MAP-5 (un claim che tace un
 requisito), **T-MAP-6 (la retro-demozione non copre il canale che il README
 insegna)**, e **T-MAP-7 (una variabile scritta male non spegne l'opt-in: lo
@@ -154,7 +154,30 @@ non quanti»* applicata a me. ⚠️ Da dichiarare comunque: aprire un db in WAL
 anche con `mode=ro` **tocca l'mtime dei file `-shm`/`-wal`** — la mia verifica
 ha cambiato quei timestamp, mai i dati.
 
-## Le altre 21 voci — `NON MISURATO`, elencate per non perderle
+## I metodi pubblici di lettura e gestione — quelli che si chiamano DOPO aver scritto (client.py 3246-4180)
+
+*`prova_gestione.py` e `prova_update_perde.py`, 08/09 22:46-22:48. Firme lette
+prima di chiamare: zero TypeError in questa passata.*
+
+| # | funzione (riga) | cosa promette | verdetto | prova (eseguita) |
+|---|---|---|---|---|
+| 60 | `update` (3964) | «un update SCRIVE un fatto nuovo (**attraverso il gate**) e SUPERA il vecchio — la vecchia versione resta nella catena di provenienza, non è distrutta» | 🔴🔴 **NON COME PROMESSO** → ticket **T-MAP-8, candidato P0** | **due bracci, una variabile per volta.** (A) `update` con un testo che il gate boccia: `status='quarantined'`, warnings `['L3','L3-semantic']` (il gate riconosce la contraddizione col fatto esistente) — **ma la supersessione avviene lo stesso**: il vecchio prende `superseded_by=<id del quarantinato>`, e `search("canone capannone 12")` passa da **1 risultato a 0**; `survivability` → `written 2, servable 0, retired 1, quarantined 1`. (B) stesso codice con un testo **sostenuto** dalla fonte: `status='model_claim'`, `search` serve il nuovo, `servable 1`. ⇒ non è `update` a essere rotto: è che **il ritiro del vecchio non è condizionato all'ammissione del nuovo**. Chi corregge un fatto con una frase che il gate respinge **resta senza nessuno dei due**, e la ricevuta dice `stored: True` senza mai nominare la perdita. Stessa famiglia della lezione di casa *«la supersessione mangia i fatti veri»* (`49e67921d177`), vista qui **dalla porta pubblica dell'SDK** |
+| 61 | `get_all` (3959) | «List stored facts (with provenance), newest-relevant first. mem0/Zep parity» | **NON COME PROMESSO nel silenzio** → si aggiunge a **T49** (owner ws5) | chiama `semantic.list_facts(limit=…, topic=…)` **senza `hide_low_trust`** (che ha default `False`), e `hide_low_trust` **non compare mai in client.py** — i due soli chiamanti sono `epistemic_health` (3550, dove è voluto: misura il corpus intero) e questo. Misurato alla porta: store con 1 ammesso e 1 quarantinato → `get_all()` = **2 righe** (`{'quarantined': 1, 'model_claim': 1}`), il quarantinato c'è (`True`), mentre `search` ne serve **1**. Il docstring non dice che include i bloccati: due porte pubbliche dello stesso SDK mostrano popolazioni diverse senza dirlo |
+| 62 | `get` (3884) | «Fetch one stored fact by id (with its provenance), or None» | **FUNZIONA COME PROMESSO** | `get(id)` → dict con `['asserted_at','confidence','confidence_tier','created_at','epistemic','grounding_score','grounding_span','id','source','source_signature','status','superseded_by']` — la provenienza c'è per davvero; `get('0000…')` → `None` |
+| 63 | `history` (4062) | «l'INTERA catena di supersessione della lineage che contiene `fact_id`… **qualunque id della catena restituisce la stessa traccia**» | **FUNZIONA COME PROMESSO**, incluso il pezzo difficile | `history(id_vecchio)` → 2 elementi `[('model_claim','…5900'),('quarantined','…6100')]`, e `history(id_nuovo)` → **stessa catena** (`True`): la camminata non è più solo in avanti, come dichiara il commento dell'audit mod.8 |
+| 64 | `quarantine_log` (3246) | «il registro dei claim bloccati: i fatti QUARANTINATI vivi, il più recente per primo… così un umano può controllare gli stop (e salvare un falso positivo)» | **FUNZIONA COME PROMESSO** | 2 righe, con `{'id','proposition','topic','created_at','status'}`: la **proposizione** c'è, non solo il conteggio — è la differenza fra il contatore («quanti») e questo («quali») |
+| 65 | `restore` (3702) | «salva un fatto bloccato per errore: lo riporta nella vista di recall viva… in una chiamata sola invece di costringere il cliente a entrare nello store interno» | **FUNZIONA COME PROMESSO** | `restore(id, reason='falso positivo di prova')` → `True`, log `fact_restored … to_status=model_claim`, `status` dopo → `model_claim`, e **la search lo serve** (`True`). Il giro completo blocco→salvataggio→servito è chiuso |
+| 66 | `label` (3662) | attacca il TIPO di garanzia: `proven` \| `unbeaten` \| `refuted` | **FUNZIONA COME PROMESSO**, e il rifiuto è parlante | `label(id,'proven',proof='tests/test_x.py::test_y')` → `True`; `label(id,'inventato')` → `ValueError: kind sconosciuto: 'inventato'. Sono proven \| unbeaten \| refuted` — l'errore elenca i valori validi invece di dire solo «no» |
+| 67 | `retirement_log` (4004) | i ritiri come coppie (perdente, vincitore), «l'equivalente del `quarantine_log` per le supersessioni», con la maniglia `undo_op_id` quando il ritiro è reversibile | **FUNZIONA COME PROMESSO** | dopo l'update: 1 riga con `{'loser_id','loser_topic','loser_status','loser_created_at','winner_id','superseded_at'}` — e il perdente è proprio il fatto vero mangiato dal braccio (A) di T-MAP-8: **il registro lo dice, la porta no** |
+| 68 | `verdict_mismatches` (4032) | «dove il verdetto del moat e il destino del fatto non coincidono, **in tutti e due i sensi**: giudicato vero e trattenuto, giudicato falso e servito, più la banda contesa» | **FUNZIONA COME PROMESSO** (chiavi presenti; popolazione non provata a fondo) | chiavi `['contested_band','judged_false_but_served','judged_true_but_withheld','measured_at','thresholds','topic']`: le due direzioni ci sono entrambe. Su questo store minuscolo le liste sono vuote — **NON MISURATO** il comportamento su un corpus con casi veri |
+| 69 | `survivability` (4047) | il quartetto scritto/servibile/ritirato/quarantinato **con la sua formula**, perché «un fatto sparisce in DUE modi, e ogni conteggio di *vivi* che ne ignora uno nasconde metà della perdita» | **FUNZIONA COME PROMESSO**, ed è il righello che ha reso leggibile T-MAP-8 | `{'written': 2, 'servable': 0, 'retired': 1, 'retired_reversible': 1, 'quarantined': 1, …}` più la `formula` scritta per esteso, con l'avviso che l'aggregato `judged` **mescola popolazioni** e il dettaglio `judged_by_status`. È l'unico punto del file dove un numero arriva già accompagnato dal suo limite |
+| 70 | `tier_inventory` (4018) | «dove vive davvero ogni tier, quante righe tiene, e **quali file vicini ne portano il nome senza esserlo**» | **FUNZIONA COME PROMESSO** (forma) | chiavi `['data_dir','note','tiers']`. Il contenuto sul corpus vero (le cinque tabelle entità vuote dentro `semantic.db` mentre il grafo vive in `entity_kg/entity_kg.db`) **NON MISURATO** qui: store temporaneo |
+| 71 | `epistemic_health` (3522) | «come sta messo il CORPUS, non un fatto per volta» | **FUNZIONA COME PROMESSO** | chiavi `['composite','fresh_fraction','grounded_fraction','n','n_grounding_audited','n_not_examined','n_superseded','n_written','provenance_coverage','sample','uncontested_fraction','ungrounded_fact_ids']` — e `n_not_examined` è nel dizionario: il non-esaminato è **nominato**, non fuso nel denominatore |
+| 72 | `ignorance` (3637) | «perché non lo so: la CLASSE dell'ignoranza e cosa la curerebbe» | **FUNZIONA COME PROMESSO** | `ignorance(["quanto costa il capannone 99?"], k=3)` → `class: 'answerable'`, `top_score: 0.8393`, `deciding_floor: 0.8`, e un `caveat` che dice che il migliore «sta al livello del pavimento misurato dallo store»: la risposta porta la sua incertezza invece di un sì secco |
+| 73 | `forget_with_report` (4155) | «cancella un fatto **e dice dove è ancora leggibile**», perché il worker Auto-Dream tiene copie intere del DB | **FUNZIONA COME PROMESSO** (sul caso senza copie) | `{'removed': True, 'fact_id': '987b06606b9f', 'residual_copies': []}` e `get` dopo → `None`. ⚠️ Lo store è temporaneo: **NON MISURATO** il caso che dà valore alla funzione, cioè con copie dream presenti |
+| 74 | `delete` (3891) | «dimentica un fatto per id (privacy/GDPR). True se almeno una riga è stata rimossa»; `purge_history=True` è la cancellazione a norma | **FUNZIONA COME PROMESSO** (ramo semplice) | `delete(id)` → `True`, e `get_all` scende da 3 a 1. Il ramo `purge_history=True` (il difetto confermato dalla sonda 2026-07-06: i predecessori superati riemergono col deep recall) **NON MISURATO**: è il ramo che vale, va provato con una catena e una lettura profonda |
+
+## Le altre 6 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -249,3 +272,31 @@ decrescenti.
   non è mia. La virgola italiana è il modo più facile di sbagliare quella
   variabile, e il prodotto ha già una cronaca su questo (`il gate e i numeri
   italiani`).
+
+- 🔴🔴 **T-MAP-8 — CANDIDATO P0, riportato al lead prima di toccare qualsiasi
+  cosa** (Galileo, 08/09 22:48). **`Memory.update` con un testo che il gate
+  respinge ritira lo stesso il fatto vecchio: l'utente resta senza nessuno dei
+  due, e la ricevuta dice `stored: True`.**
+  Misurato con due bracci, una variabile per volta (`prova_update_perde.py`):
+  · **(A) testo non sostenuto dalla fonte** — `update(id, "…6100 euro")` →
+  `status='quarantined'`, `warnings=['L3','L3-semantic']` (il gate riconosce la
+  contraddizione col fatto già presente, e fa il suo mestiere). Ma la
+  supersessione **avviene comunque**: il fatto vecchio prende
+  `superseded_by=<id del quarantinato>` e `search("canone capannone 12")`
+  passa da **1 risultato a 0**. `survivability` → `written 2, servable 0,
+  retired 1, quarantined 1`.
+  · **(B) stesso codice, testo sostenuto dalla fonte** — `status='model_claim'`,
+  la search serve il nuovo, `servable 1`.
+  ⇒ Il difetto non è in `update` come tale: **il ritiro del vecchio non è
+  condizionato all'ammissione del nuovo**. La correzione di un fatto è
+  esattamente il momento in cui un utente scrive una frase che il gate può
+  respingere — e il prezzo è il fatto vero che aveva già.
+  ⚠️ Il `retirement_log` la registra («loser» = il fatto vero), quindi
+  l'informazione **esiste**; è la porta che non la dice. Stessa famiglia della
+  lezione di casa *«la supersessione mangia i fatti veri»* (`49e67921d177`) e
+  dei *«due bracci di un A/B in un fatto solo»* (274 ritiri su 340 in 7
+  giorni): qui la si vede dalla **porta pubblica dell'SDK**, con due righe di
+  codice utente.
+  **Non curato**: siamo in mappa, e la scelta fra «non superare se il nuovo è
+  quarantinato», «superare e avvisare» o «superare solo su richiesta esplicita»
+  è del proprietario del write path, non mia.
