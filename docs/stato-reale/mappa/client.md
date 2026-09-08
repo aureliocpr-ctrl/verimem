@@ -11,9 +11,17 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 74 righe misurate su 80 · 16 claim collegati (README e
+**Contatore — dallo SCRIPT, non dalla mia memoria** (`contatore_mappa.py`:
+`ast` sul sorgente, nome fra backtick nel `.md`; criterio generoso e
+dichiarato): **80 su 80 · client.py CHIUSO**, 23:05. ⚠️ Alle 22:55 avevo
+annunciato «74 su 80, ne restano 6»: il righello meccanico ne contava **63
+nominate e 17 mancanti**. Il mio numero era **sbagliato per eccesso** perché
+contavo le righe della tabella, e una riga a volte copre due funzioni. Da qui
+in avanti il contatore è quello dello script.
+
+Poi: 16 claim collegati (README e
 istruzioni del server) · i chiamanti delle tre porte per `add` e `search`
-**letti con la riga** (20:59) · **9 ticket** (T-MAP-8 e un CANDIDATO P0), di cui quattro su promesse pubbliche:
+**letti con la riga** (20:59) · **9 ticket** (T-MAP-8 **declassato da me** da candidato P0 a difetto di avviso: la maniglia `undo_op_id` è nella ricevuta e `undo` riporta il fatto vero), di cui quattro su promesse pubbliche:
 T-MAP-4 (un claim del README falso a metà), T-MAP-5 (un claim che tace un
 requisito), **T-MAP-6 (la retro-demozione non copre il canale che il README
 insegna)**, e **T-MAP-7 (una variabile scritta male non spegne l'opt-in: lo
@@ -177,7 +185,32 @@ prima di chiamare: zero TypeError in questa passata.*
 | 73 | `forget_with_report` (4155) | «cancella un fatto **e dice dove è ancora leggibile**», perché il worker Auto-Dream tiene copie intere del DB | **FUNZIONA COME PROMESSO** (sul caso senza copie) | `{'removed': True, 'fact_id': '987b06606b9f', 'residual_copies': []}` e `get` dopo → `None`. ⚠️ Lo store è temporaneo: **NON MISURATO** il caso che dà valore alla funzione, cioè con copie dream presenti |
 | 74 | `delete` (3891) | «dimentica un fatto per id (privacy/GDPR). True se almeno una riga è stata rimossa»; `purge_history=True` è la cancellazione a norma | **FUNZIONA COME PROMESSO** (ramo semplice) | `delete(id)` → `True`, e `get_all` scende da 3 a 1. Il ramo `purge_history=True` (il difetto confermato dalla sonda 2026-07-06: i predecessori superati riemergono col deep recall) **NON MISURATO**: è il ramo che vale, va provato con una catena e una lettura profonda |
 
-## Le altre 6 voci — `NON MISURATO`, elencate per non perderle
+## Le ultime 17 — quelle che il CONTATORE DELLO SCRIPT diceva mancanti (client.py 239-4054)
+
+*`prova_ultime17.py`, 08/09 23:00. ⚠️ **Il mio contatore a memoria diceva «74 su
+80, ne restano 6»: era sbagliato per eccesso.** Il righello meccanico
+(`contatore_mappa.py`: `ast` sul sorgente, nome fra backtick nel `.md`) ne
+contava **63 nominate e 17 mancanti** — le mie righe numerate coprivano a volte
+due funzioni in una, e a volte una voce che non è una definizione. Da qui in
+avanti il contatore è quello dello script, col criterio scritto.*
+
+| # | funzione (riga) | cosa promette | verdetto | prova (eseguita) |
+|---|---|---|---|---|
+| 75 | `undo` (4054) | «annulla un'operazione distruttiva (forget / supersede) con la sua maniglia — la maniglia arriva in `add()['superseded_undo_ops']`, `update()['undo_op_id']` o nelle righe del `retirement_log`… **il ping-pong finisce con ENTRAMBI i fatti**» | **FUNZIONA COME PROMESSO — ed è ciò che declassa il mio T-MAP-8** | riprodotto il braccio (A): `update` → ricevuta con `undo_op_id='cb7dcaa6e6304f87'`, `search` → `[]`; poi `undo(op)` → `{'ok': True, 'op_type': 'supersede', 'fact_id': '70d1e5e8ef56', 'action': 'restored'}` e `search` → di nuovo **1 risultato**, il fatto vero |
+| 76 | `audit_anchor` (2681) | «una ricevuta di ancoraggio **FIRMATA** su ENTRAMBE le catene (mutazioni + aggiudicazioni) — testa e numero di righe di ciascuna, un timestamp e una firma ed25519… archiviala fuori dalla macchina» | **FUNZIONA COME DICHIARATO sul ramo senza chiave; il ramo firmato NON MISURATO** | senza `VERIMEM_AUDIT_SIGNING_KEY`: `RuntimeError: VERIMEM_AUDIT_SIGNING_KEY is not configured — audit_anchor exists to SIGN a receipt; set it to the operator's ed25519 private PEM path (this never sil…)`. L'errore **dice cosa manca e perché la funzione non può fingere**: è il comportamento giusto. Il ramo con la chiave (firma valida, catene intatte, conteggi solo cresciuti) va provato generando una chiave: **prossimo giro** |
+| 77 | `audit_verify_anchor` (2711) | verifica una ricevuta firmata contro le catene vive e nomina quale controllo cade | **NON MISURATO** (dipende da 76) | non raggiunta: `audit_anchor` solleva prima. Scritto, non indovinato |
+| 78 | `decision_outcome` (2814) | «attacca alla decisione l'esito MISURATO — **richiede evidenza** (guard-rail), aggiorna solo il record, mai le fonti citate» | **FUNZIONA COME PROMESSO**, guard-rail incluso | senza `verified_by` → `TypeError: Memory.decision_outcome() missing 1 required keyword-only argument: 'verified_by'` (il guard-rail è nel **tipo**, non in un controllo a runtime che si può dimenticare); con `verified_by=['file:report-marzo.md']` → `True`, e `why_decision('Postgres')` restituisce il record con `outcome` |
+| 79 | `_decisions` (2581) / `_decisions_ro` (2594) / `_adjudication_log` (2604) / `_adjudication_log_ro` (2617) | DB gemelli pigri: «costruito alla prima SCRITTURA, così una lettura pura non crea il file» | **FUNZIONA COME PROMESSO** | dopo `record_decision` e una scrittura con `VERIMEM_AUDIT_LOG=1`: `decisions.db` → `True`, `adjudications.db` → `True`, entrambi accanto a `semantic.db` |
+| 80 | `_floor_file` (2847) / `_auto_relevance_floor` (2974) | il pavimento auto-calibrato «PERSISTITO e servito senza ricalcoli»; `rinfresca=True` forza la stima, «lo chiede chi ha il costo atteso, MAI una lettura» | **FUNZIONA COME PROMESSO** | prima della stima `a.db.floor.json` **non esiste**; `_auto_relevance_floor()` → `0.0` (store con 2 fatti) e **dopo** il file esiste: la persistenza è reale, non un attributo in memoria |
+| 81 | `_esiste_gia_identico` (239) | «c'è già un fatto SERVIBILE con questo identico testo in questo topic? **Uguaglianza esatta, non similarità**» | **FUNZIONA COME PROMESSO** (tutti e tre i lati) | stesso testo + stesso topic → `True` · stesso testo + altro topic → `False` (il topic è parte della chiave, come dichiara) · testo simile ma non identico (senza apostrofo e senza punto) → `False`: non fa il mestiere della similarità, che ha un altro strumento |
+| 82 | `_fact_view` (3784) | «un fatto come dict dell'SDK — **la STESSA superficie di provenienza ovunque** (audit mod.8: `get`/`get_all` non avevano i campi che `search` espone, così un chiamante perdeva `verified_by` appena rileggeva)» | **FUNZIONA COME PROMESSO** — controllo positivo eseguito | campi di `get_all()[0]` e di `search()[0]` confrontati: **identici**, tranne `score` che esiste solo nella search (ed è giusto: è il punteggio di quella query). `verified_by`, `source_signature`, `grounding_span`, `superseded_by`, `writer_principal` ci sono da entrambe le parti |
+| 83 | `_spiega_le_quarantene` (3320) | «ricalcola PERCHÉ ogni claim è stato fermato, **e come sbloccarlo**», perché il motivo esiste già nella riga solo quando l'audit trail è acceso «e in pratica non lo accende nessuno» | **FUNZIONA COME PROMESSO** | `quarantine_log(limit=5, explain=True)` → chiavi `['created_at','grounding_score','grounding_span','id','layers','proposition','quarantined_by','reason','status','topic']` e `reason` = «the judge found no support for this proposition in the source. If both say the SAME thing in a different FORM — a number…»: il motivo **e** la via d'uscita, senza audit trail acceso |
+| 84 | `persisti_chi_ha_quarantinato` (535) | «scrive la causa accanto al fatto. Rende Vero se ci è riuscita… se fallisce si perde la CAUSA, non il FATTO» | **FUNZIONA in scrittura; la porta `get` NON la serve** → da isolare nel prossimo giro | `persisti_chi_ha_quarantinato(db, id, 'L1')` → `True`, ma `get(id)['quarantined_by']` → `None`. E la spiegazione probabile è nella riga 82: **`quarantined_by` non è fra i campi di `_fact_view`** — `quarantine_log` lo espone, `get` no. Non lo chiamo ancora difetto: va confermato leggendo la riga nel DB, ed è il primo lavoro del prossimo giro |
+| 85 | `_content_pins` (2743) | «ricevute legate al contenuto: fa l'hash della porzione che ogni riferimento `file:` cita, al momento della scrittura. I riferimenti che non si riescono a leggere non contribuiscono» | **NON MISURATO — il mio riferimento era probabilmente malformato** | `_content_pins(['file:C:\\…\\contratto.txt'])` → `{}` **anche con il file esistente e leggibile**, e `['file:/non/esiste']` → `{}`. ⚠️ Due esiti uguali per due casi diversi: il mio `file:` con un path Windows contiene un secondo `:` (`C:`) e può non essere parsato. **Non è un ticket finché non provo la sintassi che il prodotto usa davvero** (nei test e negli esempi): è il caso in cui un controllo positivo mancante mi farebbe scrivere una falsità |
+| 86 | `_remote_cls` (279) | «hook di import pigro (monkeypatchabile nei test) per il client sottile» | **FUNZIONA COME PROMESSO** | `_remote_cls().__name__` → `RemoteMemory` |
+| 87 | `_audit_record` (2771) | «appende il verdetto della scrittura alla traccia opt-in (`VERIMEM_AUDIT_LOG`). **Non fa nulla quando è spenta**; non solleva mai — persistere un record di audit non deve mai rompere la scrittura che registra» | **FUNZIONA COME PROMESSO — su ENTRAMBI i lati** | `prova_audit_record.py`, due giri identici tranne la variabile. **OFF**: dopo due scritture `adjudications.db` **non esiste** (`False`) — l'opt-in è vero opt-in, non un file creato vuoto. **ON**: il file c'è, tabella `adjudications`, **2 righe** — `{'topic': 'ad/ok', 'disposition': 'admitted', 'proposition': "…5900 euro.", 'fact_id': '794a4e46d352', 'evidence_class': 'cross_encoder'}` e `{'topic': 'ad/ko', 'disposition': 'quarantined', …}`: **l'ammesso e il bloccato sono registrati entrambi**, con la proposizione per intero (che è anche la ragione per cui il default è OFF: è una scelta di conservazione dei dati) |
+
+## Le voci ancora scoperte — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -273,10 +306,23 @@ decrescenti.
   variabile, e il prodotto ha già una cronaca su questo (`il gate e i numeri
   italiani`).
 
-- 🔴🔴 **T-MAP-8 — CANDIDATO P0, riportato al lead prima di toccare qualsiasi
-  cosa** (Galileo, 08/09 22:48). **`Memory.update` con un testo che il gate
-  respinge ritira lo stesso il fatto vecchio: l'utente resta senza nessuno dei
-  due, e la ricevuta dice `stored: True`.**
+- 🟡 **T-MAP-8 — DECLASSATO DA CANDIDATO P0 A DIFETTO DI AVVISO, 23:00, e il
+  controllo che lo declassa l'ho fatto io** (Galileo, 08/09 22:48 → rettifica
+  23:00). **La perdita è REVERSIBILE e la maniglia sta nella ricevuta stessa**:
+  `update()` restituisce `undo_op_id`, e `undo(op)` →
+  `{'ok': True, 'op_type': 'supersede', 'action': 'restored'}` riporta il fatto
+  vero nella vista (`search` da `[]` di nuovo a 1 risultato). Quindi la mia
+  frase «l'utente resta senza nessuno dei due» era **sbagliata**: resta senza
+  finché non annulla, e ha di che annullare. Restano veri: il ritiro non è
+  condizionato all'ammissione del nuovo, e **nessun campo della ricevuta dice
+  che il vecchio è stato ritirato in favore di un fatto QUARANTINATO** — c'è
+  `status: quarantined`, c'è `supersedes`, c'è `undo_op_id`, ma la
+  *conseguenza* non è scritta da nessuna parte. È un difetto di avviso, non di
+  perdita. ⚠️ La lezione contro di me: avevo scritto «nessun campo nomina la
+  perdita» **senza aver stampato le chiavi della ricevuta**; le chiavi erano
+  `['adjudication','advice','grounding_score','id','moat','quarantined_by','replaced','status','stored','supersedes','undo_op_id','updated','warnings']`.
+  Un'assenza si prova guardando, non deducendo.
+  Il testo originale del ticket, che resta valido nella parte misurata:
   Misurato con due bracci, una variabile per volta (`prova_update_perde.py`):
   · **(A) testo non sostenuto dalla fonte** — `update(id, "…6100 euro")` →
   `status='quarantined'`, `warnings=['L3','L3-semantic']` (il gate riconosce la

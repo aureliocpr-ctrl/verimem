@@ -1,0 +1,47 @@
+=== 1. `undo` RIPARA il buco di T-MAP-8? (il controllo contro il mio ticket)
+  search prima: ["Il canone del capannone 12 e' 5900 euro."]
+  update -> status: quarantined | chiavi della ricevuta: ['adjudication', 'advice', 'grounding_score', 'id', 'moat', 'quarantined_by', 'replaced', 'status', 'stored', 'supersedes', 'undo_op_id', 'updated', 'warnings']
+  maniglia undo trovata nella ricevuta: cb7dcaa6e6304f87
+  search dopo update: []
+  undo(op) -> {'ok': 'True', 'op_id': 'cb7dcaa6e6304f87', 'op_type': 'supersede', 'fact_id': '70d1e5e8ef56', 'action': 'restored'}
+  search DOPO undo: ["Il canone del capannone 12 e' 5900 euro."]
+  >>> il fatto vero e' tornato: True
+
+=== 2. audit_anchor / audit_verify_anchor (la ricevuta FIRMATA)
+  ECCEZIONE: RuntimeError VERIMEM_AUDIT_SIGNING_KEY is not configured — audit_anchor exists to SIGN a receipt; set it to the operator's ed25519 private PEM path (this never sil
+
+=== 3. record_decision / decision_outcome / why_decision
+  record_decision -> 10ccb4ac598b481e
+  decision_outcome(senza verified_by) -> TypeError Memory.decision_outcome() missing 1 required keyword-only argument: 'verified_by'
+  decision_outcome(con verified_by) -> True
+  why_decision('Postgres') -> [{'id': '10ccb4ac598b481e', 'decision': "uso Postgres per l'analytics", 'topic': 'a/dec', 'alternatives': [], 'evidence': [], 'expected': '', 'outcome
+
+=== 4. i lazy sibling: _decisions, _adjudication_log, _floor_file
+  decisions.db         esiste dopo le scritture: True
+  adjudications.db     esiste dopo le scritture: True
+  _floor_file -> a.db.floor.json | esiste: False
+  _auto_relevance_floor() -> 0.0
+  _floor_file esiste dopo la stima: True
+
+=== 5. _esiste_gia_identico (uguaglianza esatta, non similarita')
+  identico stesso topic  : True
+  identico altro topic   : False
+  simile ma non identico : False
+
+=== 6. _fact_view: la STESSA superficie di provenienza ovunque
+  campi di get_all()[0]: ['asserted_at', 'confidence', 'confidence_tier', 'created_at', 'epistemic', 'grounding_score', 'grounding_span', 'id', 'source', 'source_signature', 'status', 'superseded_by', 'text', 'topic', 'verified_by', 'writer_principal']
+  campi di search()[0] : ['asserted_at', 'confidence', 'confidence_tier', 'created_at', 'epistemic', 'grounding_score', 'grounding_span', 'id', 'score', 'source', 'source_signature', 'status', 'superseded_by', 'text', 'topic', 'verified_by', 'writer_principal']
+  solo in get_all: [] | solo in search: ['score']
+
+=== 7. _spiega_le_quarantene (via quarantine_log(explain=True))
+  righe: 1 | chiavi della prima: ['created_at', 'grounding_score', 'grounding_span', 'id', 'layers', 'proposition', 'quarantined_by', 'reason', 'status', 'topic']
+  reason: the judge found no support for this proposition in the source. If both say the SAME thing in a different FORM — a number
+
+=== 8. _content_pins (le ricevute legate al CONTENUTO)
+  _content_pins(['file:contratto.txt']) -> {}
+  _content_pins(['file:/non/esiste']) -> {}
+
+=== 9. persisti_chi_ha_quarantinato e _remote_cls
+  persisti(db, id, 'L1') -> True
+  chi_ha_quarantinato ora nel fatto: None
+  _remote_cls() -> RemoteMemory

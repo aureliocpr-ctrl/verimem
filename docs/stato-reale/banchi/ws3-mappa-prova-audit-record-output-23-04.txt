@@ -1,0 +1,8 @@
+
+VERIMEM_AUDIT_LOG OFF -> adjudications.db esiste: False
+
+VERIMEM_AUDIT_LOG ON  -> adjudications.db esiste: True
+  tabelle: ['adjudications']
+  adjudications: 2 righe
+    {'id': '325abe1b769a4040', 'ts': '1788901518.204166', 'topic': 'ad/ok', 'disposition': 'admitted', 'proposition': "Il canone del capannone 12 e' 5900 euro.", 'fact_id': '794a4e46d352', 'evidence_class': 'cross_encoder'}
+    {'id': '672dc2f289fb4f03', 'ts': '1788901518.4690247', 'topic': 'ad/ko', 'disposition': 'quarantined', 'proposition': "Il canone del capannone 12 e' 7300 euro.", 'fact_id': 'e26085c174a4', 'evidence_class': 'cross_encoder'}
