@@ -39,6 +39,8 @@ ordina la coda.
 | `docs/sota/temporal-evolution-narrative.md` | **VIVO** | citato dal CHANGELOG col percorso giusto |
 | `docs/archive/2026-05-13_FORGIA.md` | **VIVO come archivio** | il CHANGELOG lo cita come `FORGIA.md` in voci di versioni passate (righe 1975, 2027): è stato spostato in `archive/` col prefisso della data |
 | `docs/archive/2026-05-13_RND_MEMORIE.md` | **VIVO come archivio** | stessa forma: spostato e rinominato, citato dal nome vecchio in voci storiche |
+| `docs/stato-reale/README.md` | **VIVO** — ed è già una mappa | indice del corpus (08/08), con una **nota datata dichiarata** in cima: «il numero qui sotto è invecchiato… 375 commit → 994», e la conclusione che *si rafforza* invece di cadere. Dichiara l'età invece di nasconderla |
+| `docs/stato-reale/ticket-sigsegv-hang-watchdog.md` | **VIVO** | dichiara la finestra della misura («2026-09-03 17:39 → 2026-09-04 19:54, ultimi 60 run») e conosce il seguito: alla riga 139 registra il `--deselect` entrato in `ci.yml`, che è alla riga 901 del workflow |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -79,6 +81,29 @@ il codice e non è morto: **è un rimando che non arriva**, e si cura con una ri
 🔎 Lezione per questa mappa: **il grep serve a trovare i candidati, mai a contarli.**
 Nove su dieci sarebbero stati un allarme falso consegnato come misura.
 
+
+## 🚨 Una mappa di questo corpus ESISTEVA GIÀ, e avverte delle trappole in cui sono caduto
+
+`docs/stato-reale/README.md` non è un documento qualunque: è **l'indice del corpus**,
+scritto il 26/08, e in cima porta tre avvertimenti che ho ritrovato stasera **sulla mia
+pelle invece che leggendoli**:
+
+> *«un criterio sintattico su una proprietà semantica sbaglia in **entrambe** le direzioni»*
+> — e ne dà i due casi, visti «nello stesso censimento, a un'ora di distanza»: un titolo
+> segnato «contiene un numero» perché `L4.1` ha dentro un 4 e un 1, e tre file dati per
+> «senza SHA» perché lo dichiaravano in un blocco intestato invece che fra backtick.
+
+> ⛔ *«**E aprite anche i casi che il righello non ha segnalato.**»*
+
+> ⛔ *«Un documento che ha per contenuto un'assenza fallisce ogni `grep` che cerchi una
+> presenza»* — l'esempio è `03-cose-spente.md`, che cita una variabile assente dal codice:
+> l'assenza **è il suo finding**, e marcarlo scaduto sarebbe stato l'errore.
+
+🔑 **I due allarmi falsi che ho fermato stasera sono la stessa forma, ed erano già scritti.**
+Non ho cercato in casa prima di partire: è la regola O1, e non l'ho applicata. Da qui in
+avanti questa mappa **continua quella**, non la rifà — e il prossimo giro apre i documenti
+che il mio righello **non** ha segnalato, come quella pagina chiede.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -94,6 +119,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 15 su 287.** Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 17 su 287.** Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
