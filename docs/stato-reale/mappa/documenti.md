@@ -174,6 +174,50 @@ verdetto giusto è *vivo, con un rimando rotto* — la stessa forma di `SECURITY
 cita come proprio disegno è vivo**, perché se muore il modulo resta senza spiegazione.
 Su 64 documenti di `docs/` alla radice, **10 sono agganciati così**.
 
+
+## 📐 `docs/sota/` — la cartella dove ogni documento ha il suo modulo
+
+**8 documenti su 9 sono agganciati uno a uno** al modulo che implementa la tecnica che
+descrivono. Il nono è l'indice della cartella.
+
+```
+  L0-L3-anti-confab-layers.md            <- verimem/l1_extended_detector.py
+  active-learning-bandit-vs-cron.md      <- verimem/dream_thompson_hook.py
+  community-detection-channel-pattern.md <- verimem/community_detector.py
+  cross-encoder-reranking.md             <- verimem/cross_encoder_rerank.py
+  embedding-compression.md               <- verimem/embedding_quantize.py
+  highway-nodes-pagerank-cache.md        <- verimem/betweenness_cache.py
+  multi-signal-fusion.md                 <- verimem/fuse_recall.py
+  temporal-evolution-narrative.md        <- verimem/snapshot_at_time.py
+  README.md                              <- (indice: il «<- gateway.py» era il falso
+                                             positivo del nome comune, verificato)
+```
+⇒ **VIVI tutti e nove.** È il modello di come una cartella di ricerca resta viva: ogni
+pagina ha un modulo che la cita, e ogni modulo ha una pagina che lo spiega.
+
+## 🧪 `docs/specs/` — e il settimo righello sbagliato, che era il più pericoloso
+
+Tre specifiche su otto sono agganciate per nome (`p1` ← `mcp_server.py`, `p2` ←
+`entity_kg.py`, `p2c` ← `openie.py`). Le altre cinque no — e stavo per chiamarle **piani
+mai realizzati**. Prima ho cercato **il contenuto invece del nome**:
+
+```
+  primo tentativo (grep -E con «\|» invece di «|» — sintassi mia sbagliata):
+     p2b-ppr-entity-neighbors    ->  NESSUN modulo con quei simboli
+     p3-self-model-multi-anchor  ->  NESSUN modulo con quei simboli
+
+  rifatto con l'alternanza giusta:
+     p2b-ppr-entity-neighbors    ->  verimem/ppr_seed.py · verimem/mcp_server.py
+     p3-self-model-multi-anchor  ->  verimem/self_model.py · self_model_refresh.py
+```
+⇒ **Sono implementate tutte e due.** Il documento non è citato dal codice, ma la cosa che
+descrive **esiste**: sono **VIVE**, non piani morti.
+
+🔑 **Settima lezione, e chiude il cerchio delle altre sei: il falso negativo di un grep è
+più pericoloso del falso positivo.** Un «NESSUNO» **non fa attrito** — sembra una
+risposta, non un errore — e lo si consegna senza controllarlo. Un falso positivo urta
+contro il primo documento che apri; un falso negativo resta invisibile per costruzione.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -189,6 +233,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 27 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 38 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
