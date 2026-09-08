@@ -1,0 +1,11 @@
+# Mappa di `verimem/briefing_by_project.py` — 3 righe, 131 righe di codice (lead, 09/09 02:40)
+
+Letto per intero. Prova sul checkout a `20257636` (il tip): `env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q <i 23 file di test che importano i dieci moduli del lotto E>` → `233 passed, 24 warnings in 145.12s`, EXIT=0 (lotto E: briefing_by_project, dentate_gyrus, embedding_quantize, entity_extract_lite, entity_populate, fact_contract, fact_type, failure_clusters, gate_router, graph_reasoning; per questo modulo `tests/test_briefing_by_project.py` e `tests/test_un_anello_rimosso_si_dichiara.py`). Chiamante letto: `verimem/mcp_server.py:14956-14964` (`hippo_briefing_by_project`). Aggrega `project/<nome>/*` via `SemanticMemory.summary_topic(include_lineage=True)`, gli episodi della lineage e le catene di supersessione, con un riassunto deterministico in italiano. Claim README: nessuna riga.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/briefing_by_project.py:24` `_safe_get_episode` | un episodio per id da qualunque memoria duck-typed; assente o eccezione → None | `briefing_by_project` (101) | via i test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 233 passed |
+| 2 | `verimem/briefing_by_project.py:47` `_render_summary` | una riga: fatti attivi, obsoleti, sub-topic, episodi, catene | `briefing_by_project` (107) | via i test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 233 passed |
+| 3 | `verimem/briefing_by_project.py:70` `briefing_by_project` | il payload del progetto: conteggi, topic visti, fatti (tetto `max_facts`), episodi collegati (i più recenti, tetto `n_episodes`), catene, riassunto | `verimem/mcp_server.py:14964` (`hippo_briefing_by_project`) | `tests/test_briefing_by_project.py`, `tests/test_un_anello_rimosso_si_dichiara.py` | - | FUNZIONA COME PROMESSO | pytest 233 passed |
+
+Reperti: (a) gli id di episodi non recuperabili sono «silently dropped» (dichiarato, riga 97-98): il conteggio `n_episodes` del riassunto è quello dei trovati, non della lineage; (b) dipende dalla convenzione `project/<nome>/*`: i topic canonici con scope (`user:<u>/…/project/…`) non entrano nel glob (letto, non misurato). Nessun P0.

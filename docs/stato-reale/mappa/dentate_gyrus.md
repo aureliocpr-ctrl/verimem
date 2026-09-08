@@ -1,0 +1,11 @@
+# Mappa di `verimem/dentate_gyrus.py` — 3 righe, 104 righe di codice (lead, 09/09 02:42)
+
+Letto per intero. Prova: pytest del lotto E sul tip `20257636` (`233 passed in 145.12s`, EXIT=0, con `tests/test_dentate_gyrus.py` e `tests/test_dg_cabling.py`). Chiamanti letti: `verimem/memory.py:48` (import di entrambe), `:187` (`build_dg_projection` alla costruzione della memoria episodica), `dg_encode` in `memory.py` (+9 punti) e `config.py:233`; `scripts/bench_dg_cabling.py`, `scripts/flip_e5.py`. La bozza attribuiva a `_normalize` chiamanti in `hippo_pagerank.py`: **falso positivo del nome**. Il docstring dice «cabling it into the EpisodicMemory pipeline is a separate pezzo (#11.5+)»: **è già cablato** (`memory.py:48,187`, `test_dg_cabling.py`): docstring vecchio nel verso opposto al solito. Claim README: nessuna riga (grep su «dentate» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/dentate_gyrus.py:42` `_normalize` | norma 1, invariato se norma 0 | `dg_encode` (101) | via i test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 233 passed |
+| 2 | `verimem/dentate_gyrus.py:47` `build_dg_projection` | `W ∈ R^{d_expand×d_in}` gaussiana scalata `1/√d_in`, deterministica dal seme (la persistenza è il seme, non il disco) | `verimem/memory.py:187` | `tests/test_dentate_gyrus.py`, `tests/test_dg_cabling.py` | - | FUNZIONA COME PROMESSO | pytest 233 passed |
+| 3 | `verimem/dentate_gyrus.py:68` `dg_encode` | espansione `W@e`, k-WTA sul modulo (positivi e negativi), norma 1; `k` bloccato in [1, d_expand]; zero → zero | `verimem/memory.py` (encode-on-store ed encode-on-recall), `verimem/config.py:233` | `tests/test_dentate_gyrus.py`, `tests/test_dg_backfill_batched.py`, `tests/test_dg_cabling.py` | - | FUNZIONA COME PROMESSO | pytest 233 passed |
+
+Reperti: (a) la promessa di prodotto («5 risultati quasi identici → 1 rappresentante + 4 distinti») è nel docstring e non ha una misura citata qui: se il cablaggio migliora la varietà del recall è da leggere nella mappa di `memory.py` (ws5); (b) il seme fisso come «storia di persistenza»: cambiare `d_expand` o il seme rende incomparabili gli episodi codificati prima (dichiarato). Nessun P0.
