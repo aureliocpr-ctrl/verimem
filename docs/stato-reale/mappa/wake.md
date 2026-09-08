@@ -41,6 +41,10 @@ costruzione**, trovata in un rescan.
 percorsi era sbagliato, mancava il controllo **dove si incontravano**. Vale la pena cercarla
 altrove: **ogni fast-path è un candidato**.
 
+✅ **E oggi è CHIUSA** — la guardia del macro è chiamata a `1146`, quella del loop a `1444`,
+e il fast-path deterministico è **uno solo**: la verifica sta nel §7. Questo paragrafo
+racconta il difetto **storico**, non uno aperto.
+
 ---
 
 ## 3. Il file ha UNA superficie sola per tutto — e il mio sospetto contrario era sbagliato
