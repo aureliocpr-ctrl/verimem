@@ -1,55 +1,55 @@
-# `verimem/hooks/` — un consumatore scritto per curare del codice morto, e mai collegato
+# `verimem/hooks/` — l'hook È collegato, e il primo verdetto che avevo scritto era sbagliato
 
-**2 file, 320 righe**: `__init__.py`, `pre_tool_use.py`.
+**2 file, 320 righe**: `__init__.py` (44), `pre_tool_use.py` (276+).
+
+> 🔻 **CORREZIONE.** La prima versione di questa pagina diceva «non raggiungibile
+> per le vie che ho controllato» e sospettava codice orfano. **È falso**, e il
+> file che lo smentiva era nello stesso pacchetto: `hooks/__init__.py`, che non
+> avevo aperto.
 
 ## Cosa fa
 
 `pre_tool_use.py` è un **hook `PreToolUse` di Claude Code**: legge il payload JSON
-su stdin, ne estrae il testo del sotto-obiettivo, chiama
-`verimem.proactive_step_injector.StepInjector.inject` sullo store semantico locale
-e scrive su stdout un banner `<engram-step-recall>…</engram-step-recall>`, così
-l'LLM ospite vede i fatti rilevanti **prima** che lo strumento parta. Punto di
-ingresso: `main_stdin_stdout` (riga 276). Fail-soft dichiarato in tutto.
+su stdin, estrae il testo del sotto-obiettivo, chiama
+`verimem.proactive_step_injector.StepInjector.inject` sullo store locale e scrive
+su stdout un banner `<engram-step-recall>…</engram-step-recall>`, così l'LLM ospite
+vede i fatti rilevanti **prima** che lo strumento parta. Fail-soft ovunque.
 
-## 🔴 Perché esiste — e perché è il punto
-
-Dal suo stesso docstring:
-
-> *«Cycle 169 (2026-05-20) — PreToolUse hook that consumes StepInjector. Closes
-> the cycle-168 critic finding from PR #108 (**"StepInjector dead code = no MCP
-> wrapper / no consumer"**)»*
-
-⇒ È stato scritto **per dare un consumatore a del codice che non ne aveva**.
-
-## È raggiungibile dal prodotto? **Per le vie che ho controllato, NO**
+## È raggiungibile dal prodotto? **SÌ — e la catena è questa**
 
 ```
-  git grep 'verimem.hooks|from .hooks' -- verimem/     ->  NESSUN file fuori da hooks/
-  git grep 'pre_tool_use' -- *.json *.toml *.yml *.sh  ->  nulla (esclusi i docs)
-  pyproject.toml [project.scripts]                     ->  verimem · engram · hippo,
-                                                           tutti e tre = verimem.cli:main
-  chi importa StepInjector, in verimem/:
-      verimem/hooks/__init__.py
-      verimem/hooks/pre_tool_use.py
-      verimem/proactive_step_injector.py     (il modulo stesso)
-  chi lo importa nei test: 2 file
+  .claude/hooks/hippo_pre_tool_use.py:60   from engram.hooks.pre_tool_use import main_stdin_stdout
+  .claude/hooks/hippo_pre_tool_use.py:64   return main_stdin_stdout()
+
+  python -c "import engram.hooks.pre_tool_use"
+    IMPORTABILE:  …\HippoAgent\verimem\hooks\pre_tool_use.py
+    ha main_stdin_stdout: True
 ```
+`engram/` è un **alias** di `verimem/` (il rename del 2026-07-06 ha lasciato il
+nome vecchio importabile), quindi il wrapper arriva davvero al modulo. Lo script
+wrapper **è dentro questo repository**, non in una configurazione esterna.
 
-🔑 **La catena si chiude in sé.** `proactive_step_injector.py` era codice morto; per
-curarlo è stato scritto l'hook che lo consuma; **l'hook non è agganciato a niente** —
-nessun import dal prodotto, nessun entry point, nessuna configurazione che lo invochi.
-**Il consumatore è morto quanto il consumato**, e il finding del critic è stato chiuso
-scrivendo codice invece che collegandolo.
+## 🪞 Perché mi ero sbagliato, e cosa cambia nel metodo
 
-⚠️ **Quello che NON ho fatto**: non l'ho eseguito. Dico «non raggiungibile per le vie
-che ho controllato», e le vie sono elencate qui sopra. Se qualcuno lo lancia da un
-`settings.json` fuori dal repo — la forma in cui gli hook di Claude Code si
-configurano davvero — quella configurazione **non sta in questo repository** e il
-pacchetto pubblicato non la porta.
+Avevo cercato il consumatore in `*.json`, `*.toml`, `*.yml`, `*.sh` — **e non nei
+`.py` sotto `.claude/`**, che è esattamente dove gli hook di Claude Code vivono.
+E `hooks/__init__.py` lo dice in chiaro:
 
-## Cosa ne consegue
+> *«Each submodule exposes a CLI-shaped `main_stdin_stdout(stdin, stdout)` that
+> **`.claude/hooks/*.py` wrapper scripts** can call…»*
 
-Non è una proposta di cancellarlo: è un **modulo senza consumatore dichiarato**. Le
-strade sono due e vanno decise da chi lo tiene — **collegarlo** (un entry point, o la
-riga di configurazione documentata nel README) **oppure dichiararlo esplicitamente
-come esempio**, così chi lo trova sa che non gira.
+**Avevo letto `pre_tool_use.py` e non `__init__.py`**: il file che rispondeva alla
+mia domanda era l'unico dei due che non avevo aperto.
+🔑 **Regola per il resto di questa mappa**: prima di dire «nessuno lo chiama»,
+**leggere l'`__init__.py` del pacchetto** — è lì che un package dichiara come lo si
+usa — e cercare i consumatori **anche fra i `.py` di configurazione**, non solo nei
+formati di configurazione.
+
+## Quello che resta vero del primo verdetto
+
+Il modulo nasce per **dare un consumatore a del codice che non ne aveva**: il suo
+docstring cita il finding «*StepInjector dead code = no MCP wrapper / no consumer*».
+E il wrapper `.claude/hooks/hippo_pre_tool_use.py` ha un `except ImportError:
+return 0` — **fallisce in silenzio** se il package non è sul path. Quella riga è
+scritta apposta, ma vuol dire che l'hook **può non fare niente senza dirlo**: è la
+stessa forma di T26a, dove una scrittura non giudicata non lo dichiara.
