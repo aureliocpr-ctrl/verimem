@@ -41,6 +41,9 @@ ordina la coda.
 | `docs/archive/2026-05-13_RND_MEMORIE.md` | **VIVO come archivio** | stessa forma: spostato e rinominato, citato dal nome vecchio in voci storiche |
 | `docs/stato-reale/README.md` | **VIVO** — ed è già una mappa | indice del corpus (08/08), con una **nota datata dichiarata** in cima: «il numero qui sotto è invecchiato… 375 commit → 994», e la conclusione che *si rafforza* invece di cadere. Dichiara l'età invece di nasconderla |
 | `docs/stato-reale/ticket-sigsegv-hang-watchdog.md` | **VIVO** | dichiara la finestra della misura («2026-09-03 17:39 → 2026-09-04 19:54, ultimi 60 run») e conosce il seguito: alla riga 139 registra il `--deselect` entrato in `ci.yml`, che è alla riga 901 del workflow |
+| `docs/stato-reale/03-cose-spente.md` | **VIVO** | dichiara in testa `SHA: 544d27bd`, i comandi per rifare le misure, il verdetto e **la copertura** («64 interruttori su 151, 42%»), e scrive «dove non ho eseguito c'è **NON VERIFICATO**». È il modello di come si scrive una misura |
+| `docs/stato-reale/23-quanto-spesso-L4-1-ha-ragione.md` | **VIVO** | riga 3: «ws6 · **30/08 ore 16:20** · store in `mode=ro`, sole SELECT». Chiude un limite che il documento 22 aveva **dichiarato** invece di nascondere |
+| `docs/stato-reale/39-le-finestre-cieche-della-memoria.md` | **VIVO** | «ws6/Aldo — **30/08, sera**. Perimetro: archivio, memoria, corpus, quarantena»: dichiara data e perimetro |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -104,6 +107,34 @@ Non ho cercato in casa prima di partire: è la regola O1, e non l'ho applicata. 
 avanti questa mappa **continua quella**, non la rifà — e il prossimo giro apre i documenti
 che il mio righello **non** ha segnalato, come quella pagina chiede.
 
+
+## 🔍 La zona cieca, aperta — e non era cieca
+
+L'indice del corpus chiede di **aprire i casi che il righello non ha segnalato**. In
+`docs/stato-reale/` sono **62**: nessun path rotto, nessuno che li citi.
+
+Ho cercato quelli che **non dichiarano né SHA né data in testa** — perché una misura
+senza data letta come attuale è la forma più dannosa in questa cartella. Primo giro:
+**24**. Ne ho letti due, e **tutti e due la dichiaravano nella seconda riga**:
+«ws6 · **30/08** ore 16:20», «ws6/Aldo — **30/08**, sera». Il mio regex conosceva
+`2026-08-30` e non `30/08` — **il formato che questa casa usa davvero**.
+
+```
+  PRIMA (regex senza «30/08»):  38 con data · 24 senza
+  DOPO  (formato di casa):      62 con data ·  0 senza
+  controllo positivo: un testo senza alcuna data risulta «senza»  ✅
+```
+
+⇒ **62 documenti su 62 dichiarano quando sono stati scritti.** La classe più grossa di
+`stato-reale/` non inganna sul tempo: si legge come fotografia, e la fotografia porta la
+sua data.
+⚠️ **Dichiarare la data non è essere veri**: dice solo che il documento non si spaccia per
+attuale. Il verdetto su ciascuno resta da dare leggendolo.
+
+🪞 **Terzo criterio mio sbagliato in un'ora** — e stavolta l'avviso era scritto nero su
+bianco nell'indice del corpus: *«un criterio sintattico su una proprietà semantica sbaglia
+in entrambe le direzioni»*. L'ho verificato inciampandoci invece che leggendolo.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -119,6 +150,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 17 su 287.** Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 20 su 287.** Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
