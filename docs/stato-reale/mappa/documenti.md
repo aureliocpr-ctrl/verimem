@@ -64,6 +64,7 @@ ordina la coda.
 | `docs/stato-reale/15-la-banda-decide-e-nessuno-decide-la-banda.md` | **VIVO** | 29/08 00:45-01:44, **SHA per cella** nel registro: non uno SHA per il documento, uno per ogni misura |
 | `docs/stato-reale/21-le-due-porte-gemelle-non-si-somigliano.md` | **VIVO** | ws6, 30/08 15:10, misure alla porta MCP sullo store reale in sola lettura |
 | `docs/stato-reale/25-tre-ordinamenti-a-confronto-e-nessuno-domina.md` | **VIVO** | ws6, 30/08 18:10, corpus servibile **12.429**, `mode=ro`, sole SELECT |
+| `docs/stato-reale/48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md` | **VIVO — ed è T26a *e* T29, scritti il 30/08** | ws6/Aldo, 30/08 notte. Il titolo per intero: *«Ventitré minuti senza daemon hanno spento una promessa del README, **e resterà spenta**»*. La prima metà è T26a (daemon assente → promessa spenta), la seconda è **T29** (non si sana). Entrambi diventeranno ticket **a settembre** |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -337,6 +338,36 @@ decorativi. `12` dichiara il suo come *«= il `build=` stampato nei log»* — c
 uno per documento. Chi ha scritto queste pagine sapeva che un numero senza il suo istante
 non vale.
 
+
+## 🔗 La catena completa: CINQUE documenti prima del ticket
+
+Cercando i titoli che parlano di **silenzio** e di **daemon**, la catena di T26a si allunga
+da tre a cinque, e comprende anche **T29**:
+
+```
+  08/08   02i   «i fatti dei primi minuti restano non verificati PER SEMPRE»
+  30/08   39    «le finestre cieche della memoria: ventitré minuti, cinquantaquattro fatti»
+  30/08   48    «ventitré minuti senza daemon hanno spento una promessa del README,
+                 E RESTERÀ SPENTA»          <- T26a nella prima metà, T29 nella seconda
+  30/08   21    «le due porte gemelle non si somigliano, e QUELLA SBAGLIATA TACE»
+  09/26   T26a e T29, aperti come ticket
+```
+
+🔑 **`48` è il documento che li contiene tutti e due, e ha quasi un mese più del ticket.**
+La frase «e resterà spenta» è T29 — *il giudizio mancante non si sana* — scritta il 30
+agosto in un titolo.
+
+⇒ **Questo è il filone che rende, e non è «quali documenti sono morti».** È: **le misure
+c'erano, sparse in cinque pagine, e nessuno le aveva messe in fila.** Un indice per
+*difetto* — non per data, non per autore — le avrebbe fatte incontrare, e la 0.7.6 non
+sarebbe uscita con dentro un difetto che tre documenti avevano già descritto.
+
+📌 **Altri titoli della stessa famiglia, ancora da leggere**:
+`31-la-porta-dei-documenti-dice-quello-che-quella-dei-fatti-tace` ·
+`38-il-regime-lo-dice-alla-risposta-e-lo-tace-alla-telemetria` ·
+`70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente`. **La forma «qualcosa tace» è
+ricorrente in questo corpus**, e vale la pena contarla per intero.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -352,6 +383,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 52 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 53 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
