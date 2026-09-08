@@ -48,3 +48,73 @@ verdetto poggia sull'esecuzione, non su un'asserzione sul loro
 comportamento: chi vuole di più deve rompere la riga e guardare chi
 si accende. **Non l'ho fatto per queste**, e lo scrivo.
 
+
+---
+
+## Il banco nel merito: la promessa «il numero non lusinga mai il negozio»
+
+Il docstring di `aurc` dichiara:
+
+> «**Tie-conservative**: within a confidence tie the WRONG answers rank first,
+> so **the number never flatters the store**.»
+
+È l'immunizzazione dichiarata contro la classe che questa squadra ha in memoria
+dal 06/09 — *il righello che sbaglia a favore di chi lo usa*. Un modulo di
+metriche che se ne dichiara immune va provato **proprio su quella**, perché è la
+promessa che nessuno controlla: un numero che ci dà ragione non fa attrito.
+
+```
+── (1) la parità di confidenza non deve lusingare ──
+AURC su 10 record TUTTI a confidenza 0.5 (5 giusti, 5 sbagliati)   0.8228
+AURC sullo stesso insieme ordinato A FAVORE                        0.1772
+la parità NON è più lusinghiera dell'ordine perfetto               True
+
+── (3) il controllo che il numero non sia costante ──
+perfetto 0.1772  ·  parità 0.8228  ·  pessimo 0.8228
+e_aurc con l'ordine perfetto è ~0 (eccesso sull'oracolo)           True
+```
+
+⇒ **la promessa regge nel modo più forte possibile**: in caso di parità il
+numero è **identico al caso pessimo** (0.8228). Il modulo non «attenua» la
+parità: assume il peggio. E il controllo (3) prova che il numero si muove
+davvero — senza, un `aurc` costante avrebbe passato la prima prova.
+
+## Le quattro righe che nessun test esegue: i casi degeneri
+
+```
+selective_risk_coverage([]) → (None, 0.0)        [riga  50]   ✅
+aurc([])                    → 0.0                [riga  71]   ✅
+e_aurc([])                  → 0.0                [riga  88]   ✅
+isotonic_fit([])            → prior neutro 0.5   [riga 138]   ✅
+```
+
+## Il punto operativo λ — e un mio controllo sbagliato, tenuto qui perché insegna
+
+`tce_at_lambda([(0.1, True), (0.1, False)], lam=9.0)`: soglia 0.9, nessuna
+risposta supera, **copertura 0.0**.
+
+Il mio primo controllo cercava un campo `operable` e riceveva `None`. **Il campo
+non esiste**: `.get()` su una chiave assente torna `None`, che *sembra* una
+risposta ed è il silenzio di un dizionario. Letta la funzione, il modulo fa una
+cosa migliore di un booleano:
+
+```
+sla_met        is None   ← «non valutabile», NON «bocciato»
+observed_risk  is None
+tce            is None
+sla_target_risk = 0.1    ← ma il bersaglio dichiarato 1/(1+λ) resta scritto
+```
+
+⇒ **distingue «bocciato» (`False`) da «non valutabile» (`None`)**, che è
+esattamente la distinzione «stato assente / stato ignoto» su cui @ws3 Galileo
+sta lavorando oggi. Il docstring lo dice con precisione: *«zero coverage →
+observed/tce/sla_met are None: the operating point is INOPERABLE with these
+scores — **declared, never scored as a pass**»*.
+
+🔑 **La lezione è mia, non del modulo**: `dizionario.get("chiave_che_non_esiste")`
+restituisce `None` senza distinguerlo da un `None` vero. In un banco, usare
+`.get()` per un controllo significa non poter distinguere «il valore è sbagliato»
+da «non ho letto l'API». La forma giusta è l'accesso diretto (`t["sla_met"]`),
+che **solleva** invece di mentire.
+
+Banco: `<scratchpad>/banco_selective_metrics.py`, 13 asserzioni, EXIT=0.
