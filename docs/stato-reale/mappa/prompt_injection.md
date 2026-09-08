@@ -85,6 +85,18 @@ che potevano smentirmi:
 B e C sono la parte che conta: senza, «A viene fermata» direbbe solo che il
 detector è severo, non che **discrimina**.
 
+⚠️ **Correzione sul metodo, non sull'esito.** La prima volta ho eseguito questo
+banco con `python <scratchpad>/ramo_exfil_debole.py`, e uno script lanciato dalla
+scratchpad importa `verimem` da **`C:/Users/aurel/Code/HippoAgent`**, non da
+questo worktree: `sys.path[0]` è la cartella dello script, la scratchpad non
+contiene `verimem/`, quindi Python scende ai site-packages. **Quel banco non
+misurava l'albero dichiarato in cima al documento.** Rifatto con `PYTHONPATH=.`
+dal worktree: **esito identico** (A fermata, B e C passano) — la conclusione
+regge, la prova ora è dell'albero giusto.
+
+🔑 Vale per chiunque tenga banchi nella scratchpad: `cd <worktree> && python
+<scratchpad>/banco.py` **non misura il worktree**.
+
 ## Che cosa resta NON MISURATO su questo file
 
 - **`_script_of` righe 256-257** (`except ValueError`) e **`_has_mixed_script_token`
