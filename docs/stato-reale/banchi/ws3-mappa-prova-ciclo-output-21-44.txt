@@ -1,0 +1,27 @@
+IMPORT DA C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\__init__.py
+2026-09-08T21:44:25.420673 [info     ] flow.write                     build=f71c4832 fact_id=d5d16fe1fcd0 grounding_score=99.67333984375 judged=True layers=[] run=c11394df status=model_claim store=b42a7895c969 stored=True surface=unknown topic=mappa/ciclo withheld_despite_judge=False
+add -> model_claim d5d16fe1fcd0
+
+--- get(id): dict  {'id': 'd5d16fe1fcd0', 'text': "Il canone del capannone 12 e' 5900 euro.", 'status': 'model_claim', 'grounding_score': 99.67333984375, 'topic': 'mappa/ciclo', 'asserted_at': None, 
+
+--- count(): int  1
+
+--- topics(): ECCEZIONE AttributeError: 'Memory' object has no attribute 'topics'
+
+--- recent(k=3): str  ASSENTE
+
+--- stats(): str  ASSENTE
+
+--- health(): str  ASSENTE
+
+--- open_memory(): apre lo store condiviso da CLI/MCP/SDK?
+   tipo: Memory · stesso oggetto di Memory()? True
+
+--- forget/delete: come si toglie un fatto?
+   Memory.forget: PRESENTE
+   Memory.delete: PRESENTE
+   Memory.fact_forget: ASSENTE
+   Memory.remove: ASSENTE
+2026-09-08T21:44:25.523792 [info     ] flow.forget                    action=delete build=f71c4832 fact_id=d5d16fe1fcd0 run=c11394df store=67712a7ceb5e surface=unknown undoable=False
+   forget(id) -> True
+   get(id) dopo forget -> None

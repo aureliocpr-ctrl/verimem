@@ -11,10 +11,11 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 14 righe misurate su 80 · 7 claim del README collegati · i
+**Contatore**: 18 righe misurate su 80 · 8 claim del README collegati · i
 chiamanti delle tre porte per `add` e `search` **letti con la riga** (20:59) ·
-2 ticket aperti (T-MAP-1, T-MAP-2) · 2 righe dove **ho sbagliato io la
-chiamata** e l'ho scritto (11, 12).
+3 ticket aperti (T-MAP-1, T-MAP-2, T-MAP-3) · 3 righe dove **ho sbagliato io la
+chiamata o l'ipotesi** e l'ho scritto (11, 12, 18). Prove eseguite sul tip
+`20257636`.
 
 | # | funzione (file:riga) | cosa promette | chiamata da (letto) | test che la esercita | claim README (riga) | verdetto | prova (comando e esito) |
 |---|---|---|---|---|---|---|---|
@@ -35,7 +36,12 @@ chiamata** e l'ho scritto (11, 12).
 | 13 | `Memory.audit_log` / `audit_verify` / `audit_head` (2627, 2643, 2653) | «The opt-in per-write audit trail (`VERIMEM_AUDIT_LOG`) … **Empty when auditing was never enabled**» | (da leggere) | (da leggere) | — | **FUNZIONA COME PROMESSO (e il default è: nessun audit)** | stessa esecuzione, store nuovo senza la variabile: `audit_log()` → `[]`, `audit_verify()` → `None`, `audit_head()` → `None`. Il docstring lo dichiara; per l'utente significa che **di default la traccia di audit non esiste**, e questa è una riga da tenere accanto ai claim di verificabilità |
 | 14 | `Risultati` (client.py:326) + `sotto_il_pavimento` / `trattenuti` | il contenitore delle letture che porta il pavimento di rilevanza e il conto dei fatti trattenuti dal gate | `search` | (da leggere) | README (MCP «SERVES the results and flags them») | **FUNZIONA COME PROMESSO, ed è il pezzo che il prodotto vende** | stessa esecuzione: `search("canone capannone")` → `Risultati` len 1, `sotto_il_pavimento={'pavimento': 0.8975, 'score_migliore': 0.8566, 'tagliati': 0, 'nota': "…probabilmente la risposta NON e' in memoria. I risultati sono qui sotto, non tagliati — decidi tu."}`, `trattenuti={'quanti': 1, 'nota': "1 fatto/i … TRATTENUTI dal gate … non ti vengono serviti come veri."}` — il fatto quarantinato non è servito **ed è contato e spiegato** |
 
-## Le altre 66 voci — `NON MISURATO`, elencate per non perderle
+| 15 | `Memory.get` (client.py) | legge un fatto per id | (da leggere) | (da leggere) | — | **FUNZIONA COME PROMESSO** | `prova_ciclo.py` 08/09 21:44 sul tip 20257636: `get(id)` → dict con `id`, `text`, `status='model_claim'`, `grounding_score=99.673`, `topic`, `asserted_at` |
+| 16 | `Memory.forget` / `Memory.delete` (client.py) | tolgono un fatto | (da leggere) | (da leggere) | — | **FUNZIONA COME PROMESSO, ma il log nomina lo store sbagliato** → ticket **T-MAP-3** | stessa esecuzione: `forget(id)` → `True`, e `get(id)` subito dopo → `None`: il fatto è tolto dal db giusto (il temporaneo). ⚠️ Ma la riga di log dice `flow.forget … store=67712a7ceb5e`, mentre `add` sullo **stesso oggetto `Memory`** aveva loggato `store=b42a7895c969`: il forget riporta l'id dello store risolto dal DATA_DIR globale, non quello del path esplicito su cui ha operato. **Verificato che non ho toccato lo store di casa**: 0 righe con quell'id, 0 col topic, mtime del db fermo alle 19:40 mentre la prova è delle 21:44 |
+| 17 | `open_memory` (client.py:285) | apre lo store condiviso da CLI, MCP e SDK | (da leggere) | (da leggere) | README:428 («all three surfaces open the SAME store») | **FUNZIONA COME PROMESSO** | stessa esecuzione: `open_memory()` → un `Memory`, `isinstance(m2, Memory)` → True |
+| 18 | `Memory.topics` / `recent` / `stats` / `health` | — | — | — | — | **NON ESISTONO su `Memory`** (e non è un difetto: nessun documento li promette) | stessa esecuzione: `topics()` → `AttributeError: 'Memory' object has no attribute 'topics'`; `recent`, `stats`, `health` → `hasattr` False. ⚠️ **Li ho chiamati per ipotesi mia**, non perché un claim li nominasse: la riga resta per dire che l'SDK **non** ha un'introspezione dello store (la CLI ha `doctor`, l'SDK no), e perché un lettore della mappa non li cerchi |
+
+## Le altre 62 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -66,3 +72,11 @@ decrescenti.
   termini («elenca tutto sul capannone» → termini `tutto sul capannone` → 0).
   Confinato al router di intento (`query_intent.content_terms`); `FIND` e
   `COUNT` sulla stessa domanda funzionano. **Non curato**: mappa, non cure.
+- **T-MAP-3** (owner Galileo, 08/09 21:44) — `Memory.forget` opera sul db
+  giusto ma **logga un altro store**: `flow.forget … store=67712a7ceb5e`
+  mentre `add`, sullo stesso oggetto `Memory` costruito con un path esplicito,
+  logga `store=b42a7895c969`. Chi legge i log per sapere *dove* è stata
+  cancellata una cosa legge l'id sbagliato — e su una cancellazione è il log
+  che resta. Stessa radice di T-MAP-1 (la risoluzione del DATA_DIR ignora il
+  path esplicito nelle superfici che *riferiscono*), lato scrittura del log.
+  Verificato nella stessa esecuzione che lo store di casa non è stato toccato.
