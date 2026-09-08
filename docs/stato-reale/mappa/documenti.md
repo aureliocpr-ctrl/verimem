@@ -59,6 +59,11 @@ ordina la coda.
 | `docs/stato-reale/02i-i-fatti-dei-primi-minuti-restano-non-verificati.md` | **VIVO** | SHA `332a2f73`, `git status` pulito, HOME fredda, cache vuota. Completa un passo che `02g` **dichiarava non fatto**: i documenti si passano il testimone sui limiti dichiarati |
 | `docs/stato-reale/02l-l-astensione-e-spenta-nel-pacchetto.md` | **VIVO** | SHA, ora, store fresco per ogni braccio, zero variabili. E si apre con *«🔴 **Correggo una mia tesi di due ore fa**»*: l'autocorrezione è nel documento, non in un altro file |
 | `docs/stato-reale/17-la-ricerca-ordina-per-data-non-per-pertinenza.md` | **VIVO** | 30/08, corpus reale in `mode=ro` (15.578 fatti alle 12:25). Riporta **verbatim la domanda di Aurelio** come criterio con cui giudicarlo. ⚠️ Il difetto che descrive **non risulta curato**: cercando fra i commit dal 30/08 termini come «ordin/pertinen/relevance» non ho trovato la cura — *cercato, non provato eseguendo* |
+| `docs/stato-reale/11-la-quantita-vaga-non-viene-confrontata.md` | **VIVO** | ws4, 27/08 fra le 18:30 e le 19:10, con il perimetro delle celle dichiarato |
+| `docs/stato-reale/12-il-rimedio-del-caso-difficile-non-arriva.md` | **VIVO** | 27/08 20:37-21:12, SHA `6cbeb283` — e lo dichiara come *«= il `build=` stampato nei log»*: **lo SHA è quello che il prodotto stesso stampa**, non uno copiato a mano |
+| `docs/stato-reale/15-la-banda-decide-e-nessuno-decide-la-banda.md` | **VIVO** | 29/08 00:45-01:44, **SHA per cella** nel registro: non uno SHA per il documento, uno per ogni misura |
+| `docs/stato-reale/21-le-due-porte-gemelle-non-si-somigliano.md` | **VIVO** | ws6, 30/08 15:10, misure alla porta MCP sullo store reale in sola lettura |
+| `docs/stato-reale/25-tre-ordinamenti-a-confronto-e-nessuno-domina.md` | **VIVO** | ws6, 30/08 18:10, corpus servibile **12.429**, `mode=ro`, sole SELECT |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -310,6 +315,28 @@ Il ticket è nato a settembre; **la misura c'era da un mese**.
 nessuno l'aveva collegato. Non è un documento morto: è un documento **che aveva ragione
 presto**, e la mappa serve anche a questo — a far trovare la misura che c'era già.
 
+
+## 📢 «Una porta che tace» è stata misurata TRE volte prima di diventare un ticket
+
+```
+  08/08  02i   «i fatti dei primi minuti restano non verificati PER SEMPRE»
+  30/08  21    «le due porte gemelle non si somigliano, e QUELLA SBAGLIATA TACE»
+  09/26  T26a  la porta MCP delega: se il daemon non c'è, la scrittura entra non
+               giudicata IN SILENZIO
+```
+Tre documenti, tre date, **la stessa forma**: una porta che non dice quello che non ha
+fatto. Il ticket è arrivato per ultimo.
+
+⇒ Non è che mancasse la misura: **mancava il filo che le lega**. È il valore che questa
+mappa può aggiungere al contratto — non «quali documenti sono morti», ma **quali misure
+dicevano già la stessa cosa e nessuno le ha messe in fila**.
+
+🔍 **E una cosa sulla qualità del corpus**, misurata leggendo: gli SHA qui non sono
+decorativi. `12` dichiara il suo come *«= il `build=` stampato nei log»* — cioè quello che
+**il prodotto stampa di sé**, non uno copiato a mano; `15` porta **uno SHA per cella**, non
+uno per documento. Chi ha scritto queste pagine sapeva che un numero senza il suo istante
+non vale.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -325,6 +352,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 47 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 52 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
