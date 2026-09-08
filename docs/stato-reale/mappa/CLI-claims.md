@@ -113,3 +113,76 @@ Il contrappeso, e va detto con la stessa prontezza: **66 comandi su 88 sono
 invocati**, e la macchina che li invoca è vera (4.956 liste di argomenti nei
 test). La CLI non è una superficie abbandonata: ha un buco con una forma
 precisa, ed è il gruppo `gateway`.
+
+---
+
+## 4. Il gradino sotto: le OPZIONI che i documenti insegnano — **T31, eseguito**
+
+Il presidio dei comandi del README si ferma al comando: la sua regex cattura
+`save`, `import`, `airgap`, **non** `--asserted-at`. È il livello dove è nato
+**T30** il 07/09 (`verimem save … --db` → `No such option: --db`, exit 2).
+Righello: `docs/stato-reale/banchi/ws7-le-opzioni-che-i-documenti-insegnano-esistono.py`
+
+```
+$ python docs/stato-reale/banchi/ws7-le-opzioni-che-i-documenti-insegnano-esistono.py
+comandi con le loro opzioni:  88
+controllo positivo (3 facce): esplicita VISTA · derivata VISTA · inventata RIFIUTATA
+usi documentati con opzioni:  40
+comandi citati e non risolti: 3
+OPZIONI INSEGNATE E ASSENTI:  1
+
+   docs\MCP_QUICKSTART.md:310:  verimem health --tools
+EXIT=0
+```
+
+### 🔴 T31 — `verimem health --tools`, e stavolta l'ho ESEGUITO
+
+`docs/MCP_QUICKSTART.md:310` — il documento che legge chi collega Verimem a
+Claude Code — chiude la sezione dei tool con: *«List via `verimem health
+--tools`»*. Alla porta:
+
+```python
+>>> CliRunner().invoke(app, ['health', '--tools'])
+EXIT_CODE = 2
+Usage: root health [OPTIONS]
+┌─ Error ──────────────────────────────┐
+│ No such option: --tools              │
+└──────────────────────────────────────┘
+```
+
+`def health():` **non ha alcun parametro** (`cli.py:342`): delega a `status`. E
+cercata la via alternativa, **non c'è**: nessun comando della CLI elenca i tool
+MCP — non è un nome sbagliato per una funzione esistente, è una capacità che il
+documento promette e che non sta da nessuna parte.
+
+⇒ **T31**, gemello di T30 e con la stessa forma: *comando presente, opzione
+assente, presidio verde*. Cura: togliere la frase o rimandare all'elenco che il
+client MCP riceve alla connessione (che esiste — è l'`instructions` della
+`initialize`, presidiato da `test_agent_guide_single_source.py:12`).
+
+### 🔴 Il righello ha accusato quattro volte e tre erano colpa sua
+
+Il primo giro dava **4** opzioni assenti. Tre erano difetti miei:
+
+- **due volte `verimem warmup --no-daemon`**, che `tests/test_cli_warmup.py:36`
+  invoca e passa. Leggevo la chiamata `typer.Option(...)` con una **finestra
+  fissa di 400 caratteri** dal nome del parametro, e la finestra sconfinava nel
+  parametro successivo: `daemon` ereditava i flag espliciti di `gate`
+  (`"--gate/--no-gate"`), quindi il ramo che deriva `--no-daemon` non veniva mai
+  preso. Ora la finestra di un parametro finisce dove comincia il successivo.
+- **`verimem facts undo ---`**: il `---` di un separatore Markdown letto come
+  opzione. Ora un'opzione deve cominciare con una lettera.
+
+🔑 **E il controllo positivo non se n'era accorto, per la terza volta stasera.**
+Provava `airgap --live`, che è una forma **esplicita** e passava benissimo,
+mentre la forma rotta era quella **derivata**. Ora le facce sono tre — esplicita
+valida, derivata valida, inventata rifiutata — e la seconda è precisamente il
+caso che sbagliava.
+
+> **Un controllo positivo che non tocca la forma rotta è un controllo che tace.**
+> Stasera l'ho imparato tre volte con tre righelli diversi: il contatore della
+> mappa (guardava le etichette invece della forma), gli orfani della CLI
+> (guardava `invoke(app` e perdeva `invoke(cli.app`), le opzioni (guardava la
+> forma esplicita e perdeva la derivata). **Ogni volta il numero sbagliato era
+> più drammatico di quello vero**: 32 orfani contro 22, 4 opzioni assenti contro
+> 1, e — nell'unico caso in cui il numero riguardava me — 121 ✅ contro 119.
