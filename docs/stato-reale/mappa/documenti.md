@@ -44,6 +44,8 @@ ordina la coda.
 | `docs/stato-reale/03-cose-spente.md` | **VIVO** | dichiara in testa `SHA: 544d27bd`, i comandi per rifare le misure, il verdetto e **la copertura** («64 interruttori su 151, 42%»), e scrive «dove non ho eseguito c'è **NON VERIFICATO**». È il modello di come si scrive una misura |
 | `docs/stato-reale/23-quanto-spesso-L4-1-ha-ragione.md` | **VIVO** | riga 3: «ws6 · **30/08 ore 16:20** · store in `mode=ro`, sole SELECT». Chiude un limite che il documento 22 aveva **dichiarato** invece di nascondere |
 | `docs/stato-reale/39-le-finestre-cieche-della-memoria.md` | **VIVO** | «ws6/Aldo — **30/08, sera**. Perimetro: archivio, memoria, corpus, quarantena»: dichiara data e perimetro |
+| `docs/JUSTIFIED_MEMORY.md` | **VIVO** | è la tesi del progetto («the 2027 thesis»), e il codice la cita come riferimento del design: `verimem/justified_memory.py:7` → «See docs/JUSTIFIED_MEMORY.md for the design + the verified SOTA gap». Documento e modulo si rimandano |
+| `docs/CYCLE109_HANDOFF.md` | **MORTO (a scadenza)** | handoff del 16/05 per far ripartire una sessione, con `Branch: cycle109-provenance-fact-schema-v3` — e quel ramo **non esiste più** (`git branch -a --list '*cycle109*'` → vuoto). Ha esaurito il suo scopo il giorno dopo |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -135,6 +137,22 @@ attuale. Il verdetto su ciascuno resta da dare leggendolo.
 bianco nell'indice del corpus: *«un criterio sintattico su una proprietà semantica sbaglia
 in entrambe le direzioni»*. L'ho verificato inciampandoci invece che leggendolo.
 
+
+### 🆕 Quinta forma: il documento A SCADENZA
+
+Un **handoff** nasce per un uso singolo — far ripartire una sessione — ed è **morto per
+costruzione** quando quell'uso è finito. Non è un difetto: è la sua natura. Ma occupa
+spazio nella ricerca, e chi lo trova può crederlo attuale.
+
+In `docs/` alla radice ce ne sono **7** col ciclo o l'handoff nel nome:
+`CYCLE109_HANDOFF` · `CYCLE113-HANDOFF` · `CYCLE134-DESIGN` ·
+`cycle156_unique_index_cross_process_design` · `cycle159_scaling_experiment` (×2) · …
+
+⇒ **Non vanno cancellati e non vanno letti come attuali**: vanno riconosciuti per quello
+che sono. Il segnale più forte non è la data — che c'è — ma il **riferimento a un ramo che
+non esiste più**: `cycle109-provenance-fact-schema-v3` è sparito, e il documento lo nomina
+come se ci si potesse tornare.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -150,6 +168,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 20 su 287.** Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 22 su 287.** Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
