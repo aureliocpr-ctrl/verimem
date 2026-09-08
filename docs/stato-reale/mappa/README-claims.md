@@ -361,16 +361,108 @@ presidia da sola, una promessa numerica no.*
 
 ---
 
+## Righe 531-595 — la governance, la console della fiducia, il self-host
+
+| righe | il claim | dove sta nel codice | chi lo guarda | verdetto |
+|---|---|---|---|---|
+| 531-533 | `verimem facts undo <op_id>` — annulla un ritiro | `cli.py:3719` `@facts_app.command("undo", help="Reverse a destructive op by its handle: a forget OR a retirement.")` — **l'help dice la stessa cosa del README** | i presidi del ritiro sono nove file, fra cui `test_il_ritiro_non_diceva_chi_e_stato.py` | ✅ |
+| 531-532 | *«the lost fact comes back SERVABLE **and the newer one stays alive**»* — cioè **entrambi vivi** dopo l'undo | — | non ho seguito un presidio fino a questa coesistenza | ⬜ |
+| 535 | *«Write receipts carry the handles too (`superseded_undo_ops` on `add()`)»* | `client.py`, `gateway.py` | un solo file lo nomina, e per un altro scopo: `test_flow_isolamento_tenant.py` | ✅ |
+| 536 | *«every retirement emits a `flow.supersession` event»* | `anti_confab_gate.py`, `client.py`, `semantic.py` | `test_flow_forget.py`, `test_il_governo_e_acceso_di_default.py`, `test_flow_manutenzione_notturna.py` | ✅ |
+| 536-537 | l'Engine Room `/ui/engine` mostra le coppie **con undo/restore a un clic** | `cli.py`, `flow_events.py`, `webui/engine.css` | la pagina sì (`test_gateway_flow_events.py`); **il clic di undo no** | ⬜ |
+| 538 | il link a `docs/GOVERNANCE.md` | il file **esiste** nel repo | — | ✅ |
+| 542-543 | *«The visual layer exists at every deployment size — single user, team server, SaaS — same page, same guarantees»* | — | nessun presidio confronta le **tre taglie** | ⬜ |
+| 546 | `verimem console` — *«your OWN local store: browser opens, no keys, no config»* | `cli.py:1026`, il docstring dice *«one command, no keys»* | `test_console_local.py:40` `test_local_mode_stats_without_key` | ✅ |
+| 549-550 | il **trust ring** con sparkline per giorno | `webui/app.js` | `test_trust_ledger.py` | ✅ |
+| 550-553 | il grafo: *«grounded edges solid, ungrounded **dashed red** — declared, never hidden»*, e il clic accende la catena di custodia | `webui/app.js`, `entity_kg.py` | il grafo con provenienza sì — `test_gateway_ui.py:87` `test_graph_returns_nodes_and_edges_with_provenance`; **il tratteggio rosso non l'ho seguito** | ⬜ |
+| 553-554 | il **blocked-claims log** — *«every unsupported claim the gate stopped, auditable»* | `gateway.py` | 🌟 `test_gateway_ui.py:52` **`test_quarantine_lists_blocked_claims_not_admitted_facts`** — il nome è la promessa, e la distinzione è quella giusta | ✅ |
+| 554-556 | *«The graph is alive … straight from `/v1/events/flow`»* | `flow_events.py`, `gateway.py`, `webui/app.js` | `test_flow_entity_events.py`, `test_gateway_flow_incremental.py` | ✅ |
+| 556-559 | i totali dichiarati (`total_entities`, `total_edges`, `isolated_count`) *«so a node's `isolated` badge means "no relation anywhere", never "the sample dropped it"»* | `entity_kg.py` | 🌟 `test_graph_snapshot_isolated.py` — un file intero per questa distinzione | ✅ |
+| 559-560 | gli eventi del gate in SSE su `GET /v1/events` — *«not a 30s-old photograph»* | `gateway.py` | `test_console_local.py:103` `test_events_stream_emits_initial_ledger`, `:118` `test_events_requires_auth_in_multitenant_mode` | ✅ |
+| 561-563 | la **Live Engine Room** (`GET /ui/engine`, stream `GET /v1/events/flow`) | `flow_events.py`, `gateway.py` | `test_gateway_flow_events.py`, `test_cli_flow_tail.py` | ✅ |
+| 563-565 | *«per-tenant privacy (flow metadata only, **never fact content**)»* | `flow_events.py` | 🌟 `test_flow_isolamento_tenant.py` e `test_flow_surface_onesta.py` | ✅ |
+| 565-568 | *«The events are emitted by the core, so every surface shows up in one panel — SDK, gateway, and the MCP server»* + `VERIMEM_ACTOR` | `flow_events.py`, `cli.py`, `doctor.py`, `admission_cleanup.py` | `test_flow_events_core.py` (**il core**), `test_flow_entity_events.py`, `test_cli_flow_tail.py` | ✅ |
+| 568 | `verimem flow tail` — lo stesso feed in terminale | `flow_tail.py`, `cli.py` | `test_cli_flow_tail.py` | ✅ |
+| 568-570 | *«Personal mode binds 127.0.0.1 by default — the **loopback bind is the real defense**»* | `gateway.py:936` *«BOTH must be loopback»* | 🌟 `test_console_local.py:58` **`test_local_mode_rejects_non_localhost_host_header`** | ✅ |
+| 570-572 | *«a Host-header allowlist is a second layer … a direct client (e.g. `curl`) can spoof the Host header»* + *«A presented API key always wins»* | `gateway.py:48`, `:82` (`_host_only`, IPv6), `:933-936` | 🌟 `test_console_local.py:68` **`test_presented_key_wins_over_local_fallback`** | ✅ |
+| 572-574 | `GET /v1/snapshot` — *«the whole visible state … in one structured call»* | `gateway.py` | 🌟 `test_console_local.py:90` **`test_snapshot_returns_everything_in_one_call`** | ✅ |
+| 580-582 | `verimem gateway keys create --tenant acme --name laptop` · `verimem gateway serve` su `127.0.0.1:8377` | `cli.py:106-107` (il gruppo `keys` esiste), `8377` in `cli.py` e `gateway.py` | `test_gateway_local_tenant_collision.py`, `test_audit_moat_and_transport.py` | ✅ |
+| 586-587 | *«Each tenant gets an isolated store; the tenant is derived from the API key alone»* | `gateway.py` | `test_gateway_local_tenant_collision.py`, `test_gateway_ui.py:71` `test_quarantine_is_tenant_isolated` | ✅ |
+| 587-591 | i **dieci endpoint** elencati, `/v1/graph/dossier` e `DELETE …?purge_history=true` compresi | tutti in `gateway.py` | `test_gateway.py`, `test_gateway_ui.py:147` (dossier a due salti), `test_audit_mutations.py`, `test_anche_il_canale_mcp_cancella_la_catena.py` | ✅ |
+| 591-593 | `/ui` e `/dashboard` — *«static, dependency-free pages»* | `webui/` | `test_gateway_ui.py:174` `test_ui_page_served_without_auth_and_static`, `:183` `test_ui_assets_served`, `:191` `test_ui_page_mentions_the_three_views`; `test_gateway_console_v2.py:80` `test_asset_allowlist_stays_closed` | ✅ |
+| 592-594 | *«your API key stays in the tab and travels only as an Authorization header»* | `webui/app.js` | non seguito | ⬜ |
+| 594-595 | *«The gateway binds loopback by default»* | `gateway.py` | `test_console_local.py` | ✅ |
+
+### ① Il quinto allarme falso di oggi — ed era la tesi più bella che avessi scritto
+
+Avevo il reperto già formulato, e mi piaceva: **«ciò che il README promette come
+VISIBILE è esattamente ciò che nessun test guarda»** — il tratteggio rosso degli
+archi non fondati, l'undo a un clic, il blocked-claims log. Sarebbe stato V1
+VISION-LOCK applicato alla vetrina: *buffer API ≠ display*, la regola di casa.
+
+Un comando l'ha demolita:
+
+```
+test_gateway_ui.py:52   test_quarantine_lists_blocked_claims_not_admitted_facts
+test_gateway_ui.py:87   test_graph_returns_nodes_and_edges_with_provenance
+test_gateway_ui.py:174  test_ui_page_served_without_auth_and_static
+test_gateway_ui.py:191  test_ui_page_mentions_the_three_views
+test_gateway_console_v2.py:80  test_asset_allowlist_stays_closed
+```
+
+Il blocked-claims log **è** presidiato, e col nome della promessa. La pagina è
+servita, statica, e c'è un test che verifica che **nomini le tre viste**. Di
+tutto ciò che immaginavo scoperto resta **il colore**: nessun test che io abbia
+seguito legge il tratteggio rosso.
+
+🔑 **Quinto su cinque oggi.** E questa volta l'allarme falso non era una svista:
+era la tesi *centrale* che stavo per dare al blocco. Una tesi elegante è
+esattamente il tipo di affermazione che nessuno urta — *un numero che ti dà
+ragione non fa attrito*, e nemmeno un'idea che ti fa fare bella figura.
+
+### ② E un errore di misura mio, dentro questo stesso blocco
+
+Cinque dei grep con cui ho aperto la verifica erano **rotti**: avevo scritto
+l'alternanza come `"a\|b"` passandola a `grep -E`, dove `\|` è una pipe
+*letterale*. Hanno risposto **vuoto** — e un vuoto da parser rotto è identico a
+un vuoto vero. Se li avessi creduti avrei dichiarato assenti `facts undo`, la
+difesa Host-header e il comando `keys create`: **tre accuse false in un colpo**,
+tutte contro codice sano.
+
+Me ne sono accorto perché *tre assenze insieme, su claim scritti da chi il
+codice lo ha scritto, non è un tasso di errore plausibile*: era il righello. Sta
+scritto in memoria da agosto — **il grep serve a TROVARE, mai a CONTARE** — e
+oggi ha aggiunto un corollario: **una risposta vuota è un risultato che va
+classificato prima di essere usato**, esattamente come un rosso.
+
+### ③ Cosa dice il blocco, letto da utente
+
+Diciotto ✅ su ventitré claim, e i presidi migliori della pagina stanno **qui**:
+`test_local_mode_rejects_non_localhost_host_header`,
+`test_presented_key_wins_over_local_fallback`,
+`test_snapshot_returns_everything_in_one_call`,
+`test_graph_snapshot_isolated`. Il README descrive **due difese contro un
+avversario** (il bind di loopback come difesa vera, l'allowlist Host come
+seconda, con l'ammissione che `curl` può falsificare l'header) e **ognuna delle
+due ha il suo test, col nome della promessa**.
+
+I cinque ⬜ hanno tutti la stessa forma: sono **la parte della promessa che sta
+nel pixel** — il colore di un arco, il clic di un undo, la chiave che «resta
+nella scheda», la parità fra tre taglie di installazione. Non è che nessuno
+guardi la pagina: è che **i test la guardano dal lato del server**.
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  530 / 811   (65,4%)
-verdetti:  ✅ 84   ❌ 2   ⬜ 42   (una riga può portare due verdetti su due claim)
+righe lavorate:  595 / 811   (73,4%)
+verdetti:  ✅ 102   ❌ 2   ⬜ 47   (una riga può portare due verdetti su due claim)
 ```
 
-**I due ❌ restano la riga 24 e la 53-57**, lo stesso difetto: la frase con cui il
-prodotto si presenta, e la sua ripetizione dodici righe sotto.
+**I due ❌ restano la riga 24 e la 53-57** — lo stesso difetto, la frase con cui il
+prodotto si presenta e la sua ripetizione dodici righe sotto.
 
-**Dove si concentrano i ⬜**: nei numeri di punta e nei confronti, non nei
-comandi. Le righe 466-530 — sedici comandi e due blocchi da incollare — portano
-**tre** ⬜ su diciotto claim; le prime 465 righe ne portano trentanove.
+**Cinque allarmi falsi cercati e non pubblicati oggi.** Il conto vale quanto i
+verdetti: se l'avessi tenuto solo dei ❌ trovati, questa mappa direbbe che sono
+stato bravo cinque volte in meno.
