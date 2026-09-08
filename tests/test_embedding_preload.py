@@ -36,6 +36,42 @@ def _clean_preload_env(monkeypatch):
 
 
 def test_background_preload_returns_immediately(monkeypatch):
+    """Il chiamante NON aspetta il warm del modello — misurato sul FATTO,
+    non su un cronometro.
+
+    ⚠️ PERCHE' NON C'E' PIU' UNA SOGLIA, e la storia serve a non rimettercela.
+
+    Qui c'era ``assert elapsed < 0.3``. Dal 06/09 ``preload_embedding()``
+    chiama ``_scalda_le_librerie_del_giudice()`` in modo SINCRONO prima di
+    avviare i thread — e' la cura di T1b, voluta e misurata (col warm su un
+    thread di sfondo il banco end-to-end dava 0 giri su 3, col pre-import
+    sincrono 3 su 3). Quel pre-import sfora 0,3 s, quindi la cella era ROSSA:
+    misurata l'08/09 sul candidato 0ffd5ef7 PULITO, ``blocked for 0.62s``.
+
+    🔴 E in CI passava lo stesso, perche' la suite intera aveva gia' importato
+    ``scipy`` e li' l'import costa zero. **Un verde prestato dall'ordine dei
+    test**: la cella non presidiava piu' niente e non lo diceva.
+
+    IL COSTO, misurato l'08/09 su questa macchina, e' proprio cio' che rende
+    la soglia il righello sbagliato::
+
+        _scalda_le_librerie_del_giudice, processo nuovo   1.55 s
+        _scalda_le_librerie_del_giudice, gia' importato   0.00 s
+        dentro pytest, cella isolata                      0.55-0.62 s
+
+    Tre valori per la stessa chiamata: dipende da cosa c'e' gia' in
+    ``sys.modules``, che e' esattamente cio' che un test non controlla.
+
+    ⇒ Si misura la PROPRIETA' VERA, che e' booleana e non ha soglie: quando
+    ``preload_embedding()`` ritorna, **il warm non e' ancora avvenuto**. Il
+    gemello ``test_sync_preload_blocks_until_loaded`` mostra l'altro verso
+    (col preload sincrono ``calls == ["warmup"]`` gia' al ritorno), quindi la
+    coppia distingue davvero i due comportamenti.
+
+    📌 La soglia del gemello (``elapsed >= 0.45``) resta e va bene: «almeno»
+    e' sicuro perche' un'attesa puo' solo crescere. E' «al piu'» che cade
+    appena l'ambiente cambia.
+    """
     calls: list[str] = []
 
     def slow_encode(text):
@@ -48,7 +84,12 @@ def test_background_preload_returns_immediately(monkeypatch):
     thread = preload.preload_embedding()
     elapsed = time.time() - t0
 
-    assert elapsed < 0.3, f"background preload blocked for {elapsed:.2f}s"
+    assert calls == [], (
+        f"il chiamante ha aspettato il warm del modello: al ritorno di "
+        f"preload_embedding() il warm era gia' finito ({calls!r}, "
+        f"{elapsed:.2f}s). Il warm deve girare su un thread di sfondo — con "
+        f"il modello vero sono ~20 s sull'handshake di attach."
+    )
     assert thread is not None
     thread.join(timeout=3)
     assert calls == ["warmup"], "background warm-up must actually run"
