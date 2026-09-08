@@ -1,0 +1,5 @@
+'elenca tutti i capannoni'             intent=list_all     termini=capannoni -> 0
+'elenca tutti i capannone'             intent=list_all     termini=capannone -> 2
+'elenca tutto sul capannone'           intent=list_all     termini=tutto sul capannone -> 0
+'list all capannone'                   intent=list_all     termini=capannone -> 2
+'elenca tutti i fatti'                 intent=list_all     termini=fatti -> 0

@@ -1,0 +1,34 @@
+IMPORT DA C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\__init__.py
+
+--- index_document(path)  [README:274]
+2026-09-08T21:08:16.024513 [info     ] flow.document                  build=4c475db1 chunks_flagged=0 chunks_indexed=1 doc_id=1cf022a5cf1143e9 kind=index run=9239fa71 source_id=C:\Users\aurel\AppData\Local\Temp\ws3-mappa2-g7knt7lf\contratto.txt store=3e966cfd4b0c surface=unknown version=1
+   ritorna: {'source_id': 'C:\\Users\\aurel\\AppData\\Local\\Temp\\ws3-mappa2-g7knt7lf\\contratto.txt', 'doc_id': '1cf022a5cf1143e9', 'version': 1, 'is_new': True, 'chunks_indexed': 1, 'chunks_flagged': 0}
+
+--- search_documents('risoluzione')  [README:275, 504: «passages with file + offset citations»]
+2026-09-08T21:08:16.238527 [info     ] flow.document                  best=0.849035 build=4c475db1 hidden=1 include_flagged=False kind=search n=3 run=9239fa71 store=3e966cfd4b0c surface=unknown unreadable=0
+   3 passaggi
+   campi: ['doc_id', 'end', 'flagged', 'indexed_by', 'query_terms', 'query_terms_matched', 'score', 'source_id', 'start', 'text']
+   uri/file: file://C:\Users\aurel\AppData\Local\Temp\ws3-mappa2-g7knt7lf\contratto.txt · start: 0 · end: 167
+2026-09-08T21:08:16.616808 [info     ] flow.warmup                    build=4c475db1 phase=start run=9239fa71 store=3e966cfd4b0c surface=unknown what=moat-judge
+2026-09-08T21:08:19.849739 [info     ] flow.warmup                    build=4c475db1 elapsed_ms=3221.5 phase=ready run=9239fa71 store=3e966cfd4b0c surface=unknown what=moat-judge
+2026-09-08T21:08:22.278762 [info     ] flow.write                     build=4c475db1 fact_id=cb6f262d2264 grounding_score=99.17497253417969 judged=True layers=[] run=9239fa71 status=model_claim store=3e966cfd4b0c stored=True surface=unknown topic=mappa/ask withheld_despite_judge=False
+2026-09-08T21:08:32.453990 [info     ] flow.entity                    build=4c475db1 created=[{'id': '29c4a5d0ac21', 'name': 'Prato', 'type': 'proper'}] edges=0 fact_id=4fa506917cda run=9239fa71 store=3e966cfd4b0c surface=unknown touched=['29c4a5d0ac21']
+2026-09-08T21:08:32.476283 [info     ] flow.write                     build=4c475db1 fact_id=4fa506917cda grounding_score=96.56211853027344 judged=True layers=[] run=9239fa71 status=model_claim store=3e966cfd4b0c stored=True surface=unknown topic=mappa/ask withheld_despite_judge=False
+
+--- ask('quante volte ho parlato del capannone?')  [atteso intent COUNT]
+   intent: count · chiavi: ['count', 'intent', 'terms']
+   count: 2
+
+--- ask('elenca tutti i capannoni')  [atteso intent LIST_ALL]
+   intent: list_all · chiavi: ['intent', 'results', 'terms']
+   results: 0
+
+--- ask('dove si trova il capannone 12?')  [atteso intent FIND]
+rerank cold-load exceeded 0.25s cold budget → keeping bi-encoder order (CE warming in background; cold overruns do not trip the steady breaker)
+2026-09-08T21:08:33.154063 [info     ] flow.recall                    best=0.8776 build=4c475db1 kind=search n=2 run=9239fa71 store=3e966cfd4b0c surface=unknown tagliati=0
+encode exceeded 2.0s budget → degrading (save defers / recall falls back to keyword); kicking the encode daemon awake
+   intent: find · chiavi: ['intent', 'results']
+   results: 2
+
+--- answer() senza llm  [README:705: «raises TypeError without one»]
+   TypeError come promesso: Memory.answer() missing 1 required keyword-only argument: 'llm'
