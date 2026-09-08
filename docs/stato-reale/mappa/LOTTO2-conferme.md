@@ -120,3 +120,31 @@ esercita. Decisione di prodotto, non mia.
 📌 Su `capability_token` resta però una dipendenza **di dati**: legge
 `~/.clp/a2a-secret.bin`, cioè **condivide il segreto col bus A2A sul filesystem**. Diversa
 da un import, e per la sicurezza vale una riga sua.
+
+---
+
+# Chiusura del lotto 2 — il righello corretto passato su TUTTE le 59
+
+    ⚰️ stable_partition.community_of   dentro:1  fuori:0   ← la sola definizione
+    (nient'altro)
+
+Tutte le altre 58 hanno `dentro:2-3` (private usate in casa) o chiamanti esterni.
+⇒ **Il lotto 2 — 32 file, 4.430 righe — contiene UN codice morto**, confermato tre volte con
+righelli diversi.
+
+📌 Il numero da citare resta **«59 su 143 non sono NOMINATE da un test»**, non «59 scoperte».
+
+## La classe che due istanze hanno trovato nello stesso quarto d'ora
+
+@ws2, mappando un'altra superficie: *«"spenta" 3 volte su 5 voleva dire "non ci sono
+arrivato io". Cinque funzioni VIVE le avevo viste tutte spente.»*
+Io, dieci minuti prima: **21 candidati morti, 20 falsi**, perché il righello escludeva il
+file stesso.
+
+🔑 **Regola che ne esce, e vale per chiunque mappi**: *un verdetto «spenta / morta / mai
+chiamata» va rifatto con un SECONDO righello prima di uscire dal proprio worktree.* Il primo
+righello sbaglia quasi sempre nella stessa direzione — dice «assente» dove c'è «non l'ho
+guardato».
+
+E la rarità è essa stessa il dato: @ws6 ha trovato **un** codice morto vero (`by_task`,
+`memory.py:1573`), io **uno** (`community_of`). Su due superfici grandi, uno a testa.
