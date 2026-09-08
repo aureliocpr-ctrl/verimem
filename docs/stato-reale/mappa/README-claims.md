@@ -242,11 +242,43 @@ posto c'è **un test che diventa rosso da solo**, e il commento spiega perché.
 
 ---
 
+## Righe 401-465 — tempi, terzo modello, e il **Quickstart**
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 402-404 | **quanto ci mette**: `verimem warmup --no-gate` **2 min 45 s** su cache pulita · *«il warmup completo scarica circa tre volte tanto e **non è stato cronometrato**, quindi tratta il totale come ignoto, non come tre volte quello»* | `cli.py` (`--no-gate`, 1 file) | **nessuno** | ✅ **come forma, ed è una riga che vale citare**: misura una parte, dichiara di **non** aver misurato l'altra, e **vieta esplicitamente l'estrapolazione** che il lettore farebbe da solo. *«Tratta il totale come ignoto» è più utile di un numero inventato per simmetria.* |
+| 406-408 | il modello del giudice è **746 MB** e ne occupa **746** su disco — *«lo stesso numero che stampa la CLI»* · e la spiegazione: **decimali (10⁶)**, `746 058 368` byte, che uno strumento in **MiB (2²⁰)** mostra come **711** — *«stessi byte, unità diverse»* | `cli.py` (`warmup --help`) | `test_il_readme_e_la_cli_dicono_lo_stesso_peso.py` | ✅ **presidiato, e nato da un difetto vero**: README e CLI davano tre numeri (`656` / `711` / `746`) e **nessuno era sbagliato** |
+| 410-412 | il **reranker è un terzo modello, acceso di default**: `warmup` scarica i suoi **470 MB** salvo `VERIMEM_RECALL_RERANK=0` · *«è la leva di recall di stadio 2, **non fa parte del moat** — spegnerlo costa qualità di ranking sulle query corte e nient'altro»* | `RECALL_RERANK` (1 file) | `test_le_leve_che_il_readme_insegna_hanno_effetto.py` | ✅ **la leva esiste ed è presidiata per effetto** · ✅ **come forma**: dice **cosa costa spegnerla** e **cosa non tocca** |
+| 421-427 | il commento del Quickstart: senza giudice le scritture entrano **con un `L4-skipped` esplicito, mai in silenzio**, *«e l'assert qui sotto fallirebbe — `doctor` ti dice esattamente perché»* · e il costo vero: *«senza nulla che le giudichi, **la seconda scrittura ritira la prima**, quindi la confabulazione resta l'unico fatto vivo»* | `anti_confab_gate.py` · `supersession_policy.py` | `test_verimem_l4_no_source_advisory.py` | ✅ **e questa è la riga meglio scritta del Quickstart**: non dice «serve il giudice», dice **cosa succede senza** — *e la conseguenza (la confabulazione sopravvive alla verità) è il danno vero, non la mancanza della spunta* |
+| 428-436 | `Memory()` **senza argomento apre lo STESSO store** di CLI e MCP · passare un percorso è **relativo alla directory corrente** e lo riceve **solo l'SDK**, quindi `verimem recall` da altrove risponde *«no facts found» con exit 0* — **ma adesso dice dove ha guardato** · *«per puntare la CLI a un secondo store: `remember`, `recall`, `search`, `get` e `list` prendono tutti `--db`»* | `client.py` · `cli.py` | `test_la_cartella_dati_promessa_dal_readme.py` · `test_le_porte_aprono_lo_store_che_indichi.py` | ✅ **ed è T16 curato**: la riga racconta il difetto (*«trasforma un mistero in un refuso»*) e la sua cura · ⚠️ **ma vedi T30**: i cinque comandi elencati sono giusti, **e `save` non è fra loro** — il README **non dice** che il comando che insegna alla riga 352 e alla 510 **non accetta `--db`** |
+| 438-444 | **il moat dal vivo**, tre righe eseguibili: stessa fonte, due scritture; `"Analytics runs on Postgres."` **ammessa**, `"Analytics runs on MongoDB."` **quarantinata**, con `assert r["status"] == "quarantined"` e il commento *«conservata ma FUORI dal recall di default — il tuo agente non la ripeterà mai come verità»* | `anti_confab_gate.py` | `test_moat_on_by_default.py` · `test_gateway_moat_default.py` · `test_adjudication_receipt.py` · `test_il_referto_del_moat_spento_dice_cosa_si_perde.py` | ✅ **quattro presidi nominano questo caso** — *è il claim più presidiato della pagina, ed è giusto che sia questo: è l'unico pezzo di README che un lettore può **incollare ed eseguire** per vedere la promessa centrale accadere* |
+| 446-452 | `Memory(llm=my_llm)` per il giudice di qualità massima · i **preset** `balanced` / `strict` / `permissive` con la descrizione di ciascuno | `preset` (2 file) · `grounding_llm` (4) | **nessuno di specifico** | ✅ le API esistono · ⬜ sul comportamento dei preset |
+| 454-458 | **memorizza una conversazione**: i fatti sono estratti **atomicamente** e passano dal gate · *«l'estrazione da dialogo grezzo richiede l'llm; `user_name` rende l'identità fornita dall'app il soggetto dei fatti»* | `user_name` (7 file) | **nessuno di specifico** | ✅ **il codice c'è** · ✅ **come forma**: dichiara **la dipendenza** (serve l'llm) nel punto in cui mostra l'esempio, non in fondo |
+| 460-464 | **provenienza senza LLM**: `verified_by` registra **da dove** viene il claim, *«è mostrato a ogni lettura e **non può essere falsificato in uno stato di fiducia più alto** — una ricevuta auto-citata non diventa mai "verified": il segnale di fiducia è l'esito del gate + la provenienza, non un distintivo auto-asserito»* | `verified_by` (**65** file) | le istruzioni del server MCP lo ripetono | ✅ **ed è una difesa contro l'utente stesso**, scritta bene: dice cosa `verified_by` **non** compra. *(⚠️ E il gate lo sa: nel messaggio del server MCP c'è la stessa frase — «`verified_by` registra CHI garantisce e non fa girare questo controllo».)* |
+
+### 📌 Il reperto di questo blocco
+
+**Il claim più presidiato della pagina è quello giusto.** Le tre righe del
+Quickstart (438-444) — *stessa fonte, due scritture, la seconda quarantinata* —
+sono nominate da **quattro** file di test. È l'unico pezzo di README che un
+lettore può **incollare ed eseguire** per vedere la promessa centrale accadere, e
+qualcuno ha deciso che quello dovesse reggere più di tutto il resto. *Nel resto
+della pagina i ⬜ sono 37; qui ci sono quattro presidi su tre righe.*
+
+⚠️ **E l'avvertenza che ne discende**: quelle tre righe usano la **porta SDK**.
+La riga 24 — *«un claim che la fonte apertamente contraddice non torna come
+verità»* — è **falsa alla stessa porta** per una **forma diversa** di falso: la
+self-claim in coda a un fatto vero (6 su 7 ammesse). ⇒ **Il Quickstart mostra la
+metà della promessa che funziona.** *Non è una bugia: è una scelta di esempio —
+ma la forma che passa non compare da nessuna parte in questa pagina.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  400 / 811   (49,3%)
-verdetti:  ✅ 58   ❌ 2   ⬜ 37   (una riga può portare due verdetti su due claim)
+righe lavorate:  465 / 811   (57,3%)
+verdetti:  ✅ 69   ❌ 2   ⬜ 39   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
