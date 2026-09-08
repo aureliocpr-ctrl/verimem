@@ -43,6 +43,21 @@ diversi, e nessuna delle quattro le nomina come la stessa cosa.
 tace», è «**questo prodotto ha l'abitudine di sapere e non dire, e succede su almeno quattro
 superfici**».
 
+
+## T24 · la supersessione — e qui il corpus ha fatto la cosa giusta
+
+| data | pagina | cosa dice |
+|---|---|---|
+| **30/08** | `41-la-supersessione-sceglie-sei-volte-meglio-del-caso.md` | *«sceglie **sei volte meglio del caso**, e il danno è sceso di due terzi»* — e si apre con *«questo pezzo è una **buona notizia**, ed è la prima della serata»* |
+| **31/08** | `64-una-catena-di-quattro-ritiri-fa-sparire-una-misura-intera.md` | *«una catena di **quattro ritiri** fa sparire una misura intera»* — e dichiara come è nato: *«**leggendo i candidati al recupero, non cercando questo**»* |
+| **09/26** | `CHANGELOG.md`, voce `T24` | `replaced` nella ricevuta è sempre `False` |
+
+🔑 **Qui il corpus si comporta all'opposto della classe «tace»**: lo stesso autore misura la
+supersessione **dai due lati** a un giorno di distanza — quanto sceglie bene (41) e quanto
+danno fa quando sbaglia (64) — e dichiara che il secondo reperto **non lo stava cercando**.
+⇒ È il modello: **un numero che ti dà ragione e uno che te la toglie, dallo stesso righello,
+scritti tutti e due.**
+
 ## Come si continua
 
 Per gli altri ticket (T14, T16, T24, T25, T27, T39, T40, D-1) la tabella è **da compilare**:
