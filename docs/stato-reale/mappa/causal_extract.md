@@ -1,0 +1,12 @@
+# Mappa di `verimem/causal_extract.py` — 4 righe, 121 righe di codice (lead, 09/09 01:56)
+
+Letto per intero. Prova: pytest del lotto C sul tip `20257636` (`62 passed in 20.70s`, EXIT=0, con `tests/test_causal_extract.py`; lo nomina anche `tests/test_causal_skill_mine.py`). Chiamanti letti: `verimem/mcp_server.py:9872` (`hippo_causal_extract`), `verimem/causal_skill_mine.py:3` (R2.2, il minatore di skill). R2.1: la prima divergenza fra la traiettoria di successo e quella di fallimento è il «punto causale»; la regola proposta è il template «Prefer `X` over `Y` in this context», lo stesso che `schema_abstraction` usa come esempio (R9 consuma R2.1). Claim README: nessuna riga (grep su «causal» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/causal_extract.py:19` `_describe_step` | una riga `[kind] tool=… contenuto[:80]`; `(none)` se vuoto | `causal_extract` (100, 101) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 62 passed |
+| 2 | `verimem/causal_extract.py:34` `_propose_rule` | la regola: tool diversi → «Prefer A over B»; solo il successo ha un tool → «Always use A»; altrimenti «Do: <contenuto>» | `causal_extract` (102) | via il test | - | FUNZIONA COME PROMESSO | pytest 62 passed |
+| 3 | `verimem/causal_extract.py:51` `_confidence` | euristica dichiarata: scambio di tool 0,85 · un solo lato con tool 0,6 · solo contenuto 0,4 · nessuna divergenza 0 | `causal_extract` (103) | via il test | - | FUNZIONA COME PROMESSO | pytest 62 passed |
+| 4 | `verimem/causal_extract.py:70` `causal_extract` | `trajectory_diff` sulle due traiettorie, poi causa/alternativa/regola/confidenza con l'evidenza (id, prefisso comune, lunghezze) | `verimem/mcp_server.py:9872` (`hippo_causal_extract`), `verimem/causal_skill_mine.py:3` | `tests/test_causal_extract.py`, `tests/test_causal_skill_mine.py` | - | FUNZIONA COME PROMESSO | pytest 62 passed |
+
+Reperti: (a) la «causa» è la PRIMA divergenza per posizione: due traiettorie che divergono per un passo irrilevante e poi per quello decisivo attribuiscono la causa al primo (limite del metodo, non dichiarato nel docstring); (b) `correction_velocity` dice che il corpus vivo «rarely populates» le tracce a passi: questo modulo lavora proprio su quelle, quindi sul corpus di casa ha poco su cui lavorare (letto, non misurato). Nessun P0.
