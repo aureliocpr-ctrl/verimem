@@ -108,6 +108,38 @@ o se il match sia solo di parole**: *cercato, non letto*.
 pagine anteriori è **la cosa giusta**: significa che la misura e il ticket sono nati
 insieme — come per T27 — invece di restare separati un mese come per T26a.
 
+
+## T14 · T16 — le ultime due, e quello che ho trovato NON è quello che cercavo
+
+**T14** (il verdetto non arriva alla porta MCP): cercando nei testi escono `00-ESAME`,
+`GRAVITA-DIFETTI`, `PERCORSI-UTENTE`, `LA-FRASE-DELLA-0.7.7` e **`80-la-stessa-frase-con-
+otto-o-con-8-riceve-due-verdetti-opposti.md`**. L'ultimo non è T14 — è un difetto **diverso**
+e più netto: *«`L4.1` vede il numero **solo col glifo 0-9**»*, misurato il 02/09 alle 04:52
+con un banco nominato (`banchi/ws6-la-cifra-e-la-parola.py`) e store isolato.
+⇒ **Cercando T14 ho trovato un difetto che non stavo cercando.** Lo scrivo com'è, invece di
+forzarlo dentro la casella sbagliata: *«otto» contro «8»* è **una classe a sé**.
+
+**T16** (quale store una lettura aveva aperto): `85-il-disegno-esploso-dello-store-le-
+giunture-e-chi-le-presidia.md` (05/09) è il documento che risponde, e dichiara il proprio
+metodo: *«ogni riga porta **o la misura che presidia la giuntura, o la parola scoperta**.
+Nessuna cella è compilata a…»*. Non è una pagina anteriore al ticket: è **il livello 3 del
+disegno esploso**, cioè la risposta strutturale che il ticket ha reso necessaria.
+
+## 📐 Il conto finale delle pagine anteriori
+
+```
+  T26a · T29   4 pagine prima del ticket   (02i 08/08 · 39 · 48 · 21, tutte 30/08)
+  D-1          3 pagine                    (42 · 44 30/08 · 75 02/09)
+  T24          2 pagine                    (41 30/08 · 64 31/08)
+  T25          2 pagine                    (22 · 23, entrambe 30/08)
+  T27          0 — nato col ticket, soglia fissata PRIMA di contare
+  T39 · T40    0 — nati stasera, misura e ticket insieme
+  T14 · T16    nessuna pagina anteriore trovata; T16 ha una risposta POSTERIORE (85)
+```
+**Undici misure scritte prima che i rispettivi ticket esistessero**, e nessuno le aveva
+messe in fila. I tre difetti senza pagine anteriori (T27, T39, T40) sono **i tre in cui
+misura e ticket sono nati insieme** — ed è l'unico modo in cui il filo non si spezza.
+
 ## Come si continua
 
 Per gli altri ticket (T14, T16, T24, T25, T27, T39, T40, D-1) la tabella è **da compilare**:

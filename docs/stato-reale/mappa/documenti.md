@@ -73,6 +73,9 @@ ordina la coda.
 | `docs/stato-reale/44-il-rilevatore-dichiara-in-conflitto-quasi-tutte-le-coppie.md` | **VIVO** | ws6/Aldo, 30/08 notte: *«il **99% delle coppie possibili** di un topic»*. Chiude esplicitamente la serie iniziata dal documento 42 — i documenti qui si citano fra loro per numero |
 | `docs/stato-reale/75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md` | **VIVO** — ed è il modello del ritiro | 02/09 01:51. Il titolo porta il ritiro per intero: *«…e **leggendo l'altra popolazione ho ritirato la mia stessa lettura**»*. La regola che questa mappa ha imparato sette volte stasera, qui era già applicata |
 | `docs/stato-reale/22-un-quarto-dei-trattenuti-recenti-e-approvato-dal-giudice.md` | **VIVO** | ws6, 30/08 15:50, corpus **15.755** fatti, `mode=ro`, sole SELECT. È **T25** un mese prima del ticket: `L4.1` ferma e il giudice promuove, sullo stesso fatto. E dichiara il limite — *«non ho letto i 70»* — che il documento 23 chiude il giorno dopo |
+| `docs/stato-reale/80-la-stessa-frase-con-otto-o-con-8-riceve-due-verdetti-opposti.md` | **VIVO** | 02/09 04:52, banco **nominato** (`banchi/ws6-la-cifra-e-la-parola.py`), store isolato. Cita *«una lezione di ws5 del 27/08»*: i documenti qui si citano fra loro **a settimane di distanza** |
+| `docs/stato-reale/85-il-disegno-esploso-dello-store-le-giunture-e-chi-le-presidia.md` | **VIVO** | livello 3 del disegno esploso, 05/09, e dichiara il metodo: *«ogni riga porta **o la misura che presidia la giuntura, o la parola scoperta**»* — nessuna cella inventata |
+| `docs/stato-reale/LA-FRASE-DELLA-0.7.7.md` | **VIVO** | ws7, 06/09, *«scritta alle 08:20 e **RIMISURATA alle 08:45**, base `v0.7.6..origin/main` = `460f230e` (alle 08:20 era `13fa323f`: **main si è mosso sotto la** …)»*. Dichiara che il bersaglio si è spostato **mentre scriveva**, e rimisura |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -391,7 +394,7 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 61 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 64 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
