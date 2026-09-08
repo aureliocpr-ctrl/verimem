@@ -39,3 +39,70 @@ ogni sua funzione faccia ciò che promette. Per quello serve il banco
 nel merito, che per questa famiglia **non ho ancora scritto** — e lo
 dichiaro invece di lasciar credere che «catena completa» significhi
 «funziona come promesso».
+
+---
+
+## 🔴 T45 — il docstring promette tre insensibilità, il codice ne ha due
+
+Docstring `:3-7`, testuale:
+
+> «Normalize trigger+body to detect literal duplicates **regardless of**:
+>   - whitespace
+>   - case
+>   - **leading/trailing punctuation**»
+
+`_normalize` (`:18-22`) fa:
+
+```python
+_WHITESPACE.sub(" ", text.strip().lower())
+```
+
+`.strip()` **senza argomenti toglie gli spazi, non la punteggiatura**. Predizione
+depositata prima di eseguire: A e B reggono, **C no**. Eseguito:
+
+```
+OK  A  spazi multipli e a capo → stessa firma     74b628f5c506 == 74b628f5c506
+OK  B  maiuscole → stessa firma                   74b628f5c506 == 74b628f5c506
+🔴  C  punteggiatura in coda («risposta.» «conciso!»)   74b628f5c506 != 50cc85557a1a
+🔴  C' punteggiatura in testa («- quando serve…»)       74b628f5c506 != f78dc9029511
+OK  D  skill DIVERSE → firme diverse              74b628f5c506 != eed720a804b1
+```
+
+**D è il controllo che rende leggibile il resto**: senza, una `compute_signature`
+che restituisse sempre la stessa stringa avrebbe passato A, B e C a pieni voti.
+
+⇒ **NON COME PROMESSO (T45)**. La cura è **o** completare la normalizzazione
+(`strip(string.punctuation + whitespace)`) **o** togliere la terza riga dal
+docstring — sono due decisioni diverse e non le prendo io (regola 2). Chi
+sceglie deve sapere che la prima cambia le firme già calcolate.
+
+### Perché conta, e come si lega all'altro reperto
+
+Due skill identiche che differiscono **solo per un punto finale** non vengono
+viste come duplicate dal dedup **letterale**. Il modulo che le prenderebbe è
+`skill_semantic_dedup` — che, come misurato nella sua stessa mappa,
+**non è chiamato da nessuna riga del prodotto**.
+
+🔑 I due reperti insieme dicono una cosa che nessuno dei due dice da solo: **la
+rete contro i duplicati ha una maglia larga sul letterale e la maglia fine non è
+attaccata.**
+
+## E `find_duplicate_skills` funziona — dopo che ho corretto la mia lettura
+
+Il mio primo controllo la dava sbagliata: contavo `len(gruppi)` e ottenevo **2**,
+attendendomene 1. Ma la funzione **non restituisce un dizionario di gruppi**:
+restituisce `{"duplicate_groups": [...], "n_skills_scanned": 3}` — e il 2 erano
+le sue **chiavi**. Letto l'output vero:
+
+```
+{'duplicate_groups': [{'signature': '74b628f5c506', 'skill_ids': ['', ''],
+                       'n_dupes': 2}], 'n_skills_scanned': 3}
+```
+
+**Un gruppo, due duplicati, tre skill esaminate** — esattamente ciò che deve
+fare: A e B (stesse parole, spazi e maiuscole diverse) insieme, C fuori.
+⇒ **FUNZIONA COME PROMESSO.**
+
+🔑 È la seconda volta stasera che assumo la forma di una struttura dati invece di
+leggerla (la prima fu `.get("operable")` su una chiave inesistente). **Un
+`len()` su un valore di ritorno che non hai stampato non è una misura.**
