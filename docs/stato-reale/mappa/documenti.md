@@ -218,6 +218,32 @@ più pericoloso del falso positivo.** Un «NESSUNO» **non fa attrito** — semb
 risposta, non un errore — e lo si consegna senza controllarlo. Un falso positivo urta
 contro il primo documento che apri; un falso negativo resta invisibile per costruzione.
 
+
+## 🔬 `docs/ricerca/` — sedici documenti, tutti di questa settimana
+
+Nessuno è vecchio: il più antico è del **02/09**, il più recente del **06/09**. Non è
+archeologia, è **ricerca corrente**, e per questa cartella la domanda «vivo o morto» non
+è quella giusta. Quella giusta è: **la decisione che propongono è stata presa?**
+
+### 🆕 Ottava forma: il documento di DECISIONE APERTA
+
+Quattro documenti formano un gruppo solo — `il-giudice-della-0.8.0-tre-opzioni` più le tre
+pagine `opzione-a`, `opzione-b`, `opzione-c`. Il documento madre è **VIVO** e fa una cosa
+che vale la pena copiare:
+
+> *«Le tre opzioni hanno una pagina ciascuna. **Qui non si ripete il loro contenuto**: qui
+> c'è solo ciò che serve a **sceglierle**, e sta in un posto solo perché un criterio
+> ricopiato in tre file diverge — è la prima delle classi di errore che ci costano.»*
+
+⇒ **Il criterio di scelta sta in un posto solo, per costruzione.** È la classe ① del
+nostro metodo applicata mentre si scrive, non dopo l'incidente.
+
+⚠️ **Il rischio di questa forma**, e va scritto: un documento di decisione aperta resta
+vivo finché la scelta non è fatta. Se la scelta viene presa **altrove** — sul canale, in un
+commit — e il documento non la registra, **chi legge non sa che è chiusa** e riapre una
+discussione già conclusa. Cercando «opzione» sul canale non ho trovato una decisione
+dichiarata: allo stato, **aperta**.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -233,6 +259,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 38 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 39 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
