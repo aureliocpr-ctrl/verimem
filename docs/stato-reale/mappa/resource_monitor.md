@@ -1,0 +1,20 @@
+# Mappa di `verimem/resource_monitor.py` — 12 righe, 220 righe di codice (lead, 08/09 21:33)
+
+Letto per intero. Prova eseguita su origin/main 20257636: `env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q tests/test_resource_monitor.py` → `9 passed in 11.64s`, EXIT=0. **Nessun modulo del prodotto lo importa**: `git grep -nE "ResourceMonitor|resource_monitor" -- verimem/ scripts/ pyproject.toml` (escluso il file stesso) → vuoto; lo nominano solo `CHANGELOG.md`, `docs/F2_MODULE_INVENTORY.md`, `docs/ROADMAP-2026-05-27.md` e la checklist del 02/09. Il docstring dichiara l'origine (audit gap I2, 27/05: «nessun limite di risorse») e la scelta: il monitor non uccide niente, produce segnale; legge la configurazione da `~/.claude/clp_throttle.json`, un percorso del NOSTRO ambiente, non del pacchetto. Il README non lo nomina.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/resource_monitor.py:48` `ResourceSample` | un campione (ts, pid, cpu %, rss MB) | `sample_process` (92) | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (l'intero modulo non ha chiamanti nel prodotto; il codice funziona: 9 test verdi) | grep sopra; pytest 9 passed |
+| 2 | `verimem/resource_monitor.py:57` `ResourceAlert` | un allarme di sforamento sostenuto | `_check_one` (151) | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 3 | `verimem/resource_monitor.py:67` `load_config` | legge il JSON, default se manca o è rotto | nessuno nel prodotto | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 4 | `verimem/resource_monitor.py:81` `sample_process` | un campione CPU+RAM del pid via psutil; None senza psutil o senza processo | `_check_one` (131) | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 5 | `verimem/resource_monitor.py:100` `ResourceMonitor` | poller in background che spara allarmi su sforamento sostenuto di CPU/RAM; non uccide niente | nessuno nel prodotto | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 6 | `verimem/resource_monitor.py:121` `ResourceMonitor.audit_log_path` | il file di audit del giorno | `_audit` (127) | via `tick` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 7 | `verimem/resource_monitor.py:124` `ResourceMonitor._audit` | appende l'evento al jsonl del giorno | `tick` (172) | via `tick` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 8 | `verimem/resource_monitor.py:130` `ResourceMonitor._check_one` | un allarme per pid quando il valore supera la soglia per almeno `sustain_seconds`, una volta per finestra | `tick` (169) | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 9 | `verimem/resource_monitor.py:165` `ResourceMonitor.tick` | un ciclo sincrono di polling: allarmi, audit, callback (che non può rompere il ciclo) | `_loop` (191) | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 10 | `verimem/resource_monitor.py:185` `ResourceMonitor._loop` | il ciclo del thread fino allo stop | `start` (198) | via `start`/`stop` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 11 | `verimem/resource_monitor.py:194` `ResourceMonitor.start` | avvia il thread daemon una volta sola | nessuno nel prodotto | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+| 12 | `verimem/resource_monitor.py:203` `ResourceMonitor.stop` | ferma e attende il thread | nessuno nel prodotto | `tests/test_resource_monitor.py` | - | MAI CHIAMATA (come sopra) | grep sopra |
+
+Reperti: (a) un modulo intero (220 righe, 9 test verdi) che nessuno avvia: il prodotto non ha limiti di risorse nonostante l'audit del 27/05 e questo file; (b) proprio stasera il server MCP è morto in silenzio con 1,6 GB liberi (T39): `sample_process` e le soglie di questo modulo sono il materiale per quella cura, invece di scriverne un altro; (c) il percorso di configurazione `~/.claude/clp_throttle.json` è del nostro ambiente, non del pacchetto. Decisione da prendere: collegarlo (T39) o toglierlo. Nessun P0.
