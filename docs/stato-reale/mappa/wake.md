@@ -119,9 +119,18 @@ privati** (recupero, costruzione del prompt, i due loop, i due pruner, i due dis
   L'asimmetria ha una spiegazione plausibile nei docstring (uno riceve argomenti già
   strutturati, l'altro parsa `ActionInput`), ma **plausibile non è misurato** e su questo
   non affermo niente.
-- **Non ho verificato che la guardia di CVE-008 copra OGNI fast-path**: il rescan del
-  2026-06-02 ne trovò uno. Non so se ne esistano altri, e la domanda giusta è
-  *«quanti percorsi saltano il loop dell'LLM?»*.
+- ~~Non ho verificato che la guardia di CVE-008 copra OGNI fast-path~~ → **VERIFICATO, e
+  chiude in positivo.** La domanda era *«quanti percorsi saltano il loop dell'LLM?»*:
+
+      _macro_blocked_by_injection_guard   definita 174   CHIAMATA a 1146  (dentro _try_compiled_macro)
+      _injection_review_blocks_call       definita 162   CHIAMATA a 1444  (dentro il loop LLM)
+      riga 1101   «--- Procedural compilation fast-path ---»   ← l'unico
+      riga  846   «informational, not a deterministic fast-path» ← dichiara di NON esserlo
+
+  ⇒ **C'è UN solo fast-path deterministico, e ha la sua guardia**, con lo stesso criterio
+  del percorso lento (il docstring a 181: *«hatch as `_injection_review_blocks_call`»*). La
+  cura di CVE-008 non ha lasciato scorciatoie aperte, e un secondo punto che poteva
+  sembrarne una **dichiara di non esserlo**.
 - **Le funzioni `FORGIA` sono lette solo di nome**: sono venti superfici pubbliche di
   statistica, e non so quante siano usate da un chiamante vero.
 - `_critique`, `_tool_catalog`, `_system_prompt`, `_estimate_messages_size`: solo nomi.
