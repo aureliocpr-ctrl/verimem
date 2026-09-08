@@ -1,0 +1,12 @@
+# Mappa di `verimem/schema_abstraction.py` — 4 righe, 132 righe di codice (lead, 09/09 01:07)
+
+Letto per intero. Prova: pytest del lotto sul tip `20257636` (`51 passed in 17.79s`, EXIT=0, con `tests/test_schema_abstraction.py`). Chiamante letto: `verimem/mcp_server.py:10483-10486` (`hippo_find_cross_domain_schemas`, su `a.skills.all()`). Claim README: nessuna riga (grep su «schema|cross-domain» → nessuna). Realizza lo stadio `skill.stage="schema"` che «era un segnaposto»: estrazione di template per posizione di parola dentro secchi (prima parola + numero di token).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/schema_abstraction.py:30` `_tokenize` | «tokenize keeping all characters including punctuation»: è `s.split()` | `_common_template` (45), `find_cross_domain_schemas` (101) | via `test_schema_abstraction.py` | - | FUNZIONA COME PROMESSO | pytest 51 passed |
+| 2 | `verimem/schema_abstraction.py:35` `_common_template` | template allineato per posizione: token uguale in tutte le stringhe → tenuto, altrimenti `<slotN>`; None se sotto la soglia di posizioni uguali o senza slot | `extract_template` (72) | via `test_schema_abstraction.py` | - | FUNZIONA COME PROMESSO (il docstring dice «meno del 50%», il codice usa 40%: riga 40 contro 60-61) | pytest 51 passed |
+| 3 | `verimem/schema_abstraction.py:68` `extract_template` | `{template, instances, n_instances}` o None sotto due regole | `find_cross_domain_schemas` (113) | `tests/test_schema_abstraction.py` | - | FUNZIONA COME PROMESSO | pytest 51 passed |
+| 4 | `verimem/schema_abstraction.py:82` `find_cross_domain_schemas` | secchi per «prima parola + lunghezza», template per secchio con ≥ `min_instances`, ordinati per istanze, tetto `top_k` | `verimem/mcp_server.py:10485` (`hippo_find_cross_domain_schemas`) | `tests/test_schema_abstraction.py` | - | FUNZIONA COME PROMESSO | pytest 51 passed |
+
+Reperti: (a) `_TOKEN_RE` (riga 27) è definita e mai usata: codice morto, `_tokenize` è `split()`; (b) il secchio per lunghezza esatta: «Prefer `crtsh` over `nmap`» e «Prefer `snapshot-svc` over `event-log`» stanno insieme solo se hanno lo stesso numero di parole (dichiarato: «assumes similar word count»), quindi il «cross-domain» vale per frasi della stessa forma metrica; (c) il docstring di `_common_template` racconta una soglia (50%) diversa da quella del codice (40%): un docstring dice cosa credeva l'autore. Nessun P0.
