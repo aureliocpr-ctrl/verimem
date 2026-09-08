@@ -19,9 +19,17 @@ non viene né creato né dichiarato fallito. Il thread di richiesta è fermo den
 quel punto si accoda dietro lo stesso lock: non è una chiamata lenta, è il
 giudizio che si ferma per tutte dopo la prima.
 
-COSA PRESIDIA QUESTO TEST: che il lock protegga la COSTRUZIONE del tokenizzatore
-(che è il suo scopo — non costruirne due) e **non l'import**, che Python già
-serializza da sé e che non ha bisogno di protezione.
+COSA PRESIDIA QUESTO TEST: che `self._lock` protegga la COSTRUZIONE del
+tokenizzatore (che è il suo scopo — non costruirne due) e **non l'import**.
+
+📌 CORREZIONE 08/09 — qui era scritto che l'import «Python già serializza da sé
+e non ha bisogno di protezione». **È falso, ed è la premessa che il 06/09 aveva
+già falsificato**: due import pesanti in parallelo o si bloccano (0 giri su 3)
+o falliscono («cannot import name 'AutoModelForSequenceClassification'»), ed è
+per questo che esiste `_import_lock`. L'import ORA sta sotto quel lock — che è
+un lock diverso da `self._lock`, preso e rilasciato prima di lui. Questo test
+non cambia e resta valido: continua a misurare che `self._lock` sia libero
+durante l'import.
 
 ⚠️ COSA NON PRESIDIA, e va detto: non fa tornare un import che non ritorna. Se
 l'import resta appeso, il thread che lo esegue resta appeso comunque. Questo test

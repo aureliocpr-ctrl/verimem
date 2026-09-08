@@ -87,12 +87,21 @@ def make_nli_classifier(model_name: str, *, max_length: int = 256,
     """Production classifier over a cached NLI cross-encoder: softmax(logits) mapped
     to {contradiction, entailment, neutral} via the model's id2label. Lazy transformers
     import; runs on CUDA when available."""
-    import torch
-    from transformers import (
-        AutoConfig,
-        AutoModelForSequenceClassification,
-        AutoTokenizer,
-    )
+    # ⚠️ SOTTO IL LOCK DEGLI IMPORT, e SOLO l'import — come la gemella
+    # `local_grounding.make_finetuned_scorer`, che caricava lo stesso genere di
+    # cross-encoder ed era gia' protetta mentre questa no. Una cura arrivata a
+    # una copia sola: questo e' il punto in cui il gate carica il giudice NLI
+    # (`anti_confab_gate.py` -> `get_local_relation_judge`), quindi girava sul
+    # percorso della scrittura senza serializzarsi con nessuno.
+    # Il caricamento dei pesi resta FUORI dal lock: sotto ci starebbe 19,1 s.
+    from ._import_lock import lock_import
+    with lock_import():
+        import torch
+        from transformers import (
+            AutoConfig,
+            AutoModelForSequenceClassification,
+            AutoTokenizer,
+        )
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     cfg = AutoConfig.from_pretrained(model_name)

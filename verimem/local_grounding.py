@@ -437,17 +437,39 @@ class LocalGroundingJudge:
         cioe' il lock veniva preso e non piu' rilasciato mentre il thread era
         fermo dentro ``from transformers import AutoTokenizer`` — e ogni altra
         scrittura con fonte che arrivava a questo punto si accodava dietro un
-        IMPORT. Il lock serve a non costruire DUE tokenizzatori: quello che deve
-        proteggere e' ``from_pretrained``, non l'import, che Python serializza
-        gia' da se'.
+        IMPORT. ``self._lock`` serve a non costruire DUE tokenizzatori: quello
+        che deve proteggere e' ``from_pretrained``, non l'import.
+
+        📌 CORREZIONE 08/09 — qui c'era scritto «l'import, che Python
+        serializza gia' da se'», e i dati dicono di no: e' la premessa che il
+        06/09 ha falsificato (due import di estensioni C in parallelo, 0 giri
+        su 3) e per cui esiste ``_import_lock``. L'import NON va sotto
+        ``self._lock`` — quello resta vero e c'e' un test che lo presidia — ma
+        va sotto il lock DEGLI IMPORT, che e' un altro lock e un altro scopo.
 
         ⚠️ Questo NON fa tornare un import che non ritorna: toglie il contagio
         alle altre scritture, non il blocco. Il blocco lo toglie il preload
         (``preload.py``), che carica la catena PRIMA che il server serva.
         """
         if self._tok is None and not self._tok_failed:
+            # ⚠️ SOTTO IL LOCK DEGLI IMPORT (che NON e' `self._lock`): questo
+            # punto era scoperto, e un lock serializza solo chi lo prende.
+            # `make_finetuned_scorer` importa transformers sotto
+            # `lock_import()`; qui si importava fuori, sul THREAD DELLA
+            # RICHIESTA (`_tokenizzatore` e' chiamato dalla selezione dello
+            # span), cioe' proprio mentre il warm del giudice fa lo stesso
+            # import su un thread di sfondo. Misurato l'08/09 senza daemon
+            # condiviso: `moat_judge_failed` 3 giri su 3, «cannot import name
+            # 'AutoModelForSequenceClassification'» — lo stesso errore del
+            # 06/09 che `_import_lock` esiste per chiudere.
+            #
+            # I due lock restano distinti e in quest'ordine: `lock_import` si
+            # prende e si RILASCIA prima di `self._lock`, mai annidati, quindi
+            # non si crea il ciclo che li farebbe aspettare a vicenda.
+            from ._import_lock import lock_import
             try:
-                from transformers import AutoTokenizer
+                with lock_import():
+                    from transformers import AutoTokenizer
             except Exception:  # noqa: BLE001 — transformers assente: si prosegue
                 self._tok_failed = True
                 return self._tok
