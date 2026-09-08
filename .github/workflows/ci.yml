@@ -6,6 +6,18 @@ on:
     # rilascio non partiva mai (total_count=0) e il gate del publish
     # non aveva nulla da leggere.
     branches: [main, "hotfix/**"]
+    # 🧾 I SOLI DOCUMENTI NON FANNO PARTIRE LA MATRICE (2026-09-08, Aurelio:
+    # «se fate 190 commit in un giorno potete mai lanciare 190 ci?»). Misurato
+    # quel giorno: 190 commit su main dalla 0.7.6 in quattro giorni, e il
+    # candidato 7b9e8ca1 (due file .md) ha comprato 9 job e ~55 min di matrice
+    # per una riga di README. Un push che tocca SOLO .md o docs/ non e' un
+    # candidato: il verdetto sul candidato si CHIEDE (workflow_dispatch, sopra)
+    # sull'ultimo sha prima del tag, e quel run ha anche i presidi del README e
+    # costruisce il wheel per lo smoke. Non cambia niente per chi tocca codice,
+    # test o workflow: la matrice parte come prima.
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
   pull_request:
     branches: [main]
   # 🔑 UN VERDETTO SI DEVE POTER CHIEDERE, NON SOLO PROVOCARE.
