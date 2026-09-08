@@ -55,6 +55,10 @@ ordina la coda.
 | `docs/stato-reale/01-promesse-vs-realta.md` | **VIVO** | porta la nota datata fatta meglio del corpus: *«misura `main`, e `main` si è mosso di **756 commit**… non è datato perché sbagli, è datato perché il suo **bersaglio è mobile**… **non ho rimisurato il suo contenuto e non affermo che sia caduto**»*. Dichiara anche ciò che NON ha verificato |
 | `docs/stato-reale/02-RISPOSTA-cosa-fa-chi-installa-oggi.md` | **VIVO** | SHA `afc6cf73`, 08/08, misurato sul pacchetto da PyPI con HOME dedicata e zero variabili. E una frase che vale per tutto il corpus: *«la mia fetta è cresciuta a quattordici file, **che sono un archivio e non una risposta**. Questa pagina è la risposta; ogni riga ha il file che la prova»* |
 | `docs/stato-reale/02p-il-server-parte-su-main-e-dichiara-la-versione-sbagliata.md` | **VIVO, corretto in nota** | il titolo afferma un difetto **curato dal 09/08**, e una nota in cima lo dichiara: *«la seconda metà del titolo NON vale più… curato da `068a60d9`… verificato oggi: `mcp_server.py:1500` costruisce `Server("verimem", version=_verimem_version…)`»*. E distingue **quale metà** vale ancora: *«la PRIMA metà — il server parte — **non l'ho riverificata**: richiede un `initialize` vero su stdio, ed è l'anello che nessuno ha rifatto»* |
+| `docs/stato-reale/01b-le-promesse-mancanti.md` | **VIVO, corretto in nota** | il **numero nel titolo** è superato, e la nota lo dice: *«il conteggio nel titolo è superato: **due delle tre sono state colmate**»*, con dove sono state colmate (`README.md`, sezione «What it costs on disk»). Nona forma applicata a un numero |
+| `docs/stato-reale/02i-i-fatti-dei-primi-minuti-restano-non-verificati.md` | **VIVO** | SHA `332a2f73`, `git status` pulito, HOME fredda, cache vuota. Completa un passo che `02g` **dichiarava non fatto**: i documenti si passano il testimone sui limiti dichiarati |
+| `docs/stato-reale/02l-l-astensione-e-spenta-nel-pacchetto.md` | **VIVO** | SHA, ora, store fresco per ogni braccio, zero variabili. E si apre con *«🔴 **Correggo una mia tesi di due ore fa**»*: l'autocorrezione è nel documento, non in un altro file |
+| `docs/stato-reale/17-la-ricerca-ordina-per-data-non-per-pertinenza.md` | **VIVO** | 30/08, corpus reale in `mode=ro` (15.578 fatti alle 12:25). Riporta **verbatim la domanda di Aurelio** come criterio con cui giudicarlo. ⚠️ Il difetto che descrive **non risulta curato**: cercando fra i commit dal 30/08 termini come «ordin/pertinen/relevance» non ho trovato la cura — *cercato, non provato eseguendo* |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -292,6 +296,20 @@ perché: *«richiede un `initialize` vero su stdio, ed è l'anello che nessuno h
 ⇒ **Misura → cura → presidio.** Un difetto documentato che non torna perché qualcosa lo
 controlla a ogni rilascio. È il contrario del documento che invecchia in silenzio.
 
+
+## 🔎 Un difetto documentato il 08/08 è diventato un ticket un mese dopo
+
+`02i` si intitola *«`warmup` risolve per il futuro; i fatti dei primi minuti restano non
+verificati **per sempre**»* — ed è datato **08/08**.
+
+È **T26a/T29**: la scrittura che entra non giudicata e che nessuna cura successiva sana.
+Il ticket è nato a settembre; **la misura c'era da un mese**.
+
+⇒ Per la domanda del contratto — *quanti dei difetti noti hanno tutti e tre gli anelli
+(documento · cura · presidio)?* — qui il **primo anello esisteva prima del ticket**, e
+nessuno l'aveva collegato. Non è un documento morto: è un documento **che aveva ragione
+presto**, e la mappa serve anche a questo — a far trovare la misura che c'era già.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -307,6 +325,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 43 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 47 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
