@@ -338,12 +338,18 @@ def emit_write(*, stored: bool, status: str, fact_id: str, topic: str,
     senza un punteggio, il campo mentirebbe — ed e' il campo su cui questo
     prodotto si vende.
     """
+    # La stessa `judged_at_all` che compone la ricevuta della porta MCP: qui
+    # la riga era `_gs is not None` scritta a mano, e il campo che il journal
+    # deriva da mesi e' esattamente quello che alla ricevuta mancava. Due
+    # scritture della stessa definizione divergono — su questo prodotto e'
+    # gia' successo tre volte in due giorni con una soglia.
+    from .retirement_log import judged_at_all as _judged_at_all
     from .retirement_log import judged_true as _judged_true
     _gs = grounding_score
     emit_flow("flow.write", stored=bool(stored), status=str(status),
               fact_id=str(fact_id), topic=str(topic),
               layers=list(layers or []),
-              grounding_score=_gs, judged=_gs is not None,
+              grounding_score=_gs, judged=_judged_at_all(_gs),
               withheld_despite_judge=(str(status) in ("quarantined",
                                                       "rejected")
                                       and _judged_true(_gs)),

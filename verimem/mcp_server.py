@@ -14001,9 +14001,49 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                              "write (no llm and no local CE model); this is NOT a "
                              "pass — run `verimem warmup` to fetch the free "
                              "judge, or `verimem doctor` to see which is missing")
+            from verimem.retirement_log import judged_at_all as _judged_at_all
             from verimem.retirement_log import judged_true as _judged_true_mcp
+            # T26a — SE IL MOAT HA GIUDICATO, DETTO IN CIMA E DA UN BOOLEANO.
+            # Il server gira delegate-only (`setdefault
+            # HIPPO_ENCODE_DELEGATE_ONLY=1` in questo file): senza un daemon
+            # raggiungibile `try_local_score` torna None e una scrittura CON
+            # FONTE entra non giudicata. La ricevuta lo diceva — in ottava
+            # posizione dentro `moat` e in tredicesima dentro
+            # `anti_confab_warnings` — e in cima continuava a dire `ok: true`.
+            # Chi consuma questa porta e' un agente: legge `ok` e va avanti.
+            # L'ASSENZA DI UNA MISURA SI LEGGE COME UN VERDETTO BUONO, ed e'
+            # la forma che questo prodotto esiste per non avere.
+            #
+            # ⚠️ Il campo non nasce qui: `flow_events.emit_write` lo derivava
+            # gia' per il journal. Misurato nel banco di questa cura, stessa
+            # scrittura: `flow.write ... grounding_score=98.5 judged=True`
+            # mentre la ricevuta non portava la chiave affatto. Il prodotto lo
+            # sapeva, lo registrava per se', e non lo diceva a chi aveva
+            # appena scritto — la stessa forma curata per `quarantined_by`.
+            #
+            # ⚠️ NON e' `judged_true`: quella risponde «la fonte lo sostiene?»
+            # e direbbe «non giudicato» su una scrittura giudicata e BOCCIATA,
+            # cioe' proprio dove la ricevuta si legge per capire perche' il
+            # fatto non e' passato. Vedi il docstring di `judged_at_all`.
+            _judged_out = _judged_at_all(_gs_out)
             return _ok({
                 "ok": True,
+                # Seconda chiave, e il posto e' la meta' della cura: la
+                # diagnosi c'era gia' piu' in basso e non si vedeva.
+                "judged": _judged_out,
+                # E l'avviso in chiaro, condizionale come `quarantined_by`
+                # qui sotto: compare SOLO quando una fonte era stata data e
+                # non e' stata giudicata — il caso in cui chi scrive ha fatto
+                # tutto giusto e non ha avuto il verdetto. Dice il fatto e
+                # rimanda a `moat` per il perche', invece di ripetere la
+                # diagnosi in un secondo posto che puo' divergere dal primo.
+                **({"warning": (
+                    "NOT JUDGED — a source was given, but the entailment moat "
+                    "produced no verdict on this write: nothing here says the "
+                    "fact follows from its source. Read `moat` for which of "
+                    "the reasons, and `verimem doctor` for whether a shared "
+                    "encode daemon is reachable.")}
+                   if (not _judged_out and _source) else {}),
                 "id": fact.id,
                 "proposition": proposition,
                 "topic": topic,

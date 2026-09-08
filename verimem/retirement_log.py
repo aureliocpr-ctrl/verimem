@@ -95,6 +95,28 @@ def judged_true(score: Any) -> bool:
         return False
 
 
+def judged_at_all(score: Any) -> bool:
+    """Whether the moat produced a verdict on this write AT ALL — not whether
+    that verdict was favourable.
+
+    ⚠️ LE DUE DOMANDE SI CONFONDONO, e confonderle mente proprio dove la
+    ricevuta viene letta di più. :func:`judged_true` risponde «la fonte lo
+    sostiene?» e torna ``False`` anche su una scrittura che il giudice ha
+    esaminato e BOCCIATO: usarla per dire «giudicato» farebbe rispondere «non
+    giudicato» sull'unico caso in cui qualcuno sta leggendo per capire perché
+    il fatto non è passato. Sono due funzioni perché sono due domande.
+
+    ``None`` è l'unico «non giudicato»: il moat o ha prodotto un punteggio o
+    non l'ha prodotto. Uno zero è un verdetto — severo, ma un verdetto.
+
+    È la definizione che ``flow_events.emit_write`` già applicava al journal
+    (``judged=_gs is not None``) mentre la ricevuta della porta MCP non
+    portava il campo affatto: il prodotto lo sapeva, lo registrava per sé, e
+    non lo diceva a chi aveva appena scritto.
+    """
+    return score is not None
+
+
 def retirement_log(
     sm,
     *,
