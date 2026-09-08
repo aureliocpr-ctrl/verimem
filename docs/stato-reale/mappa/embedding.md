@@ -78,8 +78,10 @@ che non c'è si legge come perfetta»*.
 `_needs_e5_prefix` (429): i modelli e5 sono addestrati con `query: ` / `passage: `. ⚠️ Se
 questi prefissi venissero applicati al contrario, o dimenticati da un chiamante, **il
 retrieval peggiorerebbe senza errori**: nessuna eccezione, solo risultati un po' peggiori.
-**Non ho verificato** che tutti i chiamanti li usino — è il genere di cosa che non emette
-segnale.
+
+⇒ **Ma la domanda «tutti i chiamanti li usano?» è posta male**, e il §7 lo mostra: sono
+**due convenzioni dichiarate**, una per sottosistema, e `memory.py` vieta di allinearle. Il
+rischio vero è la **giuntura**, ed è ristretto (due store distinti) ma non escluso: vedi §7.
 
 ---
 
