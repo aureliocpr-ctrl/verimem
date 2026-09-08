@@ -137,11 +137,46 @@ altro, prima della mia accusa.*
 
 ---
 
+## Righe 216-275 — quarantena reversibile, provenienza, astensione, documenti
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 217-231 | **«un blocco sbagliato è visibile e reversibile»**: `Memory.quarantine_log()` elenca i trattenuti · con `explain=True` ogni riga dice **quale schermo l'ha fermata e cosa la farebbe passare**, **ricalcolato sul momento** *(quindi vale anche per claim fermati molto prima)* · `Memory.restore(fact_id, reason=…)` la rimette nel recall · stessa coppia su MCP | `quarantine_log` (1 file) · `restore` (7) | **nessuno di specifico** | ✅ **le API esistono su entrambe le superfici** · ⬜ sul comportamento |
+| 224-226 | 🔑 **il limite dichiarato dentro la funzione**: un claim fermato dal controllo di **entailment sulla fonte** è **l'unico che non si può spiegare a posteriori** — *«la fonte non è conservata»* — e **lo dice invece di non restituire nulla** | — | **nessuno** | ✅ **come forma**: è un «non lo so» scritto nel posto giusto, cioè **dentro la risposta**, non in una nota. *(È la stessa mancanza che @ws6 ha in carico come T32: «la fonte non si conserva».)* |
+| 227-231 | **restore è un override guardato, non una porta di servizio**: rifiuta un fatto **superato** (*«non resuscita mai un valore ritirato»*) e **ri-esamina proposizione E topic** per prompt-injection — *«un payload di esfiltrazione quarantinato resta quarantinato anche se un chiamante ne passa l'id»* | `supersession_policy.py` · il ri-esame | **nessuno di specifico** | ⬜ **NON MISURATO, e questa è la riga che vorrei presidiata per prima**: è l'unica del blocco che descrive una **difesa contro un attaccante**, e una difesa senza presidio è una promessa |
+| 232-241 | **provenienza a ogni lettura**: le risposte citano da dove viene ogni fatto · `TrustReport` spiega *come il sistema sa* · **il ranking si dichiara**: `hippo_facts_recall` torna un campo `ranking` (`{"rerank": "timeout_cold", "fusion": "timeout"}` quando un processo freddo ha tenuto l'ordine del bi-encoder) · *«ogni stadio degrada sotto un budget invece di appendere il chiamante, quindi la stessa domanda può legittimamente dare un insieme diverso a freddo — e quella differenza adesso è dichiarata, non silenziosa»* | `TrustReport` (6 file) | `test_la_promessa_della_citazione_vale_su_ogni_superficie.py` | ✅ **sulla citazione** · ✅ **come metodo sul `ranking`**: *dichiarare che un risultato può cambiare a freddo, invece di lasciarlo scoprire, è la stessa onestà del banner del warmup* · ⬜ sul campo `ranking` (nessun presidio lo rilegge) |
+| 242-244 | **storia bi-temporale**: quando è accaduto e quando l'abbiamo saputo; `as_of`, le transizioni, l'audit di ogni revisione | `temporal_context.py` · `as_of` sulle porte | i presidi di `as_of` (dalla 0.7.7) | ✅ — *e la 0.7.7 ha aggiunto proprio che `as_of` morde sulle porte ordinarie* |
+| 245-266 | **astensione per disegno**, e **le tre porte fanno cose diverse**: gateway/console **filtrano** · MCP **serve e segnala** (`sotto_il_pavimento`, `trattenuti`) · l'SDK espone gli stessi due segnali ed è **permissivo di default** perché uno store nuovo non si astenga troppo · *«solo `explain`/`trust_report` rifiutano di rispondere: `recall` e `search` tornano sempre i fatti più vicini — la segnalazione è come distingui "più vicino" da "giusto"»* | `sotto_il_pavimento` (4 file) · `trattenuti` (4) · `MIN_RELEVANCE` (6) | **nessuno di specifico** | ✅ **i campi esistono su tutte e tre** · ✅ **come metodo, ed è raro**: il README **non dice «il prodotto si astiene»**, dice **cosa fa ciascuna porta**, che è la sola forma utile a chi deve scegliere la porta |
+| 260-266 | **«l'astensione ha due livelli e il secondo ha una dipendenza»**: il pavimento di rilevanza gira ovunque; il giudice di **sufficienza** — quello che prende il fatto in tema che **non risponde** — richiede un provider LLM. Senza, `get_llm()` torna un mock, `verify.sufficiency` riporta **`no_provider`**, e il dossier torna senza | `no_provider` (1 file) | **nessuno** | ✅ **ed è un limite dichiarato bene**: dice **cosa perdi** (*«la presa dell'in-tema-ma-sbagliato»*) e **cosa resta** (*«il pavimento continua ad astenersi fuori dominio»*) |
+| 267-275 | **memoria documentale citata sul testo indicizzato**: `indexed_text[start:end] == passage` · promozione a memoria **attraverso il gate** · *«gli offset sono esatti sull'indice… non sono la promessa che il file originale si apra ancora, perché i percorsi sono conservati come dati»* · raggiungibile da **tutte e tre** le superfici | `index_document` (2 file) · `search_documents` (1) · `verimem index` / `search-docs` sulla CLI | **nessuno di specifico** | ✅ **le API esistono su tutte e tre** · ✅ **il limite sui percorsi è dichiarato al punto giusto** |
+
+### 📌 Un'avvertenza di leggibilità (non un difetto): due nomi per la stessa cosa
+
+La riga 274 nomina i tool MCP come **`verimem_document_*`**. Nel codice, **di
+default**, sono **`hippo_document_*`** (`mcp_server.py:1945`): il prefisso
+`verimem_` esiste **solo** con `VERIMEM_TOOL_NAMESPACE=verimem`
+(`mcp_server.py:7748`).
+
+**Non è un errore**: alla riga **484** la configurazione d'esempio del README
+**imposta quella variabile**, e alla **492** dice *«togli l'entry per tenere i
+`hippo_*` legacy»*. Chi segue il README dall'inizio ottiene davvero i nomi
+`verimem_*`.
+
+⚠️ **Ma la spiegazione sta 210 righe dopo il primo uso**, e nel frattempo la
+pagina usa **entrambi i prefissi** (`hippo_*` alle righe 227, 235, 353, 611-612,
+749; `verimem_*` in cinque punti). ⇒ **stessa forma dell'1,8% contro il 5,4%: la
+chiave che rende leggibile un nome sta lontana dal punto in cui serve.**
+
+🪞 *Terza volta oggi che stavo per scrivere un ❌ e la difesa era già nel testo:
+qui bastava leggere 210 righe più avanti.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  215 / 811   (26,5%)
-verdetti:  ✅ 25   ❌ 2   ⬜ 25   (una riga può portare due verdetti su due claim)
+righe lavorate:  275 / 811   (33,9%)
+verdetti:  ✅ 37   ❌ 2   ⬜ 29   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
