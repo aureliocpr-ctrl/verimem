@@ -1,0 +1,23 @@
+<string>:4: RuntimeWarning: DATA_DIR aliases disagree: HIPPO_DATA_DIR=C:\Users\aurel\.engram, ENGRAM_DATA_DIR=C:\Users\aurel\AppData\Local\Temp\ws3-ledger-yhr473oo, VERIMEM_DATA_DIR=C:\Users\aurel\AppData\Local\Temp\ws3-ledger-yhr473oo — using C:\Users\aurel\.engram (HIPPO_DATA_DIR wins, it is the explicit isolation handle). Unset the ones you did not mean.
+guardia: verimem.client | C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\client.py
+
+=== A. scrittura SENZA fonte che il gate ferma (il giudice non gira)
+  status: model_claim | stored: True
+  warnings (layer): ['L1.12', 'L1-domain-precision-observe']
+  adjudication.evidence_class: lexical_only | reason: 
+
+=== B. scrittura CON fonte e un numero che la fonte non contiene
+C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\anti_confab_gate.py:2635: RuntimeWarning: local grounding judge ships an unusable cut (99.6 > 90, a val-set F1 artifact) — using the validated local CE moat cut 40 (same as the conversation-ingest path)
+  status: quarantined
+  warnings (layer): ['L4.1', 'L4-grounding']
+
+=== C. una scrittura buona, per avere anche il lato ammesso
+  status: model_claim
+  warnings (layer): []
+
+=== IL CONTATORE PUBBLICO: trust_stats()
+  ledger: {'admitted': 2, 'quarantined': 1, 'rejected': 0, 'abstained': 0}
+  by_layer: {'L4-grounding': 1, 'L4.1': 1}
+
+  >>> 'L4-skipped' compare fra i layer del contatore? NO
+  >>> layer presenti: ['L4-grounding', 'L4.1']

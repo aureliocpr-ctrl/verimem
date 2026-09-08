@@ -11,14 +11,16 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 47 righe misurate su 80 · 16 claim collegati (README e
+**Contatore**: 59 righe misurate su 80 · 16 claim collegati (README e
 istruzioni del server) · i chiamanti delle tre porte per `add` e `search`
-**letti con la riga** (20:59) · **6 ticket**, di cui tre su promesse pubbliche:
+**letti con la riga** (20:59) · **7 ticket**, di cui tre su promesse pubbliche:
 T-MAP-4 (un claim del README falso a metà), T-MAP-5 (un claim che tace un
 requisito), **T-MAP-6 (la retro-demozione non copre il canale che il README
-insegna)** · 5 righe dove **ho sbagliato io la chiamata o l'ipotesi** e l'ho
-scritto, tre chiuse · **5 TypeError in una passata** perché chiamavo per
-intuizione: metodo corretto, si leggono le firme prima. Prove sul tip
+insegna)**, e **T-MAP-7 (una variabile scritta male non spegne l'opt-in: lo
+accende a un terzo valore)** · **7 righe dove ho sbagliato io** la chiamata,
+l'ipotesi o la misura, e l'ho scritto — tre chiuse; le due di stasera hanno la
+stessa forma: **5 TypeError** per aver chiamato senza leggere la firma, e un
+conteggio fatto sul **basename** invece che sul path. Prove sul tip
 `20257636`.
 
 **Il pezzo più forte finora**: la tamper-evidence dell'audit è provata
@@ -118,7 +120,41 @@ rifatto la passata. Le righe qui sotto sono della seconda.
 | 46 | `source_trust_observe` (2400) | il canale che muove la fiducia di una fonte | **FUNZIONA COME PROMESSO** | `source_trust_observe(contradiction=FONTE)` → `source_trust` da **0,5 a 0,333**. ⚠️ Una `confirmation=[FONTE]` subito dopo **non** la fa risalire (resta 0,333): non è detto sia un difetto (la risalita può volere tempo o più conferme), ma è asimmetrico e non l'ho misurato oltre |
 | 47 | `_retro_demote_source` (2522) / `_rehabilitate_source` (2552) | «Quarantine every non-quarantined fact citing `source` — the write-time gate only stops FUTURE lies; **the crossing re-evaluates the past ones**» | **FUNZIONA — ma non sul canale che il README insegna** → ticket **T-MAP-6** | controllo a **due lati**, che è ciò che rende leggibile il risultato: (A) fatto scritto con `add(source=…)` — il quickstart del README — → dopo `_retro_demote_source` resta `model_claim`; (B) fatto con `verified_by=["source:<testo>:sha256"]` → **`quarantined`**, con il log `fact_quarantined … reason="source '…' trust sank below the floor — retroactive demotion"`, e `_rehabilitate_source` lo riporta a `model_claim` (`fact_restored`). Quindi la funzione fa esattamente ciò che promette, **sui fatti che citano la fonte in `verified_by`**; `add(source=…)` lascia `verified_by=[]` e mette la fonte in `source_signature`, e la query (`verified_by LIKE '%"source:<testo>:%'`, prefissi `source-doc/source/src/doc/file`) non li trova mai |
 
-## Le altre 33 voci — `NON MISURATO`, elencate per non perderle
+## Le funzioni che scrivono la frase che l'utente legge, e quelle che decidono l'etichetta (client.py 77-198, 4180-4340)
+
+*`prova_righe.py` e `prova_ledger_layer.py`, 08/09 22:32-22:35. Sono pure o
+quasi: ogni ramo si esercita davvero invece di essere dedotto, e per ognuna c'è
+il caso che DEVE accendersi e quello che DEVE spegnersi.*
+
+| # | funzione (riga) | cosa promette | verdetto | prova (eseguita) |
+|---|---|---|---|---|
+| 48 | `_fact_trust_line` (77) | «la data viene da `asserted_at` con ripiego su `created_at`; la fonte è la prima source, else i verificatori, else la parola esplicita "unrecorded" — **mai una provenienza inventata**» | **FUNZIONA COME PROMESSO** | i tre casi: `[2025-09-04 \| Verbale del 3 marzo \| verified] …` · senza `source` ma con `verified_by` → `[… \| doc:contratto.pdf \| model_claim] …` · senza niente → `[undated \| unrecorded \| model_claim] …`. Il vuoto è *nominato*, non riempito |
+| 49 | `_pavimento_avviso` (127) | «**Senza** la variabile restituisce il pavimento calibrato, cioè il comportamento di sempre. **Con** la variabile impostata usa quel valore» | **NON COME PROMESSO** → ticket **T-MAP-7** | calibrato 0,8805: senza variabile → `0.8805` ✅ · `'0.95'` → `0.95` ✅ · ma `'0,839'` (virgola italiana) → **0.839** · `'0.95abc'` → **0.839** · `'auto'` → **0.839** · `'nan'` → **0.839** · `'inf'` → **0.839** · `'-1'` → **0.0**. Un valore malformato non è nessuno dei due casi promessi: non «quel valore» (non c'è) e non «il comportamento di sempre» (non torna al calibrato) |
+| 50 | `_frase_origine_soglia` (149) | come si CHIAMA il numero che l'avviso dichiara, «superficie unica» per SDK, MCP e CLI, perché «dire *calibrata su questo corpus* accanto a un valore che arriva da una variabile è una frase falsa dentro una ricevuta» | **FUNZIONA COME PROMESSO**, con un confine dichiarato | `(0.8805, 0.8805)` → «calibrata su questo corpus» · `(0.839, 0.8805)` → «impostata con ENGRAM_AVVISO_MIN_RELEVANCE». ⚠️ Confine: la funzione confronta **due numeri**, non l'origine — chi imposta la variabile a un valore *uguale* al calibrato si sente dire «calibrata». Il numero però è davvero quello calibrato, quindi la frase non mente sul valore: lo scrivo come confine, non come ticket |
+| 51 | `_nota_scaduti` (170) | l'avviso della scadenza «dice anche COSA NON È», perché le tre cause di una risposta più corta si presentano identiche a chi legge | **FUNZIONA COME PROMESSO** | `_nota_scaduti(3)` contiene «Non e' il pavimento e non e' la data nella domanda» (`True`) e nomina la via d'uscita `recall_as_of` (`True`) |
+| 52 | `_evidence_class` (4180) | i quattro livelli onesti: `cross_encoder`/`llm_judge` se un giudice ha dato un punteggio, `ungated` se la fonte c'era ma nessun giudice era raggiungibile, `receipt_declared`, `lexical_only` | **FUNZIONA COME PROMESSO** (tutti e cinque i rami) | `judge='local'` → `cross_encoder` · `judge='claude'` → `llm_judge` · nessun giudice + `L4-skipped` → `ungated` · nessun giudice + `verified_by` → `receipt_declared` · niente → `lexical_only` |
+| 53 | `_blocking_layers` (4230) | «i layer che **hanno AGITO** sulla scrittura — advisory `*-observe` esclusi, così il registro `by_layer` non accredita mai un avviso per un blocco che non ha causato» | **FUNZIONA ALLA LETTERA** · effetto collaterale **NON MISURATO alla porta** | in `['L4.1','L1','L4.2-observe','L4-skipped','']` → out `['L1','L4-skipped','L4.1']`: l'`*-observe` è escluso ✅, ma **`L4-skipped` resta dentro** — ed è l'unico marcatore che il commento di `_BLOCK_LAYER_PRIORITY`, dieci righe sopra, dichiara *non essere un blocco* («l'avviso: il giudice non è girato»). Il valore va al registro (`client.py:798`) → `trust_stats().by_layer`. **Il controllo alla porta mi ha falsificato**: in tre scritture vere (`prova_ledger_layer.py`) il `by_layer` è `{'L4-grounding': 1, 'L4.1': 1}` e `L4-skipped` **non compare** — non sono riuscito a produrre un blocco *mentre* il giudice non gira, perché qui il CE gira sempre. Livello dichiarato: **funzione pura sì, porta no** |
+| 54 | `_audit_log_on` (4239) | opt-in `VERIMEM_AUDIT_LOG`, **default OFF** perché persiste ogni verdetto *e la proposizione* in un DB gemello | **FUNZIONA COME PROMESSO** | assente → `False` · `'1'`/`'on'`/`'TRUE'`/`'yes'`/`' on '` → `True` · `'0'` → `False`. `'y'` e `'si'` → `False`: la lista è quella dichiarata, un «sì» italiano non accende (nota, non difetto) |
+| 55 | `_reason_from_warnings` (4248) + `_rank` (4254) | la ragione umana dal layer **bloccante di priorità più alta**, «così un fatto quarantinato da L1 non viene spiegato da una nota consultiva L4-skipped che si trovava solo più in fondo» | **FUNZIONA COME PROMESSO** — il caso del docstring riprodotto tale e quale | `['L4.1','L4-skipped']` → «il claim afferma un valore che la fonte non contiene: 7300» (**non** «nessun giudice disponibile») · solo `L4-skipped` → la sua frase · solo un `*-observe` → `''` · `L4.1` contro `L1` → «da L1», l'ordine di `_BLOCK_LAYER_PRIORITY` · nessun warning → `''` |
+| 56 | `_judge_of_record_dict` (4269) | backend + identità del modello che ha davvero caricato, perché «la fuga del CE sulle sostituzioni di entità in spagnolo è specifica del modello»; `version` è «un'impronta per file, arricchita in un seguito» | **FUNZIONA COME PROMESSO** | `None` → `None` · `'claude'` → `{'backend':'claude','model':None,'version':None}` (il modello dell'LLM iniettato non è visibile al gate: `None` **onesto**, non inventato) · `'local'` → `{'backend':'local','model':'local_gate_ce_v2','version':None}`. Il «seguito» non è arrivato: `version` è `None` in tutti e tre |
+| 57 | `_confidence_tier` (4287) | l'etichetta grossolana di fiducia, delegata alla banda del gate | **FUNZIONA COME PROMESSO** | CE locale: 95 → `high` (≥ tau_hi 80) · 60 → `borderline` (nella banda 40-80) · 10 → `low` · `None` → `unverified` · `nan` → `unverified` · giudice assente → `unverified`. Giudice `claude` con soglia 70: 95 → `high`, 60 → `low` (nessuna banda: la zona incerta è **solo** del CE locale, come dichiara) |
+| 58 | `_adjudication` (4293) | il verdetto **sempre** restituito al chiamante: cosa ha deciso, quanto è confidente, e — quando blocca — perché; «una quarantena è un verdetto visibile qui, mai un'esclusione silenziosa» | **FUNZIONA COME PROMESSO**, incluso il caso difficile | ammesso → `reason: ''` e `margin: 16.0` · quarantinato con `L4.1` → la ragione del layer, `margin: -58.0`, `confidence_tier: 'low'` · quarantinato **senza numeri né advice** → «quarantined by a store-time integrity screen (e.g. prompt-injection)», mai vuoto · **bloccato ma con score SOPRA la soglia** → *non* dice «sotto soglia» ma la frase dello screen: è il caso che il commento (facet critic opus) dichiara di voler evitare, ed è coperto |
+| 59 | il registro `by_layer` alla porta (`client.py:798`, `_record_trust` 3132, `_ledger_ingest_result` 3142) | «conta ciò che il gate HA FATTO su questo store, live» | **FUNZIONA COME PROMESSO** sui casi che ho saputo produrre | tre scritture vere → `ledger {'admitted': 2, 'quarantined': 1, 'rejected': 0, 'abstained': 0}` e `by_layer {'L4-grounding': 1, 'L4.1': 1}`: i due layer che hanno davvero fermato la scrittura B, e nessun credito agli avvisi |
+
+⚠️ **Secondo errore mio del turno, e l'ho corretto prima di dichiarare**: la
+verifica «lo store di casa non è stato toccato» stampava il **basename**, e
+sotto `.engram` ci sono **sei** file di nome `semantic.db` (store, dreams,
+backups). «`semantic.db` con 4 scritture recenti» non identifica nessun file.
+Rifatta col **path completo**: le scritture stanno in
+`.engram\semantic\semantic.db` — il db vero, nella sottocartella — e sono di
+**altre istanze** (`project/verimem/mappa-superficie-ws5`,
+`…/mappa-lotto2-senza-test`, `…/i-36s-sono-il-tokenizzatore`), zero con i miei
+topic (`l/a`, `l/b`, `l/c`) e zero coi miei testi. È la classe *«guarda QUALI,
+non quanti»* applicata a me. ⚠️ Da dichiarare comunque: aprire un db in WAL
+anche con `mode=ro` **tocca l'mtime dei file `-shm`/`-wal`** — la mia verifica
+ha cambiato quei timestamp, mai i dati.
+
+## Le altre 21 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -190,3 +226,26 @@ decrescenti.
   che resta. Stessa radice di T-MAP-1 (la risoluzione del DATA_DIR ignora il
   path esplicito nelle superfici che *riferiscono*), lato scrittura del log.
   Verificato nella stessa esecuzione che lo store di casa non è stato toccato.
+
+- **T-MAP-7** (owner Galileo, 08/09 22:33) — **una variabile scritta male non
+  spegne l'opt-in dell'avviso: lo accende a un terzo valore, e la ricevuta non
+  lo dice.** `_pavimento_avviso` (client.py:127) promette due comportamenti:
+  senza la variabile «il pavimento calibrato, cioè il comportamento di sempre»,
+  con la variabile «quel valore». Un valore **malformato** non è nessuno dei
+  due: `finite_or(grezzo, _AVVISO_FLOOR_MISURATO)` ripiega sul default
+  *dichiarato del modulo* (`0.839`), non sul calibrato passato dal chiamante.
+  Misurato con calibrato `0.8805`: `'0,839'` (virgola italiana) → `0.839` ·
+  `'0.95abc'` → `0.839` · `'auto'` → `0.839` · `'nan'` → `0.839` · `'inf'` →
+  `0.839` · `'-1'` → `0.0`. Chi scrive `ENGRAM_AVVISO_MIN_RELEVANCE=0,95`
+  ottiene **0,839**: non ciò che ha chiesto e non ciò che aveva prima — e
+  `_frase_origine_soglia` gli dirà «impostata con
+  ENGRAM_AVVISO_MIN_RELEVANCE», che è vero e incompleto.
+  ⚠️ **Non è un difetto di `env_num`**: il suo contratto è esplicito e
+  deliberato («a malformed value is operator error, so fall back to the
+  DECLARED default») — è il *default passato* che non coincide col default
+  documentato dalla funzione chiamante. La cura possibile è una riga
+  (`finite_or(grezzo, pav_calibrato)`), ma **non la scrivo ora**: siamo in
+  mappa, e la decisione fra «ripiega sul calibrato» e «rifiuta rumorosamente»
+  non è mia. La virgola italiana è il modo più facile di sbagliare quella
+  variabile, e il prodotto ha già una cronaca su questo (`il gate e i numeri
+  italiani`).

@@ -1,0 +1,77 @@
+guardia verimem.__file__: C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\538e61e3-9008-4fac-a192-1f26a10f9e05\scratchpad\wt_main\verimem\client.py
+
+=== 1. _fact_trust_line (riga 77): [quando | fonte | stato] testo
+  con asserted_at + source: [2025-09-04 | Verbale del 3 marzo | verified] Il canone e' 5900 euro.
+  solo created_at, niente source, verified_by presente: [2025-09-04 | doc:contratto.pdf | model_claim] La consegna e' del 3 marzo.
+  niente data, niente fonte, niente stato: [undated | unrecorded | model_claim] Nota libera.
+
+=== 2. _pavimento_avviso (riga 127) — IL CASO CALDO
+  senza variabile          -> 0.8805 (atteso: il calibrato)
+  variabile='0.839'    -> 0.839  <-- NON e' il calibrato
+  variabile='0,839'    -> 0.839  <-- NON e' il calibrato
+  variabile='0.95abc'  -> 0.839  <-- NON e' il calibrato
+  variabile='auto'     -> 0.839  <-- NON e' il calibrato
+  variabile='-1'       -> 0.0  <-- NON e' il calibrato
+  variabile='nan'      -> 0.839  <-- NON e' il calibrato
+  variabile='inf'      -> 0.839  <-- NON e' il calibrato
+  variabile='0.95'     -> 0.95  <-- NON e' il calibrato
+
+=== 3. _frase_origine_soglia (riga 149) — COME SI CHIAMA quel numero
+  soglia == calibrato      -> calibrata su questo corpus
+  soglia != calibrato      -> impostata con ENGRAM_AVVISO_MIN_RELEVANCE
+  IMPOSTATA a un valore UGUALE al calibrato -> calibrata su questo corpus (la funzione vede due numeri, non l'origine)
+
+=== 4. _nota_scaduti (riga 170) — dice anche COSA NON E'
+  3 fatto/i non sono stati serviti perche' la loro validita' e' SCADUTA (`valid_until` nel passato). Non e' il pavimento e ...
+  dice 'Non e' il pavimento': True · nomina recall_as_of: True
+
+=== 5. _evidence_class (riga 4180) — i QUATTRO rami, uno per uno
+  judge='local'                       -> cross_encoder
+  judge='claude'                      -> llm_judge
+  niente judge + warning L4-skipped   -> ungated
+  niente judge + verified_by          -> receipt_declared
+  niente di niente                    -> lexical_only
+
+=== 6. _blocking_layers (riga 4230) — gli advisory NON prendono il merito
+  in: ['L4.1', 'L1', 'L4.2-observe', 'L4-skipped', '']
+  out: ['L1', 'L4-skipped', 'L4.1']
+
+=== 7. _audit_log_on (riga 4239) — default OFF
+  VERIMEM_AUDIT_LOG=None     -> False
+  VERIMEM_AUDIT_LOG='1'      -> True
+  VERIMEM_AUDIT_LOG='on'     -> True
+  VERIMEM_AUDIT_LOG='TRUE'   -> True
+  VERIMEM_AUDIT_LOG='yes'    -> True
+  VERIMEM_AUDIT_LOG='y'      -> False
+  VERIMEM_AUDIT_LOG='si'     -> False
+  VERIMEM_AUDIT_LOG='0'      -> False
+  VERIMEM_AUDIT_LOG=' on '   -> True
+
+=== 8. _reason_from_warnings (riga 4248) — IL CASO DEL DOCSTRING
+  ['L4.1','L4-skipped'] -> il claim afferma un valore che la fonte non contiene: 7300
+  solo L4-skipped       -> nessun giudice disponibile, controllo non eseguito
+  solo un observe       -> 
+  L1 contro L4.1        -> da L1
+  nessun warning        -> ''
+
+=== 9. _confidence_tier (riga 4287) — la banda
+  score=95.0   judge=local   thr=40.0 -> high
+  score=60.0   judge=local   thr=40.0 -> borderline
+  score=10.0   judge=local   thr=40.0 -> low
+  score=None   judge=local   thr=40.0 -> unverified
+  score=nan    judge=local   thr=40.0 -> unverified
+  score=95.0   judge=None    thr=40.0 -> unverified
+  score=95.0   judge=claude  thr=70.0 -> high
+  score=60.0   judge=claude  thr=70.0 -> low
+
+=== 10. _adjudication (riga 4293) — il verdetto SEMPRE restituito
+  ammesso: {'disposition': 'admitted', 'evidence_class': 'llm_judge', 'judge': {'backend': 'claude', 'model': None, 'version': None}, 'score': 86.0, 'threshold': 70.0, 'margin': 16.0, 'reason': '', 'confidence_tier': 'high'}
+  quarantinato con L4.1: {'disposition': 'quarantined', 'evidence_class': 'llm_judge', 'judge': {'backend': 'claude', 'model': None, 'version': None}, 'score': 12.0, 'threshold': 70.0, 'margin': -58.0, 'reason': 'il claim afferma un valore che la fonte non contiene: 7300', 'confidence_tier': 'low'}
+  quarantinato senza numeri ne' advice: {'disposition': 'quarantined', 'evidence_class': 'lexical_only', 'judge': None, 'score': None, 'threshold': None, 'margin': None, 'reason': 'quarantined by a store-time integrity screen (e.g. prompt-injection); kept out of default recall', 'confidence_tier': 'unverified'}
+  BLOCCATO ma score SOPRA la soglia: quarantined by a store-time integrity screen (e.g. prompt-injection); kept out of default recall
+
+=== 11. _judge_of_record_dict (riga 4269) — chi ha giudicato
+  None     -> None
+  'claude' -> {'backend': 'claude', 'model': None, 'version': None}
+  'local'  -> (carica il CE, puo' metterci qualche secondo)
+           -> {'backend': 'local', 'model': 'local_gate_ce_v2', 'version': None}
