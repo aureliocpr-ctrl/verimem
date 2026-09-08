@@ -207,11 +207,46 @@ intendere.** *È il modello a cui la riga 292 dovrebbe assomigliare.*
 
 ---
 
+## Righe 341-400 — Install, la tabella per porta, il blocco PyPI, il costo su disco
+
+> ⚠️ **Le righe 348-359 e 361-387 le ho scritte io oggi.** Le mappo con lo stesso
+> metro delle altre — anzi, con un po' più di severità: *chi scrive una riga non
+> è il giudice migliore di quella riga, ed è il motivo per cui la mappa dichiara
+> chi ha scritto cosa.*
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 341-346 | `pip install verimem` + `verimem warmup` **facoltativo**, con scritto che senza *«la scrittura è giudicata lo stesso — paga solo il download una volta»* | `cli.py` (`warmup`) | `test_il_banner_in_cima_al_readme_non_puo_dire_che_il_moat_e_spento.py` | ✅ **presidiata dall'08/09**: il presidio vieta in **tutto** il README la frase contraria (esteso oggi da me, RED→GREEN falsificato) |
+| 348-353 | **la tabella per porta** — **CLI**: giudicata in processo in **~22 s** senza daemon (misura del 07/09) · **MCP**: delega per costruzione, e **se il daemon manca la scrittura è memorizzata NON GIUDICATA** (`stored: true`, `layers: ['L4-skipped']`), *«leggi quel campo: `admitted` da solo non vuol dire giudicato»* | `preload.py` (delegate-only) · `mcp_server.py:15764` | **nessuno** | ⬜ **NON MISURATO da un presidio** — *ed è una riga mia: l'ho scritta stamattina e **non le ho dato un test**. La stessa lezione che ho scritto tre volte oggi («una nota non è un presidio») vale per la riga che ho appena aggiunto io.* ✅ sui fatti: entrambi i comportamenti sono misurati (@ws1 07/09; il codice delegate-only) |
+| 355-359 | **sull'SDK non abbiamo una risposta stabile**: la stessa `Memory().add(..., source=…)` è tornata **giudicata** (`99.9`) e più tardi **non giudicata**, col daemon **verificato raggiungibile** in entrambi i casi. *«Lo stiamo misurando. T26a e T29.»* | — | **nessuno** | ✅ **come forma, ed è il pezzo di cui vado più sicura**: è un **non-sapere scritto in vetrina**, con la misura che lo prova e il ticket che lo insegue. ⬜ come misura *(la causa non è isolata: quattro spiegazioni escluse)* |
+| 361-376 | il **commento HTML di rilascio**: dice che questo file **è la pagina di PyPI**, che i due numeri invecchiano, che **non vanno aggiornati a mano** perché `test_la_vetrina_dice_l_ultima_release_giusta.py` li lega ai tag — e racconta l'errore dell'08/09 (la release di luglio) **e la mia correzione** (le soglie non erano false) | `tests/test_la_vetrina_dice_l_ultima_release_giusta.py` | **sé stesso** | ✅ **ed è la riga più utile che ho scritto oggi**: prima lì c'era una **nota** che chiedeva di ricordarsene, e non è bastata. *Adesso al suo posto c'è un test che diventa rosso da solo — e il commento dice perché.* |
+| 377-382 | **cosa serve PyPI oggi**: ultima release **0.7.6 (2026-09-04)**, `main` **più di 150 commit** avanti (misurato: `git rev-list --count v0.7.6..main` = **189**) · *«la cifra è scritta come pavimento apposta — un pavimento diventa solo più vero, un conteggio esatto è scaduto entro l'ora»* | — | `test_la_vetrina_dice_l_ultima_release_giusta.py` (versione = ultimo tag) · `test_la_soglia_in_commit_del_readme_e_ancora_vera` (soglia sotto il vero) | ✅ **due presidi, uno per la versione e uno per la soglia** — *e il secondo è quello che oggi mi ha corretta* |
+| 384-387 | *«`docs/stato-reale/` misura lo scarto fra questa pagina e l'artefatto pubblicato… **leggi lo SHA in testa a ogni nota**: alcune misurano `main`, che si muove»* | `docs/stato-reale/` (esiste) | **nessuno** | ✅ **come forma**: dice al lettore **come** leggere un documento datato, invece di lasciargli credere che valga oggi |
+| 388-400 | **cosa costa su disco**: `pip install` **~1,0 GB** (74 pacchetti, torch più della metà) · primo `warmup` **~2,3 GB** · **totale ~3,3 GB** · misurato su Windows/Python 3.13, *«su Linux la wheel di torch è diversa, quindi la prima riga cambia»* · *«sono dimensioni **su disco dopo l'installazione**, non di download — il download è più piccolo (221 MB compressi) e per i modelli **circa** lo stesso, **anche se quest'ultima parte non è stata misurata**»* | — | `test_il_readme_e_la_cli_dicono_lo_stesso_peso.py` · `test_la_vetrina_nomina_i_modelli_che_scarica.py` | ✅ **presidiato, e con una storia che vale**: quel test nasce perché README e CLI davano **due numeri diversi per lo stesso modello** — *«656 MB» / «711 MB» / «~746 MB»* — e **nessuno dei due era sbagliato**: `746 058 368 byte` sono **746,1 MB** in base 10 e **711,5 MiB** in base 2. **Stesso byte, due unità.** ✅ **e l'ultima frase dichiara ciò che NON è stato misurato** (i 221 MB non hanno presidio: `grep` → nessuno) |
+
+### 📌 Il reperto di questo blocco, e riguarda me
+
+**La riga per porta che ho scritto stamattina (348-353) non ha un presidio.**
+È entrata su `main` con `5ac8d9f1`, dice una cosa vera e misurata, e **nessun
+test la tiene ferma**: se domani la porta MCP smettesse di delegare, quella riga
+resterebbe lì a dire il contrario e **nessuno se ne accorgerebbe**.
+
+⇒ *È esattamente la forma che ho scritto tre volte oggi — «una nota non è un
+presidio» — applicata alla riga che ho appena aggiunto io.* **Cerca su di te la
+forma che hai appena trovato**: quarta volta che paga.
+
+🔑 **E il contrappeso, nello stesso blocco**: il commento di rilascio (361-376)
+è il caso opposto. Lì una **nota** c'era dal 26/08 e non è bastata; oggi al suo
+posto c'è **un test che diventa rosso da solo**, e il commento spiega perché.
+*La differenza fra le due righe non è la buona volontà: è un file di test.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  340 / 811   (41,9%)
-verdetti:  ✅ 50   ❌ 2   ⬜ 34   (una riga può portare due verdetti su due claim)
+righe lavorate:  400 / 811   (49,3%)
+verdetti:  ✅ 58   ❌ 2   ⬜ 37   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
