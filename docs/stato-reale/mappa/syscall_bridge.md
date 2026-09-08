@@ -1,0 +1,99 @@
+# `verimem/syscall_bridge.py` — 383 righe, 11 funzioni
+
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**08/09**.
+
+## Che cosa promette
+
+Un **confine tipizzato** per le operazioni di memoria: ogni chiamata passa da
+`engram_invoke`, che valida l'op contro un manifesto (anti-allucinazione),
+applica un rate-limit e scrive una riga di audit JSONL.
+
+**Claim del README**: nessuno (`grep -inw "syscall\|engram_invoke" README.md` → 0).
+**Chiamanti nel prodotto**: `dashboard_widget.py:48` (legge il manifesto, i
+bucket del rate-limit e la coda dell'audit) e `capability_token.py`, che
+descrive il token verificato da `engram_invoke`.
+
+## Il perimetro
+
+```
+5 file di test (test_syscall_bridge.py, test_capability_token.py,
+                test_op_supervisor.py, test_dashboard_widget.py,
+                test_engram_stack_e2e.py)
+25 passed in 79,67 s                                           EXIT=0
+verimem\syscall_bridge.py   153 stmts   35 miss   42 branch   10 BrPart   73,8%
+```
+
+## Il contratto falsificabile del docstring — **provato**
+
+`engram_invoke` dichiara a `:215-220`, testualmente:
+
+```
+(a) op not in manifest → ok=False, blocked_by="not_in_manifest"
+(b) rate-limited       → ok=False, blocked_by="rate_limit_exceeded"
+(c) handler raises     → ok=False, blocked_by="exception"
+(d) success            → ok=True,  result=handler output
+All paths write 1 audit JSONL row.
+```
+
+Un contratto scritto così non si crede: si prova. Banco
+`contratto_engram_invoke.py`, log di audit in una cartella temporanea (**nessun
+contatto con lo store vivo**):
+
+| clausola | esito misurato | audit |
+|---|---|---|
+| **(a)** op fuori dal manifesto | `ok=False`, `blocked_by='not_in_manifest'` ✅ | **1 riga** ✅ |
+| **(b)** rate limit | **38 chiamate su 40 bloccate** ✅ | **40 righe su 40 chiamate** ✅ |
+| **(c)** handler che solleva | `ok=False`, `blocked_by='exception'` ✅ | **1 riga** ✅ |
+| **(d)** successo | **NON PROVATO** — chiamerebbe un handler vero sullo store | — |
+
+La riga di audit dell'ultimo caso porta:
+`op`, `actor`, `args_keys`, `audit_id`, `blocked_by`, `elapsed_sec`,
+`exception`, `message`, `ok`, `ts` — e **non** i valori degli argomenti, come il
+commento a `:230` promette («*Don't audit args VALUES; just keys*»).
+
+⇒ **la clausola dell'audit vale anche per le chiamate BLOCCATE**, che è la parte
+che nessuno guarda perché non cambia il valore di ritorno.
+
+⚠️ **Un costo che non avevo previsto e che dichiaro**: la clausola (b) chiama
+l'handler vero di `recall`, che **carica l'embedder** (103 pesi di torch). Due
+chiamate su 40 sono passate. Nessuna scrittura, ma è CPU che non avevo messo a
+claim: un banco del rate-limit deve usare un'op finta anche per (b).
+
+## La tabella
+
+| # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | esercitata? | verdetto | prova |
+|---|---|---|---|---|---|---|
+| 1 | `_audit_write` (:60) | scrive una riga JSONL nel log di audit | ogni percorso di `engram_invoke` | PARZIALE — 2 statement su 6 | **FUNZIONA COME PROMESSO** | il banco: 1 riga per (a) e (c), 40 per 40 chiamate in (b) |
+| 2 | `_check_rate_limit` (:71) | vero se l'op sta sotto `limit` chiamate al secondo | `engram_invoke` | PARZIALE — 1 su 9 | **FUNZIONA COME PROMESSO** | 38/40 bloccate con `rate_limit=1.0` |
+| 3 | `_op_recall` (:87) | handler `recall` | `ENGRAM_OPS_MANIFEST` | PARZIALE — 3 su 12 | **FUNZIONA COME PROMESSO** | 2 chiamate riuscite nel banco (b) |
+| 4 | `_op_topk_embeddings` (:114) | handler `topk_embeddings`, privacy-preserving | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | nessuno dei 5 file lo percorre |
+| 5 | `_op_mesh_query` (:130) | handler `mesh_query` | manifesto | PARZIALE — 1 su 6 | **FUNZIONA COME PROMESSO** | 25 passed |
+| 6 | `_op_mesh_fetch` (:141) | handler `mesh_fetch` | manifesto | PARZIALE — 1 su 7 | **FUNZIONA COME PROMESSO** | 25 passed |
+| 7 | `_op_resonant_merge` (:158) | handler `mesh_resonant_merge` | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | idem |
+| 8 | `engram_invoke` (:190, 160 righe) | il confine tipizzato: manifesto · rate-limit · token · audit | `dashboard_widget`, MCP, agenti | PARZIALE — 1 statement su 50 | **FUNZIONA COME PROMESSO** su (a)(b)(c) | il banco sopra + `test_capability_token.py::test_syscall_bridge_token_integration` |
+| 9 | `engram_audit_tail` (:353) | le ultime N righe di audit | `dashboard_widget.py:54` | PARZIALE — 6 su 14 | **FUNZIONA COME PROMESSO** | `test_dashboard_widget.py` dentro i 25 |
+| 10 | `engram_rate_stats` (:373) | lo stato dei bucket del rate-limit | **nessun chiamante** in `verimem/` né in `tests/` | **CORPO MAI ESEGUITO** (l'unico statement, :375) | **MAI CHIAMATA** | `grep -rn "engram_rate_stats" verimem/ tests/` → 0 fuori dalla def |
+| 11 | `engram_available_ops` (:381) | l'elenco delle op del manifesto | test | ESEGUITA | **FUNZIONA COME PROMESSO** | 25 passed |
+
+## Codice mai chiamato, e due handler mai esercitati
+
+- **`engram_rate_stats` (:373-377)** — zero chiamanti nel prodotto e nei test.
+  Il suo gemello `engram_audit_tail` è usato dal widget della dashboard; questo
+  no. ⇒ **MAI CHIAMATA**: propongo la rimozione **oppure** il suo uso nel widget
+  accanto all'audit (il rate-limit è invisibile a chi guarda il pannello). Non
+  decido io, e non la tocco (regola 2).
+- **`_op_topk_embeddings` (:114)** e **`_op_resonant_merge` (:158)** — due
+  handler **registrati nel manifesto** e mai percorsi da un test. Sono
+  raggiungibili dall'esterno via `engram_invoke("topk_embeddings", ...)`:
+  ⇒ **superficie invocabile non misurata**. È il reperto più serio di questo
+  file, e vale più delle percentuali: un'op che il manifesto accetta è una porta
+  aperta, e due di queste porte non hanno un test.
+
+## Che cosa NON ho misurato
+
+- **(d) del contratto**: il percorso di successo con un handler reale.
+- **Il token di capability** (`require_token=True`): esiste un test di
+  integrazione (`test_capability_token.py`), **non l'ho letto riga per riga** e
+  non ho verificato il suo perimetro.
+- Le **10 diramazioni parziali** (`BrPart 10`) non le ho aperte una per una.
