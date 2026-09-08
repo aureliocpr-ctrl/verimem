@@ -252,3 +252,92 @@ concentrato sul `gateway` — cioè **sulla superficie che l'utente tocca per
 ultima, quando installa per una squadra**. Non è una differenza di cura: è che
 `doctor` è nato da una serie di **guasti veri** (i nomi dei suoi test sono la
 cronaca) mentre il gruppo `gateway` non ha ancora avuto il suo incidente.
+
+---
+
+## 6. `tui.py` — otto azioni, e la copertura si ferma al CSS
+
+446 righe, cinque classi (`ChatPane`, `SkillsPane`, `EpisodesPane`,
+`SettingsPane`, `HippoTUI`), **otto azioni** che un utente può compiere:
+`on_button_pressed` · `on_select_changed` · `_apply_preset` · `_unleash` ·
+`_lockdown` · `_save` · `_test` · `action_refresh`.
+Il comando che apre tutto questo — `verimem tui` — è fra i **22 che nessun test
+invoca**.
+
+### Che cosa prova l'unico presidio
+
+`tests/test_tui_smoke.py` — il nome è onesto, *smoke*: «module import + minimal
+app construction».
+
+```python
+assert hasattr(tui, "main")            assert callable(main)
+assert "ChatPane" in ChatPane.DEFAULT_CSS
+assert "chat-log" in ChatPane.DEFAULT_CSS
+```
+
+Verifica che il modulo si importi, che `main` sia chiamabile e che **il CSS
+contenga certe stringhe**. Nessuna delle otto azioni viene eseguita.
+
+### 🔴 E una di quelle otto spegne il sandbox, a un clic, senza conferma
+
+```python
+def _unleash(self) -> None:
+    cur = us.load()
+    cur.sandbox_enabled = False
+    cur.perm_filesystem = "full"
+    cur.perm_computer_use = True ; cur.perm_webcam = True
+    cur.perm_shell = True ; cur.perm_web = True ; cur.perm_vision = True
+    us.save(cur)                       # ← scrive su disco
+```
+
+e il percorso che ci arriva non ha un passaggio intermedio:
+
+```python
+def on_button_pressed(self, event):
+    ...
+    elif event.button.id == "unleash":
+        self._unleash()
+```
+
+Il pulsante c'è (`tui.py:221`, `Button("🔓 Unleash", variant="error")`), la
+riscrittura delle impostazioni è immediata e **persistente**.
+
+### ⚖️ La difesa c'è — ma sta SOTTO, e il percorso non la attraversa
+
+Cercata prima di accusare, come ogni volta stasera, e stavolta **esiste in
+parte**:
+
+- `verimem/settings.py` è presidiato bene: `tests/test_settings.py` (round-trip,
+  file corrotto, campi sconosciuti, **`test_apply_to_env_projects_capability_flags`**);
+- il sandbox ha i suoi: `tests/security/test_sandbox_cwd_jail_wiring.py`,
+  `test_sandbox_git_write_flags.py`, `test_no_dangerous_sinks.py`,
+  `test_path_traversal.py`;
+- e `settings.py:147` porta il commento *«"strict" is the default (data dir
+  only). The user must explicitly opt into "home" or "full" via the dashboard.
+  CVE-003 / SEC V4 fix»* — cioè quella superficie **ha già avuto il suo
+  incidente**, ed è stata curata.
+
+⇒ **Non è una falla di sicurezza**: il modulo che scrive è testato, il sandbox è
+testato. È che **il percorso dalla TUI al modulo non è attraversato da nessun
+test**: se `on_button_pressed` smettesse di distinguere `unleash` da `lockdown`,
+o `_unleash` scrivesse un campo sbagliato, la suite resterebbe verde.
+
+### 🔁 E c'è la classe ① in piena vista: la stessa azione, due volte
+
+`_apply_preset` esiste **in due posti**:
+
+```
+verimem/tui.py::_apply_preset                              nessun test
+verimem/dashboard_routes/settings.py::_apply_preset_to_settings
+                                    tests/test_presets_apply_reset_scan68.py ✅
+```
+
+La superficie web ha il suo presidio, quella a terminale no. È la prima delle
+cinque classi che pagano — *«una copia invece della superficie unica»* — e qui si
+vede a occhio nudo: due implementazioni della stessa scelta dell'utente, una
+guardata e una no.
+
+🔑 **La raccomandazione è piccola e vale doppio**: un test che costruisca
+`SettingsPane`, chiami `_unleash()` e poi `_lockdown()` su un `settings` isolato
+e verifichi i sette campi. Sono venti righe, e coprono **l'azione più pericolosa
+che il prodotto offre a un clic**.
