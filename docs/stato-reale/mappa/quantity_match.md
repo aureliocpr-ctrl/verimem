@@ -17,19 +17,26 @@ la prova resta NON MISURATO anche se «si vede» che la funzione va: è la regol
 del mandato, ed è quella che rende la tabella diversa da una lettura.
 
 ⚠️ **Un caso di prova fuori dal dominio della funzione non la falsifica.** Sotto
-c'è un esempio: la mia aspettativa su `distinct_event_indices` era sbagliata, non
+c'è un esempio: la mia aspettativa su `distinct_event_indices` era sbagliata (tre volte), non
 la funzione. Quando succede si scrive NON MISURATO e si va a leggere, invece di
 aprire un ticket contro il codice.
 
-## Stato di stanotte (2026-09-08, 20:41)
+## Stato di stanotte (2026-09-08, 21:05)
 
 ```
   voci elencate con l'AST        47 / 47
   misurate con un comando         4
-  di cui FUNZIONA COME PROMESSO   3
-  di cui NON MISURATO (da leggere) 1  (distinct_event_indices)
-  restanti NON MISURATO           43
+  di cui FUNZIONA COME PROMESSO   4
+  di cui NON MISURATO             0
+  restanti da fare                43
 ```
+
+📌 **Alle 20:41 la quarta era NON MISURATO** — `distinct_event_indices` dava
+`False` dove me lo aspettavo `True`. **Sciolta alle 21:02 leggendo, e la funzione
+aveva ragione tre volte su tre**: gli ordinali a parole non sono indici, le
+progressioni (`tentativo`, `attempt`) sono escluse di proposito, e «riga 12» vs
+«colonna 12» *sono* due cose diverse. La cronaca sta nella riga della tabella,
+perché il modo in cui un sospetto si è sgonfiato vale quanto il verdetto.
 
 **Ordine scelto**: prima le **pubbliche** (20 su 47), perché sono la superficie
 che il gate importa; dentro le pubbliche, prima quelle che `anti_confab_gate.py`
@@ -106,5 +113,5 @@ calpestata; su 2.973 funzioni produrrebbe proposte di rimuovere codice vivo.
 | 43 | `verimem/quantity_match.py:2370` `event_indices` | funzione: ``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" -> | `verimem/anti_confab_gate.py:928`; `verimem/quantity_match.py:1537`; `verimem/quantity_match.py:1614` (+4) | `tests/test_entity_index_not_measure.py`; `tests/test_il_posizionale_dipende_dalla_forma_non_dalla_parola.py`; `tests/test_index_regex_no_redos.py` (+1) | - | NON MISURATO | - |
 | 44 | `verimem/quantity_match.py:2410` `_indices_disjoint` | funzione: Core of :func:`distinct_event_indices` on PRE-COMPUTED index sets, so the | `verimem/quantity_match.py:1543`; `verimem/quantity_match.py:2473` | `tests/test_entity_index_not_measure.py` | - | NON MISURATO | - |
 | 45 | `verimem/quantity_match.py:2449` `indexed_vs_unindexed` | funzione: True when ONE statement names indexed subjects and the other names none. | `verimem/anti_confab_gate.py:2278`; `verimem/anti_confab_gate.py:2293`; `verimem/quantity_match.py:2549` | `tests/test_entity_index_not_measure.py` | - | NON MISURATO | - |
-| 46 | `verimem/quantity_match.py:2468` `distinct_event_indices` | funzione: True when the two statements index DIFFERENT things of the same kind | `verimem/anti_confab_gate.py:921`; `verimem/anti_confab_gate.py:940`; `verimem/anti_confab_gate.py:944` (+4) | `tests/test_entity_index_not_measure.py`; `tests/test_identifier_only_as_subject.py`; `tests/test_quantity_match.py` | - | **NON MISURATO** | eseguita 08/09 20:40: «il primo tentativo» vs «il secondo tentativo» → `False`, dove mi aspettavo `True`. ⚠️ **L'ASPETTATIVA È MIA E PUÒ ESSERE FUORI DOMINIO**: `anti_confab_gate.py:844` dice che gli indici di evento sono un elenco di 60+ parole, e non ho letto se «primo/secondo» ci siano. Verdetto sospeso finché non leggo `_EVENT_INDEX_RE`: un caso di prova fuori dominio non falsifica la funzione |
+| 46 | `verimem/quantity_match.py:2468` `distinct_event_indices` | funzione: True when the two statements index DIFFERENT things of the same kind | `verimem/anti_confab_gate.py:921`; `verimem/anti_confab_gate.py:940`; `verimem/anti_confab_gate.py:944` (+4) | `tests/test_entity_index_not_measure.py`; `tests/test_identifier_only_as_subject.py`; `tests/test_quantity_match.py` | - | **FUNZIONA COME PROMESSO** | eseguita 08/09 21:02, **6 casi su 6 corretti** una volta capito il dominio: «tentativo 1» vs «tentativo 2» → `False` · «run 3» vs «run 4» → `True` · «riga 12» vs «colonna 12» → `True` · identici → `False`. ⚠️ **TRE MIE ATTESE ERANO SBAGLIATE, NON LA FUNZIONE**, e la lettura le ha chiuse: (a) `_EVENT_INDEX_RE` (:2316) vuole `<parola> <cifra>`, quindi «il PRIMO tentativo» (ordinale a parole) non è un indice — `event_indices` restituisce `set()`; (b) `tentativo` e `attempt` stanno in `_PROGRESSION_KINDS` e sono **esclusi di proposito** («a different stage number is the same subject moving on»), mentre `run` no — ecco perché i due casi divergevano; (c) «riga 12» vs «colonna 12» → `True` è corretto, sono due cose diverse. **Il primo giro (20:40) aveva dato un falso sospetto** |
 | 47 | `verimem/quantity_match.py:2513` `valori_scritti_a_parole` | funzione: I numeri che il testo scrive a PAROLE, non in cifra. | `verimem/quantity_match.py:2534`; `verimem/valore_non_nella_fonte.py:53`; `verimem/valore_non_nella_fonte.py:342` | `tests/test_un_numero_che_la_fonte_scrive_a_parole.py` | - | NON MISURATO | - |
