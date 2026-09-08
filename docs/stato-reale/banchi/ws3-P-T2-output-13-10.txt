@@ -1,0 +1,22 @@
+
+[TIP con terzo stato] IMPORT DA C:\Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/538e61e3-9008-4fac-a192-1f26a10f9e05/scratchpad/wt_main\verimem\__init__.py
+2026-09-08T12:46:42.106746 [info     ] flow.warmup                    build=4a72b9e2 phase=start run=99044a36 store=67712a7ceb5e surface=unknown what=moat-judge
+2026-09-08T12:47:29.465751 [info     ] flow.warmup                    build=4a72b9e2 elapsed_ms=47277.8 phase=ready run=99044a36 store=67712a7ceb5e surface=unknown what=moat-judge
+[TIP con terzo stato] warmup 48.2 s
+[TIP con terzo stato] 177 record in 631 s: {'QUARANTENA': 47, 'altro:downgrade': 26, 'REVIEW': 70, 'AMMESSA': 34}
+
+[SENZA terzo stato] IMPORT DA C:\Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/538e61e3-9008-4fac-a192-1f26a10f9e05/scratchpad/wt_min\verimem\__init__.py
+2026-09-08T12:58:01.863834 [info     ] flow.warmup                    build=a9e41361 phase=start run=6bd7d96e store=67712a7ceb5e surface=unknown what=moat-judge
+2026-09-08T12:58:05.334411 [info     ] flow.warmup                    build=a9e41361 elapsed_ms=3365.8 phase=ready run=6bd7d96e store=67712a7ceb5e surface=unknown what=moat-judge
+[SENZA terzo stato] warmup 3.6 s
+[SENZA terzo stato] 177 record in 736 s: {'QUARANTENA': 127, 'altro:downgrade': 26, 'REVIEW': 24}
+
+SPOSTAMENTI (senza -> con il terzo stato):
+  QUARANTENA   -> REVIEW       56
+  QUARANTENA   -> QUARANTENA   47
+  altro:downgrade -> altro:downgrade 26
+  QUARANTENA   -> AMMESSA      24
+  REVIEW       -> REVIEW       14
+  REVIEW       -> AMMESSA      10
+
+P-T2 (0 QUARANTENA sul tip): FALSIFICATA (47)
