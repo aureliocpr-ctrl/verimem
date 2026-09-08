@@ -1,0 +1,11 @@
+# Mappa di `verimem/fact_chain.py` — 3 righe, 85 righe di codice (lead, 09/09 00:42)
+
+Letto per intero. Prove: le stesse due di `oracle.md` (pytest del lotto `61 passed in 82.08s`, EXIT=0, sul tip `20257636`; prova alla porta MCP con store isolato). `hippo_chain_facts` con `seed_query` «quale versione di Kubernetes usa il cluster OnlyPaws» → `quarantenato SERVITO=True · vivo servito=True · 395 char`. Chiamante letto: `verimem/mcp_server.py:10117-10130` (`hippo_chain_facts`), pesca con `list_facts(limit=10000)` senza `hide_low_trust` (vedi `oracle.md` per i numeri del corpus di casa). Claim README: nessuna riga (grep su chain_facts/fact_chain/multi-hop → nessuna). Il docstring distingue da `forward_chain` (R8, fatti a forma di regola): qui è BFS lessicale.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/fact_chain.py:17` `_tokens` | token `[A-Za-z0-9_-]+` in minuscolo, SENZA filtro delle parole vuote (a differenza di `oracle._tokens`: la lezione del 01/08 non è arrivata qui) | `chain_facts` (44, 47) | `tests/test_fact_chain.py` | - | FUNZIONA COME PROMESSO | pytest 61 passed |
+| 2 | `verimem/fact_chain.py:21` `_jaccard` | Jaccard, 0 se vuoto (copia n. 4 di 18) | `chain_facts` (57) | via `test_fact_chain.py` | - | FUNZIONA COME PROMESSO (plumbing) | pytest 61 passed |
+| 3 | `verimem/fact_chain.py:27` `chain_facts` | BFS dal seme: a ogni profondità i fatti con Jaccard ≥ `min_overlap` (0,15) sulla frontiera, al più `max_per_depth` (5), la frontiera si allarga coi token dei fatti presi; si ferma alla prima profondità vuota | `verimem/mcp_server.py:10124` (`hippo_chain_facts`) | `tests/test_fact_chain.py` | - | NON COME PROMESSO alla porta: la catena include fatti QUARANTENATI (T49) e vede solo i 10.000 più recenti | porta MCP 08/09 22:33 + pytest 61 passed |
+
+Reperti: (a) T49 (vedi `oracle.md`); (b) la frontiera che si allarga con TUTTI i token (preposizioni comprese) fa crescere la Jaccard con la profondità per via delle parole funzionali: la cura del 01/08 (`_PAROLE_VUOTE`) sta in `oracle.py` e non qui — classe «una copia invece della superficie unica».

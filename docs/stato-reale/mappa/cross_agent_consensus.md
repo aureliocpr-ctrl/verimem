@@ -1,0 +1,11 @@
+# Mappa di `verimem/cross_agent_consensus.py` — 3 righe, 81 righe di codice (lead, 09/09 00:46)
+
+Letto per intero. Prove: le stesse due di `oracle.md` (pytest del lotto `61 passed in 82.08s`, EXIT=0, sul tip `20257636`; prova alla porta MCP con store isolato). `hippo_cross_agent_consensus` senza argomenti, con due fatti quasi uguali da `agent:alfa` (quarantenato) e `agent:beta` (vivo) → `quarantenato SERVITO=True · vivo servito=True · 318 char`: **il fatto quarantenato conta come voto di consenso**. Chiamante letto: `verimem/mcp_server.py:10340-10352` (`hippo_cross_agent_consensus`), `list_facts(limit=10000)` senza `hide_low_trust`. Claim README: la riga 296 («manufactured consensus cannot self-confirm») parla dell'auto-conferma del moat, non di questo tool: nessuna riga descrive il consenso fra agenti.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/cross_agent_consensus.py:20` `_tokens` | token in minuscolo senza filtro | `find_consensus_facts` (44, 50) | `tests/test_cross_agent_consensus.py` | - | FUNZIONA COME PROMESSO | pytest 61 passed |
+| 2 | `verimem/cross_agent_consensus.py:24` `_jaccard` | Jaccard, 0 se vuoto (copia n. 2 di 18) | `find_consensus_facts` (51) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 61 passed |
+| 3 | `verimem/cross_agent_consensus.py:30` `find_consensus_facts` | cluster greedy a Jaccard ≥ 0,6 sul primo membro; consenso se gli `agent_id` distinti (da `agent_scope.agent_id_from_topic`) sono ≥ `min_agents` | `verimem/mcp_server.py:10347` (`hippo_cross_agent_consensus`) | `tests/test_cross_agent_consensus.py` | - | NON COME PROMESSO alla porta: un fatto QUARANTENATO vale come agente concorde (T49) | porta MCP 08/09 22:33 + pytest 61 passed |
+
+Reperti: (a) T49: «independent agents arrived at the same proposition. Strong evidence» (docstring) — ma un agente il cui fatto è stato rifiutato dal gate conta quanto uno il cui fatto è passato; (b) il clustering greedy confronta solo col PRIMO membro del cluster: due fatti a 0,6 dal capofila possono stare a 0,3 fra loro (letto, non misurato); (c) O(n·cluster) con i token del capofila ricalcolati a ogni confronto (riga 50).
