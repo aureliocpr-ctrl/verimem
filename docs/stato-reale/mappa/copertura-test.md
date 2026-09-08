@@ -1,6 +1,6 @@
 # Copertura: quali test chiamano ognuna delle funzioni di `verimem/`
 
-**Albero misurato**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **eseguito**: 2026-09-08 20:38 · owner **ws1 Marie (QA)**.
+**Albero misurato**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **eseguito**: 2026-09-08 20:58 · owner **ws1 Marie (QA)**.
 
 ## Che cosa dice questo numero, prima del numero
 
@@ -14,7 +14,7 @@ distorsioni, dichiarate perché il numero non sia letto per quello che non è:
   eseguita. ⇒ le «mai nominate» sono un **limite superiore** del codice non
   esercitato, non l'elenco del codice morto.
 - **verso l'alto** — due funzioni omonime in moduli diversi si confondono.
-  Succede per **587 funzioni su 2970** (19.8%), ed è
+  Succede per **589 funzioni su 2973** (19.8%), ed è
   contato nella colonna `omonime` del JSON invece di essere nascosto.
 
 Per questo ogni funzione ha un **livello**, non un sì/no:
@@ -29,11 +29,11 @@ Per questo ogni funzione ha un **livello**, non un sì/no:
 ## I numeri
 
 ```
-  funzioni in verimem/                    2970
-  ✅ QUALIFICATA                           1006   (33.9%)
-  🟡 PER NOME                               715   (24.1%)
-  🔵 SOLO RIFERITA                           81   (2.7%)
-  ⛔ MAI NOMINATA in tests/                1168   (39.3%)
+  funzioni in verimem/                    2973
+  ✅ QUALIFICATA                           1006   (33.8%)
+  🟡 PER NOME                               716   (24.1%)
+  🔵 SOLO RIFERITA                           82   (2.8%)
+  ⛔ MAI NOMINATA in tests/                1169   (39.3%)
 ```
 
 ## I controlli, che si sono accesi
@@ -69,7 +69,18 @@ QUALIFICATA, verificate a mano con `grep`.
   esegue. Stessa forma per `key=`, i decoratori, le tabelle di dispatch.
 
 ⇒ ho aggiunto il livello **SOLO RIFERITA**, e il reperto si è **sgonfiato**:
-le «scoperte» passano da **1249 (42,1%) a 1168 (39.3%)**.
+le «scoperte» passano da **1249 a 1168** (42,1% → 39,3%), a inventario
+fermo su 2.970.
+
+**E poi ho corretto anche l'inventario.** Il totale mi usciva **2.970**
+contro i **2.973** dell'indice del lead. Non era l'albero: la mia discesa
+nell'`ast` era scritta a mano e visitava solo `body` più i blocchi
+`If/Try/With`, così mancava le funzioni annidate più in profondità —
+`_pump` dentro l'`async with` di `ide.py:565` è una delle tre. Sostituita
+con `ast.walk`, che attraversa ogni nodo: **2973**, il numero del lead.
+🔑 **Una discesa scritta a mano dimentica sempre un tipo di nodo**; e quando
+il tuo totale non torna con quello di un altro, il difetto è tuo finché non
+hai guardato.
 
 🔑 È la classe che ho in memoria dal 06/09: **il primo numero mi dava
 ragione** (più codice scoperto = reperto più grosso), e per questo non faceva
@@ -93,7 +104,7 @@ dipende dall'ambiguità dei nomi:
 | file | mai nominate / totali |
 |---|---|
 | `verimem/cli.py` | **94** / 129 |
-| `verimem/semantic.py` | **63** / 154 |
+| `verimem/semantic.py` | **63** / 155 |
 | `verimem/gateway.py` | **44** / 82 |
 | `verimem/mcp_server.py` | **29** / 66 |
 | `verimem/memory.py` | **24** / 83 |
@@ -101,7 +112,7 @@ dipende dall'ambiguità dei nomi:
 | `verimem/anti_confab_gate.py` | **23** / 42 |
 | `verimem/client.py` | **23** / 80 |
 | `verimem/tui.py` | **22** / 26 |
-| `verimem/ide.py` | **19** / 22 |
+| `verimem/ide.py` | **20** / 23 |
 | `verimem/wake.py` | **17** / 58 |
 | `verimem/dashboard_routes/settings.py` | **16** / 18 |
 | `verimem/tools_extra.py` | **15** / 44 |
