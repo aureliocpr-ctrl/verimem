@@ -1,0 +1,14 @@
+PRIMA:
+  A (add source=)          status: model_claim · verified_by: []
+  B (verified_by 'source:')status: model_claim · verified_by: ["source:Verbale del 3 marzo: il canone del capannone 12 e' 
+2026-09-08T22:22:29.535238 [info     ] fact_quarantined               fact_id=a45c028cee72 prior_status=model_claim reason="source 'Verbale del 3 marzo: il canone del capannone 12 e' 5900 euro.' trust sank below the floor — retroactive demotion"
+2026-09-08T22:22:29.545416 [info     ] flow.quarantine                build=ea8721b8 fact_id=a45c028cee72 prior_status=model_claim reason="source 'Verbale del 3 marzo: il canone del capannone 12 e' 5900 euro.' trust sank below the floor — retroactive demotion" run=ba658fc4 store=7f4e58f78091 surface=unknown
+
+DOPO _retro_demote_source(F):
+  A (canale del README)    status: model_claim
+  B (verified_by col prefisso) status: quarantined
+2026-09-08T22:22:29.588153 [info     ] fact_restored                  fact_id=a45c028cee72 reason="source 'Verbale del 3 marzo: il canone del capannone 12 e' 5900 euro.' recovered above the floor" to_status=model_claim
+2026-09-08T22:22:29.598452 [info     ] flow.restore                   build=ea8721b8 fact_id=a45c028cee72 reason="source 'Verbale del 3 marzo: il canone del capannone 12 e' 5900 euro.' recovered above the floor" run=ba658fc4 store=7f4e58f78091 surface=unknown to_status=model_claim
+
+DOPO _rehabilitate_source(F):
+  A: model_claim · B: model_claim

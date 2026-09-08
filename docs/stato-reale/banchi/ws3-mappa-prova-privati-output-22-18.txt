@@ -1,0 +1,18 @@
+scritture: model_claim model_claim quarantined
+stati: {'9193e82e1776': 'model_claim', '275eb12c1346': 'model_claim', '403747f146df': 'quarantined'}
+
+=== firme LETTE (la prima passata aveva 5 TypeError su 6)
+  _trattenuti_safe(query): {'quanti': 1, 'nota': "1 fatto/i sull'argomento sono stati TRATTENUTI dal gate e non compa
+  _nascosti_per_eta(query, k, deep=False): None
+  report_outcome(fact_id, good=False): True
+  stati dopo report_outcome(good=False): {'9193e82e1776': 'model_claim', '275eb12c1346': 'model_claim', '403747f146df': 'quarantined'}
+  trust della fonte dopo: 0.5
+
+=== IL PASSAGGIO: la fonte diventa inaffidabile e i fatti GIA' SCRITTI cadono?
+  trust prima: 0.5 · stati: {'9193e82e1776': 'model_claim', '275eb12c1346': 'model_claim', '403747f146df': 'quarantined'}
+  dopo _retro_demote_source  -> stati: {'9193e82e1776': 'model_claim', '275eb12c1346': 'model_claim', '403747f146df': 'quarantined'}
+  dopo _rehabilitate_source  -> stati: {'9193e82e1776': 'model_claim', '275eb12c1346': 'model_claim', '403747f146df': 'quarantined'}
+
+=== source_trust_observe con gli argomenti nominati
+  observe(contradiction=fonte) · trust: 0.3333333333333333
+  observe(confirmation=[fonte]) · trust: 0.3333333333333333
