@@ -12,3 +12,47 @@
 | 8 | `verimem/tamper_evidence.py:142` `verify_head_signature` | funzione: True iff ``signature_b64`` is a valid signature of ``head_hash`` under | nessuno trovato | `tests/test_tamper_anchor_b.py` | - | NON MISURATO | - |
 | 9 | `verimem/tamper_evidence.py:179` `sign_receipt` | funzione: Sign the canonical serialization of ``payload`` (the receipt WITHOUT its | `verimem/audit_anchor.py:15`; `verimem/audit_anchor.py:39`; `verimem/audit_anchor.py:110` (+1) | `tests/test_tamper_anchor_receipt.py` | - | NON MISURATO | - |
 | 10 | `verimem/tamper_evidence.py:192` `verify_receipt_signature` | funzione: True iff ``signature_b64`` signs the canonical bytes of ``payload`` under | `verimem/audit_anchor.py:39`; `verimem/audit_anchor.py:165`; `verimem/tamper_evidence.py:151` | `tests/test_tamper_anchor_receipt.py` | - | NON MISURATO | - |
+
+---
+
+# 🔴 T48 — la testa è FIRMATA e quella firma non è MAI verificata
+
+**Assegnato dal lead come T48.** ⚠️ Il lead lo indirizzava a `provenance_signing.md`: le
+funzioni stanno **qui**, in `tamper_evidence.py` — verificato con
+`grep -ln "def sign_head\|def verify_head_signature" verimem/*.py`. Scritto dove vive il
+codice.
+
+    funzione                    in tamper_evidence   altrove in verimem/   test
+    sign_head                          1 (solo def)          4              1
+    verify_head_signature              1 (solo def)          0   ⚠️         1
+    sign_receipt                       2                     3              1
+    verify_receipt_signature           2                     2   ✅         1
+
+⇒ **Il prodotto appone la firma della testa in 4 punti e non la controlla mai.** Non è che
+«non verifica niente»: `verify_receipt_signature` è chiamata da `client.audit_verify_anchor`
+— *«Verify a signed anchor receipt …: signature valid, both chains intact, row counts only
+grew»*. **L'asimmetria è fra due firme dello stesso file.**
+
+## E sono due livelli distinti, non uno
+
+    livello 1  catena di hash      client.audit_verify()    ✅ PROVATA da @ws3 rompendo la
+                                                               catena: torna l'id della riga
+                                                               manomessa
+    livello 2  firma della testa   sign_head → verify_…     ⚠️ apposta, mai controllata
+
+`mutation_audit` **non nomina mai** la firma: i due livelli non si toccano.
+
+## 📌 E un terzo reperto, trovato indirizzando T48
+
+`provenance_signing.py` ha **la sua coppia** `sign_ref` / `verify_ref`, più
+`verify_fact_refs` e `audit_store`. E i due file **non si citano**:
+
+    grep -c "provenance_signing" verimem/tamper_evidence.py  → 0
+    grep -c "tamper_evidence" verimem/provenance_signing.py  → 0
+
+⇒ **Nel prodotto convivono DUE sistemi di firma indipendenti che non si conoscono.** Non è
+un difetto di per sé — possono avere scopi diversi — ma è il genere di cosa che chi legge
+«firmato» deve sapere: **quale firma, apposta da chi, verificata da cosa.**
+
+⛔ **Quello che T48 NON dice**: se sia sfruttabile. Nessun modello di minaccia qui, e la
+firma della testa potrebbe servire a un verificatore **esterno** al prodotto.
