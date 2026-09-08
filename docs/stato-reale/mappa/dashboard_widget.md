@@ -1,0 +1,12 @@
+# Mappa di `verimem/dashboard_widget.py` — 4 righe, 176 righe di codice (lead, 09/09 02:26)
+
+Letto per intero. Prova: pytest del lotto D sul tip `20257636` (`73 passed, 6 xfailed in 72.21s`, EXIT=0, con `tests/test_dashboard_widget.py` e `tests/test_engram_stack_e2e.py`). Chiamanti letti: `verimem/engram_syscall_mcp.py:97` (il server MCP standalone del syscall bridge, ciclo 366, censito in `docs/F2_MODULE_INVENTORY.md:17`) e l'ingresso `python -m verimem.dashboard_widget [--tail N] [--json]`. La bozza attribuiva a `main` 98 chiamanti e tre righe del README: **falsi positivi del nome** (`main` di altri moduli; README:50/66/378 non riguardano questo widget, e la riga 592 «/dashboard» è la console web di `dashboard.py`). Diagnostica della pila cycle 362-368 (mesh_memory, resonant_merge, syscall_bridge, op_supervisor, capability_token), dichiarata «A3 honest: NOT singolarità».
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/dashboard_widget.py:41` `collect_state` | coda dell'audit, riassunto per op (ok / blocked_by), stato dei circuiti dal supervisore, chiamate nell'ultimo secondo per op, manifest; sola lettura | `verimem/engram_syscall_mcp.py:97`, `main` (170) | `tests/test_dashboard_widget.py`, `tests/test_engram_stack_e2e.py` | - | FUNZIONA COME PROMESSO | pytest 73 passed |
+| 2 | `verimem/dashboard_widget.py:94` `render_text` | la vista testuale a riquadri | `engram_syscall_mcp.py:97`, `main` (171) | `tests/test_dashboard_widget.py` | - | FUNZIONA COME PROMESSO | pytest 73 passed |
+| 3 | `verimem/dashboard_widget.py:157` `render_json` | `json.dumps(state, default=str)` | `engram_syscall_mcp.py:97`, `main` (171) | `tests/test_dashboard_widget.py` | - | FUNZIONA COME PROMESSO | pytest 73 passed |
+| 4 | `verimem/dashboard_widget.py:162` `main` | argparse `--tail/--json`, stampa, exit 0 | `python -m verimem.dashboard_widget` | nessuno | - | NON MISURATO (ingresso da riga di comando non eseguito qui) | letto |
+
+Reperti: (a) `stack_layers` è una lista di stringhe fisse (righe 84-90): un'etichetta scritta a mano che dice «L2 resonant_merge (Hopfield interpolation)» qualunque cosa sia caricata — dichiarativa, non misurata; (b) tocca il privato `syscall_bridge._RATE_BUCKETS`: accoppiamento con la pila di T42 (gli import di `clp.agentos`); (c) è vivo solo dentro un server MCP separato da quello del prodotto: chi usa `verimem` dal pacchetto non lo vede. Nessun P0.

@@ -1,0 +1,11 @@
+# Mappa di `verimem/anomaly_detection.py` — 3 righe, 114 righe di codice (lead, 09/09 02:17)
+
+Letto per intero. Prova: pytest del lotto D sul tip `20257636` (`73 passed, 6 xfailed in 72.21s`, EXIT=0, con `tests/test_anomaly_detection.py`). Chiamanti letti: `verimem/mcp_server.py:10356-10363` (`hippo_detect_anomalies`, episodi da `a.memory.all`), `verimem/outlier_summary.py:6`. La bozza attribuiva a `_signature` chiamanti in `correction_velocity.py` ed `emerging_briefing.py`: **falsi positivi del nome** (quelle usano `emerging_patterns._signature`, un'altra firma a 4 token: due `_signature` diverse per «firma del task»). Claim README: nessuna riga (grep su «anomal» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/anomaly_detection.py:23` `_signature` | i 5 token più frequenti del `task_text`, ordinati, come firma del cluster | `detect_anomalies` (57) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 73 passed |
+| 2 | `verimem/anomaly_detection.py:31` `_stddev` | deviazione standard di popolazione; < 2 valori → 0 | `detect_anomalies` (77) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 73 passed |
+| 3 | `verimem/anomaly_detection.py:39` `detect_anomalies` | nei cluster con ≥ 5 episodi: esito contro una maggioranza ≥ 70%, `tokens_used` a ≥ 2σ sopra la media; **il docstring promette anche `num_steps` «similarly distant»** (riga 7) e il codice non lo guarda | `verimem/mcp_server.py:10363` (`hippo_detect_anomalies`), `verimem/outlier_summary.py:6` | `tests/test_anomaly_detection.py` | - | NON COME PROMESSO: tre criteri promessi, due applicati (`num_steps` assente) | pytest 73 passed (il test non chiede `num_steps`) |
+
+Reperti: (a) il terzo criterio del docstring non esiste nel codice: un docstring dice cosa credeva l'autore; cura in una riga (aggiungere `num_steps` con lo stesso z-score) o togliere la promessa; (b) la firma sui 5 token più frequenti senza stopword: due task diversi che condividono «the, to, a, of, in» finiscono nello stesso cluster (classe «liste monolingue», qui nessuna lista); (c) `tokens_used` a 0 quando non registrato (`or 0`): i cluster con molti zeri hanno σ bassa e ogni episodio con token contati diventa un'anomalia (letto, non misurato). Nessun P0.
