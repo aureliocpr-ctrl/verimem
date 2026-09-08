@@ -455,9 +455,22 @@ guardi la pagina: è che **i test la guardano dal lato del server**.
 
 ## 📊 Contatore
 
+⚠️ **I cinque contatori che ho postato prima di questo erano contati a mano.**
+Dalle 21:36 dell'08/09 il numero lo produce un comando —
+`docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py` — e il primo
+confronto ha detto che **sbagliavo a mio favore di 9 ✅ e 8 ⬜**. I ❌ coincidono.
+
 ```
-righe lavorate:  595 / 811   (73,4%)
-verdetti:  ✅ 102   ❌ 2   ⬜ 47   (una riga può portare due verdetti su due claim)
+$ python docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py
+coperte fino alla riga 595 / 811   (73.4%)
+righe di claim in tabella:  114
+  con ✅ : 93
+  con ❌ : 2   -> righe del file: [42, 54]
+  con ⬜ : 39
+  che portano SIA ✅ SIA ⬜ (claim diviso in due): 19
+
+controllo positivo: 0 righe di claim senza verdetto (su 114).
+righe di tabella scartate come intestazione: 10
 ```
 
 **I due ❌ restano la riga 24 e la 53-57** — lo stesso difetto, la frase con cui il
