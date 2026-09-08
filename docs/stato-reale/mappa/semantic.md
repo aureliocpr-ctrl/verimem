@@ -48,7 +48,7 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 
 ## Contatore
 
-**24 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
+**47 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
 tranne la riga 8, che è NON MISURATO per assenza di test — e lo dice.**
 Le caselle «chiamata da» delle righe 10-15 sono state lette col nome
 QUALIFICATO (`.nome(`): il nome nudo, giusto per i callback, su nomi come
@@ -189,3 +189,49 @@ Prova: `pytest -q tests/test_audit_mutations.py` → `27 passed, 1 warning in
 ⚠️ Non ho eseguito `verimem reset`: è distruttivo e lo store di casa non è un
 banco. La riga è sostenuta dalla lettura del codice e dai test dell'audit, e
 questo limite è dichiarato.
+
+
+## Le `_private`: 114, mappate a BLOCCHI — e perché
+
+Le 114 funzioni private di questo file non hanno una riga ciascuna, e il motivo
+va detto invece di lasciarlo dedurre: sono **helper**, non superficie. Nessuna è
+dietro un claim del README, nessuna è chiamata da fuori `verimem/`, e una riga
+per ciascuna con la stessa prova ripetuta 114 volte darebbe l'aspetto di 114
+verifiche dove ce n'è una. **Il blocco è l'unità onesta**: un test, l'elenco di
+ciò che copre, una prova.
+
+**Limite dichiarato**: il verdetto vale **per il blocco** — quel test esercita
+quel gruppo. Le singole non sono state aperte una per una, e dove servirà
+(perché una diventa sospetta) la riga si scriverà da sola.
+
+| blocco (test) | `_private` coperte | prova |
+|---|---|---|
+| `test_rerank_breaker.py` | **9** — `_fusion_breaker_record`, `_fusion_breaker_tripped_now`, `_rerank_breaker_cold_overrun`, `_rerank_breaker_cooldown_s`, `_rerank_breaker_overruns_in_window`, `_rerank_breaker_record`, `_rerank_breaker_reset`, `_rerank_breaker_tripped`, `_rerank_breaker_window_s` | `17 passed, 1 warning in 35.92s` EXIT=0 |
+| `test_eval_records_read_path_regime.py` | 4 — `_rerank_breaker_n`, `_rerank_breaker_overrun`, `_rerank_inflight_acquire`, `_rerank_inflight_release` | `17 passed in 7.90s` EXIT=0 |
+| `test_rerank_auto_default.py` | 3 — `_query_word_count`, `_rerank_auto_max_words`, `_rerank_mode` | `10 passed, 2 warnings in 11.34s` EXIT=0 |
+| `test_read_path_never_cold_loads.py` | 3 — `_fusion_breaker_n`, `_fusion_breaker_tripped`, `_fusion_breaker_window` | `7 passed, 1 warning in 14.10s` EXIT=0 |
+| `test_topic_penalty_wire.py` | 2 — `_apply_topic_penalty_to_sims`, `_topic_penalty_strength` | `5 passed in 8.04s` EXIT=0 |
+| `test_crash_injection_g3.py` | 2 — `_journal_path_for`, `_replay_pending_facts` | `3 passed in 11.18s` EXIT=0 |
+
+**23 `_private` coperte da sei esecuzioni.** Verdetto per tutti i blocchi:
+**FUNZIONA COME PROMESSO**, limitato a ciò che quei test asseriscono.
+
+### ⚠️ Un dato che serve a chi cura T38
+
+`test_rerank_breaker.py` è il file che stamattina dava **rosso in CI su
+windows** (`test_observing_the_breaker_does_not_rearm_it`, 1 failed su 12.821).
+Qui, in locale, sulla stessa base `7b9e8ca1`: **17 passed, EXIT=0**. Il rosso
+non è del codice mappato in queste nove righe — è dell'ambiente o del tempo, che
+è esattamente l'ipotesi su cui T38 sta lavorando (orologio finto al posto di
+`sleep(0.06)` su un cooldown di 0.05). Lo scrivo perché un verde locale non è un
+verde in CI, e la differenza qui è il reperto.
+
+### Le 48 che nessun test nomina
+
+Restano **48 `_private` che nessun test nomina**. Non sono codice morto — la
+lezione dei tre righelli vale ancora, e i chiamanti **interni** sono già contati
+nell'inventario. Sono **NON MISURATO**, e l'elenco sta in
+`scratchpad/raccolta_semantic.md`: fra queste `_migrate_v0_to_v1`,
+`_migrate_v1_to_v2` (le migrazioni di schema, che nel mio ruolo pesano più delle
+altre) e `_rango_di_fiducia`, che è la funzione dietro `_STATUS_RANK` — cioè
+dietro la domanda di Galileo sul terzo stato.
