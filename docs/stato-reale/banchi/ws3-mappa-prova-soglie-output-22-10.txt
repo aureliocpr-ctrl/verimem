@@ -1,0 +1,16 @@
+=== (a) I TRE DEBITI, con la firma giusta
+  esito_del_moat(ammesso     ) -> ECCEZIONE AttributeError: 'dict' object has no attribute 'grounding_score'
+  esito_del_moat(quarantinato) -> ECCEZIONE AttributeError: 'dict' object has no attribute 'grounding_score'
+  esito_del_moat(SENZA fonte)  -> not_run:no_source
+  source_trust(fonte) -> 0.5
+  consistency_trust(fonte) -> 0.5
+
+  chi_ha_quarantinato(riga del quarantinato):
+   -> ECCEZIONE TypeError chi_ha_quarantinato() missing 1 required positional argument: 'warnings'
+
+=== (b) le soglie, pure
+  soglia_fatto_lungo() -> 2000
+  soglia_controllo_duplicati() -> 50000
+
+=== (c) AutoMemory  [README:280]
+  ECCEZIONE: ValueError AutoMemory needs a Memory built with an extraction llm (Memory(..., llm=...)) — same requirement as add(messages)

@@ -1,0 +1,9 @@
+=== esito_del_moat + chi_ha_quarantinato, composti come vuole la firma
+  vero, con fonte          action=persist    moat='passed'               chi='gate'
+  falso, con fonte         action=downgrade  moat='failed'               chi='moat'
+  self-claim senza fonte   action=downgrade  moat='not_run:no_source'    chi='L1'
+  nota libera senza fonte  action=persist    moat='not_run:no_source'    chi='gate'
+
+=== trust_stats  [README:284]
+  trust_stats(): dict {'ledger': {'admitted': 1, 'quarantined': 1, 'rejected': 0, 'abstained': 0}, 'by_layer': {'L4-grounding': 1, 'L4.1': 1}, 'since': 1788898429.9307747, 'daily': [{'day': '2026-09-08', 'admitted': 1, 'quarantined': 1, 'reje
+  stats(): ASSENTE su Memory

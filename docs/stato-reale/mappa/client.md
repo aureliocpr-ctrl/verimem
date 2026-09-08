@@ -11,12 +11,13 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 36 righe misurate su 80 (22 funzioni + 10 rami di `add` + il
-blocco audit) · 13 claim collegati (README e istruzioni del server) · i
-chiamanti delle tre porte per `add` e `search` **letti con la riga** (20:59) ·
-4 ticket aperti (T-MAP-1, T-MAP-2, T-MAP-3, **T-MAP-4: un claim del README
-falso a metà**) · 5 righe dove **ho sbagliato io la chiamata o l'ipotesi** e
-l'ho scritto (11, 12, 18, 34, 35). Prove eseguite sul tip `20257636`.
+**Contatore**: 42 righe misurate su 80 · 15 claim collegati (README e
+istruzioni del server) · i chiamanti delle tre porte per `add` e `search`
+**letti con la riga** (20:59) · **5 ticket** (T-MAP-1, T-MAP-2, T-MAP-3,
+**T-MAP-4: un claim del README falso a metà**, **T-MAP-5: un claim del README
+che tace un requisito**) · 5 righe dove **ho sbagliato io la chiamata o
+l'ipotesi** e l'ho scritto — e **tre di quei debiti sono chiusi in questo
+blocco** (37, 38, 41). Prove eseguite sul tip `20257636`.
 
 **Il pezzo più forte finora**: la tamper-evidence dell'audit è provata
 **manomettendo la catena**, non guardandola stare ferma (riga 31).
@@ -81,7 +82,22 @@ tip 20257636.*
 | 35 | `source_trust` (2833) / `consistency_trust` (2837) | «Combined (min-of-observed-channels) trust for `source`» | **NON MISURATO** | chiamate senza argomenti → `TypeError: missing 1 required positional argument: 'source'`. **Errore mio**: vogliono la fonte. Da rifare passando una `source` vera |
 | 36 | `trust_report(query)` (2370) | il dossier di provenienza | **FUNZIONA COME PROMESSO** | `trust_report("canone capannone")` → dict con `query`, `as_of`, `deep`, `k`, `min_relevance=0.8975`, `ranking_degraded`, `generated_at` — è `explain` con un altro nome, come dichiara il docstring |
 
-## Le altre 44 voci — `NON MISURATO`, elencate per non perderle
+## Soglie, coppia del moat, contatori, AutoMemory (client.py 198-535, 2394+)
+
+*`prova_soglie.py` e `prova_moat_pair.py`, 08/09 22:10-22:12, tip 20257636.
+Questo blocco chiude anche **i tre debiti** delle prove precedenti, cioè le
+funzioni che avevo chiamato con la firma sbagliata.*
+
+| # | funzione (riga) | cosa promette | verdetto | prova |
+|---|---|---|---|---|
+| 37 | `esito_del_moat` (446) | «Che cosa ha fatto il moat, DERIVATO da ciò che il gate ha già detto» | **FUNZIONA COME PROMESSO — quattro casi distinti** | vuole il `GateResult`, non il dict della ricevuta (**tre miei tentativi sbagliati prima di leggerlo**): vero+fonte → `'passed'` · falso+fonte → `'failed'` · self-claim senza fonte → `'not_run:no_source'` · nota libera senza fonte → `'not_run:no_source'` |
+| 38 | `chi_ha_quarantinato` (464) | «Quale layer ha deciso la quarantena: `moat` / `L1` / `gate`» | **FUNZIONA COME PROMESSO** | vuole la **stringa** che restituisce `esito_del_moat`, non la riga del fatto: le due si compongono. Stessi quattro casi → `'gate'`, `'moat'`, `'L1'`, `'gate'`: i tre valori del docstring escono tutti, e su ciascuno quello giusto |
+| 39 | `soglia_fatto_lungo` (198) / `soglia_controllo_duplicati` (225) | soglie pure | **FUNZIONA (misurate)** | `2000` e `50000` |
+| 40 | `Memory.trust_stats` | README:284: «persistent counters of what the gate actually *did* … writes admitted, quarantined, rejected, and honest read-path abstentions, with per-layer attribution» | **FUNZIONA COME PROMESSO** | dopo un ammesso e un quarantinato: `{'ledger': {'admitted': 1, 'quarantined': 1, 'rejected': 0, 'abstained': 0}, 'by_layer': {'L4-grounding': 1, 'L4.1': 1}, 'since': …, 'daily': [{'day': '2026-09-08', …}]}` — i contatori e l'attribuzione per layer ci sono entrambi. (`stats()` invece **non esiste**: il nome giusto è questo) |
+| 41 | `Memory.source_trust` (2833) / `consistency_trust` (2837) | «Combined (min-of-observed-channels) trust for `source`» | **FUNZIONA (misurate, debito chiuso)** | `source_trust(FONTE)` → `0.5`, `consistency_trust(FONTE)` → `0.5` su una fonte mai vista prima: il valore neutro di partenza |
+| 42 | `AutoMemory` (client.py) | README:280-283: «`AutoMemory(memory).observe(role, text)` watches a live conversation and remembers on its own, but through the SAME gated pipeline … Opt-in by construction» | 🔴 **NON COME PROMESSO (il claim è incompleto)** → ticket **T-MAP-5** | `AutoMemory(m)` su un `Memory()` ordinario → `ValueError: AutoMemory needs a Memory built with an extraction llm (Memory(..., llm=...)) — same requirement as add(messages)`. Il messaggio d'errore **è ottimo** (dice cosa manca e a cosa somiglia); il README, alle righe 280-283, **non dice** che serve un llm — mentre alla riga 705, per `answer()`, lo dichiara («⚠️ **needs an injected LLM**»). Il prodotto sa fare la cosa giusta altrove: qui manca |
+
+## Le altre 38 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -112,6 +128,14 @@ decrescenti.
   termini («elenca tutto sul capannone» → termini `tutto sul capannone` → 0).
   Confinato al router di intento (`query_intent.content_terms`); `FIND` e
   `COUNT` sulla stessa domanda funzionano. **Non curato**: mappa, non cure.
+- 🔴 **T-MAP-5** (owner Galileo, da girare a @ws7 Iris, 08/09 22:12) —
+  **README:280-283 promette `AutoMemory` senza dire che serve un llm.** Il
+  codice solleva `ValueError: AutoMemory needs a Memory built with an
+  extraction llm (Memory(..., llm=...))`, e il messaggio è chiaro; ma chi legge
+  il README installa, scrive `AutoMemory(memory)` e sbatte contro un errore che
+  la pagina non prepara. Alla riga 705 lo stesso README **dichiara** il
+  requisito per `answer()` («needs an injected LLM»): la forma giusta esiste
+  già, va applicata anche qui. Cura: una frase nella riga 280, non codice.
 - 🔴 **T-MAP-4** (owner Galileo, da girare a @ws7 Iris che tiene il README,
   08/09 21:50) — **README:194 è vero a metà**. Dice: «`Memory(preset="permissive")`
   / `validate="fast"` skip the moat entirely». Misurato con la stessa coppia
