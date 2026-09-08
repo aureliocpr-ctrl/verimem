@@ -154,15 +154,25 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
 - **T26a — the MCP server is delegate-only by construction, so a daemon that is
   not there means an unjudged write, silently.** *Today*: the server starts the
   shared encode daemon itself, and **with the daemon a sourced write is judged —
-  7 out of 7, grounding 98.37**. But that port delegates **by construction**: if
+  7 sourced writes out of 7**. (No score is quoted: a `grounding_score` belongs to
+  the claim-and-source pair that was judged, not to the port — the README dropped
+  it for the same reason.) But that port delegates **by construction**: if
   the daemon is missing or fails to start, the write enters **unjudged**, and
   nothing says so where you read `admitted` — the receipt does carry
   `layers=['L4-skipped']`, but that is not where a caller looks. Measured on our
   own corpus: **13 of 275** facts written in the last 24 hours entered that way —
   **4.7%**, against **66 of 8833** historically (**0.7%**). The CLI, with no
   flags, judges in-process instead. *Not yet*: there is no in-process fallback
-  and no refusal — **the daemon's failure mode is silent**. *Next*: either fall
-  back to judging in-process when the daemon is unusable, or refuse out loud.
+  and no refusal — **the daemon's failure mode is silent**.
+  **Root cause found (not yet in this release)**: `sentence_transformers` went
+  through a *different* lock than the other heavy imports, so the guard that
+  was supposed to serialise them did not cover it. The fix, and a receipt that
+  shows the write coming back `judged`, live **on a branch** — measured there:
+  3 runs out of 3 judged, `moat_judge_failed` 0 out of 6, with 8.60 / 7.72 /
+  7.71 GB free (measurements by the author of the fix, not ours).
+  ⚠️ **It is a branch, not this package**: on 0.7.7 the failure mode is still
+  silent. *Next*: the fix lands in the next release, and this entry moves to
+  Fixed only when the commit is on `main`.
 - **T27 — one test is excluded from the CI suite while its crash is confirmed.**
   *Today*: `test_hang_watchdog.py::test_slow_body_leaves_a_stack_dump` sits
   behind a `--deselect` — **a probe, not a fix** — after killing the whole suite
@@ -172,6 +182,23 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
   handful of clean runs is not proof of anything. *Next*: the count reaches the
   threshold fixed **before** starting — **24 consecutive clean jobs**, chosen so
   that `(1-p)^24 = 0.05` with the measured `p` — or the `--deselect` comes out.
+
+- **T39 — a judge that runs in-process needs memory, and says nothing when it
+  does not have it.** *Today*: the server that judges in its own process **dies
+  silently with about 1.6 GB free**, and works with 7.7 GB. There is no message,
+  no degraded mode, no floor written anywhere — the process is simply gone.
+  *Not yet*: **the exact threshold is not measured**, and we are not quoting one
+  we do not have; nor does the process check the memory it is about to need
+  before it starts. *Next*: find the floor, then either refuse out loud below it
+  or fall back to the daemon.
+- **T40 — in delegate-only mode the first scored call pays for the tokenizer on
+  the request thread.** *Today*: with `HIPPO_ENCODE_DELEGATE_ONLY=1` the first
+  `try_local_score` loads the tokenizer inside the call that asked for a score,
+  so that one call takes **35.4 s** while every later one is fast. It is not the
+  judge model — that lives in the daemon — it is the tokenizer import landing on
+  the caller. *Not yet*: nothing warms it, and nothing tells the caller why the
+  first call is slow. *Next*: move that import off the request path (owner
+  assigned, fix expected next release).
 
 ### Internal
 
