@@ -47,6 +47,7 @@ from __future__ import annotations
 
 import os
 import sys
+from pathlib import Path
 import traceback
 
 #: le SETTE forme del reperto originale: un fatto vero + una self-claim in coda.
@@ -126,25 +127,66 @@ def _fermato(gate_result) -> bool:
     legge dalla stringa dell'avviso. Qui si guarda lo stato, e se lo stato non
     e' leggibile il banco esce NON MISURATO invece di indovinare.
     """
-    for attr in ("quarantined", "blocked", "rejected"):
-        v = getattr(gate_result, attr, None)
-        if isinstance(v, bool):
-            return v
-    stato = getattr(gate_result, "status", None)
-    if isinstance(stato, str):
-        return stato.lower() in {"quarantined", "rejected", "blocked"}
-    _non_misurato(
-        "GateResult non espone uno stato booleano ne' `status` leggibile: "
-        f"attributi visti = {sorted(a for a in dir(gate_result) if not a.startswith('_'))[:12]}"
-    )
-    return False  # irraggiungibile
+    #: ⚠️ 07/09, SECONDA ESECUZIONE: il banco e' uscito NON MISURATO perche'
+    #: cercava `quarantined` / `blocked` / `rejected` / `status`, e `GateResult`
+    #: non ha nessuno dei quattro. Gli attributi veri sono: action, advice,
+    #: contradicting_fact_ids, grounding_score, grounding_span, judge,
+    #: supersede_fact_ids, threshold, to_dict, warnings. Avevo dedotto la forma
+    #: della ricevuta PUBBLICA (che `status` ce l'ha) e l'avevo attribuita
+    #: all'oggetto interno: due livelli diversi, e li avevo confusi.
+    #:
+    #: 🔑 IL CRITERIO ORA E' QUELLO DEL PRODOTTO, non uno mio: `client.py:781`
+    #: legge `gate.action` e confronta con `"reject"`, e i layer che hanno agito
+    #: sui warning li estrae `client._blocking_layers` — la stessa funzione, non
+    #: una mia copia, cosi' il banco misura dove il prodotto decide.
+    azione = getattr(gate_result, "action", None)
+    if azione == "reject":
+        return True
+    warnings = getattr(gate_result, "warnings", None)
+    if warnings is None:
+        _non_misurato(
+            "GateResult non espone `warnings`: attributi visti = "
+            f"{sorted(a for a in dir(gate_result) if not a.startswith('_'))[:12]}"
+        )
+    try:
+        from verimem.client import _blocking_layers
+    except Exception as exc:  # noqa: BLE001
+        _non_misurato(
+            f"client._blocking_layers non importabile ({type(exc).__name__}): "
+            "senza la funzione del prodotto il banco userebbe un criterio mio, "
+            "e un criterio mio non dice cosa fa il prodotto."
+        )
+    return bool(_blocking_layers(list(warnings)))
+
+
+def _dettaglio(gate_result) -> str:
+    """Cosa ha deciso il gate, in chiaro accanto a ogni riga: senza questo un
+    `passata` non si distingue da un `non misurato che ha finto di passare`."""
+    try:
+        from verimem.client import _blocking_layers
+        layer = _blocking_layers(list(getattr(gate_result, "warnings", []) or []))
+    except Exception:  # noqa: BLE001
+        layer = ["?"]
+    return f"action={getattr(gate_result, 'action', '?')} layer={layer or '-'}"
 
 
 def main() -> int:
     print("D-1 — le sette forme e i veri composti")
+    print(f"provenance_trusted : {os.environ.get('WS7_PROVENANCE_TRUSTED') == '1'}"
+          "   (la porta SDK lo passa True — client.py:745)")
     print("=" * 68)
 
     # ── quale albero sto misurando (la trappola del worktree, 05/09) ──────
+    #: ⚠️ 07/09: alla PRIMA esecuzione questo banco ha stampato
+    #: «albero misurato : C:\Users\aurel\Code\HippoAgent\verimem\__init__.py»
+    #: — cioe' l'albero di UN ALTRO worktree, perche' `verimem` e' installato in
+    #: editable e `sys.path` non porta la radice di QUESTO albero. Il banco se
+    #: n'e' accorto solo perche' STAMPA l'albero invece di presumerlo: senza
+    #: quella riga avrei attribuito a main un verdetto misurato altrove.
+    #: La cura e' mettere la radice del proprio worktree in TESTA a sys.path.
+    _RADICE = Path(__file__).resolve().parents[3]
+    if str(_RADICE) not in sys.path[:1]:
+        sys.path.insert(0, str(_RADICE))
     try:
         import verimem
         print(f"albero misurato : {verimem.__file__}")
@@ -158,10 +200,30 @@ def main() -> int:
         _non_misurato(f"run_validation_gate non importabile: {type(exc).__name__}: {exc}")
 
     def giudica(testo: str):
+        #: ⚠️ 07/09: la firma e' KEYWORD-ONLY (`def run_validation_gate(*, ...)`)
+        #: e vuole quattro argomenti obbligatori. Le due chiamate scritte il
+        #: 06/09 passavano il testo per POSIZIONE: cadevano entrambe con
+        #: `TypeError: takes 0 positional arguments` e il banco usciva EXIT=1
+        #: senza verdetto. Il difetto era mio, non del gate — e la seconda
+        #: chiamata, quella «per la firma piu' vecchia», era una difesa che non
+        #: difendeva da niente, perche' sbagliava esattamente allo stesso modo.
+        #: 🔬 07/09 13:15 — L'A/B A UNA VARIABILE. Il banco dalla porta
+        #: (`ws7-d1-dalla-porta-sdk.py`) ha dato **1/7** dove questo dava 7/7, e
+        #: leggendo `client.py:745` la differenza candidata e' UNA: la porta
+        #: passa `provenance_trusted=True` («abilita il routing di provenienza
+        #: sui layer L1.x», commento alla firma del gate). Con
+        #: `WS7_PROVENANCE_TRUSTED=1` questo banco passa lo stesso flag e non
+        #: cambia nient'altro: se il braccio A crolla, la causa e' isolata.
+        _fiducia = os.environ.get("WS7_PROVENANCE_TRUSTED") == "1"
         try:
-            return run_validation_gate(testo, source=FONTE)
-        except TypeError:
-            return run_validation_gate(testo)          # firma piu' vecchia
+            return run_validation_gate(
+                proposition=testo,
+                verified_by=None,
+                topic=None,
+                agent=None,
+                source=FONTE,
+                provenance_trusted=_fiducia,
+            )
         except Exception as exc:  # noqa: BLE001
             traceback.print_exc()
             _non_misurato(f"il gate ha sollevato {type(exc).__name__} su: {testo[:60]!r}")
@@ -181,18 +243,20 @@ def main() -> int:
     print("BRACCIO A — self-claim in coda a un vero (DEVE fermare)")
     a_fermate = 0
     for nome, testo in BRACCIO_A:
-        ok = _fermato(giudica(testo))
+        g = giudica(testo)
+        ok = _fermato(g)
         a_fermate += ok
-        print(f"  {'FERMATA ' if ok else 'passata '} {nome}")
+        print(f"  {'FERMATA ' if ok else 'passata '} {nome:24s} {_dettaglio(g)}")
 
     # ── BRACCIO B: devono PASSARE ────────────────────────────────────────
     print()
     print("BRACCIO B — fatti composti VERI, nessuna self-claim (DEVE passare)")
     b_fermate = 0
     for nome, testo in BRACCIO_B:
-        ko = _fermato(giudica(testo))
+        g = giudica(testo)
+        ko = _fermato(g)
         b_fermate += ko
-        print(f"  {'FERMATO ' if ko else 'passato '} {nome}"
+        print(f"  {'FERMATO ' if ko else 'passato '} {nome:24s} {_dettaglio(g)}"
               + ("   ← FALSO POSITIVO" if ko else ""))
 
     # ── il verdetto e' la COPPIA ─────────────────────────────────────────

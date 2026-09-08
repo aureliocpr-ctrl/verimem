@@ -349,7 +349,7 @@ verimem warmup   # optional: pre-downloads the judge (711 MB) so your first
 >
 > | you write from | what happens to the first write that carries a `source` |
 > |---|---|
-> | **CLI** - `verimem save --source ...` | **judged in ~22 s with no daemon running** (`grounding_score 98.37`), measured 2026-09-07 with the judge model already installed |
+> | **CLI** - `verimem save --source ...` | **judged in process in ~22 s, with no daemon running** - measured 2026-09-07 with the judge model already installed. *(The run's `grounding_score` is not quoted here on purpose: a score belongs to the claim-and-source pair that was judged, not to the port.)* |
 > | **MCP server** - `hippo_remember` | the server **delegates to a shared encode daemon by construction** and never loads the judge in its own process (that import once blocked every concurrent call). It starts the daemon itself - but **if the daemon is missing or does not come up, the write is stored UNJUDGED**: `stored: true`, and the receipt carries `layers: ['L4-skipped']`. **Read that field.** `admitted` on its own does not mean judged. |
 >
 > On the **SDK** we do not have a stable answer yet, and we would rather write
