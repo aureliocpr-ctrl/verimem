@@ -522,30 +522,108 @@ per l'indagine; oggi vale identico per i presidi.
 
 ---
 
+## Righe 669-740 — i caveat che il README si scrive addosso, e l'«every» che li dimentica
+
+| righe | il claim | dove sta nel codice | chi lo guarda | verdetto |
+|---|---|---|---|---|
+| 669-673 | **TrustMem-Bench**: sei assi deterministici, **60/60**, *«the bench is offline and seeded, run it yourself in one command»* | `benchmark/trustmem_bench.py` **esiste** | il file sì; **il 60/60 non ha un test che lo rilegga** | ⬜ |
+| 675-677 | ANN: *«1.3 ms at 1M facts vs 81 ms brute-force»*, artefatto `ann_scale_bench_repro.json` | il file **esiste** | nessun presidio lega il numero al file | ⬜ |
+| 678-681 | ⚠️ caveat autodichiarato n°1: *«the bench's own docstring points at `ann_scale_bench.json` instead, and that file covers only 100k/500k and carries no recall column — so following the pointer does not lead to these numbers»* | — | 🌟 **verificato riga per riga**: `ann_scale_bench.json` ha due sole righe (`n=100000`, `n=500000`) e le colonne sono `brute_ms, ann_ms, speedup, build_s` — **nessun recall**. Il caveat è vero alla lettera | ✅ |
+| 681-683 | ⚠️ caveat n°2: *«for the same 100k three tracked runs report 8.0x, 9.5x and 7.8x, so read the multiplier as machine-dependent rather than as a constant»* | — | **verificato**: `ann_scale_bench.json` porta `"speedup": 8.0` a 100k, uno dei tre | ✅ |
+| 684-686 | faiss si auto-abilita sopra 100k, `VERIMEM_ANN_RECALL=0` disattiva, *«the default install ships no faiss, so recall is exact brute-force»* | `ann_gate.py`, `ann_index.py`, `semantic.py` | `test_ann_recall_equivalence.py` | ✅ |
+| 686-691 | `SCALE.md` + il recall dell'ANN **degrada** con la taglia: 0,87 @100k · 0,53 @500k · 0,41 @1M; *«il 1M build also needs a large-RAM box»* | `SCALE.md` **esiste** | nessun presidio sui tre numeri | ⬜ *(ma è un limite dichiarato **contro** di sé, con la curva peggiore in evidenza)* |
+| 695-699 | *«every row below is a measured result with the raw file in the repo, not a design intention»* | — | vedi il riquadro ①: **due righe della tabella dichiarano di non avere un file** | ⬜ |
+| 703 | l'astensione **1.000** su sette run, *«and on questions that DO have an answer it abstains 0.20 vs 0.30 plain-RAG»*, con l'autocritica: *«A 1.000 alone cannot distinguish "abstains when it should" from "abstains always", so both halves belong together»* | — | nessun presidio | ✅ **come forma** — *è la riga in cui il prodotto si toglie da solo il numero da vetrina* · ⬜ sui numeri |
+| 704-706 | il gate in scrittura, AUROC **0,96-0,97**, con ⚠️ *«this last one (0.974) has no committed results file: `epistemic_harness.py` computes `pooled_auroc`, but no artefact in `benchmark/results/` stores it»* | `benchmark/epistemic_harness.py:53` calcola `pooled_auroc` | 🌟 **verificato**: `pooled_auroc` non compare in **nessun** file di `benchmark/results/`. Il caveat dice il vero | ✅ |
+| 706 | …*«and the three `0.974` you will find there are different quantities with the same digits — an abstention canary and two accuracies»* | — | **quattro** file contengono `0.974x`: `exp3_routing_u0` (`accuracy` 0.9744), `exp4_declared_inference_u0` (`accuracy` 0.9744), `lme_s_k5_full` (`hit_at_k` 0.9744), `local_gate_calibrate_2026-07-15` (`admission_precision` 0.9746/0.9745/0.9745) | ⬜ **il conteggio non torna** — vedi riquadro ② |
+| 707 | ⚠️ *«needs an injected LLM: `answer()` is keyword-only on `llm` and raises `TypeError` without one, so this row is unavailable on a plain install»* | 🌟 `client.py:1877` — `def answer(self, query: str, *, llm: Any, k: int = 8, …)`: **keyword-only e senza default**, esattamente come dichiarato | il caveat è verificabile alla riga | ✅ |
+| 708-710 | 60/60 su TrustMem contro mem0 **2.0.4** 40/60 · bi-temporale · true forget · provenienza a ogni lettura | `benchmark/trustmem_bench.py` | `test_i_numeri_altrui_portano_la_loro_fonte.py`, `test_nessun_numero_altrui_senza_una_misura_nostra.py` | ⬜ sui numeri |
+| 710 | ⚠️ air-gap *«not the default»*: un'installazione stock è `not offline-pinned` e i primi caricamenti possono raggiungere l'HF Hub, *«as `verimem doctor` states»* | `doctor.py`, `airgap.py` | `test_doctor_puo_dire_che_va_tutto_bene.py`, `test_verimem_offline_flag.py` | ✅ |
+| 712 | *«The competitor column was measured against `mem0 2.0.4`»* — la versione è nel file, l'embedder è lo stesso, *«re-run the probe before quoting the row»* | 🌟 **verificato**: `benchmark/results/competitor_mem0.json` porta `"version": "2.0.4"` | `test_i_numeri_altrui_portano_la_loro_fonte.py` | ✅ |
+| 714-715 | 🔴 *«**every claim in this README links to a raw result file**, negative results are published»* | — | **il README si smentisce da solo due volte**: riga 664 (`0.739` *«has no committed results file»*) e riga 706 (`0.974`, idem). Verificato: `qa_gem_k12_u1.json` non esiste, `pooled_auroc` non è in `results/` | ❌ **NON COME PROMESSO** |
+| 717-719 | *«the honest framing rule — "parity, not a win" — is enforced against ourselves»* | — | la regola è **applicata** nel testo (riga 667: *«We describe the end-to-end result as parity, not a win»*); **«enforced» non ha un presidio** | ✅ come pratica · ⬜ come enforcement |
+| 723-733 | **la cancellazione**: `Memory.forget(fact_id)` toglie la riga e `recall` non la serve più *(verified)*, **ma la stringa resta leggibile nei byte del `.db`** e ci resta **dopo `VACUUM`** — `secure_delete` di SQLite è off per default; *«"forgotten" here means no longer served, not no longer recoverable»* | — | `secure_delete` **non compare né in `verimem/` né in `tests/`**: il limite è dichiarato e **nessun test lo tiene fermo** | ⬜ |
+| 735-740 | *«deletion by subject does not exist anywhere»*: senza un `user_id` dedicato si torna a un `fact_id` per volta; e *«which door you use decides whether the text is really gone»* — **cinque porte** | — | non seguito in questo blocco (la lista delle porte prosegue oltre la 740) | ⬜ |
+
+### ① Il terzo ❌ della mappa, e non serve eseguire niente per vederlo
+
+> riga 714: *«every claim in this README links to a raw result file»*
+> riga 664: *«`0.739` **has no committed results file**»*
+> riga 706: *«this last one **has no committed results file**»*
+
+Le tre frasi stanno **nella stessa pagina**, a cinquanta righe di distanza. Le due
+eccezioni non sono nascoste — sono scritte in grassetto, con il ⚠️, dal prodotto
+stesso: è la parte più onesta del documento. Ma la frase che le riassume dice
+**«every»**, e un «every» con due eccezioni dichiarate **dallo stesso testo** non
+è un'imprecisione di stile: è la riga che un lettore cita quando ci difende, e
+che chiunque può falsificare **leggendo la pagina che ha in mano**.
+
+Ho controllato entrambe: `benchmark/results/qa_gem_k12_u1.json` **non esiste**
+(ci sono `u0` e `u2`), e `pooled_auroc` — calcolato da `epistemic_harness.py:53`
+— **non compare in nessun file** di `benchmark/results/`.
+
+🔑 **La cura è di una parola**: *«nearly every claim … the two exceptions are
+flagged inline»*. Il contenuto onesto c'è già; è la sintesi che promette più di
+quanto il testo stesso sostenga. **E il difetto è precisamente della forma che ho
+mappato tutto il giorno**: il numero comodo in cima, la sua smentita venti righe
+sotto — qui invertito, con la smentita *prima* e la promessa *dopo*.
+
+### ② Anche un numero dentro un'ammissione non fa attrito
+
+Il caveat sui `0.974` è utile e vero nella sostanza (*«numeri diversi con le
+stesse cifre, non scambiarli»*), ma il suo **conteggio** non torna: dice **tre**
+e nomina *«un canary dell'astensione e due accuracies»*; nel repo oggi ci sono
+**quattro** file, e le grandezze sono **due `accuracy`, un `hit_at_k` e tre
+`admission_precision`** — nessuna delle quali si chiama «abstention canary».
+
+Stasera ho scoperto che **il mio** contatore sbagliava a mio favore perché *un
+numero che ti dà ragione non fa attrito*. Questo è il gemello: **un numero
+dentro un'ammissione di colpa non fa attrito nemmeno lui** — chi legge una frase
+che confessa un limite la prende per buona *a maggior ragione*, ed è l'ultimo
+posto dove qualcuno andrebbe a controllare l'aritmetica.
+
+### ③ Ottavo e nono allarme falso — e il nono l'avrebbe fatto sembrare un errore del README
+
+- **Ottavo**: stavo per accreditare a `test_il_claim_e_la_fonte_leggono_lo_stesso_numero.py`
+  la copertura del legame «numero del README ↔ file». Letto: parla del gate
+  L4.1 e dell'estrattore di quantità, **non del README**. Un nome che suona
+  giusto non è una copertura.
+- **Nono**: cercando se `ann_scale_bench.json` avesse davvero «no recall column»,
+  il mio `'recall' in <json come stringa>` ha risposto **True** — stavo per
+  scrivere che il README sbaglia il proprio caveat. La parola stava nella
+  `note` (*«identical top-k scores (test_ann_recall_equivalence)»*), non in una
+  colonna. **Cercata la struttura invece della parola, il caveat è vero.**
+
+🔑 **Nove allarmi falsi in una giornata**, e cinque hanno la stessa radice:
+**ho cercato una parola dove dovevo guardare una struttura** — le colonne di un
+JSON, l'oggetto che un test asserisce, il nome del difetto invece della frase
+della promessa.
+
+---
+
 ## 📊 Contatore
 
-⚠️ **I cinque contatori che ho postato prima delle 21:36 erano contati a mano** e
-sbagliavano **a mio favore** (+9 ✅, +8 ⬜; i ❌ coincidevano). Ora il numero lo
-produce un comando: `docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py`.
+⚠️ Il numero lo produce un comando, non io: i cinque contatori prima delle 21:36
+erano contati a mano e sbagliavano **a mio favore** (+9 ✅, +8 ⬜).
 
 ```
 $ python docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py
-coperte fino alla riga 668 / 811   (82.4%)
-righe di claim in tabella:  127
-  con ✅ : 102
-  con ❌ : 2   -> righe del file: [42, 54]
-  con ⬜ : 43
-  che portano SIA ✅ SIA ⬜ (claim diviso in due): 19
+coperte fino alla riga 740 / 811   (91.2%)
+righe di claim in tabella:  145
+  con ✅ : 111
+  con ❌ : 3   -> righe del file: [42, 54, 543]
+  con ⬜ : 53
+  che portano SIA ✅ SIA ⬜ (claim diviso in due): 21
 
-controllo positivo: 0 righe di claim senza verdetto (su 127).
-righe di tabella scartate come intestazione: 11
+controllo positivo: 0 righe di claim senza verdetto (su 145).
 EXIT=0
 ```
 
-**I due ❌ restano le righe 42 e 54 del file** — README:24 e README:53-57, lo
-stesso difetto: la frase con cui il prodotto si presenta e la sua ripetizione
-dodici righe sotto.
+**Il terzo ❌ è entrato adesso** (riga 543 del file = README:714-715, *«every
+claim in this README links to a raw result file»*) ed è il primo che **non
+riguarda il gate**: gli altri due sono la frase con cui il prodotto si presenta
+e la sua ripetizione. Questo si falsifica **senza eseguire niente** — basta
+leggere le righe 664 e 706 della stessa pagina.
 
-**Sette allarmi falsi cercati e non pubblicati oggi.** Cinque avevano la stessa
-causa: cercare il presidio con **le parole del README** invece che col nome del
-**difetto** che impedisce.
+**Nove allarmi falsi cercati e non pubblicati oggi.** Cinque hanno la stessa
+radice: **ho cercato una parola dove dovevo guardare una struttura.**
