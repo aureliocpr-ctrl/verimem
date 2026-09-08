@@ -24,7 +24,21 @@ import os
 import re
 import sys
 
-RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def _radice() -> str:
+    """La radice del repo: la cwd se e' un checkout (ha verimem/ e docs/),
+    altrimenti la cartella sopra lo script. Lanciato da /tmp su un albero
+    vuoto stampava «mancanti 0» (ws2, 08/09 20:55): un righello che non
+    trova niente deve dirlo, non dichiarare completa la mappa."""
+    for cand in (os.getcwd(), os.path.dirname(os.path.dirname(os.path.abspath(__file__)))):
+        if os.path.isdir(os.path.join(cand, "verimem")) and os.path.isdir(
+            os.path.join(cand, "docs")
+        ):
+            return cand
+    sys.exit("mappa_completa: nessun checkout trovato (serve una cwd con verimem/ e docs/)")
+
+
+RADICE = _radice()
 MAPPA = os.path.join(RADICE, "docs", "stato-reale", "mappa")
 VERDETTI = ("FUNZIONA COME PROMESSO", "NON COME PROMESSO", "NON MISURATO", "MAI CHIAMATA")
 
@@ -109,6 +123,10 @@ def main() -> int:
     )
     a = ap.parse_args()
     codice = funzioni_nel_codice()
+    if sum(len(v) for v in codice.values()) == 0:
+        sys.exit(
+            f"mappa_completa: nessuna funzione trovata sotto {RADICE}/verimem: radice sbagliata, non una mappa completa"
+        )
     own = owner_per_file()
     mappate, readme, docs, verdetti = righe_della_mappa()
 
