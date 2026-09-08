@@ -51,6 +51,8 @@ ordina la coda.
 | `docs/TRUST_MAINTENANCE.md` | **VIVO** | citato da `verimem/client.py:1275` dentro il ragionamento sul prezzo di una cronologia sempre accesa |
 | `docs/F1_VIRGIN_CORPUS_FINDINGS.md` | **VIVO** | `verimem/gate_router.py:4` ne porta il risultato (validazione su corpus vergine) nel proprio docstring |
 | `docs/cycle174_active_learning_design.md` | **VIVO** | `verimem/active_learning.py:1-5`: «Implements the … loop the `docs/cycle174_active_learning_design.md` **proposed and that was approved on 2026-05-22**». Il design è stato approvato **e** implementato — il sospetto che fosse un piano abbandonato non regge |
+| `docs/LIMITS.md` | **VIVO** — ma afferma una cosa che il README smentisce | *«Limits — measured, with the number and the date… **The README keeps one line and points here**»*. Il README **non ci punta**: rimanda a `BENCHMARKS`, `EVIDENCE-external`, `EVIDENCE-stress`, `GOVERNANCE`, e i tre limiti li elenca **in proprio** (riga 39). Il documento pubblico dei limiti esiste, ed è quello che il contratto chiede — **e la vetrina non ci manda nessuno** |
+| `docs/MCP_QUICKSTART.md` | **VIVO, datato nel nome** | guida di integrazione in 5 minuti; parla di *«**Engram** (formerly HippoAgent)»* — **due nomi indietro**, il prodotto si chiama `verimem` dal 06/07. I comandi (`pip install -e .`) reggono perché generici, ma un lettore cerca un pacchetto che non si chiama più così |
 | `docs/stato-reale/00-ESAME.md` | **VIVO** — è il registro | «Registro unico delle celle misurate», istituito dalla direttiva di Aurelio del 27/08: *«cosa dovrebbe avere teoricamente un progetto del genere? Le ha? Lo fa davvero?»*. **Non giudica il codice: registra le misure.** È l'unico documento di `stato-reale/` che il codice cita (`verimem/soggetto_valore.py`) |
 | `docs/stato-reale/01-promesse-vs-realta.md` | **VIVO** | porta la nota datata fatta meglio del corpus: *«misura `main`, e `main` si è mosso di **756 commit**… non è datato perché sbagli, è datato perché il suo **bersaglio è mobile**… **non ho rimisurato il suo contenuto e non affermo che sia caduto**»*. Dichiara anche ciò che NON ha verificato |
 | `docs/stato-reale/02-RISPOSTA-cosa-fa-chi-installa-oggi.md` | **VIVO** | SHA `afc6cf73`, 08/08, misurato sul pacchetto da PyPI con HOME dedicata e zero variabili. E una frase che vale per tutto il corpus: *«la mia fetta è cresciuta a quattordici file, **che sono un archivio e non una risposta**. Questa pagina è la risposta; ogni riga ha il file che la prova»* |
@@ -379,6 +381,24 @@ sarebbe uscita con dentro un difetto che tre documenti avevano già descritto.
 `70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente`. **La forma «qualcosa tace» è
 ricorrente in questo corpus**, e vale la pena contarla per intero.
 
+
+### 🆕 Decima forma: il documento che afferma una RELAZIONE che non c'è
+
+`LIMITS.md` non sbaglia un numero e non è scaduto: sbaglia **su un altro file**. Dice che
+il README *«tiene una riga e punta qui»*, e il README punta altrove.
+
+```
+  link a docs/ nel README:  BENCHMARKS.md · EVIDENCE-external · EVIDENCE-stress · GOVERNANCE
+  LIMITS.md:                assente
+  README.md:39              «Three limits belong next to those numbers…» — elencati in proprio
+```
+
+⇒ **Non si scopre leggendo il documento**: si scopre solo andando a guardare l'altra
+superficie. È la forma più difficile da trovare di tutte e dieci, e la più facile da
+curare — **una riga nel README**.
+🔑 E vale per il rilascio: il contratto chiede i limiti dichiarati per nome col numero.
+**Quel documento esiste ed è fatto bene. Nessuno lo trova.**
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -394,7 +414,7 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 64 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 66 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
