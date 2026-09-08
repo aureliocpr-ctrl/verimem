@@ -26,7 +26,7 @@ ordina la coda.
 |---|---|---|
 | `docs/stato-reale/GRAVITA-DIFETTI.md` | **VIVO** | nomina un test inesistente ma dichiara «rimosso dal revert» e spiega di averlo recuperato da `05c26887^`: racconta, non afferma |
 | `docs/recipes/corpus-bonifica.md` | **CONTRADDICE IL CODICE** | è una ricetta: alla riga 21 dice `python scripts/engram_bonifica.py`, e quel file non esiste. Chi la segue ottiene un errore |
-| `docs/EPISTEMIC_FAILURES_STUDY.md` | **CONTRADDICE IL CODICE** | riga 87: cita `benchmark/semantic_conflict.py` come fonte dello studio sui falsi positivi; il file non esiste |
+| `docs/EPISTEMIC_FAILURES_STUDY.md` | 🔻 **corretto: VIVO, con un rimando rotto** | `verimem/grounding_gate.py:1` — la **prima riga** del modulo — dice «Grounding gate (**see docs/EPISTEMIC_FAILURES_STUDY.md**)»: è il documento di riferimento del gate. Il `benchmark/semantic_conflict.py` che non esiste sta alla riga 87, **dentro una bibliografia**, non nella tesi. E il documento dichiara i propri limiti («Honest caveat», riga 654) |
 | `docs/CYCLE134-DESIGN.md` | **MORTO** | riga 65 specifica `tests/test_dashboard_sse_e2e.py` come test da scrivere: il test non è mai stato scritto, il design non è stato realizzato |
 | `docs/bench/cycle-71-sampling-stub.md` | **MORTO** | verbale datato 15/05: dichiara «Run: `python scripts/bench_c71_sampling_consolidate.py`», comando sparito. Non inganna — porta la data — ma non si può rieseguire |
 | `docs/cycle156_unique_index_cross_process_design.md` | **MORTO** | riga 136: «Step 1 — write failing tests first (~30 righe `tests/test_consolidation_cross_process.py`)»: piano mai realizzato |
@@ -46,6 +46,11 @@ ordina la coda.
 | `docs/stato-reale/39-le-finestre-cieche-della-memoria.md` | **VIVO** | «ws6/Aldo — **30/08, sera**. Perimetro: archivio, memoria, corpus, quarantena»: dichiara data e perimetro |
 | `docs/JUSTIFIED_MEMORY.md` | **VIVO** | è la tesi del progetto («the 2027 thesis»), e il codice la cita come riferimento del design: `verimem/justified_memory.py:7` → «See docs/JUSTIFIED_MEMORY.md for the design + the verified SOTA gap». Documento e modulo si rimandano |
 | `docs/CYCLE109_HANDOFF.md` | **MORTO (a scadenza)** | handoff del 16/05 per far ripartire una sessione, con `Branch: cycle109-provenance-fact-schema-v3` — e quel ramo **non esiste più** (`git branch -a --list '*cycle109*'` → vuoto). Ha esaurito il suo scopo il giorno dopo |
+| `docs/CONVERSATIONAL_ENTITY_DESIGN.md` | **VIVO** | `verimem/conversation_ingest.py:48` lo cita come il disegno che implementa |
+| `docs/DECISION_CHAIN_DESIGN.md` | **VIVO** | `verimem/decision_chain.py:20`: «Design doc: docs/DECISION_CHAIN_DESIGN.md» |
+| `docs/TRUST_MAINTENANCE.md` | **VIVO** | citato da `verimem/client.py:1275` dentro il ragionamento sul prezzo di una cronologia sempre accesa |
+| `docs/F1_VIRGIN_CORPUS_FINDINGS.md` | **VIVO** | `verimem/gate_router.py:4` ne porta il risultato (validazione su corpus vergine) nel proprio docstring |
+| `docs/cycle174_active_learning_design.md` | **VIVO** | `verimem/active_learning.py:1-5`: «Implements the … loop the `docs/cycle174_active_learning_design.md` **proposed and that was approved on 2026-05-22**». Il design è stato approvato **e** implementato — il sospetto che fosse un piano abbandonato non regge |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -153,6 +158,22 @@ che sono. Il segnale più forte non è la data — che c'è — ma il **riferime
 non esiste più**: `cycle109-provenance-fact-schema-v3` è sparito, e il documento lo nomina
 come se ci si potesse tornare.
 
+
+### 🧮 Sesta lezione: due indizi opposti si PESANO, non si sommano
+
+`EPISTEMIC_FAILURES_STUDY.md` aveva **due** indizi contrari: un path `.py` inesistente
+(→ sospetto «contraddice») e un aggancio al codice (→ «vivo»). Guardando **solo il primo**
+gli ho dato CONTRADDICE, e l'ho scritto. Guardati insieme, non sono pari:
+
+· l'aggancio è nella **prima riga** del modulo che il documento descrive;
+· il path rotto è alla riga 87, **dentro una bibliografia** di banchi.
+
+⇒ **Un rimando rotto in bibliografia non annulla un aggancio in cima a un modulo.** Il
+verdetto giusto è *vivo, con un rimando rotto* — la stessa forma di `SECURITY_AUDIT`.
+🔑 E il criterio più forte trovato finora è proprio quello: **il documento che un modulo
+cita come proprio disegno è vivo**, perché se muore il modulo resta senza spiegazione.
+Su 64 documenti di `docs/` alla radice, **10 sono agganciati così**.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -168,6 +189,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 22 su 287.** Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 27 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
