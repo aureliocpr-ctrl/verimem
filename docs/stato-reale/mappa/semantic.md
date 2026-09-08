@@ -27,10 +27,21 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 | 6 | `store_within_budget` (semantic.py:437) | «Persist `fact` via `memory.store` without letting the INTERACTIVE call …» | `mcp_server.py:9402` (episodi), `:9551` (fatti), `:13624` — tre chiamate, tutte dalla porta MCP | `tests/test_deferred_write_durability.py` | nessun claim README diretto (è il budget di latenza, non una promessa di vetrina) | **FUNZIONA COME PROMESSO**, limitato a: la scrittura differita è durevole | `pytest -q tests/test_deferred_write_durability.py` → `3 passed in 9.32s` EXIT=0 |
 | 7 | `audit_head_at` (semantic.py:6573) | «Stored head of the `count`-th chained mutation row (1-indexed), or …» | `cli.py:5778`, `cli.py:5907`, `client.py:2731` — ⚠️ passata come **CALLBACK** (`head_at=sm.audit_head_at`), mai chiamata con le parentesi | `tests/test_tamper_anchor_receipt.py` | riga 244: «audit every revision» | **FUNZIONA COME PROMESSO**, limitato a ciò che il test asserisce | `pytest -q tests/test_tamper_anchor_receipt.py` → `23 passed, 1 warning in 15.39s` EXIT=0 |
 
+| 8 | `set_derives_from` (semantic.py:3704) | dichiara i genitori di un fatto derivato | `composer.py:407` — `mem.semantic.set_derives_from(fid, [a.id, b.id])`, **unico** chiamante | 🔴 **NESSUNO**: il nome nudo cercato in tutto il repo (`*.py`, `*.md`) compare solo in `CHANGELOG.md`, `composer.py` e nella propria definizione | **CHANGELOG:1320** — «`semantic.set_derives_from` declares …» | **NON MISURATO** — ed è il caso che il mandato cerca: una funzione **citata in un claim del CHANGELOG** e senza un solo test che la nomini | `grep -rn set_derives_from --include=*.py --include=*.md .` → 3 righe, nessuna in `tests/` |
+| 9 | `direct_predecessors` (semantic.py:6098) | i predecessori diretti di un fatto | `cli.py:3623` · `client.py:3924` — **letto**: non è `history`, è la **purga** («a partial purge would leave sensitive rows resurrectable via as_of»), chiusura all'indietro di tutte le generazioni | nessun test la **nomina**; la esercita **indirettamente** `tests/test_la_storia_si_troncava_in_silenzio.py` via `history()` | `docs/AUDIT-LEDGER.md:386` (M8-1): «FIXATO: rewind al capostipite via `direct_predecessors` … **4 test**» | **FUNZIONA COME PROMESSO**, per via indiretta — e il «4 test» del documento **combacia**: quel file dà esattamente `4 passed` | `pytest -q tests/test_la_storia_si_troncava_in_silenzio.py` → `4 passed, 22 warnings in 63.17s` EXIT=0 · `test_temporal_context.py` → `6 passed in 10.16s` EXIT=0 |
+| 10 | `get_supersession_chain` (semantic.py) | la catena di supersessione di un fatto | — da leggere | `tests/test_fact_supersede.py` | riga 179 (lineage) | **FUNZIONA COME PROMESSO**, limitato a ciò che il test asserisce | `pytest -q tests/test_fact_supersede.py` → `18 passed, 1 warning in 11.23s` EXIT=0 |
+| 11 | `count_superseded` (semantic.py) | quanti fatti sono stati ritirati | — da leggere | `tests/test_fact_supersede.py` | riga 521 («A fact disappears in TWO ways») | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 10 |
+| 12 | `delete_with_undo` (semantic.py) | cancella lasciando l'operazione annullabile | — da leggere | `tests/test_undo_log.py` | riga 228 («restore refuses a **superseded** fact») | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_undo_log.py` → `15 passed, 1 warning in 11.61s` EXIT=0 |
+| 13 | `list_undoable_ops` (semantic.py) | elenca le operazioni annullabili | — da leggere | `tests/test_undo_log.py` | riga 228 | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 12 |
+| 14 | `undo_destructive_op` (semantic.py) | annulla un'operazione distruttiva | — da leggere | `tests/test_undo_log.py` | riga 228 | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 12 |
+| 15 | `search_facts` (semantic.py) | ricerca per parola sui fatti | — da leggere | `tests/test_quanti_fatti_ho.py` | riga 466 (search) | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_quanti_fatti_ho.py` → `6 passed, 1 warning in 9.29s` EXIT=0 |
+
 ## Contatore
 
-**7 / 155 funzioni mappate, tutte e 7 con un comando eseguito nella casella
-prova.** Le altre 148 sono nell'inventario e non sono ancora state toccate: non
+**15 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
+tranne la riga 8, che è NON MISURATO per assenza di test — e lo dice.**
+Le righe 10-15 hanno il verdetto ma la casella «chiamata da» ancora da leggere:
+è dichiarato, non lasciato vuoto. Le altre 148 sono nell'inventario e non sono ancora state toccate: non
 hanno una riga qui perché una riga vuota si legge come lavoro fatto.
 
 ## ⚠️ «MAI CHIAMATA» — la trappola che ho quasi calpestato alla riga 7
