@@ -51,6 +51,9 @@ ordina la coda.
 | `docs/TRUST_MAINTENANCE.md` | **VIVO** | citato da `verimem/client.py:1275` dentro il ragionamento sul prezzo di una cronologia sempre accesa |
 | `docs/F1_VIRGIN_CORPUS_FINDINGS.md` | **VIVO** | `verimem/gate_router.py:4` ne porta il risultato (validazione su corpus vergine) nel proprio docstring |
 | `docs/cycle174_active_learning_design.md` | **VIVO** | `verimem/active_learning.py:1-5`: «Implements the … loop the `docs/cycle174_active_learning_design.md` **proposed and that was approved on 2026-05-22**». Il design è stato approvato **e** implementato — il sospetto che fosse un piano abbandonato non regge |
+| `docs/stato-reale/00-ESAME.md` | **VIVO** — è il registro | «Registro unico delle celle misurate», istituito dalla direttiva di Aurelio del 27/08: *«cosa dovrebbe avere teoricamente un progetto del genere? Le ha? Lo fa davvero?»*. **Non giudica il codice: registra le misure.** È l'unico documento di `stato-reale/` che il codice cita (`verimem/soggetto_valore.py`) |
+| `docs/stato-reale/01-promesse-vs-realta.md` | **VIVO** | porta la nota datata fatta meglio del corpus: *«misura `main`, e `main` si è mosso di **756 commit**… non è datato perché sbagli, è datato perché il suo **bersaglio è mobile**… **non ho rimisurato il suo contenuto e non affermo che sia caduto**»*. Dichiara anche ciò che NON ha verificato |
+| `docs/stato-reale/02-RISPOSTA-cosa-fa-chi-installa-oggi.md` | **VIVO** | SHA `afc6cf73`, 08/08, misurato sul pacchetto da PyPI con HOME dedicata e zero variabili. E una frase che vale per tutto il corpus: *«la mia fetta è cresciuta a quattordici file, **che sono un archivio e non una risposta**. Questa pagina è la risposta; ogni riga ha il file che la prova»* |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -244,6 +247,31 @@ commit — e il documento non la registra, **chi legge non sa che è chiusa** e 
 discussione già conclusa. Cercando «opzione» sul canale non ho trovato una decisione
 dichiarata: allo stato, **aperta**.
 
+
+## ⚖️ Le due metà del corpus si giudicano con DUE criteri diversi
+
+Il criterio più forte trovato — *il documento che un modulo cita come proprio disegno è
+vivo* — **non funziona su `docs/stato-reale/`**, e la misura lo dice:
+
+```
+  su 162 file di docs/stato-reale/:  agganciati al CODICE  2
+     00-ESAME.md   <- verimem/soggetto_valore.py     (aggancio vero)
+     README.md     <- verimem/gateway.py             (falso positivo del nome comune)
+  ⇒ un solo aggancio vero su 162.
+```
+
+**Non è un difetto: è la natura della cartella.** `stato-reale/` è una **cronaca** — misure,
+esami, ticket, risposte a domande di Aurelio — e una cronaca il codice non la cita mai.
+
+⇒ **Due criteri, uno per metà:**
+· `docs/` radice, `sota/`, `specs/`, `ricerca/` → **l'aggancio al codice**: 21 documenti
+  agganciati al modulo che descrivono, e `sota/` è 8 su 9.
+· `docs/stato-reale/` (164, il **57%** del corpus) → **la dichiarazione di data e SHA**,
+  perché lì il pericolo non è essere scollegati, è **essere letti come attuali**. Misurato
+  nella zona cieca: **62 su 62 la dichiarano**.
+
+🔑 **Applicare un criterio solo avrebbe dato 162 falsi «morti» su una cartella sana.**
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -259,6 +287,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 39 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 42 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
