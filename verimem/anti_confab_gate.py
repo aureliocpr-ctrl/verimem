@@ -699,6 +699,42 @@ def _senza_source_contro_groundato(cand_ha_source: bool, old: Any) -> bool:
     return isinstance(getattr(old, "grounding_score", None), (int, float))
 
 
+def _rango_per_supersessione(status: str | None) -> int | None:
+    """Il rango di uno stato quando si decide se RITIRARE un fatto, e sono due
+    casi diversi che prima collassavano in uno.
+
+    · stato ASSENTE (``None``/vuoto) — una scrittura nuova che non dichiara uno
+      stato è ``model_claim``: il rango è quello, e si nomina invece di scrivere
+      il letterale ``2``.
+    · stato PRESENTE ma che la tabella NON conosce — ``None``: non confrontabile.
+      Prima valeva ``2``, cioè *quanto un fatto pulito*: uno stato ignoto rendeva
+      il fatto vecchio ritirabile da una scrittura ordinaria. Misurato sullo store
+      di casa l'08/09: **2.541 fatti vivi su 15.661 (16,2%)** hanno uno stato che
+      ``_STATUS_RANK`` non conosce (``user_manual`` 2.494, ``bootstrap_rule`` 24,
+      ``bootstrap_lesson`` 14, ``diary``, ``lesson_manual``, ``bench_manual``,
+      ``pending``), quindi non era un caso di scuola.
+
+    ``semantic._rango_di_fiducia`` questa distinzione la faceva dal 07/08 —
+    ``None`` e non zero — ma la usavano solo ``contradiction.py`` e ``doctor.py``:
+    il gate leggeva il rango a mano in quattro punti (746, 791, 2257, 2406).
+    """
+    from .semantic import _STATUS_RANK, _rango_di_fiducia
+    if not status:
+        return _STATUS_RANK["model_claim"]
+    return _rango_di_fiducia(status)
+
+
+def _almeno_altrettanto_fidato(rango_nuovo: int | None, status_vecchio: str | None) -> bool:
+    """Vero quando il fatto vecchio è ritirabile: il suo rango esiste ed è ``<=``
+    quello della scrittura nuova. Se UNO dei due ranghi non si sa leggere la
+    risposta è NO — non si ritira un fatto su un confronto che non si può fare.
+    """
+    if rango_nuovo is None:
+        return False
+    rango_vecchio = _rango_per_supersessione(status_vecchio)
+    return rango_vecchio is not None and rango_vecchio <= rango_nuovo
+
+
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       ids: list[str], supersede_ids: list[str],
                       new_status: str | None = None,
@@ -718,7 +754,6 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     import time as _t
     import types as _ty
 
-    from .semantic import _STATUS_RANK
     from .supersession_policy import classify_write_relation
     sm = getattr(agent, "semantic", None) if agent is not None else None
     if sm is None:
@@ -743,7 +778,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                                asserted_at=asserted_at,
                                writer_principal=claimant,
                                proposition=proposition or "")
-    _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
+    _nr = _rango_per_supersessione(new_status)
     conflicts: list[str] = []
     for cid in ids:
         # NO reference guard on THIS path, deliberately. Adversarial review
@@ -788,7 +823,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
-                and _STATUS_RANK.get(getattr(old, "status", "model_claim"), 2) <= _nr
+                and _almeno_altrettanto_fidato(_nr, getattr(old, "status", None))
                 and not _senza_source_contro_groundato(cand_ha_source, old)):
             if cid not in supersede_ids:
                 supersede_ids.append(cid)
@@ -2248,13 +2283,12 @@ def run_validation_gate(
                 _sib_by_id = {getattr(f, "id", None): f for f in _sibs}
                 _observe = _sc_mode == "observe"
                 from .proof_evidence import both_machine_checked
-                from .semantic import _STATUS_RANK
                 from .supersession_policy import (
                     classify_write_relation,
                     references_fact,
                 )
                 _supersede_on = _supersede_same_source_on()
-                _new_rank = _STATUS_RANK.get(status or "model_claim", 2)
+                _new_rank = _rango_per_supersessione(status)
                 for _w in detect_semantic_conflicts(_new, _sibs, _judge):
                     if getattr(_w, "kind", "") != "semantic_conflict":
                         continue
@@ -2403,8 +2437,8 @@ def run_validation_gate(
                                 "other_fact_id": _oid,
                             })
                     elif (_rel == "evolution" and _supersede_on and _old is not None
-                          and _STATUS_RANK.get(getattr(_old, "status", "model_claim"), 2)
-                          <= _new_rank
+                          and _almeno_altrettanto_fidato(
+                              _new_rank, getattr(_old, "status", None))
                           # ⚠️ LA GUARDIA DEL GATE (a) STAVA SU UNA PORTA SOLA.
                           # `aeee8305` l'ha messa in `_route_evolutions`, cioè sul ramo
                           # LESSICALE (numerico/versione/data). Ma su un caso REALE del

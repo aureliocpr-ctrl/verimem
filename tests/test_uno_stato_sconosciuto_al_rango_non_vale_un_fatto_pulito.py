@@ -91,18 +91,37 @@ def test_CONTROLLO_uno_stato_noto_e_piu_debole_resta_ritirabile():
     assert _chiama("quarantined") == ["vecchio"]
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "IL ROSSO: uno stato che il rango non conosce viene trattato come model_claim "
-    "(default 2) e il fatto vecchio diventa ritirabile — misurato: user_manual si "
-    "comporta ESATTAMENTE come model_claim, mentre verified no. Con "
-    "_rango_di_fiducia il rango tornerebbe None e la supersessione non partirebbe. "
-    "2.541 fatti vivi su 15.661 (16,2%) sono in questa condizione oggi."))
-def test_IL_ROSSO_uno_stato_ignoto_non_deve_rendere_il_vecchio_ritirabile():
+def test_ERA_ROSSO_uno_stato_ignoto_non_rende_il_vecchio_ritirabile():
+    """Il rosso di questa cella, ora verde con `_rango_per_supersessione`.
+
+    FALSIFICAZIONE, con la sonda `ws3-sonda-il-confronto-dei-ranghi-e-vivo.py`
+    eseguita prima e dopo la cura (senza toccare l'albero condiviso)::
+
+        19:41 (prima)  user_manual -> supersede_ids=['vecchio']  conflicts=[]
+        20:08 (dopo)   user_manual -> supersede_ids=[]           conflicts=['vecchio']
+        e nelle due esecuzioni  model_claim e quarantined restano ritirabili,
+        verified no: la cura sposta SOLO la classe che doveva spostare.
+    """
     assert "vecchio" not in _chiama(STATO_IGNOTO)
 
 
-def test_uno_stato_ignoto_si_comporta_oggi_come_un_fatto_pulito():
-    """La forma positiva dello stesso reperto, che resta verde anche dopo la
-    cura solo se la cura NON c'è: qui si fissa il comportamento di oggi, così la
-    cura lo cambia in modo visibile."""
-    assert _chiama(STATO_IGNOTO) == _chiama("model_claim") == ["vecchio"]
+def test_uno_stato_ignoto_NON_si_comporta_piu_come_un_fatto_pulito():
+    """La forma positiva del reperto: prima della cura i due erano identici
+    (`['vecchio'] == ['vecchio']`), ora no. Se un domani tornassero uguali,
+    questo test lo dice."""
+    assert _chiama("model_claim") == ["vecchio"]
+    assert _chiama(STATO_IGNOTO) != _chiama("model_claim")
+
+
+def test_una_scrittura_SENZA_stato_resta_un_model_claim():
+    """L'altro caso che il vecchio `.get(x, 2)` teneva insieme al primo, e che
+    la cura deve conservare: chi scrive senza dichiarare uno stato è
+    `model_claim`, e ritira un `model_claim` più vecchio come prima."""
+    assert _chiama("model_claim", status_nuovo=None) == ["vecchio"]
+
+
+def test_una_scrittura_con_stato_IGNOTO_non_ritira_nessuno():
+    """Il lato speculare, che nessuno aveva guardato: se è la scrittura NUOVA a
+    portare uno stato che la tabella non conosce, il confronto non si può fare
+    e non si ritira niente."""
+    assert _chiama("model_claim", status_nuovo=STATO_IGNOTO) == []
