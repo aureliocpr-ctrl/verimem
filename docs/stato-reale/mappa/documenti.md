@@ -76,6 +76,7 @@ ordina la coda.
 | `docs/stato-reale/75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md` | **VIVO** — ed è il modello del ritiro | 02/09 01:51. Il titolo porta il ritiro per intero: *«…e **leggendo l'altra popolazione ho ritirato la mia stessa lettura**»*. La regola che questa mappa ha imparato sette volte stasera, qui era già applicata |
 | `docs/stato-reale/22-un-quarto-dei-trattenuti-recenti-e-approvato-dal-giudice.md` | **VIVO** | ws6, 30/08 15:50, corpus **15.755** fatti, `mode=ro`, sole SELECT. È **T25** un mese prima del ticket: `L4.1` ferma e il giudice promuove, sullo stesso fatto. E dichiara il limite — *«non ho letto i 70»* — che il documento 23 chiude il giorno dopo |
 | `docs/stato-reale/80-la-stessa-frase-con-otto-o-con-8-riceve-due-verdetti-opposti.md` | **VIVO** | 02/09 04:52, banco **nominato** (`banchi/ws6-la-cifra-e-la-parola.py`), store isolato. Cita *«una lezione di ws5 del 27/08»*: i documenti qui si citano fra loro **a settimane di distanza** |
+| `docs/stato-reale/72-il-numero-perde-le-sue-condizioni-fra-il-changelog-e-la-vetrina.md` | **VIVO — ed è il precedente di tutta questa mappa** | 02/09 00:26. Titolo per intero: *«un numero perde le sue tre condizioni fra il CHANGELOG e la vetrina, **e i due criteri che ho scritto per misurarlo erano tutti e due sbagliati**»*. Intestazione: *«(**letta, non stimata**)… audit su un numero pubblico **non mio**, scelto perché è **l'unico della lista che nessun documento di `stato-reale` citava**»* |
 | `docs/stato-reale/85-il-disegno-esploso-dello-store-le-giunture-e-chi-le-presidia.md` | **VIVO** | livello 3 del disegno esploso, 05/09, e dichiara il metodo: *«ogni riga porta **o la misura che presidia la giuntura, o la parola scoperta**»* — nessuna cella inventata |
 | `docs/stato-reale/LA-FRASE-DELLA-0.7.7.md` | **VIVO** | ws7, 06/09, *«scritta alle 08:20 e **RIMISURATA alle 08:45**, base `v0.7.6..origin/main` = `460f230e` (alle 08:20 era `13fa323f`: **main si è mosso sotto la** …)»*. Dichiara che il bersaglio si è spostato **mentre scriveva**, e rimisura |
 
@@ -399,6 +400,30 @@ curare — **una riga nel README**.
 🔑 E vale per il rilascio: il contratto chiede i limiti dichiarati per nome col numero.
 **Quel documento esiste ed è fatto bene. Nessuno lo trova.**
 
+
+## 🚨 Il documento 72 è il precedente di questa intera mappa, e l'ho trovato per ultimo
+
+Il titolo di `72`, per intero:
+> *«Un numero perde le sue tre condizioni fra il CHANGELOG e la vetrina, **e i due criteri
+> che ho scritto per misurarlo erano tutti e due sbagliati**»*
+
+Tre cose, in un documento del **2 settembre**:
+1. **Dichiara nel titolo che i propri criteri erano sbagliati** — è la mia stessa serata
+   (sette righelli caduti), scritta cinque giorni prima da un altro.
+2. *«(letta, non stimata)»* — **l'ora è letta**, non ricostruita.
+3. Ha scelto quel numero **perché nessun documento lo citava**: ha cercato **la zona cieca**,
+   che è esattamente il metodo che questa mappa ha adottato stasera come scoperta propria.
+
+E il tema — *un numero che perde le sue condizioni passando dal CHANGELOG alla vetrina* — è
+**la decima forma**, un mese prima che io la chiamassi così.
+
+🔄 **È la seconda volta stasera che trovo il mio metodo già scritto qui dentro** (la prima
+è l'indice del corpus, `stato-reale/README.md`). O1 dice di cercare in casa **prima**: non
+l'ho fatto, e ho ricostruito da zero — comprese le trappole — quello che c'era.
+🔑 Per chi continua: **le lezioni di questa mappa non sono nuove. Sono ritrovate.** Il
+valore non è averle scoperte, è **averle messe in un posto solo** — che è precisamente il
+difetto che il documento 72 descrive per i numeri.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -414,7 +439,7 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 66 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 67 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
