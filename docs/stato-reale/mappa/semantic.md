@@ -22,17 +22,45 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 | 1 | `store` (semantic.py:2843) | «Insert or replace a fact. Backwards-compatible default returns None.» | `client.py:873` — `self.semantic.store(fact, embed="sync", purpose=purpose, …)`, unica via di scrittura dell'SDK | `tests/test_client_sdk.py` | riga 179: «the old row stays for lineage» (parziale: qui solo l'inserimento) | **FUNZIONA COME PROMESSO** (limitato a: la scrittura entra e la ricevuta torna) | `pytest -q tests/test_client_sdk.py` → `23 passed, 23 warnings in 94.91s` EXIT=0 (20:17, base 7b9e8ca1) |
 | 2 | `recall` (semantic.py:4008) | «Semantic recall over facts (cosine on embeddings).» | `client.py:1343` — `hits = self.semantic.recall(query, k=k, deep=deep, …)`; `client.py:2891-2892` per il confronto normali/profondi | `tests/test_i_due_rami_di_search_portano_le_stesse_cose.py` | riga 466: «Search — optionally with history context or as of a past moment» | **FUNZIONA COME PROMESSO** (limitato a: i due rami tornano le stesse cose) | `pytest -q tests/…due_rami…py` → `4 passed, 1 warning in 12.38s` EXIT=0 (20:20, base 7b9e8ca1) |
 | 3 | `supersede` (semantic.py:5806) | «Cycle #78 — declare `old_id` superseded by `new_id`.» | `client.py:979` — `_sup_res = self.semantic.supersede(…)` nel ramo same-source evolution; `client.py:3976` nella riconciliazione | `tests/test_entity_supersede_leak.py::test_get_live_only_excludes_superseded` · `tests/test_deep_recall_asof.py` · `tests/test_audit_mutations.py` | riga 179: «`superseded_by` the new (never a silent overwrite — the old row stays for lineage)» · riga 521: «A fact disappears in TWO ways — retired (superseded) or quarantined» | **FUNZIONA COME PROMESSO** sul claim «the old row stays» — ⚠️ ma il presidio più diretto NON passa dalla funzione: vedi la nota sotto la tabella | `pytest -q tests/test_entity_supersede_leak.py` → `4 passed in 7.40s` EXIT=0 · `tests/test_deep_recall_asof.py` → `6 passed in 10.65s` EXIT=0 · `tests/test_audit_mutations.py` → `27 passed in 15.15s` EXIT=0 (tutti 20:35, base 7b9e8ca1) |
-| 4 | `recall_hybrid` (semantic.py:5101) | «Hybrid recall: semantic cosine + keyword overlap re-rank.» | — da leggere | — | riga 466 (stessa del §2) | **NON MISURATO** | nessun comando ancora |
-| 5 | `supersede_chain` (semantic.py:6146) | «Cycle #81 — declare a multi-hop supersession» | — da leggere | — | riga 179 | **NON MISURATO** | nessun comando ancora |
-| 6 | `store_within_budget` (semantic.py:437) | «Persist `fact` via `memory.store` without letting the INTERACTIVE call …» | — da leggere | — | — | **NON MISURATO** | nessun comando ancora |
-| 7 | `audit_head_at` (semantic.py:6573) | «Stored head of the `count`-th chained mutation row (1-indexed), or …» | — da leggere | `tests/test_audit_mutations.py` (da confermare leggendo) | riga 179 (lineage) | **NON MISURATO** | nessun comando ancora |
+| 4 | `recall_hybrid` (semantic.py:5101) | «Hybrid recall: semantic cosine + keyword overlap re-rank.» | `proactive_step_injector.py:115` — `scored = semantic.recall_hybrid(…)`, **unico** chiamante in `verimem/` | `tests/test_recall_hybrid.py` | riga 466: «Search — optionally with history context or as of a past moment» | **FUNZIONA COME PROMESSO**, limitato a ciò che il test asserisce | `pytest -q tests/test_recall_hybrid.py` → `4 passed, 1 warning in 9.45s` EXIT=0 |
+| 5 | `supersede_chain` (semantic.py:6146) | «Cycle #81 — declare a multi-hop supersession» | `mcp_server.py:15086` — `result = a.semantic.supersede_chain(…)`, **unico** chiamante: è esposta solo dalla porta MCP | `tests/test_freshness_check.py` · `tests/test_audit_mutations.py` | riga 179 (lineage) | **FUNZIONA COME PROMESSO**, limitato a ciò che i test asseriscono | `pytest -q tests/test_freshness_check.py` → `10 passed, 1 warning in 13.58s` EXIT=0 · `test_audit_mutations.py` → `27 passed` EXIT=0 |
+| 6 | `store_within_budget` (semantic.py:437) | «Persist `fact` via `memory.store` without letting the INTERACTIVE call …» | `mcp_server.py:9402` (episodi), `:9551` (fatti), `:13624` — tre chiamate, tutte dalla porta MCP | `tests/test_deferred_write_durability.py` | nessun claim README diretto (è il budget di latenza, non una promessa di vetrina) | **FUNZIONA COME PROMESSO**, limitato a: la scrittura differita è durevole | `pytest -q tests/test_deferred_write_durability.py` → `3 passed in 9.32s` EXIT=0 |
+| 7 | `audit_head_at` (semantic.py:6573) | «Stored head of the `count`-th chained mutation row (1-indexed), or …» | `cli.py:5778`, `cli.py:5907`, `client.py:2731` — ⚠️ passata come **CALLBACK** (`head_at=sm.audit_head_at`), mai chiamata con le parentesi | `tests/test_tamper_anchor_receipt.py` | riga 244: «audit every revision» | **FUNZIONA COME PROMESSO**, limitato a ciò che il test asserisce | `pytest -q tests/test_tamper_anchor_receipt.py` → `23 passed, 1 warning in 15.39s` EXIT=0 |
 
 ## Contatore
 
-**7 / 155 funzioni aperte · 3 con verdetto sostenuto da un comando eseguito ·
-4 dichiarate NON MISURATO.** Le altre 148 sono nell'inventario e non sono
-ancora state toccate: non hanno una riga qui perché una riga vuota si legge come
-lavoro fatto.
+**7 / 155 funzioni mappate, tutte e 7 con un comando eseguito nella casella
+prova.** Le altre 148 sono nell'inventario e non sono ancora state toccate: non
+hanno una riga qui perché una riga vuota si legge come lavoro fatto.
+
+## ⚠️ «MAI CHIAMATA» — la trappola che ho quasi calpestato alla riga 7
+
+Il mandato dice che il verdetto MAI CHIAMATA porta a **proporre la rimozione**.
+Alla riga 7 ci sono arrivato vicino: `grep -rn "audit_head_at(" verimem/` non
+dà **nessun** chiamante, e la conclusione ovvia sarebbe «codice morto».
+
+È falsa. La funzione è viva e usata in tre punti, ma passata come **callback**:
+
+```python
+# cli.py:5778 · cli.py:5907 · client.py:2731
+head_at=sm.audit_head_at        # il riferimento, senza le parentesi
+```
+
+Il grep con la parentesi cerca la CHIAMATA; un riferimento passato a una
+funzione non ha parentesi e non compare. **Chi mappa cercando `nome(`
+proporrà di rimuovere codice vivo**, e su 2.973 funzioni succederà più di una
+volta.
+
+⇒ Regola per tutte le righe di questa mappa: prima di scrivere MAI CHIAMATA si
+cerca il **nome nudo** in tutto il repo, non `nome(`, e si guarda anche
+`getattr`, i dizionari di dispatch e le stringhe. Se dopo questo non c'è nulla,
+allora è un candidato — e resta comunque da eseguire qualcosa che lo dimostri.
+
+📌 E una cosa che il grep nudo ha mostrato e la parentesi avrebbe nascosto:
+`audit_head_at` esiste **due volte**, in `semantic.py:6573` (catena dei fatti) e
+in `memory.py:2645` (catena degli episodi, «the episodic chain head»). Non è un
+duplicato: sono due catene diverse con lo stesso nome. `memory.py` è nella mia
+lista e la riga andrà lì, non qui.
 
 ## Il reperto della riga 3, e la sua correzione
 
