@@ -11,11 +11,12 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 18 righe misurate su 80 · 8 claim del README collegati · i
-chiamanti delle tre porte per `add` e `search` **letti con la riga** (20:59) ·
-3 ticket aperti (T-MAP-1, T-MAP-2, T-MAP-3) · 3 righe dove **ho sbagliato io la
-chiamata o l'ipotesi** e l'ho scritto (11, 12, 18). Prove eseguite sul tip
-`20257636`.
+**Contatore**: 28 righe misurate su 80 (14 funzioni + 10 rami di `add`) ·
+11 claim collegati (README e istruzioni del server) · i chiamanti delle tre
+porte per `add` e `search` **letti con la riga** (20:59) · 4 ticket aperti
+(T-MAP-1, T-MAP-2, T-MAP-3, **T-MAP-4: un claim del README falso a metà**) ·
+3 righe dove **ho sbagliato io la chiamata o l'ipotesi** e l'ho scritto
+(11, 12, 18). Prove eseguite sul tip `20257636`.
 
 | # | funzione (file:riga) | cosa promette | chiamata da (letto) | test che la esercita | claim README (riga) | verdetto | prova (comando e esito) |
 |---|---|---|---|---|---|---|---|
@@ -41,7 +42,26 @@ chiamata o l'ipotesi** e l'ho scritto (11, 12, 18). Prove eseguite sul tip
 | 17 | `open_memory` (client.py:285) | apre lo store condiviso da CLI, MCP e SDK | (da leggere) | (da leggere) | README:428 («all three surfaces open the SAME store») | **FUNZIONA COME PROMESSO** | stessa esecuzione: `open_memory()` → un `Memory`, `isinstance(m2, Memory)` → True |
 | 18 | `Memory.topics` / `recent` / `stats` / `health` | — | — | — | — | **NON ESISTONO su `Memory`** (e non è un difetto: nessun documento li promette) | stessa esecuzione: `topics()` → `AttributeError: 'Memory' object has no attribute 'topics'`; `recent`, `stats`, `health` → `hasattr` False. ⚠️ **Li ho chiamati per ipotesi mia**, non perché un claim li nominasse: la riga resta per dire che l'SDK **non** ha un'introspezione dello store (la CLI ha `doctor`, l'SDK no), e perché un lettore della mappa non li cerchi |
 
-## Le altre 62 voci — `NON MISURATO`, elencate per non perderle
+## I RAMI di `Memory.add` — dove il prodotto decide cosa entra
+
+*Stessa coppia in ogni riga (claim falso «7300 euro» + fonte che dice «5900
+euro»), così l'unica variabile è il ramo. `prova_rami_add.py`, 08/09 21:50,
+tip 20257636.*
+
+| # | ramo | esito misurato | claim | verdetto |
+|---|---|---|---|---|
+| 19 | default | `quarantined`, g=1.04, `['L4.1','L4-grounding']`, stored | README:172 («the write-gate checks *source ⊢ fact*») | **FUNZIONA COME PROMESSO** |
+| 20 | `gate_mode="reject"` | `rejected`, g=1.04, **stored=False** | — | **FUNZIONA COME PROMESSO**: è l'unico ramo che NON scrive su disco |
+| 21 | `validate="fast"` | `quarantined`, g=1.04, `['L4.1','L4-grounding']` — **il moat ha girato** | README:194 («`Memory(preset="permissive")` / `validate="fast"` **skip the moat entirely**») | 🔴 **NON COME PROMESSO** → ticket **T-MAP-4** |
+| 22 | `Memory(preset="permissive")` | `model_claim`, g=None, `[]` — il moat non gira | README:194 | **FUNZIONA COME PROMESSO** (l'altra metà dello stesso claim) |
+| 23 | `ground=False` | `model_claim`, g=None, `[]` | — | **FUNZIONA COME PROMESSO** |
+| 24 | senza `source` | `model_claim`, g=None, `[]` | le istruzioni del server: «without a source … stored as an unverified `model_claim`» | **FUNZIONA COME PROMESSO** |
+| 25 | self-claim senza source («La funzionalità è stata implementata e verificata») | `quarantined`, `['L1.15','L1.20']` | le istruzioni: «ON EVERY WRITE … a lexical screen. Unsupported self-claims are quarantined» | **FUNZIONA COME PROMESSO** |
+| 26 | la stessa self-claim con `meta_narrative=True` | `model_claim`, `[]` — lo screen **non** scatta | le istruzioni: «ONE EXCEPTION … `meta_narrative=True` … skips that screen» | **FUNZIONA COME DICHIARATO** (l'eccezione è scritta, e qui è confermata) |
+| 27 | la stessa self-claim con `verified_by=["pytest: 8 passed"]` | `model_claim`, `[]` | README (la prova toglie la quarantena) | **FUNZIONA COME PROMESSO** |
+| 28 | `asserted_at=…` | scritto e **riletto**: `get()` → `asserted_at=1780000001.0` | il commento in `client.py:616-628` («valorizzato su 0 fatti su 15.978») | **FUNZIONA**: il campo non è rotto, è **inutilizzato** — la conseguenza descritta nel commento (una correzione supersede in silenzio invece di andare al giudice) dipende da chi scrive, non dal codice |
+
+## Le altre 52 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi
@@ -72,6 +92,17 @@ decrescenti.
   termini («elenca tutto sul capannone» → termini `tutto sul capannone` → 0).
   Confinato al router di intento (`query_intent.content_terms`); `FIND` e
   `COUNT` sulla stessa domanda funzionano. **Non curato**: mappa, non cure.
+- 🔴 **T-MAP-4** (owner Galileo, da girare a @ws7 Iris che tiene il README,
+  08/09 21:50) — **README:194 è vero a metà**. Dice: «`Memory(preset="permissive")`
+  / `validate="fast"` skip the moat entirely». Misurato con la stessa coppia
+  (falso + fonte che lo smentisce), una variabile per volta:
+  `preset="permissive"` → `model_claim`, g=None, nessun layer: **il moat non
+  gira, come promesso**; `validate="fast"` → `quarantined`, g=1.04,
+  `['L4.1','L4-grounding']`: **il moat gira eccome**. Un utente che legge quella
+  riga e usa `validate="fast"` per saltare il gate si ritrova i fatti
+  quarantinati e non capisce perché. Due cure possibili e non è una decisione
+  mia: o `validate="fast"` salta il moat davvero, o la riga del README perde
+  quella metà.
 - **T-MAP-3** (owner Galileo, 08/09 21:44) — `Memory.forget` opera sul db
   giusto ma **logga un altro store**: `flow.forget … store=67712a7ceb5e`
   mentre `add`, sullo stesso oggetto `Memory` costruito con un path esplicito,

@@ -1,0 +1,19 @@
+=== A) il falso, con la fonte che lo smentisce, ramo per ramo
+  default                            -> status=quarantined  g=1.03955  stored=True layers=['L4.1', 'L4-grounding']
+  gate_mode='reject'                 -> status=rejected     g=1.03955  stored=False layers=['L4.1', 'L4-grounding']
+  validate='fast'  [README:194]      -> status=quarantined  g=1.03955  stored=True layers=['L4.1', 'L4-grounding']
+  ground=False                       -> status=model_claim  g=None     stored=True layers=[]
+  SENZA source                       -> status=model_claim  g=None     stored=True layers=[]
+  il VERO (controllo)                -> status=model_claim  g=99.6733  stored=True layers=[]
+
+=== B) preset permissive [README:194: «skip the moat entirely»]
+  preset=permissive, falso           -> status=model_claim  g=None     stored=True layers=[]
+
+=== C) lo screen lessicale sulla self-claim, e l'eccezione dichiarata
+  self-claim SENZA source            -> status=quarantined  g=None     stored=True layers=['L1.15', 'L1.20']
+  self-claim + meta_narrative=True   -> status=model_claim  g=None     stored=True layers=[]
+  self-claim + verified_by           -> status=model_claim  g=None     stored=True layers=[]
+
+=== D) asserted_at, il campo che il commento dice mai valorizzato
+  con asserted_at                    -> status=model_claim  g=99.6733  stored=True layers=[]
+  rilettura: asserted_at = 1780000001.0
