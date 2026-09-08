@@ -26,6 +26,13 @@ metodi generici pesca ogni dizionario.
 | 9 | `decay_pruning_candidates` (memory.py:1292) | «Episodes whose Ebbinghaus retention falls below the threshold.» | il ciclo di sonno, con `decay_prune` | `tests/test_episode_decay.py` | riga 708 | **FUNZIONA COME PROMESSO**, limitato | `10 passed` EXIT=0 |
 | 10 | `add_causal_edge` · `causal_graph` (1530, 1539) | il grafo causale fra episodi | — da leggere | `tests/test_memory.py` · `e2e_cycle51_54_chain.py` | — | **FUNZIONA COME PROMESSO**, limitato | `5 passed` EXIT=0 |
 | 11 | `delete` · `delete_by_task_text` · `count` · `all` · `get` | la famiglia di lettura/cancellazione degli episodi | 4 file di test le coprono insieme | `tests/test_memory_delete.py` · `tests/test_audit_mutations_episodic.py` | riga 289 («True forget») | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_memory_delete.py` → `6 passed, 1 warning in 10.x` EXIT=0 |
+| 12 | `is_pinned` (memory.py:1336) | «check whether an episode is currently pinned» | 🔴 nessun chiamante di prodotto: `mcp_server.py` **0** occorrenze | `tests/test_memory_pin.py` | — | **FUNZIONA COME PROMESSO** — ma senza porta, vedi sotto | `pytest -q tests/test_memory_pin.py` → `4 passed, 1 warning in 7.7s` EXIT=0 |
+| 13 | `pinned_episodes` (memory.py:1345) | «list every pinned episode, newest-first» | `briefing.py:150` — uso **interno**; `mcp_server.py` **0**, `cli.py` **0** | `tests/test_briefing.py` | — | **FUNZIONA COME PROMESSO** — ma senza porta | `pytest -q tests/test_briefing.py` → `8 passed in 7.60s` EXIT=0 |
+| 14 | `salience_of` (memory.py:1258) | «Read the cached salience score for an episode.» | nessun chiamante di prodotto: solo `tests/test_salience_recall.py` | `tests/test_salience_recall.py` | — | **FUNZIONA COME PROMESSO**, limitato | `8 passed, 1 warning in 9.3s` EXIT=0 |
+| 15 | `compute_salience` (memory.py:1080) | «Prediction-error surprise of `episode` vs the centroid…» | nessun chiamante di prodotto; citata in `docs/archive/2026-05-13_FORGIA.md:616` | `tests/test_episode_save_encode_circuit_breaker.py` | — | **NON MISURATO** (test non ancora eseguito) | — |
+| 16 | `backfill_pending_embeddings` (memory.py:755) | «Embed episodes persisted with the DEFER sentinel» | `cli.py:4755` — esposta dalla CLI | `tests/test_backfill_heals_model_mismatch.py` | — | **NON MISURATO** (test non ancora eseguito) | — |
+| 17 | `recall_explain` (memory.py) | il perché di un richiamo | `mcp_server.py:9178` — esposta da MCP | `tests/test_mcp_lineage_explain_top.py` | — | **NON MISURATO** | — |
+| 18 | `cluster_similar` (memory.py) | raggruppa episodi simili | `dream.py:293` — il consolidamento | `benchmark/bench.py` | — | **NON MISURATO** | — |
 
 ## 🔴 Il reperto: si pota da soli, si ripristina solo scrivendo codice
 
@@ -85,3 +92,37 @@ parte di un'API pubblica documentata altrove che non ho cercato (l'ho cercata in
 smentiti. Qui il metodo corretto dà **1 su 88 funzioni pubbliche fra i due file**
 (41 in `semantic.py`, 47 in `memory.py`, contate con `ast`). Un tasso del genere è la ragione per cui il verdetto MAI CHIAMATA va
 speso solo dopo tutti e cinque i controlli della tabella qui sopra.
+
+
+## 🔴 Il filo che lega i tre reperti: `memory.py` espone le AZIONI, non le LETTURE
+
+Tre righe diverse, tre volte la stessa forma. Non l'avevo cercata: è emersa
+mappando.
+
+```
+① restore_decayed   si POTA da soli (sleep.py:1104) · si RIPRISTINA solo da Python
+② is_pinned         si PINNA da MCP (4 occorrenze) · non si CHIEDE (0 · 0)
+   pinned_episodes  usata da briefing.py:150 · non si ELENCA (mcp 0, cli 0)
+③ salience_of       calcolata e messa in cache · nessuna porta la legge
+```
+
+Misurato, un comando per riga:
+
+| domanda | comando | esito |
+|---|---|---|
+| si può pinnare da MCP? | `grep -c "episode_pin\|episode_unpin" verimem/mcp_server.py` | **4** |
+| si può chiedere se è pinnato? | `grep -c is_pinned verimem/mcp_server.py` | **0** |
+| si può elencare i pinnati? | `grep -c pinned_episodes verimem/mcp_server.py` · `cli.py` | **0** · **0** |
+| si può annullare una potatura? | `grep -c restore_decayed` su cli/mcp/gateway/client | **0** ovunque |
+
+⇒ Un agente che usa la porta MCP **può cambiare lo stato di un episodio e non
+può interrogarlo**. Vede l'effetto — gli episodi pinnati compaiono nel briefing,
+perché `briefing.py:150` chiama `pinned_episodes` internamente — ma non può
+chiedere *quali* siano, né verificare che il proprio `pin` abbia avuto effetto.
+
+**Nessuna delle funzioni è rotta**: tutte hanno il verdetto FUNZIONA COME
+PROMESSO con la loro prova. Il reperto è **dove finiscono**: la scrittura arriva
+alla porta, la lettura dello stato che quella scrittura ha cambiato no.
+
+📌 Non apro ticket e non curo. Lo consegno come **tesi della mappa su questo
+file**, perché una singola riga non l'avrebbe mostrata: serviva vederne tre.
