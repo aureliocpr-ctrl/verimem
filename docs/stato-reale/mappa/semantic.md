@@ -48,7 +48,7 @@ definizioni, `grep "def "` conterebbe anche le stringhe e i commenti.
 
 ## Contatore
 
-**49 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
+**54 / 155 funzioni mappate, tutte con un comando eseguito nella casella prova
 tranne la riga 8, che è NON MISURATO per assenza di test — e lo dice.**
 Le caselle «chiamata da» delle righe 10-15 sono state lette col nome
 QUALIFICATO (`.nome(`): il nome nudo, giusto per i callback, su nomi come
@@ -278,3 +278,67 @@ mappa, non su di me: in questo file **la copertura è migliore di quanto sembri
 da un grep**, e il metodo che la fa sembrare peggiore è sempre lo stesso — il
 nome cercato con la parentesi, o cercato dove la funzione non è registrata ma
 passata.
+
+
+## 🔴 `_rango_di_fiducia` (599) — due politiche opposte per lo stato ignoto
+
+La funzione che Galileo deve guardare prima di dare un rango a `review`. Non è
+codice morto e non è senza chiamanti: è usata a `semantic.py:6064` e `:6080`, ed
+è **importata da un altro modulo** (`contradiction.py:536`,
+`from .semantic import _rango_di_fiducia`) — una privata che attraversa il
+confine del file.
+
+**Il suo docstring porta già i numeri, misurati sullo store vero il 2026-08-07:**
+
+> la tabella conosce **7** stati, nello store ce ne sono **12**, e i fatti vivi
+> con uno stato che la tabella non conosce sono **2540 su 6982** — il 36%, di
+> cui `user_manual` da solo 2493. […] Contato sulle coppie non risolte con
+> entrambi i fatti vivi: **257** in cui il perdente sarebbe il lato a stato
+> ignoto (227 battuti da `model_claim`, 30 da `provisional`).
+> 🔑 «`.get(..., 0)` traduce "non lo so" in "vale poco". Sono cose diverse, e
+> solo la seconda autorizza un ritiro.»
+
+Per questo torna `None` e non `0`, e chi la chiama **salta la decisione**:
+
+```python
+# semantic.py:6061-6067
+# RANGO IGNOTO = NON DECIDO (vedi `_rango_di_fiducia`). Se non conosco
+# il rango di CHI VINCE non so nemmeno che sia piu' forte …
+new_rank = _rango_di_fiducia(new_fact.status)
+if new_rank is None:
+    result["skipped"] = [oid for oid in contradicting_ids if oid]
+    return result
+```
+
+### Ma l'altra superficie decide lo stesso
+
+```
+semantic.py          _rango_di_fiducia(...)         →  None = NON DECIDO
+anti_confab_gate.py  _STATUS_RANK.get(..., 2)  ×4   →  ignoto = model_claim
+                     (righe 746, 791, 2257, 2406)
+anti_confab_gate.py  usa _rango_di_fiducia:  0 volte
+```
+
+⇒ **La stessa domanda — «quanto vale uno stato che non conosco?» — ha due
+risposte opposte in due file.** Dove la cura è stata fatta, «non lo so» sospende
+il ritiro; dove non è stata fatta, «non lo so» vale `model_claim`, cioè un fatto
+pulito, e la supersessione procede.
+
+Non apro un ticket e non curo: **è la mappa che lo dice, ed è il suo mestiere.**
+Il verdetto della riga è **FUNZIONA COME PROMESSO** per `_rango_di_fiducia` —
+fa esattamente ciò che il docstring dichiara — e il reperto sta nel fatto che la
+sua lezione non ha attraversato il confine del file.
+
+📌 **Per il design del terzo stato**: aggiungere `review` senza toccare quei
+quattro `.get(..., 2)` significa che, in quei punti, uno stato che la tabella non
+conoscesse varrebbe `model_claim`. È la stessa cosa che avevo scritto nella
+risposta di dati del par. 5, ma ora ha dietro i 2540 fatti del docstring, che
+allora non avevo.
+
+| # | funzione | chiamata da | test | verdetto | prova |
+|---|---|---|---|---|---|
+| 50 | `_rango_di_fiducia` (599) | `semantic.py:6064` e `:6080`; **importata** da `contradiction.py:536` | nessuno la nomina; la esercita `tests/test_auto_supersede_on_contradiction_scan68.py` per via del chiamante | **FUNZIONA COME PROMESSO** — vedi il reperto sopra | `pytest -q tests/test_auto_supersede_on_contradiction_scan68.py` → `3 passed, 1 warning in 9.0s` EXIT=0 |
+| 51 | `_validate_min_status` (630) | `semantic.py:4069` (recall) e `:5254` (recall_hybrid) — **due** vie di lettura | via i chiamanti | **NON MISURATO** direttamente | — |
+| 52 | `_row_passes_status_filter` (639) | `semantic.py:4492`, dentro il filtro di riga | via i chiamanti | **NON MISURATO** direttamente | — |
+| 53 | `_fact_from_dict` (257) | `semantic.py:402`, nel replay del journal | `tests/test_crash_injection_g3.py` (per via del replay) | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
+| 54 | `_journal_append` (238) | `semantic.py:472` e `:515` — la scrittura differita | `tests/test_crash_injection_g3.py` · `tests/test_deferred_write_journal.py` | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
