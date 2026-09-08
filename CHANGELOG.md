@@ -170,6 +170,11 @@ tracked in `docs/stato-reale/GRAVITA-DIFETTI.md`.
   instead of leaving it to be read off `layers`. Measured by the author of the fix,
   with the daemon deliberately stopped and both legs checked before every run:
   **3 runs out of 3 judged, `moat_judge_failed` 0**.
+  **When it used to bite**: in the ordinary setup the server restarts the encode
+  daemon by itself, and that takes about **25 seconds**. In those 25 seconds — and
+  whenever the daemon is dead, or `ENGRAM_ENCODE_SERVICE=0` keeps it from coming
+  back — a sourced write used to be stored **unjudged and in silence**. That window
+  is the whole defect, and it is the window this fix closes.
   ⚠️ **Two things this does NOT fix**, and both have their own entry: the
   in-process judge needs memory nobody checks for (**T39**), and in delegate-only
   mode the first scored call still pays for the tokenizer on the request thread
