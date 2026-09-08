@@ -1,0 +1,11 @@
+# Mappa di `verimem/sla.py` — 3 righe, 61 righe di codice (lead, 09/09 01:35)
+
+Letto per intero. Prova: pytest del lotto B sul tip `20257636` (`84 passed, 1 xfailed in 37.23s`, EXIT=0, con `tests/test_sla.py`). Chiamanti: `should_answer` ← `verimem/selective_metrics.py:47`, e `selective_metrics` è importato **solo da `benchmark/selective_deployment.py:36`** (`git grep` su `verimem/ scripts/ benchmark/`): **il pomello `ENGRAM_ERROR_COST` non è letto da nessun percorso vivo del prodotto**. Il docstring lo dichiara: «mapping a raw relevance score to a calibrated P(correct) so the LIVE read-path can apply `should_answer` … is a separate, validated wiring step — NOT asserted here». Claim README: nessuna riga nomina `ENGRAM_ERROR_COST`, λ o l'astensione a costo (grep → nessuna): promessa non fatta, quindi non tradita; ma un pomello documentato nel modulo e ignorato dal prodotto è la classe «capacità pronta e mai esercitata».
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/sla.py:35` `error_cost` | λ da `ENGRAM_ERROR_COST`, default 1,0; non positivo o illeggibile → 1,0 (mai una soglia zero che risponde a tutto) | `answer_threshold` (51) | `tests/test_sla.py` | - | MAI CHIAMATA dal prodotto (pura e provata; solo il banco `benchmark/selective_deployment.py` la raggiunge) | pytest 84 passed |
+| 2 | `verimem/sla.py:47` `answer_threshold` | `λ/(1+λ)`: l'ottimo decisionale e il pareggio di NET(λ) di VeriBench (λ=1 → 0,5; 5 → 0,833; 10 → 0,909) | `should_answer` (61) | `tests/test_sla.py` | - | MAI CHIAMATA dal prodotto (pura e provata) | pytest 84 passed |
+| 3 | `verimem/sla.py:57` `should_answer` | risponde se P(corretto) supera STRETTAMENTE la soglia (sul pareggio si astiene) | `verimem/selective_metrics.py:47` ← `benchmark/selective_deployment.py:36` | `tests/test_sla.py` | - | MAI CHIAMATA dal prodotto (banco) | pytest 84 passed |
+
+Reperti: (a) «one number, the same meaning end to end» vale fra banco e banco: il read-path vivo non ha una P(corretto) calibrata su cui applicarlo (il modulo lo dice), quindi λ non arriva all'utente; (b) è la metà dichiarata di un contratto: la calibrazione (`trust_calibration_eval`) e la regola di decisione (`sla`) esistono entrambe, e nessuna delle due è cablata nel recall. Nessun P0.
