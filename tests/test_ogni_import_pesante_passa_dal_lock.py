@@ -99,8 +99,18 @@ def _scoperti(sorgente: str) -> set[int]:
 
 
 def _file_del_pacchetto() -> list[Path]:
+    """Tutti i .py del pacchetto, SOTTOCARTELLE COMPRESE.
+
+    ⚠️ Prima era ``glob("*.py")`` — solo il primo livello — e sarebbe stato un
+    perimetro che sembra completo e non lo e': un import pesante messo domani
+    in ``verimem/swarm/`` o ``verimem/dashboard_routes/`` non avrebbe acceso
+    niente, e questo file avrebbe continuato a dire verde. Verificato l'08/09
+    che oggi nelle 31 sottocartelle non ce n'e' nessuno — cioe' la cecita' non
+    stava nascondendo nulla, ma sarebbe rimasta li' ad aspettare.
+    """
     radice = Path(verimem.__file__).parent
-    return [p for p in sorted(radice.glob("*.py")) if p.name not in _ESENTI]
+    return [p for p in sorted(radice.rglob("*.py"))
+            if p.name not in _ESENTI and "__pycache__" not in p.parts]
 
 
 def test_il_banco_riconosce_davvero_un_import_protetto():
