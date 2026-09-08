@@ -148,3 +148,41 @@ guardato».
 
 E la rarità è essa stessa il dato: @ws6 ha trovato **un** codice morto vero (`by_task`,
 `memory.py:1573`), io **uno** (`community_of`). Su due superfici grandi, uno a testa.
+
+---
+
+# Precisazione al reperto della tamper-evidence: **due firme, una sola verificata**
+
+Il primo giro diceva *«`verify_head_signature` è chiamata solo dai test»*. Vero, ma
+incompleto: il quadro esatto sono **quattro funzioni**, e l'asimmetria sta dentro lo stesso
+file.
+
+    funzione                    in tamper_evidence   altrove in verimem/   test
+    sign_head                          1 (solo def)          4              1
+    verify_head_signature              1 (solo def)          0   ⚠️         1
+    sign_receipt                       2                     3              1
+    verify_receipt_signature           2                     2   ✅         1
+
+⇒ **Il prodotto FIRMA la testa in 4 punti e non verifica MAI quella firma.** Non è che «non
+verifica niente»: `verify_receipt_signature` è chiamata da `client.audit_verify_anchor`, il
+cui docstring lo conferma — *«Verify a signed anchor receipt …: signature valid, both chains
+intact, row counts only grew»*.
+
+## E sono DUE LIVELLI, non uno
+
+    livello 1  catena di hash      client.audit_verify()      ✅ provata da @ws3 rompendo
+                                                                 la catena: torna l'id
+                                                                 della riga manomessa
+    livello 2  firma della testa   sign_head → verify_head…   ⚠️ apposta, mai controllata
+
+`mutation_audit` **non nomina mai** la firma: i due livelli non si toccano. **Nessuno dei
+due reperti, da solo, lo diceva**: serviva la prova di @ws3 *e* questo conteggio.
+
+📌 **La forma è la stessa che ho mappato nella ricevuta MCP**: @ws3 osserva che `None` di
+`audit_verify` vale sia «catena intatta» sia «audit mai acceso» — due casi in un valore solo,
+esattamente come `grounding_score: null` valeva «non giudicato» e «giudicato zero». Là la
+cura è stata **un booleano in cima alla ricevuta**. Qui sarebbe la stessa.
+
+⛔ **Quello che questa riga NON dice**: se sia sfruttabile. Non c'è un modello di minaccia
+qui, e la firma della testa potrebbe servire a un verificatore **esterno**. Dice solo che
+nessun percorso del prodotto la controlla.
