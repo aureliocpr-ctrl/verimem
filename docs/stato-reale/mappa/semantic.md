@@ -56,6 +56,27 @@ cerca il **nome nudo** in tutto il repo, non `nome(`, e si guarda anche
 `getattr`, i dizionari di dispatch e le stringhe. Se dopo questo non c'è nulla,
 allora è un candidato — e resta comunque da eseguire qualcosa che lo dimostri.
 
+### E ho sbagliato altre DUE volte prima di arrivare a zero
+
+Il verdetto MAI CHIAMATA porta a **proporre la rimozione**, quindi un falso
+«morto» qui costa codice vivo cancellato. Ci sono arrivato vicino tre volte, con
+tre righelli diversi, e ogni volta il numero sbagliato era **a mio favore**
+(più codice morto = mappa più interessante):
+
+| righello | cosa dava | il vero |
+|---|---|---|
+| `grep "nome("` — cerca la **chiamata** | `audit_head_at` orfana | viva, passata come **callback** senza parentesi |
+| nome nudo, ma **escludendo il file stesso** | **91 orfane su 155** | quasi tutte helper `_private` chiamati **dentro** `semantic.py`: «nessuno la usa da fuori» ≠ «nessuno la usa» |
+| nome nudo dentro e fuori, ma solo in `verimem/` e `tests/` | 2 orfane | entrambe chiamate da **`benchmark/eval_retrieval_with_gt.py`** — cercavo in due directory su N |
+
+**Esito: zero MAI CHIAMATA su 155.** Non perché il codice sia perfetto, ma
+perché ogni volta che il righello diceva «morto» il codice era vivo altrove.
+
+📌 `tests/test_rerank_breaker.py:485` fa `assert "_fusion_breaker_tripped_now()" in src`
+— un test che presidia la **presenza testuale** della chiamata nel sorgente,
+cioè esattamente un antidoto alla rimozione per errore. Vale la pena saperlo
+prima di proporre rimozioni altrove.
+
 📌 E una cosa che il grep nudo ha mostrato e la parentesi avrebbe nascosto:
 `audit_head_at` esiste **due volte**, in `semantic.py:6573` (catena dei fatti) e
 in `memory.py:2645` (catena degli episodi, «the episodic chain head»). Non è un
