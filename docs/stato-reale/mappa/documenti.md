@@ -77,6 +77,7 @@ ordina la coda.
 | `docs/stato-reale/22-un-quarto-dei-trattenuti-recenti-e-approvato-dal-giudice.md` | **VIVO** | ws6, 30/08 15:50, corpus **15.755** fatti, `mode=ro`, sole SELECT. È **T25** un mese prima del ticket: `L4.1` ferma e il giudice promuove, sullo stesso fatto. E dichiara il limite — *«non ho letto i 70»* — che il documento 23 chiude il giorno dopo |
 | `docs/stato-reale/80-la-stessa-frase-con-otto-o-con-8-riceve-due-verdetti-opposti.md` | **VIVO** | 02/09 04:52, banco **nominato** (`banchi/ws6-la-cifra-e-la-parola.py`), store isolato. Cita *«una lezione di ws5 del 27/08»*: i documenti qui si citano fra loro **a settimane di distanza** |
 | `docs/stato-reale/72-il-numero-perde-le-sue-condizioni-fra-il-changelog-e-la-vetrina.md` | **VIVO — ed è il precedente di tutta questa mappa** | 02/09 00:26. Titolo per intero: *«un numero perde le sue tre condizioni fra il CHANGELOG e la vetrina, **e i due criteri che ho scritto per misurarlo erano tutti e due sbagliati**»*. Intestazione: *«(**letta, non stimata**)… audit su un numero pubblico **non mio**, scelto perché è **l'unico della lista che nessun documento di `stato-reale` citava**»* |
+| `docs/stato-reale/banchi/ws5-i-comandi-del-readme-pubblicato-funzionano.py` | **VIVO — ed è un presidio** | *«non “il README dice il vero”, ma **“se un utente fa quello che c'è scritto, succede quello che dice?”**»*. E la distinzione che conta: *«la vetrina che conta è quella **pubblicata**… i comandi li estraggo dal `METADATA` del wheel scaricato da PyPI, non dal repo»*. La classe «ricetta rotta» **è presidiata** |
 | `docs/stato-reale/85-il-disegno-esploso-dello-store-le-giunture-e-chi-le-presidia.md` | **VIVO** | livello 3 del disegno esploso, 05/09, e dichiara il metodo: *«ogni riga porta **o la misura che presidia la giuntura, o la parola scoperta**»* — nessuna cella inventata |
 | `docs/stato-reale/LA-FRASE-DELLA-0.7.7.md` | **VIVO** | ws7, 06/09, *«scritta alle 08:20 e **RIMISURATA alle 08:45**, base `v0.7.6..origin/main` = `460f230e` (alle 08:20 era `13fa323f`: **main si è mosso sotto la** …)»*. Dichiara che il bersaglio si è spostato **mentre scriveva**, e rimisura |
 
@@ -424,6 +425,25 @@ l'ho fatto, e ho ricostruito da zero — comprese le trappole — quello che c'e
 valore non è averle scoperte, è **averle messe in un posto solo** — che è precisamente il
 difetto che il documento 72 descrive per i numeri.
 
+
+## 🧪 574 banchi — e la mappa li aveva ignorati
+
+```
+  ls docs/stato-reale/banchi/*.py | wc -l   ->  574
+  nei loro nomi:  mcp 17 · cli 5 · sdk 2 · doctor 1 · warmup 1 · readme 3 · as_of 12
+```
+
+**Tutte e sei le superfici del contratto hanno banchi**, e l'`as_of` ne ha dodici.
+
+🔻 **Correzione a quello che avevo scritto stasera**: è vero che **lo smoke pre-tag** prova
+una superficie su sei (letto nel file, non dedotto). **Non è vero** che quelle prove non
+esistano: **ho guardato lo strumento del rilascio e ho concluso sul prodotto.**
+⇒ La prova da utente **non è da costruire, è da assemblare**.
+
+⚠️ **E non ripeto l'errore opposto**: 574 banchi col nome giusto **non sono 574 prove**. Un
+nome non dice che il banco gira, né che provi il criterio del contratto. **Il grep trova i
+candidati e non li conta** — è la lezione che questa mappa ha pagato sette volte.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -439,7 +459,7 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 67 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 68 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
