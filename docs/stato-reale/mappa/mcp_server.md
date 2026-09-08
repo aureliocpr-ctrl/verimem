@@ -1,6 +1,6 @@
 # Mappa di `verimem/mcp_server.py` — ws2 «Varco» (Giano)
 
-**67 righe su 67 elencate · 48 con una prova eseguita.**
+**67 righe su 67 elencate · 54 con una prova eseguita.**
 Il numero non lo scrivo io: e' l'output di `scripts/mappa_completa.py --owner ws2`,
 incollato nel contatore sul canale.
 
@@ -72,8 +72,8 @@ meglio della funzione privata.
 | 2 | `verimem/mcp_server.py:169` `_remote_cls` | funzione: (nessun docstring) | `verimem/client.py:305`; `verimem/mcp_server.py:190` | `tests/test_mcp_thin.py`; `tests/test_remote_memory.py` | - | NON MISURATO | - |
 | 3 | `verimem/mcp_server.py:174` `_reset_remote_cache` | funzione: (nessun docstring) | nessuno trovato | `tests/test_mcp_thin.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_mcp_thin.py` esito: 14 passed, EXIT=0 (2 chiamate esplicite) |
 | 4 | `verimem/mcp_server.py:181` `_remote` | funzione: (nessun docstring) | `verimem/mcp_server.py:7865`; `verimem/mcp_server.py:7912`; `verimem/mcp_server.py:7939` | `tests/test_mcp_thin.py`; `tests/test_remote_memory.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_mcp_thin.py` esito: 14 passed, EXIT=0 (il test la chiama 2 volte come `ms._remote(...)`) |
-| 5 | `verimem/mcp_server.py:207` `_auth_closed` | funzione: Fail-closed receipt when the configured server rejected our key. | `verimem/mcp_server.py:7867`; `verimem/mcp_server.py:7883`; `verimem/mcp_server.py:7914` (+1) | nessuno | - | NON MISURATO | - |
-| 6 | `verimem/mcp_server.py:216` `_remote_row` | funzione: Shape a shared-server search hit like a local recall/search item so a | `verimem/mcp_server.py:7929` | `tests/test_mcp_reads_expose_moat_verdict.py` | - | NON MISURATO | - |
+| 5 | `verimem/mcp_server.py:207` `_auth_closed` | funzione: Fail-closed receipt when the configured server rejected our key. | `verimem/mcp_server.py:7867`; `verimem/mcp_server.py:7883`; `verimem/mcp_server.py:7914` (+1) | nessuno | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 2 righe del corpo |
+| 6 | `verimem/mcp_server.py:216` `_remote_row` | funzione: Shape a shared-server search hit like a local recall/search item so a | `verimem/mcp_server.py:7929` | `tests/test_mcp_reads_expose_moat_verdict.py` | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 8 righe del corpo. ⚠️ e' una TRADUZIONE fra la forma del server condiviso e quella locale: il punto dove una porta puo' dire una cosa diversa dall'altra senza che nessuno lo veda |
 | 7 | `verimem/mcp_server.py:270` `_ok` | funzione: (nessun docstring) | `verimem/mcp_server.py:7881`; `verimem/mcp_server.py:7928`; `verimem/mcp_server.py:8023` (+294) | `tests/test_mcp_server_security.py` | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 1 riga del corpo (ne ha 2). Nessun test la nomina — 1.663 file esaminati con l'AST — ed e' esercitata da ogni chiamata riuscita: e' il caso che solo coverage vede (nota 14) |
 | 8 | `verimem/mcp_server.py:274` `_conta_sostituiti` | funzione: Quanti fatti sono stati RIMPIAZZATI da una scrittura successiva. | `verimem/mcp_server.py:8735`; `verimem/mcp_server.py:8943` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 4 righe del corpo. Nessun test la nomina |
 | 9 | `verimem/mcp_server.py:296` `_pavimento_di` | funzione: Il pavimento calibrato, da QUALUNQUE forma di oggetto la casa passi. | `verimem/mcp_server.py:416` | `tests/test_avviso_mcp_stessa_soglia_dell_sdk.py`; `tests/test_il_pavimento_si_trova_da_ogni_forma_di_agente.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_il_pavimento_si_trova_da_ogni_forma_di_agente.py` esito: 5 passed, EXIT=0 (58,31s). ⚠️ NON il file che la colonna «test» suggeriva per primo: in `test_avviso_mcp_stessa_soglia_dell_sdk.py` il nome compare UNA volta e dentro un docstring (nota 11) |
@@ -83,20 +83,20 @@ meglio della funzione privata.
 | 13 | `verimem/mcp_server.py:576` `_iso_day` | funzione: Epoch seconds -> 'YYYY-MM-DD' (UTC) for recall payloads. A readable date lets | `verimem/mcp_server.py:234`; `verimem/mcp_server.py:8270`; `verimem/mcp_server.py:8644` (+2) | `tests/test_mcp_recall_when_date.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_mcp_recall_when_date.py` esito: 4 passed |
 | 14 | `verimem/mcp_server.py:593` `_apply_live_filter` | funzione: Drop superseded/orphaned fact_ids from BOTH the legacy ``facts`` union | `verimem/mcp_server.py:13039` | `tests/test_ppr_ranked_live_filter.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_ppr_ranked_live_filter.py` esito: 4 passed |
 | 15 | `verimem/mcp_server.py:613` `_drop_none_args` | funzione: Drop keys whose value is ``None`` (audit#2 2026-06-08, A10). | `verimem/mcp_server.py:7841` | `tests/test_mcp_null_arg_coercion.py`; `tests/test_mcp_null_arg_e2e.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_mcp_null_arg_coercion.py` esito: 3 passed (il file la nomina 7 volte) |
-| 16 | `verimem/mcp_server.py:630` `_sandbox_replay_audit` | funzione: Task #48 — append one replayable JSONL record for a sandbox_exec | `verimem/mcp_server.py:8017`; `verimem/mcp_server.py:8060` | nessuno | - | NON MISURATO | - |
-| 17 | `verimem/mcp_server.py:678` `_skill_from_dict` | funzione: Reconstruct a Skill from a dict. Lazy import keeps the MCP module | `verimem/mcp_server.py:8989` | `tests/test_mcp_export_import_test_audit.py` | - | NON MISURATO | - |
-| 18 | `verimem/mcp_server.py:685` `_forget_cross_scope_denied` | funzione: Audit R3 #2 (multi-tenant security): if the caller supplies a scope | `verimem/mcp_server.py:14763`; `verimem/mcp_server.py:14799`; `verimem/mcp_server.py:14822` | nessuno | - | NON MISURATO | - |
-| 19 | `verimem/mcp_server.py:717` `_provider_is_configured` | funzione: Check whether an LLM provider has its credentials available. | `verimem/mcp_server.py:15344` | `tests/test_mcp_describe_provider_merge.py` | - | NON MISURATO | - |
+| 16 | `verimem/mcp_server.py:630` `_sandbox_replay_audit` | funzione: Task #48 — append one replayable JSONL record for a sandbox_exec | `verimem/mcp_server.py:8017`; `verimem/mcp_server.py:8060` | nessuno | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 11 righe del corpo |
+| 17 | `verimem/mcp_server.py:678` `_skill_from_dict` | funzione: Reconstruct a Skill from a dict. Lazy import keeps the MCP module | `verimem/mcp_server.py:8989` | `tests/test_mcp_export_import_test_audit.py` | - | NON MISURATO | ⚠️ `tests/test_mcp_export_import_test_audit.py` era nel run (13 passed) e 0 righe del corpo eseguite (nota 18) |
+| 18 | `verimem/mcp_server.py:685` `_forget_cross_scope_denied` | funzione: Audit R3 #2 (multi-tenant security): if the caller supplies a scope | `verimem/mcp_server.py:14763`; `verimem/mcp_server.py:14799`; `verimem/mcp_server.py:14822` | nessuno | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 11 righe del corpo (via `tests/test_fact_forget_scope_r3.py`, 4 passed) |
+| 19 | `verimem/mcp_server.py:717` `_provider_is_configured` | funzione: Check whether an LLM provider has its credentials available. | `verimem/mcp_server.py:15344` | `tests/test_mcp_describe_provider_merge.py` | - | NON MISURATO | ⚠️ `tests/test_mcp_describe_provider_merge.py` era nel run (8 passed) e 0 righe del corpo eseguite (nota 18) |
 | 20 | `verimem/mcp_server.py:730` `_content_hash_id` | funzione: Deterministic 12-char hex id derived from (proposition, topic). | `verimem/mcp_server.py:808`; `verimem/mcp_server.py:823`; `verimem/mcp_server.py:9415` (+1) | `tests/test_hippo_remember_idempotent.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_hippo_remember_idempotent.py` esito: 10 passed, EXIT=0 |
 | 21 | `verimem/mcp_server.py:779` `_build_fact` | funzione: Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109). | `verimem/mcp_server.py:9415`; `verimem/mcp_server.py:9522`; `verimem/mcp_server.py:13309` (+3) | `tests/perf/e2e_cycle51_54_chain.py`; `tests/test_hippo_remember_idempotent.py`; `tests/test_mcp_record_episode_with_facts.py` (+5) | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_hippo_remember_idempotent.py` esito: 10 passed, EXIT=0 |
-| 22 | `verimem/mcp_server.py:853` `_justified_contradicted_ids` | funzione: Seam for hippo_justified_audit's opt-in contradiction trigger (#4). Reuses the | `verimem/mcp_server.py:9767` | `tests/test_justified_audit_mcp.py` | - | NON MISURATO | - |
-| 23 | `verimem/mcp_server.py:868` `_build_episode` | funzione: Build an Episode object for hosted-mode record. Lazy import + | `verimem/mcp_server.py:9320`; `verimem/mcp_server.py:9386` | `tests/perf/e2e_cycle51_54_chain.py`; `tests/test_mcp_hosted_mode.py`; `tests/test_mcp_record_episode_with_facts.py` | - | NON MISURATO | - |
+| 22 | `verimem/mcp_server.py:853` `_justified_contradicted_ids` | funzione: Seam for hippo_justified_audit's opt-in contradiction trigger (#4). Reuses the | `verimem/mcp_server.py:9767` | `tests/test_justified_audit_mcp.py` | - | NON MISURATO | ⚠️ `tests/test_justified_audit_mcp.py` era nel run (6 passed) e 0 righe del corpo eseguite (nota 18) |
+| 23 | `verimem/mcp_server.py:868` `_build_episode` | funzione: Build an Episode object for hosted-mode record. Lazy import + | `verimem/mcp_server.py:9320`; `verimem/mcp_server.py:9386` | `tests/perf/e2e_cycle51_54_chain.py`; `tests/test_mcp_hosted_mode.py`; `tests/test_mcp_record_episode_with_facts.py` | - | NON MISURATO | ⚠️ `tests/test_mcp_record_episode_with_facts.py` era nel run (5 passed) e 0 righe del corpo sono state eseguite (nota 18) |
 | 24 | `verimem/mcp_server.py:892` `_is_hosted` | funzione: True when running embedded inside an LLM host (e.g. Claude Code) | `verimem/airgap.py:15`; `verimem/mcp_server.py:8074`; `verimem/mcp_server.py:8135` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 1 riga del corpo |
 | 25 | `verimem/mcp_server.py:904` `_consolidate_light` | funzione: Dedup + promote/retire pass without any LLM call. | `verimem/mcp_server.py:9664`; `verimem/sleep.py:261` | `tests/test_mcp_hosted_mode.py`; `tests/test_sleep_cycle_light.py` | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 6 righe del corpo su 67 di funzione: entra e si ferma presto |
 | 26 | `verimem/mcp_server.py:976` `_audit_log_path` | funzione: Append-only audit log. Honour HIPPO_MCP_AUDIT_LOG if set. | `verimem/audit_tail.py:50`; `verimem/mcp_server.py:1227`; `verimem/mcp_server.py:9110` (+2) | `tests/test_audit_summary_integration.py`; `tests/test_l_errore_nomina_il_tool_che_ho_chiamato.py`; `tests/test_mcp_export_import_test_audit.py` | - | FUNZIONA COME PROMESSO | comando: `ls -la ~/.engram/mcp_audit.log` esito: 2.100.293 byte, scritto l'ultima volta oggi 19:43 → il percorso reso e' quello che il prodotto usa |
 | 27 | `verimem/mcp_server.py:1016` `_rotate_audit_if_needed` | funzione: Rinomina path → path.1 quando supera _AUDIT_MAX_BYTES. Best-effort. | `verimem/mcp_server.py:1262` | `tests/test_audit_log_rotation.py` | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_audit_log_rotation.py` esito: 7 passed, EXIT=0. Sulla mia macchina non e' mai scattata davvero (2,1 MB su un tetto di 5 MB, nessun `mcp_audit.log.1`): a farla scattare e' il test |
 | 28 | `verimem/mcp_server.py:1055` `_bypass_dal_registro` | funzione: (nessun docstring) | `verimem/mcp_server.py:1061` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 2 righe del corpo. Gira all'import (`GATING_BYPASS_LIST` e' calcolata a livello di modulo) |
-| 29 | `verimem/mcp_server.py:1064` `_audit_capability_call` | funzione: Capability-gate-specific audit row. Always emits (mandatory_log). | `verimem/mcp_server.py:1139`; `verimem/mcp_server.py:1171`; `verimem/mcp_server.py:1190` (+2) | `tests/test_lavviso_dice_quali_parametri.py`; `tests/test_mcp_capability_gate.py` | - | NON MISURATO | - |
+| 29 | `verimem/mcp_server.py:1064` `_audit_capability_call` | funzione: Capability-gate-specific audit row. Always emits (mandatory_log). | `verimem/mcp_server.py:1139`; `verimem/mcp_server.py:1171`; `verimem/mcp_server.py:1190` (+2) | `tests/test_lavviso_dice_quali_parametri.py`; `tests/test_mcp_capability_gate.py` | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 8 righe del corpo (via `tests/test_mcp_capability_gate.py`, 14 passed) — cioe' il cancello si prova ACCESO, e allora scrive la riga |
 | 30 | `verimem/mcp_server.py:1102` `_capability_gate_mode` | funzione: Cycle 2026-05-27 round 15 FIX 6 — dev-friendly toggle. | `verimem/mcp_server.py:1134`; `verimem/mcp_server.py:1148` | nessuno | - | FUNZIONA COME PROMESSO | comando: `env | grep -i CAPABILITY` esito: nessuna variabile → il modo e' `off`, che e' quello che la docstring dichiara (default dev, 2026-05-27) |
 | 31 | `verimem/mcp_server.py:1128` `_capability_gate` | funzione: Cycle 2026-05-27 round 15 P0.5b — runtime gate on tool capabilities. | `verimem/mcp_server.py:7961`; `verimem/mcp_server.py:7970` | `tests/test_lavviso_dice_quali_parametri.py`; `tests/test_mcp_capability_gate.py`; `tests/test_mcp_sandbox_exec.py` | - | FUNZIONA COME PROMESSO | comando: `grep -c 'cap_allow\|cap_deny\|cap_bypass' ~/.engram/mcp_audit.log` esito: 5 su 15432 righe (0,03%), tutte con `[mode=enforce]`, l'ultima il 2026-07-09; controllo positivo `"outcome":"ok"` → 11604. Fa cio' che la SUA docstring dice; e' il commento a 7959-7969 che descrive il modo acceso come se fosse il normale (nota 9) |
 | 32 | `verimem/mcp_server.py:1211` `_audit` | funzione: Append one structured JSONL record. Best-effort — never raises. | `verimem/airgap.py:208`; `verimem/gateway.py:886`; `verimem/gateway.py:888` (+457) | `tests/security/test_pentest_validation.py`; `tests/test_audit_log_rotation.py`; `tests/test_dashboard_bus_coverage.py` (+6) | - | FUNZIONA COME PROMESSO | comando: parse JSON di ogni riga di `~/.engram/mcp_audit.log` esito: 15432 leggibili, 0 illeggibili, dal 2026-05-08 01:41 al 2026-09-08 19:43 |
@@ -123,18 +123,18 @@ meglio della funzione privata.
 | 53 | `verimem/mcp_server.py:7797` `call_tool` | funzione: Thin dispatch wrapper: watch the call for hangs (stack-dump on overrun via | `verimem/doctor.py:418`; `verimem/mcp_server.py:987`; `verimem/mcp_server.py:1039` (+5) ⚠️ nome comune: righe da confermare leggendo | `tests/test_adjudication_receipt.py`; `tests/test_anche_il_canale_mcp_cancella_la_catena.py`; `tests/test_audit_silent_failures.py` (+38) | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_il_messaggio_dice_quale_chiave_ha_buttato.py` esito: 9 passed, EXIT=0 — cinque chiamate a `m.call_tool(...)`, cioe' l'handler vero con dentro il guardiano degli hang |
 | 54 | `verimem/mcp_server.py:7806` `_call_tool_impl` | funzione: (nessun docstring) | `verimem/mcp_server.py:107`; `verimem/mcp_server.py:997`; `verimem/mcp_server.py:7803` (+1) | `tests/test_il_build_dell_agent_non_tiene_il_lock.py`; `tests/test_il_preload_non_importa_su_un_thread.py`; `tests/test_il_quarto_consumatore_non_conosceva_il_degrado.py` (+9) | - | FUNZIONA COME PROMESSO | comando: `pytest tests/test_il_messaggio_dice_quale_chiave_ha_buttato.py` esito: 9 passed, EXIT=0 — attraversata da ogni `m.call_tool(...)` del test. ⚠️ 9 test toccano una funzione di 7783 righe: e' esercitata, non coperta |
 | 55 | `verimem/mcp_server.py:9779` `_call_tool_impl._props` | funzione: (nessun docstring) | `verimem/mcp_server.py:9786`; `verimem/mcp_server.py:9787`; `verimem/mcp_server.py:9788` ⚠️ nome comune: righe da confermare leggendo | `tests/test_include_beliefs.py`; `tests/test_l3_subject_prefilter.py`; `tests/test_recall_cache_cross_conn_staleness.py` (+2) | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 3 righe del corpo |
-| 56 | `verimem/mcp_server.py:12402` `_call_tool_impl._cos` | funzione: (nessun docstring) | `verimem/mcp_server.py:12426`; `verimem/memory.py:1987` | `tests/test_un_analogia_che_non_puo_esistere_lo_dice.py` | - | NON MISURATO | - |
-| 57 | `verimem/mcp_server.py:12456` `_call_tool_impl._encode_skill` | funzione: (nessun docstring) | `verimem/mcp_server.py:12464`; `verimem/mcp_server.py:12465` | nessuno | - | NON MISURATO | - |
-| 58 | `verimem/mcp_server.py:12463` `_call_tool_impl._cosine` | funzione: (nessun docstring) | `verimem/coherence_check.py:22`; `verimem/coherence_check.py:42`; `verimem/coherence_check.py:132` (+11) ⚠️ nome comune: righe da confermare leggendo | `tests/test_contradiction_year_range_false_negative.py`; `tests/test_il_vincitore_che_ne_ingoio_dodici.py`; `tests/test_lateral_inhibition.py` | - | NON MISURATO | - |
+| 56 | `verimem/mcp_server.py:12402` `_call_tool_impl._cos` | funzione: (nessun docstring) | `verimem/mcp_server.py:12426`; `verimem/memory.py:1987` | `tests/test_un_analogia_che_non_puo_esistere_lo_dice.py` | - | NON MISURATO | due run di coverage, 0 righe del corpo. `tests/test_un_analogia_che_non_puo_esistere_lo_dice.py` era nel secondo run (5 passed) e non la tocca (nota 18) |
+| 57 | `verimem/mcp_server.py:12456` `_call_tool_impl._encode_skill` | funzione: (nessun docstring) | `verimem/mcp_server.py:12464`; `verimem/mcp_server.py:12465` | nessuno | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 4 righe del corpo |
+| 58 | `verimem/mcp_server.py:12463` `_call_tool_impl._cosine` | funzione: (nessun docstring) | `verimem/coherence_check.py:22`; `verimem/coherence_check.py:42`; `verimem/coherence_check.py:132` (+11) ⚠️ nome comune: righe da confermare leggendo | `tests/test_contradiction_year_range_false_negative.py`; `tests/test_il_vincitore_che_ne_ingoio_dodici.py`; `tests/test_lateral_inhibition.py` | - | FUNZIONA COME PROMESSO | coverage, secondo run su 11 file verdi (96 passed in 114s, EXIT=0: mcp_thin, remote_memory, mcp_capability_gate, export_import_test_audit, describe_provider_merge, justified_audit_mcp, record_episode_with_facts, fact_forget_scope_r3, un_analogia_che_non_puo_esistere, skills_top_used, security/sandbox_cwd_jail_wiring): 7 righe del corpo. La gemella `_cos` (12402) resta NON MISURATO: stesso conto, altro ramo (nota 13) |
 | 59 | `verimem/mcp_server.py:13597` `_call_tool_impl._default_coherence_hook` | funzione: (nessun docstring) | `verimem/mcp_server.py:13626` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 3 righe del corpo su 18 |
 | 60 | `verimem/mcp_server.py:15525` `_call_tool_impl._key_fitness` | funzione: (nessun docstring) | `verimem/mcp_server.py:15535`; `verimem/mcp_server.py:15538` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 1 riga del corpo (ne ha 2). Le gemelle `_key_recency` e `_key_activity` restano NON MISURATO: stesso `def`, ordinamento diverso, e questi test non lo chiedono |
-| 61 | `verimem/mcp_server.py:15528` `_call_tool_impl._key_recency` | funzione: (nessun docstring) | `verimem/mcp_server.py:15536` | nessuno | - | NON MISURATO | - |
-| 62 | `verimem/mcp_server.py:15531` `_call_tool_impl._key_activity` | funzione: (nessun docstring) | `verimem/mcp_server.py:15537` | nessuno | - | NON MISURATO | - |
+| 61 | `verimem/mcp_server.py:15528` `_call_tool_impl._key_recency` | funzione: (nessun docstring) | `verimem/mcp_server.py:15536` | nessuno | - | NON MISURATO | ⚠️ `tests/test_skills_top_used.py` era nel run (5 passed) e 0 righe del corpo eseguite, per tutte e tre le chiavi di ordinamento (nota 18) |
+| 62 | `verimem/mcp_server.py:15531` `_call_tool_impl._key_activity` | funzione: (nessun docstring) | `verimem/mcp_server.py:15537` | nessuno | - | NON MISURATO | ⚠️ come `_key_recency`: il test dell'ordinamento passa senza toccarle |
 | 63 | `verimem/mcp_server.py:15592` `list_resources` | funzione: (nessun docstring) | `verimem/doctor.py:418`; `verimem/mcp_server.py:15591` ⚠️ nome comune: righe da confermare leggendo | `tests/test_mcp_server.py` | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 5 righe del corpo. Espone due risorse statiche (`hippo://skills/list`, `hippo://episodes/recent`) piu' una per skill promossa, tetto 50. Nessuna per i FATTI (nota 15) |
 | 64 | `verimem/mcp_server.py:15619` `_read_resource_body` | funzione: JSON body for a hippo:// resource URI; wrapped by read_resource() into | `verimem/mcp_server.py:15664` | nessuno | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 9 righe del corpo. Quattro forme di URI, tutte skill o episodi (nota 15) |
 | 65 | `verimem/mcp_server.py:15659` `read_resource` | funzione: (nessun docstring) | `verimem/doctor.py:419`; `verimem/mcp_server.py:15620`; `verimem/mcp_server.py:15658` ⚠️ nome comune: righe da confermare leggendo | `tests/test_mcp_server.py` | - | FUNZIONA COME PROMESSO | coverage su 3 file verdi (test_il_messaggio_dice_quale_chiave_ha_buttato, test_mcp_reads_expose_moat_verdict, test_mcp_server — 51 test, EXIT=0): 3 righe del corpo. Rende `ReadResourceContents` invece della stringa nuda, che l'SDK MCP deprecava |
-| 66 | `verimem/mcp_server.py:15747` `_serve` | funzione: (nessun docstring) | `verimem/mcp_server.py:15844` ⚠️ nome comune: righe da confermare leggendo | `tests/test_mcp_e2e_smoke.py`; `tests/test_mcp_eager_preload.py`; `tests/test_un_fatto_scaduto_non_viene_servito.py` | - | NON MISURATO | - |
-| 67 | `verimem/mcp_server.py:15752` `main` | funzione: Entry point for `hippo mcp`. | `verimem/_hang_watchdog.py:18`; `verimem/_import_lock.py:7`; `verimem/_singleton_guard.py:34` (+95) ⚠️ nome comune: righe da confermare leggendo | `tests/conftest.py`; `tests/perf/bench.py`; `tests/perf/bench_briefing_v3_robustness.py` (+112) | `README.md:50`; `README.md:66`; `README.md:378` | NON MISURATO | - |
+| 66 | `verimem/mcp_server.py:15747` `_serve` | funzione: (nessun docstring) | `verimem/mcp_server.py:15844` ⚠️ nome comune: righe da confermare leggendo | `tests/test_mcp_e2e_smoke.py`; `tests/test_mcp_eager_preload.py`; `tests/test_un_fatto_scaduto_non_viene_servito.py` | - | NON MISURATO | e non lo sara' da pytest: e' il ciclo `stdio_server()` del processo server. Lo prova un banco end-to-end che avvia il processo, non un test in-process |
+| 67 | `verimem/mcp_server.py:15752` `main` | funzione: Entry point for `hippo mcp`. | `verimem/_hang_watchdog.py:18`; `verimem/_import_lock.py:7`; `verimem/_singleton_guard.py:34` (+95) ⚠️ nome comune: righe da confermare leggendo | `tests/conftest.py`; `tests/perf/bench.py`; `tests/perf/bench_briefing_v3_robustness.py` (+112) | `README.md:50`; `README.md:66`; `README.md:378` | NON MISURATO | come `_serve`: e' l'entry point di `hippo mcp`. ⚠️ ed e' il posto dove `os.environ.setdefault("HIPPO_ENCODE_DELEGATE_ONLY", "1")` viene impostata per ogni processo server, e dove sta il commento sulla cecita' del journal (nota 17) |
 
 ---
 
@@ -255,6 +255,77 @@ l'attribuzione delle righe per un corpo fatto di UNA sola espressione lunga
 eseguite» di coverage su una funzione enorme non e' prova di codice morto.**
 Per questo la sua riga in tabella resta NON MISURATO e non «MAI CHIAMATA»:
 non si scrive un verdetto con un righello che si e' appena visto sbagliare.
+
+## Nota 18 — SEI file di test passano senza toccare la funzione che portano nel nome
+
+Il secondo run di coverage (11 file, 96 passed in 114 s, EXIT=0) e' stato
+scelto apposta: dentro c'erano i file che la colonna «test» attribuiva alle
+righe ancora scoperte. Sei di quelle righe hanno **zero righe di corpo
+eseguite** anche col loro test dentro il run:
+
+| funzione | il file che l'avrebbe coperta | esito del file | righe del corpo eseguite |
+|---|---|---|---|
+| `_build_episode` | `test_mcp_record_episode_with_facts.py` | 5 passed | **0** |
+| `_justified_contradicted_ids` | `test_justified_audit_mcp.py` | 6 passed | **0** |
+| `_provider_is_configured` | `test_mcp_describe_provider_merge.py` | 8 passed | **0** |
+| `_skill_from_dict` | `test_mcp_export_import_test_audit.py` | 13 passed | **0** |
+| `_cos` | `test_un_analogia_che_non_puo_esistere_lo_dice.py` | 5 passed | **0** |
+| `_key_recency` / `_key_activity` | `test_skills_top_used.py` | 5 passed | **0** |
+
+Tutti e undici i file sono stati raccolti ed eseguiti — l'ho verificato riga
+per riga nell'output di pytest, non dedotto dal totale.
+
+**Non sto dicendo che quei test siano sbagliati.** Un test puo' legittimamente
+esercitare un'altra strada: `_build_episode` serve la modalita' ospitata,
+`_provider_is_configured` un ramo che quel test non prende. Sto dicendo una
+cosa piu' ristretta e misurata: **la colonna «test che la esercita», compilata
+col nome, per queste sei righe dice il falso** — e con essa avrei scritto sei
+verdi. Sono le righe da guardare per prime se qualcuno cerca dove il presidio
+manca davvero: hanno un test che porta il nome giusto, che passa, e che non ci
+arriva. E' la forma «una misura che non c'e' si legge come perfetta».
+
+## Nota 17 — `main()` dichiara che il journal non vede le letture MCP,
+## e rimisurandolo oggi il buco e' PIU' GRANDE di quello che dichiara
+
+Dentro `main()` (riga ~15790) c'e' un commento datato 2026-08-31 che merita di
+stare fuori da un file di 15.848 righe: la variabile `ENGRAM_FLOW_SURFACE=mcp`
+marca gli eventi emessi **dal nucleo**, e le LETTURE non ci passano — gli
+handler di lettura chiamano `a.semantic` diretto, mentre `flow.recall` lo
+emette `Memory.search` in `client.py`. Il commento porta la sua misura: su
+4.716 `flow.recall`, `surface=mcp` compare ZERO volte, mentre `mcp` marca
+1.373 eventi in totale.
+
+**L'ho rimisurato oggi**, su `events.jsonl` + il ruotato `.1` (26.517 righe, 6
+illeggibili, finestra 2026-09-01 20:58 -> 2026-09-08 21:15):
+
+```
+payload.surface, TUTTI gli eventi        payload.surface sui soli flow.recall
+   unknown      14947                       unknown      2751
+   (assente)     8459                       gateway       128
+   cli           1706                       cli            16
+   mcp            934                       sdk            12
+   gateway        275                       mcp              0
+```
+
+Il commento regge: **zero letture marcate `mcp`**, e il controllo positivo lo
+rende leggibile — `mcp` marca 934 eventi altrove, quindi lo zero e' un'assenza
+vera e non un lettore rotto.
+
+⚠️ E il primo tentativo il controllo NON l'aveva passato: cercavo `surface` in
+cima al record, e mi usciva «(assente) 26511 su 26517» — cioe' un campo che non
+esiste. Il campo vero e' `payload.surface`. Senza il controllo positivo avrei
+pubblicato uno zero che non voleva dire niente.
+
+**E il buco e' piu' grande di quello che il commento dichiara.** Delle 2.907
+letture, quelle attribuite a una superficie sono 128+16+12 = **156, il 5,4%**:
+le altre 2.751 (94,6%) sono `unknown`. Quindi non e' solo che «la porta MCP e'
+invisibile»: **chi conta le letture per superficie su questo journal puo'
+attribuirne una su venti**, e la fetta MCP di quelle attribuite e' zero.
+
+Il commento dice anche perche' non e' stato curato: aggiungere un `emit` nei
+gestori di lettura aggiungerebbe righe a un journal su cui misurano in
+parecchi, «so it is a group decision, not a silent fix». Sono d'accordo e non
+lo tocco. Lo porto qui perche' un commento a riga 15.790 non e' un canale.
 
 ## Il denominatore, e perché me lo sono fatto dare due volte
 
