@@ -42,3 +42,58 @@ verdetto poggia sull'esecuzione, non su un'asserzione sul loro
 comportamento: chi vuole di più deve rompere la riga e guardare chi
 si accende. **Non l'ho fatto per queste**, e lo scrivo.
 
+
+---
+
+## Il banco nel merito: nove promesse del docstring, nove confermate
+
+Questo modulo è **il più scoperto dei 30** (77,8%), e le righe non eseguite
+sono `93`, `98` e **`100`** — quest'ultima è la guardia che il docstring
+descrive per esteso:
+
+> «Short fragments are merged back into the previous clause rather than dropped
+> — a dangling ", e i due" is part of what came before, and counting it alone
+> **would inflate the number of assertions**.»
+
+Il numero che `split_claim_clauses` produce dice a chi scrive **in quanti pezzi
+spezzare** un fatto che il moat ha rifiutato. Se si gonfia, manda a spezzare più
+del necessario. Nessun test lo esercita, quindi l'ho esercitato io:
+
+```
+OK  A  lista con `e` nudo → UNA clausola          → 1 (atteso 1)
+OK  A' lista lunga, sempre una                    → 1 (atteso 1)
+OK  B  `mentre` apre una nuova asserzione         → 2 (atteso 2)
+OK  B' `perché` idem                              → 2 (atteso 2)
+OK  B'' virgola + coordinante                     → 2 (atteso 2)
+OK  B'''punto e virgola                           → 2 (atteso 2)
+OK  C  frammento corto RIASSORBITO (riga 100)     → 1 (atteso 1)
+OK     vuoto → nessuna clausola (riga 93)         → 0 (atteso 0)
+OK     solo spazi → nessuna clausola              → 0 (atteso 0)
+
+9 casi · tutte le promesse reggono                              EXIT=0
+```
+
+⇒ **il 77,8% non è un buco di comportamento: è un buco di presidio.** Il codice
+fa quello che promette — comprese le tre righe scoperte — ma **nessun test lo
+custodisce**, e se qualcuno rompesse la riga 100 il conteggio si gonfierebbe in
+silenzio. Il banco è pronto in `<scratchpad>/banco_unsupported_span.py`, nove
+casi, gira in un secondo: chi vuole promuoverlo a `tests/test_unsupported_span.py`
+lo trova lì. **Non lo promuovo io** (regola 2).
+
+## E una cosa che questo modulo insegna, al di là della sua tabella
+
+Il docstring **racconta due cure tentate e fallite**, coi numeri:
+
+- assegnare un punteggio a ogni clausola contro la fonte: **al contrario** —
+  `40.6` alla clausola colpevole, `0.1` a quella che la fonte *dimostra*, perché
+  la clausola isolata perde il contesto e il CE legge la sovrapposizione
+  lessicale;
+- l'ablazione (ricalcolare senza ciascuna clausola): **0 su 2**.
+
+E la conclusione: «*pointing at the wrong clause is worse than pointing at none,
+because it sends the writer to delete the part that was true*».
+
+📌 È il modulo meglio scritto che ho letto stasera, e la ragione è che **il suo
+docstring pubblica i fallimenti con i numeri**, invece di descrivere solo la
+soluzione. Chi lo legge sa cosa NON riprovare — che è la stessa funzione della
+nostra lista delle strade già falsificate.
