@@ -46,3 +46,62 @@ verdetto poggia sull'esecuzione, non su un'asserzione sul loro
 comportamento: chi vuole di più deve rompere la riga e guardare chi
 si accende. **Non l'ho fatto per queste**, e lo scrivo.
 
+
+---
+
+## Il banco nel merito: **i rami di fallimento, che nessun test percorre**
+
+Le righe non eseguite dai test del perimetro — **97, 174, 182, 187, 200** — sono,
+senza eccezioni, i punti in cui il modulo deve **dichiarare un fallimento**
+(`failures.append` / `raise`).
+
+Per un modulo di tamper-evidence è il caso peggiore possibile: se `verify_anchor`
+non fallisse quando deve, direbbe **«catena intatta» su una catena manomessa**, e
+la suite resterebbe verde. **Un presidio che non è mai stato visto scattare non è
+un presidio.**
+
+Le predizioni vengono dal contratto del docstring `:22-29` («*counts may only
+grow, and the anchored head must still sit at its anchored position*»):
+
+```
+OK  A  catena estesa (14 righe, head al posto) → passa                    ok=True
+OK  B  TRUNCATE (7 < 10 righe ancorate) → fallisce
+          "mutations: tail truncated — current 7 chained rows < anchored 10"
+OK  C  REWRITE (stesso conteggio, head cambiata) → fallisce
+          "mutations: head at anchored row 10 does not match the receipt…"
+OK  D  catena non intatta (verify interno rosso) → fallisce
+OK  E  stato di una catena NON fornito → fallisce                        [riga 182]
+OK  F  payload alterato dopo la firma → fallisce sulla FIRMA
+OK  G  ricevuta vecchia su stato rollbackato a quel punto → passa (dichiarato)
+
+8 casi · tutti i rami di fallimento scattano                              EXIT=0
+```
+
+**A e G sono le due colonne che rendono leggibile il resto.** Senza A («fallisce
+sempre» sarebbe indistinguibile da «funziona») e senza G — il caso del
+**contratto onesto**, in cui una ricevuta vecchia verifica contro uno stato
+rollbackato esattamente a ciò che firmava, e il docstring **lo dichiara come
+limite operativo, non lo nasconde**.
+
+### La riga 187, che il primo banco NON aveva raggiunto
+
+Il caso «ricevuta senza `mutations_rows`» falliva sulla **firma**, non sul campo:
+togliere un campo *dopo* la firma la invalida, e il verdetto si ferma prima. La
+riga 187 si raggiunge solo con una ricevuta **firmata così** — malformata ma
+autentica, il caso di un produttore vecchio o difettoso:
+
+```
+ok=False
+· mutations: receipt is missing mutations_rows          ← riga 187, raggiunta
+```
+
+📌 Lo scrivo perché è la parte che si sarebbe persa: **il primo banco dava «8 su
+8» e una riga restava comunque non percorsa.** Un banco che passa non prova di
+aver toccato ciò che voleva toccare — bisogna guardare *quale* messaggio esce,
+non solo che il verdetto sia rosso.
+
+⇒ **verdetto: FUNZIONA COME PROMESSO**, con la prova. E il buco non è nel
+codice: è che **nessun test della suite lo esercita**, quindi la protezione
+contro truncate e rewrite oggi non è custodita da niente. Banco pronto in
+`<scratchpad>/banco_audit_anchor.py` (8 casi) e `riga187.py`. **Non li promuovo
+io** (regola 2).
