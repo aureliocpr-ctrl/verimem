@@ -70,6 +70,8 @@ ordina la coda.
 | `docs/stato-reale/70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md` | **VIVO** | ws6/Aldo, 2 settembre 00:02: *«chiude il filone “le letture non trovano”»* — **0 su 3** nel titolo |
 | `docs/stato-reale/41-la-supersessione-sceglie-sei-volte-meglio-del-caso.md` | **VIVO** | ws6/Aldo, 30/08 notte, perimetro dichiarato. *«Questo pezzo è una **buona notizia**, ed è la prima della serata»*: il numero che dà ragione è scritto con la stessa cura di quelli che la tolgono |
 | `docs/stato-reale/64-una-catena-di-quattro-ritiri-fa-sparire-una-misura-intera.md` | **VIVO** | 31/08 mattina, e dichiara **come è nato**: *«nasce leggendo i candidati al recupero, **non cercando questo**»* — la scoperta laterale dichiarata invece che spacciata per ricerca mirata |
+| `docs/stato-reale/44-il-rilevatore-dichiara-in-conflitto-quasi-tutte-le-coppie.md` | **VIVO** | ws6/Aldo, 30/08 notte: *«il **99% delle coppie possibili** di un topic»*. Chiude esplicitamente la serie iniziata dal documento 42 — i documenti qui si citano fra loro per numero |
+| `docs/stato-reale/75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md` | **VIVO** — ed è il modello del ritiro | 02/09 01:51. Il titolo porta il ritiro per intero: *«…e **leggendo l'altra popolazione ho ritirato la mia stessa lettura**»*. La regola che questa mappa ha imparato sette volte stasera, qui era già applicata |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -388,7 +390,7 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 58 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 60 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 

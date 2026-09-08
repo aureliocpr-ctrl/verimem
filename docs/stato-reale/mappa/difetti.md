@@ -58,6 +58,32 @@ danno fa quando sbaglia (64) — e dichiara che il secondo reperto **non lo stav
 ⇒ È il modello: **un numero che ti dà ragione e uno che te la toglie, dallo stesso righello,
 scritti tutti e due.**
 
+
+## D-1 · il rilevatore di conflitti
+
+| data | pagina | cosa dice |
+|---|---|---|
+| **30/08** | `42-il-presidio-consiglia-una-cura-che-ritirerebbe-mille-fatti.md` | l'inizio della serie: **quante** coppie il rilevatore tocca |
+| **30/08** | `44-il-rilevatore-dichiara-in-conflitto-quasi-tutte-le-coppie.md` | *«dichiara in conflitto il **99% delle coppie possibili** di un topic»* — chiude la serie iniziata dal 42 |
+| **02/09** | `75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md` | *«…e **leggendo l'altra popolazione ho ritirato la mia stessa lettura**»* |
+| **09/26** | `CHANGELOG.md`, voce `D-1` | un fatto riportato da un terzo può essere scambiato per una contraddizione |
+
+🪞 **`75` è il modello del ritiro**, e il titolo lo dice per intero: la lettura è caduta
+**leggendo l'altra popolazione**. È la stessa regola che questa mappa ha dovuto imparare
+sette volte stasera — *guarda anche i casi che il righello non ha segnalato* — e qui era
+già applicata il 2 settembre, con il ritiro **nel titolo** invece che in fondo.
+
+## T27 · il test escluso dalla suite
+
+| data | pagina | cosa dice |
+|---|---|---|
+| **04/09** | `ticket-sigsegv-hang-watchdog.md` | il ticket, aperto da ws8: finestra dichiarata (`03/09 17:39 → 04/09 19:54`, ultimi 60 run), 3 morti di SIGSEGV su 10 falliti, e il `--deselect` registrato alla riga 139 |
+| **09/26** | `CHANGELOG.md`, voce `T27` | soglia decisa **prima**: 24 job puliti consecutivi |
+
+⇒ **Unico difetto della lista in cui documento e ticket nascono insieme**, dallo stesso
+autore, con la soglia fissata prima di contare. Non c'è nessuna misura anteriore da
+ricongiungere: il filo, qui, non è mai stato spezzato.
+
 ## Come si continua
 
 Per gli altri ticket (T14, T16, T24, T25, T27, T39, T40, D-1) la tabella è **da compilare**:
