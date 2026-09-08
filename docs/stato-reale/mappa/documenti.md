@@ -54,6 +54,7 @@ ordina la coda.
 | `docs/stato-reale/00-ESAME.md` | **VIVO** — è il registro | «Registro unico delle celle misurate», istituito dalla direttiva di Aurelio del 27/08: *«cosa dovrebbe avere teoricamente un progetto del genere? Le ha? Lo fa davvero?»*. **Non giudica il codice: registra le misure.** È l'unico documento di `stato-reale/` che il codice cita (`verimem/soggetto_valore.py`) |
 | `docs/stato-reale/01-promesse-vs-realta.md` | **VIVO** | porta la nota datata fatta meglio del corpus: *«misura `main`, e `main` si è mosso di **756 commit**… non è datato perché sbagli, è datato perché il suo **bersaglio è mobile**… **non ho rimisurato il suo contenuto e non affermo che sia caduto**»*. Dichiara anche ciò che NON ha verificato |
 | `docs/stato-reale/02-RISPOSTA-cosa-fa-chi-installa-oggi.md` | **VIVO** | SHA `afc6cf73`, 08/08, misurato sul pacchetto da PyPI con HOME dedicata e zero variabili. E una frase che vale per tutto il corpus: *«la mia fetta è cresciuta a quattordici file, **che sono un archivio e non una risposta**. Questa pagina è la risposta; ogni riga ha il file che la prova»* |
+| `docs/stato-reale/02p-il-server-parte-su-main-e-dichiara-la-versione-sbagliata.md` | **VIVO, corretto in nota** | il titolo afferma un difetto **curato dal 09/08**, e una nota in cima lo dichiara: *«la seconda metà del titolo NON vale più… curato da `068a60d9`… verificato oggi: `mcp_server.py:1500` costruisce `Server("verimem", version=_verimem_version…)`»*. E distingue **quale metà** vale ancora: *«la PRIMA metà — il server parte — **non l'ho riverificata**: richiede un `initialize` vero su stdio, ed è l'anello che nessuno ha rifatto»* |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -272,6 +273,25 @@ esami, ticket, risposte a domande di Aurelio — e una cronaca il codice non la 
 
 🔑 **Applicare un criterio solo avrebbe dato 162 falsi «morti» su una cartella sana.**
 
+
+### 🆕 Nona forma: il documento CORRETTO IN NOTA — e la catena che si chiude
+
+`02p` porta nel **titolo** un difetto che non esiste più. Non è stato riscritto né
+cancellato: gli è stata messa in cima una **nota datata** che dice *quale metà* del titolo
+è caduta, **con il commit che l'ha curata** (`068a60d9`, il giorno dopo la misura) e la
+riga di codice verificata oggi. E dichiara l'altra metà come **non riverificata**, dicendo
+perché: *«richiede un `initialize` vero su stdio, ed è l'anello che nessuno ha rifatto»*.
+
+🔑 **E qui la catena si chiude**, ed è il modello migliore che ho trovato in tutto il corpus:
+```
+  il documento registra il difetto   docs/stato-reale/02p…md
+  il commit lo cura                  068a60d9  «il server diceva agli agenti la versione di mcp»
+  lo smoke lo presidia a ogni tag    smoke_wheel_pre_tag.sh:222
+                                       riga 9 «serverInfo dichiara la versione di verimem, non di mcp»
+```
+⇒ **Misura → cura → presidio.** Un difetto documentato che non torna perché qualcosa lo
+controlla a ogni rilascio. È il contrario del documento che invecchia in silenzio.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -287,6 +307,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 42 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 43 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
