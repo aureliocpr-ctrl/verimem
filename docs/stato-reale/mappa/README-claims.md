@@ -386,7 +386,7 @@ presidia da sola, una promessa numerica no.*
 | 568-570 | *«Personal mode binds 127.0.0.1 by default — the **loopback bind is the real defense**»* | `gateway.py:936` *«BOTH must be loopback»* | 🌟 `test_console_local.py:58` **`test_local_mode_rejects_non_localhost_host_header`** | ✅ |
 | 570-572 | *«a Host-header allowlist is a second layer … a direct client (e.g. `curl`) can spoof the Host header»* + *«A presented API key always wins»* | `gateway.py:48`, `:82` (`_host_only`, IPv6), `:933-936` | 🌟 `test_console_local.py:68` **`test_presented_key_wins_over_local_fallback`** | ✅ |
 | 572-574 | `GET /v1/snapshot` — *«the whole visible state … in one structured call»* | `gateway.py` | 🌟 `test_console_local.py:90` **`test_snapshot_returns_everything_in_one_call`** | ✅ |
-| 580-582 | `verimem gateway keys create --tenant acme --name laptop` · `verimem gateway serve` su `127.0.0.1:8377` | `cli.py:106-107` (il gruppo `keys` esiste), `8377` in `cli.py` e `gateway.py` | `test_gateway_local_tenant_collision.py`, `test_audit_moat_and_transport.py` | ✅ |
+| 580-582 | `verimem gateway keys create --tenant acme --name laptop` · `verimem gateway serve` su `127.0.0.1:8377` | `cli.py:106-107` (il gruppo `keys` esiste), `8377` in `cli.py` e `gateway.py` | `test_gateway_local_tenant_collision.py`, `test_audit_moat_and_transport.py`| ⬜ **corretto alle 22:33**: il gruppo esiste e i presidi provano il gateway HTTP, ma **nessun test invoca i comandi** — vedi [CLI-claims.md](CLI-claims.md) |
 | 586-587 | *«Each tenant gets an isolated store; the tenant is derived from the API key alone»* | `gateway.py` | `test_gateway_local_tenant_collision.py`, `test_gateway_ui.py:71` `test_quarantine_is_tenant_isolated` | ✅ |
 | 587-591 | i **dieci endpoint** elencati, `/v1/graph/dossier` e `DELETE …?purge_history=true` compresi | tutti in `gateway.py` | `test_gateway.py`, `test_gateway_ui.py:147` (dossier a due salti), `test_audit_mutations.py`, `test_anche_il_canale_mcp_cancella_la_catena.py` | ✅ |
 | 591-593 | `/ui` e `/dashboard` — *«static, dependency-free pages»* | `webui/` | `test_gateway_ui.py:174` `test_ui_page_served_without_auth_and_static`, `:183` `test_ui_assets_served`, `:191` `test_ui_page_mentions_the_three_views`; `test_gateway_console_v2.py:80` `test_asset_allowlist_stays_closed` | ✅ |
@@ -465,7 +465,7 @@ guardi la pagina: è che **i test la guardano dal lato del server**.
 | 616-617 | le operazioni con scope (`user_id`/`agent_id`/`run_id`) **restano locali** per isolamento | `client.py` | `test_agent_scope.py` la nomina; non ho seguito il «restano locali» | ⬜ |
 | 618-621 | Docker *«embedding models baked in — runs fully offline»* | `docker-compose.gateway.yml` **esiste** | il file sì; **l'offline dell'immagine no** | ⬜ |
 | 624-626 | il client TypeScript è *«typed, zero-dependency, **contract-tested against the live gateway from the Python suite**»* | `sdk/typescript` **esiste** | 🌟 `tests/test_sdk_typescript.py` — il contract test **è** nella suite Python, come promesso *(«zero-dependency» resta non verificato)* | ✅ |
-| 632-637 | backup a caldo *«SQLite online backup API — **correct while serving**»*, `gateway backup`/`restore`, *«keys + every tenant store + manifest»* | `cli.py`, `doctor.py`, `trust_ledger.py` | 🌟 **cinque** file, e uno porta il nome della promessa: `test_backup_integrity_no_live_race_audit3.py`, più `test_backup_all_dbs.py`, `test_backup_follows_the_data_dir.py`, `test_backup_rotation_integrity_audit3.py` | ✅ |
+| 632-637 | backup a caldo *«SQLite online backup API — **correct while serving**»*, `gateway backup`/`restore`, *«keys + every tenant store + manifest»* | `cli.py`, `doctor.py`, `trust_ledger.py` | 🌟 **cinque** file, e uno porta il nome della promessa: `test_backup_integrity_no_live_race_audit3.py`, più `test_backup_all_dbs.py`, `test_backup_follows_the_data_dir.py`, `test_backup_rotation_integrity_audit3.py`| ⬜ **corretto alle 22:33**: quei cinque file provano `backup` come **funzione**; il comando `gateway backup` non è invocato da nessun test — vedi [CLI-claims.md](CLI-claims.md) |
 | 641-644 | i benchmark sono su **HaluMem**, con la pipeline completa, *«judged by a Claude-based grader»*, metodologia in `docs/BENCHMARKS.md` | `benchmark/halumem_updating_bench.py`; `docs/BENCHMARKS.md` **esiste** | `test_halumem_updating_logic.py` | ✅ |
 | 646-653 | la tabella dei **sette numeri** contro «MemOS (self-reported)» | `benchmark/results/*.json` | nessun test lega un numero della tabella al suo file | ⬜ *(ma vedi sotto: la catena è dichiarata e l'ho percorsa)* |
 | 655-661 | 🔑 *«Where each of our numbers comes from — **the committed artefact and the key inside it, so you can check any of them without guessing**»* | `benchmark/results/` | nessun presidio — **ma l'ho verificato a mano oggi, 08/09: sei numeri su sei coincidono** (dettaglio nel riquadro ①) | ✅ |
@@ -697,9 +697,9 @@ nessuno che le guardi invecchiare.*
 $ python docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py
 coperte fino alla riga 811 / 811   (100.0%)
 righe di claim in tabella:  155
-  con ✅ : 121
+  con ✅ : 119
   con ❌ : 3   -> righe del file: [42, 54, 543]
-  con ⬜ : 55
+  con ⬜ : 57
   che portano SIA ✅ SIA ⬜ (claim diviso in due): 23
 
 controllo positivo: 0 righe di claim senza verdetto (su 155).
@@ -708,7 +708,15 @@ EXIT=0
 ```
 
 **Le 811 righe sono mappate.** Tre ❌ (righe 42, 54 e 543 di questo file =
-README:24, 53-57, 714-715), 121 ✅, 55 ⬜.
+README:24, 53-57, 714-715), 119 ✅, 57 ⬜.
+
+🪞 **Erano 121 ✅ alle 22:07.** Alle 22:33 ne ho ritirati due io: le righe
+580-582 e 632-637 (i comandi `gateway keys create`, `gateway serve`,
+`gateway backup`/`restore`) avevano un ✅ perché *il gruppo Typer esiste* e
+*esistono test sul backup*. Ma **nessun test invoca quei comandi**: i presidi
+provano il gateway HTTP e la funzione di backup. È il difetto che ho passato la
+giornata a nominare — *il livello a cui misuri decide il verdetto* — commesso
+da me su questa stessa pagina. Il conto sta in [CLI-claims.md](CLI-claims.md).
 
 ⚠️ **Che cosa vale questo 121.** Un ✅ qui dice *«la promessa ha
 un'implementazione e qualcuno la guarda»*, non *«l'ho vista funzionare»*: dove
