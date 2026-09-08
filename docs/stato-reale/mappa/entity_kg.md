@@ -29,21 +29,44 @@ verde qui come una verifica della dashboard, che è di un altro owner.
 
 ## Le righe, raggruppate per esecuzione
 
-| # | funzioni | chiamata da | test eseguito | verdetto | prova |
-|---|---|---|---|---|---|
-| 1 | `aliases_of` · `count` · `edges_from` · `entities_for_fact` · `fact_counts` e altre 10 | il percorso di lettura del grafo | `tests/test_read_connection_is_reused.py` — **15** funzioni di questo file, il blocco più denso trovato finora | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_read_connection_is_reused.py` → `10 passed in 20.32s` EXIT=0 |
-| 2 | `add_alias` · `aliases_of` · `count` · `facts_for_entity` · `get_by_name` (+2) | il file di test proprio del modulo | `tests/test_entity_kg.py` | **FUNZIONA COME PROMESSO**, limitato | `17 passed, 1 warning in 9.x` EXIT=0 |
-| 3 | `add_edge` · `get` · `get_attrs` · `get_by_name` · `link_fact` (+4) | gli àncora del recall | `tests/test_anchor_recall.py` | **FUNZIONA COME PROMESSO**, limitato | `8 passed, 1 warning in 10.x` EXIT=0 |
-| 4 | `ppr` · `ppr_weighted` · `session` · `add_edge` · `link_fact` (+1) | il ranking personalizzato | `tests/test_ppr_fact_ranking.py` | **FUNZIONA COME PROMESSO**, limitato | `8 passed in 9.36s` EXIT=0 |
+Il verdetto di ogni blocco è **FUNZIONA COME PROMESSO**, limitato
+a ciò che quel test asserisce.
 
-**Copertura di questo giro: 4 esecuzioni, tutte verdi.** Le funzioni toccate si
-sovrappongono fra i blocchi (`add_edge` e `link_fact` compaiono in tre) — il
-conteggio esatto delle righe distinte lo faccio nel prossimo giro, e **non lo
-stimo qui**: un numero non contato in una mappa che serve a contare è il difetto
-peggiore che ci si possa mettere, e l'ho già commesso una volta stasera.
+**23 pubbliche su 23 coperte, con SEI blocchi eseguiti, tutti verdi.**
+
+| # | blocco | pubbliche nominate | prova |
+|---|---|---|---|
+| 1 | `test_read_connection_is_reused.py` | 15 | `10 passed in 20.32s` EXIT=0 |
+| 2 | `test_anchor_recall.py` | 9 | `8 passed, 1 warning in 10.x` EXIT=0 |
+| 3 | `test_entity_kg.py` | 7 | `17 passed, 1 warning in 9.x` EXIT=0 |
+| 4 | `test_ppr_fact_ranking.py` | 6 | `8 passed in 9.36s` EXIT=0 |
+| 5 | `test_ppr_entity_neighbors.py` | 6 | `11 passed, 1 warning in 10.x` EXIT=0 |
+| 6 | `test_entity_traced_paths.py` | 4 | `8 passed in 10.94s` EXIT=0 |
+
+## 🔑 Il debito che avevo dichiarato, e perché non andava stimato
+
+Nel primo giro avevo scritto: «le funzioni si sovrappongono fra i blocchi, il
+conteggio deduplicato lo faccio dopo e **non lo stimo qui**». Contato adesso con
+`scratchpad/copertura_dedup.py`:
+
+```
+SOMMA delle colonne (con i doppioni) : 47
+UNIONE, cioè il numero vero          : 23
+```
+
+**Sommare le colonne avrebbe dato 47 su 23 pubbliche — il doppio del totale.**
+Un numero impossibile, e nessuno se ne sarebbe accorto leggendo la tabella: le
+sei righe sono tutte vere, è la somma che non ha senso. `add_edge` e `link_fact`
+compaiono in tre blocchi ciascuno.
+
+📌 E il conteggio ha fatto una seconda cosa, più utile del numero: **ha detto
+cosa mancava.** Coi primi quattro blocchi l'unione era 21, e le due scoperte
+erano `neighbors` e `traced_paths`. Cercate, avevano ciascuna un test dedicato
+(`test_ppr_entity_neighbors`, `test_entity_traced_paths`) che nessuno dei quattro
+blocchi toccava. Senza il conto deduplicato avrei chiuso il file a 21 su 23
+credendolo completo.
 
 ## Da fare
 
-- il conto esatto delle pubbliche coperte dai quattro blocchi (deduplicato)
 - le `_private` di questo file
 - `entity_extract_lite.py` e `entity_populate.py` (6 funzioni in due file)
