@@ -69,11 +69,39 @@ sbagliato a un passo dal tag.*
 
 ---
 
+## Righe 91-150 — riproducibilità e la sezione «Features»
+
+| riga | claim | dove sta | presidio | verdetto |
+|---|---|---|---|---|
+| 91-93 | «il tasso di falsità e la quota servita **si leggono insieme o non si leggono**» (42% contro 63%) | — | **nessuno** | ✅ **come metodo**: impedisce di confrontare due tassi con denominatori diversi. ⬜ come misura |
+| 95-100 | **«riprodulo tu stesso, un comando per dataset, nessuna rete per i dati»**: `bash scripts/repro_c10.sh truthfulqa\|halueval`, con gli exit code dichiarati (`0` tiene · `3` diverge · `2` manca un prerequisito) | `scripts/repro_c10.sh` — **il file esiste** | **nessuno** | ✅ **sul file** · ⬜ **sul comportamento**: nessun presidio esegue lo script o verifica che gli exit code siano quelli. 🔑 **È la promessa più forte della pagina** — *«non fidarti, rifallo»* — e **nessun test la tiene ferma** |
+| 102-103 | «il modello del giudice (746 MB) è un **prerequisito**, e lo script **lo dice e si ferma** invece di produrre un numero che somiglia a questo senza di esso» | `scripts/repro_c10.sh` | **nessuno** | ⬜ **NON MISURATO** — *ed è la riga che protegge tutte le altre: se lo script non si fermasse davvero, i numeri riprodotti sarebbero falsi e sembrerebbero veri* |
+| 107-122 | **«scritture con il moat ON per default»**: ogni fatto entra come claim a bassa fiducia · con un giudice llm iniettato **AUROC 0,96-0,97** (sonnet, SNLI held-out; fuori distribuzione **~0,81-0,90**, il CE libero **~0,82**) · funziona **senza llm e in qualunque lingua** col modello locale · **solo** se mancano sia l'llm sia il modello il gate **fail-open**, e lo dice con `L4-skipped` | `anti_confab_gate.py` · `docs/EVIDENCE-external-2026-07-19.md` **esiste** | `test_verimem_l4_no_source_advisory.py` (per `L4-skipped`) | ✅ **sul fail-open dichiarato** (l'avviso esiste ed è presidiato) · ⬜ **sugli AUROC**: nessun presidio li rilegge · ⚠️ **il «per default» è quello che la riga 24 smentisce alla porta** |
+| 123-127 | **«ambito onesto del giudice CE-only»**: prende le contraddizioni di **valore/numero** e i confab fuori tema, **ma non tutte** — la run del **18/07** dava **0** fughe numeriche, la stessa il **25/08** ne dà **4** ed **esce 1**. *«Rieseguilo tu prima di fidarti di uno dei due numeri.»* | `benchmark/moat_multilingual_matrix.py` — **esiste** | **nessuno** | ✅ **e questa è la riga più onesta del README**: dichiara che **due esecuzioni dello stesso comando danno numeri diversi**, e non sceglie quello che conviene. ⬜ come misura |
+| 128-142 | il **buco più grande, quantificato**: un'inferenza aggiunta plausibile che la fonte non enuncia passa — **25 su 48** ammesse (IT 54,2%, EN 50,0%), e **8 delle 48 coppie IT/EN prendono il verdetto OPPOSTO nelle due lingue, in entrambe le direzioni** · sostituzione di entità: **25% di fuga in spagnolo** (7 su 28), **7,1%** sull'intera matrice | `docs/stato-reale/banco-osservatore-il-tasso.py` **esiste** · `docs/EVIDENCE-stress-2026-07-18.md` **esiste** | **nessuno** | ✅ **sul metodo, ed è la cosa più difficile da scrivere**: la riga dice *«questo README lasciava senza numero proprio il buco più grande, mentre quantificava tutti i minori»*, e poi lo quantifica. Il verdetto per l'utente è scritto: *«su falsità per omissione il CE da solo è vicino a un lancio di moneta»* · ⬜ come misura |
+| 143-150 | la **banda a due soglie**, **accesa per default** (`VERIMEM_CE_BAND_ENFORCE=0` la spegne): taglia la fuga spagnola **6,2% → 1,8%**, **zero** nuovi blocchi falsi, al costo di **1 su 19** di over-review · e **scala a una aggiudicazione llm OFFLINE-FIRST** (ollama, `qwen2.5:7b-instruct`, **AUROC 0,858** contro **0,829** del CE) | `grounding_gate.py` · `doctor.py` (la leva esiste in **2 punti ciascuno**) | `test_le_leve_che_il_readme_insegna_hanno_effetto.py` | ✅ **la leva esiste e un presidio verifica che le leve del README abbiano effetto** · ⬜ **sui numeri della banda** (6,2 → 1,8, 1/19, 0,858 vs 0,829): nessun presidio li rilegge |
+
+### 📌 Il reperto di questo blocco
+
+**La promessa più forte della pagina non ha un presidio.** Le righe 95-103
+dicono *«non fidarti: rifallo tu, un comando per dataset»* — ed è la forma
+migliore in cui un prodotto può dare un numero. Ma **nessun test esegue
+`repro_c10.sh` né verifica che si fermi davvero** quando manca il modello: se un
+giorno smettesse di fermarsi, produrrebbe un numero *plausibile e falso*, che è
+esattamente il danno che quella riga esiste per impedire.
+
+🔑 **E il blocco contiene la riga più onesta del README** (123-127): dichiara che
+**la stessa run dà 0 fughe il 18/07 e 4 il 25/08**, e invece di scegliere il
+numero comodo dice *«rieseguilo prima di fidarti di uno dei due»*. *Un prodotto
+che pubblica la propria varianza è più credibile di uno che pubblica il minimo.*
+
+---
+
 ## 📊 Contatore
 
 ```
-righe lavorate:  90 / 811   (11,1%)
-verdetti:  ✅ 10   ❌ 2   ⬜ 12   (una riga può portare due verdetti su due claim)
+righe lavorate:  150 / 811   (18,5%)
+verdetti:  ✅ 17   ❌ 2   ⬜ 19   (una riga può portare due verdetti su due claim)
 ```
 
 **I due ❌ sono la riga 24 e la 53-57**, e sono **lo stesso difetto**: la frase con
