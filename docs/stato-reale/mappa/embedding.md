@@ -111,9 +111,26 @@ segnale.
   ⇒ Ogni sottosistema è coerente **al suo interno**, e `memory.py` avverte esplicitamente di
   **non** allinearlo. ⚠️ **Il rischio non è il chiamante distratto: è la GIUNTURA** — un
   vettore prodotto senza prefisso confrontato con uno prodotto con prefisso sarebbe un
-  confronto fra due spazi. **Non ho verificato se i due si incontrino mai**, e questa è la
-  domanda giusta (è la stessa forma di CVE-008: nessuno dei due lati sbaglia, il rischio sta
-  dove si toccano).
+  confronto fra due spazi (stessa forma di CVE-008: nessuno dei due lati sbaglia, il rischio
+  sta dove si toccano).
+
+  📌 **QUANTO HO POTUTO VERIFICARE, e dove mi sono fermata.** Il rischio è **ristretto**, non
+  escluso:
+
+      memory.py    → episodes.db   tabelle: episodes · traces · causal_edges
+      semantic.py  → semantic.db   tabella:  facts
+
+  **Due store distinti, tabelle distinte**, e il commento vieta l'allineamento. Perché i due
+  spazi si incontrino servirebbe una funzione che passa a `cosine()` **un vettore di episodio
+  e uno di fatto insieme**.
+
+  ⛔ **Questo NON l'ho verificato, e non si chiude con un comando.** Quattordici file
+  importano entrambi i sottosistemi, ma *importarli* non è *confrontarne i vettori*: servirebbe
+  seguire i tipi attraverso i chiamanti, e il grep **trova, non decide**. Contare le
+  occorrenze di `cosine` in quei file darebbe un numero che non risponde alla domanda —
+  sarebbe il righello sbagliato, quello che stasera mi ha già prodotto 20 falsi positivi su 21.
+
+  ⇒ **Resta aperto, con la ragione**: serve una lettura dei tipi, non una ricerca testuale.
 - **Non ho misurato il timeout di `_MODEL_LOCK`** sotto contesa reale: so che esiste ed è 90 s
   di default, non cosa succede a chi ci finisce dentro.
 - **`_cached_encode` è un LRU**: non ho controllato la sua dimensione né se la cache possa
