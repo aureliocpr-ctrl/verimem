@@ -34,6 +34,11 @@ ordina la coda.
 | `docs/archive/2026-05-13_QA_AUDIT.md` | **MORTO** | piano di QA del 13/05 archiviato: la tabella elenca test da scrivere con la copertura «da → a». Mai scritti |
 | `docs/archive/2026-05-13_BENCH_VALIDATION.md` | **MORTO** | riga 221: «**Aggiungere** uno script `scripts/bench_active_memory.py`» — proposta archiviata. Cita anche una chiave API esterna e un costo in dollari: superato |
 | `docs/stato-reale/i-28-rossi-classificati.md` | **VIVO** | cita `benchmark/lme_retrieval_bench.py` **dentro** la citazione di un marcatore che dice «non esiste nel repo»: racconta l'assenza |
+| `docs/SECURITY_AUDIT_2026-07-11.md` | **VIVO**, ma il rimando che lo cita è rotto | `CHANGELOG.md:2344` dice «full report in `SECURITY_AUDIT.md`»: il file esiste col nome `SECURITY_AUDIT_2026-07-11.md`. Chi cerca il nome citato non lo trova |
+| `docs/sota/multi-signal-fusion.md` | **VIVO** | citato dal CHANGELOG col percorso giusto (riga 1791) |
+| `docs/sota/temporal-evolution-narrative.md` | **VIVO** | citato dal CHANGELOG col percorso giusto |
+| `docs/archive/2026-05-13_FORGIA.md` | **VIVO come archivio** | il CHANGELOG lo cita come `FORGIA.md` in voci di versioni passate (righe 1975, 2027): è stato spostato in `archive/` col prefisso della data |
+| `docs/archive/2026-05-13_RND_MEMORIE.md` | **VIVO come archivio** | stessa forma: spostato e rinominato, citato dal nome vecchio in voci storiche |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -52,6 +57,28 @@ esiste», e **solo la prima contraddice il codice**:
 ⇒ Il conteggio «13 documenti nominano un path inesistente» **non è** «13 documenti
 sbagliati»: dei primi dieci letti, **uno solo** è una ricetta rotta.
 
+
+### 🆕 Quarta forma, e un mio righello che ha sbagliato nove volte su dieci
+
+Cercando quali dei 39 documenti citati da README e CHANGELOG non esistono, il mio
+grep ne ha dati **dieci**. Verificati uno per uno: **nove erano falsi positivi miei**.
+
+· `multi-signal-fusion.md`, `temporal-evolution-narrative.md` → esistono in `docs/sota/`:
+  il grep estraeva il **nome senza il percorso** con cui erano citati.
+· `FORGIA.md`, `RND_MEMORIE.md`, `RND_*` → esistono in `docs/archive/` col prefisso della
+  data. Il CHANGELOG li cita col nome vecchio **in voci di versioni passate**: racconta.
+· `emerging_skill_master-fact.md` → non è un documento del repo: è un file nella cartella
+  dati dell'utente (`~/.engram/skill_drafts/…`), dentro un blocco «Disk audit». Il mio
+  grep prende qualunque `*.md` nel testo, **anche i file di qualcun altro**.
+
+**Il decimo è vero, ed è una forma nuova: il RIMANDO RINOMINATO.** Il documento esiste, ma
+con un nome diverso da quello citato — `CHANGELOG.md:2344` promette «full report in
+`SECURITY_AUDIT.md`», e il file si chiama `SECURITY_AUDIT_2026-07-11.md`. Non contraddice
+il codice e non è morto: **è un rimando che non arriva**, e si cura con una riga.
+
+🔎 Lezione per questa mappa: **il grep serve a trovare i candidati, mai a contarli.**
+Nove su dieci sarebbero stati un allarme falso consegnato come misura.
+
 ## Quello che gli indizi dicono di tutti e 287
 
 ```
@@ -67,6 +94,6 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 
 ## Contatore
 
-**Classificati con verdetto letto: 10 su 287.** Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 15 su 287.** Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
