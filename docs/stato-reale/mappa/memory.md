@@ -19,8 +19,13 @@ metodi generici pesca ogni dizionario.
 | 2 | `restore_decayed` (memory.py:1455) | «Reverse a decay prune (A-7). Re-inserts archived episodes + traces» | 🔴 **nessuno**: 0 occorrenze in `cli.py`, `mcp_server.py`, `gateway.py`, `client.py` e in tutto `verimem/`. L'unico uso è `tests/test_decay_prune_undo.py:30` | `tests/test_decay_prune_undo.py` | riga 708 — è la garanzia che la rende vera | **FUNZIONA COME PROMESSO** — ma vedi il reperto sotto | `pytest -q tests/test_decay_prune_undo.py` → `2 passed, 1 warning in 9.8s` EXIT=0 |
 | 3 | `store` (memory.py:552) | «Insert or replace an episode. Backwards-compatible default returns None.» | `store_within_budget` (semantic.py:437) per gli episodi; `mcp_server.py:9402` | `tests/test_deferred_write_durability.py` | — | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 9.32s` EXIT=0 |
 | 4 | `audit_head_at` (memory.py:2645) | «The episodic chain head AS OF the `count`-th chained row» | — da leggere; ⚠️ **omonima** di quella in `semantic.py:6573`: due catene, non un duplicato | `tests/test_audit_mutations_episodic.py` | riga 244 («audit every revision») | **FUNZIONA COME PROMESSO**, limitato | `15 passed` EXIT=0 |
-| 5 | `set_pinned` (memory.py:1326) | «pin/unpin an episode. Pinned episodes are …» | `mcp_server.py:9050` e `:9062` — esposta dalla porta MCP | — da eseguire | — | **NON MISURATO** | — |
-| 6 | `store_batch` (memory.py:818) | «CYCLE #18 — bulk insert con batch embedding.» | `mcp_server.py:9334` · `transcript_ingest.py:124` | — da eseguire | — | **NON MISURATO** | — |
+| 5 | `set_pinned` (memory.py:1326) | «pin/unpin an episode. Pinned episodes are …» | `mcp_server.py:9050` e `:9062` — esposta dalla porta MCP | `tests/test_episode_decay.py` | — | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_episode_decay.py` → `10 passed, 1 warning in 9.x` EXIT=0 |
+| 6 | `store_batch` (memory.py:818) | «CYCLE #18 — bulk insert con batch embedding.» | `mcp_server.py:9334` · `transcript_ingest.py:124` | `tests/test_memory.py` | — | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_memory.py` → `5 passed, 1 warning in 9.7s` EXIT=0 |
+| 7 | `by_outcome` (memory.py:1565) | gli episodi con un dato esito | usata dai test e dalla porta di ricerca | `tests/test_memory.py` · `tests/test_mcp_search_and_list.py` | — | **FUNZIONA COME PROMESSO**, limitato | `5 passed` EXIT=0 · `13 passed, 1 warning in 9.x` EXIT=0 |
+| 8 | **`by_task`** (memory.py:1573) | gli episodi di un dato task | 🔴 **NESSUNO** | 🔴 **nessuno** | — | 🔴 **MAI CHIAMATA** — vedi sotto | `grep -rnw by_task .` (tutto il repo, ogni tipo di file) → **1 riga: la definizione** |
+| 9 | `decay_pruning_candidates` (memory.py:1292) | «Episodes whose Ebbinghaus retention falls below the threshold.» | il ciclo di sonno, con `decay_prune` | `tests/test_episode_decay.py` | riga 708 | **FUNZIONA COME PROMESSO**, limitato | `10 passed` EXIT=0 |
+| 10 | `add_causal_edge` · `causal_graph` (1530, 1539) | il grafo causale fra episodi | — da leggere | `tests/test_memory.py` · `e2e_cycle51_54_chain.py` | — | **FUNZIONA COME PROMESSO**, limitato | `5 passed` EXIT=0 |
+| 11 | `delete` · `delete_by_task_text` · `count` · `all` · `get` | la famiglia di lettura/cancellazione degli episodi | 4 file di test le coprono insieme | `tests/test_memory_delete.py` · `tests/test_audit_mutations_episodic.py` | riga 289 («True forget») | **FUNZIONA COME PROMESSO**, limitato | `pytest -q tests/test_memory_delete.py` → `6 passed, 1 warning in 10.x` EXIT=0 |
 
 ## 🔴 Il reperto: si pota da soli, si ripristina solo scrivendo codice
 
@@ -48,3 +53,35 @@ e la chiusura in positivo (i 28 episodi non erano di casa, stavano in store
 temporanei). Quella cella chiede se i presidi sono **verificabili**; questa riga
 chiede se sono **raggiungibili**. Sono due domande diverse sulla stessa funzione,
 e la seconda non era stata fatta.
+
+
+## 🔴 `by_task` (1573) — il primo MAI CHIAMATA della mappa, e regge alla verifica
+
+Il mandato dice che questo verdetto porta a **proporre la rimozione**, quindi
+prima ho applicato la regola che avevo scritto io dopo i tre falsi morti di
+`semantic.py`:
+
+| controllo | esito |
+|---|---|
+| nome **nudo** in tutto il repo, **ogni tipo di file** (non solo `.py`/`.md`) | **1 riga: la definizione stessa** |
+| chiamanti **dentro** il file | nessuno |
+| richiami **dinamici** (`getattr`, dispatch, la stringa `"by_task"`) | nessuno |
+| test che la nominano | nessuno |
+| documenti che la citano | nessuno |
+
+E il **controllo che la rende leggibile**: il suo gemello di due righe sopra,
+`by_outcome` (1565), stessa firma e stessa forma, **è usato** — compare in
+`tests/test_memory.py` e `tests/test_mcp_search_and_list.py`, entrambi verdi.
+Quindi non è la famiglia a essere morta: è questa funzione, scritta per
+simmetria con l'altra e mai chiamata da nessuno.
+
+⇒ **PROPOSTA: rimozione.** Non la eseguo — durante la mappa non si cura — e la
+consegno con il comando che la sostiene. Chi la prende verifichi che non sia
+parte di un'API pubblica documentata altrove che non ho cercato (l'ho cercata in
+`README`, `CHANGELOG` e `docs/`: zero).
+
+📌 Vale la pena dire **quanto è costato arrivare a un morto vero**: in
+`semantic.py` tre righelli diversi mi avevano dato 1, 91 e 2 falsi morti, tutti
+smentiti. Qui il metodo corretto dà **1 su 88 funzioni pubbliche fra i due file**
+(41 in `semantic.py`, 47 in `memory.py`, contate con `ast`). Un tasso del genere è la ragione per cui il verdetto MAI CHIAMATA va
+speso solo dopo tutti e cinque i controlli della tabella qui sopra.
