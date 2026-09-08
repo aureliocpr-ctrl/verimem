@@ -338,7 +338,7 @@ allora non avevo.
 | # | funzione | chiamata da | test | verdetto | prova |
 |---|---|---|---|---|---|
 | 50 | `_rango_di_fiducia` (599) | `semantic.py:6064` e `:6080`; **importata** da `contradiction.py:536` | nessuno la nomina; la esercita `tests/test_auto_supersede_on_contradiction_scan68.py` per via del chiamante | **FUNZIONA COME PROMESSO** — vedi il reperto sopra | `pytest -q tests/test_auto_supersede_on_contradiction_scan68.py` → `3 passed, 1 warning in 9.0s` EXIT=0 |
-| 51 | `_validate_min_status` (630) | `semantic.py:4069` (recall) e `:5254` (recall_hybrid) — **due** vie di lettura | via i chiamanti | **NON MISURATO** direttamente | — |
-| 52 | `_row_passes_status_filter` (639) | `semantic.py:4492`, dentro il filtro di riga | via i chiamanti | **NON MISURATO** direttamente | — |
+| 51 | `_validate_min_status` (630) | `semantic.py:4069` (recall) e `:5254` (recall_hybrid) — **due** vie di lettura | `tests/test_fusion_provenance_filter_r3.py` · `tests/test_i_canali_di_scrittura_sono_allineati.py` (passano `min_status`, cioè il parametro che questa valida) | **FUNZIONA COME PROMESSO**, limitato | `2 passed, 2 warnings in 9.x` EXIT=0 · `3 passed in 8.34s` EXIT=0 |
+| 52 | `_row_passes_status_filter` (639) | `semantic.py:4492`, dentro il filtro di riga | gli stessi due: sono le celle che esercitano il filtro per stato | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 51 |
 | 53 | `_fact_from_dict` (257) | `semantic.py:402`, nel replay del journal | `tests/test_crash_injection_g3.py` (per via del replay) | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
 | 54 | `_journal_append` (238) | `semantic.py:472` e `:515` — la scrittura differita | `tests/test_crash_injection_g3.py` · `tests/test_deferred_write_journal.py` | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
