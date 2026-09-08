@@ -111,3 +111,62 @@ def test_il_banner_non_presenta_warmup_come_obbligo(rx):
         "gated. warmup sposta QUANDO paghi il download, non se il moat e' "
         "acceso."
     )
+
+
+# ─────────────────────────────────────────────────────────────────────────
+# 08/09 — IL PRESIDIO GUARDAVA IL POSTO IN CUI LA FRASE ERA STATA CURATA,
+# NON IL POSTO IN CUI ERA RIMASTA.
+#
+# Il 06/09 il banner e' stato corretto e questo file l'ha presidiato: 7 passed,
+# EXIT=0 sul tip 0ffd5ef7 — il candidato al tag. Ma `_banner()` legge solo le
+# prime 40 righe, e la stessa frase vietata viveva alla riga 344, dentro
+# `## Install`:
+#
+#     > ⚠️ After `pip install`, run `verimem warmup` before the first write —
+#     > see the banner at the top: without it the judge is missing and the
+#     > moat is OFF.
+#
+# ⚠️ E CITAVA IL BANNER COME FONTE di cio' che il banner smentisce
+# esplicitamente («This box used to say the moat was OFF … Corrected here»).
+# ⇒ Presidio verde, difetto presente, sul commit che si tagga.
+#
+# 🪞 La stessa riga era stata letta il 04/09 (`docs/stato-reale/00-ESAME.md`,
+# cella W7-142) come una VIRTU' — «il README sa dire che una cosa e' OFF, e lo
+# fa due volte». Era vero quel giorno: il banner diceva la stessa cosa. E'
+# diventata una contraddizione due giorni dopo, quando il banner e' cambiato e
+# l'Install no. **Una citazione interna invecchia quando cambia cio' che cita.**
+def test_la_frase_falsa_non_vive_in_NESSUN_punto_del_readme():
+    testo = README.read_text(encoding="utf-8", errors="replace")
+    colpevoli = []
+    for n, riga in enumerate(testo.splitlines(), 1):
+        if n <= _RIGHE_DEL_BANNER:
+            continue  # il banner ha gia' i suoi test, sopra
+        for rx in _FRASI_FALSE:
+            if rx.search(riga):
+                colpevoli.append(f"  README.md:{n}: {riga.strip()[:100]}")
+                break  # una riga si conta UNA volta, anche se due regex la prendono
+    assert not colpevoli, (
+        "il README dice che il moat e' spento finche' non esegui `warmup`, "
+        "FUORI dal banner — e il banner dichiara quella frase falsa e misurata "
+        "tale (06/09, 0.7.6 con la cartella del giudice vuota: la scrittura e' "
+        "stata giudicata lo stesso). Righe:\n" + "\n".join(colpevoli)
+    )
+
+
+def test_CONTROLLO_il_corpo_del_readme_e_stato_letto_davvero():
+    """Il gemello del controllo positivo di sopra, per QUESTO test.
+
+    Se il README fosse vuoto o troncato, il test qui sopra passerebbe senza
+    aver guardato niente: un verde che non ha letto nulla non e' un verde.
+    """
+    righe = README.read_text(encoding="utf-8", errors="replace").splitlines()
+    assert len(righe) > _RIGHE_DEL_BANNER + 100, (
+        f"il README ha {len(righe)} righe: il corpo oltre il banner non c'e', "
+        "quindi il test sulla frase falsa non sta guardando nulla."
+    )
+    corpo = "\n".join(righe[_RIGHE_DEL_BANNER:])
+    assert "warmup" in corpo, (
+        "nel corpo del README non si parla piu' di `warmup`: se la sezione "
+        "Install e' stata spostata, aggiorna QUESTO file invece di fidarti "
+        "del verde."
+    )

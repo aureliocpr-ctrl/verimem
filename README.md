@@ -336,69 +336,55 @@ rather than producing a number that looks like this one without it.
 - **Local-first** — SQLite storage, local embeddings, injectable LLM. Runs
   air-gapped (`verimem airgap` verifies zero-egress configuration).
 
-> **Two facts from different sources coexist.** Coexistence needs `source=` on **both** facts; facts written without `source=` still retire each other. Recall shows the two signatures, not the reason — a readable field for that is the next step.
-
 ## Install
-
-> ⚠️ **After `pip install`, run `verimem warmup` before the first write** — see
-> the banner at the top: without it the judge is missing and the moat is OFF.
 
 ```bash
 pip install verimem
-verimem warmup   # once: downloads the judge (711 MB). Without it, writes are NOT checked.
+verimem warmup   # optional: pre-downloads the judge (711 MB) so your first
+                 # gated write does not wait for it. Without it the write is
+                 # still judged - it just pays the download once. See the top.
 ```
 
-<!-- ⛔ RILASCIO — LEGGERE PRIMA DI PUBBLICARE.
-     La nota qui sotto vale FINCHE' il pacchetto pubblicato e' vecchio. Nel momento in cui
-     si pubblica diventa FALSA, e non resta un dettaglio interno: `pyproject.toml:16` dice
-     `readme = "README.md"`, quindi QUESTO FILE E' LA PAGINA DI PyPI. Pubblicare senza
-     toccarla spedisce al mondo una vetrina che dice «cio' che PyPI vi serve non e' cio'
-     che questa pagina descrive» -- riferito a se stessa.
-     Chi pubblica: aggiornare i numeri (release, distanza in commit) o togliere il blocco.
-     Aggiunta il 2026-08-26 da ws7 insieme alla nota stessa, per non lasciare una mina a
-     chi fara' il rilascio. -->
-> **What PyPI serves you today is not what this page describes.** The latest release
-> is **0.7.0 (22 July)**; `main` is **more than 1900 commits** ahead of it
-> (`git rev-list --count v0.7.0..main` for the exact figure). Two consequences you
-> should know before you start, both measured on 2026-08-26:
+> ### What gets your first write judged: it depends on the port
 >
-> - **The MCP server does not start.** `verimem 0.7.0` declares `mcp>=1.0.0` with no
->   upper bound, so pip resolves it to `mcp 2.1.1`, which removed `list_tools`,
->   `call_tool` and `list_resources` -- the low-level API this server calls in 11
->   places. The ceiling (`mcp>=1.0.0,<2`) has been in the repo since 29 July
->   (`bd4ff5ba`) and is not in the published package -- `bd4ff5ba` is not an ancestor
->   of `v0.7.0`. This is observed, not inferred: `pip install --dry-run
->   verimem==0.7.0` in a clean venv reports *"Would install ... mcp-2.1.1 ...
->   verimem-0.7.0"*, and on that installed `mcp` the API is gone at runtime:
->   `list_tools`, `call_tool` and `list_resources` are absent from both the class and
->   an instance, against an `mcp 1.26.0` control where all three are present on both.
->   The failing line itself has been executed: `@server.list_tools()` -- the decorator
->   at `mcp_server.py:6804` in `v0.7.0` -- raises `AttributeError: 'Server' object has
->   no attribute 'list_tools'` under `mcp 2.1.1`, and succeeds under `mcp 1.26.0`. So
->   `mcp<2` does restore that line. What is still *not* observed is the whole
->   `verimem mcp` process starting, which needs the full ~2 GB install.
-> - **18 commands exist here and not in the package**, `save` among them -- the
->   canonical write of the project's own protocol. Counted 2026-08-26 over one
->   perimeter, stated so you can redo it: the `@…command("name")` decorators in
->   **`verimem/cli.py` alone**, published wheel against `main` -- 40 there, 58 here,
->   the 40 a strict subset. A wider or narrower perimeter gives a different figure
->   (top level only: 9; adding `swarm/cli.py` and `teams/cli.py`: 21), which is why
->   the perimeter is written here and not left to the reader. `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md`
->   counted 16 on 2026-08-08 with a different ruler (what `verimem --help` prints);
->   both are true, and the gap has not narrowed.
+> | you write from | what happens to the first write that carries a `source` |
+> |---|---|
+> | **CLI** - `verimem save --source ...` | **judged in ~22 s with no daemon running** (`grounding_score 98.37`), measured 2026-09-07 with the judge model already installed |
+> | **MCP server** - `hippo_remember` | the server **delegates to a shared encode daemon by construction** and never loads the judge in its own process (that import once blocked every concurrent call). It starts the daemon itself - but **if the daemon is missing or does not come up, the write is stored UNJUDGED**: `stored: true`, and the receipt carries `layers: ['L4-skipped']`. **Read that field.** `admitted` on its own does not mean judged. |
 >
-> For what this page claims, install from source (`pip install -e ".[dev]"`, see
-> Development below). `docs/stato-reale/` is where the gap between this README and
-> the published artifact is measured, document by document. Most of those notes are
-> dated 2026-08-08, and whether that makes them stale depends on what each one
-> measures. Most describe the *published* package, and that has not moved since --
-> 0.7.0 is still the latest on PyPI -- so they hold by construction; re-measured on
-> 2026-08-26, `02e` had drifted only against us (16 missing commands then, 18 today).
-> But a few measure `main` instead -- `02m-le-promesse-su-origin-main.md` and
-> `02p-il-server-parte-su-main-...md` say so in their filename -- and `main` has moved
-> by hundreds of commits since. Those are snapshots of a moving target: read the SHA
-> in their header, not the claim.
+> On the **SDK** we do not have a stable answer yet, and we would rather write
+> that than invent one: on the same machine, within the same hour, the same
+> `Memory().add(..., source=...)` came back judged (`grounding_score 99.9`) and,
+> later, unjudged - with the shared daemon verified reachable both times. We are
+> measuring it. Tracked as **T26a** and **T29**.
 
+<!-- ⛔ RILASCIO — LEGGERE PRIMA DI PUBBLICARE.
+     `pyproject.toml:16` dice `readme = "README.md"`: QUESTO FILE E' LA PAGINA DI PyPI.
+     Il blocco qui sotto porta due numeri che invecchiano a ogni release — la versione
+     pubblicata e la distanza in commit. NON aggiornarli a mano sperando di ricordarsene:
+     `tests/test_la_vetrina_dice_l_ultima_release_giusta.py` li lega ai tag del repo e
+     diventa rosso da solo quando si sfasano.
+     Storia, perche' non si ripeta: fino all'08/09 questo blocco diceva «the latest
+     release is 0.7.0 (22 July)» mentre la 0.7.1 e la 0.7.6 erano gia' pubblicate — QUELLO
+     era falso, e nessuno l'aveva rieseguito.
+     ⚠️ E una correzione a me stessa, fatta dal presidio: avevo letto come falsi anche i
+     due conteggi («more than 1900» e «over 400» a tre righe l'uno dall'altro) perche' il
+     misurato e' 3891. NON erano falsi: sono SOGLIE, e una soglia monotona resta vera
+     mentre cresce — e' una cura deliberata del 29/08 (LANT-62), presidiata da
+     `test_la_soglia_in_commit_del_readme_e_ancora_vera`, che e' diventato ROSSO quando
+     ho messo un numero esatto al loro posto. Erano incoerenti fra loro, non falsi: la
+     distanza si dichiara con UNA soglia sola. -->
+> **What PyPI serves you today.** The latest published release is **0.7.6
+> (2026-09-04)**; `main` is **more than 150 commits** ahead of it (measured
+> 2026-09-08: `git rev-list --count v0.7.6..main` = 189). The figure is written
+> as a floor on purpose - a floor only grows truer, an exact count is stale
+> within the hour. Install from PyPI and you get 0.7.6; this page describes
+> `main`.
+>
+> `docs/stato-reale/` measures the gap between this page and the published
+> artifact, document by document. **Read the SHA in each header**: several of
+> those notes measure `main`, which moves — and a few of them are older than the
+> release they talk about.
 **What it costs on disk.** Verimem ships a local judge, so the footprint is larger than a
 typical library and it is worth knowing before you start:
 
