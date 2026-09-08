@@ -98,8 +98,22 @@ segnale.
 
 ## 7. Quello che questa mappa NON dice — dichiarato
 
-- **Non ho verificato che i prefissi e5 siano applicati da tutti i chiamanti** (§5): è un
-  degrado senza segnale, quindi la sola lettura non basta — serve un banco.
+- ~~Non ho verificato che i prefissi e5 siano applicati da tutti i chiamanti~~ →
+  **VERIFICATO, e la domanda era posta male.** Non è una dimenticanza: **sono due
+  convenzioni, entrambe dichiarate.**
+
+      semantic.py    li APPLICA      as_passage in store (175, 184, 3270, 3592)
+                                     as_query in recall (4089)
+      memory.py:76   NON li applica  «store(), _raw_cosine_recall and compute_salience
+                                     are ALL as_passage-free and INTERNALLY CONSISTENT,
+                                     so … do NOT "align" it with semantic's as_passage»
+
+  ⇒ Ogni sottosistema è coerente **al suo interno**, e `memory.py` avverte esplicitamente di
+  **non** allinearlo. ⚠️ **Il rischio non è il chiamante distratto: è la GIUNTURA** — un
+  vettore prodotto senza prefisso confrontato con uno prodotto con prefisso sarebbe un
+  confronto fra due spazi. **Non ho verificato se i due si incontrino mai**, e questa è la
+  domanda giusta (è la stessa forma di CVE-008: nessuno dei due lati sbaglia, il rischio sta
+  dove si toccano).
 - **Non ho misurato il timeout di `_MODEL_LOCK`** sotto contesa reale: so che esiste ed è 90 s
   di default, non cosa succede a chi ci finisce dentro.
 - **`_cached_encode` è un LRU**: non ho controllato la sua dimensione né se la cache possa

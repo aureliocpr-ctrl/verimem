@@ -83,10 +83,14 @@ Raccolti dalle sezioni finali dei quindici file. **Nessuno è stato misurato.**
 - **Nessuna prova che i 28 layer siano raggiungibili** su un input reale.
 - **Nessuna difesa di `encode_service` è stata esercitata** — la prima da provare è
   `_owner_is_zombie`, perché la sua assenza è già costata (25/07).
-- `_safe_tar_extract` (difesa tar-slip sul download da 746 MB): **ha un test?**
+- ~~`_safe_tar_extract`: ha un test?~~ → **SÌ**, `tests/test_gate_model_tarslip.py`. Il
+  presidio porta il nome dell'attacco. **Chiuso in positivo.**
 - `_default_gate_fn` (il percorso per cui il daemon giudica): **ha un test?**
-- **I prefissi e5** (`as_query`/`as_passage`): applicati da tutti i chiamanti? È un degrado
-  **senza segnale**.
+- ~~**I prefissi e5**: applicati da tutti i chiamanti?~~ → **La domanda era posta male.** Non
+  è una dimenticanza: `semantic.py` li applica, `memory.py:76` dichiara di **non** applicarli
+  ed è *«internally consistent»*, con l'avvertenza esplicita di **non allinearlo**. ⇒ **Due
+  convenzioni volute.** Il rischio vero è la **giuntura** — un vettore senza prefisso
+  confrontato con uno con prefisso — e **quello resta da verificare**. Stessa forma di ③.
 - La **cache LRU** di `embedding`: può servire un vettore del modello precedente?
 - **Quanti fast-path saltano il loop dell'LLM** (la domanda di ③).
 - `_dispatch_native` (5 righe) contro `_dispatch` (18): asimmetria **plausibile ma non

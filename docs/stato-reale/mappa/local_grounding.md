@@ -114,7 +114,9 @@ esiste un test? Giro 2.
 
 ## 6. Quello che questa mappa NON dice — dichiarato
 
-- **Non ho verificato che `_safe_tar_extract` sia coperta da un test.**
+- ~~Non ho verificato che `_safe_tar_extract` sia coperta da un test~~ → **VERIFICATO, e
+  chiude in positivo**: `tests/test_gate_model_tarslip.py`. La difesa contro il tar-slip sul
+  download da 746 MB **è presidiata**, e il presidio si chiama col nome dell'attacco.
 - **Non ho misurato le altre tre vie**: solo la quarta (daemon) e il costo del tokenizer.
 - **`_resolve_model_dir` e `_esito_dell_installazione`** sono lette solo di nome.
 
