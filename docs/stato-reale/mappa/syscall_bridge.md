@@ -90,6 +90,61 @@ claim: un banco del rate-limit deve usare un'op finta anche per (b).
   file, e vale più delle percentuali: un'op che il manifesto accetta è una porta
   aperta, e due di queste porte non hanno un test.
 
+## T42 — `clp` non è una dipendenza: che cosa riceve un utente che non ce l'ha
+
+Dato di @lead-audit: il pacchetto importa `clp.agentos` in tre punti e `clp`
+**non compare in `pyproject.toml`** (`grep -nE "clp|agentos" pyproject.toml` →
+nessun match, exit 1). Per un utente quel modulo non esiste. La domanda era: se
+cade, è un NON COME PROMESSO.
+
+**I tre import sono tutti guardati** — letti uno per uno:
+
+| punto | forma | che cosa succede senza `clp` |
+|---|---|---|
+| `syscall_bridge.py:102-106` | `try/except ImportError` | ritorna `{"ok": False, "error": "vec_bus.embed_text unavailable"}` |
+| `mesh_memory.py:74-79` | `_vec_bus()` con `try/except` | ritorna `None` |
+| `op_supervisor.py:226` | dentro un `try` | l'allarme best-effort non parte (è nella parte del lead) |
+
+⇒ **non cade.** Ma la lettura non basta: ho simulato l'assenza di `clp` con un
+finder che solleva `ImportError` su quel nome (controllo positivo: il banco
+verifica di *aver davvero* reso `clp` irraggiungibile, e si ferma se non ci
+riesce) e ho chiamato `engram_invoke` come lo chiamerebbe un utente:
+
+```
+✅ CONTROLLO: `clp` è irraggiungibile in questo processo
+verimem importato da: C:\Users\aurel\Code\HA-ws1-main\verimem\syscall_bridge.py
+
+ok         = False
+blocked_by = None
+result     = {"ok": false, "error": "vec_bus.embed_text unavailable"}
+riga di audit: ok=False blocked_by=None op='recall'
+```
+
+**La mia predizione era che uscisse `ok=True`** (l'handler non solleva, quindi
+pensavo scattasse la clausola (d) «success») **ed è stata smentita**:
+`engram_invoke` riporta il fallimento, e il log di audit pure. Bene così.
+
+🔴 **Ma il banco fa emergere un quinto esito che il contratto non enumera.** Il
+docstring dichiara quattro casi — `not_in_manifest`, `rate_limit_exceeded`,
+`exception`, successo — e questo non è nessuno dei quattro:
+
+```
+ok=False  ·  blocked_by=None
+```
+
+Un handler che **ritorna** un errore invece di sollevarlo produce un fallimento
+**senza causa nel campo che porta le cause**. Chi legge il log di audit per
+sapere *perché* una chiamata è fallita trova `blocked_by=None` e deve andare a
+cercare dentro `result` — che l'audit, per scelta esplicita (`:230`, non si
+registrano i valori), **non contiene**.
+
+⇒ **T42 — NON COME PROMESSO, e la promessa infranta è quella del docstring, non
+del codice**: il «Falsifiable contract» elenca quattro esiti e ne esiste un
+quinto, che è anche il più probabile per un utente senza `clp`. **Owner: ws1
+Marie.** La cura è una riga sola (un `blocked_by="handler_error"`, oppure il
+contratto che enumera il caso), ma **non la scrivo adesso** — regola 2 del
+mandato. Il ticket resta con la sua prova.
+
 ## Che cosa NON ho misurato
 
 - **(d) del contratto**: il percorso di successo con un handler reale.
