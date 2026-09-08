@@ -20,7 +20,20 @@ import re
 import subprocess
 import sys
 
-RADICE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def _radice() -> str:
+    """La radice del repo: la cwd se e' un checkout (verimem/ e docs/), altrimenti
+    la cartella sopra lo script. Reperto di ws1 (08/09 21:38): ancorato alla
+    posizione dello script, lanciato da un altro albero descriveva quello."""
+    for cand in (os.getcwd(), os.path.dirname(os.path.dirname(os.path.abspath(__file__)))):
+        if os.path.isdir(os.path.join(cand, "verimem")) and os.path.isdir(
+            os.path.join(cand, "docs")
+        ):
+            return cand
+    sys.exit("mappa_bozza: nessun checkout trovato (serve una cwd con verimem/ e docs/)")
+
+
+RADICE = _radice()
 
 
 def _git_grep(pattern: str, *paths: str) -> list[str]:
