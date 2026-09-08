@@ -2,7 +2,7 @@
 
 **Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) · **08/09**.
 
-## Il claim del README che questo file implementa
+## Il claim del README
 
 > `README:704` — «Write-path gate (**unsupported "it works" claims
 > quarantined** — stored, not served)»
