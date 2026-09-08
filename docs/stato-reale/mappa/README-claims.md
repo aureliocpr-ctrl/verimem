@@ -453,29 +453,99 @@ guardi la pagina: è che **i test la guardano dal lato del server**.
 
 ---
 
+## Righe 596-668 — thin client, Docker, TypeScript, backup a caldo, **e i numeri**
+
+| righe | il claim | dove sta nel codice | chi lo guarda | verdetto |
+|---|---|---|---|---|
+| 597-602 | più sessioni locali su **una** memoria: puntandole a un server diventano **thin client**, *«no model load, just HTTP»* | `client.py`, `mcp_server.py`, `cli.py` | `test_mcp_thin.py`, `test_remote_memory.py`, `test_continuity.py` | ✅ |
+| 605-607 | `verimem gateway serve` + `VERIMEM_SERVER_URL` + `VERIMEM_SERVER_KEY` | le tre variabili in `cli.py`, `client.py`, `mcp_server.py` — **una per porta** | `test_remote_memory.py` | ✅ |
+| 610-613 | **tutte e tre le porte** instradano al server condiviso (SDK `open_memory()`, CLI `remember`/`recall`, MCP `hippo_*`) e *«a session behind it never loads a model»* | `open_memory` in `__init__.py`, `client.py`, `cli.py` | `test_mcp_thin.py` (il nome è la promessa), `test_remote_memory.py` | ✅ |
+| 613-615 | *«If the server is unreachable, each falls back to its own embedded store (fail-soft, never a crash)»* | `client.py` | non seguito fino a un test del fallback | ⬜ |
+| 615-616 | *«Writes are idempotent (a retried cold-start write is de-duplicated)»* | `client.py`, `cli.py` | `test_admission_cleanup.py` e altri nominano l'idempotenza | ✅ |
+| 616-617 | le operazioni con scope (`user_id`/`agent_id`/`run_id`) **restano locali** per isolamento | `client.py` | `test_agent_scope.py` la nomina; non ho seguito il «restano locali» | ⬜ |
+| 618-621 | Docker *«embedding models baked in — runs fully offline»* | `docker-compose.gateway.yml` **esiste** | il file sì; **l'offline dell'immagine no** | ⬜ |
+| 624-626 | il client TypeScript è *«typed, zero-dependency, **contract-tested against the live gateway from the Python suite**»* | `sdk/typescript` **esiste** | 🌟 `tests/test_sdk_typescript.py` — il contract test **è** nella suite Python, come promesso *(«zero-dependency» resta non verificato)* | ✅ |
+| 632-637 | backup a caldo *«SQLite online backup API — **correct while serving**»*, `gateway backup`/`restore`, *«keys + every tenant store + manifest»* | `cli.py`, `doctor.py`, `trust_ledger.py` | 🌟 **cinque** file, e uno porta il nome della promessa: `test_backup_integrity_no_live_race_audit3.py`, più `test_backup_all_dbs.py`, `test_backup_follows_the_data_dir.py`, `test_backup_rotation_integrity_audit3.py` | ✅ |
+| 641-644 | i benchmark sono su **HaluMem**, con la pipeline completa, *«judged by a Claude-based grader»*, metodologia in `docs/BENCHMARKS.md` | `benchmark/halumem_updating_bench.py`; `docs/BENCHMARKS.md` **esiste** | `test_halumem_updating_logic.py` | ✅ |
+| 646-653 | la tabella dei **sette numeri** contro «MemOS (self-reported)» | `benchmark/results/*.json` | nessun test lega un numero della tabella al suo file | ⬜ *(ma vedi sotto: la catena è dichiarata e l'ho percorsa)* |
+| 655-661 | 🔑 *«Where each of our numbers comes from — **the committed artefact and the key inside it, so you can check any of them without guessing**»* | `benchmark/results/` | nessun presidio — **ma l'ho verificato a mano oggi, 08/09: sei numeri su sei coincidono** (dettaglio nel riquadro ①) | ✅ |
+| 662-667 | ⚠️ *«`0.739` is the exception and we say so»*: sta in `BENCHMARKS.md` come `0.7394` e **non ha un file di risultati committato** | — | **verificato**: `docs/BENCHMARKS.md:954` porta `0.7394`, e in `benchmark/results/` ci sono `qa_gem_k12_u0.json` e `qa_gem_k12_u2.json`, **`u1` no** | ✅ |
+
+### ① Ho percorso la catena dei numeri, ed è la parte migliore della pagina
+
+Il README promette che ogni numero si controlla *«senza indovinare»*, dando file
+**e chiave**. È l'unico punto della pagina dove un numero senza presidio è
+comunque **verificabile in un minuto**. L'ho fatto:
+
+```
+e2e_crossuser_u2.json               u1_mean_3runs = 0.667   README: 0.667   ✅
+e2e_crossuser_u2.json               accuracy      = 0.716   README: 0.716   ✅
+qa_gem_k12_u0.json                  accuracy      = 0.75    README: 0.750   ✅
+qa_gem_k12_u2.json                  accuracy      = 0.787   README: 0.787   ✅
+extraction_consolidate_u5s6.json    f1            = 0.7613  README: 0.761   ✅
+halumem_extraction_f1_..._completeness.json  f1   = 0.7683  README: 0.768   ✅
+```
+
+**Sei su sei.** E la riga che vale più delle sei: il README **dichiara la propria
+lacuna** — `0.739` non ha un file committato, lo dice, dice dove sta invece
+(`BENCHMARKS.md`, come `0.7394`) e dice quali utenti sono in `results/` e quale
+no. Ho controllato: è vero. *Un «non ce l'ho» scritto con precisione dice dove
+guardare; è il contrario di un numero riempito con l'ipotesi plausibile.*
+
+⚠️ **Una sfumatura, sulla promessa «senza indovinare»**: in **entrambi** i file
+dell'estrazione la chiave `f1` compare **due volte** con valori diversi (0.7286
+e 0.7613; 0.7683 e 0.7707). Il numero del README c'è, ma chi controlla trova due
+candidati e deve sceglierne uno. La chiave dichiarata **non è univoca dentro il
+file**: non è una bugia, è un passo di indovinello che la frase prometteva di
+togliere.
+
+### ② Sesto e settimo allarme falso della giornata — e la causa è sempre la stessa
+
+Stavo per scrivere ⬜ su due claim, perché il grep con **la stringa del README**
+aveva risposto vuoto: `"gateway backup"` → nessun test; `zero-dependency` →
+nessun test. Cercati col **sintomo** invece che con la parola della vetrina:
+
+```
+tests/test_backup_integrity_no_live_race_audit3.py     <- "correct while serving"
+tests/test_backup_all_dbs.py, ..._follows_the_data_dir.py, ..._rotation_integrity...
+tests/test_sdk_typescript.py                           <- "contract-tested from the Python suite"
+```
+
+Il backup a caldo ha **cinque** presidi e uno porta il nome esatto della
+promessa. Il contract test TypeScript **è** nella suite Python.
+
+🔑 **Sette allarmi falsi cercati e non pubblicati oggi**, e cinque di questi
+sette hanno la stessa causa: **ho cercato il presidio con le parole del README**.
+Un test non si chiama come la frase che difende — si chiama come il **difetto**
+che impedisce. *Cerca il sintomo, non la tua agenda*, sta in memoria dal 03/09
+per l'indagine; oggi vale identico per i presidi.
+
+---
+
 ## 📊 Contatore
 
-⚠️ **I cinque contatori che ho postato prima di questo erano contati a mano.**
-Dalle 21:36 dell'08/09 il numero lo produce un comando —
-`docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py` — e il primo
-confronto ha detto che **sbagliavo a mio favore di 9 ✅ e 8 ⬜**. I ❌ coincidono.
+⚠️ **I cinque contatori che ho postato prima delle 21:36 erano contati a mano** e
+sbagliavano **a mio favore** (+9 ✅, +8 ⬜; i ❌ coincidevano). Ora il numero lo
+produce un comando: `docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py`.
 
 ```
 $ python docs/stato-reale/banchi/ws7-conta-i-verdetti-della-mappa.py
-coperte fino alla riga 595 / 811   (73.4%)
-righe di claim in tabella:  114
-  con ✅ : 93
+coperte fino alla riga 668 / 811   (82.4%)
+righe di claim in tabella:  127
+  con ✅ : 102
   con ❌ : 2   -> righe del file: [42, 54]
-  con ⬜ : 39
+  con ⬜ : 43
   che portano SIA ✅ SIA ⬜ (claim diviso in due): 19
 
-controllo positivo: 0 righe di claim senza verdetto (su 114).
-righe di tabella scartate come intestazione: 10
+controllo positivo: 0 righe di claim senza verdetto (su 127).
+righe di tabella scartate come intestazione: 11
+EXIT=0
 ```
 
-**I due ❌ restano la riga 24 e la 53-57** — lo stesso difetto, la frase con cui il
-prodotto si presenta e la sua ripetizione dodici righe sotto.
+**I due ❌ restano le righe 42 e 54 del file** — README:24 e README:53-57, lo
+stesso difetto: la frase con cui il prodotto si presenta e la sua ripetizione
+dodici righe sotto.
 
-**Cinque allarmi falsi cercati e non pubblicati oggi.** Il conto vale quanto i
-verdetti: se l'avessi tenuto solo dei ❌ trovati, questa mappa direbbe che sono
-stato bravo cinque volte in meno.
+**Sette allarmi falsi cercati e non pubblicati oggi.** Cinque avevano la stessa
+causa: cercare il presidio con **le parole del README** invece che col nome del
+**difetto** che impedisce.
