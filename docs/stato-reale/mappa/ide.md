@@ -55,17 +55,17 @@ Verdetti dati con `coverage` per riga, attribuita alle funzioni con l'`ast`
 | 8 | `_safe_path` (:173) | nessuna fuga con `..` fuori dalla radice (CVE-001) | `:309, 342, 352` (+ docstring :19) | PARZIALE (217-218) | — | **FUNZIONA COME PROMESSO** | `test_ide_path_injection.py` e `test_ide_no_root_mutation.py` verdi dentro i 130 |
 | 9 | `_tree_node` (:237) | un nodo dell'albero dei file, con profondità massima | `:266` (ricorsiva), `:277` (`ide_tree`) | **PARZIALE — 11 righe** (247-265) | — | **NON MISURATO** sui rami scoperti | i rami di esclusione/simlink non sono percorsi dai 130 |
 | 10 | `ide_tree` (:272) | `GET /api/ide/tree` | router (`dashboard.py:129`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 11 | `_is_text` (:293) | vero se il file è testo (per decidere se aprirlo nell'editor) | `:314` (`ide_file_read`) | **MAI ESEGUITA** da questo perimetro (296-304) | — | **NON MISURATO** | nessuno degli 8 file la percorre |
+| 11 | `_is_text` (:293) | vero se il file è testo (per decidere se aprirlo nell'editor) | `:314` (`ide_file_read`) | **PARZIALE — 8 statement scoperti su 10** (296-304) | — | **NON MISURATO** | nessuno degli 8 file la percorre |
 | 12 | `ide_file_read` (:308) | `GET /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
 | 13 | `ide_file_write` (:334) | `PUT /api/ide/file` | router; importata anche da `test_ide_file_write_cap_audit3.py` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | il file di test dedicato è dentro i 130 |
 | 14 | `ide_file_delete` (:351) | `DELETE /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
 | 15 | `ide_file_new` (:369) | `POST /api/ide/file/new` | router | PARZIALE (374) | — | **FUNZIONA COME PROMESSO** | 130 passed |
 | 16 | `ide_run` (:392) | `POST /api/ide/run`, gated da `_shell_enabled` + `_require_token` | router | PARZIALE (412, 428-429, 442) | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` |
-| 17 | `ide_term` (:464) | terminale WebSocket, tre porte: shell abilitata · Origin · token nel primo messaggio | router | **PARZIALE — 99 righe scoperte** | — | **NON MISURATO nel percorso autenticato** (vedi sotto) | 485-487, 492-494, 497-499, **511-600** mai eseguite |
+| 17 | `ide_term` (:464) | terminale WebSocket, tre porte: shell abilitata · Origin · token nel primo messaggio | router | **PARZIALE — 64 statement scoperti su 82** | — | **NON MISURATO nel percorso autenticato** (vedi sotto) | 485-487, 492-494, 497-499, **511-600** mai eseguite |
 | 18 | `_pump` (:565, annidata in `ide_term`) | pompa stdout/stderr del processo verso il WebSocket | `ide_term` | **MAI ESEGUITA** (dentro 511-600) | — | **NON MISURATO** | — |
 | 19 | `_git` (:606) | esegue un comando git nel workspace e torna `(rc, out, err)` | `:622` (`ide_git_status`), `:649` (`ide_git_diff`) | PARZIALE (612-613) | — | **NON MISURATO** | il corpo dei due chiamanti non è eseguito |
-| 20 | `ide_git_status` (:620) | `GET /api/ide/git/status` | router | **PARZIALE — 12 righe** (626-637 = tutto il corpo) | — | **NON MISURATO** | `test_ide.py:108` prova solo il **401 senza auth**: la dipendenza rifiuta prima che il corpo giri |
-| 21 | `ide_git_diff` (:641) | `GET /api/ide/git/diff` | router | **MAI ESEGUITA** (642-652) | — | **NON MISURATO** | nessun test chiama l'endpoint con auth |
+| 20 | `ide_git_status` (:620) | `GET /api/ide/git/status` | router | **PARZIALE — 12 statement su 16** (626-637) | — | **NON MISURATO** | `test_ide.py:108` prova solo il **401 senza auth**: la dipendenza rifiuta prima che il corpo giri |
+| 21 | `ide_git_diff` (:641) | `GET /api/ide/git/diff` | router | **CORPO MAI ESEGUITO** (642-652) | — | **NON MISURATO** | nessun test chiama l'endpoint con auth |
 | 22 | `ide_html` (:841) | la pagina HTML dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
 | 23 | `ide_js` (:1270) | il JavaScript dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
 
@@ -122,3 +122,29 @@ Tre rami di sicurezza **NON MISURATI**. Il resto della catena di auth
   `compare_digest` sul primo messaggio, non `_require_token`).
 - La sicurezza dichiarata nel docstring del modulo (CVE-001/CVE-002) è
   **parzialmente** provata: gli helper sì, l'endpoint WebSocket in gran parte no.
+
+---
+
+### Nota sullo strumento che ha prodotto queste etichette
+
+`attribuisci_coverage.py` ha sbagliato **tre volte** prima di dare i numeri di
+questa tabella, e tutte e tre in modo che valeva la pena inseguire:
+
+1. misurava l'ampiezza di una funzione come `fine - inizio`, cioè **righe
+   fisiche**, incluse la riga del `def` e il docstring — che sono eseguite
+   all'import, sempre. Così `syscall_bridge.py:373 engram_rate_stats`, il cui
+   corpo è **un solo statement e quello statement è scoperto**, usciva
+   «PARZIALE — 1 riga» invece di «corpo mai eseguito»: l'etichetta **più mite
+   proprio nel caso peggiore**;
+2. corretto a statement, la soglia era **80%**, e `ide_term` usciva «CORPO MAI
+   ESEGUITO» mentre le sue prime righe girano eccome: etichetta **più dura del
+   vero**, stavolta a sfavore del codice;
+3. portata la soglia a 100%, il confronto era ancora `len(scoperti) >=
+   len(statement)` — **due insiemi diversi confrontati per dimensione**: fra le
+   righe scoperte ci sono le continuazioni, che non sono statement, e 99 ≥ 90
+   dava di nuovo il verdetto sbagliato. Ora il confronto è per **inclusione**.
+
+🔑 Una soglia arbitraria mente in **entrambi** i versi, e le due volte in cui il
+mio righello ha sbagliato non ha sbagliato dalla stessa parte. È il motivo per
+cui questa tabella porta **due numeri** (`N statement scoperti su M`) e non
+un'etichetta sola: chi legge può rifare il conto.

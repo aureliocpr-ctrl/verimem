@@ -37,14 +37,14 @@ verimem\sandbox.py   268 stmts   63 miss   82 branch   7 BrPart   79,4%
 | 5 | `ExecResult` (:409) | dataclass dell'esito di `execute` (action, rc, stdout, stderr, elapsed) | `execute` in 8 punti | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 160 passed |
 | 6 | `SandboxPolicy` (:423) | allowlist · denylist · `allowed_cwds` · `timeout_s` · `env_scrub_prefixes` · `allow_network` | `SandboxedShell.__init__` :514 | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 160 passed |
 | 7 | `SandboxPolicy.add_allow_pattern` (:446) | aggiunge un pattern all'allowlist | **nessun chiamante nel prodotto**; `tests/test_sandbox.py:200` | ESEGUITA (solo da un test) | — | **MAI CHIAMATA nel prodotto** | `grep -rn "add_allow_pattern" verimem/` → 0 risultati fuori dalla def |
-| 8 | `SandboxPolicy.add_deny_pattern` (:449) | aggiunge un pattern alla denylist | **nessun chiamante, né prodotto né test** | **MAI ESEGUITA** (riga 450) | — | **MAI CHIAMATA** — candidata alla rimozione | `grep -rn "add_deny_pattern" verimem/ tests/` → 0 risultati fuori dalla def |
+| 8 | `SandboxPolicy.add_deny_pattern` (:449) | aggiunge un pattern alla denylist | **nessun chiamante, né prodotto né test** | **CORPO MAI ESEGUITO** (riga 450) | — | **MAI CHIAMATA** — candidata alla rimozione | `grep -rn "add_deny_pattern" verimem/ tests/` → 0 risultati fuori dalla def |
 | 9 | `SandboxPolicy.add_allowed_cwd` (:452) | aggiunge una radice consentita | test | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `security/test_sandbox_cwd_jail_wiring.py` |
 | 10 | `_cwd_within` (:456) | la cwd deve stare dentro una radice consentita (cwd jail) | `_validate_security_layers` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `test_sandbox_cwd_jail_wiring.py` dentro i 160 |
 | 11 | `_scrub_env` (:484) | nasconde le variabili d'ambiente con i prefissi configurati | `execute` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `security/test_env_scrub_secrets.py`: il segreto non compare in `stdout` |
 | 12 | `SandboxedShell.__init__` (:514) · `audit_log_path` (:525) · `_audit` (:529) | costruzione, percorso del log, scrittura di un evento | ovunque nella classe | ESEGUITE | — | **FUNZIONA COME PROMESSO** | `TestAuditLog::test_every_validate_logs` |
 | 13 | `_validate_security_layers` (:535) | applica in ordine: denylist · allowlist · cwd jail · rete | `validate` :582 | PARZIALE (552) | — | **FUNZIONA COME PROMESSO** | 160 passed |
 | 14 | `validate` (:582) | l'esito senza eseguire (dry-run) | pubblica; `execute` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 160 passed |
-| 15 | `execute` (:611, **328 righe**) | esegue nel modo risolto, con timeout e kill del gruppo di processi | pubblica; `mcp_server` via `sandbox_exec` | **PARZIALE — 85 righe scoperte** | — | **NON MISURATO** su tre percorsi (sotto) | vedi la sezione |
+| 15 | `execute` (:611, **328 righe**) | esegue nel modo risolto, con timeout e kill del gruppo di processi | pubblica; `mcp_server` via `sandbox_exec` | **PARZIALE — 85 statement scoperti su 103** | — | **NON MISURATO** su tre percorsi (sotto) | vedi la sezione |
 
 ## Le 85 righe scoperte di `execute`, classificate — e due terzi **non sono un buco**
 
@@ -99,3 +99,29 @@ d'errore non esercitati** — non rotti: **non misurati**.
   **NON MISURATO**.
 - **Non ho rotto nessuna riga qui** (per `prompt_injection.py` l'avevo fatto).
   I verdetti di questa tabella sono `coverage` + lettura, non falsificazione.
+
+---
+
+### Nota sullo strumento che ha prodotto queste etichette
+
+`attribuisci_coverage.py` ha sbagliato **tre volte** prima di dare i numeri di
+questa tabella, e tutte e tre in modo che valeva la pena inseguire:
+
+1. misurava l'ampiezza di una funzione come `fine - inizio`, cioè **righe
+   fisiche**, incluse la riga del `def` e il docstring — che sono eseguite
+   all'import, sempre. Così `syscall_bridge.py:373 engram_rate_stats`, il cui
+   corpo è **un solo statement e quello statement è scoperto**, usciva
+   «PARZIALE — 1 riga» invece di «corpo mai eseguito»: l'etichetta **più mite
+   proprio nel caso peggiore**;
+2. corretto a statement, la soglia era **80%**, e `ide_term` usciva «CORPO MAI
+   ESEGUITO» mentre le sue prime righe girano eccome: etichetta **più dura del
+   vero**, stavolta a sfavore del codice;
+3. portata la soglia a 100%, il confronto era ancora `len(scoperti) >=
+   len(statement)` — **due insiemi diversi confrontati per dimensione**: fra le
+   righe scoperte ci sono le continuazioni, che non sono statement, e 99 ≥ 90
+   dava di nuovo il verdetto sbagliato. Ora il confronto è per **inclusione**.
+
+🔑 Una soglia arbitraria mente in **entrambi** i versi, e le due volte in cui il
+mio righello ha sbagliato non ha sbagliato dalla stessa parte. È il motivo per
+cui questa tabella porta **due numeri** (`N statement scoperti su M`) e non
+un'etichetta sola: chi legge può rifare il conto.
