@@ -7,15 +7,20 @@ support». È **la porta pubblica** del gate di verifica: `validate_claim` è ci
 che un chiamante esterno invoca, e le sue 433 righe sono la funzione più grande
 della mia porzione.
 
-## Stato di stanotte (2026-09-08, 20:48)
+## Stato di stanotte (2026-09-08, 21:09)
 
 ```
   voci elencate con l'AST         17 / 17
   misurate con un comando          3
-     FUNZIONA COME PROMESSO        2
-     NON MISURATO (firma mia sbagliata)  1
-  restanti NON MISURATO           14
+     FUNZIONA COME PROMESSO        3
+     NON MISURATO                  0
+  restanti da fare                14
 ```
+
+📌 **`validate_claim` — la porta pubblica, 433 righe — è misurata sui QUATTRO
+rami che il suo docstring dichiara, 4 su 4.** Ci sono voluti tre tentativi, e i
+due caduti erano miei: argomenti invertiti, poi un fake senza `confidence` che
+il protocollo `_FactLike` dichiara **tre righe sopra la funzione**.
 
 ## ⚠️ Due misure mie sono cadute prima di reggere, e sta scritto perché
 
@@ -81,4 +86,4 @@ calpestata; su 2.973 funzioni produrrebbe proposte di rimuovere codice vivo.
 | 14 | `verimem/validate_claim.py:445` `_subj_overlap` | funzione: Frazione di nomi-claim presenti nel testo del fact (case-insensitive). | `verimem/validate_claim.py:149`; `verimem/validate_claim.py:359`; `verimem/validate_claim.py:487` (+3) | `tests/test_il_gate_diceva_supported_alla_frase_negata.py`; `tests/test_il_gate_puo_solo_bocciare_in_tre_lingue.py`; `tests/test_trust_dichiara_cio_che_ha_girato.py` (+2) | - | NON MISURATO | - |
 | 15 | `verimem/validate_claim.py:484` `_content_overlap` | funzione: Frazione di parole DISTINTIVE della claim presenti nel testo del fact. | `verimem/quantity_match.py:1318`; `verimem/truth_reconciliation.py:274`; `verimem/truth_reconciliation.py:315` (+3) | `tests/test_l_hangul_usciva_a_pezzi_dalla_normalizzazione.py`; `tests/test_la_guardia_dell_overlap_parlava_solo_inglese.py`; `tests/test_le_vocali_indiane_non_erano_lettere.py` (+1) | - | NON MISURATO | - |
 | 16 | `verimem/validate_claim.py:539` `_giudice_contraddice` | funzione: Vero se il giudice nega sostegno a un claim che parla dello stesso tema. | `verimem/validate_claim.py:882` | nessuno | - | NON MISURATO | - |
-| 17 | `verimem/validate_claim.py:562` `validate_claim` | funzione: Valida una claim factual contro la memoria semantica dell'agente. | `verimem/anti_confab_gate.py:4`; `verimem/anti_confab_gate.py:15`; `verimem/anti_confab_gate.py:551` (+19) | `tests/test_anti_confab_gate.py`; `tests/test_anti_confab_gate_l18_wire.py`; `tests/test_any_language_ha_un_numero.py` (+20) | - | **NON MISURATO** | tentata 08/09 20:41: `TypeError: expected string or bytes-like object, got '_MemoriaVuota'`. **L'errore è nel mio chiamante, non nella funzione**: un'eccezione causata da me non è un verdetto. Da rifare leggendo la firma — 433 righe, la porta pubblica del gate |
+| 17 | `verimem/validate_claim.py:562` `validate_claim` | funzione: Valida una claim factual contro la memoria semantica dell'agente. | `verimem/anti_confab_gate.py:4`; `verimem/anti_confab_gate.py:15`; `verimem/anti_confab_gate.py:551` (+19) | `tests/test_anti_confab_gate.py`; `tests/test_anti_confab_gate_l18_wire.py`; `tests/test_any_language_ha_un_numero.py` (+20) | - | **FUNZIONA COME PROMESSO** | eseguita 08/09 21:08 con `env -u HIPPO_ENCODE_DELEGATE_ONLY` sui **quattro rami che il docstring dichiara**, 4 su 4: (1) claim con <2 salients → `unknown` · (2) memoria vuota → `unknown` · (3) anni disgiunti sullo stesso soggetto → `contradicted`, confidence 0.9, evidence `['f1']`, advice «in memoria: 1911 (fact f1), NON 1903 — controlla prima di affermare» · (4) fatto che sostiene → `supported`. ⚠️ **DUE TENTATIVI MIEI SONO CADUTI PRIMA**, e nessuno per colpa della funzione: alle 20:41 avevo invertito gli argomenti (la firma è `(agent, claim, …)`) e preso un `TypeError`; alle 21:06 il mio fake non aveva `confidence` e prendeva `AttributeError` — ma **il protocollo `_FactLike` (:80) lo dichiara**, tre righe sopra la funzione che stavo misurando. Il contratto era scritto, non l'avevo letto |
