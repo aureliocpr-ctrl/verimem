@@ -11,12 +11,15 @@ scrive così. I chiamanti sono **letti**, non contati: `grep -w add` su
 `verimem/` dà 200+ righe che sono `set.add`, `list.add`, `index.add` — la
 regola del mandato («grep serve a trovare, non a contare») qui morde subito.
 
-**Contatore**: 28 righe misurate su 80 (14 funzioni + 10 rami di `add`) ·
-11 claim collegati (README e istruzioni del server) · i chiamanti delle tre
-porte per `add` e `search` **letti con la riga** (20:59) · 4 ticket aperti
-(T-MAP-1, T-MAP-2, T-MAP-3, **T-MAP-4: un claim del README falso a metà**) ·
-3 righe dove **ho sbagliato io la chiamata o l'ipotesi** e l'ho scritto
-(11, 12, 18). Prove eseguite sul tip `20257636`.
+**Contatore**: 36 righe misurate su 80 (22 funzioni + 10 rami di `add` + il
+blocco audit) · 13 claim collegati (README e istruzioni del server) · i
+chiamanti delle tre porte per `add` e `search` **letti con la riga** (20:59) ·
+4 ticket aperti (T-MAP-1, T-MAP-2, T-MAP-3, **T-MAP-4: un claim del README
+falso a metà**) · 5 righe dove **ho sbagliato io la chiamata o l'ipotesi** e
+l'ho scritto (11, 12, 18, 34, 35). Prove eseguite sul tip `20257636`.
+
+**Il pezzo più forte finora**: la tamper-evidence dell'audit è provata
+**manomettendo la catena**, non guardandola stare ferma (riga 31).
 
 | # | funzione (file:riga) | cosa promette | chiamata da (letto) | test che la esercita | claim README (riga) | verdetto | prova (comando e esito) |
 |---|---|---|---|---|---|---|---|
@@ -61,7 +64,24 @@ tip 20257636.*
 | 27 | la stessa self-claim con `verified_by=["pytest: 8 passed"]` | `model_claim`, `[]` | README (la prova toglie la quarantena) | **FUNZIONA COME PROMESSO** |
 | 28 | `asserted_at=…` | scritto e **riletto**: `get()` → `asserted_at=1780000001.0` | il commento in `client.py:616-628` («valorizzato su 0 fatti su 15.978») | **FUNZIONA**: il campo non è rotto, è **inutilizzato** — la conseguenza descritta nel commento (una correzione supersede in silenzio invece di andare al giudice) dipende da chi scrive, non dal codice |
 
-## Le altre 52 voci — `NON MISURATO`, elencate per non perderle
+## Il blocco TRUST e AUDIT (client.py 2394-2843)
+
+*`prova_trust_audit.py` e `prova_manomissione.py`, 08/09 22:00-22:02, tip
+20257636, store temporaneo con `VERIMEM_AUDIT_LOG=1` — cioè con l'opt-in
+**acceso**, non guardato da spento come nel blocco precedente.*
+
+| # | funzione (riga) | cosa promette | verdetto | prova |
+|---|---|---|---|---|
+| 29 | `audit_log` (2627) | «The opt-in per-write audit trail … as dicts, newest-first, filterable by disposition and/or topic» | **FUNZIONA COME PROMESSO** | 3 scritture → 3 righe, campi `['disposition','evidence_class','fact_id','id','judge','layers','pins','proposition','reason','score','threshold','topic']`; la prima è `disposition='quarantined'` (la più recente), la seconda `admitted`: newest-first confermato |
+| 30 | `audit_log(disposition=…)` | il filtro | **FUNZIONA COME PROMESSO** | `audit_log(disposition="quarantined")` → 1 riga, `dispositions=['quarantined']` |
+| 31 | `audit_verify` (2643) | «the id of the FIRST tampered row … or `None` if the chain is intact» | ✅ **FUNZIONA COME PROMESSO — provato manomettendo davvero la catena** | catena intatta → `None`. Poi ho aperto `adjudications.db` e cambiato la `proposition` della riga interna `d1cbd3d67d544962` (`UPDATE adjudications SET proposition=…`), riaperto lo store con un handle nuovo: `audit_verify()` → **`d1cbd3d67d544962`**, esattamente l'id manomesso. ⚠️ Il controllo serviva: `None` significa «intatta» **e anche** «audit mai acceso» — due casi in un valore solo, e senza la manomissione la riga avrebbe detto «sembra funzionare» |
+| 32 | `audit_head` (2653) | «the current chain head — archive it off-box … to detect even a full-chain rewrite» | **FUNZIONA COME PROMESSO, e il suo limite si vede** | prima `543faa95d55e001f…`; **dopo** la manomissione interna la testa è **identica**: coerente col docstring (la testa non vede una modifica interna, la vede `verify`; la testa serve contro la riscrittura completa). Per distinguere «catena intatta» da «audit spento» servono **due** chiamate: `head()` è `None` solo nel secondo caso |
+| 33 | `audit_head_signed` (2660) | la testa firmata | **NON MISURATO** | torna `None` sullo store di prova: manca la chiave di firma, e la misura va rifatta configurandola |
+| 34 | `why_decision` (2821) | «"Why did we choose X?" → matching decisions with their cited evidence ids» | **FUNZIONA COME PROMESSO** | `record_decision("uso Postgres per l'analytics")` → id; poi `why_decision("Why did we choose Postgres?")` → 1 decisione, e lo stesso con «perche' Postgres» e «Postgres». ⚠️ Nella prova precedente le avevo passato **l'id** e tornava `[]`: **errore mio**, la firma vuole una domanda |
+| 35 | `source_trust` (2833) / `consistency_trust` (2837) | «Combined (min-of-observed-channels) trust for `source`» | **NON MISURATO** | chiamate senza argomenti → `TypeError: missing 1 required positional argument: 'source'`. **Errore mio**: vogliono la fonte. Da rifare passando una `source` vera |
+| 36 | `trust_report(query)` (2370) | il dossier di provenienza | **FUNZIONA COME PROMESSO** | `trust_report("canone capannone")` → dict con `query`, `as_of`, `deep`, `k`, `min_relevance=0.8975`, `ranking_degraded`, `generated_at` — è `explain` con un altro nome, come dichiara il docstring |
+
+## Le altre 44 voci — `NON MISURATO`, elencate per non perderle
 
 Estratte con `ast` (banco `ws3-mappa-base.py`), con chiamanti e test **da
 leggere**: `_json_default`, `_pretty`, `_fmt_score`, `AutoMemory` e i suoi

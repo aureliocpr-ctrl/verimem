@@ -1,0 +1,25 @@
+scritture: model_claim | quarantined
+
+--- audit_log() CON VERIMEM_AUDIT_LOG=1
+   righe: 2
+   campi: ['disposition', 'evidence_class', 'fact_id', 'id', 'judge', 'layers', 'pins', 'proposition', 'reason', 'score', 'threshold', 'topic']
+   disposition: quarantined · topic: t/ko
+   campi: ['disposition', 'evidence_class', 'fact_id', 'id', 'judge', 'layers', 'pins', 'proposition', 'reason', 'score', 'threshold', 'topic']
+   disposition: admitted · topic: t/ok
+
+--- audit_log(disposition='quarantined')  [il filtro dichiarato]
+   righe: 1 · dispositions: ['quarantined']
+
+--- audit_verify() / audit_head(): la catena e' verificabile?
+   audit_verify: NoneType None
+   audit_head: str e24d12054fe7f3b14c23aa244354e7697f625cf0f08e2045af892f36ed74b311
+   audit_head_signed: NoneType None
+
+--- source_trust / consistency_trust / trust_report(query)
+   source_trust(): ECCEZIONE TypeError Memory.source_trust() missing 1 required positional argument: 'source'
+   consistency_trust(): ECCEZIONE TypeError Memory.consistency_trust() missing 1 required positional argument: 'source'
+   trust_report('canone capannone',): dict {'query': 'canone capannone', 'as_of': None, 'deep': False, 'k': 5, 'min_relevance': 0.8975, 'ranking_degraded': None, 'generated_at': 1788897696.2791
+
+--- report_outcome / record_decision / why_decision (il ciclo delle decisioni)
+   record_decision -> 52479482a1b04485
+   why_decision    -> []

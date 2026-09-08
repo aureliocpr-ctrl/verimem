@@ -1,0 +1,20 @@
+PRIMA della manomissione:
+   audit_verify(): None  (None = catena intatta)
+   audit_head()  : 543faa95d55e001f2a82f8ca …
+   righe nel log : 3
+
+   file db sotto lo store: ['adjudications.db', 'm.db']
+   db dell'audit scelto: adjudications.db
+   tabelle: ['adjudications']
+   tabella adjudications: 3 righe lette, colonne ['id', 'ts', 'topic', 'disposition', 'proposition', 'fact_id', 'evidence_class', 'judge', 'score', 'threshold']
+   manomessa la riga id=d1cbd3d67d544962
+
+DOPO la manomissione (nuovo handle, per non leggere una cache):
+   audit_verify(): d1cbd3d67d544962  (un id = prima riga manomessa)
+   audit_head()  : 543faa95d55e001f2a82f8ca …
+
+--- why_decision con una DOMANDA (non con l'id: prima l'avevo chiamata male)
+   record_decision -> 394b7ee9c81c4d3a
+   why_decision('Why did we choose Postgres?') -> 1 decisioni ["uso Postgres per l'analytics"]
+   why_decision("perche' Postgres") -> 1 decisioni ["uso Postgres per l'analytics"]
+   why_decision('Postgres') -> 1 decisioni ["uso Postgres per l'analytics"]
