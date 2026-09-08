@@ -1,6 +1,6 @@
 # Mappa di `verimem/remote.py` — 11 righe, 182 righe di codice (lead, 08/09 20:50)
 
-Letto per intero. Prova eseguita sull'albero di origin/main 20257636: `env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q tests/test_remote_memory.py tests/test_mcp_thin.py tests/test_audit_moat_and_transport.py` → `39 passed, 34 warnings in 70.19s`, EXIT=0. I chiamanti sono letti in `verimem/client.py:280-321` (l'import pigro `_remote_class` e `open_memory`, che ripiega sull'embedded se il server non risponde): i metodi di questa classe non hanno chiamanti diretti per nome, la chiama chi ha in mano l'istanza restituita da `open_memory`.
+Letto per intero. Prova eseguita sul checkout a `7b9e8ca1` (i 16 commit fino a `20257636` non toccano questo file, `client.py` né i test eseguiti: `git diff --stat 7b9e8ca1 20257636` vuoto su di essi): `env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q tests/test_remote_memory.py tests/test_mcp_thin.py tests/test_audit_moat_and_transport.py` → `39 passed, 34 warnings in 70.19s`, EXIT=0. I chiamanti sono letti in `verimem/client.py:280-321` (l'import pigro `_remote_class` e `open_memory`, che ripiega sull'embedded se il server non risponde): i metodi di questa classe non hanno chiamanti diretti per nome, la chiama chi ha in mano l'istanza restituita da `open_memory`.
 
 | # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
 |---|---|---|---|---|---|---|---|
