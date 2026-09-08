@@ -84,6 +84,30 @@ già applicata il 2 settembre, con il ritiro **nel titolo** invece che in fondo.
 autore, con la soglia fissata prima di contare. Non c'è nessuna misura anteriore da
 ricongiungere: il filo, qui, non è mai stato spezzato.
 
+
+## T25 · due strati, due verdetti sullo stesso fatto
+
+| data | pagina | cosa dice |
+|---|---|---|
+| **30/08** | `22-un-quarto-dei-trattenuti-recenti-e-approvato-dal-giudice.md` | ws6, 15:50, corpus **15.755** fatti, `mode=ro`: *«un quarto dei trattenuti recenti è **approvato dal giudice**»* — cioè `L4.1` ferma e il giudice promuove, sullo stesso fatto |
+| **30/08** | `23-quanto-spesso-L4-1-ha-ragione.md` | chiude il limite che il 22 aveva **dichiarato**: *«non ho letto i 70»* |
+| **09/26** | `CHANGELOG.md`, voce `T25` | con un daemon condiviso, punteggio e soglia possono venire da due giudici diversi |
+
+🔑 **Il 22 dichiara il proprio limite e il 23 lo chiude il giorno dopo.** È la coppia che
+questa mappa cercava: non un documento che invecchia, ma **due che si passano il testimone**
+— e il secondo esiste **perché** il primo aveva scritto cosa non aveva guardato.
+
+## T39 · T40 — nessuna pagina anteriore, e dirlo è il risultato
+
+Cercando nei testi i termini di questi due difetti (`muore in silenzio`, `1,6 GB`,
+`tokenizzatore`) escono `83-il-gate-non-converte-i-numeri-scritti-in-parola.md` (03/09) e
+`SCHEDA-PRODOTTO.md` (06/09) — **ma non ho verificato se parlino davvero di questi difetti
+o se il match sia solo di parole**: *cercato, non letto*.
+
+⚠️ T39 e T40 sono nati **stasera**, dalla misura di chi tiene il giudice. Se non hanno
+pagine anteriori è **la cosa giusta**: significa che la misura e il ticket sono nati
+insieme — come per T27 — invece di restare separati un mese come per T26a.
+
 ## Come si continua
 
 Per gli altri ticket (T14, T16, T24, T25, T27, T39, T40, D-1) la tabella è **da compilare**:
