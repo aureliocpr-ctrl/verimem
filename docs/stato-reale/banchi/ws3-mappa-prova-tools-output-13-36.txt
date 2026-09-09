@@ -1,0 +1,53 @@
+=== ToolResult / to_observation
+  ToolResult: ToolResult(ok=True, output='5900 euro', error='', extra=None) | to_observation(): 'OK\n5900 euro'
+  fallito   : "ERROR\ne' caduto"
+
+=== PythonExecutor: il caso buono, il timeout, il taglio, l'errore
+2026-09-09T13:36:14.568790 [info     ] python_exec                    ok=True returncode=0 stdout_len=2
+  print(2+2)      -> ok: True | output: '4'
+2026-09-09T13:36:14.829419 [info     ] python_exec                    ok=False returncode=1 stdout_len=0
+  raise           -> ok: False | error: 'Traceback (most recent call last):\n  File "C:\\Users\\aurel\\AppData\\Local\\Temp\\tmp'
+2026-09-09T13:36:17.864333 [info     ] python_exec_timeout            timeout_s=3
+  sleep(30) con timeout 3s -> ok: False | tornato in 3.0s | error: 'Timeout after 3s'
+2026-09-09T13:36:18.185616 [info     ] python_exec                    ok=True returncode=0 stdout_len=135
+  print('x'*5000) con max_chars=200 -> lunghezza uscita: 135 | <= 200 (piu' l'avviso): True
+2026-09-09T13:36:18.557715 [info     ] python_exec                    ok=True returncode=0 stdout_len=5
+  stdin: 'ciao'
+
+=== run_with_tests: il codice candidato e la sua verifica
+2026-09-09T13:36:18.872366 [info     ] python_exec                    ok=True returncode=0 stdout_len=3
+  test che passa  -> ok: True
+2026-09-09T13:36:19.219050 [info     ] python_exec                    ok=False returncode=1 stdout_len=0
+  test che fallisce -> ok: False | error contiene AssertionError: True
+
+=== DockerPythonExecutor: c'e' Docker su questa macchina?
+2026-09-09T13:36:19.233510 [warning  ] docker_unavailable             error="No module named 'docker'"
+  available (property): False
+  (non misurato il ramo che esegue: Docker non risponde qui)
+  run comunque -> ok: False | error: docker backend unavailable (docker SDK or daemon missing)
+
+=== make_python_executor: la fabbrica e il ripiego
+2026-09-09T13:36:19.234169 [info     ] python_executor_backend        backend=subprocess
+  senza variabile        -> PythonExecutor
+2026-09-09T13:36:19.241731 [warning  ] docker_unavailable             error="No module named 'docker'"
+2026-09-09T13:36:19.242043 [info     ] python_executor_backend_fallback actual=subprocess requested=docker
+2026-09-09T13:36:19.248265 [info     ] python_executor_backend        backend=subprocess
+  backend=docker         -> PythonExecutor (se Docker non c'e', il docstring promette il ripiego)
+2026-09-09T13:36:19.255141 [info     ] python_executor_backend        backend=subprocess
+  backend=banana (ignoto)-> PythonExecutor
+
+=== CodeAnalyzer: i controlli statici
+  syntax_check(valido)   : ToolResult(ok=True, output='syntax ok', error='', extra={'nodes': 5})
+  syntax_check(rotto)    : ToolResult(ok=False, output='', error='SyntaxError: invalid syntax at line 1', extra=None)
+  find_function(presente): ToolResult(ok=True, output='function `somma` found', error='', extra={'args': ['a', 'b'], 
+  find_function(assente) : ToolResult(ok=False, output='', error='function `differenza` not found', extra=None)
+  cyclomatic(semplice)   : ToolResult(ok=True, output='complexity=1', error='', extra={'complexity': 1})
+  cyclomatic(ramificata) : ToolResult(ok=True, output='complexity=6', error='', extra={'complexity': 6})
+  >>> la complessita' cresce col numero di rami: True
+  cyclomatic su codice ROTTO: ToolResult(ok=False, output='', error='SyntaxError: invalid syntax (<unknown>, line 1)',
+
+=== _ast_node_count / ToolSpec / default_tools
+  _ast_node_count(semplice): 7 | (ramificata): 44
+2026-09-09T13:36:19.267572 [info     ] python_executor_backend        backend=subprocess
+  default_tools(): 4 strumenti -> ['submit_solution', 'run_python', 'syntax_check', 'find_function']
+  il primo ToolSpec: {'name': 'submit_solution', 'description': 'Submit your final answer / solution. Use', 'schema': "{'type': 'object', 'properties': {'answe", 'handler': '<function default_tools.<locals>.<lambda'}
