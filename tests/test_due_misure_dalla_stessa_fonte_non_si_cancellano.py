@@ -122,6 +122,27 @@ def test_la_prima_misura_non_sparisce(due_misure):
     assert "33.0s" in testo, f"la prima misura non torna: {testo[:200]}"
 
 
+def test_la_ricevuta_dichiara_la_coesistenza():
+    """R4 — LA TERZA USCITA NON DEVE ESSERE MUTA.
+
+    Il gate ha tre esiti: ritirare il vecchio, quarantenare il nuovo, o tenerli
+    entrambi. La terza è l'unica che non cambia lo stato di niente, quindi è
+    anche l'unica che può diventare silenziosa senza che un test se ne accorga
+    — è la ragione per cui esiste `tests/test_la_terza_uscita_lo_dice.py`, e
+    quel file nasce da una diagnosi fatta LEGGENDO il codice invece di
+    eseguirlo. Qui si esegue: la mia uscita nuova passa dallo stesso
+    `continue`, quindi deve raccogliere lo stesso avviso.
+    """
+    m = _memoria()
+    m.add(A, source=FONTE, topic="banco/avviso")
+    res = m.add(B, source=FONTE, topic="banco/avviso")
+
+    assert res.get("status") != "quarantined", res
+    avvisi = [w.get("layer") for w in (res.get("warnings") or [])]
+    assert "L3-coexistence" in avvisi, (
+        f"la coesistenza non è dichiarata nella ricevuta: {avvisi}")
+
+
 def test_la_rimisura_fa_ancora_vincere_il_valore_nuovo():
     """⚠️ LA POPOLAZIONE OPPOSTA — il presidio che viene prima della cura.
 

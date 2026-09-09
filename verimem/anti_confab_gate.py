@@ -699,12 +699,58 @@ def _senza_source_contro_groundato(cand_ha_source: bool, old: Any) -> bool:
     return isinstance(getattr(old, "grounding_score", None), (int, float))
 
 
+def _stessa_evidenza(cand_sig: str | None, old: Any) -> bool:
+    """I due fatti sono due LETTURE della medesima evidenza (stessa impronta).
+
+    🔑 **Un'evidenza non si contraddice da sola.** Se il candidato e il fatto
+    vecchio portano la stessa `source_signature`, sono stati estratti dalla
+    STESSA riga di output: «median 33.0s» e «min 16.3s» della stessa
+    esecuzione, i due bracci di un A/B, «retired 1796» e «never_judged 64»
+    della stessa passata. Nessuno dei due è la versione aggiornata dell'altro,
+    e il detector lessicale L3 li vede contraddirsi solo perché sono due numeri
+    diversi vicini alle stesse parole.
+
+    MISURATO il 2026-09-09 sulle 529 coppie ritirate per «same-source
+    evolution» nel corpus di casa::
+
+        FIRMA IDENTICA (stessa evidenza -> complementari) : 257  (48%)
+        firma DIVERSA  (evidenza nuova -> rimisura vera)  : 155  (29%)
+        una delle due firme VUOTA                        : 117  (22%)
+
+    e su un campione letto a mano il 31/08 (documento 66) i ritiri
+    `same-source evolution` erano sbagliati **30 su 30**.
+
+    ⚠️ PERIMETRO STRETTO E VOLUTO — serve un'impronta NON VUOTA su entrambi i
+    lati. Senza fonte non si può provare che l'evidenza sia la stessa, e i 117
+    casi a firma vuota restano com'erano: qui non si indovina.
+
+    ⚠️ NON È LA COESISTENZA FRA FONTI DIVERSE, che è stata revertata il
+    2026-09-06 perché rompeva quattro test. Quella teneva in vita due fatti da
+    origini DIVERSE (e allora chi corregge non sovrascrive più); questa vale
+    solo quando l'origine è **la stessa identica**, dove l'aggiornamento non
+    esiste per costruzione: una misura nuova porta un'evidenza nuova, e con
+    essa un'impronta diversa. Il presidio è in
+    `tests/test_due_misure_dalla_stessa_fonte_non_si_cancellano.py`, secondo
+    test: la rimisura continua a far vincere il valore nuovo.
+
+    | caso                                      | vivi attesi | prima | dopo |
+    |-------------------------------------------|-------------|-------|------|
+    | stessa evidenza, due letture complementari |      2      |   1   |  2   |
+    | evidenza nuova, rimisura dello stesso dato |      1      |   1   |  1   |
+    | nessuna fonte su uno dei due               |      1      |   1   |  1   |
+    """
+    vecchia = (getattr(old, "source_signature", "") or "").strip()
+    nuova = (cand_sig or "").strip()
+    return bool(nuova) and nuova == vecchia
+
+
 def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       ids: list[str], supersede_ids: list[str],
                       new_status: str | None = None,
                       claimant: str | None = None,
                       proposition: str | None = None,
-                      cand_ha_source: bool = True) -> list[str]:
+                      cand_ha_source: bool = True,
+                      cand_source_signature: str | None = None) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -785,6 +831,11 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         # tutti anonimi (`cli:local`, `mcp:unbound`, `sdk:local`, NULL), quindi
         # qui non cambia una virgola; morde solo in una memoria multi-utente.
         if old is not None and _entita_diverse(cand, old):
+            continue
+        # LA TERZA USCITA, secondo caso (2026-09-09): stessa IMPRONTA della
+        # fonte ⇒ due letture della medesima evidenza, non due versioni. Il
+        # perché, i numeri e le due popolazioni stanno in `_stessa_evidenza`.
+        if old is not None and _stessa_evidenza(cand_source_signature, old):
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
@@ -2137,12 +2188,15 @@ def run_validation_gate(
             _conflicts = ev
             _sup_prima = len(supersede_ids)
             if _supersede_same_source_on() and ev:
+                from .supersession_policy import source_signature_of
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
                                                claimant=claimant,
                                                proposition=proposition,
                                                cand_ha_source=bool(
-                                                   source and str(source).strip()))
+                                                   source and str(source).strip()),
+                                               cand_source_signature=(
+                                                   source_signature_of(source)))
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
