@@ -47,97 +47,97 @@ serve solo a sapere se esiste anche un test unitario diretto.
 
 67 invocati da almeno un test, **22 no**.
 
-| riga | funzione | comando dell'utente | chiamata da | test che la **nominano** | verdetto | prova |
+| riga | funzione | comando dell'utente | chiamata da | test che lo INVOCA | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 42 | `_radice` | `verimem @callback` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 161 | `flow_tail_cmd` | `verimem flow tail` | Typer (`@flow_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 173 | `lab_live_cmd` | `verimem lab live` | Typer (`@lab_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 207 | `code` | `verimem code` | Typer (`@app.command`) | 120 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 225 | `run` | `verimem run` | Typer (`@app.command`) | 330 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 242 | `status` | `verimem status` | Typer (`@app.command`) | 516 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 342 | `health` | `verimem health` | Typer (`@app.command`) | 29 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 358 | `backup_all` | `verimem backup-all` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 486 | `warmup` | `verimem warmup` | Typer (`@app.command`) | 59 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 673 | `tiers` | `verimem tiers` | Typer (`@app.command`) | 8 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 716 | `doctor` | `verimem doctor` | Typer (`@app.command`) | 58 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 741 | `airgap` | `verimem airgap` | Typer (`@app.command`) | 8 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 802 | `index` | `verimem index` | Typer (`@app.command`) | 80 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 840 | `search_docs` | `verimem search-docs` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 972 | `gateway_serve` | `verimem gateway serve` | Typer (`@gateway_app.command`) | 2 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1021 | `console_cmd` | `verimem console` | Typer (`@app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1058 | `gateway_keys_create` | `verimem gateway keys create` | Typer (`@gateway_keys_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1081 | `gateway_keys_list` | `verimem gateway keys list` | Typer (`@gateway_keys_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1097 | `gateway_backup_cmd` | `verimem gateway backup` | Typer (`@gateway_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1117 | `gateway_restore_cmd` | `verimem gateway restore` | Typer (`@gateway_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1134 | `gateway_keys_revoke` | `verimem gateway keys revoke` | Typer (`@gateway_keys_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 1153 | `import_cmd` | `verimem import` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1308 | `remember_cmd` | `verimem remember` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1574 | `recall_cmd` | `verimem recall` | Typer (`@app.command`) | 3 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1777 | `ask_cmd` | `verimem ask` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1874 | `correct_cmd` | `verimem correct` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 1962 | `ignorance_cmd` | `verimem ignorance` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2030 | `telemetry_cmd` | `verimem telemetry` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2154 | `trust_stats_cmd` | `verimem stats` | Typer (`@app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2252 | `trust` | `verimem trust` | Typer (`@app.command`) | 111 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2417 | `sleep_now` | `verimem sleep-now` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2444 | `wake` | `verimem wake` | Typer (`@app.command`) | 64 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2473 | `sleep` | `verimem sleep` | Typer (`@app.command`) | 128 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2488 | `benchmark` | `verimem benchmark` | Typer (`@app.command`) | 102 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2517 | `tui` | `verimem tui` | Typer (`@app.command`) | 2 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2524 | `mcp` | `verimem mcp` | Typer (`@app.command`) | 136 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2574 | `chat` | `verimem chat` | Typer (`@app.command`) | 33 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2641 | `reset` | `verimem reset` | Typer (`@app.command`) | 32 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2652 | `metrics` | `verimem metrics` | Typer (`@app.command`) | 20 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2659 | `dashboard` | `verimem dashboard` | Typer (`@app.command`) | 57 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2729 | `providers_list` | `verimem providers list` | Typer (`@providers_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2755 | `providers_scan` | `verimem providers scan` | Typer (`@providers_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2788 | `providers_models` | `verimem providers models` | Typer (`@providers_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2810 | `providers_active` | `verimem providers active` | Typer (`@providers_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2827 | `providers_check` | `verimem providers check` | Typer (`@providers_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 2921 | `skills_list` | `verimem skills list` | Typer (`@skills_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 2939 | `introspect` | `verimem introspect` | Typer (`@app.command`) | 5 file | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 3003 | `skills_dedup` | `verimem skills dedup` | Typer (`@skills_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3038 | `skills_show` | `verimem skills show` | Typer (`@skills_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3060 | `episodes_list` | `verimem episodes list` | Typer (`@episodes_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3075 | `episodes_show` | `verimem episodes show` | Typer (`@episodes_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3203 | `facts_list` | `verimem facts list` | Typer (`@facts_app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3307 | `facts_recall` | `verimem facts recall` | Typer (`@facts_app.command`) | 3 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3376 | `facts_search` | `verimem facts search` | Typer (`@facts_app.command`) | 3 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3433 | `facts_label` | `verimem facts label` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3482 | `facts_get` | `verimem facts get` | Typer (`@facts_app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3539 | `facts_forget` | `verimem facts forget` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3720 | `facts_undo` | `verimem facts undo` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3779 | `facts_undo_list` | `verimem facts undo-list` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3807 | `facts_quarantine_log` | `verimem facts quarantine-log` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3857 | `facts_retirement_log` | `verimem facts retirement-log` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 3994 | `facts_backup` | `verimem facts backup` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 4039 | `facts_restore` | `verimem facts restore` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 4078 | `facts_safety` | `verimem facts safety` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 4175 | `facts_capability` | `verimem facts capability` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 4241 | `facts_stats` | `verimem facts stats` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4273 | `facts_anti_confab_scan` | `verimem facts anti-confab-scan` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4300 | `facts_anti_confab_apply` | `verimem facts anti-confab-apply` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4367 | `facts_add` | `verimem facts add` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4793 | `facts_backfill` | `verimem facts backfill` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4817 | `facts_archive_narration` | `verimem facts archive-narration` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
-| 4856 | `facts_cleanup_episode_telemetry` | `verimem facts cleanup-episode-telemetry` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4885 | `facts_requalify_quarantined` | `verimem facts requalify-quarantined` | Typer (`@facts_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 4973 | `consolidate_dry_run` | `verimem consolidate dry-run` | Typer (`@consolidate_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5023 | `consolidate_apply` | `verimem consolidate apply` | Typer (`@consolidate_app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5057 | `consolidate_status` | `verimem consolidate status` | Typer (`@consolidate_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5112 | `agent_guide_cmd` | `verimem agent-guide` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5308 | `save_cmd` | `verimem save` | Typer (`@app.command`) | 1 file | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5492 | `tip_cmd` | `verimem tip` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5534 | `recent_cmd` | `verimem recent` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5552 | `chain_show_cmd` | `verimem chain show` | Typer (`@chain_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5596 | `chain_orphans_cmd` | `verimem chain orphans` | Typer (`@chain_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5620 | `chain_relink_cmd` | `verimem chain relink` | Typer (`@chain_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5645 | `handoff_prepare_cmd` | `verimem handoff prepare` | Typer (`@handoff_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5676 | `handoff_show_cmd` | `verimem handoff show` | Typer (`@handoff_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5694 | `handoff_log_cmd` | `verimem handoff log` | Typer (`@handoff_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5711 | `digest_cmd` | `verimem digest` | Typer (`@app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5835 | `audit_anchor_cmd` | `verimem audit anchor` | Typer (`@audit_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
-| 5894 | `audit_verify_cmd` | `verimem audit verify` | Typer (`@audit_app.command`) | 🔴 nessuno **nomina il nome** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 42 | `_radice` | `verimem @callback` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 161 | `flow_tail_cmd` | `verimem flow tail` | Typer (`@flow_app.command`) | **1** — `test_cli_flow_tail.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 173 | `lab_live_cmd` | `verimem lab live` | Typer (`@lab_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 207 | `code` | `verimem code` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 225 | `run` | `verimem run` | Typer (`@app.command`) | **2** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 242 | `status` | `verimem status` | Typer (`@app.command`) | **11** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 342 | `health` | `verimem health` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 358 | `backup_all` | `verimem backup-all` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 486 | `warmup` | `verimem warmup` | Typer (`@app.command`) | **2** — `test_cli_warmup.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 673 | `tiers` | `verimem tiers` | Typer (`@app.command`) | **1** — `test_inventario_dei_tier.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 716 | `doctor` | `verimem doctor` | Typer (`@app.command`) | **1** — `test_gate_model_fetch_and_doctor.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 741 | `airgap` | `verimem airgap` | Typer (`@app.command`) | **1** — `test_cli_airgap.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 802 | `index` | `verimem index` | Typer (`@app.command`) | **2** — `test_cli_docs.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 840 | `search_docs` | `verimem search-docs` | Typer (`@app.command`) | **4** — `test_cli_docs.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 972 | `gateway_serve` | `verimem gateway serve` | Typer (`@gateway_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1021 | `console_cmd` | `verimem console` | Typer (`@app.command`) | **1** — `test_gateway_tenant_reserved.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1058 | `gateway_keys_create` | `verimem gateway keys create` | Typer (`@gateway_keys_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1081 | `gateway_keys_list` | `verimem gateway keys list` | Typer (`@gateway_keys_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1097 | `gateway_backup_cmd` | `verimem gateway backup` | Typer (`@gateway_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1117 | `gateway_restore_cmd` | `verimem gateway restore` | Typer (`@gateway_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1134 | `gateway_keys_revoke` | `verimem gateway keys revoke` | Typer (`@gateway_keys_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 1153 | `import_cmd` | `verimem import` | Typer (`@app.command`) | **1** — `test_cli_import.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1308 | `remember_cmd` | `verimem remember` | Typer (`@app.command`) | **3** — `test_la_cli_sa_scrivere_una_scadenza.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1574 | `recall_cmd` | `verimem recall` | Typer (`@app.command`) | **13** — `test_chi_perde_un_fatto_per_eta_lo_sa.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1777 | `ask_cmd` | `verimem ask` | Typer (`@app.command`) | **6** — `test_ask_taceva_dove_recall_avvisava.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1874 | `correct_cmd` | `verimem correct` | Typer (`@app.command`) | **3** — `test_correct_dice_quale_ramo_ha_preso.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 1962 | `ignorance_cmd` | `verimem ignorance` | Typer (`@app.command`) | **2** — `test_la_mappa_dell_ignoranza_e_raggiungibile.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2030 | `telemetry_cmd` | `verimem telemetry` | Typer (`@app.command`) | **2** — `test_json_esce_json_anche_quando_non_c_e_niente.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2154 | `trust_stats_cmd` | `verimem stats` | Typer (`@app.command`) | **4** — `test_dashboard_overview.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2252 | `trust` | `verimem trust` | Typer (`@app.command`) | **7** — `test_cli_trust.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2417 | `sleep_now` | `verimem sleep-now` | Typer (`@app.command`) | **1** — `test_cli_agent_namespace.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2444 | `wake` | `verimem wake` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2473 | `sleep` | `verimem sleep` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2488 | `benchmark` | `verimem benchmark` | Typer (`@app.command`) | **1** — `test_read_connection_is_reused.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2517 | `tui` | `verimem tui` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2524 | `mcp` | `verimem mcp` | Typer (`@app.command`) | **4** — `test_cli_agent_namespace.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2574 | `chat` | `verimem chat` | Typer (`@app.command`) | **1** — `test_cli_agent_namespace.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2641 | `reset` | `verimem reset` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2652 | `metrics` | `verimem metrics` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2659 | `dashboard` | `verimem dashboard` | Typer (`@app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2729 | `providers_list` | `verimem providers list` | Typer (`@providers_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2755 | `providers_scan` | `verimem providers scan` | Typer (`@providers_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2788 | `providers_models` | `verimem providers models` | Typer (`@providers_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2810 | `providers_active` | `verimem providers active` | Typer (`@providers_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2827 | `providers_check` | `verimem providers check` | Typer (`@providers_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 2921 | `skills_list` | `verimem skills list` | Typer (`@skills_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 2939 | `introspect` | `verimem introspect` | Typer (`@app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 3003 | `skills_dedup` | `verimem skills dedup` | Typer (`@skills_app.command`) | **1** — `test_dedup_skill_e_raggiungibile.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3038 | `skills_show` | `verimem skills show` | Typer (`@skills_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3060 | `episodes_list` | `verimem episodes list` | Typer (`@episodes_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3075 | `episodes_show` | `verimem episodes show` | Typer (`@episodes_app.command`) | **1** — `test_cli.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3203 | `facts_list` | `verimem facts list` | Typer (`@facts_app.command`) | **4** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3307 | `facts_recall` | `verimem facts recall` | Typer (`@facts_app.command`) | **2** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3376 | `facts_search` | `verimem facts search` | Typer (`@facts_app.command`) | **3** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3433 | `facts_label` | `verimem facts label` | Typer (`@facts_app.command`) | **1** — `test_le_etichette_epistemiche_sono_collegate.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3482 | `facts_get` | `verimem facts get` | Typer (`@facts_app.command`) | **2** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3539 | `facts_forget` | `verimem facts forget` | Typer (`@facts_app.command`) | **3** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3720 | `facts_undo` | `verimem facts undo` | Typer (`@facts_app.command`) | **1** — `test_facts_forget_topic.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3779 | `facts_undo_list` | `verimem facts undo-list` | Typer (`@facts_app.command`) | **1** — `test_facts_forget_topic.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3807 | `facts_quarantine_log` | `verimem facts quarantine-log` | Typer (`@facts_app.command`) | **1** — `test_la_serie_della_quarantena_su_ogni_porta.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3857 | `facts_retirement_log` | `verimem facts retirement-log` | Typer (`@facts_app.command`) | **3** — `test_control_room_porte.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 3994 | `facts_backup` | `verimem facts backup` | Typer (`@facts_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 4039 | `facts_restore` | `verimem facts restore` | Typer (`@facts_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 4078 | `facts_safety` | `verimem facts safety` | Typer (`@facts_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 4175 | `facts_capability` | `verimem facts capability` | Typer (`@facts_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 4241 | `facts_stats` | `verimem facts stats` | Typer (`@facts_app.command`) | **1** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4273 | `facts_anti_confab_scan` | `verimem facts anti-confab-scan` | Typer (`@facts_app.command`) | **1** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4300 | `facts_anti_confab_apply` | `verimem facts anti-confab-apply` | Typer (`@facts_app.command`) | **1** — `test_cli_facts.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4367 | `facts_add` | `verimem facts add` | Typer (`@facts_app.command`) | **10** — `test_all_write_channels_judge_a_source.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4793 | `facts_backfill` | `verimem facts backfill` | Typer (`@facts_app.command`) | **1** — `test_cli_facts_add.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4817 | `facts_archive_narration` | `verimem facts archive-narration` | Typer (`@facts_app.command`) | 🔴 **nessun test lo invoca** | 🔴 **NON MISURATO** — nessun test invoca il comando | banco ws7: `comandi che NESSUN test invoca: 22`, EXIT=0 |
+| 4856 | `facts_cleanup_episode_telemetry` | `verimem facts cleanup-episode-telemetry` | Typer (`@facts_app.command`) | **1** — `test_episode_telemetry_cleanup.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4885 | `facts_requalify_quarantined` | `verimem facts requalify-quarantined` | Typer (`@facts_app.command`) | **1** — `test_requalify_quarantined.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 4973 | `consolidate_dry_run` | `verimem consolidate dry-run` | Typer (`@consolidate_app.command`) | **1** — `test_cli_consolidate.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5023 | `consolidate_apply` | `verimem consolidate apply` | Typer (`@consolidate_app.command`) | **1** — `test_cli_consolidate.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5057 | `consolidate_status` | `verimem consolidate status` | Typer (`@consolidate_app.command`) | **1** — `test_cli_consolidate.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5112 | `agent_guide_cmd` | `verimem agent-guide` | Typer (`@app.command`) | **1** — `test_agent_guide_single_source.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5308 | `save_cmd` | `verimem save` | Typer (`@app.command`) | **11** — `test_chain_surfaces_show_the_verdict.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5492 | `tip_cmd` | `verimem tip` | Typer (`@app.command`) | **3** — `test_chain_surfaces_show_the_verdict.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5534 | `recent_cmd` | `verimem recent` | Typer (`@app.command`) | **2** — `test_chain_surfaces_show_the_verdict.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5552 | `chain_show_cmd` | `verimem chain show` | Typer (`@chain_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5596 | `chain_orphans_cmd` | `verimem chain orphans` | Typer (`@chain_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5620 | `chain_relink_cmd` | `verimem chain relink` | Typer (`@chain_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5645 | `handoff_prepare_cmd` | `verimem handoff prepare` | Typer (`@handoff_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5676 | `handoff_show_cmd` | `verimem handoff show` | Typer (`@handoff_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5694 | `handoff_log_cmd` | `verimem handoff log` | Typer (`@handoff_app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5711 | `digest_cmd` | `verimem digest` | Typer (`@app.command`) | **1** — `test_continuity.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5835 | `audit_anchor_cmd` | `verimem audit anchor` | Typer (`@audit_app.command`) | **1** — `test_tamper_anchor_receipt.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
+| 5894 | `audit_verify_cmd` | `verimem audit verify` | Typer (`@audit_app.command`) | **2** — `test_audit_mutations.py` | **FUNZIONA COME PROMESSO**, limitato a cio' che quel test asserisce | banco ws7 + `tests/test_cli.py` (sotto) |
 
 ## 2. Gli helper — 42 definizioni non decorate
 
@@ -234,3 +234,58 @@ Tre limiti dichiarati, perché chi legge non li scopra da solo:
 3. **`tui.py` e `doctor.py` non sono in questo file.** Stanno nella mappa di ws7
    (`CLI-claims.md`, sezioni 5 e 6), insieme al reperto che una delle otto
    azioni della TUI spegne il sandbox con un clic e senza conferma.
+
+## 6. Le esecuzioni — che cosa ho fatto girare davvero
+
+Ogni verdetto verde di questo file poggia su una di queste righe. Nessuna è
+citata da un'altra mappa: le ho lanciate qui, oggi, in CI-mode
+(`HIPPO_OFFLINE=1 HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1`).
+
+| # | comando | esito |
+|---|---|---|
+| 1 | `python docs/stato-reale/banchi/ws7-quali-comandi-della-cli-nessun-test-invoca.py` | `comandi dichiarati: 88` · `invocazioni viste nei test: 4956` · `controllo positivo (warmup): visto` · `comandi che NESSUN test invoca: 22` — EXIT=0 |
+| 2 | `pytest -q tests/test_cli.py` | `30 passed, 1 warning in 22.81s` EXIT=0 |
+| 3 | `pytest -q tests/test_cli_facts.py` | `15 passed, 1 warning in 14.33s` EXIT=0 |
+| 4 | `pytest -q tests/test_cli_consolidate.py tests/test_cli_airgap.py` | `11 passed, 1 warning in 15.61s` EXIT=0 |
+| 5 | `python scratchpad/chi_invoca_quale.py` (l'attribuzione, sotto) | `88 / 66 / 22` · `controfirma ws7: solo-mio 0, solo-suo 0` EXIT=0 |
+
+### Come ho ottenuto la colonna «test che lo invoca»
+
+Il banco di ws7 risponde **quanti** comandi non sono invocati, e per farlo tiene
+un insieme di tuple senza la provenienza. La colonna che il formato della mappa
+chiede — *test che la esercita (file)* — vuole il **chi**. Ho importato il suo
+modulo e riusato **le sue regex**, tenendo in più il file da cui viene ogni
+invocazione: non è una seconda misura, è la sua con l'attribuzione.
+
+🔑 **E l'ho controfirmata in modo che potesse smentirmi**: l'insieme dei comandi
+che il mio passaggio non vede deve coincidere con i 22 che stampa il suo.
+
+```
+comandi dichiarati            : 88
+comandi con almeno un test    : 66
+comandi che NESSUN test invoca: 22
+controfirma ws7: solo-mio 0, solo-suo 0
+  ✅ stessa lista: l'attribuzione non ha cambiato la misura
+```
+
+Se avessi trovato anche un solo comando in più o in meno, il numero non sarebbe
+uscito da qui: una controfirma che non può divergere non controfirma niente.
+
+### 🔴 Due volte il mio righello ha sbagliato, e il controllo l'ha detto
+
+Prima di questi numeri ne avevo prodotti due falsi, e li scrivo perché il modo
+in cui sono caduti è più utile del risultato:
+
+1. **69 comandi invece di 88.** I 19 comandi dichiarati con `@app.command()`
+   **senza nome** (Typer usa il nome della funzione) finivano nel ramo del
+   callback globale. Sette dei ventidue orfani di ws7 restavano spaiati — e
+   fra loro `health`, `metrics`, `reset`, `tui`, `wake`, che sono cinque delle
+   righe più visibili della sua mappa.
+2. **23 orfani invece di 22.** Il mio parser raccoglieva la stringa `22`
+   dell'intestazione come se fosse un nome di comando, perché filtravo la cifra
+   sulla riga **non** strippata.
+
+Entrambi trovati dalla stessa guardia: *ogni orfano di ws7 deve appaiarsi a una
+funzione di questo file, altrimenti il numero non si stampa*. È la stessa forma
+che a ws7 aveva fatto scendere il suo primo 32 a 22 — e stavolta ha lavorato
+contro di me, che è l'unico modo in cui un controllo serve a qualcosa.
