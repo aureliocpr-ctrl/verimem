@@ -1,4 +1,4 @@
-# Studio del metodo — come dovrebbe andare, come sta andando, come procediamo (lead, 09/09/2026, 16:10)
+# Studio del metodo — come dovrebbe andare, come sta andando, come procediamo (lead, 09/09/2026, sera; la prima versione diceva «16:10», ora scritta a mano e sbagliata: date letto alle 22:47)
 
 > Mandato di Aurelio (09/09, dopo la chiusura della mappa): «prima di partire facciamo uno studio reale:
 > le cose come dovrebbero andare? come stanno andando? come decidiamo di procedere secondo i migliori
