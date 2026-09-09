@@ -146,6 +146,34 @@ ordina la coda.
 | `docs/stato-reale/54-la-memoria-non-ha-un-tetto-di-lunghezza-ha-un-pavimento-a-cinque-parole.md` | **VIVO** | *«**chiude il limite dichiarato nel [51]**»* |
 | `docs/stato-reale/55-non-e-la-forma-della-domanda-e-il-vocabolario.md` | **VIVO** | *«**chiude il limite dichiarato nel [54]**»* — terzo anello della catena |
 | `docs/stato-reale/56-lo-zero-e-un-interruttore-in-quattro-punti-e-la-cura-la-chiama-solo-chi-l-ha-scritta.md` | **VIVO** | *«nasce dal **voto sulla proposta** “cura-pavimento” di @ws2»*: la decisione collegiale lascia traccia nel documento |
+| `docs/stato-reale/57-la-memoria-attraversa-le-lingue-e-non-attraversa-i-sinonimi.md` | **VIVO** | *«chiude il limite dichiarato nel [55]»* — quarto anello |
+| `docs/stato-reale/58-nell-altra-direzione-la-lingua-costa-uguale-e-il-livello-crolla-per-una-ragione-che-non-ho-isolato.md` | **VIVO** | *«chiude **due** limiti»*, e il titolo ritira mezza tesi: *«il “crollo di livello” **era il mio campione**»* |
+| `docs/stato-reale/59-i-quarantinati-senza-layer-sono-autoclaim-e-il-prodotto-li-ferma-senza-chiamare-nessuno.md` | **VIVO** | *«chiude un limite che avevo lasciato aperto **per giorni**»* |
+| `docs/stato-reale/60-la-transizione-del-pavimento-colta-mentre-avveniva.md` | **VIVO** | 31/08 **ore 02:52:23** — al secondo: *«colta **mentre avveniva**»*, e chiude il [48] |
+| `docs/stato-reale/61-il-punteggio-separa-benissimo-e-per-questo-l-avviso-ha-ragione.md` | **VIVO** | *«risponde a una domanda che avevo posto **al canale** venti minuti prima»*: il canale entra nel documento |
+| `docs/stato-reale/62-tagliare-la-source-costa-un-sesto-di-allungarla.md` | **VIVO** | *«**verifica indipendente** della cura di @ws2 su un caso mio già caduto»* |
+| `docs/stato-reale/63-la-cura-che-il-quarantadue-proponeva-e-misurabile-e-toglie-l-ottantasei-per-cento.md` | **VIVO** | *«chiude il limite finale del [42]»*: la serie D-1 aperta e chiusa dallo stesso autore |
+| `docs/stato-reale/65-quali-numeri-di-stanotte-reggono-ancora-stamattina.md` | **VIVO** | *«stessa domanda che @ws7 si è fatto sui suoi aggregati, **sui miei**»* — il metodo di un altro applicato a sé |
+| `docs/stato-reale/66-il-criterio-scartava-proprio-i-casi-piu-comuni.md` | **VIVO** — ritiro col numero | *«…e **il tasso che avevo dato è sbagliato**»*. Chiude *capovolgendolo* il limite del [64] |
+| `docs/stato-reale/67-la-data-nella-domanda-spegne-la-risposta.md` | **VIVO** | *«e **il silenzio non ha un avviso**»* — la classe «qualcosa tace», applicata al filtro temporale |
+| `docs/stato-reale/68-il-numero-pubblico-non-si-riproduce-e-la-domanda-aperta-ha-risposta.md` | **VIVO** | *«audit matematico su **un numero non mio**»*: stessa scelta del 72 |
+| `docs/stato-reale/69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md` | **VIVO** — ritiro | *«**ritira la raccomandazione del [67]**»*, e il costo è misurato: sei ancore vere su diciotto |
+| `docs/stato-reale/71-quando-il-filtro-temporale-agisce-toglie-tre-quarti-di-cio-che-ha-in-mano.md` | **VIVO** | *«seguito immediato del [70]»* |
+| `docs/stato-reale/73-il-journal-registrava-duecentocinquantaquattro-zeri-inventati.md` | **VIVO** | *«**254 zeri che nessun risultato aveva**, e il difetto era scritto nel commento»*. **Cura in `8161ffe3`**: documento, difetto e commit nella stessa riga |
+| `docs/stato-reale/74-chi-ha-fermato-un-fatto-adesso-si-sa-sempre-e-il-buco-e-tutto-storico.md` | **VIVO** | *«**chiude in positivo** un aperto»*: il 71% di buco è **debito storico**, non difetto vivo |
+| `docs/stato-reale/76-la-via-che-raccomandiamo-per-i-fatti-lunghi-non-l-ha-mai-percorsa-nessuno.md` | **VIVO** | *«funziona, e **non l'ha mai percorsa nessuno**»* — la capacità pronta e mai esercitata |
+| `docs/stato-reale/77-sei-capacita-pronte-che-nessun-uso-reale-esercita.md` | **VIVO** — SINTESI | *«sintesi di **sei misure indipendenti**»*: è il documento da cui viene il corollario *«l'assenza non ha un canale»* |
+| `docs/stato-reale/78-la-precisione-di-l41-sta-fra-il-72-e-l-87-percento.md` | **VIVO** | 02/09 03:44, **banco nominato**, sola lettura: e dà un **intervallo**, non un numero secco |
+| `docs/stato-reale/79-una-riga-di-vetrina-dichiara-8-su-10-e-oggi-il-prodotto-ne-ammette-10.md` | **VIVO** | **A/B fra il prodotto del 26/08 e quello di oggi**: la vetrina dichiara meno di quello che il prodotto fa |
+| `docs/stato-reale/81-la-prova-conservata-e-abbastanza-per-rifare-il-giudizio.md` | **VIVO** | *«**Sì al tetto di oggi, no se lo si abbassa**»*: la risposta condizionata invece del sì secco |
+| `docs/stato-reale/82-il-feedback-loop-non-ce-ma-il-percorso-che-lo-produrrebbe-si.md` | **VIVO** | muro M7, banco nominato: distingue **ciò che non c'è** da **ciò che lo produrrebbe** |
+| `docs/stato-reale/83-il-gate-non-converte-i-numeri-scritti-in-parola.md` | **VIVO** | 03/09 20:12, banco `ws6-due-frasi-gemelle-due-verdetti.py`: **ferma 3 fatti veri su 4** |
+| `docs/stato-reale/84-su-quali-porte-il-recall-dichiara-i-fatti-scaduti.md` | **VIVO** | 04/09, due banchi nominati: *«**e su quali no**»* — la domanda porta per porta |
+| `docs/stato-reale/86-il-disegno-esploso-lo-store-tabelle-campi-e-chi-li-scrive.md` | **VIVO** | 05/09 23:10, *«tutto misurato con `sqlite3` **in sola lettura**»* |
+| `docs/stato-reale/AGENZIA.md` | **VIVO** — è il mandato | il documento dei ruoli, dal mandato di Aurelio del 04/09 20:20. È la fonte di chi fa cosa, e il board ne è la versione viva |
+| `docs/stato-reale/C2-tabella-classi-core.md` | **VIVO** | ws5, 29/08 20:10, **claim nominato**: le classi core di falsità in italiano **e** in inglese |
+| `docs/stato-reale/C3-parita-porte.md` | **VIVO** | ws5, 30/08, claim `f7eca18c246f`: *«chiude il pezzo ② assegnato da `lead-audit`»* — il compito assegnato e chiuso, tracciato |
+| `docs/stato-reale/CENSIMENTO-DEI-199-STRUMENTI.md` | **VIVO** | ws4, 06/09 06:20→08:01: *«cosa fanno **davvero** i 199 strumenti senza permesso»* |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -557,7 +585,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 122 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 150 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
