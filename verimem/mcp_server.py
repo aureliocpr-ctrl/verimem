@@ -293,6 +293,151 @@ def _conta_sostituiti(agent) -> int | None:
         return None
 
 
+def _fatti_per_il_recupero(agent, *, limit: int = 10000) -> tuple[list, int]:
+    """I fatti che una porta di RECUPERO puo' servire, piu' quanti ne ha tolti.
+
+    T49 (2026-09-09). Il server dichiara a ogni client che si collega: «a fact
+    its source does not support is QUARANTINED — stored, but kept OUT of
+    default recall, so you never get it back as truth». Misurato dalla porta,
+    NON era vero: nove ingressi rendevano un fatto quarantenato a grounding
+    0,25 — `hippo_oracle_query`, `hippo_chain_facts`, `hippo_prompt_skeleton`,
+    `hippo_cross_agent_consensus`, `hippo_forward_chain` (che lo usa come
+    PREMESSA, anche via `state_fact_ids`), l'SDK `Memory.get_all`, e i due
+    cercatori di duplicati che lo mostrano senza dire che e' fermato.
+    Comando e output nel commit del RED (`97437d51`):
+
+        env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q -p no:randomly \\
+            tests/test_nessuna_porta_serve_un_fatto_che_il_moat_ha_fermato.py
+        ======== 9 failed, 23 warnings in 49.32s ========   EXIT=1
+
+    PERCHE' UNA FUNZIONE E NON `hide_low_trust=True` NEI CHIAMANTI. La riga
+    giusta esiste dal 2026-07-20 in `briefing.py:136`, ed era l'unica su 38
+    chiamanti: la cura c'era e non si e' propagata. Ripeterla in nove posti
+    l'avrebbe resa una decisione presa nove volte, e il decimo chiamante
+    sarebbe nato senza — e' la classe «una copia invece della superficie
+    unica». Qui la decisione «cosa puo' tornare all'utente come vero» sta in
+    UN posto, e chi scrive un tool nuovo o passa di qui o si vede.
+
+    IL CRITERIO NON E' SCRITTO QUI. Quali status siano fuori dal recupero lo
+    decide `SemanticMemory.list_facts(hide_low_trust=True)`
+    (`semantic.py:3781`): 'orphaned', 'quarantined', 'user_belief'. Riscriverlo
+    qui sarebbe la copia numero cinque dello stesso filtro.
+
+    NON E' PER TUTTI. I tool di ANALISI e di PULIZIA devono continuare a vedere
+    il corpus intero: per riparare un fatto quarantenato bisogna poterlo
+    vedere. A loro serve un'altra cosa — lo `status` accanto a ogni riga — e
+    non questa funzione.
+
+    ⚠️ IL SECONDO VALORE NON E' ORNAMENTALE. Filtrare e tacere sostituirebbe un
+    silenzio con un altro: chi riceve otto fatti invece di dieci deve poterlo
+    sapere. Il numero va messo nel payload del tool, non solo nei log.
+
+    ⚠️ LIMITE DICHIARATO: il conteggio dei nascosti e' esatto finche' il corpus
+    sta sotto `limit`. Sopra, entrambe le liste sono tagliate dallo stesso
+    tetto e la differenza diventa un MINIMO, non il totale. Il tetto stesso e'
+    un ticket a se' (5.675 fatti vivi mai scansionati): quando il
+    payload dira' `n_scanned`/`n_total`, questo limite si chiude da solo.
+
+    Args:
+        agent: l'agente costruito da `_ag()`.
+        limit: il tetto di righe, lasciato al valore dei chiamanti storici.
+
+    Returns:
+        `(fatti, nascosti)`. Su errore `([], 0)`: un ripiego non rompe mai il
+        chiamante, ed e' la stessa forma che i 31 call site avevano gia' col
+        loro `except Exception: pass`.
+    """
+    try:
+        serviti = agent.semantic.list_facts(limit=limit, offset=0,
+                                            hide_low_trust=True)
+    except Exception:  # noqa: BLE001 — un recupero non muore per un contatore
+        return [], 0
+    try:
+        tutti = agent.semantic.list_facts(limit=limit, offset=0)
+        nascosti = max(0, len(tutti) - len(serviti))
+    except Exception:  # noqa: BLE001
+        nascosti = 0
+    return serviti, nascosti
+
+
+def _status_dei_membri(agent, payload: Any) -> Any:
+    """Accanto a ogni `fact_ids` di un payload, lo status di quei fatti.
+
+    T49, il lato che NON si cura nascondendo. I due cercatori di duplicati
+    (`hippo_find_duplicate_facts`, `hippo_facts_find_duplicates`) servono a
+    RIPARARE il corpus: per riparare un fatto quarantenato bisogna vederlo, e
+    filtrarlo li' renderebbe il corpus irreparabile. Il difetto e' un altro —
+    misurato il 09/09 dalla porta:
+
+        {"representative_id": "3b7cd022d7b8", "fact_ids": ["3b7cd022d7b8",
+         "7ebfc93bd4cb", "d87cb890d38a"], "n_dupes": 3, "max_similarity": 0.778}
+
+    Tre fatti in coppia, uno dei quali fermato dal gate, e nel payload lo
+    status non compare mai. Chi ripara non sa quale lato sia quale, e puo'
+    fondere il buono dentro il cattivo — che e' peggio del difetto che stava
+    riparando.
+
+    Aggiunge `fact_status` (id -> status) accanto a ogni gruppo che porta
+    `fact_ids`. Non toglie e non riordina niente: il payload di prima resta
+    intero, cosi' chi lo legge oggi continua a leggerlo.
+    """
+    if not isinstance(payload, dict):
+        return payload
+    #: I due tool hanno DUE FORME di payload, ed e' un fatto sul prodotto, non
+    #: un dettaglio: `memory_compaction.find_duplicates` rende gruppi con
+    #: `fact_ids`, `find_duplicate_facts.find_duplicate_facts` rende COPPIE con
+    #: `fact_a`/`fact_b` (:55-61). Due tool quasi omonimi, due moduli, due
+    #: forme. Chi le annota deve conoscerle entrambe — misurato: coprendo solo
+    #: la prima, il gemello restava rosso.
+    def _id_della(voce: dict) -> list[str]:
+        fuori = [str(x) for x in (voce.get("fact_ids") or [])]
+        for chiave in ("fact_a", "fact_b"):
+            if voce.get(chiave):
+                fuori.append(str(voce[chiave]))
+        return fuori
+
+    ids: set[str] = set()
+    for valore in payload.values():
+        if isinstance(valore, list):
+            for voce in valore:
+                if isinstance(voce, dict):
+                    ids.update(_id_della(voce))
+    if not ids:
+        return payload
+    stato: dict[str, str] = {}
+    for fid in ids:
+        try:
+            f = agent.semantic.get(fid)
+        except Exception:  # noqa: BLE001 — un'annotazione non rompe il tool
+            f = None
+        if f is not None:
+            stato[fid] = str(getattr(f, "status", "") or "model_claim")
+    for valore in payload.values():
+        if isinstance(valore, list):
+            for voce in valore:
+                if isinstance(voce, dict):
+                    membri = _id_della(voce)
+                    if membri:
+                        voce["fact_status"] = {
+                            x: stato.get(x, "sconosciuto") for x in membri}
+    return payload
+
+
+def _dichiara_nascosti(payload: Any, nascosti: int) -> Any:
+    """Mette nel payload quanti fatti il filtro di fiducia ha tolto.
+
+    Il campo c'e' SEMPRE, anche a zero: un campo che compare solo quando il
+    numero e' diverso da zero costringe chi legge a distinguere «nessuno
+    nascosto» da «questa versione non lo dice», e sono due cose diverse.
+
+    Il nome del campo sta scritto qui una volta sola: se cambia, cambia per
+    tutte le porte insieme.
+    """
+    if isinstance(payload, dict):
+        payload["hidden_low_trust"] = int(nascosti)
+    return payload
+
+
 def _pavimento_di(agent) -> float:
     """Il pavimento calibrato, da QUALUNQUE forma di oggetto la casa passi.
 
@@ -10081,12 +10226,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_prompt_skeleton":
             from verimem.prompt_skeleton import build_prompt_skeleton
-            eps, facts_all = [], []
+            eps = []
             try:
                 eps = a.memory.all(limit=5000)
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
             except Exception:
                 pass
+            # T49: questo payload finisce dentro un PROMPT. Un fatto fermato
+            # dal moat che entra qui e' il «context poisoning» che
+            # `briefing.py:136` evita dal 2026-07-20.
+            facts_all, _nascosti = _fatti_per_il_recupero(a)
             payload = build_prompt_skeleton(
                 task=str(arguments.get("task", "")),
                 episodes=eps,
@@ -10094,6 +10242,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 skills=a.skills.all(),
                 top_k_each=int(arguments.get("top_k_each", 3)),
             )
+            _dichiara_nascosti(payload, _nascosti)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10116,29 +10265,30 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_chain_facts":
             from verimem.fact_chain import chain_facts
-            facts_all = []
-            try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
-            except Exception:
-                pass
+            # T49: qui un quarantenato non e' solo servito, e' il PONTE verso
+            # i fatti dei salti successivi.
+            facts_all, _nascosti = _fatti_per_il_recupero(a)
             payload = chain_facts(
                 seed_query=str(arguments.get("seed_query", "")),
                 facts=facts_all,
                 max_depth=int(arguments.get("max_depth", 3)),
                 min_overlap=float(arguments.get("min_overlap", 0.15)),
             )
+            _dichiara_nascosti(payload, _nascosti)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
         if name == "hippo_oracle_query":
             from verimem.oracle import oracle_query
             n_scan = int(arguments.get("n_episodes_scan", 5000))
-            eps, facts_all = [], []
+            eps = []
             try:
                 eps = a.memory.all(limit=n_scan)
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
             except Exception:
                 pass
+            # T49: e' la porta del «cosa sai di X», con «aggregated confidence
+            # verdict»: un fatto che il gate ha fermato non puo' pesare li'.
+            facts_all, _nascosti = _fatti_per_il_recupero(a)
             skills = a.skills.all()
             payload = oracle_query(
                 query=str(arguments.get("query", "")),
@@ -10147,6 +10297,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 skills=skills,
                 top_k_each=int(arguments.get("top_k_each", 5)),
             )
+            _dichiara_nascosti(payload, _nascosti)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10223,6 +10374,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 sim_threshold=float(arguments.get("sim_threshold", 0.7)),
                 top_k=int(arguments.get("top_k", 100)),
             )
+            # T49: qui NON si filtra — chi ripara deve vedere anche i fermati.
+            # Si dichiara chi sono.
+            _status_dei_membri(a, payload)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10339,16 +10493,17 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_cross_agent_consensus":
             from verimem.cross_agent_consensus import find_consensus_facts
-            facts_all = []
-            try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
-            except Exception:
-                pass
+            # T49: il tool promette «independent agents arrived at the same
+            # proposition — strong evidence». Un fatto quarantenato non e'
+            # evidenza indipendente: e' rumore che vota, e senza filtro
+            # entrava nel conteggio `n_agents` senza comparire nel payload.
+            facts_all, _nascosti = _fatti_per_il_recupero(a)
             payload = find_consensus_facts(
                 facts_all,
                 min_agents=int(arguments.get("min_agents", 2)),
                 sim_threshold=float(arguments.get("sim_threshold", 0.6)),
             )
+            _dichiara_nascosti(payload, _nascosti)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10495,11 +10650,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 forward_chain,
                 parse_rule,
             )
-            facts_all = []
-            try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
-            except Exception:
-                pass
+            # T49, ed e' il caso peggiore dei nove: qui un fatto quarantenato
+            # non viene ELENCATO, viene CONSUMATO. Ne esce una proposizione
+            # nuova che nello store non esiste e che non porta nessuno status:
+            # chi la riceve non ha modo di sapere che discende da una riga che
+            # il gate aveva fermato. Misurato dalla porta il 09/09: una regola
+            # a grounding 0,13 produceva «il varco e' insicuro».
+            facts_all, _nascosti = _fatti_per_il_recupero(a)
             # Split into rules (parse-able) vs state
             rules: list = []
             non_rules: list = []
@@ -10510,8 +10667,18 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     non_rules.append(f)
             # If user specifies state_fact_ids, use only those as state
             state_ids = arguments.get("state_fact_ids")
+            _ignorati: list[str] = []
             if state_ids:
+                _vivi = {getattr(f, "id", "") for f in non_rules}
                 state = [f for f in non_rules if getattr(f, "id", "") in state_ids]
+                # ⚠️ Un id passato a mano NON e' un lasciapassare. Il README
+                # (righe 230-231) lo promette come proprieta' di sicurezza —
+                # «an exfiltration payload the gate quarantined stays
+                # quarantined even if a caller passes its id» — e prima di
+                # questa riga, su questa porta, non era vero. Chi ha passato
+                # quegli id deve pero' SAPERE che sono stati scartati: un
+                # filtro muto qui sarebbe indistinguibile da un id sbagliato.
+                _ignorati = [str(i) for i in state_ids if i not in _vivi]
             else:
                 state = non_rules
             payload = forward_chain(
@@ -10519,6 +10686,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 max_depth=int(arguments.get("max_depth", 5)),
             )
             payload["rules_found"] = len(rules)
+            _dichiara_nascosti(payload, _nascosti)
+            if state_ids:
+                payload["state_fact_ids_ignored"] = _ignorati
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -11861,6 +12031,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 top_k=int(arguments.get("top_k", 50)),
                 topic=arguments.get("topic"),
             )
+            # T49: come sopra — il gemello di questo tool, altro modulo dietro.
+            _status_dei_membri(a, payload)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 

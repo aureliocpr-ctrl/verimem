@@ -3956,10 +3956,40 @@ class Memory:
             pass
         return removed
 
-    def get_all(self, *, topic: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
-        """List stored facts (with provenance), newest-relevant first. mem0/Zep parity."""
+    def get_all(self, *, topic: str | None = None, limit: int = 100,
+                include_low_trust: bool = False) -> list[dict[str, Any]]:
+        """List stored facts (with provenance), newest-relevant first. mem0/Zep parity.
+
+        T49 (2026-09-09). Fino a questa riga il default serviva anche i fatti
+        che il gate aveva FERMATO — misurato dall'SDK con un fatto a
+        `grounding_score` 0.249:
+
+            {"text": "la serratura del deposito nord e' stata forzata",
+             "status": "quarantined", "grounding_score": 0.2490530...,
+             "confidence_tier": "low"}
+
+        Il README promette il contrario alla riga 443 — «stored but OUT of
+        default recall» — e chi integra l'SDK legge quella riga, non questa.
+        L'ottavo ingresso di T49 non e' MCP, ed e' stato trovato leggendo
+        i chiamanti di `list_facts` fuori dal server.
+
+        ⚠️ E' UN CAMBIO DI COMPORTAMENTO PUBBLICO, non un dettaglio interno:
+        un integratore che oggi conta le righe ne vedra' di meno. E' voluto —
+        quelle in meno sono esattamente quelle che il prodotto dichiara di non
+        servire — e chi le vuole ha `include_low_trust=True`, che le rende
+        tutte con il loro `status` accanto.
+
+        Args:
+            topic: se dato, restringe a quel topic.
+            limit: massimo righe.
+            include_low_trust: `True` per avere anche 'quarantined',
+                'orphaned' e 'user_belief' — la scelta di chi ripara il corpus,
+                non quella di chi legge la memoria per usarla.
+        """
         return [self._fact_view(f)
-                for f in self.semantic.list_facts(limit=limit, topic=topic)]
+                for f in self.semantic.list_facts(
+                    limit=limit, topic=topic,
+                    hide_low_trust=not include_low_trust)]
 
     def update(self, fact_id: str, text: str, *, topic: str | None = None) -> dict[str, Any]:
         """Revise a fact. Engram facts are immutable + auditable, so an update STORES a new

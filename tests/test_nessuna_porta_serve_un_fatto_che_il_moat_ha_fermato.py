@@ -325,13 +325,16 @@ def store():
         id_quar = next((getattr(f, "id", "") for f in vivi
                         if (getattr(f, "proposition", "") or "").strip().lower()
                         == B_QUARANTENATO.lower()), "")
-        assert id_quar, ("non trovo l'id del fatto quarantenato nello store: i "
-                         "test di pulizia parlano per id e senza questo non "
-                         "misurerebbero niente.")
+        id_sano = next((getattr(f, "id", "") for f in vivi
+                        if (getattr(f, "proposition", "") or "").strip().lower()
+                        == B1_SANO.lower()), "")
+        assert id_quar and id_sano, (
+            "non trovo gli id nello store: le porte parlano per id e senza "
+            f"questi non misurerebbero niente. quar={id_quar!r} sano={id_sano!r}")
 
         yield {"dir": tmp, "agente": a, "percorso": percorso,
                "ricevute": scritti, "diagnosi": diagnosi,
-               "id_quarantenato": id_quar}
+               "id_quarantenato": id_quar, "id_sano": id_sano}
     finally:
         mcp_server._agent = agente_di_prima
         from verimem.config import CONFIG as _C
@@ -359,17 +362,35 @@ def _tieni_il_pin(request):
 # ═════════════════ (a) LE PORTE DI RECUPERO: non deve uscire ═════════════════
 
 def _asserisci_recupero(payload: dict, dove: str, store: dict) -> None:
+    """⚠️ SI GUARDA L'ID, NON IL TESTO, e questo criterio e' costato un rosso.
+
+    Il primo criterio era «la proposizione del quarantenato compare nel JSON».
+    Sembra innocuo e non lo e': alle 23:31 quattro porte risultavano ancora
+    rosse **a cura funzionante**, perche' la proposizione quarantenata
+
+        "la serratura del deposito nord e' stata forzata"
+
+    compare per intero DENTRO la proposizione della regola SANA (E)
+
+        "if la serratura del deposito nord e' stata forzata then
+         il deposito va ispezionato"
+
+    che il payload serviva legittimamente. Il grep serve a TROVARE, mai a
+    contare: l'id e' univoco, la sottostringa no.
+    """
     testo = _testo(payload)
-    sano_c_e = B1_SANO.lower() in testo
-    quarantenato_c_e = B_QUARANTENATO.lower() in testo
-    assert sano_c_e, (
-        f"{dove} non rende nemmeno il fatto SANO: questo test non sta "
-        "misurando il filtro, sta misurando una porta muta. Payload: "
+    id_quar = store["id_quarantenato"]
+    id_sano = store["id_sano"]
+    assert id_sano and id_sano in testo, (
+        f"{dove} non rende nemmeno il fatto SANO (id={id_sano!r}): questo test "
+        "non sta misurando il filtro, sta misurando una porta muta. Payload: "
         f"{json.dumps(payload, ensure_ascii=False, default=str)[:600]}")
-    assert not quarantenato_c_e, (
+    _i = testo.find(id_quar)
+    assert _i < 0, (
         f"{dove} rende un fatto che il moat ha QUARANTENATO. Il server "
         "promette ai client «kept OUT of default recall, so you never get it "
-        f"back as truth». Riga servita: {B_QUARANTENATO!r}\n"
+        f"back as truth». id={id_quar!r} — {B_QUARANTENATO!r}\n"
+        f"  DOVE COMPARE: ...{testo[max(0, _i - 260):_i + 140]}...\n"
         f"  ricevuta della scrittura: {store['diagnosi']}")
 
 
@@ -419,14 +440,27 @@ def test_cross_agent_consensus_non_conta_un_quarantenato_come_un_accordo(store):
     `agent_ids` e `fact_ids` (`cross_agent_consensus.py:66-71`). Il quarantenato
     quindi **vota senza comparire**: cercarne il testo dava verde su un tool
     difettoso. Il criterio giusto e' CHI HA VOTATO — `agent_ids`."""
+    #: ⚠️ 0.4 e non 0.5, e la ragione e' un fatto sul PRODOTTO che vale la pena
+    #: scrivere: `find_consensus_facts` raggruppa in modo GREEDY confrontando
+    #: ogni fatto con il PRIMO del gruppo (`cross_agent_consensus.py:46-53`),
+    #: e l'ordine e' `created_at DESC`. Quando la regola (E) e' entrata nello
+    #: store, e' diventata lei il primo elemento: a 0.5 catturava la ronda-c
+    #: (Jaccard 0.50) e lasciava fuori la ronda-b (0.43), e il consenso spariva
+    #: — non perche' il filtro fosse sbagliato, ma perche' l'ESITO DIPENDE
+    #: DALL'ORDINE DI SCRITTURA. E' la stessa forma che @ws4 Nadia ha misurato
+    #: su `forward_chain` («con le stesse regole l'esito dipende dall'ordine»),
+    #: in un secondo modulo.
     payload = _chiama("hippo_cross_agent_consensus",
-                      {"min_agents": 2, "sim_threshold": 0.5})
+                      {"min_agents": 2, "sim_threshold": 0.4})
     gruppi = payload.get("consensus") or []
     quarantenato = "ronda-a"
-    assert gruppi, (
-        "nessun gruppo di consenso: senza un gruppo questo test sarebbe verde "
-        "a vuoto. Le due ronde SANE (ronda-b, ronda-c) dovevano bastare a "
-        f"formarlo. Payload: {json.dumps(payload, ensure_ascii=False, default=str)[:600]}")
+    insieme = [g for g in gruppi
+               if {"ronda-b", "ronda-c"} <= set(g.get("agent_ids") or [])]
+    assert insieme, (
+        "le due ronde SANE (ronda-b, ronda-c) non finiscono in nessun gruppo "
+        "insieme: senza quel gruppo «nessun quarantenato nel consenso» sarebbe "
+        "vero anche a consenso VUOTO, e questo test non misurerebbe niente. "
+        f"Payload: {json.dumps(payload, ensure_ascii=False, default=str)[:600]}")
     votanti = sorted({a for g in gruppi for a in (g.get("agent_ids") or [])})
     assert quarantenato not in votanti, (
         f"il gruppo di CONSENSO conta {quarantenato!r} fra gli agenti "
@@ -446,10 +480,11 @@ def test_sdk_memory_get_all_non_serve_un_quarantenato(store):
     m = Memory(path=store["percorso"])
     righe = m.get_all(limit=1000)
     testo = _testo(righe)
-    assert B1_SANO.lower() in testo, (
+    # per id, non per testo: vedi la nota in `_asserisci_recupero`.
+    assert store["id_sano"] in testo, (
         "get_all non rende nemmeno il fatto sano: sto guardando un altro "
         f"store. percorso={store['percorso']!r} n_righe={len(righe)}")
-    assert B_QUARANTENATO.lower() not in testo, (
+    assert store["id_quarantenato"] not in testo, (
         "l'SDK rende un quarantenato fra i fatti dell'utente. E' la stessa "
         "riga dei sei tool MCP, in un punto che il ticket T49 non copriva "
         f"finche' @ws3 non l'ha trovata.\n  {store['diagnosi']}")
@@ -558,7 +593,7 @@ def _asserisci_pulizia(payload: dict, dove: str, store: dict) -> None:
     #: 23:07, `max_similarity: 0.778`). Se ne e' accorto il controllo positivo,
     #: che e' l'unica ragione per cui questa riga adesso e' giusta.
     ident = store["id_quarantenato"]
-    assert ident and (ident in testo or B_QUARANTENATO.lower() in testo), (
+    assert ident and ident in testo, (
         f"{dove} non ha trovato nessuna coppia che contenga il quarantenato "
         f"(id={ident!r}): senza quella coppia non c'e' niente da dichiarare e "
         "questo test sarebbe verde a vuoto. Payload: "
