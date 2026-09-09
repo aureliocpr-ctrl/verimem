@@ -62,9 +62,27 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 285 | `prune` | **pub** | Retention: cancella turni per cap (``max_turns``, tiene i  | _generico — cercato qualificato nei blocchi sopra_ |
 | 324 | `_row_to_turn` | priv |  | 🔴 **nessuno** |
 
-### I dunder di questo file
+## Le classi di questo file — 2 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
+
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 52 | `Turn` | 0 | Un turno di conversazione grezzo (verbatim). | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 101 | `TranscriptIndex` | 12 | Indice isolato e low-trust del transcript grezzo. Pull-only. | 10 — `test_conversational_not_laundered.py` | esercitata dai blocchi eseguiti sopra |
+
+## I metodi speciali di questo file — 1
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 104 | `__init__` | `TranscriptIndex` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `TranscriptIndex` nei blocchi sopra |

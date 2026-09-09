@@ -47,9 +47,30 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 555 | `stats` | **pub** |  | 46 — `e2e_cycle51_54_chain.py` |
 | 575 | `encode` | **pub** |  | 107 — `conftest.py` |
 
-### I dunder di questo file
+## Le classi di questo file — 4 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
+
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 115 | `_DefaultEmbedder` | 1 | Adapter over the shared ``verimem.embedding.encode`` (model  | 3 — `test_cli_docs.py` | esercitata dai blocchi eseguiti sopra |
+| 218 | `Risultati` | 1 | I risultati di una ricerca, con quanti ne sono stati NASCOST | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 265 | `DocumentIndex` | 8 | Chunk-level semantic index with exact provenance over the Do | 18 — `test_document_index_path_guard.py` | esercitata dai blocchi eseguiti sopra |
+| 574 | `_E` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+
+## I metodi speciali di questo file — 2
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 253 | `__init__` | `Risultati` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `Risultati` nei blocchi sopra |
+| 268 | `__init__` | `DocumentIndex` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `DocumentIndex` nei blocchi sopra |

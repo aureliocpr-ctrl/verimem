@@ -94,7 +94,7 @@ SENZA_RIGA = [0]
 #: `| n | `nome(args)` | `file.py` | ...`
 INTESTAZIONE_PKG = re.compile(r"`(verimem/[^`]+?)/?`")
 RIGA_PKG = re.compile(
-    r"^\|\s*\d+\s*\|\s*`([A-Za-z_][\w.]*)(?:\([^`]*\))?`\s*\|\s*`([^`/]+\.py)`")
+    r"^\|\s*\d+\s*\|\s*`([A-Za-z_][\w.]*)(?:\([^`]*\))?`\s*\|\s*`((?:[\w.-]+/)*[\w.-]+\.py)`")
 RIGA_README = re.compile(r"`README\.md:(\d+)`")
 RIGA_DOC = re.compile(r"`(docs/[^`]+\.md)`")
 
@@ -116,10 +116,16 @@ def righe_della_mappa() -> tuple[dict[str, set[str]], set[int], set[str], dict[s
                 continue
             if not riga.startswith("|"):
                 continue
-            if pacchetto and nome not in ("README-claims.md", "documenti.md", "00-INDICE.md"):
+            if nome not in ("README-claims.md", "documenti.md", "00-INDICE.md"):
                 mp = RIGA_PKG.match(riga)
-                if mp:
-                    mappate.setdefault(pacchetto + "/" + mp.group(2), set()).add(mp.group(1))
+                # la terza colonna puo' portare il file nudo (`bridge.py`, il
+                # pacchetto viene dall'intestazione) o il percorso dentro
+                # verimem (`teams/inbox.py`): nel secondo caso l'intestazione
+                # non serve
+                if mp and (pacchetto or "/" in mp.group(2)):
+                    modulo = ("verimem/" + mp.group(2) if "/" in mp.group(2)
+                              else pacchetto + "/" + mp.group(2))
+                    mappate.setdefault(modulo, set()).add(mp.group(1))
                     SENZA_RIGA[0] += 1
                     for v in VERDETTI:
                         if v in riga:

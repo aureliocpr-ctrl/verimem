@@ -82,7 +82,7 @@ il testo intero.
 | # | dove e chi | cos'e' | nominata da | test | verdetto |
 |---|---|---|---|---|---|
 | 1 | `verimem/observability.py:43` `_resolve_log_level` | funzione | `verimem/observability.py` | **nessuno** | NON MISURATO |
-| 2 | `verimem/observability.py:66` `route_logs_to_stderr` | funzione: Re-route every structlog line to stderr (colors off), for entry points | `verimem/cli.py` | **nessuno** | NON MISURATO |
+| 2 | `verimem/observability.py:66` `route_logs_to_stderr` | funzione: Re-route every structlog line to stderr (colors off), for entry points — **il nome e le righe 22-25 promettono stderr perche' «its protocol owns stdout»; ma `PrintLoggerFactory(file=sys.stderr)` legge sys.stderr alla CHIAMATA, e con `sys.stderr is None` (pythonw, servizio senza console) `file=None` significa stdout: **86 byte misurati il 09/09**. Era la causa del rosso intermittente di test_ws5_il_download (T41). Il verdetto vale su questo commit: la cura e' sul ramo `tara/t41-logger-tace` (`be118f90`), non ancora su main** | `verimem/cli.py` | **nessuno** | NON COME PROMESSO |
 | 3 | `verimem/observability.py:96` `Event` | classe | `verimem/_hang_watchdog.py`; `verimem/encode_service.py` (+3) | `tests/test_bump_on_recall_nonblocking.py`; `tests/test_daemon_health_probe.py` (+12) | NON MISURATO |
 | 4 | `verimem/observability.py:101` `Event.to_json` | funzione | **nessuno** | **nessuno** | MAI CHIAMATA |
 | 5 | `verimem/observability.py:108` `EventBus` | classe: Synchronous pub/sub. Thread-safe. Keeps a ring buffer of recent events. | `verimem/observability.py` | **nessuno** | NON MISURATO |
@@ -108,6 +108,7 @@ il testo intero.
 | 25 | `verimem/observability.py:297` `emit` | funzione | `verimem/agent.py`; `verimem/bench_harness.py` (+17) | `tests/test_l_estratto_dell_evento_non_mutila.py`; `tests/test_memory_map_routes.py` (+1) | NON MISURATO |
 
 <!-- /TABELLA-FUNZIONI ws5 -->
+
 
 
 

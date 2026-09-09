@@ -54,3 +54,15 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 258 | `list_undoable` | **pub** | Return the N most recent undoable ops (newest first, not y | 2 — `test_undo_log.py` |
 | 282 | `invalidate_handles_for` | **pub** | Drop the PENDING undo handles that would resurrect ``fact_ | 🔴 **nessuno** |
 | 315 | `prune_expired_undo_log` | **pub** | Delete undo entries past their TTL. Returns count deleted. | 2 — `test_undo_log.py` |
+
+## Le classi di questo file — 1 sulla superficie
+
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
+
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 46 | `UndoEntry` | 0 | One row from facts_undo_log. | 🔴 **nessuno** | **NON MISURATA** — nessun test nomina il nome |
