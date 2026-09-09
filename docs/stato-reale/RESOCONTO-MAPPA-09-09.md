@@ -82,3 +82,12 @@ Ordine per effetto sull'utente, non per facilità. Ogni voce: il limite · la ri
 ## 7. Cosa può fare l'utente oggi che ieri non poteva
 
 Niente di nuovo in main oggi: la giornata è stata di mappa, non di cure. Ciò che l'utente ha ricevuto dalla giornata di ieri: as_of sulle porte ordinarie, la supersessione fra fonti diverse, il primo giudizio che parte (3/3), la CI che non riparte sui soli documenti.
+
+## Errata del controllore (09/09, 23:58, ora letta) — i numeri che i righelli delle otto hanno corretto
+
+- **Moduli senza chiamante**: il mio 19 era il conteggio di ciò che avevo letto, non un perimetro. Il righello di Corrado (`scripts/senza_chiamante.py`, PR #14) parte dalle porte e cammina in avanti: **62 moduli su 424 irraggiungibili da ogni porta** (35 senza porta, 5 solo con `python -m`, 22 raggiunti solo da importatori che a loro volta non hanno porta).
+- **Copie**: `_signature` ×5 (non 3), stoplist 16 (non 5), elenchi di status 22 (non 4); `_jaccard` ×18 e `_tokens` ×20 confermati (`scripts/copie.py`, PR #14). I tetti del cricchetto sono questi.
+- **T26a**: la cura a quattro punti `cbede6a9` è GIÀ in main (patch-id identici, cinque commit su cinque: Tara, 23:06). Il ticket vivo è T26a/a: la ricevuta dice con la stessa parola, su SDK e MCP, quando il giudice non ha giudicato (ramo `tara/t26a`).
+- **Misura 1 del contratto**: il 21,1 % non è tutto perdita. Scomposto da Aldo (`scripts/di_cosa_e_fatta_la_perdita.py`): 8,1 % snapshot degli hook potati apposta, 7,8 % quarantenati (la promessa del moat), 2,9 % same-source, 1,1 % heal, 1,1 % dedup, 0,1 % altre. Da ora si stampano entrambi: il grezzo con la scomposizione, e la **perdita non voluta 949/18.098 = 5,2 % → obiettivo ≤ 1 %** (curabile versionando 730 → 0). Decisione D-1 del lead, rovesciabile da Aurelio.
+- **Comandi CLI**: il denominatore è 98, non 88 (tre file Typer): 56 con una prova alla porta, 42 senza; 37 dei 42 eseguiti da Marie la sera del 09/09 (una caduta: T55; un codice d'uscita bugiardo: T58).
+- **T-MAP-11**: dalla porta MCP il moat non girava affatto (`ground` mai passato), non «soglia troppo bassa»; e nessuna soglia separa (47 % di invenzioni ammesse a 40 sullo split heldout mai letto, 64 % fermate a 99): il criterio deve cambiare (Galileo, PR #15 per il passaggio di `ground`, giro 3 sul criterio).
