@@ -3957,7 +3957,7 @@ class Memory:
         return removed
 
     def get_all(self, *, topic: str | None = None, limit: int = 100,
-                include_low_trust: bool = False) -> list[dict[str, Any]]:
+                include_hidden: bool = False) -> list[dict[str, Any]]:
         """List stored facts (with provenance), newest-relevant first. mem0/Zep parity.
 
         T49 (2026-09-09). Fino a questa riga il default serviva anche i fatti
@@ -3976,20 +3976,27 @@ class Memory:
         ⚠️ E' UN CAMBIO DI COMPORTAMENTO PUBBLICO, non un dettaglio interno:
         un integratore che oggi conta le righe ne vedra' di meno. E' voluto —
         quelle in meno sono esattamente quelle che il prodotto dichiara di non
-        servire — e chi le vuole ha `include_low_trust=True`, che le rende
+        servire — e chi le vuole ha `include_hidden=True`, che le rende
         tutte con il loro `status` accanto.
 
         Args:
             topic: se dato, restringe a quel topic.
             limit: massimo righe.
-            include_low_trust: `True` per avere anche 'quarantined',
+            include_hidden: `True` per avere anche 'quarantined',
                 'orphaned' e 'user_belief' — la scelta di chi ripara il corpus,
                 non quella di chi legge la memoria per usarla.
+
+        ⚠️ IL NOME NON COMBACIA CON QUELLO DEL MOTORE, ed e' deliberato: sotto
+        c'e' `list_facts(hide_low_trust=…)`. `include_hidden` sta qui per
+        simmetria con `include_superseded`, che e' l'altro «mostrami anche cio'
+        che di norma non vedi» di questa stessa classe — la porta pubblica parla
+        la lingua della porta, non quella del motore. Se un giorno il filtro
+        interno cambia criterio, questo nome regge lo stesso.
         """
         return [self._fact_view(f)
                 for f in self.semantic.list_facts(
                     limit=limit, topic=topic,
-                    hide_low_trust=not include_low_trust)]
+                    hide_low_trust=not include_hidden)]
 
     def update(self, fact_id: str, text: str, *, topic: str | None = None) -> dict[str, Any]:
         """Revise a fact. Engram facts are immutable + auditable, so an update STORES a new
