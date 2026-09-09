@@ -261,3 +261,39 @@ centocinquanta.**
 📌 **Da dove partire**, se qualcuno le documenta: `settings.py` ne ha **dodici** — è il file
 delle impostazioni, cioè quello dove un comportamento non dichiarato costa di più.
 
+---
+
+## 🧱 E le CLASSI — le diciassette che la tabella delle funzioni non vedeva
+
+Il righello del lead contava **167** definizioni dove io ne dichiaravo **150**. La differenza
+sono **17 classi**: `ast.FunctionDef` non le vede, e la mia tabella nemmeno. **Il suo numero
+era giusto e il mio incompleto** — non due criteri diversi, un pezzo mancante nel mio.
+
+### Le classi dei sei pacchetti — 17
+
+| n | classe | file | base | metodi | cosa dichiara di essere |
+|---|---|---|---|---|---|
+| 1 | `_AgentShim` | `hooks/pre_tool_use.py` | — | 0 | *(nessun docstring)* |
+| 2 | `CollabHarness` | `teams/harness.py` | — | 7 | Measures collaboration progress on an agent-team's inboxes. |
+| 3 | `InboxMessage` | `teams/inbox.py` | — | 1 | One message read out of a teammate inbox file. |
+| 4 | `InboxWatcher` | `teams/inbox.py` | — | 2 | Incremental poller over a team's ``inboxes/*.json`` files. |
+| 5 | `AgentReport` | `swarm/orchestrator.py` | — | 0 | *(nessun docstring)* |
+| 6 | `SwarmReport` | `swarm/orchestrator.py` | — | 0 | *(nessun docstring)* |
+| 7 | `AgentSpec` | `swarm/schemas.py` | BaseModel | 0 | One Claude Code background agent inside a swarm run. |
+| 8 | `SwarmConfig` | `swarm/schemas.py` | BaseModel | 2 | Top-level swarm run definition. |
+| 9 | `SpawnError` | `swarm/spawn.py` | RuntimeError | 0 | Raised when ``claude --bg`` exits non-zero or output is unparseable. |
+| 10 | `SpawnResult` | `swarm/spawn.py` | — | 0 | Outcome of a successful spawn. |
+| 11 | `SessionState` | `swarm/state.py` | BaseModel | 1 | Subset of fields we read from ``state.json``. |
+| 12 | `ChatRequest` | `dashboard_routes/chat.py` | BaseModel | 0 | *(nessun docstring)* |
+| 13 | `FeedbackRequest` | `dashboard_routes/chat.py` | BaseModel | 0 | *(nessun docstring)* |
+| 14 | `SettingsBody` | `dashboard_routes/settings.py` | BaseModel | 0 | *(nessun docstring)* |
+| 15 | `PermissionsBody` | `dashboard_routes/settings.py` | BaseModel | 0 | *(nessun docstring)* |
+| 16 | `FallbackChainBody` | `dashboard_routes/settings.py` | BaseModel | 0 | *(nessun docstring)* |
+| 17 | `PresetApply` | `dashboard_routes/settings.py` | BaseModel | 0 | *(nessun docstring)* |
+
+```
+  funzioni  150
+  classi     17
+  TOTALE    167   <- il numero del righello del lead
+```
+

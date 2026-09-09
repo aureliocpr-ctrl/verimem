@@ -311,6 +311,10 @@ ordina la coda.
 | `docs/stato-reale/revisione-esterna/glm53-round1-perimetro.md` | **VIVO** — revisione esterna | *«**la prova e lo strumento di prova coincidono**: il moat è dimostrato dal giudice che…»* — un lettore esterno ci contesta l'autovalidazione, con le due frasi a quaranta righe di distanza |
 | `docs/stato-reale/revisione-esterna/glm53-round1-premortem.md` | **VIVO** — revisione esterna | *«**lo strumento che produce i numeri di copertina è dichiarato rotto dal report stesso**»*: il premortem di un revisore che non è dei nostri |
 | `docs/stato-reale/revisione-esterna/glm53-round1-presidi.md` | **VIVO** — revisione esterna | *«circuito di prova chiuso: il report dichiara falsificabilità **che il lettore destinat**…»* — la critica più dura, e l'abbiamo tenuta nel repo |
+| `docs/BENCHMARKS.md` | **VIVO** | citato dal README. E porta in cima l'avviso sui **nomi storici**: *«i nomi dei bracci (“engram”, “engram-base”) sono le etichette storiche salvate nei JSON dei risultati — si riferiscono a questo motore, rinominato»*. Il nome vecchio dichiarato invece di corretto a posteriori |
+| `docs/archive/README.md` | **VIVO** — è l'indice dell'archivio | *«questa cartella contiene **istantanee congelate a una data** di audit, diari di R&D, recap e roadmap **superate**»*: dichiara che il suo contenuto è morto per costruzione |
+| `docs/emergence/README.md` | **VIVO** | avvio rapido della pipeline **LLM-free** di scoperta delle skill emergenti, coi cicli dichiarati (213-244) |
+| `docs/stato-reale/revisione-esterna/README.md` | **VIVO** | *«il primo lettore ostile **non-interno**»*, dal mandato di Aurelio del 30/08: un critico esterno chiamato apposta, e il motivo citato dal report stesso |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -748,6 +752,24 @@ contraddizione.**
 🔑 È il quarto candidato che cade oggi leggendo invece di dedurre, e vale come risultato:
 **su 287 documenti, nessuno spaccia per chiuso un difetto che la vetrina tiene aperto.**
 
+
+### 🔻 Decimo righello: il mio controllo di copertura cercava il NOME, non il percorso
+
+Dicevo **«zero documenti senza riga»**. Era falso, e l'ha trovato **il lead, non io**:
+il controllo cercava `basename` (`README.md`), che **matcha la riga di un altro README** già
+in tabella. Rifatto cercando il **percorso completo**:
+
+```
+  grep -qF '`docs/<percorso>`'  ->  4 documenti senza riga su 290
+     BENCHMARKS.md · archive/README.md · emergence/README.md
+     stato-reale/revisione-esterna/README.md
+```
+
+🔑 **È la stessa forma che avevo trovato negli altri e segnalato due volte** — il falso
+positivo del nome comune, che avevo persino misurato («cinque documenti risultano citati
+solo perché si chiamano `README.md`»). **L'ho visto nel corpus e non nel mio controllo.**
+⇒ Le quattro righe ci sono ora, e il controllo giusto è **per percorso**.
+
 ## 🧾 Il conto, verificato riga per riga
 
 ```
@@ -765,7 +787,7 @@ solo perché il numero era **assurdo a colpo d'occhio**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 286 su 286** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 290 documenti + 1 banco = 291 righe** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
