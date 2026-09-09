@@ -1,0 +1,73 @@
+==========================================================================
+A. compilation.py
+==========================================================================
+MacroStep round-trip: {'tool': 'cerca', 'args': {'q': '{{TASK}}', 'extra': ['{{LAST_OBSERVATION}}']}} | uguale dopo il giro: True
+CompiledMacro round-trip: {'skill_id': 'sk1', 'steps': [{'tool': 'cerca', 'args': {'q': '{{TASK}}', 'extra': ['{{LAST_OBSERVATION}}']}}], 'derived_from_epis | uguale: True
+from_dict su un dict VUOTO (i default reggono?): {'skill_id': '', 'steps': [], 'derived_from_episodes': [], 'confidence': 0.0}
+
+_extract_json su tre involucri:
+  '{"a": 1}'                                 -> {'a': 1}
+  'Ecco il risultato:\n```json\n{"a": 2}\n``' -> {'a': 2}
+  'nessun json qui'                          -> None
+
+trajectories_to_prompt(3 episodi, cap=2):
+  ### Trajectory 1
+TASK: uno
+STEPS:
+  1. cerca({"q": "uno"})
+FINAL_ANSWER: 5900 euro
+
+### Trajectory 2
+TASK: due
+STEPS:
+  1. cerca({"q": "due"})
+FINAL_ANSWER: 590
+
+_substitute (ricorsivo su str/dict/list):
+  str : trova il canone -> 5900 euro
+  dict: {'q': 'trova il canone', 'n': [1, '5900 euro']}
+  segnaposto ignoto: {{BOH}}
+
+execute_macro: deterministico, e l'LLM non deve nemmeno essere sfiorato
+  risultato: MacroRunResult(ok=False, final_answer='', traces=[{'step': 1, 'tool': 'cerca', 'args': {'q': "qual e' il canone?"}, 'observation': '5900 euro', 'ok': True}, {'step': 2, 'tool': 'scrivi', 'args': {'tes
+  chiamate registrate: [('cerca', {'q': "qual e' il canone?"}), ('scrivi', {'testo': '5900 euro'})]
+  >>> LAST_OBSERVATION del primo passo è arrivato al secondo: True
+  con uno strumento MANCANTE: MacroRunResult(ok=False, final_answer='', traces=[{'step': 1, 'tool': 'cerca', 'args': {'q': 'x'}, 'observation': '5900 euro', 'ok': True}], aborted_at_step=2, 
+  con uno strumento che SOLLEVA: MacroRunResult(ok=False, final_answer='', traces=[], aborted_at_step=1, reason="tool error in cerca: il tool e' caduto")
+  con submit_solution in fondo -> ok: True | final_answer: '5900 euro' | passi: 2
+
+compile_macro: NON MISURATO senza un LLM vero — provo con uno finto
+2026-09-09T13:13:20.033923 [warning  ] compile_no_terminator          skill_id=sk1
+  con LLM finto valido -> None | chiamate all'llm: 1
+2026-09-09T13:13:22.071133 [warning  ] compile_invalid_json           raw="non e' json" skill_id=sk1
+  con LLM finto che risponde spazzatura -> None | chiamate: 1
+  con MENO episodi del minimo (1): None → non chiama nemmeno l'LLM (chiamate totali: 1 )
+
+==========================================================================
+B. tool_registry.py
+==========================================================================
+build_default_registry: strumenti registrati: 50
+  primi otto: ['hippo_anti_confab_apply', 'hippo_anti_confab_scan', 'hippo_chain_facts', 'hippo_consolidate', 'hippo_contradictions_list', 'hippo_contradictions_scan', 'hippo_corpus_size', 'hippo_count_by_agent']
+
+>>> IL PUNTO: che cosa torna per uno strumento SCONOSCIUTO?
+    Il docstring di `get` dice «Returns DEFAULT_CAPABILITY (READ/low)»,
+    ma il commento sopra il default (righe 57-60) racconta una cura
+    fail-CLOSED dopo un audit. Misuro invece di scegliere quale credere.
+  get('hippo_anti_confab_apply') -> capability=WRITE risk=medium reversibility=undoable confirm=False
+  get(SCONOSCIUTO) -> capability=DESTRUCTIVE risk=critical reversibility=no confirm=True sandbox=True bypass=False
+
+le viste per capacita' e per rischio:
+  writes_memory   : 14 -> ['hippo_remember', 'hippo_record_episode', 'hippo_skill_promote', 'hippo_fact_forget']
+  executes_command: 2 -> ['hippo_run_task', 'sandbox_exec']
+  requires_confirm: 5 -> ['hippo_fact_forget', 'hippo_forget_scope', 'hippo_forget', 'hippo_decay_run']
+  by_risk(low): 35
+  by_risk(medium): 10
+  by_risk(high): 5
+  by_risk(critical): 0
+  by_capability(READ): 34
+  by_capability(WRITE): 7
+  by_capability(EXECUTE): 2
+
+register: aggiunta e sovrascrittura (idempotente)
+  dopo register: WRITE high | totale: 51 (era 50)
+  dopo la sovrascrittura: READ | totale (non deve crescere): 51
