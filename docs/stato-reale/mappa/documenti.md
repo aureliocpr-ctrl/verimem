@@ -86,8 +86,6 @@ ordina la coda.
 | `docs/sota/cross-encoder-reranking.md` | **VIVO** | agganciato a `verimem/cross_encoder_rerank.py` |
 | `docs/sota/embedding-compression.md` | **VIVO** | agganciato a `verimem/embedding_quantize.py` |
 | `docs/sota/highway-nodes-pagerank-cache.md` | **VIVO** | agganciato a `verimem/betweenness_cache.py` |
-| `docs/sota/multi-signal-fusion.md` | **VIVO** | agganciato a `verimem/fuse_recall.py` |
-| `docs/sota/temporal-evolution-narrative.md` | **VIVO** | agganciato a `verimem/snapshot_at_time.py` |
 | `docs/sota/README.md` | **VIVO** | indice della cartella; il suo «← gateway.py» era il falso positivo del nome comune, verificato |
 | `docs/specs/p2b-ppr-entity-neighbors.md` | **VIVO** | la cosa che specifica **esiste**: `verimem/ppr_seed.py`, `verimem/mcp_server.py`. Non è un piano morto |
 | `docs/specs/p3-self-model-multi-anchor.md` | **VIVO** | implementata: `verimem/self_model.py`, `verimem/self_model_refresh.py` |
@@ -308,6 +306,11 @@ ordina la coda.
 | `docs/archive/2026-05-13_RND_EXPLORATION.md` | **MORTO (archivio)** | *«cosa ho costruito **quando non c'era un task**»*, 08/05 |
 | `docs/archive/2026-05-13_RND_TRACE_ALIGNMENT.md` | **MORTO (archivio)** | 08/05: *«il pezzo mancante della memoria attiva»* — un'idea archiviata |
 | `docs/archive/2026-05-13_RND_UX.md` | **MORTO (archivio)** | audit UX dell'08/05, owner dichiarato |
+| `docs/mondo-esterno/2026-09-05-concorrenti-cosa-non-fanno.md` | **VIVO** — ed è mio | *«la tabella dei concorrenti — e la nostra colonna, **con dentro i nostri difetti**»*. Owner ws8: la colonna nostra porta i difetti accanto ai vanti |
+| `docs/stato-reale/mappa/00-INDICE.md` | **VIVO** — è l'indice di questa mappa | dal mandato di Aurelio dell'08/09 20:27 **verbatim**: *«voglio tutta l'intera superficie del codice mappata»*. Tiene owner e contatori di tutte le istanze |
+| `docs/stato-reale/revisione-esterna/glm53-round1-perimetro.md` | **VIVO** — revisione esterna | *«**la prova e lo strumento di prova coincidono**: il moat è dimostrato dal giudice che…»* — un lettore esterno ci contesta l'autovalidazione, con le due frasi a quaranta righe di distanza |
+| `docs/stato-reale/revisione-esterna/glm53-round1-premortem.md` | **VIVO** — revisione esterna | *«**lo strumento che produce i numeri di copertina è dichiarato rotto dal report stesso**»*: il premortem di un revisore che non è dei nostri |
+| `docs/stato-reale/revisione-esterna/glm53-round1-presidi.md` | **VIVO** — revisione esterna | *«circuito di prova chiuso: il report dichiara falsificabilità **che il lettore destinat**…»* — la critica più dura, e l'abbiamo tenuta nel repo |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -717,9 +720,25 @@ mappa passa la giornata a segnalare negli altri.
 fondo si conta con `grep -c '^| \`docs'` e deve coincidere. Se non coincide, **vince la
 tabella**.
 
+
+### 🧾 Il conto, verificato riga per riga
+
+```
+  righe di verdetto distinte      287
+    di cui documenti .md          286
+    di cui banchi .py             1   (fuori dal denominatore dei 287)
+  documenti .md in docs/ (questo worktree, esclusa mappa/)   286
+  documenti senza riga                                        0
+```
+🔻 **Due righe duplicate tolte** (`sota/multi-signal-fusion`, `sota/temporal-evolution-narrative`):
+li avevo classificati due volte — una cercando i «citati e mancanti» del README, una
+aggiungendo `docs/sota/` in blocco. **Il conteggio diceva 289 su 287**, cioè più del totale:
+un numeratore più grande del denominatore è la firma di un doppio conteggio, e l'ho trovato
+solo perché il numero era **assurdo a colpo d'occhio**.
+
 ## Contatore
 
-**Classificati con verdetto letto: 284 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 286 su 286** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
