@@ -30,7 +30,7 @@ l'estrazione non producesse mai niente, l'asserzione passerebbe per la ragione
 sbagliata. Il controllo mostra che LO STESSO righello, sullo STESSO store, vede
 i fatti quando il consenso c'e'.
 
-FALSIFICATO, non solo scritto (09/09/2026 00:15). Il difetto e' stato simulato
+FALSIFICATO, non solo scritto. Il difetto e' stato simulato
 nel prodotto per un minuto — `cli.py:1194`, `raise typer.Exit(0)` sostituito con
 `import_all = True`, cioe' «elenca E importa» — e i due presidi sono stati
 eseguiti sullo STESSO difetto, uno dopo l'altro:
@@ -52,7 +52,13 @@ e' stato ripristinato con `git checkout --` e verificato identico al backup.
 
 Senza il difetto, `EXIT=0`, 3 passed.
 
-ws7 «Iris», 09/09/2026 23:55.
+ws7 «Iris», 09/09/2026, **fra le 23:02:37 e le 23:17:33** — la finestra e' quella
+fra i miei due post sul canale, che portano il timestamp del bus. Non do un
+orario piu' preciso perche' non l'ho letto mentre lavoravo: la prima stesura di
+questo file diceva «00:15» e «23:55», due ore stimate a mente e sbagliate di
+un'ora. Tre etichette su tre lo erano, con la deriva che cresceva. Sostituirle
+con altre tre stime sarebbe lo stesso errore in pulito, quindi qui c'e' la
+finestra che il bus PROVA e nient'altro. `date '+%H:%M:%S'` costa un comando.
 """
 from __future__ import annotations
 
@@ -99,8 +105,8 @@ def _quanti_fatti() -> int:
     ⚠️ `SemanticMemory()` SENZA argomenti, esattamente come fa `import_cmd`
     (`cli.py:1208`): la cartella la decide `HIPPO_DATA_DIR`, che il test
     imposta con monkeypatch. Un `data_dir=` inventato qui e' costato tre rossi
-    alle 23:58 — e li ha classificati il controllo positivo, che e' caduto
-    insieme agli altri due: quando cade anche lui, il difetto e' nel righello.
+    — e li ha classificati il controllo positivo, che e' caduto insieme agli
+    altri due: quando cade anche lui, il difetto e' nel righello.
 
     ⚠️ E non conta i file ne' le righe a schermo: uno store CREATO e vuoto ha
     gia' i suoi byte sul disco, quindi contare il .db direbbe > 0 su un
