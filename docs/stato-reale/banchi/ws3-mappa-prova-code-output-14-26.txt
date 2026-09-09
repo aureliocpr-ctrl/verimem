@@ -1,0 +1,120 @@
+VerimemCode costruito · workspace: ws · plan_mode: False
+
+=== _status_line / _banner / _contextual_tip / _episodes_since_sleep
+  _status_line: 'ENGRAM CODE  C:\\Users\\aurel\\AppData\\Local\\Temp\\ws3-code-kf1v87j_\\ws  · (provider default)  · skills 2 (1↑, 0 c'
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ ENGRAM CODE  C:\Users\aurel\AppData\Local\Temp\ws3-code-kf1v87j_\ws  ·      │
+│ (provider default)  · skills 2 (1↑, 0 compiled)  · episodes 0               │
+└─────────────────────────────────────────────────────────────────────────────┘
+/help for commands · Ctrl-D or /quit to exit ·  inlines a screenshot
+tip: first run — type any task and press Enter; after 3+ episodes try /sleep to
+consolidate
+
+  _episodes_since_sleep: 0
+  _contextual_tip: 'first run — type any task and press Enter; after 3+ episodes try /sleep to consolidate'
+
+=== _ensure_repomap / _system_addendum
+  repomap costruita, lunghezza: 106 · costruita a: True
+  _system_addendum: '## REPO MAP (top files by relevance)\n\n### modulo.py  · python  · 1 symbols\n  L   1  def        somma(a, b)\n\n## EDIT FORM'
+
+=== _slash: il comando che esiste e quello INVENTATO
+ENGRAM CODE  C:\Users\aurel\AppData\Local\Temp\ws3-code-kf1v87j_\ws  · 
+(provider default)  · skills 2 (1↑, 0 compiled)  · episodes 0
+  /status      -> True
+unknown command: /comando-che-non-esiste  (try /help)
+  /comando-che-non-esiste -> True (True = 'gestito', e stampa 'unknown command')
+
+=== i comandi che si possono chiamare senza LLM
+--- /help
+Memory                                                                         
+ /sleep    Run a sleep consolidation cycle right now.                          
+ /skills   List active skills, sorted by fitness. Usage: /skills               
+ /promote  Promote a candidate skill so it becomes retrievable. Usage:         
+           /promote <id-prefix>                                                
+ /retire   Retire (archive) a skill so it stops being retrieved. Usage:        
+           /retire <id-prefix>                                                 
+ /forget   Wipe ALL persistent memory (episodes, skills, semantic facts). Asks 
+           confirmation.                                                       
+Workspace                                                                 
+ /repomap  Print the current repo map.                                    
+ /diff     Show git diff for current workspace. Usage: /diff              
+ /review   Ask the agent to review a file. Usage: /review path/to/file.py 
+Model                                                                          
+ /model     Switch model for the executor. Usage: /model claude-opus-4-7  (no  
+            arg = show)                                                        
+ /provider  Switch LLM provider. Usage: /provider                              
+            anthropic|openai|groq|ollama|…                                     
+ /plan      Toggle plan mode: agent must propose a plan before any edit.       
+Session                                                            
+ /status  Show workspace + memory status.                          
+ /clear   Clear the screen.                                        
+ /help    Show available slash commands. Usage: /help  for detail. 
+ /quit    Exit the session.                                        
+ /exit    Alias of /quit.                                          
+/help <command>  shows the full description for one command
+--- /help diff
+┌─────────────────────────────────── /diff ───────────────────────────────────┐
+│ Show git diff for current workspace. Usage: /diff                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+--- /skills
+┌──────────┬────────────┬───────┬───────────┬────────┬─────────┬────────┐
+│ id       │ name       │ stage │ status    │ trials │ fitness │ active │
+├──────────┼────────────┼───────┼───────────┼────────┼─────────┼────────┤
+│ bbbbbbbb │ portineria │ nrem  │ promoted  │    4/4 │    0.83 │ ·      │
+│ aaaaaaaa │ canoni     │ nrem  │ candidate │    5/6 │    0.75 │ ·      │
+└──────────┴────────────┴───────┴───────────┴────────┴─────────┴────────┘
+--- /model (senza argomento = mostra)
+current model: (provider default)
+--- /provider (senza argomento = mostra)
+current: (auto)
+--- /plan (interruttore)
+plan mode ON
+  plan_mode dopo: True
+plan mode OFF
+  plan_mode dopo il secondo giro: False
+--- /repomap
+## REPO MAP (top files by relevance)
+
+### modulo.py  · python  · 1 symbols
+  L   1  def        somma(a, b)
+--- /status
+ENGRAM CODE  C:\Users\aurel\AppData\Local\Temp\ws3-code-kf1v87j_\ws  · 
+(provider default)  · skills 2 (1↑, 0 compiled)  · episodes 0
+--- /diff (workspace senza git)
+(no changes)
+
+=== _resolve_skill_id / _cmd_promote / _cmd_retire
+  _resolve_skill_id('aaaaaaaa'): Skill(id='aaaaaaaa1111', version=1, name='canoni', trigger='calcolare un canone', body='corpo', rationale='', stage='nrem', provenance_episodes=[], parent_skills=[], status='candidate', trials=6, successes=5, avg_tokens=0.0, created_at=1788956766.6829317, updated_at=1788956766.6829445, learned_embedding=None, compiled_macro=None, is_counterfactual=False, practice_prompts=[], last_used_at=0.0, antagonists=[], preconditions=[], postconditions=[])
+  _resolve_skill_id(id intero): Skill(id='aaaaaaaa1111', version=1, name='canoni', trigger='calcolare un canone', body='corpo', rationale='', stage='nrem', provenance_episodes=[], parent_skills=[], status='candidate', trials=6, successes=5, avg_tokens=0.0, created_at=1788956766.6829317, updated_at=1788956766.6829445, learned_embedding=None, compiled_macro=None, is_counterfactual=False, practice_prompts=[], last_used_at=0.0, antagonists=[], preconditions=[], postconditions=[])
+  _resolve_skill_id('zzzz'): None
+promoted aaaaaaaa  canoni
+  status dopo /promote: promoted
+Retire skill bbbbbbbb (portineria)? [y/n] (y):   /retire -> chiede CONFERMA e senza stdin da' EOFError · /promote invece agisce SENZA conferma
+  status dopo il tentativo di /retire: promoted
+no skill matches: prefisso-inesistente
+
+=== _show_diff / _preview_block
+--- a
++++ b
+@@ -1 +1 @@
+-vecchio
++nuovo
+
+  _preview_block -> AttributeError 'dict' object has no attribute 'path'
+
+=== _resolve_vision_drops: senza marcatori il testo NON deve cambiare
+  senza marcatori: 'Sistema la funzione somma in modulo.py'
+  (il ramo con [image: ...] chiama la visione: NON eseguito)
+
+=== quello che NON eseguo, e perche'
+  _cmd_forget                esiste: True · cancella TUTTA la memoria persistente
+  _cmd_sleep                 esiste: True · lancia il ciclo di consolidamento, pesante
+  _cmd_review                esiste: True · chiede all'agente, cioe' all'LLM
+  submit                     esiste: True · manda il compito all'LLM
+  _retry_failed_edits        esiste: True · richiede un fallimento vero e l'LLM
+  _apply_edits_with_preview  esiste: True · scrive sui file dopo conferma interattiva
+  run                        esiste: True · apre il ciclo interattivo
+  main                       esiste: True · avvia la sessione
+
+  chiamate all'agente finto in tutto il banco: []

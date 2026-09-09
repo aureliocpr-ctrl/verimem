@@ -1,0 +1,22 @@
+=== Memory._source_trust_book: il libro della fiducia delle fonti
+  tipo: SourceTrustBook
+  metodi pubblici: ['accept_value', 'consistency', 'from_dict', 'independent_clusters', 'mark_false', 'observe_confirmation', 'observe_contradiction', 'observe_outcome', 'outcome', 'record_report', 'to_dict', 'trust']
+  fiducia della fonte prima di osservazioni: 0.5
+  dopo una contraddizione: 0.3333333333333333
+  la seconda chiamata rende lo STESSO oggetto (cache): True
+
+=== Memory.record_decision + why_decision
+  record_decision -> 'afd6cdd676f94959'
+  why_decision('Postgres') -> [{'id': 'afd6cdd676f94959', 'decision': "uso Postgres per l'analytics", 'topic': 't/dec', 'alternatives': [], 'evidence': [], 'expected': '', 'outcome': None, 'outcome_ve
+  why_decision('argomento mai deciso') -> []
+
+=== Risultati.__init__: la lista dei risultati con gli AVVISI attaccati
+  tipo di ritorno di search: Risultati · e' una lista: True
+  quanti serviti: 1
+  attributo sotto_il_pavimento  : {'pavimento': 0.8975, 'score_migliore': 0.8566, 'tagliati': 0, 'nota': "nessun r
+  attributo trattenuti          : {'quanti': 1, 'nota': "1 fatto/i sull'argomento sono stati TRATTENUTI dal gate e
+  attributo scaduti             : ASSENTE
+  attributo nascosti_per_eta    : ASSENTE
+  Risultati() vuoto: [] · trattenuti: None
+  Risultati con avviso: 1 elementi · sotto_il_pavimento: {'quanti': 3}
+  >>> resta una lista vera (si itera e si conta): ['uno']

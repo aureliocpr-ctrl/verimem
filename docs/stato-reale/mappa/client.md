@@ -346,3 +346,13 @@ decrescenti.
   **Non curato**: siamo in mappa, e la scelta fra «non superare se il nuovo è
   quarantinato», «superare e avvisare» o «superare solo su richiesta esplicita»
   è del proprietario del write path, non mia.
+
+## Le ultime tre (client.py 350, 2394, 2802) — chiuse il 09/09 alle 14:28
+
+*Banco: `ws3-mappa-prova-ultime-tre.py`.*
+
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 88 | `verimem/client.py:2394` `Memory._source_trust_book` | il libro della fiducia per fonte, costruito pigramente e tenuto in cache | **FUNZIONA COME PROMESSO** | `_source_trust_book()` → un `SourceTrustBook` con dodici metodi pubblici (`trust`, `consistency`, `observe_confirmation`, `observe_contradiction`, `observe_outcome`, `mark_false`, `independent_clusters`, `record_report`, `accept_value`, `outcome`, `to_dict`, `from_dict`). La fiducia di una fonte mai vista è **0,5**; dopo una contraddizione **0,3333**. E la seconda chiamata rende **lo stesso oggetto** (`is` → True): la cache è vera, non una ricostruzione |
+| 89 | `verimem/client.py:2802` `Memory.record_decision` | registra una decisione con il suo contesto, recuperabile da `why_decision` | **FUNZIONA COME PROMESSO** | `record_decision("uso Postgres per l'analytics", topic="t/dec")` → l'id `afd6cdd676f94959`; `why_decision("Postgres")` → `[{'id': 'afd6cdd676f94959', 'decision': "uso Postgres per l'analytics", 'topic': 't/dec', 'alternatives': [], 'evidence': [], 'expected': '', 'outcome': None, …}]` — la decisione torna **con i campi vuoti nominati** (alternative, evidenze, atteso, esito), non con un dizionario minimo. Su un argomento mai deciso → **`[]`** |
+| 90 | `verimem/client.py:350` `Risultati.__init__` | la lista dei risultati **con gli avvisi attaccati** (`sotto_il_pavimento`, `trattenuti`, …) | **FUNZIONA COME PROMESSO — ed è una lista vera** | `search()` restituisce un `Risultati` che **è** una `list` (`isinstance` → True, si itera e si conta), con addosso `sotto_il_pavimento` = `{'pavimento': 0.8975, 'score_migliore': 0.8566, 'tagliati': 0, 'nota': "nessun r…"}` e `trattenuti` = `{'quanti': 1, 'nota': "1 fatto/i … TRATTENUTI dal gate…"}`. Costruito a mano: `Risultati()` → lista vuota con `trattenuti = None`; `Risultati([{...}], sotto_il_pavimento={'quanti': 3})` → 1 elemento e l'avviso al suo posto. **Gli avvisi viaggiano col risultato**, non in un canale a parte |

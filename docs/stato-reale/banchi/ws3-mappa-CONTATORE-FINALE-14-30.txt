@@ -1,0 +1,14 @@
+== FUNZIONI E CLASSI: nel codice contro nella mappa ==
+  ws3    mappate   456 /   456   mancanti     0
+  TUTTE  mappate   456 /   456   mancanti     0
+== CHI MANCA, per file (prime 15) ==
+== README ==
+  righe collegate 0 / 811   mancanti 811
+== DOCUMENTI ==
+  classificati 0 / 310   mancanti 310
+== VERDETTI ==
+  FUNZIONA COME PROMESSO   295
+  NON COME PROMESSO        11
+  NON MISURATO             25
+  MAI CHIAMATA             0
+NON COMPLETA
