@@ -1,0 +1,25 @@
+  z1: prove=0 status=candidate · ferma da 90 giorni
+  z2: prove=0 status=candidate · ferma da 1 giorni
+  z3: prove=9 status=candidate · ferma da 90 giorni
+2026-09-09T14:16:24.376080 [info     ] skill_retired_dormant          last_activity=1781180184.0540087 skill_id=z1 trials=0
+
+retire_dormant_candidates(max_age_days=30, min_trials=3) -> ['z1']
+   z1: retired
+   z2: candidate
+   z3: candidate
+  >>> ritirata SOLO la zombie (0 prove, 90 giorni): True
+
+=== il cap tiene il ritiro graduale?
+2026-09-09T14:16:24.840884 [info     ] skill_retired_dormant          last_activity=1781180184.0540087 skill_id=c0 trials=0
+2026-09-09T14:16:24.859491 [info     ] skill_retired_dormant          last_activity=1781180184.0540087 skill_id=c1 trials=0
+  con cap=2 su 5 zombie -> ['c0', 'c1']
+
+=== find_duplicates: i coseni VERI fra due trigger identici
+  d1: embedding di 768 valori, norma 1.0000
+  d2: embedding di 768 valori, norma 1.0000
+  d3: embedding di 768 valori, norma 1.0000
+  coseno fra i due trigger IDENTICI: 0.984761
+  coseno fra due trigger DIVERSI:    0.813378
+  find_duplicates(0.99): []
+  find_duplicates(0.95): [('d1', 'd2', 0.9848)]
+  find_duplicates(0.99) trova la coppia identica: False
