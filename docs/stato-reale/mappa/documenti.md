@@ -80,6 +80,18 @@ ordina la coda.
 | `docs/stato-reale/banchi/ws5-i-comandi-del-readme-pubblicato-funzionano.py` | **VIVO — ed è un presidio** | *«non “il README dice il vero”, ma **“se un utente fa quello che c'è scritto, succede quello che dice?”**»*. E la distinzione che conta: *«la vetrina che conta è quella **pubblicata**… i comandi li estraggo dal `METADATA` del wheel scaricato da PyPI, non dal repo»*. La classe «ricetta rotta» **è presidiata** |
 | `docs/stato-reale/85-il-disegno-esploso-dello-store-le-giunture-e-chi-le-presidia.md` | **VIVO** | livello 3 del disegno esploso, 05/09, e dichiara il metodo: *«ogni riga porta **o la misura che presidia la giuntura, o la parola scoperta**»* — nessuna cella inventata |
 | `docs/stato-reale/LA-FRASE-DELLA-0.7.7.md` | **VIVO** | ws7, 06/09, *«scritta alle 08:20 e **RIMISURATA alle 08:45**, base `v0.7.6..origin/main` = `460f230e` (alle 08:20 era `13fa323f`: **main si è mosso sotto la** …)»*. Dichiara che il bersaglio si è spostato **mentre scriveva**, e rimisura |
+| `docs/sota/L0-L3-anti-confab-layers.md` | **VIVO** | agganciato a `verimem/l1_extended_detector.py` |
+| `docs/sota/active-learning-bandit-vs-cron.md` | **VIVO** | agganciato a `verimem/dream_thompson_hook.py` |
+| `docs/sota/community-detection-channel-pattern.md` | **VIVO** | agganciato a `verimem/community_detector.py` |
+| `docs/sota/cross-encoder-reranking.md` | **VIVO** | agganciato a `verimem/cross_encoder_rerank.py` |
+| `docs/sota/embedding-compression.md` | **VIVO** | agganciato a `verimem/embedding_quantize.py` |
+| `docs/sota/highway-nodes-pagerank-cache.md` | **VIVO** | agganciato a `verimem/betweenness_cache.py` |
+| `docs/sota/multi-signal-fusion.md` | **VIVO** | agganciato a `verimem/fuse_recall.py` |
+| `docs/sota/temporal-evolution-narrative.md` | **VIVO** | agganciato a `verimem/snapshot_at_time.py` |
+| `docs/sota/README.md` | **VIVO** | indice della cartella; il suo «← gateway.py» era il falso positivo del nome comune, verificato |
+| `docs/specs/p2b-ppr-entity-neighbors.md` | **VIVO** | la cosa che specifica **esiste**: `verimem/ppr_seed.py`, `verimem/mcp_server.py`. Non è un piano morto |
+| `docs/specs/p3-self-model-multi-anchor.md` | **VIVO** | implementata: `verimem/self_model.py`, `verimem/self_model_refresh.py` |
+| `docs/specs/p1-hippo-validate-claim.md` | **VIVO** | agganciata a `verimem/mcp_server.py` |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -456,6 +468,22 @@ candidati e non li conta** — è la lezione che questa mappa ha pagato sette vo
 ```
 Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerca/` 16 ·
 `docs/archive/` 11 (tutti citati) · `docs/sota/` 9 · `docs/specs/` 8 · il resto sparso.
+
+
+## 🧮 Il numero DEVE essere contabile da questa tabella
+
+🔻 **Correzione, 09/09.** Ieri ho dichiarato **68 documenti letti** mentre la tabella ne
+conteneva **56**: la differenza erano i documenti classificati **dentro le sezioni**
+(`docs/sota/` in blocco, due di `specs/`) senza una riga propria.
+
+**Non erano inventati** — l'aggancio al codice era verificato per ognuno — ma **chi legge
+la tabella ne contava 56**, e il numero che davo sul canale era 68. Un contatore che non si
+può ricostruire dal documento **è un numero fidato sulla parola**, ed è la cosa che questa
+mappa passa la giornata a segnalare negli altri.
+
+⇒ **Regola per questo file**: ogni documento con un verdetto ha **una riga**. Il numero in
+fondo si conta con `grep -c '^| \`docs'` e deve coincidere. Se non coincide, **vince la
+tabella**.
 
 ## Contatore
 
