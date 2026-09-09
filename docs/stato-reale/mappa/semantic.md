@@ -511,26 +511,53 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 798 | `SupersedeError` | 0 | Raised on invalid arguments to :meth:`SemanticMemory.superse | 4 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
-| 808 | `SupersedeConflict` | 0 | Raised when ``old_id`` is already superseded by a *different | 5 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
-| 1604 | `Fact` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
-| 2599 | `SemanticMemory` | 54 |  | 322 — `bench.py` | esercitata dai blocchi eseguiti sopra |
+| 798 | `SupersedeError` | 0 | Raised on invalid arguments to :meth:`SemanticMemory.supersede`. | 4 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
+| 808 | `SupersedeConflict` | 0 | Raised when ``old_id`` is already superseded by a *different* fact | 5 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
+| 1604 | `Fact` | 1 | **contratto dei dati**: `id`, `proposition`, `topic`, `confidence`, `source_episodes`, `created_at`, `superseded_by`, `superseded_at` … (27 in tutto) | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 2599 | `SemanticMemory` | 54 | — | 322 — `bench.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 2
 
 In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
-questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
-accessori di protocollo: non hanno un claim del README ne' un test proprio, e
-sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
-blocchi sopra, non una riga a se'.
+restavano fuori dal conto. **Non sono righe vuote**: i costruttori di questo
+prodotto aprono file, eseguono schemi e in tre casi su otto fanno le migrazioni.
+Ognuno dice cosa apre e cosa crea, letto dal corpo.
 
-| riga | metodo | classe | cosa fa | verdetto |
+| riga | metodo | classe | cosa apre e cosa crea (letto) | verdetto |
 |---|---|---|---|---|
-| 2600 | `__init__` | `SemanticMemory` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `SemanticMemory` nei blocchi sopra |
-| 930 | `__getattr__` | — **del modulo** (PEP 562) | rende dinamica `_EXPECTED_EMBEDDING_BYTES`, calcolata da `embedding.expected_embedding_bytes()` | esercitato da ogni lettura di quella costante; `AttributeError` su ogni altro nome |
+| 2600 | `__init__` | `SemanticMemory` | 13 stmt, il piu' pesante dei nove: `mkdir` del parent, `_connect`, `executescript` dello schema, **`ensure_schema_version`**, `_ensure_fact_columns`, `_ensure_fact_indexes` e **`_replay_pending_facts`**. Aprire lo store MIGRA il database e rigioca i fatti pendenti: non e' un costruttore inerte. Crea anche i lock (`_cache_lock`, `_dv_lock`) e le cache (`_corpus_cache`, `_ann_cache_obj`, `_recall_es`) | esercitato da ogni uso di `SemanticMemory` nei blocchi sopra |
+| 930 | `__getattr__` | — **del modulo** | riga 930, `__getattr__` **di modulo** (PEP 562), non di classe: `_EXPECTED_EMBEDDING_BYTES` non e' una costante ma una chiamata a `embedding.expected_embedding_bytes()`; ogni altro nome alza `AttributeError` | esercitato da ogni lettura dell'attributo che serve |
+
+## 🔑 Quattro politiche di schema in otto store — il reperto trasversale
+
+Uscito leggendo i corpi dei costruttori, non cercandolo. Misure nella stessa
+esecuzione, `grep -c` per file:
+
+| forma | store | come | prova |
+|---|---|---|---|
+| **versionata con callback** | `semantic.py`, `memory.py`, `entity_kg.py` | `ensure_schema_version` + lista `(n, _migrate_vN_…)` | `ensure_schema_version` = 3, 2, 3 occorrenze |
+| **additiva a tentativo** | `document_index.py:293-308` | `ALTER TABLE … ADD COLUMN` dentro `try/except sqlite3.OperationalError: pass` | 2 `ALTER TABLE`, 0 `ensure_schema_version` |
+| **additiva a interrogazione** | `adjudication_log.py:141-149` | `PRAGMA table_info` e `if "entry_hash" not in cols` | 2 `ALTER TABLE`, 0 `ensure_schema_version` |
+| **statica** | `contradiction.py`, `transcript_index.py`, `documents.py` | solo `CREATE TABLE IF NOT EXISTS` | **0** `ALTER TABLE`, **0** `ensure_schema_version` |
+
+Le due forme additive fanno la stessa cosa in due modi diversi: una prova e
+ignora l'errore, l'altra chiede prima. La seconda e' quella che si puo' leggere
+in un log; la prima no, perche' l'eccezione ingoiata non lascia traccia.
+
+⚠️ Per i tre **statici**: `CREATE TABLE IF NOT EXISTS` su un database gia'
+creato non aggiunge una colonna nuova, e li' non c'e' nessun altro che lo faccia.
+**NON MISURATO** — non ho riprodotto la conseguenza con un banco (servirebbe un
+DB con lo schema di ieri aperto dal codice di oggi), e non la dichiaro come
+verdetto: e' un ticket con una prova da fare, ed e' il mio mestiere.
+
+📌 Perche' conta per il mio mandato: «nulla scritto si perde». Uno store che
+non ha un percorso per cambiare schema non perde i dati che ha — ma il giorno che
+qualcuno aggiunge un campo, i database esistenti restano indietro in silenzio.

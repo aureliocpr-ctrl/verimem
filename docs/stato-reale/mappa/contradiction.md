@@ -87,24 +87,32 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 84 | `Contradiction` | 1 |  | 10 — `test_contradiction.py` | esercitata dai blocchi eseguiti sopra |
+| 84 | `Contradiction` | 1 | **contratto dei dati**: `fact_a_id`, `fact_b_id`, `kind`, `similarity`, `detected_at`, `id`, `resolved_at`, `resolution_note` | 10 — `test_contradiction.py` | esercitata dai blocchi eseguiti sopra |
 | 366 | `ContradictionStore` | 10 | SQLite-backed store for detected contradictions. | 18 — `test_contradiction.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 2
 
 In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
-questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
-accessori di protocollo: non hanno un claim del README ne' un test proprio, e
-sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
-blocchi sopra, non una riga a se'.
+restavano fuori dal conto. **Non sono righe vuote**: i costruttori di questo
+prodotto aprono file, eseguono schemi e in tre casi su otto fanno le migrazioni.
+Ognuno dice cosa apre e cosa crea, letto dal corpo.
 
-| riga | metodo | classe | cosa fa | verdetto |
+| riga | metodo | classe | cosa apre e cosa crea (letto) | verdetto |
 |---|---|---|---|---|
-| 94 | `__post_init__` | `Contradiction` | normalizza i campi dopo la dataclass | esercitato da ogni uso di `Contradiction` nei blocchi sopra |
-| 374 | `__init__` | `ContradictionStore` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `ContradictionStore` nei blocchi sopra |
+| 94 | `__post_init__` | `Contradiction` | 1 stmt con logica vera: l'`id` e' lo **sha256 di `sorted(a,b) + kind`**, quindi la stessa coppia in ordine inverso produce lo STESSO id — la deduplicazione delle contraddizioni sta qui, non nel database | esercitato da ogni uso di `Contradiction` nei blocchi sopra |
+| 374 | `__init__` | `ContradictionStore` | 3 stmt: `mkdir`, `_connect`, `executescript`. **Nessun `ensure_schema_version`** — `grep -c` in questo file: 0. Lo schema e' statico | esercitato da ogni uso di `ContradictionStore` nei blocchi sopra |
+
+## ⚠️ Questo store NON versiona lo schema
+
+`ensure_schema_version` compare **0 volte** in questo file, contro 3 in
+`semantic.py`, 2 in `memory.py`, 3 in `entity_kg.py`; e **zero** `ALTER TABLE`: lo schema e' statico. La tabella delle
+quattro politiche, con le prove, sta in [`semantic.md`](semantic.md) — sezione
+«Quattro politiche di schema in otto store».

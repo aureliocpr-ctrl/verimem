@@ -59,10 +59,12 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 46 | `UndoEntry` | 0 | One row from facts_undo_log. | 🔴 **nessuno** | **NON MISURATA** — nessun test nomina il nome |
+| 46 | `UndoEntry` | 0 | **contratto dei dati**: `op_id`, `op_type`, `fact_id`, `pre_row`, `created_at`, `undone_at`, `ttl_expires_at` | 🔴 **nessuno** | **NON MISURATA** — nessun test nomina il nome |

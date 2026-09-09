@@ -51,26 +51,34 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 115 | `_DefaultEmbedder` | 1 | Adapter over the shared ``verimem.embedding.encode`` (model  | 3 — `test_cli_docs.py` | esercitata dai blocchi eseguiti sopra |
-| 218 | `Risultati` | 1 | I risultati di una ricerca, con quanti ne sono stati NASCOST | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
-| 265 | `DocumentIndex` | 8 | Chunk-level semantic index with exact provenance over the Do | 18 — `test_document_index_path_guard.py` | esercitata dai blocchi eseguiti sopra |
-| 574 | `_E` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 115 | `_DefaultEmbedder` | 1 | Adapter over the shared ``verimem.embedding.encode`` (model or service | 3 — `test_cli_docs.py` | esercitata dai blocchi eseguiti sopra |
+| 218 | `Risultati` | 1 | I risultati di una ricerca, con quanti ne sono stati NASCOSTI. | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 265 | `DocumentIndex` | 8 | Chunk-level semantic index with exact provenance over the Documents ti | 18 — `test_document_index_path_guard.py` | esercitata dai blocchi eseguiti sopra |
+| 574 | `_E` | 1 | — | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
 
 ## I metodi speciali di questo file — 2
 
 In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
-questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
-accessori di protocollo: non hanno un claim del README ne' un test proprio, e
-sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
-blocchi sopra, non una riga a se'.
+restavano fuori dal conto. **Non sono righe vuote**: i costruttori di questo
+prodotto aprono file, eseguono schemi e in tre casi su otto fanno le migrazioni.
+Ognuno dice cosa apre e cosa crea, letto dal corpo.
 
-| riga | metodo | classe | cosa fa | verdetto |
+| riga | metodo | classe | cosa apre e cosa crea (letto) | verdetto |
 |---|---|---|---|---|
-| 253 | `__init__` | `Risultati` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `Risultati` nei blocchi sopra |
-| 268 | `__init__` | `DocumentIndex` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `DocumentIndex` nei blocchi sopra |
+| 253 | `__init__` | `Risultati` | 3 stmt: chiama `super().__init__` (estende una lista) e aggiunge i due contatori che il nome della classe non dice — `illeggibili` e `nascosti` | esercitato da ogni uso di `Risultati` nei blocchi sopra |
+| 268 | `__init__` | `DocumentIndex` | 9 stmt: legge `HIPPO_DOCINDEX_DB` dall'ambiente, `mkdir`, `_init_db`. Costruisce due collaboratori: un `DocumentStore` (`self.docs`) e un `_DefaultEmbedder` se non gliene passano uno. Fissa `chunk_size` e `overlap` | esercitato da ogni uso di `DocumentIndex` nei blocchi sopra |
+
+## ⚠️ Questo store NON versiona lo schema
+
+`ensure_schema_version` compare **0 volte** in questo file, contro 3 in
+`semantic.py`, 2 in `memory.py`, 3 in `entity_kg.py`; qui la migrazione esiste ma e' **a tentativo** (`ALTER TABLE` in `try/except OperationalError: pass`, righe 293-308). La tabella delle
+quattro politiche, con le prove, sta in [`semantic.md`](semantic.md) — sezione
+«Quattro politiche di schema in otto store».
