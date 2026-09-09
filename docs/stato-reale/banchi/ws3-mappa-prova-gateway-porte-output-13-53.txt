@@ -1,0 +1,97 @@
+=== 1. _host_only: il bug dell'IPv6 che il docstring dichiara curato
+  'localhost:8000'     -> 'localhost'
+  '127.0.0.1:9000'     -> '127.0.0.1'
+  '[::1]:8000'         -> '[::1]'
+  '[::1]'              -> '[::1]'
+  'esempio.it'         -> 'esempio.it'
+  None                 -> ''
+  ''                   -> ''
+
+=== 2. _gateway_min_relevance: il pavimento di astensione della porta
+  senza variabile: auto
+  ='auto'       -> 'auto'
+  ='0.75'       -> 0.75
+  ='spazzatura' -> 'auto'
+  ='-1'         -> 0.0
+
+=== 3. _parse_flow_line: la riga del flusso e la privacy del tenant
+  di un altro tenant   see_untenanted=False -> None
+  senza tenant         see_untenanted=False -> None
+  non json             see_untenanted=False -> None
+
+=== 4. quota: _quota_reserve / _quota_release (TOCTOU-safe)
+  tetto del piano: 3 fatti · fatti gia' presenti (count_fn): 1
+  prenotazione 1: True · in volo: {'acme': 1}
+  prenotazione 2: True · in volo: {'acme': 2}
+  prenotazione 3: False · in volo: {'acme': 2}
+  prenotazione 4: False · in volo: {'acme': 2}
+  prenotazione 5: False · in volo: {'acme': 2}
+  dopo una release: {'acme': 1}
+  con un piano SENZA tetto (max_facts=None): True
+
+==========================================================================
+LE PORTE, con TestClient
+==========================================================================
+POST /v1/memories -> 200 | id 474dc75d28a1
+
+=== 5. gli header di sicurezza su OGNI risposta
+  /v1/health                 200 -> {'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'strict-origin-when-cross-origin', 'permissions-policy': 'geolocation=(), camera=(), microphone=(), browsing-topics=()', 'content-security-policy': "frame-ancestors 'none'"}
+  /v1/search?q=canone        200 -> {'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'strict-origin-when-cross-origin', 'permissions-policy': 'geolocation=(), camera=(), microphone=(), browsing-topics=()', 'content-security-policy': "frame-ancestors 'none'"}
+  /v1/search?q=x             401 -> {'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY', 'referrer-policy': 'strict-origin-when-cross-origin', 'permissions-policy': 'geolocation=(), camera=(), microphone=(), browsing-topics=()', 'content-security-policy': "frame-ancestors 'none'"}
+
+=== 6. il limite del corpo: 413, e gli header ci sono lo stesso
+  corpo da ~5 KB con max_body_bytes=2048 -> 413
+  header di sicurezza anche sul rifiuto: {'x-content-type-options': 'nosniff', 'x-frame-options': 'DENY'}
+
+=== 7. Idempotency-Key: due invii identici, una sola scrittura
+  primo  -> 200 c7182c6e1cd8
+  secondo-> 200 c7182c6e1cd8
+  >>> stessa ricevuta (nessun gemello): True
+  fatti serviti sul tema: 2
+
+=== 8. le altre porte di lettura
+  /v1/quota                -> 200 · {'plan': 'free', 'facts_used': 2, 'facts_limit': 1000, 'facts_remaining': 998, 'facts_over
+  /v1/usage                -> 200 · {'tenant_id': 'acme', 'plan': 'free', 'since': None, 'days': [{'day': '2026-09-09', 'reque
+  /v1/stats                -> 200 · {'tenant': 'acme', 'trust': {'ledger': {'admitted': 2, 'quarantined': 0, 'rejected': 0, 'a
+  /v1/quarantine           -> 200 · {'items': [], 'count': 0}
+  /v1/tiers                -> 200 · {'data_dir': 'C:\\Users\\aurel\\AppData\\Local\\Temp\\ws3-gw2-nu_a2xzq\\tenants', 'tiers':
+  /v1/retirements          -> 200 · {'items': [], 'count': 0}
+  /v1/graph                -> 200 · {'nodes': [], 'edges': []}
+  /v1/graph/full           -> 200 · {'n': [], 'e': [], 'truncated': False, 'total_entities': 0, 'total_edges': 0}
+  /v1/snapshot             -> 200 · {'tenant': 'acme', 'trust': {'ledger': {'admitted': 2, 'quarantined': 0, 'rejected': 0, 'a
+  /v1/explain              -> 200 · {'query': 'canone', 'as_of': None, 'deep': False, 'k': 5, 'min_relevance': 0.0, 'ranking_d
+  /v1/correct              -> 200 · {'verdict': 'ACCEPT', 'answer': "Il canone del capannone 12 e' 5900 euro.", 'served_id': '
+  /v1/memories/474dc75d28a1 -> 200 · {'id': '474dc75d28a1', 'text': "Il canone del capannone 12 e' 5900 euro.", 'status': 'mode
+
+=== 9. answer senza llm (O4: niente LLM implicito)
+  /v1/answer -> 400 {'detail': 'answering needs a server-side llm: start the gateway with one (create_app(llm=...)); /v1/search works without it'}
+
+=== 10. restore / undo / delete
+  POST /v1/memories/<id>/restore -> 200
+  POST /v1/undo/<op inventato>   -> 200
+  DELETE /v1/memories/<id>       -> 200
+  GET dello stesso id dopo       -> 404
+
+=== 11. le pagine: /, /dashboard, /ui, un asset
+  /                    -> 200 · text/html; charset=utf-8 · etag: "893077e46e60874b2352"
+  /dashboard           -> 200 · text/html; charset=utf-8 · etag: -
+  /ui                  -> 200 · text/html; charset=utf-8 · etag: "893077e46e60874b2352"
+  /ui/app.js           -> 200 · application/javascript; charset=utf-8 · etag: "ddf57981275da38c3b0b"
+  /ui/non-esiste.js    -> 404 · application/json · etag: -
+
+=== 12. il piano di controllo admin: senza chiave NON deve esistere
+  /admin/tenants       (app senza admin_key) -> 404
+  /admin/stats         (app senza admin_key) -> 404
+  /admin/overview      (app senza admin_key) -> 404
+  /admin/audit         (app senza admin_key) -> 404
+  con admin_key, senza header  -> 401
+  con admin_key, header giusto -> 200
+  con admin_key, header errato -> 401
+  POST /admin/tenants -> 200 {'tenant_id': 'nuovo-cliente', 'api_key': 'vm_62ef989394fc3e2852fd574778f7358da3de0a5a'}
+
+=== 13. il tetto di richieste: 429 con Retry-After
+  richiesta 1: 200 · Retry-After: -
+  richiesta 2: 200 · Retry-After: -
+  richiesta 3: 429 · Retry-After: 60
+  richiesta 4: 429 · Retry-After: 60
+  /v1/health non e' mai limitato -> 200

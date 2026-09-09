@@ -1,0 +1,14 @@
+POST /v1/undo/<inventato> -> 200
+  corpo: {'ok': False, 'op_id': 'op-che-non-esiste-mai', 'action': 'not_found'}
+
+scritture: primo d3c6deea8105 model_claim · secondo 12603a3012b4 quarantined
+  maniglia undo nella ricevuta HTTP: None
+
+  >>> il 200 sull'inventato e il 200 sul vero si distinguono nel CORPO: True
+
+=== T-MAP-8 ALLA PORTA HTTP: la seconda scrittura ha superseduto la prima?
+  fatti serviti dopo le due scritture: 1
+    d3c6deea8105 model_claim Il canone del capannone 12 e' 5900 euro.
+  il primo fatto ora: model_claim | superseded_by: None
+  chiavi della ricevuta HTTP della scrittura quarantinata: ['adjudication', 'advice', 'grounding_score', 'id', 'moat', 'quarantined_by', 'replaced', 'status', 'stored', 'warnings']
+  >>> la maniglia di annullamento arriva alla porta HTTP: False
