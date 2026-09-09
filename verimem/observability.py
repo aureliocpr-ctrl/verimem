@@ -26,8 +26,40 @@ import structlog
 # framing. Other entry points (CLI, dashboard, tests) keep the default
 # stdout + colored output.
 _log_to_stderr = os.environ.get("HIPPO_LOG_STDERR", "").strip() == "1"
+
+
+class _StreamMuto:
+    """Ingoia tutto. Serve dove `sys.stderr` non c'e'.
+
+    `PrintLoggerFactory(file=None)` NON tace: Python legge `None` come «il
+    default», cioe' **stdout** — che qui sopra e' dichiarato proprieta' del
+    protocollo JSON-RPC. Un processo senza console (`pythonw`, un servizio
+    Windows, un launcher GUI) ha `sys.stderr is None`, e senza questa classe
+    la difesa del canale si rovescia proprio nel caso che doveva coprire.
+
+    Misurato il 2026-09-09: 86 byte di `flow.warmup what=moat-judge` finiti su
+    stdout. Era anche la causa del rosso Windows intermittente di
+    `test_ws5_il_download_del_giudice_lo_dice_all_utente` (T41): un test
+    lasciava il logger configurato cosi' e i successivi scrivevano su stdout.
+    Presidio: `tests/test_ws5_il_logger_tace_senza_stderr.py`.
+    """
+
+    def write(self, *a, **kw):
+        return 0
+
+    def flush(self, *a, **kw):
+        return None
+
+
+def _stream_dei_log():
+    """`sys.stderr` se c'e', altrimenti il silenzio — mai il default.
+
+    Tacere e' la scelta deliberata: fra perdere una riga di log e rompere il
+    protocollo che trasporta ogni risposta, si perde la riga.
+    """
+    return sys.stderr if sys.stderr is not None else _StreamMuto()
 _log_factory = (
-    structlog.PrintLoggerFactory(file=sys.stderr) if _log_to_stderr else None
+    structlog.PrintLoggerFactory(file=_stream_dei_log()) if _log_to_stderr else None
 )
 _console_renderer = structlog.dev.ConsoleRenderer(
     colors=not _log_to_stderr,
@@ -84,7 +116,7 @@ def route_logs_to_stderr() -> None:
             structlog.dev.ConsoleRenderer(colors=False),
         ],
         wrapper_class=structlog.make_filtering_bound_logger(_resolve_log_level()),
-        logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),
+        logger_factory=structlog.PrintLoggerFactory(file=_stream_dei_log()),
         cache_logger_on_first_use=True,
     )
 
