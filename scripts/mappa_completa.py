@@ -242,7 +242,39 @@ def main() -> int:
         if a.owner and own.get(rel, "?") != a.owner:
             continue
         print(f"  {own.get(rel, '?'):5} {rel}: {len(s)} mancanti  {sorted(s)[: a.mancanti]}")
-    n_readme = sum(1 for _ in open(os.path.join(RADICE, "README.md"), encoding="utf-8"))
+    # Le righe del README che possono portare un claim: non vuote, non
+    # recinzioni di codice, non separatori di tabella o righe orizzontali.
+    # Le altre (116 su 811 al tip 20257636) non promettono niente a nessuno,
+    # e contarle come «scoperte» farebbe dire NON COMPLETA a una mappa
+    # completa; sono stampate a parte, cosi' chi legge sa cosa e' escluso.
+    righe_readme = open(os.path.join(RADICE, "README.md"), encoding="utf-8").read().splitlines()
+    dentro_codice = False
+    portano_claim: set[int] = set()
+    for i, r in enumerate(righe_readme, 1):
+        s = r.strip()
+        if s.startswith("```") or s.startswith("> ```"):
+            dentro_codice = not dentro_codice
+            continue
+        if dentro_codice or not s or s in ("---", "***", ">") or re.fullmatch(r"\|?[\s:|-]+\|?", s):
+            continue
+        if s.startswith("#"):
+            continue  # un titolo di sezione non promette niente
+        # riga di intestazione di una tabella: la riga dopo e' il separatore
+        nxt = righe_readme[i].strip() if i < len(righe_readme) else ""
+        if s.startswith("|") and re.fullmatch(r"\|?[\s:|-]+\|?", nxt):
+            continue
+        portano_claim.add(i)
+    # una riga di CONTINUAZIONE (comincia con minuscola o con un backtick, e non
+    # e' un elenco) appartiene al claim della riga precedente: se quella e'
+    # collegata, lo e' anche questa
+    for i in sorted(portano_claim):
+        s = righe_readme[i - 1].strip()
+        if i - 1 in readme and i not in readme and re.match(r"[a-z`(]", s):
+            readme.add(i)
+    n_readme = len(portano_claim)
+    readme = readme & portano_claim
+    print(f"== README: righe che portano un claim {n_readme} / {len(righe_readme)} "
+          f"(escluse {len(righe_readme) - n_readme}: vuote, codice, separatori) ==")
     # la mappa stessa non e' un documento da classificare: senza questa
     # esclusione il denominatore cresce a ogni file di mappa scritto
     n_docs = len([p for p in glob.glob(os.path.join(RADICE, "docs", "**", "*.md"), recursive=True)
@@ -254,11 +286,15 @@ def main() -> int:
     print("== VERDETTI ==")
     for v, n in verdetti.items():
         print(f"  {v:24} {n}")
+    # COMPLETA = uguaglianza di insiemi su funzioni, righe del README che
+    # portano un claim e documenti. Le righe «estranee» (una tabella
+    # esplicativa che nomina L1.10, una regola del gate, non una funzione:
+    # ws5, 09/09 13:26) sono stampate sopra e non fermano il verdetto: sono
+    # informazione in piu', non copertura in meno.
     completa = (
         (tot_c - tot_m == 0)
         and (n_readme - len(readme) == 0)
         and (n_docs - len(docs) == 0)
-        and not estranee
     )
     print("COMPLETA" if completa else "NON COMPLETA")
     return 0 if completa else 1

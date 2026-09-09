@@ -1,0 +1,49 @@
+# Mappa — `verimem/code.py`
+
+*ws3 Galileo. 35 fra funzioni, classe e metodi: **il REPL di scrittura codice**
+(`VerimemCode`) — la sessione interattiva con memoria persistente. Banco:
+`ws3-mappa-prova-code.py` (09/09 14:26), con un **agente finto** che registra
+le richieste e non chiama nessun LLM.*
+
+⛔ **Quello che NON ho eseguito, e perché**: `/forget` (cancella **tutta** la
+memoria persistente), `/sleep` (lancia il ciclo di consolidamento), `/review` e
+`submit` (chiamano l'LLM), `run` e `main` (aprono il ciclo interattivo),
+`_apply_edits_with_preview` e `_retry_failed_edits` (scrivono sui file dopo una
+conferma interattiva). **Chiamate all'LLM in tutto il banco: zero** — verificato
+sul registro dell'agente finto (`chiamate: []`).
+
+🟡 **Il reperto del file**: **`/retire` chiede conferma, `/promote` no.**
+Misurato: `_cmd_retire('bbbbbbbb')` apre `Confirm.ask` («Retire skill bbbbbbbb
+(portineria)? [y/n]») e senza uno stdin dà `EOFError`; `_cmd_promote('aaaaaaaa')`
+**agisce subito** e stampa «promoted aaaaaaaa canoni». Le due operazioni sono
+speculari e reversibili allo stesso modo: la protezione asimmetrica è una scelta
+da guardare, non un difetto — ma va saputa.
+
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 1 | `verimem/code.py:110` `VerimemCode` · `verimem/code.py:113` `VerimemCode.__init__` | «sessione di scrittura codice interattiva con memoria attiva persistente» | **FUNZIONA COME PROMESSO** | costruita con un workspace temporaneo e un agente finto: `workspace` risolto, `plan_mode=False`, cache della repomap vuota all'inizio |
+| 2 | `verimem/code.py:134` `VerimemCode._status_line` | la riga di stato: workspace, modello, skill, episodi | **FUNZIONA COME PROMESSO** | `'ENGRAM CODE  …\ws  · (provider default)  · skills 2 (1↑, 0 compiled)  · episodes 0'` — conta le skill **e** quante sono promosse **e** quante hanno una macro compilata |
+| 3 | `verimem/code.py:151` `VerimemCode._episodes_since_sleep` | «conteggio approssimato degli episodi registrati dopo l'ultimo ciclo di sleep» | **FUNZIONA COME PROMESSO** | su una memoria vuota → **0**, senza sollevare |
+| 4 | `verimem/code.py:172` `VerimemCode._contextual_tip` | «un solo suggerimento breve in base allo stato della memoria, **o None**» | **FUNZIONA COME PROMESSO** | a memoria vuota: «first run — type any task and press Enter; after 3+ episodes try /sleep to consolidate». Il suggerimento **cambia con lo stato**, e a stato vuoto è quello giusto |
+| 5 | `verimem/code.py:194` `VerimemCode._banner` | l'intestazione della sessione | **FUNZIONA COME PROMESSO** | riquadro con la riga di stato, la riga dei comandi (`/help for commands · Ctrl-D or /quit to exit`) e il suggerimento contestuale |
+| 6 | `verimem/code.py:214` `VerimemCode._ensure_repomap` | costruisce la mappa del repository e la tiene in cache | **FUNZIONA COME PROMESSO** | dopo la chiamata: `_repomap_text` di **106** caratteri e `_repomap_built_at` valorizzato — la cache si popola |
+| 7 | `verimem/code.py:225` `VerimemCode._system_addendum` | l'aggiunta al prompt di sistema | **FUNZIONA COME PROMESSO** | contiene **la repomap** (`## REPO MAP (top files by relevance)` con `def somma(a, b)`) **e** il formato delle modifiche (`## EDIT FORM…`): l'agente riceve la mappa del codice e la forma con cui deve rispondere |
+| 8 | `verimem/code.py:401` `VerimemCode._slash` | «smista i comandi `/`. **Restituisce True se riconosciuto**» | **FUNZIONA COME PROMESSO, col caso che conta** | `/status` → **True** ed esegue · **`/comando-che-non-esiste` → True** e stampa «unknown command: /comando-che-non-esiste (try /help)». ⚠️ Il valore di ritorno è `True` **anche per un comando sconosciuto**: significa «l'ho gestito io», non «esiste» — è coerente col REPL (la riga non va all'LLM), ma il docstring dice «riconosciuto» e le due cose non coincidono |
+| 9 | `verimem/code.py:430` `VerimemCode._cmd_help` | «mostra i comandi disponibili. `/help <comando>` per il dettaglio» | **FUNZIONA COME PROMESSO — entrambe le forme** | `/help` → tabella **raggruppata per categoria** (Memory, Workspace, Model, Session) con una riga per comando · `/help diff` → il riquadro del solo `/diff` con la sua descrizione |
+| 10 | `verimem/code.py:499` `VerimemCode._cmd_skills` | «elenca le skill attive, ordinate per fitness» | **FUNZIONA COME PROMESSO** | tabella con `id · name · stage · status · trials · fitness · active`: `portineria` 4/4 → **0,83** sopra `canoni` 5/6 → **0,75**. L'ordinamento per fitness è quello dichiarato |
+| 11 | `verimem/code.py:533` `VerimemCode._cmd_model` · `verimem/code.py:543` `VerimemCode._cmd_provider` | «(nessun argomento = mostra)» | **FUNZIONA COME PROMESSO** | `/model` → «current model: (provider default)» · `/provider` → «current: (auto)». Senza argomento **mostrano** invece di cambiare qualcosa |
+| 12 | `verimem/code.py:559` `VerimemCode._cmd_plan` | «commuta la modalità piano: l'agente deve proporre un piano prima di ogni modifica» | **FUNZIONA COME PROMESSO — è un vero interruttore** | prima chiamata → «plan mode ON» e `plan_mode=True`; seconda → «plan mode OFF» e `plan_mode=False` |
+| 13 | `verimem/code.py:565` `VerimemCode._cmd_repomap` · `verimem/code.py:570` `VerimemCode._cmd_status` | stampano la mappa e lo stato | **FUNZIONA COME PROMESSO** | `/repomap` → la mappa con `modulo.py · python · 1 symbols` e la riga `L 1 def somma(a, b)` · `/status` → la riga di stato |
+| 14 | `verimem/code.py:574` `VerimemCode._cmd_diff` | «mostra il git diff del workspace» | **FUNZIONA COME PROMESSO anche fuori da un repository** | su un workspace **senza git** → «(no changes)»: non solleva e non finge un errore |
+| 15 | `verimem/code.py:631` `VerimemCode._resolve_skill_id` | «trova una skill per id intero o per prefisso di 8 caratteri» | **FUNZIONA COME PROMESSO — tre casi** | prefisso `'aaaaaaaa'` → la skill · id intero → la stessa · `'zzzz'` → **None** |
+| 16 | `verimem/code.py:644` `VerimemCode._cmd_promote` | «promuove una skill candidata perché diventi recuperabile» | **FUNZIONA COME PROMESSO — e senza chiedere conferma** | `/promote aaaaaaaa` → «promoted aaaaaaaa canoni», e nella libreria lo stato passa a `promoted`. Con un prefisso inesistente → «no skill matches: prefisso-inesistente» |
+| 17 | `verimem/code.py:657` `VerimemCode._cmd_retire` | «ritira (archivia) una skill perché smetta di essere recuperata» | **FUNZIONA COME PROMESSO, ed è protetto da una conferma** | `Confirm.ask("Retire skill bbbbbbbb (portineria)?")`; senza stdin → `EOFError` e **lo stato NON cambia**. È l'asimmetria descritta in cima: ritirare chiede, promuovere no |
+| 18 | `verimem/code.py:616` `VerimemCode._cmd_clear` · `verimem/code.py:474` `VerimemCode._cmd_quit` · `verimem/code.py:478` `VerimemCode._cmd_exit` | pulizia dello schermo e uscita (`/exit` alias di `/quit`) | **NON MISURATI** (tre comandi) | `/clear` pulirebbe il terminale di lavoro e `/quit`/`/exit` sollevano `SystemExit` chiudendo la sessione: eseguirli avrebbe interrotto il banco. Esistono e sono nella tabella di `/help` (verificato lì) |
+| 19 | `verimem/code.py:252` `VerimemCode._show_diff` | mostra un diff colorato | **FUNZIONA COME PROMESSO** | passato un diff unificato, lo stampa riga per riga (`-vecchio` / `+nuovo`) |
+| 20 | `verimem/code.py:702` `_preview_block` | «rende un diff unificato **senza scrivere su disco** — per i prompt di conferma» | **FUNZIONA COME PROMESSO nel contratto** | chiamata con un dizionario → `AttributeError: 'dict' object has no attribute 'path'`: vuole l'oggetto blocco del parser delle modifiche, non un dizionario mio. Il contratto è chiaro; **NON MISURATO** il diff vero, che richiede il parser dei blocchi SEARCH/REPLACE |
+| 21 | `verimem/code.py:70` `_resolve_vision_drops` | «sostituisce i marcatori `[image: /path]` nel prompt con l'uscita di `vision_describe`» | **FUNZIONA COME PROMESSO sul ramo senza immagini** | un testo **senza** marcatori torna **identico** (`'Sistema la funzione somma in modulo.py'`): nessuna chiamata alla visione quando non serve. ⚠️ Il ramo con `[image: …]` **NON MISURATO**: chiamerebbe un modello multimodale |
+| 22 | `verimem/code.py:240` `VerimemCode._show_turn_meta` | mostra i metadati del turno (episodio, millisecondi, skill usate) | **NON MISURATO** | si popola solo dopo un turno vero con l'agente |
+| 23 | `verimem/code.py:260` `VerimemCode._apply_edits_with_preview` · `verimem/code.py:306` `VerimemCode._retry_failed_edits` | «trova i blocchi SEARCH/REPLACE nella risposta, li mostra in anteprima, **eventualmente li applica**»; e in caso di fallimento «rimanda i fallimenti all'agente col contenuto attuale del file» | **NON MISURATE** (due funzioni) | la prima **scrive sui file** dopo una conferma interattiva, la seconda richiede un fallimento vero **e** l'LLM. Non le ho eseguite: qui «non misurato» è la risposta giusta |
+| 24 | `verimem/code.py:357` `VerimemCode.submit` · `verimem/code.py:593` `VerimemCode._cmd_review` | mandano il compito all'agente | **NON MISURATE** | chiamano l'LLM. Il registro dell'agente finto è rimasto **vuoto** per tutto il banco, il che è la prova che nessun'altra funzione lo ha invocato di nascosto |
+| 25 | `verimem/code.py:482` `VerimemCode._cmd_sleep` · `verimem/code.py:621` `VerimemCode._cmd_forget` | il ciclo di consolidamento e la cancellazione totale della memoria | **NON MISURATE, per scelta** | `/forget` «cancella TUTTA la memoria persistente (episodi, skill, fatti semantici)» — chiede conferma, ma non è una cosa da provare per riempire una riga di mappa; `/sleep` avvia un ciclo pesante mentre altre istanze lavorano |
+| 26 | `verimem/code.py:676` `VerimemCode.run` · `verimem/code.py:730` `main` | «avvia una sessione Verimem Code nel workspace» | **NON MISURATE** | aprono il ciclo interattivo: dentro un banco resterebbero in attesa di input, e l'`EOFError` di `/retire` mostra esattamente cosa succede quando manca uno stdin |

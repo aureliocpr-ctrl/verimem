@@ -725,3 +725,9 @@ sono andato abbastanza a fondo, o non esisteva niente da leggere. La forma
 dominante del ⬜ è **un numero senza qualcuno che lo rilegga** — e la cura è già
 scritta in casa, in `tests/test_il_readme_e_la_cli_dicono_lo_stesso_peso.py`,
 applicata a una tabella sola.
+
+## Riga aggiunta dal lead alla chiusura (09/09 14:35), dal righello
+
+| riga | claim | codice | presidio | verdetto |
+|---|---|---|---|---|
+| 578-579 | «Run Verimem as a shared memory server your team hosts — the data never leaves your infrastructure» | `gateway.py` (`gateway serve`, mappa di Galileo: 84/87 difese provate attaccandole) | i sei comandi del self-host che il README insegna sono fra i 22 mai invocati dai test (`CLI-claims.md`); la prova da utente (Corrado, quarto criterio del contratto) è da assemblare | ⬜ *(il server esiste ed è provato alla porta; «the data never leaves your infrastructure» non ha un banco che lo misuri: `verimem airgap --live` lo prova per il processo locale, riga 515)* |

@@ -6,20 +6,22 @@ Mandato di Aurelio (08/09 20:27): «tutta l'intera superficie del codice mappata
 
 `scripts/mappa_completa.py` (ramo `lead/mappa-indice`) confronta l'insieme delle funzioni e classi che l'AST trova sotto `verimem/` con l'insieme delle righe di tabella della mappa (`docs/stato-reale/mappa/*.md`), per owner e in totale; conta le righe del README collegate (811) e i documenti classificati (289, la mappa esclusa); stampa COMPLETA solo a zero mancanti. Superficie: 424 file, 129.986 righe, 3.200 definizioni; README 811 righe; docs 289 file.
 
-**Stato alla fusione delle 12:30 (70e9d883)** — da aggiornare alla chiusura:
+**Stato alla fusione delle 14:12 (3c908da8)** — la riga di Galileo si aggiorna alla chiusura:
 
 | owner | funzioni mappate | note |
 |---|---|---|
-| lead | 652 / 652 | i cinque file finali li ha chiusi Nadia (ws4) |
-| ws1 Marie | 286 / 286 | 99 differenze di formato e 3 di sostanza dichiarate |
-| ws2 Giano | 67 / 67 | |
-| ws3 Galileo | 123 / 456 | client.py chiuso; gateway, tools_extra, code.py in corso |
-| ws4 Nadia | 365 / 365 | 390 voci, 19 misurate sulla promessa |
-| ws5 Tara | 8 / 551 | 551/551 sul suo checkout; ramo non ancora su origin |
-| ws6 Aldo | 66 / 480 | semantic.py, memory.py, entity_kg, contradiction in corso |
-| ws7 Iris | 0 / 176 | README 695/811 righe collegate (57 claim senza presidio); cli/tui/doctor per comandi, non per funzione |
-| ws8 Corrado | 0 / 167 | documenti 255/289; i 31 moduli sono in prosa |
-| **TUTTE** | **1567 / 3200** | verdetti: 1235 come promesso · 20 non come promesso · 335 non misurati · 128 mai chiamate |
+| lead | 652 / 652 | 100% righe di codice esatte, prova eseguita in 572 righe; i cinque file finali li ha chiusi Nadia; presi a Galileo holographic_memory, resonator_memory, conversation_ingest e le nove definizioni residue di tui/cli/dashboard_routes/hooks |
+| ws1 Marie | 286 / 286 | righe esatte 100%, prova scritta in 142 righe su 280; 99 differenze di formato e 3 di sostanza dichiarate |
+| ws2 Giano | 67 / 67 | righe esatte 100%, prova in 58 su 67 |
+| ws3 Galileo | 368 / 456 | client.py 80/80 a due lati, gateway.py 84/87 «tutte le difese provate attaccandole»; restano tools_extra.py (47), code.py (35), 3 di gateway e 3 di client |
+| ws4 Nadia | 365 / 365 | righe esatte 100%, prova in 364 su 365; 284 passed sui test dei cinque file del lead |
+| ws5 Tara | 551 / 551 | righe esatte 82% (99 fuori riga da riallineare al tip), 539 righe NON MISURATO scritte nel fermo; T41 chiuso sul ramo, T48 caduto, T40 misurato (delta massimo 0,0273, 113 fatti su 11.396 entro 0,03 dalla soglia) |
+| ws6 Aldo | 480 / 480 | forma senza riga di codice; le 35 classi e costruttori letti uno per uno |
+| ws7 Iris | 176 / 176 | README 695/811 righe collegate (le 116 scoperte sono in maggioranza titoli, righe vuote e codice: «i miei bianchi sono 57»); 170 funzioni di cli/tui/doctor per lettura, zero esecuzioni; le 5 classi di tui scritte dal lead |
+| ws8 Corrado | 167 / 167 | documenti 290/290; funzioni in `funzioni.md` (54 su 150 senza docstring né test che le nomini) |
+| **TUTTE** | **3112 / 3200** | verdetti: 1392 come promesso · 26 non come promesso · 1052 non misurati · 172 mai chiamate |
+
+Il righello legge quattro forme di riga (la forma completa `verimem/f.py:riga` `Nome`; il nome nudo con il modulo dal nome del file; il metodo nudo che copre il qualificato; la forma di ws8 con pacchetto in intestazione e file in colonna) e le dichiara: 795 righe contate senza riga di codice al conteggio delle 13:18. Il controllo di qualità delle 13:10 (riga esatta e prova presente) sta nel post sul canale e nella tabella sopra.
 
 ## 2. Ticket aperti dalla mappa (tutti con la prova nel post sul canale o nella mappa)
 
@@ -31,11 +33,12 @@ Mandato di Aurelio (08/09 20:27): «tutta l'intera superficie del codice mappata
 - **T52** `residual_copies` dice dove un fatto cancellato resta leggibile guardando `dreams/` e non `backups/` (visti con 32 e 8.476 fatti).
 - **T53** l'iniezione proattiva (`proactive_step_injector`) non porta lo status né il verdetto del fatto iniettato.
 - **T54** le SONDE ATTIVE promesse dal README (righe 317-319) non hanno nessuna porta: `active_probe.probe_fact` è testata e nessun tool, comando, metodo, hook o worker la chiama (grep vuoto sull'intero repo).
+- **T-MAP-11** (Galileo, 14:03-14:07, banchi `ws3-mappa-prova-ingest*.py` e `ws3-mappa-prova-due-porte.py`): **sulla via dell'ingest il moat ferma le contraddizioni e non le invenzioni**: su un dialogo che dice solo canone e consegna, 3 fatti detti ammessi su 3, 2 contraddetti respinti su 2, e **3 fatti inventati ma plausibili ammessi su 3** (60,2 · 88,8 · 50,0 contro soglia 40); la scrittura ordinaria (`Memory.add(source=…)`) ne ferma 2 su 3, l'ingest 0 su 3, ed entrambe lasciano passare «il capannone 12 è stato venduto nel 2019», che poi `search("capannone 12")` serve fra i 3 risultati. Il prodotto lo dichiara in un commento (`client._confidence_tier`: «un livello high dal CE locale può ancora essere una confabulazione plausibile-ma-non-detta, misurato 86-99»): la mappa lo ha misurato alla porta e su due porte con la stessa fonte.
 - Dalle otto: T33 (as_of usato e non dedotto), T38 (test a orologio), T39/T40/T41 (RAM, tokenizer 35 s, rosso Windows), T-MAP-3…7 (Galileo), T31 (il quickstart insegna `verimem health --tools` che non esiste, Iris), i 30/37 `list_facts` in `except: pass` muti (Tara), le cinque funzioni con test verde e nessuna porta (Aldo), la catena dei limiti pagati nei documenti (Corrado).
 
 ## 3. Le classi, contate
 
-- **Moduli interi senza chiamante nel prodotto**: 17 nel pacchetto pubblicato (resource_monitor, hot_reload, sos_compensator, recall_usage, codebase_ingest, coding_reflection, betweenness_cache, embedding_quantize, self_curation, temporal_narrative, lab_longmemeval_adapter, parallel_drafter, decay, diversify, fuse_recall, llm_keywords_batch, snapshot_at_time) più `bench_corpus_scale`; più il percorso hopfield del recall e le funzioni pubbliche `is_set_operation`, `group_by_topic_family`, `tag_for_agent`, `filter_facts_by_agent`, `emitted_count`. Decisione da prendere insieme: cablare, spostare sotto `benchmark/`, o togliere.
+- **Moduli interi senza chiamante nel prodotto**: 19 nel pacchetto pubblicato (resource_monitor, hot_reload, sos_compensator, recall_usage, codebase_ingest, coding_reflection, betweenness_cache, embedding_quantize, self_curation, temporal_narrative, lab_longmemeval_adapter, parallel_drafter, decay, diversify, fuse_recall, llm_keywords_batch, snapshot_at_time, holographic_memory, resonator_memory: gli ultimi due sono 853 righe di «memoria senza database», il primo dichiarato falsificato dal ciclo successivo, il secondo raggiungibile solo da `python -m`) più `bench_corpus_scale`; più il percorso hopfield del recall e le funzioni pubbliche `is_set_operation`, `group_by_topic_family`, `tag_for_agent`, `filter_facts_by_agent`, `emitted_count`. Decisione da prendere insieme: cablare, spostare sotto `benchmark/`, o togliere.
 - **Copie invece della superficie unica**: il filtro degli status nascosti in quattro posti (due senza `user_belief`); `_jaccard` in 18 moduli, `_tokens` in 20; cinque liste bilingui di parole vuote; `_signature` con tre definizioni; tre emivite di «freschezza»; due implementazioni di «vivo a T» (as_of e `snapshot_at_time`); due tool di dedup dei fatti con i nomi incrociati.
 - **Docstring che dicono cosa credeva l'autore**: `betweenness_cache` («il worker la chiama»: mai), `decay` («usata dal daemon»: mai), `dentate_gyrus` («non cablata»: lo è), `anomaly_detection` (tre criteri promessi, due applicati), `schema_abstraction` (50% scritto, 40% nel codice), `agent_workload` (`n_episodes` sempre 0).
 - **Numeri nei commenti da rimisurare** (Marie: «un numero in un docstring vale meno della metà 42 giorni dopo»): analogy 31/07, proactive_step_injector 19/05, adaptive_threshold (soglia «da rivedere a 5.000» superata tre volte).
