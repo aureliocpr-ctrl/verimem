@@ -249,6 +249,39 @@ ordina la coda.
 | `docs/PLATFORM.md` | **VIVO** | riferimento della piattaforma, citato dal README |
 | `docs/PLUGIN_QUICKSTART.md` | **VIVO, datato nel nome** | *«give **HippoAgent** a hippocampus in 3 commands»* — nome di due rinomine fa, come `MCP_QUICKSTART` |
 | `docs/PRODUCT-TRUTH-GAP.md` | **VIVO** — è un mandato | Aurelio, 16/07 **verbatim**: *«dobbiamo **diventare il prodotto che dichiariamo**»*. È l'antenato diretto del contratto di ieri |
+| `docs/PROJECT_REVIEW_2026-06-07.md` | **VIVO come referto datato** | *«evidence-based, **done by reading code + running commands (no subagents — they**…)»*: dichiara il metodo **e** cosa ha escluso |
+| `docs/PROPOSAL-tamper-evidence-2026-07-19.md` | **VIVO** — decisione aperta | *«**decision owner: Aurelio**»*, e separa la scelta dell'ancora esterna dal nucleo crittografico: la decisione è isolata |
+| `docs/QUICKSTART_SDK.md` | **VIVO, con una riga superata** | *«`pip install verimem` **(PyPI name not yet reserved — for now:**…)»* — il nome **è** riservato dal 22/07: la parentesi è scaduta |
+| `docs/RENAME-PLAN-engram-to-verimem.md` | **VIVO** | porta lo **stato in cima, prima del titolo**: *«**STATO 2026-07-18: FATTO** sul branch `rename/verimem-total`»*. È il modo giusto di chiudere un piano |
+| `docs/RESEARCH_PROGRAM.md` | **VIVO** | programma di ricerca: *«the most **epistemically-reliable** LLM memory»* |
+| `docs/ROADMAP-2026-05-19.md` | **MORTO (a scadenza)** | *«handoff doc for a **fresh Claude Code instance**»*: nato per un passaggio di consegne del 19/05 |
+| `docs/ROADMAP-2026-05-27.md` | **MORTO (a scadenza)** | roadmap operativa nata da un audit del 27/05, superata dalle due successive |
+| `docs/ROADMAP-v0.7.md` | **VIVO come piano chiuso** | *«**plan of record**, 2026-07-18… born from a 3-round external adversarial review»*: la 0.7.0 è uscita, il piano resta come registro |
+| `docs/ROADMAP-v0.8.md` | **VIVO** — è il piano corrente | *«plan of record, 22/07 (sera, **post-release 0.7.0**)»*, con le fonti dichiarate |
+| `docs/SAAS_DEPLOY.md` | **VIVO** | *«il livello commerciale è **code-complete and tested**»*: dichiara di essere pronto e non attivo |
+| `docs/SCALE_CHARACTERIZATION.md` | **VIVO** | *«**measured, not assumed**»*, e nomina il percorso caldo esatto (`SemanticMemory.recall`, ramo cache `topic=None`) |
+| `docs/SEMANTIC_GROUNDING_STUDY.md` | **VIVO** | *«**PRE-REGISTERED** 2026-06-17… scritto PRIMA di vedere i risultati, così l'interpretazione non può essere razionalizzata»* — la pre-registrazione, un mese prima che diventasse prassi |
+| `docs/TEST_SURFACE_MAP.md` | **VIVO** | dal mandato di Aurelio del 10/07 riportato **verbatim**: *«testa la più ampia superficie»*. È agganciato al codice (`verimem/query_intent.py`) |
+| `docs/TRIANGULATION_PATTERN-2026-05-27.md` | **VIVO come metodo** | *«**replicable method**»*: dieci detector spediti con tre modelli diversi che si controllano |
+| `docs/TRUSTMEM_BENCH_DESIGN.md` | **VIVO** — design | *«il benchmark che **imponiamo noi**… oggi corriamo sulle piste altrui (HaluMem è del gruppo MemOS)»*: dichiara il conflitto d'interesse **del metro**, non del misuratore |
+| `docs/TRUST_CALIBRATION.md` | **VIVO** | *«**judge-free, 100% local, reproducible from this repo**. Every number below comes…»* |
+| `docs/TRUTH_RECONCILIATION_DESIGN.md` | **VIVO come design** | *«Status: **DESIGN**. The empirical motivation is `docs/TRUST_CALIBRATION.md`»* — dichiara di essere disegno **e** da dove nasce |
+| `docs/USER-BELIEF-DESIGN.md` | **VIVO** — parzialmente realizzato | *«**FOUNDATION + INGEST TAGGING SHIPPED** (`af22b04`, `0e670e1`), **rest is DESIGN**»*: distingue col commit **cosa è entrato** da cosa resta disegno. È la forma migliore per un piano a metà |
+| `docs/V1_DEFINITION_OF_DONE.md` | **VIVO** | *«Definition of Done (**FROZEN**)… scopo: **spezzare il cerchio**»* — congelata di proposito, perché una definizione che si muove non chiude niente |
+| `docs/VERIBENCH_DESIGN_INPUTS.md` | **VIVO come materiale grezzo** | *«synthesis of **BOTH instances'** work as the **raw material**»*: dichiara di essere input, non risultato |
+| `docs/cycle159_scaling_experiment.md` | **MORTO (a scadenza)** | esperimento del 19/05 su un'ipotesi di quel ciclo |
+| `docs/cycle159_scaling_experiment_2.md` | **MORTO (a scadenza)** | *«**second test** of the cycle-159 scaling hypothesis»*: la replica, e nemmeno lei è più attuale — ma **la replica c'è**, ed è la cosa che conta di questa coppia |
+| `docs/bench/cycle-70-p2-bench.md` | **MORTO (verbale datato)** | 15/05, *«Run: `python scripts/bench_p2_entity_kg…`»* — il comando non c'è più, ma la data è dichiarata |
+| `docs/bench/cycle-70-p2-load.md` | **MORTO (verbale datato)** | 15/05, con **il JSON dei risultati** citato accanto al comando |
+| `docs/bench/cycle-70-p3-anchor-latency.md` | **MORTO (verbale datato)** | 15/05, stessa forma: comando + JSON |
+| `docs/papers/MEMORY-THESES.md` | **VIVO** | *«DRAFT 15/07. Method: **B4 concatenation — take only *verified* results**»*: dichiara di concatenare **solo** ciò che è verificato |
+| `docs/papers/veribench-preprint-DRAFT.md` | **VIVO** | *«working preprint. Every empirical number is **self-run**…»* — dichiara che i numeri sono nostri, che è il limite del lavoro |
+| `docs/papers/write-time-confabulation-gates-DRAFT.md` | **VIVO come artefatto datato** | 18/05, *«all empirical numbers in this…»* |
+| `docs/recipes/pentest-memory-workflow.md` | **VIVO** | e dichiara **perché** esiste: *«il classifier upstream blocca alcuni…»* — una ricetta nata da un vincolo reale |
+| `docs/release/G2_install.md` | **VIVO** | 04/07: *«**install-from-scratch transcript**… machine: Windows 11, Python 3.13 (venv from miniconda base)»* — la trascrizione, non il riassunto |
+| `docs/research/entity-memory-state-of-art-2026-05.md` | **VIVO come ricerca datata** | 14/05: *«documento di ricerca esplorativa, **paper-first. NO codice**»* — dichiara di non aver toccato il prodotto |
+| `docs/site-update/PATCH-HOMEPAGE.md` | **VIVO** | lead, 28/08, su mandato di Aurelio: *«correzioni **oneste** + strategia GEO»* per `verimem.com` |
+| `docs/usecases/pentesting_omnex.md` | **VIVO** | caso d'uso con uno scenario reale, non ipotetico |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -660,7 +693,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 225 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 258 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
