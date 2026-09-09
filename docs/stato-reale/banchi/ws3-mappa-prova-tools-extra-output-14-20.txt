@@ -1,0 +1,102 @@
+=== _enabled: gli interruttori delle capacita' pericolose
+  _enabled('HIPPO_ENABLE_SHELL'  , False) -> False
+  _enabled('HIPPO_ENABLE_DESKTOP', False) -> False
+  _enabled('HIPPO_ENABLE_FS'     , False) -> False
+  con la variabile a '1': False
+  con la variabile a '0': True
+
+=== _fs_roots: «STRICT — solo la data dir del progetto»
+  radici permesse: ['C:\\Users\\aurel\\.engram']
+  >>> la HOME dell'utente NON e' una radice: True
+
+=== _strip_editor_backup_suffixes: «.env~ deve valere come .env»
+  '.env~'          -> '.env'
+  '.env.bak'       -> '.env'
+  '.env.backup'    -> '.env'
+  '.env.swp'       -> '.env'
+  'id_rsa~'        -> 'id_rsa'
+  'normale.txt'    -> 'normale.txt'
+  '.env'           -> '.env'
+
+=== _is_sensitive: i nomi che non si leggono
+  C:\Users\aurel\.ssh\id_rsa                 -> sensibile: True
+  C:\Users\aurel\.ssh\id_rsa~                -> sensibile: True
+  C:\Users\aurel\.aws\credentials            -> sensibile: True
+  \AppData\Local\Temp\ws3-tx-5jl7eu5x\.env   -> sensibile: True
+  Data\Local\Temp\ws3-tx-5jl7eu5x\.env.bak   -> sensibile: True
+  Data\Local\Temp\ws3-tx-5jl7eu5x\note.txt   -> sensibile: False
+
+=== _is_within_any
+  dentro: True
+  fuori : False
+  risalita con .. : False
+
+=== fs_read_file / fs_write_file / fs_list_dir / fs_search_files
+  fs_read_file (dentro la radice): ToolResult(ok=False, output='', error="path outside allowed roots: ['C
+  fs_read_file (FUORI, la HOME): ToolResult(ok=False, output='', error="path outside allowed roots: ['C:\\\\Users\\\\aurel\
+  fs_read_file (file sensibile .env): 2026-09-09T14:20:16.567691 [info     ] fs_sensitive_blocked           op=read path=C:\Users\aurel\AppData\Local\Temp\ws3-tx-5jl7eu5x\.env
+ToolResult(ok=False, output='', error='path matches sensitive deny-list (ssh/aws/credentia
+2026-09-09T14:20:16.579117 [info     ] fs_sensitive_blocked           op=read path=C:\Users\aurel\AppData\Local\Temp\ws3-tx-5jl7eu5x\.env~
+  fs_read_file ('.env~', la variante del backup): ToolResult(ok=False, output='', error='path matches sensitive deny-list (ssh/aws/credentia
+  fs_write_file (dentro): ToolResult(ok=False, output='', error="path outside allowed roots: ['C
+  fs_write_file (FUORI): ToolResult(ok=False, output='', error="path outside allowed roots: ['C:\\\\Users\\\\aurel\
+  fs_list_dir (dentro): ToolResult(ok=False, output='', error="outside allowed roots ['C:\\\\Users\\\\au
+  fs_list_dir (FUORI): ToolResult(ok=False, output='', error="outside allowed roots ['C:\\\\Users\\\\aurel\\\\.en
+  fs_search_files('*.txt'): ToolResult(ok=False, output='', error='Non-relative patterns are unsupported', e
+
+=== shell_run: DEVE essere spenta (non la accendo)
+  HIPPO_ENABLE_SHELL nell'ambiente: None
+  shell_run('echo ciao') -> ToolResult(ok=False, output='', error='shell access disabled. set HIPPO_ENABLE_SHELL=1', extra=None)
+
+=== le guardie SSRF (nessuna connessione: solo il giudizio)
+  _ip_is_blocked('127.0.0.1'       ) -> True
+  _ip_is_blocked('::1'             ) -> True
+  _ip_is_blocked('10.0.0.5'        ) -> True
+  _ip_is_blocked('192.168.1.1'     ) -> True
+  _ip_is_blocked('172.16.0.1'      ) -> True
+  _ip_is_blocked('169.254.169.254' ) -> True
+  _ip_is_blocked('224.0.0.1'       ) -> True
+  _ip_is_blocked('0.0.0.0'         ) -> True
+  _ip_is_blocked('8.8.8.8'         ) -> False
+  _ip_is_blocked('93.184.216.34'   ) -> False
+  _ip_is_blocked('non-un-ip'       ) -> False
+  >>> 169.254.169.254 (metadati cloud) bloccato: True
+  >>> un IP pubblico NON e' bloccato: True
+  _host_is_allowlisted('localhost'): False
+  con OLLAMA_HOST=127.0.0.1: _host_is_allowlisted('127.0.0.1'): True
+  _is_blocked_host('localhost'               ) -> True
+  _is_blocked_host('127.0.0.1'               ) -> True
+  _is_blocked_host('169.254.169.254'         ) -> True
+  _is_blocked_host('metadata.google.internal') -> False
+
+=== web_fetch verso una destinazione BLOCCATA (non esce in rete)
+2026-09-09T14:20:16.610525 [info     ] web_fetch_blocked              host=127.0.0.1 reason=ssrf url=http://127.0.0.1:8080/x
+  web_fetch('http://127.0.0.1:8080/x'               ) -> ToolResult(ok=False, output='', error="destination host '127.0.0.1' is on the SS
+2026-09-09T14:20:16.615027 [info     ] web_fetch_blocked              host=169.254.169.254 reason=ssrf url=http://169.254.169.254/latest/meta-data/
+  web_fetch('http://169.254.169.254/latest/meta-dat') -> ToolResult(ok=False, output='', error="destination host '169.254.169.254' is on 
+2026-09-09T14:20:16.620287 [info     ] web_fetch_blocked              host=192.168.1.1 reason=ssrf url=http://192.168.1.1/
+  web_fetch('http://192.168.1.1/'                   ) -> ToolResult(ok=False, output='', error="destination host '192.168.1.1' is on the 
+
+=== _strip_html + _Stripper: HTML→testo con il parser della libreria
+  testo: "TitoloIl canone e' 5900 euro."
+  >>> lo script NON finisce nel testo: True
+  >>> lo stile NON finisce nel testo: True
+
+=== _parse_ddg su una pagina finta (nessuna rete)
+  _parse_ddg(finta, 5): [{'title': 'Titolo uno', 'url': 'https://esempio.it/uno', 'snippet': 'Riassunto uno'}, {'title': 'Titolo due', 'url': 'https://esempio.it/due', 'snipp
+
+=== _resolve_vision_model (nessuna chiamata al modello)
+  _resolve_vision_model('anthropic'           ) -> claude-haiku-4-5-20251001
+  _resolve_vision_model('ollama'              ) -> llava
+  _resolve_vision_model('openai'              ) -> gpt-4o-mini
+  _resolve_vision_model('provider-inventato'  ) -> 
+
+=== _read_image_to_b64_and_media_type su un file che non e' un'immagine
+  ('aWwgY2Fub25lIGUnIDU5MDAgZXVybw0K', 'image/jpeg')
+
+=== all_tools / extra_tools: cosa viene ESPOSTO all'agente
+  extra_tools(): 14 -> ['fs_read_file', 'fs_write_file', 'fs_list_dir', 'fs_search_files', 'web_fetch', 'web_search', 'vision_describe', 'webcam_snapshot', 'webcam_describe', 'desktop_screenshot']
+2026-09-09T14:20:16.648004 [info     ] python_executor_backend        backend=subprocess
+  all_tools(): 18 -> ['submit_solution', 'run_python', 'syntax_check', 'find_function', 'fs_read_file', 'fs_write_file', 'fs_list_dir', 'fs_search_files', 'web_fetch', 'web_search', 'vision_describe', 'webcam_snapshot']
+  >>> gli strumenti del desktop sono esposti? ['desktop_screenshot', 'desktop_click', 'desktop_type', 'desktop_key']
+  >>> la shell e' esposta? ['shell_run']

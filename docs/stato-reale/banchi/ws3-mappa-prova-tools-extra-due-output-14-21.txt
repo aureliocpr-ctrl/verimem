@@ -1,0 +1,42 @@
+=== _enabled col NOME BREVE (la funzione antepone HIPPO_ENABLE_)
+  _enabled('shell', False)  senza variabile: False
+  con HIPPO_ENABLE_SHELL=1: True
+  con HIPPO_ENABLE_SHELL=yes: True
+  con HIPPO_ENABLE_SHELL=0: False
+  default True ma HIPPO_DISABLE_FS=1: False (il freno vince sul default)
+  default True senza freni: True
+
+=== _fs_roots con la data dir sul tmp
+  radici: ['C:\\Users\\aurel\\AppData\\Local\\Temp\\ws3-tx2-8ys8llc8']
+  il tmp e' fra le radici: True
+
+=== fs_*: ora il CASO BUONO puo' accendersi
+  fs_read_file(dentro): ok=True "il canone e' 5900 euro\r\n"
+  fs_read_file(FUORI): ToolResult(ok=False, output='', error="path outside allowed roots: ['C:\\\\Users
+2026-09-09T14:21:28.564398 [info     ] fs_sensitive_blocked           op=read path=C:\Users\aurel\AppData\Local\Temp\ws3-tx2-8ys8llc8\.env
+  fs_read_file('.env' DENTRO la radice ma sensibile): ToolResult(ok=False, output='', error='path matches sensitive deny-list (ssh/aws/credent
+2026-09-09T14:21:28.580025 [info     ] fs_sensitive_blocked           op=read path=C:\Users\aurel\AppData\Local\Temp\ws3-tx2-8ys8llc8\.env~
+  fs_read_file('.env~' la variante di backup): ToolResult(ok=False, output='', error='path matches sensitive deny-list (ssh/aws/credent
+2026-09-09T14:21:28.588357 [info     ] fs_write                       append=False bytes=4 path=C:\Users\aurel\AppData\Local\Temp\ws3-tx2-8ys8llc8\nuovo.txt
+  fs_write_file(dentro): ok=True wrote 4 chars to C:\Users\aurel\AppData\
+2026-09-09T14:21:28.599183 [info     ] fs_write                       append=True bytes=7 path=C:\Users\aurel\AppData\Local\Temp\ws3-tx2-8ys8llc8\nuovo.txt
+  fs_write_file(append=True): ok=True
+  contenuto finale: 'ciao ancora'
+  fs_list_dir(dentro): ok=True 8 entries in C:\Users\aurel\AppData\Local\Temp\ws3-tx2-8ys8llc8
+  fs_search_files('*.txt') [relativo]: ok=True 2 matches
+  fs_search_files('*.txt', contains='canone'): ok=True 1 matches
+  fs_search_files(contains=parola assente): ok=True '0 matches'
+  fs_read_file con max_bytes=5: 'il ca'
+
+=== gli strumenti esposti all'agente
+  extra_tools(): 14 -> ['fs_read_file', 'fs_write_file', 'fs_list_dir', 'fs_search_files', 'web_fetch', 'web_search', 'vision_describe', 'webcam_snapshot', 'webcam_describe', 'desktop_screenshot', 'desktop_click', 'desktop_type', 'desktop_key', 'shell_run']
+2026-09-09T14:21:28.632943 [info     ] python_executor_backend        backend=subprocess
+  all_tools(): 18 -> ['submit_solution', 'run_python', 'syntax_check', 'find_function', 'fs_read_file', 'fs_write_file', 'fs_list_dir', 'fs_search_files', 'web_fetch', 'web_search', 'vision_describe', 'webcam_snapshot', 'webcam_describe', 'desktop_screenshot', 'desktop_click', 'desktop_type', 'desktop_key', 'shell_run']
+
+=== _init_pyautogui_safety e gli strumenti del desktop: NON li eseguo
+  (nessun click, nessun tasto, nessuna schermata: e' il desktop di Aurelio)
+  _init_pyautogui_safety esiste: True
+  desktop_click esiste: True
+  desktop_type esiste: True
+  desktop_key esiste: True
+  desktop_screenshot esiste: True
