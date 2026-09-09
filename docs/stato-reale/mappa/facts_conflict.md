@@ -88,12 +88,14 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 134 | `ConflictPair` | 1 | One pair of facts believed to assert opposite polarity on th | 1 — `test_facts_conflict.py` | esercitata dai blocchi eseguiti sopra |
-| 291 | `NumericConflictPair` | 1 | Two facts that assert a DIFFERENT value for the SAME unit ab | 1 — `test_facts_conflict_numeric.py` | esercitata dai blocchi eseguiti sopra |
-| 437 | `LexicalConflictPair` | 1 | Two stored facts the EXPANDED lexical moat says cannot both  | 1 — `test_facts_conflict_lexical.py` | esercitata dai blocchi eseguiti sopra |
+| 134 | `ConflictPair` | 1 | **contratto dei dati**: `positive`, `negative`, `semantic_similarity` | 1 — `test_facts_conflict.py` | esercitata dai blocchi eseguiti sopra |
+| 291 | `NumericConflictPair` | 1 | **contratto dei dati**: `fact_a`, `fact_b`, `unit`, `value_a`, `value_b` | 1 — `test_facts_conflict_numeric.py` | esercitata dai blocchi eseguiti sopra |
+| 437 | `LexicalConflictPair` | 1 | **contratto dei dati**: `fact_a`, `fact_b`, `kind`, `detail` | 1 — `test_facts_conflict_lexical.py` | esercitata dai blocchi eseguiti sopra |

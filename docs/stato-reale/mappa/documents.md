@@ -42,23 +42,31 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 44 | `Document` | 0 | Snapshot versionato di una fonte/documento (grezzo, non sema | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
-| 84 | `DocumentStore` | 11 | Store isolato di snapshot versionati-per-hash. NON wired nel | 11 — `test_document_index_provenance.py` | esercitata dai blocchi eseguiti sopra |
+| 44 | `Document` | 0 | **contratto dei dati**: `source_id`, `content`, `uri`, `meta`, `content_hash`, `version`, `fetched_at`, `id` | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 84 | `DocumentStore` | 11 | Store isolato di snapshot versionati-per-hash. NON wired nel recall. | 11 — `test_document_index_provenance.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 1
 
 In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
-questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
-accessori di protocollo: non hanno un claim del README ne' un test proprio, e
-sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
-blocchi sopra, non una riga a se'.
+restavano fuori dal conto. **Non sono righe vuote**: i costruttori di questo
+prodotto aprono file, eseguono schemi e in tre casi su otto fanno le migrazioni.
+Ognuno dice cosa apre e cosa crea, letto dal corpo.
 
-| riga | metodo | classe | cosa fa | verdetto |
+| riga | metodo | classe | cosa apre e cosa crea (letto) | verdetto |
 |---|---|---|---|---|
-| 87 | `__init__` | `DocumentStore` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `DocumentStore` nei blocchi sopra |
+| 87 | `__init__` | `DocumentStore` | 3 stmt: `default_db_path()`, `mkdir`, `_init_db`. **Nessun versionamento** | esercitato da ogni uso di `DocumentStore` nei blocchi sopra |
+
+## ⚠️ Questo store NON versiona lo schema
+
+`ensure_schema_version` compare **0 volte** in questo file, contro 3 in
+`semantic.py`, 2 in `memory.py`, 3 in `entity_kg.py`; e **zero** `ALTER TABLE`: lo schema e' statico. La tabella delle
+quattro politiche, con le prove, sta in [`semantic.md`](semantic.md) — sezione
+«Quattro politiche di schema in otto store».

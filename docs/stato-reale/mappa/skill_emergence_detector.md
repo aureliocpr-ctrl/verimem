@@ -1,44 +1,24 @@
-# `verimem/skill_emergence_detector.py`
+# Mappa — `verimem/skill_emergence_detector.py`
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) · **08/09**.
+*ws3 Galileo. 5 funzioni: cerca **skill che stanno emergendo da sole** nel grafo
+dei fatti (comunità di Louvain + purezza del topic + coesione). Banco:
+`ws3-mappa-prova-skill-moduli.py` (09/09 13:47), su uno store costruito apposta
+con 8 fatti in 4 topic.*
 
-## La catena: modulo → tool MCP → test
+🟢 **Un sospetto mio, misurato e SMENTITO — e lo scrivo perché la lezione vale
+più del sospetto.** Il docstring di `_embeddings_for_ids` dice «(k, **384**)
+float32», la stessa dimensione legacy che in `mesh_memory` fa restituire zero
+righe su ogni store attuale (T-MAP-9). Sembrava la stessa forma su un secondo
+modulo. **Misurato**: `_embeddings_for_ids` su tre id veri torna
+`array (3, 768) float32` — il codice **legge la dimensione dai dati**, è solo la
+riga di documentazione a essere rimasta indietro. Nessun secondo T-MAP-9: se
+avessi contato le occorrenze di «384» nel sorgente invece di eseguire, avrei
+firmato un allarme falso.
 
-Misurata per tutti e 47 i moduli `skill*` in un colpo solo
-(`catena_skill.py`): il nome del tool si legge dal ramo del
-dispatcher (`if name == "hippo_…":` in `mcp_server.py`), **non**
-da una funzione `tool_*` — quelle non esistono, e cercarle dava
-**0 tool su 47** mentre 43 moduli erano importati.
-
-```
-tool MCP        hippo_emerging_skills_register
-tool MCP        hippo_emerging_skills_draft
-test che nominano il tool     2 file
-test che nominano il modulo   5 file
-```
-
-⇒ **la catena è completa**: il modulo è esposto e la porta ha
-un presidio. È il caso di **42 moduli su 47** — la famiglia
-`skill*` è la meglio presidiata della mia parte.
-
-## La tabella
-
-⚠️ Bozza da `scripts/mappa_bozza.py`: la colonna «chiamata da» viene
-da `git grep` **per nome**, e nel progetto **589 funzioni su 2.973
-(19,8%) condividono il nome** con un'altra. Le righe con un omonimo
-plausibile vanno lette prima di essere usate.
-
-| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
-|---|---|---|---|---|---|---|---|
-| 1 | `verimem/skill_emergence_detector.py:58` `_embeddings_for_ids` | funzione: Fetch embeddings as a (k, 384) float32 array. ``None`` on | `verimem/second_pass_louvain.py:87`; `verimem/second_pass_louvain.py:120`; `verimem/skill_emergence_detector.py:337` | `tests/test_skill_emergence_dim_r3.py` | - | NON MISURATO | - |
-| 2 | `verimem/skill_emergence_detector.py:95` `_topic_for_ids` | funzione: (nessun docstring) | `verimem/skill_emergence_detector.py:319` | nessuno | - | NON MISURATO | - |
-| 3 | `verimem/skill_emergence_detector.py:116` `_cohesion_score` | funzione: Mean cosine of each row to the centroid. Higher = more cohesive. | `verimem/skill_emergence_detector.py:341` | nessuno | - | NON MISURATO | - |
-| 4 | `verimem/skill_emergence_detector.py:130` `_suggest_skill_name` | funzione: (nessun docstring) | `verimem/skill_emergence_detector.py:349` | nessuno | - | NON MISURATO | - |
-| 5 | `verimem/skill_emergence_detector.py:142` `detect_emerging_skills` | funzione: Detect emergent skill candidates in the fact graph. | `verimem/auto_dream_worker.py:133`; `verimem/auto_dream_worker.py:140`; `verimem/auto_dream_worker.py:293` (+14) | `tests/test_auto_dream_stable_partition_envvar.py`; `tests/test_both_cures_interaction.py`; `tests/test_hybrid_mode.py` (+3) | - | NON MISURATO | - |
-
-⚠️ **I verdetti di questa tabella NON sono ancora dati**: la catena
-sopra dice che il modulo è raggiungibile e presidiato, **non** che
-ogni sua funzione faccia ciò che promette. Per quello serve il banco
-nel merito, che per questa famiglia **non ho ancora scritto** — e lo
-dichiaro invece di lasciar credere che «catena completa» significhi
-«funziona come promesso».
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 1 | `verimem/skill_emergence_detector.py:58` `_embeddings_for_ids` | «prende gli embedding come array (k, 384) float32. **`None`** in caso di errore o di una riga mancante» | **FUNZIONA COME PROMESSO nel comportamento; il docstring è superato nel numero** | tre id veri → `array (3, 768) float32` (la dimensione **vera** dello store, non quella scritta); un id inesistente → **`None`**, cioè il caso di errore è distinto da un array vuoto |
+| 2 | `verimem/skill_emergence_detector.py:95` `_topic_for_ids` | il topic di ciascun id | **FUNZIONA COME PROMESSO** | `{'70f24d73ce4b': 'affitti/canoni', '95592b29f9d6': 'affitti/canoni', '9eb6125d3b8e': 'affitti/canoni'}` — un dizionario id→topic, che è ciò che serve per misurare la purezza |
+| 3 | `verimem/skill_emergence_detector.py:116` `_cohesion_score` | «coseno medio di ogni riga rispetto al centroide. **Più alto = più coeso**» | **FUNZIONA COME PROMESSO, e distingue** | tre fatti dello **stesso** tema → **0,9878**; tre fatti di temi **diversi** → **0,9485**; il confronto `>` è `True`. ⚠️ La distanza fra i due è **0,039**: il punteggio separa, ma di poco — con soglie tarate male i due casi si confondono, e questo è il numero da tenere davanti quando si sceglie `min_cohesion` |
+| 4 | `verimem/skill_emergence_detector.py:130` `_suggest_skill_name` | propone il nome della skill dai topic della comunità | **FUNZIONA COME PROMESSO** | `{'affitti/canoni': 3, 'servizi/manutenzione': 1}` → **`'emerging_skill_canoni'`** (prende il topic dominante e ne usa l'ultimo segmento); con un dizionario **vuoto** → `''`, non un nome inventato |
+| 5 | `verimem/skill_emergence_detector.py:142` `detect_emerging_skills` | «rileva le skill candidate emergenti nel grafo dei fatti» (comunità di Louvain, purezza del topic, coesione, seconda passata, partizione stabile, ibrido) | **NON MISURATO nel ramo che produce candidati** | con soglie permissive (`min_community_size=2, min_topic_purity=0.5, min_cohesion=0.1, max_n=5`) su 8 fatti in 4 topic → **`[]`**. Il risultato è **onesto** (nessuna comunità abbastanza grande in un grafo così piccolo) ma **non prova la funzione**: per esercitarla serve un corpus con comunità vere. Lo scrivo come limite della mia misura, non come verdetto sul codice — e i quattro interruttori (`enable_second_pass`, `enable_stable_partition`, `enable_hybrid`, `prior_partition`) restano tutti **non misurati** |

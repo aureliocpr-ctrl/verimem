@@ -9,13 +9,13 @@
 | 5 | `verimem/tamper_evidence.py:93` `_require_crypto` | funzione: (nessun docstring) | `verimem/tamper_evidence.py:113`; `verimem/tamper_evidence.py:135`; `verimem/tamper_evidence.py:155` (+2) | nessuno | - | NON MISURATO | - |
 | 6 | `verimem/tamper_evidence.py:107` `generate_audit_keypair` | funzione: Generate an ed25519 keypair for audit-head signing; returns | nessuno trovato | `tests/test_tamper_anchor_b.py`; `tests/test_tamper_anchor_receipt.py` | - | NON MISURATO | - |
 | 7 | `verimem/tamper_evidence.py:131` `sign_head` | funzione: Sign a chain head with the operator's ed25519 private key; returns the | `verimem/audit_anchor.py:7`; `verimem/client.py:2677`; `verimem/client.py:2678` (+1) | `tests/test_tamper_anchor_b.py` | - | NON MISURATO | - |
-| 8 | `verimem/tamper_evidence.py:142` `verify_head_signature` | funzione: True iff ``signature_b64`` is a valid signature of ``head_hash`` under | nessuno trovato | `tests/test_tamper_anchor_b.py` | - | NON MISURATO | - |
+| 8 | `verimem/tamper_evidence.py:142` `verify_head_signature` | funzione: True iff ``signature_b64`` is a valid signature of ``head_hash`` under — **verificatore del sistema DEPRECATO `sign_head`: mai chiamato dal prodotto, e non e' una dimenticanza (vedi il paragrafo qui sotto). Resta senza porta per chi ha ricevute emesse prima della deprecazione** | nessuno trovato | `tests/test_tamper_anchor_b.py` | - | MAI CHIAMATA | - |
 | 9 | `verimem/tamper_evidence.py:179` `sign_receipt` | funzione: Sign the canonical serialization of ``payload`` (the receipt WITHOUT its | `verimem/audit_anchor.py:15`; `verimem/audit_anchor.py:39`; `verimem/audit_anchor.py:110` (+1) | `tests/test_tamper_anchor_receipt.py` | - | NON MISURATO | - |
 | 10 | `verimem/tamper_evidence.py:192` `verify_receipt_signature` | funzione: True iff ``signature_b64`` signs the canonical bytes of ``payload`` under | `verimem/audit_anchor.py:39`; `verimem/audit_anchor.py:165`; `verimem/tamper_evidence.py:151` | `tests/test_tamper_anchor_receipt.py` | - | NON MISURATO | - |
 
 ---
 
-# 🔴 T48 — la testa è FIRMATA e quella firma non è MAI verificata
+# T48 — la testa è FIRMATA e quella firma non è MAI verificata — **ma è la firma di un sistema DEPRECATO, e il mio «4» era gonfio**
 
 **Assegnato dal lead come T48.** ⚠️ Il lead lo indirizzava a `provenance_signing.md`: le
 funzioni stanno **qui**, in `tamper_evidence.py` — verificato con
@@ -23,15 +23,46 @@ funzioni stanno **qui**, in `tamper_evidence.py` — verificato con
 codice.
 
     funzione                    in tamper_evidence   altrove in verimem/   test
-    sign_head                          1 (solo def)          4              1
+    sign_head                          1 (solo def)          4 *            1
     verify_head_signature              1 (solo def)          0   ⚠️         1
+
+    * ⚠️ RETTIFICA 09/09, e il numero gonfio era mio: delle 4 righe, UNA sola
+      è una chiamata (`client.py:2678`). Le altre sono un import
+      (`client.py:2677`) e DUE MENZIONI dentro docstring (`audit_anchor.py:7`,
+      `mutation_audit.py:52`). Avevo contato col grep cio' che andava letto —
+      la stessa forma che segnalo agli altri: *il grep trova, non conta*.
     sign_receipt                       2                     3              1
     verify_receipt_signature           2                     2   ✅         1
 
-⇒ **Il prodotto appone la firma della testa in 4 punti e non la controlla mai.** Non è che
+⇒ **Il prodotto appone la firma della testa in UN punto e non la controlla mai.** Non è che
 «non verifica niente»: `verify_receipt_signature` è chiamata da `client.audit_verify_anchor`
 — *«Verify a signed anchor receipt …: signature valid, both chains intact, row counts only
 grew»*. **L'asimmetria è fra due firme dello stesso file.**
+
+## ✅ E la ragione dell'asimmetria, letta il 09/09: **il primo sistema è in RITIRO**
+
+L'unica porta che chiama `sign_head` è `client.audit_head_signed()`, e il suo docstring
+**si apre con la parola `DEPRECATED`**:
+
+> *«DEPRECATED — signs only the ADJUDICATION chain's BARE head. Prefer `audit_anchor()`,
+> which signs a receipt over BOTH chains and binds chain identity + row counts into the
+> signature (**a bare head does not, so a signature for one chain's head can be presented
+> as another's**).»*
+
+E `audit_anchor.py:5-9` nomina la falla con l'avversario e la data che l'hanno prodotta:
+*«adversary F1/F5, deepseek 2026-07-23»*.
+
+⇒ **Non è una dimenticanza: è un sistema che si sta ritirando, e la debolezza è scritta
+sulla porta.** Non si costruisce un verificatore a ciò che si dismette. 🔑 Correggo qui il
+tono che avevo dato ieri al titolo: la domanda «perché nessuno verifica?» aveva una
+risposta, e stava nella prima riga del docstring della porta — **bastava leggerla**.
+
+⚠️ **Quel che resta davvero aperto**, ed è piccolo: chi ha usato `audit_head_signed()`
+**prima** della deprecazione ha ricevute in mano, e la CLI espone la verifica **solo**
+dell'altro sistema (`verimem audit verify --anchor` → `verify_anchor`). Per verificare una
+ricevuta vecchia bisogna importare una funzione interna e scriversi il codice.
+📌 *Una deprecazione è una promessa a due tempi: «non usarlo più» è la metà; l'altra metà è
+«ed ecco come si legge ciò che hai già».*
 
 ## E sono due livelli distinti, non uno
 
@@ -39,6 +70,8 @@ grew»*. **L'asimmetria è fra due firme dello stesso file.**
                                                                catena: torna l'id della riga
                                                                manomessa
     livello 2  firma della testa   sign_head → verify_…     ⚠️ apposta, mai controllata
+                                                            — ma DEPRECATA: il livello 2
+                                                              vero e' audit_anchor (§ sopra)
 
 `mutation_audit` **non nomina mai** la firma: i due livelli non si toccano.
 

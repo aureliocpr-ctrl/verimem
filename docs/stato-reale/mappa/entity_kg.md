@@ -151,23 +151,24 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
-eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
-test nomina il nome si scrive NON MISURATA.
+nominata qui non e' mappata. Per le dataclass la riga porta il **contratto dei
+dati** — i campi, che sono cio' che quella classe promette a chi la legge. Il
+verdetto e' **preso in prestito** dai blocchi eseguiti piu' sopra: nessuna classe
+riceve qui un verde nuovo, e dove nessun test nomina il nome si scrive NON
+MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+| riga | classe | metodi | contratto / cosa promette | test che la nominano | verdetto |
 |---|---|---|---|---|---|
-| 447 | `Entity` | 0 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
-| 454 | `EntityStore` | 29 | SQLite-backed entity store con alias resolution e fact linki | 27 — `test_anchor_recall.py` | esercitata dai blocchi eseguiti sopra |
+| 447 | `Entity` | 0 | **contratto dei dati**: `canonical_name`, `type`, `id`, `created_at` | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 454 | `EntityStore` | 29 | SQLite-backed entity store con alias resolution e fact linking. | 27 — `test_anchor_recall.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 1
 
 In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
-questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
-accessori di protocollo: non hanno un claim del README ne' un test proprio, e
-sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
-blocchi sopra, non una riga a se'.
+restavano fuori dal conto. **Non sono righe vuote**: i costruttori di questo
+prodotto aprono file, eseguono schemi e in tre casi su otto fanno le migrazioni.
+Ognuno dice cosa apre e cosa crea, letto dal corpo.
 
-| riga | metodo | classe | cosa fa | verdetto |
+| riga | metodo | classe | cosa apre e cosa crea (letto) | verdetto |
 |---|---|---|---|---|
-| 457 | `__init__` | `EntityStore` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `EntityStore` nei blocchi sopra |
+| 457 | `__init__` | `EntityStore` | 10 stmt: `mkdir`, `_connect`, `executescript`, **`ensure_schema_version`**. L'unico dei nove che crea un `threading.local()` (`_session_local`): la connessione condivisa da `session()` e' per-thread, non per-oggetto. Crea anche la cache del grafo (`_graph`, `_graph_dv`, `_graph_lock`) | esercitato da ogni uso di `EntityStore` nei blocchi sopra |
