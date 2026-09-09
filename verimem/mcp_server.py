@@ -1884,6 +1884,18 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "strict in-text-only naming."
                         ),
                     },
+                    "ground": {
+                        "type": "boolean",
+                        "default": True,
+                        "description": (
+                            "The MOAT on this path: ON by default (like the SDK "
+                            "preset 'balanced'), an extracted fact the DIALOGUE "
+                            "does not entail is quarantined instead of stored as "
+                            "a claim. Set false only for the SDK 'permissive' "
+                            "behaviour — then nothing checks that the "
+                            "conversation actually said it."
+                        ),
+                    },
                 },
                 "required": ["messages", "conversation_id"],
             },
@@ -8319,11 +8331,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             conv_id = arguments.get("conversation_id", "")
             topic = arguments.get("topic", "conversational/ingested")
             _aat = arguments.get("asserted_at")
+            # T-MAP-11 (2026-09-09): questa porta prometteva «the full
+            # anti-confab gate» e NON chiedeva mai il moat — `ground` non
+            # veniva passato e la firma lo ha a False, mentre la porta SDK
+            # passa il default del preset (client.py:693, balanced=True).
+            # Misurato alla porta con un giudice oracolo: 0 interrogazioni su
+            # 3 fatti, e «il capannone 12 e' stato venduto nel 2019» — che il
+            # dialogo non dice — entrato come model_claim insieme ai due veri
+            # (tests/test_la_porta_mcp_dell_ingest_non_chiede_mai_il_giudizio.py).
             res = ingest_conversation(
                 a.semantic, msgs, llm=a.wake.llm,
                 conversation_id=conv_id, topic=topic,
                 asserted_at=float(_aat) if _aat is not None else None,
-                user_name=arguments.get("user_name"))
+                user_name=arguments.get("user_name"),
+                ground=bool(arguments.get("ground", True)))
             _audit(name, arguments,
                    outcome="ok" if not res.get("error") else "llm_error")
             # ⚠️ LA NOTA AFFERMAVA AL PRESENTE UN ESITO CHE POTEVA NON ESSERCI.
@@ -8367,6 +8388,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _nota = ("atomic facts stored as low-trust model_claim "
                          "with conversation provenance; evidence "
                          "elevates status, never the chat itself")
+                # T-MAP-11: il moat qui ora gira, e ciò che ferma va DETTO —
+                # una nota che parla solo di «stored» rende invisibile la
+                # quarantena, che è esattamente la forma descritta sopra.
+                _n_quar = int(res.get("quarantined") or 0)
+                if _n_quar:
+                    _nota += (f"; {_n_quar} of them the conversation does NOT "
+                              f"state — quarantined by the moat, kept out of "
+                              f"default recall (not deleted: see "
+                              f"hippo_quarantine_log / _restore)")
             return _ok({**res, "note": _nota})
 
         if name == "hippo_import_conversations":
