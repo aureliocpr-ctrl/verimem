@@ -721,7 +721,34 @@ fondo si conta con `grep -c '^| \`docs'` e deve coincidere. Se non coincide, **v
 tabella**.
 
 
-### 🧾 Il conto, verificato riga per riga
+#
+## ✅ Nessun documento dichiara chiuso un limite ancora aperto
+
+Cercati i documenti che dicono **CHIUSO / CURATO / RISOLTO**, poi incrociati con i ticket
+che il CHANGELOG tiene in «Not solved yet». **Tre candidati, tutti caduti alla lettura:**
+
+· `08-i-656-mb` — *«**CHIUSO da ws8**: 100,0 MB… 116,4 MB su Windows, 502,2 MB su Linux»*:
+  chiusure **con il numero**, e il titolo superato è dichiarato in nota.
+· `00-ESAME` — chiusure **barrate** con la ragione accanto: *«il difetto era nel **MIO
+  FATTO**»*. Un registro che barra e spiega.
+· `48` — il mio grep aveva preso una riga di **output** (`CURATO  chiavi del payload:`),
+  non una dichiarazione di chiusura.
+
+**Il caso che sembrava vero, e non lo è.** `GRAVITA-DIFETTI` dice per **T16**: *«cura in
+`main` (`--db` su cinque comandi + `recall` che nomina il percorso)»*, mentre il CHANGELOG
+lo elenca ancora fra i non risolti. Letto il CHANGELOG:
+
+> *«**T16** … *Today*: `--db` reaches the five ports, and `recall` prints the store it read
+> from… ***Not yet*: nothing warns you when…**»*
+
+⇒ **Le due superfici dicono la stessa cosa con le stesse parole**: la voce resta fra gli
+aperti perché ha un *not yet*, e la parte curata è dichiarata in entrambe. **Nessuna
+contraddizione.**
+
+🔑 È il quarto candidato che cade oggi leggendo invece di dedurre, e vale come risultato:
+**su 287 documenti, nessuno spaccia per chiuso un difetto che la vetrina tiene aperto.**
+
+## 🧾 Il conto, verificato riga per riga
 
 ```
   righe di verdetto distinte      287
