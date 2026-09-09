@@ -1173,7 +1173,27 @@ class Memory:
                 self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
+        # T26a/a — IL MOAT HA GIUDICATO? DETTO DA UN BOOLEANO, E CON LA STESSA
+        # PAROLA DELLE ALTRE DUE SUPERFICI.
+        # Questa porta lo dichiarava gia', ma in una lingua sua: `moat` valeva
+        # "not_run:no_judge" e `grounding_score` era `null`. La porta MCP
+        # (`d47f5ebc`) e il journal (`flow_events`) dicono invece `judged`, un
+        # booleano. Misurato il 2026-09-09 con
+        # `tests/test_ws5_le_tre_porte_dicono_se_il_moat_ha_giudicato.py`, giudice
+        # a oracolo e la stessa scrittura sulle due porte:
+        #     SDK -> moat='not_run:no_judge'
+        #     MCP -> judged=False
+        # Stesso stato, due chiavi: chi integra due porte deve impararle
+        # entrambe. Qui si aggiunge la parola comune SENZA togliere `moat`, che
+        # dice qualcosa in piu' (il PERCHE' non ha girato) e ha gia' dei
+        # consumatori.
+        # ⚠️ La funzione e' quella di MCP e del journal — NON una quarta copia:
+        # `judged_at_all` risponde «il moat ha prodotto un verdetto?», che non e'
+        # `judged_true` («la fonte lo sostiene?»), la quale direbbe «non
+        # giudicato» proprio su una scrittura giudicata e BOCCIATA.
+        from .retirement_log import judged_at_all as _judged_at_all
         _out = {
+            "judged": _judged_at_all(gate.grounding_score),
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
