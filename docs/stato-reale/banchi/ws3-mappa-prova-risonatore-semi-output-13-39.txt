@@ -1,0 +1,27 @@
+memoria: una sola tupla, (1, 2, 3)
+
+  seme 0: indices=(5, 5, 4) converged=True ok=True · GIUSTA: False
+  seme 1: indices=(5, 2, 7) converged=True ok=True · GIUSTA: False
+  seme 2: indices=(4, 4, 7) converged=True ok=True · GIUSTA: False
+  seme 3: indices=(1, 5, 6) converged=True ok=True · GIUSTA: False
+  seme 4: indices=(5, 4, 3) converged=True ok=True · GIUSTA: False
+  seme 5: indices=(3, 0, 6) converged=True ok=True · GIUSTA: False
+  seme 6: indices=(4, 2, 0) converged=True ok=True · GIUSTA: False
+  seme 7: indices=(4, 2, 0) converged=True ok=True · GIUSTA: False
+  seme 8: indices=(5, 5, 4) converged=True ok=True · GIUSTA: False
+  seme 9: indices=(5, 1, 1) converged=True ok=True · GIUSTA: False
+
+>>> fattorizzazioni giuste: 0/10
+>>> campi della ricevuta di recall_tuple      : ['converged', 'indices', 'iters', 'ok']
+>>> campi della ricevuta di multi_restart     : ['converged', 'found_match', 'indices', 'iters', 'n_restarts', 'ok', 'residual', 'restart']
+
+il campo che distingue una soluzione buona da una spuria e' `residual`:
+  presente in recall_tuple            : False
+  presente in recall_tuple_multi_restart: True
+
+residuo VERO delle due risposte (calcolato a mano con _residual_norm):
+  la risposta del seme 1 (5, 2, 7) -> 1.4094
+  la tupla vera (1, 2, 3)      -> 0.0
+
+e `target_indices` (l'argomento che permette di dire cosa si cercava):
+  con target_indices=(1,2,3): {'indices': (1, 2, 3), 'residual': 0.0, 'restart': 0, 'found_match': True}

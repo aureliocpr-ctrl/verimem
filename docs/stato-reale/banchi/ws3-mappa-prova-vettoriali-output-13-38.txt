@@ -1,0 +1,39 @@
+==========================================================================
+A. holographic_memory.py
+==========================================================================
+_seed_from_text: deterministico? True | diverso per testi diversi: True
+_filler: stesso testo -> stesso vettore: True | norma unitaria: 1.0 | quasi ortogonale a un altro testo: 0.0229
+_circular_conv/_circular_corr: corr(a, conv(a,b)) somiglia a b? coseno = 0.7203
+_circular_shift(k=1): cambia il vettore: True | norma conservata: 1.0
+
+_BloomFilter:
+  'uno' dentro: True | 'tre' (mai aggiunto): False
+  round-trip byte: 1024 byte ·  'uno' ancora dentro: True
+
+HolographicMemory: il giro completo
+  scritte 3 coppie · stats: {'d': '1024', 'n_facts': '3', 'aggregate_size_bytes': '4096', 'bloom_size_bytes': '80000', 'cleanup_pool_size': '3', 'cleanup_pool_cap': '2048', 'aggregate_norm': '1.7615634202957153'}
+  recall('canone') -> [{'topic': 'canone', 'proposition': '5900 euro', 'lineage_depth': 0, ' · giusta: False
+  recall('consegna') -> [{'topic': 'consegna', 'proposition': '3 marzo', 'lineage_depth': 0, ' · giusta: False
+  recall('indirizzo') -> [{'topic': 'indirizzo', 'proposition': 'via Roma', 'lineage_depth': 0, · giusta: False
+  >>> ritrovate 0 su 3
+  contains(scritta): True | contains(MAI scritta): False (False = certamente assente)
+  dopo forget('canone'): recall -> [{'topic': 'consegna', 'proposition': '3 marzo', 'lineage_depth': 0, '
+  save -> {'ok': True, 'bytes_written': 84172, 'path': 'C:\\Users\\aurel\\AppData\\Local\\Temp\\ws3-vett-64nvqnm4\\olo.bin'} | load: stats uguali: True
+
+==========================================================================
+B. resonator_memory.py
+==========================================================================
+_build_alphabet(3 ruoli, 8 atomi, d=256):
+  codici: 3 · forma del primo: (8, 256) · righe a norma 1: 1.0
+_project_to_codebook (argmax duro): indice 3 atteso 3 · punteggio 1.0
+_soft_project_to_codebook (softmax): indice 3 · punteggio 1.0
+_residual_norm della tupla giusta: 0.0 · di una sbagliata: 1.4066
+  >>> il residuo della tupla giusta e' MINORE: True
+
+ResonatorMemory: memorizza e fattorizza
+  stats: {'n_roles': '3', 'atoms_per_role': '8', 'd': '1024', 'n_facts': '1', 'aggregate_size_bytes': '4096', 'codebook_size_bytes': '98304', 'total_storage_bytes': '102400', 'aggregate_norm': '0.9802115559577942', 'theoretical_capacity_compositions': '512'}
+  recall_tuple(): {'ok': True, 'indices': (5, 2, 7), 'iters': 2, 'converged': True}
+  recall_tuple_multi_restart(): {'ok': True, 'indices': (1, 2, 3), 'iters': 3, 'converged': True, 'residual': 0.0, 'restart': 0, 'found_match': False, 'n_restarts': 5}
+  con DUE tuple, recall_all_via_matching_pursuit: {'ok': True, 'found_facts': [(4, 5, 6), (1, 2, 3)], 'residuals_trail': [0.9802115559577942, 3.9094235404490973e-08], 'n_passes': 2, 'final_residual_norm': 3.9094235404490973e-08}
+  save/load: aggregato identico: True | file: res.npz esiste: True
+text_to_indices('il canone e 5900 euro'): (3, 7, 5) · deterministico: True
