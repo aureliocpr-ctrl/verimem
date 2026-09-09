@@ -40,11 +40,18 @@ if TYPE_CHECKING:
 
 # Verdicts that count as hallucination risk. Kept as a module constant so a
 # test can contract-lock it and callers can introspect it.
-_RISKY_VERDICTS = frozenset({"obsolete", "contested", "unverified"})
+# T50 (2026-09-09): `rejected` entra fra i verdetti a rischio. Un fatto che il
+# prodotto stesso ha FERMATO (gate) o SCARTATO (reconciler) e che una porta
+# serve lo stesso non e' un rischio di allucinazione fra gli altri: e' il caso
+# limite. Prima di oggi quei fatti tornavano col verdetto `trusted` e non
+# comparivano nemmeno nel numeratore.
+_RISKY_VERDICTS = frozenset({"obsolete", "contested", "unverified", "rejected"})
 
 # Every verdict compute_trust_signal can emit — used to seed the breakdown so
 # the shape is stable regardless of which verdicts actually occur.
-_ALL_VERDICTS = ("trusted", "stale", "contested", "obsolete", "unverified")
+_ALL_VERDICTS = (
+    "trusted", "stale", "contested", "obsolete", "unverified", "rejected",
+)
 
 
 def rate_from_verdicts(verdicts: list[str]) -> tuple[float, float]:

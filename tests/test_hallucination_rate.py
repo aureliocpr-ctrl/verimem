@@ -42,7 +42,12 @@ def test_rate_from_verdicts_empty_is_zero():
 
 def test_risky_set_is_the_three_unreliable_verdicts():
     # contract-lock: obsolete/contested/unverified sono "rischio"; trusted/stale no.
-    assert _RISKY_VERDICTS == frozenset({"obsolete", "contested", "unverified"})
+    # T50 (2026-09-09): entra `rejected` — il fatto che il prodotto ha FERMATO
+    # (gate) o SCARTATO (reconciler). Prima di oggi tornava `trusted` e non
+    # entrava nemmeno nel numeratore del tasso.
+    assert _RISKY_VERDICTS == frozenset(
+        {"obsolete", "contested", "unverified", "rejected"}
+    )
 
 
 # ---- integrazione end-to-end attraverso recall(trust_signals=True) ----------
