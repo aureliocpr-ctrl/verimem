@@ -212,9 +212,38 @@ def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
         r = try_local_score(dialogue, proposition)
         if r is None:
             return True, None
-        return float(r[0]) >= _ingest_ground_threshold(), float(r[0])
+        return _ammette(float(r[0])), float(r[0])
     except Exception:  # noqa: BLE001 — the moat must never crash the ingest
         return True, None
+
+
+def _ammette(score: float) -> bool:
+    """Ammette o no, alla soglia dell'ingest E con la BANDA del write path.
+
+    T-MAP-11 (2026-09-09): le due porte usavano lo stesso numero (40.0,
+    ``grounding_gate.LOCAL_CE_MOAT_THRESHOLD``) e trattavano diversamente lo
+    stesso punteggio. ``Memory.add`` TRATTIENE la fascia incerta [40, 80) —
+    ``grounding_gate._ce_band_enforced``, attiva di default dal 2026-07-19 —
+    mentre qui sopra 40 si ammetteva e basta. Misurato: tre invenzioni
+    plausibili sullo stesso dialogo valevano 60,22 · 88,80 · 50,00, e la banda
+    e' esattamente cio' che ne fermava due dalla porta SDK e nessuna da qui.
+
+    La banda si IMPORTA, non si ricopia: una soglia in due file diverge.
+    Resta partial e non promette altro: su HaluEval QA heldout (n=200, mai
+    letto, `ws3_soglia_ingest.py` 2026-09-09 23:18) la banda porta le
+    invenzioni fermate da 106 a 112 su 200 — le altre valgono 97-99, e per
+    quelle il docstring di ``_ce_band_enforced`` dice gia' che serve un
+    giudice llm.
+    """
+    if score < _ingest_ground_threshold():
+        return False
+    try:
+        from .grounding_gate import _ce_band_enforced, _ce_band_tau_hi
+        if _ce_band_enforced():
+            return score >= _ce_band_tau_hi()
+    except Exception:  # noqa: BLE001 — la banda non deve mai rompere l'ingest
+        return True
+    return True
 
 
 def conversation_provenance_ref(conversation_id: str) -> str:
