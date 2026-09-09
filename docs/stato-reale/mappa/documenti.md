@@ -282,6 +282,32 @@ ordina la coda.
 | `docs/research/entity-memory-state-of-art-2026-05.md` | **VIVO come ricerca datata** | 14/05: *«documento di ricerca esplorativa, **paper-first. NO codice**»* — dichiara di non aver toccato il prodotto |
 | `docs/site-update/PATCH-HOMEPAGE.md` | **VIVO** | lead, 28/08, su mandato di Aurelio: *«correzioni **oneste** + strategia GEO»* per `verimem.com` |
 | `docs/usecases/pentesting_omnex.md` | **VIVO** | caso d'uso con uno scenario reale, non ipotetico |
+| `docs/specs/c71-mcp-sampling-llm.md` | **VIVO** | *«stato: **paper-first**. Build on cycle #70 P3-bis (**commit 93a156b**)»* — la specifica dichiara su quale commit poggia |
+| `docs/specs/c72-claude-cli-llm.md` | **VIVO** | 15/05, *«build on cycle #71 BIS (**commit 18b8224**)»*: la catena delle specifiche è tracciata per commit |
+| `docs/specs/p2-entity-centric-kg.md` | **VIVO** | *«paper-first, **≤300 parole core spec. NO codice ancora**»* — il limite di lunghezza e lo stato, dichiarati insieme |
+| `docs/specs/p2c-openie-extraction.md` | **VIVO** | *«build on P2.a (**commit 12fa4ff**)»* |
+| `docs/specs/p3bis-sessionstart-anchor-integration.md` | **VIVO** | *«build on P3 minimal (commit…)»*: quinta specifica della stessa catena |
+| `docs/ricerca/2026-09-02-checklist-unificata-roadmap.md` | **VIVO** | e porta **la controfirma di un altro** in cima: *«✍️ Controfirma ws6 — 02/09»* |
+| `docs/ricerca/2026-09-02-distribuzione-canali-mcp.md` | **VIVO** | *«la sezione D dello stato dell'arte, **chiusa da un secondo ricercatore**»* |
+| `docs/ricerca/2026-09-02-la-voce-degli-utenti.md` | **VIVO** | *«cosa **lamentano, chiedono e rompono** gli utenti»*: la ricerca guarda fuori, non il nostro codice |
+| `docs/ricerca/2026-09-02-muri-e-cure-letteratura.md` | **VIVO** | rassegna 2024-2026 contro i nostri cinque muri: è la fonte delle strade **già falsificate** dalla letteratura |
+| `docs/ricerca/2026-09-02-stato-dell-arte-prodotti-e-benchmark.md` | **VIVO** | mappa dei concorrenti, dei benchmark e dei canali |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-a-due-voci.md` | **VIVO** — decisione aperta | una delle tre opzioni; **il criterio sta in un file solo**, non ripetuto qui |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-b-v3.2-riaddestrato.md` | **VIVO** — decisione aperta | *«con i numeri di ws4 (`2c93d2dd4070e398`)»*: il fatto di un altro citato per id |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-c-sostituzione-secca.md` | **VIVO** — decisione aperta | la terza opzione: sostituire il nostro giudice con un modello di fact-checking |
+| `docs/ricerca/2026-09-03-il-giudice-della-0.8.0-tre-opzioni.md` | **VIVO** — il documento madre | *«coordinamento assegnato da lead-audit; i numeri del fine-tune li porta ws4»*: chi decide, chi misura, e il criterio in un posto solo |
+| `docs/ricerca/2026-09-04-decomposizione-in-claim-atomici-letteratura.md` | **VIVO** | *«che cosa hanno **già misurato gli altri**»* — la domanda posta prima di misurare da soli |
+| `docs/ricerca/2026-09-05-design-write-n-claim-atomici.md` | **VIVO** | ws3, 05/09 21:15, *«**DESIGN, non codice**»*, e agganciato a `verimem/atomic_claims.py` |
+| `docs/ricerca/2026-09-05-tre-vie-per-il-giudice-v3-2-wise-ft-lora-cascata.md` | **VIVO** | *«**letto PRIMA del banco di Nadia**»*: la letteratura consultata prima di misurare, non dopo per giustificare |
+| `docs/ricerca/2026-09-05-verifica-per-claim-wice-refchecker-minicheck.md` | **VIVO** | *«**letto PRIMA del banco** (regola 5 dell'agen…)»*: la regola è citata per numero |
+| `docs/ricerca/2026-09-06-T17-il-vicinato-del-valore-e-l-output-di-programma.md` | **VIVO** | 06/09 06:40-07:50, *«ticket aperto da Iris (`3317d989549f3ac7`)»*: chi ha aperto il ticket è citato **per id del messaggio** |
+| `docs/ricerca/2026-09-06-profili-di-strumenti-design.md` | **VIVO** | ws4, 06/09 notte: *«deliverable ③ del ruolo»* — con **la manopola vera e il suo limite** |
+| `docs/archive/2026-05-13_FINAL_REVIEW.md` | **MORTO (archivio)** | review della 0.2.0 su **sette commit nominati** (`c4a8977c..b56e1f3e`): archiviata, ma dice esattamente cosa aveva guardato |
+| `docs/archive/2026-05-13_PRODUCTION_ROADMAP.md` | **MORTO (archivio)** | roadmap di produzione del 13/05, superata da quattro roadmap successive |
+| `docs/archive/2026-05-13_RECAP_ENGRAM.md` | **MORTO (archivio)** | *«**snapshot onesto** del progetto subito dopo il rebrand»*: una fotografia dichiarata tale, di due rinomine fa |
+| `docs/archive/2026-05-13_RND_EXPLORATION.md` | **MORTO (archivio)** | *«cosa ho costruito **quando non c'era un task**»*, 08/05 |
+| `docs/archive/2026-05-13_RND_TRACE_ALIGNMENT.md` | **MORTO (archivio)** | 08/05: *«il pezzo mancante della memoria attiva»* — un'idea archiviata |
+| `docs/archive/2026-05-13_RND_UX.md` | **MORTO (archivio)** | audit UX dell'08/05, owner dichiarato |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -693,7 +719,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 258 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 284 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
