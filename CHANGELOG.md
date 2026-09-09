@@ -503,9 +503,9 @@ above: 0.7.0 carries it, 0.7.5 does not.)
   `hippo_forward_chain` also returns `state_fact_ids_ignored`.
 
   **What you must change.** `Memory.get_all()` returns **fewer rows than
-  before**: it now takes `include_low_trust=False` by default. If you were
+  before**: it now takes `include_hidden=False` by default. If you were
   reading the whole corpus — auditing, de-duplicating, repairing — pass
-  `include_low_trust=True` and every row still arrives, `status` included.
+  `include_hidden=True` and every row still arrives, `status` included.
   Nothing was deleted: a quarantined fact is still **stored**, and
   `Memory.quarantine_log()` still lists held claims with the reason.
 

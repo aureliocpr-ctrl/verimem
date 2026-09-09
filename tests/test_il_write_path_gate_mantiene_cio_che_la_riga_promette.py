@@ -143,10 +143,10 @@ def test_il_claim_quarantinato_resta_conservato(esito) -> None:
     # meta'. Quindi il caso non si sposta e basta — si SDOPPIA, e adesso
     # sorveglia ENTRAMBE le meta' della frase «stored, but kept OUT of default
     # recall», che prima erano una sola.
-    conservati = [f for f in m.get_all(include_low_trust=True)
+    conservati = [f for f in m.get_all(include_hidden=True)
                   if f.get("status") == "quarantined"]
     assert conservati, (
-        "get_all(include_low_trust=True) non restituisce piu' il fatto "
+        "get_all(include_hidden=True) non restituisce piu' il fatto "
         "quarantinato. Il contratto MCP dice «stored, but kept OUT of default "
         "recall» e la tabella del README dice «stored, not served»: entrambe "
         "promettono che il fatto RESTI, consultabile a chi lo chiede "
