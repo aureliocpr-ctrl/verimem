@@ -41,6 +41,31 @@ from __future__ import annotations
 from typing import Any
 
 from .briefing import get_briefing
+from .fact_contract import fact_payload
+
+
+def _verdetto_di(fact: Any, semantic: Any) -> str:
+    """Il verdetto di fiducia del fatto, o ``non misurato``.
+
+    T53 (2026-09-09). Lo status da solo non basta: `contested` nasce da una
+    contraddizione APERTA e non da un campo del fatto, e il recall non la
+    guarda — un fatto fresco, `model_claim`, con una contraddizione aperta
+    passa ogni filtro ed entra nel prompt. Il verdetto lo vede.
+
+    Mai un'eccezione verso l'alto: l'iniezione non deve poter bloccare il
+    tool che sta per partire. Ma nemmeno il silenzio (R4): quando il
+    verdetto non si puo' calcolare la riga lo DICE, e chi legge sa che
+    quella riga non e' stata giudicata.
+    """
+    try:
+        from .contradiction import ContradictionStore
+        from .trust_signal import compute_trust_signal
+        store = ContradictionStore(semantic.db_path)
+        return compute_trust_signal(
+            fact, semantic, contradiction_store=store,
+        ).verdict
+    except Exception:  # noqa: BLE001 — fail soft, mai bloccare il tool
+        return "non misurato"
 
 
 class StepInjector:
@@ -120,11 +145,19 @@ class StepInjector:
             for fact, score in scored:
                 if not _degradato and float(score) < min_similarity:
                     continue
+                # T53 (2026-09-09): la riga era costruita a mano con quattro
+                # chiavi e non portava lo status. Il ramo di ripiego qui
+                # sotto, che passa da `briefing.get_briefing`, usa invece
+                # `fact_payload` — cioe' LE DUE VIE DELLO STESSO INIETTORE
+                # rendevano righe diverse, e quella POVERA era il default
+                # (`use_hybrid=True`). Ora entrambe passano dal contratto
+                # unico di `fact_contract`, che e' anche il modulo dove il
+                # campo aggiunto domani esce da tutte le superfici insieme.
                 riga = {
-                    "id": getattr(fact, "id", ""),
+                    **fact_payload(fact),
                     "proposition": getattr(fact, "proposition", ""),
-                    "topic": getattr(fact, "topic", ""),
                     "similarity": float(score),
+                    "verdict": _verdetto_di(fact, semantic),
                 }
                 if _degradato:
                     riga["ranking"] = "keyword"
