@@ -216,3 +216,48 @@ le due.
 definizione (dentro una stringa o un commento). **Ho tenuto il numero dell'`ast`**, che
 legge la struttura invece del testo.
 
+---
+
+## 🚨 Le funzioni **mute due volte**: senza docstring E non nominate da nessun test
+
+```
+  righe in tabella                                150
+  senza docstring                                  76
+  non nominate da nessun file di tests/            86
+  SENZA DOCSTRING **E** NON NOMINATE DA UN TEST    54
+```
+
+⚠️ **«Non nominata da un test» NON vuol dire «non testata».** Una funzione può essere
+esercitata **indirettamente**, chiamata da un'altra che il test invoca: il `grep` sui nomi
+**trova i candidati e non li conta**. Quello che questa riga dice con certezza è che
+**nessun test la nomina**, quindi se cambia comportamento **nessun rosso porta il suo nome**.
+
+🔑 **Sono le funzioni su cui non esiste nessuna dichiarazione**: né il docstring dice cosa
+dovrebbero fare, né un test dice cosa non devono smettere di fare. **Cinquantaquattro su
+centocinquanta.**
+
+| file | quante | quali |
+|---|---|---|
+| `settings.py` | **12** | `_env_for_provider`, `_serialise`, `fallback_get`, `fallback_save`, `permissions_get`, `permissions_save`, `presets_get`, `settings_active`, `settings_models`, `settings_page`, `settings_providers`, `settings_save` |
+| `pre_tool_use.py` | **6** | `_bash_extractor`, `_edit_extractor`, `_glob_extractor`, `_grep_extractor`, `_read_extractor`, `_write_extractor` |
+| `chat.py` | **4** | `chat_api`, `chat_page`, `plan_api`, `sleep_api` |
+| `welcome.py` | **4** | `_format_event`, `_overview_render`, `metrics_page`, `welcome_page` |
+| `active_memory.py` | **3** | `_kpi`, `active_memory_page`, `active_memory_stats` |
+| `skills.py` | **3** | `skill_detail`, `skill_promote`, `skill_retire` |
+| `__init__.py` | **2** | `_write_version`, `media_type` |
+| `episodes.py` | **2** | `episode_detail`, `episodes_page` |
+| `events.py` | **2** | `events_page`, `events_recent` |
+| `harness.py` | **2** | `__post_init__`, `_classify` |
+| `lifecycle.py` | **2** | `_default_jobs_dir`, `_hhmmss` |
+| `lineage.py` | **2** | `lineage_data`, `lineage_page` |
+| `memory_map.py` | **2** | `memory_map_graph`, `memory_map_page` |
+| `orchestrator.py` | **2** | `_create_hub_episode`, `_worker` |
+| `schemas.py` | **2** | `_topic_shape`, `_unique_agent_names` |
+| `bridge.py` | **1** | `_hhmmss` |
+| `cli.py` | **1** | `_load_config` |
+| `health.py` | **1** | `healthz` |
+| `state.py` | **1** | `_default_jobs_dir` |
+
+📌 **Da dove partire**, se qualcuno le documenta: `settings.py` ne ha **dodici** — è il file
+delle impostazioni, cioè quello dove un comportamento non dichiarato costa di più.
+
