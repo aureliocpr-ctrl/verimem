@@ -85,6 +85,11 @@ def owner_per_file() -> dict[str, str]:
 
 
 RIGA_FUNZIONE = re.compile(r"`(verimem/[^`:]+\.py):(\d+)`\s*`([^`]+)`")
+#: la forma senza riga di codice: `| n | `Nome` |` (ws6, ws8); conta solo se
+#: il nome esiste nel modulo che dà il nome al file .md
+RIGA_NOME = re.compile(
+    r"^\|\s*(?:\d+\s*\|\s*)?\**`([A-Za-z_][\w.]*)(?:\([^`]*\))?`")
+SENZA_RIGA = [0]
 RIGA_README = re.compile(r"`README\.md:(\d+)`")
 RIGA_DOC = re.compile(r"`(docs/[^`]+\.md)`")
 
@@ -102,12 +107,44 @@ def righe_della_mappa() -> tuple[dict[str, set[str]], set[int], set[str], dict[s
             if nome == "README-claims.md":
                 for m in RIGA_README.finditer(riga):
                     readme.add(int(m.group(1)))
+                # la forma di ws7: la PRIMA colonna e' la riga del README, o un
+                # intervallo `A-B` (tutte le righe dell'intervallo contano)
+                m3 = re.match(r"^\|\s*(\d+)(?:\s*[-–]\s*(\d+))?\s*\|", riga)
+                if m3:
+                    a_, b_ = int(m3.group(1)), int(m3.group(2) or m3.group(1))
+                    if b_ >= a_ and b_ - a_ < 811:
+                        readme.update(range(a_, b_ + 1))
+                # i verdetti a simbolo di ws7 contano come i nostri
+                if "✅" in riga:
+                    verdetti["FUNZIONA COME PROMESSO"] += 1
+                    continue
+                if "❌" in riga:
+                    verdetti["NON COME PROMESSO"] += 1
+                    continue
+                if "⬜" in riga:
+                    verdetti["NON MISURATO"] += 1
+                    continue
             elif nome == "documenti.md":
                 for m in RIGA_DOC.finditer(riga):
                     docs.add(m.group(1))
             elif nome != "00-INDICE.md":
+                trovata = False
                 for m in RIGA_FUNZIONE.finditer(riga):
                     mappate.setdefault(m.group(1), set()).add(m.group(3))
+                    trovata = True
+                if not trovata:
+                    # Riga SENZA `verimem/f.py:riga`: il nome nella seconda
+                    # colonna vale per il modulo che dà il nome al file
+                    # (consolidation.md -> verimem/consolidation.py,
+                    # dashboard_routes-settings.md -> verimem/dashboard_routes/
+                    # settings.py). Il nome deve esistere nel modulo per contare:
+                    # l'uguaglianza di insiemi resta quella. Le righe così
+                    # contate sono stampate a parte (`senza riga di codice`).
+                    m2 = RIGA_NOME.match(riga)
+                    if m2:
+                        modulo = "verimem/" + nome[:-3].replace("-", "/") + ".py"
+                        mappate.setdefault(modulo, set()).add(m2.group(1))
+                        SENZA_RIGA[0] += 1
             for v in VERDETTI:
                 if v in riga:
                     verdetti[v] += 1
@@ -136,6 +173,15 @@ def main() -> int:
     for rel, nomi in codice.items():
         o = own.get(rel, "?")
         fatte = mappate.get(rel, set())
+        # un nome NUDO nella mappa (`store`) copre il metodo qualificato del
+        # codice (`SemanticMemory.store`): la forma di ws6. Se due classi
+        # dello stesso modulo hanno un metodo omonimo, il nome nudo li copre
+        # entrambi (sovraconteggio dichiarato, non nascosto).
+        fatte_eff = set(fatte)
+        for n in nomi:
+            if n not in fatte_eff and "." in n and n.rsplit(".", 1)[1] in fatte:
+                fatte_eff.add(n)
+        fatte = fatte_eff
         manc = nomi - fatte
         extra = fatte - nomi
         if manc:
@@ -156,6 +202,7 @@ def main() -> int:
         tot_m += m
         print(f"  {o:5}  mappate {m:5} / {c:5}   mancanti {c - m:5}")
     print(f"  TUTTE  mappate {tot_m:5} / {tot_c:5}   mancanti {tot_c - tot_m:5}")
+    print(f"  (righe contate SENZA `verimem/f.py:riga`, per nome del file: {SENZA_RIGA[0]})")
     if estranee:
         print(
             f"  righe della mappa che NON corrispondono a nessuna funzione del codice: {sum(len(v) for v in estranee.values())}"
@@ -168,7 +215,10 @@ def main() -> int:
             continue
         print(f"  {own.get(rel, '?'):5} {rel}: {len(s)} mancanti  {sorted(s)[: a.mancanti]}")
     n_readme = sum(1 for _ in open(os.path.join(RADICE, "README.md"), encoding="utf-8"))
-    n_docs = len(glob.glob(os.path.join(RADICE, "docs", "**", "*.md"), recursive=True))
+    # la mappa stessa non e' un documento da classificare: senza questa
+    # esclusione il denominatore cresce a ogni file di mappa scritto
+    n_docs = len([p for p in glob.glob(os.path.join(RADICE, "docs", "**", "*.md"), recursive=True)
+                  if os.sep + "mappa" + os.sep not in p and "/mappa/" not in p])
     print("== README ==")
     print(f"  righe collegate {len(readme)} / {n_readme}   mancanti {n_readme - len(readme)}")
     print("== DOCUMENTI ==")
