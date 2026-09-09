@@ -37,7 +37,6 @@ toglie il CONTAGIO agli altri, non la causa — che al 06/09 non è ancora spieg
 (la stessa chiamata torna in 17 s senza il transport stdio e non torna in 1800 con).
 """
 import threading
-import time
 
 from verimem.local_grounding import get_local_judge
 
@@ -116,4 +115,3 @@ def test_il_tokenizzatore_resta_costruito_una_volta_sola():
     assert len(distinti) <= 1, (
         f"quattro thread hanno ottenuto tokenizzatori diversi: {distinti}. "
         "Il lock deve continuare a garantirne UNO solo.")
-    time.sleep(0)  # nessuna attesa: il test è già deterministico

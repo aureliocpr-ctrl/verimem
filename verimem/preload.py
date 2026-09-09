@@ -372,8 +372,16 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
             target=lambda: _segnala_rerank_delegato(log=log),
             name="verimem-rerank-probe", daemon=True,
         ).start()
-    # Il giudice del moat, sul SUO thread: modello e lock diversi dall'embedder
-    # e dal reranker, quindi scaldarlo qui non blocca ne' recall ne' save.
+    # Il giudice del moat, sul SUO thread. I MODELLI hanno lock distinti da
+    # embedder e reranker, quindi scaldarlo qui non blocca ne' recall ne' save.
+    # ⚠️ Ma «lock diversi» vale per il CARICAMENTO DEL MODELLO, non per gli
+    # IMPORT: fino a cbede6a9 questa riga si leggeva come una garanzia generale
+    # ed era falsa. `sentence_transformers` TRASCINA `transformers` (misurato
+    # l'08/09: PRIMA False -> DOPO True, 43,8 s), e i due stavano sotto lock
+    # diversi: il warm del giudice falliva 3 volte su 3 senza daemon (T26a).
+    # Ora ogni import pesante passa da `_import_lock.lock_import()` — un lock
+    # SOLO — e i lock dei modelli restano separati. Le due cose sono diverse e
+    # il presidio della prima e' tests/test_ogni_import_pesante_passa_dal_lock.py.
     if _deve_scaldare_il_giudice():
         threading.Thread(
             target=lambda: _warm_moat_judge(log=log),
