@@ -765,7 +765,7 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     import types as _ty
 
     from .semantic import _STATUS_RANK
-    from .supersession_policy import classify_write_relation
+    from .supersession_policy import classify_write_relation, references_fact
     sm = getattr(agent, "semantic", None) if agent is not None else None
     if sm is None:
         return list(ids)
@@ -835,7 +835,18 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
         # LA TERZA USCITA, secondo caso (2026-09-09): stessa IMPRONTA della
         # fonte ⇒ due letture della medesima evidenza, non due versioni. Il
         # perché, i numeri e le due popolazioni stanno in `_stessa_evidenza`.
-        if old is not None and _stessa_evidenza(cand_source_signature, old):
+        #
+        # ⚠️ SALVO LA RETTIFICA ESPLICITA. Chi corregge la propria lettura della
+        # stessa evidenza NOMINA il fatto che corregge («La coda ha 540
+        # elementi (rettifica del fatto <id>)»), e quel ritiro deve continuare
+        # ad avvenire: è la decisione del 2026-07-25 (poco sopra, sul perché
+        # `references_fact` è escluso da questa rotta) e ha il suo presidio in
+        # `tests/test_due_guardie_si_coprono_e_nessuno_lo_sa.py`. Senza questa
+        # riga il banco diventa rosso — misurato: 1 failed contro 3 passed
+        # sulla base, e il rosso era mio.
+        if (old is not None
+                and _stessa_evidenza(cand_source_signature, old)
+                and not references_fact(proposition, cid)):
             continue
         if (old is not None
                 and classify_write_relation(cand, old) == "evolution"
