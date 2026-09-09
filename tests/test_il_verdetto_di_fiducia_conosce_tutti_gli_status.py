@@ -9,6 +9,20 @@ fermato in scrittura.
 Cosa cambia per l'utente: la parola «trusted» torna a voler dire trusted.
 Un fatto fermato dal moat non viene piu' chiamato affidabile.
 
+CLAIM DEL README PRESIDIATI DA QUESTO BANCO
+-------------------------------------------
+* ``README.md:443-444`` — «stored but OUT of default recall — your agent
+  will never repeat it as truth». La seconda meta' della frase e' quella
+  che questo banco misura: un verdetto ``trusted`` su un quarantenato E'
+  ripeterlo come verita', a chiunque chieda il verdetto.
+  Presidio: ``test_un_fatto_fermato_dal_gate_non_si_chiama_trusted``.
+  La prima meta' (fuori dal recall di default) e' presidiata da
+  ``test_un_quarantenato_non_esce_dal_recall_di_default``.
+* ``README.md:462-463`` — «the gate's outcome + provenance are the trust
+  signal, not a self-asserted badge». Prima di T50 l'esito del gate NON
+  entrava nel trust signal per cinque status su sette.
+  Presidio: ``test_ogni_status_riceve_un_verdetto_sensato``.
+
 I DUE LIVELLI, tenuti separati di proposito
 -------------------------------------------
 * **Livello 1 — la funzione pubblica**: la tabella dei sette status di

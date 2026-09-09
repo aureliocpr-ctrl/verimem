@@ -8,8 +8,20 @@ come ``- [sim 0.62] topic — proposizione``
 verdetto di fiducia arrivano a chi legge.
 
 Cosa cambia per l'utente: un fatto che il prodotto stesso classifica
-`stale` o `unverified` non entra piu' nel prompt travestito da fatto
+`contested` o `unverified` non entra piu' nel prompt travestito da fatto
 qualunque.
+
+CLAIM DEL README PRESIDIATO DA QUESTO BANCO
+--------------------------------------------
+``README.md:443-444`` — «stored but OUT of default recall — **your agent
+will never repeat it as truth**». L'iniezione proattiva e' il posto in cui
+quella frase si gioca alla lettera: mette il fatto NEL PROMPT dell'agente.
+Le due meta' misurate qui:
+* che un quarantenato non ci arrivi —
+  ``test_un_quarantenato_non_arriva_nel_prompt`` (verde gia' prima);
+* che quello che ci arriva dica cos'e' —
+  ``test_un_fatto_contestato_entra_nel_prompt_senza_dirlo``, perche' un
+  fatto contestato presentato senza una parola E' ripeterlo come verita'.
 
 LA DISTINZIONE CHE IL BANNER GIA' FA A META'
 --------------------------------------------
