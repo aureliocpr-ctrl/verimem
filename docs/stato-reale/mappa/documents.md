@@ -38,9 +38,27 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 231 | `list_sources` | **pub** | Elenca le fonti — SOLO la versione piu' alta di ogni ``sou | 2 — `test_documents_tier.py` |
 | 258 | `search` | **pub** | Ricerca LESSICALE (non semantica) sul contenuto della vers | 220 — `test_editfmt_sensitive.py` |
 
-### I dunder di questo file
+## Le classi di questo file — 2 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 44 | `Document` | 0 | Snapshot versionato di una fonte/documento (grezzo, non sema | _generico — cercato qualificato nei blocchi sopra_ |
+| 84 | `DocumentStore` | 11 | Store isolato di snapshot versionati-per-hash. NON wired nel | 11 — `test_document_index_provenance.py` |
+
+## I metodi speciali di questo file — 1
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 87 | `__init__` | `DocumentStore` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `DocumentStore` nei blocchi sopra |

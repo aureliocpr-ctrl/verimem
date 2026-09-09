@@ -54,3 +54,15 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 258 | `list_undoable` | **pub** | Return the N most recent undoable ops (newest first, not y | 2 — `test_undo_log.py` |
 | 282 | `invalidate_handles_for` | **pub** | Drop the PENDING undo handles that would resurrect ``fact_ | 🔴 **nessuno** |
 | 315 | `prune_expired_undo_log` | **pub** | Delete undo entries past their TTL. Returns count deleted. | 2 — `test_undo_log.py` |
+
+## Le classi di questo file — 1 sulla superficie
+
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 46 | `UndoEntry` | 0 | One row from facts_undo_log. | 🔴 **nessuno** |

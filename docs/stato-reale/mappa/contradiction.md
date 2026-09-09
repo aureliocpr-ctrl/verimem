@@ -83,9 +83,28 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 475 | `count_unresolved` | **pub** |  | 3 — `test_contradiction.py` |
 | 484 | `_row_to_contradiction` | priv |  | 🔴 **nessuno** |
 
-### I dunder di questo file
+## Le classi di questo file — 2 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__init__`, `__post_init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 84 | `Contradiction` | 1 |  | 10 — `test_contradiction.py` |
+| 366 | `ContradictionStore` | 10 | SQLite-backed store for detected contradictions. | 18 — `test_contradiction.py` |
+
+## I metodi speciali di questo file — 2
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 94 | `__post_init__` | `Contradiction` | normalizza i campi dopo la dataclass | esercitato da ogni uso di `Contradiction` nei blocchi sopra |
+| 374 | `__init__` | `ContradictionStore` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `ContradictionStore` nei blocchi sopra |

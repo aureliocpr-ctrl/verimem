@@ -507,9 +507,30 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 4519 | `_row_vu` | priv |  | 1 — `test_un_fatto_scaduto_non_viene_servito.py` |
 | 4689 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
 
-### I dunder di questo file
+## Le classi di questo file — 4 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__getattr__`, `__init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 798 | `SupersedeError` | 0 | Raised on invalid arguments to :meth:`SemanticMemory.superse | 4 — `test_fact_supersede.py` |
+| 808 | `SupersedeConflict` | 0 | Raised when ``old_id`` is already superseded by a *different | 5 — `test_fact_supersede.py` |
+| 1604 | `Fact` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 2599 | `SemanticMemory` | 54 |  | 322 — `bench.py` |
+
+## I metodi speciali di questo file — 2
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 2600 | `__init__` | `SemanticMemory` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `SemanticMemory` nei blocchi sopra |
+| 930 | `__getattr__` | — **del modulo** (PEP 562) | rende dinamica `_EXPECTED_EMBEDDING_BYTES`, calcolata da `embedding.expected_embedding_bytes()` | esercitato da ogni lettura di quella costante; `AttributeError` su ogni altro nome |

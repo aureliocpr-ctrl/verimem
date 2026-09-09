@@ -37,9 +37,27 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 290 | `count` | **pub** | Number of chained rows (``entry_hash`` present — pre-chain | _generico — cercato qualificato nei blocchi sopra_ |
 | 300 | `head_at` | **pub** | Stored ``entry_hash`` of the ``count``-th chained row (1-i | 1 — `test_tamper_anchor_receipt.py` |
 
-### I dunder di questo file
+## Le classi di questo file — 2 sulla superficie
 
-L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
-conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
-un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
-della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 85 | `AdjudicationRecord` | 0 |  | 1 — `test_adjudication_log.py` |
+| 128 | `AdjudicationLog` | 10 | Isolated per-DB, append-only log of gate verdicts — never to | 4 — `test_adjudication_log.py` |
+
+## I metodi speciali di questo file — 1
+
+In tabella come tutto il resto: il righello legge la seconda colonna, e in prosa
+questi undici (su tutti i file) restavano fuori dal conto. Sono costruttori e
+accessori di protocollo: non hanno un claim del README ne' un test proprio, e
+sono esercitati da **ogni** uso della loro classe — il verdetto e' quello dei
+blocchi sopra, non una riga a se'.
+
+| riga | metodo | classe | cosa fa | verdetto |
+|---|---|---|---|---|
+| 131 | `__init__` | `AdjudicationLog` | costruisce l'oggetto (apre la connessione, fissa i path) | esercitato da ogni uso di `AdjudicationLog` nei blocchi sopra |

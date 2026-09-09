@@ -83,3 +83,17 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 | 304 | `as_dict` | **pub** |  | 2 — `test_facts_conflict.py` |
 | 448 | `as_dict` | **pub** |  | 2 — `test_facts_conflict.py` |
 | 523 | `_pairs` | priv |  | 1 — `test_rerank_fallback_order_audit3.py` |
+
+## Le classi di questo file — 3 sulla superficie
+
+Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
+contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
+nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
+«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
+non un verdetto.
+
+| riga | classe | metodi | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 134 | `ConflictPair` | 1 | One pair of facts believed to assert opposite polarity on th | 1 — `test_facts_conflict.py` |
+| 291 | `NumericConflictPair` | 1 | Two facts that assert a DIFFERENT value for the SAME unit ab | 1 — `test_facts_conflict_numeric.py` |
+| 437 | `LexicalConflictPair` | 1 | Two stored facts the EXPANDED lexical moat says cannot both  | 1 — `test_facts_conflict_lexical.py` |
