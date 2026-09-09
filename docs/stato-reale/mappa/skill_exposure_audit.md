@@ -1,0 +1,14 @@
+# Mappa — `verimem/skill_exposure_audit.py`
+
+*ws3 Galileo. 5 fra classe e funzioni: misura **quante volte una skill candidata
+sarebbe entrata nel top-k semantico** — cioè quante sono «morte alla nascita»,
+mai viste da nessun episodio. Banco: `ws3-mappa-prova-skill-moduli.py`
+(09/09 13:47).*
+
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 1 | `verimem/skill_exposure_audit.py:54` `CandidateExposure` | «metrica di esposizione per skill» | **FUNZIONA COME PROMESSO** | ogni voce di `least_exposed` porta `{'skill_id', 'name', 'age_days', 'max_similarity', 'trials', 'exposure_count'}`: l'esposizione **e** la somiglianza massima, non solo un conteggio |
+| 2 | `verimem/skill_exposure_audit.py:66` `_cosine_matrix` | «matrice dei coseni fra le righe di a [n×d] e di b [m×d]. Assume che siano già normalizzate» | **FUNZIONA COME PROMESSO** | con `a = [[1,0],[0,1]]` e `b = [[1,0],[0.7071,0.7071]]` → `[[1.0, 0.7071], [0.0, 0.7071]]`: i quattro valori sono quelli attesi a mano |
+| 3 | `verimem/skill_exposure_audit.py:84` `audit_candidate_exposure` | «misura quante volte ogni candidata sarebbe entrata nel top-k semantico» | **FUNZIONA COME PROMESSO** | tre candidate (una simile agli episodi, una ortogonale con 3 prove, una ortogonale senza prove) e due episodi, `top_k=1` → `{'n_candidates': 3, 'n_episodes': 2, 'invisible_count': 2, 'invisible_fraction': 0.667, 'ever_seen_count': 1, 'mean_exposure': 0.667, 'median_exposure': 0.0, 'candidates_with_trials_0': 2, 'ever_seen_but_no_trials': 1}`. ⚠️ Da notare: il sommario distingue **«mai vista»** da **«vista ma mai provata»** (`ever_seen_but_no_trials`), che sono due malattie diverse con due cure diverse |
+| 4 | `verimem/skill_exposure_audit.py:231` `select_invisible_for_retire` | «seleziona le candidate *morte alla nascita* pronte per il ritiro. Criteri (**TUTTI obbligatori**): `exposure_count == 0`, età ≥ soglia, zero prove» | **FUNZIONA COME PROMESSO — provato col caso che deve accendersi e coi due che devono restare fuori** | con `min_age_days=30, require_zero_trials=True` → **una sola** voce: `[{'skill_id': 'c3', 'name': 'mai vista', 'age_days': 40.0, 'max_similarity': 0.0, 'trials': 0, 'exposure_count': 0}]`. **Non** seleziona `c1` (vista dagli episodi, pur senza prove) né `c2` (invisibile ma con 3 prove): i criteri sono davvero congiunti. Con `min_age_days=999` → **`[]`**, cioè la soglia dell'età morde |
+| 5 | `verimem/skill_exposure_audit.py:285` `load_audit_inputs_from_agent` | «adattatore: carica candidate ed episodi recenti… legge direttamente dagli SQLite per avere i BLOB degli embedding già calcolati» | **NON MISURATO** (serve un agente vivo) | con `agent=None` → `AttributeError: 'NoneType' object has no attribute 'skills'`: non è un difetto, è che l'adattatore **pretende** l'agente. Il ramo vero richiede un `HippoAgent` costruito con le sue tre memorie, e non l'ho costruito |
