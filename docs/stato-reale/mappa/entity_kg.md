@@ -100,3 +100,56 @@ chiamanti.
 
 ⇒ **Il gruppo `entity_*` è chiuso**: 1.813 righe in tre file, 42 funzioni, e
 nessuna pubblica senza test. È il gruppo più coperto dei tre aperti finora.
+
+## Inventario completo — ogni funzione per nome
+
+**35 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 111 | `_norm` | priv | Unicode-canonical, case-folded normalizer per equality mat | 3 — `test_entity_kg.py` |
+| 130 | `_migrate_v1_initial` | priv | v1 no-op: lo schema base è già creato via _SCHEMA executes | 🔴 **nessuno** |
+| 137 | `_migrate_v2_unique_index` | priv | Round 2 critic counterexample fix #1: garantisce UNIQUE in | 🔴 **nessuno** |
+| 194 | `_migrate_v3_python_norm` | priv | Round 3 critic counterexample fix #2: sostituisce gli inde | 🔴 **nessuno** |
+| 305 | `_migrate_v4_nfc_norm` | priv | Round 4 critic counterexample fix #3: ri-backfilla name_no | 🔴 **nessuno** |
+| 392 | `_migrate_v6_entity_attrs` | priv | P3 minimal — entity_attrs key-value store generico. Idempo | 🔴 **nessuno** |
+| 414 | `_migrate_v5_entity_edges` | priv | P2.b — entity_edges table per neighbors + PPR. Lo schema è | 🔴 **nessuno** |
+| 499 | `session` | **pub** | Share ONE connection across a batch of store/link/add_edge | _generico — cercato qualificato nei blocchi sopra_ |
+| 536 | `_connect` | priv |  | 47 — `test_bridge.py` |
+| 561 | `store` | **pub** | Insert entity. If `canonical_name` already exists | _generico — cercato qualificato nei blocchi sopra_ |
+| 616 | `get` | **pub** | Fetch one Entity by id (symmetric with get_by_name / Seman | _generico — cercato qualificato nei blocchi sopra_ |
+| 628 | `get_by_name` | **pub** | Lookup case-insensitive Unicode: prima su canonical_name, | 7 — `test_anchor_recall.py` |
+| 656 | `add_alias` | **pub** | Add alias for an existing entity. Idempotent. | 1 — `test_entity_kg.py` |
+| 673 | `link_fact` | **pub** | Associate a fact_id to an entity. Idempotent | 17 — `test_anchor_recall.py` |
+| 685 | `facts_for_entity` | **pub** | Return all fact_ids linked to this entity. | 5 — `test_entity_kg.py` |
+| 694 | `entities_for_fact` | **pub** | Return all entity_ids linked to this fact (inverse of | 3 — `test_fact_tier_guard.py` |
+| 706 | `aliases_of` | **pub** | Return all aliases for an entity. | 2 — `test_entity_kg.py` |
+| 715 | `count` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 723 | `set_attr` | **pub** | UPSERT su entity_attrs. value viene JSON-serializzato. | 2 — `test_anchor_recall.py` |
+| 749 | `get_attrs` | **pub** | Ritorna dict {key → JSON-decoded value}. Empty se entity | 2 — `test_anchor_recall.py` |
+| 768 | `get_attr` | **pub** | Ritorna singolo attr decoded, o `default` se mancante. | 1 — `test_read_connection_is_reused.py` |
+| 789 | `add_edge` | **pub** | Insert directed edge src -> dst with predicate metadata. | 18 — `test_anchor_recall.py` |
+| 816 | `_db_data_version` | priv | Cross-process cache-coherence probe (mirror of Semantic/Ep | 3 — `test_episode_index_cross_process.py` |
+| 843 | `_get_graph` | priv | Build (or reuse) the entity nx.DiGraph from entity_edges. | 2 — `test_entity_ppr_graph_cache.py` |
+| 873 | `edges_from` | **pub** | Return outgoing edges (src_entity = entity_id). | 4 — `test_entity_live_latency.py` |
+| 894 | `neighbors` | **pub** | BFS neighbors fino a `hops` di distanza, capped a `k`. | 4 — `test_entity_traced_paths.py` |
+| 929 | `traced_paths` | **pub** | Multi-hop traversal that KEEPS the chain of custody — the  | 2 — `test_entity_traced_paths.py` |
+| 999 | `snapshot` | **pub** | A renderable WINDOW on the graph: the most recent entities | _generico — cercato qualificato nei blocchi sopra_ |
+| 1091 | `snapshot_full` | **pub** | The WHOLE graph in a compact, renderable form — no samplin | 1 — `test_read_connection_is_reused.py` |
+| 1141 | `_rank_facts` | priv | Rank facts by the summed PPR mass of the entities linking  | 🔴 **nessuno** |
+| 1178 | `fact_counts` | **pub** | (fatti distinti totali in entity_facts, {entity_id: n fatt | 1 — `test_read_connection_is_reused.py` |
+| 1200 | `ppr` | **pub** | Personalized PageRank su grafo entity (HippoRAG pattern). | 12 — `test_anchor_recall.py` |
+| 1293 | `ppr_weighted` | **pub** | Variante di ppr() che accetta `personalization` dict | 3 — `test_entity_ppr_graph_cache.py` |
+| 1361 | `list_anchors` | **pub** | List all entity with type='anchor' + their attrs. | 4 — `test_anchor_recall.py` |
+| 1378 | `_row_to_entity` | priv |  | 🔴 **nessuno** |
+
+### I dunder di questo file
+
+L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
+conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
+un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
+della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.

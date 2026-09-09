@@ -52,3 +52,40 @@ notturno (`auto_dream_worker.py:392`, `principal="system:heal"`). Nella mia
 misura del 07/09 era responsabile di **130 ritiri su 292**. Le decisioni di
 questa funzione non passano da nessuna mano umana, e il criterio con cui decide
 è quello che le tre righe della tabella qui sopra descrivono.
+
+## Inventario completo — ogni funzione per nome
+
+**19 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 122 | `_extract_numbers` | priv |  | 1 — `test_contradiction_typed_numbers.py` |
+| 126 | `_classify_numbers` | priv | Cycle #123: classify extracted numbers by semantic type. | 2 — `test_contradiction_typed_numbers.py` |
+| 153 | `_values_clash` | priv | Detect a meaningful numeric clash between two propositions | 2 — `test_contradiction_typed_numbers.py` |
+| 209 | `_cosine` | priv | Compute cosine on freshly-encoded propositions. | 3 — `test_contradiction_year_range_false_negative.py` |
+| 226 | `_has_negation` | priv | Negation check — DELEGA alla superficie unica in ``quantit | 2 — `test_due_opposti_non_possono_vivere_insieme.py` |
+| 243 | `_group_by_topic` | priv |  | 🔴 **nessuno** |
+| 250 | `detect_numeric_clashes` | **pub** | See module docstring. Returns one Contradiction per offend | 3 — `test_contradiction.py` |
+| 299 | `detect_boolean_clashes` | **pub** | Find same-topic pairs where ONE side has a negation marker | 3 — `test_contradiction.py` |
+| 504 | `heal_contradictions` | **pub** | Self-healing pass over ALREADY-detected contradictions. | 11 — `test_flow_manutenzione_notturna.py` |
+| 616 | `scan_corpus` | **pub** | Run all detectors over the corpus and persist new contradi | 5 — `test_contradiction.py` |
+| 381 | `_connect` | priv |  | 47 — `test_bridge.py` |
+| 395 | `add` | **pub** | Insert a contradiction. Returns True if a new row was crea | _generico — cercato qualificato nei blocchi sopra_ |
+| 417 | `list_unresolved` | **pub** |  | 2 — `test_contradiction.py` |
+| 427 | `list_all` | **pub** |  | 3 — `test_ask_ha_un_contratto_solo.py` |
+| 436 | `resolve` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 446 | `list_unresolved_for_fact` | **pub** | Cycle #117: return unresolved contradictions that involve | 3 — `test_fact_delete_cascade_r3.py` |
+| 462 | `resolve_all_for_fact` | **pub** | Cycle #117: mark every unresolved contradiction involving | 1 — `test_trust_signal.py` |
+| 475 | `count_unresolved` | **pub** |  | 3 — `test_contradiction.py` |
+| 484 | `_row_to_contradiction` | priv |  | 🔴 **nessuno** |
+
+### I dunder di questo file
+
+L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
+conteggio: **`__init__`, `__post_init__`**. Sono costruttori e accessori di protocollo — non hanno
+un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
+della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.

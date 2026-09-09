@@ -86,8 +86,6 @@ ordina la coda.
 | `docs/sota/cross-encoder-reranking.md` | **VIVO** | agganciato a `verimem/cross_encoder_rerank.py` |
 | `docs/sota/embedding-compression.md` | **VIVO** | agganciato a `verimem/embedding_quantize.py` |
 | `docs/sota/highway-nodes-pagerank-cache.md` | **VIVO** | agganciato a `verimem/betweenness_cache.py` |
-| `docs/sota/multi-signal-fusion.md` | **VIVO** | agganciato a `verimem/fuse_recall.py` |
-| `docs/sota/temporal-evolution-narrative.md` | **VIVO** | agganciato a `verimem/snapshot_at_time.py` |
 | `docs/sota/README.md` | **VIVO** | indice della cartella; il suo «← gateway.py» era il falso positivo del nome comune, verificato |
 | `docs/specs/p2b-ppr-entity-neighbors.md` | **VIVO** | la cosa che specifica **esiste**: `verimem/ppr_seed.py`, `verimem/mcp_server.py`. Non è un piano morto |
 | `docs/specs/p3-self-model-multi-anchor.md` | **VIVO** | implementata: `verimem/self_model.py`, `verimem/self_model_refresh.py` |
@@ -282,6 +280,37 @@ ordina la coda.
 | `docs/research/entity-memory-state-of-art-2026-05.md` | **VIVO come ricerca datata** | 14/05: *«documento di ricerca esplorativa, **paper-first. NO codice**»* — dichiara di non aver toccato il prodotto |
 | `docs/site-update/PATCH-HOMEPAGE.md` | **VIVO** | lead, 28/08, su mandato di Aurelio: *«correzioni **oneste** + strategia GEO»* per `verimem.com` |
 | `docs/usecases/pentesting_omnex.md` | **VIVO** | caso d'uso con uno scenario reale, non ipotetico |
+| `docs/specs/c71-mcp-sampling-llm.md` | **VIVO** | *«stato: **paper-first**. Build on cycle #70 P3-bis (**commit 93a156b**)»* — la specifica dichiara su quale commit poggia |
+| `docs/specs/c72-claude-cli-llm.md` | **VIVO** | 15/05, *«build on cycle #71 BIS (**commit 18b8224**)»*: la catena delle specifiche è tracciata per commit |
+| `docs/specs/p2-entity-centric-kg.md` | **VIVO** | *«paper-first, **≤300 parole core spec. NO codice ancora**»* — il limite di lunghezza e lo stato, dichiarati insieme |
+| `docs/specs/p2c-openie-extraction.md` | **VIVO** | *«build on P2.a (**commit 12fa4ff**)»* |
+| `docs/specs/p3bis-sessionstart-anchor-integration.md` | **VIVO** | *«build on P3 minimal (commit…)»*: quinta specifica della stessa catena |
+| `docs/ricerca/2026-09-02-checklist-unificata-roadmap.md` | **VIVO** | e porta **la controfirma di un altro** in cima: *«✍️ Controfirma ws6 — 02/09»* |
+| `docs/ricerca/2026-09-02-distribuzione-canali-mcp.md` | **VIVO** | *«la sezione D dello stato dell'arte, **chiusa da un secondo ricercatore**»* |
+| `docs/ricerca/2026-09-02-la-voce-degli-utenti.md` | **VIVO** | *«cosa **lamentano, chiedono e rompono** gli utenti»*: la ricerca guarda fuori, non il nostro codice |
+| `docs/ricerca/2026-09-02-muri-e-cure-letteratura.md` | **VIVO** | rassegna 2024-2026 contro i nostri cinque muri: è la fonte delle strade **già falsificate** dalla letteratura |
+| `docs/ricerca/2026-09-02-stato-dell-arte-prodotti-e-benchmark.md` | **VIVO** | mappa dei concorrenti, dei benchmark e dei canali |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-a-due-voci.md` | **VIVO** — decisione aperta | una delle tre opzioni; **il criterio sta in un file solo**, non ripetuto qui |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-b-v3.2-riaddestrato.md` | **VIVO** — decisione aperta | *«con i numeri di ws4 (`2c93d2dd4070e398`)»*: il fatto di un altro citato per id |
+| `docs/ricerca/2026-09-03-giudice-0.8.0-opzione-c-sostituzione-secca.md` | **VIVO** — decisione aperta | la terza opzione: sostituire il nostro giudice con un modello di fact-checking |
+| `docs/ricerca/2026-09-03-il-giudice-della-0.8.0-tre-opzioni.md` | **VIVO** — il documento madre | *«coordinamento assegnato da lead-audit; i numeri del fine-tune li porta ws4»*: chi decide, chi misura, e il criterio in un posto solo |
+| `docs/ricerca/2026-09-04-decomposizione-in-claim-atomici-letteratura.md` | **VIVO** | *«che cosa hanno **già misurato gli altri**»* — la domanda posta prima di misurare da soli |
+| `docs/ricerca/2026-09-05-design-write-n-claim-atomici.md` | **VIVO** | ws3, 05/09 21:15, *«**DESIGN, non codice**»*, e agganciato a `verimem/atomic_claims.py` |
+| `docs/ricerca/2026-09-05-tre-vie-per-il-giudice-v3-2-wise-ft-lora-cascata.md` | **VIVO** | *«**letto PRIMA del banco di Nadia**»*: la letteratura consultata prima di misurare, non dopo per giustificare |
+| `docs/ricerca/2026-09-05-verifica-per-claim-wice-refchecker-minicheck.md` | **VIVO** | *«**letto PRIMA del banco** (regola 5 dell'agen…)»*: la regola è citata per numero |
+| `docs/ricerca/2026-09-06-T17-il-vicinato-del-valore-e-l-output-di-programma.md` | **VIVO** | 06/09 06:40-07:50, *«ticket aperto da Iris (`3317d989549f3ac7`)»*: chi ha aperto il ticket è citato **per id del messaggio** |
+| `docs/ricerca/2026-09-06-profili-di-strumenti-design.md` | **VIVO** | ws4, 06/09 notte: *«deliverable ③ del ruolo»* — con **la manopola vera e il suo limite** |
+| `docs/archive/2026-05-13_FINAL_REVIEW.md` | **MORTO (archivio)** | review della 0.2.0 su **sette commit nominati** (`c4a8977c..b56e1f3e`): archiviata, ma dice esattamente cosa aveva guardato |
+| `docs/archive/2026-05-13_PRODUCTION_ROADMAP.md` | **MORTO (archivio)** | roadmap di produzione del 13/05, superata da quattro roadmap successive |
+| `docs/archive/2026-05-13_RECAP_ENGRAM.md` | **MORTO (archivio)** | *«**snapshot onesto** del progetto subito dopo il rebrand»*: una fotografia dichiarata tale, di due rinomine fa |
+| `docs/archive/2026-05-13_RND_EXPLORATION.md` | **MORTO (archivio)** | *«cosa ho costruito **quando non c'era un task**»*, 08/05 |
+| `docs/archive/2026-05-13_RND_TRACE_ALIGNMENT.md` | **MORTO (archivio)** | 08/05: *«il pezzo mancante della memoria attiva»* — un'idea archiviata |
+| `docs/archive/2026-05-13_RND_UX.md` | **MORTO (archivio)** | audit UX dell'08/05, owner dichiarato |
+| `docs/mondo-esterno/2026-09-05-concorrenti-cosa-non-fanno.md` | **VIVO** — ed è mio | *«la tabella dei concorrenti — e la nostra colonna, **con dentro i nostri difetti**»*. Owner ws8: la colonna nostra porta i difetti accanto ai vanti |
+| `docs/stato-reale/mappa/00-INDICE.md` | **VIVO** — è l'indice di questa mappa | dal mandato di Aurelio dell'08/09 20:27 **verbatim**: *«voglio tutta l'intera superficie del codice mappata»*. Tiene owner e contatori di tutte le istanze |
+| `docs/stato-reale/revisione-esterna/glm53-round1-perimetro.md` | **VIVO** — revisione esterna | *«**la prova e lo strumento di prova coincidono**: il moat è dimostrato dal giudice che…»* — un lettore esterno ci contesta l'autovalidazione, con le due frasi a quaranta righe di distanza |
+| `docs/stato-reale/revisione-esterna/glm53-round1-premortem.md` | **VIVO** — revisione esterna | *«**lo strumento che produce i numeri di copertina è dichiarato rotto dal report stesso**»*: il premortem di un revisore che non è dei nostri |
+| `docs/stato-reale/revisione-esterna/glm53-round1-presidi.md` | **VIVO** — revisione esterna | *«circuito di prova chiuso: il report dichiara falsificabilità **che il lettore destinat**…»* — la critica più dura, e l'abbiamo tenuta nel repo |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -691,9 +720,52 @@ mappa passa la giornata a segnalare negli altri.
 fondo si conta con `grep -c '^| \`docs'` e deve coincidere. Se non coincide, **vince la
 tabella**.
 
+
+#
+## ✅ Nessun documento dichiara chiuso un limite ancora aperto
+
+Cercati i documenti che dicono **CHIUSO / CURATO / RISOLTO**, poi incrociati con i ticket
+che il CHANGELOG tiene in «Not solved yet». **Tre candidati, tutti caduti alla lettura:**
+
+· `08-i-656-mb` — *«**CHIUSO da ws8**: 100,0 MB… 116,4 MB su Windows, 502,2 MB su Linux»*:
+  chiusure **con il numero**, e il titolo superato è dichiarato in nota.
+· `00-ESAME` — chiusure **barrate** con la ragione accanto: *«il difetto era nel **MIO
+  FATTO**»*. Un registro che barra e spiega.
+· `48` — il mio grep aveva preso una riga di **output** (`CURATO  chiavi del payload:`),
+  non una dichiarazione di chiusura.
+
+**Il caso che sembrava vero, e non lo è.** `GRAVITA-DIFETTI` dice per **T16**: *«cura in
+`main` (`--db` su cinque comandi + `recall` che nomina il percorso)»*, mentre il CHANGELOG
+lo elenca ancora fra i non risolti. Letto il CHANGELOG:
+
+> *«**T16** … *Today*: `--db` reaches the five ports, and `recall` prints the store it read
+> from… ***Not yet*: nothing warns you when…**»*
+
+⇒ **Le due superfici dicono la stessa cosa con le stesse parole**: la voce resta fra gli
+aperti perché ha un *not yet*, e la parte curata è dichiarata in entrambe. **Nessuna
+contraddizione.**
+
+🔑 È il quarto candidato che cade oggi leggendo invece di dedurre, e vale come risultato:
+**su 287 documenti, nessuno spaccia per chiuso un difetto che la vetrina tiene aperto.**
+
+## 🧾 Il conto, verificato riga per riga
+
+```
+  righe di verdetto distinte      287
+    di cui documenti .md          286
+    di cui banchi .py             1   (fuori dal denominatore dei 287)
+  documenti .md in docs/ (questo worktree, esclusa mappa/)   286
+  documenti senza riga                                        0
+```
+🔻 **Due righe duplicate tolte** (`sota/multi-signal-fusion`, `sota/temporal-evolution-narrative`):
+li avevo classificati due volte — una cercando i «citati e mancanti» del README, una
+aggiungendo `docs/sota/` in blocco. **Il conteggio diceva 289 su 287**, cioè più del totale:
+un numeratore più grande del denominatore è la firma di un doppio conteggio, e l'ho trovato
+solo perché il numero era **assurdo a colpo d'occhio**.
+
 ## Contatore
 
-**Classificati con verdetto letto: 258 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 286 su 286** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 

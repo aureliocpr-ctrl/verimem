@@ -176,3 +176,103 @@ che verifica che l'annullamento funzioni.
 garanzia della riga 2 (`restore_decayed`) poggia su questa funzione, e il test
 che prova l'una prova anche l'altra. Il reperto della riga 2 resta quello che
 era — **manca la porta, non il presidio.**
+
+## Inventario completo — ogni funzione per nome
+
+**82 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 55 | `_slow_txn_warn_s` | priv | Twin of semantic._slow_txn_warn_s (kept local: no cross-im | 1 — `test_slow_txn_telemetry.py` |
+| 83 | `_encode_episode_within_budget` | priv | Encode an episode summary for a store, returning None if i | 🔴 **nessuno** |
+| 149 | `_dg_serialize` | priv | Pack a k-sparse `d_expand` float32 vector to the on-disk f | 🔴 **nessuno** |
+| 168 | `_dg_deserialize` | priv | Reconstruct the dense `d_expand` float32 vector from the | 🔴 **nessuno** |
+| 180 | `_global_dg_projection` | priv | Cached W_dg matrix shared by every `EpisodicMemory` instan | 1 — `test_dg_cabling.py` |
+| 194 | `_migration_v2_salience_columns` | priv | v1 → v2: add the columns required by salience-weighted rec | 1 — `test_due_processi_non_rieseguono_la_migrazione.py` |
+| 212 | `_migration_v1_initial_schema` | priv | v0 → v1: stamp the original schema (already applied via | 🔴 **nessuno** |
+| 221 | `_migration_v3_dg_embedding` | priv | v2 → v3: add a `dg_embedding` BLOB column for FORGIA pezzo | 🔴 **nessuno** |
+| 231 | `_migration_v4_context_embedding` | priv | v3 → v4: add a `context_embedding` BLOB column for FORGIA  | 🔴 **nessuno** |
+| 241 | `_migration_v5_pinned` | priv | v4 → v5: add `pinned INTEGER NOT NULL DEFAULT 0` for FORGI | 🔴 **nessuno** |
+| 253 | `_migration_v6_embedding_model` | priv | v5 → v6 (2026-06-03): add `embedding_model TEXT` per-riga  | 1 — `test_episode_embedding_model_isolation.py` |
+| 283 | `_normalize` | priv | Unit-norm a vector. Pure-numpy, no sklearn dep. Matches th | 5 — `test_context_engine.py` |
+| 98 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
+| 427 | `_connect` | priv |  | 47 — `test_bridge.py` |
+| 455 | `_screen_episode_inplace` | priv | Defang injection + redact secrets in an episode's free-tex | 2 — `test_episode_batch_screen.py` |
+| 516 | `_store_episode_telemetry` | priv | Route a cross-LLM call-telemetry episode to a SEPARATE | 1 — `test_episode_telemetry_cleanup.py` |
+| 552 | `store` | **pub** | Insert or replace an episode. Backwards-compatible default | _generico — cercato qualificato nei blocchi sopra_ |
+| 755 | `backfill_pending_embeddings` | **pub** | Embed episodes persisted with the DEFER sentinel (empty | 7 — `test_backfill_heals_model_mismatch.py` |
+| 818 | `store_batch` | **pub** | CYCLE #18 — bulk insert con batch embedding. | 6 — `test_episode_batch_screen.py` |
+| 976 | `_dg_projection` | priv | Return the deterministic W_dg projection (cached process-w | 1 — `test_dg_cabling.py` |
+| 984 | `_backfill_dg_embeddings` | priv | Compute and persist `dg_embedding` for any episode that | 2 — `test_dg_backfill_batched.py` |
+| 1038 | `_ensure_dg_index` | priv | Build (or reuse) an in-memory matrix of DG-encoded vectors | 3 — `test_e2e_memory_integration.py` |
+| 1080 | `compute_salience` | **pub** | Prediction-error surprise of `episode` vs the centroid of  | 4 — `test_episode_save_encode_circuit_breaker.py` |
+| 1148 | `_compute_novelty` | priv | Novelty axis ∈ [0,1]: 1 - max(cosine to k nearest neighbou | 🔴 **nessuno** |
+| 1165 | `_compute_valence` | priv | Valence axis ∈ [0,1]: absolute affective load — fraction o | 🔴 **nessuno** |
+| 1185 | `_compute_task` | priv | Task axis ∈ [0,1]: cosine(episode, current_goal_focus). | 🔴 **nessuno** |
+| 1200 | `_compute_repetition` | priv | Repetition axis ∈ [0,1]: log(1+count_same_task_id) / | 🔴 **nessuno** |
+| 1225 | `compute_salience_4d` | **pub** | 4D importance composite (SCM cycle 141). | 1 — `test_salience_4d.py` |
+| 1258 | `salience_of` | **pub** | Read the cached salience score for an episode. | 1 — `test_salience_recall.py` |
+| 1267 | `_raw_cosine_recall` | priv | Internal cosine top-k WITHOUT side effects. | 1 — `test_episode_save_encode_circuit_breaker.py` |
+| 1292 | `decay_pruning_candidates` | **pub** | Episodes whose Ebbinghaus retention falls below the thresh | 4 — `test_curate_pipeline.py` |
+| 1326 | `set_pinned` | **pub** | FORGIA #197: pin/unpin an episode. Pinned episodes are | 2 — `test_mcp_pin_metrics.py` |
+| 1336 | `is_pinned` | **pub** | FORGIA #197: check whether an episode is currently pinned. | 2 — `test_mcp_pin_metrics.py` |
+| 1345 | `pinned_episodes` | **pub** | FORGIA #197: list every pinned episode, newest-first. | 3 — `test_briefing.py` |
+| 1363 | `decay_prune` | **pub** | Delete episodes whose retention < threshold. Returns the s | 5 — `test_audit_mutations_episodic.py` |
+| 1413 | `_archive_episodes_for_undo` | priv | Snapshot ``ids`` (full episode rows + their traces) into | 🔴 **nessuno** |
+| 1455 | `restore_decayed` | **pub** | Reverse a decay prune (A-7). Re-inserts archived episodes  | 1 — `test_decay_prune_undo.py` |
+| 1508 | `_bump_access_tracking` | priv | Atomic update of `last_accessed_at` and `access_count` for | 🔴 **nessuno** |
+| 1530 | `add_causal_edge` | **pub** |  | 5 — `e2e_cycle51_54_chain.py` |
+| 1539 | `causal_graph` | **pub** |  | 2 — `test_mcp_lineage_trace.py` |
+| 1549 | `get` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 1557 | `all` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 1565 | `by_outcome` | **pub** |  | 4 — `test_audit_summary.py` |
+| 1573 | `by_task` | **pub** |  | 🔴 **nessuno** |
+| 1581 | `_db_data_version` | priv | Cross-process cache-coherence probe — mirror of SemanticMe | 3 — `test_episode_index_cross_process.py` |
+| 1608 | `_ensure_recall_index` | priv | Lazily build / rebuild the in-memory recall index. | 5 — `bench.py` |
+| 1667 | `_batch_get_episodes` | priv | Fetch many episodes (with traces) in two queries instead o | 🔴 **nessuno** |
+| 1692 | `recall` | **pub** | Top-k episodes ranked by `cosine + α × salience + β × rece | _generico — cercato qualificato nei blocchi sopra_ |
+| 1931 | `_rerank_and_finalise` | priv | Compose `cosine + α·salience + β·recency + γ·context_cos` | 1 — `test_episode_recall_nonfinite.py` |
+| 1989 | `recall_by_context` | **pub** | Top-k episodes ranked by cosine on `context_embedding` onl | 5 — `test_e2e_memory_integration.py` |
+| 2052 | `cluster_similar` | **pub** | Greedy clustering: episodes with cos-sim ≥ threshold to a  | 3 — `bench.py` |
+| 2089 | `count` | **pub** | Total episode count, optionally filtered by outcome. | _generico — cercato qualificato nei blocchi sopra_ |
+| 2106 | `clear` | **pub** | Wipe every episode/trace/edge. ``principal`` is MANDATORY  | _generico — cercato qualificato nei blocchi sopra_ |
+| 2127 | `skill_outcome_breakdown` | **pub** | FORGIA pezzo #157: outcome → count for episodes that used  | 1 — `test_memory_skill_outcome.py` |
+| 2141 | `skill_co_occurrence` | **pub** | FORGIA pezzo #158: count which other skills appear with `s | 3 — `test_memory_skill_cooccurrence.py` |
+| 2168 | `skill_bundle_candidates` | **pub** | FORGIA pezzo #160: skill-pair bundle candidates. | 4 — `test_mcp_compound_skills.py` |
+| 2207 | `update_salience` | **pub** | FORGIA pezzo #175: in-place salience update bypassing comp | 2 — `test_sleep_synaptic_tagging.py` |
+| 2224 | `synaptic_tag_candidates` | **pub** | FORGIA pezzo #174: synaptic tagging (Frey & Morris 1997). | 2 — `test_memory_synaptic_tag.py` |
+| 2276 | `negative_bundle_candidates` | **pub** | FORGIA pezzo #169: lateral inhibition — pair → failure det | 2 — `test_memory_negative_bundles.py` |
+| 2317 | `average_episode_age_s` | **pub** | FORGIA pezzo #153: mean age in seconds across all episodes | 1 — `test_memory_avg_age.py` |
+| 2333 | `steps_summary` | **pub** | FORGIA pezzo #144: aggregate stats on number of steps per  | 2 — `test_memory_steps_summary.py` |
+| 2355 | `outcome_breakdown` | **pub** | FORGIA pezzo #143: dict outcome → count for every distinct | 3 — `test_corpus_diff.py` |
+| 2368 | `skill_usage_histogram` | **pub** | FORGIA pezzo #139: dict skill_id → number of episodes that | 4 — `test_memory_skill_histogram.py` |
+| 2403 | `token_usage_summary` | **pub** | FORGIA pezzo #137: aggregate token usage stats across all  | 3 — `test_memory_method_aliases.py` |
+| 2431 | `token_usage_stats` | **pub** | Alias di `token_usage_summary` per backward-compat col MCP | 4 — `test_audit_summary_integration.py` |
+| 2435 | `recall_explain` | **pub** | CYCLE #11 — versione strutturata di `recall` con breakdown | 3 — `test_mcp_lineage_explain_top.py` |
+| 2469 | `episodes_last_n_minutes` | **pub** | FORGIA pezzo #135: episodi degli ultimi N minuti. | 1 — `test_memory_window.py` |
+| 2483 | `episodes_in_window` | **pub** | FORGIA pezzo #134: episodi creati in [start_ts, end_ts). | 1 — `test_memory_window.py` |
+| 2503 | `find_by_task_text` | **pub** | FORGIA pezzo #110: exact-match query on task_text. | 1 — `test_memory_find_by_task_text.py` |
+| 2523 | `search_episodes` | **pub** | FORGIA pezzo #195: substring/keyword search over `task_tex | 3 — `test_mcp_search_and_list.py` |
+| 2563 | `delete_by_task_text` | **pub** | FORGIA pezzo #111: cancella tutti gli episodi con questo t | 2 — `test_audit_mutations_episodic.py` |
+| 2579 | `delete` | **pub** | FORGIA pezzo #109: delete one episode + its traces + edges | _generico — cercato qualificato nei blocchi sopra_ |
+| 2623 | `audit_verify` | **pub** | First tampered ``audit_mutations`` row id in episodes.db,  | 5 — `test_adjudication_log_chain.py` |
+| 2631 | `audit_head` | **pub** | Current episodic mutation-chain head (archive off-box). | 4 — `test_adjudication_log_chain.py` |
+| 2637 | `audit_count` | **pub** | Number of chained rows in the episodic mutation chain — th | 1 — `test_tamper_anchor_receipt.py` |
+| 2645 | `audit_head_at` | **pub** | The episodic chain head AS OF the ``count``-th chained row | 1 — `test_tamper_anchor_receipt.py` |
+| 2653 | `gc_orphan_causal_edges` | **pub** | Delete causal_edges whose src OR dst episode no longer exi | 2 — `test_audit_mutations_episodic.py` |
+| 2680 | `_load_traces` | priv |  | 🔴 **nessuno** |
+| 2689 | `_row_to_episode` | priv |  | 🔴 **nessuno** |
+| 1016 | `_flush` | priv |  | 🔴 **nessuno** |
+| 1765 | `_keyword_fallback` | priv |  | 🔴 **nessuno** |
+| 2694 | `_col` | priv |  | 🔴 **nessuno** |
+
+### I dunder di questo file
+
+L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
+conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
+un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
+della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.

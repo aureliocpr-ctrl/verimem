@@ -1,0 +1,9 @@
+# Mappa di `verimem/_compat.py` — 5 righe (bozza da confermare leggendo ed eseguendo)
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/_compat.py:104` `alias_creati` | funzione: I nomi che :func:`init_env_aliases` ha creato in questo processo. | `verimem/_compat.py:125`; `verimem/doctor.py:1196`; `verimem/doctor.py:1197` | `tests/test_i_parametri_in_vigore_si_possono_vedere.py` | - | NON MISURATO | - |
+| 2 | `verimem/_compat.py:113` `init_env_aliases` | funzione: Mirror VERIMEM_* / HIPPO_* ↔ ENGRAM_* env vars (idempotent). | `verimem/__init__.py:16`; `verimem/__init__.py:45`; `verimem/_compat.py:8` (+4) | `tests/test_env_alias_verimem.py`; `tests/test_i_parametri_in_vigore_si_possono_vedere.py`; `tests/test_il_nome_del_prodotto_funziona_davvero.py` (+3) | - | NON MISURATO | - |
+| 3 | `verimem/_compat.py:129` `init_env_aliases._mirror` | funzione: (nessun docstring) | `verimem/_compat.py:141`; `verimem/_compat.py:142`; `verimem/_compat.py:143` (+3) | nessuno | - | NON MISURATO | - |
+| 4 | `verimem/_compat.py:173` `_env_data_dir` | funzione: L'override della data dir dall'ambiente, o "" se nessun alias e' posto. | `verimem/_compat.py:219`; `verimem/_compat.py:222`; `verimem/auto_dream_worker.py:40` (+18) | `tests/conftest.py`; `tests/test_l_avviso_diceva_il_contrario_del_codice.py`; `tests/test_una_sola_data_dir.py` | - | NON MISURATO | - |
+| 5 | `verimem/_compat.py:202` `data_dir` | funzione: Return the canonical Verimem data directory. | `verimem/_compat.py:21`; `verimem/admission_gate.py:106`; `verimem/audit_tail.py:26` (+168) | `tests/conftest.py`; `tests/security/test_gateway_security_headers.py`; `tests/security/test_path_traversal.py` (+73) | - | NON MISURATO | - |

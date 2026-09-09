@@ -90,6 +90,11 @@ RIGA_FUNZIONE = re.compile(r"`(verimem/[^`:]+\.py):(\d+)`\s*`([^`]+)`")
 RIGA_NOME = re.compile(
     r"^\|\s*(?:\d+\s*\|\s*)?\**`([A-Za-z_][\w.]*)(?:\([^`]*\))?`")
 SENZA_RIGA = [0]
+#: la forma di ws8: `### `verimem/swarm/` — 33 funzioni` sopra, e sotto
+#: `| n | `nome(args)` | `file.py` | ...`
+INTESTAZIONE_PKG = re.compile(r"`(verimem/[^`]+?)/?`")
+RIGA_PKG = re.compile(
+    r"^\|\s*\d+\s*\|\s*`([A-Za-z_][\w.]*)(?:\([^`]*\))?`\s*\|\s*`([^`/]+\.py)`")
 RIGA_README = re.compile(r"`README\.md:(\d+)`")
 RIGA_DOC = re.compile(r"`(docs/[^`]+\.md)`")
 
@@ -101,9 +106,26 @@ def righe_della_mappa() -> tuple[dict[str, set[str]], set[int], set[str], dict[s
     verdetti = {v: 0 for v in VERDETTI}
     for md in glob.glob(os.path.join(MAPPA, "*.md")):
         nome = os.path.basename(md)
+        pacchetto = ""
         for riga in open(md, encoding="utf-8", errors="replace"):
+            if riga.startswith("#"):
+                # la forma di ws8 (funzioni.md): l'intestazione dice il
+                # pacchetto (`verimem/swarm/`), la terza colonna il file
+                mh = INTESTAZIONE_PKG.search(riga)
+                pacchetto = mh.group(1) if mh else pacchetto
+                continue
             if not riga.startswith("|"):
                 continue
+            if pacchetto and nome not in ("README-claims.md", "documenti.md", "00-INDICE.md"):
+                mp = RIGA_PKG.match(riga)
+                if mp:
+                    mappate.setdefault(pacchetto + "/" + mp.group(2), set()).add(mp.group(1))
+                    SENZA_RIGA[0] += 1
+                    for v in VERDETTI:
+                        if v in riga:
+                            verdetti[v] += 1
+                            break
+                    continue
             if nome == "README-claims.md":
                 for m in RIGA_README.finditer(riga):
                     readme.add(int(m.group(1)))

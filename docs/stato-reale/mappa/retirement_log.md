@@ -63,3 +63,24 @@ Le tre `_private` di questo file portano nomi italiani (`_istante`,
 Nessuna è nominata da un test, tutte hanno chiamanti dentro il file. **NON
 MISURATE**, non morte — e la distinzione, dopo i tre falsi morti di
 `semantic.py`, la scrivo ogni volta.
+
+## Inventario completo — ogni funzione per nome
+
+**10 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 34 | `_istante` | priv | QUANDO e' stato preso il conteggio. Epoch, non una stringa | 🔴 **nessuno** |
+| 83 | `judged_true` | **pub** | Whether the moat's verdict on this fact counts as «the sou | 2 — `test_la_ricevuta_mcp_dice_se_ha_giudicato.py` |
+| 98 | `judged_at_all` | **pub** | Whether the moat produced a verdict on this write AT ALL — | 🔴 **nessuno** |
+| 120 | `retirement_log` | **pub** | The retirements, newest first, as (loser, winner) PAIRS. | 23 — `test_control_room_porte.py` |
+| 285 | `verdict_mismatches` | **pub** | Where the moat's verdict and the fact's fate disagree, bot | 4 — `test_mismatch_su_ogni_porta.py` |
+| 373 | `_esempio_che_si_ribalta` | priv | L'esempio numerico dentro ``chain.formula``, DERIVATO dal  | 🔴 **nessuno** |
+| 393 | `_esito_delle_catene` | priv | Dove FINISCE la catena delle supersessioni, non solo il pr | 🔴 **nessuno** |
+| 484 | `retirement_breakdown` | **pub** | Dove si ADDENSANO i ritiri: per motivo e per giorno. | 10 — `test_housekeeping_non_vuol_dire_senza_perdita.py` |
+| 678 | `quarantine_breakdown` | **pub** | La stessa domanda dei ritiri, girata alla quarantena — esi | 5 — `test_il_governo_e_acceso_di_default.py` |
+| 756 | `survivability_counts` | **pub** | The canonical quartet, together: written / servable / reti | 7 — `test_governo_stesse_chiavi_su_ogni_porta.py` |

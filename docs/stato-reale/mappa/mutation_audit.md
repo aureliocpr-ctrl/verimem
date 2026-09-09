@@ -1,0 +1,11 @@
+# Mappa di `verimem/mutation_audit.py` — 7 righe (bozza da confermare leggendo ed eseguendo)
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/mutation_audit.py:103` `require_principal` | funzione: Validate and return the principal, or raise ``ValueError``. | `verimem/admission_cleanup.py:70`; `verimem/admission_cleanup.py:71`; `verimem/admission_cleanup.py:176` (+15) | `tests/test_il_ritiro_non_diceva_chi_e_stato.py` | - | NON MISURATO | - |
+| 2 | `verimem/mutation_audit.py:122` `_chain_payload` | funzione: The EXACT field set hashed into the chain. ``record_mutation`` (write) | `verimem/adjudication_log.py:188`; `verimem/adjudication_log.py:268`; `verimem/mutation_audit.py:164` (+1) | `tests/test_adjudication_pins.py` | - | NON MISURATO | - |
+| 3 | `verimem/mutation_audit.py:134` `record_mutation` | funzione: Append one mutation row on the CALLER's connection/transaction. | `verimem/admission_cleanup.py:70`; `verimem/admission_cleanup.py:126`; `verimem/admission_cleanup.py:176` (+16) | `tests/test_audit_mutations.py`; `tests/test_audit_mutations_episodic.py`; `tests/test_il_riesame_della_quarantena_lascia_traccia.py` | - | NON MISURATO | - |
+| 4 | `verimem/mutation_audit.py:175` `verify_conn` | funzione: Recompute the chain in append (rowid) order; return the id of the FIRST | `verimem/memory.py:2627`; `verimem/memory.py:2629`; `verimem/mutation_audit.py:73` (+5) | nessuno | - | NON MISURATO | - |
+| 5 | `verimem/mutation_audit.py:203` `head_conn` | funzione: The current chain head (newest row's ``entry_hash``), or ``None`` when | `verimem/memory.py:2633`; `verimem/memory.py:2635`; `verimem/mutation_audit.py:70` (+1) | nessuno | - | NON MISURATO | - |
+| 6 | `verimem/mutation_audit.py:214` `count_conn` | funzione: Number of chained rows (``entry_hash`` present). The signed anchor | `verimem/memory.py:2641`; `verimem/memory.py:2643`; `verimem/mutation_audit.py:68` (+1) | nessuno | - | NON MISURATO | - |
+| 7 | `verimem/mutation_audit.py:224` `head_at_conn` | funzione: The stored ``entry_hash`` of the ``count``-th chained row (1-indexed, | `verimem/memory.py:2649`; `verimem/memory.py:2651`; `verimem/mutation_audit.py:69` (+1) | nessuno | - | NON MISURATO | - |
