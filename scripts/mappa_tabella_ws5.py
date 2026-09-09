@@ -70,6 +70,15 @@ VERDETTI_A_MANO = {
         "MAI CHIAMATA",
         "soppiantata da `strategy.system_prompt`, usata a wake.py:1411 e "
         "definita in wake_strategy.py:109, 183, 352; questa non e' nominata"),
+    ("verimem/observability.py", "route_logs_to_stderr"): (
+        "NON COME PROMESSO",
+        "il nome e le righe 22-25 promettono stderr perche' «its protocol owns "
+        "stdout»; ma `PrintLoggerFactory(file=sys.stderr)` legge sys.stderr alla "
+        "CHIAMATA, e con `sys.stderr is None` (pythonw, servizio senza console) "
+        "`file=None` significa stdout: **86 byte misurati il 09/09**. Era la "
+        "causa del rosso intermittente di test_ws5_il_download (T41). Il "
+        "verdetto vale su questo commit: la cura e' sul ramo "
+        "`tara/t41-logger-tace` (`be118f90`), non ancora su main"),
     ("verimem/grounding_gate.py", "_is_abstention"): (
         "MAI CHIAMATA",
         "un commento del 2026-07-21 (grounding_gate.py:129) ne descrive il "
