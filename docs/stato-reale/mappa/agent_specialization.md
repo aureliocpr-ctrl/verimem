@@ -1,0 +1,10 @@
+# Mappa di `verimem/agent_specialization.py` — 2 righe, 80 righe di codice (lead, 09/09 03:40)
+
+Letto per intero. Prova sul checkout a `20257636` (il tip): `env -u HIPPO_ENCODE_DELEGATE_ONLY python -m pytest -q <i 18 file di test che importano i dodici moduli del lotto G>` → `117 passed, 1 skipped, 23 warnings in 94.44s`, EXIT=0 (lotto G: agent_specialization, audit_tail, briefing_stats, cross_encoder_rerank, legacy_cleanup, narration_llm, orchestration, parallel_drafter, stats_velocity, topic_cleanup_suggestions, transcript_promote, narration; per questo modulo `tests/test_agent_specialization.py`). Chiamante letto: `verimem/mcp_server.py:10024-10030` (`hippo_agent_specialization`, nome dall'elenco dei tool). Entropia di Shannon (in nat) della distribuzione dei sotto-topic di primo livello per agente: < 0,5 specialista, < 1,5 bilanciato, altrimenti generalista. Claim README: nessuna riga (grep su «specializ» → nessuna).
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/agent_specialization.py:22` `_entropy` | entropia in nat; totale 0 → 0 | `compute_specialization` (54) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 117 passed |
+| 2 | `verimem/agent_specialization.py:36` `compute_specialization` | per ogni agente (via `agent_id_from_topic`): fatti, sotto-topic distinti, entropia, etichetta, top-5 | `verimem/mcp_server.py:10030` | `tests/test_agent_specialization.py` | - | FUNZIONA COME PROMESSO | pytest 117 passed |
+
+Reperti: (a) il sotto-topic è «ciò che segue il primo `/`» del topic grezzo (riga 47): con la forma canonica `user:<u>/agent:<a>/<topic>` il primo segmento dopo `/` è `agent:<a>`, quindi il «sotto-topic» di ogni fatto canonico è sempre lo stesso e l'entropia collassa a 0 («specialist» per costruzione): `agent_id_from_topic` è stato aggiornato alla forma canonica (audit#3 R14), questa riga no — letto, non misurato: candidato ticket per ws2/ws5 (le porte dello scope). Nessun P0.

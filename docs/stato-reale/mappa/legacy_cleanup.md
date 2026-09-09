@@ -1,0 +1,10 @@
+# Mappa di `verimem/legacy_cleanup.py` — 2 righe, 133 righe di codice (lead, 09/09 03:48)
+
+Letto per intero. Prova: pytest del lotto G sul tip `20257636` (`117 passed, 1 skipped in 94.44s`, EXIT=0, con `tests/test_legacy_cleanup.py`). Chiamanti: **nessuno in `verimem/`**; solo `scripts/cleanup_legacy_corpus.py:25`. Il passo che agisce sui secchi di `legacy_audit` (mappa a parte): cancella SOLO i `legacy_unverified` classificati `forgettable` che passano due guardie (≤ 200 caratteri, confidenza ≤ 0,85: sul corpus reale il classificatore prendeva narrazioni da 200+ caratteri che soltanto MENZIONANO «deprecated/TODO»), `dry_run=True` di default, `max_forget` come tetto. Claim README: la riga 492 («legacy `hippo_*`») è il namespace dei tool, altro senso.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/legacy_cleanup.py:45` `_passes_cleanup_guardrails` | falso se > 200 caratteri o confidenza > 0,85 | `cleanup_forgettable` (95) | via il test | - | MAI CHIAMATA dal prodotto (plumbing) | pytest 117 passed |
+| 2 | `verimem/legacy_cleanup.py:54` `cleanup_forgettable` | scansiona `sm.all()`, tiene i `legacy_unverified` → `forgettable` → guardie; campioni (5) PRIMA di cancellare; `dry_run` non muta; `delete(principal="system:cleanup")`; rapporto con `skipped_by_guardrails` | `scripts/cleanup_legacy_corpus.py:25` | `tests/test_legacy_cleanup.py` | - | MAI CHIAMATA dal prodotto (uno script) | pytest 117 passed |
+
+Reperti: (a) il rapporto (`legacy_audit`) ha una porta MCP (`hippo_legacy_audit`), l'azione no: chi vede il rapporto dal server non ha il comando per agire, e `sm.all()` carica tutto il corpus (18.087 fatti a casa) per trovarne 115 `legacy_unverified` vivi (conteggio del 08/09 22:29); (b) `max_forget` è controllato DOPO aver campionato e prima del delete: con `dry_run=False` i campioni mostrano fino a 5 righe che potrebbero non essere state cancellate (letto). Nessun P0.

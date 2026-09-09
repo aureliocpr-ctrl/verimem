@@ -1,0 +1,10 @@
+# Mappa di `verimem/orchestration.py` — 2 righe, 58 righe di codice (lead, 09/09 03:52)
+
+Letto per intero. Prova: pytest del lotto G sul tip `20257636` (`117 passed, 1 skipped in 94.44s`, EXIT=0): **nessun file di test importa questo modulo** (la selezione per import non lo trova, la bozza dice «nessuno» per entrambe le righe); è esercitato, se lo è, dai test dei bridge che lo chiamano. Chiamanti letti: `agent_principal` ← `verimem/supersession_policy.py:179`, `verimem/swarm/bridge.py:25` (+8: i bridge swarm/teams). Compone il `writer_principal` lato server `<prefix>:<seg>/<seg>` con il prefisso letterale fidato e ogni parte influenzabile ridotta a `[A-Za-z0-9_-]` (via `/`, `:`, `.` → niente traversal, niente collisione di namespace); `CHRONICLE_CONFIDENCE = 0,3` per le righe di cronaca fra agenti. Claim README: la riga 331 («Provenance signing (opt-in) — an unforgeable HMAC of who is speaking») è il canale HMAC; qui il docstring dichiara il contrario: «surface attribution, not a cryptographic binding».
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/orchestration.py:36` `_sanitize_segment` | un segmento sicuro; vuoto o tutto illegale → `fallback` | `agent_principal` (57) | nessuno per nome | - | NON MISURATO (nessun test nomina il modulo: letto, promessa semplice) | letto |
+| 2 | `verimem/orchestration.py:47` `agent_principal` | `<prefix>:<seg>/<seg>/…` con ogni parte sanificata | `supersession_policy.py:179`, `swarm/bridge.py:25` (+8) | nessuno per nome (i test dei bridge, per effetto) | README:331 (per contrasto: qui non è crittografico) | NON MISURATO (letto; da provare con un test di 6 righe: `..`, `/`, `:` e vuoto) | letto |
+
+Reperti: (a) un modulo che esiste per una ragione di sicurezza dell'identità («adversarial review finding 3») e non ha un test col suo nome: la promessa è semplice e va inchiodata con quattro casi (traversal, separatori, vuoto, unicode); (b) `CHRONICLE_CONFIDENCE` è dichiarato ma chi lo usa non è in questo file (da leggere nei bridge, ws2). Nessun P0 misurato.

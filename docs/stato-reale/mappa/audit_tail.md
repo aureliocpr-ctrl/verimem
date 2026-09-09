@@ -1,0 +1,10 @@
+# Mappa di `verimem/audit_tail.py` — 2 righe, 78 righe di codice (lead, 09/09 03:42)
+
+Letto per intero. Prova: pytest del lotto G sul tip `20257636` (`117 passed, 1 skipped in 94.44s`, EXIT=0, con `tests/test_audit_tail_module.py`; lo nominano anche `tests/test_due_resolver_due_store_e_nessuno_lo_dice.py`, `tests/test_audit_summary_integration.py`). Chiamanti letti: `audit_tail` ← `verimem/mcp_server.py:10447` e `:11242` (i tool di introspezione e la coda dell'audit); `_audit_log_path` ← `mcp_server.py:1227,9110` (+2). Il docstring racconta il difetto d'origine (ciclo #26): il server importava un modulo che NON esisteva, l'`ImportError` finiva in un `except` e `hippo_introspect_state` rendeva `recent_audit=[]` per sempre. Claim README: la riga 244 («audit every revision») e 515 (`airgap --live` audita i socket) sono altri audit; nessuna riga descrive il log MCP.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/audit_tail.py:20` `_audit_log_path` | `HIPPO_MCP_AUDIT_LOG` se impostata, altrimenti `<data_dir>/mcp_audit.log` | `audit_tail` (50), `mcp_server.py:1227,9110` | `tests/test_audit_summary_integration.py` (per nome) | - | FUNZIONA COME PROMESSO | pytest 117 passed |
+| 2 | `verimem/audit_tail.py:29` `audit_tail` | le ultime N righe JSONL (N in [1, 10000]) con `exists`, `n_returned`, righe malformate come `{"_raw": …}`; errore I/O → parziale, mai un'eccezione | `verimem/mcp_server.py:10447,11242` | `tests/test_audit_tail_module.py` | - | FUNZIONA COME PROMESSO | pytest 117 passed |
+
+Reperti: (a) `f.readlines()` legge TUTTO il file per prenderne la coda: sul log di casa (cresce a ogni chiamata di tool; taglia non misurata qui) è O(file) per ogni `hippo_audit_tail` — dichiarato «best-effort», non dichiarato il costo; (b) la lezione del docstring è la classe «sensore scollegato»: un `except` che rende vuoto è un tool che funziona sempre con dati vuoti. Nessun P0.

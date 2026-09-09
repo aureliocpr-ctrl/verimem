@@ -1,0 +1,10 @@
+# Mappa di `verimem/briefing_stats.py` — 2 righe, 155 righe di codice (lead, 09/09 03:44)
+
+Letto per intero. Prova: pytest del lotto G sul tip `20257636` (`117 passed, 1 skipped in 94.44s`, EXIT=0, con `tests/test_briefing_stats.py`; lo nomina anche `tests/perf/e2e_cycle51_54_chain.py`). Chiamante letto: `verimem/mcp_server.py:11473` (`hippo_briefing_stats`, nome dall'elenco dei tool). La bozza attribuiva a `_percentile` chiamanti in `telemetry_analyzer.py`: **falso positivo del nome** (un'altra `_percentile`: classe ①). Telemetria del briefing proattivo (`~/.engram/audit/briefing.jsonl`): tasso di hit, latenze P50/P95, istogramma di `top_matched` e una soglia `min_matched` SUGGERITA, mai applicata («the operator decides»). Claim README: nessuna riga.
+
+| # | funzione (`file:riga`) | cosa promette | chiamata da | test che la esercita | claim README | verdetto | prova |
+|---|---|---|---|---|---|---|---|
+| 1 | `verimem/briefing_stats.py:33` `_percentile` | percentile con interpolazione lineare; vuoto → 0 | `compute_stats` (99, 100) | via il test | - | FUNZIONA COME PROMESSO (plumbing) | pytest 117 passed |
+| 2 | `verimem/briefing_stats.py:45` `compute_stats` | sugli ultimi `max_records`: firings, hit_rate, zero-hit, duplicati filtrati, medie e percentili di latenza, istogramma, soglia suggerita con la ragione (< 30% di hit → abbassa; > 80% e metà dei firings sopra la soglia+1 → alza); file assente → zeri con «no data yet» | `verimem/mcp_server.py:11473` | `tests/test_briefing_stats.py` | - | FUNZIONA COME PROMESSO | pytest 117 passed |
+
+Reperti: (a) il caso «file presente ma vuoto» è reso con una ricorsione su `Path("/nonexistent/path")` (riga 89): funziona, ed è il modo più opaco di dire «zeri»; (b) le righe malformate sono saltate in silenzio (`except Exception: continue`): il numero di righe scartate non esce; (c) la soglia suggerita legge `min_matched_used` dall'ULTIMO record come «corrente»: se la soglia è cambiata nella finestra, il consiglio confronta mele con pere (letto). Nessun P0.
