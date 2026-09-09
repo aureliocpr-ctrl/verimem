@@ -174,6 +174,20 @@ ordina la coda.
 | `docs/stato-reale/C2-tabella-classi-core.md` | **VIVO** | ws5, 29/08 20:10, **claim nominato**: le classi core di falsità in italiano **e** in inglese |
 | `docs/stato-reale/C3-parita-porte.md` | **VIVO** | ws5, 30/08, claim `f7eca18c246f`: *«chiude il pezzo ② assegnato da `lead-audit`»* — il compito assegnato e chiuso, tracciato |
 | `docs/stato-reale/CENSIMENTO-DEI-199-STRUMENTI.md` | **VIVO** | ws4, 06/09 06:20→08:01: *«cosa fanno **davvero** i 199 strumenti senza permesso»* |
+| `docs/stato-reale/CONTRATTO-RILASCIO-COMPLETO.md` | **VIVO** — è il contratto | Aurelio, 08/09 20:18, **testuale**: le tre misure, i difetti per nome, la prova da utente, la CI. È il documento contro cui si giudica il rilascio |
+| `docs/stato-reale/DISEGNO-ESPLOSO.md` | **VIVO** | lead con Aldo e Tara, dal 05/09 20:55: livello 3 — componenti, giunture, **e chi le presidia** |
+| `docs/stato-reale/F1-DESIGN-DOC-strato-soggetto-valore.md` | **VIVO** | ws3, 28/08, **per l'ordine di @lead-audit** con l'id del messaggio (`5db4f2fa618fa9ce`): il mandato è tracciabile |
+| `docs/stato-reale/F1-FIRMA-ESTERNA-ws4.md` | **VIVO** | **firma esterna** su richiesta del lead: chi valida non è chi ha scritto |
+| `docs/stato-reale/F1-design-dello-strato-soggetto-valore.md` | **VIVO** | ws3, 28/08, *«il rosso misurato, e **due mie affermazioni**…»*: separa il misurato dalle proprie tesi già nel titolo |
+| `docs/stato-reale/IL-README-DA-UTENTE.md` | **VIVO** | Iris (PO), 06/09 02:57: *«le tre porte sono presentate come **intercambiabili**, e n…»*. Deliverable di ruolo: **non «cosa dice il README» ma come lo legge un utente** |
+| `docs/stato-reale/LA-GIORNATA-DAL-LATO-UTENTE-06-09.md` | **VIVO** | ws7, per il resoconto delle 15:55: la giornata **dal lato di chi usa** |
+| `docs/stato-reale/LA-GIORNATA-DAL-LATO-UTENTE-07-09.md` | **VIVO** | ws7 alle 13:25 sulla finestra 12:25→14:25, **tip letto**: dichiara la finestra e l'istante |
+| `docs/stato-reale/LA-PROVA-DELLA-SCHEDA.md` | **VIVO** | *«come si falsifica, **e perché non possiamo eseguirla noi**»* — dichiara il proprio conflitto d'interesse, come ho fatto io sulla prova da utente |
+| `docs/stato-reale/PERCORSI-UTENTE.md` | **VIVO** | livello 2 del disegno esploso: i tre percorsi con **criterio di arrivo** e i difetti che li bloccano |
+| `docs/stato-reale/REPORT-30-08-lo-stato-vero-del-prodotto.md` | **VIVO** | *«scritto da lead-audit **per Aurelio e per chiunque apra il repo domani**»*: dichiara il destinatario |
+| `docs/stato-reale/SCHEDA-PRODOTTO.md` | **VIVO** | livello 1, «l'esterno»: il primo gradino del disegno esploso |
+| `docs/stato-reale/SMOKE-PRE-TAG.md` | **VIVO** — è il registro | *«una riga qui vale solo se lo smoke **è stato eseguito**»*. È il registro che tengo io, e il cancello del tag lo legge |
+| `docs/stato-reale/W2-27-la-divergenza-regge-il-MECCANISMO-che-ho-pubblicato-NO.md` | **VIVO** — ritiro | ws3, 29/08 00:44: ***«corregge il commit `621d9ab3`, pubblicato quindici minuti prima»***. Il ritiro più veloce del corpus |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -585,7 +599,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 150 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 164 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
