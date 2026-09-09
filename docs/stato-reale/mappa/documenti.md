@@ -188,6 +188,38 @@ ordina la coda.
 | `docs/stato-reale/SCHEDA-PRODOTTO.md` | **VIVO** | livello 1, «l'esterno»: il primo gradino del disegno esploso |
 | `docs/stato-reale/SMOKE-PRE-TAG.md` | **VIVO** — è il registro | *«una riga qui vale solo se lo smoke **è stato eseguito**»*. È il registro che tengo io, e il cancello del tag lo legge |
 | `docs/stato-reale/W2-27-la-divergenza-regge-il-MECCANISMO-che-ho-pubblicato-NO.md` | **VIVO** — ritiro | ws3, 29/08 00:44: ***«corregge il commit `621d9ab3`, pubblicato quindici minuti prima»***. Il ritiro più veloce del corpus |
+| `docs/stato-reale/blocco-vetrina-0.8.0-il-trade-off.md` | **VIVO** | **PROPOSTA** di ws7 pronta da incollare, e dichiara: *«**non l'ho messa nel README**»* — proposto ≠ eseguito, scritto nel documento |
+| `docs/stato-reale/chi-decide-sullo-scambio-e-il-giudice-da-solo.md` | **VIVO** | ws3, 27/08 22:15, banco nominato: *«`L4.1` non parla mai: **0 su 12**»* |
+| `docs/stato-reale/due-porte-garanzie-diverse.md` | **VIVO** | ws2, 22/08 15:04-16:40, *«misurato **da utente**: venv separato»*: la differenza fra due porte è *«sempre un default o un nome»* |
+| `docs/stato-reale/due-riconoscitori-di-date-e-l-italiano-cade-in-mezzo.md` | **VIVO** | ws3, 28/08, **finestra macchina libera** dichiarata: due riconoscitori nello stesso modulo, e l'italiano cade fra i due |
+| `docs/stato-reale/il-giudice-sbaglia-con-sicurezza-in-entrambi-i-versi.md` | **VIVO** — sintesi | ws3, 29/08: **sintesi di sei banchi** con la finestra oraria |
+| `docs/stato-reale/il-prodotto-e-affidabile-su-cio-che-sa-di-se.md` | **VIVO** | 30/08: **diciotto promesse dichiarate**, misurate una per una. *«ciò che fa e ciò che dice di fare **invecchiano a velocità diverse**»* |
+| `docs/stato-reale/il-verde-della-ci-non-contiene-la-promessa.md` | **VIVO, corretto in nota** | *«**RIVERIFICATO il 27/08, sedici giorni dopo — e il cuore è stato CURATO**»*: la nona forma, con la riverifica datata |
+| `docs/stato-reale/l-exit-che-non-e-un-verdetto.md` | **VIVO** | ws3, 30/08 12:25: *«nasce dallo **spegnimento del PC di ieri sera**»* — `suite_a_fette.py` propaga il codice del SO, e l'occasione è dichiarata |
+| `docs/stato-reale/l4-1-guarda-in-una-direzione-sola.md` | **VIVO** | ws3, 27/08, *«**lettura statica del codice, RAM zero**»*: dichiara di NON aver eseguito, e perché |
+| `docs/stato-reale/la-notte-delle-controfirme-02-09.md` | **VIVO** | ws2, 02/09 00:00-05:17: **63 celle** (`W2-381`…`W2-443`), **quaranta controfirme a celle altrui** |
+| `docs/stato-reale/la-popolazione-che-02i-chiedeva-di-misurare.md` | **VIVO** | ws3, 27/08: **36 fatti su 14.472** — risponde a una domanda posta da `02i` **un altro giorno, da un altro autore** |
+| `docs/stato-reale/la-vetrina-e-stata-corretta-quattordici-volte.md` | **VIVO** | *«**quattordici volte in tre ore**, e la quindicesima è già pronta»* |
+| `docs/stato-reale/le-lezioni-del-ramo-di-rilascio.md` | **VIVO** | *«cinque forme trovate **misurando, non ragionando**»*, nella notte in cui la 0.7.1 è rimasta ferma |
+| `docs/stato-reale/le-quattro-promesse-sulle-porte-degli-agenti.md` | **VIVO** | 31/08 02:19-03:00 **(ore lette)**: le celle sono nominate |
+| `docs/stato-reale/lo-scambio-di-date-non-ha-un-proprietario.md` | **VIVO** — ritiro | ws3, 28/08: *«**e ritiro il modo in cui l'ave**…»*, con *«**nessuna esecuzione**: regime risparmio RAM»* dichiarato in testa |
+| `docs/stato-reale/nota-w2-27-il-mio-diagnostico-leggeva-l-oggetto-sbagliato.md` | **VIVO** — ritiro | ws3, 29/08 00:20: *«**corregge la nota di `6bfe9fae`**»* — e quaranta minuti dopo arriva `W2-27`, che corregge un commit di quindici minuti prima |
+| `docs/stato-reale/piano-versioni-2026-09-02.md` | **VIVO** — è un mandato | Aurelio, 02/09 22:20, riportato **verbatim** |
+| `docs/stato-reale/predizioni-m3-anello2.md` | **VIVO** | ws2, 02/09 12:52: *«**scritte e salvate PRIMA di eseguire qualunque…**»* — la predizione depositata, non ricostruita |
+| `docs/stato-reale/punto-del-mattino-31-08.md` | **VIVO** | lead alle 05:15, **e dichiara la versione**: *«v1; rifinitura con gli ultimi bilanci…»* |
+| `docs/stato-reale/q1-il-muro-della-concorrenza-era-il-cold-start.md` | **VIVO** — ritiro di un muro | ws3, 27/08 20:47: *«**“il muro della concorrenza” non esiste: era il cold start**»* — un muro smontato, col costo vero misurato |
+| `docs/stato-reale/quadro-decisione-versione-30-08.md` | **VIVO** | lead per Aurelio: *«**ogni dato cita la misura che lo sostiene**»* |
+| `docs/stato-reale/quando-la-fonte-ha-due-valori-il-gate-perde-la-riga.md` | **VIVO** | ws4, consolidamento della notte 30-31/08, **cinque celle** |
+| `docs/stato-reale/referto-del-laboratorio-27-08.md` | **VIVO** | ws3, 27/08 sera, **un'ora** dichiarata; nasce dal mandato dei ruoli |
+| `docs/stato-reale/retrospettivo-30-giorni.md` | **VIVO** | 02/09 00:00-01:00, *«dallo store di casa, **in sola lettura**»*: trenta giorni di log |
+| `docs/stato-reale/riesecuzioni-fan-out-30-08.md` | **VIVO** | *«**16 comandi estratti dalle celle di `00-ESAME.md` e rieseguiti**»* — il registro delle misure che si riesegue da sé |
+| `docs/stato-reale/ritiro-il-mio-rosso-sul-doctor-e-la-risposta-era-nel-registro.md` | **VIVO** — ritiro | ws3, 28/08: *«**ritiro il mio rosso sul `doctor`: è curato. E la risposta era nel registro da ore**»* — O1 non applicata, dichiarata |
+| `docs/stato-reale/tre-mie-correzioni-dopo-l-anello.md` | **VIVO** — tre ritiri insieme | ws3, 27/08 20:15: *«tre mie affermazioni corrette dall'anello **in cinque minuti** — e la regola che avevo viola…»*, scritto **dopo che ws5, ws2 e ws6 hanno attaccato** |
+| `docs/stato-reale/un-verde-locale-non-e-un-verde-in-ci.md` | **VIVO** | ws3, 27/08 19:10, *«**misurato, non dedotto**»*: dieci variabili che abbiamo e la CI no |
+| `docs/stato-reale/ws3-M5-e-T11-chiusura-02-09.md` | **VIVO** | due muri chiusi *«con la predizione depositata **prima**»* |
+| `docs/stato-reale/ws3-aperti-verificati-11-08.md` | **VIVO** | 11/08 19:25-20:30: *«gli aperti del gate, **VERIFICATI invece che ereditati**»* — nessun aperto passa di mano senza riprova |
+| `docs/stato-reale/ws5-P1-predizione-pool-ripetibile.md` | **VIVO** | ws5, 03/09 19:25: *«**depositata PRIMA di scrivere il codice**»* |
+| `docs/stato-reale/ws5-daemon-del-giudice-disegno-per-la-0.8.0.md` | **VIVO** | ws5, 02/09, *«scritto durante il **fermo termico**: **nessuna misura nuova**, solo…»* — dichiara di essere disegno e non misura |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -599,7 +631,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 164 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 196 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
