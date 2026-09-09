@@ -51,16 +51,16 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
-«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
-non un verdetto.
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano |
-|---|---|---|---|---|
-| 115 | `_DefaultEmbedder` | 1 | Adapter over the shared ``verimem.embedding.encode`` (model  | 3 — `test_cli_docs.py` |
-| 218 | `Risultati` | 1 | I risultati di una ricerca, con quanti ne sono stati NASCOST | _generico — cercato qualificato nei blocchi sopra_ |
-| 265 | `DocumentIndex` | 8 | Chunk-level semantic index with exact provenance over the Do | 18 — `test_document_index_path_guard.py` |
-| 574 | `_E` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ |
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 115 | `_DefaultEmbedder` | 1 | Adapter over the shared ``verimem.embedding.encode`` (model  | 3 — `test_cli_docs.py` | esercitata dai blocchi eseguiti sopra |
+| 218 | `Risultati` | 1 | I risultati di una ricerca, con quanti ne sono stati NASCOST | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 265 | `DocumentIndex` | 8 | Chunk-level semantic index with exact provenance over the Do | 18 — `test_document_index_path_guard.py` | esercitata dai blocchi eseguiti sopra |
+| 574 | `_E` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
 
 ## I metodi speciali di questo file — 2
 

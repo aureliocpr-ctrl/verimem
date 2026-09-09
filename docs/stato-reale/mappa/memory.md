@@ -274,13 +274,13 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
-«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
-non un verdetto.
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano |
-|---|---|---|---|---|
-| 364 | `EpisodicMemory` | 67 |  | 147 — `conftest.py` |
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 364 | `EpisodicMemory` | 67 |  | 147 — `conftest.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 1
 

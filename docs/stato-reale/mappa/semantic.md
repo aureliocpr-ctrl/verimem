@@ -511,16 +511,16 @@ perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
 
 Il righello del lead conta le **classi** nel denominatore (480 sui miei 21 file
 contro i 449 di sole funzioni): una classe e' superficie, e finche' non e'
-nominata qui non e' mappata. Stesso patto dell'inventario sopra: la colonna
-«test» dice quanti file di `tests/` **nominano** quel nome — rintracciabilita',
-non un verdetto.
+nominata qui non e' mappata. Il verdetto e' **preso in prestito** dai blocchi
+eseguiti piu' sopra — nessuna classe riceve qui un verde nuovo — e dove nessun
+test nomina il nome si scrive NON MISURATA.
 
-| riga | classe | metodi | cosa promette | test che la nominano |
-|---|---|---|---|---|
-| 798 | `SupersedeError` | 0 | Raised on invalid arguments to :meth:`SemanticMemory.superse | 4 — `test_fact_supersede.py` |
-| 808 | `SupersedeConflict` | 0 | Raised when ``old_id`` is already superseded by a *different | 5 — `test_fact_supersede.py` |
-| 1604 | `Fact` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ |
-| 2599 | `SemanticMemory` | 54 |  | 322 — `bench.py` |
+| riga | classe | metodi | cosa promette | test che la nominano | verdetto |
+|---|---|---|---|---|---|
+| 798 | `SupersedeError` | 0 | Raised on invalid arguments to :meth:`SemanticMemory.superse | 4 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
+| 808 | `SupersedeConflict` | 0 | Raised when ``old_id`` is already superseded by a *different | 5 — `test_fact_supersede.py` | esercitata dai blocchi eseguiti sopra |
+| 1604 | `Fact` | 1 |  | _generico — cercato qualificato nei blocchi sopra_ | vedi i blocchi eseguiti sopra (nome generico) |
+| 2599 | `SemanticMemory` | 54 |  | 322 — `bench.py` | esercitata dai blocchi eseguiti sopra |
 
 ## I metodi speciali di questo file — 2
 
