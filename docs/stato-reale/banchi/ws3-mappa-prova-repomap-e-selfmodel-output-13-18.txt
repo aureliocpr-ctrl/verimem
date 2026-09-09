@@ -1,0 +1,39 @@
+==========================================================================
+A. repomap.py — la mappa del repository sotto un budget
+==========================================================================
+_walk_files: ['app.js', 'grande.py', 'piccolo.py']
+_scan_file(grande.py): simboli trovati: 30 | primi tre: ['funzione_0', 'funzione_1', 'funzione_2']
+_entry_to_cache/_entry_from_cache round-trip: simboli uguali: True
+_default_cache_path: repomap_cache_4e8005ed7909.json | sotto data_dir: False
+scan_repo: 3 file · prima passata 0.009s · seconda (con cache) 0.016s · file di cache creato: True
+  i file trovati: ['app.js', 'grande.py', 'piccolo.py']
+_load_cache: chiavi in cache: 3
+rank_files (senza skill recenti): [('grande.py', 4.85), ('app.js', 2.2), ('piccolo.py', 1.95)]
+  (il path come lo tiene FileEntry: 'pkg/piccolo.py' )
+rank_files (con piccolo.py fra le skill recenti, path RELATIVO): [('grande.py', 4.85), ('piccolo.py', 3.45), ('app.js', 2.2)]
+  >>> il file citato è salito in cima: False
+  con il path ASSOLUTO (come avevo sbagliato io): [('grande.py', 4.85), ('app.js', 2.2), ('piccolo.py', 1.95)]
+render_repomap: con 4000 caratteri -> 699 · con 120 -> 36
+  >>> il budget stretto viene RISPETTATO: True
+  estratto: '## REPO MAP (top files by relevance)'
+build_repomap (scan+rank+render): 499 caratteri, <= 500: True
+
+==========================================================================
+B. self_model.py — il modello di sé, versionato e con un tetto
+==========================================================================
+get() su uno store nuovo: None (None = mai scritto, non un vuoto finto)
+update #1 -> versione 1 | attore: ws3
+update #2 -> versione 2
+get() ora: {'version': '2', 'updated_at': '1788952710.7254856', 'content': "{'focus': 'gateway.py', 'goal': ['87 funzioni']}", 'actor': 'ws3'}
+history: [(1, "{'focus': 'la mappa di client.py', 'goal"), (2, "{'focus': 'gateway.py', 'goal': ['87 fun")] | dalla piu' vecchia: True
+
+il TETTO: si accende dove deve, e resta spento dove non deve?
+  contenuto da 5000 byte -> SelfModelTooLarge: content 5012 bytes exceeds limit 2000
+  contenuto corto -> versione 3 (il tetto NON ha bloccato)
+
+render_for_injection:
+  con None -> ''
+  con un record -> '=== SELF MODEL (continuity layer, cycle #67) ===\nversion: 3 (updated_at epoch 1788952711)\n=============================='
+
+render_anchor_block (serve un EntityStore: lo chiamo con sem=None)
+  -> "{'markdown': '', 'n_anchors': 0, 'truncated': False}"
