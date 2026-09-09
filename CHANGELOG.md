@@ -486,6 +486,35 @@ above: 0.7.0 carries it, 0.7.5 does not.)
 
 ### Changed (BREAKING)
 
+- **A fact the moat quarantined no longer comes back from any read port.** The
+  server has always told every client that a fact its source does not support is
+  *«QUARANTINED — stored, but kept OUT of default recall, so you never get it
+  back as truth»*, and the README says the same at the `m.add(...)` example.
+  Measured from the port on 2026-09-09, **nine** entries returned one anyway: a
+  fact scored `0.249` by the judge came back from `hippo_oracle_query`,
+  `hippo_chain_facts`, `hippo_prompt_skeleton`, `hippo_cross_agent_consensus`,
+  the SDK's `Memory.get_all()`, and — worse — `hippo_forward_chain` **consumed**
+  it as a premise (directly and through `state_fact_ids`) and emitted a brand-new
+  proposition carrying no status at all.
+
+  **What changes for you.** Those ports now hide `quarantined` / `orphaned` /
+  `user_belief` rows, and every one of them reports **how many it removed** in
+  `hidden_low_trust`, so a shorter answer is never a silent one.
+  `hippo_forward_chain` also returns `state_fact_ids_ignored`.
+
+  **What you must change.** `Memory.get_all()` returns **fewer rows than
+  before**: it now takes `include_low_trust=False` by default. If you were
+  reading the whole corpus — auditing, de-duplicating, repairing — pass
+  `include_low_trust=True` and every row still arrives, `status` included.
+  Nothing was deleted: a quarantined fact is still **stored**, and
+  `Memory.quarantine_log()` still lists held claims with the reason.
+
+  The two duplicate finders (`hippo_find_duplicate_facts`,
+  `hippo_facts_find_duplicates`) deliberately **do not** hide anything — you
+  cannot repair what you cannot see — and instead gained `fact_status` next to
+  each group's members, so a caller merging duplicates can tell which side the
+  gate had already stopped.
+
 - **Read-path abstention is ON by default.** `ENGRAM_MIN_RELEVANCE` unset now
   resolves to `auto` instead of `0.0`, so `Memory.explain()`, the console and
   the gateway abstain on a question the store cannot support, instead of
