@@ -92,6 +92,36 @@ ordina la coda.
 | `docs/specs/p2b-ppr-entity-neighbors.md` | **VIVO** | la cosa che specifica **esiste**: `verimem/ppr_seed.py`, `verimem/mcp_server.py`. Non è un piano morto |
 | `docs/specs/p3-self-model-multi-anchor.md` | **VIVO** | implementata: `verimem/self_model.py`, `verimem/self_model_refresh.py` |
 | `docs/specs/p1-hippo-validate-claim.md` | **VIVO** | agganciata a `verimem/mcp_server.py` |
+| `docs/stato-reale/02-utente-che-installa.md` | **VIVO** | ws2 «Vega», 08/08 12:40-13:05: la fetta ② intera, dal nulla al primo fatto |
+| `docs/stato-reale/02b-primo-avvio-gate-lingua.md` | **VIVO** | ws2, 08/08 13:50: *«il gate lessicale protegge l'inglese, non l'italiano»* — un difetto di lingua misurato al primo avvio |
+| `docs/stato-reale/02c-il-numero-mostrato-e-chi-decide.md` | **VIVO, corretto in nota** | nota di ws7 del 27/08: *«misura `main`, e `main` si è mosso di **741 commit** da allora»* |
+| `docs/stato-reale/02d-la-lista-dei-vanti-e-il-carve-out.md` | **VIVO, corretto in nota** | stessa forma: **740 commit** dichiarati nella nota. *«non è la grammatica, è una lista (e un carve-out)»* |
+| `docs/stato-reale/02e-chi-installa-riceve-il-22-luglio.md` | **VIVO** | ws2, 08/08 14:40, SHA `3c4c2e1b`, `git status` pulito: *«chi installa oggi riceve il prodotto del 22 luglio, e **nessun numero glielo dice**»* |
+| `docs/stato-reale/02f-la-tabella-delle-porte-dal-lato-utente.md` | **VIVO** | ws2, 08/08 14:35-14:45, SHA `2d64b7b7`, `git status` pulito: la tabella delle porte **eseguita dal lato di chi installa** |
+| `docs/stato-reale/02g-il-primo-comando-a-freddo.md` | **VIVO** | ws2, 08/08 14:38-14:47, SHA `6d1080cf`, `git status` pulito: *«il primo comando su un'installazione fredda: **la cura è una riga**»* |
+| `docs/stato-reale/02h-quali-promesse-reggono-sul-pacchetto.md` | **VIVO** | ws2, 08/08 14:48, SHA `810de530`, pulito: quali promesse reggono **sull'artefatto che l'utente installa** — non su `main` |
+| `docs/stato-reale/02j-trust-il-punto-c.md` | **VIVO** | ws2, 08/08 14:58-15:05, SHA `a9969ccf`: *«due modi di dire TRUSTED, e **due esempi su tre che non funzionano**»* |
+| `docs/stato-reale/02k-l41-il-verbo-diventa-unita.md` | **VIVO, corretto in nota** | nota di ws7 del 27/08 con **730 commit** dichiarati. *«quando “del 2019 risponde” diventa un valore da cercare nella fonte»* |
+| `docs/stato-reale/02m-le-promesse-su-origin-main.md` | **VIVO, corretto in nota** | nota ws7 27/08: **767 commit**. *«la colonna che serve al rilascio»* |
+| `docs/stato-reale/02n-il-server-mcp-e-morto-per-chi-installa.md` | **VIVO** | ws2, 08/08 15:44-15:50, SHA `3d47df46`, pacchetto `0.7.0` da PyPI: *«chi installa oggi ha il server MCP **morto**, e **la cura è nel repo dal 29 luglio**»* — il difetto pubblicato con la cura già scritta |
+| `docs/stato-reale/02o-l41-e-bilingue-e-allargarlo-peggiora.md` | **VIVO, corretto in nota** | **761 commit**. *«sbaglia in due lingue su cinque, e **allargare la lista peggiorerebbe**»* — la cura ovvia misurata e scartata |
+| `docs/stato-reale/04-percorso-di-lettura.md` | **VIVO, corretto in nota** | *«misura `main` a `544d27bd`, cioè **771 commit fa**»* |
+| `docs/stato-reale/05-ingestione-documenti.md` | **VIVO, corretto in nota** | **756 commit** |
+| `docs/stato-reale/06-parametri-metriche-telemetria.md` | **VIVO, corretto in nota** | *«misura `main` a `5edc0dfe`, cioè **768 commit fa**»* |
+| `docs/stato-reale/07-percorso-di-scrittura.md` | **VIVO, corretto in nota** | **771 commit**, stesso SHA del 04: le due fette lette insieme |
+| `docs/stato-reale/08-i-656-mb-le-quattro-strade.md` | **VIVO, corretto in nota** | *«il numero nel titolo è **superato di 90 MB**, e questo documento lo dichiara»* — la nona forma applicata a un numero **nel titolo** |
+| `docs/stato-reale/09-i-cancelli-del-rilascio.md` | **VIVO** | misurato 26/08 fra le 19:25 e le 23:00: *«cosa impedisce **meccanicamente** di pubblicare»* — è l'antenato di `cancelli_del_tag.py` |
+| `docs/stato-reale/10-il-contorno-cambia-il-verdetto.md` | **VIVO** | ws4, 26-27/08 21:30-00:10, celle dichiarate: *«il contorno cambia il verdetto — **e non sappiamo perché**»* |
+| `docs/stato-reale/13-la-taglia-della-fonte-degrada-il-gate-nei-due-versi.md` | **VIVO** | 28/08 18:37-20:53: *«degrada **nei due versi** — e per una metà **la cura c'è già**»* |
+| `docs/stato-reale/14-la-forma-della-fonte-decide-quale-layer-sbaglia.md` | **VIVO** | 28/08 22:35-23:18: *«su un output di strumento **uno dei due è rumore**»* |
+| `docs/stato-reale/16-che-cosa-deve-contenere-un-corpus-tipo-cliente.md` | **VIVO** | ws6/Aldo, 29/08 sera, e dichiara il proprio stato: *«**specifica degli assi**, non del…»* — dice di essere una specifica, non una misura |
+| `docs/stato-reale/18-quante-volte-scriviamo-per-ogni-volta-che-leggiamo.md` | **VIVO** | ws6, 30/08 13:36, journal `events.jsonl` + `.1` — e dichiara la trappola: ***«il journal ruota»***, che è la stessa scritta nelle nostre lezioni di casa |
+| `docs/stato-reale/19-la-cura-del-ranking-peggiora-il-caso-reale.md` | **VIVO** | ws6, 30/08 13:49, corpus servibile **12.232**, `mode=ro`: **una cura misurata e scartata**, col difetto vero spostato a monte |
+| `docs/stato-reale/20-l-archivio-vecchio-ha-gia-una-porta-e-si-chiama-auto-master.md` | **VIVO** | ws6, 30/08 14:22, corpus **12.247**: la porta c'era già e nessuno la usava |
+| `docs/stato-reale/24-anche-il-gate-ha-ere.md` | **VIVO** | ws6, 30/08 16:40: *«**quattro ere in ventiquattro giorni**»* — il gate cambia sotto le misure che lo misurano |
+| `docs/stato-reale/25-la-specifica-di-L1-cosa-ferma-e-cosa-lascia-passare.md` | **VIVO** | 29-30/08, **celle nominate** (`W7-60`…`W7-65`): e chiede *«quale dei due errori arriva all'utente»*, non quale è più grande |
+| `docs/stato-reale/26-la-difesa-che-si-spegne-con-un-booleano.md` | **VIVO** | 30/08 14:12-15:49, celle `W7-69`…`W7-71`: *«su questo corpus è una **compensazione**, non un bug»* — la distinzione che salva una cura sbagliata |
+| `docs/stato-reale/26-le-nove-trappole-della-copia-condivisa.md` | **VIVO** | ws6, 30/08: *«**nessuna è ipotizzata: le ho pagate tutte oggi, in prima persona**»*. È la fonte delle nove trappole della copia condivisa che usiamo tutti |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -487,7 +517,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 68 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 98 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
