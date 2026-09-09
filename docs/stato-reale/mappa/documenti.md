@@ -220,6 +220,35 @@ ordina la coda.
 | `docs/stato-reale/ws3-aperti-verificati-11-08.md` | **VIVO** | 11/08 19:25-20:30: *«gli aperti del gate, **VERIFICATI invece che ereditati**»* — nessun aperto passa di mano senza riprova |
 | `docs/stato-reale/ws5-P1-predizione-pool-ripetibile.md` | **VIVO** | ws5, 03/09 19:25: *«**depositata PRIMA di scrivere il codice**»* |
 | `docs/stato-reale/ws5-daemon-del-giudice-disegno-per-la-0.8.0.md` | **VIVO** | ws5, 02/09, *«scritto durante il **fermo termico**: **nessuna misura nuova**, solo…»* — dichiara di essere disegno e non misura |
+| `docs/stato-reale/ws6-T32-la-fonte-non-si-conserva-disegno.md` | **VIVO** | ws6, 08/09: *«**disegno, non cura**. Tutti i numeri sotto sono misurati…»* — dichiara la propria natura in due parole |
+| `docs/AUDIT-LEDGER.md` | **VIVO** | registro dell'audit riga per riga, dal mandato di Aurelio del 16/07: *«una cosa alla volta dovrà essere controllato»* |
+| `docs/AUDIT_2026-06-07.md` | **VIVO come referto datato** | audit avversariale del 07/06 con **run id, 10 agenti, 1.69M token** e *«file:line + empirically reproduced»*: dice come è stato prodotto |
+| `docs/CLAIM-RECEIPTS.md` | **VIVO** — è una regola | *«ogni claim pubblico ha una ricevuta (**o non lo diciamo**)»*, regola dura di Aurelio del 16/07. È l'antenato del contratto |
+| `docs/COMPETITIVE_LANDSCAPE.md` | **VIVO come fotografia** | 20/06, *«Engram's **honest position**»*: analisi di campo con la data in testa |
+| `docs/CYCLE113-HANDOFF.md` | **MORTO (a scadenza)** | handoff pre-compact del 17/05: ha esaurito il suo scopo il giorno dopo |
+| `docs/DATACENTER_DESIGN.md` | **VIVO come design** | *«Status: **design document**. Nothing in here is shipped beyond…»* — dichiara di non essere realizzato |
+| `docs/DESIGN-esc-prefilter-2026-07-21.md` | **VIVO** — proposta aperta | *«**PROPOSTA misurata, NON cablata**. Decisione richiesta ad Aurelio»*: l'ottava forma, decisione aperta da luglio |
+| `docs/DESIGN-memory-ablation-2026-07-20.md` | **VIVO** | nasce da una domanda di Aurelio riportata **verbatim**: *«quanto incide avere o non avere una…»* |
+| `docs/DESIGN_PARTNER.md` | **VIVO** | programma per un pilota: *«one pilot team. Full engineering attention. **Honest numbers**»* |
+| `docs/EVIDENCE-contradiction-external-snli-2026-07-19.md` | **VIVO** | certificazione **esterna** su SNLI: dataset non nostro, ricevuta riproducibile |
+| `docs/EVIDENCE-external-2026-07-19.md` | **VIVO** | *«reproducible receipt for what the write-gate's grounding judge does on **data we**…»* — citato dal README |
+| `docs/EVIDENCE-phase1.1-contradiction-moat-2026-07-19.md` | **VIVO** | *«what the **llm-free** contradiction moat actually does, measured on **labeled data**»* |
+| `docs/EVIDENCE-poisoning-2026-07-22.md` | **VIVO** | confronto col concorrente **reale** su una fetta di HaluMem: *«when plausible-…»* |
+| `docs/EVIDENCE-stress-2026-07-18.md` | **VIVO** | *«**measured, not asserted**. Isolated tmp stores; `ENGRAM_ENCODE_SERVICE=0`»*: dichiara l'isolamento e la variabile spenta |
+| `docs/F2_MODULE_INVENTORY.md` | **VIVO come istantanea generata** | *«**auto-generated** by `scripts/f2_module_inventory.py`»*: **365 moduli, 81.385 LOC**. Si rigenera, quindi non scade — ma il numero va riletto, non citato |
+| `docs/FLAGS-AUDIT.md` | **VIVO come referto datato** | 15/07, *«claim-vs-default audit»* con auditor dichiarato |
+| `docs/GOVERNANCE.md` | **VIVO** | citato dal README: *«**seeing and reversing** what the memory decides»* — il manuale di come si disfa ciò che la memoria decide da sola |
+| `docs/HALUMEM_OFFICIAL_PROTOCOL.md` | **VIVO** | protocollo **estratto dal repo del benchmark**, con la data di lettura: si misura con il metro degli altri |
+| `docs/L1_DETECTOR_ARCHITECTURE-2026-05-27.md` | **VIVO come istantanea** | 27/05: *«18 detectors active… 350/350 pytest»*. ⚠️ Cita `engram/anti_confab_gate.py`, e il package oggi è `verimem/` — **il nome vecchio nel path** |
+| `docs/LAUNCH_READINESS_AUDIT.md` | **VIVO** | *«**living register**… every verdict carries…»*: registro vivo, non referto chiuso |
+| `docs/MCP_DEAD_SURFACE_AUDIT_2026-05-17.md` | **VIVO come referto datato** | audit su **12.252 chiamate storiche** del log MCP: misurato sull'uso vero |
+| `docs/MEMORY_PROTOCOL.md` | **VIVO** | come rendere la memoria **automatica** per un agente |
+| `docs/MIGRATIONS.md` | **VIVO** | citato dal README **e** dal codice (`verimem/migrations/__init__.py`): *«**tre** database SQLite con cicli di vita indipendenti»* — la stessa ragione che il modulo dà per non usare Alembic |
+| `docs/MOAT_SUMMARY.md` | **VIVO** | *«one authoritative statement of what the write-path gate **IS and ISN'T**»* — la dichiarazione unica, col rovescio incluso |
+| `docs/MOONSHOTS.md` | **VIVO** | *«**validated by an adversarial opus panel**… generated + **falsified**»*: le idee sono state attaccate prima di entrare |
+| `docs/PLATFORM.md` | **VIVO** | riferimento della piattaforma, citato dal README |
+| `docs/PLUGIN_QUICKSTART.md` | **VIVO, datato nel nome** | *«give **HippoAgent** a hippocampus in 3 commands»* — nome di due rinomine fa, come `MCP_QUICKSTART` |
+| `docs/PRODUCT-TRUTH-GAP.md` | **VIVO** — è un mandato | Aurelio, 16/07 **verbatim**: *«dobbiamo **diventare il prodotto che dichiariamo**»*. È l'antenato diretto del contratto di ieri |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -631,7 +660,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 196 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 225 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
