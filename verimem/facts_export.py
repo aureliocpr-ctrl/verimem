@@ -15,14 +15,31 @@ def export_all_facts(
     facts: list[Any],
     *,
     topic: str | None = None,
+    n_in_store: int | None = None,
+    cap: int | None = None,
 ) -> dict[str, Any]:
     """Return all facts as portable JSON dicts.
 
     Args:
       - `facts`: iterable of fact-likes.
       - `topic`: optional filter (exact match on `f.topic`).
+      - `n_in_store`: quanti fatti esistono davvero nella popolazione da cui
+        `facts` è stato preso (`SemanticMemory.count(topic=...)`). Serve a
+        rendere LEGGIBILE un export parziale; `None` quando il chiamante non
+        lo sa, e allora i campi che ne dipendono valgono `None` (la
+        convenzione delle porte gemelle: `null` = «non dichiarato», mai un
+        numero inventato).
+      - `cap`: il tetto che il chiamante ha applicato leggendo lo store.
 
-    Returns: `{schema_version, n_total, facts}`.
+    Returns: `{schema_version, n_total, n_in_store, cap, capped, facts}`.
+
+    ⚠️ `n_total` è, e resta, **il numero delle righe esportate** — non il
+    totale del corpus. Il nome è infelice e cambiarlo romperebbe chi lo
+    consuma; il totale vero sta in `n_in_store` (2026-09-09).
+
+    📌 2026-09-09: questa funzione dichiara il taglio, non lo evita. Chi legge
+    lo store deve passare il `topic` a `list_facts` — altrimenti il tetto cade
+    PRIMA del filtro qui sotto e un topic vecchio esce vuoto.
     """
     rows: list[dict[str, Any]] = []
     for f in facts:
@@ -37,6 +54,10 @@ def export_all_facts(
     return {
         "schema_version": _SCHEMA_VERSION,
         "n_total": len(rows),
+        "n_in_store": n_in_store,
+        "cap": cap,
+        "capped": (None if n_in_store is None or cap is None
+                   else n_in_store > cap),
         "facts": rows,
     }
 
