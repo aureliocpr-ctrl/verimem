@@ -131,12 +131,34 @@ def test_il_claim_quarantinato_resta_conservato(esito) -> None:
         f"riporta stored={r.get('stored')!r}: se il prodotto ha smesso di "
         f"conservare i quarantinati, e' la riga a essere di nuovo falsa"
     )
-    conservati = [f for f in m.get_all() if f.get("status") == "quarantined"]
+    # 2026-09-09, T49. Fino a oggi bastava `get_all()`: il quarantinato usciva
+    # dal recupero ORDINARIO, e quel caso qui sopra lo prendeva. Adesso
+    # `get_all()` applica `hide_low_trust` di default (client.py), perche' era
+    # una delle nove porte che servivano un fatto fermato dal moat come se
+    # fosse vero. La via esplicita e' l'argomento.
+    #
+    # ⚠️ E' ESATTAMENTE CIO' CHE IL DOCSTRING QUI SOPRA PRESCRIVE: «curare una
+    # promessa puo' disarmare il presidio che la sorvegliava, e la cura deve
+    # portarsi dietro il suo complemento». La cura di T49 ha disarmato questa
+    # meta'. Quindi il caso non si sposta e basta — si SDOPPIA, e adesso
+    # sorveglia ENTRAMBE le meta' della frase «stored, but kept OUT of default
+    # recall», che prima erano una sola.
+    conservati = [f for f in m.get_all(include_low_trust=True)
+                  if f.get("status") == "quarantined"]
     assert conservati, (
-        "get_all() non restituisce piu' il fatto quarantinato. Il contratto MCP "
-        "dice «stored, but kept OUT of default recall» e la tabella del README "
-        "dice «stored, not served»: entrambe promettono che il fatto RESTI, "
-        "consultabile a chi lo chiede esplicitamente"
+        "get_all(include_low_trust=True) non restituisce piu' il fatto "
+        "quarantinato. Il contratto MCP dice «stored, but kept OUT of default "
+        "recall» e la tabella del README dice «stored, not served»: entrambe "
+        "promettono che il fatto RESTI, consultabile a chi lo chiede "
+        "esplicitamente"
+    )
+    #: e la meta' nuova: chi NON lo chiede non lo riceve.
+    di_default = [f for f in m.get_all() if f.get("status") == "quarantined"]
+    assert not di_default, (
+        "get_all() SENZA argomenti rende un fatto quarantinato: la seconda "
+        "meta' della promessa («kept OUT of default recall») e' rotta sulla "
+        f"porta dell'SDK. status delle righe rese: "
+        f"{[f.get('status') for f in m.get_all()]}"
     )
 
 
