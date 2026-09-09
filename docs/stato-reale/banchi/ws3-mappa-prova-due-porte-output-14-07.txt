@@ -1,0 +1,16 @@
+CASO                                                                      add()        _grounds (ingest)
+--------------------------------------------------------------------------------------------------------
+DETTO         "Il canone del capannone 12 e' 5900 euro."     model_claim    99.9            True    99.9
+DETTO         "La consegna del capannone 12 e' prevista"     model_claim    99.4            True    99.4
+INVENTATO     "Il capannone 12 e' stato venduto nel 201"     model_claim    84.0            True    71.7
+INVENTATO     'Il capannone 12 ha una superficie di 400'     quarantined    89.2            True    87.9
+INVENTATO     'Il proprietario del capannone 12 si chia'     quarantined    74.5            True    63.1
+CONTRADDETTO  "Il canone del capannone 12 e' 9999 euro."     quarantined     0.7           False     0.7
+
+conteggio finale nello store (chi e' servito e chi no):
+  model_claim   : 3
+  quarantined   : 3
+  serviti da search: 3
+    Il capannone 12 e' stato venduto nel 2019.
+    Il canone del capannone 12 e' 5900 euro.
+    La consegna del capannone 12 e' prevista per il 3 marzo.

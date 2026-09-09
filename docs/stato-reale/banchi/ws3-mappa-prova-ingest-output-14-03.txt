@@ -1,0 +1,45 @@
+=== split_entities_line
+  in: "Il canone e' 5900 euro.\nENTITIES: person:Mario"  -> testo "Il canone e' 5900 euro." · entita' [{'name': 'Mario', 'type': 'person'}, {'name': 'Acme', 'type': 'org'}]
+  in: "Il canone e' 5900 euro."                          -> testo "Il canone e' 5900 euro." · entita' []
+  in: "Il canone e' 5900 euro.\nENTITIES: alieno:Zorg;"  -> testo "Il canone e' 5900 euro." · entita' [{'name': 'Mario', 'type': 'person'}]
+
+=== parse_extracted_lines: UN SOLO marcatore tolto
+  "Il canone e' 5900 euro."
+  "La consegna e' il 3 marzo."
+  'Due marcatori di fila.'
+  'Riga con spazi davanti.'
+
+=== strip_belief_marker
+  'BELIEF: il canone dovrebbe salire.'         -> ('il canone dovrebbe salire.', True)
+  "Il canone e' 5900 euro."                    -> ("Il canone e' 5900 euro.", False)
+  'belief: minuscolo'                          -> ('minuscolo', True)
+
+=== render_conversation: il taglio non deve essere SILENZIOSO
+  senza cap stretto: lunghezza 585 · prime righe: "user: Quanto costa il capannone 12?\nassistant: Il canone e' "
+  con cap 80 e with_flag=True -> lunghezza 80 · truncated: True
+  con cap largo            -> truncated: False (il flag distingue i due casi)
+
+=== conversation_provenance_ref
+  ref('conv-1'): conversation:conv-1
+  stabile: True · diverso per conversazioni diverse: True
+
+=== extraction_system_for: il prompt di estrazione
+  col nome utente: lunghezza 1455 · contiene 'Aurelio': True
+  senza nome     : lunghezza 1191 · contiene 'Aurelio': False
+  con entita' tipizzate e BELIEF: piu' lungo: True · nomina ENTITIES: True · nomina BELIEF: True
+
+=== _ingest_ground_threshold / _grounds (il moat sulla via dell'ingest)
+  soglia: 40.0
+  "Il canone del capannone 12 e' 5900 euro."         -> ammesso=True punteggio=99.5
+  "Il canone del capannone 12 e' 9999 euro."         -> ammesso=False punteggio=0.72
+  "Il capannone 12 e' stato venduto nel 2019."       -> ammesso=True punteggio=80.47
+
+=== ingest_conversation con un LLM finto (nessuna chiamata esterna)
+  -> {'stored': '0', 'rejected': '0', 'fact_ids': '[]', 'extracted': '0', 'gapfilled': '0', 'consolidated': '0', 'error': 'extraction llm error: _LLM.complete() takes 1 positional argument but 3 were giv', 'truncated': 'False'}
+  chiamate all'llm finto: 0
+
+=== gapfill_facts / consolidate_facts (le due passate opzionali)
+  gapfill_facts (llm che aggiunge una riga): []
+  gapfill_facts (llm che risponde spazzatura, fail-safe): []
+  consolidate_facts (due quasi-duplicati): ["Il canone e' 5900 euro.", "Il canone e' di 5900 euro."]
+  consolidate_facts (llm che risponde vuoto, fail-safe): ["Il canone e' 5900 euro."]

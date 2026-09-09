@@ -1,0 +1,33 @@
+soglia dell'ingest: 40.0
+
+fatti che il dialogo DICE (devono passare):
+  "Il canone del capannone 12 e' 5900 euro."               ammesso=True punteggio=99.58
+  "La consegna del capannone 12 e' prevista per il 3 ma"   ammesso=True punteggio=99.64
+  'Il capannone 12 ha un canone mensile.'                  ammesso=True punteggio=96.84
+
+fatti INVENTATI ma plausibili, che il dialogo NON dice (devono cadere):
+  "Il capannone 12 e' stato venduto nel 2019."             ammesso=True punteggio=60.22
+  'Il capannone 12 ha una superficie di 400 metri quadr'   ammesso=True punteggio=88.8
+  'Il proprietario del capannone 12 si chiama Mario Ros'   ammesso=True punteggio=50.0
+
+fatti CONTRADDETTI dal dialogo (devono cadere):
+  "Il canone del capannone 12 e' 9999 euro."               ammesso=False punteggio=0.62
+  "La consegna del capannone 12 e' prevista per il 9 ap"   ammesso=False punteggio=0.51
+
+>>> detti ammessi      3/3  (devono essere tutti)
+>>> inventati ammessi  3/3  (devono essere ZERO)
+>>> contraddetti ammessi 0/2  (devono essere ZERO)
+
+=== ingest_conversation con l'LLM finto corretto
+  -> {'stored': '3', 'rejected': '0', 'fact_ids': "['7ad152d42428', '5fc7821d1595', '38e96c655bc0']", 'extracted': '3', 'gapfilled': '0', 'consolidated': '3', 'error': 'None', 'truncated': 'False', 'typed_entities': '0'}
+  chiamate all'llm: 2
+   7ad152d42428 · model_claim · Il canone del capannone 12 e' 5900 euro.
+   5fc7821d1595 · model_claim · La consegna del capannone 12 e' prevista per il 3 marzo.
+   38e96c655bc0 · model_claim · Il capannone 12 e' stato venduto nel 2019.
+
+=== e con ground=False (il moat spento sull'ingest)
+  -> {'stored': '1', 'rejected': '0', 'fact_ids': "['9346d825c01e']", 'extracted': '1', 'gapfilled': '0', 'consolidated': '1', 'error': 'None', 'truncated': 'False', 'typed_entities': '0'}
+
+=== gapfill_facts con l'LLM corretto
+  aggiunge cio' che manca: ['Il contratto scade nel 2027.'] · chiamate: 1
+  consolidate_facts su due quasi-duplicati: ["Il canone e' 5900 euro."] · chiamate: 1
