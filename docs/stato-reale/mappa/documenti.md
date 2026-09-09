@@ -122,6 +122,30 @@ ordina la coda.
 | `docs/stato-reale/25-la-specifica-di-L1-cosa-ferma-e-cosa-lascia-passare.md` | **VIVO** | 29-30/08, **celle nominate** (`W7-60`…`W7-65`): e chiede *«quale dei due errori arriva all'utente»*, non quale è più grande |
 | `docs/stato-reale/26-la-difesa-che-si-spegne-con-un-booleano.md` | **VIVO** | 30/08 14:12-15:49, celle `W7-69`…`W7-71`: *«su questo corpus è una **compensazione**, non un bug»* — la distinzione che salva una cura sbagliata |
 | `docs/stato-reale/26-le-nove-trappole-della-copia-condivisa.md` | **VIVO** | ws6, 30/08: *«**nessuna è ipotizzata: le ho pagate tutte oggi, in prima persona**»*. È la fonte delle nove trappole della copia condivisa che usiamo tutti |
+| `docs/stato-reale/27-la-porta-ignora-il-campo-che-dice-di-cosa-parla-un-fatto.md` | **VIVO** | ws6, 30/08 18:55, corpus **12.438** |
+| `docs/stato-reale/28-cercare-nel-topic-costa-meno-non-di-piu.md` | **VIVO** | corpus **12.445**: un risultato **contro l'intuizione**, misurato — cercare nel topic costa meno |
+| `docs/stato-reale/29-la-ricerca-lessicale-trova-solo-se-indovini-le-parole.md` | **VIVO** | corpus **12.449** |
+| `docs/stato-reale/30-la-porta-dei-documenti-e-costruita-meglio-e-l-indice-e-fatto-di-scratchpad.md` | **VIVO** | 30/08 20:15, `document_index.db` in `mode=ro`: e trova che **l'indice è fatto di scratchpad** |
+| `docs/stato-reale/32-il-rerank-sa-quando-non-ha-trovato-e-la-porta-serve-lo-stesso.md` | **VIVO** | 30/08 21:15, *«porte MCP **interrogate davvero**»*: il rerank sa di non aver trovato **e la porta serve lo stesso** |
+| `docs/stato-reale/33-il-presidio-anti-injection-nasconde-la-roadmap.md` | **VIVO** | *«misure sul rilevatore vero, **non sul codice letto**»*: un presidio che nasconde PHASE 0 della roadmap |
+| `docs/stato-reale/34-lo-stesso-fatto-con-una-lettera-greca-viene-quarantinato.md` | **VIVO** | store **temporaneo** in tempdir, **scritture vere**: lo stesso fatto con una lettera greca cade |
+| `docs/stato-reale/35-il-rimedio-che-la-ricevuta-suggerisce-non-cambia-l-esito.md` | **VIVO** | 30/08 22:45, store temporaneo, **fuori da pytest**: il consiglio che il prodotto dà non funziona |
+| `docs/stato-reale/36-la-promessa-di-astensione-esiste-funziona-ed-e-spenta.md` | **VIVO** | 31/08 00:25: *«esiste, **funziona**, ed è **spenta di default**»* — la forma «capacità spenta» in tre parole |
+| `docs/stato-reale/37-il-mio-banco-e-caduto-e-il-prodotto-aveva-gia-la-guardia.md` | **VIVO** | 31/08 01:35, store di Aurelio in **sole letture**: il titolo è un **ritiro** — il banco è caduto e il prodotto aveva ragione |
+| `docs/stato-reale/40-il-rerank-che-quasi-non-gira-e-il-banco-che-non-si-puo-rieseguire.md` | **VIVO** | ws6/Aldo, 30/08 notte: e dichiara che **il proprio banco non è rieseguibile** |
+| `docs/stato-reale/42-il-presidio-consiglia-una-cura-che-ritirerebbe-mille-fatti.md` | **VIVO** | *«…per contraddizioni **che non lo sono**»*: apre la serie di D-1, chiusa dal 44 |
+| `docs/stato-reale/43-le-contraddizioni-sono-log.md` | **VIVO** | *«il **94%** a quattro token di distanza»* |
+| `docs/stato-reale/45-il-grounding-alto-non-protegge-dai-numeri-sbagliati.md` | **VIVO** | *«`L4.1` è **l'unico** che li vede»*: un punteggio alto non copre i numeri |
+| `docs/stato-reale/46-gli-episodi-si-ricordano-di-essere-letti-e-nessuno-li-dimentica.md` | **VIVO** | *«e **nessuno li dimentica mai**»* |
+| `docs/stato-reale/47-sa-fare-la-cosa-e-non-la-fa.md` | **VIVO** — ed è una SINTESI | *«sette misure, **un motivo solo**»*, dichiarata come *«sintesi dei documenti 36-46»*: il corpus si auto-organizza |
+| `docs/stato-reale/49-il-prodotto-avvisa-a-ogni-scrittura-e-l-inerzia-e-nostra.md` | **VIVO** | *«avvisa a ogni scrittura **da un mese**, e l'inerzia è nostra»* — il difetto attribuito a noi, non al prodotto |
+| `docs/stato-reale/50-il-pavimento-e-una-lama-a-due-tagli.md` | **VIVO** | *«…e **l'ho scoperto cercando altro**»*: scoperta laterale dichiarata |
+| `docs/stato-reale/51-ho-scritto-settanta-fatti-e-col-nome-del-loro-argomento-ne-torna-il-nove-per-cento.md` | **VIVO** | **9%** su settanta fatti scritti da lui: si misura sul proprio lavoro |
+| `docs/stato-reale/52-undici-dei-miei-fatti-si-sono-mangiati-fra-loro.md` | **VIVO** | *«e l'etichetta del ritiro dice una cosa che non ha ver…»* — la supersessione misurata **sui propri** fatti |
+| `docs/stato-reale/53-il-pavimento-si-ripara-da-solo-fra-centocinque-fatti-e-taglia-il-98-percento.md` | **VIVO** | *«seguito diretto del [48]»*: i documenti si citano per numero **e con il link** |
+| `docs/stato-reale/54-la-memoria-non-ha-un-tetto-di-lunghezza-ha-un-pavimento-a-cinque-parole.md` | **VIVO** | *«**chiude il limite dichiarato nel [51]**»* |
+| `docs/stato-reale/55-non-e-la-forma-della-domanda-e-il-vocabolario.md` | **VIVO** | *«**chiude il limite dichiarato nel [54]**»* — terzo anello della catena |
+| `docs/stato-reale/56-lo-zero-e-un-interruttore-in-quattro-punti-e-la-cura-la-chiama-solo-chi-l-ha-scritta.md` | **VIVO** | *«nasce dal **voto sulla proposta** “cura-pavimento” di @ws2»*: la decisione collegiale lascia traccia nel documento |
 
 
 ## 🔑 Tre forme che l'indizio non distingue, e che cambiano il verdetto
@@ -500,6 +524,22 @@ Dove stanno: `docs/stato-reale/` **164** · `docs/` (radice) ~67 · `docs/ricerc
 `docs/archive/` 11 (tutti citati) · `docs/sota/` 9 · `docs/specs/` 8 · il resto sparso.
 
 
+
+## 🔗 Una catena di limiti PAGATI, uno dopo l'altro
+
+```
+  51  dichiara un limite  («ne torna il 9%»)
+  54  «CHIUDE IL LIMITE DICHIARATO NEL 51»   -> il pavimento è a cinque parole
+  55  «CHIUDE IL LIMITE DICHIARATO NEL 54»   -> non è la forma, è il vocabolario
+```
+Tre documenti in due notti, e ognuno **si apre dichiarando quale debito sta pagando**.
+Con `47`, che è una **sintesi dichiarata** dei documenti 36-46, e `53`, *«seguito diretto
+del 48»*, il quadro è chiaro: **questo corpus si auto-organizza**, e i legami sono scritti
+**nel documento**, non lasciati alla memoria di chi legge.
+
+🔑 È il contrario del difetto che la mappa cercava. Dove i legami sono scritti, la catena
+regge; dove non lo sono — T26a in quattro pagine sparse — il ticket arriva un mese dopo.
+
 ## 🧮 Il numero DEVE essere contabile da questa tabella
 
 🔻 **Correzione, 09/09.** Ieri ho dichiarato **68 documenti letti** mentre la tabella ne
@@ -517,7 +557,7 @@ tabella**.
 
 ## Contatore
 
-**Classificati con verdetto letto: 98 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
+**Classificati con verdetto letto: 122 su 287** (e uno **corretto**: `EPISTEMIC_FAILURES_STUDY`). Con gli indizi raccolti: 287 su 287.
 Triati sui path rotti: 13 su 13, e **dei dieci letti uno solo contraddice davvero**.
 *Il numero che conta è il primo: gli indizi non sono un verdetto, e non li conto come tale.*
 
