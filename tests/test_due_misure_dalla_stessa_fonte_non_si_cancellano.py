@@ -52,6 +52,30 @@ RIMISURA dello stesso valore deve continuare a far vincere il valore NUOVO.
 Una memoria che non aggiorna più è rotta quanto una che cancella, e una cura
 che salva il vecchio rompendo l'aggiornamento non è una cura.
 
+🚧 IL CONFINE DELLA CURA, e l'ho trovato ROMPENDOLO. La prima stesura faceva
+coesistere QUALUNQUE coppia a impronta uguale, e rendeva rosso
+`tests/test_due_guardie_si_coprono_e_nessuno_lo_sa.py`::
+
+    con la cura larga                        1 failed, 2 passed in 48.18s  EXIT=1
+    sulla BASE 20257636 (git worktree a parte)      3 passed in 57.09s     EXIT=0
+    con la cura RISTRETTA (`references_fact` escluso) 3 passed in 54.60s   EXIT=0
+
+Il caso: «La coda ha 540 elementi (rettifica del fatto <id>)» lasciava vivo il
+500 accanto alla sua stessa correzione. Chi rettifica la propria lettura lo
+DICHIARA nominando il fatto che corregge, e quel ritiro deve continuare ad
+avvenire — `references_fact`, dal 2026-07-25.
+
+📌 E QUI NON C'È UN MIO TEST SU QUEL CONFINE, di proposito. Provandolo da
+questo file il banco pretendeva un ritiro che **sulla base non avviene
+nemmeno**: stessa sonda sui due alberi, entrambi rendono `L3-coexistence «a
+contradiction was found but both facts are kept»` e due righe vive — senza
+`verified_by` la citazione dell'id passa dal percorso semantico, dove tenere
+entrambi è la decisione di progetto. Un banco lasciato rosso qui avrebbe
+accusato questa cura di un comportamento che non ha introdotto; e un test
+senza asserzioni, tenuto per il suo commento, sarebbe stato un verde che non
+misura niente. Il presidio vero è il file citato sopra: chi tocca questa rotta
+lo esegua.
+
 Ticket: piano di ripresa 09/09 §5 riga 2 (ws6), gamba B. Ramo
 `aldo/tetto-e-supersede`.
 """
