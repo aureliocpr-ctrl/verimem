@@ -85,10 +85,10 @@ c'è) — ma qui la misura mancante **nascondeva un'inversione di segno**.
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | test | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 1 | `compute_community_sizes` (:65) | `{indice: dimensione}` per una lista di insiemi | `select_compensated_anchor` | **nessuno** | **FUNZIONA COME PROMESSO** | eseguita: `{0: 2, 1: 100}` sulla partizione di prova |
-| 2 | `score_anchor_for_compensation` (:72) | «higher = better anchor (less expected ΔJ)» | `:199` | **nessuno** | 🔴 **NON COME PROMESSO (T43)** | score 0.5 per la comunità da 2 contro 0.01 per quella da 100: premia chi perturba di più |
-| 3 | `select_compensated_anchor` (:110) | l'anchor che minimizza lo scostamento atteso; «LARGEST community» (:122) | nessun chiamante nel prodotto | **nessuno** | 🔴 **NON COME PROMESSO (T43)** | riga 199 prende il massimo di uno score che vale `1/size` (riga 96) ⇒ la comunità più piccola |
-| 4 | `select_vanilla_anchor` (:216) | la linea di base: un anchor a caso, per il confronto | nessun chiamante nel prodotto | **nessuno** | **NON MISURATO** | richiede un `semantic.db`; non chiamata |
+| 1 | `verimem/sos_compensator.py:65` `compute_community_sizes` | `{indice: dimensione}` per una lista di insiemi | `select_compensated_anchor` | **nessuno** | **FUNZIONA COME PROMESSO** | eseguita: `{0: 2, 1: 100}` sulla partizione di prova |
+| 2 | `verimem/sos_compensator.py:72` `score_anchor_for_compensation` | «higher = better anchor (less expected ΔJ)» | `:199` | **nessuno** | 🔴 **NON COME PROMESSO (T43)** | score 0.5 per la comunità da 2 contro 0.01 per quella da 100: premia chi perturba di più |
+| 3 | `verimem/sos_compensator.py:110` `select_compensated_anchor` | l'anchor che minimizza lo scostamento atteso; «LARGEST community» (:122) | nessun chiamante nel prodotto | **nessuno** | 🔴 **NON COME PROMESSO (T43)** | riga 199 prende il massimo di uno score che vale `1/size` (riga 96) ⇒ la comunità più piccola |
+| 4 | `verimem/sos_compensator.py:216` `select_vanilla_anchor` | la linea di base: un anchor a caso, per il confronto | nessun chiamante nel prodotto | **nessuno** | **NON MISURATO** | richiede un `semantic.db`; non chiamata |
 
 ## Il verdetto, e che cosa NON va fatto
 

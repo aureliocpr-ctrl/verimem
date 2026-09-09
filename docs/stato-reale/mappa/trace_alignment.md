@@ -42,17 +42,17 @@ controllo. **NON MISURATI**, e scritti come tali — non «banali».
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | esercitata? | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 1 | `AlignedPair` (:50) | la coppia di passi allineati | `Alignment` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
-| 2 | `Alignment` (:58) | l'allineamento completo fra due tracce | `align_traces` → `wake.py:956` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
-| 3 | `Alignment.length` (:63) | il numero di coppie allineate | `find_divergence_point` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
-| 4 | `DivergencePoint` (:68) | il punto di divergenza trovato | `find_divergence_point` → `wake.py` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
-| 5 | `_obs_vec` (:93) | il vettore dell'osservazione di un passo | `align_traces` | PARZIALE — 1 statement su 4 (:104) | **FUNZIONA COME PROMESSO** | il taglio a `_OBS_TRIM` non è esercitato |
-| 6 | `_cosine` (:108) | il coseno fra due vettori | `align_traces` | PARZIALE — 1 su 5 (:112) | **FUNZIONA COME PROMESSO** | il caso «norma nulla» non è esercitato |
-| 7 | `align_traces` (:129, 65 righe) | allinea sulle **osservazioni**, non sulle azioni | `wake.py:956` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed, 94,0% |
-| 8 | `find_divergence_point` (:217) | il primo passo con azioni divergenti e osservazioni ancora allineate | `wake.py:956` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed |
-| 9 | `_scan_action_divergence` (:255) | la scansione sulle azioni | `find_divergence_point` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed |
-| 10 | `_scan_input_divergence` (:281) | la scansione sugli input | `find_divergence_point` | PARZIALE — 2 su 19 (:304, :314) | **FUNZIONA COME PROMESSO** | due `continue` non percorsi |
-| 11 | `format_divergence` (:336) | la resa leggibile del punto di divergenza | `wake.py` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
+| 1 | `verimem/trace_alignment.py:50` `AlignedPair` | la coppia di passi allineati | `Alignment` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
+| 2 | `verimem/trace_alignment.py:58` `Alignment` | l'allineamento completo fra due tracce | `align_traces` → `wake.py:956` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
+| 3 | `verimem/trace_alignment.py:63` `Alignment.length` | il numero di coppie allineate | `find_divergence_point` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
+| 4 | `verimem/trace_alignment.py:68` `DivergencePoint` | il punto di divergenza trovato | `find_divergence_point` → `wake.py` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
+| 5 | `verimem/trace_alignment.py:93` `_obs_vec` | il vettore dell'osservazione di un passo | `align_traces` | PARZIALE — 1 statement su 4 (:104) | **FUNZIONA COME PROMESSO** | il taglio a `_OBS_TRIM` non è esercitato |
+| 6 | `verimem/trace_alignment.py:108` `_cosine` | il coseno fra due vettori | `align_traces` | PARZIALE — 1 su 5 (:112) | **FUNZIONA COME PROMESSO** | il caso «norma nulla» non è esercitato |
+| 7 | `verimem/trace_alignment.py:129` `align_traces` | allinea sulle **osservazioni**, non sulle azioni | `wake.py:956` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed, 94,0% |
+| 8 | `verimem/trace_alignment.py:217` `find_divergence_point` | il primo passo con azioni divergenti e osservazioni ancora allineate | `wake.py:956` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed |
+| 9 | `verimem/trace_alignment.py:255` `_scan_action_divergence` | la scansione sulle azioni | `find_divergence_point` | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 11 passed |
+| 10 | `verimem/trace_alignment.py:281` `_scan_input_divergence` | la scansione sugli input | `find_divergence_point` | PARZIALE — 2 su 19 (:304, :314) | **FUNZIONA COME PROMESSO** | due `continue` non percorsi |
+| 11 | `verimem/trace_alignment.py:336` `format_divergence` | la resa leggibile del punto di divergenza | `wake.py` | ESEGUITA | **FUNZIONA COME PROMESSO** | 11 passed |
 
 ## Perché questo file sta bene e gli altri no
 

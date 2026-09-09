@@ -64,17 +64,17 @@ claim: un banco del rate-limit deve usare un'op finta anche per (b).
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | esercitata? | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 1 | `_audit_write` (:60) | scrive una riga JSONL nel log di audit | ogni percorso di `engram_invoke` | PARZIALE — 2 statement su 6 | **FUNZIONA COME PROMESSO** | il banco: 1 riga per (a) e (c), 40 per 40 chiamate in (b) |
-| 2 | `_check_rate_limit` (:71) | vero se l'op sta sotto `limit` chiamate al secondo | `engram_invoke` | PARZIALE — 1 su 9 | **FUNZIONA COME PROMESSO** | 38/40 bloccate con `rate_limit=1.0` |
-| 3 | `_op_recall` (:87) | handler `recall` | `ENGRAM_OPS_MANIFEST` | PARZIALE — 3 su 12 | **FUNZIONA COME PROMESSO** | 2 chiamate riuscite nel banco (b) |
-| 4 | `_op_topk_embeddings` (:114) | handler `topk_embeddings`, privacy-preserving | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | nessuno dei 5 file lo percorre |
-| 5 | `_op_mesh_query` (:130) | handler `mesh_query` | manifesto | PARZIALE — 1 su 6 | **FUNZIONA COME PROMESSO** | 25 passed |
-| 6 | `_op_mesh_fetch` (:141) | handler `mesh_fetch` | manifesto | PARZIALE — 1 su 7 | **FUNZIONA COME PROMESSO** | 25 passed |
-| 7 | `_op_resonant_merge` (:158) | handler `mesh_resonant_merge` | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | idem |
-| 8 | `engram_invoke` (:190, 160 righe) | il confine tipizzato: manifesto · rate-limit · token · audit | `dashboard_widget`, MCP, agenti | PARZIALE — 1 statement su 50 | **FUNZIONA COME PROMESSO** su (a)(b)(c) | il banco sopra + `test_capability_token.py::test_syscall_bridge_token_integration` |
-| 9 | `engram_audit_tail` (:353) | le ultime N righe di audit | `dashboard_widget.py:54` | PARZIALE — 6 su 14 | **FUNZIONA COME PROMESSO** | `test_dashboard_widget.py` dentro i 25 |
-| 10 | `engram_rate_stats` (:373) | lo stato dei bucket del rate-limit | **nessun chiamante** in `verimem/` né in `tests/` | **CORPO MAI ESEGUITO** (l'unico statement, :375) | **MAI CHIAMATA** | `grep -rn "engram_rate_stats" verimem/ tests/` → 0 fuori dalla def |
-| 11 | `engram_available_ops` (:381) | l'elenco delle op del manifesto | test | ESEGUITA | **FUNZIONA COME PROMESSO** | 25 passed |
+| 1 | `verimem/syscall_bridge.py:60` `_audit_write` | scrive una riga JSONL nel log di audit | ogni percorso di `engram_invoke` | PARZIALE — 2 statement su 6 | **FUNZIONA COME PROMESSO** | il banco: 1 riga per (a) e (c), 40 per 40 chiamate in (b) |
+| 2 | `verimem/syscall_bridge.py:71` `_check_rate_limit` | vero se l'op sta sotto `limit` chiamate al secondo | `engram_invoke` | PARZIALE — 1 su 9 | **FUNZIONA COME PROMESSO** | 38/40 bloccate con `rate_limit=1.0` |
+| 3 | `verimem/syscall_bridge.py:87` `_op_recall` | handler `recall` | `ENGRAM_OPS_MANIFEST` | PARZIALE — 3 su 12 | **FUNZIONA COME PROMESSO** | 2 chiamate riuscite nel banco (b) |
+| 4 | `verimem/syscall_bridge.py:114` `_op_topk_embeddings` | handler `topk_embeddings`, privacy-preserving | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | nessuno dei 5 file lo percorre |
+| 5 | `verimem/syscall_bridge.py:130` `_op_mesh_query` | handler `mesh_query` | manifesto | PARZIALE — 1 su 6 | **FUNZIONA COME PROMESSO** | 25 passed |
+| 6 | `verimem/syscall_bridge.py:141` `_op_mesh_fetch` | handler `mesh_fetch` | manifesto | PARZIALE — 1 su 7 | **FUNZIONA COME PROMESSO** | 25 passed |
+| 7 | `verimem/syscall_bridge.py:158` `_op_resonant_merge` | handler `mesh_resonant_merge` | manifesto | **CORPO MAI ESEGUITO** | **NON MISURATO** | idem |
+| 8 | `verimem/syscall_bridge.py:190` `engram_invoke` | il confine tipizzato: manifesto · rate-limit · token · audit | `dashboard_widget`, MCP, agenti | PARZIALE — 1 statement su 50 | **FUNZIONA COME PROMESSO** su (a)(b)(c) | il banco sopra + `test_capability_token.py::test_syscall_bridge_token_integration` |
+| 9 | `verimem/syscall_bridge.py:353` `engram_audit_tail` | le ultime N righe di audit | `dashboard_widget.py:54` | PARZIALE — 6 su 14 | **FUNZIONA COME PROMESSO** | `test_dashboard_widget.py` dentro i 25 |
+| 10 | `verimem/syscall_bridge.py:373` `engram_rate_stats` | lo stato dei bucket del rate-limit | **nessun chiamante** in `verimem/` né in `tests/` | **CORPO MAI ESEGUITO** (l'unico statement, :375) | **MAI CHIAMATA** | `grep -rn "engram_rate_stats" verimem/ tests/` → 0 fuori dalla def |
+| 11 | `verimem/syscall_bridge.py:381` `engram_available_ops` | l'elenco delle op del manifesto | test | ESEGUITA | **FUNZIONA COME PROMESSO** | 25 passed |
 
 ## Codice mai chiamato, e due handler mai esercitati
 
@@ -83,7 +83,7 @@ claim: un banco del rate-limit deve usare un'op finta anche per (b).
   no. ⇒ **MAI CHIAMATA**: propongo la rimozione **oppure** il suo uso nel widget
   accanto all'audit (il rate-limit è invisibile a chi guarda il pannello). Non
   decido io, e non la tocco (regola 2).
-- **`_op_topk_embeddings` (:114)** e **`_op_resonant_merge` (:158)** — due
+- **`verimem/syscall_bridge.py:114` `_op_topk_embeddings`** e **`verimem/syscall_bridge.py:158` `_op_resonant_merge`** — due
   handler **registrati nel manifesto** e mai percorsi da un test. Sono
   raggiungibili dall'esterno via `engram_invoke("topk_embeddings", ...)`:
   ⇒ **superficie invocabile non misurata**. È il reperto più serio di questo

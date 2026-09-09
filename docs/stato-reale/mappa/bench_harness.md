@@ -38,28 +38,28 @@ verimem\bench_harness.py   187 stmts   25 miss   36 branch   2 BrPart   86,1%
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | esercitata? | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 1 | `TaskCase` (:55) | il caso: id, prompt, validatore, tag | tutte le suite | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 2 | `_val_contains` (:67) + `_v` (:70) | validatore «la risposta contiene X» | le suite | ESEGUITE | **FUNZIONA COME PROMESSO** | 26 passed |
-| 3 | `_val_equals_int` (:77) + `_v` (:81) | validatore «la risposta è l'intero N» | le suite | PARZIALE (87-88) | **NON MISURATO** sul ramo `ValueError` | il caso «intero non parsabile» non è esercitato |
-| 4 | `default_suite` (:92) | la suite di base | `run_full_bench`, script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 5 | `hard_memory_recall_suite` (:116) | suite dura di richiamo | `scripts/bench_with_without_hippo.py:243` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 6 | `memory_recall_suite` (:178) | suite di richiamo | script `:216` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 7 | `compositional_suite` (:224) | suite composizionale (113 righe di casi) | script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 8 | `skill_compounding_suite` (:343) | suite sull'accumulo di skill | script `:182, :197` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 9 | `RunResult` (:389) | l'esito di un caso: condizione, provider, task, successo, latenza, errore | ovunque | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 10 | `run_case_raw` (:416) | un caso in condizione `raw` | `run_suite_raw` | PARZIALE (431-432) | **NON MISURATO** sull'`except` | — |
-| 11 | `run_case_hippo` (:439) | un caso con l'agente | `run_suite_hippo_{cold,warm}` | PARZIALE (460-462) | **NON MISURATO** sull'`except` | — |
-| 12 | `_factory_failure_results` (:475) | risultati fittizi quando la factory del provider fallisce | `run_suite_hippo_warm:525` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 13 | `run_suite_raw` (:484) | l'intera suite in `raw` | `run_full_bench:576` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 14 | `run_suite_hippo_cold` (:497) | agente nuovo per ogni caso | `run_full_bench:578` | PARZIALE (505-511) | **NON MISURATO**: il build che fallisce | — |
-| 15 | `run_suite_hippo_warm` (:517) | un agente condiviso + `consolidate()` ogni K | `run_full_bench:580` | PARZIALE (524-525, 534-537) | **NON MISURATO**: build fallito e `consolidate` fallito | — |
-| 16 | `ProviderSpec` (:545) | nome + factory di un provider | `run_full_bench` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
-| 17 | `run_full_bench` (:555) | orchestra provider × condizioni | `scripts/bench_with_without_hippo.py` | **PARZIALE — 14 righe** (577-592) | **NON MISURATO**: il dispatch delle condizioni e l'abort di un provider | — |
-| 18 | `aggregate` (:608) | il riepilogo per (condizione, provider) | script, consumatori | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
-| 19 | `aggregate_by_task` (:643) | riepilogo per task | script | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
-| 20 | `aggregate_by_iter` (:669) | riepilogo per iterazione | script | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
-| 21 | `to_jsonable` (:698) / `from_jsonable` (:703) | serializzazione dei risultati | script | ESEGUITE | **FUNZIONA COME PROMESSO** | 26 passed |
-| 22 | `merge_results` (:722) | unione di più liste di risultati | script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 1 | `verimem/bench_harness.py:55` `TaskCase` | il caso: id, prompt, validatore, tag | tutte le suite | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 2 | `verimem/bench_harness.py:67` `_val_contains` + `verimem/bench_harness.py:70` `_val_contains._v` | validatore «la risposta contiene X» | le suite | ESEGUITE | **FUNZIONA COME PROMESSO** | 26 passed |
+| 3 | `verimem/bench_harness.py:77` `_val_equals_int` + `verimem/bench_harness.py:81` `_val_equals_int._v` | validatore «la risposta è l'intero N» | le suite | PARZIALE (87-88) | **NON MISURATO** sul ramo `ValueError` | il caso «intero non parsabile» non è esercitato |
+| 4 | `verimem/bench_harness.py:92` `default_suite` | la suite di base | `run_full_bench`, script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 5 | `verimem/bench_harness.py:116` `hard_memory_recall_suite` | suite dura di richiamo | `scripts/bench_with_without_hippo.py:243` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 6 | `verimem/bench_harness.py:178` `memory_recall_suite` | suite di richiamo | script `:216` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 7 | `verimem/bench_harness.py:224` `compositional_suite` | suite composizionale (113 righe di casi) | script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 8 | `verimem/bench_harness.py:343` `skill_compounding_suite` | suite sull'accumulo di skill | script `:182, :197` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 9 | `verimem/bench_harness.py:389` `RunResult` | l'esito di un caso: condizione, provider, task, successo, latenza, errore | ovunque | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 10 | `verimem/bench_harness.py:416` `run_case_raw` | un caso in condizione `raw` | `run_suite_raw` | PARZIALE (431-432) | **NON MISURATO** sull'`except` | — |
+| 11 | `verimem/bench_harness.py:439` `run_case_hippo` | un caso con l'agente | `run_suite_hippo_{cold,warm}` | PARZIALE (460-462) | **NON MISURATO** sull'`except` | — |
+| 12 | `verimem/bench_harness.py:475` `_factory_failure_results` | risultati fittizi quando la factory del provider fallisce | `run_suite_hippo_warm:525` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 13 | `verimem/bench_harness.py:484` `run_suite_raw` | l'intera suite in `raw` | `run_full_bench:576` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 14 | `verimem/bench_harness.py:497` `run_suite_hippo_cold` | agente nuovo per ogni caso | `run_full_bench:578` | PARZIALE (505-511) | **NON MISURATO**: il build che fallisce | — |
+| 15 | `verimem/bench_harness.py:517` `run_suite_hippo_warm` | un agente condiviso + `consolidate()` ogni K | `run_full_bench:580` | PARZIALE (524-525, 534-537) | **NON MISURATO**: build fallito e `consolidate` fallito | — |
+| 16 | `verimem/bench_harness.py:545` `ProviderSpec` | nome + factory di un provider | `run_full_bench` | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
+| 17 | `verimem/bench_harness.py:555` `run_full_bench` | orchestra provider × condizioni | `scripts/bench_with_without_hippo.py` | **PARZIALE — 14 righe** (577-592) | **NON MISURATO**: il dispatch delle condizioni e l'abort di un provider | — |
+| 18 | `verimem/bench_harness.py:608` `aggregate` | il riepilogo per (condizione, provider) | script, consumatori | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
+| 19 | `verimem/bench_harness.py:643` `aggregate_by_task` | riepilogo per task | script | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
+| 20 | `verimem/bench_harness.py:669` `aggregate_by_iter` | riepilogo per iterazione | script | **ESEGUITA** | **FUNZIONA COME PROMESSO** | 26 passed |
+| 21 | `verimem/bench_harness.py:698` `to_jsonable` / `verimem/bench_harness.py:703` `from_jsonable` | serializzazione dei risultati | script | ESEGUITE | **FUNZIONA COME PROMESSO** | 26 passed |
+| 22 | `verimem/bench_harness.py:722` `merge_results` | unione di più liste di risultati | script | ESEGUITA | **FUNZIONA COME PROMESSO** | 26 passed |
 
 ## Il taglio netto: **le funzioni che producono i numeri sono tutte esercitate**
 

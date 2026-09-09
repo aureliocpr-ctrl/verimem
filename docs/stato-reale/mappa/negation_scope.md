@@ -77,9 +77,9 @@ fatta diventa un'arma:
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | test | verdetto | prova |
 |---|---|---|---|---|---|---|
-| 1 | `governata_da_negazione` (:53) | c'è un negatore che governa la parola a `inizio`? Finestra 60 char, tagliata da punteggiatura e da `ma/però/but/yet/however/tuttavia` | `:80` (`tutte_le_occorrenze_sono_negate`) | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 4 casi su 4, incluso il taglio del «ma» e la finestra |
-| 2 | `tutte_le_occorrenze_sono_negate` (:64) | **ogni** occorrenza è negata? Basta una libera perché il warning resti; `False` se la parola non c'è | `anti_confab_gate.py:141` | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 4 casi su 4, incluso «staging/produzione» |
-| 3 | `e_un_claim_negativo` (:85) | il claim afferma un'**assenza**? Serve al moat, il cui verdetto su quella classe non è affidabile (nessuna assunzione di mondo chiuso) | `anti_confab_gate.py:140` | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 8 casi su 8, IT e EN, più i quattro claim L1.10-L1.13 |
+| 1 | `verimem/negation_scope.py:53` `governata_da_negazione` | c'è un negatore che governa la parola a `inizio`? Finestra 60 char, tagliata da punteggiatura e da `ma/però/but/yet/however/tuttavia` | `:80` (`tutte_le_occorrenze_sono_negate`) | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 4 casi su 4, incluso il taglio del «ma» e la finestra |
+| 2 | `verimem/negation_scope.py:64` `tutte_le_occorrenze_sono_negate` | **ogni** occorrenza è negata? Basta una libera perché il warning resti; `False` se la parola non c'è | `anti_confab_gate.py:141` | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 4 casi su 4, incluso «staging/produzione» |
+| 3 | `verimem/negation_scope.py:85` `e_un_claim_negativo` | il claim afferma un'**assenza**? Serve al moat, il cui verdetto su quella classe non è affidabile (nessuna assunzione di mondo chiuso) | `anti_confab_gate.py:140` | **nessuno lo nomina** | **FUNZIONA COME PROMESSO** | 8 casi su 8, IT e EN, più i quattro claim L1.10-L1.13 |
 
 ## Il verdetto
 

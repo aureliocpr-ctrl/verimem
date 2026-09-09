@@ -45,29 +45,32 @@ Verdetti dati con `coverage` per riga, attribuita alle funzioni con l'`ast`
 
 | # | funzione (file:riga) | cosa promette | chiamata da (LETTO) | esercitata? | claim | verdetto | prova |
 |---|---|---|---|---|---|---|---|
-| 1 | `_require_session_auth` (:55) | dipendenza FastAPI: sessione autenticata su ogni endpoint di lettura | `Depends(...)` in 7 decoratori (`:271, 307, 333, 350, 368, 619, 640`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `test_ide.py:108` → `/api/ide/git/status` senza auth dà **401** |
-| 2 | `_shell_enabled` (:73) | rispecchia `tools_extra._enabled('shell')`: opt-in via `HIPPO_ENABLE_SHELL` | `:406` (`ide_run`), `:481` (`ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `test_ws_requires_shell_enabled` chiude 4403 senza la variabile |
-| 3 | `_expected_token` (:80) | il bearer token da `HIPPO_AUTH_TOKEN`; senza, l'endpoint rifiuta di servire | `:91` (`_require_token`), `:505` (dentro `ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed; `_require_token` alza 503 se vuoto |
-| 4 | `_require_token` (:90) | 503 se il token non è configurato, 403 se non combacia (`compare_digest`) | `:409` (`ide_run`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | idem |
-| 5 | `_shell_argv` (:99) | `shlex.split` + allowlist di binari al posto di `shell=True` (CVE-001) | `:413` (`ide_run`), `:544` (`ide_term`) | PARZIALE (1 riga: 114) | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` in `test_pentest_validation.py`, 73 passed |
-| 6 | `_check_ws_origin` (:137) | l'Origin del WebSocket deve stare in `HIPPO_IDE_ORIGIN_ALLOWLIST` | `:484` (`ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 5 test la chiamano **direttamente** (no origin, origin estraneo, sottostringa, slash finale, default) |
-| 7 | `workspace_root` (:158) | la radice del workspace servito | `:213, 274, 410, 539` | PARZIALE (168) | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 8 | `_safe_path` (:173) | nessuna fuga con `..` fuori dalla radice (CVE-001) | `:309, 342, 352` (+ docstring :19) | PARZIALE (217-218) | — | **FUNZIONA COME PROMESSO** | `test_ide_path_injection.py` e `test_ide_no_root_mutation.py` verdi dentro i 130 |
-| 9 | `_tree_node` (:237) | un nodo dell'albero dei file, con profondità massima | `:266` (ricorsiva), `:277` (`ide_tree`) | **PARZIALE — 11 righe** (247-265) | — | **NON MISURATO** sui rami scoperti | i rami di esclusione/simlink non sono percorsi dai 130 |
-| 10 | `ide_tree` (:272) | `GET /api/ide/tree` | router (`dashboard.py:129`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 11 | `_is_text` (:293) | vero se il file è testo (per decidere se aprirlo nell'editor) | `:314` (`ide_file_read`) | **PARZIALE — 8 statement scoperti su 10** (296-304) | — | **NON MISURATO** | nessuno degli 8 file la percorre |
-| 12 | `ide_file_read` (:308) | `GET /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 13 | `ide_file_write` (:334) | `PUT /api/ide/file` | router; importata anche da `test_ide_file_write_cap_audit3.py` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | il file di test dedicato è dentro i 130 |
-| 14 | `ide_file_delete` (:351) | `DELETE /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 15 | `ide_file_new` (:369) | `POST /api/ide/file/new` | router | PARZIALE (374) | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 16 | `ide_run` (:392) | `POST /api/ide/run`, gated da `_shell_enabled` + `_require_token` | router | PARZIALE (412, 428-429, 442) | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` |
-| 17 | `ide_term` (:464) | terminale WebSocket, tre porte: shell abilitata · Origin · token nel primo messaggio | router | **PARZIALE — 64 statement scoperti su 82** | — | **NON MISURATO nel percorso autenticato** (vedi sotto) | 485-487, 492-494, 497-499, **511-600** mai eseguite |
-| 18 | `_pump` (:565, annidata in `ide_term`) | pompa stdout/stderr del processo verso il WebSocket | `ide_term` | **MAI ESEGUITA** (dentro 511-600) | — | **NON MISURATO** | — |
-| 19 | `_git` (:606) | esegue un comando git nel workspace e torna `(rc, out, err)` | `:622` (`ide_git_status`), `:649` (`ide_git_diff`) | PARZIALE (612-613) | — | **NON MISURATO** | il corpo dei due chiamanti non è eseguito |
-| 20 | `ide_git_status` (:620) | `GET /api/ide/git/status` | router | **PARZIALE — 12 statement su 16** (626-637) | — | **NON MISURATO** | `test_ide.py:108` prova solo il **401 senza auth**: la dipendenza rifiuta prima che il corpo giri |
-| 21 | `ide_git_diff` (:641) | `GET /api/ide/git/diff` | router | **CORPO MAI ESEGUITO** (642-652) | — | **NON MISURATO** | nessun test chiama l'endpoint con auth |
-| 22 | `ide_html` (:841) | la pagina HTML dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
-| 23 | `ide_js` (:1270) | il JavaScript dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 1 | `verimem/ide.py:55` `_require_session_auth` | dipendenza FastAPI: sessione autenticata su ogni endpoint di lettura | `Depends(...)` in 7 decoratori (`:271, 307, 333, 350, 368, 619, 640`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `test_ide.py:108` → `/api/ide/git/status` senza auth dà **401** |
+| 2 | `verimem/ide.py:73` `_shell_enabled` | rispecchia `tools_extra._enabled('shell')`: opt-in via `HIPPO_ENABLE_SHELL` | `:406` (`ide_run`), `:481` (`ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `test_ws_requires_shell_enabled` chiude 4403 senza la variabile |
+| 3 | `verimem/ide.py:80` `_expected_token` | il bearer token da `HIPPO_AUTH_TOKEN`; senza, l'endpoint rifiuta di servire | `:91` (`_require_token`), `:505` (dentro `ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed; `_require_token` alza 503 se vuoto |
+| 4 | `verimem/ide.py:90` `_require_token` | 503 se il token non è configurato, 403 se non combacia (`compare_digest`) | `:409` (`ide_run`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | idem |
+| 5 | `verimem/ide.py:99` `_shell_argv` | `shlex.split` + allowlist di binari al posto di `shell=True` (CVE-001) | `:413` (`ide_run`), `:544` (`ide_term`) | PARZIALE (1 riga: 114) | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` in `test_pentest_validation.py`, 73 passed |
+| 6 | `verimem/ide.py:137` `_check_ws_origin` | l'Origin del WebSocket deve stare in `HIPPO_IDE_ORIGIN_ALLOWLIST` | `:484` (`ide_term`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 5 test la chiamano **direttamente** (no origin, origin estraneo, sottostringa, slash finale, default) |
+| 7 | `verimem/ide.py:158` `workspace_root` | la radice del workspace servito | `:213, 274, 410, 539` | PARZIALE (168) | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 8 | `verimem/ide.py:173` `_safe_path` | nessuna fuga con `..` fuori dalla radice (CVE-001) | `:309, 342, 352` (+ docstring :19) | PARZIALE (217-218) | — | **FUNZIONA COME PROMESSO** | `test_ide_path_injection.py` e `test_ide_no_root_mutation.py` verdi dentro i 130 |
+| 9 | `verimem/ide.py:237` `_tree_node` | un nodo dell'albero dei file, con profondità massima | `:266` (ricorsiva), `:277` (`ide_tree`) | **PARZIALE — 11 righe** (247-265) | — | **NON MISURATO** sui rami scoperti | i rami di esclusione/simlink non sono percorsi dai 130 |
+| 10 | `verimem/ide.py:272` `ide_tree` | `GET /api/ide/tree` | router (`dashboard.py:129`) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 11 | `verimem/ide.py:293` `_is_text` | vero se il file è testo (per decidere se aprirlo nell'editor) | `:314` (`ide_file_read`) | **PARZIALE — 8 statement scoperti su 10** (296-304) | — | **NON MISURATO** | nessuno degli 8 file la percorre |
+| 12 | `verimem/ide.py:308` `ide_file_read` | `GET /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 13 | `verimem/ide.py:334` `ide_file_write` | `PUT /api/ide/file` | router; importata anche da `test_ide_file_write_cap_audit3.py` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | il file di test dedicato è dentro i 130 |
+| 14 | `verimem/ide.py:351` `ide_file_delete` | `DELETE /api/ide/file` | router | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 15 | `verimem/ide.py:369` `ide_file_new` | `POST /api/ide/file/new` | router | PARZIALE (374) | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 16 | `verimem/ide.py:392` `ide_run` | `POST /api/ide/run`, gated da `_shell_enabled` + `_require_token` | router | PARZIALE (412, 428-429, 442) | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` |
+| 17 | `verimem/ide.py:464` `ide_term` | terminale WebSocket, tre porte: shell abilitata · Origin · token nel primo messaggio | router | **PARZIALE — 64 statement scoperti su 82** | — | **NON MISURATO nel percorso autenticato** (vedi sotto) | 485-487, 492-494, 497-499, **511-600** mai eseguite |
+| 18 | `verimem/ide.py:565` `ide_term._pump` (annidata) | pompa stdout/stderr del processo verso il WebSocket | `ide_term` | **MAI ESEGUITA** (dentro 511-600) | — | **NON MISURATO** | — |
+| 19 | `verimem/ide.py:606` `_git` | esegue un comando git nel workspace e torna `(rc, out, err)` | `:622` (`ide_git_status`), `:649` (`ide_git_diff`) | PARZIALE (612-613) | — | **NON MISURATO** | il corpo dei due chiamanti non è eseguito |
+| 20 | `verimem/ide.py:620` `ide_git_status` | `GET /api/ide/git/status` | router | **PARZIALE — 12 statement su 16** (626-637) | — | **NON MISURATO** | `test_ide.py:108` prova solo il **401 senza auth**: la dipendenza rifiuta prima che il corpo giri |
+| 21 | `verimem/ide.py:641` `ide_git_diff` | `GET /api/ide/git/diff` | router | **CORPO MAI ESEGUITO** (642-652) | — | **NON MISURATO** | nessun test chiama l'endpoint con auth |
+| 22 | `verimem/ide.py:841` `ide_html` | la pagina HTML dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 23 | `verimem/ide.py:1270` `ide_js` | il JavaScript dell'IDE (una stringa) | `dashboard.py:39` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 24 | `verimem/ide.py:328` `FileWriteBody` | il corpo di `PUT /api/ide/file`: `path` + `content` | `ide_file_write` (:334); importato da `tests/test_ide_file_write_cap_audit3.py` | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 25 | `verimem/ide.py:363` `FileCreateBody` | il corpo di `POST /api/ide/file/new` | `ide_file_new` (:369) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | 130 passed |
+| 26 | `verimem/ide.py:385` `RunBody` | il corpo di `POST /api/ide/run`: il comando e la cwd | `ide_run` (:392) | ESEGUITA | — | **FUNZIONA COME PROMESSO** | `TestCVE001ShellRun` |
 
 ## Il reperto: un docstring di test che promette una copertura che non c'è
 
