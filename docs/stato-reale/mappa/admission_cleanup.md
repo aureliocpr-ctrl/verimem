@@ -21,3 +21,17 @@ pesca ogni dizionario.
 di tutta la mia parte (162). Non è un difetto — sono tre funzioni lunghe con
 molta logica dentro — ma è il file dove una riga di test copre più codice che
 altrove, e chi lo toccherà dovrebbe saperlo.
+
+## Inventario completo — ogni funzione per nome
+
+**3 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 47 | `cleanup_telemetry` | **pub** | Route existing telemetry facts out of ``facts`` into ``tel | 4 — `test_admission_cleanup.py` |
+| 149 | `cleanup_episode_telemetry` | **pub** | Route existing call-telemetry episodes out of ``episodes`` | 3 — `test_audit_mutations_episodic.py` |
+| 239 | `requalify_quarantined` | **pub** | Re-evaluate quarantined facts with the CURRENT gate and pr | 6 — `test_il_riesame_della_quarantena_lascia_traccia.py` |

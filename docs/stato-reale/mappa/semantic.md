@@ -342,3 +342,174 @@ allora non avevo.
 | 52 | `_row_passes_status_filter` (639) | `semantic.py:4492`, dentro il filtro di riga | gli stessi due: sono le celle che esercitano il filtro per stato | **FUNZIONA COME PROMESSO**, limitato | stessa esecuzione della riga 51 |
 | 53 | `_fact_from_dict` (257) | `semantic.py:402`, nel replay del journal | `tests/test_crash_injection_g3.py` (per via del replay) | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
 | 54 | `_journal_append` (238) | `semantic.py:472` e `:515` — la scrittura differita | `tests/test_crash_injection_g3.py` · `tests/test_deferred_write_journal.py` | **FUNZIONA COME PROMESSO**, limitato | `3 passed in 11.18s` EXIT=0 |
+
+## Inventario completo — ogni funzione per nome
+
+**153 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 117 | `_recall_rerank_budget_s` | priv | Wall-clock budget (s) for the stage-2 CE rerank, read at C | 2 — `test_rerank_cold_start.py` |
+| 133 | `_encode_prepared_within_budget` | priv | Encode ALREADY-PREFIXED text (caller applied as_query / as | 10 — `test_il_degrado_arriva_anche_agli_agenti.py` |
+| 174 | `_encode_within_budget` | priv | Encode `text` for a STORE (applies as_passage), returning  | 1 — `test_save_encode_circuit_breaker.py` |
+| 216 | `_slow_txn_warn_s` | priv | Threshold (s) above which a held _connect() context logs a | 1 — `test_slow_txn_telemetry.py` |
+| 228 | `_journal_path_for` | priv | pending_facts.jsonl beside the semantic db; None for :memo | 4 — `test_crash_injection_g3.py` |
+| 238 | `_journal_append` | priv | Append one JSON line, fsync'd (must survive an immediate k | 🔴 **nessuno** |
+| 253 | `_json_safe_store_kwargs` | priv |  | 🔴 **nessuno** |
+| 257 | `_fact_from_dict` | priv | Rebuild a Fact from a journal entry, tolerant to schema dr | 🔴 **nessuno** |
+| 264 | `_episode_from_dict` | priv | Rebuild an Episode (with its nested Trace list) from a jou | 🔴 **nessuno** |
+| 283 | `_durable_checkpoint` | priv | Force WAL -> main db + fsync so replayed writes are on dis | 1 — `test_journal_durability_r3.py` |
+| 310 | `_replay_pending_facts` | priv | Replay crash-orphaned deferred writes for this db. Returns | 3 — `test_crash_injection_g3.py` |
+| 437 | `store_within_budget` | **pub** | Persist `fact` via `memory.store` without letting the INTE | 6 — `test_deferred_write_durability.py` |
+| 523 | `_flush_pending_writes` | priv | Wait (bounded) for in-flight deferred writes before interp | 1 — `test_deferred_write_durability.py` |
+| 599 | `_rango_di_fiducia` | priv | Il rango di ``status``, oppure ``None`` se la tabella non  | 🔴 **nessuno** |
+| 630 | `_validate_min_status` | priv | Raise ValueError when ``min_status`` is set but unknown. | 🔴 **nessuno** |
+| 639 | `_row_passes_status_filter` | priv | Apply provenance filter to a raw SQLite row (pre-Fact dese | 🔴 **nessuno** |
+| 765 | `_glob_to_like` | priv | Cycle #79: translate small glob (``*``/``?``) into SQL LIK | 🔴 **nessuno** |
+| 786 | `_like_escape_literal` | priv | Escape a string so it matches LITERALLY inside a ``LIKE``  | 🔴 **nessuno** |
+| 890 | `_bump_busy_timeout_ms` | priv | SQLite busy_timeout (ms) for the bump-on-recall UPDATE, re | 🔴 **nessuno** |
+| 967 | `_is_telemetry_topic` | priv | Python mirror of _TELEMETRY_DENYLIST_CLAUSES (same prefixe | 🔴 **nessuno** |
+| 973 | `_topic_prefix_upper` | priv | Half-open upper bound for an INDEXED prefix range scan: th | 1 — `test_scope_index_scan.py` |
+| 993 | `_is_unverified_conversational` | priv | A conversational_promotion row that hasn't been verified — | 🔴 **nessuno** |
+| 1002 | `_fact_is_stale` | priv | v8 (2026-06-03) buco #3: True se il fatto e' scaduto per e | 6 — `test_freshness_bump_on_recall.py` |
+| 1056 | `_topic_penalty_strength` | priv | Strength of the off-topic recall penalty (verimem.topic_pr | 2 — `test_topic_penalty_wire.py` |
+| 1067 | `_apply_topic_penalty_to_sims` | priv | Down-rank broadly-matching off-topic facts (verimem.topic_ | 1 — `test_topic_penalty_wire.py` |
+| 1089 | `_migrate_v0_to_v1` | priv | No-op: the pre-cycle-#78 schema is already created by _SCH | 🔴 **nessuno** |
+| 1097 | `_migrate_v1_to_v2` | priv | Add supersession columns to facts table (cycle #78, 2026-0 | 🔴 **nessuno** |
+| 1134 | `_migrate_v2_to_v3` | priv | Add provenance columns to facts table (cycle #109, 2026-05 | 🔴 **nessuno** |
+| 1170 | `_migrate_v3_to_v4` | priv | Cycle #157 (2026-05-19): partial UNIQUE INDEX on auto-clus | 1 — `test_consolidation_unique_index.py` |
+| 1216 | `_migrate_v4_to_v5` | priv | Cycle 160 (2026-05-19): pattern card schema. Add four opti | 🔴 **nessuno** |
+| 1249 | `_migrate_v5_to_v6` | priv | Cycle 2026-05-27 round 12 (F-fix): provenance schema for t | 🔴 **nessuno** |
+| 1296 | `_migrate_v6_to_v7` | priv | Cycle 2026-05-27 round 13 P0c: transactional rollback for  | 🔴 **nessuno** |
+| 1314 | `_migrate_v7_to_v8` | priv | 2026-06-03 buco #3 (validita temporale): colonna ``last_ve | 🔴 **nessuno** |
+| 1340 | `_migrate_v8_to_v9` | priv | 2026-06-03 buco silent-poisoning (Sorella C): colonna ``em | 🔴 **nessuno** |
+| 1362 | `_migrate_v9_to_v10` | priv | 2026-06-14 valid-time bi-temporale: colonna ``valid_until` | 1 — `test_valid_time.py` |
+| 1387 | `_migrate_v10_to_v11` | priv | 2026-06-19 typed LOGICAL-derivation edge ``derives_from``  | 🔴 **nessuno** |
+| 1405 | `_migrate_v11_to_v12` | priv | 2026-06-20 persist the write-time grounding score (moonsho | 🔴 **nessuno** |
+| 1421 | `_migrate_v12_to_v13` | priv | 2026-07-05 bi-temporal EVENT time ``asserted_at`` (valid-F | 🔴 **nessuno** |
+| 1442 | `_migrate_v14_to_v15` | priv | v15 (2026-07-19): persist the write-time confidence_tier.  | 🔴 **nessuno** |
+| 1452 | `_migrate_v15_to_v16` | priv | v16 (2026-07-23): ``writer_principal`` in a REACHABLE ladd | 🔴 **nessuno** |
+| 1466 | `_migrate_v16_to_v17` | priv | v17 (2026-08-08): ``grounding_span`` — LA PROVA della veri | 🔴 **nessuno** |
+| 1531 | `_ensure_fact_columns` | priv | Self-heal additive fact columns the versioned ladder faile | 🔴 **nessuno** |
+| 1561 | `_ensure_fact_indexes` | priv | Create the indexes an already-migrated store would never g | 🔴 **nessuno** |
+| 1578 | `_migrate_v13_to_v14` | priv | 2026-07-13 epistemic label (cortex transfer #1). | 1 — `test_migration_v14_upgrade_path.py` |
+| 1715 | `_rerank_mode` | priv | 'on' | 'off' | 'auto'. Default AUTO since 2026-07-26 (was  | 1 — `test_rerank_auto_default.py` |
+| 1742 | `_rerank_enabled` | priv | Whether the CE may run at all (preload/CLI warm it iff thi | 6 — `test_la_vetrina_nomina_i_modelli_che_scarica.py` |
+| 1747 | `_rerank_auto_max_words` | priv | AUTO mode's gate: rerank only queries of at most this many | 1 — `test_rerank_auto_default.py` |
+| 1772 | `_query_word_count` | priv | Word count for the AUTO gate — Unicode-aware where split() | 1 — `test_rerank_auto_default.py` |
+| 1791 | `_topk_deterministic` | priv | Top-``n`` candidate indices by ``(-score, fact.id)`` — det | 1 — `test_recall_deterministic_tiebreak.py` |
+| 1822 | `_ann_recall_enabled` | priv | ANN pre-narrowing of the recall corpus. Default AUTO-ON (i | 🔴 **nessuno** |
+| 1843 | `_entity_live_enabled` | priv | Entity-live write path (2026-06-10): keep the entity KG in | 🔴 **nessuno** |
+| 1852 | `_reconcile_on_write_enabled` | priv | P1 truth-reconciliation on write (2026-06-17): after a fac | 🔴 **nessuno** |
+| 1863 | `_source_auto_confirm_enabled` | priv | Auto-confirmation on write (2026-07-11): when a fact resta | 🔴 **nessuno** |
+| 1876 | `_reconcile_auto_supersede_enabled` | priv | Allow reconcile-on-write to SUPERSEDE (apply a knowledge u | 🔴 **nessuno** |
+| 1887 | `_reconcile_evidence_policy` | priv | Anti-sycophancy policy for write-path supersede -> ``(stri | 🔴 **nessuno** |
+| 1907 | `_rerank_topn` | priv | CE pool size = pairs actually scored — the latency knob (2 | 🔴 **nessuno** |
+| 1916 | `_rerank_max_doc_chars` | priv | Length guard for stage-2 rerank. The mmarco CE truncates a | 1 — `test_una_frase_estranea_puo_ribaltare_il_moat.py` |
+| 1939 | `_rerank_via_daemon` | priv | Punteggi del cross-encoder dal daemon condiviso, o None pe | 3 — `test_il_giudice_del_moat_vive_nel_daemon.py` |
+| 1996 | `_load_reranker` | priv | Process-wide lazy CrossEncoder scorer (mirror of embedding | 14 — `test_abstention_ce_gate.py` |
+| 2058 | `_reranker_ready` | priv | True quando una risposta del cross-encoder e' a portata: m | 5 — `test_il_reranker_vive_nel_daemon.py` |
+| 2110 | `_rerank_breaker_n` | priv | Overruns WITHIN THE WINDOW that trip the breaker. 0 disabl | 1 — `test_eval_records_read_path_regime.py` |
+| 2119 | `_rerank_breaker_window` | priv | How many recent reranks the window remembers. | 1 — `test_rerank_breaker.py` |
+| 2128 | `_rerank_breaker_cooldown_s` | priv | Seconds after a trip before the breaker re-arms itself; 0  | 1 — `test_rerank_breaker.py` |
+| 2147 | `_rerank_breaker_tripped_now` | priv | The state as it IS, with no side effect — for observers. | 1 — `test_rerank_breaker.py` |
+| 2162 | `_rerank_breaker_tripped` | priv | THE GATE: whether the rerank is disabled — re-arming LAZIL | 1 — `test_rerank_breaker.py` |
+| 2193 | `_rerank_breaker_overruns_in_window` | priv |  | 2 — `test_rerank_breaker.py` |
+| 2197 | `_rerank_cold_breaker_n` | priv | Cold-load overruns tolerated before tripping (0 disables). | 🔴 **nessuno** |
+| 2234 | `_rerank_slot_lease_s` | priv | How long the slot may stay held before it is presumed lost | 1 — `test_rerank_does_not_pile_up_threads.py` |
+| 2266 | `_rerank_inflight_acquire` | priv | Claim the single rerank slot. Returns the lease number, or | 2 — `test_eval_records_read_path_regime.py` |
+| 2297 | `_rerank_inflight_release` | priv | Release the slot, but only if it is still the one we were  | 2 — `test_eval_records_read_path_regime.py` |
+| 2310 | `_rerank_breaker_reset` | priv | Re-arm the rerank protection (tests; model/env swap at run | 6 — `conftest.py` |
+| 2331 | `_rerank_breaker_record` | priv | Record one FINISHED rerank, in budget or not. | 1 — `test_rerank_breaker.py` |
+| 2362 | `_rerank_breaker_overrun` | priv | One rerank that overran. Kept as the name the call sites a | 1 — `test_eval_records_read_path_regime.py` |
+| 2367 | `_rerank_breaker_cold_overrun` | priv |  | 1 — `test_rerank_breaker.py` |
+| 2413 | `_fusion_breaker_n` | priv | Overruns WITHIN the window that trip the breaker. 0 disabl | 1 — `test_read_path_never_cold_loads.py` |
+| 2423 | `_fusion_breaker_window` | priv | How many recent fusion outcomes the decision looks at. | 1 — `test_read_path_never_cold_loads.py` |
+| 2432 | `_fusion_breaker_reset` | priv | Re-arm the breaker (tests; env swap at runtime). | 4 — `conftest.py` |
+| 2440 | `_fusion_breaker_cooldown_s` | priv | Fusion twin of _rerank_breaker_cooldown_s — same rationale | 🔴 **nessuno** |
+| 2451 | `_fusion_breaker_tripped_now` | priv | The fusion state as it IS, no side effect — twin of | 1 — `test_rerank_breaker.py` |
+| 2457 | `_fusion_breaker_tripped` | priv | THE GATE: whether the fusion is disabled — re-arming lazil | 2 — `test_read_path_never_cold_loads.py` |
+| 2476 | `_fusion_breaker_record` | priv | Record one fusion outcome and trip if the window says it i | 1 — `test_rerank_breaker.py` |
+| 2499 | `_rerank_cold_budget_s` | priv | Wall-clock budget for a rerank attempt while the CE is sti | 1 — `test_rerank_cold_start.py` |
+| 2512 | `_ppr_fusion_budget_s` | priv | Wall-clock budget for the opt-in PPR+BM25 fusion (default- | 🔴 **nessuno** |
+| 2532 | `_ppr_fusion_enabled` | priv | DEFAULT-ON (2026-06-15): the 3-signal fusion (dense-cosine | 🔴 **nessuno** |
+| 2577 | `ranking_reset` | **pub** | Apre una registrazione per la recall che sta per partire. | 1 — `test_una_recall_dice_quali_segnali_hanno_deciso.py` |
+| 2582 | `_ranking_note` | priv | Registra l'esito di uno stadio. Muta il dict IN PLACE: chi | 1 — `test_una_recall_dice_quali_segnali_hanno_deciso.py` |
+| 2592 | `ranking_stages` | **pub** | Gli stadi dell'ultima recall in questo contesto, o None se | 1 — `test_una_recall_dice_quali_segnali_hanno_deciso.py` |
+| 144 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
+| 462 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
+| 1688 | `as_payload` | **pub** | Il fatto come esce dal prodotto: un contratto solo, per tu | 1 — `test_fact_ha_un_contratto_di_uscita.py` |
+| 1809 | `_fid` | priv |  | 5 — `test_anti_confabulation_reconciler.py` |
+| 2742 | `_connect` | priv |  | 47 — `test_bridge.py` |
+| 2769 | `_ann_cache` | priv | La cache dell'indice ANN, costruita al PRIMO accesso. | 3 — `test_ann_recall_equivalence.py` |
+| 2789 | `_db_data_version` | priv | Cross-process cache-coherence probe (sorelle loop 2026-06- | 3 — `test_episode_index_cross_process.py` |
+| 2833 | `_store_telemetry` | priv | Admission-gate (opt-in): persist a telemetry-topic fact in | 🔴 **nessuno** |
+| 2851 | `store` | **pub** | Insert or replace a fact. Backwards-compatible default ret | _generico — cercato qualificato nei blocchi sopra_ |
+| 3543 | `backfill_pending_embeddings` | **pub** | Embed rows persisted with ``embed='defer'`` (NULL embeddin | 7 — `test_backfill_heals_model_mismatch.py` |
+| 3624 | `all` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 3629 | `live_topic_siblings` | **pub** | LIVE same-topic facts a NEW write should be checked agains | 1 — `test_live_topic_siblings.py` |
+| 3650 | `get` | **pub** | Fetch one Fact by id. Returns None if not found. | _generico — cercato qualificato nei blocchi sopra_ |
+| 3684 | `set_epistemic` | **pub** | Apply an epistemic label under the MONOTONE transition rul | 8 — `test_cosa_resta_scollegato_dell_epistemico.py` |
+| 3712 | `set_derives_from` | **pub** | Declare the LOGICAL derivation edge (v11 ``derives_from``) | 🔴 **nessuno** |
+| 3729 | `filter_live_ids` | **pub** | Return the subset of ``fact_ids`` that are LIVE (supersede | 2 — `test_entity_supersede_leak.py` |
+| 3750 | `list_facts` | **pub** | CYCLE #10 fix: paginated list. mcp_server.py called | 22 — `test_audit_summary_integration.py` |
+| 3797 | `_get_corpus_cache` | priv | Cycle #135: lazy build of the recall hot-path cache. | 2 — `test_recall_cache_cross_conn_staleness.py` |
+| 3938 | `_attach_trust_signals` | priv | Cycle #117: post-hoc trust-signal attachment (reused from | 🔴 **nessuno** |
+| 3953 | `_bump_verified` | priv | Bump-on-recall (2026-06-09): refresh ``last_verified_at``  | 1 — `test_bump_on_recall_nonblocking.py` |
+| 4016 | `recall` | **pub** | Semantic recall over facts (cosine on embeddings). | _generico — cercato qualificato nei blocchi sopra_ |
+| 4598 | `_rerank_stage2` | priv | P0.3: re-order the bi-encoder shortlist with a cross-encod | 3 — `test_recall_ppr_fusion.py` |
+| 4753 | `_recall_entity_store` | priv | Lazy EntityStore over the same data dir as this semantic d | 2 — `test_asserted_at_bitemporal.py` |
+| 4764 | `set_reconcile_judge` | **pub** | Wire a semantic NLI judge (semantic_conflict.RelationJudge | 2 — `test_reconcile_judge_env_wiring.py` |
+| 4772 | `reconcile_new_fact` | **pub** | P1 truth-reconciliation on a just-stored fact: find shared | 5 — `test_asserted_at_bitemporal.py` |
+| 4793 | `_auto_confirm_source_trust` | priv | Feed the source-trust consistency channel from same-topic  | 🔴 **nessuno** |
+| 4834 | `_extra_similarity_scorer` | priv | Real cosine for a graph/lexical-only fusion candidate. | 2 — `test_fusion_score_real_store.py` |
+| 4897 | `_maybe_fuse_ppr` | priv | Opt-in (ENGRAM_PPR_FUSION): RRF-fuse query-auto-seeded ent | 3 — `test_fusion_provenance_filter_r3.py` |
+| 5097 | `_expand_query_tokens` | priv | Cycle 166: expand query tokens with synonyms from | 🔴 **nessuno** |
+| 5109 | `recall_hybrid` | **pub** | Hybrid recall: semantic cosine + keyword overlap re-rank. | 6 — `test_l_iniezione_proattiva_spariva_col_degrado.py` |
+| 5204 | `topics_for_query` | **pub** | FORGIA pezzo #180: schema priming primitive. | 2 — `test_semantic_topics_for_query.py` |
+| 5232 | `search_facts` | **pub** | FORGIA pezzo #203: keyword/substring search over `proposit | 41 — `test_anchor_recall.py` |
+| 5442 | `_cascade_delete_refs` | priv | Audit R3 #16: a hard fact-delete must cascade to its refer | 2 — `test_audit_mutations_episodic.py` |
+| 5467 | `_relink_through` | priv | Re-link incoming supersession pointers THROUGH a row about | 🔴 **nessuno** |
+| 5485 | `delete` | **pub** | FORGIA pezzo #202: delete one fact by id (privacy / GDPR). | _generico — cercato qualificato nei blocchi sopra_ |
+| 5547 | `delete_with_undo` | **pub** | Cycle 2026-05-27 round 13 P0c — delete + emit undo handle. | 6 — `test_audit_mutations.py` |
+| 5601 | `undo_destructive_op` | **pub** | Undo a previous delete_with_undo / supersede_with_undo. | 2 — `test_timone_supersede_undo.py` |
+| 5624 | `list_undoable_ops` | **pub** | List the N most recent undoable ops (not yet undone, not e | 3 — `test_timone_non_resuscita_i_cancellati.py` |
+| 5638 | `quarantine_fact` | **pub** | Flip a fact to ``status='quarantined'`` — used by the Tier | 15 — `test_ask_ha_un_contratto_solo.py` |
+| 5695 | `restore_fact` | **pub** | Un-quarantine: flip a ``quarantined`` fact back to ``to_st | 7 — `test_flow_quarantine_exit.py` |
+| 5727 | `mark_orphaned` | **pub** | Cycle #137 — L2 mutation: flip a fact to ``status='orphane | 6 — `test_anti_confab_gate.py` |
+| 5778 | `count` | **pub** | Quante righe, e di QUALE popolazione. | _generico — cercato qualificato nei blocchi sopra_ |
+| 5807 | `count_superseded` | **pub** | Cycle #78: count facts marked as superseded. | 2 — `test_fact_supersede.py` |
+| 5814 | `supersede` | **pub** | Cycle #78 — declare ``old_id`` superseded by ``new_id``. | 102 — `test_asserted_at_bitemporal.py` |
+| 6021 | `auto_supersede_on_contradiction` | **pub** | Auto-invalidate (supersede, NOT delete) older facts that a | 5 — `test_auto_supersede_on_contradiction_scan68.py` |
+| 6106 | `direct_predecessors` | **pub** | Facts this fact directly REPLACED (``superseded_by == fact | 🔴 **nessuno** |
+| 6125 | `get_supersession_chain` | **pub** | Walk forward from ``fact_id`` along ``superseded_by`` poin | 2 — `test_fact_supersede.py` |
+| 6154 | `supersede_chain` | **pub** | Cycle #81 (2026-05-16) — declare a multi-hop supersession | 5 — `test_audit_mutations.py` |
+| 6314 | `_restore_supersession_snapshots` | priv | Cycle #81b atomic rollback helper. Each snapshot is | 1 — `test_semantic_recall_cache_supersede_invalidation.py` |
+| 6350 | `summary_topic` | **pub** | Cycle #79 (2026-05-16) — narrative aggregator for a topic  | 6 — `test_briefing_by_project.py` |
+| 6503 | `_fact_to_summary_dict` | priv |  | 🔴 **nessuno** |
+| 6543 | `clear` | **pub** | Wipe EVERY fact (test-reset / full re-init). ``principal`` | _generico — cercato qualificato nei blocchi sopra_ |
+| 6562 | `audit_verify` | **pub** | Recompute the mutation-audit chain; the id of the first ta | 5 — `test_adjudication_log_chain.py` |
+| 6570 | `audit_head` | **pub** | Current mutation-audit chain head (archive it off-box). | 4 — `test_adjudication_log_chain.py` |
+| 6575 | `audit_count` | **pub** | Number of chained mutation rows — recorded in a signed anc | 1 — `test_tamper_anchor_receipt.py` |
+| 6581 | `audit_head_at` | **pub** | Stored head of the ``count``-th chained mutation row (1-in | 1 — `test_tamper_anchor_receipt.py` |
+| 6588 | `_row` | priv | Deserialize a SQLite row into a Fact. | 6 — `test_continuity.py` |
+| 2012 | `_scorer_remoto` | priv |  | 🔴 **nessuno** |
+| 4853 | `_score` | priv |  | 10 — `test_abstention_hybrid.py` |
+| 4959 | `_fuse` | priv |  | 🔴 **nessuno** |
+| 5022 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
+| 6601 | `_opt` | priv |  | 1 — `test_ogni_colonna_di_facts_arriva_all_oggetto.py` |
+| 4121 | `_passes_recall_view` | priv |  | 1 — `test_i_ritirati_sostenuti_non_tornano_da_nessuna_porta.py` |
+| 4513 | `_row_lv` | priv |  | 🔴 **nessuno** |
+| 4519 | `_row_vu` | priv |  | 1 — `test_un_fatto_scaduto_non_viene_servito.py` |
+| 4689 | `_work` | priv |  | 1 — `test_entity_live_latency.py` |
+
+### I dunder di questo file
+
+L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
+conteggio: **`__getattr__`, `__init__`**. Sono costruttori e accessori di protocollo — non hanno
+un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
+della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.

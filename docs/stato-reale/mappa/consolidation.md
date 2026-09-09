@@ -33,3 +33,24 @@ regola.
 `decay_prune` gira nel worker e l'annullamento non ha comando; qui
 `auto_consolidate` ha **entrambi**. Lo stesso file mostra come sarebbe fatta la
 cosa completa — utile a chi prenderà quel ticket, che non è mio.
+
+## Inventario completo — ogni funzione per nome
+
+**10 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 88 | `_topic_prefix` | priv | Return the first ``depth`` slash-separated segments of ``t | 🔴 **nessuno** |
+| 100 | `detect_cluster_candidates` | **pub** | Group live facts by ``prefix_depth`` of their topic, retur | 2 — `test_consolidation.py` |
+| 142 | `_select_key_facts` | priv | Pick up to ``k`` representative propositions from the clus | 1 — `test_consolidation_bugfixes.py` |
+| 169 | `propose_master_node` | **pub** | Draft a master Fact for one cluster. | 4 — `test_consolidation.py` |
+| 225 | `_cluster_already_consolidated` | priv | Idempotency probe: an AUTO-CLUSTER-MASTER fact already exi | 3 — `test_consolidation_bugfixes.py` |
+| 251 | `_preload_consolidated_prefixes` | priv | Cycle 151 MED#4 fix: ONE SQL select to pull every already- | 🔴 **nessuno** |
+| 277 | `_source_episodes_for_facts` | priv | Collect all ``source_episodes`` from the given facts. | 3 — `test_consolidation_bugfixes.py` |
+| 343 | `auto_consolidate` | **pub** | End-to-end auto-consolidation pass. | 12 — `test_cli_consolidate.py` |
+| 448 | `_persist_master` | priv | Persist one cluster's master node (guarded Fact first, the | 9 — `test_consolidation_cycle170_arm_d_self_loop.py` |
+| 551 | `_wire_edges` | priv | Insert ``narrative_link`` causal_edges from ``ep_id`` to e | 3 — `test_consolidation.py` |

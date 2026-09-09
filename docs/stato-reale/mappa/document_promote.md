@@ -15,3 +15,16 @@ Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello g
 rapporto test/funzione più alto della mia parte. Il nome del terzo
 («il vanto entrava dalla porta dei documenti») dice che qui un difetto c'è già
 stato ed è presidiato.
+
+## Inventario completo — ogni funzione per nome
+
+**2 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 34 | `chunk_citation` | **pub** | The exact, checkable citation of a chunk: ``file:<source_i | 1 — `test_la_citazione_mostrata_e_quella_cercabile.py` |
+| 39 | `promote_chunk_to_fact` | **pub** | Store ``hit`` (a DocumentIndex search result) as a gated F | 6 — `test_document_promote.py` |

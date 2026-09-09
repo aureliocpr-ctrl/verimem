@@ -16,3 +16,17 @@ Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello g
 eseguito nessuno**. Secondo la regola del mandato, un verdetto senza il comando
 è **NON MISURATO**, e lo scrivo invece di prendere in prestito un verde altrui.
 302 righe per 3 funzioni.
+
+## Inventario completo — ogni funzione per nome
+
+**3 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 47 | `_label_for` | priv | Return a short human-readable label for the node, or None  | 1 — `test_l_estratto_dell_evento_non_mutila.py` |
+| 73 | `_neighbors` | priv | Yield (neighbor_id, neighbor_kind, relation_label) tuples. | 🔴 **nessuno** |
+| 150 | `trace` | **pub** | BFS walker. See module docstring. | 30 — `e2e_cycle51_54_chain.py` |

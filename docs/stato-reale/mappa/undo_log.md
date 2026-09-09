@@ -34,3 +34,23 @@ grep -rnw invalidate_handles_for .
 — la stessa forma di `_rango_di_fiducia` (importata da `contradiction.py`) e dei
 callback di `audit_head_at`. Nessun test la nomina; la esercitano i test di chi
 la chiama. **NON MISURATA** direttamente, **non** morta.
+
+## Inventario completo — ogni funzione per nome
+
+**9 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 57 | `ensure_undo_table` | **pub** | Create the facts_undo_log table if it doesn't exist. | 2 — `test_undo_log.py` |
+| 95 | `_is_bytes_envelope` | priv |  | 🔴 **nessuno** |
+| 104 | `_row_to_dict` | priv | Serialize a single facts row to a dict, preserving all col | 🔴 **nessuno** |
+| 129 | `_dict_to_row_args` | priv | Inverse of _row_to_dict: produce (cols, values) for an INS | 🔴 **nessuno** |
+| 162 | `snapshot_pre_op` | **pub** | Snapshot the fact row BEFORE a destructive op. Returns op_ | 3 — `test_timone_supersede_undo.py` |
+| 199 | `undo_op` | **pub** | Restore the pre-op snapshot for op_id. Returns result dict | 3 — `test_timone_non_resuscita_i_cancellati.py` |
+| 258 | `list_undoable` | **pub** | Return the N most recent undoable ops (newest first, not y | 2 — `test_undo_log.py` |
+| 282 | `invalidate_handles_for` | **pub** | Drop the PENDING undo handles that would resurrect ``fact_ | 🔴 **nessuno** |
+| 315 | `prune_expired_undo_log` | **pub** | Delete undo entries past their TTL. Returns count deleted. | 2 — `test_undo_log.py` |

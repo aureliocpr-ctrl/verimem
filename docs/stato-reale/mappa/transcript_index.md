@@ -38,3 +38,33 @@ nominato.
 📌 È la quarta forma della trappola del righello, e questo file è il caso più
 estremo che ho incontrato: **il 100% delle pubbliche “coperte” con un metodo che
 su cinque nomi su otto non misura niente.**
+
+## Inventario completo — ogni funzione per nome
+
+**12 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 66 | `default_db_path` | **pub** | Path di default del Tier C — DB dedicato, separato da ``CO | 2 — `test_documents_tier.py` |
+| 109 | `_connect` | priv |  | 47 — `test_bridge.py` |
+| 114 | `_init_db` | priv |  | 🔴 **nessuno** |
+| 123 | `store` | **pub** | Persisti un turno. Stampa SEMPRE embedding_model + confide | _generico — cercato qualificato nei blocchi sopra_ |
+| 141 | `store_batch` | **pub** | Persisti molti turni in un colpo (encode batch per velocit | 6 — `test_episode_batch_screen.py` |
+| 172 | `_load_rows` | priv |  | 🔴 **nessuno** |
+| 196 | `recall` | **pub** | Recall semantico SUL SOLO Tier C (pull-only). Ritorna ``[( | _generico — cercato qualificato nei blocchi sopra_ |
+| 221 | `recall_report` | **pub** | Come :meth:`recall`, ma dice ANCHE se c'era qualcosa da ce | 1 — `test_il_tier_vuoto_non_e_nessun_risultato.py` |
+| 261 | `get` | **pub** | Recupera un turno per id (usato da promozione / ispezione) | _generico — cercato qualificato nei blocchi sopra_ |
+| 274 | `count` | **pub** |  | _generico — cercato qualificato nei blocchi sopra_ |
+| 285 | `prune` | **pub** | Retention: cancella turni per cap (``max_turns``, tiene i  | _generico — cercato qualificato nei blocchi sopra_ |
+| 324 | `_row_to_turn` | priv |  | 🔴 **nessuno** |
+
+### I dunder di questo file
+
+L'inventario sopra esclude i metodi speciali, e qui sono nominati per chiudere il
+conteggio: **`__init__`**. Sono costruttori e accessori di protocollo — non hanno
+un claim del README, non hanno un test proprio, e sono esercitati da **ogni** uso
+della loro classe: il verdetto è quello dei blocchi qui sopra, non una riga a sé.

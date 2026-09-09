@@ -61,3 +61,25 @@ serve a produrre e che la lettura funzione-per-funzione non può dare.
 stesso file, sulla stessa porta. Non è una scelta di disegno che si possa
 spiegare con «il decay è manutenzione»: è una coppia scritta insieme di cui è
 arrivata solo una metà.
+
+## Inventario completo — ogni funzione per nome
+
+**11 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 99 | `has_negation` | **pub** | True iff `text` contains an ODD number of syntactic negati | 1 — `test_facts_conflict.py` |
+| 115 | `strip_negation` | **pub** | Remove every negation marker (both syntactic AND lexical); | 1 — `test_facts_conflict.py` |
+| 177 | `_content_tokens` | priv | Lowercased tokens (preserving `#` for identifiers like `F# | 🔴 **nessuno** |
+| 187 | `_overlap_coefficient` | priv | Szymkiewicz-Simpson coefficient: |A ∩ B| / min(|A|, |B|). | 🔴 **nessuno** |
+| 202 | `find_conflicting_pairs` | **pub** | Return every (positive, negative) fact pair that asserts t | 2 — `test_facts_conflict.py` |
+| 326 | `find_numeric_conflicts` | **pub** | Return fact pairs that state a DIFFERENT value for the sam | 2 — `test_facts_conflict_numeric.py` |
+| 469 | `find_lexical_conflicts` | **pub** | Retroactive scan for EVERYTHING the expanded lexical write | 1 — `test_facts_conflict_lexical.py` |
+| 142 | `as_dict` | **pub** |  | 2 — `test_facts_conflict.py` |
+| 304 | `as_dict` | **pub** |  | 2 — `test_facts_conflict.py` |
+| 448 | `as_dict` | **pub** |  | 2 — `test_facts_conflict.py` |
+| 523 | `_pairs` | priv |  | 1 — `test_rerank_fallback_order_audit3.py` |

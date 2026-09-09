@@ -49,3 +49,22 @@ esattamente la forma che ho trovato negli altri file oggi, e me l'ero fatta
 addosso senza vederla: **il test presidia il comportamento, la funzione resta
 non misurata**. Nel caso specifico è la scelta giusta (il presidio dal canale è
 più forte), ma il conteggio va detto com'è, e vale per me come per gli altri.
+
+## Inventario completo — ogni funzione per nome
+
+**8 funzioni**, dall'albero sintattico. La colonna «test» dice
+quanti file di `tests/` **nominano** quel nome e il primo di essi: è
+rintracciabilità, **non** un verdetto — i verdetti con la prova eseguita
+stanno nei blocchi qui sopra. I nomi generici sono marcati come tali,
+perché il nome nudo di `get` o `store` pesca ogni dizionario del repo.
+
+| riga | funzione | vis | cosa promette | test che la nominano |
+|---|---|---|---|---|
+| 35 | `references_fact` | **pub** | True when the new write NAMES the stored fact's id. | 2 — `test_due_guardie_si_coprono_e_nessuno_lo_sa.py` |
+| 62 | `source_signature_of` | **pub** | L'impronta di un TESTO di fonte, o ``None`` se testo non c | 🔴 **nessuno** |
+| 89 | `canonical_source_of` | **pub** | The reputation key of a fact's writer: the ``canonical_sou | 1 — `test_due_cartelle_diverse_non_sono_la_stessa_fonte.py` |
+| 162 | `declared_identity` | **pub** | L'identita' DICHIARATA in un ``writer_principal``, o ``Non | 1 — `test_il_fatto_di_bruno_archiviava_quello_di_anna.py` |
+| 196 | `is_same_source` | **pub** | Due fatti vengono dalla stessa penna? (la `canonical_sourc | 3 — `test_due_cartelle_diverse_non_sono_la_stessa_fonte.py` |
+| 232 | `_coerce_ts` | priv |  | 🔴 **nessuno** |
+| 243 | `_when_true` | priv | WHEN the fact is asserted TRUE — ``asserted_at`` (bi-tempo | 🔴 **nessuno** |
+| 256 | `classify_write_relation` | **pub** | ``"evolution"`` iff ``new_fact`` is the SAME canonical sou | 4 — `test_il_fatto_di_bruno_archiviava_quello_di_anna.py` |
