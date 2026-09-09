@@ -1,0 +1,76 @@
+due fatti: fc02c45901c7 545f1c21e451
+
+=== _parse_ids: la colonna separata da virgole, coi vuoti di legacy
+  'aaa,bbb'        -> ['aaa', 'bbb']
+  'aaa,,bbb'       -> ['aaa', 'bbb']
+  ''               -> []
+  None             -> []
+  ','              -> []
+  '  aaa , bbb '   -> ['aaa', 'bbb']
+
+=== resolve_prefix: corto, ambiguo, buono
+  'fc0'            -> LineageRefError: fact reference 'fc0' is shorter than 6 chars
+  'fc02c4'         -> fc02c45901c7
+  'fc02c45901c7'   -> fc02c45901c7
+  'zzzzzzzz'       -> LineageNotFound: no fact matches prefix 'zzzzzzzz'
+
+=== tip_fact / recent_facts
+  tip_fact: 545f1c21e451
+  recent_facts(5): 2 nodi · ['545f1c21e451', 'fc02c45901c7']
+
+=== resolve_lineage: auto | topic | latest | prefisso
+  'auto'                   -> 545f1c21e451
+  'latest'                 -> 545f1c21e451
+  'topic'                  -> LineageNotFound: lineage 'topic': no prior fact with topic 'project/verimem/tre'
+  'fc02c459'               -> fc02c45901c7
+  'riferimento-inventato'  -> LineageNotFound: no fact matches prefix 'riferimento-inventato'
+
+=== save_checkpoint: scrive ATTRAVERSO il gate, incatenato
+  ricevuta: {'moat': 'not_run:no_source', 'stored': 'True', 'id': '5fb303bdfdca', 'status': 'model_claim', 'replaced': 'False', 'grounding_score': 'None'}
+
+=== walk_backward / walk_forward
+  walk_backward dal checkpoint: ['fc02c45901c7', '5fb303bdfdca']
+  walk_forward dal primo fatto: ['5fb303bdfdca']
+
+  le QUATTRO codifiche dell'appartenenza, costruite a mano nel db:
+   fatti nel db: 7
+   codifica esatta   (ee2bef9ea4f6) trovata da walk_forward: True
+   codifica testa    (4d6f8a6bf7fc) trovata da walk_forward: True
+   codifica coda     (02920951d1a7) trovata da walk_forward: True
+   codifica mezzo    (94a9725d296f) trovata da walk_forward: True
+
+=== find_orphans / since_epoch
+  since_epoch('today'     ) -> 1788904800.0
+  since_epoch('2h'        ) -> 1788946324.0654848
+  since_epoch('3d'        ) -> 1788694324.0655167
+  since_epoch('1w'        ) -> 1788348724.06554
+  since_epoch('5m'        ) -> 1788953224.0655613
+  since_epoch('spazzatura') -> LineageRefError: invalid --since 'spazzatura' (expected NUM[m|h|d|w] or 'toda
+  find_orphans nell'ultima ora: 2 orfani su 7 fatti nella finestra · chiavi: ['orphans', 'total']
+
+=== relink: la riparazione della catena
+  prima: [{'id': 'fc02c45901c7', 'topic': 'project/verimem/uno', 'preview': "Il canone del capannone 12 e' 5900 euro.", 'created_at': 1788953521.5142183, 'lineage_to': [], 'extra_parents': [], 'confidence': 0.5, 'status': 'model_claim', 'meta_narrative': False, 'grounding_score': 99.67333984375}, {'id': 'ee2bef9ea4f6', 'topic': 'project/verimem/figli', 'preview': 'Fatto figlio con codifica esatta del capannone 12.', 'created_at': 1788953522.6451705, 'lineage_to': ['fc02c45901c7'], 'extra_parents': [], 'confidence': 0.5, 'status': 'quarantined', 'meta_narrative': False, 'grounding_score': 99.89030456542969}]
+  relink(figlio -> secondo fatto) -> {'id': 'ee2bef9ea4f6', 'lineage_to': ['545f1c21e451'], 'previous': ['fc02c45901c7']}
+  dopo: ['545f1c21e451', 'ee2bef9ea4f6']
+
+=== handoff_prepare / handoff_show / handoff_log
+  handoff_prepare: {'moat': 'not_run:no_source', 'stored': 'True', 'id': 'e14d0b52cdc8', 'status': 'model_claim', 'replaced': 'False'}
+  handoff_show('ws3'): {'id': 'e14d0b52cdc8', 'topic': 'continuity/handoff/ws3', 'proposition': "Consegna: la mappa di gateway.py e' 
+  handoff_show('nessuno'): None
+  handoff_log('ws3', 5): 1 voci
+
+=== collect_digest: il racconto della finestra
+  window_hours: 24
+  n_facts: 8
+  by_status: {'model_claim': 4, 'quarantined': 4}
+  themes: [{'namespace': 'project/verimem', 'n_facts': 7, 'linked_ratio': 0.71, 'last_seen': 1788953523.94773}, {'namespace': 'continuity/handoff', 'n_facts': 1
+  velocity_per_hour: 0.33
+  orphan_ratio: 0.25
+  tip: {'id': 'e14d0b52cdc8', 'topic': 'continuity/handoff/ws3', 'preview': "Consegna: la mappa di gateway.py e' a meta'.", 'created_at': 1788953524.1148822,
+
+=== _node / _namespace (le due private di supporto)
+  _node(riga con _NODE_COLS): {'id': 'fc02c45901c7', 'topic': 'project/verimem/uno', 'preview': "Il canone del capannone 12 e' 5900", 'created_at': '1788953521.5142183', 'lineage_to': '[]'}
+  _node(riga da SELECT *)   : {'id': 'fc02c45901c7', 'topic': "Il canone del capannone 12 e' 5900", 'preview': 'project/verimem/uno', 'created_at': '0.5', 'lineage_to': '[]'}
+  _namespace('project/verimem/uno', 1) -> 'project'
+  _namespace('project/verimem/uno', 2) -> 'project/verimem'
+  _namespace('senza', 1) -> 'senza'
