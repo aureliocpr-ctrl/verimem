@@ -1,0 +1,19 @@
+=== briefing: il riconoscitore col FORMATO VERO accanto a quello spento
+  '[gemini-call 1.2s] ask_gemini(prompt=…)'    -> True
+  '[agy-call] ok'                              -> True
+  '[CLAUDE-CALL 0.3s] ask_claude'              -> True
+  '  [kimi-call] con spazi davanti'            -> True
+  'cross-LLM call to gemini: ok'               -> False
+  'ho scritto la mappa di client.py'           -> False
+  "[deploy-call] non e' un llm"                -> False
+
+=== mesh: quanti embedding ci sono DAVVERO nel db
+  colonne di facts che parlano di vettori: ['embedding', 'embedding_model']
+  fatti: 2 · con embedding non nullo: 2
+  lunghezza del blob: 3072 byte → 768.0 float32
+
+=== mesh: le funzioni pure
+  _cosine(uguali): 1.0 | ortogonali: 0.0 | a 45 gradi: 0.7071
+  _vec_bus(): clp.agentos.vec_bus
+  local_topk_embeddings(vettore artificiale): 0 righe
+  mesh_resonant_merge: {'ok': False, 'error': 'no valid embeddings'}

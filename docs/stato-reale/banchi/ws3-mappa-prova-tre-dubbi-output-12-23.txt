@@ -1,0 +1,30 @@
+=== 1. la NEGAZIONE dentro il soggetto
+  "Il capannone 12 e' in via Roma."      -> None
+  "Il capannone 12 non e' in via Roma."  -> None
+  'Rex is a labrador.'                   -> ('rex', 'labrador', 'a labrador')
+       subject_key -> 'rex'
+  'Rex is not a labrador.'               -> ('rex', 'not a labrador', 'not a labrador')
+       subject_key -> 'rex'
+  >>> due fatti opposti hanno lo STESSO soggetto? True
+
+=== 2. che cosa cerca davvero _is_call_telemetry_episode
+def _is_call_telemetry_episode(ep: Any) -> bool:
+    """True when the episode's task_text is a cross-LLM call record, not a task."""
+    return is_call_telemetry(getattr(ep, "task_text", ""))
+
+  'cross-LLM call to gemini: ok'     -> False
+  'ask_gemini'                       -> False
+  '[call] ask_claude'                -> False
+  'ask_agy(prompt=...)'              -> False
+  'ho scritto la mappa'              -> False
+
+=== 3. la soglia del clustering morde?
+  ids: ['a', 'b', 'x', 'y']
+  soglia 0.99 -> [['a', 'b'], ['x', 'y']]
+  soglia  0.9 -> [['a', 'b'], ['x', 'y']]
+  soglia  0.5 -> [['a', 'b'], ['x', 'y']]
+  soglia  0.1 -> [['a', 'b'], ['x', 'y']]
+  soglia  0.0 -> [['a', 'b', 'x', 'y']]
+
+=== e la firma di forward_plan: `goal` è annotato come richiamabile?
+  (start_skill: 'str', ids: 'list[str]', P: 'np.ndarray', *, depth: 'int' = 3, beam_width: 'int' = 3, goal: 'Callable[[list[str]], bool] | None' = None) -> 'list[tuple[list[str], float]]'

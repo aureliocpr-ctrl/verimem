@@ -1,0 +1,49 @@
+==========================================================================
+A. successor_repr.py — la matrice del successore sulle sequenze di skill
+==========================================================================
+_collect_skills: ['a', 'b', 'c', 'd'] | ordinato e stabile: True
+build_transition_matrix: forma (4, 4) | riga di 'a': [0.0, 0.667, 0.333, 0.0] | somma 1.0
+build_successor_matrix: riga di 'a': [0.1, 0.06, 0.066, 0.774]
+predict_next('a'): ['b', 'c', 'd']
+predict_next(skill ignota): []
+update_from_sequence: la matrice CAMBIA: True
+forward_plan senza goal: [(['a', 'b', 'c', 'd'], -0.8109301566116849), (['a', 'c', 'd', 'd'], -1.0986122588657878)]
+forward_plan con goal predicato ('d' nel cammino): [(['a', 'b', 'c', 'd'], -0.8109301566116849), (['a', 'c', 'd'], -1.0986122588657878)]
+forward_plan(goal='d') -> TypeError 'str' object is not callable
+cluster_by_sr_similarity(0.9): [['a', 'b', 'c', 'd']]
+cluster_by_sr_similarity(0.1): [['a', 'b', 'c', 'd']]
+
+==========================================================================
+B. composer.py — «lo stesso soggetto», una definizione sola per tutti
+==========================================================================
+_min_score(): 55.0
+  subject_key('Il canone del capannone'       ) -> 'canone del capannone'
+  subject_key('il  Canone   del capannone'    ) -> 'canone del capannone'
+  subject_key("L'aula magna"                  ) -> "l'aula magna"
+  subject_key('The dog'                       ) -> 'dog'
+  subject_key('a dog'                         ) -> 'dog'
+normalizza_apostrofi(tre varianti): ["l'aula", "l'aula", "l'aula"]
+  _copula_parse('Rex is a labrador.'                            ) -> ('rex', 'labrador', 'a labrador')
+  _copula_parse("Il canone e' 5900 euro."                       ) -> None
+  _copula_parse("Rex e' nel capannone."                         ) -> None
+  _copula_parse("Questa non e' una copula perche' manca il verbo") -> ('questa non', "copula perche' manca il verbo", "una copula perche' manca il verbo")
+_strip_article('the dog','en'): dog | ('il cane','it'): cane | ('a dog','it') [articolo di ALTRA lingua]: a dog
+_apre_un_locativo('nel','it'): True | ('Nelson','it'): False | ('nelle','it'): True
+
+  compose_once su uno store vero:
+    {'eligible': 2, 'copula_facts': 0, 'candidates': 0, 'admitted': 0, 'rejected_gate': 0, 'rejected_noncommittal': 0, 'skipped_known': 0, 'admitted_ids': [], 'run_id': 'ws3-mappa'}
+
+==========================================================================
+C. briefing.py — il riassunto di sessione dai tre livelli di memoria
+==========================================================================
+_is_call_telemetry_episode('cross-LLM call ...'): False
+_is_call_telemetry_episode('ho scritto la mappa'): False
+_safe_count(oggetto con count): 7 | senza count: None (None = il livello non sa rispondere, NON un numero)
+get_briefing(agent=None) -> {'summary_text': 'verimem memory: episodes unavailable, facts unavailable, skills unavailable.', 'stats': {'episodes': N
+
+==========================================================================
+D. mesh_memory.py — la memoria condivisa fra istanze
+==========================================================================
+_cosine(uguali): 1.0 | _cosine(ortogonali): 0.0
+local_topk_embeddings: righe 0 | la prima porta (id, embedding, score): vuoto
+_vec_bus(): clp.agentos.vec_bus

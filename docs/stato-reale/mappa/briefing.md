@@ -1,0 +1,12 @@
+# Mappa — `verimem/briefing.py`
+
+*ws3 Galileo. 3 funzioni: il **riassunto di sessione** che mette insieme i tre
+livelli di memoria (episodi, fatti, skill). Banchi:
+`ws3-mappa-prova-quattro-moduli.py` e `ws3-mappa-prova-mesh-e-briefing.py`
+(09/09 12:21-12:26).*
+
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 1 | `verimem/briefing.py:45` `_safe_count` | «`count()` best-effort per tipizzazione d'anatra. Restituisce **None quando il livello non sa rispondere — NON un numero**. Prima restituiva -1, un sentinella ragionevole INTERNAMENTE…» | **FUNZIONA COME PROMESSO** | oggetto con `count()` → **7** · oggetto senza → **None**. Il «non lo so» resta distinguibile da un conteggio: se tornasse -1 o 0, un totale a valle lo sommerebbe come se fosse una misura |
+| 2 | `verimem/briefing.py:40` `_is_call_telemetry_episode` | «True quando il `task_text` dell'episodio è il **verbale di una chiamata cross-LLM**, non un compito» | **FUNZIONA COME PROMESSO — e il controllo positivo l'ho dovuto correggere io** | prima passata: `False` su cinque testi, incluso `'cross-LLM call to gemini: ok'`. **Letta la regex** (`_call_telemetry.py:17`): il formato è `[<llm>-call …]` a inizio riga. Rifatto col formato vero: `'[gemini-call 1.2s] …'` → **True** · `'[agy-call] ok'` → **True** · `'[CLAUDE-CALL 0.3s] …'` → **True** (insensibile alle maiuscole) · `'  [kimi-call] …'` → **True** (spazi iniziali tollerati). E resta **spento** dove deve: `'cross-LLM call to gemini: ok'` → False · `'ho scritto la mappa di client.py'` → False · **`"[deploy-call] non e' un llm"` → False** (la lista dei nomi è chiusa, non un `*-call` qualsiasi). ⚠️ I miei primi cinque casi non erano un difetto del codice: erano casi sbagliati miei |
+| 3 | `verimem/briefing.py:65` `get_briefing` | «assembla un riassunto curato del contesto di sessione dai tre livelli di memoria dell'agente» | **FUNZIONA COME PROMESSO anche senza agente — ed è la parte che conta** | `get_briefing(agent=None, n_facts=2)` **non solleva**: restituisce `{'summary_text': 'verimem memory: episodes unavailable, facts unavailable, skills unavailable.', 'stats': {...}}`. Le tre indisponibilità sono **nominate una per una** nel testo che l'utente legge: un riassunto che non può leggere un livello lo dice, invece di presentare un vuoto come «nessun episodio». ⚠️ **NON MISURATO** il ramo con un agente vero e i tre livelli pieni (richiede un `HippoAgent` costruito): qui ho provato il ramo degradato, che è quello dove un riassunto può mentire |

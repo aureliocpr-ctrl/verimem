@@ -1,0 +1,18 @@
+# Mappa — `verimem/successor_repr.py`
+
+*ws3 Galileo. 7 funzioni, tutte pure: si esercitano su liste di sequenze, quindi
+**ogni riga qui sotto ha una prova eseguita**, nessuna dedotta. Banco:
+`ws3-mappa-prova-quattro-moduli.py` e `ws3-mappa-prova-tre-dubbi.py` (09/09
+12:21-12:23). Le firme sono state lette prima di chiamare.*
+
+Episodi di prova: `[["a","b","c"], ["a","b","d"], ["a","c","d"], ["b","c"]]`.
+
+| # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
+|---|---|---|---|---|
+| 1 | `verimem/successor_repr.py:52` `_collect_skills` | «lista ordinata e stabile degli id unici… l'ordinamento tiene l'indice della matrice **riproducibile fra esecuzioni**» | **FUNZIONA COME PROMESSO** | `_collect_skills(EPISODI)` → `['a','b','c','d']`, e `== sorted(...)` → `True`: l'indice non dipende dall'ordine di arrivo |
+| 2 | `verimem/successor_repr.py:61` `build_transition_matrix` | «matrice empirica `P[i][j] = P(s_{t+1}=j | s_t=i)`… normalizzata per riga. Gli stati pozzo prendono un cappio su sé stessi **così la riga resta una distribuzione valida** (niente divisione per zero a valle)» | **FUNZIONA COME PROMESSO** | forma `(4, 4)`; riga di `'a'` → `[0.0, 0.667, 0.333, 0.0]`, **somma 1.0** — «a» va a «b» due volte su tre e a «c» una: i conteggi degli episodi tornano. Restituisce `(ids, matrice)`, non la sola matrice |
+| 3 | `verimem/successor_repr.py:89` `build_successor_matrix` | la matrice del successore scontata di `gamma`, normalizzata per riga | **FUNZIONA COME PROMESSO** | `gamma=0.9` → riga di `'a'` = `[0.1, 0.06, 0.066, 0.774]`: il peso si sposta su `'d'`, che è dove i cammini da `'a'` finiscono — **il futuro lontano pesa più del prossimo passo**, che è ciò che distingue la SR dalla transizione |
+| 4 | `verimem/successor_repr.py:133` `predict_next` | «le top-k skill più probabili data quella corrente» | **FUNZIONA COME PROMESSO**, e il caso vuoto è pulito | `predict_next('a', ids, P, top_k=3)` → `['b','c','d']`; con una skill **mai vista** → `[]` (non un errore, non una lista di rumore) |
+| 5 | `verimem/successor_repr.py:164` `update_from_sequence` | «aggiornamento online in stile TD della matrice del successore da una singola sequenza» | **FUNZIONA COME PROMESSO** | con `alpha=0.5` sulla sequenza `['a','b','c']` la matrice **cambia davvero** (`(abs(M2-M) > 1e-9).any()` → `True`): l'aggiornamento non è un passaggio a vuoto |
+| 6 | `verimem/successor_repr.py:266` `forward_plan` | «pianificazione in avanti con beam search sulla matrice di transizione» | **FUNZIONA COME PROMESSO** | senza obiettivo → `[(['a','b','c','d'], -0.811), (['a','c','d','d'], -1.099)]`; con obiettivo → `[(['a','b','c','d'], -0.811), (['a','c','d'], -1.099)]`, cioè **il cammino si ferma quando l'obiettivo è raggiunto**. ⚠️ Nota **contro di me**: ho passato `goal="d"` e ho preso `TypeError: 'str' object is not callable` — ma la firma è annotata `goal: Callable[[list[str]], bool] \| None`, quindi l'errore era mio, non del codice. Il tipo lo diceva; l'ho letto dopo |
+| 7 | `verimem/successor_repr.py:367` `cluster_by_sr_similarity` | «raggruppamento greedy delle skill per coseno sulle loro righe della SR» | **FUNZIONA COME PROMESSO — e la soglia MORDE, provato con un controllo positivo** | primo giro: `[['a','b','c','d']]` a soglia 0,9 **e** 0,1 — un risultato che non distingue non decide niente. Rifatto con due gruppi **separati per costruzione** (`a↔b` da una parte, `x↔y` dall'altra, mai in contatto): `0.99 → [['a','b'],['x','y']]` · `0.9 → [['a','b'],['x','y']]` · `0.5 → idem` · `0.1 → idem` · `0.0 → [['a','b','x','y']]`. La soglia separa e a zero collassa: il primo giro non era un difetto, erano quattro skill davvero tutte simili |

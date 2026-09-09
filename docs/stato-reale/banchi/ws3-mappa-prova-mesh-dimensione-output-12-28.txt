@@ -1,0 +1,21 @@
+  fatto 7d9470669db4 · modello 'intfloat/multilingual-e5-base' · embedding 3072 byte = 768 float32
+
+  mesh_memory.EMBED_DIM = 384 → la query filtra length(embedding) = 1536 byte
+
+=== il default del prodotto, letto dal codice ===
+  HIPPO_EMBED_MODEL:
+  multilingual-e5:
+    verimem/anti_confab_gate.py:573:    # per sempre. `intfloat/multilingual-e5-base` e' gia' installato e gia' in
+    verimem/cli.py:393:#: `intfloat/multilingual-e5-base` folder lands at 1082 MB (`model.safetensors`
+    verimem/cli.py:406:    "intfloat/multilingual-e5-base": 1082,
+  all-MiniLM:
+    verimem/bench_corpus_scale.py:53:            ``sentence-transformers/all-MiniLM-L6-v2``).
+    verimem/config.py:66:_LEGACY_EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    verimem/config.py:88:    "sentence-transformers/all-MiniLM-L6-v2": 384,
+  EMBED_MODEL:
+    verimem/resonator_text_bridge.py:47:_EMBED_MODEL: Any = None
+    verimem/resonator_text_bridge.py:53:    global _EMBED_MODEL
+    verimem/resonator_text_bridge.py:54:    if _EMBED_MODEL is None:
+
+=== lo store di casa (sola lettura): che dimensione hanno LI'? ===
+  modello 'intfloat/multilingual-e5-base' · 3072 byte (768 float32) · 18092 fatti

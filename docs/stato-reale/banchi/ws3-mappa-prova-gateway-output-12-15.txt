@@ -1,0 +1,50 @@
+chiave di acme: vm_123… | lunghezza: 43 | prefisso vm_: True
+
+=== 1. chi entra senza chiave
+  GET /v1/health  senza chiave -> 200 {'ok': True, 'version': '0.7.7'}
+  GET /v1/search  senza chiave -> 401 {'detail': 'invalid or missing API key'}
+  GET /v1/search  chiave finta -> 401
+  GET /v1/search  chiave vera  -> 200
+  GET /v1/search  Bearer       -> 200
+
+=== 2. IL CLAIM: il tenant viene dalla CHIAVE, mai dal corpo
+  POST con chiave ACME e tenant_id='globex' nel corpo -> 200 {'moat': 'passed', 'stored': 'True', 'id': '58b1a3473476', 'status': 'model_claim'}
+  il fatto lo vede ACME  : 1
+  il fatto lo vede GLOBEX: 0
+  >>> l'isolamento regge: True
+  file per tenant: True | True | cartelle: ['acme', 'globex']
+
+=== 3. i nomi di tenant che NON devono nascere
+  '../evil'    -> ValueError: tenant_id non valido: '../evil' (slug [a-z0-9._-], max 64)
+  'acme.'      -> ValueError: tenant_id 'acme.' must not end with '.' — Windows strips trailin
+  'con'        -> ValueError: tenant_id 'con' is a reserved device name on Windows (con/aux/nu
+  'ACME'       -> ValueError: tenant_id non valido: 'ACME' (slug [a-z0-9._-], max 64)
+  'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' -> ValueError: tenant_id non valido: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+  'acme/../x'  -> ValueError: tenant_id non valido: 'acme/../x' (slug [a-z0-9._-], max 64)
+  ''           -> ValueError: tenant_id non valido: '' (slug [a-z0-9._-], max 64)
+  (controllo positivo) 'acme-2' -> creato
+
+=== 4. la chiave a riposo: c'e' il testo in chiaro nel database?
+  la chiave in chiaro compare nei byte del db: False
+  tabelle: ['gateway_keys', 'gateway_usage']
+  colonne di gateway_keys: ['key_id', 'key_hash', 'tenant_id', 'name', 'plan', 'created_at', 'revoked_at']
+  prima riga: ['62fde42659db8a5b', '43cf7e9947011b6a0601449a03d5b66e95', 'acme', 'prova', 'free', '1788948957.6641119', 'None']
+  colonne di gateway_usage: ['tenant_id', 'day', 'requests', 'reads', 'writes', 'stored_ok', 'rejected']
+  prima riga: ['acme', '2026-09-09', '4', '3', '1', '1', '0']
+
+=== 5. revoca
+  revoke( 62fde42659db ) -> True
+  la chiave revocata ora -> 401
+  l'altra chiave -> 200
+
+=== 6. ogni write passa il GATE, come nell'SDK
+  confab -> 200 {'moat': 'failed', 'quarantined_by': 'moat', 'stored': 'True', 'id': '09ed2f829916', 'status': 'quarantined', 'replaced': 'False'}
+
+=== 7. niente LLM implicito (O4)
+  ingest conversazionale senza llm -> 400 {'detail': 'conversation ingest needs a server-side extraction llm: start the gateway with one (create_app(llm=...)); single verified facts work witho
+
+=== 8. corpo malformato: 400, mai 500 (un 500 su input costruito e' un DoS)
+  {}                                       -> 400
+  {'content': 123}                         -> 400
+  {'messages': 'non una lista'}            -> 400
+  {'content': 'xxxxxxxxxx', 'topic': {'a   -> 400
