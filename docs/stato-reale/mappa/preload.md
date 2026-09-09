@@ -92,3 +92,52 @@ cima): un'assenza dichiarata invece che dedotta.
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`. I numeri di §2 sono miei, misurati l'08/09; quelli di
 §4 vengono dal file.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/preload.py` — 11 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/preload.py:44` `_warm` | funzione | `verimem/local_grounding.py`; `verimem/preload.py` | **nessuno** | NON MISURATO |
+| 2 | `verimem/preload.py:51` `_segnala_rerank_delegato` | funzione: Chiede al daemon se sa rerankare, e lo registra. Nessun modello caricato. | `verimem/preload.py` | `tests/test_il_reranker_vive_nel_daemon.py` | NON MISURATO |
+| 3 | `verimem/preload.py:78` `_warm_reranker` | funzione: Pre-load the stage-2 cross-encoder reranker (the R@1 lever) in-process. | `verimem/preload.py` | `tests/test_preload_reranker.py` | NON MISURATO |
+| 4 | `verimem/preload.py:101` `_deve_scaldare_il_giudice` | funzione: Il moat sul write e' acceso ESPLICITAMENTE per questo processo? | `verimem/preload.py` | `tests/test_il_giudice_dice_se_sta_scaldando.py`; `tests/test_l_avvio_dice_se_scaldera_il_giudice.py` | NON MISURATO |
+| 5 | `verimem/preload.py:119` `_warm_moat_judge` | funzione: Carica il giudice del moat fuori dal thread di richiesta. Best-effort: | `verimem/preload.py` | **nessuno** | NON MISURATO |
+| 6 | `verimem/preload.py:133` `_service_enabled` | funzione | `verimem/embedding.py`; `verimem/preload.py` | **nessuno** | NON MISURATO |
+| 7 | `verimem/preload.py:137` `_scalda_le_librerie_del_giudice` | funzione: Carica le LIBRERIE che il giudice usera', all'avvio e non sotto richiesta. | `verimem/preload.py` | **nessuno** | NON MISURATO |
+| 8 | `verimem/preload.py:215` `_dichiara_il_piano_del_giudice` | funzione: Dice all'avvio se il giudice verra' scaldato, quanto costa, e la leva. | `verimem/preload.py` | **nessuno** | NON MISURATO |
+| 9 | `verimem/preload.py:242` `preload_embedding` | funzione: Warm the embedding model. Returns the background thread, or None. | `verimem/mcp_server.py` | `tests/test_cold_start_warmup.py`; `tests/test_embedding_preload.py` (+4) | NON MISURATO |
+| 10 | `verimem/preload.py:295` `preload_embedding._run` | funzione | `verimem/ann_cache.py`; `verimem/flow_events.py` (+2) | `tests/test_airgap_live_probe.py`; `tests/test_bench_compare.py` (+11) | NON MISURATO |
+| 11 | `verimem/preload.py:350` `preload_embedding._run_reranker` | funzione | `verimem/preload.py` | **nessuno** | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+

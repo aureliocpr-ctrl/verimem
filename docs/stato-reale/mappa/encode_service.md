@@ -101,3 +101,79 @@ Dettaglio da desktop, non da server, e dice chi è l'utente vero di questo prodo
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`. I 7,5 s del §3 sono miei, dell'08/09; i 26,5 / 2,2 s
 sono di @ws1, attribuiti.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/encode_service.py` — 38 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/encode_service.py:44` `_idle_timeout_s` | funzione: Seconds of inactivity before the daemon self-exits. | `verimem/encode_service.py` | `tests/test_encode_service_idle.py`; `tests/test_superfluous_daemon_steps_aside.py` | NON MISURATO |
+| 2 | `verimem/encode_service.py:105` `_recvall` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 3 | `verimem/encode_service.py:115` `recv_msg` | funzione: Read one length-prefixed JSON message. None on clean EOF. | `verimem/embedding.py`; `verimem/encode_service.py` (+2) | `tests/security/test_encode_service_auth.py`; `tests/test_daemon_health_probe.py` (+4) | NON MISURATO |
+| 4 | `verimem/encode_service.py:129` `send_msg` | funzione | `verimem/embedding.py`; `verimem/encode_service.py` (+2) | `tests/security/test_encode_service_auth.py`; `tests/test_daemon_health_probe.py` (+4) | NON MISURATO |
+| 5 | `verimem/encode_service.py:134` `read_discovery` | funzione: Return the running service's discovery info, or None if absent/unparseable. | `verimem/doctor.py`; `verimem/embedding.py` (+4) | `tests/security/test_encode_service_auth.py`; `tests/test_il_reranker_vive_nel_daemon.py` | NON MISURATO |
+| 6 | `verimem/encode_service.py:147` `_default_encode_fn` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 7 | `verimem/encode_service.py:163` `_default_rerank_fn` | funzione: Punteggi del cross-encoder, calcolati QUI — nel daemon, una volta sola. | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 8 | `verimem/encode_service.py:184` `_default_gate_fn` | funzione: Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola. | `verimem/encode_service.py` | `tests/test_il_giudice_del_moat_vive_nel_daemon.py` | NON MISURATO |
+| 9 | `verimem/encode_service.py:213` `EncodeServer` | classe: Threaded localhost encode server. ``encode_fn`` is injectable for tests. | `verimem/encode_service.py` | `tests/security/test_encode_service_auth.py`; `tests/test_daemon_health_probe.py` (+7) | NON MISURATO |
+| 10 | `verimem/encode_service.py:216` `EncodeServer.__init__` | funzione | `verimem/client.py`; `verimem/document_index.py` (+2) | `tests/test_i_default_che_il_readme_dichiara.py`; `tests/test_windows_no_console_popup.py` | NON MISURATO |
+| 11 | `verimem/encode_service.py:269` `EncodeServer.port` | funzione | `verimem/cli.py`; `verimem/encode_service.py` (+1) | `tests/security/test_ssrf.py`; `tests/security/test_ssrf_rebind_real_socket.py` (+5) | NON MISURATO |
+| 12 | `verimem/encode_service.py:272` `EncodeServer._touch` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 13 | `verimem/encode_service.py:276` `EncodeServer._idle_for` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 14 | `verimem/encode_service.py:280` `EncodeServer._to_list` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 15 | `verimem/encode_service.py:283` `EncodeServer._handle_request` | funzione | `verimem/encode_service.py` | `tests/test_embedding_model_versioning.py` | NON MISURATO |
+| 16 | `verimem/encode_service.py:331` `EncodeServer._serve_conn` | funzione | `verimem/encode_service.py` | `tests/test_daemon_republishes_its_discovery.py` | NON MISURATO |
+| 17 | `verimem/encode_service.py:354` `EncodeServer._write_discovery` | funzione | `verimem/encode_service.py` | `tests/test_daemon_republishes_its_discovery.py` | NON MISURATO |
+| 18 | `verimem/encode_service.py:383` `EncodeServer._republish_discovery_if_unclaimed` | funzione: Re-announce this daemon if nothing currently announces it. | `verimem/encode_service.py` | `tests/test_daemon_health_probe.py`; `tests/test_daemon_republishes_its_discovery.py` (+1) | NON MISURATO |
+| 19 | `verimem/encode_service.py:453` `EncodeServer._mark_superfluous` | funzione: Record the transition, not just the state — when the step-aside | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 20 | `verimem/encode_service.py:462` `EncodeServer._effective_idle_timeout` | funzione: Seconds of silence before self-exiting, given who is announced. | `verimem/encode_service.py` | `tests/test_superfluous_daemon_steps_aside.py` | NON MISURATO |
+| 21 | `verimem/encode_service.py:485` `EncodeServer._should_idle_exit` | funzione: Whether to stop waiting for requests that are not coming. | `verimem/encode_service.py` | `tests/test_superfluous_daemon_steps_aside.py` | NON MISURATO |
+| 22 | `verimem/encode_service.py:512` `EncodeServer._clear_discovery` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 23 | `verimem/encode_service.py:523` `EncodeServer.start` | funzione | `verimem/_hang_watchdog.py`; `verimem/ann_cache.py` (+36) | `tests/security/test_encode_service_auth.py`; `tests/security/test_pentest_validation.py` (+39) | NON MISURATO |
+| 24 | `verimem/encode_service.py:531` `EncodeServer.serve_forever` | funzione | `verimem/encode_service.py` | `tests/security/test_encode_service_auth.py`; `tests/security/test_ssrf_rebind_real_socket.py` (+5) | NON MISURATO |
+| 25 | `verimem/encode_service.py:561` `EncodeServer.stop` | funzione | `verimem/decision_chain.py`; `verimem/encode_service.py` (+1) | `tests/security/test_encode_service_auth.py`; `tests/swarm/test_cli.py` (+10) | NON MISURATO |
+| 26 | `verimem/encode_service.py:586` `_pid_alive` | funzione: Best-effort liveness. Unknown/odd states err on 'alive' — a false | `verimem/encode_service.py`; `verimem/interactive_judge.py` | `tests/test_ram_footprint.py` | NON MISURATO |
+| 27 | `verimem/encode_service.py:612` `_pid_alive_windows` | funzione: Windows liveness via the Win32 API — never sends a console control event | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 28 | `verimem/encode_service.py:636` `_read_lock_owner` | funzione | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 29 | `verimem/encode_service.py:682` `_owner_is_zombie` | funzione: True se il proprietario del lock e' vivo ma non sta SERVENDO. | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 30 | `verimem/encode_service.py:722` `acquire_daemon_lock` | funzione: Atomically claim the one-daemon-per-machine lock. | `verimem/encode_service.py` | `tests/test_daemon_zombie_does_not_block.py`; `tests/test_ram_footprint.py` | NON MISURATO |
+| 31 | `verimem/encode_service.py:769` `release_daemon_lock` | funzione: Remove the lock iff THIS process owns it (never someone else's). | `verimem/encode_service.py` | `tests/test_ram_footprint.py` | NON MISURATO |
+| 32 | `verimem/encode_service.py:779` `_ping` | funzione: One verified ping round-trip, or None. | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 33 | `verimem/encode_service.py:817` `ping_healthy` | funzione: True iff a daemon ANSWERS a verified ping within the timeout. | `verimem/encode_service.py` | `tests/test_daemon_health_probe.py` | NON MISURATO |
+| 34 | `verimem/encode_service.py:825` `is_reachable` | funzione: True if a daemon is listening per the discovery file (or given info). | `verimem/encode_service.py`; `verimem/mcp_server.py` | `tests/test_daemon_health_probe.py` | NON MISURATO |
+| 35 | `verimem/encode_service.py:840` `daemon_usable` | funzione: True iff a daemon is reachable AND advertises ``CONFIG.embedding_model``. | `verimem/doctor.py`; `verimem/embedding.py` (+6) | `tests/test_cold_start_warmup.py`; `tests/test_daemon_health_probe.py` (+1) | NON MISURATO |
+| 36 | `verimem/encode_service.py:864` `_spawn_detached` | funzione: Spawn the daemon in a DETACHED, windowless process (no console flash). | `verimem/encode_service.py` | **nessuno** | NON MISURATO |
+| 37 | `verimem/encode_service.py:882` `ensure_running` | funzione: Ensure the shared encode daemon is up; spawn it (windowless) if not. | `verimem/cli.py`; `verimem/memory.py` (+2) | `tests/test_discovery_not_deleted_for_live_daemon.py`; `tests/test_encode_service.py` | NON MISURATO |
+| 38 | `verimem/encode_service.py:952` `main` | funzione | `verimem/auto_dream_worker.py`; `verimem/cli.py` (+9) | `tests/perf/bench.py`; `tests/perf/bench_briefing_v3_robustness.py` (+25) | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+

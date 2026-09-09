@@ -66,3 +66,68 @@ Tutte pubbliche tranne i due `__init__`.
 ---
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/wake_strategy.py` — 27 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/wake_strategy.py:68` `ParsedTurn` | classe: The strategy-uniform view of one LLM turn. | `verimem/wake.py`; `verimem/wake_strategy.py` | **nessuno** | NON MISURATO |
+| 2 | `verimem/wake_strategy.py:85` `ToolObservation` | classe: Result of executing one tool call, ready for the next turn. | `verimem/wake.py`; `verimem/wake_strategy.py` | **nessuno** | NON MISURATO |
+| 3 | `verimem/wake_strategy.py:95` `WakeStrategy` | classe: Per-encoding behaviour for the wake loop. | `verimem/wake.py`; `verimem/wake_strategy.py` | **nessuno** | NON MISURATO |
+| 4 | `verimem/wake_strategy.py:109` `WakeStrategy.system_prompt` | funzione: Return the system prompt for this encoding. | `verimem/wake.py` | `tests/test_mcp_sampling_llm.py` | NON MISURATO |
+| 5 | `verimem/wake_strategy.py:112` `WakeStrategy.initial_messages` | funzione: Both encodings start with one user message — kept on the | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 6 | `verimem/wake_strategy.py:118` `WakeStrategy.call` | funzione: Invoke the LLM and parse its response into a `ParsedTurn`. | `verimem/wake.py` | `tests/test_embedding_preload.py`; `tests/test_governo_stesse_chiavi_su_ogni_porta.py` (+4) | NON MISURATO |
+| 7 | `verimem/wake_strategy.py:124` `WakeStrategy.on_no_tool_calls` | funzione: Handle a turn that produced zero tool calls. | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 8 | `verimem/wake_strategy.py:142` `WakeStrategy.append_assistant` | funzione: Append the assistant's turn to `messages` for the next iteration. | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 9 | `verimem/wake_strategy.py:148` `WakeStrategy.append_observations` | funzione: Append the tool observations to `messages` for the next turn. | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 10 | `verimem/wake_strategy.py:157` `WakeStrategy.prune` | funzione: Working-memory pruning specific to this encoding. | `verimem/smart_pruning.py`; `verimem/wake.py` | `tests/test_transcript_prune.py` | NON MISURATO |
+| 11 | `verimem/wake_strategy.py:170` `NativeToolsStrategy` | classe: Driver for providers that support native tool-use. | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 12 | `verimem/wake_strategy.py:180` `NativeToolsStrategy.__init__` | funzione | `verimem/client.py`; `verimem/document_index.py` (+2) | `tests/test_i_default_che_il_readme_dichiara.py`; `tests/test_windows_no_console_popup.py` | NON MISURATO |
+| 13 | `verimem/wake_strategy.py:183` `NativeToolsStrategy.system_prompt` | funzione | `verimem/wake.py` | `tests/test_mcp_sampling_llm.py` | NON MISURATO |
+| 14 | `verimem/wake_strategy.py:207` `NativeToolsStrategy.call` | funzione | `verimem/wake.py` | `tests/test_embedding_preload.py`; `tests/test_governo_stesse_chiavi_su_ogni_porta.py` (+4) | NON MISURATO |
+| 15 | `verimem/wake_strategy.py:222` `NativeToolsStrategy.on_no_tool_calls` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 16 | `verimem/wake_strategy.py:242` `NativeToolsStrategy.append_assistant` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 17 | `verimem/wake_strategy.py:258` `NativeToolsStrategy.append_observations` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 18 | `verimem/wake_strategy.py:283` `NativeToolsStrategy.prune` | funzione | `verimem/smart_pruning.py`; `verimem/wake.py` | `tests/test_transcript_prune.py` | NON MISURATO |
+| 19 | `verimem/wake_strategy.py:311` `parse_react_step` | funzione: Tolerant ReAct parser: handles markdown fences, asterisks, | `verimem/wake_strategy.py` | `tests/test_wake.py`; `tests/test_wake_extra.py` | NON MISURATO |
+| 20 | `verimem/wake_strategy.py:336` `ReActStrategy` | classe: Driver for providers without native tool-use. | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 21 | `verimem/wake_strategy.py:346` `ReActStrategy.__init__` | funzione | `verimem/client.py`; `verimem/document_index.py` (+2) | `tests/test_i_default_che_il_readme_dichiara.py`; `tests/test_windows_no_console_popup.py` | NON MISURATO |
+| 22 | `verimem/wake_strategy.py:352` `ReActStrategy.system_prompt` | funzione | `verimem/wake.py` | `tests/test_mcp_sampling_llm.py` | NON MISURATO |
+| 23 | `verimem/wake_strategy.py:357` `ReActStrategy.call` | funzione | `verimem/wake.py` | `tests/test_embedding_preload.py`; `tests/test_governo_stesse_chiavi_su_ogni_porta.py` (+4) | NON MISURATO |
+| 24 | `verimem/wake_strategy.py:393` `ReActStrategy.on_no_tool_calls` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 25 | `verimem/wake_strategy.py:408` `ReActStrategy.append_assistant` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 26 | `verimem/wake_strategy.py:414` `ReActStrategy.append_observations` | funzione | `verimem/wake.py` | **nessuno** | NON MISURATO |
+| 27 | `verimem/wake_strategy.py:428` `ReActStrategy.prune` | funzione | `verimem/smart_pruning.py`; `verimem/wake.py` | `tests/test_transcript_prune.py` | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+

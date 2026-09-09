@@ -58,3 +58,48 @@ scrittura per le misure»* è una regola che qui ha un supporto nel codice.
 ---
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`. Il 21% di perdita è una misura del team, attribuita.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/admission_gate.py` — 7 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/admission_gate.py:39` `telemetry_route_prefixes` | funzione: Topic prefixes that ROUTE a write to the telemetry table — EMPTY | `verimem/admission_gate.py` | **nessuno** | NON MISURATO |
+| 2 | `verimem/admission_gate.py:89` `gate_enabled` | funzione: The admission gate is ON by default since 0.7.0. | `verimem/memory.py`; `verimem/semantic.py` | `tests/test_admission_gate_default_on.py`; `tests/test_admission_gate_wire.py` | NON MISURATO |
+| 3 | `verimem/admission_gate.py:127` `warn_first_route_once` | funzione: Tell the operator, once per process, that a write was ROUTED. | `verimem/memory.py`; `verimem/semantic.py` | `tests/test_admission_gate_default_on.py` | NON MISURATO |
+| 4 | `verimem/admission_gate.py:215` `AdmissionVerdict` | classe | `verimem/admission_gate.py` | **nessuno** | NON MISURATO |
+| 5 | `verimem/admission_gate.py:221` `normalize_proposition` | funzione: Stable key for exact-duplicate detection (whitespace + case folded). | `verimem/admission_gate.py` | `tests/test_admission_gate.py` | NON MISURATO |
+| 6 | `verimem/admission_gate.py:226` `classify_admission` | funzione: Classify a candidate fact for admission to the CURATED corpus. | `verimem/admission_cleanup.py`; `verimem/admission_gate.py` (+1) | `tests/security/test_gate_redteam_20260721.py`; `tests/test_admission_gate.py` (+3) | NON MISURATO |
+| 7 | `verimem/admission_gate.py:289` `audit_corpus` | funzione: READ-ONLY: run the gate over a live semantic.db, return the breakdown. | **nessuno** | `tests/test_admission_gate.py`; `tests/test_epistemic_health_score.py` | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+

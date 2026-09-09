@@ -67,3 +67,45 @@ presidiata prima che accada.
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`. I conteggi dei presidi (6 e 3 passed) sono miei,
 eseguiti stasera sul perimetro `preload|_scalda`.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/_hang_watchdog.py` — 4 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/_hang_watchdog.py:82` `_cicla_e_sorveglia` | funzione: Guarda il file corrente, se c'e', e disarma il timer quando sfonda. | `verimem/_hang_watchdog.py` | **nessuno** | NON MISURATO |
+| 2 | `verimem/_hang_watchdog.py:103` `avvia_il_sorvegliante` | funzione: Avvia il sorvegliante UNICO. Va chiamata all'avvio del server. | `verimem/mcp_server.py` | `tests/test_il_watchdog_non_si_mangia_il_disco.py` | NON MISURATO |
+| 3 | `verimem/_hang_watchdog.py:134` `_pota_i_vecchi` | funzione: Tiene i ``_MAX_FILES`` trace più recenti. Best-effort come tutto il | `verimem/_hang_watchdog.py` | `tests/test_il_watchdog_non_si_mangia_il_disco.py` | NON MISURATO |
+| 4 | `verimem/_hang_watchdog.py:148` `hang_trace` | funzione: Wrap a tool call. If it runs longer than ``budget_s`` seconds, append a | `verimem/mcp_server.py` | `tests/test_hang_watchdog.py`; `tests/test_il_watchdog_non_avvia_thread_nella_richiesta.py` (+1) | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+

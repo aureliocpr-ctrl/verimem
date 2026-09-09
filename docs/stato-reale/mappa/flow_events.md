@@ -83,3 +83,52 @@ funzione che ammette di servire ai test è più onesta di una che finge di no.
 ---
 
 *Mappato da ws5 (Tara) su `7b9e8ca1`. La misura del §2 è mia, dell'08/09.*
+
+---
+
+<!-- TABELLA-FUNZIONI ws5 -->
+
+## Dove sta ogni funzione, e con che verdetto
+
+*Rubrica generata dall'AST. Cosa e' misurato e cosa no, per colonna:*
+
+- **dove e chi** — `file:riga` dall'AST: misurato.
+- **cos'e'** — tipo e prima riga del docstring: e' cio' che la funzione
+  PROMETTE, non cio' che fa.
+- **nominata da** — file che NOMINANO il nome corto: chiamate, ma anche
+  riferimenti nudi, property e annotazioni. Gli alias di import sono
+  risolti (senza, `emit_write` risultava a zero). Contando solo le
+  chiamate, 17 funzioni su 27 risultavano morte e non lo erano: Protocol,
+  property e callback non passano da una `ast.Call`. Include il file
+  stesso. ⚠️ Un nome che vive in piu' classi (`call`, `to_dict`) somma
+  usi non suoi: e' un TETTO, non una misura.
+- **test** — file sotto `tests/` che lo nominano: dice che e' TOCCATA,
+  non che sia coperta.
+- **verdetto** — `MAI CHIAMATA` = zero riferimenti nel prodotto E zero nei
+  test (i dunder esclusi: li chiama il linguaggio). `NON MISURATO` =
+  tutto il resto, ed e' lo stato onesto: sapere chi la nomina non e'
+  sapere che funziona.
+
+
+### `verimem/flow_events.py` — 11 fra funzioni e classi
+
+| # | dove e chi | cos'e' | nominata da | test | verdetto |
+|---|---|---|---|---|---|
+| 1 | `verimem/flow_events.py:46` `set_flow_context` | funzione: Overlay ambient fields onto every flow event in this context | `verimem/client.py`; `verimem/gateway.py` | `tests/test_flow_events_core.py` | NON MISURATO |
+| 2 | `verimem/flow_events.py:55` `reset_flow_context` | funzione: Clear the overlay (or restore to ``token`` if given). | `verimem/gateway.py` | `tests/test_flow_decay_dichiarato.py`; `tests/test_flow_documenti.py` (+15) | NON MISURATO |
+| 3 | `verimem/flow_events.py:73` `reset_store_fingerprint` | funzione: Ricalcola l'impronta e il build alla prossima emissione (banchi, e chi | **nessuno** | `tests/test_l_evento_dice_a_quale_store_appartiene.py`; `tests/test_l_impronta_segue_lo_store_aperto_per_path.py` (+1) | NON MISURATO |
+| 4 | `verimem/flow_events.py:82` `impronta_di_percorso` | funzione: L'impronta della memoria che si apre con un PATH esplicito. | `verimem/client.py` | `tests/test_l_impronta_segue_lo_store_aperto_per_path.py` | NON MISURATO |
+| 5 | `verimem/flow_events.py:103` `_store_fingerprint` | funzione: QUALE memoria ha prodotto questo evento — impronta, non percorso. | `verimem/event_jsonl_log.py`; `verimem/flow_events.py` | `tests/test_l_impronta_segue_lo_store_aperto_per_path.py` | NON MISURATO |
+| 6 | `verimem/flow_events.py:172` `_revisione_git` | funzione: La revisione corta dell'albero da cui gira il pacchetto, o ``None``. | `verimem/flow_events.py` | **nessuno** | NON MISURATO |
+| 7 | `verimem/flow_events.py:215` `_build` | funzione: DA QUALE CODICE viene questo evento — calcolato una volta per processo. | `verimem/band_escalation.py`; `verimem/event_jsonl_log.py` (+2) | `tests/test_community_causal_edges.py`; `tests/test_llm_client.py` (+13) | NON MISURATO |
+| 8 | `verimem/flow_events.py:256` `_run` | funzione: DA QUALE ESECUZIONE viene questo evento — una volta per processo. | `verimem/ann_cache.py`; `verimem/flow_events.py` (+2) | `tests/test_airgap_live_probe.py`; `tests/test_bench_compare.py` (+11) | NON MISURATO |
+| 9 | `verimem/flow_events.py:291` `_ambient` | funzione | `verimem/flow_events.py` | `tests/test_flow_surface_onesta.py`; `tests/test_gli_eventi_non_dicevano_da_quale_esecuzione_venivano.py` (+1) | NON MISURATO |
+| 10 | `verimem/flow_events.py:321` `emit_write` | funzione: L'UNICO emettitore di ``flow.write`` — una funzione, piu' porte. | `verimem/client.py`; `verimem/mcp_server.py` | `tests/test_l_evento_dice_a_quale_store_appartiene.py`; `tests/test_la_porta_mcp_non_emetteva_nulla.py` | NON MISURATO |
+| 11 | `verimem/flow_events.py:353` `emit_flow` | funzione: Emit one flow event (ambient tags + ``payload``). Never raises. | `verimem/auto_dream_worker.py`; `verimem/client.py` (+10) | `tests/test_l_evento_dice_a_quale_store_appartiene.py`; `tests/test_ogni_evento_dice_quale_build_lo_ha_scritto.py` | NON MISURATO |
+
+<!-- /TABELLA-FUNZIONI ws5 -->
+
+
+
+
+
