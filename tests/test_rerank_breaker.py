@@ -530,8 +530,31 @@ def test_la_cella_del_cooldown_regge_a_un_riarmo_concorrente(monkeypatch):
     La cella qui sopra cadeva su windows py3.12 l'08/09 e il 10/09 (run
     34472648985).
 
-    ⚠️⚠️ CHI INNESCA QUEL ROSSO IN CI E' TUTTORA IGNOTO, e va detto prima di
-    tutto il resto. Fra le due stesure di questo docstring l'ipotesi che
+    ✅ LA CAUSA E' NOTA DAL 10/09 SERA, misurata da @ws3, ed e' la prima
+    ipotesi che IO avevo dichiarato FALSIFICATA. Su Windows `time.monotonic`
+    cambia implementazione con la versione di Python::
+
+        py3.13+    QueryPerformanceCounter()   risoluzione 1e-07
+        py<=3.12   GetTickCount64()            risoluzione 0.015625  (15,6 ms)
+
+    La cella che cade e' `windows-latest / py3.12`: l'unica della matrice con
+    l'orologio a scatti. Un sonno REALE di 60 ms viene LETTO 46 ms quando i
+    tick cadono male — sotto il cooldown di 50 — quindi il gate non ri-arma e
+    l'assert salta col messaggio esatto della CI. Misurato su un interprete
+    con lo stesso orologio: **5 fallimenti su 40 = 12,5%**, che combacia col
+    13,3% osservato in CI.
+
+    🪞 IO L'AVEVO ESCLUSA, E SBAGLIANDO IN UN MODO CHE VALE PIU' DELL'ERRORE:
+    avevo misurato `time.get_clock_info('monotonic').resolution = 1e-07` e
+    `sleep(0.06)` fra 60,3 e 61,6 ms — **sulla macchina di sviluppo, che ha
+    py3.13**. La cella che cade ha py3.12. **Ho falsificato un'ipotesi VERA
+    misurando nell'ambiente sbagliato, e l'ho scritta come chiusa nel
+    messaggio di commit `d6e7fa6e`**: chi legge quel commit trova una strada
+    dichiarata morta che invece era quella giusta.
+    ⇒ Una misura vale nell'ambiente in cui e' stata presa. «Falsificato» senza
+    dire DOVE non e' falsificato: e' un'altra domanda con la stessa risposta.
+
+    ⇒ QUESTO NON CAMBIA LA CURA, e va detto anche questo. Fra le due stesure di questo docstring l'ipotesi che
     citava — un rerank lasciato in volo che finisce dentro la finestra dello
     `sleep` — e' stata RITIRATA DAL SUO AUTORE con il banco che la smentisce:
     un rerank vero in volo, otto giri, **zero rossi**, `GATE=False` in tutti e
