@@ -76,8 +76,27 @@ senza asserzioni, tenuto per il suo commento, sarebbe stato un verde che non
 misura niente. Il presidio vero è il file citato sopra: chi tocca questa rotta
 lo esegua.
 
+🔗 IL CLAIM DEL README, verificato e NON toccato da questa cura. README:179
+promette: «`superseded_by` the new (never a silent overwrite — the old row
+stays for lineage)». Misurato alla porta dell'SDK su una rimisura (fonti
+diverse, il ritiro avviene)::
+
+    CHIAVI della ricevuta che RITIRA: [... 'superseded',
+                                       'superseded_undo_ops', 'warnings']
+       superseded: ['b79516394665']
+       warnings: [('L3-supersession',
+                   'a newer same-source value supersedes a stored fact')]
+       DB b79516394665 sup_by=ed9896a7230a 'same-source evolution'
+
+⇒ **Il claim è vero**: la scrittura che ritira lo dichiara nella ricevuta (con
+la maniglia dell'undo) e la riga vecchia resta. Ed è già presidiato altrove —
+`tests/test_cli_save_names_what_it_retired.py` e altri cinque file leggono
+`superseded` dalla ricevuta — quindi qui NON si aggiunge un doppione. Questa
+cura cambia **quando** si ritira, non **se** il ritiro è dichiarato: le due
+cose sono indipendenti e restano tali.
+
 Ticket: piano di ripresa 09/09 §5 riga 2 (ws6), gamba B. Ramo
-`aldo/tetto-e-supersede`.
+`aldo/supersede` (PR #22).
 """
 
 from __future__ import annotations
