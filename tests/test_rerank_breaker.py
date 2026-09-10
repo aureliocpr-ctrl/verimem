@@ -445,13 +445,41 @@ def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     what it was measuring and then wrote 'tripped: False' — the regime block,
     which exists precisely so a number is never orphaned from the state that
     produced it, would have been lying. Observers get a PURE reader; only the
-    gate re-arms."""
+    gate re-arms.
+
+    ⚠️ T38 — QUESTA CELLA CRONOMETRAVA INVECE DI MISURARE, ed e' costata due
+    rossi su windows py3.12 a due giorni di distanza (08/09 e run 34472648985
+    del 10/09), sempre sulla stessa riga::
+
+        AssertionError: the gate, and only the gate, re-arms after the cooldown
+
+    Diceva `setenv(COOLDOWN_S, "0.05")` + `time.sleep(0.06)`: **dieci
+    millisecondi di margine** su un runner condiviso, dentro una suite gia' in
+    corsa da mezz'ora. La proprieta' da dimostrare — «l'osservatore non
+    ri-arma, il gate si'» — e' BOOLEANA e non ha soglie: legarla a una corsa
+    fra due orologi la rende vera per fortuna.
+
+    Ora il tempo si SPOSTA invece di passare: si porta indietro l'istante del
+    trip, e il cooldown risulta scaduto **per costruzione**, con dieci secondi
+    di margine invece di dieci millisecondi. Nessuno `sleep`, nessuna corsa,
+    e la cella diventa deterministica su qualunque macchina.
+
+    📌 Stessa cura di `2021247f` («la cella misura la PROPRIETA' VERA, che e'
+    booleana e non ha soglie»), li' su una soglia di preload.
+
+    📌 RESTA DA FARE, dichiarato e non nascosto: `test_..._re_arm_is_atomic`
+    (poco sopra) ha la STESSA forma — `sleep(0.06)` contro un cooldown di
+    0.05 — ma li' i thread servono davvero, quindi la cura non e' la stessa e
+    non entra in questa PR.
+    """
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
     semantic._rerank_breaker_reset()
     for _ in range(3):
         semantic._rerank_breaker_record(True)
-    time.sleep(0.06)                      # cooldown elapsed
+    # il cooldown e' scaduto PER COSTRUZIONE: il trip e' avvenuto dieci secondi
+    # fa, non sessanta millisecondi fa.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
 
     assert semantic._rerank_breaker_tripped_now() is True, (
         "the pure reader must report the state as it IS")
@@ -465,7 +493,7 @@ def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     monkeypatch.setenv("ENGRAM_FUSION_BREAKER_N", "3")
     for _ in range(3):
         semantic._fusion_breaker_record(True)
-    time.sleep(0.06)
+    semantic._FUSION_BREAKER["tripped_at"] -= 10.0
     assert semantic._fusion_breaker_tripped_now() is True
     assert semantic._FUSION_BREAKER["tripped"] is True, "twin: same contract"
 
