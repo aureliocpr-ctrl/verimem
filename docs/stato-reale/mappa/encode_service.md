@@ -86,10 +86,32 @@ Dettaglio da desktop, non da server, e dice chi è l'utente vero di questo prodo
 
 ## 6. Quello che questa mappa NON dice — dichiarato
 
-- **Non ho esercitato nessuna delle difese del §2.** So che esistono e cosa dichiarano;
-  **non ho verificato che scattino** — e una difesa che non si accende è indistinguibile da
-  una che non serve mai. Il caso più interessante da provare è `_owner_is_zombie`, perché la
-  sua assenza è già costata una volta.
+- ~~**Non ho esercitato nessuna delle difese del §2.**~~ ✅ **CHIUSO il 10/09**, e non da
+  un banco: dall'incidente vero. La notte del 09-10/09 il daemon è stato rimpiazzato da uno
+  con un **altro modello** (`e5-base`/768 → `MiniLM`/384) e le difese sono state osservate
+  **mentre lavoravano**:
+
+      is_reachable()   = True     il daemon rispondeva
+      daemon_usable()  = False    e RIFIUTAVA, perché il modello non era quello di CONFIG
+      lock owner       = 34992    il daemon sbagliato teneva il lock del singleton
+      eta del lock     = 3844 s   (grazia 600 s)
+      _owner_is_zombie = True     ⇒ il lock era RUBABILE
+
+  ⇒ **`_owner_is_zombie` SI ACCENDE**, ed è model-aware perché passa da `daemon_usable`.
+  La mia prima ipotesi — «il lock è model-blind, un daemon col modello sbagliato non si
+  sostituisce più» — era **falsa**, falsificata prima di pubblicarla. Il sostituto è nato in
+  **42 s** con una sola chiamata a `ensure_running()`, senza uccidere niente.
+
+- 🔴 **E LA DIFESA CHE MANCA, trovata nello stesso incidente**: `DISCOVERY_PATH` (41),
+  `_SPAWN_LOCK_PATH` (573) e `DAEMON_LOCK_PATH` (583) stanno tutti in **`Path.home()`**, mai
+  nella data dir. ⇒ **un processo che isola `ENGRAM_DATA_DIR` NON isola il daemon**: legge
+  la discovery globale, non riconosce il modello, ne spawna uno col **proprio** e lo
+  registra per tutti. Il 09/09 l'ha fatto un banco isolato di un'altra istanza
+  (`ENGRAM_DATA_DIR = …\Temp\ws2-t49-…`, `ENGRAM_EMBEDDING_MODEL = …MiniLM…`, letto dal suo
+  `environ`), e il ripristino manuale è durato **12 minuti**. Costo: 15 fatti entrati nello
+  store di produzione senza vettore. Rimedio immediato `ENGRAM_ENCODE_SERVICE=0` nei banchi
+  con un modello diverso; la cura strutturale (discovery e lock **dentro** la data dir) è
+  una decisione di progetto, **aperta**.
 - **Non so se `_default_gate_fn` sia esercitata da un test**: è il percorso per cui il
   daemon giudica, cioè quello che ha reso verde la cura di oggi.
 - **`_handle_request` e `_serve_conn`** sono lette solo di nome: non ho mappato quali
