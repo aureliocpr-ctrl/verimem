@@ -116,3 +116,41 @@ def test_l_interruttore_della_fascia_e_onorato_anche_qui(
     monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "0")
     _esito, righe = _ingerisci_dalla_porta_mcp(monkeypatch, isolato, "spenta.db")
     assert righe.get(NELLA_FASCIA) != "quarantined", righe
+
+
+def test_se_la_fascia_diventa_inapplicabile_l_ingest_lo_DICE(
+        monkeypatch: pytest.MonkeyPatch, caplog, isolato) -> None:
+    """Rilievo R1 di ws4 (2026-09-10), e il presidio che lo tiene chiuso.
+
+    Le due funzioni che importo da ``grounding_gate`` sono PRIVATE. Il giorno
+    che qualcuno le rinomina, l'``except`` le inghiotte e l'ingest torna ad
+    ammettere tutta la fascia [40, 80): **torna T-MAP-11**. Qui il rename lo
+    simulo togliendo l'attributo, e pretendo le tre cose che devono succedere:
+    l'ingest NON si rompe (fail-open, scelta di prodotto), il fatto passa —
+    cioe' il difetto e' tornato davvero, non sto misurando aria — e la cosa
+    e' VISIBILE in due posti, il log e la ricevuta.
+    """
+    import logging
+
+    from verimem import grounding_gate
+
+    _giudice_finto(monkeypatch)
+    monkeypatch.delattr(grounding_gate, "_ce_band_tau_hi", raising=True)
+
+    with caplog.at_level(logging.WARNING, logger="verimem.conversation_ingest"):
+        esito, righe = _ingerisci_dalla_porta_mcp(monkeypatch, isolato, "muta.db")
+
+    assert esito.get("error") is None, esito
+    assert righe.get(NELLA_FASCIA) != "quarantined", (
+        "controllo positivo del banco: senza la fascia il fatto DEVE tornare a "
+        f"passare, altrimenti non sto misurando il caso che temo — {righe}")
+    assert esito.get("moat_band") == "unavailable", (
+        f"la ricevuta non dice che la fascia non e' stata applicata: {esito}")
+    avvisi = [r.getMessage() for r in caplog.records
+              if "fascia incerta del write path" in r.getMessage()]
+    assert avvisi, f"il fail-open e' rimasto muto: {caplog.records}"
+    assert "ImportError" in avvisi[0] and "_ce_band_tau_hi" in avvisi[0], (
+        f"l'avviso non dice COSA manca: {avvisi[0]!r}")
+    assert len(avvisi) == 1, (
+        f"la fascia va letta una volta per ingest, non una per fatto: "
+        f"{len(avvisi)} avvisi su 2 fatti estratti")
