@@ -17,6 +17,7 @@ def export_all_facts(
     topic: str | None = None,
     n_in_store: int | None = None,
     cap: int | None = None,
+    scan_error: str | None = None,
 ) -> dict[str, Any]:
     """Return all facts as portable JSON dicts.
 
@@ -30,8 +31,14 @@ def export_all_facts(
         convenzione delle porte gemelle: `null` = «non dichiarato», mai un
         numero inventato).
       - `cap`: il tetto che il chiamante ha applicato leggendo lo store.
+      - `scan_error`: se la lettura dello store è fallita, il tipo e il
+        messaggio dell'errore. Senza, un export che non ha potuto leggere
+        niente e uno di un corpus vuoto sono la stessa ricevuta — è
+        l'incidente del CYCLE #10 (28 tool che resero `facts=[]` in silenzio),
+        raccontato nel docstring di `SemanticMemory.list_facts`.
 
-    Returns: `{schema_version, n_total, n_in_store, cap, capped, facts}`.
+    Returns:
+        `{schema_version, n_total, n_in_store, cap, capped, scan_error, facts}`.
 
     ⚠️ `n_total` è, e resta, **il numero delle righe esportate** — non il
     totale del corpus. Il nome è infelice e cambiarlo romperebbe chi lo
@@ -58,6 +65,7 @@ def export_all_facts(
         "cap": cap,
         "capped": (None if n_in_store is None or cap is None
                    else n_in_store > cap),
+        "scan_error": scan_error,
         "facts": rows,
     }
 

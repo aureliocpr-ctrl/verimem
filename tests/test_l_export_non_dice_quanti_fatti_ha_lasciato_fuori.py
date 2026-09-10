@@ -189,6 +189,46 @@ def test_sotto_il_tetto_nessun_allarme(sotto_il_tetto):
     assert len(d["facts"]) == n_nello_store, len(d["facts"])
 
 
+def test_se_la_lettura_fallisce_la_ricevuta_lo_dice(sotto_il_tetto, monkeypatch):
+    """R4 — L'ALTRO SILENZIO DELLA STESSA PORTA, e ha già fatto danno una volta.
+
+    Il chiamante avvolge la lettura in `except Exception: pass` con `facts_all`
+    inizializzato a `[]`: se `list_facts` solleva, l'export risponde `n_total:
+    0, facts: []` — **indistinguibile da un corpus vuoto**. Non è un'ipotesi:
+    è l'incidente del CYCLE #10, raccontato nel docstring di
+    `SemanticMemory.list_facts` — il metodo non esisteva, ogni chiamata dava
+    `AttributeError`, e 28 tool MCP hanno reso `facts=[]` in silenzio finché
+    qualcuno non è andato a guardare.
+
+    ⇒ Chi fa un backup deve poter distinguere «non hai fatti» da «non sono
+    riuscito a leggerli». Il campo si chiama `scan_error` ed è `null` quando
+    tutto è andato bene (la convenzione delle porte gemelle: `null` = niente
+    da dichiarare, mai un valore inventato).
+
+    📌 Lo stesso nome è proposto a @ws2 per i due ripieghi di
+    `_fatti_per_il_recupero` (PR #17), così l'utente trova la stessa parola su
+    ogni porta invece di una diversa per file.
+    """
+    def _esplode(*a, **k):
+        raise RuntimeError("il database è chiuso")
+
+    monkeypatch.setattr(mcp_server._ag().semantic, "list_facts", _esplode)
+    d = _chiama("hippo_facts_export_all", {})
+
+    assert d.get("scan_error"), sorted(d.keys())
+    assert "RuntimeError" in d["scan_error"], d["scan_error"]
+    assert d["facts"] == [], len(d["facts"])
+
+
+def test_senza_errori_il_campo_e_null(sotto_il_tetto):
+    """⚠️ LA POPOLAZIONE OPPOSTA: se `scan_error` portasse sempre una stringa,
+    un export riuscito e uno fallito tornerebbero indistinguibili — lo stesso
+    difetto spostato di un passo."""
+    d = _chiama("hippo_facts_export_all", {})
+    assert "scan_error" in d, sorted(d.keys())
+    assert d["scan_error"] is None, d["scan_error"]
+
+
 def test_i_campi_di_prima_sono_ancora_li(sotto_il_tetto):
     """La cura è ADDITIVA: chi legge oggi `n_total` o `facts` continua a
     leggerli, con lo stesso significato. `n_total` resta il numero delle righe
