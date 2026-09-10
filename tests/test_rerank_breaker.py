@@ -517,9 +517,25 @@ def test_la_cella_del_cooldown_regge_a_un_riarmo_concorrente(monkeypatch):
     """T38 — il RED vero, reso deterministico e messo a presidio.
 
     La cella qui sopra cadeva su windows py3.12 l'08/09 e il 10/09 (run
-    34472648985). La diagnosi e' di @ws8 — un rerank lasciato in volo da un
-    test precedente che finisce dentro la finestra dello `sleep` — e il
-    meccanismo, misurato, ha un anello in piu' di quello raccontato::
+    34472648985).
+
+    ⚠️⚠️ CHI INNESCA QUEL ROSSO IN CI E' TUTTORA IGNOTO, e va detto prima di
+    tutto il resto. Fra le due stesure di questo docstring l'ipotesi che
+    citava — un rerank lasciato in volo che finisce dentro la finestra dello
+    `sleep` — e' stata RITIRATA DAL SUO AUTORE con il banco che la smentisce:
+    un rerank vero in volo, otto giri, **zero rossi**, `GATE=False` in tutti e
+    otto. La ragione e' nella nota dell'autore del rerank (righe 324-327):
+    **lo sforamento lo registra il CALLER al timeout del budget, non il
+    worker**, quindi un worker in volo non tocca il breaker. In tutto: cinque
+    ipotesi, cinque cadute, 31 esecuzioni su questa macchina e mai un rosso.
+
+    ⇒ QUESTA CELLA NON SPIEGA IL ROSSO DI CI: prova un MECCANISMO per cui la
+    cella gemella puo' cadere, e prova che con il tempo spostato non cade piu'.
+    Il meccanismo e' reale e misurato; **che sia lui a scattare in CI e' una
+    congettura senza prova**. Chi riaprira' T38 parta da qui e non dia per
+    chiusa la causa.
+
+    Il meccanismo, misurato::
 
         A  record in volo, breaker GIA' scattato -> tripped_at NON cambia
            (`_rerank_breaker_record` e `_rerank_breaker_cold_overrun` sono
