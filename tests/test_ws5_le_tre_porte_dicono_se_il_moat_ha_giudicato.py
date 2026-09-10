@@ -215,3 +215,49 @@ def test_le_tre_forme_sono_LA_STESSA(porta_isolata, giudice_muto):
         "LE DUE PORTE DICONO LA STESSA COSA IN DUE FORME DIVERSE — chi integra "
         f"deve conoscerle entrambe:\n  SDK -> {dove_sdk}\n  MCP -> {dove_mcp}"
     )
+
+
+def test_la_porta_CLI_dichiara_il_verdetto_mancante(porta_isolata, giudice_muto):
+    """La TERZA porta. Misurata il 10/09 PRIMA della cura: con il giudice muto
+    stampava::
+
+        inserted: 1 fact(s). quarantined=0 rejected=0 parse_errors=0
+          id=a6766f179a14  status=ok
+
+    e NESSUNA delle sei parole cercate (judged / not_run / giudic / moat /
+    unverified / ungated). Non e' silenzio: e' `status=ok`, cioe' l'affermazione
+    che e' andato tutto bene su una scrittura CON FONTE che nessuno ha
+    verificato — e il giudice ERA stato interrogato (1 volta): la porta chiede e
+    non riporta la risposta mancante.
+
+    ⚠️ Il testo va in ``--proposition``, non posizionale: passarlo come argomento
+    fa tornare «Got unexpected extra argument» (preso in faccia il 10/09, il
+    prodotto lo dice per nome).
+
+    ⚠️ ``CliRunner`` mette l'eccezione in ``result.exception``, NON nell'output:
+    un assert sul solo output non puo' fallire su un errore (trappola pagata da
+    @ws1 lo stesso giorno). Qui si guarda entrambi.
+    """
+    from typer.testing import CliRunner
+
+    from verimem.cli import app
+
+    r = CliRunner().invoke(
+        app,
+        ["facts", "add", "--proposition", FATTO,
+         "--topic", "ws5/banco", "--source", FONTE],
+    )
+    assert r.exception is None, (
+        f"la porta CLI ha sollevato: {type(r.exception).__name__}: {r.exception}"
+    )
+    assert r.exit_code == 0, f"exit={r.exit_code}, output: {r.output[:300]}"
+    assert giudice_muto, (
+        "la porta CLI non ha nemmeno CHIESTO il giudizio: sarebbe un difetto "
+        "diverso e questo banco misurerebbe la cosa sbagliata"
+    )
+    # qui il criterio NON puo' guardare i campi (la CLI stampa prosa): guarda
+    # la PAROLA CANONICA, che e' la stessa delle altre due porte.
+    assert "judged=false" in r.output.lower(), (
+        "LA PORTA CLI TACE, e dice `status=ok` su una scrittura che il moat non "
+        f"ha giudicato. Quello che l'utente vede e':\n{r.output[:400]}"
+    )
