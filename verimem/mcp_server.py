@@ -293,7 +293,8 @@ def _conta_sostituiti(agent) -> int | None:
         return None
 
 
-def _fatti_per_il_recupero(agent, *, limit: int = 10000) -> tuple[list, int]:
+def _fatti_per_il_recupero(
+        agent, *, limit: int = 10000) -> tuple[list, int, str | None]:
     """I fatti che una porta di RECUPERO puo' servire, piu' quanti ne ha tolti.
 
     T49 (2026-09-09). Il server dichiara a ogni client che si collega: «a fact
@@ -343,21 +344,39 @@ def _fatti_per_il_recupero(agent, *, limit: int = 10000) -> tuple[list, int]:
         limit: il tetto di righe, lasciato al valore dei chiamanti storici.
 
     Returns:
-        `(fatti, nascosti)`. Su errore `([], 0)`: un ripiego non rompe mai il
-        chiamante, ed e' la stessa forma che i 31 call site avevano gia' col
-        loro `except Exception: pass`.
+        `(fatti, nascosti, scan_error)`. L'ultimo e' `None` quando e' andato
+        tutto bene, e altrimenti dice COSA non ha potuto fare — perche' un
+        ripiego che non rompe il chiamante non deve nemmeno ingannarlo:
+        «zero fatti» e «non ho potuto leggerli» sono due risposte diverse, e
+        oggi il chiamante le riceveva identiche. Il nome del campo e'
+        `scan_error` ed e' concordato con l'altra cura in corso sul tetto
+        della scansione: due nomi per la stessa cosa sarebbero la divergenza
+        che stiamo togliendo.
     """
     try:
         serviti = agent.semantic.list_facts(limit=limit, offset=0,
                                             hide_low_trust=True)
-    except Exception:  # noqa: BLE001 — un recupero non muore per un contatore
-        return [], 0
+    except Exception as exc:  # noqa: BLE001 — un recupero non muore qui
+        # ⚠️ NON `return [], 0`: quello direbbe al chiamante «il corpus e'
+        # vuoto», che e' un'AFFERMAZIONE sul mondo, mentre qui non abbiamo
+        # potuto guardare. Sono due risposte diverse alla stessa domanda: la
+        # prima fa concludere a un agente che non esiste memoria e rispondere
+        # lo stesso; la seconda gli dice che e' cieco, e allora puo' fermarsi.
+        # E' la forma del CYCLE #10 — «28 MCP tools silently returned
+        # facts=[]» — che il docstring di `list_facts` racconta per esteso.
+        return [], 0, f"{type(exc).__name__}: {exc}"
     try:
         tutti = agent.semantic.list_facts(limit=limit, offset=0)
         nascosti = max(0, len(tutti) - len(serviti))
-    except Exception:  # noqa: BLE001
-        nascosti = 0
-    return serviti, nascosti
+    except Exception as exc:  # noqa: BLE001
+        # Qui i fatti ci sono: cade solo il CONTEGGIO di quanti ne ha tolti.
+        # `nascosti = 0` direbbe «non ne ho nascosto nessuno» — di nuovo
+        # un'affermazione al posto di un «non lo so», la stessa classe del
+        # `.get(status, 0)` che traduce «non lo so» in «vale poco»
+        # (`semantic.py`, `_rango_di_fiducia`). I fatti si servono lo stesso,
+        # ma il conteggio si dichiara inattendibile.
+        return serviti, 0, f"conteggio dei nascosti non riuscito — {type(exc).__name__}: {exc}"
+    return serviti, nascosti, None
 
 
 def _status_dei_membri(agent, payload: Any) -> Any:
@@ -423,7 +442,8 @@ def _status_dei_membri(agent, payload: Any) -> Any:
     return payload
 
 
-def _dichiara_nascosti(payload: Any, nascosti: int) -> Any:
+def _dichiara_nascosti(payload: Any, nascosti: int,
+                       scan_error: str | None = None) -> Any:
     """Mette nel payload quanti fatti il filtro di fiducia ha tolto.
 
     Il campo c'e' SEMPRE, anche a zero: un campo che compare solo quando il
@@ -435,6 +455,11 @@ def _dichiara_nascosti(payload: Any, nascosti: int) -> Any:
     """
     if isinstance(payload, dict):
         payload["hidden_low_trust"] = int(nascosti)
+        # `scan_error` invece compare SOLO quando c'e' qualcosa da dire: un
+        # campo d'errore sempre presente e quasi sempre nullo si smette di
+        # leggere dopo tre volte, e allora tanto vale non averlo.
+        if scan_error:
+            payload["scan_error"] = str(scan_error)
     return payload
 
 
@@ -10234,7 +10259,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # T49: questo payload finisce dentro un PROMPT. Un fatto fermato
             # dal moat che entra qui e' il «context poisoning» che
             # `briefing.py:136` evita dal 2026-07-20.
-            facts_all, _nascosti = _fatti_per_il_recupero(a)
+            facts_all, _nascosti, _scan_err = _fatti_per_il_recupero(a)
             payload = build_prompt_skeleton(
                 task=str(arguments.get("task", "")),
                 episodes=eps,
@@ -10242,7 +10267,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 skills=a.skills.all(),
                 top_k_each=int(arguments.get("top_k_each", 3)),
             )
-            _dichiara_nascosti(payload, _nascosti)
+            _dichiara_nascosti(payload, _nascosti, _scan_err)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10267,14 +10292,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.fact_chain import chain_facts
             # T49: qui un quarantenato non e' solo servito, e' il PONTE verso
             # i fatti dei salti successivi.
-            facts_all, _nascosti = _fatti_per_il_recupero(a)
+            facts_all, _nascosti, _scan_err = _fatti_per_il_recupero(a)
             payload = chain_facts(
                 seed_query=str(arguments.get("seed_query", "")),
                 facts=facts_all,
                 max_depth=int(arguments.get("max_depth", 3)),
                 min_overlap=float(arguments.get("min_overlap", 0.15)),
             )
-            _dichiara_nascosti(payload, _nascosti)
+            _dichiara_nascosti(payload, _nascosti, _scan_err)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10288,7 +10313,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 pass
             # T49: e' la porta del «cosa sai di X», con «aggregated confidence
             # verdict»: un fatto che il gate ha fermato non puo' pesare li'.
-            facts_all, _nascosti = _fatti_per_il_recupero(a)
+            facts_all, _nascosti, _scan_err = _fatti_per_il_recupero(a)
             skills = a.skills.all()
             payload = oracle_query(
                 query=str(arguments.get("query", "")),
@@ -10297,7 +10322,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 skills=skills,
                 top_k_each=int(arguments.get("top_k_each", 5)),
             )
-            _dichiara_nascosti(payload, _nascosti)
+            _dichiara_nascosti(payload, _nascosti, _scan_err)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10497,13 +10522,13 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # proposition — strong evidence». Un fatto quarantenato non e'
             # evidenza indipendente: e' rumore che vota, e senza filtro
             # entrava nel conteggio `n_agents` senza comparire nel payload.
-            facts_all, _nascosti = _fatti_per_il_recupero(a)
+            facts_all, _nascosti, _scan_err = _fatti_per_il_recupero(a)
             payload = find_consensus_facts(
                 facts_all,
                 min_agents=int(arguments.get("min_agents", 2)),
                 sim_threshold=float(arguments.get("sim_threshold", 0.6)),
             )
-            _dichiara_nascosti(payload, _nascosti)
+            _dichiara_nascosti(payload, _nascosti, _scan_err)
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
 
@@ -10656,7 +10681,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # chi la riceve non ha modo di sapere che discende da una riga che
             # il gate aveva fermato. Misurato dalla porta il 09/09: una regola
             # a grounding 0,13 produceva «il varco e' insicuro».
-            facts_all, _nascosti = _fatti_per_il_recupero(a)
+            facts_all, _nascosti, _scan_err = _fatti_per_il_recupero(a)
             # Split into rules (parse-able) vs state
             rules: list = []
             non_rules: list = []
@@ -10686,7 +10711,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 max_depth=int(arguments.get("max_depth", 5)),
             )
             payload["rules_found"] = len(rules)
-            _dichiara_nascosti(payload, _nascosti)
+            _dichiara_nascosti(payload, _nascosti, _scan_err)
             if state_ids:
                 payload["state_fact_ids_ignored"] = _ignorati
             _audit(name, arguments, outcome="ok")
