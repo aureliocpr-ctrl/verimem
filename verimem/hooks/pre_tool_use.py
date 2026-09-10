@@ -238,9 +238,32 @@ def _marchio(hit: Mapping[str, Any]) -> str:
     status = str(hit.get("status") or "").strip()
     if not status:
         return ""
-    from ..semantic import _rango_di_fiducia
-    rango = _rango_di_fiducia(status)
-    pieno = _rango_di_fiducia("model_claim")
+    try:
+        from ..semantic import _rango_di_fiducia
+        rango = _rango_di_fiducia(status)
+        pieno = _rango_di_fiducia("model_claim")
+    except Exception as exc:  # noqa: BLE001
+        # RETE OBBLIGATORIA QUI, e non e' prudenza generica: e' un rilievo
+        # della revisione della PR #16 (2026-09-10), provato con un A/B a
+        # una variabile sola, non dedotto.
+        # `_rango_di_fiducia` e' una funzione PRIVATA di un'altra superficie:
+        # se cambia nome, l'import solleva. E questo punto NON ha rete —
+        # `_render_banner` sta FUORI dai due `try` di `run()` (e' la sua
+        # ultima riga) e `main_stdin_stdout` chiama `run()` senza `try`,
+        # mentre il suo docstring promette «Returns 0 on every path so the
+        # hook never blocks a tool call». Senza questo except, un rename
+        # altrove romperebbe OGNI tool call con un traceback.
+        #
+        # Ne' il silenzio (R4): senza la tabella dei ranghi il ripiego non sa
+        # giudicare lo status, e chi legge il banner deve poterlo sapere.
+        # stderr e non stdout: il banner e' stdout, e va lasciato pulito.
+        print(
+            f"engram-step-recall: tabella dei ranghi non leggibile "
+            f"({exc.__class__.__name__}: {exc}) — nessun marchio su "
+            f"status={status!r}",
+            file=sys.stderr,
+        )
+        return ""
     if rango is None or (pieno is not None and rango < pieno):
         return f" [{_safe_untrusted(status, 24)}]"
     return ""

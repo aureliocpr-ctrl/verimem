@@ -57,6 +57,7 @@ from typing import Any
 
 import pytest
 
+from verimem.hooks.pre_tool_use import _marchio
 from verimem.hooks.pre_tool_use import run as hook_run
 from verimem.proactive_step_injector import StepInjector
 from verimem.semantic import Fact, SemanticMemory
@@ -229,6 +230,103 @@ class TestAllaPortaDellHook:
         assert "f-fermato" not in banner, (
             f"un fatto quarantenato e' finito nel prompt:\n{banner}"
         )
+
+
+class TestLHookNonPuoEsplodere:
+    """Il rilievo della revisione della PR #16 (2026-09-10), provato
+    dal revisore con un A/B a una variabile sola.
+
+    `_marchio` importa `_rango_di_fiducia`, una funzione PRIVATA di
+    un'altra superficie. `_render_banner` che la chiama sta FUORI dai due
+    `try` di `run()`, e `main_stdin_stdout` chiama `run()` senza `try`
+    mentre promette «Returns 0 on every path so the hook never blocks a
+    tool call». Senza rete, un rename altrove romperebbe OGNI tool call.
+
+    Che l'eccezione uscisse dall'hook era ESEGUITO dal revisore; che il
+    rename accada un giorno resta un'ipotesi. Questo test rende la prima
+    metà permanente, così la rete non si può togliere per sbaglio.
+    """
+
+    # ⚠️ LA PRIMA STESURA DI QUESTI TEST PASSAVA ANCHE SENZA LA RETE.
+    # Chiamava l'hook su uno store vero, e dopo T53 ogni riga porta il
+    # `verdict`: `_marchio` rispondeva sul verdetto e non arrivava MAI
+    # all'import. Un sensore scollegato — passava nei due versi, quindi
+    # non provava niente. L'ha preso la falsificazione, non la rilettura.
+    # Il ripiego dello status vive SOLO sulla via del briefing, dove il
+    # verdetto non c'è: i test qui sotto costruiscono quel caso a mano.
+
+    def _hit_senza_verdetto(self) -> dict[str, Any]:
+        """Una riga come la rende `briefing.get_briefing`: porta il payload
+        del fatto (quindi lo `status`) ma NON il verdetto.
+        """
+        return {
+            "proposition": _TESTO, "topic": "magazzino",
+            "similarity": 0.53, "status": "legacy_unverified",
+        }
+
+    def test_senza_la_tabella_dei_ranghi_il_ripiego_non_solleva(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        import verimem.semantic as _sem
+
+        hit = self._hit_senza_verdetto()
+
+        # CONTROLLO POSITIVO: con la tabella al suo posto il marchio c'è.
+        # Senza questo, un marchio vuoto dopo il monkeypatch non
+        # proverebbe niente — potrebbe non esserci mai stato.
+        assert _marchio(hit) == " [legacy_unverified]", (
+            "CONTROLLO POSITIVO SPENTO: il ripiego dello status non "
+            f"marchia già prima — {_marchio(hit)!r}"
+        )
+
+        # Una variabile sola: la funzione privata sparisce.
+        monkeypatch.delattr(_sem, "_rango_di_fiducia")
+
+        assert _marchio(hit) == "", (
+            "senza la tabella il ripiego non può giudicare lo status: "
+            "nessun marchio, e nessuna eccezione"
+        )
+
+    def test_il_banner_intero_regge_senza_la_tabella(
+        self, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Il livello che conta: `_render_banner` sta FUORI dai `try` di
+        `run()`, quindi qui un'eccezione uscirebbe dall'hook e romperebbe
+        la tool call.
+        """
+        import verimem.semantic as _sem
+        from verimem.hooks.pre_tool_use import _render_banner
+
+        hits = [self._hit_senza_verdetto()]
+
+        prima = _render_banner("Bash", hits)
+        assert "legacy_unverified" in prima, (
+            f"CONTROLLO POSITIVO SPENTO: nessun marchio già prima — {prima!r}"
+        )
+
+        monkeypatch.delattr(_sem, "_rango_di_fiducia")
+
+        dopo = _render_banner("Bash", hits)  # NON deve sollevare
+
+        assert "capannone 12" in dopo, (
+            f"il banner si è perso del tutto invece di degradare: {dopo!r}"
+        )
+        assert "legacy_unverified" not in dopo, (
+            f"il marchio non deve essere inventato senza la tabella — {dopo!r}"
+        )
+
+    def test_il_verdetto_non_dipende_dalla_tabella_dei_ranghi(
+        self, sm: SemanticMemory, monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """La via principale (hybrid, che porta il `verdict`) non passa
+        dall'import: anche senza la tabella il marchio del verdetto resta.
+        """
+        import verimem.semantic as _sem
+
+        monkeypatch.delattr(_sem, "_rango_di_fiducia")
+
+        assert _marchio({"verdict": "contested"}) == " [contested]"
+        assert _marchio({"verdict": "trusted"}) == ""
 
 
 class TestLaRigaIniettata:

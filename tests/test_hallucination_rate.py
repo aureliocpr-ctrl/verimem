@@ -3,7 +3,7 @@
 
 Mem0/Zep recuperano fatti senza alcun segnale di affidabilita': ogni hit e' "da
 verificare" by construction, quindi la loro hallucination-rate@k e' ~1.0. Engram
-attacca a ogni hit un trust_signal (trusted/stale/contested/obsolete/unverified):
+attacca a ogni hit un trust_signal (trusted/stale/contested/obsolete/unverified/rejected):
 questa metrica quantifica la frazione dei top-k recuperati che NON sono fidati =
 il rischio-allucinazione che il recall espone al chiamante. E' il numero che mem0
 non puo' nemmeno misurare (non ha status/supersession/contradiction).
@@ -40,7 +40,7 @@ def test_rate_from_verdicts_empty_is_zero():
     assert rate_from_verdicts([]) == (0.0, 0.0)
 
 
-def test_risky_set_is_the_three_unreliable_verdicts():
+def test_risky_set_is_the_four_unreliable_verdicts():
     # contract-lock: obsolete/contested/unverified sono "rischio"; trusted/stale no.
     # T50 (2026-09-09): entra `rejected` — il fatto che il prodotto ha FERMATO
     # (gate) o SCARTATO (reconciler). Prima di oggi tornava `trusted` e non
