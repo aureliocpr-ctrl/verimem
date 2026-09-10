@@ -197,11 +197,6 @@ def _safe_untrusted(text: Any, limit: int = 120) -> str:
     return s[:limit]
 
 
-#: Verdetto e status che NON meritano un marchio nella riga: il fatto e'
-#: in regola e ogni parola in piu' e' contesto rubato a chi legge.
-_SENZA_MARCHIO = frozenset({"", "trusted", "verified", "model_claim"})
-
-
 def _marchio(hit: Mapping[str, Any]) -> str:
     """Che cos'e' questo fatto, in una parola, o stringa vuota.
 
@@ -212,14 +207,42 @@ def _marchio(hit: Mapping[str, Any]) -> str:
     fidarti come ISTRUZIONE» e «non fidarti come INFORMAZIONE» sono due
     cose diverse.
 
-    Il verdetto viene per primo perche' vede anche cio' che non e' un
-    campo del fatto (`contested`, `stale`); lo status e' il ripiego per la
-    via del briefing, che porta il payload ma non il verdetto.
+    NESSUNA LISTA (2026-09-10). La prima stesura fissava a mano
+    ``{"", "trusted", "verified", "model_claim"}`` — mescolando un
+    VERDETTO e due STATUS — ed era la 23ª lista letterale di status del
+    pacchetto: il cricchetto `scripts/copie.py` l'ha vista e aveva
+    ragione, in una PR il cui argomento e' proprio che le liste a mano
+    divergono. Ora le domande sono due, ognuna posta alla superficie che
+    la possiede:
+
+    * il **verdetto**, quando c'e': ``trusted`` e' il valore di default
+      documentato di :class:`~verimem.trust_signal.TrustSignal` — una
+      parola sola, non un elenco. Tutto il resto e' qualcosa che chi
+      legge deve sapere. Il verdetto vince sullo status perche' vede
+      anche cio' che non e' un campo del fatto (``contested``,
+      ``stale``); se i due divergessero, il difetto sarebbe in
+      ``compute_trust_signal``, non qui.
+    * lo **status**, come ripiego per la via del briefing che porta il
+      payload ma non il verdetto: si marchia tutto cio' che sta SOTTO
+      ``model_claim`` nella tabella dei ranghi, piu' cio' che la tabella
+      non conosce (``None``: «non lo so» non e' «affidabile»). La soglia
+      non e' un numero scritto qui: e' il rango di ``model_claim``, e si
+      muove con lui.
     """
-    for chiave in ("verdict", "status"):
-        valore = str(hit.get(chiave) or "").strip()
-        if valore and valore not in _SENZA_MARCHIO:
-            return f" [{_safe_untrusted(valore, 24)}]"
+    verdetto = str(hit.get("verdict") or "").strip()
+    if verdetto:
+        if verdetto == "trusted":
+            return ""
+        return f" [{_safe_untrusted(verdetto, 24)}]"
+
+    status = str(hit.get("status") or "").strip()
+    if not status:
+        return ""
+    from ..semantic import _rango_di_fiducia
+    rango = _rango_di_fiducia(status)
+    pieno = _rango_di_fiducia("model_claim")
+    if rango is None or (pieno is not None and rango < pieno):
+        return f" [{_safe_untrusted(status, 24)}]"
     return ""
 
 
