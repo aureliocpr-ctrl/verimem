@@ -52,9 +52,34 @@ TETTI = {
     "liste_di_parole_vuote": 16,
     "elenchi_di_status": 22,
 }
-# Questo NON è un tetto: è un debito che deve SCENDERE (ticket T49, owner ws2).
-# Sale ⇒ rosso come gli altri; scende ⇒ va abbassato qui, nello stesso commit.
-DEBITO_STATUS_SENZA_USER_BELIEF = 13
+# ⛔ QUI C'ERA UN «DEBITO» DI 13 ELENCHI CON `quarantined` E SENZA `user_belief`,
+# attribuito al ticket T49. RITIRATO da me il 10/09/2026, dopo aver letto tutti e
+# tredici i posti uno per uno sul main appena mergiato (`32273665`):
+#
+#   cli.py:4255            l'enum canonico per la PRESENTAZIONE
+#   cli.py:4683            la validazione dello status dopo il gate
+#   client.py:1207 · flow_events.py:353 · mcp_server.py:14263
+#                          il calcolo di `withheld_despite_judge` su UN fatto
+#   gateway.py:1746 · trust_ledger.py:30
+#                          le AZIONI del gate — `admitted` e `abstained` non sono
+#                          nemmeno status: falsi positivi puri del criterio
+#   entity_populate.py:111 · provenance_signing.py:142 · tier2_judge.py:296 ·
+#   semantic.py:3460 · 3488 · 3516
+#                          esclusioni VOLUTE e corrette («Quarantined/orphaned
+#                          facts are excluded»)
+#
+# Zero su tredici erano «una porta che serve i quarantenati come veri», che è la
+# cosa che il nome prometteva e che T49 ha davvero curato con una superficie sola.
+# Il numero non è sceso col merge di T49 perché non misurava T49.
+#
+# E c'è di peggio di un numero inutile: quel contatore pretendeva di SCENDERE,
+# cioè chiedeva di togliere sei esclusioni corrette. Un righello che spinge nella
+# direzione sbagliata è peggio di nessun righello — chi lo prende sul serio rompe
+# il prodotto per far scendere una cifra.
+#
+# La lezione, contro di me: **contare le OCCORRENZE di una forma non misura una
+# funzione**. Chi vuole misurare T49 conta i chiamanti di recupero che non
+# nascondono gli status bassi, e quel test ce l'ha Giano.
 
 # Le parole vuote note servono solo a RICONOSCERE una stoplist, non a esserlo.
 _VUOTE_EN = {"the", "and", "for", "with", "that", "this", "from", "are", "was", "not", "you"}
@@ -198,16 +223,9 @@ def stampa(risultato: dict, dettaglio: bool) -> int:
             saliti.append((chiave, valore, tetto))
         print(f"  [{segno}] {chiave:24s} {valore:3d} / tetto {tetto:3d}   {CRITERI[chiave]}")
 
-    debito = risultato["debito_status_senza_user_belief"]
-    if debito > DEBITO_STATUS_SENZA_USER_BELIEF:
-        saliti.append(("debito_status_senza_user_belief", debito, DEBITO_STATUS_SENZA_USER_BELIEF))
-        stato = "SALE"
-    elif debito < DEBITO_STATUS_SENZA_USER_BELIEF:
-        stato = "SCESO — abbassa il numero in questo file, nello stesso commit"
-    else:
-        stato = "fermo (ticket T49, owner ws2)"
-    print(f"  [debito] elenchi con `quarantined` e SENZA `user_belief`: "
-          f"{debito} / {DEBITO_STATUS_SENZA_USER_BELIEF}  {stato}")
+    # Il «debito» degli elenchi senza `user_belief` è stato RITIRATO: vedi la nota
+    # in testa al file. Il numero resta consultabile con --dettaglio, senza tetto e
+    # senza pretendere di misurare una funzione.
 
     if dettaglio:
         print("\n--- dove stanno ---")

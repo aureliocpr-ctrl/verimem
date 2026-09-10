@@ -47,12 +47,23 @@ def test_nessun_tetto_e_superato(misura_di_oggi):
     )
 
 
-def test_il_debito_degli_status_non_sale(misura_di_oggi):
-    """Gli elenchi con `quarantined` e senza `user_belief` (T49) devono scendere, non salire."""
-    assert (
-        misura_di_oggi["debito_status_senza_user_belief"]
-        <= copie.DEBITO_STATUS_SENZA_USER_BELIEF
-    ), misura_di_oggi["status_senza_user_belief"]
+def test_il_debito_degli_status_e_stato_ritirato():
+    """Il «debito» dei 13 elenchi senza `user_belief` non esiste più, e non deve tornare.
+
+    Letti tutti e tredici su `32273665`: enum di presentazione, azioni del gate
+    (`admitted`/`abstained` non sono nemmeno status) ed esclusioni VOLUTE. Zero
+    erano «una porta che serve i quarantenati come veri». Il contatore pretendeva
+    di scendere, cioè chiedeva di togliere sei esclusioni corrette: un righello che
+    spinge nella direzione sbagliata è peggio di nessun righello.
+
+    Questo test è la lapide: se qualcuno rimette il tetto senza rifare il criterio,
+    diventa rosso e trova qui il motivo.
+    """
+    assert not hasattr(copie, "DEBITO_STATUS_SENZA_USER_BELIEF"), (
+        "il «debito» è stato ritirato il 10/09: contare le occorrenze di una forma "
+        "non misura una funzione. Per misurare T49 si contano i chiamanti di "
+        "recupero che non nascondono gli status bassi — quel test è di ws2."
+    )
 
 
 def test_il_cricchetto_diventa_rosso_su_una_copia_in_piu():
