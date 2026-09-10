@@ -111,3 +111,50 @@ regola giusta e non la mette in un controllo.
     ①b   otto comandi non possono sparire senza che nessuno se ne accorga
     T59  la pagina che risponde a una richiesta di cancellazione dati elenca TUTTE le porte
     ①h   (nulla oggi: chiude un debito, non un difetto)
+
+## 5. Aggiunta del 10/09 sera — il reperto di ws2 Giano, e va SOPRA tutti
+
+**Il reperto** (ws2, post delle 20:23, da lui dichiarato NON MISURATO): *«la
+deny-list protegge solo mentre il server condiviso è VIVO — se è giù, `_remote()`
+cade fail-soft e tutte e 15 le mutazioni tornano sul locale»*.
+
+**Confermato strutturalmente da me** (non misurato eseguendo: la misura è sua):
+
+    mcp_server.py:7939
+      if (name in _THIN_UNSUPPORTED_READS or name in _THIN_UNSUPPORTED_WRITES)
+              and _remote() is not None:
+    mcp_server.py:202  (dentro `_remote`)
+      except Exception as exc:  # noqa: BLE001 -- fail-soft to local
+
+Server giù ⇒ `_remote()` è `None` ⇒ la congiunzione è falsa ⇒ il tool prosegue e
+agisce sullo store locale.
+
+| | 1. percorso | 2. promessa | 3. se ne accorge | **gravità** |
+|---|---|---|---|---|
+| la deny-list si spegne a server giù | no | **sì** | **no, e crede di essere protetto** | **P0, sopra T49** |
+
+**Perché sopra T49, e non per la dimensione.** *La difesa si spegne esattamente
+quando serve di più.* A server vivo lo store locale è secondario ma il sistema
+funziona; a server **giù** l'utente è già nella situazione peggiore — non raggiunge
+il corpus vero — ed è **proprio allora** che la guardia smette di dirglielo.
+
+Sta **sopra «nessuna difesa»**, e non è un paradosso: una difesa assente lascia
+l'utente prudente, una che c'è e si disattiva da sola gli fa abbassare la guardia
+nel momento sbagliato. Ed è il difetto che il prodotto descrive da sé —
+*«a forget that silently forgets nothing is the most dangerous no-op here»* — reso
+condizionale a uno stato di rete. Più l'ordinatore: **sono mutazioni**, e la cura
+di domani non rimette nel corpus condiviso ciò che l'utente crede di aver cancellato.
+
+**🪞 E qui ritiro metà di una lode mia.** Nel post delle 00:38 avevo scritto che «il
+prodotto fa una cosa **migliore** di quella che il README promette: dice di no». È
+vero **solo a server vivo**. Avevo letto la riga 7939 — l'ho citata nel cricchetto
+`e155cdaa` — e **la congiunzione `and _remote() is not None` ce l'avevo davanti**.
+Ho visto la lista e non ho visto la condizione.
+
+**I due conti, dichiarati invece che scelti**: io leggo 14 `READS` + 14 `WRITES` =
+**28** in lista; Giano dice **15 mutazioni**. Torna se il suo conto è delle
+mutazioni *del corpus dei fatti*: **14 in lista + `hippo_quarantine_restore`**, che
+non è in nessuna delle due (mio, `e155cdaa`, `xfail(strict=True)`). Chiesto a lui di
+confermare il criterio. Se è quello, i due reperti coprono lo stesso insieme da due
+lati: **il mio** dice che una mutazione non è protetta nemmeno a server vivo, **il
+suo** che le altre quattordici non lo sono a server giù.
