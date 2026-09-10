@@ -51,9 +51,18 @@ _MAPPA = re.compile(r"^docs/stato-reale/mappa/.*\.md$")
 #: — che e' ancorato **due volte**, allo SHA e alla data all'italiana. Un
 #: righello che boccia chi ha fatto la cosa giusta insegna a ignorarlo.
 _DATA = re.compile(
-    r"\b20\d{2}-\d{2}-\d{2}\b"          # 2026-09-09
-    r"|\b\d{1,2}/\d{1,2}(/\d{2,4})?\b"  # 07/09, 07/09/2026
-    r"|\b[0-9a-f]{7,40}\b"              # lo SHA del commit che l'ha misurato
+    r"\b20\d{2}-\d{2}-\d{2}\b"                              # 2026-09-09
+    # 🔴 IL BUCO CHE HA TENUTO SPENTA QUESTA CASELLA, trovato da `--autotest`
+    #    al primo colpo (10/09). La v2 scriveva `\d{1,2}/\d{1,2}` per accettare
+    #    «07/09», e quel pattern **matcha anche una frazione**: `3/4`, `8/9`,
+    #    `77/150`. Ma il numero che cerco e' proprio `\d+/\d+` — quindi **ogni
+    #    rapporto ancorava se stesso** e la casella non poteva diventare rossa.
+    #    Cercando un commit di `main` che la facesse scattare non ne trovavo
+    #    nessuno su 25, e avevo pensato «il repo e' disciplinato»: era spenta.
+    #    Ora: giorno 01-31 e mese 01-12, **con lo zero iniziale** — la forma che
+    #    l'agenzia usa davvero («07/09») — cosi' `3/4` e `12/40` non passano.
+    r"|\b(0[1-9]|[12]\d|3[01])/(0[1-9]|1[0-2])(/\d{2,4})?\b"  # 07/09, 07/09/2026
+    r"|\b[0-9a-f]{7,40}\b"                                  # lo SHA che l'ha misurato
 )
 
 TETTO_RIGHE = 300
@@ -62,6 +71,72 @@ TETTO_RIGHE = 300
 def git(*args: str) -> str:
     return subprocess.run(["git", *args], capture_output=True, text=True,
                           encoding="utf-8", errors="replace").stdout.strip()
+
+
+def numeri_senza_ancoraggio(aggiunte: list[str]) -> tuple[list[str], int]:
+    """I blocchi di commento che portano un numero e NON portano una data.
+
+    Funzione pura, e non per eleganza: e' l'unico modo di provare che questa
+    casella MORDE (`--autotest`). L'avevo allentata due volte in due giorni —
+    prima il formato della data, poi il raggruppamento — e cercando un commit
+    di `main` che la facesse scattare non ne ho trovato **nessuno su 25**. Un
+    gate che non hai mai visto diventare rosso non e' un gate: e' una casella
+    che dice sempre di si'.
+
+    Ritorna (blocchi senza ancoraggio, quanti blocchi portavano un numero).
+    """
+    blocchi: list[list[str]] = []
+    for riga in aggiunte:
+        if re.search(r"#|\"\"\"|'''", riga):
+            if blocchi and blocchi[-1]:
+                blocchi[-1].append(riga)
+            else:
+                blocchi.append([riga])
+        elif blocchi and blocchi[-1]:
+            blocchi.append([])              # una riga di codice interrompe il blocco
+    blocchi = [b for b in blocchi if b]
+    sospetti = [b for b in blocchi
+                if any(re.search(r"\d+[.,]?\d*\s*%|\d+\s*/\s*\d+", r) for r in b)]
+    senza = [" ".join(x.strip() for x in b)
+             for b in sospetti if not any(_DATA.search(r) for r in b)]
+    return senza, len(sospetti)
+
+
+def autotest() -> int:
+    """Casi costruiti: la casella deve dire NO dove va detto, e SI dove va detto.
+
+    Ogni caso e' scritto per poter FALLIRE: se il raggruppamento diventasse
+    troppo largo, il caso D (numero e data in due blocchi separati da una riga
+    di codice) passerebbe e questo autotest diventerebbe rosso.
+    """
+    casi = [
+        ("A  blocco con la data ISO e un numero",
+         ["    # misurato 2026-09-09: 12 su 40"], 0),
+        ("B  numero e NESSUN ancoraggio  → deve BOCCIARE",
+         ["    # la copertura e' del 97,1%"], 1),
+        ("C  data nella 1a riga, numero nella 3a (il caso di @Nadia)",
+         ["    # Misurato sullo store vero il 07/08 e scritto nel docstring",
+          "    # di `_rango_di_fiducia`: la tabella conosce 7 stati,",
+          "    # e i fatti vivi con uno stato ignoto sono 2540 su 6982"], 0),
+        ("D  data in UN blocco, numero in un ALTRO  → deve BOCCIARE",
+         ["    # misurato il 2026-09-09",
+          "    x = calcola()",
+          "    # il tasso e' 3/4"], 1),
+        ("E  un numero in una riga di CODICE, non un commento",
+         ["    soglia = 40 / 100"], 0),
+        ("F  lo SHA del commit come ancoraggio",
+         ["    # (2b82497f) il rapporto e' 8/9"], 0),
+    ]
+    esito = 0
+    print("== AUTOTEST della casella «i numeri nuovi portano un ancoraggio» ==")
+    for nome, righe, attesi in casi:
+        senza, _ = numeri_senza_ancoraggio(righe)
+        ok = len(senza) == attesi
+        print(f"  {'OK ' if ok else '🔴 '} {nome:58s} bocciati {len(senza)}, attesi {attesi}")
+        esito |= 0 if ok else 1
+    print("\n  AUTOTEST VERDE: la casella boccia dove deve e passa dove deve."
+          if esito == 0 else "\n  🔴 AUTOTEST ROSSO: la casella non fa quello che dice.")
+    return esito
 
 
 @dataclass
@@ -137,19 +212,18 @@ def analizza(base: str, testa: str = "HEAD") -> list[Casella]:
         diff = git("diff", f"{base}...{testa}", "--", *prodotto)
         aggiunte = [r[1:] for r in diff.splitlines()
                     if r.startswith("+") and not r.startswith("+++")]
-        #: una riga «sospetta» = una riga di commento/docstring con una
-        #: percentuale o una frazione dentro
-        sospette = [r for r in aggiunte
-                    if re.search(r"#|\"\"\"|'''", r) and re.search(r"\d+[.,]?\d*\s*%|\d+\s*/\s*\d+", r)]
-        senza_data = [r.strip() for r in sospette if not _DATA.search(r)]
-        if not sospette:
+        # Il calcolo sta in `numeri_senza_ancoraggio` (funzione pura) perche'
+        # e' l'unica casella che ho allentato due volte: cosi' `--autotest` puo'
+        # provare che morde ancora.
+        senza_data, quanti = numeri_senza_ancoraggio(aggiunte)
+        if not quanti:
             c.esito, c.dettaglio = "VERDE", "nessun numero nuovo nei commenti"
         elif senza_data:
             c.esito = "ROSSO"
-            c.dettaglio = f"{len(senza_data)} righe di commento con un numero e senza data"
+            c.dettaglio = f"{len(senza_data)} blocchi di commento con un numero e senza ancoraggio"
             c.righe = senza_data[:4]
         else:
-            c.esito, c.dettaglio = "VERDE", f"{len(sospette)} numeri nuovi, tutti con data"
+            c.esito, c.dettaglio = "VERDE", f"{quanti} numeri nuovi, tutti con data"
     caselle.append(c)
 
     # ── 5. niente push su main ────────────────────────────────────────────
@@ -188,7 +262,12 @@ def main() -> int:
     ap.add_argument("--head", default="HEAD",
                     help="il ramo/commit da giudicare (per provare il gate su un caso noto)")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--autotest", action="store_true",
+                    help="prova che la casella dei numeri MORDE (casi costruiti)")
     args = ap.parse_args()
+
+    if args.autotest:
+        return autotest()
 
     caselle = analizza(args.base, args.head)
     rosse = [c for c in caselle if c.esito == "ROSSO"]
