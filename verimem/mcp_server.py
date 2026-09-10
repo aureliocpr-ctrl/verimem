@@ -12243,15 +12243,25 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # esce vuoto — indistinguibile da «non esiste» (misurato alla porta
             # il 2026-09-09: 0 fatti su un topic che ne aveva uno).
             _topic = arguments.get("topic") or None
+            # ⚠️ L'ERRORE VA NELLA RICEVUTA, non in un `pass`. Con
+            # `facts_all = []` e l'eccezione ingoiata, un export che non ha
+            # potuto leggere niente e uno di un corpus vuoto danno la stessa
+            # risposta — e da quando la ricevuta dichiara `n_in_store`, dice
+            # perfino «nello store ce ne sono 12» consegnandone zero, senza
+            # spiegare. E' l'incidente del CYCLE #10 (28 tool che resero
+            # `facts=[]` in silenzio), che il docstring di `list_facts`
+            # racconta due schermate sopra questa riga.
+            _scan_error: str | None = None
             try:
                 facts_all = a.semantic.list_facts(
                     limit=_SCAN_CAP, offset=0, topic=_topic)
-            except Exception:
-                pass
+            except Exception as _exc:  # noqa: BLE001 — un export non muore qui
+                _scan_error = f"{type(_exc).__name__}: {_exc}"
             payload = export_all_facts(
                 facts_all, topic=_topic,
                 n_in_store=a.semantic.count(topic=_topic),
                 cap=_SCAN_CAP,
+                scan_error=_scan_error,
             )
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
