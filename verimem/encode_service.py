@@ -38,7 +38,50 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-DISCOVERY_PATH = Path.home() / ".engram" / "encode_service.json"
+
+def _dir_dei_marcatori() -> Path:
+    """La cartella dove QUESTO processo cerca e annuncia il daemon.
+
+    T60 — I MARCATORI DEVONO SEGUIRE LA DATA DIR, o l'isolamento e' meta'.
+    Fino al 2026-09-10 i tre path stavano in ``Path.home()``: un processo che
+    isolava ``ENGRAM_DATA_DIR`` — cioe' che faceva la cosa giusta — leggeva
+    comunque la discovery GLOBALE, non riconosceva il modello del daemon di
+    casa e ne spawnava uno col PROPRIO, registrandolo per tutti. Misurato due
+    volte in quindici ore, leggendo l'``environ()`` dei processi::
+
+        09/09 23:02:29   ENGRAM_DATA_DIR = ...\\Temp\\<banco-isolato-A>
+        10/09 13:14:23   ENGRAM_DATA_DIR = ...\\Temp\\<banco-isolato-B>
+
+    Costo per chi non c'entrava: 17 fatti entrati nello store di produzione
+    senza vettore (il client rifiuta il daemon col modello sbagliato, ed e'
+    giusto; in delegate-only non c'e' ripiego, quindi la scrittura viene
+    differita) — con la ricevuta che diceva ``stored: true``.
+
+    ⚠️ LA RISOLUZIONE NON SI DECIDE QUI: passa da ``_compat._env_data_dir()``,
+    la stessa che usa ``cli._facts_data_dir``. Quella funzione esiste perche'
+    la STESSA classe era gia' stata pagata su un altro percorso — il suo
+    docstring lo racconta: «con entrambe poste la CLI scriveva nel corpus VIVO
+    mentre l'avviso annunciava di usare quello isolato. Misurato: i fatti in
+    produzione da 7178 a 7179». Ordine degli alias compreso: ``HIPPO_DATA_DIR``
+    e' l'appiglio esplicito e non va sovrascritto da quello del manutentore.
+
+    ⚠️ SENZA OVERRIDE NON CAMBIA NIENTE: il fallback e' ``~/.engram``, cioe' il
+    valore letterale di prima. Un'installazione che non isola non si accorge di
+    questa modifica — ed e' presidiato da una cella apposta, perche' spostare i
+    path di chi NON isola renderebbe il daemon di casa invisibile a ogni
+    client.
+
+    Import locale come gli altri di questo modulo: a livello di modulo
+    creerebbe un ciclo.
+    """
+    from ._compat import _env_data_dir
+    override = _env_data_dir()
+    if override:
+        return Path(override).expanduser().resolve()
+    return Path.home() / ".engram"
+
+
+DISCOVERY_PATH = _dir_dei_marcatori() / "encode_service.json"
 
 
 def _idle_timeout_s() -> float:
@@ -570,7 +613,7 @@ class EncodeServer:
 
 
 # --- Auto-spawn (lazy, windowless) -----------------------------------------
-_SPAWN_LOCK_PATH = Path.home() / ".engram" / "encode_service.spawn.lock"
+_SPAWN_LOCK_PATH = _dir_dei_marcatori() / "encode_service.spawn.lock"
 _SPAWN_COOLDOWN_S = 60.0
 
 # --- Daemon singleton lock (2026-07-10 RAM incident) -------------------------
@@ -580,7 +623,7 @@ _SPAWN_COOLDOWN_S = 60.0
 # loser then lingers idle for hours at full weight (measured: 2 × 1.9 GB).
 # The daemon itself must be the arbiter: take an atomic pid lock BEFORE the
 # model load and exit cheaply if another live daemon holds it.
-DAEMON_LOCK_PATH = Path.home() / ".engram" / "encode_service.daemon.lock"
+DAEMON_LOCK_PATH = _dir_dei_marcatori() / "encode_service.daemon.lock"
 
 
 def _pid_alive(pid: int) -> bool:
