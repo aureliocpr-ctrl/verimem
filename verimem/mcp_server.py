@@ -9868,7 +9868,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_aggregate_overall import aggregate_facts_overall
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = aggregate_facts_overall(
@@ -9882,7 +9882,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_cluster_by_topic import facts_cluster_by_topic
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = facts_cluster_by_topic(
@@ -10075,7 +10075,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.outlier_summary import summarize_top_outliers
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = summarize_top_outliers(
@@ -10121,7 +10121,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.outcome_pattern import find_outcome_patterns
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = find_outcome_patterns(
@@ -10135,8 +10135,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.knowledge_graph_export import export_graph
             eps, facts_all = [], []
             try:
-                eps = a.memory.all(limit=10000)
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                eps = a.memory.all(limit=_SCAN_CAP)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = export_graph(
@@ -10149,8 +10149,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.stats_velocity import compute_velocity
             eps, facts_all = [], []
             try:
-                eps = a.memory.all(limit=10000)
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                eps = a.memory.all(limit=_SCAN_CAP)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = compute_velocity(
@@ -10164,7 +10164,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.fact_priority import rank_facts_by_priority
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = rank_facts_by_priority(
@@ -10179,7 +10179,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.agent_specialization import compute_specialization
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = compute_specialization(facts_all)
@@ -10190,7 +10190,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.skill_cooccurrence_graph import build_cooccurrence_graph
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = build_cooccurrence_graph(
@@ -10204,7 +10204,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_disagreement import find_disagreements
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = find_disagreements(
@@ -10218,7 +10218,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.failure_clusters import cluster_failures
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = cluster_failures(
@@ -10260,7 +10260,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.skill_drift import detect_skill_drift
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = detect_skill_drift(
@@ -10315,8 +10315,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.memory_health_report import generate_health_report
             eps, facts_all = [], []
             try:
-                eps = a.memory.all(limit=10000)
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                eps = a.memory.all(limit=_SCAN_CAP)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = generate_health_report(
@@ -10376,7 +10376,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.memory_compaction import find_duplicates
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = find_duplicates(
@@ -10423,8 +10423,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             facts_all = []
             eps = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
-                eps = a.memory.all(limit=10000)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = compute_workload(facts=facts_all, episodes=eps)
@@ -10488,7 +10488,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.emerging_patterns import find_emerging_patterns
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = find_emerging_patterns(
@@ -10548,7 +10548,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.episode_rollup import rollup_old_episodes
             eps = []
             try:
-                eps = a.memory.all(limit=10000)
+                eps = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = rollup_old_episodes(
@@ -10563,7 +10563,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.trust_score import rank_facts_by_trust
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = rank_facts_by_trust(
@@ -10706,7 +10706,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.time_decay import find_stale_facts
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = find_stale_facts(
@@ -10723,7 +10723,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             half_life = float(arguments.get("half_life_days", 90))
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             target = None
@@ -10769,7 +10769,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from .scope import matches_scope as _matches_scope
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             agent_id = str(arguments.get("agent_id", ""))
@@ -10799,7 +10799,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.agent_scope import count_by_agent
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = {"counts": count_by_agent(facts_all)}
@@ -11273,7 +11273,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_recent import facts_recent
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = facts_recent(
@@ -11346,7 +11346,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_by_confidence import facts_by_confidence
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = facts_by_confidence(
@@ -11390,7 +11390,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.facts_topic_merge import merge_facts_by_topic
             facts = []
             try:
-                facts = a.semantic.list_facts(limit=10000, offset=0)
+                facts = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = merge_facts_by_topic(
@@ -11947,7 +11947,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             fb_id = str(arguments.get("fact_id_b", "")).strip()
             facts = []
             try:
-                facts = a.semantic.list_facts(limit=10000, offset=0)
+                facts = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             by_id = {getattr(f, "id", ""): f for f in facts}
@@ -12032,7 +12032,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.find_duplicate_facts import find_duplicate_facts
             facts_all = []
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
+                facts_all = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pass
             payload = find_duplicate_facts(
@@ -12076,7 +12076,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             else:
                 exclude_prefixes = tuple(str(p) for p in raw_exclude)
             try:
-                pool = a.semantic.list_facts(limit=10000, offset=0)
+                pool = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
             except Exception:
                 pool = []
             # The detector itself accepts a `topic` filter — pass it
@@ -12337,7 +12337,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from verimem.outcome_timeseries import outcome_timeseries
             episodes_all = []
             try:
-                episodes_all = a.memory.all(limit=10000)
+                episodes_all = a.memory.all(limit=_SCAN_CAP)
             except Exception:
                 pass
             payload = outcome_timeseries(
@@ -13730,7 +13730,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         in ("1", "true", "yes", "on")):
                     try:
                         from .derivation_detect import detect_derivations
-                        _live = a.semantic.list_facts(limit=10000, offset=0)
+                        _live = a.semantic.list_facts(limit=_SCAN_CAP, offset=0)
                         _derives_raw = detect_derivations(
                             str(_source), _live,
                             exclude_id=_content_hash_id(proposition, topic))
