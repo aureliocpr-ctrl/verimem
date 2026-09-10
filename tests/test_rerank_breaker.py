@@ -12,6 +12,7 @@ All tests inject a fake scorer — no model, no RAM.
 """
 from __future__ import annotations
 
+import sys
 import threading
 import time
 
@@ -437,6 +438,21 @@ def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
         "scatta, il re-arm ha inghiottito le registrazioni concorrenti")
 
 
+@pytest.mark.xfail(
+    sys.platform == "win32",
+    strict=False,
+    reason=(
+        "T38 — QUARANTENA SOLO SU WINDOWS, decisa dal controllore il 2026-09-10 "
+        "alle 21:00 per riaprire la finestra su main. Questo assert cade per una "
+        "GARA, non per una regressione: 2 gambe `windows-latest / py3.12` su 15 "
+        "con verdetto il 09-10/09 (13,3%), e 2 su 6 il 24/08 (33%), col codice "
+        "del breaker BYTE-IDENTICO fra i run che passano e quelli che cadono. "
+        "Cronaca, classificazione e le cinque ipotesi già ESCLUSE: "
+        "docs/stato-reale/postmortem/2026-09-08-ci-windows-il-breaker-che-si-riarmava-da-solo.md "
+        "— la causa NON è trovata e il ticket T38 (owner ws5) resta APERTO. "
+        "Il marker si toglie con la cura, non con il tempo."
+    ),
+)
 def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     """Second finding of the same external review (glm-5.2): 'observation
     becomes action'. The re-arm lives in the reader, and the read-path REGIME

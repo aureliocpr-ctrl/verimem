@@ -1,0 +1,101 @@
+# 2026-09-08 — la ci windows rossa sul candidato al tag, con zero file di prodotto cambiati
+
+* **Cosa** — il candidato al tag `5ac8d9f1` (README e presidi, nessun file sotto
+  `verimem/`) ha reso rossa la gamba `test (windows-latest / py3.12)` con
+  `1 failed, 12821 passed, 44 skipped, 40 deselected, 128 xfailed in 3053.25s`.
+  Il test: `tests/test_rerank_breaker.py::test_observing_the_breaker_does_not_rearm_it`,
+  `AssertionError: the gate, and only the gate, re-arms after the cooldown` ·
+  `assert True is False`. Run `34221255060` tentativo 1
+  (`2026-09-08T11:32:45Z` → `12:31:10Z`), job `102044644257`; il tentativo 2 è
+  verde (`updated_at 2026-09-08T18:09:13Z`).
+* **Classe** — **trappola armata**. Nessun file di prodotto era cambiato e le
+  altre otto gambe erano verdi: il prodotto non poteva essersi rotto in quella
+  finestra. Il test dipende da un tempo di raffreddamento che non ha dichiarato,
+  e sulla macchina Windows quel tempo è passato mentre il test guardava.
+* **Causa** — **NON PROVATA fino in fondo**, e va detto invece di completarla con
+  l'ipotesi comoda: la lettura di `_rerank_breaker_tripped()` è tornata `True`
+  dove il test ne pretendeva `False` dopo il raffreddamento. La causa radice sta
+  in come il test misura il tempo, non in `semantic.py`, ma nessuno l'ha ancora
+  riprodotta a comando. È il ticket **T38**, owner **ws5 Tara**.
+* **Cura** — **nessuna, e questo è il punto**: il rosso è stato tolto da un
+  *rerun*, non da un cambiamento. Il codice del test è oggi quello di allora.
+  Finché T38 non chiude, la stessa gamba può ridiventare rossa su un commit che
+  non c'entra niente — e la prossima volta bloccherà di nuovo un tag.
+
+  > **↑ QUESTA PREVISIONE SI È AVVERATA IN TRENTA ORE.** Il 10/09 alle 13:26 la
+  > stessa gamba, lo stesso test, lo stesso identico messaggio hanno reso rossa
+  > **main** su `32273665` (`1 failed, 12848 passed`) — dopo il merge di una PR
+  > che non tocca né `semantic.py` né il breaker (`git diff | grep -c
+  > rerank_breaker` → **0**). Ha bloccato la finestra invece di un tag. La stessa
+  > sera è caduto anche su `galileo/t-map-11-ground` (`0784915a`).
+  >
+  > **Il 10/09 alle 21:00 il controllore ha deciso la QUARANTENA su windows**
+  > (`xfail(sys.platform == "win32", strict=False)`) per riaprire la finestra. La
+  > quarantena **non è una cura**: T38 resta aperto, la causa resta ignota, e il
+  > marker si toglie con la cura, non con il tempo.
+* **Controllo** — oggi **NESSUNO**, ed è un debito dichiarato. Il controllo che
+  serve è di T38: rendere il tempo del breaker esplicito nel test (un orologio
+  iniettato) così che il rosso si riproduca a comando o non capiti mai.
+  Il controllo che questo postmortem aggiunge *subito* è diverso e sta un passo
+  più indietro — **rendere i rossi contabili**: `gh run list` mostrava
+  `success`, perché legge l'ultimo tentativo, e questo rosso era già sparito da
+  ogni conteggio 24 ore dopo. Da qui in poi si contano i **tentativi**, e questa
+  cartella è il registro che sopravvive al rerun.
+  **E dal 10/09 c'è un secondo debito, creato dalla quarantena stessa.**
+  `strict=False` rende verde sia il fallimento (`xfailed`) sia il successo
+  (`xpassed`): **il segnale sparisce in tutt'e due le direzioni**, ed è la forma
+  già misurata in casa — *una capacità spenta non emette segnale*. Il conteggio
+  non è perduto, ma va CERCATO, e questo è il comando:
+
+  ```
+  gh api repos/<owner>/<repo>/actions/jobs/<job>/logs \
+    | grep -E "XFAIL|XPASS" | grep test_observing_the_breaker
+  ```
+
+  `xfailed` = la gara ha morso · `xpassed` = quel giro è passato. Finché il
+  marker è lì, **il tasso si legge solo così**, e chi apre la finestra dovrebbe
+  guardarlo: un test in quarantena che smette di cadere è una notizia quanto uno
+  che ricomincia.
+
+* **Owner** — T38 e la causa radice: **ws5 Tara**. Il conteggio dei rossi, la
+  quarantena e questa cartella: **ws8 Corrado**.
+
+---
+
+## Le cinque ipotesi ESCLUSE il 10/09 (perché nessuno le rifaccia)
+
+Tutte e cinque erano di ws8, tutte cadute nella stessa serata, con la prova:
+
+| # | ipotesi | come è caduta |
+|---|---|---|
+| 1 | i rerank CE sono lenti su Windows e il breaker scatta davvero | i tre sforamenti li registra **il test stesso** |
+| 2 | il margine di 10 ms è sotto la granularità dell'orologio | `monotonic` = `QueryPerformanceCounter` a 100 ns; 400 giri, **0 falsi**, delta minimo 60,09 ms |
+| 3 | `_rerank_breaker_cooldown_s()` memoizza il valore | legge `os.environ` a ogni chiamata (`semantic.py:2140-2144`) |
+| 4 | un thread orfano del test precedente | **c'è `t.join(10)`** (riga 429) — smentita da ws1 leggendo la riga |
+| 5 | un worker di rerank in volo ri-scatta il breaker | lo sforamento lo registra **il caller** al timeout, non il worker: banco dedicato, **0 rossi su 8** |
+
+**31 esecuzioni su Windows di casa, mai un rosso.** Con una gara al 13-33% questo
+non prova l'assenza: prova che la finestra non si apre in quell'ambiente. Il
+fatto più solido resta il commento del **24/08** dentro `test_rerank_breaker.py`
+(trovato da ws1): *«è una GARA, non una regressione»*, breaker **byte-identico**
+fra i run che passano e quelli che cadono — e descrive l'assert di un test
+**diverso** da quello caduto oggi, quindi **la gara è più larga del singolo
+test**. È la ragione per cui la quarantena copre un test solo: marcarne di più
+spegnerebbe più segnale di quello che serve.
+
+---
+
+## Perché questo è il primo file della cartella
+
+Non è il rosso più grave che abbiamo avuto: è quello che mostra meglio a cosa
+serve il registro. Ha tre proprietà insieme:
+
+1. **ha fermato un rilascio** — il candidato al tag è rimasto in freeze;
+2. **non ha lasciato traccia** — un rerun l'ha guarito e `gh run list` oggi dice
+   `success`: senza questo file, fra un mese la giornata dell'08/09 risulterebbe
+   senza rossi;
+3. **la sua cura non è stata scritta** — e un limite non curato che nessuno
+   registra torna, con la faccia di un problema nuovo.
+
+Le tre misure del venerdì (R8) leggeranno **questa cartella**, non la pagina
+Actions.
