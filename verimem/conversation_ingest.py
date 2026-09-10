@@ -20,7 +20,10 @@ provider-agnostic, hermetic in tests, hosted-sampling-friendly in MCP.
 """
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+_LOG = logging.getLogger(__name__)
 
 #: The extraction prompt that won the granularity A/B (iter 19-22): HaluMem gold
 #: points are atomic, subject-named and exhaustive; compound facts match at most
@@ -192,7 +195,9 @@ def _ingest_ground_threshold() -> float:
     return env_float("ENGRAM_INGEST_GROUND_THRESHOLD", _INGEST_GROUND_THRESHOLD)
 
 
-def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
+def _grounds(dialogue: str, proposition: str, *,
+             banda: tuple[bool, bool, float] | None = None,
+             ) -> tuple[bool, float | None]:
     """The moat on the ingest path: does the DIALOGUE entail the extracted fact?
 
     Returns ``(admit, score)``. Uses the local CE (free, no per-fact LLM call,
@@ -212,13 +217,19 @@ def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
         r = try_local_score(dialogue, proposition)
         if r is None:
             return True, None
-        return _ammette(float(r[0])), float(r[0])
+        return _ammette(float(r[0]), banda=banda), float(r[0])
     except Exception:  # noqa: BLE001 — the moat must never crash the ingest
         return True, None
 
 
-def _ammette(score: float) -> bool:
+def _ammette(score: float, *,
+             banda: tuple[bool, bool, float] | None = None) -> bool:
     """Ammette o no, alla soglia dell'ingest E con la BANDA del write path.
+
+    ``banda`` e' ``(applicabile, attiva, taglio_alto)`` gia' letta dal
+    chiamante — cosi' ``ingest_conversation`` la legge UNA volta e non una per
+    fatto, e un eventuale avviso non si ripete per ogni riga. Se non arriva,
+    la legge da se'.
 
     T-MAP-11 (2026-09-09): le due porte usavano lo stesso numero (40.0,
     ``grounding_gate.LOCAL_CE_MOAT_THRESHOLD``) e trattavano diversamente lo
@@ -230,20 +241,43 @@ def _ammette(score: float) -> bool:
 
     La banda si IMPORTA, non si ricopia: una soglia in due file diverge.
     Resta partial e non promette altro: su HaluEval QA heldout (n=200, mai
-    letto, `ws3_soglia_ingest.py` 2026-09-09 23:18) la banda porta le
-    invenzioni fermate da 106 a 112 su 200 — le altre valgono 97-99, e per
-    quelle il docstring di ``_ce_band_enforced`` dice gia' che serve un
-    giudice llm.
+    letto) la banda porta le invenzioni fermate da 106 a 112 su 200 — le altre
+    valgono 97-99, e per quelle il docstring di ``_ce_band_enforced`` dice gia'
+    che serve un giudice llm. Il banco e il suo esito stanno nel repo e si
+    rieseguono (2026-09-09 23:18):
+
+        python docs/stato-reale/banchi/t-map-11-la-soglia-non-separa-halueval.py <repo>
     """
     if score < _ingest_ground_threshold():
         return False
+    applicabile, attiva, taglio = banda if banda else _banda_del_write_path()
+    if applicabile and attiva:
+        return score >= taglio
+    return True
+
+
+def _banda_del_write_path() -> tuple[bool, bool, float]:
+    """``(applicabile, attiva, taglio_alto)`` della fascia del write path.
+
+    ``applicabile=False`` vuol dire che non si e' potuta leggere — E LO DICE.
+
+    Rilievo in revisione (2026-09-10) sulla prima stesura: le due funzioni sono
+    PRIVATE, e un ``except`` muto qui vuol dire che il giorno in cui
+    ``grounding_gate`` le rinomina la fascia si spegne e l'ingest torna ad
+    ammettere tutto [40, 80) — cioe' torna T-MAP-11 — senza una riga da
+    nessuna parte. Il fail-OPEN resta (coerente con ``_grounds``: il moat non
+    rompe mai un ingest); a sparire e' il silenzio.
+    """
     try:
         from .grounding_gate import _ce_band_enforced, _ce_band_tau_hi
-        if _ce_band_enforced():
-            return score >= _ce_band_tau_hi()
-    except Exception:  # noqa: BLE001 — la banda non deve mai rompere l'ingest
-        return True
-    return True
+        return True, bool(_ce_band_enforced()), float(_ce_band_tau_hi())
+    except Exception as exc:  # noqa: BLE001 — la banda non deve mai rompere l'ingest
+        _LOG.warning(
+            "ingest moat: la fascia incerta del write path NON e' applicabile "
+            "(%s: %s) — l'ingest ammette tutto sopra %.1f, come prima della "
+            "cura di T-MAP-11. La ricevuta lo dice in moat_band.",
+            type(exc).__name__, exc, _ingest_ground_threshold())
+        return False, False, 0.0
 
 
 def conversation_provenance_ref(conversation_id: str) -> str:
@@ -400,6 +434,16 @@ def ingest_conversation(
                 semantic_memory.db_path))
         except Exception:  # noqa: BLE001 — graph enrichment must never block ingest
             kg = None
+    _banda: tuple[bool, bool, float] | None = None
+    if ground:
+        # Rilievo in revisione: la fascia si legge UNA volta per ingest — non una per
+        # fatto — e se non e' applicabile la ricevuta lo porta: un fail-open
+        # muto qui rimette in piedi T-MAP-11 e chi legge la ricevuta non ha
+        # modo di saperlo.
+        _banda = _banda_del_write_path()
+        res["moat_band"] = (
+            "unavailable" if not _banda[0]
+            else ("on" if _banda[1] else "off"))
     for prop in lines:
         # Giro 2: a BELIEF:-tagged line is an unverified user assertion ->
         # user_belief (hidden from default recall), else model_claim as always.
@@ -415,7 +459,7 @@ def ingest_conversation(
         status = "user_belief" if is_belief else "model_claim"
         _score: float | None = None
         if ground and not is_belief:
-            _admit, _score = _grounds(dialogue, prop)
+            _admit, _score = _grounds(dialogue, prop, banda=_banda)
             if not _admit:
                 status = "quarantined"
                 res["quarantined"] = res.get("quarantined", 0) + 1
