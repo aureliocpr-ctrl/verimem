@@ -2,6 +2,27 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### What changes for you
+
+- **A conversation ingested over MCP no longer leaves behind things nobody
+  said.** `hippo_ingest_conversation` promised «the full anti-confab gate», and
+  the **moat** — the question «does this dialogue actually say that?» — was
+  never asked on that port: the call did not pass `ground`, whose default is
+  `False`. Measured at the port with an oracle judge: **0 questions asked** on 3
+  extracted facts, and «the warehouse was sold in 2019» — which the dialogue
+  never mentions — stored exactly like the two true ones. The SDK port
+  (`Memory.add(messages=…)`) already asked, via the preset default.
+- **CHANGE OF DEFAULT, so you can plan for it:** that port now grounds by
+  default. From this release an extracted fact the conversation does **not**
+  state is **quarantined** — kept out of default recall, never deleted, and
+  restorable (`hippo_quarantine_log` / `hippo_quarantine_restore`). The receipt
+  now says how many were held back, instead of reporting only what was stored.
+  To keep the old behaviour, pass `ground: false` on the call — which is the
+  SDK's `permissive` preset, and means nothing checks that the conversation
+  said it.
+
 ## [0.7.7] - 2026-09-06
 
 ### What changes for you
