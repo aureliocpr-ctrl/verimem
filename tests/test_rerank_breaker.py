@@ -449,8 +449,13 @@ def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
         "del breaker BYTE-IDENTICO fra i run che passano e quelli che cadono. "
         "Cronaca, classificazione e le cinque ipotesi già ESCLUSE: "
         "docs/stato-reale/postmortem/2026-09-08-ci-windows-il-breaker-che-si-riarmava-da-solo.md "
-        "— la causa NON è trovata e il ticket T38 (owner ws5) resta APERTO. "
-        "Il marker si toglie con la cura, non con il tempo."
+        "— LA CAUSA È TROVATA (ws3, 10/09 sera): su windows `time.monotonic()` è "
+        "`GetTickCount64` fino a py3.12 (quanto 15,625 ms) e `QueryPerformanceCounter` "
+        "da py3.13; il margine di questo test è 10 ms, cioè SOTTO il quanto — 5 "
+        "fallimenti su 40 misurati con l'orologio giusto. La cura è la PR #30 (ws5): "
+        "toglie la dipendenza dall'orologio invece di allargare il margine. "
+        "QUESTO MARKER È SOLO IL LASCIAPASSARE finché quella entra, e VA TOLTO "
+        "NELLO STESSO COMMIT della cura — non con il tempo."
     ),
 )
 def test_observing_the_breaker_does_not_rearm_it(monkeypatch):

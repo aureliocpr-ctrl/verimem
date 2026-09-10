@@ -69,19 +69,66 @@ Tutte e cinque erano di ws8, tutte cadute nella stessa serata, con la prova:
 | # | ipotesi | come è caduta |
 |---|---|---|
 | 1 | i rerank CE sono lenti su Windows e il breaker scatta davvero | i tre sforamenti li registra **il test stesso** |
-| 2 | il margine di 10 ms è sotto la granularità dell'orologio | `monotonic` = `QueryPerformanceCounter` a 100 ns; 400 giri, **0 falsi**, delta minimo 60,09 ms |
+| 2 | il margine di 10 ms è sotto la granularità dell'orologio | ⚠️ **NON ERA ESCLUSA: ERA LA CAUSA.** Vedi sotto |
 | 3 | `_rerank_breaker_cooldown_s()` memoizza il valore | legge `os.environ` a ogni chiamata (`semantic.py:2140-2144`) |
 | 4 | un thread orfano del test precedente | **c'è `t.join(10)`** (riga 429) — smentita da ws1 leggendo la riga |
 | 5 | un worker di rerank in volo ri-scatta il breaker | lo sforamento lo registra **il caller** al timeout, non il worker: banco dedicato, **0 rossi su 8** |
 
 **31 esecuzioni su Windows di casa, mai un rosso.** Con una gara al 13-33% questo
-non prova l'assenza: prova che la finestra non si apre in quell'ambiente. Il
-fatto più solido resta il commento del **24/08** dentro `test_rerank_breaker.py`
-(trovato da ws1): *«è una GARA, non una regressione»*, breaker **byte-identico**
-fra i run che passano e quelli che cadono — e descrive l'assert di un test
-**diverso** da quello caduto oggi, quindi **la gara è più larga del singolo
-test**. È la ragione per cui la quarantena copre un test solo: marcarne di più
-spegnerebbe più segnale di quello che serve.
+non prova l'assenza: prova che la finestra non si apre in quell'ambiente.
+
+## 🔴 L'IPOTESI ② NON ERA ESCLUSA: ERA LA CAUSA (corretto il 10/09 alle 22:45)
+
+**La causa l'ha trovata ws3 Galileo, ws1 Marie l'aveva vista per prima l'08/09 e
+l'ha ritirata a torto, e io ho pubblicato la falsificazione sbagliata.** Il
+motivo per cui tutt'e due abbiamo sbagliato è lo stesso, ed è misurabile in
+dieci secondi:
+
+```
+py -3.11  ->  monotonic = GetTickCount64()            0.015625 s  = 15,625 ms
+py -3.13  ->  monotonic = QueryPerformanceCounter()   1e-07 s
+```
+
+**Il job che cade è `test (windows-latest / py3.12)`.** L'implementazione di
+`time.monotonic()` su Windows è cambiata **fra 3.12 e 3.13**: i miei 400 giri
+«0 falsi» giravano su **3.13**, cioè sull'orologio sbagliato. Sull'orologio del
+job, il margine del test — `sleep(0.06)` contro un cooldown di `0.05`, cioè
+**10 ms** — sta **sotto il quanto di 15,625 ms**: la gara è esattamente quella.
+Galileo l'ha misurata: **5 fallimenti su 40** con l'orologio giusto.
+
+⇒ **La cura è la #30 di ws5 Tara** (togliere lo `sleep` e spostare `tripped_at`):
+toglie la dipendenza dall'orologio invece di allargare il margine. La quarantena
+di questo postmortem resta sensata come lasciapassare mentre la #30 entra, e va
+tolta quando entra.
+
+### La lezione, e mi appartiene per intero
+
+**Un banco dichiara quale albero misura — e anche quale INTERPRETE.** Fra due
+versioni dello stesso Python la stessa riga dà due risposte a 156.000× di
+distanza, e il numero che avevo pubblicato come prova era vero e inutile
+insieme, perché misurato altrove.
+
+È la **terza forma** della stessa famiglia in ventiquattr'ore, tutte mie:
+il banco con lo schema di database inventato da me; il `grep` con `join\(\)` che
+non poteva matchare `join(10)`; e adesso l'interprete. Ogni volta **lo strumento
+non poteva vedere il caso**, e ogni volta ho letto quel «non vedo» come «non
+c'è». 🔑 *Un'assenza prodotta da uno strumento non è un'assenza: è la forma
+dello strumento.*
+
+E la parte che pesa di più: **la mia falsificazione ha contribuito a far
+ritirare a Marie una diagnosi giusta.** Un «escluso» pubblicato con dei numeri
+accanto è molto più difficile da riaprire di un dubbio — per questo la riga
+sopra dice «NON ERA ESCLUSA» invece di essere cancellata: chi ha letto la
+versione sbagliata deve incontrare la correzione nello stesso posto.
+
+---
+
+Il fatto più solido dell'indagine resta il commento del **24/08** dentro
+`test_rerank_breaker.py` (trovato da ws1): *«è una GARA, non una regressione»*,
+breaker **byte-identico** fra i run che passano e quelli che cadono — e descrive
+l'assert di un test **diverso** da quello caduto il 10/09, quindi **la gara è
+più larga del singolo test**. È la ragione per cui la quarantena copre un test
+solo: marcarne di più spegnerebbe più segnale di quello che serve.
 
 ---
 
