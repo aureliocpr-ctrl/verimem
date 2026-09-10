@@ -511,3 +511,47 @@ def test_the_regime_recorder_uses_the_pure_readers() -> None:
             f"measuring; use the *_tripped_now() pure reader")
     assert "_rerank_breaker_tripped_now()" in src
     assert "_fusion_breaker_tripped_now()" in src
+
+
+def test_la_cella_del_cooldown_regge_a_un_riarmo_concorrente(monkeypatch):
+    """T38 — il RED vero, reso deterministico e messo a presidio.
+
+    La cella qui sopra cadeva su windows py3.12 l'08/09 e il 10/09 (run
+    34472648985). La diagnosi e' di @ws8 — un rerank lasciato in volo da un
+    test precedente che finisce dentro la finestra dello `sleep` — e il
+    meccanismo, misurato, ha un anello in piu' di quello raccontato::
+
+        A  record in volo, breaker GIA' scattato -> tripped_at NON cambia
+           (`_rerank_breaker_record` e `_rerank_breaker_cold_overrun` sono
+            entrambi guardati da `not tripped`), il gate resta False
+        B  un GATE in volo che RI-ARMA, e i record che ri-scattano subito
+           dopo -> tripped_at riscritto ad adesso, gate=True, LA CELLA CADE
+
+    ⇒ non basta un *rerank* in volo: serve un *recall* in volo che chieda al
+    gate se puo' rerankare. Questa cella riproduce lo scenario B **senza
+    thread** — il ri-armo e' sincrono, quindi e' deterministico su qualunque
+    macchina — e verifica che con il tempo SPOSTATO invece che ATTESO la cella
+    regga lo stesso.
+
+    Se qualcuno rimettesse uno `sleep` al posto dello spostamento, questa
+    cella lo prenderebbe: con `tripped_at` riscritto ad adesso, un cooldown
+    atteso di 60 ms non e' mai scaduto.
+    """
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
+    semantic._rerank_breaker_reset()
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)
+
+    # --- lo scenario B, sincrono: qualcuno ri-arma e fa ri-scattare ---
+    semantic._RERANK_BREAKER["tripped_at"] -= 1.0     # per lui il cooldown e' scaduto
+    assert semantic._rerank_breaker_tripped() is False, "sanity: il gate ha ri-armato"
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)          # ri-scatta: tripped_at = adesso
+    assert semantic._RERANK_BREAKER["tripped"] is True, "sanity: ri-scattato"
+
+    # --- e ora la cella fa quello che fa la sua gemella curata ---
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
+    assert semantic._rerank_breaker_tripped() is False, (
+        "con il tempo SPOSTATO il cooldown e' scaduto per costruzione, anche "
+        "se un ri-armo concorrente ha appena riscritto tripped_at")
