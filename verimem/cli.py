@@ -62,6 +62,38 @@ providers_app = typer.Typer(help="Inspect LLM providers and discover models")
 # had no CLI surface at all, only the 60+ `hippo_facts_*` MCP tools — usable
 # from an agent, unusable from a terminal. This cluster pairs the most useful
 # subset of those tools with terminal-friendly output.
+#: T58 (2026-09-10). Il messaggio e il codice di uscita di un'operazione
+#: ANNULLATA, in un posto solo perche' sono la stessa promessa detta da quattro
+#: punti di tre comandi (`facts forget` due volte, `facts restore`,
+#: `facts anti-confab-apply`), e tutti e tre cambiano lo store.
+#:
+#: Prima c'era `return`, che in typer e' un'uscita ZERO: l'operazione non
+#: avveniva e il processo diceva la parola che in una shell significa «fatto».
+#:
+#:     verimem facts forget X && echo "cancellato"
+#:
+#: L'utente rispondeva «no» e la seconda meta' partiva lo stesso. Misurato
+#: dalla porta con un subprocess — il codice di uscita esiste solo se c'e' un
+#: processo: store fermo, `returncode=0`.
+#:
+#: Vale anche per l'INTERRUZIONE, che e' il caso senza controipotesi:
+#: `typer.Abort` arriva li' con `ok=False`, e che un'interruzione valga
+#: «riuscito» non lo sostiene nessuna convenzione. Chi annulla di proposito
+#: continua a leggere `aborted` sul terminale: cambia solo cio' che leggono
+#: gli script.
+#:
+#: 1 e non 2: e' il codice che gli ALTRI rami di questi stessi comandi usano
+#: gia' (backup assente, pre-flight fallito). Un terzo valore per distinguere
+#: «annullato» da «fallito» servirebbe a uno script, ma e' una decisione di
+#: prodotto e merita il suo ticket.
+#:
+#: ⚠️ E STA QUI, e non ripetuto nei quattro punti, per un rilievo nella
+#: revisione della PR #27: tre righe e un commento identici in quattro posti
+#: sono una COPIA, e le copie divergono — basta che qualcuno cambi il
+#: messaggio in un punto e gli altri tre restano indietro. Il testo e' uno; il
+#: `raise` resta inline, che e' una riga e si legge dove serve.
+_ABORTO_NIENTE_CAMBIATO = "[yellow]aborted[/yellow] — nothing was changed"
+
 facts_app = typer.Typer(help="Inspect / manage semantic memory (facts)")
 # Cycle #145 (2026-05-18 sera): auto-consolidation operator surface.
 # Wrapper Typer attorno a verimem.consolidation.{auto_consolidate,
@@ -3622,33 +3654,10 @@ def facts_forget(
             except typer.Abort:
                 ok = False
             if not ok:
-                # T58 (2026-09-10). Qui c'era `return`, che in typer e' un'uscita
-                # ZERO: l'operazione NON avveniva e il processo diceva la parola
-                # che in una shell significa «fatto».
-                #
-                #     verimem facts restore vecchio.db && rm -rf ./dati_correnti
-                #
-                # L'utente rispondeva «no» e la seconda meta' partiva lo stesso.
-                # Misurato dalla porta con un subprocess — il codice di uscita
-                # esiste solo se c'e' un processo: store fermo, `returncode=0`.
-                #
-                # ⚠️ Lo stesso silenzio stava in QUATTRO punti di TRE comandi, e
-                # tutti e tre cambiano lo store: `facts forget` (due volte),
-                # `facts restore`, `facts anti-confab-apply`. Non era un caso
-                # isolato: era una riga copiata.
-                #
-                # ⚠️ Vale anche per l'INTERRUZIONE, che e' il caso senza
-                # controipotesi: `typer.Abort` arriva qui con `ok=False`, e che
-                # un'interruzione valga «riuscito» non lo sostiene nessuna
-                # convenzione. Chi annulla di proposito continua a leggere
-                # `aborted` sul terminale: cambia solo cio' che leggono gli
-                # script.
-                #
-                # 1 e non 2: e' il codice che gli ALTRI rami di questi stessi
-                # comandi usano gia' (backup assente, pre-flight fallito). Un
-                # terzo valore per distinguere «annullato» da «fallito» sarebbe
-                # utile, ma e' una decisione di prodotto e merita il suo ticket.
-                console.print("[yellow]aborted[/yellow] — nothing was changed")
+                # T58: un'operazione ANNULLATA non dice successo. Il perche' e la
+                # scelta del codice stanno su `_ABORTO_NIENTE_CAMBIATO`, in un
+                # posto solo per tutti e quattro i punti.
+                console.print(_ABORTO_NIENTE_CAMBIATO)
                 raise typer.Exit(1) from None
         _ops: list[str] = []
         for _x in _hits:
@@ -3682,33 +3691,10 @@ def facts_forget(
         except typer.Abort:
             ok = False
         if not ok:
-            # T58 (2026-09-10). Qui c'era `return`, che in typer e' un'uscita
-            # ZERO: l'operazione NON avveniva e il processo diceva la parola
-            # che in una shell significa «fatto».
-            #
-            #     verimem facts restore vecchio.db && rm -rf ./dati_correnti
-            #
-            # L'utente rispondeva «no» e la seconda meta' partiva lo stesso.
-            # Misurato dalla porta con un subprocess — il codice di uscita
-            # esiste solo se c'e' un processo: store fermo, `returncode=0`.
-            #
-            # ⚠️ Lo stesso silenzio stava in QUATTRO punti di TRE comandi, e
-            # tutti e tre cambiano lo store: `facts forget` (due volte),
-            # `facts restore`, `facts anti-confab-apply`. Non era un caso
-            # isolato: era una riga copiata.
-            #
-            # ⚠️ Vale anche per l'INTERRUZIONE, che e' il caso senza
-            # controipotesi: `typer.Abort` arriva qui con `ok=False`, e che
-            # un'interruzione valga «riuscito» non lo sostiene nessuna
-            # convenzione. Chi annulla di proposito continua a leggere
-            # `aborted` sul terminale: cambia solo cio' che leggono gli
-            # script.
-            #
-            # 1 e non 2: e' il codice che gli ALTRI rami di questi stessi
-            # comandi usano gia' (backup assente, pre-flight fallito). Un
-            # terzo valore per distinguere «annullato» da «fallito» sarebbe
-            # utile, ma e' una decisione di prodotto e merita il suo ticket.
-            console.print("[yellow]aborted[/yellow] — nothing was changed")
+            # T58: un'operazione ANNULLATA non dice successo. Il perche' e la
+            # scelta del codice stanno su `_ABORTO_NIENTE_CAMBIATO`, in un
+            # posto solo per tutti e quattro i punti.
+            console.print(_ABORTO_NIENTE_CAMBIATO)
             raise typer.Exit(1) from None
     # QUANTE ALTRE RIGHE PORTANO LO STESSO DATO. `update()` non sovrascrive:
     # STORE un fatto nuovo e SUPERSEDE il vecchio, che resta nel database con
@@ -4110,33 +4096,10 @@ def facts_restore(
         except typer.Abort:
             ok = False
         if not ok:
-            # T58 (2026-09-10). Qui c'era `return`, che in typer e' un'uscita
-            # ZERO: l'operazione NON avveniva e il processo diceva la parola
-            # che in una shell significa «fatto».
-            #
-            #     verimem facts restore vecchio.db && rm -rf ./dati_correnti
-            #
-            # L'utente rispondeva «no» e la seconda meta' partiva lo stesso.
-            # Misurato dalla porta con un subprocess — il codice di uscita
-            # esiste solo se c'e' un processo: store fermo, `returncode=0`.
-            #
-            # ⚠️ Lo stesso silenzio stava in QUATTRO punti di TRE comandi, e
-            # tutti e tre cambiano lo store: `facts forget` (due volte),
-            # `facts restore`, `facts anti-confab-apply`. Non era un caso
-            # isolato: era una riga copiata.
-            #
-            # ⚠️ Vale anche per l'INTERRUZIONE, che e' il caso senza
-            # controipotesi: `typer.Abort` arriva qui con `ok=False`, e che
-            # un'interruzione valga «riuscito» non lo sostiene nessuna
-            # convenzione. Chi annulla di proposito continua a leggere
-            # `aborted` sul terminale: cambia solo cio' che leggono gli
-            # script.
-            #
-            # 1 e non 2: e' il codice che gli ALTRI rami di questi stessi
-            # comandi usano gia' (backup assente, pre-flight fallito). Un
-            # terzo valore per distinguere «annullato» da «fallito» sarebbe
-            # utile, ma e' una decisione di prodotto e merita il suo ticket.
-            console.print("[yellow]aborted[/yellow] — nothing was changed")
+            # T58: un'operazione ANNULLATA non dice successo. Il perche' e la
+            # scelta del codice stanno su `_ABORTO_NIENTE_CAMBIATO`, in un
+            # posto solo per tutti e quattro i punti.
+            console.print(_ABORTO_NIENTE_CAMBIATO)
             raise typer.Exit(1) from None
     try:
         result = restore_from_backup(bp, target)
@@ -4415,33 +4378,10 @@ def facts_anti_confab_apply(
         except typer.Abort:
             ok = False
         if not ok:
-            # T58 (2026-09-10). Qui c'era `return`, che in typer e' un'uscita
-            # ZERO: l'operazione NON avveniva e il processo diceva la parola
-            # che in una shell significa «fatto».
-            #
-            #     verimem facts restore vecchio.db && rm -rf ./dati_correnti
-            #
-            # L'utente rispondeva «no» e la seconda meta' partiva lo stesso.
-            # Misurato dalla porta con un subprocess — il codice di uscita
-            # esiste solo se c'e' un processo: store fermo, `returncode=0`.
-            #
-            # ⚠️ Lo stesso silenzio stava in QUATTRO punti di TRE comandi, e
-            # tutti e tre cambiano lo store: `facts forget` (due volte),
-            # `facts restore`, `facts anti-confab-apply`. Non era un caso
-            # isolato: era una riga copiata.
-            #
-            # ⚠️ Vale anche per l'INTERRUZIONE, che e' il caso senza
-            # controipotesi: `typer.Abort` arriva qui con `ok=False`, e che
-            # un'interruzione valga «riuscito» non lo sostiene nessuna
-            # convenzione. Chi annulla di proposito continua a leggere
-            # `aborted` sul terminale: cambia solo cio' che leggono gli
-            # script.
-            #
-            # 1 e non 2: e' il codice che gli ALTRI rami di questi stessi
-            # comandi usano gia' (backup assente, pre-flight fallito). Un
-            # terzo valore per distinguere «annullato» da «fallito» sarebbe
-            # utile, ma e' una decisione di prodotto e merita il suo ticket.
-            console.print("[yellow]aborted[/yellow] — nothing was changed")
+            # T58: un'operazione ANNULLATA non dice successo. Il perche' e la
+            # scelta del codice stanno su `_ABORTO_NIENTE_CAMBIATO`, in un
+            # posto solo per tutti e quattro i punti.
+            console.print(_ABORTO_NIENTE_CAMBIATO)
             raise typer.Exit(1) from None
     applied = 0
     for fid in to_flip:
