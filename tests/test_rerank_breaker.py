@@ -467,10 +467,21 @@ def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     📌 Stessa cura di `2021247f` («la cella misura la PROPRIETA' VERA, che e'
     booleana e non ha soglie»), li' su una soglia di preload.
 
-    📌 RESTA DA FARE, dichiarato e non nascosto: `test_..._re_arm_is_atomic`
-    (poco sopra) ha la STESSA forma — `sleep(0.06)` contro un cooldown di
-    0.05 — ma li' i thread servono davvero, quindi la cura non e' la stessa e
-    non entra in questa PR.
+    📌 RESTA DA FARE, e il numero e' SEI, non una. Contate da @ws1 con `ast`
+    sui nodi (non con un regex, che avrebbe contato anche il `sleep` CITATO in
+    questo docstring): sei celle di questo file legano un cooldown a uno
+    `sleep`. Una sola ha lo stesso margine di 10 ms —
+    `test_no_overrun_is_lost_when_a_rearm_is_in_flight` (riga 353) — e li' i
+    thread servono davvero, quindi la cura non e' la stessa. Le altre cinque
+    hanno 50-100 ms: **piu' larghe, non immuni**.
+    Non entrano in questa PR (R6, una cosa sola), ma il ticket che resta ha
+    ora la sua dimensione vera.
+
+    ⚠️ NOTA SU UN MIO ERRORE, tenuta qui perche' e' la specie che si ripete:
+    la prima stesura citava `test_..._re_arm_is_atomic`, un nome che NON
+    ESISTE in questo file (`grep -c` → 0). L'avevo reso PLAUSIBILE invece di
+    copiarlo, e sarebbe rimasto nel repo come puntatore a un test
+    immaginario. Trovato da @ws1 cercandolo.
     """
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
