@@ -227,3 +227,43 @@ def test_un_ripristino_INTERROTTO_non_dice_successo(scena):
         f"Lo store e' fermo a {dopo} fatti: non e' successo niente, e il "
         "prodotto dice di si'.\n"
         f"  stdout: {r.stdout.strip()[:300]}")
+
+# ═══════════ E NON ERA UN COMANDO SOLO: LA STESSA RIGA IN TRE PORTE ═══════════
+#
+# Curando `facts restore` il sostituto ha trovato **quattro** punti identici in
+# **tre** comandi — `facts forget` (due volte), `facts restore`,
+# `facts anti-confab-apply` — e tutti e tre CAMBIANO lo store. Non era un caso
+# isolato: era una riga copiata, che e' la classe «una copia invece della
+# superficie unica».
+#
+# Il caso qui sotto sorveglia la SECONDA porta, perche' una cura provata su un
+# comando solo si riscrive al primo che la ricopia. La terza
+# (`anti-confab-apply`) e' curata dalla stessa riga ma NON ha un caso qui:
+# ⚠️ LIMITE DICHIARATO, non nascosto — chi la tocca lo aggiunga.
+
+
+def test_anche_un_OBLIO_abortito_non_dice_successo(scena):
+    """`verimem facts forget <id>` annullato: il fatto resta, e l'uscita?
+
+    Stessa forma di `restore`, altra porta, e qui il danno e' speculare: uno
+    script che fa `facts forget X && echo "cancellato"` scrive nel registro
+    che il fatto e' sparito mentre e' ancora li'.
+    """
+    r_lista = _cli(["facts", "list", "--limit", "5"], scena["env"])
+    assert r_lista.returncode == 0, f"la lista non risponde: {r_lista.stdout}"
+
+    prima = _n_fatti(scena["db"])
+    assert prima >= 1, f"serve almeno un fatto da NON cancellare: {prima}"
+
+    #: il topic e' quello che la fixture ha scritto: cosi' l'id non serve.
+    r = _cli(["facts", "forget", "--topic", "banco/t58"], scena["env"], stdin="n" + chr(10))
+    dopo = _n_fatti(scena["db"])
+
+    assert dopo == prima, (
+        f"il fatto E' stato cancellato dopo un «no»: prima={prima} "
+        f"dopo={dopo}. {r.stdout}")
+    assert r.returncode != 0, (
+        f"l'oblio NON e' avvenuto (lo store e' fermo a {dopo} fatti) e il "
+        f"processo esce {r.returncode}: `facts forget X && echo cancellato` "
+        "scrive che il fatto e' sparito mentre e' ancora nello store. "
+        f"stdout: {r.stdout.strip()[:300]}")
