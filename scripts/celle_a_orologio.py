@@ -1,5 +1,21 @@
 """Quante celle CRONOMETRANO ancora: `sleep` REALE contro una soglia.
 
+🔴 PERCHE' CONTA, misurato il 2026-09-10 alle 21:43 su questa macchina::
+
+    py -3.11  ->  3.11.9   monotonic = GetTickCount64()           0.015625 s
+    python    ->  3.13.12  monotonic = QueryPerformanceCounter()  1e-07
+    py -3.14  ->  3.14.3   monotonic = QueryPerformanceCounter()  1e-07
+
+**Il cambio di orologio e' avvenuto fra 3.12 e 3.13**, e la matrice della CI
+gira `windows-latest / py3.12`: li' `time.monotonic()` scatta ogni **15,625
+ms**. Una cella che dorme 60 ms contro un cooldown di 50 ha **10 ms di
+margine** — meno di un tick — e cade a caso. E' la causa del rosso T38, trovata
+da @ws3 il 10/09 dopo che io l'avevo diagnosticata l'08/09 e **RITIRATA a
+torto**: avevo misurato con 3.13 e concluso per 3.12.
+
+⇒ Ogni riga di questo elenco e', su py3.12, una caduta che aspetta. I margini
+contano in TICK, non in millisecondi: 50 ms sono tre tick, 100 ms sei.
+
 ⚠️ La v1 usava un regex e ha contato `time.sleep(0.06)` **dentro un docstring**
 — la riga in cui @Tara CITA la vecchia forma per spiegarla. Stavo per portarle
 un rilievo falso sulla cella che aveva appena curato.
