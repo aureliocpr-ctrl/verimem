@@ -668,21 +668,38 @@ def test_in_questo_file_nessuna_attesa_cronometra_piu_una_soglia() -> None:
     righe = testo.splitlines()
     info = time.get_clock_info("monotonic")
 
+    # DUE FALSI NEGATIVI, trovati da Marie in revisione e curati qui.
+    #
+    # (1) `from time import sleep` SFUGGIVA: il criterio guardava solo
+    #     `ast.Attribute` (`time.sleep(...)`), e una chiamata nuda `sleep(...)`
+    #     e' un `ast.Name`. Chi importava direttamente passava il presidio.
+    # (2) LA FINESTRA ERA CONDIVISA: cercando il marcatore nelle 7 righe sopra,
+    #     due `sleep` a meno di sette righe di distanza se lo PRESTAVANO — al
+    #     secondo bastava il commento del primo. Ora la finestra si ferma alla
+    #     chiamata precedente, quindi ogni attesa deve avere il SUO.
+    chiamate = sorted(
+        nodo.lineno
+        for nodo in ast.walk(ast.parse(testo))
+        if isinstance(nodo, ast.Call)
+        and ((isinstance(nodo.func, ast.Attribute) and nodo.func.attr == "sleep")
+             or (isinstance(nodo.func, ast.Name) and nodo.func.id == "sleep"))
+    )
+
     nude = []
-    for nodo in ast.walk(ast.parse(testo)):
-        if not isinstance(nodo, ast.Call):
-            continue
-        f = nodo.func
-        if not (isinstance(f, ast.Attribute) and f.attr == "sleep"):
-            continue
-        sopra = "\n".join(righe[max(0, nodo.lineno - 7):nodo.lineno])
+    for i, riga_n in enumerate(chiamate):
+        confine = chiamate[i - 1] if i else 0          # non oltre la precedente
+        inizio = max(confine, riga_n - 7)
+        sopra = "\n".join(righe[inizio:riga_n])
         if "OROLOGIO-OK" not in sopra:
-            nude.append(f"riga {nodo.lineno}: {righe[nodo.lineno - 1].strip()}")
+            nude.append(f"riga {riga_n}: {righe[riga_n - 1].strip()}")
 
     assert not nude, (
-        "attesa NUDA in un banco a orologio — qui gira "
-        f"{info.implementation} con grana {info.resolution} s "
-        f"({info.resolution * 1000:.3f} ms): un margine sotto DUE tick non e' "
-        "un margine. Sposta il tempo (`tripped_at -= 10.0`) invece di "
-        "aspettarlo, oppure dichiara `OROLOGIO-OK: <perche'>` sopra la riga.\n"
+        "attesa NUDA in un banco a orologio. IL CRITERIO E' IL MARCATORE, non "
+        "una soglia: ogni `sleep` deve portare il SUO `OROLOGIO-OK: <perche'>` "
+        "nelle righe sopra (e non vale quello della chiamata precedente). "
+        f"Qui gira {info.implementation} con grana {info.resolution} s "
+        f"({info.resolution * 1000:.3f} ms) — e' la misura di quanto costa "
+        "sbagliare: su una gamba con grana 15,625 ms un margine di 10 ms non "
+        "esiste. Sposta il tempo (`tripped_at -= 10.0`) invece di aspettarlo, "
+        "oppure dichiara perche' quell'attesa non cronometra nulla.\n"
         + "\n".join(nude))
