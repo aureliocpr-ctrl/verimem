@@ -28,6 +28,15 @@ import ast
 import pathlib
 import sys
 
+
+def _numero(x: str) -> float | None:
+    """`"0.06"` → 0.06; `"?"` o una variabile → None."""
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
 albero = ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 
 print("celle con uno `sleep` REALE (nodo, non testo):")
@@ -50,17 +59,28 @@ for n in albero.body:
                 if isinstance(chiave, ast.Constant) and "COOLDOWN" in str(chiave.value) \
                    and isinstance(val, ast.Constant):
                     soglie.append(str(val.value))
-    if sleeps and soglie:
+    # ⚠️ CORREZIONE 2026-09-11, rilievo di @ws5 Tara su PR #30: una soglia a
+    #    ZERO non e' una soglia. `cooldown_zero_keeps_the_trip_standing` mette
+    #    il cooldown a 0 e poi dorme: quell'attesa non deve superare niente ed
+    #    e' immune per costruzione. La v1 la contava, e il mio numero era SEI
+    #    invece di CINQUE. Contavo le attese, non quelle che DECIDONO.
+    soglie_vere = [c for c in soglie if _numero(c) not in (None, 0.0)]
+    if sleeps and soglie_vere:
         totale += 1
         margini = []
         for s in sleeps:
-            for c in soglie:
-                try:
-                    margini.append(round((float(s) - float(c)) * 1000))
-                except ValueError:
-                    pass
-        print(f"   {n.name[:54]:54s} cooldown={soglie} sleep={sleeps} "
-              f"margine={margini} ms")
+            for c in soglie_vere:
+                a, b = _numero(s), _numero(c)
+                if a is not None and b is not None:
+                    margini.append(round((a - b) * 1000))
+        #: il margine si legge in TICK, non in millisecondi: su Windows con
+        #: py<=3.12 `monotonic` e' GetTickCount64 e la grana e' 15,625 ms.
+        tick = [round(m / 15.625, 2) for m in margini]
+        print(f"   {n.name[:52]:52s} cooldown={soglie_vere} sleep={sleeps} "
+              f"margine={margini} ms = {tick} tick")
+    elif sleeps and soglie:
+        print(f"   {n.name[:52]:52s} cooldown={soglie} sleep={sleeps} "
+              f"→ IMMUNE: la soglia e' zero, l'attesa non decide niente")
     elif sleeps:
         print(f"   {n.name[:54]:54s} sleep={sleeps} (nessuna soglia di cooldown)")
 print(f"\n   celle che cronometrano contro una soglia: {totale}")
