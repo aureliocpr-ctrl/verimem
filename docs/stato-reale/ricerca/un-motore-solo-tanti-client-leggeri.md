@@ -128,10 +128,31 @@ non ci porta solo un endpoint: ci porta **quella domanda**, e con essa autentica
 `Origin`, e un registro di chi ha chiesto cosa — le tre cose che la specifica MCP elenca come
 **MUST/SHOULD** e che mem0 ha già in vetrina come parte del suo server.
 
-**Resta NON VERIFICATO** (non l'ho letto in questo turno): i **protocolli fra agenti** (A2A,
-ACP) e — la domanda che conta più della loro esistenza — **quali client reali li parlano
-oggi**. Un protocollo che nessun client parla è una capacità spenta, e su quelle abbiamo già
-una lezione pagata.
+## 5-bis. I protocolli fra agenti — e la domanda che conta più della loro esistenza
+
+**A2A (Agent2Agent)** — <https://a2a-protocol.org/latest/> (letto l'11/09 alle ~19:57).
+«An open standard for seamless communication and collaboration between AI agents»,
+«originally developed by Google and **donated to the Linux Foundation**», con un comitato in
+cui siedono AWS, Cisco, Google, IBM Research, Microsoft, Salesforce, SAP e ServiceNow.
+
+**Non è un concorrente di MCP, e la pagina lo dice da sé**: MCP «standardizes how an agent
+connects to its **tools**, APIs, and resources»; A2A serve agli agenti per «**discover each
+other**, delegate tasks, and share results». Strumenti contro pari: due assi diversi.
+
+⚠️ **E qui il reperto, che vale per la nostra decisione**: quella pagina elenca **sei SDK**
+(Python, JavaScript, Java, C#, Go, Rust), campioni su GitHub e «partner nella comunità» — ma
+**non nomina un solo client reale che lo parli in produzione**. Esistono gli SDK; chi li usa
+davvero, dalla fonte ufficiale, **non risulta**.
+
+È la nostra classe «**una capacità spenta non emette segnale**» applicata a un protocollo:
+adottare A2A perché «è lo standard» significherebbe costruire una porta e poi misurare quanti
+ci passano. Prima di aprirla, la domanda da chiudere è **quale client che Aurelio usa
+davvero** (Claude Code, l'app, un IDE) parla A2A oggi — e questo **NON l'ho verificato**: la
+pagina ufficiale non basta a rispondere, e un elenco di partner non è un elenco di client.
+
+Per il nostro problema di stasera, comunque, **A2A non c'entra**: dodici processi da 2 GB non
+sono un problema di *agenti che si parlano*, sono un problema di *client che condividono un
+motore* — cioè MCP e il suo trasporto, la sezione 2.
 
 ## 6. Cosa serve, prima di decidere
 
