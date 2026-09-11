@@ -154,6 +154,42 @@ Per il nostro problema di stasera, comunque, **A2A non c'entra**: dodici process
 sono un problema di *agenti che si parlano*, sono un problema di *client che condividono un
 motore* — cioè MCP e il suo trasporto, la sezione 2.
 
+## 5-ter. I numeri di T1/T3 sono arrivati (Tara, 11/09 ~20:04) — e spostano la domanda
+
+Dal resoconto di Tara sul canale, **letto e non misurato da me**:
+
+    pid 24788  intfloat/multilingual-e5-base   dim 768  porta 60479
+               commit proprio 4,86 GB · rss 1,05 GB · store 18.147 fatti · differiti 0
+    pid  2748  paraphrase-multilingual-MiniLM-L12-v2  dim 384  porta 60548
+               (serve il recall proattivo dell'hook)
+    insieme    9,68 GB
+
+Tre cose cambiano rispetto a come avevo impostato la pagina due ore fa:
+
+**① Non abbiamo «dodici processi», ne abbiamo dodici più due — e i due sono già la strada C.**
+I due daemon di embedding **sono** il servizio condiviso che la strada C propone: esistono, sono
+in piedi, e sono **due**, con **due modelli diversi** (768 per lo store, 384 per l'hook). La
+condivisione non è un'idea da valutare: è una cosa che facciamo già, e che **già si sdoppia**.
+
+**② Il numero che satura non è la RAM: è il commit, e per questi processi vale ~4,6 volte il
+residente** (4,86 GB di commit contro 1,05 di RSS, su quel pid). È la spiegazione del paradosso
+di ieri sera — «commit 88,6 % **con 8 GB di RAM libera**»: chi guarda la RAM vede spazio, chi
+guarda il commit vede il muro, e a cadere è la macchina. ⚠️ **Il rapporto è misurato su UN
+processo**: che valga anche per i server MCP è un'**ipotesi**, non un fatto — si chiude con la
+riga di coda della sezione 6.
+
+**③ La ripartizione dei ~1,9-2,41 GB per server MCP non c'è ancora**, e resta la domanda che
+decide: se dentro un `engram mcp` il peso è **il modello**, allora togliere il modello dai
+dodici (strada C, fatta bene) vale più che condividere il server (strada B); se il peso è
+altro, si chiude con la strada A.
+
+🔴 **E un difetto che Tara ha trovato e che riguarda questa pagina**: il docstring del secondo
+daemon dichiara «LEGACY MiniLM-L6», mentre lo store è e5-base/768 (T67, suo). Vale come
+avvertimento per chiunque progetti il motore unico: **un servizio condiviso che non dichiara
+correttamente il proprio modello è peggio di nessun servizio condiviso** — perché i client non
+hanno modo di accorgersi del disallineamento. È esattamente il difetto che T-MAP-9 ha già
+pagato una volta.
+
 ## 6. Cosa serve, prima di decidere
 
 1. **T3 di Tara** con la ripartizione dei ~1,9-2,41 GB: **se il peso è il modello**, la strada A
