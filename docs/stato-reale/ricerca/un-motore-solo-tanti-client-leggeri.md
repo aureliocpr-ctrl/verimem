@@ -95,21 +95,43 @@ condivisione che abbiamo già non regge?** Se la risposta è «il servizio condi
 la sua versione al client», quel difetto si ripresenta identico, e più grande, su un server
 MCP condiviso.
 
-## 5. Quello che NON ho verificato, e come si verifica
+## 5. Come fanno gli altri — tre pagine lette, con l'URL
 
-Il lead ha chiesto anche come **mem0 / Letta / Zep** servono più agenti e quali **protocolli fra
-agenti** esistono e chi li parla. In questo turno **non l'ho letto: NON VERIFICATO.** Non lo
-riempio con ciò che «di solito» fanno quei prodotti — sarebbe esattamente la confabulazione
-plausibile che il nostro moat deve fermare.
+*Letto alle 19:55-20:00 dell'11/09. Ogni riga qui sotto ha la sua fonte; dove la pagina non
+risponde, sta scritto che non risponde, invece di riempirlo con ciò che «di solito» fanno.*
 
-Come si chiude, in ordine di costo:
-1. la pagina della documentazione di ciascuno sul **deployment server/self-hosted** e sul
-   **multi-tenant** (un URL a testa, letto e citato);
-2. se il server è multi-client: **come isola i dati fra agenti** (chiave per agente? un DB per
-   agente? un campo?) — è la domanda che decide se il modello è copiabile da noi;
-3. i protocolli fra agenti (**A2A** di Google, ACP, e MCP stesso come «porta» non come bus):
-   quali **client reali** li parlano oggi — perché un protocollo che nessun client parla è una
-   capacità spenta, e su quelle abbiamo già una lezione.
+**Letta** — <https://docs.letta.com/guides/selfhosting>
+Server unico che tiene **più agenti**: immagine `letta/letta:latest`, **una porta** (8283) per
+la REST API, stato in **PostgreSQL con pgvector**. Come i dati siano isolati **fra** agenti
+quella pagina **non lo dice**. E porta un avviso che conta per chi volesse copiarne la forma:
+«The Docker image is no longer an actively maintained or supported Letta product surface».
+
+**mem0** — <https://docs.mem0.ai/open-source/overview>
+Due modalità, e sono esattamente le nostre due strade: **libreria in-process**
+(`pip install mem0ai`) **oppure** un **server self-hosted** — «A Docker stack with a dashboard,
+**per-user API keys**, and a **request audit log**». Il ruolo preciso di `user_id`/`agent_id`/
+`run_id` nell'isolamento non è in quella pagina.
+
+**Zep** — <https://help.getzep.com/concepts>
+Modello **per utente**: «Each user has a user graph and thread history», e il grafo è «A
+Context Graph that stores context for **one** application user». Il multi-agente su un solo
+servizio quella pagina non lo affronta.
+
+🔑 **Il filo che tengono tutti e tre, ed è la cosa che ci riguarda davvero.** Quando una
+memoria smette di essere una libreria dentro il processo del client e diventa **un servizio
+condiviso**, compare sempre la stessa domanda nuova: **«di chi è questo dato?»** — chiavi per
+utente in mem0, un grafo per utente in Zep, agenti come oggetti di prima classe in Letta.
+
+Da noi quella domanda **oggi non esiste**, e non perché l'abbiamo risolta: perché **ogni
+processo è di un client solo**, e l'isolamento ce lo regala il sistema operativo. La strada B
+non ci porta solo un endpoint: ci porta **quella domanda**, e con essa autenticazione,
+`Origin`, e un registro di chi ha chiesto cosa — le tre cose che la specifica MCP elenca come
+**MUST/SHOULD** e che mem0 ha già in vetrina come parte del suo server.
+
+**Resta NON VERIFICATO** (non l'ho letto in questo turno): i **protocolli fra agenti** (A2A,
+ACP) e — la domanda che conta più della loro esistenza — **quali client reali li parlano
+oggi**. Un protocollo che nessun client parla è una capacità spenta, e su quelle abbiamo già
+una lezione pagata.
 
 ## 6. Cosa serve, prima di decidere
 
