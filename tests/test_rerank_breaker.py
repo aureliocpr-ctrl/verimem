@@ -66,6 +66,9 @@ def _mem(tmp_path, monkeypatch, *, scorer_delay: float, budget: str = "0.2"):
 
     def slow_scorer():
         def score(pairs):
+            # OROLOGIO-OK: non aspetta una soglia — FINGE un cross-encoder lento
+            # perche' il budget sfori. Una grana piu' grossa lo rende solo piu'
+            # lento, mai piu' veloce: non puo' far sparire lo sforamento.
             time.sleep(scorer_delay)
             return [0.5] * len(pairs)
         return score
@@ -264,7 +267,12 @@ def test_a_tripped_breaker_rearms_after_the_cooldown(monkeypatch):
     for _ in range(5):
         semantic._rerank_breaker_record(True)
     assert semantic._rerank_breaker_tripped(), "before the cooldown the trip stands"
-    time.sleep(0.35)
+    # T38 — IL TEMPO SI SPOSTA, NON SI ASPETTA. Prima: `time.sleep(0.35)` contro
+    # un cooldown di 0,3 s, cioe' 50 ms di margine = TRE TICK di un orologio che
+    # su py3.12 Windows scatta ogni 15,625 ms (GetTickCount64). Tre tick non
+    # sono un margine: sono tre letture. Spostando l'istante dello scatto il
+    # margine diventa 10 SECONDI e la cella non dipende piu' dall'orologio.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     assert not semantic._rerank_breaker_tripped(), "cooldown elapsed -> re-armed"
     semantic._rerank_breaker_record(True)
     assert not semantic._rerank_breaker_tripped(), (
@@ -278,6 +286,10 @@ def test_cooldown_zero_keeps_the_trip_standing(monkeypatch):
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0")
     for _ in range(5):
         semantic._rerank_breaker_record(True)
+    # OROLOGIO-OK: qui il cooldown e' ZERO, cioe' non c'e' nessuna soglia da
+    # superare — lo scatto e' permanente per costruzione e questa attesa non
+    # decide niente. E' l'unica delle sei attese del file IMMUNE alla grana
+    # dell'orologio, e per questo resta uno `sleep`.
     time.sleep(0.05)
     assert semantic._rerank_breaker_tripped(), "0 opts out: permanent trip"
 
@@ -288,7 +300,8 @@ def test_cold_trip_rearms_and_forgets_the_cold_count(monkeypatch):
     for _ in range(3):
         semantic._rerank_breaker_cold_overrun()
     assert semantic._rerank_breaker_tripped()
-    time.sleep(0.35)
+    # T38 — stesso metro della cella qui sopra: 50 ms erano tre tick.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     assert not semantic._rerank_breaker_tripped()
     semantic._rerank_breaker_cold_overrun()
     assert not semantic._rerank_breaker_tripped(), (
@@ -301,7 +314,9 @@ def test_fusion_breaker_rearms_after_the_cooldown(monkeypatch):
     for _ in range(5):
         semantic._fusion_breaker_record(True)
     assert semantic._fusion_breaker_tripped()
-    time.sleep(0.35)
+    # T38 — il gemello della fusione ha lo STESSO difetto e la stessa cura: era
+    # l'unica delle tre a 50 ms che nessuno aveva collegato al breaker.
+    semantic._FUSION_BREAKER["tripped_at"] -= 10.0
     assert not semantic._fusion_breaker_tripped(), "fusion twin re-arms too"
     semantic._fusion_breaker_record(True)
     assert not semantic._fusion_breaker_tripped(), "clean window after re-arm"
@@ -330,7 +345,13 @@ def test_the_recall_gate_sees_the_rearm(tmp_path, monkeypatch):
     for _ in range(3):
         _cerca(mem)
     assert semantic._rerank_breaker_tripped(), "sanity: tripped on slow CE"
-    time.sleep(2.1)
+    # T38 — 2,1 contro 2,0 erano 100 ms, cioe' 6,4 tick: il margine piu' largo
+    # del file, e comunque un margine misurato in tick. Lo spostamento NON
+    # tradisce l'intento dichiarato qui sopra — «this test never calls the
+    # function between cooldown and queries» — perche' scrivere il campo non
+    # chiama `_rerank_breaker_tripped()`: a ri-armare resta solo il gate.
+    # E la cella smette di costare due secondi di attesa vera.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     for _ in range(3):
         _cerca(mem)
     assert semantic._rerank_breaker_tripped(), (
@@ -367,13 +388,24 @@ def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
     for _ in range(3):
         semantic._rerank_breaker_record(True)
     assert semantic._RERANK_BREAKER["tripped"], "sanity: tripped"
-    time.sleep(0.06)                       # cooldown elapsed -> next read re-arms
+    # 🔴 T38 — QUESTA ERA LA PIU' ESPOSTA DI TUTTO IL FILE, e non di poco:
+    # `sleep(0.06)` contro un cooldown di 0,05 s lascia 10 ms di margine,
+    # cioe' 0,64 TICK di un orologio che su py3.12 Windows scatta ogni
+    # 15,625 ms. Sotto UN tick il margine non esiste: non era «stretto», era
+    # inferiore alla grandezza minima che quell'orologio sa rappresentare, e
+    # un sonno REALE di 60 ms poteva essere LETTO 46. Ora il tempo si sposta.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0   # cooldown scaduto: la
+    #                                    prossima lettura ri-arma, e non c'e'
+    #                                    nessun orologio da interrogare.
 
     lento = threading.Event()
     vero_window = semantic._rerank_breaker_window
 
     def window_lento():
         lento.set()
+        # OROLOGIO-OK: non aspetta nessuna soglia — ALLUNGA di proposito la
+        # finestra insicura perche' il recorder ci caschi dentro. Se l'orologio
+        # e' piu' grosso, questa attesa funziona ancora meglio.
         time.sleep(0.3)                    # the re-arm is now mid-flight
         return vero_window()
 
@@ -605,3 +637,52 @@ def test_la_cella_del_cooldown_regge_a_un_riarmo_concorrente(monkeypatch):
     assert semantic._rerank_breaker_tripped() is False, (
         "con il tempo SPOSTATO il cooldown e' scaduto per costruzione, anche "
         "se un ri-armo concorrente ha appena riscritto tripped_at")
+
+
+def test_in_questo_file_nessuna_attesa_cronometra_piu_una_soglia() -> None:
+    """IL PRESIDIO DI T38 — e guarda il CODICE, non il testo.
+
+    Il difetto costato due giorni: un `sleep(0.06)` contro un cooldown di
+    0,05 s lasciava 10 ms di margine, cioe' 0,64 TICK dell'orologio che
+    `time.monotonic` usa su Windows con py<=3.12 (`GetTickCount64`, grana
+    0,015625 s = 15,625 ms). Sotto un tick il margine non esiste: un sonno
+    REALE di 60 ms viene LETTO 46 e l'assert salta. Su py3.13+ lo stesso
+    codice usa `QueryPerformanceCounter` (1e-07) e non cade mai — per questo
+    non si riproduceva in locale, e per questo tre di noi hanno misurato
+    sull'interprete sbagliato e hanno dichiarato falsificata l'ipotesi VERA.
+
+    Questa cella impedisce che ricapiti: ogni chiamata a `sleep` di questo
+    file deve portare, nelle righe sopra, un commento `OROLOGIO-OK:` che
+    dichiari PERCHE' non sta cronometrando una soglia. Chi ne aggiunge una
+    nuda la trova rossa, con la grana dell'orologio scritta nel messaggio.
+
+    ⚠️ CERCA CON `ast`, NON CON UNA SOTTOSTRINGA: in questo stesso file la
+    stringa «time.sleep(» compare dentro i docstring che RACCONTANO il
+    difetto. Un criterio testuale pescherebbe la prosa e direbbe rosso su una
+    cura gia' applicata — la forma di errore che abbiamo pagato piu' spesso.
+    """
+    import ast
+    from pathlib import Path
+
+    testo = Path(__file__).read_text(encoding="utf-8")
+    righe = testo.splitlines()
+    info = time.get_clock_info("monotonic")
+
+    nude = []
+    for nodo in ast.walk(ast.parse(testo)):
+        if not isinstance(nodo, ast.Call):
+            continue
+        f = nodo.func
+        if not (isinstance(f, ast.Attribute) and f.attr == "sleep"):
+            continue
+        sopra = "\n".join(righe[max(0, nodo.lineno - 7):nodo.lineno])
+        if "OROLOGIO-OK" not in sopra:
+            nude.append(f"riga {nodo.lineno}: {righe[nodo.lineno - 1].strip()}")
+
+    assert not nude, (
+        "attesa NUDA in un banco a orologio — qui gira "
+        f"{info.implementation} con grana {info.resolution} s "
+        f"({info.resolution * 1000:.3f} ms): un margine sotto DUE tick non e' "
+        "un margine. Sposta il tempo (`tripped_at -= 10.0`) invece di "
+        "aspettarlo, oppure dichiara `OROLOGIO-OK: <perche'>` sopra la riga.\n"
+        + "\n".join(nude))
