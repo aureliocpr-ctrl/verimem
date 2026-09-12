@@ -95,6 +95,14 @@ chiude una persona, e il documento dice **dove guardare**.
     ```
     ≤ 10 righe, **nessun nome di istanza, nessun ruolo, nessun path locale,
     nessun numero di macchina**.
+13. **Dopo uno squash, `--is-ancestor` dice NO su una cosa che c'è.** Lo squash
+    crea un commit **nuovo**: stesso albero, SHA diverso. Quindi lo SHA del ramo
+    non è antenato di `main`, e `git merge-base --is-ancestor <tip> main`,
+    `git branch --merged` e `git log <sha>..main` rispondono tutti «non c'è» su
+    una cura che è entrata. Misurato il 12/09: una cura mergiata in squash
+    risultava assente per parentela e presente per contenuto, riga per riga.
+    **Si verifica il CONTENUTO** (`git show main:<file> | grep <la riga>`),
+    non la parentela — e vale anche per la domanda «questa PR è già dentro?».
 
 ---
 
