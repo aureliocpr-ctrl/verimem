@@ -1,208 +1,160 @@
-# Un motore solo, tanti client leggeri — cosa permette il protocollo, cosa facciamo oggi, cosa costa cambiare
+# Un motore solo, tanti client leggeri — v2
 
-*ws3 Galileo (ricerca), 11/09/2026 ore 19:5x (lette con `date`: `Fri Sep 11 19:49:41 2026`).
-Mandato del lead nel post «START 11/09 19:20». **Nessun codice**, e nessuna esecuzione: in
-questo turno sono lettore, gli operatori sono Tara e Corrado.*
+*Ricerca interna, 12/09/2026. Versione 2: la v1 (11/09) aveva il protocollo e le tre strade;
+questa aggiunge un progetto confrontabile **letto nel codice**, i numeri della misura interna, e
+in fondo la **bozza della decisione**. Nessun codice di prodotto è stato scritto o eseguito per
+questa pagina.*
 
 ---
 
-## 1. La domanda, e il numero che la pone
+## 1. La domanda
 
-Ieri sera il PC di Aurelio è caduto con un bugcheck mentre il **commit di memoria** era al
-**96,7 %**, e nel resoconto di chiusura il lead ha scritto che **22,8 GB stavano in 12 server
-MCP**. Tara sta misurando (**T3**, in corso) che cosa pesa dentro un singolo processo
-`engram mcp`; il numero che ha portato sul canale è **~2,41 GB di commit per server, identici
-da un processo all'altro**.
+Su una macchina da sviluppo, ogni client che usa la memoria via MCP fa partire **il proprio
+processo server**, e ciascuno carica il proprio modello. Con una decina di client aperti la
+memoria impegnata dalla somma dei processi diventa il vincolo della macchina — non la CPU, non
+il disco: **la memoria impegnata (commit)**.
 
-⚠️ *Quel numero non l'ho misurato io: viene dal canale ed è dichiarato «misura T3 in corso».
-Finché T3 non chiude con la sua ripartizione (torch? giudice? embedder?), in questa pagina
-vale come **ordine di grandezza**, non come numero da citare fuori.*
-
-La domanda che ne nasce non è «come riduciamo la RAM di un processo», ma:
-
-> **perché i processi sono dodici, e il protocollo ci obbliga davvero ad averne dodici?**
+La domanda non è «come riduciamo un processo», ma: **perché i processi sono tanti, e il
+protocollo ci obbliga davvero ad averne tanti?**
 
 ## 2. Cosa dice la specifica MCP — letto, con l'URL
 
-Fonte: <https://modelcontextprotocol.io/specification/2025-06-18/basic/transports>
-(versione della specifica **2025-06-18**, letta oggi).
+Fonte: <https://modelcontextprotocol.io/specification/2025-06-18/basic/transports> (spec
+**2025-06-18**, letta l'11/09).
 
-La specifica definisce **due** trasporti standard:
+**stdio** — testuale: «The client **launches the MCP server as a subprocess**.» Un client, un
+sottoprocesso; N client, N sottoprocessi. E la specifica lo raccomanda: «Clients **SHOULD**
+support stdio whenever possible».
 
-**① stdio.** Testuale:
+**Streamable HTTP** — testuale: «the server operates as an independent process that **can handle
+multiple client connections**». Un solo endpoint (POST e GET sullo stesso path). Le **sessioni**
+sono nel protocollo: `Mcp-Session-Id` assegnato nell'`InitializeResult`, rimandato dal client su
+ogni richiesta, `404` quando il server la chiude (e il client re-inizializza), `DELETE` per
+chiuderla dal lato client.
 
-> «The client **launches the MCP server as a subprocess**.»
+Tre obblighi che diventano nostri se apriamo una porta: validare l'header `Origin` (**MUST**),
+legarsi a `127.0.0.1` in locale (**SHOULD**), autenticare (**SHOULD**).
 
-Un client, un sottoprocesso. Due client, due sottoprocessi. **La molteplicità dei processi non
-è una nostra scelta sbagliata: è la definizione del trasporto che usiamo.** E la specifica lo
-raccomanda pure: «Clients **SHOULD** support stdio whenever possible».
-
-**② Streamable HTTP.** Testuale, ed è la riga che risponde alla domanda:
-
-> «In the Streamable HTTP transport, **the server operates as an independent process that can
-> handle multiple client connections**.»
-
-Un solo endpoint HTTP (POST e GET sullo stesso path), e le **sessioni** sono parte della
-specifica, non un'invenzione nostra:
-
-- il server **PUÒ** assegnare un `Mcp-Session-Id` nell'header della risposta di
-  `InitializeResult`; l'id **DEVE** essere globalmente unico e crittograficamente sicuro;
-- il client **DEVE** rimandarlo su **ogni** richiesta successiva; un server che lo esige
-  **DOVREBBE** rispondere `400` a chi non lo manda;
-- il server **PUÒ** terminare una sessione quando vuole: da lì risponde `404`, e il client
-  **DEVE** ricominciare con una nuova `InitializeRequest`;
-- il client che ha finito **DOVREBBE** mandare `DELETE` con quell'header.
-
-E tre obblighi di sicurezza che, se si apre una porta, diventano nostri:
-
-> «Servers **MUST** validate the `Origin` header… **SHOULD** bind only to localhost
-> (127.0.0.1)… **SHOULD** implement proper authentication for all connections.»
-
-**Conclusione di questa sezione, e vale come fatto**: *il protocollo permette già oggi un
-motore solo con molti client. Non serve inventare niente: serve cambiare trasporto.*
+⇒ **Il protocollo permette già oggi un motore solo con molti client.** Non serve inventare
+niente: serve cambiare trasporto.
 
 ## 3. Cosa facciamo oggi — letto nel nostro codice
 
-- `verimem/mcp_server.py:68` importa **`from mcp.server.stdio import stdio_server`**, e non
-  c'è nessun import di un trasporto HTTP/SSE nel modulo.
-- Cercando `streamable_http|sse_server|uvicorn` in tutto il pacchetto, i soli file che
-  rispondono sono **`verimem/cli.py`** e **`verimem/gateway.py`** — cioè il **gateway REST**,
-  che è un'**altra porta del prodotto**, non un trasporto MCP.
-- Cercando una leva (`ENGRAM_MCP_HTTP`, `--http`, `mcp_http`): **nessuna riga**.
+- `verimem/mcp_server.py` importa `mcp.server.stdio` e **nient'altro**: nessun trasporto
+  HTTP/SSE nel modulo.
+- Cercando `streamable_http|sse_server|uvicorn` nel pacchetto rispondono solo `verimem/cli.py` e
+  `verimem/gateway.py`, cioè il **gateway REST** — un'altra porta del prodotto, non un trasporto
+  MCP.
+- Leve per accenderlo (`ENGRAM_MCP_HTTP`, `--http`, `mcp_http`): **nessuna riga**.
 
-⇒ **La porta MCP del prodotto parla solo stdio.** Quindi un processo per client **per
-costruzione**, e ogni processo paga per intero il suo modello, il suo giudice e il suo
-embedder. Dodici client = dodici motori.
+⇒ **La porta MCP parla solo stdio**: N client = N motori **per costruzione**, e ogni processo
+paga per intero modello, giudice ed embedder.
 
-🔎 **E un reperto della classe «il commento manda nel posto sbagliato»**: il commento a
-`verimem/mcp_server.py:50` dice che chi vuole i log altrove «ha `ENGRAM_LOG_LEVEL` **e il
-transport HTTP**». Chi legge quella riga sulla porta MCP cerca un trasporto HTTP **che su
-questa porta non esiste**: il riferimento è al gateway. Una riga da correggere quando si
-tocca quel file — **non ora**, non è il mio turno e non è il ticket di nessuno.
+🔎 *Nota da correggere quando qualcuno tocca quel file*: un commento in cima al server rimanda
+chi vuole i log altrove «al transport HTTP» — che su quella porta **non esiste**: il riferimento
+è al gateway REST.
 
-## 4. Le tre strade, con il rischio scritto accanto
+## 4. I numeri della misura interna (11/09)
 
-| | strada | cosa cambia per l'utente | il prezzo, detto prima |
-|---|---|---|---|
-| **A** | **restare su stdio e dimagrire il processo** (caricare torch/giudice/embedder **solo quando servono**) | niente, se non che la macchina regge | non tocca la **moltiplicazione**: 12 client restano 12 processi. Se il peso vero è il modello, si moltiplica per 12 anche dopo la cura. **È la strada che T63 sta già aprendo** |
-| **B** | **un server Streamable HTTP** su `127.0.0.1`, i client si attaccano | un solo motore, un solo modello caricato, una sola coda di scrittura sullo store | **punto unico di guasto** (cade il server, cadono tutti i client) · **coda**: le richieste dei client si serializzano dove prima erano parallele, e il giudice è lento (misurato: 303 s il primo `remember` con fonte) · **un salto in più** (rete locale invece di pipe) · i **tre obblighi di sicurezza** della specifica diventano codice da scrivere e da provare · **chi avvia il server?** un processo che nessun client possiede va gestito (avvio, riavvio, versione) |
-| **C** | **ibrido**: stdio per il client, e il lavoro pesante (embedder/giudice) in **un solo servizio** condiviso dietro le quinte | come B sul consumo, senza cambiare come i client si connettono | è ciò che il prodotto **già fa a metà** col `HIPPO_ENCODE_DELEGATE_ONLY` e il daemon dell'embedding — e con quel meccanismo abbiamo già preso **due incidenti in due giorni** (il daemon rinato a 384 mentre lo store scrive a 768; i fatti scritti senza vettore). **La strada non è nuova: è già qui, ed è quella che oggi si rompe in silenzio** |
+Dal resoconto della piattaforma, **letto sul canale interno, non misurato da chi scrive**:
 
-**Osservazione che vale più delle tre righe sopra**: la strada C esiste già e i suoi difetti
-sono i nostri ticket aperti (T60, T-MAP-9, i 14 fatti senza vettore). Prima di aprire la
-strada B — che sposta *tutto* nello stesso schema — la domanda onesta è: **perché la
-condivisione che abbiamo già non regge?** Se la risposta è «il servizio condiviso non dichiara
-la sua versione al client», quel difetto si ripresenta identico, e più grande, su un server
-MCP condiviso.
+    daemon di codifica   modello e5-base, dim 768
+                         commit proprio 4,86 GB · residente 1,05 GB · store 18.147 fatti
+    secondo daemon       modello MiniLM-L12, dim 384 (serve il recall proattivo)
+    i due insieme        9,68 GB
 
-## 5. Come fanno gli altri — tre pagine lette, con l'URL
+Due letture che cambiano la domanda:
 
-*Letto alle 19:55-20:00 dell'11/09. Ogni riga qui sotto ha la sua fonte; dove la pagina non
-risponde, sta scritto che non risponde, invece di riempirlo con ciò che «di solito» fanno.*
+**① Il servizio condiviso esiste già, ed è già sdoppiato.** I due daemon *sono* la «strada
+ibrida» che questa pagina proponeva come opzione: sono in piedi, e sono **due**, con **due
+modelli diversi** — uno allineato allo store, uno no.
 
-**Letta** — <https://docs.letta.com/guides/selfhosting>
-Server unico che tiene **più agenti**: immagine `letta/letta:latest`, **una porta** (8283) per
-la REST API, stato in **PostgreSQL con pgvector**. Come i dati siano isolati **fra** agenti
-quella pagina **non lo dice**. E porta un avviso che conta per chi volesse copiarne la forma:
-«The Docker image is no longer an actively maintained or supported Letta product surface».
+**② Il numero che satura non è la RAM: è il commit, e su quel processo vale ~4,6 volte il
+residente** (4,86 contro 1,05 GB). È la spiegazione del paradosso osservato: memoria impegnata
+quasi all'88-96 % **con diversi GB di RAM apparentemente liberi**. Chi guarda la RAM vede
+spazio, chi guarda il commit vede il muro, e a cadere è la macchina.
+⚠️ Il rapporto è misurato su **un** processo: che valga anche per i server MCP è un'**ipotesi**,
+non un fatto.
 
-**mem0** — <https://docs.mem0.ai/open-source/overview>
-Due modalità, e sono esattamente le nostre due strade: **libreria in-process**
-(`pip install mem0ai`) **oppure** un **server self-hosted** — «A Docker stack with a dashboard,
-**per-user API keys**, and a **request audit log**». Il ruolo preciso di `user_id`/`agent_id`/
-`run_id` nell'isolamento non è in quella pagina.
+📌 **NON VERIFICATO da chi scrive**: la ripartizione per singolo server MCP (quanto è modello,
+quanto contesto dell'acceleratore, quanto altro) e i numeri sull'uso della GPU. Sono la misura
+che decide fra le alternative del §7, e vanno presi dal loro post con l'output, non di seconda
+mano.
 
-**Zep** — <https://help.getzep.com/concepts>
-Modello **per utente**: «Each user has a user graph and thread history», e il grafo è «A
-Context Graph that stores context for **one** application user». Il multi-agente su un solo
-servizio quella pagina non lo affronta.
+## 5. Come fanno gli altri — quattro fonti, con l'URL
 
-🔑 **Il filo che tengono tutti e tre, ed è la cosa che ci riguarda davvero.** Quando una
-memoria smette di essere una libreria dentro il processo del client e diventa **un servizio
-condiviso**, compare sempre la stessa domanda nuova: **«di chi è questo dato?»** — chiavi per
-utente in mem0, un grafo per utente in Zep, agenti come oggetti di prima classe in Letta.
+**Letta** (<https://docs.letta.com/guides/selfhosting>): un server, **più agenti**, una porta,
+stato in PostgreSQL con pgvector. Come isoli i dati **fra** agenti quella pagina non lo dice; e
+avvisa che l'immagine Docker «is no longer an actively maintained or supported product surface».
 
-Da noi quella domanda **oggi non esiste**, e non perché l'abbiamo risolta: perché **ogni
-processo è di un client solo**, e l'isolamento ce lo regala il sistema operativo. La strada B
-non ci porta solo un endpoint: ci porta **quella domanda**, e con essa autenticazione,
-`Origin`, e un registro di chi ha chiesto cosa — le tre cose che la specifica MCP elenca come
-**MUST/SHOULD** e che mem0 ha già in vetrina come parte del suo server.
+**mem0** (<https://docs.mem0.ai/open-source/overview>): due modalità, che sono le nostre due
+strade — **libreria in-process** oppure **server self-hosted**, «A Docker stack with a dashboard,
+**per-user API keys**, and a **request audit log**».
 
-## 5-bis. I protocolli fra agenti — e la domanda che conta più della loro esistenza
+**Zep** (<https://help.getzep.com/concepts>): modello **per utente** — «Each user has a user
+graph and thread history».
 
-**A2A (Agent2Agent)** — <https://a2a-protocol.org/latest/> (letto l'11/09 alle ~19:57).
-«An open standard for seamless communication and collaboration between AI agents»,
-«originally developed by Google and **donated to the Linux Foundation**», con un comitato in
-cui siedono AWS, Cisco, Google, IBM Research, Microsoft, Salesforce, SAP e ServiceNow.
+**A2A** (<https://a2a-protocol.org/latest/>): standard aperto donato alla Linux Foundation,
+**complementare** a MCP e non alternativo — MCP «standardizes how an agent connects to its
+**tools**», A2A serve agli agenti per «**discover each other**, delegate tasks, and share
+results». La pagina elenca **sei SDK e nessun client reale** che lo parli: per il nostro problema
+(client che condividono un motore) **non c'entra**.
 
-**Non è un concorrente di MCP, e la pagina lo dice da sé**: MCP «standardizes how an agent
-connects to its **tools**, APIs, and resources»; A2A serve agli agenti per «**discover each
-other**, delegate tasks, and share results». Strumenti contro pari: due assi diversi.
+## 6. Il confronto che serviva: un progetto che fa esattamente la scelta opposta
 
-⚠️ **E qui il reperto, che vale per la nostra decisione**: quella pagina elenca **sei SDK**
-(Python, JavaScript, Java, C#, Go, Rust), campioni su GitHub e «partner nella comunità» — ma
-**non nomina un solo client reale che lo parli in produzione**. Esistono gli SDK; chi li usa
-davvero, dalla fonte ufficiale, **non risulta**.
+Letto **nel codice**, non nel README (`TencentCloud/TencentDB-Agent-Memory`, ramo `main`, 12/09).
 
-È la nostra classe «**una capacità spenta non emette segnale**» applicata a un protocollo:
-adottare A2A perché «è lo standard» significherebbe costruire una porta e poi misurare quanti
-ci passano. Prima di aprirla, la domanda da chiudere è **quale client che Aurelio usa
-davvero** (Claude Code, l'app, un IDE) parla A2A oggi — e questo **NON l'ho verificato**: la
-pagina ufficiale non basta a rispondere, e un elenco di partner non è un elenco di client.
+**Il bordo.** `src/gateway/server.ts` espone sette rotte: `GET /health`, `POST /recall`,
+`POST /capture`, `POST /search/memories`, `POST /search/conversations`, `POST /session/end`,
+`POST /seed`. **La parola `mcp` non compare nel file**: il loro modello è che l'agente punti la
+propria *base URL* al proxy. Un'estensione MCP esiste come **issue aperta** (#833), non come
+codice.
 
-Per il nostro problema di stasera, comunque, **A2A non c'entra**: dodici processi da 2 GB non
-sono un problema di *agenti che si parlano*, sono un problema di *client che condividono un
-motore* — cioè MCP e il suo trasporto, la sezione 2.
+**L'identità.** Il campo che identifica chi chiama è **`session_key`** (più un `session_id`
+opzionale). **Non c'è tenant, non c'è user, non c'è agent id**: l'unità di isolamento è **la
+conversazione**.
 
-## 5-ter. I numeri di T1/T3 sono arrivati (Tara, 11/09 ~20:04) — e spostano la domanda
+**L'autenticazione.** `Authorization: Bearer <apiKey>` con confronto a tempo costante. Ma **se la
+chiave non è configurata, l'autenticazione è disabilitata** — comportamento legacy dichiarato nel
+file. Un servizio condiviso «aperto se non lo configuri» è precisamente ciò che la specifica MCP
+chiede di non fare.
 
-Dal resoconto di Tara sul canale, **letto e non misurato da me**:
+**La scrittura.** `/capture` verifica **solo la presenza** dei campi e passa al core;
+`handleTurnCommitted` registra **compiti in background** (fire-and-forget) e le memorie derivate
+le producono runner a più livelli. **Nel bordo e nel core non risulta un controllo di
+verità/qualità/deduplica prima della scrittura**; se esiste sta in un modulo di auto-capture
+**non letto: NON VERIFICATO**.
 
-    pid 24788  intfloat/multilingual-e5-base   dim 768  porta 60479
-               commit proprio 4,86 GB · rss 1,05 GB · store 18.147 fatti · differiti 0
-    pid  2748  paraphrase-multilingual-MiniLM-L12-v2  dim 384  porta 60548
-               (serve il recall proattivo dell'hook)
-    insieme    9,68 GB
+🔑 **La differenza che decide, e non è il trasporto**: loro **scrivono subito e distillano dopo**;
+noi **giudichiamo prima e scriviamo dopo**. Se un giorno mettessimo un proxy davanti a più
+client, **il giudizio deve restare davanti alla scrittura**: spostarlo in un compito di
+background significherebbe comprare la loro architettura e vendere la nostra promessa.
 
-Tre cose cambiano rispetto a come avevo impostato la pagina due ore fa:
+## 7. Bozza della decisione
 
-**① Non abbiamo «dodici processi», ne abbiamo dodici più due — e i due sono già la strada C.**
-I due daemon di embedding **sono** il servizio condiviso che la strada C propone: esistono, sono
-in piedi, e sono **due**, con **due modelli diversi** (768 per lo store, 384 per l'hook). La
-condivisione non è un'idea da valutare: è una cosa che facciamo già, e che **già si sdoppia**.
+**La domanda da decidere**: *come serviamo più client senza moltiplicare il motore, senza
+spostare il giudizio dalla scrittura, e senza aggiungere un guasto che oggi non esiste?*
 
-**② Il numero che satura non è la RAM: è il commit, e per questi processi vale ~4,6 volte il
-residente** (4,86 GB di commit contro 1,05 di RSS, su quel pid). È la spiegazione del paradosso
-di ieri sera — «commit 88,6 % **con 8 GB di RAM libera**»: chi guarda la RAM vede spazio, chi
-guarda il commit vede il muro, e a cadere è la macchina. ⚠️ **Il rapporto è misurato su UN
-processo**: che valga anche per i server MCP è un'**ipotesi**, non un fatto — si chiude con la
-riga di coda della sezione 6.
+| | alternativa | cosa cambia per chi usa il prodotto | rischi, detti prima | quando è la scelta giusta |
+|---|---|---|---|---|
+| **A** | **Alleggerire il processo**: caricare modello/giudice/embedder solo quando servono; non inizializzare l'acceleratore in un processo che non lo usa | niente di visibile, se non che la macchina regge | non tocca la **moltiplicazione**: N client restano N processi. Se il peso è il modello, si moltiplica lo stesso | se la misura per server dice che il peso **non** è il modello |
+| **B** | **Un server condiviso** (Streamable HTTP su `127.0.0.1`, sessioni del protocollo) | un motore solo, un modello caricato, una sola coda verso lo store | **① punto unico di guasto**: cade il server, cadono tutti i client · **② coda**: richieste serializzate dove oggi sono parallele, e il giudizio è lento · **③ un salto in più**: rete locale invece di pipe · **④ le tre garanzie** (`Origin`, bind locale, auth) diventano codice **nostro** da scrivere e provare · **⑤ chi lo avvia, lo riavvia e ne dichiara la versione?** | se il peso è il modello **e** accettiamo di scrivere e presidiare le garanzie |
+| **C** | **Ibrido**: i client restano su stdio, il lavoro pesante in un servizio condiviso | come B sul consumo, senza cambiare come i client si connettono | **è ciò che già facciamo, ed è già rotto due volte**: un servizio condiviso rinato con un modello diverso da quello dello store; scritture entrate senza vettore. Il difetto non è il modello: è che **il servizio non dichiara al client la propria versione** | se prima chiudiamo il difetto di dichiarazione — allora C è la strada più corta |
 
-**③ La ripartizione dei ~1,9-2,41 GB per server MCP non c'è ancora**, e resta la domanda che
-decide: se dentro un `engram mcp` il peso è **il modello**, allora togliere il modello dai
-dodici (strada C, fatta bene) vale più che condividere il server (strada B); se il peso è
-altro, si chiude con la strada A.
+**Le tre condizioni che metterei prima di qualunque «sì»**, in ordine:
 
-🔴 **E un difetto che Tara ha trovato e che riguarda questa pagina**: il docstring del secondo
-daemon dichiara «LEGACY MiniLM-L6», mentre lo store è e5-base/768 (T67, suo). Vale come
-avvertimento per chiunque progetti il motore unico: **un servizio condiviso che non dichiara
-correttamente il proprio modello è peggio di nessun servizio condiviso** — perché i client non
-hanno modo di accorgersi del disallineamento. È esattamente il difetto che T-MAP-9 ha già
-pagato una volta.
+1. **La misura per server** (quanto è modello, quanto contesto dell'acceleratore, quanto altro).
+   Senza, si sceglie a occhio.
+2. **Quanti client servono davvero insieme.** Se i client pesanti sono tre e non dodici, la
+   domanda non è «condividere il motore» ma «chi lascia aperti i client».
+3. **Il presidio della versione**: qualunque servizio condiviso deve **dichiarare al client**
+   modello e dimensione, e il client deve **rifiutare** ciò che non combacia. Vale per la strada
+   C che abbiamo già, prima ancora che per la B.
 
-## 6. Cosa serve, prima di decidere
-
-1. **T3 di Tara** con la ripartizione dei ~1,9-2,41 GB: **se il peso è il modello**, la strada A
-   da sola non basta e B/C diventano la vera domanda; **se è altro** (import, cache, copie),
-   forse la strada A chiude tutto senza un salto architetturale.
-2. **Quanti client servono davvero contemporaneamente**: dodici perché servono, o dodici perché
-   nessuno li chiude? Non l'ho misurato — è una riga da mettere in coda a un operatore, non un
-   numero da indovinare.
-3. La **decisione D-1** che ne segue non è mia: io porto il quadro, la sceglie il lead con
-   Aurelio.
+**Quello che questa pagina non decide, e non deve**: quale strada prendere. Porta il quadro, i
+numeri con la loro fonte, e i rischi scritti prima — la scelta è di chi guida il prodotto.
 
 ---
 
-*Fonti citate: la specifica MCP 2025-06-18 (letta oggi, URL sopra) e il codice del nostro
-pacchetto alle righe indicate. Tutto ciò che in questa pagina non ha un URL o una riga di
-codice accanto è marcato **NON VERIFICATO**.*
+*Ogni affermazione ha accanto la sua fonte: un URL, una riga di codice, o il marchio **NON
+VERIFICATO**.*
