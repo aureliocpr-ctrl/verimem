@@ -80,6 +80,41 @@ def _il_grafo(client) -> str:
     return "\n".join(_tutto_cio_che_arriva_al_browser(client).values())
 
 
+#: Quanto vicino deve stare il tratteggio alla dichiarazione dell'arco per essere
+#: SUO. Una regola CSS o un ramo JS stanno in poche centinaia di caratteri; le
+#: altre occorrenze di `dash` della pagina distano righe e righe (in `style.css`
+#: il colore dell'arco e' a riga 32 e il primo tratteggio a 154).
+_VICINANZA = 300
+
+
+def _le_dichiarazioni_dell_arco_non_fondato(client) -> dict[str, list[str]]:
+    """I dintorni di ogni menzione dell'arco NON fondato, asset per asset.
+
+    ⚠️ CORRETTO DUE VOLTE IL 12/09, e la seconda correzione e' la lezione vera.
+
+    ① Prima cercavo il tratteggio nel CONCATENATO di tutta la pagina, e `app.js`
+       ne contiene uno (`strokeDasharray`, riga 125) **per un'altra cosa**: il
+       test e' passato in CI — `XPASS(strict)` — mentre `graph.js` aveva, e ha,
+       ZERO occorrenze di `dash`.
+    ② Poi ho ristretto AL FILE che nomina l'arco. **Non bastava**: `style.css`
+       nomina l'arco (riga 32) **e** ha due tratteggi (154, 242) che sono
+       un'animazione e una classe `.sw`. Stesso file, cose diverse.
+
+    🔑 Cercare l'OGGETTO GIUSTO nella POPOLAZIONE SBAGLIATA da' lo stesso verde di
+    cercare la forma sbagliata — e «stesso file» e' ancora una popolazione. Il
+    tratteggio conta solo se sta **dove si dichiara quell'arco**.
+    """
+    fuori: dict[str, list[str]] = {}
+    for nome, testo in _tutto_cio_che_arriva_al_browser(client).items():
+        dintorni = [
+            testo[max(0, m.start() - _VICINANZA) : m.end() + _VICINANZA]
+            for m in _COLORE_NON_FONDATO.finditer(testo)
+        ]
+        if dintorni:
+            fuori[nome] = dintorni
+    return fuori
+
+
 # ── IL CONTROLLO POSITIVO PER PRIMO ─────────────────────────────────────────
 
 
@@ -141,14 +176,30 @@ def test_gli_archi_non_fondati_hanno_un_COLORE_diverso(console):  # noqa: F811
 )
 def test_gli_archi_non_fondati_hanno_anche_una_FORMA_diversa(console):  # noqa: F811
     """README:550-553 — «dashed»: la ridondanza che rende la distinzione accessibile."""
-    testo = _il_grafo(console)
-    colpi = _FORMA_DIVERSA.findall(testo)
-    assert colpi, (
+    dichiarazioni = _le_dichiarazioni_dell_arco_non_fondato(console)
+
+    # Controllo positivo: se nessun asset dichiara piu' l'arco non fondato,
+    # questo test non misura niente e deve DIRLO, non passare per vuoto.
+    assert dichiarazioni, (
+        "nessun asset servito dichiara l'arco non fondato (`edgeUn`): o la pagina "
+        "e' cambiata, o questo presidio sta guardando una superficie che non e' "
+        "piu' il grafo di `/ui`."
+    )
+
+    con_la_forma = {
+        nome
+        for nome, dintorni in dichiarazioni.items()
+        if any(_FORMA_DIVERSA.search(d) for d in dintorni)
+    }
+    assert con_la_forma, (
         "il grafo distingue gli archi non fondati SOLO con il colore "
-        "(verde/rosso) e nessuna differenza di forma. README:550-553 promette "
-        "«ungrounded **dashed** red — declared, never hidden»: senza il "
-        "tratteggio, per chi non distingue verde e rosso quegli archi sono "
-        "indistinguibili, cioe' nascosti."
+        f"(verde/rosso) e nessuna differenza di forma, in {sorted(dichiarazioni)}. "
+        "README:550-553 promette «ungrounded **dashed** red — declared, never "
+        "hidden»: senza il tratteggio, per chi non distingue verde e rosso quegli "
+        "archi sono indistinguibili, cioe' nascosti.\n"
+        "⚠️ Un tratteggio che stia altrove — in un altro asset, o nello stesso "
+        "file ma a cento righe di distanza — NON conta: e' cosi' che questo test "
+        "e' passato a vuoto il 12/09, due volte di fila."
     )
 
 
