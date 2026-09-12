@@ -200,6 +200,33 @@ def test_il_trailer_di_attribuzione_non_conta(repo: Path) -> None:
     assert esito.returncode == 0, esito.stdout
 
 
+def test_il_corpo_di_una_pr_si_riduce_alle_due_righe() -> None:
+    """Il messaggio con cui una PR entra in main si COMPONE, non si riscrive.
+
+    La parte che si puo' provare senza rete e' questa: dal corpo di una PR nella
+    forma decisa il 12/09 devono restare esattamente le due righe, senza la
+    checklist e senza la riga dello strumento.
+    """
+    sys.path.insert(0, str(RADICE / "scripts"))
+    from messaggio_dello_squash import due_righe  # noqa: PLC0415
+
+    corpo = (
+        "The scan no longer reports an empty corpus when it could not read.\n\n"
+        "RED at the port before the fix, GREEN after.\n\n"
+        "### Definition of Done\n"
+        "- [ ] RED at the port, with the output in the PR\n"
+        "- [ ] GREEN\n\n"
+        "\U0001f916 Generated with [Claude Code](https://claude.com/claude-code)\n"
+    )
+
+    righe = due_righe(corpo)
+
+    assert len(righe) == 2, righe
+    assert righe[0].startswith("The scan no longer")
+    assert righe[1] == "RED at the port before the fix, GREEN after."
+    assert not any("[ ]" in r or "Generated with" in r for r in righe), righe
+
+
 def test_citare_un_file_che_esiste_non_e_parlare_della_stanza(repo: Path) -> None:
     """🔑 12/09: 472 file tracciati portano un nome di sessione nel PERCORSO, e
     si stanno rinominando. Un `git mv` si descrive citando i due percorsi.
