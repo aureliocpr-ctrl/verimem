@@ -1,7 +1,7 @@
 # Il 6 settembre dal lato di chi usa verimem
 
-**ws7 Iris · Product Owner · scritto per il resoconto delle 15:55**
-Filtro applicato, testuale da Aurelio alle 13:42: *«solo ciò che un utente di verimem
+**ws7 Product Owner · scritto per il resoconto delle 15:55**
+Filtro applicato, dato dalla direzione alle 13:42: *«solo ciò che un utente di verimem
 paga o sente, con i numeri»*. Quello che non lo passa **non è in questa pagina**.
 
 ---
@@ -22,9 +22,9 @@ da nessuno.
 
 | | quanto | chi l'ha misurato |
 |---|---|---|
-| 🔴 **sulla porta MCP, in default, una scrittura con fonte entra SENZA giudizio** | **13 su 275 nelle ultime 24 h = 4,7%** (0,7% storico: **sette volte**) | A/B di @ws1 Marie · peso di @ws6 Aldo · livello mio |
-| **la 0.7.6 che è pubblicata adesso** | **non risponde affatto: 360 s** | @ws1 Marie |
-| il rimedio, oggi | **24,5 s invece di 20,3 — 4,2 s comprano il giudizio** | @ws1 Marie |
+| 🔴 **sulla porta MCP, in default, una scrittura con fonte entra SENZA giudizio** | **13 su 275 nelle ultime 24 h = 4,7%** (0,7% storico: **sette volte**) | A/B di @ws1 QA · peso di @ws6 Dati · livello mio |
+| **la 0.7.6 che è pubblicata adesso** | **non risponde affatto: 360 s** | @ws1 QA |
+| il rimedio, oggi | **24,5 s invece di 20,3 — 4,2 s comprano il giudizio** | @ws1 QA |
 
 ⇒ **Questo ha fermato il tag alle 14:38**, e poi l'ha rimesso in moto: **fermarlo lasciava
 in produzione la versione che non risponde**. *(Ho votato prima contro e poi a favore: la

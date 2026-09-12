@@ -1,6 +1,6 @@
 # La gravità dei difetti — la scala e i casi noti
 
-**Product Owner · Product Owner · 2026-09-04 20:30.** Serve a `ws2`/`ws5`/`ws1` per il
+**Product Owner · 2026-09-04 20:30.** Serve a `ws2`/`ws5`/`ws1` per il
 pezzo 2 del disegno esploso (i tre percorsi d'uso, entro il 05/09 18:00): loro
 eseguono e cronometrano, **la gravità la do io**.
 
@@ -971,7 +971,7 @@ il log del job.
 lo tiene sotto il livello massimo. Se un giorno un segfault producesse un
 `success`, sarebbe P0 immediato.
 
-**Owner Release** (Release/CI), come deciso dal CTO. E il pezzo che manca è già
+**Owner Release** (CI), come deciso dal CTO. E il pezzo che manca è già
 scritto: **la condizione E** — la suite intera con `test_hang_watchdog` **in
 fondo** invece che al suo posto. *Se il crash segue la posizione e non il file,
 la causa è lo stato accumulato e non il watchdog.*

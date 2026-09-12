@@ -20,7 +20,7 @@ Misurato su `544d27bd`. Le sezioni di dettaglio sono i file numerati qui accanto
 
 ---
 
-> 🧭 **AGGIUNTA 06/09 (Iris, ws7) — questa pagina descrive l'8 agosto, e da allora la
+> 🧭 **AGGIUNTA 06/09 (Product Owner, ws7) — questa pagina descrive l'8 agosto, e da allora la
 > cartella è cresciuta di documenti che NON sono «i file numerati qui accanto».** Il README
 > pubblico rimanda qui (`docs/stato-reale/ is where the gap between this README and…`,
 > riga 386 della `v0.7.6`), e chi segue quel link entrava senza un percorso verso il lavoro
