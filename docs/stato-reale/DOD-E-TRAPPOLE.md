@@ -40,6 +40,13 @@ chiude una persona, e il documento dice **dove guardare**.
    quel commit **non è mai esistito un verdetto**. «Rosso», «verde» e «nessun
    verdetto» sono tre stati, e la colonna ne mostra due. Si chiede al job:
    `gh api repos/<o>/<r>/actions/jobs/<id> --jq .conclusion`.
+   🔄 **E vale anche al ROVESCIO, misurato il 12/09**: un run può risultare
+   `conclusion: cancelled` — perché un push successivo l'ha superato — e
+   contenere un job `conclusion: failure` con il suo test e il suo messaggio.
+   Chi legge il **run** conclude «nessun verdetto, si rilancia» e butta via un
+   fallimento vero. ⇒ Non è solo che un run può sembrare rosso essendo verde:
+   **un run può sembrare senza verdetto avendone uno.** Il piano su cui si
+   legge è sempre il JOB.
 2. **Una PR la cui base non è `main` non fa partire niente.** I trigger sono
    `pull_request: branches: [main]`: una PR impilata su un altro ramo **non ha
    `ci` né `security`**, e il vuoto si legge come un verde. Serve
