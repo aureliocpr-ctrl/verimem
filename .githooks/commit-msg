@@ -63,7 +63,26 @@ CONTROLLO="$RADICE/scripts/messaggio_pulito.py"
 # ha lo script ma non ancora l'elenco, python esce con `ModuleNotFoundError` e
 # l'hook bloccherebbe il commit per un file mancante invece che per il
 # messaggio — misurato in casa: cinque celle rosse appena l'elenco e' uscito.
-[ -f "$RADICE/scripts/nomi_delle_sessioni.py" ] || exit 0
+#
+# 🔴 MA QUI NON SI TACE, ed e' una distinzione che la prima versione non faceva
+# (rilievo di QA, 12/09 16:37: «fail-open si', silenzio no»).
+#
+#   lo SCRIPT manca        -> il cancello non e' INSTALLATO su questo albero:
+#                             tacere e' giusto, non c'e' niente da dichiarare
+#   l'ELENCO manca         -> il cancello C'E' e NON PUO' MISURARE: dirlo e'
+#                             obbligatorio, o un messaggio sporco passa e
+#                             chi lo scrive crede di essere stato controllato
+#
+# E' la stessa regola che questo progetto applica al passo della mappa in CI
+# («NON MISURATO» invece del silenzio) e che qui avevo violato: **una misura
+# che non c'e' si legge come perfetta**.
+if [ ! -f "$RADICE/scripts/nomi_delle_sessioni.py" ]; then
+    echo "commit-msg: NON MISURATO. Il controllo c'e' ma l'elenco dei nomi"
+    echo "  ($RADICE/scripts/nomi_delle_sessioni.py) manca in questo albero:"
+    echo "  il messaggio NON e' stato controllato. Il commit passa, ma non"
+    echo "  contarlo come verificato."
+    exit 0
+fi
 
 PYTHON="python"
 command -v "$PYTHON" >/dev/null 2>&1 || PYTHON="python3"

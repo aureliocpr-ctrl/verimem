@@ -171,13 +171,23 @@ def test_il_testo_respinto_non_e_perso_e_il_comando_per_riprenderlo_funziona(
     assert "Reported in" in _git(repo, "log", "-1", "--format=%B").stdout
 
 
-def test_senza_l_elenco_dei_nomi_l_hook_tace_invece_di_bloccare(repo: Path) -> None:
-    """Un ramo che ha lo script ma non ancora l'elenco non si deve fermare.
+def test_senza_l_elenco_l_hook_non_blocca_ma_DICHIARA_di_non_aver_misurato(
+        repo: Path) -> None:
+    """Fail-open sì, silenzio no — rilievo di QA del 12/09 16:37.
 
-    Dal 12/09 l'elenco dei nomi sta in un file a parte. Su un albero dove
-    quel file non c'e' ancora, python esce con `ModuleNotFoundError`: senza la
-    guardia l'hook bloccherebbe il commit **per un file mancante**, non per il
-    messaggio — e chi lo subisce non ha modo di capirlo.
+    Su un albero dove l'elenco dei nomi non c'è, python uscirebbe con
+    `ModuleNotFoundError`: senza la guardia l'hook bloccherebbe il commit **per
+    un file mancante**, non per il messaggio. Quindi non blocca.
+
+    🔴 MA LA PRIMA VERSIONE TACEVA, e questa cella presidiava il silenzio: un
+    messaggio sporco passava e chi l'aveva scritto credeva di essere stato
+    controllato. È la forma che questo progetto conosce — *una misura che non
+    c'è si legge come perfetta* — e che il passo della mappa in CI evita
+    stampando «NON MISURATO». Qui l'avevo violata.
+
+    ⚖️ E la distinzione vale: se manca lo SCRIPT il cancello non è installato e
+    tacere è giusto; se manca l'ELENCO il cancello c'è e non può misurare, e
+    deve dirlo.
     """
     (repo / "scripts" / "nomi_delle_sessioni.py").unlink()
     (repo / "nuovo.txt").write_text("x", encoding="utf-8")
@@ -185,12 +195,15 @@ def test_senza_l_elenco_dei_nomi_l_hook_tace_invece_di_bloccare(repo: Path) -> N
     prima = _quanti_commit(repo)
 
     esito = _git(repo, "commit", "-m", SPORCO, controlla=False)
+    detto = esito.stdout + esito.stderr
 
     assert esito.returncode == 0, (
-        "senza l'elenco l'hook ha bloccato il commit invece di tacere:\n"
-        f"{esito.stdout}\n{esito.stderr}")
+        f"ha bloccato il commit invece di passare:\n{detto}")
     assert _quanti_commit(repo) == prima + 1
-    assert "Traceback" not in (esito.stdout + esito.stderr)
+    assert "Traceback" not in detto
+    assert "NON MISURATO" in detto, (
+        "l'hook è passato IN SILENZIO: un messaggio sporco è entrato e chi "
+        f"l'ha scritto crede di essere stato controllato.\n{detto}")
 
 
 def test_la_via_d_uscita_e_dichiarata_e_funziona(repo: Path, monkeypatch) -> None:
