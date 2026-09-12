@@ -106,14 +106,26 @@ chiude una persona, e il documento dice **dove guardare**.
     ```
     ≤ 10 righe, **nessun nome di istanza, nessun ruolo, nessun path locale,
     nessun numero di macchina**.
-13. **Dopo uno squash, `--is-ancestor` dice NO su una cosa che c'è.** Lo squash
-    crea un commit **nuovo**: stesso albero, SHA diverso. Quindi lo SHA del ramo
-    non è antenato di `main`, e `git merge-base --is-ancestor <tip> main`,
-    `git branch --merged` e `git log <sha>..main` rispondono tutti «non c'è» su
-    una cura che è entrata. Misurato il 12/09: una cura mergiata in squash
-    risultava assente per parentela e presente per contenuto, riga per riga.
+13. **Dopo uno squash O UN REBASE, `--is-ancestor` dice NO su una cosa che
+    c'è.** Tutti e due riscrivono: stesso contenuto, SHA nuovi. Quindi lo SHA
+    del ramo non è antenato di `main`, e `git merge-base --is-ancestor <tip>
+    main`, `git branch --merged` e `git log <sha>..main` rispondono tutti «non
+    c'è» su una cura che è entrata. Misurato il 12/09 su una cura fusa: assente
+    per parentela, presente per contenuto riga per riga.
     **Si verifica il CONTENUTO** (`git show main:<file> | grep <la riga>`),
-    non la parentela — e vale anche per la domanda «questa PR è già dentro?».
+    non la parentela — e vale anche per «questa PR è già dentro?».
+    🔴 **E NON dare per scontato quale modo sia stato usato.** Il 12/09 ho
+    attribuito allo squash un effetto prodotto da un **rebase**: qui sono
+    abilitati tutti e tre (`allow_squash_merge`, `allow_rebase_merge`,
+    `allow_merge_commit`), e la storia dice quale è stato usato — i commit del
+    ramo su `main` uno per uno vuol dire rebase.
+14. **Il corpo dello squash NON è vuoto di default: è la CONCATENAZIONE dei
+    messaggi del ramo.** `squash_merge_commit_message` qui vale
+    `COMMIT_MESSAGES`. ⇒ È **falso** che «tanto con lo squash i messaggi del
+    ramo non arrivano su main»: ci arrivano tutti, e col rebase ci arrivano
+    anche uno per uno. Un messaggio di ramo scritto male **è** un messaggio
+    pubblico. La domanda si chiude in un comando, non a memoria:
+    `gh api repos/<owner>/<repo> --jq .squash_merge_commit_message`.
 
 ---
 
