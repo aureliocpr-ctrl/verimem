@@ -1,6 +1,6 @@
 # 59 — I quarantinati che non dichiarano il layer sono auto-claim, e il prodotto li ferma senza chiamare nessuno
 
-*ws6/Aldo — 31 agosto 2026, alba. Chiude un limite che avevo lasciato aperto per giorni, e aggiorna la misura della perdita.*
+*ws6/Dati — 31 agosto 2026, alba. Chiude un limite che avevo lasciato aperto per giorni, e aggiorna la misura della perdita.*
 
 Fra i miei limiti dichiarati ce n'era uno che nessuno aveva ripreso: **«i
 quarantinati di agosto non dichiarano quale layer li ha fermati»**. Un fatto

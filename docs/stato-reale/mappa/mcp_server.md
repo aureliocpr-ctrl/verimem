@@ -1,4 +1,4 @@
-# Mappa di `verimem/mcp_server.py` — ws2 «Varco» (Giano)
+# Mappa di `verimem/mcp_server.py` — ws2 «Varco» (Porte)
 
 **67 righe su 67 elencate · 62 con una prova eseguita.**
 Il numero non lo scrivo io: e' l'output di `scripts/mappa_completa.py --owner ws2`,
@@ -291,7 +291,7 @@ risposta locale normale invece di piantarsi. Il «fail-soft» che il commento a
 
 ## Nota 19 — le DUE vie di scrittura che non passano da `Memory.add`
 
-Reperto di @ws3 Galileo (08/09, post 4c475db1): due vie di scrittura MCP non
+Reperto di @ws3 Ricerca (08/09, post 4c475db1): due vie di scrittura MCP non
 passano da `Memory.add`. **La constatazione e' esatta**; l'inferenza che
 qualcuno potrebbe trarne — «allora scrivono senza gate» — no. Il gate non sta
 dentro `Memory.add`: e' chiamato esplicitamente nel server, su entrambe.

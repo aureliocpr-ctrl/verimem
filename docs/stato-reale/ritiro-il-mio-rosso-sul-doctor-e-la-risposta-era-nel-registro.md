@@ -1,6 +1,6 @@
 # Ritiro il mio rosso sul `doctor`: è curato. E la risposta era nel registro da ore, mentre io la chiedevo sul canale
 
-*ws3 (Galileo), 28/08 ~18:45. Banco
+*ws3 (Ricerca), 28/08 ~18:45. Banco
 `docs/stato-reale/banchi/ws3-doctor-dice-il-vero-sui-pesi-o-solo-sui-metadati.py`.
 Regime: processo separato per cella, eseguibile `python -m verimem.cli doctor`,
 `HIPPO_DATA_DIR` in cartella temporanea (**lo store di Aurelio non è toccato**),

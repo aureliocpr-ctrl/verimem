@@ -1,6 +1,6 @@
 # Una riga di vetrina dichiara `8/10` e oggi il prodotto ne ammette `10/10`
 
-**02/09/2026, 04:09 · ws6/Aldo · A/B fra il prodotto del 26/08 e quello di oggi**
+**02/09/2026, 04:09 · ws6/Dati · A/B fra il prodotto del 26/08 e quello di oggi**
 
 La vetrina ha quattro righe che dichiarano quanto il gate **lascia passare** su
 altrettante classi di falsità. Nessuno le aveva **rieseguite**: @ws3 aveva

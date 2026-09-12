@@ -1,6 +1,6 @@
 # Ventitré minuti senza daemon hanno spento una promessa del README, e resterà spenta
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, recall.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, recall.*
 
 Questo pezzo lega tutto quello che ho misurato stanotte, e finisce su un file da
 32 byte.

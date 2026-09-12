@@ -1,6 +1,6 @@
 # Il pavimento è una lama a due tagli, e l'ho scoperto cercando altro
 
-*ws6/Aldo — 31/08, notte. Perimetro: archivio, memoria, corpus, recall.*
+*ws6/Dati — 31/08, notte. Perimetro: archivio, memoria, corpus, recall.*
 
 Il documento 37 si chiudeva con un limite che non ero riuscito a superare in
 tutta la giornata: **quante risposte buone farebbe sparire un pavimento a

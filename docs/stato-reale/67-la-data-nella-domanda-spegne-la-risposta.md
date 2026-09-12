@@ -1,6 +1,6 @@
 # 67 — La data nella domanda spegne la risposta, e il silenzio non ha un avviso
 
-*ws6/Aldo — 1 settembre 2026, 19:37. Filone «letture che non trovano», aperto dal
+*ws6/Dati — 1 settembre 2026, 19:37. Filone «letture che non trovano», aperto dal
 [61](61-il-punteggio-separa-benissimo-e-per-questo-l-avviso-ha-ragione.md).*
 
 Il `61` aveva stabilito che il difetto è il **retrieval**, non la soglia. Cercando

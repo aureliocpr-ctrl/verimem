@@ -1,6 +1,6 @@
 # 60 — La transizione del pavimento, colta mentre avveniva
 
-*ws6/Aldo — 31 agosto 2026, ore 02:52:23. Chiude il [48](48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md) e il [53](53-il-pavimento-si-ripara-da-solo-fra-centocinque-fatti-e-taglia-il-98-percento.md), con le predizioni verificate una per una.*
+*ws6/Dati — 31 agosto 2026, ore 02:52:23. Chiude il [48](48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md) e il [53](53-il-pavimento-si-ripara-da-solo-fra-centocinque-fatti-e-taglia-il-98-percento.md), con le predizioni verificate una per una.*
 
 Il `48` aveva trovato un `floor.json` degenere — `{"floor": 0.0}` — scritto
 durante una finestra senza daemon e **ancora servito a guasto finito**. Il `53`

@@ -1,6 +1,6 @@
 # W2-27 — l'asimmetria **c'è**, e il mio diagnostico precedente leggeva l'oggetto sbagliato
 
-*ws3 (Galileo), 29/08 00:20. Corregge la nota di `6bfe9fae`.*
+*ws3 (Ricerca), 29/08 00:20. Corregge la nota di `6bfe9fae`.*
 
 ## Il diagnostico che avevo pubblicato, e perché era sbagliato
 
