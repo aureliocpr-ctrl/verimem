@@ -31,6 +31,18 @@ ragione che questo script non conosce), il numero non tornerebbe e lo script
 esce con 1 invece di stampare una tabella rassicurante. Un righello che non
 può accorgersi di ciò che non conosce non è un righello.
 
+🪞 E LA PRIMA STESURA DI QUEL CONTROLLO NON POTEVA ACCENDERSI — trovato in
+revisione dal ruolo QA. `altre` era derivata per differenza
+(`ritirati - contate`), quindi la verifica era l'identità
+`contate + (ritirati - contate) == ritirati`: vera per costruzione, su
+qualunque database, anche rotto. Ora `altre` si CONTA con una query che
+esclude le cause note, e i due lati arrivano da due interrogazioni
+indipendenti: una ragione che ricadesse sotto due pattern verrebbe contata
+due volte a sinistra e una sola a destra, e il righello lo direbbe.
+⇒ **In uno script che esiste per dire «questo numero non misura ciò che
+credi», il controllo che non può fallire era la stessa forma, un piano più
+sotto.**
+
 USO::
 
     python scripts/di_cosa_e_fatta_la_perdita.py <data_dir>
@@ -74,7 +86,19 @@ def scomponi(db: pathlib.Path) -> dict:
                 "AND superseded_reason LIKE ?", like)
         per_causa.append((nome, n, nota))
         contate += n
-    altre = ritirati - contate
+    # ⚠️ `altre` si CONTA, non si deriva per differenza. Con
+    # `altre = ritirati - contate` il controllo in coda diventava l'identità
+    # `contate + (ritirati - contate) == ritirati`, vera per costruzione: un
+    # controllo che non può accendersi. Qui la riga si conta escludendo le
+    # cause note, così i due numeri arrivano da due query indipendenti e la
+    # verifica ha qualcosa da verificare — per esempio una ragione che ricade
+    # sotto DUE pattern, che sarebbe contata due volte a sinistra e una sola
+    # a destra.
+    esclusioni = " ".join("AND superseded_reason NOT LIKE ?" for _ in CAUSE)
+    altre = uno(
+        "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL "
+        "AND (superseded_reason IS NULL OR (1=1 " + esclusioni + "))",
+        *[like for _, like, _ in CAUSE])
     con.close()
     return {
         "scritti": scritti, "ritirati": ritirati,
