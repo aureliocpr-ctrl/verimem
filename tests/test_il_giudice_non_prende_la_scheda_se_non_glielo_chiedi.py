@@ -88,11 +88,33 @@ def test_chi_chiede_la_cpu_non_fa_nemmeno_la_domanda() -> None:
         "la inizializza, quindi questa cura non toglierebbe un solo MiB")
 
 
-def test_auto_si_comporta_come_prima() -> None:
-    """Il default non cambia nulla: chi non configura niente non se ne accorge."""
-    assert scegli_device(lambda: True, {}) == "cuda"
+def test_senza_variabile_si_sta_su_cpu_anche_con_la_scheda_presente() -> None:
+    """IL DEFAULT E' CAMBIATO, ed e' il punto della cura.
+
+    Prima, chi non configurava niente prendeva la scheda in silenzio. I numeri
+    del 2026-09-12 dicono che per un processo a vita breve quella scheda e' un
+    pedaggio e non un acceleratore: 86 ms guadagnati per giudizio contro 19,2 s
+    persi alla prima inferenza, cioe' pareggio a ~223 giudizi, piu' 285,7 MB di
+    contesto per processo.
+
+    La cella e' scritta col callable che dice SI': se il default tornasse ad
+    essere «la scheda se c'e'», qui uscirebbe "cuda" e la cella cadrebbe. E' la
+    gamba che puo' falsificare il cambio.
+    """
+    assert scegli_device(lambda: True, {}) == "cpu"
     assert scegli_device(lambda: False, {}) == "cpu"
-    assert device_richiesto({}) == "auto"
+    assert device_richiesto({}) == "cpu"
+
+
+def test_auto_resta_disponibile_come_scelta_esplicita() -> None:
+    """`auto` non sparisce: diventa una cosa che si chiede.
+
+    Serve a chi vive abbastanza da ammortizzare la scheda — il daemon, non il
+    server di una sessione.
+    """
+    assert scegli_device(lambda: True, {ENV_DEVICE: "auto"}) == "cuda"
+    assert scegli_device(lambda: False, {ENV_DEVICE: "auto"}) == "cpu"
+    assert device_richiesto({ENV_DEVICE: "auto"}) == "auto"
 
 
 def test_cuda_chiesta_e_assente_e_un_errore_non_un_ripiego() -> None:
@@ -143,8 +165,9 @@ def test_nessun_modello_sceglie_la_scheda_al_posto_nostro() -> None:
     sorgenti avevo trovato DUE punti; i punti veri erano il doppio, e questa
     cella e' nata proprio da quel conteggio sbagliato.
 
-    `device=None` (il default di `auto`) lascia decidere alla libreria come
-    prima: dichiararlo non cambia il comportamento, rende possibile cambiarlo.
+    Da quando il default e' `cpu`, `device_dichiarato()` restituisce la stringa
+    "cpu" invece di `None`: la libreria non sceglie piu' nemmeno quando nessuno
+    ha configurato niente. `None` resta solo per chi chiede `auto`.
     """
     nudi: list[str] = []
     for percorso in sorted((_radice() / "verimem").rglob("*.py")):

@@ -17,29 +17,53 @@ scheda, cioe' costruisce il contesto che stiamo cercando di non costruire. Chi
 ha chiesto "cpu" non deve vedere quella domanda partire: qui infatti il callable
 `cuda_disponibile` NON viene chiamato nel ramo "cpu".
 
-Non decide la politica: rende possibile deciderla. Il default resta `auto`,
-cioe' il comportamento di prima.
+LA POLITICA, e i numeri che l'hanno decisa (misurati il 2026-09-12, A/B nella
+stessa esecuzione, una variabile sola):
+
+  commit di un processo appena avviato   con scheda   senza scheda   differenza
+    che NON giudica (il caso di oggi)      1088,0 MB     1071,5 MB      16,6 MB
+    che giudica                            2412,2 MB     2126,5 MB     285,7 MB
+
+  un giudizio sulla stessa frase         con scheda   senza scheda
+    a regime (mediana di tre)               0,120 s       0,206 s
+    PRIMA inferenza                        20,95 s        1,75 s   <- il numero
+
+La scheda fa guadagnare 86 ms a giudizio e ne fa perdere 19,2 all'ingresso:
+pareggia dopo ~223 giudizi. Un processo a vita breve non ci arriva mai, quindi
+per lui la scheda non e' un acceleratore, e' un pedaggio — oltre ai 285,7 MB di
+contesto moltiplicati per quanti processi ci sono.
+
+DUNQUE: **il default e' `cpu`**. La scheda si CHIEDE, e la chiede chi vive
+abbastanza da ammortizzarla (il daemon, non il server di una sessione). `auto`
+resta disponibile come scelta esplicita e vale «la scheda se c'e'».
+
+⚠️ E' un cambio di comportamento per chi non configura niente: prima prendeva la
+scheda in silenzio, adesso sta su CPU. E' il punto della cura, non un effetto
+collaterale — ma va letto qui e non scoperto da un rallentamento.
 """
 from __future__ import annotations
 
 import os
 from collections.abc import Callable
 
-#: La variabile che sceglie. `auto` (default) = come prima.
+#: La variabile che sceglie: `cpu` (default), `cuda`, oppure `auto`.
 ENV_DEVICE = "ENGRAM_JUDGE_DEVICE"
 
 _AMMESSI = ("auto", "cpu", "cuda")
+
+#: Assente = CPU. Chi vuole la scheda la chiede: vedi i numeri in cima.
+_SENZA_VARIABILE = "cpu"
 
 
 def device_richiesto(ambiente: dict[str, str] | None = None) -> str:
     """Che cosa CHIEDE la configurazione. Non tocca torch, non tocca la scheda.
 
-    Vuoto o assente -> "auto". Maiuscole e spazi non contano.
+    Vuoto o assente -> "cpu": la scheda si chiede. Maiuscole e spazi non contano.
     """
     grezzo = (ambiente if ambiente is not None else os.environ).get(ENV_DEVICE, "")
     voluto = str(grezzo).strip().lower()
     if not voluto:
-        return "auto"
+        return _SENZA_VARIABILE
     if voluto not in _AMMESSI:
         raise ValueError(
             f"{ENV_DEVICE}={grezzo!r} non e' un valore ammesso "
@@ -86,8 +110,9 @@ def device_dichiarato(ambiente: dict[str, str] | None = None) -> str | None:
     `cuda` non compare, eppure il contesto nasce. Cercare "cuda" nei sorgenti
     dava due punti; i punti veri erano il doppio.
 
-    `None` e' il valore che quelle librerie interpretano come «scegli tu», cioe'
-    il comportamento di prima: con `auto` non cambia nulla per nessuno.
+    `None` e' il valore che quelle librerie interpretano come «scegli tu»: lo
+    restituisce SOLO `auto`, che ormai e' una scelta esplicita. Senza variabile
+    esce `"cpu"`, e il modello non va piu' sulla scheda di sua iniziativa.
     """
     voluto = device_richiesto(ambiente)
     return None if voluto == "auto" else voluto
