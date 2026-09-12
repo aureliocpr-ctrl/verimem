@@ -34,6 +34,12 @@ chiude una persona, e il documento dice **dove guardare**.
 1. **Il `conclusion` di un run è la PEGGIORE delle sue parti.** Un job
    `report-only` cancellato tinge di «cancelled» un run i cui gate sono tutti
    passati. **Si legge per JOB**, mai per riga di riepilogo.
+   ⚠️ E un livello più sotto: **`gh pr checks` stampa `fail` anche per un job
+   `cancelled`**. Misurato il 12/09 su una PR data per rossa: il job era
+   `conclusion: cancelled` dopo 51 minuti, lo step `Tests` interrotto, e su
+   quel commit **non è mai esistito un verdetto**. «Rosso», «verde» e «nessun
+   verdetto» sono tre stati, e la colonna ne mostra due. Si chiede al job:
+   `gh api repos/<o>/<r>/actions/jobs/<id> --jq .conclusion`.
 2. **Una PR la cui base non è `main` non fa partire niente.** I trigger sono
    `pull_request: branches: [main]`: una PR impilata su un altro ramo **non ha
    `ci` né `security`**, e il vuoto si legge come un verde. Serve
@@ -42,6 +48,11 @@ chiude una persona, e il documento dice **dove guardare**.
    **sparisce da `gh run list`**: il tasso vero di un test intermittente è più
    alto di quello che la lista mostra. **Mai un rerun per far diventare verde
    una cosa**: si classifica il rosso, non lo si nasconde.
+   🔀 **Ma il rerun non è sempre la cosa sbagliata, e la differenza è netta**:
+   su un job **`failure`** il rerun *nasconde* un verdetto che c'è; su un job
+   **`cancelled`** *produce* il verdetto che non c'è mai stato. Prima di
+   rilanciare si scrive dove sta il rosso (id del job, nome del test, messaggio
+   dell'assert): un rerun non può cancellare ciò che è già stato trascritto.
 4. **Un verde è di un COMMIT, non di una PR.** Se qualcuno pusha mentre leggi,
    il verde che stai guardando è di un altro albero. **Un VIA vale sullo SHA**,
    e va riscritto quando il tip cambia.
