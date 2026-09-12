@@ -1,44 +1,47 @@
-"""Quanto manca perche' i documenti pubblici siano presentabili — per classe.
+"""Quanto manca perche' i documenti pubblici siano presentabili — per classe
+e per POPOLAZIONE.
 
 PERCHE' ESISTE — il 12/09 ho contato a mano i file con un path locale in
 `docs/stato-reale/` e mi sono venuti **23**; un'ora dopo, con un regex
-leggermente diverso, **24**. Nessuno dei due numeri era sbagliato: era il
-righello a muoversi. Una revisione che deve dire *«la pulizia li toglie
-TUTTI?»* ha bisogno di un criterio scritto, non di un `grep` riscritto ogni
-volta da chi guarda.
+leggermente diverso, **24**; col pattern giusto **84**. Nessuno dei tre era
+sbagliato: era il righello a muoversi. Una revisione che deve dire *«la pulizia
+li toglie TUTTI?»* ha bisogno di un criterio scritto, non di un `grep`
+riscritto ogni volta da chi guarda.
 
-🔴 LA DECISIONE DEL 12/09, e perche' cambia il numero di testa:
-**le sigle `wsN` RESTANO come sono.** Si tolgono i **nomi umani** (→ ruoli), le
-citazioni che li portano, e i **path locali**. Rinominare 447 banchi che hanno
-una sigla nel nome costa piu' di quello che rende, e rompe i riferimenti.
-⇒ Questo righello tiene le due cose **separate**, perche' un criterio di
-accettazione che conti anche cio' che per decisione resta **non puo' mai
-arrivare a zero**, e un cancello che non puo' chiudersi viene aggirato.
+🔴 L'ELENCO DEI NOMI NON STA PIU' QUI, e non e' una raffinatezza. Il 12/09 lo
+stesso elenco viveva in QUATTRO file con TRE contenuti diversi, e il mio ne
+conosceva 9 su 16: mancavano `Varco` (495 occorrenze) e `Vega` (17 file da
+solo). **Un elenco incompleto non e' un criterio permissivo: e' un criterio che
+MENTE**, perche' porta a zero una misura che zero non e'.
+⇒ Il roster unico e' `scripts/nomi_delle_sessioni.py` (adottato 12/09 14:50 da
+tutti i righelli). Qui si importa e non si riscrive: **due elenchi sono due
+criteri, e divergono il giorno in cui nascono.**
+
+🔴 E LE POPOLAZIONI SONO TRE, non una. Il 12/09 ho scritto «i path locali sono
+84 e la pulizia non e' cominciata» misurando su tutti i 775 file, mentre il
+perimetro deciso ne conta 169: dentro quello il lavoro era **a zero**, e l'80%
+delle occorrenze stava nei banchi, che sono ESCLUSI. Il numero era giusto, il
+denominatore no. ⇒ Questo righello stampa **tre numeri**, e un verde su uno
+solo non puo' passare per un verde su tutti.
+
+  PERIMETRO       i documenti che la pulizia deve portare a zero
+  BANCHI          esclusi: sono codice di misura, e cambiarli falsifica un dato
+  DATI DI PROVA   esclusi di diritto (`ESCLUSI_DI_DIRITTO` nel roster):
+                  riscriverli falsifica un reperto registrato
 
 LE CLASSI:
 
-  🔴 BLOCCANTI — devono arrivare a zero
-     ① nome umano nel TESTO      AMBIGUO per costruzione: `tara` e' anche la
-                                 tara di un peso, `aldo` sta dentro `caldo`.
-                                 Il 12/09 una sostituzione cieca ha scritto
-                                 `cDati` al posto di `caldo` in 200+ punti.
-                                 ⇒ si stampa il CONTESTO e classifica una
-                                 persona; non si sostituisce a occhi chiusi.
-     ② nome umano nel PATH       invisibile a una pulizia del TESTO: nessuna
-                                 riscrittura della prosa rinomina un file.
-     ③ path locale nel TESTO     la home di chi ha lanciato il comando.
-     ⑤ nome di SESSIONE          cercato SOLO in forma-nome (`@Nome`, `firma
-                                 Nome`, `Agent: Nome`), perche' `varco`,
-                                 `paragone` e `lanterna` sono anche parole
-                                 italiane: 529 occorrenze di `varco` in un file
-                                 sono **486** nomi e 43 parole. Aggiunta il
-                                 12/09 dopo che una misura ha mostrato che
-                                 l'elenco ① era incompleto — 495 occorrenze in
-                                 3 file che questo righello non vedeva, cioe'
-                                 uno «zero» che sarebbe stato falso.
+  🔴 BLOCCANTI — devono arrivare a zero NEL PERIMETRO
+     ① nome di sessione nel TESTO   dal roster: i sicuri senza distinzione di
+                                    maiuscole, gli ambigui SOLO maiuscoli
+                                    (`tara` e' anche il verbo «tarare»)
+     ② nome di sessione nel PATH    invisibile a una pulizia del TESTO: nessuna
+                                    riscrittura della prosa rinomina un file
+     ③ path locale nel TESTO        la home di chi ha lanciato il comando
 
-  ⚪ DICHIARATA — resta per decisione, si conta per sapere quanto e' grande
-     ④ sigla `wsN` (testo e path)
+  ⚪ DICHIARATA — resta per decisione del 12/09
+     ④ sigla `wsN` nei nomi di file: rinominare 447 banchi costa piu' di quel
+        che rende e rompe i riferimenti
 
 USO
     python scripts/nomi_nei_documenti.py docs/stato-reale
@@ -48,12 +51,6 @@ USO
 ⚠️ Il confronto PRIMA/DOPO si fa su DUE alberi (due worktree, due ref), non su
 due momenti dello stesso: il righello stampa la cartella che ha misurato
 proprio perche' un banco deve dichiarare quale albero misura.
-
-⚠️ QUESTO FILE E' ESCLUSO DALLA PROPRIA MISURA, e lo dichiara a ogni giro:
-contiene l'anagrafica completa perche' **l'elenco E' il criterio**. Spostarlo
-fuori dal repo renderebbe il righello muto quando il file manca — e un criterio
-assente conta zero e si legge «pulito», che e' il modo piu' efficace di
-dichiarare finita una pulizia che non e' partita.
 """
 from __future__ import annotations
 
@@ -62,40 +59,30 @@ import re
 import sys
 import tempfile
 
-#: Il criterio. Va tenuto allineato al board dei ruoli: un nome nuovo che non e'
-#: qui non viene contato, e il righello direbbe «pulito» a torto.
-SIGLE = ["ws1", "ws2", "ws3", "ws4", "ws5", "ws6", "ws7", "ws8"]
-UMANI = ["marie", "tara", "corrado", "galileo", "nadia", "aldo", "giano", "iris", "curie"]
+#: 🔑 SE IL ROSTER NON C'E', QUESTO RIGHELLO NON MISURA — e lo dice uscendo 2.
+#: Il ripiego «uso un elenco mio» sarebbe la cosa peggiore: darebbe un numero
+#: piu' basso con l'aria di un numero buono, che e' esattamente il modo in cui
+#: una pulizia si dichiara finita senza esserlo.
+try:
+    from nomi_delle_sessioni import ESCLUSI_DI_DIRITTO, trova
+except ImportError as _errore:      # pragma: no cover - si prova a mano
+    print("NON MISURATO: manca `scripts/nomi_delle_sessioni.py`, che e' il "
+          f"roster unico dei nomi ({_errore}).\n"
+          "  Non esiste un ripiego: un elenco locale darebbe un numero piu' "
+          "basso con l'aria di un numero buono.\n"
+          "  Arriva con la PR del cancello sui messaggi; fino ad allora questo "
+          "righello non ha un criterio.", file=sys.stderr)
+    raise SystemExit(2) from _errore
 
-#: 🔴 NOMI DI SESSIONE, aggiunti il 12/09 dopo una misura che ha mostrato che
-#: l'elenco sopra era INCOMPLETO: 495 occorrenze in 3 file che questo righello
-#: non vedeva, e quindi uno «① a zero» sarebbe stato falso.
-#:
-#: ⚠️ Vanno cercati SOLO IN FORMA-NOME, e la ragione e' misurata: `varco` in un
-#: file solo fa **529** occorrenze totali ma **486** in forma-nome — le altre 43
-#: sono la parola italiana. Cercarli come parola nuda rifarebbe, su di noi,
-#: l'errore che questo righello esiste per impedire.
-#: 📌 E due candidati sono stati SCARTATI dalla stessa misura: `sentinella` (13
-#: occorrenze, **0** in forma-nome) e `faro` (1, **0**). Non sono nomi qui, e
-#: metterli dentro avrebbe gonfiato ogni numero futuro senza aggiungere un caso.
-SESSIONI = ["varco", "paragone", "lanterna"]
-
-#: il file che contiene l'elenco non puo' misurare se stesso
-ESCLUSO = "nomi_nei_documenti.py"
-
-_SIGLA = re.compile(r"\b(?:" + "|".join(SIGLE) + r")\b", re.I)
-_UMANO = re.compile(r"\b(?:" + "|".join(UMANI) + r")\b", re.I)
-#: la FORMA-NOME: `@Varco`, `firma Varco`, `Agent: Varco`, `— Varco`, `di @Varco`.
-#: Il criterio e' quello usato nella misura del 12/09 che ha trovato i tre nomi.
-_FORMA_NOME = re.compile(
-    r"(?:@|\bfirma\s+|\bAgent:\s*|—\s*|\bdi\s+@?)(?:" + "|".join(SESSIONI) + r")\b",
-    re.I)
-#: nel path il nome sta fra separatori: `banchi-ws2/`, `_ws3_curva.json`, `/ws7-u-c.json`
-_SEP = r"(?:^|[/\-_])(?:{})(?:[/\-_.]|$)"
-_PATH_UMANO = re.compile(_SEP.format("|".join(UMANI)), re.I)
-_PATH_SIGLA = re.compile(_SEP.format("|".join(SIGLE)), re.I)
-#: la home di chi ha lanciato il comando, in tutte e tre le forme che usiamo
+#: le sigle restano per decisione: si contano, non si curano
+SIGLE = ("ws1", "ws2", "ws3", "ws4", "ws5", "ws6", "ws7", "ws8")
+_SIGLA_PATH = re.compile(r"(?:^|[/\-_])(?:" + "|".join(SIGLE) + r")(?:[/\-_.]|$)", re.I)
+#: la home di chi ha lanciato il comando, in tutte le forme che usiamo —
+#: separatore RIPETUTO compreso (`C:\\Users\\…` nelle stringhe JSON e Python),
+#: che il mio primo pattern non prendeva e che valeva 19 occorrenze.
 _LOCALE = re.compile(r"[A-Za-z]:[\\/]+Users[\\/]+|/c/Users/", re.I)
+#: il file che contiene il roster non puo' misurare se stesso
+ESCLUSO = "nomi_delle_sessioni.py"
 
 _CONTESTO = 34
 
@@ -104,83 +91,126 @@ def _testo(f: pathlib.Path) -> str:
     return f.read_text(encoding="utf-8", errors="replace")
 
 
+def _nomi(testo: str) -> list[str]:
+    """I nomi BLOCCANTI in un testo: sigle escluse.
+
+    🔴 Il roster mette le SIGLE fra i nomi sicuri, e fa bene: chi misura i
+    messaggi le vuole. Ma il criterio di pulizia deciso il 12/09 e' «zero nomi
+    umani e zero soprannomi NEL CONTENUTO», e **le sigle restano**. Contarle
+    qui gonfiava ① da 3 a 156 su 169 file — cioe' dava per sporco un perimetro
+    che e' pulito, e avrei portato un rilievo falso a chi lo aveva ripulito.
+    ⇒ Chi importa un roster deve guardare **quali classi ci ha messo dentro**:
+    un elenco unico non vuol dire un criterio unico.
+    """
+    return [n for n, _ in trova(testo) if n.lower() not in SIGLE]
+
+
+def _nomi_nel_path(rel: str) -> list[str]:
+    """I nomi in un PERCORSO, sigle escluse.
+
+    🔴 SERVE `con_identificatori=True`, e l'autotest me l'ha insegnato facendo
+    ROSSO: il roster, di suo, scarta un nome attaccato a `-` o `_` dentro un
+    token piu' lungo, perche' nella PROSA `iris-ub-jivzor1t` e' una cartella
+    temporanea citata come dato e riscriverla falsifica una misura. Ma un NOME
+    DI FILE e' fatto esattamente cosi' (`aldo-prova.py`), quindi con la regola
+    della prosa la classe ② sarebbe stata **sempre zero**: un criterio spento
+    che si legge come «pulito».
+    ⇒ Sui percorsi si guarda tutto, e si tolgono le SIGLE, che per decisione
+    del 12/09 nei nomi di file restano.
+    """
+    return [n for n, _ in trova(rel, con_identificatori=True)
+            if n.lower() not in SIGLE]
+
+
+def popolazione(rel: str) -> str:
+    """PERIMETRO, BANCHI o DATI-DI-PROVA per un percorso relativo.
+
+    ⚠️ Il filtro dei banchi cerca `banchi` come COMPONENTE, non `"/banchi/"`:
+    le cartelle si chiamano anche `banchi-ws2` e `banchi-04`, e un filtro
+    troppo stretto non fa rumore — fa entrare nel lavoro roba che era stata
+    esclusa, e non se ne accorge nessuno finche' non arriva in revisione.
+    """
+    p = pathlib.PurePosixPath(rel)
+    if p.name in ESCLUSI_DI_DIRITTO:
+        return "DATI-DI-PROVA"
+    if any(parte.startswith("banchi") for parte in p.parts):
+        return "BANCHI"
+    return "PERIMETRO"
+
+
 def misura(radice: pathlib.Path) -> dict:
-    """Insiemi di file per classe. Insiemi e non conteggi: chi legge deve poter
-    stampare CHI cade, non solo quanti."""
+    """Insiemi di file per classe e per popolazione. Insiemi e non conteggi:
+    chi legge deve poter stampare CHI cade, non solo quanti."""
     tutti = sorted(p for p in radice.rglob("*")
-                   if p.is_file() and ".git" not in p.parts)
-    esclusi = [p for p in tutti if p.name == ESCLUSO]
-    tutti = [p for p in tutti if p.name != ESCLUSO]
-    r: dict[str, list] = {"tutti": tutti, "esclusi": esclusi, "umano": [],
-                          "path_umano": [], "locale": [], "sigla": [],
-                          "path_sigla": [], "sessione": []}
+                   if p.is_file() and ".git" not in p.parts and p.name != ESCLUSO)
+    r: dict = {"tutti": tutti, "nome": [], "path_nome": [], "locale": [],
+               "path_sigla": [], "pop": {}}
     for f in tutti:
-        rel = "/" + f.relative_to(radice).as_posix()
-        if _PATH_UMANO.search(rel):
-            r["path_umano"].append(f)
-        if _PATH_SIGLA.search(rel):
+        rel = f.relative_to(radice).as_posix()
+        r["pop"][f] = popolazione(rel)
+        if _nomi_nel_path("/" + rel):
+            r["path_nome"].append(f)
+        if _SIGLA_PATH.search("/" + rel):
             r["path_sigla"].append(f)
         try:
             t = _testo(f)
         except OSError:
             continue
-        if _UMANO.search(t):
-            r["umano"].append(f)
-        if _FORMA_NOME.search(t):
-            r["sessione"].append(f)
+        if _nomi(t):
+            r["nome"].append(f)
         if _LOCALE.search(t):
             r["locale"].append(f)
-        if _SIGLA.search(t):
-            r["sigla"].append(f)
     return r
 
 
-def _elenco(radice: pathlib.Path, files: list, quanti: int = 8) -> None:
-    for f in files[:quanti]:
-        print(f"      {f.relative_to(radice).as_posix()}")
-    if len(files) > quanti:
-        print(f"      … e altri {len(files) - quanti}")
+def _per_pop(r: dict, chiave: str) -> dict:
+    conta = {"PERIMETRO": 0, "BANCHI": 0, "DATI-DI-PROVA": 0}
+    for f in r[chiave]:
+        conta[r["pop"][f]] += 1
+    return conta
+
+
+def _riga(nome: str, conta: dict) -> str:
+    return (f"   {nome:<34} {conta['PERIMETRO']:>6} {conta['BANCHI']:>8}"
+            f" {conta['DATI-DI-PROVA']:>8}")
 
 
 def _stampa(radice: pathlib.Path, r: dict, contesto: bool) -> int:
     n = len(r["tutti"])
-    bloccanti = sorted(set(r["umano"]) | set(r["path_umano"]) | set(r["locale"])
-                       | set(r["sessione"]))
-    dichiarati = sorted(set(r["sigla"]) | set(r["path_sigla"]))
+    tot = {"PERIMETRO": 0, "BANCHI": 0, "DATI-DI-PROVA": 0}
+    for f in r["tutti"]:
+        tot[r["pop"][f]] += 1
 
     print(f"ALBERO MISURATO: {radice.resolve()}")
-    print(f"file: {n}"
-          + (f"   (escluso {len(r['esclusi'])}: {ESCLUSO}, contiene l'elenco"
-             " per costruzione)" if r["esclusi"] else ""))
-    print()
-    print("🔴 BLOCCANTI — devono arrivare a zero")
-    print(f"   ① nome umano nel TESTO .............. {len(r['umano'])}"
-          "   (ambiguo: --contesto per classificarli)")
-    print(f"   ② nome umano nel PATH ............... {len(r['path_umano'])}"
-          "   (un `git mv`, non una riscrittura)")
-    print(f"   ③ path locale nel TESTO ............. {len(r['locale'])}")
-    print(f"   ⑤ nome di SESSIONE in forma-nome .... {len(r['sessione'])}"
-          f"   ({', '.join(SESSIONI)}; solo `@Nome`/`firma Nome`/`Agent: Nome`)")
-    print(f"   ⇒ file da toccare: {len(bloccanti)} su {n}")
-    print()
-    print("⚪ DICHIARATA — resta per decisione del 12/09, non e' un difetto")
-    print(f"   ④ sigla wsN, testo o path ........... {len(dichiarati)}"
-          f"   (testo {len(r['sigla'])}, path {len(r['path_sigla'])})")
+    print(f"file: {n}   (roster: scripts/nomi_delle_sessioni.py)\n")
+    print(f"   {'':<34} {'PERIM.':>6} {'BANCHI':>8} {'PROVA':>8}")
+    print(_riga("file totali", tot))
+    print("   " + "─" * 58)
+    print("🔴 BLOCCANTI (solo la colonna PERIMETRO deve andare a zero)")
+    print(_riga("① nome di sessione nel TESTO", _per_pop(r, "nome")))
+    print(_riga("② nome di sessione nel PATH", _per_pop(r, "path_nome")))
+    print(_riga("③ path locale nel TESTO", _per_pop(r, "locale")))
+    print("⚪ DICHIARATA — resta per decisione del 12/09")
+    print(_riga("④ sigla wsN nel PATH", _per_pop(r, "path_sigla")))
 
-    if r["path_umano"]:
-        print("\n   ② i file che una pulizia del TESTO non tocca:")
-        _elenco(radice, r["path_umano"])
-    if r["locale"]:
-        print("\n   ③ i file con un path locale:")
-        _elenco(radice, r["locale"])
+    bloccanti = [f for f in set(r["nome"]) | set(r["path_nome"]) | set(r["locale"])
+                 if r["pop"][f] == "PERIMETRO"]
+    print(f"\n   ⇒ DA TOCCARE nel perimetro: {len(bloccanti)} su {tot['PERIMETRO']}")
+    if bloccanti:
+        for f in sorted(bloccanti)[:10]:
+            print(f"      {f.relative_to(radice).as_posix()}")
+        if len(bloccanti) > 10:
+            print(f"      … e altri {len(bloccanti) - 10}")
 
     if contesto:
-        print("\n=== ① IL CONTESTO DEI NOMI UMANI — classificali a mano ===")
-        for f in r["umano"]:
+        print("\n=== ① IL CONTESTO DEI NOMI — classificali a mano ===")
+        for f in r["nome"]:
+            if r["pop"][f] != "PERIMETRO":
+                continue
             t = _testo(f)
-            for m in _UMANO.finditer(t):
-                a = max(0, m.start() - _CONTESTO)
-                frammento = t[a:m.end() + _CONTESTO].replace("\n", "⏎")
+            for nome, pos in [(n, p) for n, p in trova(t) if n.lower() not in SIGLE]:
+                a = max(0, pos - _CONTESTO)
+                frammento = t[a:pos + len(nome) + _CONTESTO].replace("\n", "⏎")
                 print(f"   {f.relative_to(radice).as_posix()}: …{frammento}…")
 
     return 1 if bloccanti else 0
@@ -199,55 +229,48 @@ def autotest() -> int:
             p.write_text(testo, encoding="utf-8")
             return p
 
-        umano = scrivi("testo/nota.md", "reperto di Tara, 6,8 misurati")
+        nome = scrivi("testo/nota.md", "reperto di Tara, 6,8 misurati")
         locale = scrivi("loc/nota.md", r"C:\Users\qualcuno\AppData\Local\Temp\x")
-        sigla = scrivi("sig/nota.md", "il difetto e' di @ws6, non mio")
-        scrivi("banchi/aldo-prova.py", "print(1)")          # ② nome nel PATH
-        scrivi("banchi-ws2/prova.py", "print(1)")           # ④ sigla nel path
-        # controllo NEGATIVO: parole che CONTENGONO un nome senza esserlo. Se
-        # questo si accende, il confine di parola non tiene e OGNI numero sale.
-        neg = scrivi("negativo.md", "tarare la bilancia, il caldo, Marielle, ws9")
-        # ⚠️ IL LIMITE, scritto come test e non come nota: l'omonimo CADE dentro.
-        omonimo = scrivi("omonimo.md", "il peso al netto della tara")
-        # ⑤ i nomi di sessione: forma-nome SI', parola comune NO. La seconda
-        # gamba e' la piu' importante: senza, questo righello rifarebbe su di
-        # se' l'errore che esiste per impedire.
-        sessione = scrivi("sess/nota.md", "il rilievo e' di @Varco, non mio")
-        parola = scrivi("sess/parola.md",
-                        "hanno aperto un varco nel muro, e il paragone regge")
-        # il righello non deve misurare se stesso
-        scrivi(ESCLUSO, "UMANI = marie tara corrado aldo giano iris")
+        doppio = scrivi("loc/doppio.md", r"path in JSON: C:\\Users\\qualcuno\\x")
+        scrivi("banchi/aldo-prova.py", "print(1)")
+        scrivi("banchi-ws2/prova.py", "print(1)")
+        scrivi("banchi-04/dentro.md", "reperto di Vega")
+        prova = scrivi("00-ESAME.md", "Corrado Ferri - job title is giardiniere")
+        # controllo NEGATIVO: parole che CONTENGONO un nome senza esserlo, e la
+        # forma minuscola di un ambiguo. Se questo si accende, OGNI numero sale.
+        neg = scrivi("negativo.md",
+                     "tarare la bilancia, il caldo, Marielle, ws9, "
+                     "hanno aperto un varco nel muro")
 
         r = misura(radice)
-        esiti.append(("① nome umano nel testo si accende", umano in set(r["umano"])))
+        pop = r["pop"]
+        esiti.append(("① nome nel testo si accende", nome in set(r["nome"])))
         esiti.append(("③ path locale si accende", locale in set(r["locale"])))
-        esiti.append(("④ sigla nel testo si accende", sigla in set(r["sigla"])))
-        esiti.append(("② nome umano nel PATH si accende",
-                      any("aldo-prova" in f.as_posix() for f in r["path_umano"])))
+        esiti.append(("③ separatore DOPPIO si accende (valeva 19 occorrenze)",
+                      doppio in set(r["locale"])))
+        esiti.append(("② nome nel PATH si accende",
+                      any("aldo-prova" in f.as_posix() for f in r["path_nome"])))
         esiti.append(("② e NON e' visto dal testo",
-                      not any("aldo-prova" in f.as_posix() for f in r["umano"])))
-        esiti.append(("④ sigla nel path NON entra fra i nomi umani",
-                      not any("banchi-ws2" in f.as_posix() for f in r["path_umano"])))
-        esiti.append(("controllo NEGATIVO resta spento (`caldo` non e' `aldo`)",
-                      neg not in set(r["umano"]) | set(r["path_umano"])
-                      | set(r["locale"]) | set(r["sigla"])))
-        esiti.append(("① l'OMONIMO cade in ①, ed e' per questo che si stampa"
-                      " il contesto", omonimo in set(r["umano"])))
-        esiti.append(("⑤ `@Varco` (forma-nome) si accende",
-                      sessione in set(r["sessione"])))
-        esiti.append(("⑤ «un varco nel muro» (parola) resta SPENTO",
-                      parola not in set(r["sessione"])))
-        esiti.append((f"il righello ESCLUDE se stesso ({ESCLUSO})",
-                      len(r["esclusi"]) == 1
-                      and not any(f.name == ESCLUSO for f in r["umano"])))
+                      not any("aldo-prova" in f.as_posix() for f in r["nome"])))
+        esiti.append(("controllo NEGATIVO resta spento (`caldo`, `tarare`, "
+                      "`varco` minuscolo)", neg not in set(r["nome"])))
+        esiti.append(("`banchi-ws2` e' BANCHI (non `/banchi/`)",
+                      pop[radice / "banchi-ws2" / "prova.py"] == "BANCHI"))
+        esiti.append(("`banchi-04` e' BANCHI",
+                      pop[radice / "banchi-04" / "dentro.md"] == "BANCHI"))
+        esiti.append(("`00-ESAME.md` e' DATI-DI-PROVA", pop[prova] == "DATI-DI-PROVA"))
+        esiti.append(("un nome nei BANCHI non entra nel bloccante del perimetro",
+                      _per_pop(r, "nome")["PERIMETRO"] == 1))
+        esiti.append(("`Vega` (roster) si accende",
+                      any("dentro" in f.as_posix() for f in r["nome"])))
 
-        umano.write_text("reperto del Product Owner", encoding="utf-8")
+        nome.write_text("reperto del Product Owner", encoding="utf-8")
         esiti.append(("① si SPEGNE tolto il nome",
-                      umano not in set(misura(radice)["umano"])))
+                      nome not in set(misura(radice)["nome"])))
 
-    for nome, ok in esiti:
-        print(f"   {'✅' if ok else '🔴'} {nome}")
-    caduti = [n for n, ok in esiti if not ok]
+    for testo_esito, ok in esiti:
+        print(f"   {'✅' if ok else '🔴'} {testo_esito}")
+    caduti = [t for t, ok in esiti if not ok]
     print(f"\n   autotest: {len(esiti) - len(caduti)}/{len(esiti)}")
     return 1 if caduti else 0
 
