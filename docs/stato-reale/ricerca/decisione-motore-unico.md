@@ -39,8 +39,8 @@ a chiedere invece di indovinare. Un marcatore che chi legge non conosce non marc
 
 | sigla | in una riga | stato |
 |---|---|---|
-| **F1** | togliere l'acceleratore **non** riduce la memoria impegnata | aperta — è *la* misura che decide |
-| **F2** | toglierlo cura la macchina e **rallenta** ciò che l'utente aspetta | aperta, precisata: allocato ≠ usato |
+| **F1** | togliere l'acceleratore **non** riduce la memoria impegnata | **CHIUSA: confermata** — 1,5 % su un server ordinario |
+| **F2** | toglierlo cura la macchina e **rallenta** ciò che l'utente aspetta | **CHIUSA: era mal posta** — toglierlo ACCELERA sotto ~223 giudizi |
 | **F3** | il presidio della versione **non copre** i guasti veri di quel servizio | **chiusa**: 1 anello su 7, e c'era già |
 | **F4** | il servizio condiviso **non alleggerisce** il client | aperta — una lettura delle mappe |
 | **F5** | l'ordine è sbagliato: **prima i dati**, poi la macchina | aperta — un conteggio sullo store |
@@ -226,6 +226,48 @@ architetturale: è una **precedenza**. E la stima poggia su un numero che **non 
 scritture con fonte al minuto facciamo nel momento di punta — se fosse molto sotto la soglia, il
 conto perde forza e la decisione va rifatta.
 
+### ⚡ Le due misure sono arrivate (12/09, 14:2x) e CAMBIANO due punti su quattro
+
+*Eseguite una alla volta, A/B nella stessa esecuzione, con un controllo positivo in ogni
+braccio. Numeri riportati come stanno.*
+
+**① Il commit non viene dall'acceleratore: viene dalla libreria.**
+
+    processo appena avviato          scheda visibile   scheda nascosta   differenza
+    com'è oggi (non giudica)            1088,0 MB         1071,5 MB        +16,6 MB  (1,5 %)
+    se giudica (moat sul write)         2412,2 MB         2126,5 MB       +285,7 MB (11,8 %)
+
+⇒ **La falsificazione ① di questa pagina è confermata per il caso ordinario**: togliere
+l'acceleratore a un server come quelli che girano adesso risparmia **l'1,5 %**. Restano
+**1071 MB anche senza scheda**, ed è la libreria tensoriale. **La cura del commit non è la
+scheda: è non caricare quella libreria dove non serve** — il «carico pigro», che nella
+raccomandazione era la metà dimenticata del punto 3.
+📌 Nei processi che **giudicano** il contesto vale invece **285,7 MB** (con nove, ~2,5 GB): lì
+toglierlo conta, ma non è il grosso.
+
+**② Sulla latenza il verso è OPPOSTO a quello che temevo.**
+
+    giudizio, stessa frase, stesso verdetto (90,58)   mediana    caricamento   prima inferenza
+    con la scheda                                     0,120 s       28,0 s        20,95 s
+    senza la scheda                                   0,206 s       28,0 s         1,75 s
+
+A regime la scheda guadagna **86 ms**; ma la **prima** inferenza costa **20,95 s contro 1,75 s**
+— **19,2 secondi di svantaggio all'ingresso**, pagati da chi salva per primo. Il pareggio arriva
+dopo **~223 giudizi**: al ritmo stimato nella falsificazione ⑥ (~2,7 scritture con fonte al
+minuto per tutti) sono **~82 minuti**. ⇒ **Un processo che vive meno di un'ora e mezza sta meglio
+senza acceleratore anche sulla latenza.** La mia falsificazione ② temeva il contrario: **era
+mal posta**, e la misura l'ha girata.
+
+⚠️ **Il dato che manca adesso** — e decide quanto vale la riga sopra: **quanto vive davvero un
+server**. Se vivono ore, il pareggio si raggiunge e la scheda torna utile a chi giudica; se
+vivono minuti, toglierla è un guadagno netto su entrambi i fronti. **NON misurato.**
+
+🔧 **E un reperto dello strumento, da tenere fuori dalla decisione ma dentro la testa di chi
+misura**: `CUDA_VISIBLE_DEVICES=""` **non nasconde la scheda** — con la stringa vuota la
+libreria continua a vederla; serve `-1`. Il primo giro della misura ① confrontava due bracci
+identici e dava «−0,5 MB»: un numero vero e una risposta falsa, salvata dal controllo che
+stampa **che cosa vede il processo** invece di fidarsi della variabile impostata.
+
 ### Quello che si fa, in ordine
 
 1. **La ricevuta non mente.** Chi scrive deve sapere quando il vettore manca, quando la fascia
@@ -235,11 +277,17 @@ conto perde forza e la decisione va rifatta.
 2. **Il servizio condiviso dichiara il proprio modello**, e il client rifiuta ciò che non
    combacia. Il rifiuto **c'è già**: manca la metà che dichiara. Con ① sopra, un servizio che
    riparte diverso diventa **visibile** invece che silenzioso.
-3. **Togliere l'acceleratore ai processi che non giudicano.** Ristretta così — non a tutti —
-   perché la scheda risulta occupata al 90 % con 0 % di utilizzo, ma *allocato non è usato* e
-   chi giudica potrebbe usarla davvero. La superficie non è «due righe»: è **ogni punto che
-   costruisce un modello**, con un presidio che cammina il pacchetto.
-4. **In ogni strada, il giudizio resta davanti alla scrittura.** Non è una preferenza di
+3. **Non caricare la libreria pesante dove non serve** — *questo è il punto che le misure
+   hanno promosso*. Il commit di un server ordinario è **1071 MB anche senza scheda**, e sono
+   la libreria tensoriale: è lì il vincolo che ha fatto cadere la macchina, non nel contesto
+   dell'acceleratore.
+4. **Togliere l'acceleratore**, e ora per **due** ragioni misurate, nessuna delle quali è il
+   commit ordinario: fa risparmiare **19,2 s all'ingresso** a ogni processo che giudica poco (il
+   pareggio arriva dopo ~223 giudizi) e libera **285,7 MB** in quelli che giudicano. La
+   superficie non è «due righe»: è **ogni punto che costruisce un modello**, con un presidio che
+   cammina il pacchetto — e chi la disattiva ricordi che la stringa vuota **non** nasconde la
+   scheda.
+5. **In ogni strada, il giudizio resta davanti alla scrittura.** Non è una preferenza di
    progetto: è la promessa del prodotto. Una memoria che scrive prima e verifica poi è un'altra
    cosa, e non è la nostra.
 
