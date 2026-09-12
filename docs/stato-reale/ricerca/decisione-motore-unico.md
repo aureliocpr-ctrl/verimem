@@ -69,9 +69,36 @@ ferma **un** modo di guasto (modello diverso da quello dello store). Non ferma: 
 
 **Misura che decide — e si può fare oggi, leggendo**: prendere i **due incidenti già
 documentati**, elencare i modi di guasto osservati, e contare **quanti sarebbero stati fermati
-dal presidio della versione**. Se sono **meno della metà**, il presidio è necessario ma non
-sufficiente, e «C irrobustita» va riscritta con l'elenco completo (dichiarazione + battito +
-rifiuto esplicito quando il servizio non c'è).
+dal presidio della versione**.
+
+### F3 — FATTA, leggendo il postmortem. E l'esito rovescia il punto 2 della raccomandazione
+
+*Letto il postmortem dell'incidente delle quattordici scritture senza vettore. La catena ha
+**sette anelli**; accanto a ciascuno, se il «presidio della versione» lo avrebbe fermato.*
+
+| # | anello, come sta nel postmortem | il presidio lo ferma? |
+|---|---|---|
+| 1 | discovery e lock del servizio stanno **nella home dell'utente, mai nella cartella dei dati**: un banco che isola la cartella **non isola il servizio** | **no** — è un problema di *dove* si cercano, non di *quale versione* |
+| 2 | un processo isolato trova la discovery globale, **avvia un servizio col proprio modello e lo registra per tutti** | **no** — e anzi: il servizio trovato **«non dichiara il suo modello»** |
+| 3 | il client **rifiuta** il modello che non combacia | **SÌ — e c'era già** |
+| 4 | in modalità «solo delega» **non esiste ripiego locale**, quindi il rifiuto diventa un'eccezione | no |
+| 5 | l'eccezione viene catturata e la riga **viene scritta senza vettore**, con un solo avviso nel log | no |
+| 6 | la **ricevuta dice `stored=True judged=True`** e non dice che il vettore manca: nove scritture di fila passano per riuscite | **no — ed è l'anello che fa il danno** |
+| 7 | il servizio resta **giù per ore** e nessuno se ne accorge | no |
+
+🔴 **Esito: 1 anello su 7, e quell'uno era già presente.** Il postmortem lo dice testualmente —
+*«il client lo rifiuta, ed è giusto»*. **Il presidio della versione non è la cura di questo
+incidente: è la parte che ha funzionato.** Il danno è arrivato **a valle** del rifiuto, perché il
+rifiuto si è trasformato in una scrittura muta con una ricevuta che diceva di sì.
+
+⇒ **«C irrobustita» va riscritta**, e in ordine di efficacia diventa: ① la **ricevuta non mente**
+(chi scrive deve sapere che il vettore manca) · ② il servizio **dichiara** il proprio modello
+(metà del presidio che davvero manca) · ③ discovery e lock **dove stanno i dati**, non nella home
+· ④ il rifiuto del client, **che c'è già**.
+
+*Nota su cosa questa lettura non prova*: è **un** incidente su due. L'altro (il servizio rinato
+con un modello diverso) ha la stessa radice, ma non l'ho scomposto anello per anello: **NON
+VERIFICATO** che la proporzione sia la stessa.
 
 ### F4 — «C non riduce il consumo, perché il peso non sta dove lo spostiamo»
 
