@@ -121,6 +121,49 @@ cioè fissa una promessa all'utente. Lo decide il ruolo di prodotto; qui si
 scrive come test appena la decisione c'è. Ciò che la decisione ha in mano sono
 i numeri della sezione 1 e della 5.
 
+## 6bis. Le tre forme che la risposta può avere — e la domanda va riscritta
+
+La domanda «1 o 2?» ne ammette **tre** di risposte, non due, e **due delle tre
+danno lo stesso conteggio di righe vive**. Il RED-1 non le separa: se il RED-2
+si scrive sulla stessa grandezza, resta verde anche quando all'utente non
+arriva niente di nuovo — è la trappola del §7, misurata il 4 agosto.
+
+| risposta | promessa all'utente | righe vive | la lettura di default rende |
+|---|---|---|---|
+| **(A) ritirare** | «ti do il valore più recente, e uno solo» | 1 | 1 |
+| **(B) conservare** | «ti do tutte le letture della stessa evidenza» | 2 | **2** |
+| **(C) versionare** | «le tengo tutte, ti do l'ultima» | 2 | **1** |
+
+⚠️ **(B) e (C) hanno lo stesso numero di righe vive e promesse opposte.** (C) è
+la strada che il §7 indica ed è già nel prodotto per i documenti — ma se il
+vecchio resta fuori dalla lettura di default, **il numero della perdita scende
+senza che l'utente riceva un fatto in più**: cambia il nome della perdita, non
+la perdita.
+
+⇒ **Il RED-2 non si scrive sul conteggio delle righe: si scrive su ciò che una
+lettura rende.** In concreto, l'asserzione cambia così:
+
+```
+(A)  una ricerca sul tema rende 1 risposta,  ed è la più recente
+(B)  una ricerca sul tema rende 2 risposte,  ed è dichiarato che sono
+     due letture della stessa evidenza (altrimenti l'utente riceve due
+     numeri senza sapere quale vale — §6a del piano di ripristino)
+(C)  una ricerca sul tema rende 1 risposta (l'ultima) E la precedente è
+     raggiungibile da una porta dichiarata, che va nominata nella
+     decisione: senza quella porta, (C) è (A) con un altro nome
+```
+
+**La domanda per il ruolo di prodotto, riscritta** — nel linguaggio di chi usa
+il prodotto, non in quello della tabella:
+
+> Quando l'utente chiede «quanto è la latenza», e la memoria ha registrato
+> *mediana 33,0s* e *min 16,3s* dalla **stessa** esecuzione: quante risposte
+> deve ricevere, e se sono due, che cosa gli dice quale vale?
+
+Le tre risposte sono (A), (B), (C) qui sopra. I numeri su cui decidere stanno
+nelle sezioni 1 e 5. **Appena la risposta c'è, il RED-2 è una giornata**: il
+banco delle tre porte esiste già, cambia l'asserzione finale.
+
 ## 7. La strada che resta, e non è un criterio
 
 Dieci criteri testuali caduti dicono la stessa cosa: **l'informazione che
