@@ -40,6 +40,29 @@ la stessa parola passerebbe questo test.
 ⚠️ REGIME: la porta CLI si misura in SOTTOPROCESSO, che e' l'unico modo di
 attraversarla davvero — e che NON eredita gli stub del `conftest`. Ogni braccio
 usa una `HIPPO_DATA_DIR` sua, e i due lati leggono la stessa colonna.
+
+🕳️ IL BUCO DICHIARATO: LA TERZA PORTA NON E' QUI (rilievo del pari)
+--------------------------------------------------------------------
+Il ticket parla di TRE porte; questo banco ne confronta DUE. La porta esposta
+agli agenti passa la cosa giusta **oggi** — letto, non eseguito — ma **nessun
+presidio la tiene**: se domani quella riga diventasse `[]` come era questa, il
+banco qui sotto resterebbe VERDE e il difetto tornerebbe da un'altra parte.
+
+E' un buco DICHIARATO, non dedotto, e la ragione per cui resta e' il costo:
+attraversare davvero la terza porta vuol dire alzarla, e questo file gia' paga
+un sottoprocesso per braccio. ⚠️ **Un presidio scritto guardando il SORGENTE di
+quella riga non e' l'alternativa**: misurerebbe un nome, non un comportamento,
+e morirebbe alla prima cura scritta in un'altra forma. Chi la estende la
+attraversi, o lasci scritto perche' no.
+
+♻️ RESIDUO NOTO — LA COPIA E' RIMASTA, UN PIANO PIU' SOTTO (rilievo del pari)
+------------------------------------------------------------------------------
+La funzione che decide e' UNA. Dopo la cura, pero', **l'argomento si costruisce
+ancora in due posti**: la stessa espressione, con lo stesso letterale
+``["store-screen"]``, vive nel write path e nella riga di comando. E' la stessa
+classe di difetto che questo file presidia, spostata di un piano — e la prossima
+porta che nasce la ricopiera'. Non e' rifatto adesso perche' unificarlo tocca
+una firma condivisa; **e' scritto qui perche' chi copia trovi il perche'**.
 """
 from __future__ import annotations
 
