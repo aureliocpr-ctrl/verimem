@@ -17,6 +17,7 @@ from functools import lru_cache
 
 import numpy as np
 
+from ._device import device_dichiarato as _device_dichiarato
 from .config import CONFIG
 
 # Cache size — 1024 unique texts is a safe ceiling for skill triggers,
@@ -71,7 +72,14 @@ def _load_model():
         # recall/write via MCP). Verificato 2026-06-04: con local_files_only il
         # warning di rete sparisce. Fallback al load CON rete solo se il modello
         # non e' ancora in cache (primo download).
-        return SentenceTransformer(model, local_files_only=True)
+        # T63a — il device si DICHIARA. Senza, SentenceTransformer sceglie da
+        # se' e prende la scheda: e' il modo in cui un processo apre un contesto
+        # CUDA senza che nel nostro codice compaia mai la parola `cuda`, quindi
+        # senza che un grep lo trovi. Qui `_device_dichiarato()` restituisce
+        # None quando la scelta e' `auto`, e in quel caso la libreria decide
+        # come prima: il default non cambia.
+        return SentenceTransformer(
+            model, local_files_only=True, device=_device_dichiarato())
     except Exception:  # noqa: BLE001
         # 2026-06-05 ROOT-CAUSE FIX (4h save/recall hang): the network fallback
         # can stall indefinitely on a flaky / rate-limited HF Hub, and it runs
@@ -81,7 +89,7 @@ def _load_model():
         # first-download in an explicitly-online setup.
         if _offline():
             raise
-        return SentenceTransformer(model)
+        return SentenceTransformer(model, device=_device_dichiarato())
 
 
 def _model():

@@ -193,7 +193,12 @@ def make_finetuned_scorer(model_dir: str | Path, *, max_length: int = 512,
         import torch
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # T63a — la scelta si puo' contraddire da fuori (ENGRAM_JUDGE_DEVICE).
+    # `is_available` si passa SENZA chiamarla: interrogare CUDA la inizializza,
+    # e chi ha chiesto la CPU non deve vedere nascere quel contesto. Con nove
+    # processi su una scheda sola la differenza e' fra 96 % occupato e zero.
+    from ._device import scegli_device
+    device = scegli_device(torch.cuda.is_available)
     tok = AutoTokenizer.from_pretrained(str(model_dir))
     model = AutoModelForSequenceClassification.from_pretrained(
         str(model_dir)).to(device).eval()

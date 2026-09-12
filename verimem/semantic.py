@@ -2032,6 +2032,7 @@ def _load_reranker(*, consenti_daemon: bool = True):
                 # importa altrove sotto `_import_lock`. L'ordine e' sempre
                 # questo — il lock del modello fuori, quello degli import
                 # dentro — e solo l'import ci sta dentro.
+                from ._device import device_dichiarato
                 from ._import_lock import lock_import
                 with lock_import():
                     from sentence_transformers import CrossEncoder
@@ -2039,15 +2040,23 @@ def _load_reranker(*, consenti_daemon: bool = True):
                     "ENGRAM_RERANK_MODEL", _DEFAULT_RERANK_MODEL,
                 ).strip() or _DEFAULT_RERANK_MODEL
                 try:
+                    # UNA politica sola, anche per il modello piu' pesante.
+                    # Era cablato "cpu" qui: giusto come default (l'incidente
+                    # RAM del 2026-07-10, ~450 MB per processo), ma illeggibile
+                    # come politica — `ENGRAM_JUDGE_DEVICE=cuda` accendeva la
+                    # scheda al giudice e all'embedder e lasciava indietro
+                    # QUESTO, in silenzio. Ora passa di li' anche lui, e visto
+                    # che senza variabile la superficie dice "cpu" il default
+                    # non cambia di un byte.
                     _RERANKER = CrossEncoder(
-                        model, max_length=512, device="cpu",
+                        model, max_length=512, device=device_dichiarato(),
                         local_files_only=True,
                     )
                 except Exception:  # noqa: BLE001 — any load error → online retry/raise
                     if embedding._offline():
                         raise
                     _RERANKER = CrossEncoder(
-                        model, max_length=512, device="cpu",
+                        model, max_length=512, device=device_dichiarato(),
                     )
     m = _RERANKER
     return lambda pairs: [
