@@ -149,30 +149,44 @@ def trova(testo: str, *, con_identificatori: bool = False) -> list[tuple[str, in
     return sorted(esiti, key=lambda x: x[1])
 
 
-CASI: list[tuple[str, str, bool]] = [
-    # (nome del caso, testo, ci aspettiamo che TROVI qualcosa)
-    ("una sigla", "rilievo di ws5", True),
-    ("un ruolo interno", "chiesto da lead-audit", True),
-    ("un nome sicuro, minuscolo", "trovato da marie", True),
-    ("un nome sicuro, MAIUSCOLO", "firmato TARA", True),
+# ⚠️ IL TERZO CAMPO E' IL NOME CHE DEVE USCIRE, non «qualcosa deve uscire».
+#
+# 🔴 12/09, trovato provando a falsificare questo stesso autotest dopo un
+# rilievo del pari: il caso di `Varco` era scritto
+#
+#     ("«Varco» maiuscolo SI'", "CONTROFIRMATA da ws2 «Varco»", True)
+#
+# e togliendo `Varco` dall'elenco **restava verde**, perche' nella stessa
+# stringa c'e' `ws2`. L'output lo diceva da sempre — `-> ['ws2']` — e nessuno
+# lo leggeva: un campo stampato e non letto e' un campo assente.
+#
+# 🔑 E' la forma «l'oggetto giusto nella POPOLAZIONE sbagliata da' lo stesso
+# verde»: il controllo positivo era soddisfatto da un altro oggetto. Chiedere
+# QUALE nome esce rende il caso incapace di passare per la ragione sbagliata.
+CASI: list[tuple[str, str, str | bool]] = [
+    # (nome del caso, testo, il nome atteso — oppure False se non deve uscire nulla)
+    ("una sigla", "rilievo di ws5", "ws5"),
+    ("un ruolo interno", "chiesto da lead-audit", "lead-audit"),
+    ("un nome sicuro, minuscolo", "trovato da marie", "marie"),
+    ("un nome sicuro, MAIUSCOLO", "firmato TARA", "TARA"),
     ("dentro un'altra parola NON conta", "il parser marieterapia", False),
     ("«caldo» non contiene «Aldo»", "il percorso caldo e il freddo", False),
     # I due che hanno fatto nascere questo file.
     ("il verbo «tarare» NON e' un nome", "se la guardia si tara sulla somiglianza", False),
     ("«non si tara una soglia» NON e' un nome", "con un vero positivo non si tara una soglia", False),
-    ("ma «Tara» maiuscolo SI'", "misurato da Tara il 04/09", True),
+    ("ma «Tara» maiuscolo SI'", "misurato da Tara il 04/09", "Tara"),
     ("«varco» minuscolo NON e' un nome", "il varco fra le due porte era largo", False),
-    ("«Varco» maiuscolo SI'", "CONTROFIRMATA da ws2 «Varco»", True),
+    ("«Varco» maiuscolo SI'", "controfirmata da «Varco» in coda", "Varco"),
     ("«paragone» minuscolo NON e' un nome", "per paragone la porta vecchia", False),
     ("«riscontro» minuscolo NON e' un nome", "un riscontro sul corpus vero", False),
     # Il decimo nome, trovato il 15:15 perche' l'ha nominato la PR di un altro:
     # sta scritto senza caporali e la mia ricerca cercava solo `ws<N> «Nome»`.
-    ("il nome scritto SENZA caporali", "# ws3 Saggiatore — gli aperti del giorno", True),
+    ("il nome scritto SENZA caporali", "# Saggiatore — gli aperti del giorno", "Saggiatore"),
     ("«saggiatore» minuscolo NON e' un nome", "chi saggia il metallo e' il saggiatore", False),
     # La classe che il 12/09 e' stata esclusa per decisione.
     ("un identificatore generato NON e' prosa", 'prefix="iris-ub-jivzor1t"', False),
     ("«misura-iris» NON e' prosa", '{"name": "misura-iris", "version": "0"}', False),
-    ("ma «Iris» in prosa SI'", "il reperto e' di Iris, letto stamattina", True),
+    ("ma «Iris» in prosa SI'", "il reperto e' di Iris, letto stamattina", "Iris"),
     # I ruoli con cui si sostituisce: non devono accendersi MAI.
     ("«ricerca» e' un ruolo, non un nome", "la ricerca sui sei muri", False),
     ("«piattaforma» idem", "la piattaforma regge sei sessioni", False),
@@ -182,11 +196,14 @@ CASI: list[tuple[str, str, bool]] = [
 def autotest() -> int:
     esiti = []
     for nome, testo, atteso in CASI:
-        trovati = trova(testo)
-        ok = bool(trovati) == atteso
+        trovati = [t for t, _ in trova(testo)]
+        # `atteso` e' il NOME che deve uscire, non un booleano: cosi' un caso
+        # non puo' passare perche' nella stringa c'e' un ALTRO nome.
+        ok = (not trovati) if atteso is False else (atteso in trovati)
         esiti.append(ok)
         print(f"  [{'OK ' if ok else 'ROSSO'}] {nome:44s} -> "
-              f"{[t for t, _ in trovati] or 'niente'}")
+              f"{trovati or 'niente'}"
+              + ("" if ok or atteso is False else f"   (atteso: {atteso})"))
     # Il controllo che impedisce all'elenco di svuotarsi senza che nessuno
     # se ne accorga: un elenco vuoto passerebbe tutti i casi negativi.
     pieno = len(SIGLE) + len(RUOLI) + len(UMANI_SICURI) + len(AMBIGUI)

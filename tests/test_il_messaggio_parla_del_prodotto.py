@@ -221,6 +221,27 @@ def test_la_via_d_uscita_e_dichiarata_e_funziona(repo: Path, monkeypatch) -> Non
 
 # ── lo script, sulle sue tre interfacce ───────────────────────────────────────
 
+def test_anche_l_elenco_dei_nomi_morde() -> None:
+    """🔴 21 controlli che non eseguiva nessuno — rilievo del pari, 12/09.
+
+    L'elenco dei nomi ha il suo autotest (le maiuscole per i nomi che sono
+    anche parole comuni, gli identificatori generati, i ruoli che NON sono
+    nomi), e non lo lanciava ne' la CI ne' il pytest: **un presidio che nessuno
+    esegue e uno che non esiste si equivalgono**.
+
+    ⚠️ E non basta l'autotest del cancello: quello importa l'elenco ma i suoi
+    casi non nominano `Varco` ne' `Saggiatore`. Se il criterio dell'elenco si
+    rompesse, il cancello sbaglierebbe e il suo autotest resterebbe verde.
+    """
+    esito = subprocess.run(
+        [sys.executable, str(ELENCO), "--autotest"],
+        cwd=RADICE, capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=120)
+
+    assert esito.returncode == 0, esito.stdout + esito.stderr
+    assert "AUTOTEST VERDE" in esito.stdout, esito.stdout
+
+
 def test_il_controllo_morde(tmp_path: Path) -> None:
     """L'autotest dello script e' il suo controllo positivo: qui si esige che
     sia verde, perche' un controllo che non puo' diventare rosso e' un semaforo."""

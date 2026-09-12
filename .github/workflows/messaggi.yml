@@ -120,6 +120,18 @@ jobs:
       # controllo che non puo' diventare rosso e' un semaforo verde: qui si
       # prova che boccia cio' che deve e tace sul resto, e solo dopo si crede al
       # suo verdetto. Non installa niente: lo script usa la libreria standard.
+      # 🔴 DUE autotest, non uno — rilievo del pari sulla #33 (12/09): l'elenco
+      # dei nomi ha 21 casi che provano il suo criterio (le maiuscole per i nomi
+      # che sono anche parole comuni, gli identificatori, i ruoli che NON sono
+      # nomi) e **non li eseguiva nessuno**: ne' qui ne' il pytest. Un presidio
+      # che nessuno esegue e uno che non esiste si equivalgono.
+      #
+      # ⚠️ E il primo dipende dal secondo: `messaggio_pulito` importa l'elenco.
+      # Se il criterio dell'elenco si rompe, il cancello sbaglia senza che il
+      # suo autotest se ne accorga — perche' i suoi casi non nominano `Varco`.
+      - name: L'elenco dei nomi morde (autotest)
+        run: python scripts/nomi_delle_sessioni.py --autotest
+
       - name: Il controllo morde (autotest)
         run: python scripts/messaggio_pulito.py --autotest
 
