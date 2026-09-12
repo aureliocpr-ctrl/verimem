@@ -33,6 +33,19 @@ solo, tanti client leggeri», ciascuno con la sua fonte.*
 
 ## 3. Quello che la smentirebbe — sei falsificazioni, ognuna con la sua misura
 
+📖 **Le sigle, in chiaro** — *aggiunte il 12/09 perché servivano: usate in una discussione
+fuori da questa pagina hanno lasciato ferma una richiesta di lavoro, e chi leggeva ha fatto bene
+a chiedere invece di indovinare. Un marcatore che chi legge non conosce non marca niente.*
+
+| sigla | in una riga | stato |
+|---|---|---|
+| **F1** | togliere l'acceleratore **non** riduce la memoria impegnata | aperta — è *la* misura che decide |
+| **F2** | toglierlo cura la macchina e **rallenta** ciò che l'utente aspetta | aperta, precisata: allocato ≠ usato |
+| **F3** | il presidio della versione **non copre** i guasti veri di quel servizio | **chiusa**: 1 anello su 7, e c'era già |
+| **F4** | il servizio condiviso **non alleggerisce** il client | aperta — una lettura delle mappe |
+| **F5** | l'ordine è sbagliato: **prima i dati**, poi la macchina | aperta — un conteggio sullo store |
+| **F6** | la **coda** rende il server condiviso impraticabile | **chiusa**: stima, ~2,7 scritture/minuto per tutti |
+
 ### F1 — «A non tocca il vincolo che ci ha fatto cadere»
 
 **L'affermazione sotto accusa**: che togliere l'acceleratore ai server riduca la **memoria
