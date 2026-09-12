@@ -13,8 +13,10 @@ CONTRACT — observability ONLY:
   * a fast call leaves NO file (the header-only file is cleaned up).
 
 IL TETTO SUI FILE, e quando e' attivo (contratto, riscritto 2026-09-12):
-  * si applica alla CHIUSURA del contesto, SEMPRE e in ogni processo:
-    tardi, perche' il file e' gia' cresciuto, ma mai "mai";
+  * si applica alla CHIUSURA del contesto, SEMPRE e in ogni processo, e
+    TAGLIA: si tiene la testa (dove sta la diagnosi) e si butta la coda.
+    Tardi, perche' il file nel frattempo e' cresciuto sul disco, ma il
+    file che resta e' dentro il tetto;
   * MENTRE la chiamata e' in corso NESSUNO ferma piu' la crescita. Il
     sorvegliante, se avviato, la DICHIARA nel file appena sfonda, ma non
     disarma il timer: il dump lo annulla solo chi lo ha armato, e il
@@ -268,14 +270,30 @@ def hang_trace(label: str, budget_s: float):
         # in corso, e il size letto da f.tell() non l'avrebbe vista.
         try:
             if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
-                with open(path, "a", encoding="utf-8") as g:
-                    g.write(
-                        f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
-                        f"superato, rilevato alla CHIUSURA: durante la "
-                        f"chiamata nulla ferma la crescita, perche' il dump "
-                        f"lo annulla solo chi lo ha armato ed e' la chiamata "
-                        f"appesa. Il primo dump qui "
-                        f"sopra e' quello che contiene la diagnosi.\n")
+                # SI TAGLIA, non si annota soltanto. Fino a qui il tetto
+                # DICHIARAVA la violazione e lasciava il file intero: il caso
+                # da 24.211.732 byte si sarebbe riformato identico, con una
+                # riga in fondo a dire che era troppo grande. Il valore da
+                # salvare sta scritto nel messaggio stesso - la diagnosi e' nel
+                # PRIMO dump - quindi si tiene la TESTA e si butta la coda.
+                with open(path, "rb") as h:
+                    testa = h.read(_MAX_FILE_BYTES)
+                # Mai spezzare l'ultima riga a meta': si taglia su un a capo,
+                # altrimenti l'ultimo carattere puo' restare mutilato e il
+                # trace diventa illeggibile proprio in fondo.
+                fine = testa.rfind(b"\n")
+                if fine > 0:
+                    testa = testa[:fine + 1]
+                nota = (
+                    f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte superato e "
+                    f"rilevato alla CHIUSURA: la CODA e' stata TAGLIATA. "
+                    f"Durante la chiamata nulla ferma la crescita, perche' il "
+                    f"dump lo annulla solo chi lo ha armato ed e' la chiamata "
+                    f"appesa. Il primo dump qui sopra e' quello che contiene "
+                    f"la diagnosi.\n")
+                with open(path, "wb") as g:
+                    g.write(testa)
+                    g.write(nota.encode("utf-8", errors="replace"))
         except Exception:  # noqa: BLE001 - mai far fallire la chiamata
             pass
         _ARMED.release()

@@ -54,16 +54,23 @@ def test_un_file_che_cresce_troppo_smette_e_lo_dichiara(tmp_path, monkeypatch):
     # Si continua ad avviare il sorvegliante perche' e' la configurazione di
     # produzione, e perche' proprio in quella il fallback alla chiusura veniva
     # SALTATO — il difetto curato insieme a questo, cella qui sotto.
-    # 📌 La soglia ha molto gioco (200 000 contro un tetto di 4096): dice
-    # "non e' cresciuto senza limite", NON "si e' fermato al tetto".
+    # 📌 Il file cresce eccome, mentre la chiamata e' appesa: quello che questa
+    # cella misura e' che alla fine la coda viene TAGLIATA e quel che resta
+    # sta dentro il tetto.
     w.avvia_il_sorvegliante()
     with w.hang_trace("prova_lenta", 0.05):
         time.sleep(1.2)
     file = list(tmp_path.glob("hang-*.txt"))
     assert file, "nessun trace scritto per una chiamata oltre budget"
     testo = file[0].read_text(encoding="utf-8", errors="replace")
-    assert file[0].stat().st_size < 200_000, (
-        f"il tetto non ha fermato la crescita: {file[0].stat().st_size} byte")
+    # LA SOGLIA ERA MUTA: 200 000 contro un tetto di 4096 e' un gioco di 48
+    # volte, e non distingueva "fermato al tetto" da "cresciuto e poi tagliato".
+    # Da quando la chiusura TAGLIA la coda, il file che resta deve stare dentro
+    # il tetto piu' la nota, e la cella puo' chiedere proprio quello.
+    dimensione = file[0].stat().st_size
+    assert dimensione <= w._MAX_FILE_BYTES + 2000, (
+        f"il file finale e' di {dimensione} byte contro un tetto di "
+        f"{w._MAX_FILE_BYTES}: la coda non e' stata tagliata alla chiusura")
     assert "tetto" in testo.lower() or "troncato" in testo.lower(), (
         "il file è stato troncato senza dire perché: chi legge non distingue "
         f"un tetto da un file corrotto\n{testo[-300:]}")
