@@ -136,7 +136,7 @@ jobs:
           # ottiene la matrice PIENA. Si sbaglia verso piu' copertura.
           if [ "$EVENTO" = "pull_request" ] && [ "${RAMO#integrazione/}" = "$RAMO" ]; then
             echo 'nome=ridotta' >> "$GITHUB_OUTPUT"
-            echo 'matrice={"include":[{"os":"ubuntu-latest","python-version":"3.12"},{"os":"windows-latest","python-version":"3.12"}]}' >> "$GITHUB_OUTPUT"
+            echo 'matrice={"include":[{"os":"ubuntu-latest","python-version":"3.12"},{"os":"windows-latest","python-version":"3.12"},{"os":"macos-latest","python-version":"3.12"}]}' >> "$GITHUB_OUTPUT"
           else
             echo 'nome=piena' >> "$GITHUB_OUTPUT"
             echo 'matrice={"os":["ubuntu-latest"],"python-version":["3.10","3.11","3.12","3.13"],"include":[{"os":"windows-latest","python-version":"3.12"},{"os":"macos-latest","python-version":"3.12"}]}' >> "$GITHUB_OUTPUT"
