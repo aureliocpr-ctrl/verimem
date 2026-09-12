@@ -12,8 +12,10 @@ dicono (`gh api repos/<owner>/<repo>`):
     squash_merge_commit_title   : COMMIT_OR_PR_TITLE
 
 `COMMIT_MESSAGES` vuol dire che il corpo del commit di squash e' la
-CONCATENAZIONE dei messaggi dei commit della PR. Misurato il 12/09 su tutte le
-PR aperte: **66 messaggi su 99 sono sporchi**, e una PR ne ha 47. Lasciando il
+CONCATENAZIONE dei messaggi dei commit della PR. Misurato il 12/09 alle 13:55,
+su 20 PR aperte: **70 messaggi su 130 sono sporchi**, e una PR ne ha 48 (il
+numero porta la sua popolazione e la sua ora: dipende da quante PR sono aperte,
+e in mezza giornata e' gia' passato da 66 su 99 su 14 PR). Lasciando il
 valore predefinito, in main entrerebbe quel muro di testo — che e' esattamente
 il `git log` che stiamo ripulendo.
 

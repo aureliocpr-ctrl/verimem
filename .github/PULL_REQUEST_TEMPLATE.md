@@ -4,9 +4,9 @@ messaggio con cui questa PR entra nel ramo principale.
 
 Le impostazioni del repository dicono `squash_merge_commit_message:
 COMMIT_MESSAGES`, cioè il corpo del commit di fusione è la CONCATENAZIONE dei
-messaggi dei commit. Misurato il 12/09 sulle PR aperte: 66 messaggi su 99 non
-erano presentabili, e una PR ne aveva 47. Lasciando fare, quel muro di testo
-finisce nel `git log` pubblico.
+messaggi dei commit. Misurato il 12/09 alle 13:55, su 20 PR aperte: 70 messaggi
+su 130 non erano presentabili, e una PR ne aveva 48. Lasciando fare, quel muro
+di testo finisce nel `git log` pubblico.
 
 ⇒ `scripts/messaggio_dello_squash.py <numero>` compone il messaggio da queste
 due righe più il titolo, e lo passa dal controllo. Con il corpo in questa forma

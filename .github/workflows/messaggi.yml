@@ -28,12 +28,14 @@
 # modi il messaggio che scrive chi lavora e' quello che l'utente legge — che e'
 # la ragione per cui questo controllo esiste.
 #
-# ⇒ Il controllo e' ROSSO sulla PR, non un avviso. Misurato prima di spedirlo:
+# ⇒ Il controllo e' ROSSO sulla PR, non un avviso. Misurato prima di spedirlo —
+# e il numero porta la sua POPOLAZIONE e la sua ORA, perche' dipende da quante
+# PR sono aperte in quel momento e in mezza giornata si e' gia' mosso:
 #
-#     PR che diventerebbero ROSSE: 14 su 14
-#     commit sporchi: 66 su 99
+#     12/09 12:40, su 14 PR aperte : 14 rosse su 14 · 66 commit sporchi su  99
+#     12/09 13:55, su 20 PR aperte : 17 rosse su 20 · 70 commit sporchi su 130
 #
-# Quattordici su quattordici e' un debito vero, non un falso allarme, e il
+# Diciassette su venti e' un debito vero, non un falso allarme, e il
 # rosso dice a ciascuna cosa le manca prima di entrare.
 #
 # 📌 E NON BLOCCA NESSUNO: `main` non ha protezione di ramo (`gh api
