@@ -55,6 +55,7 @@ jobs:
           python scripts/copie.py --autotest
           python scripts/senza_chiamante.py --autotest
           python scripts/righe_della_pr.py --autotest
+          python scripts/grep_nelle_mappe.py --autotest
 
       # ---- R3: una superficie per primitiva --------------------------------
       - name: R3 - le copie non crescono
@@ -79,6 +80,21 @@ jobs:
             echo "NON MISURATO: il righello della mappa non e' ancora su main."
             echo "Arriva con la fusione di lead/mappa-indice; questo passo si accende da solo."
             echo "Fino ad allora una funzione nuova puo' entrare senza la sua riga nella mappa."
+          fi
+
+      # ---- R5: un pattern con `|` senza `-E` è uno ZERO che sembra misurato --
+      # Reperto di ws4 il 09/09: `grep -c "a|b"` cerca la stringa «a|b», non
+      # trova niente, e la conclusione «nessuna occorrenza» sembra una misura.
+      # Come il righello della mappa, la cartella arriva con lead/mappa-indice:
+      # finché non c'è, il passo lo DICE invece di tacere.
+      - name: R5 - nessuno zero finto nei documenti della mappa
+        run: |
+          if [ -d docs/stato-reale/mappa ]; then
+            python scripts/grep_nelle_mappe.py
+          else
+            echo "::warning title=zeri finti non cercati::docs/stato-reale/mappa/ non e' in questo albero"
+            echo "NON MISURATO: la mappa non e' ancora su main (ramo lead/mappa-indice)."
+            echo "Misurato a mano il 10/09 sui 403 documenti del ramo: 3 sicuri + 1 ambiguo."
           fi
 
       # ---- R6: piccolo e rivisto -------------------------------------------
