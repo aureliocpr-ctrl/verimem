@@ -304,6 +304,44 @@ _EPISODE_MUTATING: frozenset[str] = frozenset({
 })
 
 
+def _con_annotazioni(tools: list[t.Tool]) -> list[t.Tool]:
+    """Stamp ``destructiveHint`` on the tools the product declares as mutating.
+
+    MCP lets a server tell a client what a tool does to the world. Until now
+    this server told it nothing: all 249 declarations carried name, description
+    and inputSchema and no ``annotations``, so a client could not tell a read
+    from a deletion except by reading the prose of a description.
+
+    WHAT IS AND IS NOT CLAIMED HERE, and the asymmetry is the whole point:
+
+    * ``destructiveHint=True`` goes only on names the product ALREADY declares
+      in ``_THIN_UNSUPPORTED_WRITES`` (facts) and ``_EPISODE_MUTATING``
+      (episodes). It is derived from those sets, never from a list written
+      here: two copies of one set drift, and this file has paid for that.
+    * ``readOnlyHint=True`` goes on NOTHING. Read-only was defined 2026-09-12
+      as "does not change the content of the memory; the audit journal does not
+      count" — definable, but measured NOT derivable: a criterion with a pinned
+      receiver, run over the dispatch, reports 9 of the 20 declared mutators as
+      writing nothing, because they mutate through a module helper or a second
+      store object. A `readOnlyHint=True` granted that way would tell a client
+      that `smart_prune` and `forget_with_report` are safe to call.
+
+    An unannotated tool is already read by the protocol's own defaults as
+    possibly destructive — the prudent reading. Saying nothing is therefore
+    the safe position, and saying the wrong thing would move a client from
+    caution to trust on our word alone.
+    """
+    muta = _THIN_UNSUPPORTED_WRITES | _EPISODE_MUTATING
+    fuori: list[t.Tool] = []
+    for tool in tools:
+        if tool.name in muta:
+            fuori.append(tool.model_copy(update={"annotations": t.ToolAnnotations(
+                destructiveHint=True, readOnlyHint=False)}))
+        else:
+            fuori.append(tool)
+    return fuori
+
+
 def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
 
@@ -7914,10 +7952,16 @@ async def list_tools() -> list[t.Tool]:
     ``_list_tools_unfiltered``. When the env var is unset the output is
     byte-identical to the legacy behaviour.
     """
-    return _apply_tool_namespace(_filter_tools(
+    # ⚠️ L'ORDINE CONTA: le annotazioni si timbrano PRIMA del rinominamento.
+    # `_apply_tool_namespace` puo' trasformare `hippo_x` in `verimem_x`, e i
+    # due insiemi dichiarati parlano di `hippo_*`: timbrare dopo lascerebbe
+    # senza annotazione, in silenzio, esattamente la configurazione che il
+    # prodotto consiglia. Il rinominamento usa `model_copy`, quindi le
+    # conserva.
+    return _apply_tool_namespace(_con_annotazioni(_filter_tools(
         await _list_tools_unfiltered(),
         _allowed_tool_prefixes(),
-    ))
+    )))
 
 
 def _apply_tool_namespace(tools: list[t.Tool]) -> list[t.Tool]:
