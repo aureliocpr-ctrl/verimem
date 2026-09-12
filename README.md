@@ -615,6 +615,16 @@ embedded store (fail-soft, never a crash). Writes are idempotent (a retried
 cold-start write is de-duplicated). Per-user scoped ops
 (`user_id`/`agent_id`/`run_id`) stay local for isolation.
 
+**What the shared server does NOT carry.** It serves **facts**. Episodes stay
+local by design, so the five episode-mutating tools (`hippo_episode_pin`,
+`hippo_episode_unpin`, `hippo_rollup_old_episodes`, `hippo_episodes_dedup`,
+`hippo_episode_classify`) act on the session's own store even behind a server —
+for them the local store is the right answer, not a fallback. Fact-mutating
+tools behave the opposite way: behind a server they are **refused** rather than
+applied locally, because reporting "removed" after touching the wrong store is
+worse than refusing. That refusal holds while the server answers; if it stops
+answering, the fail-soft above applies to them too.
+
 Docker (embedding models baked in — runs fully offline):
 
 ```bash
