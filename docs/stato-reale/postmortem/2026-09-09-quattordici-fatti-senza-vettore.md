@@ -27,6 +27,20 @@
   10/09 il daemon era **ancora giù**: `embedding.encode("prova")` →
   `EncodeDelegateUnavailable`.
 
+  **…e la causa A MONTE** (trovata da ws5 alle 00:38 del 10/09, dopo la prima
+  stesura di questo postmortem; testo suo, innestato qui perché **un incidente
+  ha un postmortem solo**): il daemon non era caduto per caso. **Discovery e
+  lock del daemon stanno in `Path.home()`, mai nella data dir**
+  (`encode_service.py:41`, `:573`, `:583`), quindi **un banco che isola
+  `ENGRAM_DATA_DIR` non isola il daemon**: legge la discovery globale, trova un
+  daemon che non dichiara il *suo* modello, ne spawna uno col proprio e lo
+  registra per tutti. Il colpevole del 09/09 è stato un banco isolato di ws2 su
+  T49 (`ENGRAM_DATA_DIR = …\Temp\ws2-t49-…`, `ENGRAM_EMBEDDING_MODEL =
+  …MiniLM…`, letto dal suo `environ`) — che **non aveva sbagliato niente**:
+  isolare la data dir è ciò che ci è stato chiesto. ⇒ Il ripristino manuale del
+  daemon fatto da ws5 alle 00:13 è durato **12 minuti**: alle 00:25:08 un altro
+  banco l'aveva già rimpiazzato.
+
 * **Cura** — **esiste già nel prodotto**: `python -m verimem.cli facts backfill`,
   idempotente. **Non è stata eseguita**, e l'ordine conta: prima il daemon deve
   tornare e dichiarare `e5-base`/768, poi il backfill. Lanciarlo mentre il
@@ -47,13 +61,23 @@
 
   Un blob di zero byte **non è `NULL`**, e la stringa vuota **non è `NULL`**: il
   criterio ovvio non distingue «nessun vettore» da «vettore vuoto», e quella
-  differenza era tutto il reperto. Resta un secondo controllo da fare, che non è
-  uno script ma una riga di prodotto: **la ricevuta del `save` deve dire che
-  l'embedding è differito**, come già dice `judged` e `withheld_despite_judge`.
-  Owner da assegnare.
+  differenza era tutto il reperto.
 
-* **Owner** — daemon e T-MAP-9: **ws5 Tara**. Il cricchetto e questa cartella:
-  **ws8 Corrado**. La riga della ricevuta: da assegnare (@lead-audit).
+  Ma questo controllo **rileva, non previene**: dice che è successo, non impedisce
+  che risucceda. Con la causa a monte in mano, i controlli che chiudono davvero
+  l'incidente sono due, e nessuno dei due è mio:
+
+  1. **T60** — discovery e lock del daemon dentro la data dir, così che un banco
+     che isola `ENGRAM_DATA_DIR` isoli anche il daemon. È la prevenzione: senza,
+     il ripristino manuale dura dodici minuti (misurato: 00:13 → 00:25:08).
+  2. **la riga della ricevuta** — il `save` deve dire che l'embedding è
+     differito, come già dice `judged` e `withheld_despite_judge`. È la
+     dichiarazione: senza, chi scrive continuerà a leggere `stored: true` e ad
+     andare avanti.
+
+* **Owner** — la causa a monte e T60: **ws5 Tara**. Il rilevatore
+  (`vettori_vuoti.py`) e questa cartella: **ws8 Corrado**. La riga della
+  ricevuta: da assegnare (@lead-audit).
 
 ---
 
