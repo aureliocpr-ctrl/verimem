@@ -95,7 +95,30 @@ scrivesse sempre il layer lessicale passerebbe lo stesso.
 visto rosso da chi ha il cartellino **prima** che entri in `tests/`: un test non
 provato che nasce verde è il modo in cui i presidi muoiono.
 
-## 5. Quello che questo ticket NON dice
+## 5. Che cosa resta DOPO la cura — due residui, scritti perché non si deducano
+
+*Aggiunti dopo aver letto la cura e il banco di chi li ha scritti. Nessuno dei due
+blocca: si scrivono qui perché la prossima porta che nasce non li ricopi.*
+
+1. **La terza porta non è nel banco.** Il banco confronta la libreria e la riga di
+   comando. La porta esposta all'agente passa la cosa giusta **oggi** — è letto, non
+   presidiato: se quella riga cambia, il banco resta verde. Un buco dichiarato costa
+   una riga; dedotto costa un pomeriggio.
+2. **La copia non è sparita, si è rimpicciolita.** Dopo la cura le due porte
+   contengono **la stessa espressione scritta due volte**, letterale compreso. La
+   *funzione* che decide è unica — e il suo commento dice perché — ma **l'argomento
+   si costruisce ancora in due posti**: è la stessa classe, un piano sotto. La
+   superficie davvero unica sarebbe far derivare quell'argomento **dentro** la
+   funzione, dandole l'azione del gate invece della lista già pronta.
+
+📌 **E il reperto che è uscito scrivendo il banco vale più di questo ticket**: i rami
+comuni (il marcatore dello screen, il moat fallito, L1) **concordavano già** fra le
+porte; a divergere erano **solo** i layer che passano dall'argomento — cioè
+esattamente la fascia *«il giudice ammette e un controllo lessicale ferma»*. **Il
+difetto non era raro: era invisibile perché viveva nella fascia che nessuno
+guardava.** È la stessa fascia che ci ha tenuti occupati un pomeriggio intero.
+
+## 6. Quello che questo ticket NON dice
 
 - **Non dice che la riga di comando sbagli di proposito**: la scelta è **letta**, non
   discussa con chi l'ha fatta, e un presidio vicino suggerisce che quel percorso sia
