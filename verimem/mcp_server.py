@@ -264,6 +264,13 @@ _THIN_UNSUPPORTED_WRITES: frozenset[str] = frozenset({
     "hippo_facts_topic_merge", "hippo_smart_prune", "hippo_decay_run",
     "hippo_heal_contradictions", "hippo_contradictions_resolve",
     "hippo_anti_confab_apply", "hippo_fact_priority",
+    # T61 (2026-09-10). Mancava, e mutava i fatti come tutte le altre:
+    # `hippo_quarantine_restore` chiama `a.semantic.restore_fact(...)`.
+    # E' la piu' delicata dell'elenco, non la meno: le altre mentono su
+    # un'operazione ordinaria, questa ANNULLA UNA QUARANTENA — cioe' fa
+    # un'eccezione deliberata a una decisione del gate, e la faceva sul posto
+    # sbagliato mentre nel corpus condiviso il fatto restava fermato.
+    "hippo_quarantine_restore",
 })
 
 

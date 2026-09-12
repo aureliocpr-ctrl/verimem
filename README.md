@@ -615,6 +615,18 @@ embedded store (fail-soft, never a crash). Writes are idempotent (a retried
 cold-start write is de-duplicated). Per-user scoped ops
 (`user_id`/`agent_id`/`run_id`) stay local for isolation.
 
+**What the shared server does NOT carry.** It serves **facts**. Episodes stay
+local by design: the tools that mutate episodes act on the session's own store
+even behind a server — for them the local store is the right answer, not a
+fallback. The set is deliberately not enumerated here: a list in prose cannot be
+checked against the code, and the one that used to be here was wrong three ways
+at once — it named two tools that write nothing, missed three that do, and no
+criterion could close it. Fact-mutating
+tools behave the opposite way: behind a server they are **refused** rather than
+applied locally, because reporting "removed" after touching the wrong store is
+worse than refusing. That refusal holds while the server answers; if it stops
+answering, the fail-soft above applies to them too.
+
 Docker (embedding models baked in — runs fully offline):
 
 ```bash
