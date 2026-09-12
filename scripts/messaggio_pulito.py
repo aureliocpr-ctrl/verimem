@@ -90,6 +90,26 @@ SESSIONE = re.compile(
     r"|Corrado|Marie|Tara|Iris|Aldo|Giano|Galileo|Nadia|Curie)\b",
     re.IGNORECASE,
 )
+
+# ⚠️ TRE NOMI CHE SONO ANCHE PAROLE ITALIANE COMUNI, e per questo stanno a
+# parte e si cercano SENZA ignorare le maiuscole.
+#
+# Misurati il 12/09 in `docs/stato-reale/`, separando la forma-NOME (`@Nome`,
+# `firma @Nome`, `Agent: Nome`) da tutte le occorrenze — perche' 529 occorrenze
+# di «varco» non sono 529 nomi, e contarle tutte sarebbe il grep usato per
+# contare invece che per trovare:
+#
+#     varco       486 come NOME  /  529 in tutto
+#     paragone      9            /   42
+#     lanterna      9            /   18
+#     sentinella    0            /   13   <- NON e' un nome qui: resta fuori
+#     faro          0            /    1   <- idem
+#
+# Cercarli con `re.IGNORECASE` boccerebbe «il varco fra i due» e «per
+# paragone»: un cancello che grida su una parola comune insegna a ignorarlo.
+# La maiuscola non e' una garanzia — e' il criterio piu' stretto che distingue
+# i due casi senza inventarne uno.
+SESSIONE_AMBIGUA = re.compile(r"\b(Varco|Paragone|Lanterna)\b")
 # ⚠️ UNA LISTA CHIUSA, non una forma. Vedi il docstring del modulo: con la
 # regola sintattica (`^Parola:\s`) bastava scrivere `Nota:` per far sparire una
 # riga dal controllo. Un'esenzione aperta a qualunque parola non e' un'esenzione,
@@ -226,7 +246,8 @@ def controlla(testo: str, percorsi: frozenset[str] | None = None) -> list[str]:
         problemi.append(f"{len(righe_intere)} righe non vuote (il massimo e' {RIGHE_MASSIME})")
     for etichetta, regola in (("percorso locale", PERCORSO),
                               ("nome utente", UTENTE),
-                              ("nome di sessione o ruolo interno", SESSIONE)):
+                              ("nome di sessione o ruolo interno", SESSIONE),
+                              ("nome di sessione o ruolo interno", SESSIONE_AMBIGUA)):
         trovati = sorted({m.group(0) for m in regola.finditer(corpo)})
         if trovati:
             problemi.append(f"{etichetta}: {', '.join(trovati[:4])}")
@@ -288,6 +309,15 @@ CASI: list[tuple[str, str, bool]] = [
     ("nome di sessione", "Fix\n\ntrovato da Marie", False),
     # Il nome che il mio elenco NON aveva, e che l'altro righello aveva.
     ("il nono nome, quello che mancava", "Fix\n\nrilievo di Curie", False),
+    # I tre che NESSUNO dei due righelli aveva: nomi veri che sono anche
+    # parole comuni. Le due righe qui sotto sono la coppia che rende il
+    # criterio un criterio — se cadesse la seconda, sarebbe un cancello che
+    # grida su «il varco fra i due».
+    ("un nome che e' anche una parola, maiuscolo",
+     "Fix the parser\n\nrilievo di Varco, controfirmato da Paragone", False),
+    ("la stessa parola in minuscolo NON e' un nome",
+     "Close the gap between the two ports\n\nil varco fra i due era largo, "
+     "e per paragone la porta vecchia lo chiudeva", True),
     ("ruolo interno", "Fix\n\nchiesto da lead-audit", False),
     ("il trailer non conta", "Fix\n\nDue righe di spiegazione.\n"
                              "Co-Authored-By: Qualcuno <a@b.c>", True),
