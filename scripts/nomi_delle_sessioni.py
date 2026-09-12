@@ -78,7 +78,28 @@ AMBIGUI = {
     "Lanterna": "il nome comune «lanterna»",
     "Riscontro": "il nome comune «riscontro» e il verbo «riscontrare»",
     "Ester": "la classe di composti chimici",
+    "Saggiatore": "«Il Saggiatore» di Galileo, e il nome comune (chi saggia)",
 }
+
+# ⚠️ L'ELENCO E' CRESCIUTO DUE VOLTE NELLO STESSO GIORNO, dopo che due volte
+# l'avevo dichiarato completo. E' il fatto piu' importante di questo file.
+#
+#   14:20  aggiunti Varco, Paragone, Lanterna — trovati leggendo i CONTESTI
+#          dei file che restavano, non cercandoli
+#   14:35  aggiunti Vega, Riscontro, Ester — trovati con la forma canonica
+#          `ws<N> «Nome»`
+#   15:15  aggiunto Saggiatore — nominato da una PR di un altro, e la mia
+#          ricerca non lo trovava: sta scritto `# ws3 Saggiatore`, SENZA le
+#          caporali, e io cercavo `ws<N> «Nome»`. Il righello descriveva la
+#          FORMA che avevo in mente, non l'oggetto.
+#
+# ⇒ Un elenco di nomi non e' mai finito: le sessioni cambiano soprannome (ws2
+# e' stata «Vega» e poi «Varco»). Non e' un argomento per rinunciare — e'
+# l'argomento per tenerlo in UN posto: cosi' aggiungerne uno cura tutti i
+# righelli insieme, invece di curarne uno e lasciare gli altri a mentire.
+FORME_CERCATE = (
+    "@Nome", "firma @Nome", "Agent: Nome", "ws<N> «Nome»", "ws<N> Nome",
+)
 
 #: ⚠️ QUESTI NON SONO NOMI, SONO I RUOLI CON CUI SI SOSTITUISCONO — «ws3
 #: «Ricerca»», «ws5 «Piattaforma»». Compaiono nella stessa forma dei soprannomi
@@ -144,6 +165,10 @@ CASI: list[tuple[str, str, bool]] = [
     ("«Varco» maiuscolo SI'", "CONTROFIRMATA da ws2 «Varco»", True),
     ("«paragone» minuscolo NON e' un nome", "per paragone la porta vecchia", False),
     ("«riscontro» minuscolo NON e' un nome", "un riscontro sul corpus vero", False),
+    # Il decimo nome, trovato il 15:15 perche' l'ha nominato la PR di un altro:
+    # sta scritto senza caporali e la mia ricerca cercava solo `ws<N> «Nome»`.
+    ("il nome scritto SENZA caporali", "# ws3 Saggiatore — gli aperti del giorno", True),
+    ("«saggiatore» minuscolo NON e' un nome", "chi saggia il metallo e' il saggiatore", False),
     # La classe che il 12/09 e' stata esclusa per decisione.
     ("un identificatore generato NON e' prosa", 'prefix="iris-ub-jivzor1t"', False),
     ("«misura-iris» NON e' prosa", '{"name": "misura-iris", "version": "0"}', False),
