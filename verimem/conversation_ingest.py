@@ -376,6 +376,21 @@ def ingest_conversation(
     "consolidated", "error"}``. Fail-safe end to end: an LLM error reports
     instead of raising; a fact the store gate rejects is counted, never
     re-tried blindly.
+
+    TWO KEYS APPEAR ONLY WHEN THE MOAT RAN, i.e. only with ``ground=True``
+    (2026-09-12, asked in review — the field stays, so the contract must say
+    WHEN it is there instead of leaving the caller to guess):
+
+    * ``quarantined`` — how many extracted facts the dialogue does NOT state
+      and were therefore held back. **Absent when nothing was held back**, so
+      read it with a default (``res.get("quarantined", 0)``), never as a key
+      that must exist.
+    * ``moat_band`` — the state of the write-path uncertain band on THIS call:
+      ``"on"`` (band enforced, facts in it held back), ``"off"`` (the lever
+      turns it off, admitted above the ingest threshold as before), or
+      ``"unavailable"`` (the band could not be read — the ingest fails OPEN
+      and admits, and a warning says why). **Absent when ``ground=False``**:
+      the question was never asked, and "not asked" must not look like "off".
     """
     from .redaction import redact_secrets
     from .semantic import Fact
