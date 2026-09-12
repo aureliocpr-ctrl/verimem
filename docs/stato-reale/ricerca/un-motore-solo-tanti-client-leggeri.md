@@ -76,10 +76,53 @@ spazio, chi guarda il commit vede il muro, e a cadere è la macchina.
 ⚠️ Il rapporto è misurato su **un** processo: che valga anche per i server MCP è un'**ipotesi**,
 non un fatto.
 
-📌 **NON VERIFICATO da chi scrive**: la ripartizione per singolo server MCP (quanto è modello,
-quanto contesto dell'acceleratore, quanto altro) e i numeri sull'uso della GPU. Sono la misura
-che decide fra le alternative del §7, e vanno presi dal loro post con l'output, non di seconda
-mano.
+### 4-bis. La ripartizione c'è, ed è stata letta senza avviare niente
+
+*Misura interna dell'11/09 sera, fatta **leggendo le mappe dei processi già vivi** — non
+avviandone uno nuovo, perché un processo nuovo sarebbe costato più di ciò che si voleva misurare.
+Numeri riportati come stanno nel resoconto.*
+
+**Che cosa ha in più un processo pesante rispetto a uno leggero**
+
+    leggero:  122 mappe, 0,13 GB
+    pesante:  346 mappe, 4,77 GB        differenza: 224 mappe, 4,63 GB
+        4.443,5 MB  n=38   torch
+          117,6 MB  n=111  altre librerie
+           45,4 MB  n=69   scipy
+    le più grosse:  torch_cuda 835,9 MB · cublaslt 757,8 · cudnn 482,7 · cusparse 379,6 ·
+                    cufft 278,7 · torch_cpu 266,7
+
+⇒ **Il peso è la libreria di calcolo tensoriale, e per la maggior parte sono le sue parti per
+l'acceleratore.**
+
+**E il controllo successivo dice una cosa più seria del peso**
+
+    otto processi nostri risultano con un contesto GPU attivo
+    (i due servizi di codifica più SEI server della memoria)
+    scheda: 7.331 MiB usati su 8.151 (90 %) · utilizzo 0 %
+
+**La scheda è piena al 90 % e il calcolo è a zero**: otto processi la tengono occupata senza
+usarla. La causa sta in due righe del prodotto — `verimem/local_grounding.py:196` e
+`verimem/local_relation.py:106`, entrambe `device = "cuda" if torch.cuda.is_available() else
+"cpu"`: **ogni processo che tocca il giudice prende l'acceleratore per sé e non lo lascia**. In
+un processo solo è la scelta giusta; moltiplicata per otto è il difetto.
+
+🔑 **DUE COSTI DIVERSI, E SI CURANO IN MODI DIVERSI — è la distinzione che mancava a questa
+pagina**:
+
+| | cosa si esaurisce | chi lo consuma | come si cura |
+|---|---|---|---|
+| **memoria impegnata (commit)** | il limite della macchina, che l'ha già fatta cadere | ogni processo, per intero | **solo** riducendo i processi o ciò che ciascuno carica → §7 |
+| **memoria della scheda (VRAM)** | 90 % con 0 % di calcolo | i processi che toccano il giudice | **una leva di configurazione**: chi non calcola non prende l'acceleratore |
+
+⚠️ **E la riga che tiene onesto tutto il resto**, dichiarata da chi ha misurato: **quanta parte
+dei 2,29 GB di commit in più venga dal contesto dell'acceleratore NON è misurata**. Le librerie
+mappate sono *file-backed*: contribuiscono al working set, **non direttamente al commit**. La
+spiegazione «il contesto prenota spazio di indirizzamento» è **plausibile e non provata**.
+
+⇒ Conseguenza pratica per il §7: **la cura della VRAM è ortogonale alla scelta architetturale e
+costa una riga**; la cura del commit no. Chi decide non deve confondere le due, perché la prima
+si può fare oggi e non chiude la seconda.
 
 ## 5. Come fanno gli altri — quattro fonti, con l'URL
 
@@ -140,6 +183,12 @@ spostare il giudizio dalla scrittura, e senza aggiungere un guasto che oggi non 
 | **A** | **Alleggerire il processo**: caricare modello/giudice/embedder solo quando servono; non inizializzare l'acceleratore in un processo che non lo usa | niente di visibile, se non che la macchina regge | non tocca la **moltiplicazione**: N client restano N processi. Se il peso è il modello, si moltiplica lo stesso | se la misura per server dice che il peso **non** è il modello |
 | **B** | **Un server condiviso** (Streamable HTTP su `127.0.0.1`, sessioni del protocollo) | un motore solo, un modello caricato, una sola coda verso lo store | **① punto unico di guasto**: cade il server, cadono tutti i client · **② coda**: richieste serializzate dove oggi sono parallele, e il giudizio è lento · **③ un salto in più**: rete locale invece di pipe · **④ le tre garanzie** (`Origin`, bind locale, auth) diventano codice **nostro** da scrivere e provare · **⑤ chi lo avvia, lo riavvia e ne dichiara la versione?** | se il peso è il modello **e** accettiamo di scrivere e presidiare le garanzie |
 | **C** | **Ibrido**: i client restano su stdio, il lavoro pesante in un servizio condiviso | come B sul consumo, senza cambiare come i client si connettono | **è ciò che già facciamo, ed è già rotto due volte**: un servizio condiviso rinato con un modello diverso da quello dello store; scritture entrate senza vettore. Il difetto non è il modello: è che **il servizio non dichiara al client la propria versione** | se prima chiudiamo il difetto di dichiarazione — allora C è la strada più corta |
+
+**Prima delle tre alternative c'è una cosa che non è un'alternativa**: la scheda è occupata al
+90 % da processi che non calcolano, e questo **non richiede nessuna scelta architetturale** —
+chi non calcola non deve prendere l'acceleratore (una leva di configurazione, §4-bis). Farla non
+chiude la domanda del commit, ma toglie subito un vincolo dalla macchina e **non pregiudica
+nessuna delle tre strade**. Va fatta comunque, e per prima.
 
 **Le tre condizioni che metterei prima di qualunque «sì»**, in ordine:
 
