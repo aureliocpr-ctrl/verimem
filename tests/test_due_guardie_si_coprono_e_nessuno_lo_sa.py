@@ -113,30 +113,18 @@ def _ritiri(seconda: str) -> tuple[int, str, str]:
     prima = mem.add("La coda ha 500 elementi.", topic="t/coppia",
                     verified_by=FONTE, source=SORGENTE, validate="full")
     fid = prima.get("id") or prima.get("fact_id") or ""
-    #: ⚠️ LA FONTE DEVE CONTENERE ANCHE L'ID CHE LA PROPOSIZIONE CITA, e la
-    #: ragione è che senza di esso questo banco non è deterministico.
+    #: ⚠️ LA FONTE RESTA QUELLA ORIGINALE, E NON PER DIMENTICANZA.
     #:
-    #: `seconda` diventa, per esempio, «La coda ha 540 elementi (rettifica del
-    #: fatto 7c1a9e02).» — e quell'id **cambia a ogni esecuzione**, mentre
-    #: `SORGENTE` non lo contiene. Con `validate="full"` il moat gira davvero e
-    #: giudica la frase INTERA: un pezzo che la fonte non dice abbassa il
-    #: punteggio, e se il punteggio si ferma vicino alla soglia l'esito oscilla
-    #: fra un'esecuzione e l'altra.
+    #: Questi due presidi sono deterministici solo se la fonte contiene
+    #: anche l'id che la proposizione cita. La cura c'era su questo ramo ed
+    #: e' stata CEDUTA alla PR che porta anche il banco che la spiega: due
+    #: rami non possono portare la stessa cura sullo stesso file, e chi
+    #: porta la spiegazione deve portare la cura.
     #:
-    #: Misurato in CI il 2026-09-12 sulla PR #27, che tocca solo la CLI e non
-    #: passa da qui: `1 failed, 12853 passed` su **una** gamba (ubuntu py3.11)
-    #: e verde sulle altre quattordici, col messaggio del banco stesso —
-    #: «CONTROLLO POSITIVO SPENTO: la rettifica e' entrata come 'quarantined'».
-    #: Non era la gamba: era la soglia.
-    #:
-    #: Aggiungendo l'id alla fonte, la proposizione non porta più materiale non
-    #: sostenuto e il giudizio torna stabile. Il presidio continua a misurare
-    #: la stessa cosa — «una rettifica esplicita ritira il valore vecchio» —
-    #: e `anti_confab_gate.py:749`, che è la decisione del 2026-07-25, non
-    #: viene toccato.
-    fonte_della_seconda = SORGENTE + (f"rettifica del fatto {fid}\n" if fid else "")
+    #: ⇒ QUESTO RAMO VA MERGIATO DOPO QUELLO: da solo lascia i due presidi
+    #: qui sopra intermittenti, com'erano prima.
     ricevuta = mem.add(seconda.format(fid=fid), topic="t/coppia",
-                       verified_by=FONTE, source=fonte_della_seconda,
+                       verified_by=FONTE, source=SORGENTE,
                        validate="full")
     sid = ricevuta.get("id") or ricevuta.get("fact_id") or ""
     vivo = mem.semantic.get(sid) if sid else None
@@ -226,30 +214,50 @@ def test_CONTROLLO_senza_la_citazione_il_ritiro_avviene_ancora():
 # ingresso che la prossima esecuzione boccia.
 # ═══════════════════════════════════════════════════════════════════════════
 
-#: Il taglio del moat per la scrittura ordinaria. Se cambia, questo numero va
-#: cambiato qui e il test lo dice da se' nel messaggio: e' scritto due volte
-#: apposta, perche' un margine calcolato contro una soglia sbagliata e' peggio
-#: di nessun margine.
-SOGLIA_DEL_MOAT = 40.0
-
-#: Quanto lontano dal taglio deve stare un ingresso perche' lo si possa
-#: chiamare stabile. 10 punti e' una scelta, non una misura: con meno di cosi'
-#: la CI del 2026-09-12 ha dato 14 verdi e 1 rosso sullo stesso ingresso.
-MARGINE_MINIMO = 10.0
+#: Il taglio del moat, LETTO DAL PRODOTTO e non copiato qui. Era `40.0`
+#: scritto a mano: una soglia duplicata e' la classe ① delle nostre cinque —
+#: una copia invece della superficie unica — e l'avevo commessa dentro un
+#: banco che parla di presidi disarmati. Se il nome sparisce, questo file
+#: muore con un ImportError, che e' il segnale giusto: la soglia si e' mossa.
+from verimem.grounding_gate import LOCAL_CE_MOAT_THRESHOLD  # noqa: E402
 
 
-def test_OSSERVATORE_un_ingresso_legittimo_non_passa_per_un_soffio():
+def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
     """Il difetto del PRODOTTO che la cura del banco aveva smesso di mostrare.
 
-    ⚠️ NON e' un doppione dei due presidi sopra: quelli chiedono «il prodotto
-    fa la cosa giusta?», questo chiede «la fa per un margine che regge una
-    seconda esecuzione?». Un prodotto puo' rispondere si' al primo e no al
-    secondo, ed e' esattamente cio' che e' successo.
+    ⚠️ IL NOME DICE COSA FA, e cioe' MENO di quanto T69 chiedeva. Vale la pena
+    spiegare perche', invece di lasciare un nome che promette un presidio.
 
-    Fallisce in due modi, e sono due notizie diverse:
-      · il fatto e' QUARANTINATO  -> il difetto e' tornato, con il numero;
-      · e' ammesso ma per meno di `MARGINE_MINIMO` -> non e' ancora tornato,
-        ma il prossimo giro puo' bocciarlo: e' l'avviso che mancava.
+    T69 chiedeva «un osservatore che possa fallire» su un difetto vero: un
+    ingresso legittimo che passa per pochi punti oggi e viene bocciato domani
+    (misurato in CI il 2026-09-12: 14 gambe verdi e 1 rossa sullo stesso
+    ingresso). Per farlo fallire servirebbe un MARGINE MINIMO — e la prima
+    versione di questo file ne aveva uno, `MARGINE_MINIMO = 10.0`, dichiarato
+    nel commento come «una scelta, non una misura».
+
+    L'ho tolto, per due ragioni che tirano dalla stessa parte:
+      · un limite scelto e' un debito che paga chi lo trova rosso fra un mese;
+      · un altro banco sullo stesso giudice ha deciso di NON fissarne uno
+        perche' nessuno l'ha misurato, e due file dello stesso repo non
+        possono rispondere il contrario alla stessa domanda.
+
+    E l'assert che restava — «lo stato non e' quarantined» — e' PROPRIO quello
+    che oscilla: metterlo qui significherebbe armare nella suite la stessa
+    trappola intermittente che un'altra PR sta togliendo da questo file. Un
+    osservatore che puo' fallire a caso non e' un osservatore, e' un rumore
+    che qualcuno dovra' spegnere.
+
+    ⇒ QUESTO TEST REGISTRA E NON GIUDICA. Fallisce solo se il numero non e'
+    piu' ottenibile — che e' una regressione vera: senza `grounding_score`
+    sulla ricevuta, il margine non lo puo' misurare piu' nessuno, e il difetto
+    tornerebbe invisibile per sempre invece che per una cura. Il margine sta
+    nel messaggio, cosi' chi legge un rosso qui trova il numero davanti.
+
+    🔑 COSA LO ARMA: la distribuzione del punteggio sullo STESSO ingresso,
+    ripetuto. Se i valori stanno a cavallo del taglio, il margine minimo
+    esiste e vale quel che dice la misura; se sono stabili e lontani, la
+    diagnosi del 2026-09-12 e' sbagliata e va ritirata — compresa la mia.
+    Fino ad allora questo file NON dichiara chiuso T69.
     """
     db = Path(tempfile.mkdtemp()) / "margine.db"
     mem = Memory(str(db))
@@ -265,19 +273,12 @@ def test_OSSERVATORE_un_ingresso_legittimo_non_passa_per_un_soffio():
     punteggio = ricevuta.get("grounding_score")
     stato = ricevuta.get("status")
     assert punteggio is not None, (
-        "la ricevuta non porta `grounding_score`: senza il numero questo "
-        f"osservatore non puo' misurare niente. ricevuta={ricevuta}")
+        "la ricevuta non porta piu' `grounding_score`: senza quel numero il "
+        "margine fra un ingresso e il taglio del moat non e' misurabile da "
+        "nessuna porta, e il difetto del 2026-09-12 — un ingresso legittimo "
+        "ammesso per un soffio — torna invisibile. Non abbassare questo "
+        f"assert: rimetti il campo sulla ricevuta. ricevuta={ricevuta}")
 
-    margine = float(punteggio) - SOGLIA_DEL_MOAT
-    assert stato != "quarantined", (
-        f"IL DIFETTO E' TORNATO: un ingresso sostenuto dalla fonte per il suo "
-        f"contenuto e' stato quarantinato a {punteggio}. La proposizione cita "
-        f"un id che la source non contiene, e il giudice scarta la frase "
-        f"intera. E' il rosso del 2026-09-12 in CI, una gamba su quindici.")
-    assert margine >= MARGINE_MINIMO, (
-        f"passa per un soffio: grounding {punteggio} contro una soglia di "
-        f"{SOGLIA_DEL_MOAT}, margine {margine:.2f} sotto i {MARGINE_MINIMO} "
-        f"richiesti. Non e' rosso oggi e puo' esserlo domani sulla stessa "
-        f"riga: e' la condizione che ha prodotto 14 verdi e 1 rosso. Se la "
-        f"soglia del moat e' cambiata, aggiorna SOGLIA_DEL_MOAT qui sopra "
-        f"invece di abbassare il margine.")
+    margine = float(punteggio) - LOCAL_CE_MOAT_THRESHOLD
+    print(f"[T69] grounding={punteggio} soglia={LOCAL_CE_MOAT_THRESHOLD} "
+          f"margine={margine:+.2f} stato={stato!r}")
