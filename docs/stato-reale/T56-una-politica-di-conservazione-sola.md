@@ -101,6 +101,47 @@ automatico) e il ritiro resta un'azione esplicita: è la stessa asimmetria che
 il prodotto dichiara altrove — perdere un fatto vero è irreversibile, tenerne
 due no.
 
+## 4-bis. Il RED che lo prova — e sono DUE, perché le domande sono due
+
+La prima stesura di questa pagina diceva «si unifica verso il comportamento
+che conserva» **senza il test che lo prova**: una pagina di design che propone
+una direzione e non scrive come si falsifica è prosa. I due RED sono separati
+perché rispondono a due domande diverse, e una delle due non è tecnica.
+
+### RED-1 — l'unificazione (tecnico, indipendente dal criterio)
+
+> La stessa coppia di scritture, ripetuta dalle tre porte su tre store
+> isolati, lascia **lo stesso numero di fatti vivi**.
+
+```
+la coppia: due letture della stessa evidenza, scritte con la stessa fonte
+atteso  : n(riga di comando) == n(libreria) == n(server di strumenti)
+oggi    : 1 == 1 != 2          ROSSO
+```
+
+Non dice **quale** debba essere il numero: dice che non possono essere due
+numeri diversi. Resta rosso qualunque criterio si scelga, e diventa verde solo
+quando le tre porte decidono allo stesso modo. **È il RED dell'unificazione.**
+
+### RED-2 — la direzione (decisione, non misura)
+
+> Quel numero comune è **2**: le due letture della stessa evidenza restano
+> entrambe.
+
+```
+atteso  : n == 2 su tutte e tre
+oggi    : 2 dal server di strumenti, 1 dalle altre due
+```
+
+⚠️ **Questo secondo RED non lo decide chi scrive il codice.** Sceglie fra
+conservare e ritirare, cioè sceglie il criterio — e il criterio ha dieci
+tentativi caduti alle spalle. Va scritto **dopo** la decisione collegiale, e
+la pagina propone `2` per l'asimmetria già dichiarata dal prodotto: perdere un
+fatto vero è irreversibile, tenerne due no.
+
+⇒ **RED-1 si può scrivere oggi. RED-2 no**, e dire perché fa parte del
+design.
+
 ## 5. La misura che direbbe che ha funzionato
 
 | grandezza | oggi | dopo |
