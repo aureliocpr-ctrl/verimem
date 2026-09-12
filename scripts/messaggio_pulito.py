@@ -76,8 +76,18 @@ RIGHE_MASSIME = 10
 
 PERCORSO = re.compile(r"([A-Za-z]:[\\/]Users[\\/]|/c/Users/|[A-Za-z]:[\\/]a[\\/]|/home/[a-z]+/)")
 UTENTE = re.compile(r"\baurel(io)?(cpr)?(-ctrl)?\b", re.IGNORECASE)
+# ⚠️ 12/09 — QUESTO ELENCO ESISTE DUE VOLTE NEL REPOSITORY, e le due copie
+# erano gia' diverse il giorno in cui sono nate: `scripts/nomi_nei_documenti.py`
+# (il righello dei nomi nei documenti) ne porta NOVE e questo ne portava OTTO —
+# mancava `Curie`, che compare 32 volte nel solo `docs/stato-reale/00-ESAME.md`.
+# ⇒ Un messaggio che nominava quella sessione passava pulito.
+# 🔑 Allineato qui, ma allineare non e' curare: due elenchi restano due criteri,
+# e divergono di nuovo alla prossima sessione che si aggiunge. Quando i due
+# righelli sono tutt'e due in main l'elenco va in UN posto solo e i due lo
+# importano. Finche' non succede, chi tocca uno dei due tocchi anche l'altro.
 SESSIONE = re.compile(
-    r"\b(ws[1-8]|lead-audit|Corrado|Marie|Tara|Iris|Aldo|Giano|Galileo|Nadia)\b",
+    r"\b(ws[1-8]|lead-audit"
+    r"|Corrado|Marie|Tara|Iris|Aldo|Giano|Galileo|Nadia|Curie)\b",
     re.IGNORECASE,
 )
 # ⚠️ UNA LISTA CHIUSA, non una forma. Vedi il docstring del modulo: con la
@@ -276,6 +286,8 @@ CASI: list[tuple[str, str, bool]] = [
     ("nome utente", "Fix\n\nsegnalato da aureliocpr", False),
     ("sigla di sessione", "Fix\n\nrilievo di ws5", False),
     ("nome di sessione", "Fix\n\ntrovato da Marie", False),
+    # Il nome che il mio elenco NON aveva, e che l'altro righello aveva.
+    ("il nono nome, quello che mancava", "Fix\n\nrilievo di Curie", False),
     ("ruolo interno", "Fix\n\nchiesto da lead-audit", False),
     ("il trailer non conta", "Fix\n\nDue righe di spiegazione.\n"
                              "Co-Authored-By: Qualcuno <a@b.c>", True),
