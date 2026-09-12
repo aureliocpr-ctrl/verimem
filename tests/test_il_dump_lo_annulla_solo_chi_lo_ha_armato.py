@@ -76,16 +76,31 @@ def test_l_annullamento_passa_da_un_punto_solo() -> None:
     sorgente = (Path(w.__file__)).read_text(encoding="utf-8")
     albero = ast.parse(sorgente)
 
+    def annulla(n: ast.AST) -> bool:
+        """DUE FORME, e la seconda me l'ha trovata Marie in revisione.
+
+        `faulthandler.cancel_dump_traceback_later()` e' un `ast.Attribute`,
+        ma `from faulthandler import cancel_dump_traceback_later` seguito da
+        una chiamata nuda e' un `ast.Name`, e passava questo presidio.
+
+        La riga e' copiata da `tests/test_rerank_breaker.py`, dove la stessa
+        forma era gia' stata trovata e curata due giorni fa: una cura scritta
+        in un file NON protegge il file accanto, e un presidio nuovo va
+        guardato con le lezioni dei presidi vecchi in mano.
+        """
+        if not isinstance(n, ast.Call):
+            return False
+        return ((isinstance(n.func, ast.Attribute)
+                 and n.func.attr == "cancel_dump_traceback_later")
+                or (isinstance(n.func, ast.Name)
+                    and n.func.id == "cancel_dump_traceback_later"))
+
     dentro: list[int] = []
     for nodo in ast.walk(albero):
         if isinstance(nodo, ast.FunctionDef) and nodo.name == "_annulla_il_dump":
-            dentro = [n.lineno for n in ast.walk(nodo)
-                      if isinstance(n, ast.Call)
-                      and getattr(n.func, "attr", "") == "cancel_dump_traceback_later"]
+            dentro = [n.lineno for n in ast.walk(nodo) if annulla(n)]
 
-    tutte = [n.lineno for n in ast.walk(albero)
-             if isinstance(n, ast.Call)
-             and getattr(n.func, "attr", "") == "cancel_dump_traceback_later"]
+    tutte = [n.lineno for n in ast.walk(albero) if annulla(n)]
 
     assert dentro, "`_annulla_il_dump` non annulla piu' niente: presidio cieco"
     fuori = sorted(set(tutte) - set(dentro))

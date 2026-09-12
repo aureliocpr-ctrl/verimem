@@ -12,12 +12,16 @@ CONTRACT — observability ONLY:
   * never cancels/returns the call (it only LOGS; fixing is a separate concern),
   * a fast call leaves NO file (the header-only file is cleaned up).
 
-IL TETTO SUI FILE, e quando e' attivo (contratto, 2026-09-06):
-  * il tetto e' attivo MENTRE la chiamata e' in corso SOLO se il
-    sorvegliante e' stato avviato all'avvio del processo
-    (`avvia_il_sorvegliante()`, che `mcp_server.main()` chiama);
-  * altrimenti si applica alla CHIUSURA del contesto: tardi, perche' il
-    file e' gia' cresciuto, ma mai "mai".
+IL TETTO SUI FILE, e quando e' attivo (contratto, riscritto 2026-09-12):
+  * si applica alla CHIUSURA del contesto, SEMPRE e in ogni processo:
+    tardi, perche' il file e' gia' cresciuto, ma mai "mai";
+  * MENTRE la chiamata e' in corso NESSUNO ferma piu' la crescita. Il
+    sorvegliante, se avviato, la DICHIARA nel file appena sfonda, ma non
+    disarma il timer: il dump lo annulla solo chi lo ha armato, e il
+    proprietario e' la chiamata che e' appesa. Vedi `_annulla_il_dump`.
+  ⚠️ Questo contratto prometteva il tetto DURANTE la chiamata col
+    sorvegliante avviato. Non e' piu' vero da quando il dump ha un
+    proprietario, e la riga qui sopra e' l'unica che regge.
 
 PERCHE' NON SI AVVIA UN THREAD PER CHIAMATA. Misurato il 2026-09-06 sul
 server MCP (12 dump su 12, nove minuti, frame identici): il thread che
@@ -248,25 +252,30 @@ def hang_trace(label: str, budget_s: float):
                     path.unlink(missing_ok=True)
             except Exception:  # noqa: BLE001
                 pass
-        # FALLBACK (lead, 06/09 08:40): fuori dal server nessuno ha avviato
-        # il sorvegliante, e senza questo il tetto non si applicherebbe MAI.
-        # Qui si applica alla CHIUSURA: tardi - il file e' gia' cresciuto -
-        # ma mai "mai". Chi vuole il tetto DURANTE la chiamata avvia il
-        # sorvegliante all'avvio del processo.
+        # IL TETTO SI APPLICA QUI, e adesso SEMPRE.
+        # Questo blocco girava solo se il sorvegliante NON era vivo, e il
+        # presupposto era: "se e' vivo, il tetto e' gia' stato applicato
+        # durante la chiamata". Da quando il dump ha un proprietario quel
+        # presupposto e' caduto - il sorvegliante dichiara ma non disarma -
+        # e nel server MCP, che il sorvegliante lo avvia, il tetto non si
+        # applicava PIU' IN NESSUNO DEI DUE RAMI. Togliere la condizione e'
+        # la meta' della cura che mancava.
+        # Col sorvegliante vivo il file puo' portare DUE note: la sua, di
+        # quando ha sfondato, e questa, di quanto era alla fine. Sono due
+        # istanti diversi e si tengono entrambe.
         # Sta QUI, dopo cancel_dump_traceback_later() e dopo f.close():
         # scriverlo prima avrebbe messo la riga in mezzo ai dump ancora
         # in corso, e il size letto da f.tell() non l'avrebbe vista.
-        if (_sorvegliante_unico is None or not _sorvegliante_unico.is_alive()):
-            try:
-                if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
-                    with open(path, "a", encoding="utf-8") as g:
-                        g.write(
-                            f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
-                            f"superato e rilevato alla CHIUSURA: nessun "
-                            f"sorvegliante era attivo in questo processo, "
-                            f"quindi i dump non sono stati fermati mentre "
-                            f"la chiamata era in corso. Il primo dump qui "
-                            f"sopra e' quello che contiene la diagnosi.\n")
-            except Exception:  # noqa: BLE001 - mai far fallire la chiamata
-                pass
+        try:
+            if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
+                with open(path, "a", encoding="utf-8") as g:
+                    g.write(
+                        f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
+                        f"superato, rilevato alla CHIUSURA: durante la "
+                        f"chiamata nulla ferma la crescita, perche' il dump "
+                        f"lo annulla solo chi lo ha armato ed e' la chiamata "
+                        f"appesa. Il primo dump qui "
+                        f"sopra e' quello che contiene la diagnosi.\n")
+        except Exception:  # noqa: BLE001 - mai far fallire la chiamata
+            pass
         _ARMED.release()
