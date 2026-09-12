@@ -60,6 +60,16 @@ leggono), lasciando l'acceleratore a **uno** che giudica.
 ⚠️ Questa è la falsificazione che più facilmente passa inosservata, perché A *sembra* una pulizia
 e invece è una scelta di prestazioni.
 
+**Aggiornamento del 12/09 — A è più larga di come la raccomandazione la descrive.** La prima cura
+era stata cercata con il nome dell'acceleratore e aveva trovato **due** punti. Ma un modello
+costruito **senza dire su quale dispositivo** prende la scheda da sé, e quel nome **nel nostro
+codice non compare**: la ricerca giusta non era la parola, era **«chi costruisce un modello»** —
+e i punti sono **cinque**, due dei quali già a posto, con il caricatore dell'embedder fra quelli
+che mancavano. ⇒ **A non è «una riga»**: è una leva esterna **più** uno sweep sui costruttori,
+tenuto da un presidio che cammina il pacchetto. Non la sposta dal primo posto; **le toglie
+l'aria di cosa gratuita**, e chi la vende come tale sta descrivendo la versione da due righe che
+copriva metà del problema.
+
 ### F3 — «il presidio della versione non copre i modi in cui quel servizio si rompe davvero»
 
 **L'affermazione sotto accusa**: che «dichiara e rifiuta» basti a irrobustire C. Il presidio

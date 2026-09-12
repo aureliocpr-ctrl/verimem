@@ -113,7 +113,20 @@ pagina**:
 | | cosa si esaurisce | chi lo consuma | come si cura |
 |---|---|---|---|
 | **memoria impegnata (commit)** | il limite della macchina, che l'ha già fatta cadere | ogni processo, per intero | **solo** riducendo i processi o ciò che ciascuno carica → §7 |
-| **memoria della scheda (VRAM)** | 90 % con 0 % di calcolo | i processi che toccano il giudice | **una leva di configurazione**: chi non calcola non prende l'acceleratore |
+| **memoria della scheda (VRAM)** | 90 % con 0 % di calcolo | i processi che costruiscono un modello | dall'esterno **una leva di configurazione**; dentro il prodotto, **ogni punto che costruisce un modello deve dire su quale dispositivo** — vedi sotto: non è una riga sola |
+
+⚠️ **CORREZIONE alla riga qui sopra, arrivata dalla misura successiva (12/09) — e la correggo perché
+era ottimista**: questa pagina aveva scritto che la scheda «si cura con una leva di
+configurazione». Vero dall'esterno, **falso dentro il prodotto**. Un modello costruito così
+
+    SentenceTransformer("nome-del-modello")     # senza dire su quale dispositivo
+
+**prende la scheda da sé**, e nel nostro codice **la parola che nomina l'acceleratore non compare
+mai**: nessuna ricerca di quella parola può trovarlo. La superficie vera della cura non è «le due
+righe che scelgono il dispositivo», è **ogni punto che costruisce un modello** — nella misura del
+12/09 erano cinque, di cui due già a posto, e il caricatore dell'embedder era fra quelli
+scoperti. Il presidio che regge non cerca il nome dell'acceleratore: cammina il pacchetto e
+**fallisce su ogni costruttore di modello che non dichiara il dispositivo**.
 
 ⚠️ **E la riga che tiene onesto tutto il resto**, dichiarata da chi ha misurato: **quanta parte
 dei 2,29 GB di commit in più venga dal contesto dell'acceleratore NON è misurata**. Le librerie
