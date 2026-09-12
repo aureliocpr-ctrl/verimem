@@ -39,10 +39,17 @@ _NOMI = _BASE + [n.upper() for n in _BASE]
 _NP = r"[^0-9A-Za-zÀ-ÿ_]"
 _PAT = re.compile("|".join(f"(?:^|{_NP}){n}(?:{_NP}|$)" for n in _NOMI))
 
-#: 🔒 IL TETTO, misurato su `origin/main` il 12/09/2026 alle 18:15.
+#: 🔒 IL TETTO, misurato su `origin/main`.
 #: **Si abbassa soltanto**, nello stesso commit della pulizia che lo consente.
 #: Se stai per ALZARLO, fermati: e' il difetto che questo file esiste per vedere.
-TETTO = 86
+#:
+#:   86  su `b96f4088`, il 12/09 alle 18:15
+#:    6  su `8acff799`, dopo il merge della PR di pulizia (12/09, 19:15)
+#:        — nella sola `docs/stato-reale/` sono passati da 81 a 1, e quell'1 e'
+#:          `00-ESAME.md`, escluso qui perche' i suoi nomi sono DATI DI PROVA.
+#:          I 6 che restano stanno fuori da `stato-reale/` (`ricerca/`,
+#:          `mondo-esterno/`): erano fuori dal perimetro di quella pulizia.
+TETTO = 6
 
 
 def _e_un_banco(f: Path) -> bool:
