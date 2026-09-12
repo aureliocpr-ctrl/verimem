@@ -1,6 +1,6 @@
 # T51 — piano di ripristino dei fatti ritirati per errore
 
-*Scritto dal ruolo Dati, 12 settembre 2026, ore 12:30 lette. Chi esegue è
+*Scritto dal ruolo Dati, 12 settembre 2026, ore 18:40 lette. Chi esegue è
 l'operatore Piattaforma: qui non c'è nessuna esecuzione, solo il comando, i
 conteggi attesi e i limiti.*
 
@@ -13,104 +13,170 @@ conteggi attesi e i limiti.*
 ## 1. La porta, e le tre porte gemelle
 
 Il prodotto espone la stessa operazione su tre superfici, e tutte e tre
-chiamano `SemanticMemory.undo_destructive_op`:
+chiamano `SemanticMemory.undo_destructive_op` (`verimem/semantic.py:5601`):
 
 | superficie | comando |
 |---|---|
-| CLI | `verimem facts undo <op_id>` · elenco: `verimem facts undo-list --limit N` |
-| MCP | `hippo_undo_destructive_op` · elenco: `hippo_undo_list` |
-| SDK | `Memory.undo(op_id)` |
+| riga di comando | `verimem facts undo <op_id>` |
+| server di strumenti | `hippo_undo_destructive_op` |
+| libreria | `Memory.undo(op_id)` |
 
-**Per questo ripristino si usa la CLI**: è la porta che un utente ha, ed è
-l'unica delle tre che stampa la tabella con `expires` accanto a ogni riga.
+**Per questo ripristino si usa la riga di comando**: è la porta che un utente
+ha, ed è l'unica delle tre che stampa, accanto a ogni ritiro, **sia l'esito
+sia la maniglia per annullarlo**.
 
 ## 2. Che cosa fa, esattamente
 
-`undo_log.undo_op` rilegge lo snapshot `pre_row_json` e lo riscrive con
-`INSERT OR REPLACE`, **tollerante allo schema**: rilegge le colonne vive con
-`PRAGMA table_info(facts)` prima di ricostruire la riga, quindi una migrazione
-avvenuta dopo l'operazione non rompe il ripristino. Poi stampa `undone_at`,
-così un secondo undo è un no-op.
+`undo_log.undo_op` (`verimem/undo_log.py:199`) rilegge lo snapshot
+`pre_row_json` e lo riscrive con `INSERT OR REPLACE`, **tollerante allo
+schema**: rilegge le colonne vive con `PRAGMA table_info(facts)` prima di
+ricostruire la riga, quindi una migrazione avvenuta dopo l'operazione non
+rompe il ripristino. Poi stampa `undone_at`, così un secondo undo è un no-op.
 
-Il campo che conta nella risposta è `action`, con quattro valori:
+Lo snapshot è preso **prima** dell'UPDATE e nella **stessa transazione**
+(`verimem/semantic.py:5944-5946`): la riga salvata è quella di un fatto
+**vivo**, con `superseded_by` nullo. Ripristinarla è ciò che rimette il fatto
+in circolo.
 
-| `action` | significato |
-|---|---|
-| `restored` | fatto rimesso com'era prima del ritiro |
-| `already_undone` | già ripristinato: `undone_at` valorizzato |
-| `expired` | la finestra di sette giorni è passata |
-| `not_found` | handle inesistente |
+Il campo che conta nella risposta è `action`, con quattro valori
+(`verimem/cli.py:3756-3771`):
+
+| `action` | significato | uscita |
+|---|---|---|
+| `restored` | fatto rimesso com'era prima del ritiro | 0 |
+| `already_undone` | già ripristinato: `undone_at` valorizzato | 0 |
+| `expired` | la finestra di sette giorni è passata | 0 |
+| `not_found` | handle inesistente | **1** |
+
+⚠️ **Tre dei quattro esiti escono con 0.** Un lotto che stampa `expired` su
+tutte le righe termina «bene»: l'esito si legge **riga per riga**, non
+dall'uscita del processo.
 
 ## 3. Il comando, in tre passi
 
-**Passo 1 — la fotografia PRIMA (sola lettura).** Una query sul database dei
-fatti, senza toccarlo:
-
-```sql
-SELECT COUNT(*) AS ritiri_totali
-  FROM facts WHERE superseded_by IS NOT NULL;
-
-SELECT COUNT(*) AS maniglie_valide
-  FROM facts_undo_log
- WHERE op_type = 'supersede'
-   AND undone_at IS NULL
-   AND ttl_expires_at > strftime('%s','now');
-
-SELECT COUNT(*) AS riparabili_same_source
-  FROM facts_undo_log u JOIN facts f ON f.id = u.fact_id
- WHERE u.op_type = 'supersede' AND u.undone_at IS NULL
-   AND u.ttl_expires_at > strftime('%s','now')
-   AND f.superseded_by IS NOT NULL
-   AND f.superseded_reason LIKE 'same-source evolution%';
-```
-
-**Passo 2 — l'elenco dalla porta**, che è ciò che vedrebbe l'utente:
+**Passo 1 — la fotografia PRIMA, dalla porta.** Il quartetto canonico, che
+porta con sé la propria definizione di «servibile»:
 
 ```
-verimem facts undo-list --limit 100
+verimem facts retirement-log --counts
 ```
 
-**Passo 3 — il ripristino, uno per volta**, sugli `op_id` del passo 2 il cui
-`fact_id` compare nell'elenco del passo 1:
+stampa `written / servable / retired / quarantined` più la formula
+(`verimem/retirement_log.py:756`). ⚠️ **Si annota `retired` E `servable`**: il
+ripristino tocca `superseded_by`, non `status`, e il predicato di servibilità
+è `superseded_by IS NULL AND status NOT IN ('quarantined')`
+(`verimem/retirement_log.py:80`). Sono due numeri diversi e si muovono di
+quantità diverse — §4.
+
+**Passo 2 — il lotto, con la maniglia nella stessa riga:**
+
+```
+COLUMNS=200 verimem facts retirement-log --reason "same-source evolution" --limit 100
+```
+
+La colonna `undo` porta **l'op_id se il ritiro è reversibile, altrimenti il
+perché no** — «nessuno scatto», «finestra scaduta», «già annullato»
+(`verimem/cli.py:3982-3983`). Il filtro `--reason` è un confronto **esatto** su
+`superseded_reason` (`verimem/retirement_log.py:157-159`) e la stringa scritta
+dal prodotto è esattamente `same-source evolution` (`verimem/client.py:982`,
+`verimem/mcp_server.py:13956`).
+
+> ⚠️ **Perché NON `facts undo-list`.** Quel comando elenca le maniglie valide
+> ma **non porta il motivo del ritiro** (`verimem/cli.py:3778-3804`): con esso
+> il lotto si seleziona incrociando a mano una tabella di op_id con una query
+> SQL sui fact_id. `retirement-log --reason` restituisce le righe già filtrate
+> **e** l'op_id, da una porta sola, senza SQL. La capacità c'era: non era usata.
+
+**Passo 3 — il ripristino, uno per volta**, sugli op_id raccolti al passo 2:
 
 ```
 verimem facts undo <op_id>
 ```
 
-⚠️ **Uno per volta e con l'esito letto**: `action` va guardato riga per riga.
-Un `expired` in mezzo al lotto non è un errore dell'operatore — è la finestra
-che è passata mentre il lotto girava.
+## 3bis. Le tre trappole della copia (tutte e tre stanno fra il passo 2 e il 3)
 
-## 4. I conteggi attesi
+1. **L'op_id è lungo 16 caratteri esadecimali** (`uuid4().hex[:16]`,
+   `verimem/undo_log.py:176`). La tabella è una griglia Rich su console a
+   larghezza automatica (`verimem/cli.py:202`) e su terminale stretto tronca
+   con un'ellissi — il difetto è dichiarato nel prodotto stesso
+   (`verimem/cli.py:3740-3744`: incollare ciò che si vede risponde «not
+   found»). ⇒ **`COLUMNS=200` davanti al comando**, e il controllo prima di
+   incollare: **16 caratteri, tutti in `0-9a-f`, nessun «…»**.
+2. **Il prefisso risolve solo fra le 200 maniglie valide più recenti**
+   (`verimem/cli.py:3746`: `list_undoable_ops(limit=200)`). Sotto quella
+   soglia il prefisso è comodo; sopra, un prefisso legittimo risponde
+   `not found` **senza dire perché**. ⇒ Con 90 maniglie valide (misura del 10
+   settembre) siamo dentro, ma **si incolla l'op_id intero**, non il prefisso:
+   costa niente e toglie il caso ambiguo.
+3. **Un prefisso che matcha più di una maniglia esce con 2** e non ripristina
+   niente (`verimem/cli.py:3749-3752`). È un esito distinto da `not_found` e
+   va contato a parte.
 
-🔴 **I numeri vanno RILETTI al momento dell'esecuzione, non presi da qui.** La
-finestra scorre: ogni ora una fetta di maniglie scade. I numeri qui sotto sono
-la fotografia del **10 settembre alle 21:27**, e servono come ordine di
-grandezza e come verifica che il righello sia lo stesso, non come attesa:
+## 4. Il conteggio atteso dopo — la predizione, e il comando che la smentisce
+
+Sia **R** il numero di righe che hanno stampato `restored`. Dopo il lotto, con
+`verimem facts retirement-log --counts` rieseguito:
+
+| grandezza | prima | dopo, atteso |
+|---|---|---|
+| `retired` | N | **N − R** |
+| voci `facts_undo_log` con `undone_at` valorizzato | M | **M + R** |
+| `servable` | S | **S + R − q** |
+| `written` | W | **W** (invariato) |
+| righe rese da una ricerca sul contenuto ripristinato | 0 | **≥ 1** |
+
+dove **q** = quanti dei fatti ripristinati erano `quarantined` **al momento
+dello scatto**. Lo snapshot rimette la riga com'era, `status` compreso: un
+fatto fermato dal gate e poi ritirato torna con `superseded_by` nullo **e
+ancora quarantinato** — esce dai `retired` e non entra nei `servable`.
+
+🔑 **`q` è la ragione per cui la prima riga e la terza non sono la stessa
+riga.** Se si annota solo `retired`, un lotto che non ha restituito **nessun
+fatto all'utente** mostra lo stesso calo. Predizione dichiarata: **q = 0** su
+questo lotto (un fatto quarantinato non arriva alla politica della
+supersessione), ed è **falsificabile dal comando stesso** — se `servable` sale
+di meno di `R`, la predizione è sbagliata e il numero di `q` è la differenza.
+
+**I due conteggi centrali si muovono della stessa quantità in direzioni
+opposte.** Se non lo fanno, qualcosa fuori dal lotto ha scritto durante
+l'esecuzione, e il lotto va rimisurato prima di dichiararlo.
+
+**L'ultima riga è quella che conta per chi usa il prodotto:** il fatto non
+deve solo tornare nella tabella, deve tornare **quando lo si chiede**.
 
 ```
-ritiri nel corpus                      : 2414
-maniglie di undo valide                :   90
-riparabili fra i «same-source evolution»:   62   (su 530)
+verimem recall "<una parola del fatto ripristinato, scelta PRIMA di eseguire>"
+verimem facts search "<la stessa parola>"
+```
+
+⚠️ **Si sceglie prima**, non dopo: una parola scelta guardando l'esito misura
+la propria memoria, non il prodotto. **Due comandi e non uno**: `recall` è la
+porta che un utente usa (`verimem/cli.py:1573`), `facts search` la rotta sui
+soli fatti (`verimem/cli.py:3375`) — se il fatto torna da una e non
+dall'altra, il ripristino è a metà e lo si sa subito.
+
+**E l'indice non va ricostruito a mano.** `INSERT OR REPLACE` passa per un
+DELETE e un INSERT sulla tabella `facts`, e i trigger `facts_fts_ad` /
+`facts_fts_ai` (`verimem/bm25_rank.py:165-177`) rifanno la riga indicizzata;
+l'embedding è una **colonna di `facts`** (`verimem/semantic.py:668`), quindi
+lo snapshot lo riporta con sé.
+📌 **NON VERIFICATO da esecuzione** — letto nel codice, non eseguito: il
+controllo è la ricerca qui sopra, che è rossa se questa lettura è sbagliata.
+
+### I numeri di riferimento, e perché non sono l'attesa
+
+🔴 **Vanno RILETTI al momento dell'esecuzione.** La finestra scorre: ogni ora
+una fetta di maniglie scade. Fotografia del **10 settembre alle 21:27**:
+
+```
+ritiri nel corpus                        : 2414
+maniglie di undo valide                  :   90
+riparabili fra i «same-source evolution» :   62   (su 530)
 ```
 
 **Atteso il 12 settembre**: meno di 90 e meno di 62, perché due giorni di
-finestra sono passati e le maniglie più vecchie di sette giorni sono uscite.
-**Se il numero fosse uguale o maggiore, il righello è sbagliato** — è il
-controllo che questo piano porta con sé.
-
-**Dopo il ripristino**, attesi:
-
-| grandezza | prima | dopo |
-|---|---|---|
-| fatti con `superseded_by` non nullo | N | N − (quanti `restored`) |
-| voci con `undone_at` valorizzato | M | M + (quanti `restored`) |
-| righe rese da una ricerca sul contenuto ripristinato | 0 | ≥ 1 |
-
-L'ultima riga è quella che conta per chi usa il prodotto: **il fatto non deve
-solo tornare nella tabella, deve tornare quando lo si chiede**. La verifica è
-una ricerca dalla porta su una parola del fatto ripristinato, scelta prima di
-eseguire.
+finestra sono passati. **Se il numero fosse uguale o maggiore, il righello è
+sbagliato** — è il controllo che questo piano porta con sé.
 
 ## 5. Che cosa NON si ripristina, e perché
 
@@ -126,32 +192,41 @@ eseguire.
 4. **La potatura volontaria** (gli snapshot di sessione, la deduplicazione di
    testo identico). Ripristinarli peggiorerebbe il corpus invece di ripararlo.
 
-## 6. La conseguenza da mettere in conto
+## 6. Le due conseguenze da mettere in conto
 
-Lo snapshot rimette il fatto vecchio **com'era**, cioè con `superseded_by`
-nullo. **Il fatto nuovo non viene toccato.** ⇒ Dopo il ripristino i due fatti
-sono **entrambi vivi**, e se erano davvero in contraddizione la memoria ne
+**(a) Dopo il ripristino i due fatti sono entrambi vivi.** Lo snapshot rimette
+il vecchio com'era; **il nuovo non viene toccato** — l'undo scrive una riga
+sola, quella del perdente. Se erano davvero in contraddizione, la memoria ne
 serve due invece di uno.
 
 Per i ritiri di questo lotto è l'esito **voluto**: sono letture complementari
 della stessa evidenza (la mediana e il minimo della stessa esecuzione, i due
-bracci dello stesso confronto), e tenerle entrambe è la riparazione. Ma è un
-esito che va dichiarato prima di eseguire, non scoperto dopo: **chi ripristina
-un ritiro legittimo si ritrova due valori dello stesso dato**, e nessuno dei
-due dichiara di essere il più recente.
+bracci dello stesso confronto), e tenerle entrambe è la riparazione. Ma va
+dichiarato prima di eseguire, non scoperto dopo: **chi ripristina un ritiro
+legittimo si ritrova due valori dello stesso dato**, e nessuno dei due dichiara
+di essere il più recente. ⇒ Per questo il lotto è ristretto ai ritiri con
+`superseded_reason` esattamente `same-source evolution`, e non esteso a tutti i
+ritiri con una maniglia valida.
 
-⇒ Per questo il lotto va ristretto ai ritiri con `superseded_reason` che
-comincia per `same-source evolution`, e non esteso a tutti i ritiri con una
-maniglia valida.
+**(b) Il ripristino sovrascrive la riga INTERA, non solo le tre colonne del
+ritiro.** `INSERT OR REPLACE` riscrive tutte le colonne dallo snapshot: ciò che
+è cambiato su quel fatto **dopo** il ritiro — un `last_verified_at`
+aggiornato, una quarantena decisa da un triage, un `grounding_score` arrivato
+più tardi — **torna al valore di prima e non è recuperabile**. Sul lotto di
+ritiri automatici questo è improbabile ma non impossibile, e non esiste un
+comando che lo annulli: l'undo dell'undo non c'è.
 
 ## 7. Il criterio di fine
 
 Il ripristino è finito quando:
 
-- ogni `op_id` del lotto ha un esito letto (`restored`, `expired` o
-  `already_undone`), e il conto dei tre torna al totale del lotto;
-- i due conteggi del passo 1, rieseguiti, si sono mossi **della stessa
+- ogni op_id del lotto ha un esito letto (`restored`, `expired`,
+  `already_undone`, `not_found` o prefisso ambiguo), e il conto dei cinque
+  torna al totale del lotto;
+- `retired` e le voci con `undone_at` valorizzato si sono mossi **della stessa
   quantità** e in direzioni opposte;
+- `servable` è salito di `R`, oppure la differenza è spiegata da `q` **con i
+  fatti nominati**, non stimata;
 - una ricerca dalla porta su un fatto ripristinato lo rende;
 - l'esito è scritto con l'output, compresi gli `expired`: **un ripristino
   parziale annunciato come completo è peggio di nessun ripristino**, perché
