@@ -201,9 +201,23 @@ def test_un_caso_che_PASSA_dagli_agito_deve_dare_lo_stesso_nome_e_oggi_NO(
     DICE invece di passare — sarebbe un verde ottenuto misurando il ramo
     sbagliato.
     """
+    # ⚠️ IL CASO E' SCELTO PERCHE' MORDE SENZA IL GIUDICE CONTRARIO, e la
+    # prima stesura non mordeva affatto: citava un id esadecimale
+    # (`7c1a9e02`), e in CI il fatto entrava `model_claim` con `layer []`.
+    # La ragione sta nell'estrattore: una forma lettere+cifre e' «la forma di
+    # un codice prodotto» e viene CANCELLATA prima del confronto, quindi per
+    # `L4.1` in quel claim non c'era nessun numero. La guardia contro il vuoto
+    # ha fatto il suo mestiere e ha fermato il banco invece di lasciarlo
+    # passare: il verde sarebbe stato peggio del rosso.
+    #
+    # ⇒ Serve un NUMERO CON UNITA' che la fonte non contiene — la forma del
+    # caso che il prodotto ha gia' registrato («… 176,6 MB», moat 99.89,
+    # `L4.1`). La meta' verbatim tiene alto il giudice; il dettaglio di cui la
+    # fonte TACE e' proprio la classe che il gate ammette (misurato: 8/10 e
+    # 9/10) e che `L4.1` esiste per prendere.
     fonte = ("verbale: la coda aveva 500 elementi\n"
              "rettifica: la coda aveva 540 elementi\n")
-    claim = "La coda ha 540 elementi (rettifica del fatto 7c1a9e02)."
+    claim = "La coda ha 540 elementi e occupa 176 MB."
 
     proc = _dalla_riga_di_comando(tmp_path / "cli", claim, fonte)
     mem, ricevuta = _dall_sdk(tmp_path / "sdk", claim, fonte)
