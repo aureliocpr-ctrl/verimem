@@ -63,9 +63,21 @@
 # divergono.
 name: messaggi
 
+# ⚠️ `pull_request` SENZA `branches:`, di proposito. Con il filtro su `main`
+# una PR impilata su un altro ramo non fa partire niente — e @ws1 ha misurato
+# che due delle nostre (base `aldo/tetto` e `galileo/t-map-11-ground`) hanno
+# ZERO check: `gh pr checks` non dice «rosso», dice **niente**, e il vuoto si
+# legge come un verde. Una PR che aggiunge commit va controllata comunque, e
+# `base...head` misura cio' che aggiunge qualunque sia la base.
+#
+# 📌 IL LIMITE, perche' non sembri piu' di quel che e': questo NON accende il
+# controllo sulle due PR di oggi. Per un evento `pull_request` i workflow si
+# leggono dal merge di base e testa, quindi finche' quelle basi non ripartono da
+# un main che contiene questo file, il file li' non c'e' e non gira niente.
+# ⇒ vale per le PR impilate da qui in avanti. (Ragionato, NON verificato: non
+# ho un modo di provarlo senza fondere.)
 on:
-  pull_request:
-    branches: [main]
+  pull_request: {}
   push:
     branches: [main]
   workflow_dispatch: {}
