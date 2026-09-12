@@ -618,9 +618,10 @@ cold-start write is de-duplicated). Per-user scoped ops
 **What the shared server does NOT carry.** It serves **facts**. Episodes stay
 local by design: the tools that mutate episodes act on the session's own store
 even behind a server — for them the local store is the right answer, not a
-fallback. The set is deliberately not enumerated here, because the product does
-not yet define it: there is no constant that marks a tool as episode-mutating,
-so any list in this file would be a closed number nobody can check. Fact-mutating
+fallback. The set is deliberately not enumerated here: a list in prose cannot be
+checked against the code, and the one that used to be here was wrong three ways
+at once — it named two tools that write nothing, missed three that do, and no
+criterion could close it. Fact-mutating
 tools behave the opposite way: behind a server they are **refused** rather than
 applied locally, because reporting "removed" after touching the wrong store is
 worse than refusing. That refusal holds while the server answers; if it stops
