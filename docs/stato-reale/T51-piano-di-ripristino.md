@@ -52,7 +52,49 @@ Il campo che conta nella risposta è `action`, con quattro valori
 tutte le righe termina «bene»: l'esito si legge **riga per riga**, non
 dall'uscita del processo.
 
-## 3. Il comando, in tre passi
+## 3. Il comando, in quattro passi
+
+**Passo 0 — la copia di sicurezza, e non è una formalità.** L'undo dell'undo
+**non esiste** (§6b: `INSERT OR REPLACE` riscrive la riga intera). Questa copia
+è l'unica marcia indietro del lotto:
+
+```
+verimem facts backup --tier manual
+verimem facts safety
+```
+
+Il primo stampa `backup ok: <path>` con `size`, **`facts: <n>`** e `tier`, e
+verifica un'impronta di integrità contro il DB vivo prima di dichiarare
+riuscito (`verimem/cli.py:4019-4030`). ⚠️ **Il `facts: <n>` si confronta con il
+`written` del passo 1**: se i due numeri non coincidono, la copia è di un altro
+store — è la trappola dei due DB, e qui si accende prima di fare danni.
+
+Il secondo elenca l'ultimo backup per tier con la sua età e il numero di
+maniglie annullabili (`verimem/cli.py:4077-4083`): è il controllo che la copia c'è
+**dalla porta**, non guardando una cartella.
+
+📌 Il tier `manual` **non viene ruotato**: `DEFAULT_POLICY`
+(`verimem/backup.py:84-88`) ha solo `daily`/`weekly`/`monthly`, e la rotazione
+itera su quelle chiavi (`verimem/backup.py:513`). ⇒ La copia resta finché non
+la si toglie a mano — voluto qui, ma è un file che nessuno cancella per te.
+
+**La via di ritorno, se il lotto va storto:**
+
+```
+verimem facts restore <il path stampato dal backup> --yes
+```
+
+Tiene una **copia pre-restore** e stampa `facts: <n>` alla fine
+(`verimem/cli.py:4070-4074`); **rifiuta** un backup che non è di questo store o
+non è un DB SQLite, senza toccare il bersaglio (`verimem/cli.py:4066-4069`).
+Senza `--yes` chiede conferma: in coda a un lotto automatico, si passa `--yes`
+**solo dopo aver riletto il path**.
+
+🔑 **Il registro delle maniglie sta nello stesso file dei fatti** — `undo_op`
+scrive `facts_undo_log` sulla connessione di `facts`
+(`verimem/undo_log.py:248-251`, `verimem/semantic.py:5609-5610`). ⇒ Un
+restore riporta indietro **anche gli `undone_at`**: il lotto non resta a
+metà, si rifà da capo con le stesse maniglie.
 
 **Passo 1 — la fotografia PRIMA, dalla porta.** Il quartetto canonico, che
 porta con sé la propria definizione di «servibile»:
@@ -214,12 +256,16 @@ ritiro.** `INSERT OR REPLACE` riscrive tutte le colonne dallo snapshot: ciò che
 aggiornato, una quarantena decisa da un triage, un `grounding_score` arrivato
 più tardi — **torna al valore di prima e non è recuperabile**. Sul lotto di
 ritiri automatici questo è improbabile ma non impossibile, e non esiste un
-comando che lo annulli: l'undo dell'undo non c'è.
+comando che lo annulli: l'undo dell'undo non c'è. ⇒ **È la ragione del
+passo 0**: la copia di sicurezza è l'unica marcia indietro che questo
+lotto ha.
 
 ## 7. Il criterio di fine
 
 Il ripristino è finito quando:
 
+- la copia del passo 0 esiste e il suo `facts:` coincideva con `written`
+  **prima** di iniziare (dopo non prova più niente);
 - ogni op_id del lotto ha un esito letto (`restored`, `expired`,
   `already_undone`, `not_found` o prefisso ambiguo), e il conto dei cinque
   torna al totale del lotto;
