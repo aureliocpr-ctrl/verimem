@@ -13,10 +13,14 @@ CONTRACT — observability ONLY:
   * a fast call leaves NO file (the header-only file is cleaned up).
 
 IL TETTO SUI FILE, e quando e' attivo (contratto, riscritto 2026-09-12):
-  * si applica alla CHIUSURA del contesto, SEMPRE e in ogni processo, e
-    TAGLIA: si tiene la testa (dove sta la diagnosi) e si butta la coda.
-    Tardi, perche' il file nel frattempo e' cresciuto sul disco, ma il
-    file che resta e' dentro il tetto;
+  * si applica alla CHIUSURA del contesto, in ogni processo, e TAGLIA: si
+    tiene la testa (dove sta la diagnosi) e si butta la coda. Tardi, perche'
+    il file nel frattempo e' cresciuto sul disco, ma il file che resta e'
+    dentro il tetto;
+  * ⚠️ L'ECCEZIONE, che e' proprio il guasto per cui questo modulo esiste:
+    se il processo MUORE invece di fallire - l'access violation raccontata
+    in `_annulla_il_dump` - il `finally` non viene eseguito e il file resta
+    intero sul disco. Un processo morto non taglia niente;
   * MENTRE la chiamata e' in corso NESSUNO ferma piu' la crescita. Il
     sorvegliante, se avviato, la DICHIARA nel file appena sfonda, ma non
     disarma il timer: il dump lo annulla solo chi lo ha armato, e il
@@ -262,9 +266,10 @@ def hang_trace(label: str, budget_s: float):
         # e nel server MCP, che il sorvegliante lo avvia, il tetto non si
         # applicava PIU' IN NESSUNO DEI DUE RAMI. Togliere la condizione e'
         # la meta' della cura che mancava.
-        # Col sorvegliante vivo il file puo' portare DUE note: la sua, di
-        # quando ha sfondato, e questa, di quanto era alla fine. Sono due
-        # istanti diversi e si tengono entrambe.
+        # ⚠️ LA NOTA DEL SORVEGLIANTE NON SOPRAVVIVE, e va detto qui: lui
+        # scrive in append OLTRE il tetto, e il taglio tiene la testa. Il file
+        # finale porta UNA nota, questa. Chi cerca la nota del sorvegliante in
+        # un trace tagliato non la trova, e non e' un guasto: e' il taglio.
         # Sta QUI, dopo cancel_dump_traceback_later() e dopo f.close():
         # scriverlo prima avrebbe messo la riga in mezzo ai dump ancora
         # in corso, e il size letto da f.tell() non l'avrebbe vista.

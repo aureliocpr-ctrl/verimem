@@ -204,6 +204,20 @@ def test_col_sorvegliante_vivo_il_tetto_si_applica_lo_stesso_alla_chiusura(
         with w.hang_trace("col_sorvegliante", 0.05):
             time.sleep(0.3)
 
+        # ⚠️ IL CONTROLLO ROVESCIATO GUARDA IL THREAD, NON IL TESTO, e la
+        # ragione e' misurata. Cercare la nota del sorvegliante nel file non
+        # puo' accendersi MAI: lui la scrive in append, ma il writer di
+        # faulthandler tiene il proprio offset e ci ripassa sopra — misurato su
+        # questo modulo con un sorvegliante vero vivo, 0 occorrenze sia durante
+        # la chiamata (7831 byte) sia dopo la chiusura (271 byte). Prima era
+        # scritto cosi', e passava sempre: un controllo che non puo' fallire
+        # non e' un controllo. La domanda vera e' «c'era un thread vero in
+        # giro?», e a quella risponde il thread.
+        assert vivo is None or not vivo.is_alive(), (
+            "un sorvegliante VERO era ancora vivo durante questa cella: puo' "
+            "aver toccato il file, quindi la misura non e' quella che dice di "
+            "essere. Il join a inizio cella non lo ha fermato.")
+
         file = list(tmp_path.glob("hang-*.txt"))
         assert file, "nessun trace scritto per una chiamata oltre budget"
         testo = file[0].read_text(encoding="utf-8", errors="replace")
@@ -211,11 +225,5 @@ def test_col_sorvegliante_vivo_il_tetto_si_applica_lo_stesso_alla_chiusura(
             "col sorvegliante vivo la chiusura NON ha applicato il tetto: e' il "
             "ramo che prende il server MCP, dove il file cresce e nessuno lo "
             "dichiara. Coda del trace: " + testo[-300:])
-        # CONTROLLO ROVESCIATO: se avesse scritto il sorvegliante vero, questa
-        # cella misurerebbe il caso opposto e passerebbe lo stesso.
-        assert "raggiunto: i dump successivi" not in testo, (
-            "ha scritto il sorvegliante, non la chiusura: un thread vero era "
-            "ancora vivo, quindi questa cella non ha misurato il fallback. "
-            "Coda del trace: " + testo[-400:])
     finally:
         w._ferma_il_sorvegliante.clear()
