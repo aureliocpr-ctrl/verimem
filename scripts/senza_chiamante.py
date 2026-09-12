@@ -217,6 +217,7 @@ def analizza(pacchetto: pathlib.Path, pyproject: pathlib.Path = PYPROJECT,
         "C2_nessuna_porta": sorted(c2),
         "importatori": importatori,
         "moduli": len(moduli),
+        "pacchetto": str(pacchetto.resolve()),
         "non_letti": non_letti,
         "entry_point": sorted(entry),
     }
@@ -232,7 +233,12 @@ def _percorso_umano(nome: str) -> str:
 
 def stampa(risultato: dict, dettaglio: bool) -> int:
     c2, c1, b = risultato["C2_nessuna_porta"], risultato["C1_solo_python_m"], risultato["B_entry_point"]
-    print(f"senza_chiamante.py — {risultato['moduli']} moduli sotto verimem/ (ast)")
+    # il percorso ASSOLUTO: vedi la nota in copie.py — uno script ancorato a __file__
+    # lanciato da un altro albero misura quello, e il verde non vale niente.
+    print(f"senza_chiamante.py — {risultato['moduli']} moduli sotto {risultato['pacchetto']} (ast)")
+    if risultato["moduli"] == 0:
+        print("VERDETTO: ROSSO — zero moduli letti: questo non è l'albero del prodotto.")
+        return 1
     if risultato["non_letti"]:
         print(f"  ATTENZIONE: {len(risultato['non_letti'])} file NON letti: i loro import "
               "mancano, quindi questi numeri sono un MASSIMO")

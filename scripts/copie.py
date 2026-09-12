@@ -158,6 +158,7 @@ def conta(pacchetto: pathlib.Path, copia_finta: str | None = None) -> dict:
         "status": status,
         "status_senza_user_belief": senza_user_belief,
         "non_letti": non_letti,
+        "pacchetto": str(pacchetto.resolve()),
         "file_letti": len(list(pacchetto.rglob("*.py"))) - len(non_letti),
     }
 
@@ -174,7 +175,15 @@ CRITERI = {
 
 def stampa(risultato: dict, dettaglio: bool) -> int:
     misure = risultato["misure"]
-    print(f"copie.py — {risultato['file_letti']} file letti sotto verimem/ (ast)")
+    # il percorso ASSOLUTO, non «verimem/»: questo script si ancora a __file__, quindi
+    # lanciato da un altro albero misura QUELL'albero e stampa un verde che non vale
+    # (trovato in revisione da ws1 il 09/09: una copia dello script nella scratchpad
+    # dava VERDE con EXIT=0 perché lì `verimem/` non esiste).
+    print(f"copie.py — {risultato['file_letti']} file letti sotto {risultato['pacchetto']} (ast)")
+    if risultato["file_letti"] == 0:
+        print("VERDETTO: ROSSO — zero file letti: questo non è l'albero del prodotto. "
+              "Un cricchetto che misura la cartella sbagliata stampa sempre verde.")
+        return 1
     if risultato["non_letti"]:
         print(f"  ATTENZIONE: {len(risultato['non_letti'])} file NON letti (SyntaxError): "
               "il conteggio è un minimo, non un totale")
