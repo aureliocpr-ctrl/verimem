@@ -18,10 +18,15 @@
 #     squash_merge_commit_title   : COMMIT_OR_PR_TITLE
 #
 # `COMMIT_MESSAGES` vuol dire che il corpo del commit di squash e' la
-# CONCATENAZIONE dei messaggi dei commit della PR. Si vede a occhio su
-# `d60cc326`, che e' uno squash: il suo corpo sono i messaggi originali uno
-# dietro l'altro. ⇒ I messaggi di una PR arrivano su main per intero, ed e'
-# esattamente per questo che il log di main e' come lo abbiamo misurato.
+# CONCATENAZIONE dei messaggi dei commit della PR. ⇒ I messaggi di una PR
+# arrivano su main per intero.
+#
+# 📌 E oggi ci arrivano lo stesso, per un'altra strada: le PR si sono fuse in
+# REBASE (`allow_rebase_merge` acceso), che mette ogni messaggio su main uno per
+# uno. Misurato sui sette commit dell'ultima PR fusa: zero sono antenati di
+# main, ma i loro sette messaggi ci sono tutti, con SHA nuovi. In tutt'e due i
+# modi il messaggio che scrive chi lavora e' quello che l'utente legge — che e'
+# la ragione per cui questo controllo esiste.
 #
 # ⇒ Il controllo e' ROSSO sulla PR, non un avviso. Misurato prima di spedirlo:
 #
