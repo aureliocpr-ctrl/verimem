@@ -113,8 +113,31 @@ def _ritiri(seconda: str) -> tuple[int, str, str]:
     prima = mem.add("La coda ha 500 elementi.", topic="t/coppia",
                     verified_by=FONTE, source=SORGENTE, validate="full")
     fid = prima.get("id") or prima.get("fact_id") or ""
+    #: ⚠️ LA FONTE DEVE CONTENERE ANCHE L'ID CHE LA PROPOSIZIONE CITA, e la
+    #: ragione è che senza di esso questo banco non è deterministico.
+    #:
+    #: `seconda` diventa, per esempio, «La coda ha 540 elementi (rettifica del
+    #: fatto 7c1a9e02).» — e quell'id **cambia a ogni esecuzione**, mentre
+    #: `SORGENTE` non lo contiene. Con `validate="full"` il moat gira davvero e
+    #: giudica la frase INTERA: un pezzo che la fonte non dice abbassa il
+    #: punteggio, e se il punteggio si ferma vicino alla soglia l'esito oscilla
+    #: fra un'esecuzione e l'altra.
+    #:
+    #: Misurato in CI il 2026-09-12 sulla PR #27, che tocca solo la CLI e non
+    #: passa da qui: `1 failed, 12853 passed` su **una** gamba (ubuntu py3.11)
+    #: e verde sulle altre quattordici, col messaggio del banco stesso —
+    #: «CONTROLLO POSITIVO SPENTO: la rettifica e' entrata come 'quarantined'».
+    #: Non era la gamba: era la soglia.
+    #:
+    #: Aggiungendo l'id alla fonte, la proposizione non porta più materiale non
+    #: sostenuto e il giudizio torna stabile. Il presidio continua a misurare
+    #: la stessa cosa — «una rettifica esplicita ritira il valore vecchio» —
+    #: e `anti_confab_gate.py:749`, che è la decisione del 2026-07-25, non
+    #: viene toccato.
+    fonte_della_seconda = SORGENTE + (f"rettifica del fatto {fid}\n" if fid else "")
     ricevuta = mem.add(seconda.format(fid=fid), topic="t/coppia",
-                       verified_by=FONTE, source=SORGENTE, validate="full")
+                       verified_by=FONTE, source=fonte_della_seconda,
+                       validate="full")
     sid = ricevuta.get("id") or ricevuta.get("fact_id") or ""
     vivo = mem.semantic.get(sid) if sid else None
     stato = str(getattr(vivo, "status", None)) if vivo is not None else "ASSENTE"
