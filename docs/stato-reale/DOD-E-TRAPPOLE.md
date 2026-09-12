@@ -138,6 +138,47 @@ chiude una persona, e il documento dice **dove guardare**.
     per parentela, presente per contenuto riga per riga.
     **Si verifica il CONTENUTO** (`git show main:<file> | grep <la riga>`),
     non la parentela — e vale anche per «questa PR è già dentro?».
+    ✅ **E c'è una risposta migliore del `grep`, misurata il 12/09 sul primo
+    merge: si confronta l'ALBERO.** Un tree è un oggetto con un nome, e due
+    alberi uguali sono lo stesso contenuto bit per bit — non «lo stesso a
+    occhio»:
+    ```bash
+    git rev-parse <sha-che-ho-approvato>^{tree}
+    git rev-parse origin/main^{tree}
+    ```
+    Uguali ⇒ **il VIA dato su quello SHA si trasferisce al merge**, senza
+    rileggere niente. Diversi ⇒ qualcosa è entrato fra la revisione e la
+    fusione, e va guardato. È il modo più corto di rispondere a «il merge ha
+    portato quello che avevo approvato?», ed è immune allo squash, al rebase e
+    al cambio di SHA.
+    ⚠️ **MA «diversi» NON vuol dire «rileggi tutto»**, e il 12/09 l'ho misurato
+    due volte nella stessa sera: in tutti e due i casi gli alberi erano diversi
+    e **il VIA si trasferiva lo stesso**. L'uguaglianza del tree è una
+    scorciatoia che chiude la domanda in un comando; la disuguaglianza **apre
+    il diff**, non una nuova revisione. Le tre forme:
+    ```
+    tree UGUALE            -> chiuso. Il VIA si trasferisce, niente da leggere.
+    tree diverso, e il diff
+      e' un DOCUMENTO      -> leggi il diff e decidi. (Misurato su una PR
+                              riscritta: 1 file, +409 righe di prosa, zero
+                              righe di codice ⇒ il VIA vale.)
+    tree diverso perche'
+      lo squash e' RIBASATO
+      su un main piu' nuovo -> non confrontare lo STATO, confronta il
+                              CAMBIAMENTO:
+    ```
+    ```bash
+    git diff --stat <base-della-PR>..<tip-approvato>   # cio' che la PR porta
+    git diff --stat <squash>~1..<squash>               # cio' che il merge porta
+    comm -23 <(git diff --name-only <base>..<tip>|sort) \
+             <(git diff --name-only <squash>~1..<squash>|sort)   # deve essere VUOTO
+    ```
+    Misurato il 12/09 sul primo squash della giornata: la PR e il merge davano
+    entrambi `9 files changed, 1530 insertions(+), 15 deletions(-)` e nessun
+    file della PR mancava — **identico, con gli alberi diversi**, perché il
+    merge era stato ribasato su un main che nel frattempo aveva un'altra cura
+    dentro. Con la sola regola dell'albero avrei detto «rileggi tutto» in due
+    casi su due, e tutte e due le volte sarebbe stato uno spreco.
     🔴 **E NON dare per scontato quale modo sia stato usato.** Il 12/09 ho
     attribuito allo squash un effetto prodotto da un **rebase**: qui sono
     abilitati tutti e tre (`allow_squash_merge`, `allow_rebase_merge`,
