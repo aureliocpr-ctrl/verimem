@@ -107,6 +107,89 @@ def _ritiri(seconda: str) -> tuple[int, str, str]:
     «ritiri == 0» ottenuto perche' il moat ha quarantinato il secondo fatto
     sarebbe indistinguibile da uno ottenuto perche' il prodotto ha deciso di non
     ritirare. E' il controllo positivo, e va guardato in ogni test che pretende 0.
+
+    L'INTERMITTENZA: DUE CURE PROPOSTE, DUE RITIRATE (2026-09-12)
+    --------------------------------------------------------------
+    La causa ha un nome dalle 17:40 (`L4.1`, sotto), ma tutte e tre le cure
+    proposte prima di saperlo sono cadute: questo blocco esiste per impedire
+    che vengano riproposte.
+
+    ① ARRICCHIRE LA FONTE con l'id che la proposizione cita. Ritirata: misurato
+       su due piattaforme, la fonte arricchita ABBASSA il punteggio (99,95 ->
+       99,71) e avvicinerebbe il setup al confine invece di allontanarlo.
+
+    ② FISSARE L'ID citato, per togliere la variabilita'. Ritirata, e per una
+       ragione che vale a prescindere da tutto il resto:
+       `supersession_policy.references_fact(new_text, old_id)` cerca l'id
+       **dello store** dentro il testo nuovo. Con un id inventato la ricerca
+       non trova nulla, la guardia non si arma e i due presidi qui sotto
+       resterebbero VERDI misurando un caso che non esiste piu' — il peggiore
+       dei quattro stati di un test, quello che mente.
+
+    ③ RIPESCARE quando il punteggio del giudice sta sotto la soglia. Scritta e
+       ritirata nella stessa ora, e la ragione e' la piu' istruttiva:
+       **filtrava contro un numero che il prodotto butta.**
+
+    IL NUMERO CHE IL CODICE NOMINA NON E' QUELLO CHE USA
+    -----------------------------------------------------
+    `try_local_score` rende ``(punteggio, config_threshold)`` e il secondo vale
+    **99,64**. Ma `grounding_gate.resolve_write_threshold_for("local")` lo
+    SCARTA di proposito — «a moat admission cut above ~90/100 is a calibration
+    artifact, never a real operating point: ignore it» — e rende
+    ``LOCAL_CE_MOAT_THRESHOLD`` = **40,0**, che e' il valore usato al punto di
+    decisione (`anti_confab_gate.py`, `_threshold_of_record`).
+
+    ⇒ Gli otto id misurati stanno fra **99,6069 e 99,9746**: superano il taglio
+    in vigore di quasi sessanta punti. **Nessuno di loro puo' essere fermato
+    dal moat**, e la dispersione fra id — reale, 0,3677 — non spiega niente di
+    questa intermittenza::
+
+        deadbeef 99.6069   12345678 99.8257   00000000 99.8477
+        9f8e7d6c 99.9418   7c1a9e02 99.9477   a1b2c3d4 99.9548
+        ffffffff 99.9559   0a1b2c3d 99.9746        (run 34695954775,
+        job 103559354485 macos py3.12 · 103559354588 ubuntu py3.11)
+
+    LA CAUSA ERA GIA' SCRITTA NEL PRODOTTO — e non nel punteggio
+    -------------------------------------------------------------
+    `client.py` registra un caso riprodotto della STESSA forma: il moat
+    **APPROVA a 99.89** e a fermare la scrittura e' **`L4.1`**, il controllo
+    lessicale sui valori che la fonte non contiene. Le due cose convivono per
+    disegno.
+
+    ⇒ **Un grounding alto non dice che la scrittura sia passata.** Il
+    ragionamento «99,6 contro un taglio di 40, quindi non puo' essere la
+    soglia, quindi la causa e' ignota» e' sbagliato nell'ultimo passo, ed e'
+    quello che ha fatto perdere tre ore a piu' di uno.
+
+    ⚠️ E `quarantined_by` **NON basta**: in quel caso registrato scriveva il
+    generico `'gate'` mentre a decidere era `L4.1` — tanto che il giorno dopo
+    una lettura in buona fede concluse «non e' L4». **Un'etichetta generica si
+    legge come un'assenza e fa dedurre il contrario del vero.** Chi decide sta
+    nei WARNING della ricevuta, che portano il `layer`.
+
+    🔬 Resta APERTO, e va falsificato invece che creduto: **come L4.1 estragga
+    i valori.** Nel caso registrato erano «6 mb, 176», cioe' numeri con
+    un'unita' accanto; un id esadecimale nudo potrebbe non entrarci affatto.
+    Se ci entra, gli id con CIFRE sono i pericolosi e `deadbeef` il piu'
+    sicuro — l'opposto di quel che prediceva il punteggio. La prova e' una
+    riga: stampare i warning per ciascuno degli otto id.
+
+    ⇒ **E questo banco adesso quel campo LO LEGGE E LO STAMPA quando cade.**
+    Il campo c'era a tutte e tre le cadute e veniva buttato: la ricevuta di
+    ``add()`` lo porta, e la colonna nel DB pure. Tre run spesi per un rosso
+    che aveva la risposta dentro.
+
+    ⚠️ IL PRESIDIO RESTA ACCESO — decisione del 2026-09-12 alle 17:00, contro
+    due proposte, una delle quali mia. Erano ``xfail(strict=False)`` e uno
+    SKIP, per smettere di far cadere PR estranee. **Sono le due forme dello
+    stesso silenzio**, e la regola e' che un test o misura qualcosa e resta
+    acceso, o si TOGLIE con la ragione scritta e il ticket che dice cosa lo
+    sostituisce. Questo misura — sette esecuzioni su otto arriva in fondo e
+    copre un caso che nessun'altra misura vede — quindi resta.
+
+    🔑 Quello che cambia non e' il verdetto: e' che adesso **ogni caduta paga
+    il proprio costo**, perche' consegna il nome dello schermo che ha fermato
+    il fatto invece di lasciare aperta la domanda per la quarta volta.
     """
     db = Path(tempfile.mkdtemp()) / "coppia.db"
     mem = Memory(str(db))
@@ -122,9 +205,45 @@ def _ritiri(seconda: str) -> tuple[int, str, str]:
     try:
         riga = conn.execute(
             "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL").fetchone()
-        return (int(riga[0]) if riga else 0), fid, stato
+        ritiri = int(riga[0]) if riga else 0
+        nel_db = ""
+        if sid:
+            q = conn.execute(
+                "SELECT quarantined_by FROM facts WHERE id = ?", (sid,)).fetchone()
+            nel_db = (q[0] if q and q[0] else "") or ""
     finally:
         conn.close()
+
+    # ⚠️ `quarantined_by` NON BASTA, ed e' il campo che ha gia' ingannato
+    # qualcuno: nel caso riprodotto in `client.py` il moat APPROVA a 99.89, a
+    # fermare e' `L4.1`, e la colonna scrive il generico `'gate'` — tanto che
+    # il giorno dopo una lettura in buona fede concluse «non e' L4». Chi decide
+    # sta nei WARNING della stessa ricevuta, che portano il `layer`. Si
+    # stampano tutti e tre: se l'etichetta generica e il layer non coincidono,
+    # la differenza e' essa stessa il reperto.
+    strati = [str(w.get("layer", "?"))
+              for w in (ricevuta.get("warnings") or []) if isinstance(w, dict)]
+    assert stato in ("model_claim", "user_manual"), (
+        f"CONTROLLO POSITIVO SPENTO: il secondo fatto e' entrato come "
+        f"{stato!r}, quindi non c'era niente che potesse ritirare il primo.\n"
+        f"    layer dei warning         = {strati!r}   <- CHI DECIDE\n"
+        f"    quarantined_by (ricevuta) = "
+        f"{(ricevuta.get('quarantined_by') or '')!r}   <- etichetta generica\n"
+        f"    quarantined_by (nel DB)   = {nel_db!r}\n"
+        f"    grounding_score           = "
+        f"{ricevuta.get('grounding_score')!r}   <- puo' essere ALTO e la "
+        f"scrittura fermata lo stesso\n"
+        f"    ^^^ LEGGI IL LAYER, NON L'ETICHETTA. Al 2026-09-12 questa caduta "
+        f"e' arrivata TRE volte su PR che non toccano questo file, e per tre "
+        f"ore la causa e' stata attribuita al punteggio del giudice: a torto, "
+        f"perche' il taglio ammette a 40,0 e il punteggio vale ~99,6. **Un "
+        f"grounding alto NON dice che la scrittura sia passata**: il moat puo' "
+        f"approvare e un controllo lessicale fermare, per disegno.\n"
+        f"    Riporta le righe qui sopra: sono cio' che chiude il ticket.\n"
+        f"    NON ammorbidire questa asserzione e NON silenziare la cella: un "
+        f"test o misura e resta acceso, o si toglie con la ragione.")
+
+    return ritiri, fid, stato
 
 
 def test_un_fatto_che_cita_l_id_di_un_altro_SENZA_contraddirlo_non_lo_ritira():
