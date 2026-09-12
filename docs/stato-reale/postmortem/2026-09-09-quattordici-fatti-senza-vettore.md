@@ -77,7 +77,7 @@
 
 * **Owner** — la causa a monte e T60: **ws5 Piattaforma**. Il rilevatore
   (`vettori_vuoti.py`) e questa cartella: **ws8 Release**. La riga della
-  ricevuta: da assegnare (@lead-audit).
+  ricevuta: da assegnare (il CTO).
 
 ---
 
