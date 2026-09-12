@@ -174,7 +174,7 @@ davvero nel momento di punta — **non è misurato**, ed è il numero che trasfo
 verdetto. Non dice nulla su un giudice che sappia lavorare in parallelo: se ne esistesse uno, la
 soglia si sposta e F6 cade.
 
-⇒ **Conseguenza per la raccomandazione**: B non va descritta ad Aurelio come «la terza strada,
+⇒ **Conseguenza per la raccomandazione**: B non va descritta come «la terza strada,
 se serve». Va descritta come **«la strada che richiede prima di rendere il giudizio parallelo o
 molto più veloce»** — altrimenti scambiamo un vincolo di memoria con un vincolo di attesa, e il
 secondo lo paga l'utente a ogni salvataggio.
