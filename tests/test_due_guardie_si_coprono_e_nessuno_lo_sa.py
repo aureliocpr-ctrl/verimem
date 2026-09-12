@@ -245,27 +245,32 @@ def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
     tornerebbe invisibile per sempre invece che per una cura. Il margine sta
     nel messaggio, cosi' chi legge un rosso qui trova il numero davanti.
 
-    🔑 E IL 10.0 NON ERA SOLO «UNA SCELTA»: ERA FUORI SCALA DI DUE ORDINI DI
-    GRANDEZZA. Misurato in CI lo stesso giorno da un banco di un'altra
-    sessione, sullo stesso ingresso::
+    🔑 IL 10.0 ERA UN NUMERO SCELTO, E LA GIORNATA IN CUI E' STATO TOLTO DICE
+    PERCHE' NESSUNO DOVREBBE SCEGLIERLO. Misurato in CI il 2026-09-12 da un
+    banco di un'altra sessione, sullo stesso ingresso::
 
-        punteggio  99.95      soglia resa dal giudice  99.64
-        margine reale                                   0.31 punti
+        punteggio  99.95      con la "cura" alla fonte  99.71
+        otto id diversi        99.6069 - 99.9746, dispersione 0.3677
 
-    Un minimo di 10.0 avrebbe dichiarato in difetto OGNI ingresso di questo
-    banco, compresi quelli sani: non era conservativo, era un numero preso da
-    un'altra scala — la stessa confusione che l'assert qui sotto adesso evita
-    leggendo la soglia dalla ricevuta.
+    Su quei numeri sono state costruite, e poi ritirate, DUE spiegazioni: che
+    l'id nella proposizione abbassasse il punteggio (falsificato: con l'id il
+    punteggio e' gia' quasi il massimo, e la cura lo ABBASSA), e che un id su
+    otto scendesse sotto il taglio (falsificato: il taglio usato per dirlo era
+    99.64, cioe' la soglia che `grounding_gate.py:532` SCARTA di proposito —
+    «a calibration artifact, never a real operating point» — ricadendo su
+    `LOCAL_CE_MOAT_THRESHOLD`). Contro il taglio in vigore quegli otto id
+    passano tutti di quasi sessanta punti.
 
-    ⚠️ E LA DIAGNOSI CHE HA GENERATO QUESTO FILE E' STATA FALSIFICATA, dallo
-    stesso banco: la premessa era «un pezzo che la fonte non dice abbassa il
-    punteggio», e la misura dice che con la fonte di oggi il punteggio e'
-    99.95 — quasi il massimo — mentre la cura lo ABBASSA a 99.71, cioe' porta
-    il margine da 0.31 a 0.07. La causa dell'intermittenza non e' l'id nella
-    proposizione: e' che il setup vive a tre decimi di punto dal taglio, su
-    una scala di 100. Questa lettura era mia, ed era una lettura del codice
-    con una predizione scritta prima: l'esperimento l'ha smentita, che e'
-    esattamente il motivo per cui l'esperimento esisteva.
+    ⇒ Le MISURE erano vere tutte e tre le volte; a essere sbagliato era il
+    CONFRONTO. La prima diagnosi era una lettura mia del codice, data come
+    lettura e con la predizione scritta prima: l'esperimento l'ha smentita, ed
+    e' esattamente per questo che l'esperimento esisteva.
+
+    ⚠️ E IL DIFETTO DEL BANCO RESTA, SENZA SPIEGAZIONE: questo file cade a
+    intermittenza su PR che non lo toccano. Tre meccanismi proposti, tre
+    ritirati. Un margine minimo scelto a mano avrebbe dato a quel rosso una
+    spiegazione che nessuna misura sostiene — ed e' il motivo per cui il test
+    qui sotto REGISTRA e non giudica.
 
     ⇒ QUESTO FILE NON DICHIARA CHIUSO T69, e il margine minimo non si arma
     finche' non lo dice la distribuzione dei punteggi.
@@ -283,32 +288,35 @@ def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
 
     punteggio = ricevuta.get("grounding_score")
     stato = ricevuta.get("status")
-    #: ⚠️ LA SOGLIA SI PRENDE DALLA RICEVUTA, non da una costante. Due versioni
-    #: di questo file hanno gia' sbagliato qui, in due modi diversi:
-    #:   · `SOGLIA_DEL_MOAT = 40.0` copiata a mano nel banco;
-    #:   · poi `LOCAL_CE_MOAT_THRESHOLD` importata dal prodotto — che toglie la
-    #:     copia ma resta il numero sbagliato.
-    #: Il 2026-09-12 un banco di un'altra sessione ha misurato in CI che il
-    #: giudice rende `config_threshold = 99.64` e punteggi legittimi a
-    #: 99.7-99.9: 40.0 e 99.64 non sono due valori della stessa cosa, sono
-    #: tagli su DUE SCALE diverse, e `local_grounding.py:917` lo scrive —
-    #: «the config cut must never be applied to a claude-scale score».
-    #: Un margine calcolato contro il taglio dell'altra scala e' un numero che
-    #: sembra enorme (~60) mentre quello vero e' 0,31.
-    #: La ricevuta porta la soglia CONTRO CUI QUESTO punteggio e' stato
-    #: giudicato (`adjudication.threshold`, la stessa che legge cli.py:1411):
-    #: presa da li', non c'e' nessuna scala da sbagliare.
+    #: ⚠️ IL MARGINE NON SI CALCOLA QUI: LO CALCOLA GIA' IL PRODOTTO.
+    #: `client.py:4371` mette sulla ricevuta `threshold` E `margin`, e il
+    #: secondo e' `score - threshold` fatto dal prodotto con la soglia che il
+    #: prodotto ha davvero usato. Prenderlo e' l'unico modo di non scegliere.
+    #:
+    #: Tre versioni di questa riga hanno sbagliato, ognuna un livello piu' su:
+    #:   1. `SOGLIA_DEL_MOAT = 40.0` copiata a mano nel banco;
+    #:   2. `LOCAL_CE_MOAT_THRESHOLD` importata dal prodotto — niente copia,
+    #:      ma sempre una costante scelta da chi scrive il test;
+    #:   3. `score - adjudication.threshold` calcolato qui — la soglia veniva
+    #:      dalla ricevuta, ma l'aritmetica no, e il prodotto la faceva gia'.
+    #: Ogni cura era giusta e si fermava un livello troppo in basso. La
+    #: risposta era sempre la stessa: CHIEDERLO AL PRODOTTO, non scegliere.
+    #:
+    #: E il livello conta perche' quale sia il taglio in vigore NON e' ovvio:
+    #: `grounding_gate.py:532` SCARTA la soglia del modello quando supera 90
+    #: («a calibration artifact, never a real operating point») e ricade su
+    #: `LOCAL_CE_MOAT_THRESHOLD`. Un banco che leggesse la soglia nominale del
+    #: giudice misurerebbe contro un numero che il prodotto butta.
+    margine = (ricevuta.get("adjudication") or {}).get("margin")
     soglia = (ricevuta.get("adjudication") or {}).get("threshold")
-    assert punteggio is not None and soglia is not None, (
-        "la ricevuta non porta piu' `grounding_score` e la sua "
-        "`adjudication.threshold`: senza quei due numeri INSIEME il margine "
-        "fra un ingresso e il taglio non e' misurabile da nessuna porta, e il "
-        "difetto del 2026-09-12 — un ingresso legittimo ammesso per tre "
-        "decimi di punto — torna invisibile. Servono entrambi e dalla STESSA "
-        "ricevuta: un punteggio confrontato con una soglia presa altrove puo' "
-        "stare su un'altra scala. Non abbassare questo assert: rimetti i "
-        f"campi sulla ricevuta. ricevuta={ricevuta}")
+    assert punteggio is not None and margine is not None, (
+        "la ricevuta non porta piu' `grounding_score` e `adjudication.margin`: "
+        "senza quei due campi la distanza fra un ingresso e il taglio non e' "
+        "leggibile da nessuna porta, e il difetto del 2026-09-12 — un ingresso "
+        "legittimo ammesso per un soffio — torna invisibile. Non ricalcolare "
+        "il margine qui per aggirare questo assert: quale soglia sia in vigore "
+        "lo decide il prodotto (grounding_gate.py:532 ne scarta una), e un "
+        f"banco che la sceglie misura un'altra cosa. ricevuta={ricevuta}")
 
-    margine = float(punteggio) - float(soglia)
     print(f"[T69] grounding={punteggio} soglia={soglia} "
-          f"margine={margine:+.4f} stato={stato!r}")
+          f"margine={margine:+} stato={stato!r}")
