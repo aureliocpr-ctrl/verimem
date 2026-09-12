@@ -1,6 +1,6 @@
 """Chi importa un nome PRIVATO di un altro modulo, e senza rete sotto.
 
-Nato da un rilievo di @ws3 Galileo su una PR che **io avevo approvato**
+Nato da un rilievo di @ws3 su una PR che **io avevo approvato**
 (PR #16, 2026-09-10): `hooks/pre_tool_use._marchio` fa
 `from ..semantic import _rango_di_fiducia`, e il chiamante sta fuori dal `try`
 di `run()`. Se quel nome cambia, l'hook esce con `ImportError` su **ogni tool

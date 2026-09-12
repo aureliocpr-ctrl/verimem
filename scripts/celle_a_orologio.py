@@ -17,7 +17,7 @@ torto**: avevo misurato con 3.13 e concluso per 3.12.
 contano in TICK, non in millisecondi: 50 ms sono tre tick, 100 ms sei.
 
 ⚠️ La v1 usava un regex e ha contato `time.sleep(0.06)` **dentro un docstring**
-— la riga in cui @Tara CITA la vecchia forma per spiegarla. Stavo per portarle
+— la riga in cui @ws5 CITA la vecchia forma per spiegarla. Stavo per portarle
 un rilievo falso sulla cella che aveva appena curato.
 🔑 Un `grep` non distingue il codice dalla prosa che parla del codice: qui
 servono i nodi (`ast.Call` su `time.sleep`), non le stringhe.
@@ -59,7 +59,7 @@ for n in albero.body:
                 if isinstance(chiave, ast.Constant) and "COOLDOWN" in str(chiave.value) \
                    and isinstance(val, ast.Constant):
                     soglie.append(str(val.value))
-    # ⚠️ CORREZIONE 2026-09-11, rilievo di @ws5 Tara su PR #30: una soglia a
+    # ⚠️ CORREZIONE 2026-09-11, rilievo di @ws5 su PR #30: una soglia a
     #    ZERO non e' una soglia. `cooldown_zero_keeps_the_trip_standing` mette
     #    il cooldown a 0 e poi dorme: quell'attesa non deve superare niente ed
     #    e' immune per costruzione. La v1 la contava, e il mio numero era SEI

@@ -13,10 +13,17 @@ import pathlib
 import subprocess
 import sys
 
-ALBERO = pathlib.Path(r"C:\Users\aurel\Code\HA-ws1-main")
-SCRATCH = pathlib.Path(__file__).resolve().parent
+#: ⚠️ CORREZIONE 2026-09-12. Qui c'era un percorso ASSOLUTO della macchina di
+#: chi l'ha scritto: lo script funzionava solo li', e in un worktree diverso
+#: avrebbe misurato l'albero di un altro senza dirlo. L'albero e' quello in cui
+#: questo file vive, e la riga sotto lo DICHIARA a chi legge l'uscita.
+ALBERO = pathlib.Path(__file__).resolve().parent.parent
 
-#: che cosa manca, per livello — la colonna che Iris usa per la gravita'
+#: Gli esiti dell'esecuzione dei comandi, prodotti a parte: e' la misura che
+#: costa (si lanciano i comandi uno per uno), non si rifa' a ogni generazione.
+ESITI = ALBERO / "scripts" / "esiti_completi.json"
+
+#: che cosa manca, per livello — la colonna che il Product Owner usa per la gravita'
 _MANCA = {
     "①h AIUTO": "solo `--help`: prova che ESISTE, non che funzioni",
     "①b GRUPPO": "invocato sulla sotto-app: il montaggio su `app` non e' provato",
@@ -34,12 +41,27 @@ _ESITO = {
 
 
 def main() -> int:
+    print(f"ALBERO MISURATO: {ALBERO}")
+    # ⚠️ 2026-09-12: questo file NON e' nel repo, e prima lo script moriva con un
+    #    `FileNotFoundError` nudo — cioe' non girava per nessuno, autore compreso,
+    #    e nessuno se ne accorgeva perche' non lo rilanciava piu'. Ora la
+    #    dipendenza PARLA e dice come si produce: un guasto detto costa un
+    #    minuto, uno muto costa la prossima persona che ci prova.
+    if not ESITI.is_file():
+        print(f"manca {ESITI.relative_to(ALBERO)} — e' la misura che costa, non "
+              "si rifa' da sola.\n"
+              "  Si produce eseguendo i comandi uno per uno e scrivendo per "
+              "ciascuno {\"comando\": ..., \"esito\": GIRA|ERR-OK|CHIEDE|APPESO|CADE}.\n"
+              "  Finche' non c'e', questa tabella NON si puo' rigenerare: il "
+              "documento in docs/stato-reale resta quello dell'ultima misura.",
+              file=sys.stderr)
+        return 2
     grezzo = subprocess.run([sys.executable, "scripts/porte_provate.py", "--json"],
                             cwd=ALBERO, capture_output=True, text=True,
                             encoding="utf-8", errors="replace",
                             env={**dict(__import__("os").environ), "PYTHONPATH": str(ALBERO)})
     dati = json.loads(grezzo.stdout)
-    esiti = json.loads((SCRATCH / "esiti_completi.json").read_text(encoding="utf-8"))
+    esiti = json.loads(ESITI.read_text(encoding="utf-8"))
 
     #: "episodes show ep-inesistente" → "episodes show"
     per_comando: dict[str, dict] = {}
@@ -60,9 +82,9 @@ def main() -> int:
 
     testo = f"""# I comandi della CLI senza una prova alla porta
 
-**Albero** `20257636044a98ec0ba7fd2fea4bfc3ada0cfe1a` · **owner** ws1 Marie (QA) ·
-**09-10/09/2026** · chiesto da @lead (post delle 23:34, punto 7) ·
-**la gravita' la fissa @Iris (Product Owner)**, questa lista non la ordina.
+**Albero** `20257636044a98ec0ba7fd2fea4bfc3ada0cfe1a` · **owner** ws1 (QA) ·
+**09-10/09/2026** · chiesto dal coordinamento (punto 7) ·
+**la gravita' la fissa il Product Owner**, questa lista non la ordina.
 
 ## Come si rifa' questa misura
 

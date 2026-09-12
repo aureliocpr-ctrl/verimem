@@ -114,7 +114,7 @@ def autotest() -> int:
          ["    # misurato 2026-09-09: 12 su 40"], 0),
         ("B  numero e NESSUN ancoraggio  → deve BOCCIARE",
          ["    # la copertura e' del 97,1%"], 1),
-        ("C  data nella 1a riga, numero nella 3a (il caso di @Nadia)",
+        ("C  data nella 1a riga, numero nella 3a (il caso visto in revisione)",
          ["    # Misurato sullo store vero il 07/08 e scritto nel docstring",
           "    # di `_rango_di_fiducia`: la tabella conosce 7 stati,",
           "    # e i fatti vivi con uno stato ignoto sono 2540 su 6982"], 0),
@@ -247,7 +247,7 @@ def analizza(base: str, testa: str = "HEAD") -> list[Casella]:
                 dove_guardare="`verimem tip`: `admitted` o `quarantined`, "
                               "e il campo `moat` se torna `not run`."),
         Casella("zero copie nuove", False,
-                dove_guardare="scripts/copie.py (R3, di @Corrado) quando esiste; "
+                dove_guardare="scripts/copie.py (R3) quando esiste; "
                               "oggi si legge a mano."),
         Casella("CI verde sul tip", False,
                 dove_guardare="`gh run list --branch <ramo>` — e i JOB uno per uno, "
