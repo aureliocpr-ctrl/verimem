@@ -21,9 +21,20 @@ misurato che il README riporta). Chiede che **finche' l'ambiguita' c'e', ci sia
 anche il suo avviso**. Se un giorno i due numeri vengono riconciliati davvero,
 questo test lo dice e va riscritto — non passa in silenzio.
 
+🆕 **TERZA COPPIA, aggiunta lo stesso giorno — README:703.** La riga
+dell'astensione e' quella in cui il prodotto **si toglie da solo il numero da
+vetrina**: pubblica un **1.000** e subito dopo scrive che *«un 1.000 da solo non
+distingue "si astiene quando deve" da "si astiene sempre", quindi le due meta'
+stanno insieme»*. E infatti porta anche l'altra meta' (0.20 contro 0.30 del
+plain-RAG). ⇒ Un 1.000 citato **senza** la sua critica torna a essere marketing,
+e il primo a poterlo fare siamo noi.
+
+📌 Le coppie stanno in UNA tabella e non in tre test: quando ne trovo un'altra si
+aggiunge una riga. **Zero copie** e' una casella della DoD, non uno stile.
+
 Presidio: Product Owner, 12/09/2026, sul README di `origin/main`.
 ⚠️ LIMITE DICHIARATO: **non eseguito da chi lo ha scritto** (sono in sola lettura
-oggi). Atteso: **2 passed**.
+oggi). Atteso: **3 passed**.
 """
 
 from __future__ import annotations
@@ -48,6 +59,12 @@ COPPIE = [
         ["The competitor column was measured against"],
         "re-run the probe before quoting the row",
         id="colonna-concorrente",
+    ),
+    pytest.param(
+        "README:703 — l'astensione 1.000, e il prodotto che si toglie da solo il numero",
+        ["1.000 across seven consecutive full e2e runs", "it abstains **0.20**"],
+        "A 1.000 alone cannot distinguish",
+        id="astensione-1000",
     ),
 ]
 
