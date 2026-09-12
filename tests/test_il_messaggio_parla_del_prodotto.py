@@ -200,6 +200,40 @@ def test_il_trailer_di_attribuzione_non_conta(repo: Path) -> None:
     assert esito.returncode == 0, esito.stdout
 
 
+def test_citare_un_file_che_esiste_non_e_parlare_della_stanza(repo: Path) -> None:
+    """🔑 12/09: 472 file tracciati portano un nome di sessione nel PERCORSO, e
+    si stanno rinominando. Un `git mv` si descrive citando i due percorsi.
+
+    Senza questa cura il cancello bocciava esattamente i commit che curano il
+    difetto — e un cancello che ferma la cura viene aggirato, non corretto.
+    """
+    (repo / "docs").mkdir()
+    (repo / "docs" / "ws7-porte.md").write_text("contenuto pulito\n", encoding="utf-8")
+    _git(repo, "add", "docs/ws7-porte.md")
+    _git(repo, "-c", "core.hooksPath=.nessuno", "commit", "-q", "-m",
+         "Add a note\n\nNothing to see here.\n")
+
+    esito = _git(repo, "commit", "--allow-empty", "-m",
+                 "Rename the note so its name carries a role\n\n"
+                 "docs/ws7-porte.md becomes docs/porte.md.\n", controlla=False)
+
+    assert esito.returncode == 0, (
+        "l'hook ha bocciato la citazione di un file che esiste:\n"
+        f"{esito.stdout}\n{esito.stderr}")
+
+
+def test_una_barra_non_basta_il_percorso_deve_esistere(repo: Path) -> None:
+    """L'esenzione e' un CRITERIO, non una via d'uscita: se bastasse la forma di
+    un percorso, per evadere il controllo basterebbe scrivere una barra."""
+    esito = _git(repo, "commit", "--allow-empty", "-m",
+                 "Fix the parser\n\nvedi ws7/appunti per il dettaglio\n",
+                 controlla=False)
+
+    assert esito.returncode != 0, (
+        f"una barra e' bastata a nascondere il nome:\n{esito.stdout}\n{esito.stderr}")
+    assert "nome di sessione" in (esito.stdout + esito.stderr)
+
+
 def test_una_riga_del_corpo_travestita_da_trailer_non_sfugge(repo: Path) -> None:
     """🔴 IL BUCO DELLA PRIMA VERSIONE, e il motivo per cui i trailer ammessi
     sono una LISTA CHIUSA.

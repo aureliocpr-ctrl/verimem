@@ -96,6 +96,68 @@ TRAILER = re.compile(r"^(?:" + "|".join(TRAILER_AMMESSI) + r"):\s", re.IGNORECAS
 FORBICI = re.compile(r"^[#;!$%^&|:]?\s*-+\s*>8\s*-+\s*$", re.MULTILINE)
 
 
+CANDIDATO_PERCORSO = re.compile(r"[A-Za-z0-9_.\-/]*/[A-Za-z0-9_.\-]*")
+
+
+def _percorsi_del_repo(radice: str | None = None) -> frozenset[str]:
+    """Ogni percorso tracciato, nell'indice E in HEAD.
+
+    Serve anche HEAD perche' una RINOMINA si descrive citando il nome VECCHIO,
+    che nell'indice non c'e' piu' ma in HEAD si'.
+
+    Se git non risponde (non e' un repository, non e' installato) torna un
+    insieme vuoto: il controllo diventa piu' SEVERO, non muto. Un misuratore
+    che cade deve sbagliare contro chi lo usa, non a suo favore.
+    """
+    percorsi: set[str] = set()
+    for comando in (["git", "ls-files"], ["git", "ls-tree", "-r", "--name-only", "HEAD"]):
+        try:
+            fatto = subprocess.run(comando, cwd=radice, capture_output=True,
+                                   text=True, encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if fatto.returncode == 0:
+            percorsi.update(r.strip() for r in fatto.stdout.splitlines() if r.strip())
+    return frozenset(percorsi)
+
+
+def _senza_percorsi_veri(testo: str, percorsi: frozenset[str]) -> str:
+    """Il testo senza i percorsi CHE ESISTONO nel repository.
+
+    ⚠️ 12/09, il difetto che questa funzione cura: 95 file su 775 in
+    `docs/stato-reale/` portano un nome di sessione SOLO nel nome del file, e la
+    squadra li sta rinominando. Un `git mv` si descrive citando i due percorsi,
+    e i due percorsi contengono il nome —
+
+        "docs/stato-reale/banchi/<nome>-porte-e-etichetta.py becomes ..."
+          -> BOCCIATO: nome di sessione
+
+    cioe' il cancello bocciava esattamente il lavoro che cura il difetto. Un
+    nome dentro il nome di un file non e' un nome nel discorso: e' una
+    citazione, e toglierla renderebbe il messaggio falso.
+
+    🔑 IL CRITERIO E' L'ESISTENZA, non la forma. `<nome>/appunti` ha la forma di
+    un percorso e non e' tracciato da nessuna parte: resta prosa, e resta
+    bocciato. Cosi' l'esenzione non si ottiene scrivendo una barra.
+    """
+    if not percorsi:
+        return testo
+
+    def togli(trovato: re.Match[str]) -> str:
+        pezzo = trovato.group(0).strip(".,;:()[]`\"'<>")
+        if not pezzo or "/" not in pezzo:
+            return trovato.group(0)
+        if pezzo in percorsi:
+            return " "
+        # Una CARTELLA: non e' tracciata di per se', ma lo e' cio' che contiene.
+        prefisso = pezzo.rstrip("/") + "/"
+        if any(p.startswith(prefisso) for p in percorsi):
+            return " "
+        return trovato.group(0)
+
+    return CANDIDATO_PERCORSO.sub(togli, testo)
+
+
 def _senza_trailer(testo: str) -> str:
     """Il messaggio senza il blocco di trailer finale, come lo intende git.
 
@@ -133,13 +195,25 @@ def _come_lo_salva_git(testo: str) -> str:
     return fatto.stdout if fatto.returncode == 0 else testo
 
 
-def controlla(testo: str) -> list[str]:
-    """Le violazioni di un messaggio, in chiaro. Lista vuota = pulito."""
+def controlla(testo: str, percorsi: frozenset[str] | None = None) -> list[str]:
+    """Le violazioni di un messaggio, in chiaro. Lista vuota = pulito.
+
+    `percorsi` sono i file tracciati, per riconoscere le CITAZIONI di percorso;
+    se non lo si passa li chiede a git. L'autotest ne passa uno finto apposta:
+    un banco che dipendesse dai file veri del repository misurerebbe la pulizia
+    di oggi invece del criterio, e diventerebbe rosso al primo `git mv`.
+    """
+    if percorsi is None:
+        percorsi = _percorsi_del_repo()
     corpo = _senza_trailer(testo.replace("\r\n", "\n"))
+    righe_intere = [r for r in corpo.splitlines() if r.strip()]
+    corpo = _senza_percorsi_veri(corpo, percorsi)
     problemi = []
-    righe = [r for r in corpo.splitlines() if r.strip()]
-    if len(righe) > RIGHE_MASSIME:
-        problemi.append(f"{len(righe)} righe non vuote (il massimo e' {RIGHE_MASSIME})")
+    # ⚠️ Le righe si contano PRIMA della mascheratura: una riga fatta di solo
+    # percorso diventerebbe vuota, e un messaggio di dodici righe ne
+    # dichiarerebbe dieci. La mascheratura serve ai NOMI, non alla lunghezza.
+    if len(righe_intere) > RIGHE_MASSIME:
+        problemi.append(f"{len(righe_intere)} righe non vuote (il massimo e' {RIGHE_MASSIME})")
     for etichetta, regola in (("percorso locale", PERCORSO),
                               ("nome utente", UTENTE),
                               ("nome di sessione o ruolo interno", SESSIONE)):
@@ -219,12 +293,41 @@ CASI: list[tuple[str, str, bool]] = [
      "Fix\n\nAgent: Iris\nma questa riga nomina ws5", False),
 ]
 
+# Percorsi FINTI per i casi di citazione: se il banco leggesse i file veri
+# misurerebbe la pulizia di oggi invece del criterio, e diventerebbe rosso al
+# primo `git mv` — cioe' proprio quando la cura funziona.
+PERCORSI_FINTI = frozenset({
+    "docs/stato-reale/banchi/ws7-porte-e-etichetta.py",
+    "docs/stato-reale/banchi-ws2/porte.py",
+    "docs/stato-reale/ws8-corrado-notte-05-06-09.md",
+})
+
+CASI_CON_PERCORSI: list[tuple[str, str, bool]] = [
+    ("una rinomina, citando il nome vecchio",
+     "Rename the bench so its name carries a role\n\n"
+     "docs/stato-reale/banchi/ws7-porte-e-etichetta.py becomes "
+     "docs/stato-reale/banchi/porte-e-etichetta.py.", True),
+    ("la citazione di un documento che esiste",
+     "Link the postmortem from the README\n\n"
+     "Adds a pointer to docs/stato-reale/ws8-corrado-notte-05-06-09.md.", True),
+    ("una cartella tracciata",
+     "Move the benches out of a per-session folder\n\n"
+     "docs/stato-reale/banchi-ws2/ becomes docs/stato-reale/banchi/porte/.", True),
+    # 🔑 I due che rendono l'esenzione un criterio e non una via d'uscita.
+    ("una barra NON basta: il percorso non esiste",
+     "Fix the parser\n\nvedi ws5/appunti per il dettaglio", False),
+    ("un percorso inventato dentro una cartella vera",
+     "Fix\n\nvedi docs/stato-reale/ws5-ha-sbagliato.md", False),
+]
+
 
 def autotest() -> int:
     """Il controllo positivo: deve bocciare cio' che deve e TACERE sul resto."""
     esiti = []
-    for nome, testo, atteso_pulito in CASI:
-        problemi = controlla(testo)
+    coppie = ([(n, t, a, frozenset()) for n, t, a in CASI]
+              + [(n, t, a, PERCORSI_FINTI) for n, t, a in CASI_CON_PERCORSI])
+    for nome, testo, atteso_pulito, percorsi in coppie:
+        problemi = controlla(testo, percorsi=percorsi)
         ok = (not problemi) == atteso_pulito
         esiti.append(ok)
         stato = "pulito" if not problemi else f"bocciato ({problemi[0][:44]})"
