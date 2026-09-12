@@ -1,6 +1,6 @@
 # La gravità dei difetti — la scala e i casi noti
 
-**Iris · Product Owner · 2026-09-04 20:30.** Serve a `ws2`/`ws5`/`ws1` per il
+**Product Owner · Product Owner · 2026-09-04 20:30.** Serve a `ws2`/`ws5`/`ws1` per il
 pezzo 2 del disegno esploso (i tre percorsi d'uso, entro il 05/09 18:00): loro
 eseguono e cronometrano, **la gravità la do io**.
 
@@ -15,35 +15,35 @@ da utente erano già scritti nel README, alla riga 397 di 812.*
 
 | # | difetto | livello | rompe | stato |
 |---|---|---|---|---|
-| **T1** | **la porta MCP dà la stessa spiegazione della CLI — 903 s dopo, quando chi aspettava se n'è già andato** | **P0** | U-A, U-C | **cura APPROVATA nel merito** (Tara: scaldare le librerie del giudice all'avvio, **17,3 s** contro «non torna») — 🔁 **06/09 10:30: le tre cure SONO in main** (`31d4d57f` il tokenizzatore fuori dal lock, `2e13a5b5` il preload scalda le librerie, `0363a813` l'avvio dichiara costo e leva — verificati con `merge-base --is-ancestor`; la riga «non ancora in main» era **obsoleta**). ⚠️ **Il livello NON cambia lo stesso, e per una ragione diversa**: nessuno ha **rimisurato dal lato utente** quanto aspetta oggi la prima scrittura con fonte sulla porta MCP. Cura in main ≠ difetto chiuso. **La misura che lo chiude**: un primo `remember --source` da MCP su installazione fresca, cronometrato |
-| **D-1** | una self-claim **preceduta da una frase vera** passa il cancello | **P0** | la promessa centrale | 🔬 **07/09 13:07 — IL BANCO A DUE BRACCI È STATO ESEGUITO** (`ws7-d1-le-sette-forme-e-i-veri-composti.py`, tip `2b82497f`, albero **verificato e stampato**, `ENGRAM_ENCODE_SERVICE=0`, controllo positivo **acceso**): <br>**BRACCIO A: 7/7 FERMATE**, tutte da `L1.15` — le sette forme del reperto originale, italiano e inglese. <br>**BRACCIO B: 1/7 fermato** — `B1`, *«Il comando warmup è iniziato alle 14:50:24 ed è finito alle 14:53:19»*, fermato da **`L1.13`**: un fatto composto **vero**, senza self-claim. ⇒ **FALSO POSITIVO, ed è lì SENZA la cura** (misurato dopo il revert del 06/09): non lo produceva la decomposizione, c'è già. · ⛔ **IL LIVELLO NON LO CAMBIO ANCORA, e dico perché**: questo banco misura `run_validation_gate` **in-process**, mentre il reperto originale (LANT-175, 05/09) era **sul pacchetto pubblicato 0.7.6 e su tre porte**. *Il livello a cui misuri decide il verdetto*: «7/7 fermate» qui **non** prova che una self-claim non passi **dalla porta**. Le due spiegazioni possibili sono (a) una cura entrata fra il 05/09 e oggi, (b) la differenza di livello — e **non ho ancora un modo di distinguerle**. ⇒ **prossima misura: le stesse sette forme dalla porta CLI e dalla porta MCP.** · 🆕 **Il braccio B però un ticket lo apre subito**, e non dipende dal livello: vedi **T28**. · 🔴🔴 **07/09 13:10 — D-1 È CONFERMATO ALLA PORTA, ed è la misura che mancava** (`ws7-d1-dalla-porta-sdk.py`: stesse 14 frasi, stessa fonte, stesso albero, ma da **`Memory.add`**; verdetto letto **dallo store** — `SELECT status`, come fa `test_all_write_channels_judge_a_source.py:165` — non da `action`): <br>**BRACCIO A: 1/7 fermate.** **Sei self-claim su sette entrano come `model_claim`, `judged=True`, `grounding_score` 99,94–99,98, `layers=[]`.** ⇒ *il prodotto non le lascia solo passare: le serve come fatti **giudicati**.* <br>La sola fermata è **A4** (soggetto non umano): `grounding_score` **16,51**, `layers=['L1.15','L4-grounding','L4.1']` → `quarantined`. <br>**BRACCIO B: 0/7 fermati** — alla porta il falso positivo di **T28 NON si riproduce** (`B1` passa con 99,985): T28 vale in-process e **alla porta no**, quindi resta **P1** e non sale. · 🔑 **E il confronto fra i due livelli è il reperto**: **in-process 7/7 fermate, dalla porta 1/7.** ⚠️ **La mia prima spiegazione era sbagliata e la scrivo**: il banco stampava *«la porta non usa il verdetto del gate»*. **No**: chiamato dalla porta il gate `L1.15` **non lo emette proprio**. **Tre candidati provati e SCARTATI con un A/B a una variabile** — `provenance_trusted=True` (il flag che `client.py:745` passa), `agent`, `topic`: **tutte e quattro le combinazioni fermano 7/7**, controllo positivo acceso in ognuna. ⇒ **la causa non è nessuno dei tre.** 🔬 **Il candidato che i dati suggeriscono e che NON ho verificato**: alla porta decide il **moat** — l'unica fermata è quella con grounding **16,51**, le sei passate hanno **99,9x** — e `Memory.add` passa un argomento che il mio banco non passa (`ground_write`). *Chi cura D-1 parta da lì: i tre facili sono già esclusi.* · 📌 **REGIME dichiarato**: `ENGRAM_ENCODE_SERVICE=0`, store **temporaneo** (mai quello di Aurelio), fatti scritti **senza embedding** (`encode delegate unavailable`) ⇒ **la lettura non l'ho misurata**: so che entrano come giudicati, **non** che il recall li serva. È la prossima misura, e cambia il livello solo verso l'alto. |
+| **T1** | **la porta MCP dà la stessa spiegazione della CLI — 903 s dopo, quando chi aspettava se n'è già andato** | **P0** | U-A, U-C | **cura APPROVATA nel merito** (Piattaforma: scaldare le librerie del giudice all'avvio, **17,3 s** contro «non torna») — 🔁 **06/09 10:30: le tre cure SONO in main** (`31d4d57f` il tokenizzatore fuori dal lock, `2e13a5b5` il preload scalda le librerie, `0363a813` l'avvio dichiara costo e leva — verificati con `merge-base --is-ancestor`; la riga «non ancora in main» era **obsoleta**). ⚠️ **Il livello NON cambia lo stesso, e per una ragione diversa**: nessuno ha **rimisurato dal lato utente** quanto aspetta oggi la prima scrittura con fonte sulla porta MCP. Cura in main ≠ difetto chiuso. **La misura che lo chiude**: un primo `remember --source` da MCP su installazione fresca, cronometrato |
+| **D-1** | una self-claim **preceduta da una frase vera** passa il cancello | **P0** | la promessa centrale | 🔬 **07/09 13:07 — IL BANCO A DUE BRACCI È STATO ESEGUITO** (`ws7-d1-le-sette-forme-e-i-veri-composti.py`, tip `2b82497f`, albero **verificato e stampato**, `ENGRAM_ENCODE_SERVICE=0`, controllo positivo **acceso**): <br>**BRACCIO A: 7/7 FERMATE**, tutte da `L1.15` — le sette forme del reperto originale, italiano e inglese. <br>**BRACCIO B: 1/7 fermato** — `B1`, *«Il comando warmup è iniziato alle 14:50:24 ed è finito alle 14:53:19»*, fermato da **`L1.13`**: un fatto composto **vero**, senza self-claim. ⇒ **FALSO POSITIVO, ed è lì SENZA la cura** (misurato dopo il revert del 06/09): non lo produceva la decomposizione, c'è già. · ⛔ **IL LIVELLO NON LO CAMBIO ANCORA, e dico perché**: questo banco misura `run_validation_gate` **in-process**, mentre il reperto originale (LANT-175, 05/09) era **sul pacchetto pubblicato 0.7.6 e su tre porte**. *Il livello a cui misuri decide il verdetto*: «7/7 fermate» qui **non** prova che una self-claim non passi **dalla porta**. Le due spiegazioni possibili sono (a) una cura entrata fra il 05/09 e oggi, (b) la differenza di livello — e **non ho ancora un modo di distinguerle**. ⇒ **prossima misura: le stesse sette forme dalla porta CLI e dalla porta MCP.** · 🆕 **Il braccio B però un ticket lo apre subito**, e non dipende dal livello: vedi **T28**. · 🔴🔴 **07/09 13:10 — D-1 È CONFERMATO ALLA PORTA, ed è la misura che mancava** (`ws7-d1-dalla-porta-sdk.py`: stesse 14 frasi, stessa fonte, stesso albero, ma da **`Memory.add`**; verdetto letto **dallo store** — `SELECT status`, come fa `test_all_write_channels_judge_a_source.py:165` — non da `action`): <br>**BRACCIO A: 1/7 fermate.** **Sei self-claim su sette entrano come `model_claim`, `judged=True`, `grounding_score` 99,94–99,98, `layers=[]`.** ⇒ *il prodotto non le lascia solo passare: le serve come fatti **giudicati**.* <br>La sola fermata è **A4** (soggetto non umano): `grounding_score` **16,51**, `layers=['L1.15','L4-grounding','L4.1']` → `quarantined`. <br>**BRACCIO B: 0/7 fermati** — alla porta il falso positivo di **T28 NON si riproduce** (`B1` passa con 99,985): T28 vale in-process e **alla porta no**, quindi resta **P1** e non sale. · 🔑 **E il confronto fra i due livelli è il reperto**: **in-process 7/7 fermate, dalla porta 1/7.** ⚠️ **La mia prima spiegazione era sbagliata e la scrivo**: il banco stampava *«la porta non usa il verdetto del gate»*. **No**: chiamato dalla porta il gate `L1.15` **non lo emette proprio**. **Tre candidati provati e SCARTATI con un A/B a una variabile** — `provenance_trusted=True` (il flag che `client.py:745` passa), `agent`, `topic`: **tutte e quattro le combinazioni fermano 7/7**, controllo positivo acceso in ognuna. ⇒ **la causa non è nessuno dei tre.** 🔬 **Il candidato che i dati suggeriscono e che NON ho verificato**: alla porta decide il **moat** — l'unica fermata è quella con grounding **16,51**, le sei passate hanno **99,9x** — e `Memory.add` passa un argomento che il mio banco non passa (`ground_write`). *Chi cura D-1 parta da lì: i tre facili sono già esclusi.* · 📌 **REGIME dichiarato**: `ENGRAM_ENCODE_SERVICE=0`, store **temporaneo** (mai uno store reale), fatti scritti **senza embedding** (`encode delegate unavailable`) ⇒ **la lettura non l'ho misurata**: so che entrano come giudicati, **non** che il recall li serva. È la prossima misura, e cambia il livello solo verso l'alto. |
 | **T28** | **un fatto composto VERO viene fermato**: *«Il comando warmup è iniziato alle 14:50:24 ed è finito alle 14:53:19»* — due misure di orario, **nessuna self-claim** — è fermato da **`L1.13`**. La coda «è finito alle 14:53:19» perde il soggetto e viene letta come affermazione nuda | **P1** | U-A, U-C | 🔬 **misurato da me il 07/09 sul tip `2b82497f`**, braccio B del banco D-1: **1 su 7** dei veri composti è fermato, gli altri sei passano (`action=persist`, nessun layer). ⚠️ **Vale SENZA la cura revertita**: è il gate di oggi. 🔑 **Perché conta da prodotto**: è esattamente la forma di frase che un agente scrive quando registra un'esecuzione — *«è iniziato alle X ed è finito alle Y»* — cioè il caso d'uso che vendiamo. ⬆️ **sale a P0 se** si misura che morde **dalla porta** e non solo in-process · ⬇️ **scende a P3 se** il fatto entra comunque e `L1.13` è solo un avviso: **non l'ho verificato** — il banco legge `_blocking_layers`, che dice che il layer **ha agito**, non che la scrittura sia stata rifiutata (`action` restava `persist`) |
-| **T29** | **il giudizio mancante non si sana MAI**: un fatto entrato con `grounding_score` a `NULL` e `layers=['L4-skipped']` **resta non giudicato per sempre**. Il prodotto ha il recupero per la cosa **meno** grave — l'embedding vuoto (`mcp_server.py:8685` *«**Heal** facts saved with a deferred (empty) embedding»*, `cli.py:4727`) — e **nessuno** per il giudizio | **P1** | U-A, U-B | 🔬 **reperto mio, 07/09 13:40**, per lettura: cercati `unjudged`, `rejudge`, `pending_judge`, `backfill…judg` e ogni comando CLI che nomini `judg\ · ⛔ **13:47 — LA MISURA CHE DOVEVA DECIDERE IL LIVELLO È USCITA `NON MISURATO`, e il perché è un reperto**: il banco (`ws7-t29-il-recall-distingue-un-fatto-non-giudicato.py`) non è riuscito a costruire il caso **giudicato** — `mem.add(..., source=…)` dalla porta SDK ha dato **`grounding_score=None`**. 🔬 **Verificato prima di scriverlo**: `daemon_usable()=True`, `is_reachable()=True`, `HIPPO_ENCODE_DELEGATE_ONLY='1'` ⇒ **la spiegazione facile («il daemon era spento») è esclusa**. E alle **13:10**, stessa porta, stesso albero, stesso flag, sei fatti con fonte erano usciti **`judged=True`, `grounding` 99,94–99,98**. ⇒ **a 37 minuti di distanza la stessa chiamata ha dato `99,9` e `None`.** **Non so perché, e non lo indovino.** 🪞 **Questo falsifica una mia riga delle 13:35** (*«T26a non tocca l'SDK: è confinato alla porta MCP»*), che avevo dato come argomento **a favore del tag**: ritirata sul canale. ⇒ **prima di rifare questo banco serve sapere quando la porta SDK giudica e quando no** — ed è più importante della misura che stavo facendo. |moat\|ground` — **le occorrenze descrivono il problema, nessuna una cura, nessun comando** (⚠️ *cercato, non provato eseguendo*) · **owner della cura: @ws2 Giano** (lead, 13:40: comando `verimem moat rejudge` con dry-run, contatore e ricevuta; RED = i 13/275 di @ws4) · 🔑 **è la spiegazione di T26c**: l'avviso di `doctor` non torna mai verde **perché niente ripara i fatti che lo hanno acceso** — non è un contatore mal fatto, è un contatore onesto su un residuo permanente · 📌 **e cambia il conto del tag**: se la cura di T26a arriva domani, **non sana i fatti scritti oggi** · ⬆️ **SALE A P0 se** si misura che **il recall serve quei fatti come gli altri** — cioè se `grounding_score IS NULL` non cambia né il rango né la presentazione: allora il prodotto non li dichiara a chi legge, li serve e basta. **È la misura che manca, e non l'ho fatta** · ⬇️ **scende a P3 se** una porta li marca in modo visibile in lettura |
+| **T29** | **il giudizio mancante non si sana MAI**: un fatto entrato con `grounding_score` a `NULL` e `layers=['L4-skipped']` **resta non giudicato per sempre**. Il prodotto ha il recupero per la cosa **meno** grave — l'embedding vuoto (`mcp_server.py:8685` *«**Heal** facts saved with a deferred (empty) embedding»*, `cli.py:4727`) — e **nessuno** per il giudizio | **P1** | U-A, U-B | 🔬 **reperto mio, 07/09 13:40**, per lettura: cercati `unjudged`, `rejudge`, `pending_judge`, `backfill…judg` e ogni comando CLI che nomini `judg\ · ⛔ **13:47 — LA MISURA CHE DOVEVA DECIDERE IL LIVELLO È USCITA `NON MISURATO`, e il perché è un reperto**: il banco (`ws7-t29-il-recall-distingue-un-fatto-non-giudicato.py`) non è riuscito a costruire il caso **giudicato** — `mem.add(..., source=…)` dalla porta SDK ha dato **`grounding_score=None`**. 🔬 **Verificato prima di scriverlo**: `daemon_usable()=True`, `is_reachable()=True`, `HIPPO_ENCODE_DELEGATE_ONLY='1'` ⇒ **la spiegazione facile («il daemon era spento») è esclusa**. E alle **13:10**, stessa porta, stesso albero, stesso flag, sei fatti con fonte erano usciti **`judged=True`, `grounding` 99,94–99,98**. ⇒ **a 37 minuti di distanza la stessa chiamata ha dato `99,9` e `None`.** **Non so perché, e non lo indovino.** 🪞 **Questo falsifica una mia riga delle 13:35** (*«T26a non tocca l'SDK: è confinato alla porta MCP»*), che avevo dato come argomento **a favore del tag**: ritirata sul canale. ⇒ **prima di rifare questo banco serve sapere quando la porta SDK giudica e quando no** — ed è più importante della misura che stavo facendo. |moat\|ground` — **le occorrenze descrivono il problema, nessuna una cura, nessun comando** (⚠️ *cercato, non provato eseguendo*) · **owner della cura: @ws2 Porte** (lead, 13:40: comando `verimem moat rejudge` con dry-run, contatore e ricevuta; RED = i 13/275 di @ws4) · 🔑 **è la spiegazione di T26c**: l'avviso di `doctor` non torna mai verde **perché niente ripara i fatti che lo hanno acceso** — non è un contatore mal fatto, è un contatore onesto su un residuo permanente · 📌 **e cambia il conto del tag**: se la cura di T26a arriva domani, **non sana i fatti scritti oggi** · ⬆️ **SALE A P0 se** si misura che **il recall serve quei fatti come gli altri** — cioè se `grounding_score IS NULL` non cambia né il rango né la presentazione: allora il prodotto non li dichiara a chi legge, li serve e basta. **È la misura che manca, e non l'ho fatta** · ⬇️ **scende a P3 se** una porta li marca in modo visibile in lettura |
 | **T30** | **i tre comandi di scrittura della CLI hanno opzioni DISGIUNTE, e nessuno le ha tutte**: `save` prende `--json` ma **non** `--db`; `remember` prende `--db` ma **non** `--json`; `facts add` prende `--json` ma **non** `--db`. ⇒ **chi vuole scrivere in uno store scelto E leggere la ricevuta in modo automatico non può farlo con nessuno dei tre** — ed è esattamente quello che fa **un agente**, l'utente che dichiariamo | **P1** | U-C, U-B | 🔬 **misurato ESEGUENDO** `--help` (18 comandi + i 4 sotto `facts`), non contando le occorrenze nel sorgente — dove `"--db"` compare **10** volte e i comandi che lo accettano sono **sette**: <br>`--db` **sì**: `remember` `recall` `stats` `console` `facts search|get|list` <br>`--db` **no**: `save` `facts add` <br>`--json` **no**: `remember` · 🪞 **l'ho trovato perché due miei banchi ci sono morti addosso**, uno dopo l'altro: `verimem save … --db …` → **`Error: No such option: --db`, exit 2**; poi `verimem remember … --json` → **`Error: No such option: --json`**. *Un banco che non riesce a costruire il caso ha comunque misurato qualcosa.* · 🔑 **è l'asimmetria di T16**: quel ticket ha portato `--db` sulle porte di **lettura**, il verso della **scrittura** è rimasto indietro — «non sapevi quale store una lettura aveva aperto» è curato, «non puoi scegliere dove scrivere» no · ⚠️ **e tocca una riga mia, di stamattina**: il README dà `verimem save --source …` come esempio della porta CLI (`README.md:352`) e lo ripete alla 510. **Chi prova il prodotto su uno store di prova seguendo il Quickstart scrive nel proprio store vero.** · ⬆️ **sale a P0 se** si misura che la CLI non dice in quale store ha scritto (**non verificato**) · ⬇️ **scende a P3 se** `remember` è il comando che prescriviamo e `save` un residuo: allora il difetto è **nel README**, non nella CLI |
 | **D-6** | **entrambe** le porte MCP accettano `as_of` e lo ignorano senza dirlo | **P0** | U-A, U-B | **cura IN MAIN** (`db7dfd11` + presidio `79625479`) — **da riverificare, non da riscrivere** |
 | **T10** | la promozione documento→fatto non ascoltava il gate come il gate | **P0 sul codice, ma il ticket ha un problema PRIMA del merito** | U-B | vedi sotto |
-| **T14** | il gate **decide** che i due fatti coesistono (`L3-coexistence`: scambia il **valore che cambia** per un soggetto diverso) — su **MCP il verdetto non arriva affatto**, e **in lettura il terzo riceve 2 fornitori diversi per lo stesso servizio** (*la porta è corretta: senza la relazione quelli sono due fatti distinti*) | **P0 su MCP · P1 su SDK** | U-B, U-A | causa trovata da Aldo; due difetti in fila · 🔁 **06/09 09:05: la cura ESISTE e NON è in main** — ramo di @ws6 Aldo `6bd8c6ae` (`_entita_diverse` + `subject_of`, `canonical_source_of` nell'ordine penna→firma→`"user"`), **riletta dal lead**: regge, con **una riga da restringere** (`due_fonti_dichiarate_e_diverse` oggi lascia passare il caso «uno anonimo, l'altro con penna dichiarata»; per la 0.7.7 la coesistenza vale **solo fra due anonimi**, il caso misto va a `xfail` strict per la 0.7.8). **Il livello NON cambia finché non entra**: una cura su un ramo non toglie nulla a chi installa · ✅🔴 **13:30 — È ENTRATA, e cura la PRIMA metà soltanto** (`b979bc4c`, `9827aed4`, `d7cd08c4`, `6bd8c6ae` verificati con `merge-base` su `0939b5b0`): il **criterio** non scambia più il valore che cambia per un soggetto diverso. ⚠️ **Ma il P0 era la SECONDA metà** — *«su MCP il verdetto non arriva affatto»* — che è il **pezzo 3c del muro 1, REVERTATO stamattina** insieme a 3a. ⇒ **P1 sull'SDK: curato. P0 su MCP: aperto.** *Stessa struttura di T16, e stessa disciplina: non si declassa perché «la cura è entrata», si guarda **quale metà** cura* |
-| **T16** | il **percorso esplicito lo riceve solo l'SDK** — la CLI non ha `--db` su nessun comando che legge — e risponde `no facts found` **con `exit 0`**: è la riga che il nostro Quickstart insegna | ✅ **CURATO, ENTRAMBE LE METÀ** *(tre riscritture in tre ore: «curato» alle 10:10 era **troppo generoso**, «a metà» alle 13:05 era **giusto per venti minuti**, e alle 13:15 la seconda metà è entrata davvero)* | U-C, U-A | effetto misurato da me il 06/09 · causa corretta da Aldo · 🟢 **06/09 10:10, letto su `1f2eb47f`**: `--db` è ora su **`remember`, `recall`, `search`, `get`, `list`** (`cli.py` righe 1311, 1561, 3143, 3247, 3312, 3407), non più solo su `console` e `stats`. **Ho riscritto la mia riga del README**, che diceva il contrario ed era pubblicata da un'ora. ⚠️ **Verificato leggendo, non eseguendo**: la prova dal lato utente (due cartelle, scrivo con l'SDK e rileggo dalla CLI) resta da fare, e finché non la faccio scrivo «curato» e non «chiuso». 📌 *Stavo per aggiungere in vetrina che «la risposta nomina lo store aperto», preso dal messaggio di commit: **non è vero per `recall`** — quel `store:` lo stampa il comando `console` (`cli.py:1048`), e nessun test di @ws2 lo asserisce. Tolto.* · 🔴 **13:05, la CI conferma e il livello NON scende**: il run `34021131704` su `d14f0ece` è **FAILURE su tre piattaforme** con `test_la_porta_dice_quale_store_ha_aperto` → *«la risposta non dice quale store ha aperto: chi ha sbagliato cartella non ha modo di accorgersene, ed è esattamente il P0»*. ⇒ **la metà entrata cura chi SA di avere due store; il P0 era l'altra metà** — chi ha seguito il Quickstart e non sa di averne due continua a leggere `no facts found` con `exit 0`. **T16 non si chiude.** *(La mia riga delle 10:10 diceva «curato»: era troppo generosa, e me ne accorgo solo perché il test di @ws2 asserisce la promessa che io avevo tolto dal README.)* · ✅ **13:15 — LA SECONDA METÀ È ENTRATA** (main `ab2f45c5`): `_dichiara_store()` in `cli.py:1265`, chiamata **due volte dentro `recall`** (righe 1618 e 1679, la seconda con `motivo="cercato in:"` quando non trova nulla). ⇒ **chi non sa di avere due store adesso legge il percorso**, e il `no facts found` con `exit 0` smette di essere un mistero. **Ho rimesso nel README la promessa che avevo tolto** — questa volta **verificata leggendo i chiamanti**, non presa da un messaggio di commit, e ristretta a ciò che il codice fa davvero: **`recall`**, non tutte le porte. ⏳ **Resta la prova da utente** (due cartelle: scrivo con l'SDK, rileggo dalla CLI): finché non la faccio, «curato», non «chiuso» · 📖 **Letto il testo che l'utente vedrà** (`cli.py:1288-1304`): `cercato in: C:\…\semantic.db — 0 fatti`, con **una sola etichetta** (`motivo` sostituisce `store:`, non lo precede) e **`soft_wrap=True`** perché il percorso non vada a capo dentro il nome del file — *«un percorso spezzato a metà non si copia e non si incolla»*, e il difetto era uscito in CI mentre l'utente col terminale stretto lo pagava in silenzio. **È scritto bene, e il conteggio dei fatti è la parte che chiude il ragionamento.** 📌 **L'unica cosa che manca, e la lascio come osservazione non come ticket**: la riga dice **dove** ha cercato, non **cosa fare** — chi non conosce `--db` capisce di guardare nel posto sbagliato ma non che può indicarne un altro. È il terzo passo classico (*il prodotto dice il problema, non la via d'uscita*), e vale meno delle due metà appena entrate |
+| **T14** | il gate **decide** che i due fatti coesistono (`L3-coexistence`: scambia il **valore che cambia** per un soggetto diverso) — su **MCP il verdetto non arriva affatto**, e **in lettura il terzo riceve 2 fornitori diversi per lo stesso servizio** (*la porta è corretta: senza la relazione quelli sono due fatti distinti*) | **P0 su MCP · P1 su SDK** | U-B, U-A | causa trovata da Dati; due difetti in fila · 🔁 **06/09 09:05: la cura ESISTE e NON è in main** — ramo di @ws6 Dati `6bd8c6ae` (`_entita_diverse` + `subject_of`, `canonical_source_of` nell'ordine penna→firma→`"user"`), **riletta dal lead**: regge, con **una riga da restringere** (`due_fonti_dichiarate_e_diverse` oggi lascia passare il caso «uno anonimo, l'altro con penna dichiarata»; per la 0.7.7 la coesistenza vale **solo fra due anonimi**, il caso misto va a `xfail` strict per la 0.7.8). **Il livello NON cambia finché non entra**: una cura su un ramo non toglie nulla a chi installa · ✅🔴 **13:30 — È ENTRATA, e cura la PRIMA metà soltanto** (`b979bc4c`, `9827aed4`, `d7cd08c4`, `6bd8c6ae` verificati con `merge-base` su `0939b5b0`): il **criterio** non scambia più il valore che cambia per un soggetto diverso. ⚠️ **Ma il P0 era la SECONDA metà** — *«su MCP il verdetto non arriva affatto»* — che è il **pezzo 3c del muro 1, REVERTATO stamattina** insieme a 3a. ⇒ **P1 sull'SDK: curato. P0 su MCP: aperto.** *Stessa struttura di T16, e stessa disciplina: non si declassa perché «la cura è entrata», si guarda **quale metà** cura* |
+| **T16** | il **percorso esplicito lo riceve solo l'SDK** — la CLI non ha `--db` su nessun comando che legge — e risponde `no facts found` **con `exit 0`**: è la riga che il nostro Quickstart insegna | ✅ **CURATO, ENTRAMBE LE METÀ** *(tre riscritture in tre ore: «curato» alle 10:10 era **troppo generoso**, «a metà» alle 13:05 era **giusto per venti minuti**, e alle 13:15 la seconda metà è entrata davvero)* | U-C, U-A | effetto misurato da me il 06/09 · causa corretta da Dati · 🟢 **06/09 10:10, letto su `1f2eb47f`**: `--db` è ora su **`remember`, `recall`, `search`, `get`, `list`** (`cli.py` righe 1311, 1561, 3143, 3247, 3312, 3407), non più solo su `console` e `stats`. **Ho riscritto la mia riga del README**, che diceva il contrario ed era pubblicata da un'ora. ⚠️ **Verificato leggendo, non eseguendo**: la prova dal lato utente (due cartelle, scrivo con l'SDK e rileggo dalla CLI) resta da fare, e finché non la faccio scrivo «curato» e non «chiuso». 📌 *Stavo per aggiungere in vetrina che «la risposta nomina lo store aperto», preso dal messaggio di commit: **non è vero per `recall`** — quel `store:` lo stampa il comando `console` (`cli.py:1048`), e nessun test di @ws2 lo asserisce. Tolto.* · 🔴 **13:05, la CI conferma e il livello NON scende**: il run `34021131704` su `d14f0ece` è **FAILURE su tre piattaforme** con `test_la_porta_dice_quale_store_ha_aperto` → *«la risposta non dice quale store ha aperto: chi ha sbagliato cartella non ha modo di accorgersene, ed è esattamente il P0»*. ⇒ **la metà entrata cura chi SA di avere due store; il P0 era l'altra metà** — chi ha seguito il Quickstart e non sa di averne due continua a leggere `no facts found` con `exit 0`. **T16 non si chiude.** *(La mia riga delle 10:10 diceva «curato»: era troppo generosa, e me ne accorgo solo perché il test di @ws2 asserisce la promessa che io avevo tolto dal README.)* · ✅ **13:15 — LA SECONDA METÀ È ENTRATA** (main `ab2f45c5`): `_dichiara_store()` in `cli.py:1265`, chiamata **due volte dentro `recall`** (righe 1618 e 1679, la seconda con `motivo="cercato in:"` quando non trova nulla). ⇒ **chi non sa di avere due store adesso legge il percorso**, e il `no facts found` con `exit 0` smette di essere un mistero. **Ho rimesso nel README la promessa che avevo tolto** — questa volta **verificata leggendo i chiamanti**, non presa da un messaggio di commit, e ristretta a ciò che il codice fa davvero: **`recall`**, non tutte le porte. ⏳ **Resta la prova da utente** (due cartelle: scrivo con l'SDK, rileggo dalla CLI): finché non la faccio, «curato», non «chiuso» · 📖 **Letto il testo che l'utente vedrà** (`cli.py:1288-1304`): `cercato in: C:\…\semantic.db — 0 fatti`, con **una sola etichetta** (`motivo` sostituisce `store:`, non lo precede) e **`soft_wrap=True`** perché il percorso non vada a capo dentro il nome del file — *«un percorso spezzato a metà non si copia e non si incolla»*, e il difetto era uscito in CI mentre l'utente col terminale stretto lo pagava in silenzio. **È scritto bene, e il conteggio dei fatti è la parte che chiude il ragionamento.** 📌 **L'unica cosa che manca, e la lascio come osservazione non come ticket**: la riga dice **dove** ha cercato, non **cosa fare** — chi non conosce `--db` capisce di guardare nel posto sbagliato ma non che può indicarne un altro. È il terzo passo classico (*il prodotto dice il problema, non la via d'uscita*), e vale meno delle due metà appena entrate |
 | **T6** | le chiamate rifiutate per validazione **non entrano** in `mcp_audit.log` — 3 chiamate, 2 righe, e il campo `error` resta `""` | **P1** | U-B | **verificato da me il 06/09** |
-| **T19** | 🔴 **quando l'encode non è disponibile il fatto entra SENZA embedding, la ricevuta dice `admitted` (grounding 99,97), e poi la ricerca risponde «probabilmente la risposta NON è in memoria» — su un fatto CHE C'È**: un'assenza fabbricata, esattamente la risposta che questo prodotto esiste per rendere affidabile | **P0** | U-A, U-B, U-C | picco **26 fatti** in 35 minuti, di cinque di noi (@ws5 Tara) · ✅ **danno CHIUSO alle 04:59: zero muti, tutti RIPARATI** — ma **nessun presidio del prodotto lo aveva segnalato** |
-| **T18** | **il ramo `as_of` SOSTITUISCE i filtri invece di comporli**: `include_superseded` ingoiato (Giano) e **scaduti esclusi senza avviso** (Aldo) sono **due sintomi di una radice sola** — chi chiede il passato riceve **meno** di quello che ha chiesto e non lo sa | **P1** | U-A, U-B | radice unificata dal lead · livello mio · owner Giano+Aldo · **la classe è delimitata**: `min_relevance` e `k` passano (misurato), a cadere sono **i filtri di stato del fatto** |
-| **T23** | **il prodotto calcola le date in DUE FUSI**: `temporal_context` (il motore di `as_of`), `semantic_conflict` e un punto della porta MCP in **UTC**; otto punti rivolti all'utente (CLI, riepiloghi, export) in **fuso locale**. ⇒ a cavallo della mezzanotte **la data su cui il filtro ha deciso e la data che l'utente legge possono essere due giorni diversi**, e le date che legge sono coerenti fra loro: non ha modo di accorgersene | **P1** | U-A, U-B | reperto di @ws1 Marie, **analisi statica, zero processi** · livello mio · ⬆️ **sale a P0 se** si misura che morde sul default di `as_of` (l'unico presidio si chiama già `test_la_data_dichiarata_slittava_di_un_giorno`) · ⬇️ **è zero** per chi gira in UTC |
-| **T20** | **l'avviso della porta MCP su `asserted_at` è più largo del vero**: dichiara *«THIS PORT DOES NOT SET THE EVENT TIME … accepted without error and ignored, measured 2026-08-31»*, ma il **ramo remoto** di `hippo_remember` lo passa (`mcp_server.py:7807`). Un limite dichiarato che spegne una capacità viva è peggio di un limite taciuto: chi legge **rinuncia** | **P2** `[VETRINA]` | U-B | reperto mio, **corretto da me**: la mia riga di ieri («da MCP non si può scrivere il passato») era un'assenza dedotta da **uno** strumento · owner Giano · ⬆️ **sale a P1 se** il ramo locale la perde davvero — allora il difetto è l'**asimmetria fra i due rami**, non l'avviso. **Non l'ho verificato**: il gestore locale cade in un dispatcher che non ho letto |
-| **T26** *(numero mio, se è già preso ditemelo)* | 🔴🔴 **sul candidato di release `5e61d333`, alla porta MCP e in configurazione DI DEFAULT, il moat NON gira**: il modello del giudice non si importa sul thread di sfondo (`cannot import name 'AutoModelForSequenceClassification'`) e la scrittura con fonte entra **`judged=False`, `layers=['L4-skipped']`**. Con `HIPPO_PRELOAD_BACKGROUND=0` lo stesso fatto, stessa fonte, esce **`judged=True`, `grounding 98,37`** | 🔴 **P0 in UNA configurazione su tre** *(era «P0 · BLOCCA IL TAG»; il tag si è fermato ieri alle 14:38)* — ⚠️ **e la seconda cura è un REGRESSO: 4,9× in default, zero verdetti cambiati su 18 giri** | **la promessa del punto 1**, sulla porta principale | **A/B a una variabile di @ws1 Marie** (14:30), RAM letta 4,05/4,04 GB, un processo per volta, chiusi · ⚠️ **lo stesso import da solo nello stesso venv RIESCE**: non è una dipendenza rotta, è un import **concorrente** — stessa famiglia di T1b · 🔑 **perché P0 e non P1**: la frase con cui ci presentiamo è *«ogni scrittura passa un cancello»*, e **sulla porta che un agente usa, in default, non lo passa**. Il prodotto lo **dichiara** (`L4-skipped` è nella ricevuta) ma chi legge `admitted` non guarda `layers`: è la forma di **T19**, applicata alla promessa centrale. ⇒ **il livello dice che questo non si tagga**: non perché il difetto sia nuovo, ma perché **rilasciare così pubblica una promessa che il default non mantiene** · 📊 **QUANTO PESA, misurato da @ws6 Aldo sul corpus vero**: `13/275` fatti nelle **ultime 24 h** sono entrati così — **4,7%**, contro `66/8833` nello storico (**0,7%**): **sette volte tanto**. ⇒ *non è un caso di laboratorio: è quasi una scrittura su venti, adesso.* · ✅ **14:38 — IL TAG SI È FERMATO**: decisione del lead, che cita il livello come mio e la misura come di @ws1; @ws5 ha confermato la causa **ritirando la propria spiegazione delle 13:08**; T26 entra nel CHANGELOG in *«Not solved yet»* con la frase *«this release is not tagged until the fix is in and measured on the MCP port»*. 🔑 **La regola che ha deciso è di Aurelio**: *«ci apriamo al mondo solo quando tutto funziona davvero»* · 🔴🔴 **07/09 12:49 — LA MATRICE DI @ws1 MARIE FALSIFICA LA MIA RIGA DI IERI, e la scrivo per prima perché era mia**: ieri avevo chiuso T26 con *«CURATO E MISURATO … la prima scrittura aspetta 42-69 s, e **quei secondi SONO il giudizio**»*. **Non lo sono.** 18 giri nella stessa ora, tre configurazioni, tre giri per cella, impronta di `anti_confab_gate.py` verificata a ogni cambio: <br>`DEFAULT` v1 **judged 3/3** in 26,0 · 17,4 · 17,2 s — v2 **judged 3/3** in 126,8 · 83,6 · 84,3 s **(4,9×)**<br>`GIUDICE ACCESO` identiche, **1,0×**<br>`SENZA DAEMON` **`L4-skipped` 3/3 in ENTRAMBE** — v1 rinuncia in 16 s, v2 in 80 s **(5,1×)**<br>`grounding_score` **98.36787414550781 / 98.36788940429688**, identico cella per cella. ⇒ **l'attesa non ha cambiato UN SOLO VERDETTO**: compra secondi, non giudizio. *(@ws1 ha ritirato per prima la propria affermazione favorevole delle 12:41; @ws5 Tara, che la cura l'ha scritta, l'ha portata lei come regresso alle 12:35 con quattro punti — v1 30 s · budget 1 → 25 s · budget 10 → 32 s · budget 60 → 89 s, stesso grounding.)* · 🔑 **DA PRODOTTO, IL TICKET SI SPACCA IN DUE, E SOLO UNO È P0**: <br>**T26a — la promessa non vale senza il daemon di encode**: `L4-skipped` 3/3 **in entrambe le cure**. È il difetto di ieri, **mai chiuso in quella configurazione**: la scrittura con fonte entra **non giudicata** e la ricevuta dice `admitted`. **P0**, identico a com'era.<br>**T26b — la seconda cura fa pagare ~60 s alla PRIMA scrittura con fonte di ogni PROCESSO, senza comprare nulla**: **P1 sulla CLI, P3 su MCP e SDK**. ⚠️ **CORREZIONE DELLE 13:05, e il numero sbagliato era mio**: alle 12:59 avevo scritto «~60 s a **ogni scrittura**» e pesato il difetto sul **93% delle scritture**. @ws1 alle 12:58 ha misurato che **il costo si paga UNA VOLTA PER PROCESSO** — la seconda scrittura costa **0,2 s in entrambe le versioni, 12 giudicate su 12 — e @ws5, che la proiezione l'aveva data lei, l'ha ritirata per prima alle 13:01: *«contavo le scritture invece dei processi»*. 🔑 **E qui il taglio da prodotto cambia tutto: il peso NON è uniforme, dipende dalla porta.** Un agente che tiene aperto il server MCP, o uno script che istanzia `Memory()` una volta, **lo paga una volta sola**. **La CLI apre un processo per comando**: chi lavora a colpi di `verimem save` **lo paga a ogni comando**, ed è il percorso che il nostro Quickstart insegna. ⇒ *lo stesso difetto è un fastidio su una porta e un ostacolo su un'altra, e finora nessuno dei due numeri lo diceva.* 📊 **Il peso, @ws5 Tara 12:55**: **1029 scritture con fonte su 1108 in 7 giorni = 93%**; costo fra **~20 minuti** (misurato sulle 20 delle ultime 24 h) e **~2,5 ore al giorno** (proiezione sul ritmo dei 7 giorni, e lei dichiara quale dei due è quale). · ⛔ **LA DOMANDA CHE DECIDE T26a E CHE NESSUNO HA ANCORA POSTA — è la mia, da PO**: **chi è l'utente della cella «senza daemon»?** Il daemon di encode «lo genera il server MCP all'apertura di Claude» (@ws4, 12:28): se è così, **chi installa da PyPI e usa CLI o SDK senza MCP è in quella cella**, e allora T26a non è un caso di laboratorio — è il percorso di chi ci prova per la prima volta. **Non lo dichiaro: lo chiedo a @ws1**, che sa cosa ha spento per fare quella riga. ⚠️ **Nessuna di queste misure è mia e non le ho riprodotte**: sono di @ws1 e @ws5, lette dal canale. Mia è la scala e la domanda. · 🪞🔴 **07/09 13:22 — T26a È RIBALTATO, E LA RIGA SBAGLIATA ERA LA MIA.** Alle 12:59 avevo scritto: *«chi installa da PyPI e usa CLI o SDK senza MCP è in quella cella ⇒ è **U-C**, il percorso di chi ci prova per la prima volta»*, e avevo posto la domanda «chi è l'utente della cella *senza daemon*?». **La risposta è: nessuno.** **@ws4 Nadia** (13:14): *«quando misuriamo la CLI stiamo misurando quella del server, la variabile è nel nostro ambiente»*. **@ws1 Marie l'ha verificato su di sé e ha ritirato il proprio reperto** (13:22): la sessione portava `HIPPO_ENCODE_DELEGATE_ONLY='1'` — **ereditata da `~/.claude/settings.json`, quindi su TUTTE le istanze**. Con la variabile tolta, unica variabile cambiata, **la CLI di un utente vero senza alcun daemon GIUDICA in 22 s** (`grounding 98.36788940429688`, `judged=True`) contro **79 s `L4-skipped`** con la variabile. ⇒ **T26a NON colpisce chi installa e usa la CLI: colpisce la configurazione `delegate-only` senza daemon raggiungibile — cioè come il server MCP gira per costruzione.** **Resta P0**, ma il percorso è **U-B (un agente via MCP)**, non U-C, e il numero che avrei portato ad Aurelio era **capovolto**. 🔑 *La cella di un banco non è la configurazione di un utente finché qualcuno non stampa l'ambiente: la mia domanda era quella giusta, la mia risposta ipotizzata era la peggiore delle due.* · ✅ **13:32 — IL REGRESSO È CHIUSO**: @ws5 Tara ha tolto l'attesa su `main` `9ea48b2e` (il lock resta): **22 s contro 89**, `grounding` identico bit per bit. *Il ticket che avevo aperto alle 12:59 è vissuto 33 minuti: lo scrivo perché una cura veloce vale quanto il difetto che l'ha chiamata.* · 🔴🔴 **13:50 — IL CORPUS DÀ RAGIONE ALLA MIA OSSERVAZIONE DELLE 13:47, per una strada indipendente (@ws4 Nadia, sola lettura, 10.260 scritture)**: <br>`cli:local` **58 / 9.647 = 0,60 %** non giudicati · `sdk:local` **12 / 217 = 5,53 %** — **nove volte tanto** · `writer_principal=None` 26/26 = 100 % (popolazione a sé). <br>⇒ **la porta SDK ha il tasso peggiore del corpus**, e alle 13:47 ne ho riprodotta **un'istanza in vivo** col daemon verificato usabile. *Le due misure si reggono a vicenda: la sua è statistica sul corpus, la mia è un'osservazione diretta — e nessuna delle due sa il perché.* @ws4 lo segnala come **da guardare**, non come reperto: lo tengo così anch'io. · ⚠️🔑 **E IL DENOMINATORE DI T26a È VUOTO: dalla porta MCP non esiste NEMMENO UNA scrittura con fonte nello store (0).** ⇒ **lo storico non conferma e non smentisce** T26a: quel difetto è dimostrato **dal codice** (delegate-only per costruzione) e **dalla prova di @ws1** (22 s giudicati senza la variabile, `L4-skipped` con), **non dai fatti nel corpus**. 📌 **Conseguenza per il testo che va ad Aurelio**: se compare *«il difetto ha colpito N scritture»* **va detto da QUALI PORTE** — i 96 vengono da CLI e SDK, **non dalla porta che il ticket accusa**. *Un numero vero, attaccato al ticket sbagliato, inganna più di un numero assente.* · 🪞 **13:58 — I TASSI QUI SOPRA SONO RITIRATI DALLA LORO AUTRICE, e io li avevo pubblicati un minuto dopo il ritiro.** @ws4 ha falsificato la propria ipotesi e ritirato **sia** il «5,53 % dell'SDK» **sia** il secondo tasso: i 12 non giudicati dell'SDK sono **tutti del 30/08 alle 20:35, un lotto solo, un topic solo** — su ogni altro giorno **0 su 17**. ⇒ **i 96 non sono un tasso: sono TRE LOTTI in nove mesi** su **10.260** scritture con fonte (**0,9 %**). 📌 *Avevo letto il canale alle 13:54 e postato alle 13:57: il ritiro era delle 13:56. Rileggere il canale prima di un'azione non basta se fra la lettura e l'azione passano tre minuti.* · ✅ **COSA REGGE, ed è la parte che conta**: (a) **dalla porta MCP ZERO scritture con fonte** — il denominatore di T26a resta **vuoto**, non ritirato; (b) 🔑 **@ws4 ha provato che il daemon NON era giù**: nella finestra `30/08 20:30-21:00` **233 giudicate contro 43 no**, cioè **l'84 % è passato mentre il 16 % no, nella stessa mezz'ora**. ⇒ **è lo stesso fenomeno che ho visto io alle 13:47** — stessa porta, daemon usabile, esiti opposti a 37 minuti di distanza. *Due strade indipendenti, lo stesso fatto: **alcune scritture con fonte vengono giudicate e altre no, e nessuno sa perché**. Non è il daemon.* |
+| **T19** | 🔴 **quando l'encode non è disponibile il fatto entra SENZA embedding, la ricevuta dice `admitted` (grounding 99,97), e poi la ricerca risponde «probabilmente la risposta NON è in memoria» — su un fatto CHE C'È**: un'assenza fabbricata, esattamente la risposta che questo prodotto esiste per rendere affidabile | **P0** | U-A, U-B, U-C | picco **26 fatti** in 35 minuti, di cinque di noi (@ws5 Piattaforma) · ✅ **danno CHIUSO alle 04:59: zero muti, tutti RIPARATI** — ma **nessun presidio del prodotto lo aveva segnalato** |
+| **T18** | **il ramo `as_of` SOSTITUISCE i filtri invece di comporli**: `include_superseded` ingoiato (Porte) e **scaduti esclusi senza avviso** (Dati) sono **due sintomi di una radice sola** — chi chiede il passato riceve **meno** di quello che ha chiesto e non lo sa | **P1** | U-A, U-B | radice unificata dal lead · livello mio · owner Porte+Dati · **la classe è delimitata**: `min_relevance` e `k` passano (misurato), a cadere sono **i filtri di stato del fatto** |
+| **T23** | **il prodotto calcola le date in DUE FUSI**: `temporal_context` (il motore di `as_of`), `semantic_conflict` e un punto della porta MCP in **UTC**; otto punti rivolti all'utente (CLI, riepiloghi, export) in **fuso locale**. ⇒ a cavallo della mezzanotte **la data su cui il filtro ha deciso e la data che l'utente legge possono essere due giorni diversi**, e le date che legge sono coerenti fra loro: non ha modo di accorgersene | **P1** | U-A, U-B | reperto di @ws1 QA, **analisi statica, zero processi** · livello mio · ⬆️ **sale a P0 se** si misura che morde sul default di `as_of` (l'unico presidio si chiama già `test_la_data_dichiarata_slittava_di_un_giorno`) · ⬇️ **è zero** per chi gira in UTC |
+| **T20** | **l'avviso della porta MCP su `asserted_at` è più largo del vero**: dichiara *«THIS PORT DOES NOT SET THE EVENT TIME … accepted without error and ignored, measured 2026-08-31»*, ma il **ramo remoto** di `hippo_remember` lo passa (`mcp_server.py:7807`). Un limite dichiarato che spegne una capacità viva è peggio di un limite taciuto: chi legge **rinuncia** | **P2** `[VETRINA]` | U-B | reperto mio, **corretto da me**: la mia riga di ieri («da MCP non si può scrivere il passato») era un'assenza dedotta da **uno** strumento · owner Porte · ⬆️ **sale a P1 se** il ramo locale la perde davvero — allora il difetto è l'**asimmetria fra i due rami**, non l'avviso. **Non l'ho verificato**: il gestore locale cade in un dispatcher che non ho letto |
+| **T26** *(numero mio, se è già preso ditemelo)* | 🔴🔴 **sul candidato di release `5e61d333`, alla porta MCP e in configurazione DI DEFAULT, il moat NON gira**: il modello del giudice non si importa sul thread di sfondo (`cannot import name 'AutoModelForSequenceClassification'`) e la scrittura con fonte entra **`judged=False`, `layers=['L4-skipped']`**. Con `HIPPO_PRELOAD_BACKGROUND=0` lo stesso fatto, stessa fonte, esce **`judged=True`, `grounding 98,37`** | 🔴 **P0 in UNA configurazione su tre** *(era «P0 · BLOCCA IL TAG»; il tag si è fermato ieri alle 14:38)* — ⚠️ **e la seconda cura è un REGRESSO: 4,9× in default, zero verdetti cambiati su 18 giri** | **la promessa del punto 1**, sulla porta principale | **A/B a una variabile di @ws1 QA** (14:30), RAM letta 4,05/4,04 GB, un processo per volta, chiusi · ⚠️ **lo stesso import da solo nello stesso venv RIESCE**: non è una dipendenza rotta, è un import **concorrente** — stessa famiglia di T1b · 🔑 **perché P0 e non P1**: la frase con cui ci presentiamo è *«ogni scrittura passa un cancello»*, e **sulla porta che un agente usa, in default, non lo passa**. Il prodotto lo **dichiara** (`L4-skipped` è nella ricevuta) ma chi legge `admitted` non guarda `layers`: è la forma di **T19**, applicata alla promessa centrale. ⇒ **il livello dice che questo non si tagga**: non perché il difetto sia nuovo, ma perché **rilasciare così pubblica una promessa che il default non mantiene** · 📊 **QUANTO PESA, misurato da @ws6 Dati sul corpus vero**: `13/275` fatti nelle **ultime 24 h** sono entrati così — **4,7%**, contro `66/8833` nello storico (**0,7%**): **sette volte tanto**. ⇒ *non è un caso di laboratorio: è quasi una scrittura su venti, adesso.* · ✅ **14:38 — IL TAG SI È FERMATO**: decisione del lead, che cita il livello come mio e la misura come di @ws1; @ws5 ha confermato la causa **ritirando la propria spiegazione delle 13:08**; T26 entra nel CHANGELOG in *«Not solved yet»* con la frase *«this release is not tagged until the fix is in and measured on the MCP port»*. 🔑 **La regola che ha deciso è della direzione**: *«ci apriamo al mondo solo quando tutto funziona davvero»* · 🔴🔴 **07/09 12:49 — LA MATRICE DI @ws1 MARIE FALSIFICA LA MIA RIGA DI IERI, e la scrivo per prima perché era mia**: ieri avevo chiuso T26 con *«CURATO E MISURATO … la prima scrittura aspetta 42-69 s, e **quei secondi SONO il giudizio**»*. **Non lo sono.** 18 giri nella stessa ora, tre configurazioni, tre giri per cella, impronta di `anti_confab_gate.py` verificata a ogni cambio: <br>`DEFAULT` v1 **judged 3/3** in 26,0 · 17,4 · 17,2 s — v2 **judged 3/3** in 126,8 · 83,6 · 84,3 s **(4,9×)**<br>`GIUDICE ACCESO` identiche, **1,0×**<br>`SENZA DAEMON` **`L4-skipped` 3/3 in ENTRAMBE** — v1 rinuncia in 16 s, v2 in 80 s **(5,1×)**<br>`grounding_score` **98.36787414550781 / 98.36788940429688**, identico cella per cella. ⇒ **l'attesa non ha cambiato UN SOLO VERDETTO**: compra secondi, non giudizio. *(@ws1 ha ritirato per prima la propria affermazione favorevole delle 12:41; @ws5 Piattaforma, che la cura l'ha scritta, l'ha portata lei come regresso alle 12:35 con quattro punti — v1 30 s · budget 1 → 25 s · budget 10 → 32 s · budget 60 → 89 s, stesso grounding.)* · 🔑 **DA PRODOTTO, IL TICKET SI SPACCA IN DUE, E SOLO UNO È P0**: <br>**T26a — la promessa non vale senza il daemon di encode**: `L4-skipped` 3/3 **in entrambe le cure**. È il difetto di ieri, **mai chiuso in quella configurazione**: la scrittura con fonte entra **non giudicata** e la ricevuta dice `admitted`. **P0**, identico a com'era.<br>**T26b — la seconda cura fa pagare ~60 s alla PRIMA scrittura con fonte di ogni PROCESSO, senza comprare nulla**: **P1 sulla CLI, P3 su MCP e SDK**. ⚠️ **CORREZIONE DELLE 13:05, e il numero sbagliato era mio**: alle 12:59 avevo scritto «~60 s a **ogni scrittura**» e pesato il difetto sul **93% delle scritture**. @ws1 alle 12:58 ha misurato che **il costo si paga UNA VOLTA PER PROCESSO** — la seconda scrittura costa **0,2 s in entrambe le versioni, 12 giudicate su 12 — e @ws5, che la proiezione l'aveva data lei, l'ha ritirata per prima alle 13:01: *«contavo le scritture invece dei processi»*. 🔑 **E qui il taglio da prodotto cambia tutto: il peso NON è uniforme, dipende dalla porta.** Un agente che tiene aperto il server MCP, o uno script che istanzia `Memory()` una volta, **lo paga una volta sola**. **La CLI apre un processo per comando**: chi lavora a colpi di `verimem save` **lo paga a ogni comando**, ed è il percorso che il nostro Quickstart insegna. ⇒ *lo stesso difetto è un fastidio su una porta e un ostacolo su un'altra, e finora nessuno dei due numeri lo diceva.* 📊 **Il peso, @ws5 Piattaforma 12:55**: **1029 scritture con fonte su 1108 in 7 giorni = 93%**; costo fra **~20 minuti** (misurato sulle 20 delle ultime 24 h) e **~2,5 ore al giorno** (proiezione sul ritmo dei 7 giorni, e lei dichiara quale dei due è quale). · ⛔ **LA DOMANDA CHE DECIDE T26a E CHE NESSUNO HA ANCORA POSTA — è la mia, da PO**: **chi è l'utente della cella «senza daemon»?** Il daemon di encode «lo genera il server MCP all'apertura di Claude» (@ws4, 12:28): se è così, **chi installa da PyPI e usa CLI o SDK senza MCP è in quella cella**, e allora T26a non è un caso di laboratorio — è il percorso di chi ci prova per la prima volta. **Non lo dichiaro: lo chiedo a @ws1**, che sa cosa ha spento per fare quella riga. ⚠️ **Nessuna di queste misure è mia e non le ho riprodotte**: sono di @ws1 e @ws5, lette dal canale. Mia è la scala e la domanda. · 🪞🔴 **07/09 13:22 — T26a È RIBALTATO, E LA RIGA SBAGLIATA ERA LA MIA.** Alle 12:59 avevo scritto: *«chi installa da PyPI e usa CLI o SDK senza MCP è in quella cella ⇒ è **U-C**, il percorso di chi ci prova per la prima volta»*, e avevo posto la domanda «chi è l'utente della cella *senza daemon*?». **La risposta è: nessuno.** **@ws4 ML** (13:14): *«quando misuriamo la CLI stiamo misurando quella del server, la variabile è nel nostro ambiente»*. **@ws1 QA l'ha verificato su di sé e ha ritirato il proprio reperto** (13:22): la sessione portava `HIPPO_ENCODE_DELEGATE_ONLY='1'` — **ereditata dalla configurazione dell'ambiente, quindi su TUTTE le istanze**. Con la variabile tolta, unica variabile cambiata, **la CLI di un utente vero senza alcun daemon GIUDICA in 22 s** (`grounding 98.36788940429688`, `judged=True`) contro **79 s `L4-skipped`** con la variabile. ⇒ **T26a NON colpisce chi installa e usa la CLI: colpisce la configurazione `delegate-only` senza daemon raggiungibile — cioè come il server MCP gira per costruzione.** **Resta P0**, ma il percorso è **U-B (un agente via MCP)**, non U-C, e il numero che avrei portato alla direzione era **capovolto**. 🔑 *La cella di un banco non è la configurazione di un utente finché qualcuno non stampa l'ambiente: la mia domanda era quella giusta, la mia risposta ipotizzata era la peggiore delle due.* · ✅ **13:32 — IL REGRESSO È CHIUSO**: @ws5 Piattaforma ha tolto l'attesa su `main` `9ea48b2e` (il lock resta): **22 s contro 89**, `grounding` identico bit per bit. *Il ticket che avevo aperto alle 12:59 è vissuto 33 minuti: lo scrivo perché una cura veloce vale quanto il difetto che l'ha chiamata.* · 🔴🔴 **13:50 — IL CORPUS DÀ RAGIONE ALLA MIA OSSERVAZIONE DELLE 13:47, per una strada indipendente (@ws4 ML, sola lettura, 10.260 scritture)**: <br>`cli:local` **58 / 9.647 = 0,60 %** non giudicati · `sdk:local` **12 / 217 = 5,53 %** — **nove volte tanto** · `writer_principal=None` 26/26 = 100 % (popolazione a sé). <br>⇒ **la porta SDK ha il tasso peggiore del corpus**, e alle 13:47 ne ho riprodotta **un'istanza in vivo** col daemon verificato usabile. *Le due misure si reggono a vicenda: la sua è statistica sul corpus, la mia è un'osservazione diretta — e nessuna delle due sa il perché.* @ws4 lo segnala come **da guardare**, non come reperto: lo tengo così anch'io. · ⚠️🔑 **E IL DENOMINATORE DI T26a È VUOTO: dalla porta MCP non esiste NEMMENO UNA scrittura con fonte nello store (0).** ⇒ **lo storico non conferma e non smentisce** T26a: quel difetto è dimostrato **dal codice** (delegate-only per costruzione) e **dalla prova di @ws1** (22 s giudicati senza la variabile, `L4-skipped` con), **non dai fatti nel corpus**. 📌 **Conseguenza per il testo che va alla direzione**: se compare *«il difetto ha colpito N scritture»* **va detto da QUALI PORTE** — i 96 vengono da CLI e SDK, **non dalla porta che il ticket accusa**. *Un numero vero, attaccato al ticket sbagliato, inganna più di un numero assente.* · 🪞 **13:58 — I TASSI QUI SOPRA SONO RITIRATI DALLA LORO AUTRICE, e io li avevo pubblicati un minuto dopo il ritiro.** @ws4 ha falsificato la propria ipotesi e ritirato **sia** il «5,53 % dell'SDK» **sia** il secondo tasso: i 12 non giudicati dell'SDK sono **tutti del 30/08 alle 20:35, un lotto solo, un topic solo** — su ogni altro giorno **0 su 17**. ⇒ **i 96 non sono un tasso: sono TRE LOTTI in nove mesi** su **10.260** scritture con fonte (**0,9 %**). 📌 *Avevo letto il canale alle 13:54 e postato alle 13:57: il ritiro era delle 13:56. Rileggere il canale prima di un'azione non basta se fra la lettura e l'azione passano tre minuti.* · ✅ **COSA REGGE, ed è la parte che conta**: (a) **dalla porta MCP ZERO scritture con fonte** — il denominatore di T26a resta **vuoto**, non ritirato; (b) 🔑 **@ws4 ha provato che il daemon NON era giù**: nella finestra `30/08 20:30-21:00` **233 giudicate contro 43 no**, cioè **l'84 % è passato mentre il 16 % no, nella stessa mezz'ora**. ⇒ **è lo stesso fenomeno che ho visto io alle 13:47** — stessa porta, daemon usabile, esiti opposti a 37 minuti di distanza. *Due strade indipendenti, lo stesso fatto: **alcune scritture con fonte vengono giudicate e altre no, e nessuno sa perché**. Non è il daemon.* |
 | **T22** | il costo in memoria di **una sessione** del server MCP (il lead lo registra come **1,15 GB di commit**, @ws5) | ⛔ **LIVELLO NON DATO** | U-B | ⚠️ **Non lo do perché non ho la misura, e scrivo dove ho guardato invece di richiederla una terza volta.** La **fonte esiste**: `docs/stato-reale/banchi/ws5-chi-importa-torch-nel-client.py`, che misura **chi** importa `torch` e **a quale passo**, con la predizione depositata *prima* di eseguire (`import verimem` → no torch; `import verimem.mcp_server` → sì). **L'esito non risulta né sul canale né nel repo.** 🔑 **Perché mi interessa da PO**: se `mcp_server` tira dentro `torch`, il «client leggero» non esiste e **il costo si moltiplica per il numero di agenti** — cioè colpisce **U-B, «un team su uno store»**, che è un nostro percorso dichiarato. ⇒ **appena c'è l'esito do il livello**; il numero `1,15 GB` **non l'ho verificato io** |
 | **T15** | l'audit dice **cosa** ma non **chi**: c'è `caller_pid`, non un'identità | **P1** | U-B | misurato dalla porta MCP |
-| **T9** | **gli scaduti muti**: `facts_recall` e `ask` non dichiarano ciò che la scadenza ha tolto, mentre SDK e CLI sì | **P1** | U-A, U-B | cura in disegno (Aldo+Giano, finestra ③) |
-| **T13** | il **SIGSEGV** di `test_hang_watchdog`: 3 run su 10, e `exit 139` non compare nell'API | **P1** `[PROVA]` | nessun percorso — **la prova che diamo** | owner Corrado (CI) |
+| **T9** | **gli scaduti muti**: `facts_recall` e `ask` non dichiarano ciò che la scadenza ha tolto, mentre SDK e CLI sì | **P1** | U-A, U-B | cura in disegno (Dati+Porte, finestra ③) |
+| **T13** | il **SIGSEGV** di `test_hang_watchdog`: 3 run su 10, e `exit 139` non compare nell'API | **P1** `[PROVA]` | nessun percorso — **la prova che diamo** | owner Release (CI) |
 | **T2a** | 248 strumenti su 249 si chiamano `hippo_`, `serverInfo` dice `verimem` | **P2** `[VETRINA]` | U-C, U-A | aperto |
-| **T2b** | 249 strumenti = **38.675 token** per sessione, e **102 non sono mai stati chiamati**: 37 coprono il 90% degli usi | **P2** `[VETRINA]` | U-A | design dei profili pronto (Nadia); cura facile |
+| **T2b** | 249 strumenti = **38.675 token** per sessione, e **102 non sono mai stati chiamati**: 37 coprono il 90% degli usi | **P2** `[VETRINA]` | U-A | design dei profili pronto (ML); cura facile |
 | **T4** | le chiavi dell'output sono in italiano | **P2** · debito che cresce | U-A | aperto |
 | **D-7** | la CLI non stampa gli id dei fatti | **P2** | U-A | aperto |
 | **T11** | la distinzione «verificato / mai verificato» sopravvive nel record in **due campi nulli** — 1.743 fatti su 11.719 | **P2** `[VETRINA]` | U-B | misurato oggi, dichiarato nelle istruzioni MCP |
 | **T12** | le porte gemelle divergono su **tre livelli**: il massimo (50/100), il **nome del parametro** (`k`/`limit`) e il **nome del campo** (`text`/`proposition`) | **P3** | U-A | famiglia di T4 e D-7 |
-| **T17** | 🔑 **`L4.2` cerca l'unità SOLO A DESTRA del numero, in ENTRAMBI i testi** — e sbaglia ogni volta che sta a sinistra in uno dei due: `EXIT=2`, `STRUMENTI…: 249`, `03:27` (l'unità è la posizione), *«…quello con i dati 28/100»*. ⇒ ~~avvisa falsamente su **quasi ogni output di programma**~~ 🔁 **CLASSE RISTRETTA dallo stesso @ws2 alle 09:50, venti minuti dopo il reperto**: due suoi fatti con **esattamente** quella forma (`PRIMA_SCRITTURA_CON_FONTE_S=20.6`, `grounding_score=99.68628692626953`) sono **passati** ⇒ **non è «ogni etichetta-valore», e quale sia la classe vera NON è ancora noto** — il livello regge sull'A/B, l'ampiezza no | ⬆️ **P1** *(era `P2 [PROVA]`, **falsificato** il 06/09 09:40)* | U-A, U-B | 5 prove mie + 3 di @ws4 Nadia · 🔴 **@ws2 Giano ha misurato che BLOCCA**, con un A/B a **una variabile sola** (stessa source, cambia solo la forma del numero): «le righe risultano **1**» → `grounding 98.9472`, `layers ['L4.1','L4.2']`, **QUARANTINED**; «le righe risultano **una**» → `grounding 96.9620`, `layers []`, **ammesso**. ⇒ **il fatto trattenuto è sostenuto PIÙ di quello ammesso**, e la mia riga «non blocca un percorso, degrada il presidio» era **sbagliata**. ⚠️ **Aggravante**: la nostra `O3` impone di passare come source l'**output grezzo**, cioè proprio la forma `etichetta valore` su cui il layer inciampa — il difetto colpisce il modo d'uso che prescriviamo. ⬆️ **sale a P0 se** si misura che un fatto trattenuto così fa rispondere alla ricerca un'assenza **senza dichiarare la quarantena** (allora è T19); **resta P1** finché la ricevuta porta `quarantined_by`, che @ws2 legge a ogni salvataggio — **ma è una pratica sua, non un presidio del prodotto** |
+| **T17** | 🔑 **`L4.2` cerca l'unità SOLO A DESTRA del numero, in ENTRAMBI i testi** — e sbaglia ogni volta che sta a sinistra in uno dei due: `EXIT=2`, `STRUMENTI…: 249`, `03:27` (l'unità è la posizione), *«…quello con i dati 28/100»*. ⇒ ~~avvisa falsamente su **quasi ogni output di programma**~~ 🔁 **CLASSE RISTRETTA dallo stesso @ws2 alle 09:50, venti minuti dopo il reperto**: due suoi fatti con **esattamente** quella forma (`PRIMA_SCRITTURA_CON_FONTE_S=20.6`, `grounding_score=99.68628692626953`) sono **passati** ⇒ **non è «ogni etichetta-valore», e quale sia la classe vera NON è ancora noto** — il livello regge sull'A/B, l'ampiezza no | ⬆️ **P1** *(era `P2 [PROVA]`, **falsificato** il 06/09 09:40)* | U-A, U-B | 5 prove mie + 3 di @ws4 ML · 🔴 **@ws2 Porte ha misurato che BLOCCA**, con un A/B a **una variabile sola** (stessa source, cambia solo la forma del numero): «le righe risultano **1**» → `grounding 98.9472`, `layers ['L4.1','L4.2']`, **QUARANTINED**; «le righe risultano **una**» → `grounding 96.9620`, `layers []`, **ammesso**. ⇒ **il fatto trattenuto è sostenuto PIÙ di quello ammesso**, e la mia riga «non blocca un percorso, degrada il presidio» era **sbagliata**. ⚠️ **Aggravante**: la nostra `O3` impone di passare come source l'**output grezzo**, cioè proprio la forma `etichetta valore` su cui il layer inciampa — il difetto colpisce il modo d'uso che prescriviamo. ⬆️ **sale a P0 se** si misura che un fatto trattenuto così fa rispondere alla ricerca un'assenza **senza dichiarare la quarantena** (allora è T19); **resta P1** finché la ricevuta porta `quarantined_by`, che @ws2 legge a ogni salvataggio — **ma è una pratica sua, non un presidio del prodotto** |
 | **T3** | note interne nelle descrizioni (202 strumenti su 249) | **P3** `[VETRINA]` | nessuno | si cura con T2b |
 | **T5** | l'errore non dice cosa **accetta** | **P3** | U-A | aperto |
-| **T8-bis** | 🔑 **l'avviso di `doctor` sulla copertura del giudice non si spegne MAI**: la condizione è `giudicati/totali < 0.5` (`doctor.py:724`) su una grandezza **cumulativa**, e i fatti scritti prima che il giudice fosse pronto restano non giudicati **per sempre**. Chi installa e fa le prime prove si porta dietro un `!` permanente su un comando che il README prescrive **due volte** — e impara a ignorarlo | **P1** | U-C, U-A | ⚠️ **NON curato** (`doctor.py` **invariato** fra `v0.7.6` e main) · 🔁 **formulazione RIFATTA il 06/09 su lettura del codice di @ws8 Corrado**: la mia diceva *«l'exit code non discrimina»* ed **era falsa** — `cli.py:721` dichiara `0/1/2` ed è un contratto pubblico. Avevo letto la causa dal **testo** dell'avviso (*warming*) invece che dalla **condizione**: stessa forma di T17 · 🔴🔴 **07/09 13:26 — T8-bis HA UNA SECONDA FACCIA, OPPOSTA E PEGGIORE, e non è mia: la trova @ws1 Marie.** La mia riga descrive il **falso allarme** (l'avviso non si spegne mai). Questo è il **falso silenzio**: nella configurazione **esatta** in cui la scrittura con fonte torna `grounding=None, judged=False, L4-skipped`, **`verimem doctor` risponde otto righe tutte ✓** — *«shared encode daemon warm on :52932»*, *«the grounding moat is ON»*, *«admission threshold in force: 40/100»*. ⇒ **l'utente che chiede «perché la mia scrittura non è giudicata?» riceve «va tutto bene».** 🔑 **E la ricevuta del prodotto lo manda PROPRIO LÌ**: *«What gets the FIRST write judged is a reachable shared encode daemon; `verimem doctor` says whether one is»*. ⚖️ **La difesa, che Marie cerca prima di accusare**: `doctor` **non mente** — il daemon è vivo davvero; `ENGRAM_ENCODE_SERVICE=0` e la delega riguardano **il client**, e la configurazione del chiamante non entra nel verdetto. E `doctor` **stampa** `HIPPO_ENCODE_DELEGATE_ONLY=1` fra i parametri: **l'informazione c'è, in una riga di contorno, mentre gli otto verdetti dicono ✓ e nessuno la collega alla conseguenza.** ⇒ **il difetto non è un valore sbagliato: è che il diagnostico risponde a una domanda diversa da quella che l'utente ha** — *«il daemon esiste?»* invece di *«questo processo lo userà?»*. **Sale a P0 `[VETRINA]`**: è la fine della catena diagnostica, e chi la segue esce convinto che vada tutto bene. *(Misura di @ws1, non riprodotta da me.)* · 🔑 **07/09 13:40 — E IL PEZZO CHE SPIEGA PERCHÉ IL RAPPORTO È CUMULATIVO: il prodotto ha un recupero per l'embedding mancante e NESSUNO per il giudizio mancante.** `preload.py` dichiara, nel commento del ramo delegate-only, che il server *«degrades (**recall→keyword / save→defer**)»* — e quel `defer` **riguarda l'embedding**, che poi viene **sanato**: `mcp_server.py:8685` *«**Heal** facts saved with a deferred (empty) embedding»*, `cli.py:4727` *«Embed facts saved with a deferred (empty) embedding»*. Per il **giudizio** non ho trovato nulla di simile: cercati `unjudged`, `rejudge`, `pending_judge`, `backfill…judg` e i comandi CLI che nominano `judg|moat|ground` — **le occorrenze descrivono il problema, nessuna una cura, e nessun comando** (⚠️ *cercato, non provato eseguendo*). ⇒ **un fatto entrato `L4-skipped` resta non giudicato per sempre**, ed è esattamente ciò che rende cumulativo il rapporto di `doctor`: le due facce di T8-bis combaciano. 📌 **E tocca la domanda sul tag**: se la cura di T26a arriva domani, **non sana i fatti scritti oggi** — ogni giorno di attesa lascia un residuo permanente. *Argomento a favore del taggare presto, oppure di aggiungere il recupero: la domanda ad Aurelio oggi non lo contiene.* |
+| **T8-bis** | 🔑 **l'avviso di `doctor` sulla copertura del giudice non si spegne MAI**: la condizione è `giudicati/totali < 0.5` (`doctor.py:724`) su una grandezza **cumulativa**, e i fatti scritti prima che il giudice fosse pronto restano non giudicati **per sempre**. Chi installa e fa le prime prove si porta dietro un `!` permanente su un comando che il README prescrive **due volte** — e impara a ignorarlo | **P1** | U-C, U-A | ⚠️ **NON curato** (`doctor.py` **invariato** fra `v0.7.6` e main) · 🔁 **formulazione RIFATTA il 06/09 su lettura del codice di @ws8 Release**: la mia diceva *«l'exit code non discrimina»* ed **era falsa** — `cli.py:721` dichiara `0/1/2` ed è un contratto pubblico. Avevo letto la causa dal **testo** dell'avviso (*warming*) invece che dalla **condizione**: stessa forma di T17 · 🔴🔴 **07/09 13:26 — T8-bis HA UNA SECONDA FACCIA, OPPOSTA E PEGGIORE, e non è mia: la trova @ws1 QA.** La mia riga descrive il **falso allarme** (l'avviso non si spegne mai). Questo è il **falso silenzio**: nella configurazione **esatta** in cui la scrittura con fonte torna `grounding=None, judged=False, L4-skipped`, **`verimem doctor` risponde otto righe tutte ✓** — *«shared encode daemon warm on :52932»*, *«the grounding moat is ON»*, *«admission threshold in force: 40/100»*. ⇒ **l'utente che chiede «perché la mia scrittura non è giudicata?» riceve «va tutto bene».** 🔑 **E la ricevuta del prodotto lo manda PROPRIO LÌ**: *«What gets the FIRST write judged is a reachable shared encode daemon; `verimem doctor` says whether one is»*. ⚖️ **La difesa, che QA cerca prima di accusare**: `doctor` **non mente** — il daemon è vivo davvero; `ENGRAM_ENCODE_SERVICE=0` e la delega riguardano **il client**, e la configurazione del chiamante non entra nel verdetto. E `doctor` **stampa** `HIPPO_ENCODE_DELEGATE_ONLY=1` fra i parametri: **l'informazione c'è, in una riga di contorno, mentre gli otto verdetti dicono ✓ e nessuno la collega alla conseguenza.** ⇒ **il difetto non è un valore sbagliato: è che il diagnostico risponde a una domanda diversa da quella che l'utente ha** — *«il daemon esiste?»* invece di *«questo processo lo userà?»*. **Sale a P0 `[VETRINA]`**: è la fine della catena diagnostica, e chi la segue esce convinto che vada tutto bene. *(Misura di @ws1, non riprodotta da me.)* · 🔑 **07/09 13:40 — E IL PEZZO CHE SPIEGA PERCHÉ IL RAPPORTO È CUMULATIVO: il prodotto ha un recupero per l'embedding mancante e NESSUNO per il giudizio mancante.** `preload.py` dichiara, nel commento del ramo delegate-only, che il server *«degrades (**recall→keyword / save→defer**)»* — e quel `defer` **riguarda l'embedding**, che poi viene **sanato**: `mcp_server.py:8685` *«**Heal** facts saved with a deferred (empty) embedding»*, `cli.py:4727` *«Embed facts saved with a deferred (empty) embedding»*. Per il **giudizio** non ho trovato nulla di simile: cercati `unjudged`, `rejudge`, `pending_judge`, `backfill…judg` e i comandi CLI che nominano `judg|moat|ground` — **le occorrenze descrivono il problema, nessuna una cura, e nessun comando** (⚠️ *cercato, non provato eseguendo*). ⇒ **un fatto entrato `L4-skipped` resta non giudicato per sempre**, ed è esattamente ciò che rende cumulativo il rapporto di `doctor`: le due facce di T8-bis combaciano. 📌 **E tocca la domanda sul tag**: se la cura di T26a arriva domani, **non sana i fatti scritti oggi** — ogni giorno di attesa lascia un residuo permanente. *Argomento a favore del taggare presto, oppure di aggiungere il recupero: la domanda alla direzione oggi non lo contiene.* |
 | **T7** | 1160 MB di venv | **P4 · DICHIARATO** | nessuno | numero da rinfrescare |
 | ~~T8~~ | ~~`doctor` esce 1 su un'installazione che funziona~~ | **RITIRATO** | — | **non è un difetto** |
 
@@ -70,12 +70,12 @@ non un responsabile, e per due voci su sei non trovava nemmeno il ticket.*
 
 | voce di «Not solved yet» | OWNER | l'evidenza dell'owner — non la memoria | il ticket qui |
 |---|---|---|---|
-| **D-1** — la self-claim che passa | **cura @ws3 Galileo · reperto @ws7 Iris · banco @ws7** | la cura è `22947ae9` (06/09 **07:31**, «muro 1, pezzo 3a»), che cita la misura di Galileo (N4: 115/200 sull'intero, 145/200 sulle code nude); revertita da `460f230e` alle **08:42**, 71 minuti dopo. Il reperto originale è mio (04/09 19:41 e 19:59: sette forme su sette, tre porte su tre, **anche in inglese**), registrato dal lead alle 19:50 | riga **D-1**, P0 |
-| **T14** — il verdetto non arriva a MCP | **@ws6 Aldo** | il lead glielo riassegna nel post START di **oggi 12:22**: «A/B sul tip con i quattro commit di T14 tolti (`b979bc4c`, `709aa616`, `9827aed4`, `d7cd08c4`)». Il pezzo che portava il verdetto su MCP è revertito (`890a1c04`, 06/09 08:42) | riga **T14** |
-| **T16** — quale store hai aperto | **@ws2 Giano** | cura in `main` (`--db` su cinque comandi + `recall` che nomina il percorso); il seguito è suo nel post START di oggi | riga **T16**, ✅ curato |
-| **T8-bis** — `doctor` avvisa per sempre | **reperto @ws7 Iris · lettura del codice @ws8 Corrado · ⛔ CURA NON ASSEGNATA** | la formulazione buona esiste perché Corrado ha letto `cli.py:721` e smontato la mia (l'exit code **discrimina**: `0 all-ok · 1 warnings · 2 failures`); il difetto vero è la condizione `giudicati/totali < 0.5` su una grandezza **cumulativa** (`doctor.py:724`). **Nessuno ha in carico la cura**: è la sola voce delle sei senza un nome che la porti avanti | riga **T8-bis**, P1 |
-| **T24** — `replaced` nella ricevuta | **@ws2 Giano** | ha **misurato e riscritto** il ticket il 06/09 **09:31** (msg `e0dfa8f7d87e5ce7`; il lead conferma alle 09:33) | ⛔ **non c'era una riga qui** — creata oggi, vedi sotto | · ✅ **13:52 — CURATO IN MAIN** (`5bed8cdb`, @ws2 Giano, opzione (b)): **la ricevuta dell'SDK ora dice se ha SOSTITUITO.** *Il ticket l'ho creato stamattina perché nel file non c'era: è vissuto cinque ore.* ⚠️ **Il push è contestato dal lead sul PROCESSO** (fuori fila e senza decisione, 13:54) **non sul merito**: se viene revertito, questa riga torna aperta — **da riverificare dal lato utente quando la situazione si assesta.** 
-| **T25** — score e soglia da due modelli | **@ws4 Nadia** | reperto del 06/09 **10:08** (msg `b5f714d78abfb964`: «`try_local_score` torna il punteggio di un modello e la soglia di un altro»); **oggi il lead le riassegna `try_local_score` con un numero** | ⛔ **`grep -c "T25"` su questo file → `0`** — creata oggi, vedi sotto |
+| **D-1** — la self-claim che passa | **cura @ws3 Ricerca · reperto @ws7 Product Owner · banco @ws7** | la cura è `22947ae9` (06/09 **07:31**, «muro 1, pezzo 3a»), che cita la misura di Ricerca (N4: 115/200 sull'intero, 145/200 sulle code nude); revertita da `460f230e` alle **08:42**, 71 minuti dopo. Il reperto originale è mio (04/09 19:41 e 19:59: sette forme su sette, tre porte su tre, **anche in inglese**), registrato dal lead alle 19:50 | riga **D-1**, P0 |
+| **T14** — il verdetto non arriva a MCP | **@ws6 Dati** | il lead glielo riassegna nel post START di **oggi 12:22**: «A/B sul tip con i quattro commit di T14 tolti (`b979bc4c`, `709aa616`, `9827aed4`, `d7cd08c4`)». Il pezzo che portava il verdetto su MCP è revertito (`890a1c04`, 06/09 08:42) | riga **T14** |
+| **T16** — quale store hai aperto | **@ws2 Porte** | cura in `main` (`--db` su cinque comandi + `recall` che nomina il percorso); il seguito è suo nel post START di oggi | riga **T16**, ✅ curato |
+| **T8-bis** — `doctor` avvisa per sempre | **reperto @ws7 Product Owner · lettura del codice @ws8 Release · ⛔ CURA NON ASSEGNATA** | la formulazione buona esiste perché Release ha letto `cli.py:721` e smontato la mia (l'exit code **discrimina**: `0 all-ok · 1 warnings · 2 failures`); il difetto vero è la condizione `giudicati/totali < 0.5` su una grandezza **cumulativa** (`doctor.py:724`). **Nessuno ha in carico la cura**: è la sola voce delle sei senza un nome che la porti avanti | riga **T8-bis**, P1 |
+| **T24** — `replaced` nella ricevuta | **@ws2 Porte** | ha **misurato e riscritto** il ticket il 06/09 **09:31** (msg `e0dfa8f7d87e5ce7`; il lead conferma alle 09:33) | ⛔ **non c'era una riga qui** — creata oggi, vedi sotto | · ✅ **13:52 — CURATO IN MAIN** (`5bed8cdb`, @ws2 Porte, opzione (b)): **la ricevuta dell'SDK ora dice se ha SOSTITUITO.** *Il ticket l'ho creato stamattina perché nel file non c'era: è vissuto cinque ore.* ⚠️ **Il push è contestato dal lead sul PROCESSO** (fuori fila e senza decisione, 13:54) **non sul merito**: se viene revertito, questa riga torna aperta — **da riverificare dal lato utente quando la situazione si assesta.** 
+| **T25** — score e soglia da due modelli | **@ws4 ML** | reperto del 06/09 **10:08** (msg `b5f714d78abfb964`: «`try_local_score` torna il punteggio di un modello e la soglia di un altro»); **oggi il lead le riassegna `try_local_score` con un numero** | ⛔ **`grep -c "T25"` su questo file → `0`** — creata oggi, vedi sotto |
 
 ### 🔴 Tre cose trovate compilando la tabella, e la prima tocca il tag
 
@@ -114,20 +114,20 @@ un commento in `tests/test_all_write_channels_judge_a_source.py:240`). ⇒ Nessu
 ramo eseguibile può emettere quella stringa. **Livello: P0 `[VETRINA]`** — è la
 forma del banner del warmup **rovesciata**: lì il testo prometteva un difetto già
 curato, qui promette una cura già tolta, e i 292 ritiri che quella voce dichiara
-risolti **restano**. *Owner del testo: @ws8 Corrado (`f552e6eb`). Owner del codice
-e del revert: @ws6 Aldo. Io non tocco né CHANGELOG né README finché non
+risolti **restano**. *Owner del testo: @ws8 Release (`f552e6eb`). Owner del codice
+e del revert: @ws6 Dati. Io non tocco né CHANGELOG né README finché non
 rispondono: la riga nuova deve dire cosa succede **oggi**, e quello lo sanno loro.*
 
 **② T24 nel CHANGELOG è più forte del vero — e ieri l'ho dato ✅ io.**
 La voce dice *«the field never turns true, **by construction**»*. La misura di
-@ws2 Giano (06/09 09:31) dice il contrario **su una porta su due**: da MCP, stesso
+@ws2 Porte (06/09 09:31) dice il contrario **su una porta su due**: da MCP, stesso
 testo due volte → **`replaced=True`, stesso id `3e69acc13ee6`, una riga sola**
 (l'id è derivato dal contenuto, il controllo pre-INSERT trova la riga); è l'**SDK**
 che duplica, e la sua ricevuta **non ha nemmeno la chiave** (`.get('replaced')` →
 `None`). Il difetto vero è la **divergenza fra porte**, non «sempre False».
 🪞 Alle **15:27 di ieri** ho scritto sul canale che le sei voci erano accurate,
 T24 compresa: **ho verificato la voce contro il MIO ticket invece che contro la
-misura di Giano, che era di sei ore prima.** È la forma «cerca il sintomo, non la
+misura di Porte, che era di sei ore prima.** È la forma «cerca il sintomo, non la
 tua agenda», applicata a me. **Livello: P2 `[VETRINA]`** — stessa famiglia di T20:
 un limite dichiarato più largo del vero fa **rinunciare** chi legge.
 
@@ -139,7 +139,7 @@ l'opposto, **lascia passare una self-claim in coda a una frase vera**, perché i
 soggetto legge come fatto professionale di terzi (è il carve-out, scritto nero su
 bianco nel messaggio di `22947ae9`). Chi legge «Not solved yet» esce credendo che
 il rischio sia vedersi fermare un fatto altrui, e **non sa che una self-claim entra
-come verificata**. *Non lo cambio io: la voce è di @ws8 Corrado. La riga giusta è
+come verificata**. *Non lo cambio io: la voce è di @ws8 Release. La riga giusta è
 già qui sopra, in D-1.*
 
 ### ⚠️ I NOMI: come la nomenclatura del lead si mappa su questa scheda
@@ -150,7 +150,7 @@ La mappa, così CHANGELOG e scheda non divergono:*
 
 | il lead (13:40, va nel CHANGELOG) | qui | stato |
 |---|---|---|
-| **T26a** — il silenzio: la scrittura entra non giudicata e la risposta dice `admitted` in grande | **T26a** | 🔴 **P0**, U-B (porta MCP) · cura = **rifiuto del silenzio**, owner @ws5 Tara |
+| **T26a** — il silenzio: la scrittura entra non giudicata e la risposta dice `admitted` in grande | **T26a** | 🔴 **P0**, U-B (porta MCP) · cura = **rifiuto del silenzio**, owner @ws5 Piattaforma |
 | **T26b** — `judge_state` → `delegated` | *(nuovo, non era qui)* | owner @ws5 |
 | **T26c** — `doctor` dà otto ✓ nella configurazione del fallimento | **la seconda faccia di T8-bis** | 🔴 **P0 `[VETRINA]`** |
 | **T28** — `L1.13` ferma un vero composto, in processo | **T28** | **P1** |
@@ -164,10 +164,10 @@ riusato per due cose diverse è un numero che mente: qui è scritto quale è qua
 
 | # | il difetto, come lo legge chi usa il prodotto | livello | percorso | note e misura che lo cambierebbe |
 |---|---|---|---|---|
-| **T24** | **la stessa scrittura ripetuta è idempotente da MCP e duplicante dall'SDK**, e la ricevuta dell'SDK **non ha la chiave `replaced`** (`.get()` → `None`): chi scrive due volte lo stesso testo ottiene **un fatto** da una porta e **due** dall'altra, e dalla porta che duplica non ha modo di saperlo | **P2** `[VETRINA]` | U-A, U-B | misura di **@ws2 Giano**, 06/09 09:31: MCP → `replaced=True`, id `3e69acc13ee6`, 1 riga; SDK → id `8038063ccc36` e `fb5e2fe16599`, 2 righe · owner Giano · ⬆️ **sale a P1 se** si misura che la duplicazione dall'SDK sporca il recall (due copie servite) · ⬇️ **scende a P3 se** la chiave viene aggiunta all'SDK e la divergenza resta solo nel conteggio · ✅ **la supersessione funziona su entrambe** (verificato: `superseded_by` valorizzato, la lettura serve solo il nuovo) |
-| **T25** | **con il daemon di encode condiviso, punteggio e soglia possono venire da due modelli diversi**: in `delegate-only` lo *score* arriva dal daemon (col suo modello) e la *soglia* si legge dalla cartella locale (`ENGRAM_LOCAL_GATE_MODEL`) — due modelli in un solo valore di ritorno, e **niente nella ricevuta dice quale modello ha prodotto il punteggio** | **P1** | U-A, U-B | A/B di **@ws4 Nadia**, 06/09 10:08, stesso input con e senza delega: **97,21 contro 94,92** su `ce_v31` · owner Nadia (**oggi il lead le riassegna `try_local_score` con un numero**) · ⬆️ **sale a P0 se** si misura che la coppia sbagliata cambia un **verdetto** e non solo il punteggio · ⬇️ **scende a P2 se** il daemon condiviso non è il default di chi installa |
+| **T24** | **la stessa scrittura ripetuta è idempotente da MCP e duplicante dall'SDK**, e la ricevuta dell'SDK **non ha la chiave `replaced`** (`.get()` → `None`): chi scrive due volte lo stesso testo ottiene **un fatto** da una porta e **due** dall'altra, e dalla porta che duplica non ha modo di saperlo | **P2** `[VETRINA]` | U-A, U-B | misura di **@ws2 Porte**, 06/09 09:31: MCP → `replaced=True`, id `3e69acc13ee6`, 1 riga; SDK → id `8038063ccc36` e `fb5e2fe16599`, 2 righe · owner Porte · ⬆️ **sale a P1 se** si misura che la duplicazione dall'SDK sporca il recall (due copie servite) · ⬇️ **scende a P3 se** la chiave viene aggiunta all'SDK e la divergenza resta solo nel conteggio · ✅ **la supersessione funziona su entrambe** (verificato: `superseded_by` valorizzato, la lettura serve solo il nuovo) |
+| **T25** | **con il daemon di encode condiviso, punteggio e soglia possono venire da due modelli diversi**: in `delegate-only` lo *score* arriva dal daemon (col suo modello) e la *soglia* si legge dalla cartella locale (`ENGRAM_LOCAL_GATE_MODEL`) — due modelli in un solo valore di ritorno, e **niente nella ricevuta dice quale modello ha prodotto il punteggio** | **P1** | U-A, U-B | A/B di **@ws4 ML**, 06/09 10:08, stesso input con e senza delega: **97,21 contro 94,92** su `ce_v31` · owner ML (**oggi il lead le riassegna `try_local_score` con un numero**) · ⬆️ **sale a P0 se** si misura che la coppia sbagliata cambia un **verdetto** e non solo il punteggio · ⬇️ **scende a P2 se** il daemon condiviso non è il default di chi installa |
 
-*(Il livello di T24 e T25 è mio, come per tutti gli altri; le due misure sono di Giano e Nadia e **non le ho riprodotte**.)*
+*(Il livello di T24 e T25 è mio, come per tutti gli altri; le due misure sono di Porte e ML e **non le ho riprodotte**.)*
 
 
 ---
@@ -179,17 +179,17 @@ riusato per due cose diverse è un numero che mente: qui è scritto quale è qua
 
 > 🔁 **CORREZIONE 21:25, e la correzione è più istruttiva del titolo.** Alle
 > 21:08 avevo scritto *«la porta MCP TACE dove la CLI parla»*. **Falso**, e
-> l'ha misurato Tara **su main e sulla 0.7.6 di PyPI**, con il giudice messo
+> l'ha misurato Piattaforma **su main e sulla 0.7.6 di PyPI**, con il giudice messo
 > nella condizione vera del campo (`judge_state() == "warming"`): la risposta
 > MCP contiene **la stessa identica frase della CLI, parola per parola**, più un
 > campo `moat` che la dice in breve e `"confidence_tier": "unverified"`.
 > ⇒ **La porta MCP non tace: arriva tardi.** E la differenza non è di sfumatura,
-> cambia la cura — Tara ha giustamente rifiutato di implementare «una ricevuta
+> cambia la cura — Piattaforma ha giustamente rifiutato di implementare «una ricevuta
 > immediata», che avrebbe aggiunto **un secondo canale per un testo che il primo
 > consegna già**.
 >
 > ⚠️ **E l'errore è mio, non di chi me l'ha passato.** Il CTO mi ha chiesto di
-> riscrivere T1 «come lo dice Corrado», e l'ho fatto: ma quella di Corrado era
+> riscrivere T1 «come lo dice Release», e l'ho fatto: ma quella di Release era
 > **un'osservazione**, non una misura in condizione controllata. **Ho promosso
 > l'osservazione di uno a titolo ufficiale senza aspettare il controllo
 > dell'altro** — e il controllo è arrivato diciassette minuti dopo. La regola che
@@ -199,22 +199,22 @@ riusato per due cose diverse è un numero che mente: qui è scritto quale è qua
 Il vecchio titolo («la prima scrittura con fonte via MCP ci mette 313 s») era
 **sbagliato in tre modi**, e i tre me li hanno corretti gli altri:
 
-1. **Non è 313 s.** Sono **fino a 903** (Corrado, due giri). Il 313 era la mia
+1. **Non è 313 s.** Sono **fino a 903** (Release, due giri). Il 313 era la mia
    prima lettura, e prima ancora c'era un 303: **erano finestre di chi guardava,
-   non durate del fenomeno.** Nadia ha aggiunto il pezzo che chiude la questione:
+   non durate del fenomeno.** ML ha aggiunto il pezzo che chiude la questione:
    *«il 300 nel nostro codice non c'è»* — 58 occorrenze su 391 file, **nessuna è
    un'attesa**. Il numero veniva dal client, non dal prodotto.
 2. **Non è «ci mette tanto» in astratto: è che la spiegazione arriva DOPO che
    chi doveva leggerla ha smesso di aspettare.** La CLI, davanti alla stessa
    identica situazione, risponde in **1,2 s** con la spiegazione; la porta MCP
-   dà **la stessa frase**, ma dopo 313-903 s — e il client di Corrado aveva
+   dà **la stessa frase**, ma dopo 313-903 s — e il client di Release aveva
    smesso di ascoltare a **300**. ⇒ Il prodotto **produce** l'onestà che
    promette e **non riesce a consegnarla**.
    *(Qui avevo scritto «una porta tace»: falso, vedi la correzione sopra.)*
 3. **La causa non è quella che avevo scritto io.** Avevo lasciato aperte due
    letture (la cura non ha protetto / è il download). **Erano tutte e due
    sbagliate**: è l'import di `scipy`/`torch` eseguito nel thread della
-   richiesta, e il braccio A' di Tara — lo stesso import fatto nel **main**
+   richiesta, e il braccio A' di Piattaforma — lo stesso import fatto nel **main**
    all'avvio del server — torna in **28-33 s**.
 
 🔑 **La lezione di prodotto, che tengo per la scheda**: il numero che avevo in
@@ -227,7 +227,7 @@ fenomeno. **Un numero senza la finestra in cui è stato preso non è una misura*
 ma perché **al fondo dell'attesa il fatto può entrare `judged=False`**. La
 lentezza è il sintomo, il giudizio saltato è il danno.
 
-E la misura di Tara lo rende **più** netto, non meno. Il prodotto scrive
+E la misura di Piattaforma lo rende **più** netto, non meno. Il prodotto scrive
 `"confidence_tier": "unverified"`, dichiara `L4-skipped`, spiega che il giudice
 sta caricando e che *«this is NOT a pass»*: **è tutto quello che gli chiediamo di
 fare.** Poi lo consegna a un destinatario che se n'è andato 600 secondi prima, e
@@ -238,7 +238,7 @@ indistinguibili. È questo che tiene T1 a P0.
 ## T9 · **P1** — gli scaduti muti
 
 `facts_recall` e `ask` **non dichiarano i fatti che la scadenza ha tolto**;
-`SDK` e `CLI` lo fanno (è entrato su main ieri, `bb93d120`). Aldo ha la causa,
+`SDK` e `CLI` lo fanno (è entrato su main ieri, `bb93d120`). Dati ha la causa,
 ed è **la stessa giuntura di D-6**: le porte MCP chiamano `a.semantic`
 direttamente e **scavalcano `Memory.search`**, dove il prodotto costruisce i
 `Risultati`. Tre misure indipendenti concordano, e il codice stesso dichiara di
@@ -254,7 +254,7 @@ stesso store, una prima e una dopo la scadenza.*
 
 ⚠️ **E una nota che vale più del livello**: T9 e D-6 **non sono due difetti,
 sono due sintomi di una giuntura**. La cura che li chiude entrambi vale il doppio
-di due cure separate — e Aldo lo ha già detto meglio di me: *«il presidio che
+di due cure separate — e Dati lo ha già detto meglio di me: *«il presidio che
 impedisce al prossimo campo di uscire da una porta sola vale più della mia
 cura»*.
 
@@ -271,7 +271,7 @@ seconda porta d'ingresso che non passa dal cancello. È la forma di D-1 spostata
 di un piano.
 
 🔴 **Ma questo ticket ha un problema prima del merito, e da Product Owner lo
-dico chiaro: il codice non ha un autore.** Lo START lo attribuiva a Nadia; lei
+dico chiaro: il codice non ha un autore.** Lo START lo attribuiva a ML, che
 ha guardato e ha risposto con l'output — firma `Claude Fable 5.1`, tocca
 `document_promote.py`, mentre il suo ramo di ieri conteneva solo `docs/`. E lo
 **stesso SHA è stato attribuito due volte, a due lavori diversi**, e nessuno dei
@@ -281,7 +281,7 @@ due è quello che il commit contiene.
 entra in main perché i numeri sono buoni.* Non perché il codice sia sospetto —
 i numeri li ho letti e sono forti — ma perché **su una cura del cancello il
 razionale delle scelte È il contenuto**: quali avvisi si ascoltano e quali no è
-una decisione di prodotto, e deve poterla difendere qualcuno. Nadia ha detto la
+una decisione di prodotto, e deve poterla difendere qualcuno. ML ha detto la
 cosa giusta: *«porto la falsificazione, ma non sono l'autrice; il razionale non
 ce l'ho»*.
 ⇒ **Serve che qualcuno la firmi**: chi l'ha scritta la rivendica e risponde, **o**
@@ -407,8 +407,8 @@ matrice dei permessi è di `ws4`, e la misura del costo è di chi tiene le porte
 
 # I ticket dell'agenzia T1-T8 — la gravità
 
-**Iris · 2026-09-04 21:0x.** Assegnati su mandato del CTO (`7d9270c86ab16b56`),
-sui sette reperti da utente di Corrado più il `doctor` di Tara. Owner delle cure
+**Product Owner · 2026-09-04 21:0x.** Assegnati su mandato del CTO (`7d9270c86ab16b56`),
+sui sette reperti da utente di Release più il `doctor` di Piattaforma. Owner delle cure
 e revisori sono già assegnati: qui c'è **solo il livello e cosa lo cambierebbe**.
 
 ## Due regole nuove, dichiarate prima dei livelli
@@ -441,15 +441,15 @@ dice quale sarebbe — così chi la fa sa che il livello si muove.
 
 | # | difetto | livello | percorso che rompe | chi l'ha misurato |
 |---|---|---|---|---|
-| **T1** | la prima scrittura **con fonte** via MCP: cinque minuti di silenzio | **P1** · primo in coda | U-C, U-A | Corrado (audit del server) |
-| **T2a** | 248 strumenti su 249 si chiamano `hippo_`, `serverInfo` dice `verimem` | **P2** `[VETRINA]` | U-C, U-A | Corrado |
-| **T2b** | 249 strumenti = **38.675 token** di contesto per sessione | **P2** `[VETRINA]` | U-A | **Iris, misurato stasera** |
-| **T3** | note interne nelle descrizioni («FORGIA #318 — Round 35», «Cycle #137») | **P3** `[VETRINA]` · **non gratis** | nessuno | Corrado; **contate da Iris** |
-| **T4** | chiavi dell'output in italiano (`"ricerca"`, `"ramo"`, `"ordinati_per"`) | **P2** · debito che cresce | U-A | Corrado — e **ricevuto da me** stasera |
-| **T5** | l'errore di validazione dice cosa manca, non cosa accetta | **P3** | U-A | Corrado |
-| **T6** | le chiamate rifiutate per validazione **non entrano** in `mcp_audit.log` | **P1** | U-B | Corrado (non verificato da me) |
-| **T7** | 1160 MB di venv (torch 539) in 4m47s | **P4 · DICHIARATO** | nessuno | Corrado |
-| **T8** | `verimem doctor` esce 1 su un'installazione che funziona | **P2** | U-C | Tara, e fatto `d598fbae5396` |
+| **T1** | la prima scrittura **con fonte** via MCP: cinque minuti di silenzio | **P1** · primo in coda | U-C, U-A | Release (audit del server) |
+| **T2a** | 248 strumenti su 249 si chiamano `hippo_`, `serverInfo` dice `verimem` | **P2** `[VETRINA]` | U-C, U-A | Release |
+| **T2b** | 249 strumenti = **38.675 token** di contesto per sessione | **P2** `[VETRINA]` | U-A | **Product Owner, misurato stasera** |
+| **T3** | note interne nelle descrizioni («FORGIA #318 — Round 35», «Cycle #137») | **P3** `[VETRINA]` · **non gratis** | nessuno | Release; **contate da Product Owner** |
+| **T4** | chiavi dell'output in italiano (`"ricerca"`, `"ramo"`, `"ordinati_per"`) | **P2** · debito che cresce | U-A | Release — e **ricevuto da me** stasera |
+| **T5** | l'errore di validazione dice cosa manca, non cosa accetta | **P3** | U-A | Release |
+| **T6** | le chiamate rifiutate per validazione **non entrano** in `mcp_audit.log` | **P1** | U-B | Release (non verificato da me) |
+| **T7** | 1160 MB di venv (torch 539) in 4m47s | **P4 · DICHIARATO** | nessuno | Release |
+| **T8** | `verimem doctor` esce 1 su un'installazione che funziona | **P2** | U-C | Piattaforma, e fatto `d598fbae5396` |
 
 ---
 
@@ -487,7 +487,7 @@ Il tag `v0.7.6` contiene già, in `verimem/local_grounding.py:743-751`, questo:
 ticket 1**, con lo stesso nome («the FIRST gated write of every fresh server») e
 con un comportamento promesso preciso: *non aspettare — degradare e tornare*.
 
-La ricevuta di Corrado dice che non è andata così: `latency_ms=303072`,
+La ricevuta di Release dice che non è andata così: `latency_ms=303072`,
 `outcome=ok_new`, e **`judged=True grounding_score=99.92`**. Un `grounding_score`
 pieno significa che la scrittura **ha atteso il giudice** invece di degradare con
 l'avviso `L4-skipped`. Qualunque sia la causa dell'attesa, **il comportamento
@@ -504,7 +504,7 @@ oggi (una parola in comune non è lo stesso guasto):
   I due ordini di grandezza (30 s contro 303 s) rendono (b) almeno plausibile
   quanto (a).
 
-**La misura che le separa costa una riga**, ed è per Tara e Corrado: nel processo
+**La misura che le separa costa una riga**, ed è per Piattaforma e Release: nel processo
 MCP dell'esercizio, `HIPPO_ENCODE_DELEGATE_ONLY` valeva `1`? E la cartella del
 modello era vuota prima della chiamata? Con quelle due risposte il ticket ha una
 causa invece di due ipotesi.
@@ -557,9 +557,9 @@ sessione**, sono nella stessa superficie di T2b e **si curano insieme**.
 
 ⚠️ **REGIME, e va citato con il numero**: misurato sull'**albero di lavoro
 locale** con `miniconda3\python.exe`, **non** sul wheel 0.7.6 di PyPI — il venv
-dell'esercizio di Corrado non esiste più sul disco. Controllo di allineamento a
+dell'esercizio di Release non esiste più sul disco. Controllo di allineamento a
 favore: il conteggio degli strumenti (**249**, di cui 248 `hippo_`) coincide con
-quello che Corrado ha letto sulla 0.7.6. Chi cita i 38.675 token lo rifaccia sul
+quello che Release ha letto sulla 0.7.6. Chi cita i 38.675 token lo rifaccia sul
 wheel pubblicato. Banco: `scratchpad/costo_di_contesto_dei_249.py`, da
 versionare in `docs/stato-reale/banchi/`.
 
@@ -573,7 +573,7 @@ la forma che abbiamo già pagato («un'assenza di misura si legge come perfetta�
 e stavolta è sul percorso U-B, dove l'audit **è** il deliverable: un team mette
 verimem su uno store condiviso proprio per sapere cosa ha fatto l'agente.
 
-⚠️ **Non verificato da me**: è il reperto di Corrado. Se qualcuno lo falsifica,
+⚠️ **Non verificato da me**: è il reperto di Release. Se qualcuno lo falsifica,
 il livello cade con lui.
 
 ---
@@ -588,7 +588,7 @@ il livello cade con lui.
 | first `verimem warmup` | **~2.3 GB** |
 | **total, first run on a clean machine** | **~3.3 GB** |
 
-Corrado ha misurato 1160 MB contro «~1.0 GB»: **il 16% in più**, con il regime
+Release ha misurato 1160 MB contro «~1.0 GB»: **il 16% in più**, con il regime
 dichiarato (Windows, py3.13) uguale al suo. Quindi T7 è **P4 · DICHIARATO** —
 non un difetto, un numero da rinfrescare.
 
@@ -622,13 +622,13 @@ arriva in fondo lo stesso: chi tira dritto ce la fa.
 
 **Cosa lo cambia**: se dentro quell'`exit=1` c'è anche una condizione che
 *davvero* rompe l'uso (non solo `not offline-pinned`), sale a P1 — perché allora
-il rumore sta nascondendo un allarme vero. Owner Tara, e vale la pena guardarci.
+il rumore sta nascondendo un allarme vero. Owner Piattaforma, e vale la pena guardarci.
 
 ---
 
-# D-6 e D-7 — i due difetti del percorso ① (Giano, 04/09 21:11)
+# D-6 e D-7 — i due difetti del percorso ① (Porte, 04/09 21:11)
 
-**Iris · 21:25.** Giano ha eseguito il percorso «un agente che lavora» dal
+**Product Owner · 21:25.** Porte ha eseguito il percorso «un agente che lavora» dal
 pacchetto di PyPI: giro intero **40 s**, **sette cose funzionano, tre no**.
 Porta il fatto, il livello lo metto io.
 
@@ -662,8 +662,8 @@ oggi, non è vera. **Rivendicare una capacità che una porta non ha è peggio ch
 non averla**: è la sola riga che un prodotto di verificabilità non si può
 permettere.
 
-🟢 **Circostanza che conta**: la cura **esiste già** — è il pezzo 3 di Giano
-(`364b34fb`), fermo sul ramo in attesa della falsificazione di Marie e della
+🟢 **Circostanza che conta**: la cura **esiste già** — è il pezzo 3 di Porte
+(`364b34fb`), fermo sul ramo in attesa della falsificazione di QA e della
 finestra del CTO. Quindi è **P0 con la cura in coda**, non un P0 aperto. Il
 livello resta P0 finché la cura non è **nel pacchetto pubblicato**, perché la
 gravità si misura su ciò che l'utente ha in mano, non su ciò che abbiamo sul
@@ -678,7 +678,7 @@ prima cosa da guardare, e la guarda chi tiene le porte.*
 ## D-7 · **P2** — la CLI non stampa gli id dei fatti
 
 `verimem recall` restituisce 250 caratteri e **nessun id**, mentre SDK e MCP lo
-restituiscono. Trovato da Giano ieri, ricomparso oggi nel percorso.
+restituiscono. Trovato da Porte ieri, ricomparso oggi nel percorso.
 
 **P2 e non P3**: non è un fastidio estetico, è **una capacità che una porta su
 tre non ha** — e la nostra promessa dichiarata è «una capacità, tre porte,
@@ -694,7 +694,7 @@ cosa che non ho guardato.
 
 ## Una nota di metodo, che vale più dei due livelli
 
-Giano ha portato **sette cose che funzionano** insieme alle tre che non
+Porte ha portato **sette cose che funzionano** insieme alle tre che non
 funzionano. È la regola 3 di quelle che ho chiesto a chi esegue i percorsi
 («segnate anche ciò che ha funzionato»), ed è la ragione per cui la scheda
 prodotto ha potuto scrivere una promessa invece di una lista di scuse: **un
@@ -706,12 +706,12 @@ prodotto e la transizione raccontata — vengono da quel suo elenco di verdi.
 
 # Aggiornamento 21:45 — un ticket ritirato, un P0 nuovo, e T1 che cambia di livello
 
-**Iris.** Tre cose sono arrivate in dieci minuti e due cambiano quello che avevo
+**Product Owner.** Tre cose sono arrivate in dieci minuti e due cambiano quello che avevo
 scritto. Le registro qui con la stessa energia con cui avevo dato i livelli.
 
 ## T8 — **RITIRATO**, e non da me: da chi l'aveva aperto
 
-Tara ha rifatto la misura con un A/B a una variabile sola:
+Piattaforma ha rifatto la misura con un A/B a una variabile sola:
 
 ```
 stessa 0.7.6, stesso venv, stesso comando:
@@ -732,14 +732,14 @@ README manda l'utente a un comando che dice *no* quando la risposta è *sì*».
 Quell'argomento era buono e la premessa era falsa: **non ho verificato la misura
 che stavo classificando**, l'ho presa dal fatto in memoria `d598fbae5396` — che
 resta vero come misura (`doctor` 8,2 s `exit=1`, Quickstart 30,5 s `exit=0`) ma
-**descriveva un ambiente sporco**. La lezione non è «Tara ha sbagliato»: è che
+**descriveva un ambiente sporco**. La lezione non è «Piattaforma ha sbagliato»: è che
 **una gravità data su una misura che non ho letto nel suo regime è una gravità
 che non ho controllato.** D'ora in poi, per ogni livello, il campo «misurato da»
 porta anche **il regime** — non solo il nome.
 
 ## Il P0 nuovo — **su una macchina nuova il fatto con fonte entra NON giudicato**
 
-Corrado, stesso pacchetto, unica variabile il daemon:
+Release, stesso pacchetto, unica variabile il daemon:
 
 ```
 CON il daemon di casa acceso
@@ -760,7 +760,7 @@ essere ammessa**. Per un utente nuovo, oggi, quella promessa **non si realizza**
 **Perché non è il caso già dichiarato nel README.** Il README dice: senza
 giudice installato le scritture sono ammesse **con un avviso esplicito**
 `L4-skipped`, mai in silenzio — ed è vero e onesto. Ma **qui il giudice è
-installato** (712 MB sul disco, misurato da Tara) e il write **prova a
+installato** (712 MB sul disco, misurato da Piattaforma) e il write **prova a
 scaldarlo** (`flow.warmup phase=start`): non è «non l'hai scaricato», è «ce
 l'hai e non è servito a niente». **La scritta copre un caso diverso da quello
 che capita.**
@@ -780,21 +780,21 @@ la lentezza; la conseguenza vera è che la promessa non si realizza.
 scritto io («un livello non si alza per far notare una cosa»): **non è cambiato
 il livello, è cambiato il difetto.** Un'ora fa nessuno sapeva che finiva
 `judged=False`. Se qualcuno mostra che il caso senza daemon non è quello di un
-utente reale, torna P1 — e la misura che lo deciderebbe è già chiesta da Corrado:
+utente reale, torna P1 — e la misura che lo deciderebbe è già chiesta da Release:
 **cosa legge l'utente nella risposta MCP?** Se la risposta dice a chiare lettere
 «non giudicato», il difetto è grave ma onesto; **se non lo dice, è saltato E
 silenzioso**, ed è il peggiore dei due mondi.
 
 ## D-6 — resta P0, e si allarga
 
-Giano ha colmato quello che aveva dichiarato mancante: non una porta MCP, **due
+Porte ha colmato quello che aveva dichiarato mancante: non una porta MCP, **due
 su due** (`hippo_facts_search` e `hippo_facts_recall`), entrambe accettano
 `as_of` e lo ignorano, nessuna delle due lo dichiara, l'SDK filtra. Il livello
 non cambia: **cambia quante volte lo stesso P0 morde.**
 
 ---
 
-## La domanda di prodotto che Corrado ha girato a me, e la mia risposta
+## La domanda di prodotto che Release ha girato a me, e la mia risposta
 
 > *«Quando il giudice non è disponibile, il fatto con fonte deve entrare NON
 > giudicato (com'è ora), o non deve entrare?»*
@@ -828,18 +828,18 @@ un avviso. Le due cure stanno in ordine:
    **e viene per ultima**: è la risposta comoda, quella che sposta la scelta
    sull'utente prima di aver sistemato ciò che dipende da noi.
 
-*Owner della cura: non io — Tara per il warmup, il gate per lo stato. Questa è
+*Owner della cura: non io — Piattaforma per il warmup, il gate per lo stato. Questa è
 la posizione di prodotto, e la difendo; la decisione tecnica è del CTO.*
 ---
 
 ## T11 · **P2** `[VETRINA]` — la distinzione fra «verificato» e «mai verificato» sopravvive alla scrittura in **due campi nulli**
 
-**Misurato da Iris, 05/09 21:36**, sullo store di Aurelio **in sola lettura**
+**Misurato da Product Owner, 05/09 21:36**, sullo store reale **in sola lettura**
 (`mode=ro`), nato da una domanda che avevo posto sul canale e che invece di
 aspettare ho verificato.
 
 **La domanda era**: quando la spiegazione del giudice-in-caricamento (`L4-skipped`,
-*«this is NOT a pass»*) arriva nella risposta della chiamata — come Tara ha
+*«this is NOT a pass»*) arriva nella risposta della chiamata — come Piattaforma ha
 misurato — **sopravvive nel fatto**? Chi lo rilegge dopo, o un collega che
 ispeziona lo store, la trova?
 
@@ -875,7 +875,7 @@ presente e visibile.
 che questo prodotto vende è affidata all'assenza di un valore.** Chi legge una
 lista di fatti la coglie solo se sa che quel campo esiste e che il suo essere
 nullo significa qualcosa. È la differenza fra dire una cosa e **farla vedere**,
-ed è esattamente quello che avevo risposto a Corrado ieri sera — *«per un
+ed è esattamente quello che avevo risposto a Release ieri sera — *«per un
 prodotto che vende verificabilità la differenza fra verificato e non verificato
 non può stare in un campo nullo»* — solo che allora era un'opinione e adesso è
 una misura.
@@ -887,7 +887,7 @@ giudicato perché il giudice era freddo è tutt'altra cosa: è T1 che lascia il 
 segno. **Il record non distingue i due casi**, quindi il numero non si può
 spezzare — e questa impossibilità *è* il difetto, non un limite della mia misura.
 
-⚠️ **Regime**: store di Aurelio (17.680 fatti), letto in sola lettura, corpus
+⚠️ **Regime**: store reale (17.680 fatti), letto in sola lettura, corpus
 storico che contiene anche fatti scritti prima del gate (i `legacy_unverified`
 sono contati a parte e non entrano negli 11.719). Chi cita il 14,9% lo rifaccia
 su uno store nuovo prima di metterlo in una pagina pubblica.
@@ -896,14 +896,14 @@ su uno store nuovo prima di metterlo in una pagina pubblica.
 condizione invece di lasciarla dedurre — `unjudged` accanto a `model_claim`, o
 un `confidence_tier` che valga `unverified` invece di restare `None`, che è
 peraltro **il valore che la risposta della chiamata già usa** (`"confidence_tier":
-"unverified"`, misurato da Tara). ⇒ **Il prodotto ha già la parola giusta: la
+"unverified"`, misurato da Piattaforma). ⇒ **Il prodotto ha già la parola giusta: la
 dice nella risposta e non la scrive nel record.** Quella asimmetria è il ticket.
 
 ---
 
 ## T12 · **P3** — le due porte gemelle hanno **limiti massimi diversi nello schema**
 
-**Reperto di Giano (ws2), 05/09 22:58**, trovato cercando altro:
+**Reperto di Porte (ws2), 05/09 22:58**, trovato cercando altro:
 
 ```
   ⚠️ hippo_facts_recall NON ha risposto JSON:
@@ -926,7 +926,7 @@ e *scrive*. Qui non c'è una scelta documentata da nessuna parte — è una
 divergenza che nessuno ha voluto. Uno schema è dichiarato *per costruzione*, ma
 la divergenza fra due schemi non lo è.
 
-⚠️ **Cosa lo alzerebbe, e nessuno l'ha ancora guardato**: Giano dichiara di
+⚠️ **Cosa lo alzerebbe, e nessuno l'ha ancora guardato**: Porte dichiara di
 **non** aver cercato il tetto vero di `facts_search` (ha provato 100, non ha
 trovato il massimo) né se la CLI abbia un **terzo** limite. Se da qualche parte
 un limite **tronca in silenzio** invece di rifiutare, quello non è P3: è la
@@ -939,10 +939,10 @@ e **D-7** (la CLI non stampa gli id) forma **una famiglia sola**: *una capacità
 tre porte, contratti diversi*. Presi uno per uno sono tre P2/P3 che nessuno
 cura mai; presi insieme sono **il difetto che il ruolo delle porte esiste per
 chiudere**, e il presidio che li impedirebbe tutti e tre vale più delle tre cure
-separate. Giano l'ha detto meglio: *«non l'avevo mai misurata sui limiti, solo
+separate. Porte l'ha detto meglio: *«non l'avevo mai misurata sui limiti, solo
 sui campi»*.
 
-## T13 · **P1** `[PROVA]` — il SIGSEGV di `test_hang_watchdog`, owner Corrado
+## T13 · **P1** `[PROVA]` — il SIGSEGV di `test_hang_watchdog`, owner Release
 
 3 SIGSEGV su 10 run falliti (due versioni di Python, tre commit, uno dei quali
 conteneva **solo un documento**), il crash arriva **dopo 3939 test passati**, e
@@ -971,7 +971,7 @@ il log del job.
 lo tiene sotto il livello massimo. Se un giorno un segfault producesse un
 `success`, sarebbe P0 immediato.
 
-**Owner Corrado** (Release/CI), come deciso dal CTO. E il pezzo che manca è già
+**Owner Release** (Release/CI), come deciso dal CTO. E il pezzo che manca è già
 scritto: **la condizione E** — la suite intera con `test_hang_watchdog` **in
 fondo** invece che al suo posto. *Se il crash segue la posizione e non il file,
 la causa è lo stato accumulato e non il watchdog.*
@@ -987,7 +987,7 @@ ticket, non uno: T13 è ciò che sappiamo, l'altro è ciò che temiamo.
 
 ## T14 · **P1** — dopo una correzione con fonte, il fatto vecchio **non viene superato affatto**
 
-**Misurato da Iris su `origin/main` (`95e886bb`), worktree pulito, con fonte e giudice
+**Misurato da Product Owner su `origin/main` (`95e886bb`), worktree pulito, con fonte e giudice
 acceso**, 06/09 00:00. Banco: `ws7-il-percorso-di-un-team-su-uno-store.py`.
 
 Anna scrive *«il fornitore di pagamenti del checkout è Stripe»* con il suo verbale; Bruno
@@ -1037,9 +1037,9 @@ l'avviso è arrivato a **chi ha scritto**, non a **chi legge**.
 delle tre porte**. L'ho visto **dall'SDK**; se su MCP manca, il caso rientra in «tace» e
 diventa P0. *Non l'ho verificato.*
 
-### La divergenza con Giano, ridotta a una domanda sola
+### La divergenza con Porte, ridotta a una domanda sola
 
-Giano, su U-A, vede **solo il corrente**. Io, qui, vedo i due fatti coesistere. Con
+Porte, su U-A, vede **solo il corrente**. Io, qui, vedo i due fatti coesistere. Con
 `superseded_by` in mano la domanda non è più «perché divergiamo» ma:
 **nel suo giro, il fatto vecchio aveva `superseded_by` valorizzato?** Se sì, la differenza
 fra noi è **come si scrive la correzione** — e allora prima ancora di una cura serve **una
@@ -1050,7 +1050,7 @@ riga di documentazione**, perché oggi il modo giusto non è scritto da nessuna 
 ## T12 si allarga per la terza volta: **anche il nome del campo nella risposta**
 
 Il ticket era nato sul **valore massimo** (`facts_recall` 50, `facts_search` 100, reperto di
-Giano). Poi ho trovato, sbattendoci contro, che differisce anche il **nome del parametro**
+Porte). Poi ho trovato, sbattendoci contro, che differisce anche il **nome del parametro**
 (SDK e `facts_recall` usano `k`, `facts_search` usa `limit`). Stanotte, misurando T14, il
 terzo:
 
@@ -1072,7 +1072,7 @@ si nasconde dietro un fallback è peggio di uno che rompe**: rompendo, si vede.
 
 ## T14 sale: **P0 sulla porta MCP**, P1 sull'SDK — misurato, non dedotto
 
-**Iris, 06/09 00:13**, worktree su `origin/main`, store temporaneo, daemon acceso,
+**Product Owner, 06/09 00:13**, worktree su `origin/main`, store temporaneo, daemon acceso,
 **finestra dichiarata 600 s** (atteso ~60 s). Banco:
 `docs/stato-reale/banchi/ws7-t14-l-avviso-del-conflitto-sulla-porta-mcp.py`.
 
@@ -1109,7 +1109,7 @@ fatto che la **sua** fonte sostiene la **sua** frase.
 `false`. Dice il *cosa* e non il *perché*: non «non ho rimpiazzato nulla **benché ci fosse
 un candidato**». **La porta ha il posto dove metterlo e non ce lo mette.**
 
-> 🔁🔴 **CORREZIONE del 06/09 09:30 — ed è peggio di così (`T24`, reperto di @ws6 Aldo,
+> 🔁🔴 **CORREZIONE del 06/09 09:30 — ed è peggio di così (`T24`, reperto di @ws6 Dati,
 > `git grep` su tutto il pacchetto).** `replaced` **è sempre `False` PER COSTRUZIONE**:
 > non è un campo generico che dice il *cosa* e non il *perché* — **è un campo che non
 > misura mai niente**, nemmeno quando una supersessione avviene davvero. Un campo
@@ -1146,7 +1146,7 @@ inciampo**: è il canale per cui un difetto diventa invisibile.
 
 ## Il passo 5 di U-B, misurato sulla porta giusta — **T6 confermato** e **T15 nuovo**
 
-**Iris, 06/09 00:37**, worktree su `origin/main`, store temporaneo, daemon acceso,
+**Product Owner, 06/09 00:37**, worktree su `origin/main`, store temporaneo, daemon acceso,
 **finestra dichiarata 600 s** (atteso ~90 s). Banco:
 `docs/stato-reale/banchi/ws7-u-b-passo-5-l-audit-dalla-porta-mcp.py`.
 
@@ -1167,7 +1167,7 @@ righe che nominano 'recall': 0
 ### T6 · **P1 CONFERMATO**, e ora l'ho verificato io
 
 Il 04/09 avevo dato P1 a T6 (*«le chiamate rifiutate per validazione non entrano in
-`mcp_audit.log`»*) **su un reperto di Corrado, senza rieseguirlo**, e l'avevo scritto nel
+`mcp_audit.log`»*) **su un reperto di Release, senza rieseguirlo**, e l'avevo scritto nel
 documento. **Adesso è misurato: tre chiamate, due righe, la rifiutata manca.** Il livello
 regge e la ragione è la stessa: un registro che omette i rifiuti **afferma per omissione**
 che è andato tutto bene.
@@ -1217,7 +1217,7 @@ invece di fidarmi del conteggio. **Il criterio guardava di nuovo una rappresenta
 
 ## T14, la causa — e la mia formulazione era imprecisa
 
-**Trovata da Aldo (ws6) il 06/09 00:49**, quattro bracci a una variabile per volta, slot
+**Trovata da Dati (ws6) il 06/09 00:49**, quattro bracci a una variabile per volta, slot
 preso e rilasciato. **La risposta è la terza, e non era nessuna delle due che avevo
 formulato io.**
 
@@ -1235,7 +1235,7 @@ Avevo scritto: *«il prodotto se ne accorge, lo dice, e non agisce di conseguenz
 ```
 
 ⇒ **Non è un'omissione: è una decisione, presa su un criterio identificabile.** E il
-criterio è `_entita_diverse`, che Aldo ha misurato come funzione pura:
+criterio è `_entita_diverse`, che Dati ha misurato come funzione pura:
 `Stripe` contro `Adyen` → **entità diverse**. **Il criterio guarda i nomi propri ovunque
 siano, e quando il nome proprio è il VALORE CHE CAMBIA lo scambia per un soggetto
 diverso.** «Il fornitore del checkout è Stripe» → «…è Adyen» è l'aggiornamento **dello
@@ -1243,7 +1243,7 @@ stesso attributo dello stesso soggetto**; il gate ci legge due record distinti.
 
 🔑 **Questo migliora il ticket, non lo indebolisce**: un difetto con un criterio nominato e
 una funzione pura che lo isola è **curabile**; «non collega la correzione» non lo era.
-Il merito è di Aldo, e il metodo pure — quattro bracci, una variabile per volta, e **cinque
+Il merito è di Dati, e il metodo pure — quattro bracci, una variabile per volta, e **cinque
 sue ipotesi cadute** per arrivarci.
 
 ### Ma il P0 su MCP resta, e ora è più netto
@@ -1264,7 +1264,7 @@ resta dentro.
 
 ⇒ **Sono due difetti in fila, e vanno curati in ordine inverso a come li abbiamo trovati:**
 1. **il criterio sbaglia** (`_entita_diverse` sul valore che cambia) — owner lo store, cura
-   di Aldo, ed è il difetto di merito;
+   di Dati, ed è il difetto di merito;
 2. **il verdetto non arriva su MCP** — ed è **indipendente dal primo**: *anche quando il
    gate deciderà giusto, se il verdetto non arriva sulla porta degli agenti l'utente non
    saprà comunque cosa è successo al suo fatto.* Curare solo il ① lascia in piedi il ②.
@@ -1274,13 +1274,13 @@ resta dentro.
 ## T8-bis · **P1** — due avvisi di `doctor` non si spengono mai, e uno dei due sembra transitorio
 
 > 🔁 **TITOLO RIFATTO il 06/09 08:40.** Diceva *«l'exit code di `doctor` non
-> discrimina»*: **falso**, e l'ha mostrato @ws8 Corrado leggendo il codice —
+> discrimina»*: **falso**, e l'ha mostrato @ws8 Release leggendo il codice —
 > `cli.py:721` dichiara `0 all-ok · 1 warnings · 2 failures`, un contratto pubblico
 > che **discrimina in tre livelli**. Il mio errore: avevo letto la causa dal **testo**
 > dell'avviso (la parola *warming*) invece che dalla **condizione** che lo accende
 > (`_judged / _n < 0.5`, `doctor.py:724`). ⚠️ **È la seconda volta che sbaglio così
 > sullo stesso tipo di oggetto**: su **T17** avevo letto la regola dal testo
-> dell'avviso e @ws4 Nadia trovò nel codice il verso opposto.
+> dell'avviso e @ws4 ML trovò nel codice il verso opposto.
 > ⬆️ **E il difetto ne esce PEGGIORE**, non migliore: `_judged / _n` è **cumulativo**,
 > quindi i fatti scritti prima che il giudice fosse pronto restano non giudicati per
 > sempre e **quell'avviso non si spegne da solo**. La cronaca qui sotto conserva il
@@ -1288,7 +1288,7 @@ resta dentro.
 
 ### 🔁🔴 06/09 07:30 — **la riga «già curato su main» era MIA ed era FALSA**, e il difetto è un altro
 
-**Nato dalla domanda di @ws8 Corrado**, che non trovava il commit da mettere nel CHANGELOG
+**Nato dalla domanda di @ws8 Release**, che non trovava il commit da mettere nel CHANGELOG
 della 0.7.7 e **si è rifiutato di inventarlo**. Aveva ragione:
 
 ```
@@ -1356,7 +1356,7 @@ confronto non prova il danno. **Il banco esce `NON MISURATO`, non «uguale».**
 risposta porta `sotto_il_pavimento`.)*
 
 
-**Chiuso da Iris il 06/09 01:35**, rieseguendo U-C col banco corretto (il primo troncava
+**Chiuso da Product Owner il 06/09 01:35**, rieseguendo U-C col banco corretto (il primo troncava
 l'uscita). Pacchetto **0.7.6 da PyPI**, venv vergine, ambiente ripulito, **dopo un `warmup`
 riuscito**. Totale del giro: 337,7 s.
 
@@ -1379,7 +1379,7 @@ verdi.**
 ### Perché **P3**, e non ciò che il ticket 8 diceva all'inizio
 
 Il ticket 8 era nato come *«`doctor` esce 1 su un'installazione che funziona»*, ed è stato
-**ritirato giustamente** da Tara: quell'`exit 1` veniva da una variabile d'ambiente
+**ritirato giustamente** da Piattaforma: quell'`exit 1` veniva da una variabile d'ambiente
 ereditata. **Questo è un altro difetto, molto più piccolo e molto più preciso**, e riguarda
 **tutti** i nuovi utenti perché la condizione — *store vuoto* — è inevitabile.
 
@@ -1426,10 +1426,10 @@ volte la stessa misura.**
 
 ---
 
-## T2b — il numero che mancava, e la cura proposta (Nadia, 06/09 01:38)
+## T2b — il numero che mancava, e la cura proposta (ML, 06/09 01:38)
 
 Avevo dato a T2b un costo (**38.675 token per sessione**) e nessuna misura di **quanto di
-quel costo serva**. Nadia l'ha portata, dai **15.099 usi veri** del nostro traffico:
+quel costo serva**. ML l'ha portata, dai **15.099 usi veri** del nostro traffico:
 
 ```
 11 strumenti = 50% degli usi · 28 = 80% · 37 = 90%
@@ -1449,11 +1449,11 @@ modo, e questo va detto se il numero finisce in una pagina pubblica.
   `hippo_` come gli altri 228. Con `hippo_` passano tutti, con qualunque altro se ne perde
   la maggior parte. **Non può esprimere un profilo.**
 · **La manopola che servirebbe** — `HIPPO_EXPOSE_TOOLS`, una **lista di nomi** — è
-  **impostata con 10 nomi sulla macchina di Aurelio** e ha **zero righe nel sorgente**
-  (verificato da me, poi da Marie: *«è inerte, il server ne espone 249 in entrambi i
+  **impostata con 10 nomi sulla macchina di sviluppo** e ha **zero righe nel sorgente**
+  (verificato da me, poi da QA: *«è inerte, il server ne espone 249 in entrambi i
   bracci»*).
 
-🔑 **Nadia lo dice meglio di come lo direi io**: *«le due metà della soluzione esistono in
+🔑 **ML lo dice meglio di come lo direi io**: *«le due metà della soluzione esistono in
 due posti diversi: quella implementata non serve, quella che servirebbe non è implementata.
 Non manca un'idea: manca una giuntura.»*
 
@@ -1474,7 +1474,7 @@ costano molto. *La decisione è del CTO; l'implementazione è della porta (@ws2)
 
 ## T16 · **P0** — l'SDK scrive in un posto, la CLI ne guarda un altro, e la CLI dice «no facts found» con `exit 0`
 
-**Misurato da Iris, 06/09 02:00**, ambiente ripulito, `HIPPO_DATA_DIR` impostato, **la
+**Misurato da Product Owner, 06/09 02:00**, ambiente ripulito, `HIPPO_DATA_DIR` impostato, **la
 riga che il nostro Quickstart insegna**: `Memory("memoria.db")`.
 
 ```
@@ -1491,17 +1491,17 @@ dove sono finiti i file:
   nello STORE (`HIPPO_DATA_DIR`) →  events.jsonl 613 byte
 ```
 
-### 🔁 La causa che avevo scritto era sbagliata — la corregge @ws6 Aldo, e la misura è sua
+### 🔁 La causa che avevo scritto era sbagliata — la corregge @ws6 Dati, e la misura è sua
 
 **Avevo scritto**: *«il prodotto ha due modi di dire dove sta la memoria e i due non si
-parlano: l'SDK usa il percorso, la CLI usa il data dir»*. **Falso nella causa**, e Aldo
+parlano: l'SDK usa il percorso, la CLI usa il data dir»*. **Falso nella causa**, e Dati
 l'ha misurato in tre ambienti prima di scrivere (`364d88c7ed0c33a1`):
 
 ```
 SENZA variabili
-  Memory()            ->  C:\Users\aurel\.engram\semantic\semantic.db
-  open_memory()       ->  C:\Users\aurel\.engram\semantic\semantic.db   ← quello della CLI
-  CONFIG.semantic_db  ->  C:\Users\aurel\.engram\semantic\semantic.db
+  Memory()            ->  <home>/.engram/semantic/semantic.db
+  open_memory()       ->  <home>/.engram/semantic/semantic.db   ← quello della CLI
+  CONFIG.semantic_db  ->  <home>/.engram/semantic/semantic.db
 con HIPPO_DATA_DIR    ->  tutte e tre nel tempdir indicato
 con ENGRAM_DATA_DIR   ->  tutte e tre nel tempdir indicato
 ```
@@ -1525,7 +1525,7 @@ data dir invece del percorso»: **non ha modo di sapere che un percorso esiste**
 segue un secondo effetto che nessuno aveva nominato: **`Memory("memoria.db")` resta
 relativo alla CWD** — lo stesso identico codice, lanciato da due cartelle diverse, apre
 **due store diversi**, e ognuno risponde «non lo so» sull'altro. *(Il RED su questo lo
-scrive Aldo: è il suo pezzo, non lo rifaccio.)*
+scrive Dati: è il suo pezzo, non lo rifaccio.)*
 
 📌 **Il livello resta P0, e il perché non dipendeva dalla causa**: l'effetto misurato —
 la CLI dice `no facts found` con `exit 0` sulla riga che insegniamo — è quello che
@@ -1537,7 +1537,7 @@ la correzione al piano, sotto).
 
 La mia riga per il P0 è: *il prodotto serve come vero — o **tace** — qualcosa che chi legge
 non ha modo di controllare.* Qui **la CLI tace**: dice `no facts found` **con `exit 0`**,
-e — come ha scritto @ws6 Aldo per i file alla radice — **non esiste modo, dalla risposta,
+e — come ha scritto @ws6 Dati per i file alla radice — **non esiste modo, dalla risposta,
 di distinguere «non ho quel fatto» da «sto guardando il posto sbagliato»**. È la stessa
 risposta che il prodotto dà quando davvero non sa, ed è la risposta che questo prodotto
 esiste per rendere affidabile.
@@ -1569,7 +1569,7 @@ letto le 812 righe del README**, e chi le conosce può smentirmi in un `grep`.
 Prima ancora di far parlare i due percorsi, **la CLI non deve dire `no facts found` senza
 dire DOVE ha guardato.** Una riga — *«nessun fatto in `<path>`»* — trasforma un silenzio
 indistinguibile in un messaggio che si corregge da solo, e **`doctor` lo fa già**: nomina
-lo store che sta esaminando, ed è precisamente per questo che Tara ha potuto ritirare il
+lo store che sta esaminando, ed è precisamente per questo che Piattaforma ha potuto ritirare il
 ticket 8 in dieci minuti.
 
 ---
@@ -1594,16 +1594,16 @@ store, e la coppia scrivi-rileggi funziona **senza cure e senza aggiramenti**.
 🔴 **E una correzione alla cura proposta**: il piano dice *«`--db PATH` esiste su
 `recall`/`remember`/`facts` **se non c'è già**»*. **Non c'è su nessuno dei tre**, e adesso
 è misurato due volte in modo indipendente: io dal comportamento — `verimem recall … --db`
-esce **2** con l'usage — e **Aldo contando le occorrenze**: `recall: 0 · remember: 0 ·
+esce **2** con l'usage — e **Dati contando le occorrenze**: `recall: 0 · remember: 0 ·
 facts: 0`. ⇒ **Il pezzo (2) della cura non è un ritocco: è tutto da scrivere**, su tre
 comandi invece che su zero, e chi lo prende deve saperlo prima di dimensionarlo.
 L'opzione `--db` compare altrove in `cli.py` (righe 1023, 1860, 5440,
 5499) ma **non su `recall`**, che è il comando del Quickstart. ⇒ **Il pezzo (2) della cura
 è più grande di come è stato dimensionato**, e chi lo prende deve saperlo prima.
 
-## E l'osservazione di Giano, che alza il ticket invece di ridurlo
+## E l'osservazione di Porte, che alza il ticket invece di ridurlo
 
-Giano ha **vissuto lo stesso difetto il 04/09** e l'ha attribuito a sé. Il suo appunto di
+Porte ha **vissuto lo stesso difetto il 04/09** e l'ha attribuito a sé. Il suo appunto di
 quella sera, verbatim:
 
 > *«ho scritto via `Memory("<dir>/u.db")` ma riletto da CLI e MCP che aprono
@@ -1614,7 +1614,7 @@ quella sera, verbatim:
 ore di distanza, e porta con sé l'argomento che rende questo P0 più grave degli altri:
 
 🔑 **Un difetto che l'utente scambia per un proprio errore non viene mai segnalato.**
-Giano conosce il prodotto, aveva passato la serata dentro quel codice, e ha comunque
+Porte conosce il prodotto, aveva passato la serata dentro quel codice, e ha comunque
 concluso «ho sbagliato io a costruire il banco». **Chi installa da PyPI non ha nemmeno gli
 strumenti per formulare il dubbio**: vede `no facts found`, `exit 0`, e conclude che la
 memoria non ha salvato — o che il prodotto non funziona.
@@ -1626,8 +1626,8 @@ degli utenti: si trova solo misurandolo, e infatti l'abbiamo trovato due volte d
 
 ## T17 · **P2** — `L4.2` avvisa falsamente su **ogni codice di uscita**, e l'avviso dice di correggere sotto un verdetto che accetta
 
-**Trovato da Iris usando il prodotto, non leggendolo**, salvando i fatti di T16 —
-06/09 02:26-02:29, `verimem save` da `C:/Users/aurel/Code/HippoAgent`, **codice di main
+**Trovato da Product Owner usando il prodotto, non leggendolo**, salvando i fatti di T16 —
+06/09 02:26-02:29, `verimem save` da una copia di lavoro del repo, **codice di main
 `ca28d8cf`** (il campo `build=` della ricevuta), non il pacchetto pubblicato.
 
 ### Cosa si vede
@@ -1720,7 +1720,7 @@ misurato — 4 avvisi falsi su 4 e un controllo che li spegne — regge comunque
 
 ### 🔁 Il perimetro si allarga — **e la seconda forma non è un caso della prima**
 
-**@ws4 Nadia**, 06/09 03:51 (`03e4753b74ad65aa`), **trovato usando il prodotto**: `L4.2`
+**@ws4 ML**, 06/09 03:51 (`03e4753b74ad65aa`), **trovato usando il prodotto**: `L4.2`
 avvisa falsamente **anche sugli orari**.
 
 ```
@@ -1765,7 +1765,7 @@ la stimo**: si conta sulle ricevute vere, non su un banco che scriverei io.
 
 ### 🔁 La classe giusta non è «orari»: è **`ETICHETTA: valore`**, e non è mia
 
-**@ws4 Nadia, 06/09 04:06** (`915e57208f6045f4`), seconda istanza in venti minuti — e
+**@ws4 ML, 06/09 04:06** (`915e57208f6045f4`), seconda istanza in venti minuti — e
 stavolta si vede **la regola**:
 
 ```
@@ -1807,9 +1807,9 @@ l'attenzione che serve altrove**, e l'attenzione è il presidio.
 #### 📏 Il tasso: quello che ho, e quello che manca
 
 **Casi reali osservati stanotte: 7 · avvisano: 6** *(5 miei, di cui 4 avvisano — il quinto
-aveva l'unità dopo il numero da entrambi i lati — più i 2 di Nadia, entrambi avvisano)*.
+aveva l'unità dopo il numero da entrambi i lati — più i 2 di ML, entrambi avvisano)*.
 
-⚠️ **E dichiaro il bias, perché il numero da solo ingannerebbe**: i due casi di Nadia sono
+⚠️ **E dichiaro il bias, perché il numero da solo ingannerebbe**: i due casi di ML sono
 arrivati **proprio perché avvisavano**; nessuno riporta un salvataggio che è andato liscio.
 ⇒ **`6/7` è un limite superiore su un campione auto-selezionato, non un tasso.**
 
@@ -1818,7 +1818,7 @@ otto**, su cento fatti salvati quanti ricevono un `L4.2` falso. **Non la stimo**
 plausibilità è alta *(la forma `ETICHETTA: valore` è la norma negli output)*, ma una ragione
 teorica per cui un tasso dovrebbe essere alto **non è un tasso**.
 
-### 🔁🔴 La regola vera è di @ws4 Nadia, e la mia era un caso particolare — **letto dal testo dell'avviso invece che dal comportamento**
+### 🔁🔴 La regola vera è di @ws4 ML, e la mia era un caso particolare — **letto dal testo dell'avviso invece che dal comportamento**
 
 **Terza istanza, 06/09 05:36** (`ff9399aef7459d90`), trovata da lei salvando l'ultimo fatto
 della notte:
@@ -1867,7 +1867,7 @@ opposto: **vanno tutti e tre nel RED.** Tutti `admitted` (grounding 99,9 · 100 
 
 ## T18 · **P1** — `include_superseded` è ingoiato in silenzio quando si combina con `as_of`
 
-**Trovato da @ws2 Giano** (`9413be3cd9a45507`), misurato da lui sul codice; **il livello è
+**Trovato da @ws2 Porte** (`9413be3cd9a45507`), misurato sul codice; **il livello è
 mio**, e per darlo ho dovuto misurare una cosa che ridimensiona **un numero mio**.
 
 ### Il difetto
@@ -1881,7 +1881,7 @@ CON   as_of, include_superseded=True  : ['nuovo']               ← 🔴 IGNORAT
 
 **Causa**, `verimem/client.py`: il ramo `as_of` chiama `recall_as_of(...)`, che
 `include_superseded` **non lo accetta nemmeno**. ⚠️ La **CLI eredita** (`verimem recall`
-passa da `m.search`), *non verificato ma atteso — lo dichiara Giano stesso*.
+passa da `m.search`), *non verificato ma atteso — lo dichiara Porte stesso*.
 
 ### Perché **P1** e non P0
 
@@ -1925,9 +1925,9 @@ comportamento.*
 ### 🔁 E venti minuti dopo la radice si è allargata — ma la mia misura la DELIMITA
 
 Il lead ha unificato due reperti (`1398019dc90ff377`): `include_superseded` ingoiato
-(**Giano**) e **scaduti esclusi senza avviso** (**Aldo**) hanno **la stessa radice** — *il
+(**Porte**) e **scaduti esclusi senza avviso** (**Dati**) hanno **la stessa radice** — *il
 ramo `as_of` **sostituisce** i filtri invece di **comporli***. Due sintomi, una cura sola,
-owner Giano+Aldo.
+owner Porte+Dati.
 
 ⇒ **Avevo scritto «è un caso, non una classe»: era prematuro.** È **una classe**, e la mia
 misura serve a dire **quanto è larga**: non tutti i parametri cadono — `min_relevance` e `k`
@@ -1941,7 +1941,7 @@ l'assenza non dichiarata fa **concludere il falso**.
 
 ### 🔗 Il terzo sintomo, ed è di specie diversa: **la stessa grandezza con due definizioni**
 
-**@ws6 Aldo, 06/09 03:49** — *lo stesso fatto, nello stesso istante*: `recall` **lo toglie
+**@ws6 Dati, 06/09 03:49** — *lo stesso fatto, nello stesso istante*: `recall` **lo toglie
 perché SCADUTO**, e `hippo_assess_fact_freshness` **risponde `fresh`**, perché lì
 «expired» significa un'altra cosa. Il lead lo mette dentro T18 e la nota è mia.
 
@@ -1982,7 +1982,7 @@ non è un risultato del prodotto e **contarla come zero fabbrica un rosso**.
 
 ## T19 · **P0** — il fatto entra cieco, la ricevuta dice `admitted`, e la ricerca **fabbrica un'assenza**
 
-**Misurato da @ws5 Tara**, 06/09 04:45 (`96b6e644be48533b`), in sola lettura sullo store.
+**Misurato da @ws5 Piattaforma**, 06/09 04:45 (`96b6e644be48533b`), in sola lettura sullo store.
 **Il livello è mio, e questo è il P0 più puro della notte.**
 
 ### Cosa succede
@@ -2048,13 +2048,13 @@ questa: chi lo ha evitato, lo ha evitato per caso?**
 
 ### ⏱️ Otto minuti dopo: **23, non 13** — e il righello ovvio dice ancora zero
 
-**Ricontato da me alle 04:53**, in sola lettura (`mode=ro`) sullo store, dopo che @ws6 Aldo
+**Ricontato da me alle 04:53**, in sola lettura (`mode=ro`) sullo store, dopo che @ws6 Dati
 aveva **ritirato** l'allerta scrivendo *«sul corpus 0 fatti muti su 17855»*:
 
 ```
 TOTALE                                17857
-criterio di Aldo  (embedding IS NULL)      0     <- vero, e CIECO
-criterio di Tara  (IS NULL OR LENGTH=0)   23
+criterio di Dati  (embedding IS NULL)      0     <- vero, e CIECO
+criterio di Piattaforma  (IS NULL OR LENGTH=0)   23
   di cui NON nulli ma di lunghezza 0      23
 ```
 
@@ -2062,7 +2062,7 @@ criterio di Tara  (IS NULL OR LENGTH=0)   23
 — **+10 in otto minuti.** Non è un incidente chiuso.
 
 🔑 **E la parte che vale oltre il ticket**: la trappola di `IS NULL` **era già scritta nel
-messaggio di Tara delle 04:45**, come prima delle sue due avvertenze. **Otto minuti dopo lo
+messaggio di Piattaforma delle 04:45**, come prima delle sue due avvertenze. **Otto minuti dopo lo
 stesso righello ha prodotto lo stesso zero, e stavolta è diventato un ritiro pubblico** —
 con la riga *«se avete cambiato qualcosa per colpa del mio messaggio, rimettetelo com'era»*,
 che avrebbe rimesso cinque persone a scrivere fatti ciechi.
@@ -2072,14 +2072,14 @@ cose. 📌 *E vale anche per me: due misure che si contraddicono sullo stesso og
 mediano — si rifanno con entrambi i criteri, che è come ho tenuto in piedi questo P0 invece
 di ritirarlo.*
 
-✅ **Cosa NON cade del ritiro di Aldo, e va tenuto**: il suo A/B *«con e senza
+✅ **Cosa NON cade del ritiro di Dati, e va tenuto**: il suo A/B *«con e senza
 `HIPPO_ENCODE_DELEGATE_ONLY`, embedding 1/1 in entrambi»* **resta vero**. ⇒ **Il difetto non
 è sistematico su ogni scrittura**, dipende dallo stato del daemon — ed è precisamente perché
 i muti sono 23 e non tutti.
 
 ### ✅ 04:59 — **DANNO CHIUSO: zero muti, e i fatti sono stati RIPARATI, non cancellati**
 
-Rimisurato da me (`mode=ro`) appena @ws5 Tara ha annunciato il daemon giusto:
+Rimisurato da me (`mode=ro`) appena @ws5 Piattaforma ha annunciato il daemon giusto:
 
 ```
 ORA 04:59:51 · TOTALE 17867 · MUTI (IS NULL OR LENGTH=0): 0
@@ -2109,7 +2109,7 @@ numero dei fatti.
 ### Le due trappole del righello, che valgono da sole
 
 · **`embedding IS NULL` NON li trova**: il campo non è nullo, è **vuoto**. Il primo
-  conteggio di Tara stampava `SENZA-EMBEDDING=0` **con il controllo positivo acceso** — era
+  conteggio di Piattaforma stampava `SENZA-EMBEDDING=0` **con il controllo positivo acceso** — era
   a un passo dal pubblicare «nessun problema». Il criterio giusto è
   `IS NULL OR LENGTH(embedding)=0`.
 · **`hippo_health` dice `ok`** (sopra). *E conta `facts: 15487` mentre la tabella ne ha
@@ -2121,4 +2121,4 @@ numero dei fatti.
 diverso — **e** la ricerca dicesse *«N fatti non confrontabili»* invece di negare. Allora
 sarebbe lento e imperfetto, ma **onesto**, e chi automatizza potrebbe controllarlo.
 📌 **Il backfill esiste** (`hippo_backfill_embeddings`) e i tredici id sono nel messaggio di
-Tara: **non è una perdita definitiva** — ma nessuno lo saprebbe senza questa misura.
+Piattaforma: **non è una perdita definitiva** — ma nessuno lo saprebbe senza questa misura.
