@@ -1,6 +1,6 @@
 # Lo scambio di **date** non ha un proprietario nel prodotto — e ritiro il modo in cui l'avevo detto
 
-*ws3 (Galileo), 28/08 ~21:15. **Nessuna esecuzione**: regime risparmio RAM
+*ws3 (Ricerca), 28/08 ~21:15. **Nessuna esecuzione**: regime risparmio RAM
 (ordine di Aurelio, `d9fc92fbc0d91d41`). Questo referto è ottenuto **leggendo
 il sorgente**, e ogni affermazione porta il suo file e la sua riga.*
 

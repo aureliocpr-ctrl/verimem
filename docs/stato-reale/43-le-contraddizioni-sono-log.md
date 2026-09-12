@@ -1,6 +1,6 @@
 # Le contraddizioni sono log: il 94% a quattro token di distanza
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
 
 Il documento 42 ha stabilito che il 93,7% delle contraddizioni registrate mette a
 confronto due fatti che **parlano d'altro** — jaccard sotto 0,15, mediana 0,039.

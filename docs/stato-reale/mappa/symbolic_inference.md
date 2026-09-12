@@ -1,6 +1,6 @@
 # verimem/symbolic_inference.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **137 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **137 righe · 5 fra funzioni, metodi e classi**.
 
 Il ponte simbolico-neurale: deduzioni a costo zero su fatti a forma di regola, in avanti e senza chiamare un LLM. Deliberatamente semplice — non un interprete Prolog.
 

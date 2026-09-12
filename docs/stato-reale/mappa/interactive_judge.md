@@ -1,6 +1,6 @@
 # verimem/interactive_judge.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **313 righe · 27 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **313 righe · 27 fra funzioni, metodi e classi**.
 
 Il giudice interattivo: chiede all'operatore quando non sa.
 

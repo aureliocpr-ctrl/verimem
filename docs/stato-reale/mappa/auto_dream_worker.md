@@ -1,6 +1,6 @@
 # verimem/auto_dream_worker.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **509 righe · 11 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **509 righe · 11 fra funzioni, metodi e classi**.
 
 Il lavoratore che fa partire il ciclo onirico da solo.
 

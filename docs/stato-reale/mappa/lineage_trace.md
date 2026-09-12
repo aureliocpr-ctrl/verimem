@@ -1,6 +1,6 @@
 # mappa — `verimem/lineage_trace.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:37
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:37
 
 **302 righe · 3 funzioni · 0 classi** (`ast`). **1 pubbliche, 2 private.**
 Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello già pagate.

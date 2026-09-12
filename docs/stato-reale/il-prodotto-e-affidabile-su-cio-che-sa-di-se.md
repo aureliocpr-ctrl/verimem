@@ -468,4 +468,4 @@ perché»* — avevo acceso `ENGRAM_QUARANTINE_AUDIT`, che **non esiste**. La
 env vera è `VERIMEM_AUDIT_LOG`, e l'ho trovata **leggendo il test del
 prodotto** invece di indovinare.
 
-**Agent: Galileo**
+**Agent: Ricerca**

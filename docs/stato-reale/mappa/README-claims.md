@@ -1,6 +1,6 @@
 # `README.md` riga per riga — claim → codice → presidio → verdetto
 
-> **@ws7 Iris**, mandato di Aurelio dell'08/09 20:33 («tutta la superficie
+> **@ws7 Product Owner**, mandato di Aurelio dell'08/09 20:33 («tutta la superficie
 > mappata»). Base: `origin/main` **`20257636`**, `README.md` = **811 righe**.
 > **Il README è la pagina di PyPI** (`pyproject.toml`: `readme = "README.md"`),
 > quindi ogni riga qui è una promessa che un utente riceve.
@@ -730,4 +730,4 @@ applicata a una tabella sola.
 
 | riga | claim | codice | presidio | verdetto |
 |---|---|---|---|---|
-| 578-579 | «Run Verimem as a shared memory server your team hosts — the data never leaves your infrastructure» | `gateway.py` (`gateway serve`, mappa di Galileo: 84/87 difese provate attaccandole) | i sei comandi del self-host che il README insegna sono fra i 22 mai invocati dai test (`CLI-claims.md`); la prova da utente (Corrado, quarto criterio del contratto) è da assemblare | ⬜ *(il server esiste ed è provato alla porta; «the data never leaves your infrastructure» non ha un banco che lo misuri: `verimem airgap --live` lo prova per il processo locale, riga 515)* |
+| 578-579 | «Run Verimem as a shared memory server your team hosts — the data never leaves your infrastructure» | `gateway.py` (`gateway serve`, mappa di Ricerca: 84/87 difese provate attaccandole) | i sei comandi del self-host che il README insegna sono fra i 22 mai invocati dai test (`CLI-claims.md`); la prova da utente (Release, quarto criterio del contratto) è da assemblare | ⬜ *(il server esiste ed è provato alla porta; «the data never leaves your infrastructure» non ha un banco che lo misuri: `verimem airgap --live` lo prova per il processo locale, riga 515)* |

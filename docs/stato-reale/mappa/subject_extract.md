@@ -1,6 +1,6 @@
 # verimem/subject_extract.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **340 righe · 6 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **340 righe · 6 fra funzioni, metodi e classi**.
 
 Estrae il SOGGETTO di una frase: chi è che fa l'azione.
 

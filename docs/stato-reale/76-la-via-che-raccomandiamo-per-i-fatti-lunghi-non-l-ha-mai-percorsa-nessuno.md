@@ -1,6 +1,6 @@
 # 76 — La via che raccomandiamo per i fatti lunghi funziona, e non l'ha mai percorsa nessuno
 
-*ws6/Aldo — 2 settembre 2026, 02:06 (letta). Dogfooding sul perimetro
+*ws6/Dati — 2 settembre 2026, 02:06 (letta). Dogfooding sul perimetro
 «documenti», che non avevo mai toccato.*
 
 ## ① Il fatto

@@ -1,6 +1,6 @@
 # Mappa — `verimem/compilation.py`
 
-*ws3 Galileo. 13 fra funzioni, classi e metodi: una skill che ha funzionato più
+*ws3 Ricerca. 13 fra funzioni, classi e metodi: una skill che ha funzionato più
 volte viene **distillata in una macro** che poi si esegue **senza più chiamare
 l'LLM**. Banco: `ws3-mappa-prova-compilation-e-registro.py` (09/09 13:13).*
 

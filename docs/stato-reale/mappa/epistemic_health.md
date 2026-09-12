@@ -1,6 +1,6 @@
 # verimem/epistemic_health.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **155 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **155 righe · 5 fra funzioni, metodi e classi**.
 
 La salute epistemica del corpus in una manciata di numeri.
 

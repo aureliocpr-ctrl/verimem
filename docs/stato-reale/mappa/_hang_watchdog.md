@@ -65,7 +65,7 @@ presidiata prima che accada.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. I conteggi dei presidi (6 e 3 passed) sono miei,
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. I conteggi dei presidi (6 e 3 passed) sono miei,
 eseguiti stasera sul perimetro `preload|_scalda`.*
 
 ---

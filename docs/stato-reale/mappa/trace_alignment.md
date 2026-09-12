@@ -1,6 +1,6 @@
 # `verimem/trace_alignment.py` — 370 righe, 8 funzioni, 3 classi
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) ·
 **08/09**.
 
 ## Che cosa promette

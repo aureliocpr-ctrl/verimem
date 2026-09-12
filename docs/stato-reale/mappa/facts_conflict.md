@@ -1,6 +1,6 @@
 # mappa — `verimem/facts_conflict.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 23:01
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 23:01
 
 **563 righe · 11 funzioni · 3 classi.** Contate con `ast`.
 **8 pubbliche, ZERO senza test.** 3 private: 1 con test, 2 con soli chiamanti

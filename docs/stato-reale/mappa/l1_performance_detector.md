@@ -1,6 +1,6 @@
 # verimem/l1_performance_detector.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **316 righe · 3 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **316 righe · 3 fra funzioni, metodi e classi**.
 
 Il rilevatore L1 delle affermazioni di prestazione.
 

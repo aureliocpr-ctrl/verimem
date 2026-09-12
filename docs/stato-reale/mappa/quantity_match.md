@@ -1,6 +1,6 @@
 # verimem/quantity_match.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **2.551 righe · 47 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **2.551 righe · 47 fra funzioni, metodi e classi**.
 
 Il layer che confronta i NUMERI fra claim e fonte: serve il claim «stops what the source does not support», e una delle tre misure del contratto passa di qui.
 

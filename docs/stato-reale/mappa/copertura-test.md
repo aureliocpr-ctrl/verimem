@@ -1,6 +1,6 @@
 # Copertura: quali test chiamano ognuna delle funzioni di `verimem/`
 
-**Albero misurato**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **eseguito**: 2026-09-08 20:58 · owner **ws1 Marie (QA)**.
+**Albero misurato**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **eseguito**: 2026-09-08 20:58 · owner **ws1 QA (QA)**.
 
 ## Che cosa dice questo numero, prima del numero
 

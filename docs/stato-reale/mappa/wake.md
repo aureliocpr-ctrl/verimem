@@ -165,7 +165,7 @@ privati** (recupero, costruzione del prompt, i due loop, i due pruner, i due dis
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. Le misure di riga del §3 sono mie, con `ast`.*
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. Le misure di riga del §3 sono mie, con `ast`.*
 
 ---
 

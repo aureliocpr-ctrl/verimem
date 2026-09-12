@@ -1,6 +1,6 @@
 # `verimem/bench_harness.py` — 732 righe, 22 funzioni, 3 classi
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) ·
 **08/09**.
 
 ## Che cosa promette, e chi lo usa
@@ -24,7 +24,7 @@ pubblicati vengono da `benchmark/` (`moat_multilingual_matrix.py`,
 
 📌 **Un documento interno è disallineato**: `docs/F2_MODULE_INVENTORY.md:49` dà
 `bench_harness.py` a **637 righe**; `wc -l` ne conta **732**. Segnalato a
-@Corrado (owner dei 287 documenti), non corretto da me.
+@Release (owner dei 287 documenti), non corretto da me.
 
 ## Il perimetro
 
@@ -91,4 +91,4 @@ cure. **Non lo curo adesso** (regola 2 del mandato).
   della *struttura*, non della bontà dei numeri che il modulo produrrebbe.
 - `docs/F2_MODULE_INVENTORY.md` dice anche «1 classe, 26 funzioni» per questo
   file, mentre l'`ast` conta **22 funzioni e 3 classi**. Altra riga per
-  @Corrado — e un promemoria: un inventario scritto a mano invecchia.
+  @Release — e un promemoria: un inventario scritto a mano invecchia.

@@ -1,6 +1,6 @@
 # verimem/decay_job.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **276 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **276 righe · 5 fra funzioni, metodi e classi**.
 
 Il decadimento della confidenza con l'eta': new = max(floor, original * exp(-age / tau)), tau 30 giorni, mezza vita ~21. Nasce da un audit: «i fatti stagionati non perdono peso, sistema inerte».
 

@@ -1,6 +1,6 @@
 # I 287 documenti di `docs/`, classificati
 
-> ws8 (Corrado), 08/09/2026. **Questo file cresce**: ogni riga della tabella è un
+> ws8 (Release), 08/09/2026. **Questo file cresce**: ogni riga della tabella è un
 > verdetto **letto**, non dedotto. Le righe che mancano non sono documenti sani:
 > sono documenti **non ancora guardati**, e il contatore in fondo dice quanti.
 
@@ -43,7 +43,7 @@ ordina la coda.
 | `docs/stato-reale/ticket-sigsegv-hang-watchdog.md` | **VIVO** | dichiara la finestra della misura («2026-09-03 17:39 → 2026-09-04 19:54, ultimi 60 run») e conosce il seguito: alla riga 139 registra il `--deselect` entrato in `ci.yml`, che è alla riga 901 del workflow |
 | `docs/stato-reale/03-cose-spente.md` | **VIVO** | dichiara in testa `SHA: 544d27bd`, i comandi per rifare le misure, il verdetto e **la copertura** («64 interruttori su 151, 42%»), e scrive «dove non ho eseguito c'è **NON VERIFICATO**». È il modello di come si scrive una misura |
 | `docs/stato-reale/23-quanto-spesso-L4-1-ha-ragione.md` | **VIVO** | riga 3: «ws6 · **30/08 ore 16:20** · store in `mode=ro`, sole SELECT». Chiude un limite che il documento 22 aveva **dichiarato** invece di nascondere |
-| `docs/stato-reale/39-le-finestre-cieche-della-memoria.md` | **VIVO** | «ws6/Aldo — **30/08, sera**. Perimetro: archivio, memoria, corpus, quarantena»: dichiara data e perimetro |
+| `docs/stato-reale/39-le-finestre-cieche-della-memoria.md` | **VIVO** | «ws6/Dati — **30/08, sera**. Perimetro: archivio, memoria, corpus, quarantena»: dichiara data e perimetro |
 | `docs/JUSTIFIED_MEMORY.md` | **VIVO** | è la tesi del progetto («the 2027 thesis»), e il codice la cita come riferimento del design: `verimem/justified_memory.py:7` → «See docs/JUSTIFIED_MEMORY.md for the design + the verified SOTA gap». Documento e modulo si rimandano |
 | `docs/CYCLE109_HANDOFF.md` | **MORTO (a scadenza)** | handoff del 16/05 per far ripartire una sessione, con `Branch: cycle109-provenance-fact-schema-v3` — e quel ramo **non esiste più** (`git branch -a --list '*cycle109*'` → vuoto). Ha esaurito il suo scopo il giorno dopo |
 | `docs/CONVERSATIONAL_ENTITY_DESIGN.md` | **VIVO** | `verimem/conversation_ingest.py:48` lo cita come il disegno che implementa |
@@ -66,13 +66,13 @@ ordina la coda.
 | `docs/stato-reale/15-la-banda-decide-e-nessuno-decide-la-banda.md` | **VIVO** | 29/08 00:45-01:44, **SHA per cella** nel registro: non uno SHA per il documento, uno per ogni misura |
 | `docs/stato-reale/21-le-due-porte-gemelle-non-si-somigliano.md` | **VIVO** | ws6, 30/08 15:10, misure alla porta MCP sullo store reale in sola lettura |
 | `docs/stato-reale/25-tre-ordinamenti-a-confronto-e-nessuno-domina.md` | **VIVO** | ws6, 30/08 18:10, corpus servibile **12.429**, `mode=ro`, sole SELECT |
-| `docs/stato-reale/48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md` | **VIVO — ed è T26a *e* T29, scritti il 30/08** | ws6/Aldo, 30/08 notte. Il titolo per intero: *«Ventitré minuti senza daemon hanno spento una promessa del README, **e resterà spenta**»*. La prima metà è T26a (daemon assente → promessa spenta), la seconda è **T29** (non si sana). Entrambi diventeranno ticket **a settembre** |
+| `docs/stato-reale/48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md` | **VIVO — ed è T26a *e* T29, scritti il 30/08** | ws6/Dati, 30/08 notte. Il titolo per intero: *«Ventitré minuti senza daemon hanno spento una promessa del README, **e resterà spenta**»*. La prima metà è T26a (daemon assente → promessa spenta), la seconda è **T29** (non si sana). Entrambi diventeranno ticket **a settembre** |
 | `docs/stato-reale/31-la-porta-dei-documenti-dice-quello-che-quella-dei-fatti-tace.md` | **VIVO** | ws6, 30/08 20:40, e dichiara il metodo: *«porte MCP **interrogate davvero, non lette nel codice**»* |
-| `docs/stato-reale/38-il-regime-lo-dice-alla-risposta-e-lo-tace-alla-telemetria.md` | **VIVO** | ws6/Aldo, 30/08 sera, perimetro dichiarato (archivio, memoria, corpus, recall) |
-| `docs/stato-reale/70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md` | **VIVO** | ws6/Aldo, 2 settembre 00:02: *«chiude il filone “le letture non trovano”»* — **0 su 3** nel titolo |
-| `docs/stato-reale/41-la-supersessione-sceglie-sei-volte-meglio-del-caso.md` | **VIVO** | ws6/Aldo, 30/08 notte, perimetro dichiarato. *«Questo pezzo è una **buona notizia**, ed è la prima della serata»*: il numero che dà ragione è scritto con la stessa cura di quelli che la tolgono |
+| `docs/stato-reale/38-il-regime-lo-dice-alla-risposta-e-lo-tace-alla-telemetria.md` | **VIVO** | ws6/Dati, 30/08 sera, perimetro dichiarato (archivio, memoria, corpus, recall) |
+| `docs/stato-reale/70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md` | **VIVO** | ws6/Dati, 2 settembre 00:02: *«chiude il filone “le letture non trovano”»* — **0 su 3** nel titolo |
+| `docs/stato-reale/41-la-supersessione-sceglie-sei-volte-meglio-del-caso.md` | **VIVO** | ws6/Dati, 30/08 notte, perimetro dichiarato. *«Questo pezzo è una **buona notizia**, ed è la prima della serata»*: il numero che dà ragione è scritto con la stessa cura di quelli che la tolgono |
 | `docs/stato-reale/64-una-catena-di-quattro-ritiri-fa-sparire-una-misura-intera.md` | **VIVO** | 31/08 mattina, e dichiara **come è nato**: *«nasce leggendo i candidati al recupero, **non cercando questo**»* — la scoperta laterale dichiarata invece che spacciata per ricerca mirata |
-| `docs/stato-reale/44-il-rilevatore-dichiara-in-conflitto-quasi-tutte-le-coppie.md` | **VIVO** | ws6/Aldo, 30/08 notte: *«il **99% delle coppie possibili** di un topic»*. Chiude esplicitamente la serie iniziata dal documento 42 — i documenti qui si citano fra loro per numero |
+| `docs/stato-reale/44-il-rilevatore-dichiara-in-conflitto-quasi-tutte-le-coppie.md` | **VIVO** | ws6/Dati, 30/08 notte: *«il **99% delle coppie possibili** di un topic»*. Chiude esplicitamente la serie iniziata dal documento 42 — i documenti qui si citano fra loro per numero |
 | `docs/stato-reale/75-ho-letto-otto-quarantene-e-due-strati-si-contraddicono-sullo-stesso-fatto.md` | **VIVO** — ed è il modello del ritiro | 02/09 01:51. Il titolo porta il ritiro per intero: *«…e **leggendo l'altra popolazione ho ritirato la mia stessa lettura**»*. La regola che questa mappa ha imparato sette volte stasera, qui era già applicata |
 | `docs/stato-reale/22-un-quarto-dei-trattenuti-recenti-e-approvato-dal-giudice.md` | **VIVO** | ws6, 30/08 15:50, corpus **15.755** fatti, `mode=ro`, sole SELECT. È **T25** un mese prima del ticket: `L4.1` ferma e il giudice promuove, sullo stesso fatto. E dichiara il limite — *«non ho letto i 70»* — che il documento 23 chiude il giorno dopo |
 | `docs/stato-reale/80-la-stessa-frase-con-otto-o-con-8-riceve-due-verdetti-opposti.md` | **VIVO** | 02/09 04:52, banco **nominato** (`banchi/ws6-la-cifra-e-la-parola.py`), store isolato. Cita *«una lezione di ws5 del 27/08»*: i documenti qui si citano fra loro **a settimane di distanza** |
@@ -112,7 +112,7 @@ ordina la coda.
 | `docs/stato-reale/10-il-contorno-cambia-il-verdetto.md` | **VIVO** | ws4, 26-27/08 21:30-00:10, celle dichiarate: *«il contorno cambia il verdetto — **e non sappiamo perché**»* |
 | `docs/stato-reale/13-la-taglia-della-fonte-degrada-il-gate-nei-due-versi.md` | **VIVO** | 28/08 18:37-20:53: *«degrada **nei due versi** — e per una metà **la cura c'è già**»* |
 | `docs/stato-reale/14-la-forma-della-fonte-decide-quale-layer-sbaglia.md` | **VIVO** | 28/08 22:35-23:18: *«su un output di strumento **uno dei due è rumore**»* |
-| `docs/stato-reale/16-che-cosa-deve-contenere-un-corpus-tipo-cliente.md` | **VIVO** | ws6/Aldo, 29/08 sera, e dichiara il proprio stato: *«**specifica degli assi**, non del…»* — dice di essere una specifica, non una misura |
+| `docs/stato-reale/16-che-cosa-deve-contenere-un-corpus-tipo-cliente.md` | **VIVO** | ws6/Dati, 29/08 sera, e dichiara il proprio stato: *«**specifica degli assi**, non del…»* — dice di essere una specifica, non una misura |
 | `docs/stato-reale/18-quante-volte-scriviamo-per-ogni-volta-che-leggiamo.md` | **VIVO** | ws6, 30/08 13:36, journal `events.jsonl` + `.1` — e dichiara la trappola: ***«il journal ruota»***, che è la stessa scritta nelle nostre lezioni di casa |
 | `docs/stato-reale/19-la-cura-del-ranking-peggiora-il-caso-reale.md` | **VIVO** | ws6, 30/08 13:49, corpus servibile **12.232**, `mode=ro`: **una cura misurata e scartata**, col difetto vero spostato a monte |
 | `docs/stato-reale/20-l-archivio-vecchio-ha-gia-una-porta-e-si-chiama-auto-master.md` | **VIVO** | ws6, 30/08 14:22, corpus **12.247**: la porta c'era già e nessuno la usava |
@@ -130,7 +130,7 @@ ordina la coda.
 | `docs/stato-reale/35-il-rimedio-che-la-ricevuta-suggerisce-non-cambia-l-esito.md` | **VIVO** | 30/08 22:45, store temporaneo, **fuori da pytest**: il consiglio che il prodotto dà non funziona |
 | `docs/stato-reale/36-la-promessa-di-astensione-esiste-funziona-ed-e-spenta.md` | **VIVO** | 31/08 00:25: *«esiste, **funziona**, ed è **spenta di default**»* — la forma «capacità spenta» in tre parole |
 | `docs/stato-reale/37-il-mio-banco-e-caduto-e-il-prodotto-aveva-gia-la-guardia.md` | **VIVO** | 31/08 01:35, store di Aurelio in **sole letture**: il titolo è un **ritiro** — il banco è caduto e il prodotto aveva ragione |
-| `docs/stato-reale/40-il-rerank-che-quasi-non-gira-e-il-banco-che-non-si-puo-rieseguire.md` | **VIVO** | ws6/Aldo, 30/08 notte: e dichiara che **il proprio banco non è rieseguibile** |
+| `docs/stato-reale/40-il-rerank-che-quasi-non-gira-e-il-banco-che-non-si-puo-rieseguire.md` | **VIVO** | ws6/Dati, 30/08 notte: e dichiara che **il proprio banco non è rieseguibile** |
 | `docs/stato-reale/42-il-presidio-consiglia-una-cura-che-ritirerebbe-mille-fatti.md` | **VIVO** | *«…per contraddizioni **che non lo sono**»*: apre la serie di D-1, chiusa dal 44 |
 | `docs/stato-reale/43-le-contraddizioni-sono-log.md` | **VIVO** | *«il **94%** a quattro token di distanza»* |
 | `docs/stato-reale/45-il-grounding-alto-non-protegge-dai-numeri-sbagliati.md` | **VIVO** | *«`L4.1` è **l'unico** che li vede»*: un punteggio alto non copre i numeri |
@@ -173,11 +173,11 @@ ordina la coda.
 | `docs/stato-reale/C3-parita-porte.md` | **VIVO** | ws5, 30/08, claim `f7eca18c246f`: *«chiude il pezzo ② assegnato da `lead-audit`»* — il compito assegnato e chiuso, tracciato |
 | `docs/stato-reale/CENSIMENTO-DEI-199-STRUMENTI.md` | **VIVO** | ws4, 06/09 06:20→08:01: *«cosa fanno **davvero** i 199 strumenti senza permesso»* |
 | `docs/stato-reale/CONTRATTO-RILASCIO-COMPLETO.md` | **VIVO** — è il contratto | Aurelio, 08/09 20:18, **testuale**: le tre misure, i difetti per nome, la prova da utente, la CI. È il documento contro cui si giudica il rilascio |
-| `docs/stato-reale/DISEGNO-ESPLOSO.md` | **VIVO** | lead con Aldo e Tara, dal 05/09 20:55: livello 3 — componenti, giunture, **e chi le presidia** |
+| `docs/stato-reale/DISEGNO-ESPLOSO.md` | **VIVO** | lead con Dati e Piattaforma, dal 05/09 20:55: livello 3 — componenti, giunture, **e chi le presidia** |
 | `docs/stato-reale/F1-DESIGN-DOC-strato-soggetto-valore.md` | **VIVO** | ws3, 28/08, **per l'ordine di @lead-audit** con l'id del messaggio (`5db4f2fa618fa9ce`): il mandato è tracciabile |
 | `docs/stato-reale/F1-FIRMA-ESTERNA-ws4.md` | **VIVO** | **firma esterna** su richiesta del lead: chi valida non è chi ha scritto |
 | `docs/stato-reale/F1-design-dello-strato-soggetto-valore.md` | **VIVO** | ws3, 28/08, *«il rosso misurato, e **due mie affermazioni**…»*: separa il misurato dalle proprie tesi già nel titolo |
-| `docs/stato-reale/IL-README-DA-UTENTE.md` | **VIVO** | Iris (PO), 06/09 02:57: *«le tre porte sono presentate come **intercambiabili**, e n…»*. Deliverable di ruolo: **non «cosa dice il README» ma come lo legge un utente** |
+| `docs/stato-reale/IL-README-DA-UTENTE.md` | **VIVO** | Product Owner (PO), 06/09 02:57: *«le tre porte sono presentate come **intercambiabili**, e n…»*. Deliverable di ruolo: **non «cosa dice il README» ma come lo legge un utente** |
 | `docs/stato-reale/LA-GIORNATA-DAL-LATO-UTENTE-06-09.md` | **VIVO** | ws7, per il resoconto delle 15:55: la giornata **dal lato di chi usa** |
 | `docs/stato-reale/LA-GIORNATA-DAL-LATO-UTENTE-07-09.md` | **VIVO** | ws7 alle 13:25 sulla finestra 12:25→14:25, **tip letto**: dichiara la finestra e l'istante |
 | `docs/stato-reale/LA-PROVA-DELLA-SCHEDA.md` | **VIVO** | *«come si falsifica, **e perché non possiamo eseguirla noi**»* — dichiara il proprio conflitto d'interesse, come ho fatto io sulla prova da utente |
@@ -296,9 +296,9 @@ ordina la coda.
 | `docs/ricerca/2026-09-03-il-giudice-della-0.8.0-tre-opzioni.md` | **VIVO** — il documento madre | *«coordinamento assegnato da lead-audit; i numeri del fine-tune li porta ws4»*: chi decide, chi misura, e il criterio in un posto solo |
 | `docs/ricerca/2026-09-04-decomposizione-in-claim-atomici-letteratura.md` | **VIVO** | *«che cosa hanno **già misurato gli altri**»* — la domanda posta prima di misurare da soli |
 | `docs/ricerca/2026-09-05-design-write-n-claim-atomici.md` | **VIVO** | ws3, 05/09 21:15, *«**DESIGN, non codice**»*, e agganciato a `verimem/atomic_claims.py` |
-| `docs/ricerca/2026-09-05-tre-vie-per-il-giudice-v3-2-wise-ft-lora-cascata.md` | **VIVO** | *«**letto PRIMA del banco di Nadia**»*: la letteratura consultata prima di misurare, non dopo per giustificare |
+| `docs/ricerca/2026-09-05-tre-vie-per-il-giudice-v3-2-wise-ft-lora-cascata.md` | **VIVO** | *«**letto PRIMA del banco di ML**»*: la letteratura consultata prima di misurare, non dopo per giustificare |
 | `docs/ricerca/2026-09-05-verifica-per-claim-wice-refchecker-minicheck.md` | **VIVO** | *«**letto PRIMA del banco** (regola 5 dell'agen…)»*: la regola è citata per numero |
-| `docs/ricerca/2026-09-06-T17-il-vicinato-del-valore-e-l-output-di-programma.md` | **VIVO** | 06/09 06:40-07:50, *«ticket aperto da Iris (`3317d989549f3ac7`)»*: chi ha aperto il ticket è citato **per id del messaggio** |
+| `docs/ricerca/2026-09-06-T17-il-vicinato-del-valore-e-l-output-di-programma.md` | **VIVO** | 06/09 06:40-07:50, *«ticket aperto da Product Owner (`3317d989549f3ac7`)»*: chi ha aperto il ticket è citato **per id del messaggio** |
 | `docs/ricerca/2026-09-06-profili-di-strumenti-design.md` | **VIVO** | ws4, 06/09 notte: *«deliverable ③ del ruolo»* — con **la manopola vera e il suo limite** |
 | `docs/archive/2026-05-13_FINAL_REVIEW.md` | **MORTO (archivio)** | review della 0.2.0 su **sette commit nominati** (`c4a8977c..b56e1f3e`): archiviata, ma dice esattamente cosa aveva guardato |
 | `docs/archive/2026-05-13_PRODUCTION_ROADMAP.md` | **MORTO (archivio)** | roadmap di produzione del 13/05, superata da quattro roadmap successive |
@@ -387,7 +387,7 @@ L'indice del corpus chiede di **aprire i casi che il righello non ha segnalato**
 Ho cercato quelli che **non dichiarano né SHA né data in testa** — perché una misura
 senza data letta come attuale è la forma più dannosa in questa cartella. Primo giro:
 **24**. Ne ho letti due, e **tutti e due la dichiaravano nella seconda riga**:
-«ws6 · **30/08** ore 16:20», «ws6/Aldo — **30/08**, sera». Il mio regex conosceva
+«ws6 · **30/08** ore 16:20», «ws6/Dati — **30/08**, sera». Il mio regex conosceva
 `2026-08-30` e non `30/08` — **il formato che questa casa usa davvero**.
 
 ```

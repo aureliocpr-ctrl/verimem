@@ -1,6 +1,6 @@
 # Mappa — `verimem/self_model.py`
 
-*ws3 Galileo. 11 fra classi, metodi e funzioni: il **modello di sé** che ogni
+*ws3 Ricerca. 11 fra classi, metodi e funzioni: il **modello di sé** che ogni
 istanza si porta dietro fra una sessione e l'altra — versionato, con un audit, e
 con un tetto di byte. Banco: `ws3-mappa-prova-repomap-e-selfmodel.py`
 (09/09 13:18).*

@@ -1,6 +1,6 @@
 # Mappa — `verimem/client.py`
 
-*ws3 Galileo. Parte assegnata: 20 file, 15.064 righe misurate sul mio albero
+*ws3 Ricerca. Parte assegnata: 20 file, 15.064 righe misurate sul mio albero
 (l'indice dice 15.084: differenza di 20 righe, dichiarata, da riconciliare col
 lead). Questo file: **4.339 righe, 80 fra funzioni e classi** (`ast`, escluse
 le dunder). Ordine del mandato: prima ciò che sta dietro un claim del README.*
@@ -36,8 +36,8 @@ conteggio fatto sul **basename** invece che sul path. Prove sul tip
 
 | # | funzione (file:riga) | cosa promette | chiamata da (letto) | test che la esercita | claim README (riga) | verdetto | prova (comando e esito) |
 |---|---|---|---|---|---|---|---|
-| 1 | `verimem/client.py:556` `Memory.__init__` — `Memory.__init__` (client.py:556) | apre lo store: senza argomento «the library, the CLI and the MCP server all open the SAME store»; con un path, quello | `cli.py`, `mcp_server.py`, `gateway.py` (da leggere uno per uno: riga nella prossima passata) | `tests/test_moat_works_out_of_the_box.py` (8 passed) | README:428-429 | **FUNZIONA COME PROMESSO, con un avviso fuorviante** | `python prova_sdk.py` 08/09 20:31: `Memory(<tmp>/mappa.db)` scrive in `<tmp>/mappa.db` (106 KB creato) e **non** nello store di casa — verificato dopo: 0 righe con quei due id e 0 col topic `mappa/prova`, mtime del db di casa fermo alle 19:40. ⚠️ Ma il warning stampato dice «*using C:\Users\aurel\.engram (HIPPO_DATA_DIR wins)*» mentre il path esplicito vince davvero: il messaggio nomina un vincitore che non è quello dei fatti → **ticket T-MAP-1, owner Galileo** |
-| 2 | `verimem/client.py:613` `Memory.add` — `Memory.add` (client.py:613) | «Store `text` AFTER the anti-confab gate»; ritorna `{stored, id?, status, grounding_score, warnings, advice}` | **LETTI, con la riga**: CLI `cli.py:1373` in `remember_cmd` (1308) e `cli.py:1872` in `correct_cmd` (1822) · HTTP `gateway.py:1151` dentro `@app.post("/v1/memories")` (1047) · MCP `mcp_server.py:7875` dentro `_call_tool_impl` (7806). ⚠️ E **due punti del server MCP dichiarano di NON passare di qui**: `mcp_server.py:843` («costruisce il Fact dentro il server, non passa da `client.add()`») e `13648` («chiama `store()` senza passare da `Memory.add()`, dove viveva…») — due vie di scrittura che saltano questa funzione, da mappare quando tocca a Giano | `tests/test_moat_works_out_of_the_box.py`, `tests/test_all_write_channels_judge_a_source.py`, `tests/test_adjudication_receipt.py` | README:441-442 (quickstart: entailed → admitted, confab → QUARANTINED) | **FUNZIONA COME PROMESSO** | `python prova_sdk.py` 08/09 20:31, store temporaneo: `add("Analytics runs on Postgres.", source=…)` → `status='model_claim'`, `grounding_score=99.916`, `layers=[]`, `stored=True`; `add("Analytics runs on MongoDB.", source=…)` → `status='quarantined'`, `grounding_score=0.613`, `quarantined_by='moat'`, `layers=['L4-grounding']`. E `pytest tests/test_moat_works_out_of_the_box.py` → **8 passed, EXIT=0** |
+| 1 | `verimem/client.py:556` `Memory.__init__` — `Memory.__init__` (client.py:556) | apre lo store: senza argomento «the library, the CLI and the MCP server all open the SAME store»; con un path, quello | `cli.py`, `mcp_server.py`, `gateway.py` (da leggere uno per uno: riga nella prossima passata) | `tests/test_moat_works_out_of_the_box.py` (8 passed) | README:428-429 | **FUNZIONA COME PROMESSO, con un avviso fuorviante** | `python prova_sdk.py` 08/09 20:31: `Memory(<tmp>/mappa.db)` scrive in `<tmp>/mappa.db` (106 KB creato) e **non** nello store di casa — verificato dopo: 0 righe con quei due id e 0 col topic `mappa/prova`, mtime del db di casa fermo alle 19:40. ⚠️ Ma il warning stampato dice «*using <home> (HIPPO_DATA_DIR wins)*» mentre il path esplicito vince davvero: il messaggio nomina un vincitore che non è quello dei fatti → **ticket T-MAP-1, owner Ricerca** |
+| 2 | `verimem/client.py:613` `Memory.add` — `Memory.add` (client.py:613) | «Store `text` AFTER the anti-confab gate»; ritorna `{stored, id?, status, grounding_score, warnings, advice}` | **LETTI, con la riga**: CLI `cli.py:1373` in `remember_cmd` (1308) e `cli.py:1872` in `correct_cmd` (1822) · HTTP `gateway.py:1151` dentro `@app.post("/v1/memories")` (1047) · MCP `mcp_server.py:7875` dentro `_call_tool_impl` (7806). ⚠️ E **due punti del server MCP dichiarano di NON passare di qui**: `mcp_server.py:843` («costruisce il Fact dentro il server, non passa da `client.add()`») e `13648` («chiama `store()` senza passare da `Memory.add()`, dove viveva…») — due vie di scrittura che saltano questa funzione, da mappare quando tocca a Porte | `tests/test_moat_works_out_of_the_box.py`, `tests/test_all_write_channels_judge_a_source.py`, `tests/test_adjudication_receipt.py` | README:441-442 (quickstart: entailed → admitted, confab → QUARANTINED) | **FUNZIONA COME PROMESSO** | `python prova_sdk.py` 08/09 20:31, store temporaneo: `add("Analytics runs on Postgres.", source=…)` → `status='model_claim'`, `grounding_score=99.916`, `layers=[]`, `stored=True`; `add("Analytics runs on MongoDB.", source=…)` → `status='quarantined'`, `grounding_score=0.613`, `quarantined_by='moat'`, `layers=['L4-grounding']`. E `pytest tests/test_moat_works_out_of_the_box.py` → **8 passed, EXIT=0** |
 | 3 | `verimem/client.py:1217` `Memory.search` — `Memory.search` (client.py:1217) | «Recall the top-k facts for `query`, each with its provenance — `status` + write-time `grounding_score`» | **LETTI, con la riga**: CLI `cli.py:1649` (con `as_of`, `deep`) · HTTP `gateway.py:621` (`k=4`) e `gateway.py:1185` (per tenant) · `active_probe.py:59`. ⚠️ Il server MCP **non** chiama questa: legge da `semantic.recall` direttamente (`mcp_server.py:432`, `sem.recall(query, k=3)`) — porta diversa, funzione diversa, e i due `k` di default non coincidono (SDK 5, gateway 4, MCP 3) | `tests/test_moat_works_out_of_the_box.py` | README:428-448 (l'SDK del quickstart) | **FUNZIONA COME PROMESSO (parziale: k=5 su un corpus di 2)** | stessa esecuzione: `search("Analytics", k=5)` → 1 hit, `flow.recall best=0.8424 n=1 tagliati=0`; il quarantinato **non** è servito, come promesso |
 | 4 | `verimem/client.py:1217` `Memory.search` — `Memory.recall` (alias di `search`, client.py:1217) | i documenti e le porte la nominano accanto a `search`, come se fossero due letture | — (è lo stesso oggetto: chi chiama `recall` chiama `search`) | gli stessi di `search` | — | **FUNZIONA, ma è UN SOLO metodo con due nomi** | stessa esecuzione, riga finale: `Memory.recall is Memory.search` → **True**, e `[a for a in dir(Memory) if 'recall' in a]` → `['recall']`. ⚠️ **Prima avevo scritto in questa riga «NON ESISTE COME METODO SEPARATO»: sbagliato, e l'ho corretto prima di pubblicare** — l'output della prova diceva già «True» e l'ho letto male. Vale come reperto per chi legge la mappa: due nomi per una funzione fanno credere a due comportamenti |
 
@@ -227,12 +227,12 @@ decrescenti.
 
 ## Ticket aperti da questa passata
 
-- **T-MAP-1** (owner Galileo, 08/09 20:31) — `Memory(path)` con path esplicito
+- **T-MAP-1** (owner Ricerca, 08/09 20:31) — `Memory(path)` con path esplicito
   scrive nel path, ma il warning di risoluzione dei DATA_DIR annuncia un altro
   vincitore («HIPPO_DATA_DIR wins»). Il messaggio è vero per gli accessori e
   falso per il fatto principale, e chi legge conclude di aver scritto altrove.
   Nessuna cura durante la mappa: qui si registra.
-- **T-MAP-2** (owner Galileo, 08/09 21:09) — `Memory.ask` con intento
+- **T-MAP-2** (owner Ricerca, 08/09 21:09) — `Memory.ask` con intento
   `LIST_ALL` fa un confronto **letterale** sui termini: «elenca tutti i
   capannon**i**» → 0 risultati, «elenca tutti i capannon**e**» → 2, sullo
   stesso corpus. Il docstring promette «returns the whole matching set», e la
@@ -241,7 +241,7 @@ decrescenti.
   termini («elenca tutto sul capannone» → termini `tutto sul capannone` → 0).
   Confinato al router di intento (`query_intent.content_terms`); `FIND` e
   `COUNT` sulla stessa domanda funzionano. **Non curato**: mappa, non cure.
-- 🔴🔴 **T-MAP-6** (owner Galileo, 08/09 22:22) — **la retro-demozione di una
+- 🔴🔴 **T-MAP-6** (owner Ricerca, 08/09 22:22) — **la retro-demozione di una
   fonte non tocca i fatti scritti come il README insegna.**
   `_retro_demote_source` cerca `verified_by LIKE '%"source:<testo>:%'` (prefissi
   `source-doc`, `source`, `src`, `doc`, `file`), ma `add(source=…)` — il
@@ -254,8 +254,8 @@ decrescenti.
   fonte perde fiducia, i fatti scritti nel modo che la pagina insegna restano
   ammessi. Cure possibili (non è una decisione mia): la query guarda anche
   `source_signature`/`source`, oppure `add(source=…)` popola `verified_by` col
-  riferimento. Da portare al lead con @ws6 Aldo, che ha il perimetro dati.
-- 🔴 **T-MAP-5** (owner Galileo, da girare a @ws7 Iris, 08/09 22:12) —
+  riferimento. Da portare al lead con @ws6 Dati, che ha il perimetro dati.
+- 🔴 **T-MAP-5** (owner Ricerca, da girare a @ws7 Product Owner, 08/09 22:12) —
   **README:280-283 promette `AutoMemory` senza dire che serve un llm.** Il
   codice solleva `ValueError: AutoMemory needs a Memory built with an
   extraction llm (Memory(..., llm=...))`, e il messaggio è chiaro; ma chi legge
@@ -263,7 +263,7 @@ decrescenti.
   la pagina non prepara. Alla riga 705 lo stesso README **dichiara** il
   requisito per `answer()` («needs an injected LLM»): la forma giusta esiste
   già, va applicata anche qui. Cura: una frase nella riga 280, non codice.
-- 🔴 **T-MAP-4** (owner Galileo, da girare a @ws7 Iris che tiene il README,
+- 🔴 **T-MAP-4** (owner Ricerca, da girare a @ws7 Product Owner che tiene il README,
   08/09 21:50) — **README:194 è vero a metà**. Dice: «`Memory(preset="permissive")`
   / `validate="fast"` skip the moat entirely». Misurato con la stessa coppia
   (falso + fonte che lo smentisce), una variabile per volta:
@@ -274,7 +274,7 @@ decrescenti.
   quarantinati e non capisce perché. Due cure possibili e non è una decisione
   mia: o `validate="fast"` salta il moat davvero, o la riga del README perde
   quella metà.
-- **T-MAP-3** (owner Galileo, 08/09 21:44) — `Memory.forget` opera sul db
+- **T-MAP-3** (owner Ricerca, 08/09 21:44) — `Memory.forget` opera sul db
   giusto ma **logga un altro store**: `flow.forget … store=67712a7ceb5e`
   mentre `add`, sullo stesso oggetto `Memory` costruito con un path esplicito,
   logga `store=b42a7895c969`. Chi legge i log per sapere *dove* è stata
@@ -283,7 +283,7 @@ decrescenti.
   path esplicito nelle superfici che *riferiscono*), lato scrittura del log.
   Verificato nella stessa esecuzione che lo store di casa non è stato toccato.
 
-- **T-MAP-7** (owner Galileo, 08/09 22:33) — **una variabile scritta male non
+- **T-MAP-7** (owner Ricerca, 08/09 22:33) — **una variabile scritta male non
   spegne l'opt-in dell'avviso: lo accende a un terzo valore, e la ricevuta non
   lo dice.** `_pavimento_avviso` (client.py:127) promette due comportamenti:
   senza la variabile «il pavimento calibrato, cioè il comportamento di sempre»,
@@ -307,7 +307,7 @@ decrescenti.
   italiani`).
 
 - 🟡 **T-MAP-8 — DECLASSATO DA CANDIDATO P0 A DIFETTO DI AVVISO, 23:00, e il
-  controllo che lo declassa l'ho fatto io** (Galileo, 08/09 22:48 → rettifica
+  controllo che lo declassa l'ho fatto io** (Ricerca, 08/09 22:48 → rettifica
   23:00). **La perdita è REVERSIBILE e la maniglia sta nella ricevuta stessa**:
   `update()` restituisce `undo_op_id`, e `undo(op)` →
   `{'ok': True, 'op_type': 'supersede', 'action': 'restored'}` riporta il fatto

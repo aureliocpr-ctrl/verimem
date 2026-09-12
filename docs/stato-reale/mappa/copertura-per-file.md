@@ -1,6 +1,6 @@
 # Copertura per file — la colonna «test» di ognuno dei file di `verimem/`
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · prodotto da ws1 Marie col righello descritto in
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · prodotto da ws1 QA col righello descritto in
 [`copertura-test.md`](copertura-test.md), che va **letto prima di usare questi
 numeri**: «coperta» qui vuol dire **nominata** da un test, non **eseguita**.
 

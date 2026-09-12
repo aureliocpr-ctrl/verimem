@@ -1,6 +1,6 @@
 # Mappa — `verimem/skill_exposure_audit.py`
 
-*ws3 Galileo. 5 fra classe e funzioni: misura **quante volte una skill candidata
+*ws3 Ricerca. 5 fra classe e funzioni: misura **quante volte una skill candidata
 sarebbe entrata nel top-k semantico** — cioè quante sono «morte alla nascita»,
 mai viste da nessun episodio. Banco: `ws3-mappa-prova-skill-moduli.py`
 (09/09 13:47).*

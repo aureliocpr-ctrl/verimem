@@ -1,6 +1,6 @@
 # Mappa — `verimem/tools.py`
 
-*ws3 Galileo. 19 fra classi, metodi e funzioni: **l'esecutore di codice** e
+*ws3 Ricerca. 19 fra classi, metodi e funzioni: **l'esecutore di codice** e
 **l'analizzatore statico** che l'agente usa per scrivere e provare software.
 Banco: `ws3-mappa-prova-tools.py` (09/09 13:36). Il codice eseguito nel banco è
 mio e innocuo — un `print`, un `assert`, un `sleep` per provare il timeout.*

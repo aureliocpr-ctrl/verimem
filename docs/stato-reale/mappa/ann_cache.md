@@ -1,6 +1,6 @@
 # verimem/ann_cache.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **112 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **112 righe · 5 fra funzioni, metodi e classi**.
 
 ANNCache tiene vivo UN indice HNSW fra le chiamate di recall: costruirlo costa ~52 s a 100k, quindi si costruisce una volta e si riusa. Sotto la soglia (100.000, in ann_gate.py) il recall resta la forza bruta esatta.
 

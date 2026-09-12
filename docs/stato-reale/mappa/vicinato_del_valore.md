@@ -1,6 +1,6 @@
 # verimem/vicinato_del_valore.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **320 righe · 6 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **320 righe · 6 fra funzioni, metodi e classi**.
 
 Il contesto attorno a un numero: che cosa lo qualifica.
 

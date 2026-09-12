@@ -1,6 +1,6 @@
 # Mappa — `verimem/tool_registry.py`
 
-*ws3 Galileo. 11 fra classe, metodi e costruttore: il **registro delle capacità**
+*ws3 Ricerca. 11 fra classe, metodi e costruttore: il **registro delle capacità**
 degli strumenti — chi legge, chi scrive, chi esegue comandi, chi chiede conferma.
 È il punto dove si decide se un'azione passa o si ferma, quindi il caso che conta
 non è quello noto: è **lo strumento sconosciuto**. Banco:

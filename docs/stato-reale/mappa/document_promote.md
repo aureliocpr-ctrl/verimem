@@ -1,6 +1,6 @@
 # mappa — `verimem/document_promote.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:37
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:37
 
 **258 righe · 2 funzioni · 0 classi** (`ast`). **2 pubbliche, 0 private.**
 Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello già pagate.

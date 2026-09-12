@@ -116,7 +116,7 @@ Nell'ambiente della sessione c'è:
 
 Sembra dire: «di tutti gli strumenti di Verimem, esponine solo questi dieci».
 
-**Cercata in tutto il pacchetto effettivamente caricato** (`C:/Users/aurel/Code/HippoAgent/verimem`,
+**Cercata in tutto il pacchetto effettivamente caricato** (`<home>`,
 versione **0.7.0** — ho verificato che sia questo e non una copia installata altrove):
 
     file del pacchetto importato che leggono HIPPO_EXPOSE_TOOLS: 0

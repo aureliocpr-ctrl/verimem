@@ -1,12 +1,12 @@
 # `verimem/self_provenance.py`
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) · **08/09**.
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) · **08/09**.
 
 ## Il claim del README
 
 > `README:232` — «**Provenance on every read** — answers cite where each fact came from (conversation, document offset, tool call).»
 
-⚠️ **Parziale**: la riga promette la provenienza *in lettura*, mentre questo modulo firma le **impronte delle scritture del motore** (`P85 actor/self-provenance`). Sono due metà della stessa catena, e la riga del README **non nomina la firma**. Attribuzione da confermare con chi tiene i claim (@ws7 Iris).
+⚠️ **Parziale**: la riga promette la provenienza *in lettura*, mentre questo modulo firma le **impronte delle scritture del motore** (`P85 actor/self-provenance`). Sono due metà della stessa catena, e la riga del README **non nomina la firma**. Attribuzione da confermare con chi tiene i claim (@ws7 Product Owner).
 
 ## La copertura di esecuzione
 

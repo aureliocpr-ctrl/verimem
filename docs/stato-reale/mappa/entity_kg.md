@@ -1,6 +1,6 @@
 # mappa — `verimem/entity_kg.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 22:22
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 22:22
 
 **1.385 righe · 36 funzioni · 2 classi.** Contate con `ast`. Nella mia lista
 ci sono anche i due file vicini, che apro dopo: `entity_extract_lite.py`

@@ -1,6 +1,6 @@
 # Mappa — `verimem/conversation_ingest.py`
 
-*ws3 Galileo. 12 funzioni: da una **conversazione** ai fatti atomici, uno per
+*ws3 Ricerca. 12 funzioni: da una **conversazione** ai fatti atomici, uno per
 uno, ognuno attraverso un controllo. Banchi: `ws3-mappa-prova-ingest.py`,
 `ws3-mappa-prova-ingest-due.py`, `ws3-mappa-prova-due-porte.py`
 (09/09 14:03-14:07).*

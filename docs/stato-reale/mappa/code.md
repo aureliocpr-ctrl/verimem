@@ -1,6 +1,6 @@
 # Mappa — `verimem/code.py`
 
-*ws3 Galileo. 35 fra funzioni, classe e metodi: **il REPL di scrittura codice**
+*ws3 Ricerca. 35 fra funzioni, classe e metodi: **il REPL di scrittura codice**
 (`VerimemCode`) — la sessione interattiva con memoria persistente. Banco:
 `ws3-mappa-prova-code.py` (09/09 14:26), con un **agente finto** che registra
 le richieste e non chiama nessun LLM.*

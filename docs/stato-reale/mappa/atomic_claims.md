@@ -1,6 +1,6 @@
 # verimem/atomic_claims.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **284 righe · 13 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **284 righe · 13 fra funzioni, metodi e classi**.
 
 La decomposizione di una scrittura in claim ATOMICI, uno per affermazione: il «tempo 1» del design «write = N claim atomici, ognuno giudicato». Pura e deterministica, nessun modello — quindi la promessa si può verificare davvero.
 

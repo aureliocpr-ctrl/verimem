@@ -1,6 +1,6 @@
 # verimem/telemetry_analyzer.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **256 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **256 righe · 5 fra funzioni, metodi e classi**.
 
 Il registro MCP letto come rapporto per tool: quante chiamate, quanto lente. Puro e tollerante alle righe malformate, per girare anche su un log parzialmente corrotto.
 

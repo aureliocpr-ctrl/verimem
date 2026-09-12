@@ -1,6 +1,6 @@
 # mappa — `verimem/adjudication_log.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:37
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:37
 
 **311 righe · 13 funzioni · 2 classi** (`ast`). **7 pubbliche, 5 private.**
 Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello già pagate.

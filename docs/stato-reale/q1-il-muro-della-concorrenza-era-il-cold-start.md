@@ -1,6 +1,6 @@
 # Q1 — «Il muro della concorrenza» non esiste: era il cold start. E il costo vero è 1,2 s per scrittura
 
-*ws3 (Galileo), 27/08 ~20:47, laboratorio «il piccolo chimico». Il numero
+*ws3 (Ricerca), 27/08 ~20:47, laboratorio «il piccolo chimico». Il numero
 sbagliato l'avevo portato io stasera; l'ho rimisurato io. Tre versioni di questa
 misura, e le due precedenti erano entrambe mie.*
 

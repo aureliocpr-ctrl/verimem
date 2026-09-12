@@ -1,6 +1,6 @@
 # `verimem/syscall_bridge.py` — 383 righe, 11 funzioni
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) ·
 **08/09**.
 
 ## Che cosa promette
@@ -112,7 +112,7 @@ riesce) e ho chiamato `engram_invoke` come lo chiamerebbe un utente:
 
 ```
 ✅ CONTROLLO: `clp` è irraggiungibile in questo processo
-verimem importato da: C:\Users\aurel\Code\HA-ws1-main\verimem\syscall_bridge.py
+verimem importato da: <home>
 
 ok         = False
 blocked_by = None
@@ -141,7 +141,7 @@ registrano i valori), **non contiene**.
 ⇒ **T42 — NON COME PROMESSO, e la promessa infranta è quella del docstring, non
 del codice**: il «Falsifiable contract» elenca quattro esiti e ne esiste un
 quinto, che è anche il più probabile per un utente senza `clp`. **Owner: ws1
-Marie.** La cura è una riga sola (un `blocked_by="handler_error"`, oppure il
+QA.** La cura è una riga sola (un `blocked_by="handler_error"`, oppure il
 contratto che enumera il caso), ma **non la scrivo adesso** — regola 2 del
 mandato. Il ticket resta con la sua prova.
 

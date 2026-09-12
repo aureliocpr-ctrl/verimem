@@ -57,7 +57,7 @@ scrittura per le misure»* è una regola che qui ha un supporto nel codice.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. Il 21% di perdita è una misura del team, attribuita.*
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. Il 21% di perdita è una misura del team, attribuita.*
 
 ---
 

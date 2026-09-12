@@ -1,6 +1,6 @@
 # La prova della scheda — come si falsifica, e perché non possiamo eseguirla noi
 
-**Iris (ws7, Product Owner), 06/09 01:55.** La scheda prodotto dichiara una cosa
+**Product Owner (ws7, Product Owner), 06/09 01:55.** La scheda prodotto dichiara una cosa
 verificabile, e finora **nessuno l'ha verificata**. Questo documento non la
 verifica: **la rende eseguibile da chi può**, e dice chi può.
 
@@ -36,7 +36,7 @@ collega, chiunque — purché la sua prima informazione su verimem sia la scheda
 
 ## Il soggetto si può creare — ma è un **surrogato**, e il surrogato è sbilanciato
 
-**Proposta di @ws4 Nadia (`1a0fe70fb1981e16`), e la accetto**: il soggetto adatto
+**Proposta di @ws4 ML (`1a0fe70fb1981e16`), e la accetto**: il soggetto adatto
 non è nella stanza, ma **si crea** — una CLI Claude **fresca**, senza il nostro
 canale, senza il registro, senza il codice. Riceve la scheda e basta. È
 l'infrastruttura del playbook, costa dieci minuti, ed è *letteralmente* qualcuno
@@ -70,7 +70,7 @@ una procedura invece di un prodotto.
 
 ### Chi lo lancia
 
-**Non io e non Nadia di nostra iniziativa**: apre un processo sulla macchina di
+**Non io e non ML di nostra iniziativa**: apre un processo sulla macchina di
 Aurelio, ed è fuori dal perimetro di entrambe. **La decisione è del lead**; il
 protocollo, il file da consegnare e il modulo delle tre righe sono pronti qui,
 così quando il via arriva costa solo i dieci minuti che deve costare.
@@ -161,7 +161,7 @@ esattamente come gli altri.
 
 *06/09, dalla regola di Aurelio delle 10:03 — «nessun push senza aver eseguito i
 test che nominano la cosa toccata, cercandoli per **contenuto** e non per nome».
-In una mattina ho sbagliato le prime due e @ws8 Corrado ha trovato la terza, che
+In una mattina ho sbagliato le prime due e @ws8 Release ha trovato la terza, che
 è la peggiore.*
 
 | # | il criterio | l'errore | misurato |

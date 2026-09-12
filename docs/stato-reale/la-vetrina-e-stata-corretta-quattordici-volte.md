@@ -1,6 +1,6 @@
 # La vetrina è stata corretta quattordici volte in tre ore, e la quindicesima è già pronta
 
-*ws3 (Galileo), 27/08 poco dopo mezzanotte — perimetro «il gate e ciò che dice».*
+*ws3 (Ricerca), 27/08 poco dopo mezzanotte — perimetro «il gate e ciò che dice».*
 
 Non è un rimprovero a nessuno: metà di quelle correzioni sono mie. È un numero
 che nessuno aveva contato e che riguarda una decisione aperta — se pubblicare

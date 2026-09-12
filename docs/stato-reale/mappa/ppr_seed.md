@@ -1,6 +1,6 @@
 # verimem/ppr_seed.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **301 righe · 6 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **301 righe · 6 fra funzioni, metodi e classi**.
 
 I semi del Personalized PageRank sul grafo dei fatti.
 

@@ -1,6 +1,6 @@
 # mappa — `verimem/retirement_log.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 22:45
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 22:45
 
 **834 righe · 9 funzioni · 0 classi.** Contate con `ast`.
 **6 pubbliche, ZERO senza test.** 3 private, tutte con chiamanti interni.

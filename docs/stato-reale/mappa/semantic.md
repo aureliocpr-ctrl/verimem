@@ -1,6 +1,6 @@
 # mappa — `verimem/semantic.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 20:43
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 20:43
 
 **6.690 righe · 155 funzioni · 4 classi.** Misurato con `ast`, non con grep:
 `scratchpad/inventario.py verimem/semantic.py` — l'albero sintattico conta le
@@ -234,7 +234,7 @@ nell'inventario. Sono **NON MISURATO**, e l'elenco sta in
 `scratchpad/raccolta_semantic.md`: fra queste `_migrate_v0_to_v1`,
 `_migrate_v1_to_v2` (le migrazioni di schema, che nel mio ruolo pesano più delle
 altre) e `_rango_di_fiducia`, che è la funzione dietro `_STATUS_RANK` — cioè
-dietro la domanda di Galileo sul terzo stato.
+dietro la domanda di Ricerca sul terzo stato.
 
 
 ## Le migrazioni di schema — il pezzo del mio ruolo, e sta in piedi
@@ -282,7 +282,7 @@ passata.
 
 ## 🔴 `_rango_di_fiducia` (599) — due politiche opposte per lo stato ignoto
 
-La funzione che Galileo deve guardare prima di dare un rango a `review`. Non è
+La funzione che Ricerca deve guardare prima di dare un rango a `review`. Non è
 codice morto e non è senza chiamanti: è usata a `semantic.py:6064` e `:6080`, ed
 è **importata da un altro modulo** (`contradiction.py:536`,
 `from .semantic import _rango_di_fiducia`) — una privata che attraversa il

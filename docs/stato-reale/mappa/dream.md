@@ -1,6 +1,6 @@
 # verimem/dream.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **909 righe · 18 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **909 righe · 18 fra funzioni, metodi e classi**.
 
 Il consolidamento onirico: proposte di skill generate dal sonno.
 

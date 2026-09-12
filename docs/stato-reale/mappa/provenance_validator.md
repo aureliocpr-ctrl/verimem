@@ -1,6 +1,6 @@
 # verimem/provenance_validator.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **376 righe · 9 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **376 righe · 9 fra funzioni, metodi e classi**.
 
 Valida la PROVENIENZA di un fatto: da dove viene e se quel dove regge.
 

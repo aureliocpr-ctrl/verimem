@@ -66,7 +66,7 @@ si può, il prodotto tiene una strada che non dipende da un modello.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`.*
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`.*
 
 ---
 

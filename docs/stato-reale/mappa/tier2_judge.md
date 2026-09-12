@@ -1,6 +1,6 @@
 # verimem/tier2_judge.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **338 righe · 13 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **338 righe · 13 fra funzioni, metodi e classi**.
 
 Il giudice di secondo livello, dopo i layer lessicali.
 

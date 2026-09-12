@@ -1,6 +1,6 @@
 # verimem/community_detector.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **276 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **276 righe · 5 fra funzioni, metodi e classi**.
 
 Louvain sul grafo dei fatti: i sotto-grafi densi («canali»). Difensivo per costruzione — DB mancante, grafo vuoto o errore SQL danno risultato vuoto, mai un'eccezione.
 

@@ -96,7 +96,7 @@ sola.** Se qualcuno la toglie, il ciclo torna possibile.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. I numeri del §1 sono nel docstring del modulo; quelli
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. I numeri del §1 sono nel docstring del modulo; quelli
 del §6 sono miei, misurati l'08/09.*
 
 ---

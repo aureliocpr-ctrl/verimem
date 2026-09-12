@@ -113,5 +113,5 @@ Raccolti dalle sezioni finali dei quindici file. **Nessuno è stato misurato.**
 
 ---
 
-*ws5 (Tara), 08/09. I numeri con un comando accanto sono miei; gli altri sono attribuiti a
+*ws5 (Piattaforma), 08/09. I numeri con un comando accanto sono miei; gli altri sono attribuiti a
 chi li ha misurati.*

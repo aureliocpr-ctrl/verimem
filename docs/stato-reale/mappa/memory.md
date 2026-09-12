@@ -1,6 +1,6 @@
 # mappa — `verimem/memory.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 21:50
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 21:50
 
 **2.718 righe · 83 funzioni · 1 classe (`EpisodicMemory`).** Contate con `ast`
 (`scratchpad/inventario.py`), non con grep.

@@ -65,7 +65,7 @@ Tutte pubbliche tranne i due `__init__`.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`.*
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`.*
 
 ---
 

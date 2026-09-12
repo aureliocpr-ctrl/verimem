@@ -1,6 +1,6 @@
 # verimem/second_pass_louvain.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **352 righe · 5 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **352 righe · 5 fra funzioni, metodi e classi**.
 
 Seconda passata di clustering sulla comunità dei fatti.
 

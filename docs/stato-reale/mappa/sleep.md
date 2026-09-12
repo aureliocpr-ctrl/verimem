@@ -1,6 +1,6 @@
 # verimem/sleep.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **1.348 righe · 37 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **1.348 righe · 37 fra funzioni, metodi e classi**.
 
 Il ciclo di consolidamento: NREM → REM → Pruning → Curator.
 

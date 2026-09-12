@@ -1,6 +1,6 @@
 # Mappa — `verimem/tools_extra.py`
 
-*ws3 Galileo. 47 fra funzioni, classi e metodi: **le capacità che possono fare
+*ws3 Ricerca. 47 fra funzioni, classi e metodi: **le capacità che possono fare
 danno** — filesystem, shell, rete, visione, webcam, desktop — e le guardie che
 ci stanno davanti. Banchi: `ws3-mappa-prova-tools-extra.py` e
 `ws3-mappa-prova-tools-extra-due.py` (09/09 14:20-14:21).*
@@ -23,7 +23,7 @@ funzione** (riga 10). Chi legge l'elenco pensa di poterli usare, e la risposta
 | # | funzione (file:riga) | cosa promette | verdetto | prova (comando e esito) |
 |---|---|---|---|---|
 | 1 | `verimem/tools_extra.py:39` `_enabled` | l'interruttore di una capacità: `HIPPO_ENABLE_<NOME>` accende, `HIPPO_DISABLE_<NOME>` frena un default acceso | **FUNZIONA COME PROMESSO** | `_enabled('shell', False)` senza variabile → **False** · con `HIPPO_ENABLE_SHELL=1` → **True** · con `=yes` → **True** · con `=0` → **False** · default `True` ma `HIPPO_DISABLE_FS=1` → **False** (il freno vince). ⚠️ La funzione **antepone da sé** `HIPPO_ENABLE_`: chiamarla con il nome completo cerca `HIPPO_ENABLE_HIPPO_ENABLE_SHELL` — errore mio nel primo giro |
-| 2 | `verimem/tools_extra.py:46` `_fs_roots` | «radici permesse. Politica di default (v0.2): **STRICT — solo la data dir del progetto**. Il precedente default permissivo (`$HOME`) esponeva `~/.ssh`, `~/.aws`, `~/.gnupg`…» | **FUNZIONA COME PROMESSO** | con la data dir di casa → radici `['C:\Users\aurel\.engram']`, e **la HOME dell'utente NON è una radice** (verificato per confronto esplicito). Puntando la data dir a un tmp, la radice diventa il tmp: la politica segue la configurazione, non un percorso cablato |
+| 2 | `verimem/tools_extra.py:46` `_fs_roots` | «radici permesse. Politica di default (v0.2): **STRICT — solo la data dir del progetto**. Il precedente default permissivo (`$HOME`) esponeva `~/.ssh`, `~/.aws`, `~/.gnupg`…» | **FUNZIONA COME PROMESSO** | con la data dir di casa → radici `['<home>']`, e **la HOME dell'utente NON è una radice** (verificato per confronto esplicito). Puntando la data dir a un tmp, la radice diventa il tmp: la politica segue la configurazione, non un percorso cablato |
 | 3 | `verimem/tools_extra.py:88` `_strip_editor_backup_suffixes` | «toglie i suffissi di backup/swap così che **`.env~` corrisponda come `.env`**: `~`, `.bak`, `.backup`, `.swp`…» | **FUNZIONA COME PROMESSO — sette casi** | `.env~` → `.env` · `.env.bak` → `.env` · `.env.backup` → `.env` · `.env.swp` → `.env` · `id_rsa~` → `id_rsa` · `normale.txt` → invariato · `.env` → invariato |
 | 4 | `verimem/tools_extra.py:128` `_is_sensitive` | «vero se il path sta sotto (o corrisponde a) un nome noto come sensibile» | **FUNZIONA COME PROMESSO — e prende anche le varianti** | `~/.ssh/id_rsa` → **True** · **`~/.ssh/id_rsa~` → True** (la variante di backup non sfugge) · `~/.aws/credentials` → **True** · `.env` → **True** · `.env.bak` → **True** · `note.txt` → **False** |
 | 5 | `verimem/tools_extra.py:158` `_is_within_any` | il path sta dentro una delle radici? | **FUNZIONA COME PROMESSO** | dentro → **True** · nella HOME → **False** · **con una risalita `..` → False** (il tentativo di uscire non paga) |

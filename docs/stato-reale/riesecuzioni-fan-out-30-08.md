@@ -75,7 +75,7 @@ SINTESI:
   SUPERIORE. E le sei radici restano scelte da me.
 ```
 GIUDIZIO: VERDE (verdetto coerente coi propri numeri: costo 0.44% dichiarato come limite superiore; W7-66 falsificata sul corpus vero 0/26 morfologici; alla porta 12/12 downgrade, fattore 1.00)
-NOTA: il banco LEGGE il DB di produzione `C:\Users\aurel\.engram\semantic\semantic.db` (popolazione 5948, sola lettura — è il suo scopo "corpus vero"); a runtime emette `RuntimeWarning` da `verimem/anti_confab_gate.py:2400` (cut del judge locale 99.6 inutilizzabile, usa il cut CE validato 40) e testa alla porta solo 12 dei 26 nuovi, estrapolando il fattore 1.00 all'intero costo.
+NOTA: il banco LEGGE il DB di produzione `<home>` (popolazione 5948, sola lettura — è il suo scopo "corpus vero"); a runtime emette `RuntimeWarning` da `verimem/anti_confab_gate.py:2400` (cut del judge locale 99.6 inutilizzabile, usa il cut CE validato 40) e testa alla porta solo 12 dei 26 nuovi, estrapolando il fattore 1.00 all'intero costo.
 
 ---
 
@@ -306,7 +306,7 @@ SINTESI:
 W0830 20:34:10.253000 39200 site-packages\torch\utils\flop_counter.py:29] triton not found; flop counting will not work for triton kernels
      ⚠️ punteggio assente sul primo caso: non parto.
 GIUDIZIO: ROSSO (il banco abortisce fail-closed prima di produrre qualunque verdetto sulla leva: nessuno dei 404 giudizi eseguito)
-NOTA: Riprodotto 2/2 (stesso punto, stesso exit 1); causa: `run_validation_gate` restituisce `grounding_score=None` su entrambi i voti del primo caso (guard a C:/Users/aurel/Code/HippoAgent/docs/stato-reale/banchi/quanto-pesa-una-leva-sul-giudice.py:162-170) — il giudice non giudica in questo regime (HIPPO_DATA_DIR=C:\Users\aurel\.engram, ENGRAM_ADMISSION_GATE=1); fra le due run "fatti vivi con fonte" è passato 6296→6299 (corpus in movimento, la leva resta 202), il warning triton è solo rumore torch.
+NOTA: Riprodotto 2/2 (stesso punto, stesso exit 1); causa: `run_validation_gate` restituisce `grounding_score=None` su entrambi i voti del primo caso (guard a <home>) — il giudice non giudica in questo regime (HIPPO_DATA_DIR=<home> ENGRAM_ADMISSION_GATE=1); fra le due run "fatti vivi con fonte" è passato 6296→6299 (corpus in movimento, la leva resta 202), il warning triton è solo rumore torch.
 
 ---
 
@@ -360,7 +360,7 @@ SINTESI:
   in quel caso il difetto e' la COLONNA che la promessa cita, non il giudizio.
 ```
 GIUDIZIO: VERDE (exit 0, verdetto leggibile e internamente coerente: le quattro caselle sommano a 13849 = fatti vivi dichiarati; i disallineati per era 26+108+1031 = 1165 = 1108+57)
-NOTA: il banco NON usa uno store temporaneo — legge in SQL puro il DB di produzione vivo (C:\Users\aurel\.engram\semantic\semantic.db, 13849 fatti vivi): sola lettura, nessuna scrittura, ma i numeri (1108/8.0%, 57/0.4%) sono fotografia del corpus a quest'ora e si muoveranno con esso; il banco stesso dichiara il regime («ho letto le colonne, non ho chiesto al prodotto»).
+NOTA: il banco NON usa uno store temporaneo — legge in SQL puro il DB di produzione vivo (<home> 13849 fatti vivi): sola lettura, nessuna scrittura, ma i numeri (1108/8.0%, 57/0.4%) sono fotografia del corpus a quest'ora e si muoveranno con esso; il banco stesso dichiara il regime («ho letto le colonne, non ho chiesto al prodotto»).
 
 ---
 
@@ -389,7 +389,7 @@ SINTESI:
   e' un difetto del verdetto: `L4.2` e' un avviso e non quarantina.
 ```
 GIUDIZIO: VERDE (verdetto 🟢 coerente coi propri numeri: VUOTA 5/5253=0.1% lato claim e 3/5253=0.1% lato fonte, exit 0)
-NOTA: il banco legge la popolazione VIVA intera (6335 fatti con fonte, nessuno store temporaneo, sola lettura); l'intestazione dice «cinque esempi» ma ne stampa 3 perché i casi VUOTA lato fonte sono esattamente 3; MISTI restano fuori dal verdetto per dichiarazione esplicita del banco (38.2% claim / 26.7% fonte). Log completo (35 righe): C:\Users\aurel\AppData\Local\Temp\claude\C--Users-aurel-Desktop-ProgettiAI\6b293399-2833-41d8-a1bc-e2c3f4908955\scratchpad\banco-l42.log
+NOTA: il banco legge la popolazione VIVA intera (6335 fatti con fonte, nessuno store temporaneo, sola lettura); l'intestazione dice «cinque esempi» ma ne stampa 3 perché i casi VUOTA lato fonte sono esattamente 3; MISTI restano fuori dal verdetto per dichiarazione esplicita del banco (38.2% claim / 26.7% fonte). Log completo (35 righe): <home>
 
 ---
 

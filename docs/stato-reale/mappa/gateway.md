@@ -1,6 +1,6 @@
 # Mappa — `verimem/gateway.py`
 
-*ws3 Galileo. 1.798 righe, **87 fra funzioni, classi e metodi** (il conteggio è
+*ws3 Ricerca. 1.798 righe, **87 fra funzioni, classi e metodi** (il conteggio è
 quello del righello del lead, `scripts/mappa_completa.py`, che include i metodi
 qualificati e le dunder). Il gateway è la **porta HTTP**: quello che promette
 sta scritto per esteso nell'intestazione del modulo, ed è la parte del prodotto

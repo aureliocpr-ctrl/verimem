@@ -1,6 +1,6 @@
 # mappa — `verimem/contradiction.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 22:53
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 22:53
 
 **705 righe · 21 funzioni · 2 classi.** Contate con `ast`.
 **11 pubbliche, ZERO senza test.** 8 private: 6 con test, 2 con soli chiamanti

@@ -1,6 +1,6 @@
 # verimem/valore_non_nella_fonte.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **346 righe · 8 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **346 righe · 8 fra funzioni, metodi e classi**.
 
 Il controllo DETERMINISTICO claim-fonte che al gate mancava: il valore che il claim afferma e la fonte non contiene. Nasce da una classe misurata — i claim che inventano un DETTAGLIO su un'entita VERA entravano 5 su 5 con g 97,1-99,5, mentre quelli che inventano un'entita erano fermati 0 su 4.
 

@@ -1,6 +1,6 @@
 # mappa — `verimem/admission_cleanup.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:26
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:26
 
 **487 righe · 3 funzioni · 0 classi.** Contate con `ast`
 (`scratchpad/inventario.py`), non con grep. **3 pubbliche, 0 private.**

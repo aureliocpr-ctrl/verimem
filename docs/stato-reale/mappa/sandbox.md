@@ -1,6 +1,6 @@
 # `verimem/sandbox.py` — 953 righe, 14 funzioni, 4 classi
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) ·
 **08/09**.
 
 ## Il claim del README: **nessuno**

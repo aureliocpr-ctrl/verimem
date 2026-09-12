@@ -1,6 +1,6 @@
 # verimem/semantic_selfclaim.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **408 righe · 13 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **408 righe · 13 fra funzioni, metodi e classi**.
 
 Il rilevatore semantico delle auto-affermazioni: «funziona», «verificato», senza prova.
 

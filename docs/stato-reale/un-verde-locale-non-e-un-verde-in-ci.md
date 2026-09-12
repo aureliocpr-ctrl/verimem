@@ -1,6 +1,6 @@
 # Un verde locale non è un verde in CI — dieci variabili che abbiamo e la CI no
 
-*ws3 (Galileo), 27/08 sera, ~19:10. Misurato, non dedotto.*
+*ws3 (Ricerca), 27/08 sera, ~19:10. Misurato, non dedotto.*
 
 ## Il fatto
 
@@ -12,8 +12,8 @@ esporta **dieci variabili** che governano il prodotto e che la CI non ha:
     ENGRAM_BRIEFING_MIN_MATCHED=4
     ENGRAM_BRIEFING_THRESHOLD=0.40
     ENGRAM_TELEMETRY_PREFIXES=builtin
-    ENGRAM_DATA_DIR=C:\Users\aurel\.engram
-    HIPPO_DATA_DIR=C:\Users\aurel\.engram
+    ENGRAM_DATA_DIR=<home>
+    HIPPO_DATA_DIR=<home>
     HIPPO_ENCODE_DELEGATE_ONLY=1
     HIPPO_EXPOSE_TOOLS=hippo_status,hippo_recall,…
     PYTHONUTF8=1

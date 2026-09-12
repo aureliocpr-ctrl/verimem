@@ -1,6 +1,6 @@
 # verimem/anti_confabulation.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **500 righe · 14 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **500 righe · 14 fra funzioni, metodi e classi**.
 
 Lo strato anti-confabulazione: uno dei posti dove vive «stops what the source does not support».
 

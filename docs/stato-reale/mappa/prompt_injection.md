@@ -1,6 +1,6 @@
 # `verimem/prompt_injection.py` — 390 righe, 7 funzioni + 1 classe
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) ·
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) ·
 **08/09**.
 
 **Perché questo file per primo** — la regola 3 dice «prima i file dietro un claim
@@ -87,7 +87,7 @@ detector è severo, non che **discrimina**.
 
 ⚠️ **Correzione sul metodo, non sull'esito.** La prima volta ho eseguito questo
 banco con `python <scratchpad>/ramo_exfil_debole.py`, e uno script lanciato dalla
-scratchpad importa `verimem` da **`C:/Users/aurel/Code/HippoAgent`**, non da
+scratchpad importa `verimem` da **`<home>`**, non da
 questo worktree: `sys.path[0]` è la cartella dello script, la scratchpad non
 contiene `verimem/`, quindi Python scende ai site-packages. **Quel banco non
 misurava l'albero dichiarato in cima al documento.** Rifatto con `PYTHONPATH=.`

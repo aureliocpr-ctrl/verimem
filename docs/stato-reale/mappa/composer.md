@@ -1,6 +1,6 @@
 # Mappa — `verimem/composer.py`
 
-*ws3 Galileo. 8 funzioni. Qui vive **la definizione di «stesso soggetto»** che
+*ws3 Ricerca. 8 funzioni. Qui vive **la definizione di «stesso soggetto»** che
 tutto il prodotto usa per far incontrare due fatti rivali: se sbaglia, due fatti
 che si contraddicono non si incontrano mai e restano entrambi in memoria.
 Banchi: `ws3-mappa-prova-quattro-moduli.py`, `ws3-mappa-prova-tre-dubbi.py`

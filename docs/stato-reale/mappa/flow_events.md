@@ -82,7 +82,7 @@ funzione che ammette di servire ai test è più onesta di una che finge di no.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. La misura del §2 è mia, dell'08/09.*
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. La misura del §2 è mia, dell'08/09.*
 
 ---
 

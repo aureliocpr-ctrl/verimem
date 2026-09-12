@@ -1,6 +1,6 @@
 # Mappa — `verimem/repomap.py`
 
-*ws3 Galileo. 13 fra funzioni e classi: la **mappa del repository** che entra nel
+*ws3 Ricerca. 13 fra funzioni e classi: la **mappa del repository** che entra nel
 contesto di un agente che scrive codice — file, simboli, e un budget di
 caratteri da rispettare. Banco: `ws3-mappa-prova-repomap-e-selfmodel.py`
 (09/09 13:18). Repository di prova costruito apposta: `pkg/grande.py` (30

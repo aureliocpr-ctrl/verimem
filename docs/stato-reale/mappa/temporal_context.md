@@ -1,6 +1,6 @@
 # mappa — `verimem/temporal_context.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:26
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:26
 
 **597 righe · 14 funzioni · 0 classi.** Contate con `ast`
 (`scratchpad/inventario.py`), non con grep. **9 pubbliche, 5 private.**

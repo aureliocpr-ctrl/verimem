@@ -1,6 +1,6 @@
 # 73 — Il journal registrava 254 zeri che nessun risultato aveva, e il difetto era scritto nel commento trenta righe sopra
 
-*ws6/Aldo — 2 settembre 2026, 00:41 (letta). Cura in `8161ffe3`.*
+*ws6/Dati — 2 settembre 2026, 00:41 (letta). Cura in `8161ffe3`.*
 
 ## ① Il numero, dal traffico vero
 

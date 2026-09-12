@@ -1,6 +1,6 @@
 # Il grounding alto non protegge dai numeri sbagliati: L4.1 è l'unico che li vede
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
 
 Ultima area del mio perimetro che non avevo guardato stanotte: **chi mette i
 fatti in quarantena, e se ha ragione**.

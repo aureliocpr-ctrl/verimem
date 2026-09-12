@@ -1,6 +1,6 @@
 # Le funzioni dei sei pacchetti — una riga per funzione
 
-> **ws8 (Corrado), 09/09/2026.** Le trentuno schede di `mappa/` dicono **cosa fa ogni file**
+> **ws8 (Release), 09/09/2026.** Le trentuno schede di `mappa/` dicono **cosa fa ogni file**
 > e **chi lo chiama**; questa tabella scende di un gradino: **una riga per funzione**, con la
 > **firma** e la **prima riga del docstring prese dal codice**, non riassunte.
 >

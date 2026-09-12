@@ -1,6 +1,6 @@
 # verimem/openie.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **328 righe · 6 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **328 righe · 6 fra funzioni, metodi e classi**.
 
 Estrazione aperta di relazioni (soggetto, predicato, oggetto).
 

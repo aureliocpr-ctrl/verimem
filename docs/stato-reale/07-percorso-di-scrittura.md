@@ -160,7 +160,7 @@ fragile.
 
 ```bash
 # i numeri del corpus (il conto ufficiale del repo)
-python scripts/quanti_fatti_sono_davvero_serviti.py "C:/Users/aurel/.engram"
+python scripts/quanti_fatti_sono_davvero_serviti.py "<home>"
 
 # il banco dei sei fatti, su store isolato
 python - <<'PY'

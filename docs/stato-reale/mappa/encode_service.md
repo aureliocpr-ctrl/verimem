@@ -99,7 +99,7 @@ Dettaglio da desktop, non da server, e dice chi è l'utente vero di questo prodo
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. I 7,5 s del §3 sono miei, dell'08/09; i 26,5 / 2,2 s
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. I 7,5 s del §3 sono miei, dell'08/09; i 26,5 / 2,2 s
 sono di @ws1, attribuiti.*
 
 ---

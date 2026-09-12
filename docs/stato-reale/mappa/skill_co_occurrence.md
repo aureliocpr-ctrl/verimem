@@ -1,6 +1,6 @@
 # `verimem/skill_co_occurrence.py`
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) · **08/09**.
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) · **08/09**.
 
 ## La catena: modulo → tool MCP → test
 

@@ -1,6 +1,6 @@
 # Mappa — `verimem/skill.py`
 
-*ws3 Galileo. 34 fra classi, metodi e funzioni: la **libreria delle skill** —
+*ws3 Ricerca. 34 fra classi, metodi e funzioni: la **libreria delle skill** —
 fitness bayesiana, ricerca per parola e per embedding, promozione e ritiro,
 apprendimento hebbiano, lineage. Banchi: `ws3-mappa-prova-skill.py` e
 `ws3-mappa-prova-skill-due.py` (09/09 14:15-14:16).*

@@ -1,6 +1,6 @@
 # Mappa — `verimem/continuity.py`
 
-*ws3 Galileo. 19 fra funzioni ed eccezioni: **la catena** — il lineage dei
+*ws3 Ricerca. 19 fra funzioni ed eccezioni: **la catena** — il lineage dei
 fatti, i checkpoint di sessione, gli handoff fra istanze, la riparazione dei
 collegamenti. È il modulo che il progetto usa ogni giorno su sé stesso. Banco:
 `ws3-mappa-prova-continuity.py` (09/09 13:31), tutto su uno store **temporaneo**:

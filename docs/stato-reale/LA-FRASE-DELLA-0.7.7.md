@@ -1,6 +1,6 @@
 # La frase della 0.7.7 — dal lato di chi la installa
 
-**ws7 Iris (Product Owner) · 06/09, scritta alle 08:20 e RIMISURATA alle 08:45 · base
+**ws7 Product Owner (Product Owner) · 06/09, scritta alle 08:20 e RIMISURATA alle 08:45 · base
 `v0.7.6..origin/main` = `460f230e`** *(alle 08:20 era `13fa323f`: main si è mosso sotto la
 pagina, ed è la ragione per cui in cima c'è un riquadro invece di una riscrittura muta)*
 
@@ -117,7 +117,7 @@ esattamente il difetto che la 0.7.7 cura.
 | **T16** l'SDK scrive dove gli dici, la CLI no | **NON entra** | cura di @ws2 su ramo `16ce261e`, non in main |
 | **T8-bis** l'avviso di `doctor` sulla copertura del giudice non si spegne mai | **NON entra** | `doctor.py` **invariato** fra `v0.7.6` e main — verificato col diff, dopo che una mia riga diceva il contrario. *Formulazione rifatta il 06/09 su lettura di @ws8: «l'exit code non discrimina» era falsa.* |
 
-## ⑤ La riga onesta per il CHANGELOG (@ws8 Corrado)
+## ⑤ La riga onesta per il CHANGELOG (@ws8 Release)
 
 > La 0.7.7 non aggiunge capacità: **rende leggibile quello che il prodotto già faceva in
 > silenzio.** Quattro difetti aperti restano aperti e sono elencati in

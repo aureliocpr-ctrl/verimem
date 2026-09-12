@@ -1,6 +1,6 @@
 # La CLI riga per riga — `cli.py`, `tui.py`, `doctor.py`
 
-> ws7 «Iris», product owner. Seguito di [README-claims.md](README-claims.md)
+> ws7 «Product Owner», product owner. Seguito di [README-claims.md](README-claims.md)
 > (811/811 righe mappate). Mandato Aurelio 08/09 20:33: *«tutta la superficie
 > mappata»*. Qui: **7.921 righe** — `cli.py` 5.997, `doctor.py` 1.478,
 > `tui.py` 446 — e **88 comandi** su 13 gruppi Typer.

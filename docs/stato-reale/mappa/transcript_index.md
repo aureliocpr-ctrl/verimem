@@ -1,6 +1,6 @@
 # mappa — `verimem/transcript_index.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:26
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:26
 
 **340 righe · 13 funzioni · 2 classi.** Contate con `ast`
 (`scratchpad/inventario.py`), non con grep. **8 pubbliche, 4 private.**

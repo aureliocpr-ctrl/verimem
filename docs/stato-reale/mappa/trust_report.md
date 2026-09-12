@@ -1,6 +1,6 @@
 # verimem/trust_report.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **351 righe · 4 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **351 righe · 4 fra funzioni, metodi e classi**.
 
 Il referto della fiducia: che cosa il corpus dichiara di sé.
 

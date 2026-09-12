@@ -1,6 +1,6 @@
 # Mappa — `verimem/mesh_memory.py`
 
-*ws3 Galileo. 8 funzioni: la **memoria condivisa fra istanze** — pubblicare una
+*ws3 Ricerca. 8 funzioni: la **memoria condivisa fra istanze** — pubblicare una
 domanda su un canale, ricevere i top-k degli altri **senza mai scambiare il
 testo**, fondere i due campi. Banchi: `ws3-mappa-prova-quattro-moduli.py`,
 `ws3-mappa-prova-mesh-e-briefing.py`, `ws3-mappa-prova-mesh-dimensione.py`

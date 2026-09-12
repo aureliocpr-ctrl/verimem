@@ -109,7 +109,7 @@ nessuno**.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. §1 usa i tre bracci misurati da me stasera; il numero
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. §1 usa i tre bracci misurati da me stasera; il numero
 del §2 e il beneficio dello span vengono dal docstring e sono attribuiti lì.*
 
 ---

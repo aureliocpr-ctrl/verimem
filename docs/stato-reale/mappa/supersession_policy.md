@@ -1,6 +1,6 @@
 # mappa — `verimem/supersession_policy.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:37
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:37
 
 **318 righe · 8 funzioni · 0 classi** (`ast`). **6 pubbliche, 2 private.**
 Metodo e limiti: quelli di `semantic.md`, con le quattro trappole del righello già pagate.

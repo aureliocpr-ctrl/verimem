@@ -102,4 +102,4 @@ regola 2, e non è la mia parte.
   accorgano: costerebbe far girare il giudice, e non ho preso il claim CPU.
   ⇒ «se ne accorgerebbero di rimbalzo» è una **lettura**, non una misura.
 - Le **undici lingue** di `_NEGATOR_RE`: ho provato IT e EN. Le altre nove
-  **NON MISURATE** da me — e stanno in `quantity_match.py`, che è di @ws4 Nadia.
+  **NON MISURATE** da me — e stanno in `quantity_match.py`, che è di @ws4 ML.

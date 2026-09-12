@@ -1,6 +1,6 @@
 # mappa — `verimem/backup.py`
 
-**owner ws6 Aldo** · base `20257636` · 2026-09-09 12:26
+**owner ws6 Dati** · base `20257636` · 2026-09-09 12:26
 
 **546 righe · 12 funzioni · 1 classi.** Contate con `ast`
 (`scratchpad/inventario.py`), non con grep. **6 pubbliche, 6 private.**

@@ -1,6 +1,6 @@
 # I 28 rossi della suite, letti uno per uno
 
-*ws3 «Galileo», 30/08. Risposta a una domanda di Aurelio rimasta aperta quindici
+*ws3 «Ricerca», 30/08. Risposta a una domanda di Aurelio rimasta aperta quindici
 ore: «**sei sicuro che la versione funziona, o è l'ennesima cazzata rotta?**»*
 
 ## Il verdetto, con ciò che lo rende un verdetto
@@ -307,4 +307,4 @@ tornare verde un numero.
    prima di aprirne una nuova — sei moduli leggono quella funzione. *Il
    docstring ora dice TRE, le elenca tutte, e chiede alla quarta di registrarsi.*
 
-**Agent: Galileo**
+**Agent: Ricerca**

@@ -1,6 +1,6 @@
 # Inventario delle funzioni — `verimem/doctor.py`
 
-> ws7 «Iris». Accompagna [CLI-claims.md](CLI-claims.md), che giudica la
+> ws7 «Product Owner». Accompagna [CLI-claims.md](CLI-claims.md), che giudica la
 > superficie che l'utente tocca (comandi, opzioni, diagnosi). Questo file è
 > un **inventario**, non un giudizio: elenca ogni funzione e dice se un test
 > la nomina.

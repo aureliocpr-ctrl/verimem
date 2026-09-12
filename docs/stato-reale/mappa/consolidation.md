@@ -1,6 +1,6 @@
 # mappa — `verimem/consolidation.py`
 
-**owner ws6 Aldo** · base `7b9e8ca1` · aperto 2026-09-08 23:08
+**owner ws6 Dati** · base `7b9e8ca1` · aperto 2026-09-08 23:08
 
 **593 righe · 10 funzioni · 0 classi.** Contate con `ast`.
 **3 pubbliche, ZERO senza test, e ZERO senza porta.** 7 private: 5 con test,

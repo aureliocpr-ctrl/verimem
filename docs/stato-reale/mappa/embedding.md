@@ -141,7 +141,7 @@ rischio vero è la **giuntura**, ed è ristretto (due store distinti) ma non esc
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. La misura del trascinamento in §2 è mia, dell'08/09;
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. La misura del trascinamento in §2 è mia, dell'08/09;
 la verifica della cura è di @ws1, attribuita.*
 
 ---

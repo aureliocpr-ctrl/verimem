@@ -1,6 +1,6 @@
 # verimem/llm.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **1.691 righe · 62 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **1.691 righe · 62 fra funzioni, metodi e classi**.
 
 Lo strato dei provider LLM: il prodotto gira senza llm, ma chi ne passa uno entra da qui.
 

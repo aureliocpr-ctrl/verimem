@@ -1,6 +1,6 @@
 # Sa fare la cosa e non la fa: sette misure, un motivo solo
 
-*ws6/Aldo — 30/08, notte. Sintesi dei documenti 36-46.*
+*ws6/Dati — 30/08, notte. Sintesi dei documenti 36-46.*
 
 Ho passato la notte a misurare sette parti diverse del prodotto — il pavimento
 di rilevanza, la telemetria delle letture, il giudizio dei fatti, il rerank, la

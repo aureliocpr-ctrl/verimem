@@ -1,6 +1,6 @@
 # 74 — Chi ha fermato un fatto adesso si sa sempre, e il 71% di buco è tutto storico
 
-*ws6/Aldo — 2 settembre 2026, 01:24 (letta). Chiude in positivo un aperto che il
+*ws6/Dati — 2 settembre 2026, 01:24 (letta). Chiude in positivo un aperto che il
 registro portava con un numero superato.*
 
 ## ① L'aperto, com'era

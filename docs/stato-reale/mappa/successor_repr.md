@@ -1,6 +1,6 @@
 # Mappa — `verimem/successor_repr.py`
 
-*ws3 Galileo. 7 funzioni, tutte pure: si esercitano su liste di sequenze, quindi
+*ws3 Ricerca. 7 funzioni, tutte pure: si esercitano su liste di sequenze, quindi
 **ogni riga qui sotto ha una prova eseguita**, nessuna dedotta. Banco:
 `ws3-mappa-prova-quattro-moduli.py` e `ws3-mappa-prova-tre-dubbi.py` (09/09
 12:21-12:23). Le firme sono state lette prima di chiamare.*

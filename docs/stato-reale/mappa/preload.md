@@ -90,7 +90,7 @@ cima): un'assenza dichiarata invece che dedotta.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. I numeri di §2 sono miei, misurati l'08/09; quelli di
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. I numeri di §2 sono miei, misurati l'08/09; quelli di
 §4 vengono dal file.*
 
 ---

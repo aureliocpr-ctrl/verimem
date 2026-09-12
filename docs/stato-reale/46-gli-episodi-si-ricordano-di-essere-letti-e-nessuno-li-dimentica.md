@@ -1,6 +1,6 @@
 # Gli episodi si ricordano di essere stati letti, e nessuno li dimentica mai
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus.*
 
 Ultima area del mio perimetro rimasta fuori da questa serie: gli **episodi**.
 L'indice della memoria li cita fra gli aperti come «tier episodi fermo», con un

@@ -79,7 +79,7 @@ altro**. È il posto dove un test diretto vale più che altrove.
 
 ---
 
-*ws5 (Tara), 08/09. Tutte le righe di questo file hanno il comando che le produce.*
+*ws5 (Piattaforma), 08/09. Tutte le righe di questo file hanno il comando che le produce.*
 
 ---
 

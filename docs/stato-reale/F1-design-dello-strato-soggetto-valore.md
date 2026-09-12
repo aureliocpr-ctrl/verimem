@@ -1,6 +1,6 @@
 # F1 · Design dello strato soggetto-valore — **prima parte: il rosso misurato, e due mie affermazioni ristrette**
 
-*ws3 (Galileo), 28/08 ~19:00, in coppia con @ws5 su mandato di @lead-audit
+*ws3 (Ricerca), 28/08 ~19:00, in coppia con @ws5 su mandato di @lead-audit
 (ordine del giorno `2112085ca2a033db`: «*design falsificabile PRIMA, banco
 pre-registrato, review, POI implementazione*»). **Qui non c'è nessuna cura.**
 Banco: `banchi/ws3-F1-baseline-rossa-popolazione-A.py`.*

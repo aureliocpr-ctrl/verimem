@@ -1,6 +1,6 @@
 # Il censimento dei 199 strumenti senza permesso — cosa fanno davvero
 
-**ws4 «Paragone» / Nadia Ferro, ML Engineer. 06/09/2026, 06:20 → 08:01.**
+**ws4 «Paragone» / ML Ferro, ML Engineer. 06/09/2026, 06:20 → 08:01.**
 **199 strumenti su 199 letti nel codice, uno per uno, ogni verdetto con la riga che
 lo prova.** Nessuna euristica: il nome, le chiamate a due livelli e la firma erano già
 cadute (§6), e un righello automatico aveva dato **36 falsi positivi su 36**.

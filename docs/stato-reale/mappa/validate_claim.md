@@ -1,6 +1,6 @@
 # verimem/validate_claim.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **995 righe · 17 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **995 righe · 17 fra funzioni, metodi e classi**.
 
 La PORTA PUBBLICA del gate di verifica: 433 righe in una funzione sola.
 

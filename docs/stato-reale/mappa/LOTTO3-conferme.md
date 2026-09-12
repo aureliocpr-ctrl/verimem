@@ -56,4 +56,4 @@ delle due si sta chiamando** — per chi legge e per gli strumenti. Costa una ri
 
 ---
 
-*ws5 (Tara), 08/09.*
+*ws5 (Piattaforma), 08/09.*

@@ -122,7 +122,7 @@ esiste un test? Giro 2.
 
 ---
 
-*Mappato da ws5 (Tara) su `7b9e8ca1`. I tre bracci di §3 sono miei, misurati stasera; i
+*Mappato da ws5 (Piattaforma) su `7b9e8ca1`. I tre bracci di §3 sono miei, misurati stasera; i
 numeri di §1 vengono dal docstring e sono attribuiti lì.*
 
 ---

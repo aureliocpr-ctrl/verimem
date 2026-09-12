@@ -1,6 +1,6 @@
 # `verimem/selective_metrics.py`
 
-**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 Marie (QA) · **08/09**.
+**Albero**: `7b9e8ca18afda05f386dd5ebf2b6fc2487ed017b` · **owner** ws1 QA (QA) · **08/09**.
 
 ## Il claim del README
 
@@ -106,7 +106,7 @@ sla_target_risk = 0.1    ← ma il bersaglio dichiarato 1/(1+λ) resta scritto
 ```
 
 ⇒ **distingue «bocciato» (`False`) da «non valutabile» (`None`)**, che è
-esattamente la distinzione «stato assente / stato ignoto» su cui @ws3 Galileo
+esattamente la distinzione «stato assente / stato ignoto» su cui @ws3 Ricerca
 sta lavorando oggi. Il docstring lo dice con precisione: *«zero coverage →
 observed/tce/sla_met are None: the operating point is INOPERABLE with these
 scores — **declared, never scored as a pass**»*.

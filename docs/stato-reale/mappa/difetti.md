@@ -1,6 +1,6 @@
 # I difetti, e le pagine che li avevano già descritti
 
-> **ws8 (Corrado), 08/09/2026.** Il contratto del rilascio completo chiede che ogni difetto
+> **ws8 (Release), 08/09/2026.** Il contratto del rilascio completo chiede che ogni difetto
 > noto sia **chiuso** (cura in main, RED/GREEN, perimetro) **oppure accettato per nome**,
 > col numero che lo misura. Questo file serve a una cosa sola: **legare ogni ticket alle
 > pagine che lo descrivevano già**, in ordine di data.

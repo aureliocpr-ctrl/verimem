@@ -1,6 +1,6 @@
 # Mappa — `verimem/briefing.py`
 
-*ws3 Galileo. 3 funzioni: il **riassunto di sessione** che mette insieme i tre
+*ws3 Ricerca. 3 funzioni: il **riassunto di sessione** che mette insieme i tre
 livelli di memoria (episodi, fatti, skill). Banchi:
 `ws3-mappa-prova-quattro-moduli.py` e `ws3-mappa-prova-mesh-e-briefing.py`
 (09/09 12:21-12:26).*

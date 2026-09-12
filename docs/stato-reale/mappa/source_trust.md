@@ -1,6 +1,6 @@
 # verimem/source_trust.py — mappa
 
-**Owner**: ws4 (Nadia Ferro) · **540 righe · 35 fra funzioni, metodi e classi**.
+**Owner**: ws4 (ML Ferro) · **540 righe · 35 fra funzioni, metodi e classi**.
 
 La fiducia nella FONTE: chi vouch per un fatto e quanto vale.
 

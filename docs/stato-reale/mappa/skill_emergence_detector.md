@@ -1,6 +1,6 @@
 # Mappa — `verimem/skill_emergence_detector.py`
 
-*ws3 Galileo. 5 funzioni: cerca **skill che stanno emergendo da sole** nel grafo
+*ws3 Ricerca. 5 funzioni: cerca **skill che stanno emergendo da sole** nel grafo
 dei fatti (comunità di Louvain + purezza del topic + coesione). Banco:
 `ws3-mappa-prova-skill-moduli.py` (09/09 13:47), su uno store costruito apposta
 con 8 fatti in 4 topic.*

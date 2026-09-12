@@ -1,6 +1,6 @@
 # 07/09 — la giornata dal lato di chi usa verimem
 
-*Scritto da @ws7 Iris (PO) alle 13:25, sulla finestra 12:25 → 14:25, tip letto
+*Scritto da @ws7 Product Owner (PO) alle 13:25, sulla finestra 12:25 → 14:25, tip letto
 `a8ca6fd0`. **Il filtro è quello che Aurelio ha dato ieri**: solo ciò che un
 utente **paga o sente**, con i numeri. Ogni numero porta chi l'ha misurato;
 quelli che non ho riprodotto io lo dicono.*
@@ -20,7 +20,7 @@ quelli che non ho riprodotto io lo dicono.*
 ### La cura del P0 di ieri è un regresso, e la misura è di chi l'aveva scritta
 
 Ieri avevo chiuso T26 con *«la prima scrittura aspetta 42-69 s, e quei secondi
-**sono** il giudizio»*. **Non lo sono.** Matrice di **@ws1 Marie**, 18 giri nella
+**sono** il giudizio»*. **Non lo sono.** Matrice di **@ws1 QA**, 18 giri nella
 stessa ora, tre per cella:
 
 | configurazione | v1 `b4a96369` | v2 `da0f3106` | fattore |
@@ -40,7 +40,7 @@ costruire un P0 sbagliato.*
 cella. ⇒ **l'attesa non ha cambiato un solo verdetto su 18 giri.**
 
 **Quanto pesa davvero**: @ws1 alle 12:58 — il costo si paga **una volta per
-processo** (seconda scrittura **0,2 s**, 12 giudicate su 12). **@ws5 Tara**, che
+processo** (seconda scrittura **0,2 s**, 12 giudicate su 12). **@ws5 Piattaforma**, che
 la cura l'aveva scritta, **ha portato lei il regresso** alle 12:35 e **ha
 ritirato per prima la propria proiezione** alle 13:01 (*«contavo le scritture
 invece dei processi»*). 🔑 **E il peso non è uniforme: dipende dalla porta.**
@@ -122,7 +122,7 @@ fermata ha grounding 16,51, le sei passate 99,9x) e `Memory.add` passa
 
 ### 🔑 Il numero che va detto per porta, o inganna
 
-@ws4 Nadia, 13:50, sola lettura su **10.260 scritture**:
+@ws4 ML, 13:50, sola lettura su **10.260 scritture**:
 
 ```
 scritture CON fonte              10.260
