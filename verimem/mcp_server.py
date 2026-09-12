@@ -90,6 +90,16 @@ _agent_in_costruzione = False
 _AGENT_BUILD_BUDGET_S = float(
     os.environ.get("VERIMEM_AGENT_BUILD_BUDGET_S") or 120.0)
 
+#: Quanti fatti legge in una volta chi scansiona il corpus intero (era il
+#: letterale 10000 ripetuto in 40 punti di questo file). NON è un dettaglio di
+#: prestazione: `list_facts` ordina `created_at DESC`, quindi il tetto taglia i
+#: fatti PIÙ VECCHI — in una memoria a lungo termine, la parte che l'utente non
+#: può riscrivere. Misurato il 2026-09-09 sul corpus di casa: 15.686 vivi, i
+#: 5.686 più vecchi mai scansionati, e nessuna porta lo diceva.
+#: ⇒ Chi lo usa DEVE dichiararlo nella propria ricevuta (`n_in_store`, `cap`,
+#: `capped`), o la perdita resta indistinguibile dall'assenza.
+_SCAN_CAP = int(os.environ.get("VERIMEM_SCAN_CAP") or 10000)
+
 
 def _ag() -> VerimemAgent:
     """Process-wide agent, built exactly once, SENZA tenere il lock nel build.
@@ -12228,12 +12238,30 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
         if name == "hippo_facts_export_all":
             from verimem.facts_export import export_all_facts
             facts_all = []
+            # Il topic va PASSATO allo store: filtrarlo dopo il tetto vuol dire
+            # cercarlo solo fra i 10.000 fatti più recenti, e un topic vecchio
+            # esce vuoto — indistinguibile da «non esiste» (misurato alla porta
+            # il 2026-09-09: 0 fatti su un topic che ne aveva uno).
+            _topic = arguments.get("topic") or None
+            # ⚠️ L'ERRORE VA NELLA RICEVUTA, non in un `pass`. Con
+            # `facts_all = []` e l'eccezione ingoiata, un export che non ha
+            # potuto leggere niente e uno di un corpus vuoto danno la stessa
+            # risposta — e da quando la ricevuta dichiara `n_in_store`, dice
+            # perfino «nello store ce ne sono 12» consegnandone zero, senza
+            # spiegare. E' l'incidente del CYCLE #10 (28 tool che resero
+            # `facts=[]` in silenzio), che il docstring di `list_facts`
+            # racconta due schermate sopra questa riga.
+            _scan_error: str | None = None
             try:
-                facts_all = a.semantic.list_facts(limit=10000, offset=0)
-            except Exception:
-                pass
+                facts_all = a.semantic.list_facts(
+                    limit=_SCAN_CAP, offset=0, topic=_topic)
+            except Exception as _exc:  # noqa: BLE001 — un export non muore qui
+                _scan_error = f"{type(_exc).__name__}: {_exc}"
             payload = export_all_facts(
-                facts_all, topic=arguments.get("topic"),
+                facts_all, topic=_topic,
+                n_in_store=a.semantic.count(topic=_topic),
+                cap=_SCAN_CAP,
+                scan_error=_scan_error,
             )
             _audit(name, arguments, outcome="ok")
             return _ok(payload)
