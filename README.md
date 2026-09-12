@@ -45,6 +45,8 @@ AR 5, HI 7, and Thai fails outright at 10/10; on the implicit class the shape ho
 order does not — there AR is the worst (4 in 5), not HI. Negation alone is
 still unmeasured outside IT/EN; in Thai it fails 6/10. **Figures**: the 8/10–9/10 above is an average over two halves that behave in opposite ways. An added detail that contains a **figure** is caught **0/18** — every case, across EN, ZH, JA, KO, AR and HI — because the check is lexical and looks for the digit in the source, so it has no reason to depend on the script and does not. The same detail **without a figure** slips through **16/18**, and is already 3/3 in English: here there is no gradient to speak of. Read that row as «almost always stopped if there is a number, almost never if there isn't», not as «2 in 10 stopped» (`docs/stato-reale/banchi/ws3-la-seconda-garanzia-fuori-da-it-en.py`; no true claim was wrongly rejected in any script, 0/1 each).
 
+These are not all of them, and this page is not where they live: every limit we have measured — with the number, the command and the date that produced it, including the ones that do not fit here — is in [`docs/LIMITS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/LIMITS.md). Read it before you trust a number above.
+
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue)](https://github.com/aureliocpr-ctrl/verimem/blob/main/LICENSING.md)
