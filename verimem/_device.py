@@ -66,6 +66,7 @@ def scegli_device(
     voluto = device_richiesto(ambiente)
     if voluto == "cpu":
         return "cpu"                      # NESSUNA domanda alla scheda
+
     if voluto == "cuda":
         if not cuda_disponibile():
             raise RuntimeError(
@@ -74,3 +75,19 @@ def scegli_device(
                 "variabile per tornare ad 'auto', o mettila a 'cpu'.")
         return "cuda"
     return "cuda" if cuda_disponibile() else "cpu"
+
+
+def device_dichiarato(ambiente: dict[str, str] | None = None) -> str | None:
+    """Per le librerie che il device lo scelgono DA SOLE (sentence-transformers,
+    CrossEncoder): la stringa quando qualcuno ha deciso, `None` quando no.
+
+    QUESTA E' LA META' DEL PROBLEMA CHE UN `grep` NON TROVA. `SentenceTransformer(m)`
+    senza `device=` prende la scheda per conto suo: nel nostro codice la parola
+    `cuda` non compare, eppure il contesto nasce. Cercare "cuda" nei sorgenti
+    dava due punti; i punti veri erano il doppio.
+
+    `None` e' il valore che quelle librerie interpretano come «scegli tu», cioe'
+    il comportamento di prima: con `auto` non cambia nulla per nessuno.
+    """
+    voluto = device_richiesto(ambiente)
+    return None if voluto == "auto" else voluto

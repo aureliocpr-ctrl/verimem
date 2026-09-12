@@ -108,3 +108,49 @@ def test_cuda_chiesta_e_assente_e_un_errore_non_un_ripiego() -> None:
 def test_un_valore_che_non_capiamo_ferma_invece_di_indovinare() -> None:
     with pytest.raises(ValueError, match="non e' un valore ammesso"):
         device_richiesto({ENV_DEVICE: "gpu"})
+
+
+#: I costruttori che il device lo scelgono DA SOLI se non glielo dici.
+COSTRUTTORI_CHE_SCELGONO = ("SentenceTransformer", "CrossEncoder")
+
+
+def _costruttori_senza_device(sorgente: str) -> list[tuple[int, str]]:
+    """Le chiamate a quei costruttori PRIVE del keyword `device`.
+
+    Cerca con `ast` i keyword della chiamata: `device=` in mezzo agli argomenti
+    non si vede con una sottostringa, e una sottostringa lo troverebbe anche in
+    un commento.
+    """
+    fuori: list[tuple[int, str]] = []
+    for nodo in ast.walk(ast.parse(sorgente)):
+        if not isinstance(nodo, ast.Call):
+            continue
+        f = nodo.func
+        nome = f.id if isinstance(f, ast.Name) else getattr(f, "attr", "")
+        if nome not in COSTRUTTORI_CHE_SCELGONO:
+            continue
+        if not any(k.arg == "device" for k in nodo.keywords):
+            fuori.append((nodo.lineno, nome))
+    return fuori
+
+
+def test_nessun_modello_sceglie_la_scheda_al_posto_nostro() -> None:
+    """LA META' DEL PROBLEMA CHE IL GREP NON TROVA.
+
+    `SentenceTransformer(m)` senza `device=` prende la scheda per conto suo: nel
+    nostro codice la parola «cuda» non compare mai, eppure il contesto nasce —
+    e il processo entra nella lista di chi tiene la VRAM. Cercando «cuda» nei
+    sorgenti avevo trovato DUE punti; i punti veri erano il doppio, e questa
+    cella e' nata proprio da quel conteggio sbagliato.
+
+    `device=None` (il default di `auto`) lascia decidere alla libreria come
+    prima: dichiararlo non cambia il comportamento, rende possibile cambiarlo.
+    """
+    nudi: list[str] = []
+    for percorso in sorted((_radice() / "verimem").rglob("*.py")):
+        for riga, nome in _costruttori_senza_device(
+                percorso.read_text(encoding="utf-8", errors="replace")):
+            nudi.append(f"{percorso.name}:{riga} {nome}(...)")
+    assert not nudi, (
+        "questi modelli scelgono il device da soli, quindi possono prendere la "
+        f"scheda anche quando {ENV_DEVICE}=cpu:\n  " + "\n  ".join(nudi))
