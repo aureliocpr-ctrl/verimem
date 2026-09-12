@@ -78,9 +78,46 @@ _da_sorvegliare: list[Path] = []
 _sorvegliante_unico: threading.Thread | None = None
 _ferma_il_sorvegliante = threading.Event()
 
+#: Chi ha ARMATO il dump attualmente in corso (`threading.get_ident()`), o None.
+#: Il dump ha un proprietario, e solo lui lo annulla — vedi `_annulla_il_dump`.
+_proprietario_del_dump: int | None = None
+
+
+def _annulla_il_dump() -> None:
+    """Annulla il dump SOLO se lo chiama chi lo ha armato.
+
+    IL DIFETTO CHE QUESTA FUNZIONE CHIUDE (misurato 2026-09-11 in integrazione,
+    su Windows con py3.12): il processo moriva con `Windows fatal exception:
+    access violation`, con due thread dentro questo modulo nello stesso istante
+    — il sorvegliante qui, e il chiamante dentro `hang_trace` con i dump armati.
+
+    `dump_traceback_later(..., file=f)` fa scrivere i dump a un writer interno
+    di CPython su quel descrittore. Annullare da un thread che NON possiede quel
+    dump puo' liberare sotto il writer cio' che sta usando: da fuori si vede
+    come una violazione di accesso, e il processo non si ferma — muore.
+
+    Quindi l'annullamento non e' piu' un'azione che chiunque puo' fare: e' un
+    diritto di chi ha armato. Chi non e' il proprietario non aspetta e non
+    fallisce — semplicemente non annulla.
+    """
+    if _proprietario_del_dump != threading.get_ident():
+        return
+    try:
+        faulthandler.cancel_dump_traceback_later()
+    except Exception:  # noqa: BLE001 - mai far fallire la chiamata osservata
+        pass
+
 
 def _cicla_e_sorveglia() -> None:
-    """Guarda il file corrente, se c'e', e disarma il timer quando sfonda."""
+    """Guarda il file corrente, se c'e', e DICHIARA il tetto quando sfonda.
+
+    ⚠️ COSA NON FA PIU', e il prezzo va letto qui e non scoperto dopo: NON
+    disarma il timer. Il dump lo annulla solo chi lo ha armato, quindi durante
+    una chiamata appesa il file PUO' CONTINUARE A CRESCERE oltre il tetto. A
+    fermarlo resta il fallback alla chiusura, che esiste gia' ed e' coperto da
+    una cella. Abbiamo scambiato un file che puo' crescere con un processo che
+    non muore.
+    """
     while not _ferma_il_sorvegliante.wait(_CONTROLLO_S):
         try:
             if not _da_sorvegliare:
@@ -88,13 +125,13 @@ def _cicla_e_sorveglia() -> None:
             percorso = _da_sorvegliare[-1]
             if percorso.stat().st_size <= _MAX_FILE_BYTES:
                 continue
-            faulthandler.cancel_dump_traceback_later()
+            _annulla_il_dump()          # da qui: non e' il proprietario, non annulla
             with open(percorso, "a", encoding="utf-8") as g:
                 g.write(
                     f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
                     f"raggiunto: i dump successivi ripetevano lo stesso "
-                    f"stack e sono stati fermati. Il primo dump qui sopra "
-                    f"e' quello che contiene la diagnosi.\n")
+                    f"stack. Il primo dump qui sopra e' quello che contiene "
+                    f"la diagnosi; il resto si ferma alla chiusura.\n")
             _da_sorvegliare.clear()
         except Exception:  # noqa: BLE001 - mai far fallire la chiamata osservata
             pass
@@ -169,6 +206,11 @@ def hang_trace(label: str, budget_s: float):
         )
         f.flush()
         faulthandler.dump_traceback_later(budget_s, repeat=True, file=f)
+        # Da qui il dump ha un PROPRIETARIO: questo thread. Nessun altro puo'
+        # annullarlo — `_annulla_il_dump()` lo verifica prima di toccare
+        # faulthandler.
+        global _proprietario_del_dump
+        _proprietario_del_dump = threading.get_ident()
         armed = True
         _pota_i_vecchi()
         # Sorvegliante del tetto: il dump lo scrive faulthandler in C e non si
@@ -195,10 +237,9 @@ def hang_trace(label: str, budget_s: float):
     finally:
         _da_sorvegliare.clear()
         if armed:
-            try:
-                faulthandler.cancel_dump_traceback_later()
-            except Exception:  # noqa: BLE001
-                pass
+            # Il proprietario annulla il proprio dump, ed e' l'unico che puo'.
+            _annulla_il_dump()
+            globals()["_proprietario_del_dump"] = None
         if f is not None:
             try:
                 size = f.tell()
