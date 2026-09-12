@@ -45,17 +45,20 @@ def _testo_readme() -> str:
     return README.read_text(encoding="utf-8", errors="replace")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "README:714 promette «every claim … links to a raw result file» mentre le "
-        "righe 664 e 704 dichiarano due eccezioni. Difetto APERTO, registrato senza "
-        "curarlo: la cura e' una parola («nearly every») e tocca la pagina pubblica, "
-        "quindi la decide chi la pubblica. Quando entra, questo xfail diventa XPASS "
-        "e strict=True lo segnala: allora si toglie il marcatore."
-    ),
-)
+#: Le eccezioni che la pagina dichiara di sé, contate il 12/09/2026 (righe 664 e
+#: 704). Il numero e' misurato QUI, sullo stesso testo che questo test legge.
+ECCEZIONI_IL_12_09 = 2
+
+
 def test_una_promessa_universale_non_convive_con_le_eccezioni_che_dichiara():
+    """🔴 Il difetto e' APERTO e questo test lo REGISTRA invece di aspettarselo.
+
+    ⚙️ **Perche' non e' un `xfail`** (decisione del 12/09: *«un test misura e
+    resta, o si toglie con la ragione»*). Un `xfail` cade solo quando il difetto
+    e' curato; questo cade **nei due versi** — se la parola «every» viene
+    corretta **e** se le eccezioni dichiarate cambiano di numero, cioe' se la
+    pagina ne acquista una terza senza che nessuno lo dica.
+    """
     testo = _testo_readme()
     promette = PROMESSA in testo
     eccezioni = testo.count(ECCEZIONE)
@@ -72,10 +75,23 @@ def test_una_promessa_universale_non_convive_con_le_eccezioni_che_dichiara():
         "Se sono state curate davvero, questo test ora passa ed e' giusto cosi'."
     )
 
-    assert not (promette and eccezioni), (
-        f"il README promette «{PROMESSA}…» e nella stessa pagina dichiara "
-        f"{eccezioni} eccezioni «{ECCEZIONE}». Un «every» con eccezioni scritte "
-        "dallo stesso testo e' falsificabile da chiunque legga la pagina."
+    # Il difetto REGISTRATO: la promessa universale e le sue eccezioni convivono.
+    # Se la promessa viene corretta («nearly every»), questo cade ed e' una BUONA
+    # notizia: il test va girato, non tolto.
+    assert promette, (
+        "🟢 **BUONA NOTIZIA, e questo test va riscritto**: la promessa universale "
+        f"«{PROMESSA}…» non e' piu' nel README. Se e' diventata «nearly every» il "
+        "difetto e' curato ⇒ questo presidio diventa l'asserzione positiva "
+        "(«la pagina non promette piu' l'universale») e il docstring perde il "
+        "paragrafo del difetto."
+    )
+    assert eccezioni == ECCEZIONI_IL_12_09, (
+        f"le eccezioni che la pagina dichiara di se' sono {eccezioni}, misurate "
+        f"{ECCEZIONI_IL_12_09} il 12/09. Se sono AUMENTATE, l'«every» di riga 714 "
+        "e' diventato ancora meno vero e nessuno l'ha detto; se sono diminuite "
+        "senza che «every» sia cambiato, un limite dichiarato e' sparito dalla "
+        "pagina — che e' peggio, perche' l'ambiguita' resta senza il suo avviso. "
+        "**Guarda la pagina, non aggiornare il numero.**"
     )
 
 

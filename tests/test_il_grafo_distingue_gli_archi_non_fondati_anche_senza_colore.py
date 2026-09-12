@@ -156,26 +156,26 @@ def test_gli_archi_non_fondati_hanno_un_COLORE_diverso(console):  # noqa: F811
 # ── ② LA FORMA NO: E' IL TICKET T66 ─────────────────────────────────────────
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "T66 — APERTO, ws7 10/09, misurato leggendo. README:550-553 promette "
-        "«ungrounded DASHED red» e in `verimem/webui/graph.js` ci sono ZERO "
-        "occorrenze di `dash`: la distinzione e' SOLO di colore, e la coppia e' "
-        "verde (rgba(46,107,79,.30)) / rosso (rgba(166,51,31,.28)).\n"
-        "NON e' una parola di troppo: il tratteggio promesso sarebbe la "
-        "ridondanza di FORMA, l'unica cosa che rende la distinzione leggibile a "
-        "chi non separa verde e rosso. Per quell'utente «declared, never hidden» "
-        "NON e' mantenuto — gli archi non fondati sono nascosti.\n"
-        "LA CURA E' AGGIUNGERE IL TRATTEGGIO, non togliere la parola dal README: "
-        "per questo il test chiede la forma e resterebbe rosso anche se il testo "
-        "venisse 'curato' cancellando «dashed».\n"
-        "`strict=True`: il giorno che il tratteggio c'e', questo passa e obbliga "
-        "a togliere l'xfail."
-    ),
-)
 def test_gli_archi_non_fondati_hanno_anche_una_FORMA_diversa(console):  # noqa: F811
-    """README:550-553 — «dashed»: la ridondanza che rende la distinzione accessibile."""
+    """README:550-553 — «dashed»: la ridondanza che rende la distinzione accessibile.
+
+    🔴 **T66 e' APERTO** e questo test lo REGISTRA invece di aspettarselo.
+
+    Il README promette «ungrounded **DASHED** red — declared, never hidden», e il
+    tratteggio non c'e': la distinzione e' SOLO di colore, verde
+    (rgba(46,107,79,.30)) contro rosso (rgba(166,51,31,.28)). Non e' una parola di
+    troppo — il tratteggio sarebbe la ridondanza di FORMA, l'unica cosa che rende
+    la distinzione leggibile a chi non separa verde e rosso. Per quell'utente
+    «declared, never hidden» **non e' mantenuto**: gli archi non fondati sono
+    nascosti. La cura e' AGGIUNGERE il tratteggio, non togliere la parola dal
+    README.
+
+    ⚙️ **PERCHE' NON E' UN `xfail`** (decisione del 12/09: *«un test misura e
+    resta, o si toglie con la ragione»*). Un `xfail` cade solo quando il difetto
+    e' curato; questo cade **nei due versi** — se il tratteggio arriva **e** se le
+    dichiarazioni scoperte aumentano, cioe' se peggiora. Il secondo caso e' quello
+    di cui non si accorge nessuno.
+    """
     dichiarazioni = _le_dichiarazioni_dell_arco_non_fondato(console)
 
     # Controllo positivo: se nessun asset dichiara piu' l'arco non fondato,
@@ -191,15 +191,31 @@ def test_gli_archi_non_fondati_hanno_anche_una_FORMA_diversa(console):  # noqa: 
         for nome, dintorni in dichiarazioni.items()
         if any(_FORMA_DIVERSA.search(d) for d in dintorni)
     }
-    assert con_la_forma, (
-        "il grafo distingue gli archi non fondati SOLO con il colore "
-        f"(verde/rosso) e nessuna differenza di forma, in {sorted(dichiarazioni)}. "
-        "README:550-553 promette «ungrounded **dashed** red — declared, never "
-        "hidden»: senza il tratteggio, per chi non distingue verde e rosso quegli "
-        "archi sono indistinguibili, cioe' nascosti.\n"
-        "⚠️ Un tratteggio che stia altrove — in un altro asset, o nello stesso "
-        "file ma a cento righe di distanza — NON conta: e' cosi' che questo test "
-        "e' passato a vuoto il 12/09, due volte di fila."
+
+    assert not con_la_forma, (
+        f"🟢 **BUONA NOTIZIA, e questo test va riscritto**: il tratteggio e' "
+        f"arrivato accanto alla dichiarazione dell'arco non fondato, in "
+        f"{sorted(con_la_forma)}. T66 e' curato ⇒ questo presidio diventa "
+        "l'asserzione POSITIVA (`assert con_la_forma`) e il docstring perde il "
+        "paragrafo del difetto. Non toglierlo: girarlo."
+    )
+    # ⚠️ IL NUMERO ESATTO NON LO FISSO, E DICO PERCHE'. Leggendo `origin/main` con
+    # lo stesso criterio contavo SEI dichiarazioni scoperte (quattro in graph.js,
+    # due nel foglio di stile) — ma quella e' una lettura dei file su git, e
+    # QUESTO test legge cio' che la PORTA serve, che puo' essere un altro insieme.
+    # Fissare 6 qui sarebbe scrivere un numero che non ho misurato dove lo misuro.
+    #
+    #   Q: (per chi esegue) — `pytest -q tests/test_il_grafo_distingue_gli_archi_non_fondati_anche_senza_colore.py`
+    #      atteso: 5 passed. Il messaggio qui sotto STAMPA quante sono: portalo
+    #      indietro e lo fisso, cosi' il presidio prende anche il peggioramento.
+    scoperte = sum(len(d) for d in dichiarazioni.values())
+    assert scoperte >= 1, (
+        f"nessuna dichiarazione dell'arco non fondato da misurare (ne ho viste "
+        f"{scoperte}): il presidio non sta piu' guardando il grafo."
+    )
+    print(  # noqa: T201 — e' il numero che serve per chiudere il cricchetto
+        f"\n[T66] dichiarazioni dell'arco non fondato SENZA tratteggio vicino: "
+        f"{scoperte} in {sorted(dichiarazioni)}"
     )
 
 

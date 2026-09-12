@@ -64,17 +64,20 @@ def _tag_esterni() -> list[tuple[str, str]]:
     return fuori
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "5 tag <script> da 4 domini terzi senza `integrity=` nelle pagine che mostrano "
-        "la memoria, mentre README:578-579 promette che i dati non lasciano "
-        "l'infrastruttura. Difetto APERTO, registrato senza curarlo: la cura tocca il "
-        "prodotto e la decide chi lo mantiene. Quando entra, questo xfail diventa "
-        "XPASS e strict lo segnala."
-    ),
-)
+#: Gli script di terze parti senza `integrity=`, contati il 12/09/2026 con lo
+#: stesso criterio che questo test usa (i `.py` di `verimem/`).
+SENZA_INTEGRITY_IL_12_09 = 5
+
+
 def test_nessuna_pagina_servita_carica_codice_da_un_dominio_che_non_controlliamo():
+    """🔴 Il difetto e' APERTO e questo test lo REGISTRA invece di aspettarselo.
+
+    ⚙️ **Perche' non e' un `xfail`** (decisione del 12/09: *«un test misura e
+    resta, o si toglie con la ragione»*). Un `xfail` cade solo quando il difetto
+    e' curato; questo cade **nei due versi** — se arriva `integrity=` **e** se
+    qualcuno aggiunge un sesto script da una CDN, che e' il caso di cui non si
+    accorge nessuno.
+    """
     tag = _tag_esterni()
 
     # Controllo positivo: se i tag sparissero del tutto, questo test non starebbe
@@ -86,8 +89,15 @@ def test_nessuna_pagina_servita_carica_codice_da_un_dominio_che_non_controlliamo
     )
 
     senza_integrity = [dove for dove, t in tag if not HA_INTEGRITY.search(t)]
-    assert not senza_integrity, (
-        f"{len(senza_integrity)} script di terze parti senza `integrity=`, serviti "
-        f"nelle pagine del prodotto: {senza_integrity}. Chi controlla quei domini "
-        "serve JavaScript che gira dove stanno i dati della memoria."
+    assert len(senza_integrity) == SENZA_INTEGRITY_IL_12_09, (
+        f"gli script di terze parti senza `integrity=` serviti nelle pagine del "
+        f"prodotto sono {len(senza_integrity)}, misurati {SENZA_INTEGRITY_IL_12_09} "
+        f"il 12/09: {senza_integrity}\n"
+        "🟢 Se sono DIMINUITI, la cura sta arrivando: quando toccano zero questo "
+        "presidio diventa `assert not senza_integrity` e il docstring perde il "
+        "paragrafo del difetto.\n"
+        "🔴 Se sono AUMENTATI, un altro script da un dominio che non controlliamo "
+        "e' entrato in una pagina che mostra la memoria — e README:578-579 "
+        "promette che i dati non lasciano l'infrastruttura.\n"
+        "**In tutti e due i casi: guarda le pagine, non aggiornare il numero.**"
     )
