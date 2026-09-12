@@ -87,7 +87,14 @@ permissions:
 
 concurrency:
   group: messaggi-${{ github.ref }}
-  cancel-in-progress: true
+  # ⚠️ `false`, e il motivo l'ho misurato su questa stessa PR. Con
+  # `cancel-in-progress: true` ogni push cancellava il run del push precedente:
+  # cinque SHA su sette sono rimasti `cancelled`, cioe' SENZA VERDETTO — ed e'
+  # esattamente il non-verdetto che `gh pr checks` stampa come `fail` e che ci
+  # ha gia' fatto leggere come rossa una PR che non lo era.
+  # Su un job da mezzo minuto non si risparmia niente e si comprano sette
+  # righe ambigue: ogni SHA spinto merita una risposta.
+  cancel-in-progress: false
 
 jobs:
   messaggi:
@@ -120,6 +127,20 @@ jobs:
           python scripts/messaggio_pulito.py \
             --range '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
 
+      # ⚠️ QUESTO PASSO NON HA MAI GIRATO quando l'ho scritto: `push: main` si
+      # accende solo dopo la fusione, e un presidio mai eseguito e' un presidio
+      # ignoto. Estratto ed eseguito a mano il 12/09 sui quattro casi che puo'
+      # incontrare — questi sono gli esiti, non una previsione:
+      #
+      #   prima = tutti zeri (ramo nuovo)   -> ::notice NON HO MISURATO   EXIT=0
+      #   prima = sha inesistente           -> ::notice NON HO MISURATO   EXIT=0
+      #   push pulito  (7 messaggi)         -> VERDETTO: VERDE            EXIT=0
+      #   push sporco  (7 messaggi su 7)    -> VERDETTO: ROSSO            EXIT=1
+      #
+      # 📌 E l'exit code va letto SENZA pipe: la prima volta l'ho letto con
+      # `| tail -3` e il caso sporco diceva ROSSO con EXIT=0, perche' l'uscita
+      # della pipe sostituisce quella del comando. E' la trappola contro cui
+      # avvisa il nostro stesso strumento, e ci sono cascato provandone una.
       - name: I messaggi appena arrivati su main
         if: github.event_name == 'push'
         run: |
