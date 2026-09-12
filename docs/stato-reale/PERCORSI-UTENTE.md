@@ -302,7 +302,20 @@ io. Si vedono solo mettendole accanto alla fonte che le ha superate.
 
 ⇒ **Il controllo di questa pagina è un incrocio, non una rilettura**, e ha tre gambe:
 1. ogni affermazione su un **difetto** si verifica in `GRAVITA-DIFETTI.md` di *adesso*;
-2. ogni affermazione su una **cura** si verifica con `git branch -r --contains <sha>`;
+2. ogni affermazione su una **cura** si verifica **con lo strumento giusto per come è
+   entrata** — ⚠️ e `--contains` / `merge-base --is-ancestor` **non lo sono più**:
+
+   ```
+   dopo un REBASE :  git cherry -v origin/main <ramo>      ('-' = già a monte)
+   dopo uno SQUASH:  git log --oneline --grep "(#<N>)" origin/main
+   ```
+
+   🔴 Misurato il 12/09 sui sette commit dell'ultima PR fusa: `--is-ancestor` risponde
+   **NO 7 volte su 7** su lavoro che in `main` **c'è**, perché il rebase ri-applica ogni
+   commit con uno SHA nuovo. `git cherry` (che confronta i *patch-id*) li trova **7 su 7**.
+   Ma il patch-id **non sopravvive a uno squash**: quello del diff combinato non coincide
+   con nessuno dei sette. ⇒ **L'unico appiglio che regge a tutt'e due i modi è il numero
+   della PR**, e per questo dal 12/09 ogni squash lo porta nel titolo;
 3. ogni **esito** porta l'albero su cui è stato preso, e **un esito preso su un albero che
    non esiste più non si riscrive: si rifà.**
 
@@ -317,6 +330,10 @@ grep "cura ... sul ramo" docs/stato-reale/*.md
   SCHEDA-PRODOTTO.md:261   cura pronta sul ramo
 git branch -r --contains db7dfd11  ->  origin/main       (la cura È in main)
 ```
+
+⚠️ **Quel comando qui sopra è il racconto di com'è andata allora, non la ricetta di
+oggi**: dal 12/09 `--contains` risponde NO su lavoro che in `main` c'è (vedi la gamba ②).
+Chi rifà questo controllo usi `git cherry -v` o il numero della PR.
 
 ⇒ **La stessa affermazione superata viveva in tre documenti, e me n'era stata segnalata
 una.** Correggere dove ti viene indicato dà **l'illusione di aver corretto**: è la classe ①
