@@ -113,8 +113,19 @@ def _ritiri(seconda: str) -> tuple[int, str, str]:
     prima = mem.add("La coda ha 500 elementi.", topic="t/coppia",
                     verified_by=FONTE, source=SORGENTE, validate="full")
     fid = prima.get("id") or prima.get("fact_id") or ""
+    #: ⚠️ LA FONTE RESTA QUELLA ORIGINALE, E NON PER DIMENTICANZA.
+    #:
+    #: Questi due presidi sono deterministici solo se la fonte contiene
+    #: anche l'id che la proposizione cita. La cura c'era su questo ramo ed
+    #: e' stata CEDUTA alla PR che porta anche il banco che la spiega: due
+    #: rami non possono portare la stessa cura sullo stesso file, e chi
+    #: porta la spiegazione deve portare la cura.
+    #:
+    #: ⇒ QUESTO RAMO VA MERGIATO DOPO QUELLO: da solo lascia i due presidi
+    #: qui sopra intermittenti, com'erano prima.
     ricevuta = mem.add(seconda.format(fid=fid), topic="t/coppia",
-                       verified_by=FONTE, source=SORGENTE, validate="full")
+                       verified_by=FONTE, source=SORGENTE,
+                       validate="full")
     sid = ricevuta.get("id") or ricevuta.get("fact_id") or ""
     vivo = mem.semantic.get(sid) if sid else None
     stato = str(getattr(vivo, "status", None)) if vivo is not None else "ASSENTE"
@@ -180,3 +191,132 @@ def test_CONTROLLO_senza_la_citazione_il_ritiro_avviene_ancora():
     assert ritiri == 1, (
         "la rettifica di uno stesso valore non aggiorna piu' il precedente: il "
         "presidio qui accanto non sta piu' misurando niente")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# T69 — L'OSSERVATORE CHE LA CURA DEL 2026-09-12 AVEVA TOLTO
+#
+# Mettendo l'id nella fonte, i due presidi qui sopra sono tornati
+# deterministici — e insieme al rumore se n'e' andato l'unico posto da cui si
+# vedeva un comportamento del PRODOTTO: lo stesso ingresso, quattordici gambe
+# verdi e una rossa. Quel dato non era il difetto del banco: era il sintomo di
+# un giudizio che si ferma vicino al taglio, e la cura l'ha reso invisibile.
+#
+# E' la stessa forma gia' pagata su T49 e scritta trenta righe piu' su in
+# questo file: «curare una promessa puo' disarmare il presidio che la
+# sorvegliava, e la cura deve portarsi dietro il suo complemento». Stavolta il
+# presidio l'ho disarmato io, e il complemento e' questo caso.
+#
+# COSA OSSERVA, e perche' puo' fallire davvero: scrive la proposizione COME
+# ERA — con l'id che la fonte non contiene — e guarda QUANTO il giudizio disti
+# dalla soglia. Non pretende un verdetto: pretende un MARGINE. Un ingresso
+# legittimo che passa per due punti non e' un ingresso promosso, e' un
+# ingresso che la prossima esecuzione boccia.
+# ═══════════════════════════════════════════════════════════════════════════
+
+def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
+    """Il difetto del PRODOTTO che la cura del banco aveva smesso di mostrare.
+
+    ⚠️ IL NOME DICE COSA FA, e cioe' MENO di quanto T69 chiedeva. Vale la pena
+    spiegare perche', invece di lasciare un nome che promette un presidio.
+
+    T69 chiedeva «un osservatore che possa fallire» su un difetto vero: un
+    ingresso legittimo che passa per pochi punti oggi e viene bocciato domani
+    (misurato in CI il 2026-09-12: 14 gambe verdi e 1 rossa sullo stesso
+    ingresso). Per farlo fallire servirebbe un MARGINE MINIMO — e la prima
+    versione di questo file ne aveva uno, `MARGINE_MINIMO = 10.0`, dichiarato
+    nel commento come «una scelta, non una misura».
+
+    L'ho tolto, per due ragioni che tirano dalla stessa parte:
+      · un limite scelto e' un debito che paga chi lo trova rosso fra un mese;
+      · un altro banco sullo stesso giudice ha deciso di NON fissarne uno
+        perche' nessuno l'ha misurato, e due file dello stesso repo non
+        possono rispondere il contrario alla stessa domanda.
+
+    E l'assert che restava — «lo stato non e' quarantined» — e' PROPRIO quello
+    che oscilla: metterlo qui significherebbe armare nella suite la stessa
+    trappola intermittente che un'altra PR sta togliendo da questo file. Un
+    osservatore che puo' fallire a caso non e' un osservatore, e' un rumore
+    che qualcuno dovra' spegnere.
+
+    ⇒ QUESTO TEST REGISTRA E NON GIUDICA. Fallisce solo se il numero non e'
+    piu' ottenibile — che e' una regressione vera: senza `grounding_score`
+    sulla ricevuta, il margine non lo puo' misurare piu' nessuno, e il difetto
+    tornerebbe invisibile per sempre invece che per una cura. Il margine sta
+    nel messaggio, cosi' chi legge un rosso qui trova il numero davanti.
+
+    🔑 IL 10.0 ERA UN NUMERO SCELTO, E LA GIORNATA IN CUI E' STATO TOLTO DICE
+    PERCHE' NESSUNO DOVREBBE SCEGLIERLO. Misurato in CI il 2026-09-12 da un
+    banco di un'altra sessione, sullo stesso ingresso::
+
+        punteggio  99.95      con la "cura" alla fonte  99.71
+        otto id diversi        99.6069 - 99.9746, dispersione 0.3677
+
+    Su quei numeri sono state costruite, e poi ritirate, DUE spiegazioni: che
+    l'id nella proposizione abbassasse il punteggio (falsificato: con l'id il
+    punteggio e' gia' quasi il massimo, e la cura lo ABBASSA), e che un id su
+    otto scendesse sotto il taglio (falsificato: il taglio usato per dirlo era
+    99.64, cioe' la soglia che `grounding_gate.py:532` SCARTA di proposito —
+    «a calibration artifact, never a real operating point» — ricadendo su
+    `LOCAL_CE_MOAT_THRESHOLD`). Contro il taglio in vigore quegli otto id
+    passano tutti di quasi sessanta punti.
+
+    ⇒ Le MISURE erano vere tutte e tre le volte; a essere sbagliato era il
+    CONFRONTO. La prima diagnosi era una lettura mia del codice, data come
+    lettura e con la predizione scritta prima: l'esperimento l'ha smentita, ed
+    e' esattamente per questo che l'esperimento esisteva.
+
+    ⚠️ E IL DIFETTO DEL BANCO RESTA, SENZA SPIEGAZIONE: questo file cade a
+    intermittenza su PR che non lo toccano. Tre meccanismi proposti, tre
+    ritirati. Un margine minimo scelto a mano avrebbe dato a quel rosso una
+    spiegazione che nessuna misura sostiene — ed e' il motivo per cui il test
+    qui sotto REGISTRA e non giudica.
+
+    ⇒ QUESTO FILE NON DICHIARA CHIUSO T69, e il margine minimo non si arma
+    finche' non lo dice la distribuzione dei punteggi.
+    """
+    db = Path(tempfile.mkdtemp()) / "margine.db"
+    mem = Memory(str(db))
+    prima = mem.add("La coda ha 500 elementi.", topic="t/margine",
+                    verified_by=FONTE, source=SORGENTE, validate="full")
+    fid = prima.get("id") or prima.get("fact_id") or ""
+
+    #: La fonte e' quella ORIGINALE, senza l'id: e' il caso che la CI ha visto.
+    ricevuta = mem.add(
+        f"La coda ha 540 elementi (rettifica del fatto {fid}).",
+        topic="t/margine", verified_by=FONTE, source=SORGENTE, validate="full")
+
+    punteggio = ricevuta.get("grounding_score")
+    stato = ricevuta.get("status")
+    #: ⚠️ IL MARGINE NON SI CALCOLA QUI: LO CALCOLA GIA' IL PRODOTTO.
+    #: `client.py:4371` mette sulla ricevuta `threshold` E `margin`, e il
+    #: secondo e' `score - threshold` fatto dal prodotto con la soglia che il
+    #: prodotto ha davvero usato. Prenderlo e' l'unico modo di non scegliere.
+    #:
+    #: Tre versioni di questa riga hanno sbagliato, ognuna un livello piu' su:
+    #:   1. `SOGLIA_DEL_MOAT = 40.0` copiata a mano nel banco;
+    #:   2. `LOCAL_CE_MOAT_THRESHOLD` importata dal prodotto — niente copia,
+    #:      ma sempre una costante scelta da chi scrive il test;
+    #:   3. `score - adjudication.threshold` calcolato qui — la soglia veniva
+    #:      dalla ricevuta, ma l'aritmetica no, e il prodotto la faceva gia'.
+    #: Ogni cura era giusta e si fermava un livello troppo in basso. La
+    #: risposta era sempre la stessa: CHIEDERLO AL PRODOTTO, non scegliere.
+    #:
+    #: E il livello conta perche' quale sia il taglio in vigore NON e' ovvio:
+    #: `grounding_gate.py:532` SCARTA la soglia del modello quando supera 90
+    #: («a calibration artifact, never a real operating point») e ricade su
+    #: `LOCAL_CE_MOAT_THRESHOLD`. Un banco che leggesse la soglia nominale del
+    #: giudice misurerebbe contro un numero che il prodotto butta.
+    margine = (ricevuta.get("adjudication") or {}).get("margin")
+    soglia = (ricevuta.get("adjudication") or {}).get("threshold")
+    assert punteggio is not None and margine is not None, (
+        "la ricevuta non porta piu' `grounding_score` e `adjudication.margin`: "
+        "senza quei due campi la distanza fra un ingresso e il taglio non e' "
+        "leggibile da nessuna porta, e il difetto del 2026-09-12 — un ingresso "
+        "legittimo ammesso per un soffio — torna invisibile. Non ricalcolare "
+        "il margine qui per aggirare questo assert: quale soglia sia in vigore "
+        "lo decide il prodotto (grounding_gate.py:532 ne scarta una), e un "
+        f"banco che la sceglie misura un'altra cosa. ricevuta={ricevuta}")
+
+    print(f"[T69] grounding={punteggio} soglia={soglia} "
+          f"margine={margine:+} stato={stato!r}")
