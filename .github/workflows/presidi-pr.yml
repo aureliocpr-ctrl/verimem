@@ -1,0 +1,113 @@
+name: presidi-pr
+
+# I CRICCHETTI (regole R2, R3, R6 dello STUDIO-METODO del 09/09).
+#
+# Un job solo, leggero, su ogni PR verso main: nessuna matrice, nessun modello,
+# nessuna suite. Sono tre letture statiche con `ast` e un `git diff --numstat`:
+# ~1 minuto, contro i ~55 della matrice di `ci.yml`. Sta in un file suo e non
+# dentro `ci.yml` per due ragioni dichiarate:
+#   1. `ci.yml` non parte quando la PR tocca solo `docs/**` o `*.md`
+#      (paths-ignore, 08/09): i cricchetti devono partire SEMPRE, anche allora —
+#      una PR di soli documenti puo' comunque portare via una riga della mappa.
+#   2. `ci.yml` e' il file su cui scrivono in otto; un presidio che ci si
+#      infila aumenta la superficie di collisione senza guadagnare niente.
+#
+# Cosa cambia per l'utente: i limiti misurati il 09/09 (copie di una stessa
+# primitiva, moduli pubblicati e irraggiungibili, PR troppo grandi per essere
+# riviste davvero) non possono peggiorare in silenzio mentre curiamo il resto.
+#
+# Ogni script qui sotto ha un `--autotest` che prova che diventa rosso: un
+# cricchetto mai diventato rosso e' un sensore scollegato. Gli autotest girano
+# in questo stesso job, PRIMA delle misure — se il presidio non morde, il job
+# fallisce anche quando i numeri sono verdi.
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: presidi-pr-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  cricchetti:
+    name: cricchetti (R2 R3 R6)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # serve la storia: il conteggio delle righe usa `base...head`
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ---- prima si prova che i presidi mordono, poi si misura -------------
+      - name: gli autotest dei cricchetti (se non mordono, il job cade)
+        run: |
+          set -e
+          python scripts/copie.py --autotest
+          python scripts/senza_chiamante.py --autotest
+          python scripts/righe_della_pr.py --autotest
+          python scripts/grep_nelle_mappe.py --autotest
+
+      # ---- R3: una superficie per primitiva --------------------------------
+      - name: R3 - le copie non crescono
+        run: python scripts/copie.py --dettaglio
+
+      # ---- R2: niente aggiunte senza porta ---------------------------------
+      - name: R2 - nessun modulo nuovo senza porta
+        run: python scripts/senza_chiamante.py
+
+      # ---- R2: il righello della mappa -------------------------------------
+      # Non e' ancora su main: `scripts/mappa_completa.py` vive sul ramo
+      # `lead/mappa-indice` e arriva con la finestra. Finche' non c'e', questo
+      # passo DICE che non ha misurato invece di tacere: un controllo che non
+      # gira e non lo dichiara si legge come un controllo verde (misurato in
+      # casa piu' volte, «una misura che non c'e' si legge come perfetta»).
+      - name: R2 - il righello della mappa (zero funzioni fuori dalla mappa)
+        run: |
+          if [ -f scripts/mappa_completa.py ]; then
+            python scripts/mappa_completa.py --mancanti 0
+          else
+            echo "::warning title=righello non eseguito::scripts/mappa_completa.py non e' in questo albero"
+            echo "NON MISURATO: il righello della mappa non e' ancora su main."
+            echo "Arriva con la fusione di lead/mappa-indice; questo passo si accende da solo."
+            echo "Fino ad allora una funzione nuova puo' entrare senza la sua riga nella mappa."
+          fi
+
+      # ---- R5: un pattern con `|` senza `-E` è uno ZERO che sembra misurato --
+      # Reperto di ws4 il 09/09: `grep -c "a|b"` cerca la stringa «a|b», non
+      # trova niente, e la conclusione «nessuna occorrenza» sembra una misura.
+      # Come il righello della mappa, la cartella arriva con lead/mappa-indice:
+      # finché non c'è, il passo lo DICE invece di tacere.
+      - name: R5 - nessuno zero finto nei documenti della mappa
+        run: |
+          if [ -d docs/stato-reale/mappa ]; then
+            python scripts/grep_nelle_mappe.py
+          else
+            echo "::warning title=zeri finti non cercati::docs/stato-reale/mappa/ non e' in questo albero"
+            echo "NON MISURATO: la mappa non e' ancora su main (ramo lead/mappa-indice)."
+            echo "Misurato a mano il 10/09 sui 403 documenti del ramo: 3 sicuri + 1 ambiguo."
+          fi
+
+      # ---- R6: piccolo e rivisto -------------------------------------------
+      - name: R6 - la PR sta sotto le 300 righe di prodotto
+        if: github.event_name == 'pull_request'
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          # la deroga e' NOMINALE: l'etichetta la mette il lead sulla PR
+          DEROGA: ${{ contains(github.event.pull_request.labels.*.name, 'lotto-grande') }}
+        run: |
+          if [ "$DEROGA" = "true" ]; then
+            python scripts/righe_della_pr.py "$BASE" "$HEAD" --deroga
+          else
+            python scripts/righe_della_pr.py "$BASE" "$HEAD"
+          fi
