@@ -4570,6 +4570,14 @@ def facts_add(
         _gate_repo_root = getattr(sm, "repo_root", None)
 
     inserted: list[str] = []
+    #: T26a/a — gli id che il moat NON ha giudicato. Misurato il 2026-09-10 con
+    #: `tests/test_ws5_le_tre_porte_dicono_se_il_moat_ha_giudicato.py`: con il
+    #: giudice muto questa porta stampava `status=ok` e nessuna delle sei parole
+    #: cercate (judged / not_run / giudic / moat / unverified / ungated). Non e'
+    #: silenzio: e' un'affermazione che e' andato bene, su una scrittura CON
+    #: FONTE che nessuno ha verificato. Le altre due porte lo dicevano gia'.
+    from .retirement_log import judged_at_all as _judged_at_all
+    non_giudicati: set[str] = set()
     quarantined: list[str] = []
     rejected: list[str] = []
     for p in payloads:
@@ -4743,6 +4751,16 @@ def facts_add(
         # `engram facts backfill` / next warm op). Daemon warm -> embeds now.
         sm.store(f, hook_token=hook_token, embed="auto")
         inserted.append(f.id)
+        # …e SE IL MOAT HA GIUDICATO, con la stessa funzione di mcp_server, di
+        # flow_events e di client.py — non una quinta copia (R3). Il verdetto
+        # non sta sul Fact (non ha `grounding_score`): sta sul gate, che qui e'
+        # in scope ed e' gia' letto otto righe piu' su per la persistenza.
+        # ⚠️ NON `judged_true`: quella risponde «la fonte lo sostiene?» e
+        # direbbe «non giudicato» su una scrittura giudicata e BOCCIATA, cioe'
+        # proprio dove questa riga si legge per capire perche' il fatto non e'
+        # passato.
+        if not _judged_at_all(getattr(gate, "grounding_score", None)):
+            non_giudicati.add(f.id)
         # ⚠️ LO STATO **DOPO** LA SCRITTURA, non quello deciso prima: uno
         # screen dentro `store()` puo' ribaltare un fatto che il gate aveva
         # ammesso, e guardando `final_status` quel ribalto non si vedeva —
@@ -4775,8 +4793,17 @@ def facts_add(
             f"parse_errors={parse_errors}"
         )
         for fid in inserted:
-            console.print(f"  id={fid[:12]}  status="
-                          + ("quarantined" if fid in quarantined else "ok"))
+            # `judged=false` accanto allo status, e non al posto suo: sono due
+            # domande diverse — «il fatto e' passato?» e «qualcuno l'ha
+            # verificato?». Un fatto puo' essere `ok` E non giudicato, ed e'
+            # esattamente il caso che questa riga esiste per non lasciare muto.
+            _non_giud = fid in non_giudicati
+            console.print(
+                f"  id={fid[:12]}  status="
+                + ("quarantined" if fid in quarantined else "ok")
+                + ("  [yellow]judged=false[/yellow] [dim]— il moat non ha "
+                   "giudicato questa scrittura: la fonte NON e' stata "
+                   "verificata[/dim]" if _non_giud else ""))
     else:
         # audit#3-r3 R6: an `add` that persisted NOTHING is a failure — exit
         # non-zero so a bulk pipeline (cat findings.jsonl | engram facts add
