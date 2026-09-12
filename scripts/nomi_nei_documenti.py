@@ -27,6 +27,15 @@ LE CLASSI:
      ② nome umano nel PATH       invisibile a una pulizia del TESTO: nessuna
                                  riscrittura della prosa rinomina un file.
      ③ path locale nel TESTO     la home di chi ha lanciato il comando.
+     ⑤ nome di SESSIONE          cercato SOLO in forma-nome (`@Nome`, `firma
+                                 Nome`, `Agent: Nome`), perche' `varco`,
+                                 `paragone` e `lanterna` sono anche parole
+                                 italiane: 529 occorrenze di `varco` in un file
+                                 sono **486** nomi e 43 parole. Aggiunta il
+                                 12/09 dopo che una misura ha mostrato che
+                                 l'elenco ① era incompleto — 495 occorrenze in
+                                 3 file che questo righello non vedeva, cioe'
+                                 uno «zero» che sarebbe stato falso.
 
   ⚪ DICHIARATA — resta per decisione, si conta per sapere quanto e' grande
      ④ sigla `wsN` (testo e path)
@@ -58,11 +67,29 @@ import tempfile
 SIGLE = ["ws1", "ws2", "ws3", "ws4", "ws5", "ws6", "ws7", "ws8"]
 UMANI = ["marie", "tara", "corrado", "galileo", "nadia", "aldo", "giano", "iris", "curie"]
 
+#: 🔴 NOMI DI SESSIONE, aggiunti il 12/09 dopo una misura che ha mostrato che
+#: l'elenco sopra era INCOMPLETO: 495 occorrenze in 3 file che questo righello
+#: non vedeva, e quindi uno «① a zero» sarebbe stato falso.
+#:
+#: ⚠️ Vanno cercati SOLO IN FORMA-NOME, e la ragione e' misurata: `varco` in un
+#: file solo fa **529** occorrenze totali ma **486** in forma-nome — le altre 43
+#: sono la parola italiana. Cercarli come parola nuda rifarebbe, su di noi,
+#: l'errore che questo righello esiste per impedire.
+#: 📌 E due candidati sono stati SCARTATI dalla stessa misura: `sentinella` (13
+#: occorrenze, **0** in forma-nome) e `faro` (1, **0**). Non sono nomi qui, e
+#: metterli dentro avrebbe gonfiato ogni numero futuro senza aggiungere un caso.
+SESSIONI = ["varco", "paragone", "lanterna"]
+
 #: il file che contiene l'elenco non puo' misurare se stesso
 ESCLUSO = "nomi_nei_documenti.py"
 
 _SIGLA = re.compile(r"\b(?:" + "|".join(SIGLE) + r")\b", re.I)
 _UMANO = re.compile(r"\b(?:" + "|".join(UMANI) + r")\b", re.I)
+#: la FORMA-NOME: `@Varco`, `firma Varco`, `Agent: Varco`, `— Varco`, `di @Varco`.
+#: Il criterio e' quello usato nella misura del 12/09 che ha trovato i tre nomi.
+_FORMA_NOME = re.compile(
+    r"(?:@|\bfirma\s+|\bAgent:\s*|—\s*|\bdi\s+@?)(?:" + "|".join(SESSIONI) + r")\b",
+    re.I)
 #: nel path il nome sta fra separatori: `banchi-ws2/`, `_ws3_curva.json`, `/ws7-u-c.json`
 _SEP = r"(?:^|[/\-_])(?:{})(?:[/\-_.]|$)"
 _PATH_UMANO = re.compile(_SEP.format("|".join(UMANI)), re.I)
@@ -86,7 +113,7 @@ def misura(radice: pathlib.Path) -> dict:
     tutti = [p for p in tutti if p.name != ESCLUSO]
     r: dict[str, list] = {"tutti": tutti, "esclusi": esclusi, "umano": [],
                           "path_umano": [], "locale": [], "sigla": [],
-                          "path_sigla": []}
+                          "path_sigla": [], "sessione": []}
     for f in tutti:
         rel = "/" + f.relative_to(radice).as_posix()
         if _PATH_UMANO.search(rel):
@@ -99,6 +126,8 @@ def misura(radice: pathlib.Path) -> dict:
             continue
         if _UMANO.search(t):
             r["umano"].append(f)
+        if _FORMA_NOME.search(t):
+            r["sessione"].append(f)
         if _LOCALE.search(t):
             r["locale"].append(f)
         if _SIGLA.search(t):
@@ -115,7 +144,8 @@ def _elenco(radice: pathlib.Path, files: list, quanti: int = 8) -> None:
 
 def _stampa(radice: pathlib.Path, r: dict, contesto: bool) -> int:
     n = len(r["tutti"])
-    bloccanti = sorted(set(r["umano"]) | set(r["path_umano"]) | set(r["locale"]))
+    bloccanti = sorted(set(r["umano"]) | set(r["path_umano"]) | set(r["locale"])
+                       | set(r["sessione"]))
     dichiarati = sorted(set(r["sigla"]) | set(r["path_sigla"]))
 
     print(f"ALBERO MISURATO: {radice.resolve()}")
@@ -129,6 +159,8 @@ def _stampa(radice: pathlib.Path, r: dict, contesto: bool) -> int:
     print(f"   ② nome umano nel PATH ............... {len(r['path_umano'])}"
           "   (un `git mv`, non una riscrittura)")
     print(f"   ③ path locale nel TESTO ............. {len(r['locale'])}")
+    print(f"   ⑤ nome di SESSIONE in forma-nome .... {len(r['sessione'])}"
+          f"   ({', '.join(SESSIONI)}; solo `@Nome`/`firma Nome`/`Agent: Nome`)")
     print(f"   ⇒ file da toccare: {len(bloccanti)} su {n}")
     print()
     print("⚪ DICHIARATA — resta per decisione del 12/09, non e' un difetto")
@@ -177,6 +209,12 @@ def autotest() -> int:
         neg = scrivi("negativo.md", "tarare la bilancia, il caldo, Marielle, ws9")
         # ⚠️ IL LIMITE, scritto come test e non come nota: l'omonimo CADE dentro.
         omonimo = scrivi("omonimo.md", "il peso al netto della tara")
+        # ⑤ i nomi di sessione: forma-nome SI', parola comune NO. La seconda
+        # gamba e' la piu' importante: senza, questo righello rifarebbe su di
+        # se' l'errore che esiste per impedire.
+        sessione = scrivi("sess/nota.md", "il rilievo e' di @Varco, non mio")
+        parola = scrivi("sess/parola.md",
+                        "hanno aperto un varco nel muro, e il paragone regge")
         # il righello non deve misurare se stesso
         scrivi(ESCLUSO, "UMANI = marie tara corrado aldo giano iris")
 
@@ -195,6 +233,10 @@ def autotest() -> int:
                       | set(r["locale"]) | set(r["sigla"])))
         esiti.append(("① l'OMONIMO cade in ①, ed e' per questo che si stampa"
                       " il contesto", omonimo in set(r["umano"])))
+        esiti.append(("⑤ `@Varco` (forma-nome) si accende",
+                      sessione in set(r["sessione"])))
+        esiti.append(("⑤ «un varco nel muro» (parola) resta SPENTO",
+                      parola not in set(r["sessione"])))
         esiti.append((f"il righello ESCLUDE se stesso ({ESCLUSO})",
                       len(r["esclusi"]) == 1
                       and not any(f.name == ESCLUSO for f in r["umano"])))
