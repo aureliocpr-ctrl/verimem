@@ -1,0 +1,74 @@
+#!/bin/sh
+# Il messaggio parla del prodotto, non della stanza in cui lavoriamo.
+#
+# 12/09/2026: il repository e' pubblico e i suoi ultimi quaranta commit erano,
+# misurati con lo script che questo hook chiama:
+#
+#     oltre 10 righe    : 39
+#     nome di sessione  : 24
+#     nome utente       :  5
+#     percorso locale   :  2
+#     PULITI            :  0     <- zero su quaranta
+#
+# Chi apre il `git log` di un progetto che dice di ricordare i fatti legge
+# quaranta resoconti di indagini interne, con dentro il percorso del disco di
+# chi ha scritto e sigle che non significano niente per lui.
+#
+# ⚠️ PERCHE' `commit-msg` E NON `pre-commit`: al pre-commit il messaggio NON
+# ESISTE ANCORA. L'ho scoperto provando: l'hook giusto e' questo, che riceve il
+# file del messaggio come primo argomento.
+#
+# ⚠️ E PERCHE' L'HOOK NON BASTA, e c'e' anche il passo in CI: `core.hooksPath`
+# e' configurazione locale. Chi clona il repository non ce l'ha, e un `git
+# commit --no-verify` lo salta. L'hook e' il cancello che avvisa SUBITO, quando
+# correggere costa dieci secondi; la CI e' quello che non si puo' saltare.
+#
+# LA VIA D'USCITA E' DICHIARATA, non nascosta:
+#
+#     VERIMEM_MESSAGGIO_LUNGO=1 git commit ...
+#
+# Serve per i commit di merge fatti a mano e per i casi che non avevamo
+# previsto. Un cancello senza via d'uscita viene aggirato con --no-verify, che
+# spegne ANCHE tutti gli altri: meglio una porta con la targa.
+
+set -u
+
+MSG_FILE="${1:-}"
+[ -n "$MSG_FILE" ] && [ -f "$MSG_FILE" ] || exit 0
+
+# Un rebase ri-applica messaggi gia' scritti e un merge ne genera uno suo: in
+# nessuno dei due casi c'e' qualcuno che possa correggere adesso. Fermarli
+# vorrebbe dire lasciare il repository a meta' di un'operazione.
+RADICE_GIT="$(git rev-parse --git-dir 2>/dev/null || echo .git)"
+for IN_CORSO in rebase-merge rebase-apply MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+    [ -e "$RADICE_GIT/$IN_CORSO" ] && exit 0
+done
+
+if [ -n "${VERIMEM_MESSAGGIO_LUNGO:-}" ]; then
+    echo "commit-msg: controllo SALTATO (VERIMEM_MESSAGGIO_LUNGO e' impostato)."
+    exit 0
+fi
+
+RADICE="$(git rev-parse --show-toplevel 2>/dev/null || echo .)"
+CONTROLLO="$RADICE/scripts/messaggio_pulito.py"
+
+# ⚠️ SE IL CONTROLLO NON C'E', TACI E PASSA. L'hook gira anche su rami vecchi,
+# dove lo script non e' ancora stato scritto: gridare li' vorrebbe dire
+# insegnare a ignorare l'hook. Non e' un controllo che si spegne da solo — in
+# CI il file c'e' sempre, ed e' li' che il cancello deve reggere.
+[ -f "$CONTROLLO" ] || exit 0
+
+PYTHON="python"
+command -v "$PYTHON" >/dev/null 2>&1 || PYTHON="python3"
+command -v "$PYTHON" >/dev/null 2>&1 || exit 0
+
+"$PYTHON" "$CONTROLLO" --file "$MSG_FILE" || {
+    echo
+    echo "commit-msg: il messaggio non e' stato scritto. Le righe in piu' non si"
+    echo "  buttano, si spostano: in docs/stato-reale/ o nel corpo della PR."
+    echo "  Se questo caso il controllo non lo prevede:"
+    echo "      VERIMEM_MESSAGGIO_LUNGO=1 git commit ..."
+    exit 1
+}
+
+exit 0

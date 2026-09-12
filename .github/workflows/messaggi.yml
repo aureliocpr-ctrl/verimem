@@ -1,0 +1,126 @@
+# Il `git log` pubblico parla del prodotto, non della stanza in cui lavoriamo.
+#
+# Misurato il 12/09/2026 con lo script che questo workflow esegue, sugli ultimi
+# quaranta commit del ramo principale (`d60cc326~40..d60cc326`):
+#
+#     oltre 10 righe    : 39
+#     nome di sessione  : 24
+#     nome utente       :  5
+#     percorso locale   :  2
+#     PULITI            :  0     <- zero su quaranta
+#
+# ─────────────────────────────────────────────────────────────────────────────
+# ⚠️ AVEVO SCRITTO CHE I MESSAGGI DI UNA PR «NON ARRIVANO SU MAIN PERCHE' SI
+# FONDE IN SQUASH». E' FALSO, E LA DIFFERENZA E' TUTTO IL DISEGNO DI QUESTO
+# FILE. Chiesto alle impostazioni del repository invece di ricordarselo:
+#
+#     squash_merge_commit_message : COMMIT_MESSAGES
+#     squash_merge_commit_title   : COMMIT_OR_PR_TITLE
+#
+# `COMMIT_MESSAGES` vuol dire che il corpo del commit di squash e' la
+# CONCATENAZIONE dei messaggi dei commit della PR. Si vede a occhio su
+# `d60cc326`, che e' uno squash: il suo corpo sono i messaggi originali uno
+# dietro l'altro. ⇒ I messaggi di una PR arrivano su main per intero, ed e'
+# esattamente per questo che il log di main e' come lo abbiamo misurato.
+#
+# ⇒ Il controllo e' ROSSO sulla PR, non un avviso. Misurato prima di spedirlo:
+#
+#     PR che diventerebbero ROSSE: 14 su 14
+#     commit sporchi: 66 su 99
+#
+# Quattordici su quattordici e' un debito vero, non un falso allarme, e il
+# rosso dice a ciascuna cosa le manca prima di entrare.
+#
+# 📌 E NON BLOCCA NESSUNO: `main` non ha protezione di ramo (`gh api
+# .../branches/main/protection` -> «Branch not protected»), quindi nessun check
+# e' richiesto per fondere. Questo rosso e' un segnale, non un cancello chiuso —
+# e va detto, perche' chi vede un check rosso di solito conclude di essere
+# bloccato.
+#
+# 🔑 LA CURA PER UNA PR GIA' SCRITTA NON E' RISCRIVERE IL RAMO: chi fonde
+# compone a mano il messaggio dello squash, che e' quello che l'utente
+# leggera'. Il messaggio dello squash lo scrive GitHub al momento della
+# fusione e nessun hook lo vede prima: l'unico presidio e' la mano di chi
+# fonde, e questo comando prima di confermare —
+#
+#     python scripts/messaggio_pulito.py --file <il messaggio dello squash>
+#
+# ⚠️ E UN ROSSO QUI NON FERMA UN TAG: il cancello del publish legge un solo
+# workflow (`publish.yml`: `select(.name=="ci" and .head_branch=="main")`).
+# Scritto perche' chi legge «CI verde» non concluda «anche i messaggi sono a
+# posto». Cosa debba bloccare un tag e' una decisione che sta in `publish.yml`.
+#
+# ⚠️ PERCHE' UN WORKFLOW SEPARATO E NON UN JOB IN `ci.yml`: stesso motivo
+# scritto in `presidi-lenti.yml` — `ci` e' lo strumento con cui si legge il gate
+# del rilascio, e aggiungerci un job cambia cio' con cui si misura mentre lo si
+# sta misurando. Quando la PR dei presidi entra in main questo job va dentro
+# `presidi-pr.yml`: due file per lo stesso mestiere sono una copia, e le copie
+# divergono.
+name: messaggi
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: messaggi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  messaggi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Serve la storia: il controllo legge un INTERVALLO di commit, e su un
+          # clone profondo 1 la base non e' raggiungibile — `git log A..B`
+          # fallirebbe invece di tornare vuoto.
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # ⚠️ PRIMA L'AUTOTEST, POI LA MISURA — come gli altri cricchetti. Un
+      # controllo che non puo' diventare rosso e' un semaforo verde: qui si
+      # prova che boccia cio' che deve e tace sul resto, e solo dopo si crede al
+      # suo verdetto. Non installa niente: lo script usa la libreria standard.
+      - name: Il controllo morde (autotest)
+        run: python scripts/messaggio_pulito.py --autotest
+
+      - name: I messaggi di questa PR
+        if: github.event_name == 'pull_request'
+        run: |
+          python scripts/messaggio_pulito.py \
+            --range '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+
+      - name: I messaggi appena arrivati su main
+        if: github.event_name == 'push'
+        run: |
+          PRIMA='${{ github.event.before }}'
+          DOPO='${{ github.event.after }}'
+          # Un ramo appena creato, o una storia riscritta, non hanno un «prima»
+          # raggiungibile: senza questa guardia il passo fallirebbe per un
+          # difetto del misuratore e si leggerebbe come un messaggio sporco.
+          if [ -z "$PRIMA" ] || [ "$PRIMA" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$PRIMA^{commit}" 2>/dev/null; then
+            echo "::notice title=Messaggi::Nessun punto di partenza raggiungibile ($PRIMA): NON HO MISURATO NIENTE."
+            exit 0
+          fi
+          python scripts/messaggio_pulito.py --range "$PRIMA..$DOPO"
+
+      # A comando: una fotografia del debito, non un cancello. Non fallisce, o
+      # diventerebbe un rosso permanente su una storia che non riscriviamo.
+      - name: Fotografia degli ultimi 40 (a comando)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          python scripts/messaggio_pulito.py --range "HEAD~40..HEAD" || true
