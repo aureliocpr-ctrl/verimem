@@ -126,6 +126,34 @@ chiude una persona, e il documento dice **dove guardare**.
     anche uno per uno. Un messaggio di ramo scritto male **è** un messaggio
     pubblico. La domanda si chiude in un comando, non a memoria:
     `gh api repos/<owner>/<repo> --jq .squash_merge_commit_message`.
+15. **Un errore che diventa uno ZERO.** `gh pr diff <n>` su una PR con più di
+    300 file **rifiuta**: esce 1, stampa l'errore su stderr e l'uscita è
+    **vuota**. Con un `| wc -l`, un `comm` o un `grep -c` in mezzo, l'errore
+    sparisce e resta lo zero — e «zero file in comune» si legge come una
+    misura. Misurato il 12/09 su una PR da 494 file: il primo confronto fra
+    due rami disse «nessuna sovrapposizione», e la sovrapposizione era di 86
+    file. ⚠️ **Questa trappola è peggiore delle altre di questa lista**: un
+    criterio incompleto, un presidio spento o una misura mancante danno un
+    numero **più basso**; questa dà **zero**, che è il numero più rassicurante
+    che esista. ⇒ **Un comando che può rifiutare si legge per EXIT prima che
+    per output**, e la pipe che conta è proprio quella che cancella la riga
+    che te lo direbbe. Per i file di una PR si usa il RAMO:
+    `git diff --name-only origin/main...origin/<ramo>`.
+16. **Una revisione per PR non vede le collisioni FRA PR.** Guarda il diff
+    contro `main` e non sa che un altro ramo tocca gli stessi file. Misurato
+    il 12/09 su 15 PR aperte: un file di prodotto toccato da **sette** PR,
+    tre PR che portavano la **stessa** pulizia degli stessi documenti con tre
+    valori diversi della stessa riga, e due PR che curavano lo stesso difetto
+    nello stesso file. Nessuna CI può vederlo: si misura prima di ogni giro di
+    merge, e **lo deve lanciare chi non è l'autore** — l'autore confronta la
+    PR con quello che credeva di averci messo (una PR era ramificata dal ramo
+    sbagliato e ne trascinava dentro altri due).
+    ```bash
+    for n in $(gh pr list --state open --limit 40 --json number -q '.[].number'); do
+      r=$(gh pr view $n --json headRefName -q .headRefName)
+      git diff --name-only origin/main...origin/$r | sed "s|^|#$n |"
+    done | awk '{print $2}' | sort | uniq -c | awk '$1>1' | sort -rn
+    ```
 
 ---
 
