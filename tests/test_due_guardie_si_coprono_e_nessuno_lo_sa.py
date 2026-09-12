@@ -203,3 +203,81 @@ def test_CONTROLLO_senza_la_citazione_il_ritiro_avviene_ancora():
     assert ritiri == 1, (
         "la rettifica di uno stesso valore non aggiorna piu' il precedente: il "
         "presidio qui accanto non sta piu' misurando niente")
+
+
+# ═══════════════════════════════════════════════════════════════════════════
+# T69 — L'OSSERVATORE CHE LA CURA DEL 2026-09-12 AVEVA TOLTO
+#
+# Mettendo l'id nella fonte, i due presidi qui sopra sono tornati
+# deterministici — e insieme al rumore se n'e' andato l'unico posto da cui si
+# vedeva un comportamento del PRODOTTO: lo stesso ingresso, quattordici gambe
+# verdi e una rossa. Quel dato non era il difetto del banco: era il sintomo di
+# un giudizio che si ferma vicino al taglio, e la cura l'ha reso invisibile.
+#
+# E' la stessa forma gia' pagata su T49 e scritta trenta righe piu' su in
+# questo file: «curare una promessa puo' disarmare il presidio che la
+# sorvegliava, e la cura deve portarsi dietro il suo complemento». Stavolta il
+# presidio l'ho disarmato io, e il complemento e' questo caso.
+#
+# COSA OSSERVA, e perche' puo' fallire davvero: scrive la proposizione COME
+# ERA — con l'id che la fonte non contiene — e guarda QUANTO il giudizio disti
+# dalla soglia. Non pretende un verdetto: pretende un MARGINE. Un ingresso
+# legittimo che passa per due punti non e' un ingresso promosso, e' un
+# ingresso che la prossima esecuzione boccia.
+# ═══════════════════════════════════════════════════════════════════════════
+
+#: Il taglio del moat per la scrittura ordinaria. Se cambia, questo numero va
+#: cambiato qui e il test lo dice da se' nel messaggio: e' scritto due volte
+#: apposta, perche' un margine calcolato contro una soglia sbagliata e' peggio
+#: di nessun margine.
+SOGLIA_DEL_MOAT = 40.0
+
+#: Quanto lontano dal taglio deve stare un ingresso perche' lo si possa
+#: chiamare stabile. 10 punti e' una scelta, non una misura: con meno di cosi'
+#: la CI del 2026-09-12 ha dato 14 verdi e 1 rosso sullo stesso ingresso.
+MARGINE_MINIMO = 10.0
+
+
+def test_OSSERVATORE_un_ingresso_legittimo_non_passa_per_un_soffio():
+    """Il difetto del PRODOTTO che la cura del banco aveva smesso di mostrare.
+
+    ⚠️ NON e' un doppione dei due presidi sopra: quelli chiedono «il prodotto
+    fa la cosa giusta?», questo chiede «la fa per un margine che regge una
+    seconda esecuzione?». Un prodotto puo' rispondere si' al primo e no al
+    secondo, ed e' esattamente cio' che e' successo.
+
+    Fallisce in due modi, e sono due notizie diverse:
+      · il fatto e' QUARANTINATO  -> il difetto e' tornato, con il numero;
+      · e' ammesso ma per meno di `MARGINE_MINIMO` -> non e' ancora tornato,
+        ma il prossimo giro puo' bocciarlo: e' l'avviso che mancava.
+    """
+    db = Path(tempfile.mkdtemp()) / "margine.db"
+    mem = Memory(str(db))
+    prima = mem.add("La coda ha 500 elementi.", topic="t/margine",
+                    verified_by=FONTE, source=SORGENTE, validate="full")
+    fid = prima.get("id") or prima.get("fact_id") or ""
+
+    #: La fonte e' quella ORIGINALE, senza l'id: e' il caso che la CI ha visto.
+    ricevuta = mem.add(
+        f"La coda ha 540 elementi (rettifica del fatto {fid}).",
+        topic="t/margine", verified_by=FONTE, source=SORGENTE, validate="full")
+
+    punteggio = ricevuta.get("grounding_score")
+    stato = ricevuta.get("status")
+    assert punteggio is not None, (
+        "la ricevuta non porta `grounding_score`: senza il numero questo "
+        f"osservatore non puo' misurare niente. ricevuta={ricevuta}")
+
+    margine = float(punteggio) - SOGLIA_DEL_MOAT
+    assert stato != "quarantined", (
+        f"IL DIFETTO E' TORNATO: un ingresso sostenuto dalla fonte per il suo "
+        f"contenuto e' stato quarantinato a {punteggio}. La proposizione cita "
+        f"un id che la source non contiene, e il giudice scarta la frase "
+        f"intera. E' il rosso del 2026-09-12 in CI, una gamba su quindici.")
+    assert margine >= MARGINE_MINIMO, (
+        f"passa per un soffio: grounding {punteggio} contro una soglia di "
+        f"{SOGLIA_DEL_MOAT}, margine {margine:.2f} sotto i {MARGINE_MINIMO} "
+        f"richiesti. Non e' rosso oggi e puo' esserlo domani sulla stessa "
+        f"riga: e' la condizione che ha prodotto 14 verdi e 1 rosso. Se la "
+        f"soglia del moat e' cambiata, aggiorna SOGLIA_DEL_MOAT qui sopra "
+        f"invece di abbassare il margine.")
