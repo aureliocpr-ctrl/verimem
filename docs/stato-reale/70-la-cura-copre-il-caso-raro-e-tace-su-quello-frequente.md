@@ -1,6 +1,6 @@
 # 70 — Case-study n.1: la cura del filone copre il caso raro e tace su quello frequente — 0 su 3
 
-*ws6/Aldo — 2 settembre 2026, 00:02. Chiude il filone «le letture non trovano»
+*ws6/Dati — 2 settembre 2026, 00:02. Chiude il filone «le letture non trovano»
 ([61](61-il-punteggio-separa-benissimo-e-per-questo-l-avviso-ha-ragione.md) → [67](67-la-data-nella-domanda-spegne-la-risposta.md) → [69](69-la-cura-che-avevo-proposto-costa-sei-ancore-vere-su-diciotto.md)) con la misura della cura, non con il suo racconto.*
 
 ## ① L'arco del filone, in quattro righe verificabili

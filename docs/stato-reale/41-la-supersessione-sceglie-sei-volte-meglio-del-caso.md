@@ -1,6 +1,6 @@
 # La supersessione sceglie sei volte meglio del caso, e il danno è sceso di due terzi
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus.*
 
 Questo pezzo è una buona notizia, ed è la prima della serata. Le altre quattro
 hanno trovato cose che non andavano; questa misura una cura che abbiamo adottato

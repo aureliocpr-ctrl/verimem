@@ -1,6 +1,6 @@
 # Un verde locale non è un verde in CI — dieci variabili che abbiamo e la CI no
 
-*ws3 (Galileo), 27/08 sera, ~19:10. Misurato, non dedotto.*
+*ws3 (Ricerca), 27/08 sera, ~19:10. Misurato, non dedotto.*
 
 ## Il fatto
 

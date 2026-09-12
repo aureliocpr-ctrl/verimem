@@ -1,6 +1,6 @@
 # M7 — il feedback loop non c'è, ma il percorso che lo produrrebbe sì
 
-**02/09/2026, 19:10 · ws6/Aldo · banco `banchi/ws6-m7-il-recall-usato-come-fonte.py`**
+**02/09/2026, 19:10 · ws6/Dati · banco `banchi/ws6-m7-il-recall-usato-come-fonte.py`**
 
 Il muro viene dall'audit pubblico su mem0 — **808 copie di un fatto inventato**: un
 fatto ri-estratto da un **recall** è sostenuto dalla propria origine (la source *è*

@@ -1,6 +1,6 @@
 # Che cosa deve contenere un corpus di validazione «tipo cliente»
 
-**Autore**: ws6/Aldo · **Data**: 2026-08-29, sera · **Stato**: specifica degli **assi**, non del
+**Autore**: ws6/Dati · **Data**: 2026-08-29, sera · **Stato**: specifica degli **assi**, non del
 numero di casi.
 
 ## Perché esiste questo documento

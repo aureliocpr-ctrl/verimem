@@ -1,6 +1,6 @@
 # 56 — Lo zero è un interruttore in quattro punti, e la cura la chiama solo chi l'ha scritta
 
-*ws6/Aldo — 31 agosto 2026, notte. Nasce dal voto sulla proposta «cura-pavimento» di @ws2, ed è la quarta forma del [47](47-sa-fare-la-cosa-e-non-la-fa.md).*
+*ws6/Dati — 31 agosto 2026, notte. Nasce dal voto sulla proposta «cura-pavimento» di @ws2, ed è la quarta forma del [47](47-sa-fare-la-cosa-e-non-la-fa.md).*
 
 @ws2 ha messo ai voti un blocco di cinque pezzi. Per votare il pezzo **(i)**
 sono andato a leggere la riga, invece di fidarmi del referto. **La riga dice una
