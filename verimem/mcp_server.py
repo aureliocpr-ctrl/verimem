@@ -266,6 +266,43 @@ _THIN_UNSUPPORTED_WRITES: frozenset[str] = frozenset({
     "hippo_anti_confab_apply", "hippo_fact_priority",
 })
 
+#: Tools that MUTATE EPISODES. They are deliberately absent from the deny-list
+#: above — the shared server serves facts, so for these the local store is the
+#: right answer, not a fallback — but until now the set existed nowhere: only
+#: in prose, in the README, as a closed count.
+#:
+#: That count was wrong in three directions at once, which is why this constant
+#: exists rather than another sentence. The README said "the five
+#: episode-mutating tools" and listed them; measured 2026-09-12:
+#:   · two of the five write nothing at all (`hippo_rollup_old_episodes` and
+#:     `hippo_episode_classify` return a report: no write SQL, no writing
+#:     method of EpisodicMemory anywhere they reach);
+#:   · three that do mutate were missing, one of which deletes an episode
+#:     outright (`hippo_forget`, "Delete one episode by id");
+#:   · and no criterion closed the set — by name it gives 18 tools, by a
+#:     pinned receiver 5, by hand 6. Three criteria, three answers, and no way
+#:     to say which was right, because the property was not an object.
+#:
+#: The list was built from the NAMES: `hippo_forget` does not contain
+#: "episode" and was lost, while `rollup` and `classify` have it and were
+#: wrongly included. A criterion that reads the shape misses what does not
+#: have the shape, and takes in what has it without the substance.
+#:
+#: ⚠️ THE GUARD IS NOT THIS LIST — it is the EQUALITY between this list and
+#: what the dispatch actually does, in `tests/
+#: test_gli_strumenti_che_mutano_gli_episodi_sono_dichiarati.py`. That test
+#: goes red in both directions: a new undeclared mutator, and a criterion that
+#: stopped seeing a dispatch shape. The second matters as much as the first —
+#: a sweep that quietly stops sweeping reads exactly like a clean one.
+_EPISODE_MUTATING: frozenset[str] = frozenset({
+    "hippo_episode_pin",            # a.memory.set_pinned()
+    "hippo_episode_unpin",          # a.memory.set_pinned()
+    "hippo_forget",                 # a.memory.delete() — one episode by id
+    "hippo_record_episode",         # a.memory.add_causal_edge()
+    "hippo_record_episodes_batch",  # a.memory.store_batch()
+    "hippo_episodes_dedup",         # dedup_episodes(a.memory) -> .delete()
+})
+
 
 def _ok(obj: Any) -> list[t.TextContent]:
     return [t.TextContent(type="text", text=json.dumps(obj, indent=2, default=str))]
