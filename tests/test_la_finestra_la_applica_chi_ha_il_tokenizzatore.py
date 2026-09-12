@@ -93,8 +93,16 @@ def test_il_daemon_riduce_lo_span_se_gli_mandi_la_finestra(monkeypatch) -> None:
 
     class _GiudiceCheRiduce:
         max_length = 8
+        chiamate: list[int | None] = []
 
-        def _entro_la_finestra(self, span: str) -> str:
+        # ⚠️ LA FIRMA E' QUELLA VERA, col budget per parametro. Se un doppio
+        # resta alla firma vecchia, il daemon lo chiama con due argomenti, il
+        # `except Exception` del prodotto INGOIA il TypeError e lo span esce
+        # intero: il sintomo e' «la finestra non e' stata applicata», non «hai
+        # sbagliato la firma». Un `except` largo nasconde anche gli errori di
+        # programmazione, e la cella qui sotto distingue i due casi apposta.
+        def _entro_la_finestra(self, span: str, max_length=None) -> str:
+            type(self).chiamate.append(max_length)
             return span.splitlines()[0]
 
     monkeypatch.setattr(local_grounding, "get_local_judge", _GiudiceCheRiduce)
@@ -104,10 +112,16 @@ def test_il_daemon_riduce_lo_span_se_gli_mandi_la_finestra(monkeypatch) -> None:
 
     assert resp["ok"], resp
     assert visti, "il giudice del daemon non e' stato chiamato affatto"
+    assert _GiudiceCheRiduce.chiamate, (
+        "il daemon non ha nemmeno PROVATO a ridurre: o non legge `max_length`, "
+        "oppure ci ha provato e un'eccezione e' stata ingoiata dal best-effort")
+    assert _GiudiceCheRiduce.chiamate == [8], (
+        f"il daemon ha passato una finestra diversa da quella chiesta: "
+        f"{_GiudiceCheRiduce.chiamate}")
     span_giudicato = visti[0][0]
     assert span_giudicato == "riga numero 0 del documento", (
-        "il daemon ha giudicato lo span INTERO: la finestra non e' stata "
-        f"applicata di qua e nessuno l'ha applicata di la'. Span: {span_giudicato[:80]!r}")
+        "il daemon ha giudicato lo span INTERO pur avendo chiamato la "
+        f"riduzione. Span: {span_giudicato[:80]!r}")
 
 
 def test_senza_max_length_il_daemon_non_tocca_lo_span() -> None:
@@ -177,3 +191,109 @@ def test_il_client_chiede_la_riduzione_solo_a_chi_l_ha_dichiarata(
         assert giudice.richieste_del_tokenizzatore == 1, (
             "col daemon vecchio nessuno ha ridotto lo span: la qualita' cala "
             "in silenzio, che e' il caso che questa cura NON deve creare")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# IL BUDGET NON PUO' PASSARE DA UNO STATO CONDIVISO
+#
+# Rilievo in revisione, 2026-09-12: la prima versione di questa cura passava il
+# budget al daemon scrivendolo su `giudice.max_length` e rimettendolo a posto
+# nel `finally`. Ma il daemon fa UN THREAD PER CONNESSIONE, quindi quello e'
+# stato condiviso mutato da piu' thread: due richieste con budget diversi si
+# sovrascrivono il valore a vicenda, e il danno non e' un errore ma UNO SPAN
+# TAGLIATO CON LA FINESTRA DI UN ALTRO — silenzioso, e nel giudizio.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class _GiudiceCheRegistraLeScritture:
+    """Riduce come quello vero, e URLA se qualcuno gli scrive `max_length`."""
+
+    def __init__(self) -> None:
+        object.__setattr__(self, "scritture_di_max_length", [])
+        object.__setattr__(self, "max_length", 512)
+
+    def __setattr__(self, nome: str, valore) -> None:
+        if nome == "max_length":
+            self.scritture_di_max_length.append(valore)
+        object.__setattr__(self, nome, valore)
+
+    def _entro_la_finestra(self, span: str, max_length=None) -> str:
+        limite = int(max_length) if max_length else self.max_length
+        return span[:limite]
+
+
+def test_il_daemon_non_scrive_il_budget_su_uno_stato_condiviso(monkeypatch) -> None:
+    """LA GAMBA COSTRUTTIVA: nessuna corsa, nessun timing — si guarda se
+    qualcuno SCRIVE l'attributo. Vale su ogni macchina e non puo' passare per
+    fortuna, che e' quello che una corsa riprodotta a caso farebbe."""
+    giudice = _GiudiceCheRegistraLeScritture()
+    monkeypatch.setattr(local_grounding, "get_local_judge", lambda: giudice)
+
+    server = object.__new__(encode_service.EncodeServer)
+    server._token = "t"
+    server._gate_fn = lambda coppie: [1.0] * len(coppie)
+
+    server._handle_request(
+        {"token": "t", "gate_pairs": [["x" * 100, "un fatto"]], "max_length": 7})
+
+    assert giudice.scritture_di_max_length == [], (
+        "il daemon ha SCRITTO max_length sul giudice condiviso: con un thread "
+        "per connessione due richieste con budget diversi si sovrascrivono il "
+        f"valore. Scritture viste: {giudice.scritture_di_max_length}")
+
+
+def test_due_richieste_insieme_con_budget_diversi_non_si_rubano_la_finestra(
+        monkeypatch) -> None:
+    """LA GAMBA CONCORRENTE, e la sovrapposizione e' GARANTITA da una barriera.
+
+    Senza la barriera i due thread potrebbero non incrociarsi mai e la cella
+    passerebbe anche col difetto — «una corsa riprodotta con un'altra corsa non
+    prova niente». Qui nessuno dei due puo' uscire dalla riduzione finche' non
+    ci sono entrati tutt'e due: se il budget passasse da uno stato condiviso,
+    il secondo troverebbe il valore del primo SEMPRE, non per caso.
+    """
+    import threading
+
+    dentro = threading.Barrier(2, timeout=10)
+
+    class _GiudiceLento(_GiudiceCheRegistraLeScritture):
+        def _entro_la_finestra(self, span: str, max_length=None) -> str:
+            limite = int(max_length) if max_length else self.max_length
+            dentro.wait()          # tutti e due dentro, poi si taglia
+            return span[:limite]
+
+    giudice = _GiudiceLento()
+    monkeypatch.setattr(local_grounding, "get_local_judge", lambda: giudice)
+
+    server = object.__new__(encode_service.EncodeServer)
+    server._token = "t"
+    visti: dict[int, str] = {}
+    server._gate_fn = lambda coppie: [1.0] * len(coppie)
+
+    def una_richiesta(budget: int) -> None:
+        r = dict(server._handle_request({
+            "token": "t",
+            "gate_pairs": [["x" * 100, "un fatto"]],
+            "max_length": budget,
+        }))
+        visti[budget] = r.get("_span_giudicato", "")
+
+    # lo span giudicato si recupera dal gate_fn, che lo registra per budget
+    def _registra(coppie):
+        for s, _f in coppie:
+            visti[len(s)] = s
+        return [1.0] * len(coppie)
+
+    server._gate_fn = _registra
+
+    thread = [threading.Thread(target=una_richiesta, args=(b,)) for b in (7, 41)]
+    for t in thread:
+        t.start()
+    for t in thread:
+        t.join(timeout=15)
+
+    assert 7 in visti and 41 in visti, (
+        "uno dei due budget non e' arrivato al giudice: le due richieste si sono "
+        f"rubate la finestra. Lunghezze viste: {sorted(visti)}")
+    assert giudice.scritture_di_max_length == [], (
+        f"scritture sullo stato condiviso: {giudice.scritture_di_max_length}")

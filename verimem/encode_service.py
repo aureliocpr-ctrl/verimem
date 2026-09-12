@@ -324,16 +324,20 @@ class EncodeServer:
                 try:
                     from .local_grounding import get_local_judge
                     _giudice = get_local_judge()
+                    # ⚠️ IL BUDGET VIAGGIA DENTRO LA RICHIESTA E SI APPLICA
+                    # SULLA RICHIESTA. Qui gira un thread per connessione: la
+                    # prima versione scriveva il budget su `_giudice.max_length`
+                    # e lo rimetteva a posto nel `finally`, cioe' mutava uno
+                    # stato CONDIVISO. Due richieste con budget diversi si
+                    # sovrascrivevano il valore, e il danno non sarebbe stato un
+                    # errore ma uno span tagliato con la finestra di un altro.
+                    # Nessun attributo del giudice viene toccato.
                     _finestra = int(req["max_length"])
-                    _vecchia = _giudice.max_length
-                    try:
-                        _giudice.max_length = _finestra
-                        req = dict(req)
-                        req["gate_pairs"] = [
-                            [_giudice._entro_la_finestra(str(p[0])), str(p[1])]
-                            for p in req["gate_pairs"]]
-                    finally:
-                        _giudice.max_length = _vecchia
+                    req = dict(req)
+                    req["gate_pairs"] = [
+                        [_giudice._entro_la_finestra(str(p[0]), _finestra),
+                         str(p[1])]
+                        for p in req["gate_pairs"]]
                 except Exception:  # noqa: BLE001 — mai far cadere un giudizio
                     pass
             # Il GIUDICE DEL MOAT, che e' un modello diverso dal reranker. Qui

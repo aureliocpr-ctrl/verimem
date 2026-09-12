@@ -401,8 +401,18 @@ class LocalGroundingJudge:
         return (self._entro_la_finestra(span) if applica_finestra else span,
                 fact or "")
 
-    def _entro_la_finestra(self, span: str) -> str:
+    def _entro_la_finestra(self, span: str,
+                           max_length: int | None = None) -> str:
         """Riduce lo span finche' entra nella finestra del CE, contando TOKEN.
+
+        ⚠️ `max_length` ARRIVA COME PARAMETRO, e non e' un dettaglio di stile.
+        Nel daemon questa funzione gira su UN THREAD PER CONNESSIONE: passare il
+        budget scrivendolo su `self.max_length` - come faceva la prima versione
+        di questa cura - lo rende uno STATO CONDIVISO MUTATO da piu' thread.
+        Due richieste con budget diversi si sovrascrivono il valore a vicenda, e
+        il danno non e' un errore ma un TAGLIO SBAGLIATO: uno span ridotto con
+        la finestra di un altro, senza che nessuno se ne accorga. Rilievo in
+        revisione, 2026-09-12.
 
         `focus_budget` e' in CARATTERI, `max_length` in TOKEN: le due unita'
         coincidono solo sulla prosa. Misurato 2026-08-19 col tokenizzatore del
@@ -429,13 +439,14 @@ class LocalGroundingJudge:
         if tok is None:
             return span
         conta = lambda s: len(tok.encode(s, add_special_tokens=False))  # noqa: E731
-        if conta(span) <= self.max_length:
+        limite = int(max_length) if max_length else self.max_length
+        if conta(span) <= limite:
             return span
         righe = span.splitlines()
         while len(righe) > 1:
             righe.pop()
             candidato = _A_CAPO.join(righe)
-            if conta(candidato) <= self.max_length:
+            if conta(candidato) <= limite:
                 return candidato
         return righe[0] if righe else span
 
