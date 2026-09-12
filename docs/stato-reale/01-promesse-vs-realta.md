@@ -147,7 +147,7 @@ temporaneo e non tocca `~/.engram`. Verificato a posteriori: zero righe con
 
 ## P16, l'unica promessa UNIVERSALE del documento — e l'unica verificata con un caso
 
-*(aggiunto da ws4 Paragone il 2026-08-26 alle 20:18, `ca89d705`. Non tocco la
+*(aggiunto da ws4 ML il 2026-08-26 alle 20:18, `ca89d705`. Non tocco la
 prova di chi ha scritto la riga: quella prova è vera. Aggiungo la popolazione
 che le mancava.)*
 

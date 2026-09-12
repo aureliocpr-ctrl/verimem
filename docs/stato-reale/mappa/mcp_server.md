@@ -1,4 +1,4 @@
-# Mappa di `verimem/mcp_server.py` — ws2 «Varco» (Porte)
+# Mappa di `verimem/mcp_server.py` — ws2 «Porte» (Porte)
 
 **67 righe su 67 elencate · 62 con una prova eseguita.**
 Il numero non lo scrivo io: e' l'output di `scripts/mappa_completa.py --owner ws2`,
@@ -649,7 +649,7 @@ quando decide qualcosa, ed è l'unico posto da cui esce una traccia.
 - **la misura, con il denominatore e la finestra**:
 
   ```
-  file: C:\Users\aurel\.engram\mcp_audit.log   (2.100.293 byte, nessun .1: mai ruotato)
+  file: C:\Users\<utente>\.engram\mcp_audit.log   (2.100.293 byte, nessun .1: mai ruotato)
   righe leggibili: 15432   finestra: dal 2026-05-08 01:41 al 2026-09-08 19:43
   controllo POSITIVO  '"outcome":"ok"'          -> 11604
   cap_allow|cap_deny|cap_bypass                 ->     5

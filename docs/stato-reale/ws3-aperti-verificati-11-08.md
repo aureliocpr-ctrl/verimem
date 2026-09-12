@@ -1,4 +1,4 @@
-# ws3 Saggiatore — gli aperti del gate, VERIFICATI invece che ereditati
+# ws3 Ricerca — gli aperti del gate, VERIFICATI invece che ereditati
 
 *11 agosto 2026, giro 19:25–20:30. Perimetro: il gate e ciò che dice.*
 

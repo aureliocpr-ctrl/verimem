@@ -133,7 +133,7 @@ da cui viene**, colonne comprese.
 ## La sedicesima — stesso numero, due popolazioni diverse (27/08)
 
 Il giorno dopo, applicando lo stesso presidio alle cifre più in basso nella
-pagina, ne è uscita una quarta. Non è mia — la riga è di *Varco* (commit
+pagina, ne è uscita una quarta. Non è mia — la riga è di *Porte* (commit
 «readme: la gap piu' grande era l'unica senza un numero», 25/08) — quindi la
 consegno e non la tocco. Ma è **esattamente la stessa forma**, il che la rende
 più interessante di un errore singolo.

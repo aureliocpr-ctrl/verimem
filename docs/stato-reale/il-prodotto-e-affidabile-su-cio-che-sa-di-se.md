@@ -107,7 +107,7 @@ La colonna che conta di più è l'ultima.
 | ① | «SDK processes keep the synchronous one-time load» — `CHANGELOG:635` | 3 processi freschi, fonte che NEGA: **0/6** ammissioni a giudice freddo, controllo 6/6 | 🟢 | ⚠️ **non misurato**: quanti usino SDK contro MCP non è osservabile da qui |
 | ② | «first write ~32 s → 0.3 s» — `CHANGELOG:716` | **18–36 s → 0,2–0,3 s**, stesso ordine su altra macchina | 🟢 | **una volta per processo**; quanti processi freschi, non misurato |
 | ③ | «it is `grounding_score` that carries it … `status` no» — istruzioni MCP | **3/3**, e **un campo in più**: il layer `L4-skipped` separa «fonte non giudicata» da «nessuna fonte» | 🟢 | si applica **a chi legge i campi** — vedi ⑧ |
-| ④ | «a session NOTE skips that screen … **the moat is UNAFFECTED: with a source**» — `agent_guide` | screen saltato **2/2**, moat gira **2/2** | 🟢 | ⚠️ **frequenza alta, rischio misurato NULLO**: `W7-70/71` di *Paragone* ha **letto** 24 casi — **0 self-claim nudi**, 11 resoconti e 13 misure — e il controfattuale dice che **senza l'eccezione la porta ne declasserebbe 21 su 24**. ⇒ *compensazione, non buco* |
+| ④ | «a session NOTE skips that screen … **the moat is UNAFFECTED: with a source**» — `agent_guide` | screen saltato **2/2**, moat gira **2/2** | 🟢 | ⚠️ **frequenza alta, rischio misurato NULLO**: `W7-70/71` di *ML* ha **letto** 24 casi — **0 self-claim nudi**, 11 resoconti e 13 misure — e il controfattuale dice che **senza l'eccezione la porta ne declasserebbe 21 su 24**. ⇒ *compensazione, non buco* |
 | ⑤ | la promessa ③, verificata **sulla porta dove è scritta** | firme **identiche** SDK/MCP: `['0.56/False','null/True','null/False']` | 🟢 | entrambe le porte, regime pulito |
 | ⑥ | «only when neither an llm nor the local model is present does the gate fail-open» — `README:64` | **binario, non temporale**: `DELEGATE_ONLY` 0 e 1 → **0/6** a freddo con modello presente | 🟢 | **installazioni senza modello**; non misurabile da qui |
 | ⑦ | `doctor` esiste per dire perché manca un punteggio | modello assente → **`status='fail'`**, dice il path, distingue «con fonte → avviso» da «**senza fonte → nessun avviso**» | 🟢 | chi esegue `doctor` |
@@ -144,14 +144,14 @@ e il moat resta a proteggere»*. **Il meccanismo era ed è vero.** Ma la guida
 dice «**with a source** it runs in both modes», e **nei miei quattro casi la
 fonte l'avevo messa io**.
 
-Poi *Paragone* ha misurato che il **65% del corpus** salta quello screen, e io ne
+Poi *ML* ha misurato che il **65% del corpus** salta quello screen, e io ne
 ho dedotto un rischio: *«quei fatti non hanno fonte, quindi non sono protetti»*.
 
 > 🔑 **Verificare una garanzia condizionale senza misurare la frequenza della
 > condizione produce un verdetto VERO e una rassicurazione FALSA.**
 
 🔴 **E POI HO SBAGLIATO UNA SECONDA VOLTA, NELLA DIREZIONE OPPOSTA.** `W7-70` e
-`W7-71` (*Paragone*, 15:40 e 15:49) hanno **letto** quei fatti invece di
+`W7-71` (*ML*, 15:40 e 15:49) hanno **letto** quei fatti invece di
 contarli: su 24 casi campionati **uno ogni 14** — **11 resoconti · 13 misure
 verificabili · ZERO self-claim nudi**. E il controfattuale, che è la misura
 giusta: **senza l'eccezione la porta ne declasserebbe 21 su 24**, quasi tutti per
@@ -186,7 +186,7 @@ non stimate.**
   Il commit che introduce il perdono dichiara «*una self-claim senza fonte resta
   fermata*» — vero alla lettera; ciò che non nomina è che **chi scrive la fonte
   è chi scrive il claim**. `a7f39bf0`
-- **Le sei radici di `L1.13`** (*Paragone*, `a83d9605`): un sinonimo fuori
+- **Le sei radici di `L1.13`** (*ML*, `a83d9605`): un sinonimo fuori
   dall'elenco aggira il layer **senza fonte**. Due vie indipendenti sullo stesso
   strato; la protezione residua è **gergo di collaudo**, e un verbale d'ufficio
   non ne ha nessuno.

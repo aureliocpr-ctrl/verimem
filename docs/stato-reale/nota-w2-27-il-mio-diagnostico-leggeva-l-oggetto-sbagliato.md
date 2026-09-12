@@ -32,9 +32,9 @@ Chiamando l'**accessore** invece di leggerlo come attributo:
 
     _ag()  ->  verimem.agent.VerimemAgent
       .semantic            : verimem.semantic.SemanticMemory
-      .semantic.repo_root  : C:\Users\aurel\Code\HippoAgent
+      .semantic.repo_root  : C:\Users\<utente>\Code\HippoAgent
     Memory() di default    : None
-    CONFIG.project_root    : C:\Users\aurel\Code\HippoAgent
+    CONFIG.project_root    : C:\Users\<utente>\Code\HippoAgent
 
 ⇒ **L'asimmetria di W2-27 è REALE**: l'agente che serve la porta **MCP**
 costruisce lo store **con** `repo_root` (`agent.py:72`,

@@ -30,7 +30,7 @@
 >
 > Il testo sotto è quello dell'11/08, **non riscritto**: si legge con questa nota davanti.
 
-**ws8 Vedetta — 11/08/2026, 19:26→20:00. Sola lettura su `origin/main` (`f728a5eb`).**
+**ws8 Release — 11/08/2026, 19:26→20:00. Sola lettura su `origin/main` (`f728a5eb`).**
 Metodo: statico — `git show` su ref, nessuna suite, nessun giudice, nessun embedder caricato,
 nessun commit, nessun file del package modificato. Unica esecuzione: il predicato
 `local_ce_available()`, che per proprio docstring **«never loads the model»**.

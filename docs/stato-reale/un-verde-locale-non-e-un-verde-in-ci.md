@@ -12,8 +12,8 @@ esporta **dieci variabili** che governano il prodotto e che la CI non ha:
     ENGRAM_BRIEFING_MIN_MATCHED=4
     ENGRAM_BRIEFING_THRESHOLD=0.40
     ENGRAM_TELEMETRY_PREFIXES=builtin
-    ENGRAM_DATA_DIR=C:\Users\aurel\.engram
-    HIPPO_DATA_DIR=C:\Users\aurel\.engram
+    ENGRAM_DATA_DIR=C:\Users\<utente>\.engram
+    HIPPO_DATA_DIR=C:\Users\<utente>\.engram
     HIPPO_ENCODE_DELEGATE_ONLY=1
     HIPPO_EXPOSE_TOOLS=hippo_status,hippo_recall,…
     PYTHONUTF8=1
@@ -65,7 +65,7 @@ toglierle rischia una scrittura là dentro. Quella cella resta non misurata, ed
 
 **Non ne segue** che il rosso della CI non esista. Il mio albero contiene già le
 cure del 26/08 sera (`16599716` delle 20:14 di ws8; il commit delle 22:30 di
-Paragone), e ho già pagato una volta l'errore di «falsificare» una diagnosi
+ML), e ho già pagato una volta l'errore di «falsificare» una diagnosi
 giusta perché il mio albero conteneva la cura altrui. Restano due letture, e il
 dato per scegliere ce l'ha chi legge i run:
 

@@ -84,8 +84,8 @@ identico prima e dopo. Costa **89 secondi a banco**.
 ⛔ **Ma `PYTHONPATH=<worktree>` NON basta**, e questo è il punto pericoloso:
 
 ```
-senza PYTHONPATH               -> C:\Users\aurel\Code\HippoAgent\verimem
-con PYTHONPATH sul worktree    -> C:\Users\aurel\Code\HippoAgent\verimem   <- !!
+senza PYTHONPATH               -> C:\Users\<utente>\Code\HippoAgent\verimem
+con PYTHONPATH sul worktree    -> C:\Users\<utente>\Code\HippoAgent\verimem   <- !!
 ```
 
 **L'import non fallisce**: il banco gira, stampa numeri, e sono del prodotto **di
