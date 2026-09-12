@@ -207,9 +207,53 @@ con e senza acceleratore, nella stessa esecuzione.**
 (contare i modi di guasto dei due incidenti contro ciò che il presidio ferma) e F4 (le mappe di
 un client che usa il servizio condiviso).
 
-## 5. Cosa questa pagina non dice
+## 5. La raccomandazione finale
 
-- **Non dice quale strada prendere**: dice a quali condizioni la raccomandazione è giusta e a
+*Scritta dopo che due delle sei falsificazioni si sono chiuse. È cambiata rispetto alla prima
+stesura: **non** perché qualcuno abbia cambiato idea, ma perché due conti l'hanno costretta.*
+
+### Il server condiviso esce dall'ordine del giorno — con la clausola che lo riaprirebbe
+
+Non «per ultimo»: **fuori**, finché una condizione non cambia. Il conto della coda dice che con
+un giudizio **seriale** a ~22 s una coda condivisa regge **~2,7 scritture con fonte al minuto per
+tutti i client insieme**, mentre oggi i giudizi vanno in parallelo perché ciascuno ha il suo. Un
+server condiviso scambierebbe un limite di **memoria** con un limite di **attesa**, e il secondo
+lo paga chi usa il prodotto **a ogni salvataggio**.
+
+🔓 **La clausola, scritta perché fra un mese nessuno legga «chiusa» senza sapere perché**: si
+riapre **il giorno in cui il giudizio diventa parallelo o molto più veloce**. Non è un divieto
+architetturale: è una **precedenza**. E la stima poggia su un numero che **non abbiamo**: quante
+scritture con fonte al minuto facciamo nel momento di punta — se fosse molto sotto la soglia, il
+conto perde forza e la decisione va rifatta.
+
+### Quello che si fa, in ordine
+
+1. **La ricevuta non mente.** Chi scrive deve sapere quando il vettore manca, quando la fascia
+   non è stata applicata, quando il servizio condiviso non c'era. È **l'anello che ha fatto il
+   danno** nell'incidente documentato — nove scritture di fila passate per riuscite — e nessuna
+   delle altre cure lo tocca.
+2. **Il servizio condiviso dichiara il proprio modello**, e il client rifiuta ciò che non
+   combacia. Il rifiuto **c'è già**: manca la metà che dichiara. Con ① sopra, un servizio che
+   riparte diverso diventa **visibile** invece che silenzioso.
+3. **Togliere l'acceleratore ai processi che non giudicano.** Ristretta così — non a tutti —
+   perché la scheda risulta occupata al 90 % con 0 % di utilizzo, ma *allocato non è usato* e
+   chi giudica potrebbe usarla davvero. La superficie non è «due righe»: è **ogni punto che
+   costruisce un modello**, con un presidio che cammina il pacchetto.
+4. **In ogni strada, il giudizio resta davanti alla scrittura.** Non è una preferenza di
+   progetto: è la promessa del prodotto. Una memoria che scrive prima e verifica poi è un'altra
+   cosa, e non è la nostra.
+
+### Le due misure che restano, e cosa cambierebbero
+
+- **Il commit di un server con e senza acceleratore** (stessa esecuzione, una variabile sola):
+  se la differenza è ≈ 0, il punto 3 **non** è una cura del vincolo che ha fatto cadere la
+  macchina — resta buono per la scheda e scende di priorità sotto ① e ②.
+- **L'utilizzo della scheda durante un giudizio**: se sale, il punto 3 va ristretto ancora (la
+  scheda resta a chi giudica); se è ~0 anche sotto carico, quei contesti sono puro peso.
+
+## 6. Cosa questa pagina non dice
+
+- **Dice quale strada prendere, e a quali condizioni**: §5 è la raccomandazione finale; §3 resta il modo per abbatterla. Non dice a quali condizioni la raccomandazione è giusta e a
   quali è sbagliata.
 - **Non contesta il vincolo** del giudizio davanti alla scrittura — lo tratta come dato, perché è
   la promessa del prodotto; F6 misura quanto costa, non se vada tolto.
