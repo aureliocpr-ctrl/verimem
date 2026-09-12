@@ -77,6 +77,31 @@ un daemon avviato. Le domande, in ordine:
 La quarta è quella che l'incidente del vettore mancante ha già fatto pagare: il differimento era
 progettato e documentato, e il danno l'ha fatto **il non saperlo**.
 
+## 5-bis. I candidati, letti nel codice — un ELENCO, non un conteggio
+
+*Prima lettura del 12/09. ⚠️ Questi numeri sono **candidati da verificare uno per uno**, non
+una misura: una ricerca testuale serve a **trovare**, mai a **contare**, e qui conterebbe cose
+diverse come se fossero la stessa.*
+
+**Chi interroga il giudice** — tre punti fuori dal suo modulo: la scrittura diretta della
+libreria, la via della conversazione, e il cancello anti-confabulazione.
+
+**Chi scrive nello store** — dodici moduli, in testa la porta esposta all'agente con **sedici**
+punti di scrittura, poi il consolidamento notturno con quattordici.
+
+⚠️ **E qui sta la trappola che questo elenco NON deve far scattare**: molti di quei punti **non
+scrivono fatti** — scrivono competenze, documenti promossi, risultati di consolidamento. Il
+giudizio riguarda **i fatti con una fonte**. Dire «dodici moduli scrivono senza giudizio»
+sarebbe un numero vero e una risposta falsa, la stessa forma che stiamo curando.
+
+⇒ **Che cosa deve fare il banco con questo elenco**: per **ciascun** punto, dire in quale delle
+quattro caselle cade — e, per quelli che non scrivono fatti, dirlo e toglierli dal perimetro
+**per iscritto**, invece di lasciarli nel conteggio a gonfiare il risultato.
+
+📌 Il primo candidato da guardare è la **porta esposta all'agente**: su quella, un mese fa, un
+punto di scrittura è stato trovato che non interrogava il giudice per niente. Gli altri quindici
+non li ho guardati.
+
 ## 6. Quello che questo disegno non decide
 
 - **Non decide la cura**: se una superficie cade nella quarta casella, la cura la sceglie chi
