@@ -33,6 +33,16 @@ PREDIZIONI DICHIARATE PRIMA DI ESEGUIRE (12 settembre, ore 18:50 lette):
                                       il ripiego dovrebbe salvarla, ma
                                       «dovrebbe» non è una misura.
 
+🔴 UN DIFETTO TROVATO IN QUESTO BANCO PRIMA DI ESEGUIRLO (19:05): la cella 2
+confrontava le due righe senza togliere i NUMERI, e la riga porta il punteggio
+di rilevanza — diverso per due fatti diversi quasi sempre. Le due righe
+sarebbero risultate distinte **anche senza nessuna cura**, cioè la cella
+sarebbe passata per il motivo sbagliato. Con `xfail(strict=True)` un verde è un
+fallimento, quindi il difetto si sarebbe visto lo stesso — ma il verdetto che
+ne usciva non parlava del prodotto. Ora ogni numero diventa un segnaposto e
+resta solo ciò che la porta DICE. È la stessa classe che questo ticket
+racconta: il righello che sbaglia a favore di chi lo usa.
+
 🔒 SOLO LA CELLA 2 PORTA `xfail(strict=True)`: è l'unica il cui esito è letto
 nel codice. Marcare le altre significherebbe dichiarare un esito che non ho
 misurato — e con `strict` un XPASS è un fallimento, quindi una marcatura
@@ -53,6 +63,7 @@ from __future__ import annotations
 
 import os
 import pathlib
+import re
 import subprocess
 import sys
 import tempfile
@@ -191,10 +202,23 @@ def test_chiedendo_anche_i_superati_si_vede_quale_e_superato(store):
                 "stato scritto, quindi non si può separare ciò che aggiunge "
                 f"la porta da ciò che viene dal fatto. {riga}")
 
-    def _della_porta(riga: str) -> tuple[str, str]:
-        return riga[:riga.index(TESTA)], riga[riga.index(CODA) + len(CODA):]
+    def _forma(riga: str) -> str:
+        """La riga SENZA il fatto e SENZA i numeri che cambiano a ogni giro.
 
-    assert _della_porta(vecchia[0]) != _della_porta(nuova[0]), (
+        🔴 I NUMERI VANNO TOLTI, e questo banco per poco non lo faceva: la
+        riga porta il punteggio di rilevanza, che per due fatti diversi è
+        quasi sempre diverso. Confrontando le code così come sono, le due
+        righe risultano DIVERSE sempre — anche oggi, senza nessuna cura — e
+        questa cella sarebbe passata per il motivo sbagliato. Con
+        `xfail(strict=True)` un verde è un fallimento, quindi il difetto si
+        sarebbe visto; ma il verdetto che ne usciva non parlava del
+        prodotto. Sostituendo ogni numero con un segnaposto resta solo ciò
+        che la porta DICE, che è quanto questa cella misura.
+        """
+        fuori = riga[:riga.index(TESTA)] + "|" + riga[riga.index(CODA) + len(CODA):]
+        return re.sub(r"[0-9]+(?:[.,][0-9]+)?", "#", fuori)
+
+    assert _forma(vecchia[0]) != _forma(nuova[0]), (
         "le due righe sono indistinguibili una volta tolto il testo del "
         "fatto: la porta non dice quale delle due è la versione superata, e "
         "chi legge riceve due numeri diversi per la stessa domanda senza un "
