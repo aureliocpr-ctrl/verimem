@@ -55,7 +55,7 @@ def test_limits_esiste_e_dichiara_il_patto_col_readme():
     strict=True,
     reason="il limite **Order** (il self-claim ammesso dopo una frase vera di terzi, "
            "7 formulazioni su 7, misurato il 2026-09-04) è in docs/LIMITS.md e NON nel "
-           "README. La cura è di ws7 Iris (i 57 claim del README): quando entra, questo "
+           "README. La cura è di ws7 Product Owner (i 57 claim del README): quando entra, questo "
            "test diventa verde e va tolto l'xfail.",
 )
 def test_ogni_limite_di_limits_e_nominato_anche_nel_readme():

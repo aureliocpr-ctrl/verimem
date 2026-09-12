@@ -16,7 +16,7 @@
   l'ipotesi comoda: la lettura di `_rerank_breaker_tripped()` è tornata `True`
   dove il test ne pretendeva `False` dopo il raffreddamento. La causa radice sta
   in come il test misura il tempo, non in `semantic.py`, ma nessuno l'ha ancora
-  riprodotta a comando. È il ticket **T38**, owner **ws5 Tara**.
+  riprodotta a comando. È il ticket **T38**, owner **ws5 Piattaforma**.
 * **Cura** — **nessuna, e questo è il punto**: il rosso è stato tolto da un
   *rerun*, non da un cambiamento. Il codice del test è oggi quello di allora.
   Finché T38 non chiude, la stessa gamba può ridiventare rossa su un commit che
@@ -27,7 +27,7 @@
   > **main** su `32273665` (`1 failed, 12848 passed`) — dopo il merge di una PR
   > che non tocca né `semantic.py` né il breaker (`git diff | grep -c
   > rerank_breaker` → **0**). Ha bloccato la finestra invece di un tag. La stessa
-  > sera è caduto anche su `galileo/t-map-11-ground` (`0784915a`).
+  > sera è caduto anche su un altro ramo (`0784915a`).
   >
   > **Il 10/09 alle 21:00 il controllore ha deciso la QUARANTENA su windows**
   > (`xfail(sys.platform == "win32", strict=False)`) per riaprire la finestra. La
@@ -57,8 +57,8 @@
   guardarlo: un test in quarantena che smette di cadere è una notizia quanto uno
   che ricomincia.
 
-* **Owner** — T38 e la causa radice: **ws5 Tara**. Il conteggio dei rossi, la
-  quarantena e questa cartella: **ws8 Corrado**.
+* **Owner** — T38 e la causa radice: **ws5 Piattaforma**. Il conteggio dei rossi, la
+  quarantena e questa cartella: **ws8 Release**.
 
 ---
 
@@ -79,7 +79,7 @@ non prova l'assenza: prova che la finestra non si apre in quell'ambiente.
 
 ## 🔴 L'IPOTESI ② NON ERA ESCLUSA: ERA LA CAUSA (corretto il 10/09 alle 22:45)
 
-**La causa l'ha trovata ws3 Galileo, ws1 Marie l'aveva vista per prima l'08/09 e
+**La causa l'ha trovata ws3 Ricerca, ws1 QA l'aveva vista per prima l'08/09 e
 l'ha ritirata a torto, e io ho pubblicato la falsificazione sbagliata.** Il
 motivo per cui tutt'e due abbiamo sbagliato è lo stesso, ed è misurabile in
 dieci secondi:
@@ -94,11 +94,11 @@ py -3.13  ->  monotonic = QueryPerformanceCounter()   1e-07 s
 «0 falsi» giravano su **3.13**, cioè sull'orologio sbagliato. Sull'orologio del
 job, il margine del test — `sleep(0.06)` contro un cooldown di `0.05`, cioè
 **10 ms** — sta **sotto il quanto di 15,625 ms**: la gara è esattamente quella.
-Galileo l'ha misurata: **5 fallimenti su 40** con l'orologio giusto.
+ws3 Ricerca l'ha misurata: **5 fallimenti su 40** con l'orologio giusto.
 
 ### Il margine contato in TICK, e le celle a rischio sono CINQUE (ws5, 11/09)
 
-Tara ha rifatto il conto **in tick dell'orologio** invece che in millisecondi, ed
+ws5 Piattaforma ha rifatto il conto **in tick dell'orologio** invece che in millisecondi, ed
 è la forma che rende la cosa evidente:
 
 ```
@@ -120,7 +120,7 @@ E le celle a rischio erano **cinque, non una**: il commento del 24/08 ne
 descriveva un'altra, e infatti la gara è più larga del singolo test — ora sappiamo
 di quanto.
 
-⇒ **La cura è la #30 di ws5 Tara** (`6bc2f0e5`): le cinque celle **spostano** il
+⇒ **La cura è la #30 di ws5 Piattaforma** (`6bc2f0e5`): le cinque celle **spostano** il
 tempo (`tripped_at -= 10.0`) invece di aspettarlo, passando da 3-6 tick a dieci
 secondi. Toglie la dipendenza dall'orologio invece di allargare il margine.
 
@@ -144,7 +144,7 @@ c'è». 🔑 *Un'assenza prodotta da uno strumento non è un'assenza: è la form
 dello strumento.*
 
 E la parte che pesa di più: **la mia falsificazione ha contribuito a far
-ritirare a Marie una diagnosi giusta.** Un «escluso» pubblicato con dei numeri
+ritirare a ws1 QA una diagnosi giusta.** Un «escluso» pubblicato con dei numeri
 accanto è molto più difficile da riaprire di un dubbio — per questo la riga
 sopra dice «NON ERA ESCLUSA» invece di essere cancellata: chi ha letto la
 versione sbagliata deve incontrare la correzione nello stesso posto.

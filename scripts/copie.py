@@ -79,7 +79,7 @@ TETTI = {
 #
 # La lezione, contro di me: **contare le OCCORRENZE di una forma non misura una
 # funzione**. Chi vuole misurare T49 conta i chiamanti di recupero che non
-# nascondono gli status bassi, e quel test ce l'ha Giano.
+# nascondono gli status bassi, e quel test ce l'ha ws2 Porte.
 
 # Le parole vuote note servono solo a RICONOSCERE una stoplist, non a esserlo.
 _VUOTE_EN = {"the", "and", "for", "with", "that", "this", "from", "are", "was", "not", "you"}

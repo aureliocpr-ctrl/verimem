@@ -2,7 +2,7 @@
 
 Un `|` in un pattern di `grep` senza `-E` è letterale: `grep -c "a|b"` cerca la
 stringa «a|b», non trova niente, e la conclusione «nessuna occorrenza» sembra
-misurata. Reperto di ws4 Nadia, 09/09/2026.
+misurata. Reperto di ws4 ML, 09/09/2026.
 
 La metà che decide se il presidio verrà usato è l'altra: i casi in cui **NON**
 deve suonare. Sui 403 documenti veri della mappa il primo criterio dava 8

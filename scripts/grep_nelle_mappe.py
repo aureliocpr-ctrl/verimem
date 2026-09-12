@@ -5,7 +5,7 @@
     python scripts/grep_nelle_mappe.py --cartella docs/   # su un'altra cartella
     python scripts/grep_nelle_mappe.py --autotest         # prova che il controllo morde
 
-IL DIFETTO, trovato da ws4 Nadia il 10/09/2026 e misurato da lei:
+IL DIFETTO, trovato da ws4 ML il 10/09/2026 e misurato nello stesso giro:
 
     $ grep -c  "trust signal|trusted|hallucination rate" README.md
     0        EXIT=1
@@ -20,7 +20,7 @@ nomina questa funzione» sembra misurata mentre è l'artefatto di un'opzione
 mancante. Su 405 mappe, 7 dichiaravano un pattern con `|`: **2 conclusioni
 "nessuna" erano smentite** (`trust_signal.md` → README:463,
 `trust_calibration.md` → README:249), 5 reggevano. Due su sette, non sette su
-sette — il numero è di Nadia, che aveva tutto da guadagnare a gonfiarlo.
+sette — il numero è di ws4 ML, che aveva tutto da guadagnare a gonfiarlo.
 
 È la regola di casa applicata al RIGHELLO invece che al prodotto: **il grep
 serve a TROVARE, mai a CONTARE**, e qui non trovava nemmeno.

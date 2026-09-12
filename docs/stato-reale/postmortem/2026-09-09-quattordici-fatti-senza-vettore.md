@@ -18,7 +18,7 @@
   scrive non lo sa**: la ricevuta stampa `stored=True judged=True` e non dice
   che il vettore manca, così nove scritture di fila sono passate per riuscite.
 
-* **Causa** — provata da ws5 (Tara) passo per passo, e ricontrollata qui: il
+* **Causa** — provata da ws5 (Piattaforma) passo per passo, e ricontrollata qui: il
   servizio di encoding è morto e rinato con **un altro modello**
   (`e5-base`/768 → `MiniLM`/384); il client lo rifiuta, ed è giusto; in
   `HIPPO_ENCODE_DELEGATE_ONLY=1` non c'è ripiego locale, quindi
@@ -75,8 +75,8 @@
      dichiarazione: senza, chi scrive continuerà a leggere `stored: true` e ad
      andare avanti.
 
-* **Owner** — la causa a monte e T60: **ws5 Tara**. Il rilevatore
-  (`vettori_vuoti.py`) e questa cartella: **ws8 Corrado**. La riga della
+* **Owner** — la causa a monte e T60: **ws5 Piattaforma**. Il rilevatore
+  (`vettori_vuoti.py`) e questa cartella: **ws8 Release**. La riga della
   ricevuta: da assegnare (@lead-audit).
 
 ---
