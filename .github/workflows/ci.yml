@@ -103,8 +103,51 @@ permissions:
   contents: read
 
 jobs:
+  # ─────────────────────────────────────────────────────────────────────────
+  # 🆕 12/09 — QUALE MATRICE. Ridotta sulle richieste, piena su main e sui rami
+  # di integrazione. I numeri che hanno deciso stanno accanto a `test`.
+  #
+  # 🔴 PERCHE' UN JOB E NON UN'ESPRESSIONE IN LINEA: la prima versione metteva
+  # `matrix: ${{ fromJSON(<condizione> && '<ridotta>' || '<piena>') }}` dentro
+  # `strategy`. Il file era YAML valido e GitHub l'ha RIFIUTATO lo stesso:
+  #
+  #     run 34702773087   name=.github/workflows/ci.yml   failure   jobs=0
+  #     «This run likely failed because of a workflow file issue»
+  #
+  # e l'API non espone quale pezzo non gli piace. ⇒ Questa e' la forma
+  # documentata: un job che calcola e un `needs` che legge. Costa ~10 secondi su
+  # ubuntu, e in cambio **si legge**: chi guarda i job vede QUALE matrice e'
+  # stata scelta, invece di dedurla contando le gambe.
+  quale_matrice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrice: ${{ steps.scegli.outputs.matrice }}
+      nome: ${{ steps.scegli.outputs.nome }}
+    steps:
+      - id: scegli
+        shell: bash
+        env:
+          EVENTO: ${{ github.event_name }}
+          RAMO: ${{ github.head_ref }}
+        run: |
+          # ⚠️ LA RIDOTTA E' L'ECCEZIONE, e il verso e' scelto: se l'evento e'
+          # uno che non abbiamo previsto, o la variabile arriva vuota, si
+          # ottiene la matrice PIENA. Si sbaglia verso piu' copertura.
+          if [ "$EVENTO" = "pull_request" ] && [ "${RAMO#integrazione/}" = "$RAMO" ]; then
+            echo 'nome=ridotta' >> "$GITHUB_OUTPUT"
+            echo 'matrice={"include":[{"os":"ubuntu-latest","python-version":"3.12"},{"os":"windows-latest","python-version":"3.12"}]}' >> "$GITHUB_OUTPUT"
+          else
+            echo 'nome=piena' >> "$GITHUB_OUTPUT"
+            echo 'matrice={"os":["ubuntu-latest"],"python-version":["3.10","3.11","3.12","3.13"],"include":[{"os":"windows-latest","python-version":"3.12"},{"os":"macos-latest","python-version":"3.12"}]}' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Dillo a voce alta
+        run: |
+          echo "::notice title=Matrice::${{ steps.scegli.outputs.nome }} — evento ${{ github.event_name }}, ramo '${{ github.head_ref }}'"
+
   test:
     name: test (${{ matrix.os }} / py${{ matrix.python-version }})
+    needs: quale_matrice
     runs-on: ${{ matrix.os }}
     # 45, not 30: the windows-latest runners take ~20-24 min for the full
     # suite (≈3-4x ubuntu/macos), leaving a razor-thin margin under a 30 min
@@ -186,7 +229,6 @@ jobs:
     timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 50 }}
     strategy:
       fail-fast: false
-      matrix:
         # Cost-aware matrix (2026-07-04): ubuntu across all supported Python
         # versions (cheap runner = full version coverage) + one windows and one
         # macos leg for OS coverage. Cuts ~11 legs to 6 — matters because this
@@ -216,13 +258,49 @@ jobs:
         # 📌 Il dato che resta valido, misurato alle 13:47 sui run in volo:
         #     ubuntu 4 in esecuzione · 24 in coda   |   windows 6 · 1
         # Sono i job LENTI a tenere i posti, non il numero di job.
-        os: [ubuntu-latest]
-        python-version: ["3.10", "3.11", "3.12", "3.13"]
-        include:
-          - os: windows-latest
-            python-version: "3.12"
-          - os: macos-latest
-            python-version: "3.12"
+      # ─────────────────────────────────────────────────────────────────────
+      # 🆕 12/09 — DUE MATRICI: ridotta sulle PR, piena su main e sui rami di
+      # integrazione. La decisione e' del coordinamento; qui stanno i numeri.
+      #
+      # LA COSA MISURATA, non stimata (12/09 16:30, `gh run list` + i job):
+      #
+      #     in corso / in coda        ubuntu 14/15 · windows 5/3 · macos 1/1
+      #
+      # ⇒ **La coda e' ubuntu**: 15 dei 19 job in coda. Tagliare tre gambe
+      # ubuntu e una macos per PR toglie posti proprio a cio' che e' fermo.
+      #
+      # E le durate, sui soli job RIUSCITI degli ultimi 20 run (un job rosso
+      # finisce prima e abbasserebbe la mediana):
+      #
+      #     windows py3.12   61,5 min (2 campioni, 53,6-61,5)
+      #     ubuntu  py3.12   30,4    ubuntu py3.11  29,3
+      #     ubuntu  py3.13   28,1    ubuntu py3.10  27,3
+      #     macos   py3.12   25,8
+      #
+      #     per run di PR:  6 gambe ≈ 202 minuti-macchina  ->  2 ≈ 92  (−55%)
+      #
+      # 🪞 QUESTA RIGA E' STATA PROVATA E RITIRATA IL 15/08 — vedi il commento
+      # qui sotto. Quella era «windows solo su main e sui PR», e fu INERTE
+      # perche' la condizione nominava main e noi pubblichiamo tutto su main.
+      # Questa e' l'inversa (si taglia sulle PR, non su main) e il beneficio e'
+      # misurato sopra invece che atteso. **Una cura che paga il prezzo e non
+      # da' il beneficio e' peggio di nessuna cura**: e' la stessa frase, e
+      # stavolta il beneficio ha un numero.
+      #
+      # ⚠️ IL PREZZO, dichiarato: su una PR non si vedono piu' py3.10, py3.11,
+      # py3.13 e macOS. Una rottura legata a una versione arriverebbe piu'
+      # tardi — **ma non su main**: il lotto passa da un ramo `integrazione/*`,
+      # dove la matrice e' PIENA, e quello gira PRIMA della fusione. Senza i
+      # rami di integrazione questo taglio non lo proporrei.
+      #
+      # 🔑 E IL VERSO DELLA CONDIZIONE E' SCELTO: la ridotta e' l'ECCEZIONE. Se
+      # l'espressione sbaglia, o l'evento e' uno che non abbiamo previsto, si
+      # ottiene la matrice PIENA — si sbaglia verso piu' copertura, mai verso
+      # meno. Un `if` scritto al contrario avrebbe il difetto opposto e nessuno
+      # se ne accorgerebbe, perche' il verde arriverebbe prima.
+      # (scalare PIEGATO `>-`: l'espressione deve essere UNA riga sola per
+      # GitHub Actions, e cosi' resta leggibile senza diventare illeggibile.)
+      matrix: ${{ fromJSON(needs.quale_matrice.outputs.matrice) }}
     steps:
       # ⚠️ `fetch-depth: 0` NON e' zelo: senza, il clone e' profondo 1 e il
       # presidio del RILASCIO diventa MUTO. Cerca il commit che ha introdotto
