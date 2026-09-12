@@ -1,8 +1,8 @@
 # I comandi della CLI senza una prova alla porta
 
-**Albero** `20257636044a98ec0ba7fd2fea4bfc3ada0cfe1a` · **owner** ws1 Marie (QA) ·
-**09-10/09/2026** · chiesto da @lead (post delle 23:34, punto 7) ·
-**la gravita' la fissa @Iris (Product Owner)**, questa lista non la ordina.
+**Albero** `20257636044a98ec0ba7fd2fea4bfc3ada0cfe1a` · **owner** ws1 (QA) ·
+**09-10/09/2026** · chiesto dal coordinamento (punto 7) ·
+**la gravita' la fissa il Product Owner**, questa lista non la ordina.
 
 ## Come si rifa' questa misura
 
@@ -37,7 +37,7 @@ trattare un difetto come un dettaglio.
 | `verimem facts capability` | MAI TOCCATO | nessun test lo nomina | `verimem facts capability` → gira (EXIT=0) |
 | `verimem facts restore` | ③ NOMINATO | il nome compare nei test e nient'altro | **non eseguito** (vedi sotto) |
 | `verimem facts safety` | MAI TOCCATO | nessun test lo nomina | `verimem facts safety` → gira (EXIT=0) |
-| `verimem gateway backup` | MAI TOCCATO | nessun test lo nomina | `verimem gateway backup C:/Users/aurel/AppData/Local/Temp/claude/C--Users-aurel-Desktop-ProgettiAI/811d4eda-76dd-4222-b989-2aa7e22c1cb5/scratchpad/gwb2` → gira (EXIT=0) |
+| `verimem gateway backup` | MAI TOCCATO | nessun test lo nomina | `verimem gateway backup <una cartella di lavoro vuota>` → gira (EXIT=0) |
 | `verimem gateway keys create` | ③ NOMINATO | il nome compare nei test e nient'altro | `verimem gateway keys create --tenant t1` → gira (EXIT=0) |
 | `verimem gateway keys list` | MAI TOCCATO | nessun test lo nomina | `verimem gateway keys list` → gira (EXIT=0) |
 | `verimem gateway keys revoke` | MAI TOCCATO | nessun test lo nomina | `verimem gateway keys revoke k-inesistente` → errore leggibile, corretto |
