@@ -214,14 +214,6 @@ def test_CONTROLLO_senza_la_citazione_il_ritiro_avviene_ancora():
 # ingresso che la prossima esecuzione boccia.
 # ═══════════════════════════════════════════════════════════════════════════
 
-#: Il taglio del moat, LETTO DAL PRODOTTO e non copiato qui. Era `40.0`
-#: scritto a mano: una soglia duplicata e' la classe ① delle nostre cinque —
-#: una copia invece della superficie unica — e l'avevo commessa dentro un
-#: banco che parla di presidi disarmati. Se il nome sparisce, questo file
-#: muore con un ImportError, che e' il segnale giusto: la soglia si e' mossa.
-from verimem.grounding_gate import LOCAL_CE_MOAT_THRESHOLD  # noqa: E402
-
-
 def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
     """Il difetto del PRODOTTO che la cura del banco aveva smesso di mostrare.
 
@@ -253,11 +245,30 @@ def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
     tornerebbe invisibile per sempre invece che per una cura. Il margine sta
     nel messaggio, cosi' chi legge un rosso qui trova il numero davanti.
 
-    🔑 COSA LO ARMA: la distribuzione del punteggio sullo STESSO ingresso,
-    ripetuto. Se i valori stanno a cavallo del taglio, il margine minimo
-    esiste e vale quel che dice la misura; se sono stabili e lontani, la
-    diagnosi del 2026-09-12 e' sbagliata e va ritirata — compresa la mia.
-    Fino ad allora questo file NON dichiara chiuso T69.
+    🔑 E IL 10.0 NON ERA SOLO «UNA SCELTA»: ERA FUORI SCALA DI DUE ORDINI DI
+    GRANDEZZA. Misurato in CI lo stesso giorno da un banco di un'altra
+    sessione, sullo stesso ingresso::
+
+        punteggio  99.95      soglia resa dal giudice  99.64
+        margine reale                                   0.31 punti
+
+    Un minimo di 10.0 avrebbe dichiarato in difetto OGNI ingresso di questo
+    banco, compresi quelli sani: non era conservativo, era un numero preso da
+    un'altra scala — la stessa confusione che l'assert qui sotto adesso evita
+    leggendo la soglia dalla ricevuta.
+
+    ⚠️ E LA DIAGNOSI CHE HA GENERATO QUESTO FILE E' STATA FALSIFICATA, dallo
+    stesso banco: la premessa era «un pezzo che la fonte non dice abbassa il
+    punteggio», e la misura dice che con la fonte di oggi il punteggio e'
+    99.95 — quasi il massimo — mentre la cura lo ABBASSA a 99.71, cioe' porta
+    il margine da 0.31 a 0.07. La causa dell'intermittenza non e' l'id nella
+    proposizione: e' che il setup vive a tre decimi di punto dal taglio, su
+    una scala di 100. Questa lettura era mia, ed era una lettura del codice
+    con una predizione scritta prima: l'esperimento l'ha smentita, che e'
+    esattamente il motivo per cui l'esperimento esisteva.
+
+    ⇒ QUESTO FILE NON DICHIARA CHIUSO T69, e il margine minimo non si arma
+    finche' non lo dice la distribuzione dei punteggi.
     """
     db = Path(tempfile.mkdtemp()) / "margine.db"
     mem = Memory(str(db))
@@ -272,13 +283,32 @@ def test_OSSERVATORE_registra_il_margine_ma_NON_lo_giudica_ancora():
 
     punteggio = ricevuta.get("grounding_score")
     stato = ricevuta.get("status")
-    assert punteggio is not None, (
-        "la ricevuta non porta piu' `grounding_score`: senza quel numero il "
-        "margine fra un ingresso e il taglio del moat non e' misurabile da "
-        "nessuna porta, e il difetto del 2026-09-12 — un ingresso legittimo "
-        "ammesso per un soffio — torna invisibile. Non abbassare questo "
-        f"assert: rimetti il campo sulla ricevuta. ricevuta={ricevuta}")
+    #: ⚠️ LA SOGLIA SI PRENDE DALLA RICEVUTA, non da una costante. Due versioni
+    #: di questo file hanno gia' sbagliato qui, in due modi diversi:
+    #:   · `SOGLIA_DEL_MOAT = 40.0` copiata a mano nel banco;
+    #:   · poi `LOCAL_CE_MOAT_THRESHOLD` importata dal prodotto — che toglie la
+    #:     copia ma resta il numero sbagliato.
+    #: Il 2026-09-12 un banco di un'altra sessione ha misurato in CI che il
+    #: giudice rende `config_threshold = 99.64` e punteggi legittimi a
+    #: 99.7-99.9: 40.0 e 99.64 non sono due valori della stessa cosa, sono
+    #: tagli su DUE SCALE diverse, e `local_grounding.py:917` lo scrive —
+    #: «the config cut must never be applied to a claude-scale score».
+    #: Un margine calcolato contro il taglio dell'altra scala e' un numero che
+    #: sembra enorme (~60) mentre quello vero e' 0,31.
+    #: La ricevuta porta la soglia CONTRO CUI QUESTO punteggio e' stato
+    #: giudicato (`adjudication.threshold`, la stessa che legge cli.py:1411):
+    #: presa da li', non c'e' nessuna scala da sbagliare.
+    soglia = (ricevuta.get("adjudication") or {}).get("threshold")
+    assert punteggio is not None and soglia is not None, (
+        "la ricevuta non porta piu' `grounding_score` e la sua "
+        "`adjudication.threshold`: senza quei due numeri INSIEME il margine "
+        "fra un ingresso e il taglio non e' misurabile da nessuna porta, e il "
+        "difetto del 2026-09-12 — un ingresso legittimo ammesso per tre "
+        "decimi di punto — torna invisibile. Servono entrambi e dalla STESSA "
+        "ricevuta: un punteggio confrontato con una soglia presa altrove puo' "
+        "stare su un'altra scala. Non abbassare questo assert: rimetti i "
+        f"campi sulla ricevuta. ricevuta={ricevuta}")
 
-    margine = float(punteggio) - LOCAL_CE_MOAT_THRESHOLD
-    print(f"[T69] grounding={punteggio} soglia={LOCAL_CE_MOAT_THRESHOLD} "
-          f"margine={margine:+.2f} stato={stato!r}")
+    margine = float(punteggio) - float(soglia)
+    print(f"[T69] grounding={punteggio} soglia={soglia} "
+          f"margine={margine:+.4f} stato={stato!r}")
