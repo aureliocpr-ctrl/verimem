@@ -47,6 +47,23 @@ chiude una persona, e il documento dice **dove guardare**.
    fallimento vero. ⇒ Non è solo che un run può sembrare rosso essendo verde:
    **un run può sembrare senza verdetto avendone uno.** Il piano su cui si
    legge è sempre il JOB.
+   🔧 **E il log di un job FINITO non si legge dal run.** `gh run view --job
+   <id> --log-failed` risponde *«run is still in progress; logs will be
+   available when it is complete»* anche quando quel job è chiuso da mezz'ora
+   col suo `conclusion: failure`: i log si servono a **run** chiuso, quindi in
+   una matrice con una gamba da 60 minuti il rosso di una gamba da 25 resta
+   illeggibile per più di mezz'ora. L'endpoint del singolo job invece risponde
+   subito — misurato il 12/09, 2 MB mentre l'altro comando diceva «non pronto»:
+   ```bash
+   gh api repos/<owner>/<repo>/actions/jobs/<job_id>/logs > job.log
+   grep -aE "FAILED |AssertionError|[0-9]+ failed," job.log
+   ```
+   ⚠️ Il **`-a`** non è un dettaglio: il file contiene byte non testuali e senza
+   quello `grep` stampa *«binary file matches»* e nient'altro — **un'altra
+   uscita vuota che si legge come un'assenza** (vedi la trappola 15).
+   🔑 In tutto: `gh pr checks` (mescola run diversi) · il RUN · il JOB ·
+   `commits/<SHA>/check-runs`. **Quattro piani, quattro risposte alla stessa
+   domanda**: si dichiara sempre su quale si è letto.
 2. **Una PR la cui base non è `main` non fa partire niente.** I trigger sono
    `pull_request: branches: [main]`: una PR impilata su un altro ramo **non ha
    `ci` né `security`**, e il vuoto si legge come un verde. Serve
