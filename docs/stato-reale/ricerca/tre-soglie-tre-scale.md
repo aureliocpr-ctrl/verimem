@@ -62,9 +62,32 @@ Che non sia teorico lo dice la giornata: **due pari con il codice davanti** hann
 ventun minuti numeri di scale diverse, e una delle due autocorrezioni fatte in buona fede era
 essa stessa sbagliata.
 
+## 4-bis. E non sono solo tre numeri: c'è un giudice che non usa numeri affatto
+
+*Portato da chi fa QA nel pomeriggio, leggendo un caso già registrato nel prodotto. Lo riporto
+qui perché senza questo la pagina sarebbe vera e incompleta.*
+
+Nel codice è documentato un caso in cui **il moat approva con 99,89** e a fermare la scrittura è
+un **layer lessicale**: la regola dice *«il claim afferma un valore che la fonte non contiene»*.
+Due decisori di natura diversa, che convivono **per disegno**:
+
+| decisore | come decide | cosa restituisce |
+|---|---|---|
+| il moat | un **punteggio** su una scala, contro un taglio | un numero e un verdetto |
+| il layer lessicale | una **regola sul testo** (un valore affermato che la fonte non ha) | un avviso con il nome del layer |
+
+⇒ **Un punteggio alto non dimostra che la scrittura sia passata**, e — lezione del giorno —
+*«il punteggio è 99,6 contro un taglio di 40, quindi non può essere stata la soglia, quindi la
+causa è ignota»* è un ragionamento **sbagliato**: la causa non è ignota, è **un altro decisore**.
+
+🔴 **E la ricevuta li appiattisce.** Nel caso registrato il campo che dovrebbe nominare chi ha
+deciso riportava un generico `'gate'`, mentre il nome vero del layer stava **nella stessa
+ricevuta**, in un altro campo. Chi lesse quel generico concluse, in buona fede, **il contrario
+del vero**: *«non è stato il layer»*. Un'etichetta generica **si legge come un'assenza**.
+
 ## 5. La cura che propongo — è una riga di contratto, non un algoritmo
 
-**Ogni numero che esce dal giudizio porta con sé il nome della sua scala.** Il punteggio e la
+**Ogni verdetto dice CHI ha deciso e SU QUALE BASE — e ogni numero porta il nome della sua scala.** Il punteggio e la
 soglia viaggiano insieme all'esecutore che li ha prodotti — la ricevuta già dice **chi** ha
 giudicato (aggiunto oggi da chi tiene la piattaforma): **manca il fratello di quel campo, "su
 quale scala"**.
