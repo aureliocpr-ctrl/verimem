@@ -57,6 +57,14 @@ fonte, e che in passato è arrivato a **centinaia di secondi** al primo uso.
 Se sulla CPU costa sensibilmente di più, A **non è gratis**: scambia memoria della scheda con
 latenza dell'utente, e va allora ristretta ai processi che **non** giudicano (i client che solo
 leggono), lasciando l'acceleratore a **uno** che giudica.
+
+🔎 **Un indizio a favore di A, e il motivo per cui NON basta**: nella misura la scheda risulta
+**allocata al 90 % con lo 0 % di utilizzo**. Tiene separate due cose che è facile confondere —
+**il contesto è riservato** (e occupa) e **il calcolo avviene** (e usa). Lo zero dice che in
+*quell'istante* nessuno calcolava; **non** dice che il giudizio non usi la scheda quando gira.
+⇒ La misura giusta non è un'istantanea a riposo: è l'utilizzo **durante** un giudizio. Se anche
+lì è vicino a zero, allora quei contesti sono puro peso e A è gratis davvero; se sale, A ha un
+prezzo e va ristretta come sopra.
 ⚠️ Questa è la falsificazione che più facilmente passa inosservata, perché A *sembra* una pulizia
 e invece è una scelta di prestazioni.
 
@@ -144,6 +152,32 @@ essere **il motivo per cui B non si fa affatto**.
 punta. Se il prodotto è già oggi vicino al limite con **un** client, B non è «l'ultima strada»:
 è **una strada chiusa**, e la vera alternativa diventa «meno client pesanti», non «un motore
 solo».
+
+**Conto fatto sui numeri che già abbiamo — è una STIMA, non una misura, e le assunzioni sono
+dichiarate.** Due tempi documentati nelle cronache interne dei giorni scorsi (regimi diversi,
+non misurati oggi): **~303 s** il primo salvataggio con fonte dal pacchetto sotto la porta
+MCP (caso **freddo**, comprende il caricamento del giudice) e **~22 s** un giudizio **a
+regime** su CPU.
+
+Assunzioni: il giudizio è **seriale** (un client alla volta) e ogni scrittura con fonte ne paga
+uno intero. Allora la capacità della coda condivisa è
+
+    60 s / 22 s  ≈  2,7 scritture con fonte al minuto, in tutto e per tutti i client
+
+⇒ **Con tre client che salvano insieme, il terzo aspetta oltre un minuto**; con dieci, l'ultimo
+aspetta quasi quattro minuti — e la coda cresce senza limite appena il carico supera quella
+soglia. Oggi quel costo non si vede perché **ogni client ha il suo giudice** e i giudizi vanno
+in parallelo: **è esattamente la cosa che B toglie**.
+
+⚠️ **Che cosa questa stima NON dice**: non dice quante scritture con fonte al minuto facciamo
+davvero nel momento di punta — **non è misurato**, ed è il numero che trasforma la stima in
+verdetto. Non dice nulla su un giudice che sappia lavorare in parallelo: se ne esistesse uno, la
+soglia si sposta e F6 cade.
+
+⇒ **Conseguenza per la raccomandazione**: B non va descritta ad Aurelio come «la terza strada,
+se serve». Va descritta come **«la strada che richiede prima di rendere il giudizio parallelo o
+molto più veloce»** — altrimenti scambiamo un vincolo di memoria con un vincolo di attesa, e il
+secondo lo paga l'utente a ogni salvataggio.
 
 ## 4. La misura che deciderebbe l'intera raccomandazione
 
