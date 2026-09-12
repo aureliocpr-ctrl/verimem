@@ -313,6 +313,33 @@ class EncodeServer:
             return {"ok": True,
                     "scores": [float(s) for s in self._rerank_fn(coppie)]}
         if "gate_pairs" in req:
+            # `max_length`: il client ha chiesto di RIDURRE QUI lo span alla
+            # finestra del modello. Lo fa il daemon perche' il tokenizzatore
+            # ce l'ha gia' caricato: farlo nel server costava 1292 MB e 31,7 s
+            # a chi poi delegava comunque il giudizio (misurato 2026-09-12).
+            # Best-effort come tutto il resto: se la riduzione non riesce, si
+            # giudica lo span intero e il modello tronca da se', che e'
+            # esattamente il comportamento di prima.
+            if req.get("max_length"):
+                try:
+                    from .local_grounding import get_local_judge
+                    _giudice = get_local_judge()
+                    # ⚠️ IL BUDGET VIAGGIA DENTRO LA RICHIESTA E SI APPLICA
+                    # SULLA RICHIESTA. Qui gira un thread per connessione: la
+                    # prima versione scriveva il budget su `_giudice.max_length`
+                    # e lo rimetteva a posto nel `finally`, cioe' mutava uno
+                    # stato CONDIVISO. Due richieste con budget diversi si
+                    # sovrascrivevano il valore, e il danno non sarebbe stato un
+                    # errore ma uno span tagliato con la finestra di un altro.
+                    # Nessun attributo del giudice viene toccato.
+                    _finestra = int(req["max_length"])
+                    req = dict(req)
+                    req["gate_pairs"] = [
+                        [_giudice._entro_la_finestra(str(p[0]), _finestra),
+                         str(p[1])]
+                        for p in req["gate_pairs"]]
+                except Exception:  # noqa: BLE001 — mai far cadere un giudizio
+                    pass
             # Il GIUDICE DEL MOAT, che e' un modello diverso dal reranker. Qui
             # non si guadagna solo latenza: finche' viveva nel processo che
             # scrive, le scritture che arrivavano durante il warm venivano
@@ -368,6 +395,13 @@ class EncodeServer:
                 "dim": self._model_dim,
                 "started_at": time.time(),
                 "token": self._token,
+                # CHE COSA SO FARE, dichiarato invece che indovinato: questo
+                # daemon riduce lui lo span alla finestra del modello se il
+                # client gli manda `max_length`. Un daemon piu' vecchio non
+                # scrive questa chiave, e il client allora riduce di qua come
+                # ha sempre fatto: il costo resta suo, ma nessuno perde
+                # qualita' senza accorgersene.
+                "applies_window": self._gate_fn is not None,
             }),
             encoding="utf-8",
         )
