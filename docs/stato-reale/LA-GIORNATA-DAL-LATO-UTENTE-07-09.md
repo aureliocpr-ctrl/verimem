@@ -1,7 +1,7 @@
 # 07/09 — la giornata dal lato di chi usa verimem
 
-*Scritto da @ws7 Iris (PO) alle 13:25, sulla finestra 12:25 → 14:25, tip letto
-`a8ca6fd0`. **Il filtro è quello che Aurelio ha dato ieri**: solo ciò che un
+*Scritto da @ws7 Product Owner (PO) alle 13:25, sulla finestra 12:25 → 14:25, tip letto
+`a8ca6fd0`. **Il filtro è quello che la direzione ha dato ieri**: solo ciò che un
 utente **paga o sente**, con i numeri. Ogni numero porta chi l'ha misurato;
 quelli che non ho riprodotto io lo dicono.*
 
@@ -20,7 +20,7 @@ quelli che non ho riprodotto io lo dicono.*
 ### La cura del P0 di ieri è un regresso, e la misura è di chi l'aveva scritta
 
 Ieri avevo chiuso T26 con *«la prima scrittura aspetta 42-69 s, e quei secondi
-**sono** il giudizio»*. **Non lo sono.** Matrice di **@ws1 Marie**, 18 giri nella
+**sono** il giudizio»*. **Non lo sono.** Matrice di **@ws1 QA**, 18 giri nella
 stessa ora, tre per cella:
 
 | configurazione | v1 `b4a96369` | v2 `da0f3106` | fattore |
@@ -31,7 +31,7 @@ stessa ora, tre per cella:
 
 ⚠️ **La terza riga è stata ribaltata alle 13:22, dopo che questa tabella era già
 scritta**: quella cella **non è un utente**, è la nostra sessione con
-`HIPPO_ENCODE_DELEGATE_ONLY='1'` ereditata da `~/.claude/settings.json`. **La CLI
+`HIPPO_ENCODE_DELEGATE_ONLY='1'` ereditata dalla configurazione dell'ambiente. **La CLI
 di un utente vero, senza daemon, giudica in 22 s.** *Lasciata qui con la
 correzione accanto invece che cancellata: è il numero su cui stavamo per
 costruire un P0 sbagliato.*
@@ -40,7 +40,7 @@ costruire un P0 sbagliato.*
 cella. ⇒ **l'attesa non ha cambiato un solo verdetto su 18 giri.**
 
 **Quanto pesa davvero**: @ws1 alle 12:58 — il costo si paga **una volta per
-processo** (seconda scrittura **0,2 s**, 12 giudicate su 12). **@ws5 Tara**, che
+processo** (seconda scrittura **0,2 s**, 12 giudicate su 12). **@ws5 Piattaforma**, che
 la cura l'aveva scritta, **ha portato lei il regresso** alle 12:35 e **ha
 ritirato per prima la propria proiezione** alle 13:01 (*«contavo le scritture
 invece dei processi»*). 🔑 **E il peso non è uniforme: dipende dalla porta.**
@@ -122,7 +122,7 @@ fermata ha grounding 16,51, le sei passate 99,9x) e `Memory.add` passa
 
 ### 🔑 Il numero che va detto per porta, o inganna
 
-@ws4 Nadia, 13:50, sola lettura su **10.260 scritture**:
+@ws4 ML, 13:50, sola lettura su **10.260 scritture**:
 
 ```
 scritture CON fonte              10.260
@@ -140,7 +140,7 @@ fatti CON fonte dalla porta MCP:  0
 **un minuto dopo il ritiro**. *I 96 non sono un tasso: sono **tre lotti in nove
 mesi**.*
 
-**Due conseguenze, e la seconda tocca il testo che leggerà Aurelio:**
+**Due conseguenze, e la seconda tocca il testo che leggerà la direzione:**
 
 1. 🔑 **Alcune scritture con fonte vengono giudicate e altre no, e non è il
    daemon.** @ws4 l'ha **provato**: nella finestra `30/08 20:30-21:00`, **233
@@ -162,7 +162,7 @@ mesi**.*
 | # | stato al 07/09 13:25 |
 |---|---|
 | **D-1** | 🔴 **confermato alla porta, 1/7** — misurato oggi, tre cause escluse, una da provare |
-| **T26a** | 🪞 **ribaltato alle 13:22, e il numero capovolto era mio.** La cella «senza daemon» **non è la configurazione di un utente**: era la nostra sessione, con `HIPPO_ENCODE_DELEGATE_ONLY='1'` **ereditata da `~/.claude/settings.json` su tutte le istanze** (@ws4 lo rileva, @ws1 lo verifica su di sé e ritira il proprio reperto). **La CLI di un utente vero, senza alcun daemon, GIUDICA in 22 s** (`98.36788940429688`) contro 79 s `L4-skipped` con la variabile. ⇒ **resta P0**; il percorso certo è **U-B (un agente via MCP)**, **ma non solo**: alle 13:47 anche la porta **SDK** ha scritto con fonte un fatto entrato **non giudicato**, col daemon verificato usabile — mentre alle 13:10 la stessa chiamata giudicava a 99,9. **Non sappiamo perché**, e il perimetro è quindi **più largo di come l'avevo scritto io alle 13:35**: colpisce la configurazione `delegate-only`, che è come il server MCP gira per costruzione |
+| **T26a** | 🪞 **ribaltato alle 13:22, e il numero capovolto era mio.** La cella «senza daemon» **non è la configurazione di un utente**: era la nostra sessione, con `HIPPO_ENCODE_DELEGATE_ONLY='1'` **ereditata dalla configurazione dell'ambiente su tutte le istanze** (@ws4 lo rileva, @ws1 lo verifica su di sé e ritira il proprio reperto). **La CLI di un utente vero, senza alcun daemon, GIUDICA in 22 s** (`98.36788940429688`) contro 79 s `L4-skipped` con la variabile. ⇒ **resta P0**; il percorso certo è **U-B (un agente via MCP)**, **ma non solo**: alle 13:47 anche la porta **SDK** ha scritto con fonte un fatto entrato **non giudicato**, col daemon verificato usabile — mentre alle 13:10 la stessa chiamata giudicava a 99,9. **Non sappiamo perché**, e il perimetro è quindi **più largo di come l'avevo scritto io alle 13:35**: colpisce la configurazione `delegate-only`, che è come il server MCP gira per costruzione |
 | **T8-bis** | 🔴 **sale a P0 `[VETRINA]`, e la faccia nuova è l'opposta della mia** (reperto di @ws1, 13:26): nella configurazione **esatta** in cui la scrittura torna `L4-skipped`, `verimem doctor` risponde **otto righe tutte ✓** — *«the grounding moat is ON»*. **Chi chiede «perché la mia scrittura non è giudicata?» riceve «va tutto bene»**, e la ricevuta del prodotto lo manda proprio lì |
 | **T19 · D-6 · T1** | invariati, nessuna misura nuova oggi |
 | **T16** | ✅ curato, invariato |

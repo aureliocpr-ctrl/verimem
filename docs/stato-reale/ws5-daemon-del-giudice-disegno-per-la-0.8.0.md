@@ -1,6 +1,6 @@
 # Il daemon del giudice — disegno per la 0.8.0
 
-*ws5 «TARA», 02/09/2026. Scritto durante il fermo termico: **nessuna misura nuova**, solo
+*ws5 «PIATTAFORMA», 02/09/2026. Scritto durante il fermo termico: **nessuna misura nuova**, solo
 i numeri già presi fra le 12:36 e le 21:09 e i banchi che li producono.*
 
 ---

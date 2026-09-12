@@ -1,7 +1,7 @@
 # I tre percorsi d'uso — definizione, criterio di arrivo, difetti che bloccano
 
-**Livello 2 del disegno esploso, «l'utente seduto alla scrivania».** Iris (ws7,
-Product Owner) definisce e dà la gravità; **Giano (ws2), Tara (ws5) e Marie
+**Livello 2 del disegno esploso, «l'utente seduto alla scrivania».** Il Product Owner
+(ws7) definisce e dà la gravità; **Porte (ws2), Piattaforma (ws5) e QA
 (ws1) eseguono e cronometrano.** `2026-09-06`.
 
 ⚠️ **Il regime NON è uniforme, e questa riga prima prometteva il contrario**
@@ -27,8 +27,8 @@ inciampo non serve a decidere niente.
 **③ Eseguito ≠ supportato.** Un percorso è **eseguito** quando qualcuno di noi
 ci arriva in fondo. È **supportato** quando ci arriva **su tutte e tre le porte**
 (SDK, CLI, MCP) e **senza sapere dove guardare** — cioè senza conoscere i nostri
-aggiramenti. **Al 06/09 tutti e tre sono ESEGUITI** (U-A da Giano il 04/09, U-B e
-U-C da Iris nella notte fra il 5 e il 6) e **nessuno dei tre è SUPPORTATO**:
+aggiramenti. **Al 06/09 tutti e tre sono ESEGUITI** (U-A da Porte il 04/09, U-B e
+U-C da Product Owner nella notte fra il 5 e il 6) e **nessuno dei tre è SUPPORTATO**:
 nessuno è stato provato su tutte e tre le porte, e nessuno da qualcuno che non ci
 conosce.
 
@@ -39,7 +39,7 @@ conosce.
 **Chi è.** Un agente che chiude compiti e scrive in memoria quello che ha fatto,
 e che rileggerà se stesso fra una settimana. È il caso per cui il prodotto esiste.
 
-**Cosa fa, passo per passo** — misurato da Giano sul pacchetto `0.7.6` da PyPI,
+**Cosa fa, passo per passo** — misurato da Porte sul pacchetto `0.7.6` da PyPI,
 store isolato, il **04/09**:
 
 | # | passo | esito |
@@ -71,7 +71,7 @@ porte su due.
   quello di prima. **Si chiude rifacendo il passo, non correggendo la riga.**
 - **T1 · P0** — se il primo passo lo fa dalla porta MCP a giudice freddo, la
   risposta arriva dopo **313-903 s**: contiene la spiegazione giusta (identica a
-  quella della CLI, misurata da Tara su main e sulla 0.7.6), ma **il client ha
+  quella della CLI, misurata da Piattaforma su main e sulla 0.7.6), ma **il client ha
   smesso di ascoltare molto prima**, e in fondo all'attesa il fatto può entrare
   `judged=False`. *(cura in corso, finestra ①)*
 - **T9 · P1** — se un fatto è scaduto, `facts_recall` e `ask` non lo dichiarano:
@@ -104,14 +104,14 @@ subito sotto la tabella):*
 chi ha scritto cosa, quando, e perché il valore corrente è quello — senza
 chiedere niente a nessuno.*
 
-### 🟢 **ESEGUITO** — 06/09 00:00, Iris, su `origin/main` (`95e886bb`), con la fonte e il giudice acceso
+### 🟢 **ESEGUITO** — 06/09 00:00, Product Owner, su `origin/main` (`95e886bb`), con la fonte e il giudice acceso
 
 | # | passo | esito |
 |---|---|---|
 | 1 | due scrittori diversi sullo stesso store | ✅ |
 | 2 | il secondo vede **da chi viene** il fatto del primo | ✅ `writer_principal` = `anna`/`bruno`, valorizzato e giusto |
 | 3 | uno **corregge** il fatto dell'altro | ✅ la correzione è **giudicata**: `cross_encoder`, score 99,45, tier `high` |
-| 4 | un terzo riceve **solo il corrente** | 🔴 **NO su due porte su due**, e **la causa è una sola: il write.** SDK: i due fatti coesistono, `superseded_by` **nullo su entrambi**. **MCP, misurato il 06/09 03:03** (albero `ca28d8cf`, prima della cura di T14): la lettura restituisce **2 fatti**, Adyen **e** Stripe — *«due fornitori di pagamento per lo stesso servizio, e nulla dice quale vale»*. ⚠️ **La porta NON ha colpa, e l'ho verificato dopo che @ws2 Giano me l'ha fatto notare**: `include_superseded` è spento di default e presidiato, e con una supersessione **creata esplicitamente** la stessa lettura torna **1 fatto solo** (banco `banchi/ws7-la-porta-mcp-espone-superseded-by.py`). ⇒ Se ne arrivano due è perché **per lo store non sono «corrente + superato», sono due fatti distinti**: è legittimo che tornino entrambi, ed è **T14** — il difetto sta in chi non ha creato la relazione. *(banco `banchi/ws7-u-b-passo-4-la-lettura-dalla-porta-mcp.py`)* |
+| 4 | un terzo riceve **solo il corrente** | 🔴 **NO su due porte su due**, e **la causa è una sola: il write.** SDK: i due fatti coesistono, `superseded_by` **nullo su entrambi**. **MCP, misurato il 06/09 03:03** (albero `ca28d8cf`, prima della cura di T14): la lettura restituisce **2 fatti**, Adyen **e** Stripe — *«due fornitori di pagamento per lo stesso servizio, e nulla dice quale vale»*. ⚠️ **La porta NON ha colpa, e l'ho verificato dopo che @ws2 Porte me l'ha fatto notare**: `include_superseded` è spento di default e presidiato, e con una supersessione **creata esplicitamente** la stessa lettura torna **1 fatto solo** (banco `banchi/ws7-la-porta-mcp-espone-superseded-by.py`). ⇒ Se ne arrivano due è perché **per lo store non sono «corrente + superato», sono due fatti distinti**: è legittimo che tornino entrambi, ed è **T14** — il difetto sta in chi non ha creato la relazione. *(banco `banchi/ws7-u-b-passo-4-la-lettura-dalla-porta-mcp.py`)* |
 | 5 | l'**audit** dice cosa è successo | 🔴 **misurato dalla porta MCP il 06/09**: il registro dice **cosa** (`tool`) e **non chi** (`caller_pid` è un processo, non un'identità → **T15**), e **omette le chiamate rifiutate** (3 chiamate, 2 righe → **T6**, ora verificato) |
 | 6 | un fatto **scade** e chi legge lo sa | ✅ `esclusi_perche_scaduti = {'esclusi': 1, 'nota': "…la loro validità è SCADUTA…"}` |
 
@@ -146,10 +146,10 @@ guardato una rappresentazione della cosa invece della cosa.** Il dettaglio nel b
   è quello che il passo 4 ha trovato: dopo una correzione ammessa a 99,45 **il fatto
   vecchio non viene superato affatto**, e il gate *decide* che i due coesistono
   (`L3-coexistence`: `_entita_diverse` scambia **il valore che cambia** per un soggetto
-  diverso — causa di Aldo). **Su MCP il verdetto non arriva nemmeno**: `anti_confab_warnings`
+  diverso — causa di Dati). **Su MCP il verdetto non arriva nemmeno**: `anti_confab_warnings`
   vuoto, la stringa `L3-coexistence` assente. ⚠️ *Mancava da questa lista fino alle 02:45,
   mentre dieci righe sopra era già scritto che il responsabile è lui — trovato da @ws4
-  Nadia incrociando la pagina con `GRAVITA-DIFETTI`.*
+  ML incrociando la pagina con `GRAVITA-DIFETTI`.*
 - 🔴 **T16 · P0** — la riga che il Quickstart insegna, `Memory("memoria.db")`, è **relativa
   alla CWD**: in un percorso che è letteralmente *«più mani sullo stesso store»*, **due
   cartelle diverse aprono due store diversi**, e la CLI risponde `no facts found` con
@@ -215,16 +215,16 @@ prodotto funziona sul suo esempio; **non dimostra che l'utente abbia capito a
 cosa gli serve**. Un percorso di valutazione che finisce con un `assert` verde
 misura noi, non lui.
 
-### 🟢 **MISURATO** — 06/09 01:19, Iris, ambiente **ripulito di nove variabili**
+### 🟢 **MISURATO** — 06/09 01:19, Product Owner, ambiente **ripulito di nove variabili**
 
     0 creo il venv        7,5 s    1 pip install verimem (PyPI)  280,8 s
     2 verimem warmup     28,3 s    3 verimem doctor                7,8 s  exit=1
     4 il Quickstart      16,3 s    5 una scrittura SUA + richiamo 16,2 s
     ⇒ TOTALE 357 s = 5,9 MINUTI · dentro i dieci
 
-**Il numero era dichiarato «da rifare»** perché i 6,8 minuti di Tara giravano con
+**Il numero era dichiarato «da rifare»** perché i 6,8 minuti di Piattaforma giravano con
 `ENGRAM_DATA_DIR` ereditata. 🔴 **Controllando prima di misurare, le variabili sporche non
-erano una: erano NOVE** — fra cui due che puntavano allo store di Aurelio e
+erano una: erano NOVE** — fra cui due che puntavano allo store reale e
 `HIPPO_ENCODE_DELEGATE_ONLY` (quella di T1). Il banco **le toglie tutte**: *la trappola nota
 si evita, la trappola nuova si evita solo togliendo la classe.*
 I due numeri (6,8 e 5,9) **non sono in contraddizione**: regimi diversi, entrambi dentro i
@@ -240,7 +240,7 @@ cosa giusta; era il mio assert a non misurarla.**
 curato su main, e il difetto vero è che l'exit code di `doctor` non discrimina* (`570f98f5`,
 e la riga nella scheda con
 `fffb56c3`) — *questa sezione l'ha dichiarato «aperto e non chiuso» per tredici minuti
-dopo la chiusura; l'incoerenza l'ha trovata @ws4 Nadia incrociando gli orari dei commit.*
+dopo la chiusura; l'incoerenza l'ha trovata @ws4 ML incrociando gli orari dei commit.*
 `verimem doctor` esce **1 sul pacchetto 0.7.6** dopo un warmup riuscito, per
 `relevance-floor floor 0.0000 computed on 0 facts`, e **propone `fix: verimem warmup`, cioè
 il comando appena eseguito**: è un avviso su uno **store vuoto**, non su un'installazione
@@ -276,7 +276,7 @@ rotta. **Su `main` esce 0** con lo stesso store e lo stesso ambiente: **già cur
    SDK+CLI con un controllo su MCP; **U-B è SDK con il passo 5 dalla porta MCP**;
    U-C è CLI. Finché non lo sono, «supportato» non si può scrivere.
    *(L'elenco ne contava due su tre dicendo «tutti e tre» — la forma del
-   denominatore che si muove, trovata da @ws4 Nadia.)*
+   denominatore che si muove, trovata da @ws4 ML.)*
 4. **Nessuno dei tre è stato eseguito da chi non ci conosce**, ed è il controllo
    che vale più di tutti: noi sappiamo già dove guardare, e questo rende i nostri
    tempi i più ottimistici possibili.
@@ -285,13 +285,13 @@ rotta. **Su `main` esce 0** con lo stesso store e lo stesso ambiente: **già cur
 
 ## 🪞 Perché questa pagina ha avuto **undici** incoerenze in una notte, e cosa le ha trovate
 
-**Alle 01:57 ne ho corrette quattro io, rileggendo.** Alle 02:41 @ws4 Nadia ne ha trovate
+**Alle 01:57 ne ho corrette quattro io, rileggendo.** Alle 02:41 @ws4 ML ne ha trovate
 **altre sette**, e la peggiore era che **il difetto che questa pagina elegge responsabile
 di U-B non era nella lista dei difetti che bloccano U-B**. Le mie quattro e le sue sette
 sono la stessa classe. La differenza non è l'attenzione: **è il metodo.**
 
     io, alle 01:57      ho RILETTO la pagina cercando le incoerenze     ->  4
-    Nadia, alle 02:41   ha INCROCIATO la pagina con GRAVITA-DIFETTI
+    ML, alle 02:41   ha INCROCIATO la pagina con GRAVITA-DIFETTI
                         e con gli ORARI DEI COMMIT                      ->  7
 
 🔑 **Un documento non si controlla da sé.** Le affermazioni che invecchiano qui dentro
@@ -321,12 +321,12 @@ io. Si vedono solo mettendole accanto alla fonte che le ha superate.
 
 ### ⚠️ E la quarta gamba, imparata applicando le altre tre dieci minuti dopo
 
-Ho preso la ② di Nadia — *«D-6 dato come cura sul ramo, mentre è in `main`»* — l'ho
+Ho preso la ② di ML — *«D-6 dato come cura sul ramo, mentre è in `main`»* — l'ho
 corretta qui, e poi **ho cercato la stessa frase altrove**:
 
 ```
 grep "cura ... sul ramo" docs/stato-reale/*.md
-  GRAVITA-DIFETTI.md:20    cura sul ramo (Giano, finestra ②)
+  GRAVITA-DIFETTI.md:20    cura sul ramo (Porte, finestra ②)
   SCHEDA-PRODOTTO.md:261   cura pronta sul ramo
 git branch -r --contains db7dfd11  ->  origin/main       (la cura È in main)
 ```
@@ -340,7 +340,7 @@ una.** Correggere dove ti viene indicato dà **l'illusione di aver corretto**: �
 — *una copia invece della superficie unica* — applicata non al codice ma alle affermazioni
 di stato. 🔑 **Quando una di queste cade, si cerca la frase, non il documento.**
 
-📌 E la conferma che il metodo conta più della cura: Nadia **ha cercato la stessa forma su
+📌 E la conferma che il metodo conta più della cura: ML **ha cercato la stessa forma su
 di sé prima di mandarmela** e ha trovato il proprio verde preso su un `main` indietro di
 uno — conseguenza nulla, e l'ha scritto lo stesso, *«perché è la differenza fra l'ho
 controllato e non poteva succedere»*.

@@ -1,6 +1,6 @@
 # 68 — Il numero pubblico del README, eseguito: la domanda che restava aperta ha una risposta, e la cifra non si riproduce
 
-*ws6/Aldo — 1 settembre 2026, sera. Audit matematico su **un numero non mio**.*
+*ws6/Dati — 1 settembre 2026, sera. Audit matematico su **un numero non mio**.*
 
 Il `README.md:74-76` porta, sulla lacuna più grande dichiarata del gate:
 

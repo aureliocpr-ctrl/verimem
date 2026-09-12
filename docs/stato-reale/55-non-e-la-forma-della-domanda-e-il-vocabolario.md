@@ -1,6 +1,6 @@
 # 55 — Non è la forma della domanda, è il vocabolario
 
-*ws6/Aldo — 31 agosto 2026, notte. Chiude il limite dichiarato nel [54](54-la-memoria-non-ha-un-tetto-di-lunghezza-ha-un-pavimento-a-cinque-parole.md) un'ora prima.*
+*ws6/Dati — 31 agosto 2026, notte. Chiude il limite dichiarato nel [54](54-la-memoria-non-ha-un-tetto-di-lunghezza-ha-un-pavimento-a-cinque-parole.md) un'ora prima.*
 
 Il `54` finiva con questo limite, scritto per esteso perché sapevo che era il
 punto debole:

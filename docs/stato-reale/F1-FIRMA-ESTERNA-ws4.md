@@ -1,4 +1,4 @@
-# F1 · FIRMA ESTERNA — ws4 «Paragone»
+# F1 · FIRMA ESTERNA — ws4 «ML»
 
 **Richiesta**: DIREZIONE di `lead-audit` del 28/08 ore 20:09, punto 1 — «*serve
 UNA firma ESTERNA (ws4 o ws6, a claim) sul doc AGGIORNATO, poi si passa al
@@ -111,5 +111,5 @@ zona sola. 📌 La misura giusta non è il conteggio finale ma **quante volte
 
 ---
 
-**Firmato**: ws4 «Paragone» · 28/08/2026, 20:23 · baseline eseguita in processo
+**Firmato**: ws4 «ML» · 28/08/2026, 20:23 · baseline eseguita in processo
 proprio, codice `Code/HippoAgent`, fuori da pytest.

@@ -1,7 +1,7 @@
 # Verimem — la scheda prodotto
 
-**Livello 1 del disegno esploso, «l'esterno».** Iris (ws7, Product Owner) per la
-promessa, l'utente e la prova; Corrado (ws8, Release) per i concorrenti e i
+**Livello 1 del disegno esploso, «l'esterno».** Product Owner (ws7) per la
+promessa, l'utente e la prova; Release (ws8) per i concorrenti e i
 numeri del mondo (`docs/mondo-esterno/2026-09-05-concorrenti-cosa-non-fanno.md`).
 **Scritta il 2026-09-04, aggiornata il 2026-09-06, sul pacchetto pubblicato
 `verimem==0.7.6`.**
@@ -29,7 +29,7 @@ scrittura passa un cancello di ammissione; un'affermazione che la fonte non
 regge viene **conservata ma non servita** — resta nello store, marcata, fuori
 dal richiamo, e la ricevuta dice chi l'ha fermata.
 
-Misurato sul pacchetto pubblicato, non sul repo (Giano, percorso ① del 04/09):
+Misurato sul pacchetto pubblicato, non sul repo (Porte, percorso ① del 04/09):
 
 ```
 self-claim non sostenuta →  status=quarantined  quarantined_by=moat
@@ -40,7 +40,7 @@ self-claim non sostenuta →  status=quarantined  quarantined_by=moat
 fondo: il giudice deve essere caldo.** Se non lo è, la scrittura con `source`
 entra lo stesso — marcata `L4-skipped`, ma entra — e su una macchina nuova via
 MCP questo accade **dopo un'attesa che va da 313 secondi a oltre 15 minuti**
-(misurato da Corrado e da Tara sul pacchetto pubblicato; il numero è un
+(misurato da Release e da Piattaforma sul pacchetto pubblicato; il numero è un
 intervallo perché **le prime letture erano la finestra di chi guardava**, non la
 durata del fenomeno). **Esegui `verimem warmup` prima di scrivere.** Finché non
 lo fai, il prodotto non ti sta mentendo — te lo scrive nella ricevuta — ma la
@@ -63,7 +63,7 @@ Verimem è per chi ha già pagato quel conto una volta. Se i tuoi agenti scrivon
 solo dati che arrivano da fuori (letture di API, log, documenti), **non ti
 serve**: paghi un cancello che non hai motivo di attraversare.
 
-**Il secondo momento**, misurato da Giano su un giro reale: il mondo cambia (il
+**Il secondo momento**, misurato da Porte su un giro reale: il mondo cambia (il
 fornitore di pagamenti migra), l'agente richiama, e nella risposta ci sono **il
 vecchio e il nuovo insieme** senza un segnale su quale valga. Su quel giro
 verimem ha restituito **solo il corrente** (`nuovo: True · vecchio: False`) e
@@ -89,12 +89,12 @@ entrambi:**
 
 | chi | quando | tempo | regime |
 |---|---|---|---|
-| Tara | 04/09 | **6,8 min** | pacchetto PyPI, ma con variabili d'ambiente **ereditate** |
-| Iris | 06/09 | **5,9 min** | pacchetto PyPI, **ambiente ripulito di nove variabili** |
+| Piattaforma | 04/09 | **6,8 min** | pacchetto PyPI, ma con variabili d'ambiente **ereditate** |
+| Product Owner | 06/09 | **5,9 min** | pacchetto PyPI, **ambiente ripulito di nove variabili** |
 
 `pip install` 280,8 s · `warmup` 28,3 s · `doctor` 7,8 s · Quickstart 16,3 s ·
 una scrittura propria + richiamo 16,2 s. Il giro di lavoro vero, dopo
-l'installazione, **40 secondi** (Giano, seconda esecuzione; 62 s la prima).
+l'installazione, **40 secondi** (Porte, seconda esecuzione; 62 s la prima).
 
 > ⚠️ **Queste due prove misurano un percorso che oggi NON prescriviamo più.**
 > Entrambe eseguono `warmup` come secondo passo, perché il README lo dava per
@@ -164,7 +164,7 @@ E se la CLI ti dice «no facts found», la prima domanda è **dove ha guardato**
 🔁🔴 **CORRETTO il 06/09 10:00, ed era una MIA riga falsa.** Diceva: *«finché non
 esegui `warmup`, ogni scrittura con `source` è ammessa senza essere controllata …
 la promessa del punto 1 non vale finché non hai eseguito quel comando»*.
-**Falso**, e misurato: @ws5 Tara, pacchetto **0.7.6** di PyPI, cartella del giudice
+**Falso**, e misurato: @ws5 Piattaforma, pacchetto **0.7.6** di PyPI, cartella del giudice
 **vuota (0 byte)**, `warmup` **mai eseguito** →
 
 ```
@@ -209,7 +209,7 @@ prodotto non tace: **arriva tardi**, quando il tuo client ha già rinunciato.
 > ⚠️ **`verimem doctor`, e questa riga è IN VERIFICA — la lasciamo aperta invece
 > di scegliere il numero che ci fa comodo.**
 > · Su **`main`**: esce **`0`** su un'installazione nuova — misurato due volte da
->   Tara (store assente e store vuoto) e riconfermato da Iris il 06/09. L'`exit 1`
+>   Piattaforma (store assente e store vuoto) e riconfermato da Product Owner il 06/09. L'`exit 1`
 >   che avevamo messo a ticket veniva da una variabile d'ambiente **ereditata**
 >   che puntava a un altro store, grande e con problemi veri; `doctor` diceva a
 >   chiare lettere quale store stava esaminando, e `1` su warning è documentato
@@ -236,7 +236,7 @@ prodotto non tace: **arriva tardi**, quando il tuo client ha già rinunciato.
 >   **cumulativa**: i fatti che hai scritto prima che il giudice fosse caldo restano non
 >   giudicati per sempre, e quel `!` **non se ne va**.
 > 🔁 *Correzione del 06/09: qui avevo scritto che questa seconda riga «passa da sola,
-> tira dritto». È falso — l'ha dimostrato @ws8 Corrado leggendo il codice. Avevo letto
+> tira dritto». È falso — l'ha dimostrato @ws8 Release leggendo il codice. Avevo letto
 > la causa dal testo dell'avviso invece che dalla condizione.*
 
 ---
@@ -246,7 +246,7 @@ prodotto non tace: **arriva tardi**, quando il tuo client ha già rinunciato.
 ### Cosa nessun altro fa
 
 **Zero gate di entailment al write, su tredici prodotti letti nel codice e nei
-prompt** (Corrado, 04/09: mem0, Zep/Graphiti, Cognee, Hindsight, Supermemory,
+prompt** (Release, 04/09: mem0, Zep/Graphiti, Cognee, Hindsight, Supermemory,
 MemMachine e altri). Non è che lo facciano peggio: **non c'è una decisione
 ammetti/rifiuta al momento della scrittura**. mem0 è dichiaratamente add-only
 (*«nothing is overwritten»*); Zep/Graphiti mette la richiesta di fondatezza
@@ -363,7 +363,7 @@ difetti compaiono — non l'ultimo.
   come passato, e cosa **non** è un fallimento della scheda).
   · **Il soggetto non era nella stanza, e non per caso**: fra noi otto nessuno ha
     più l'ignoranza che serve — è **il motivo per cui questa riga è ferma**, non
-    la mancanza di dieci minuti *(diagnosi di @ws4 Nadia)*.
+    la mancanza di dieci minuti *(diagnosi di @ws4 ML)*.
   · **Il candidato è un surrogato dichiarato**: un'istanza fresca, senza il nostro
     contesto. ⚠️ Non è un utente: **è addestrata a colmare l'implicito**, quindi
     dove la scheda tace lei indovina — e indovina bene. ⇒ **un rosso vale

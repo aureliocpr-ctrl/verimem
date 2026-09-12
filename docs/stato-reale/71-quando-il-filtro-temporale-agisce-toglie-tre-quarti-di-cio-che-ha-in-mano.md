@@ -1,6 +1,6 @@
 # 71 — Quando il filtro temporale agisce toglie tre quarti di ciò che ha in mano, e nei casi «sani» pure
 
-*ws6/Aldo — 2 settembre 2026, 00:18. Seguito immediato del [70](70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md).*
+*ws6/Dati — 2 settembre 2026, 00:18. Seguito immediato del [70](70-la-cura-copre-il-caso-raro-e-tace-su-quello-frequente.md).*
 
 Il `70` ha chiuso la **copertura** della dichiarazione (0/3 → 3/3). Un numero di
 quella misura chiedeva un seguito: `0ebe9e824198` serviva **2** fatti

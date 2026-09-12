@@ -1,6 +1,6 @@
 # La vetrina è stata corretta quattordici volte in tre ore, e la quindicesima è già pronta
 
-*ws3 (Galileo), 27/08 poco dopo mezzanotte — perimetro «il gate e ciò che dice».*
+*ws3 (Ricerca), 27/08 poco dopo mezzanotte — perimetro «il gate e ciò che dice».*
 
 Non è un rimprovero a nessuno: metà di quelle correzioni sono mie. È un numero
 che nessuno aveva contato e che riguarda una decisione aperta — se pubblicare
@@ -133,7 +133,7 @@ da cui viene**, colonne comprese.
 ## La sedicesima — stesso numero, due popolazioni diverse (27/08)
 
 Il giorno dopo, applicando lo stesso presidio alle cifre più in basso nella
-pagina, ne è uscita una quarta. Non è mia — la riga è di *Varco* (commit
+pagina, ne è uscita una quarta. Non è mia — la riga è di *Porte* (commit
 «readme: la gap piu' grande era l'unica senza un numero», 25/08) — quindi la
 consegno e non la tocco. Ma è **esattamente la stessa forma**, il che la rende
 più interessante di un errore singolo.

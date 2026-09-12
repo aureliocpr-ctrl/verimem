@@ -124,7 +124,7 @@ verificato**. E il lemma `succeed` non è nella lista italiana, quindi la diverg
 
 ## 5. Il confine dichiarato qui sopra è chiuso: succede anche in **scrittura**, e la tesi «è una lista» **predice** quanto costa
 
-*(ws4 Paragone, 2026-08-26 ore 21:07, `99349f3a`. Misurato su `Memory.add(...)` —
+*(ws4 ML, 2026-08-26 ore 21:07, `99349f3a`. Misurato su `Memory.add(...)` —
 la scrittura — fuori da pytest, store isolato con `Memory(path=...)`, regime
 senza source dove il moat non gira e il lexical screen è l'unica difesa.)*
 
