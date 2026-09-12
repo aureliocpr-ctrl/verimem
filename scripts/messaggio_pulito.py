@@ -76,40 +76,18 @@ RIGHE_MASSIME = 10
 
 PERCORSO = re.compile(r"([A-Za-z]:[\\/]Users[\\/]|/c/Users/|[A-Za-z]:[\\/]a[\\/]|/home/[a-z]+/)")
 UTENTE = re.compile(r"\baurel(io)?(cpr)?(-ctrl)?\b", re.IGNORECASE)
-# ⚠️ 12/09 — QUESTO ELENCO ESISTE DUE VOLTE NEL REPOSITORY, e le due copie
-# erano gia' diverse il giorno in cui sono nate: `scripts/nomi_nei_documenti.py`
-# (il righello dei nomi nei documenti) ne porta NOVE e questo ne portava OTTO —
-# mancava `Curie`, che compare 32 volte nel solo `docs/stato-reale/00-ESAME.md`.
-# ⇒ Un messaggio che nominava quella sessione passava pulito.
-# 🔑 Allineato qui, ma allineare non e' curare: due elenchi restano due criteri,
-# e divergono di nuovo alla prossima sessione che si aggiunge. Quando i due
-# righelli sono tutt'e due in main l'elenco va in UN posto solo e i due lo
-# importano. Finche' non succede, chi tocca uno dei due tocchi anche l'altro.
-SESSIONE = re.compile(
-    r"\b(ws[1-8]|lead-audit"
-    r"|Corrado|Marie|Tara|Iris|Aldo|Giano|Galileo|Nadia|Curie)\b",
-    re.IGNORECASE,
-)
-
-# ⚠️ TRE NOMI CHE SONO ANCHE PAROLE ITALIANE COMUNI, e per questo stanno a
-# parte e si cercano SENZA ignorare le maiuscole.
-#
-# Misurati il 12/09 in `docs/stato-reale/`, separando la forma-NOME (`@Nome`,
-# `firma @Nome`, `Agent: Nome`) da tutte le occorrenze — perche' 529 occorrenze
-# di «varco» non sono 529 nomi, e contarle tutte sarebbe il grep usato per
-# contare invece che per trovare:
-#
-#     varco       486 come NOME  /  529 in tutto
-#     paragone      9            /   42
-#     lanterna      9            /   18
-#     sentinella    0            /   13   <- NON e' un nome qui: resta fuori
-#     faro          0            /    1   <- idem
-#
-# Cercarli con `re.IGNORECASE` boccerebbe «il varco fra i due» e «per
-# paragone»: un cancello che grida su una parola comune insegna a ignorarlo.
-# La maiuscola non e' una garanzia — e' il criterio piu' stretto che distingue
-# i due casi senza inventarne uno.
-SESSIONE_AMBIGUA = re.compile(r"\b(Varco|Paragone|Lanterna)\b")
+# ⚠️ L'ELENCO DEI NOMI NON STA PIU' QUI, e il perche' e' la storia del 12/09:
+# lo stesso elenco viveva in QUATTRO posti con TRE contenuti diversi, e ognuno
+# sbagliava in modo suo — qui mancava `Curie`, altrove mancavano `Varco`,
+# `Paragone`, `Lanterna`, e una pulizia arrivata a «zero nomi» ne lasciava 495.
+# ⇒ L'elenco E' il criterio: due elenchi sono due criteri. Ora sta in
+# `scripts/nomi_delle_sessioni.py`, che porta anche la regola delle maiuscole
+# per i nomi che sono ANCHE parole italiane comuni.
+# ⚠️ La cartella di QUESTO file, non `sys.path[0]`: in un worktree la seconda
+# punta all'albero da cui si e' lanciato il comando, e si finirebbe per
+# misurare con l'elenco di un altro albero (gia' pagato in casa due volte).
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+from nomi_delle_sessioni import trova as _nomi_di_sessione  # noqa: E402, I001
 # ⚠️ UNA LISTA CHIUSA, non una forma. Vedi il docstring del modulo: con la
 # regola sintattica (`^Parola:\s`) bastava scrivere `Nota:` per far sparire una
 # riga dal controllo. Un'esenzione aperta a qualunque parola non e' un'esenzione,
@@ -245,12 +223,19 @@ def controlla(testo: str, percorsi: frozenset[str] | None = None) -> list[str]:
     if len(righe_intere) > RIGHE_MASSIME:
         problemi.append(f"{len(righe_intere)} righe non vuote (il massimo e' {RIGHE_MASSIME})")
     for etichetta, regola in (("percorso locale", PERCORSO),
-                              ("nome utente", UTENTE),
-                              ("nome di sessione o ruolo interno", SESSIONE),
-                              ("nome di sessione o ruolo interno", SESSIONE_AMBIGUA)):
+                              ("nome utente", UTENTE)):
         trovati = sorted({m.group(0) for m in regola.finditer(corpo)})
         if trovati:
             problemi.append(f"{etichetta}: {', '.join(trovati[:4])}")
+    # ⚠️ `con_identificatori=True`, ed e' una scelta di DOMINIO. L'esenzione per
+    # gli identificatori generati (`iris-ub-jivzor1t`) vale per i DOCUMENTI, che
+    # contengono dati di misure registrate: cambiarli falsificherebbe un reperto.
+    # Un messaggio di commit non contiene reperti, e li' un nome attaccato a un
+    # trattino e' un nome — provato: senza questo, «vedi docs/…/ws5-ha-sbagliato.md»
+    # passava pulito. I percorsi VERI del repository sono gia' stati tolti sopra.
+    nomi = sorted({n for n, _ in _nomi_di_sessione(corpo, con_identificatori=True)})
+    if nomi:
+        problemi.append("nome di sessione o ruolo interno: " + ", ".join(nomi[:4]))
     return problemi
 
 

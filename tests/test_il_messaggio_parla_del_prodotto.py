@@ -38,6 +38,7 @@ import pytest
 
 RADICE = Path(__file__).resolve().parents[1]
 SCRIPT = RADICE / "scripts" / "messaggio_pulito.py"
+ELENCO = RADICE / "scripts" / "nomi_delle_sessioni.py"
 HOOK = RADICE / ".githooks" / "commit-msg"
 
 SPORCO = ("T38: il presidio che si riarmava\n\n"
@@ -74,7 +75,12 @@ def repo(tmp_path: Path) -> Path:
     dove = tmp_path / "repo"
     (dove / "scripts").mkdir(parents=True)
     (dove / ".githooks").mkdir(parents=True)
+    # ⚠️ DUE file, non uno: dal 12/09 il controllo legge l'elenco dei nomi da
+    # `nomi_delle_sessioni.py` invece di portarsene una copia. Copiandone uno
+    # solo, cinque celle sono diventate rosse con `ModuleNotFoundError` — ed e'
+    # la stessa cosa che succederebbe a chi installasse solo lo script.
     shutil.copy2(SCRIPT, dove / "scripts" / SCRIPT.name)
+    shutil.copy2(ELENCO, dove / "scripts" / ELENCO.name)
     shutil.copy2(HOOK, dove / ".githooks" / "commit-msg")
     (dove / ".githooks" / "commit-msg").chmod(0o755)
 
@@ -163,6 +169,28 @@ def test_il_testo_respinto_non_e_perso_e_il_comando_per_riprenderlo_funziona(
         "il comando che l'hook suggerisce non fa nascere il commit:\n"
         f"{ripreso.stdout}\n{ripreso.stderr}")
     assert "Reported in" in _git(repo, "log", "-1", "--format=%B").stdout
+
+
+def test_senza_l_elenco_dei_nomi_l_hook_tace_invece_di_bloccare(repo: Path) -> None:
+    """Un ramo che ha lo script ma non ancora l'elenco non si deve fermare.
+
+    Dal 12/09 l'elenco dei nomi sta in un file a parte. Su un albero dove
+    quel file non c'e' ancora, python esce con `ModuleNotFoundError`: senza la
+    guardia l'hook bloccherebbe il commit **per un file mancante**, non per il
+    messaggio — e chi lo subisce non ha modo di capirlo.
+    """
+    (repo / "scripts" / "nomi_delle_sessioni.py").unlink()
+    (repo / "nuovo.txt").write_text("x", encoding="utf-8")
+    _git(repo, "add", "nuovo.txt")
+    prima = _quanti_commit(repo)
+
+    esito = _git(repo, "commit", "-m", SPORCO, controlla=False)
+
+    assert esito.returncode == 0, (
+        "senza l'elenco l'hook ha bloccato il commit invece di tacere:\n"
+        f"{esito.stdout}\n{esito.stderr}")
+    assert _quanti_commit(repo) == prima + 1
+    assert "Traceback" not in (esito.stdout + esito.stderr)
 
 
 def test_la_via_d_uscita_e_dichiarata_e_funziona(repo: Path, monkeypatch) -> None:

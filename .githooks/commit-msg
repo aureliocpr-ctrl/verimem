@@ -58,6 +58,13 @@ CONTROLLO="$RADICE/scripts/messaggio_pulito.py"
 # CI il file c'e' sempre, ed e' li' che il cancello deve reggere.
 [ -f "$CONTROLLO" ] || exit 0
 
+# ⚠️ E LA STESSA COSA PER CIO' CHE IL CONTROLLO LEGGE. Dal 12/09 l'elenco dei
+# nomi sta in un file a parte (era in quattro copie divergenti). Su un ramo che
+# ha lo script ma non ancora l'elenco, python esce con `ModuleNotFoundError` e
+# l'hook bloccherebbe il commit per un file mancante invece che per il
+# messaggio — misurato in casa: cinque celle rosse appena l'elenco e' uscito.
+[ -f "$RADICE/scripts/nomi_delle_sessioni.py" ] || exit 0
+
 PYTHON="python"
 command -v "$PYTHON" >/dev/null 2>&1 || PYTHON="python3"
 command -v "$PYTHON" >/dev/null 2>&1 || exit 0
