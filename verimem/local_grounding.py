@@ -373,17 +373,32 @@ class LocalGroundingJudge:
         return self._scorer
 
     def coppia(self, source: str, fact: str, *,
-               focus_budget: int | None = None) -> tuple[str, str]:
+               focus_budget: int | None = None,
+               applica_finestra: bool = True) -> tuple[str, str]:
         """La coppia (span, fatto) che il CE giudica.
 
         Estratta da ``score`` perche' ha DUE esecutori: lo scorer in-process e
-        il daemon condiviso (``_gate_via_daemon``). La selezione dello span e'
-        puro testo e costa poco, quindi resta di qua in entrambi i casi: al
-        daemon si manda la coppia gia' pronta, cosi' non c'e' un secondo posto
-        dove il budget possa essere applicato in modo diverso."""
+        il daemon condiviso (``_gate_via_daemon``).
+
+        ⚠️ QUI C'ERA SCRITTO «costa poco», ED E' STATO VERO FINO AL 2026-08-19.
+        La selezione dello span e' puro testo davvero; ma la RIDUZIONE ALLA
+        FINESTRA conta i TOKEN, e per contarli carica il tokenizzatore del
+        modello, che tira dentro `transformers` e con lui `torch`. Misurato il
+        2026-09-12 alla porta, in un server che DELEGA il giudizio::
+
+            server importato                     171,9 MB
+            dopo `try_local_score`              1464,0 MB   in 31,73 s
+              scorer locale caricato = False    <- il giudizio l'ha fatto il daemon
+
+        1292 MB e 31,7 secondi per PREPARARE una domanda che poi si delega. Con
+        `applica_finestra=False` lo span esce grezzo e la finestra la applica
+        chi il tokenizzatore ce l'ha gia' caricato: il daemon.
+
+        Il budget resta in UN POSTO SOLO, come prima: al daemon si manda il
+        NUMERO (`max_length`), non una seconda regola per applicarlo."""
         budget = int(focus_budget) if focus_budget else self.focus_budget
         span = select_relevant_span(source or "", fact or "", budget=budget)
-        return (self._entro_la_finestra(span),
+        return (self._entro_la_finestra(span) if applica_finestra else span,
                 fact or "")
 
     def _entro_la_finestra(self, span: str) -> str:
@@ -835,7 +850,8 @@ def _delegate_only() -> bool:
 _GATE_DELEGATO = {"ok": False}
 
 
-def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
+def _gate_via_daemon(pairs, *, info=None,
+                     max_length: int | None = None) -> list[float] | None:
     """Punteggi del giudice del moat dal daemon condiviso, o None per degradare.
 
     Speculare a ``semantic._rerank_via_daemon``, e per la stessa ragione con una
@@ -874,6 +890,12 @@ def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
         try:
             conn.settimeout(_emb._SERVICE_READ_TIMEOUT_S)
             req = {"gate_pairs": [[p[0], p[1]] for p in pairs]}
+            if max_length:
+                # «riduci tu lo span a questa finestra»: si manda il NUMERO,
+                # non la regola. Un daemon che non lo conosce lo ignora, ma non
+                # ci arriva mai — il client lo manda solo se il daemon ha
+                # dichiarato `applies_window`.
+                req["max_length"] = int(max_length)
             if info.get("token"):
                 req["token"] = info["token"]
             _svc.send_msg(conn, req)
@@ -954,8 +976,21 @@ def try_local_score(source: str, fact: str, *,
     # daemon assente o muto -> None -> warm in background e il chiamante
     # fa esattamente cio' che faceva prima.
     if judge._scorer is None and _delegate_only():
+        # LA FINESTRA LA APPLICA IL DAEMON, se sa farlo. Costruire la coppia
+        # gia' ridotta costa al server 1292 MB e 31,7 s di tokenizzatore per
+        # una domanda che poi delega (misurato alla porta il 2026-09-12).
+        # `applies_window` lo DICHIARA il daemon nel file di scoperta: un
+        # daemon vecchio non lo scrive, e allora si fa come prima — la
+        # riduzione di qua, col suo costo, e mai una perdita di qualita'
+        # silenziosa.
+        from . import encode_service as _svc
+        info = _svc.read_discovery()
+        il_daemon_riduce = bool(info and info.get("applies_window"))
         punteggi = _gate_via_daemon(
-            [judge.coppia(source, fact, focus_budget=focus_budget)])
+            [judge.coppia(source, fact, focus_budget=focus_budget,
+                          applica_finestra=not il_daemon_riduce)],
+            info=info,
+            max_length=judge.max_length if il_daemon_riduce else None)
         if punteggi:
             return judge.normalizza(punteggi[0]), judge.threshold
         warm_local_judge_async()
