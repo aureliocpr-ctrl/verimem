@@ -122,6 +122,49 @@ def test_l_hook_lascia_passare_un_messaggio_pulito(repo: Path) -> None:
     assert _quanti_commit(repo) == prima + 1
 
 
+def test_il_testo_respinto_non_e_perso_e_il_comando_per_riprenderlo_funziona(
+        repo: Path, monkeypatch) -> None:
+    """🔑 Il pezzo che decide se il cancello viene corretto o spento.
+
+    Un messaggio di quaranta righe respinto SEMBRA buttato via, e la reazione di
+    chi l'ha appena scritto e' `--no-verify`, che spegne anche tutti gli altri
+    hook. L'hook dice dove sta il testo e con quale comando riprenderlo: qui si
+    prova che quel comando fa davvero nascere il commit, perche' un'istruzione
+    sbagliata in un messaggio d'errore e' peggio di nessuna istruzione.
+    """
+    (repo / "nuovo.txt").write_text("x", encoding="utf-8")
+    _git(repo, "add", "nuovo.txt")
+
+    respinto = _git(repo, "commit", "-m", SPORCO, controlla=False)
+    assert respinto.returncode != 0
+    conservato = (repo / ".git" / "COMMIT_EDITMSG").read_text(encoding="utf-8")
+    assert "Marie" in conservato, "il testo respinto non e' stato conservato"
+
+    # L'editor corregge la riga incriminata: una variabile sola cambia.
+    # ⚠️ Sta in un FILE e i percorsi hanno le barre in avanti: git passa
+    # GIT_EDITOR a una shell, che sui percorsi di Windows si mangia i
+    # backslash («C:Usersaurel…: command not found», misurato qui).
+    editore = repo / "correggi.py"
+    editore.write_text(
+        "import pathlib, sys\n"
+        "p = pathlib.Path(sys.argv[1])\n"
+        "t = p.read_text(encoding='utf-8')\n"
+        "t = t.replace('Rilievo di Marie, riprodotto in', 'Reported in')\n"
+        "t = t.replace('C:\\\\Users\\\\tizio\\\\Code', 'the tree')\n"
+        "t = t.replace('Chiesto da lead-audit.', '')\n"
+        "p.write_text(t, encoding='utf-8')\n",
+        encoding="utf-8")
+    monkeypatch.setenv(
+        "GIT_EDITOR",
+        f'"{Path(sys.executable).as_posix()}" "{editore.as_posix()}"')
+    ripreso = _git(repo, "commit", "-e", "-F", ".git/COMMIT_EDITMSG", controlla=False)
+
+    assert ripreso.returncode == 0, (
+        "il comando che l'hook suggerisce non fa nascere il commit:\n"
+        f"{ripreso.stdout}\n{ripreso.stderr}")
+    assert "Reported in" in _git(repo, "log", "-1", "--format=%B").stdout
+
+
 def test_la_via_d_uscita_e_dichiarata_e_funziona(repo: Path, monkeypatch) -> None:
     """Un cancello senza via d'uscita si aggira con `--no-verify`, che spegne
     ANCHE tutti gli altri hook. Meglio una porta con la targa."""
