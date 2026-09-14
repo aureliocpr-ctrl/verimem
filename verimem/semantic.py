@@ -166,6 +166,30 @@ def _encode_prepared_within_budget(
         # back to keyword, save defers — instead of propagating (no in-process
         # cold-load happened, so nothing to wait on).
         if isinstance(box["err"], embedding.EncodeDelegateUnavailable):
+            # …MA SI CHIEDE ANCHE UN DAEMON NUOVO, come fa il ramo dell'overrun
+            # otto righe piu' su. Senza questa riga lo stato degradato SI
+            # AUTOCONSERVA: ogni scrittura fallisce identica e nessuna chiede
+            # mai il daemon giusto.
+            # Misurato il 2026-09-09 sulla macchina di Aurelio: il servizio di
+            # encoding e' morto ed e' rinato alle 23:02:29 con un modello
+            # diverso da quello dello store (MiniLM-L12-v2/384 contro
+            # e5-base/768, 18.107 fatti sani a 768). `daemon_usable` lo rifiuta
+            # — correttamente — e per 64 MINUTI nessuno ha chiesto il
+            # sostituto: 14 fatti sono entrati con l'embedding differito senza
+            # che chi scriveva lo sapesse. Il lock del singleton NON c'entrava
+            # (`_owner_is_zombie` e' model-aware e risultava rubabile): mancava
+            # solo la richiesta.
+            # Il commento qui sopra — «nothing to wait on» — resta vero
+            # dell'ATTESA, e non e' una ragione per non svegliare il daemon:
+            # sono due cose diverse e il perimetro della frase era piu' largo
+            # del suo contenuto.
+            # Best-effort come il gemello: un errore qui non deve trasformare
+            # un differimento riuscito in una scrittura persa.
+            try:
+                from . import encode_service as _es
+                _es.ensure_running()
+            except Exception:  # noqa: BLE001 — svegliare e' un di piu', mai un obbligo
+                pass
             return None
         raise box["err"]
     return box.get("vec")
