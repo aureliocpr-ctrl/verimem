@@ -71,12 +71,34 @@ del campo, il valore. È il passo che **passa**, ed è metà del criterio.
 
 ### 3 · Uno **corregge** il fatto dell'altro
 
-```bash
+🔴 **LA RIGA CHE QUESTA PAGINA AVEVA SCRITTO NON FUNZIONA** — la stessa caduta
+del passo 3 della pagina 02, e trovata allo stesso modo: **eseguendola**.
+
+```
 verimem correct "<il valore nuovo>" --source "<ciò che sostiene il cambiamento>"
+  EXIT=2
+  Usage: python -m verimem.cli correct [OPTIONS] OLD_ID TEXT
+  Error: Missing argument 'TEXT'.
+```
+
+⇒ `correct` vuole **DUE argomenti posizionali**: l'id del fatto da correggere
+**e** il testo nuovo. La forma che gira:
+
+```bash
+verimem correct <id_del_fatto_dell_altro> "<il valore nuovo>" \
+  --source "<ciò che sostiene il cambiamento>"
 ```
 
 ✅ **La correzione viene giudicata**: `cross_encoder`, punteggio **99,45**,
 fascia `high`. Cioè il giudice dice sì.
+
+📖 **Da quale strada viene quel numero — e perché la pagina deve dirlo.** Non da
+questa riga di comando: è misurato da un banco Python
+(`banchi/ws7-il-percorso-di-un-team-su-uno-store.py`) su `95e886bb`, e qui viene
+**riportato**. ⇒ Il ✅ di questo passo e il 🔴 del passo 4 valgono **per quella
+strada**; dalla riga di comando non sono ancora stati rifatti. Se li rifai e
+ottieni altro, non è un tuo errore: è la differenza fra due porte, ed è
+esattamente la cosa da segnalare.
 
 ### 4 · 🔴 Un terzo legge e deve ricevere **solo il corrente**
 
