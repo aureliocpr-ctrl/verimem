@@ -34,7 +34,13 @@ def test_load_model_offline_reraises_instead_of_network(monkeypatch):
     calls = []
 
     class _FakeST:
-        def __init__(self, model, local_files_only=False):
+        # `device=` ESPLICITO e non `**kwargs`: il prodotto lo passa da quando
+        # la scelta del device e' dichiarata, e un doppio che ingoiasse
+        # qualunque keyword non si accorgerebbe della prossima firma sbagliata.
+        # Cosi' invece il banco resta un presidio: un argomento che non
+        # riconosce lo dice, invece di passare.
+        def __init__(self, model, local_files_only=False, device=None):
+            self.device_richiesto = device
             calls.append("local" if local_files_only else "network")
             if local_files_only:
                 raise OSError("simulated: not in local cache")
@@ -56,7 +62,13 @@ def test_load_model_online_may_fall_back_to_network(monkeypatch):
     calls = []
 
     class _FakeST:
-        def __init__(self, model, local_files_only=False):
+        # `device=` ESPLICITO e non `**kwargs`: il prodotto lo passa da quando
+        # la scelta del device e' dichiarata, e un doppio che ingoiasse
+        # qualunque keyword non si accorgerebbe della prossima firma sbagliata.
+        # Cosi' invece il banco resta un presidio: un argomento che non
+        # riconosce lo dice, invece di passare.
+        def __init__(self, model, local_files_only=False, device=None):
+            self.device_richiesto = device
             calls.append("local" if local_files_only else "network")
             if local_files_only:
                 raise OSError("simulated: not in local cache")

@@ -58,7 +58,11 @@ def _get_embed_model() -> Any:
         from ._import_lock import lock_import
         with lock_import():
             from sentence_transformers import SentenceTransformer
-        _EMBED_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
+        # T63a — anche qui il device si dichiara: senza, la libreria prende la
+        # scheda da sola e questo processo entra fra quelli che tengono la VRAM.
+        from ._device import device_dichiarato
+        _EMBED_MODEL = SentenceTransformer(
+            "all-MiniLM-L6-v2", device=device_dichiarato())
     return _EMBED_MODEL
 
 

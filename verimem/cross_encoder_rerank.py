@@ -13,7 +13,12 @@ provides a ``scorer: Callable[[list[tuple[str, str]]], list[float]]``
 that scores `(query, passage)` pairs. In production wire it to:
 
     from sentence_transformers import CrossEncoder
-    model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2")
+    from verimem._device import device_dichiarato
+    # `device=` NON e' un dettaglio dell'esempio: senza, la libreria prende la
+    # scheda da sola e nel codice la parola "cuda" non compare. Un esempio e'
+    # codice che qualcuno copia.
+    model = CrossEncoder("cross-encoder/ms-marco-MiniLM-L-12-v2",
+                          device=device_dichiarato())
     scorer = lambda pairs: list(model.predict(pairs))
     rerank_candidates(query, candidate_ids, semantic_db,
                        scorer=scorer, top_n=5)

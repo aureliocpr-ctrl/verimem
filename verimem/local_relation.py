@@ -103,7 +103,11 @@ def make_nli_classifier(model_name: str, *, max_length: int = 256,
             AutoTokenizer,
         )
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    # T63a — stessa scelta dell'altro caricatore, e dalla STESSA funzione: due
+    # copie della stessa decisione divergono, e questa decide se un processo si
+    # prende la scheda o no.
+    from ._device import scegli_device
+    device = scegli_device(torch.cuda.is_available)
     cfg = AutoConfig.from_pretrained(model_name)
     mapper = _build_label_mapper(dict(cfg.id2label))
     tok = AutoTokenizer.from_pretrained(model_name)
