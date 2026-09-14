@@ -257,6 +257,24 @@ def ultimo_rifiuto_del_servizio() -> str | None:
     return _ULTIMO_RIFIUTO
 
 
+#: Il CLIENT ha rifiutato la RISPOSTA del daemon — che è l'opposto del caso
+#: sopra, e vanno tenuti separati: là il daemon dice di non poter servire, qui
+#: il daemon serve benissimo e siamo noi a non poterci fidare di ciò che serve.
+#: Confonderli produrrebbe «the daemon REFUSED» su un daemon che ha risposto,
+#: cioè una diagnosi falsa su una cosa verificabile — la stessa classe di
+#: errore già pagata il 06/09 con «unavailable» su un daemon vivo.
+_ULTIMO_RIFIUTO_MIO: str | None = None
+
+
+def ultimo_rifiuto_del_client() -> str | None:
+    """Perché QUESTO processo ha scartato l'ultima risposta del daemon, o None.
+
+    Si azzera a ogni chiamata al servizio, come il gemello: un motivo vecchio
+    riletto come nuovo è peggio dell'assenza.
+    """
+    return _ULTIMO_RIFIUTO_MIO
+
+
 def _encode_via_service(text: str) -> np.ndarray | None:
     """Encode via the shared service. Returns None if unavailable so the
     caller falls back to in-process encoding.
@@ -270,10 +288,11 @@ def _encode_via_service(text: str) -> np.ndarray | None:
     l'opposto del vero. L'``error`` è nel CONTRATTO (`test_encode_service.py:73`
     lo pretende dal daemon); mancava chi lo raccogliesse di qua.
     """
-    global _ULTIMO_RIFIUTO
+    global _ULTIMO_RIFIUTO, _ULTIMO_RIFIUTO_MIO
     #: si azzera a OGNI giro: un motivo vecchio riletto come nuovo sarebbe
     #: peggio dell'assenza, perché chi legge crederebbe di avere una diagnosi.
     _ULTIMO_RIFIUTO = None
+    _ULTIMO_RIFIUTO_MIO = None
     if not _service_enabled():
         return None
     try:
@@ -305,7 +324,41 @@ def _encode_via_service(text: str) -> np.ndarray | None:
         finally:
             conn.close()
         if resp and resp.get("ok") and "vec" in resp:
-            return np.asarray(resp["vec"], dtype=np.float32)
+            _grezzo = resp["vec"]
+            # LA STRETTA DI MANO GUARDA ANCHE LA TAGLIA, non solo il nome (T86).
+            # Il controllo sopra rifiuta un daemon che DICHIARA un altro
+            # modello; di ciò che SERVE non guardava niente. Misurato alla porta
+            # il 13/09 con un daemon che dichiara il modello di CONFIG e serve
+            # 384 dove lo store ne attende 768: `store()` torna lo STESSO None
+            # del caso buono, la riga va sul disco a 1536 byte con l'etichetta
+            # del modello giusto, e il `recall` ne rende ZERO — il filtro
+            # `length(embedding) = ?` la esclude in silenzio. Nessun errore,
+            # nessun avviso: il fatto è scritto e invisibile.
+            #
+            # ⚠️ SOLO QUANDO LA DIMENSIONE SI CONOSCE. Se è un'ASSUNZIONE
+            # (modello sconosciuto, nessun `HIPPO_EMBEDDING_DIM`), il vettore
+            # osservato è l'unica fonte di verità e va ADOTTATO — è la cura
+            # iter 31/32 contro il recall vuoto silenzioso, e pretendere la
+            # taglia qui renderebbe muto un daemon sano, che è il danno opposto
+            # e più grande.
+            #
+            # Il confronto non è una copia nuova: `vettore_compatibile()` fa
+            # esattamente `len(vec) * 4 == expected_embedding_bytes()`, ed è già
+            # la superficie unica di questa domanda per gli altri sei
+            # consumatori. Gli si passa la LISTA, non l'array: il suo `if not
+            # vec` su un ndarray solleverebbe.
+            if (not getattr(CONFIG, "embedding_dim_assumed", False)
+                    and not vettore_compatibile(_grezzo)):
+                _quanti = len(_grezzo) if hasattr(_grezzo, "__len__") else 0
+                _ULTIMO_RIFIUTO_MIO = (
+                    f"the daemon answered with {_quanti} values "
+                    f"({_quanti * 4} bytes) where the active model asks for "
+                    f"{CONFIG.embedding_dim} ({expected_embedding_bytes()} "
+                    f"bytes): it announces {info.get('model')!r} and serves "
+                    "another size, so the vector was REFUSED — storing it "
+                    "would write a fact that recall can never return")
+                return None
+            return np.asarray(_grezzo, dtype=np.float32)
         #: HA RISPOSTO E HA DETTO PERCHE': si conserva, invece di uscire come
         #: se non avesse risposto affatto.
         if isinstance(resp, dict) and resp.get("error"):
@@ -329,6 +382,17 @@ def _encode_one(text: str) -> np.ndarray:
         _adopt_observed_dim(int(vec.shape[-1]), "encode-service vector")
         return vec
     if _delegate_only() and not is_loaded():
+        #: TRE FRASI PER TRE GUASTI, e la PRIMA è che il daemon sta bene e
+        #: siamo noi a non poterci fidare della sua risposta (T86). Va davanti
+        #: alle altre due perché è l'unica in cui riavviare il daemon non serve
+        #: a niente: quello che va cambiato è il daemon che i client trovano.
+        _mio = ultimo_rifiuto_del_client()
+        if _mio:
+            raise EncodeDelegateUnavailable(
+                f"this client REFUSED the daemon's answer: {_mio}; "
+                "in-process cold-load is disabled "
+                "(HIPPO_ENCODE_DELEGATE_ONLY=1) — caller must degrade"
+            )
         #: DUE FRASI PER DUE GUASTI. Se il daemon ha spiegato il rifiuto, la
         #: sua spiegazione va davanti: «unavailable» su un daemon vivo che
         #: risponde e' una diagnosi FALSA, e manda a cercare un processo morto.
