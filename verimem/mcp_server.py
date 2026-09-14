@@ -13983,7 +13983,21 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # the curated store (store() can divert a non-quarantined write to telemetry
             # without a 'quarantined' status; retiring the old against a diverted new drops
             # both from curated recall — opus final critic).
+            # …E IL «Mirrors Memory.add() (SDK)» QUI SOPRA NON ERA VERO: la
+            # guardia dell'SDK ha una condizione in piu' (client.py,
+            # `_graded_admit`) e questa porta non l'aveva. Un'ammissione
+            # DEGRADATA — grounding sotto soglia ammesso come bassa fiducia
+            # sotto ENGRAM_GRADED_ADMISSION — non e' un'ammissione guadagnata
+            # sulle proprie prove, e non deve sbloccare la supersessione.
+            # Misurato da questa porta il 2026-09-13: uno score-12 ritirava
+            # uno score-95 dal recall curato, cioe' la perdita netta che la
+            # quarantena dura impediva. Stessa regola, stesso vocabolario
+            # (`*-graded`), su tutt'e due le porte.
+            _graded_admit = any(
+                str(w.get("layer", "")).endswith("-graded")
+                for w in (_gate_warnings or []) if isinstance(w, dict))
             if (not _deferred and getattr(fact, "status", "") != "quarantined"
+                    and not _graded_admit
                     and getattr(_gate, "supersede_fact_ids", None)
                     and a.semantic.get(fact.id) is not None):
                 for _old_id in _gate.supersede_fact_ids:
