@@ -1,0 +1,63 @@
+ws3 Galileo — T-MAP-11, il costo della cura alla porta MCP e la domanda
+"la cura MORDE davvero, o il fail-open la rende inerte?"
+Eseguito il 2026-09-09 alle 23:40 e 23:42 dal worktree con i tre commit
+ab8e8e6f + dda0e301 + e20da241 (banco: ws3-t-map-11-costo-e-fail-open.py).
+Righe di rumore tolte (loading weights, triton, FutureWarning); il resto e'
+copiato dalla console riga per riga.
+
+===== A) delegate-only ACCESO (com'e' il server MCP di casa: la variabile sta
+        in ~/.claude/settings.json e la ereditano tutti i processi) =====
+store: encode delegate unavailable → il fatto viene scritto SENZA embedding (recall keyword finche' il daemon non torna)
+   [la riga sopra ripetuta 5 volte, una per fatto]
+2026-09-09T23:40:59.807775 [info     ] audit_tool_call                error= latency_ms=1159.9483 outcome=ok tool=hippo_ingest_conversation
+== HIPPO_ENCODE_DELEGATE_ONLY = 1
+== primo ingest (giudice FREDDO): 35.9s per 5 fatti
+   ricevuta: stored=5 quarantined=2 error=None
+   nota: atomic facts stored as low-trust model_claim with conversation provenance; evidence elevates status, never the chat itself; 2 of them the conversation
+== secondo ingest (giudice CALDO): 1.2s
+== i fatti come stanno nello store (primo ingest)
+   model_claim  · punteggio         99.58 · Il canone del capannone 12 e' 5900 euro.
+   model_claim  · punteggio         99.57 · La consegna del capannone 12 e' prevista per il 3 ma
+   quarantined  · punteggio         57.18 · Il capannone 12 e' stato venduto nel 2019.
+   model_claim  · punteggio         87.53 · Il capannone 12 ha una superficie di 400 metri quadr
+   quarantined  · punteggio         46.98 · Il proprietario del capannone 12 si chiama Mario Ros
+>> fatti entrati SENZA un giudizio: 0/5
+EXIT=0
+
+===== B) delegate-only SPENTO =====
+2026-09-09T23:42:11.358313 [info     ] audit_tool_call                error= latency_ms=46659.9415 outcome=ok tool=hippo_ingest_conversation
+2026-09-09T23:42:11.902713 [info     ] audit_tool_call                error= latency_ms=533.4908 outcome=ok tool=hippo_ingest_conversation
+== primo ingest (giudice FREDDO): 46.7s per 5 fatti
+   ricevuta: stored=5 quarantined=2 error=None
+   nota: atomic facts stored as low-trust model_claim with conversation provenance; evidence elevates status, never the chat itself; 2 of them the conversation
+== secondo ingest (giudice CALDO): 0.5s
+== i fatti come stanno nello store (primo ingest)
+   model_claim  · punteggio         99.58 · Il canone del capannone 12 e' 5900 euro.
+   model_claim  · punteggio         99.57 · La consegna del capannone 12 e' prevista per il 3 ma
+   quarantined  · punteggio         57.18 · Il capannone 12 e' stato venduto nel 2019.
+   model_claim  · punteggio         87.53 · Il capannone 12 ha una superficie di 400 metri quadr
+   quarantined  · punteggio         46.98 · Il proprietario del capannone 12 si chiama Mario Ros
+>> fatti entrati SENZA un giudizio: 0/5
+EXIT=0
+
+===== COSA DICONO QUESTI DUE GIRI =====
+
+1. LA CURA MORDE ANCHE COL DELEGATE-ONLY ACCESO, che era la domanda vera: 2
+   fatti su 5 quarantinati in entrambe le configurazioni, e ZERO fatti entrati
+   con grounding_score NULL ("nessuno ha giudicato"). Il fail-open esiste e
+   resta possibile — se il giudice non risponde affatto — ma qui non e'
+   scattato, e quando scatta lo si vede: il punteggio resta NULL nella riga.
+
+2. I PUNTEGGI SONO IDENTICI nelle due configurazioni (99.58 · 99.57 · 57.18 ·
+   87.53 · 46.98): il giudizio non cambia, cambia solo chi carica il modello.
+
+3. IL COSTO e' quasi tutto nel PRIMO ingest — 35.9s (delegate ON) e 46.7s
+   (delegate OFF, che carica anche l'embedder e5) — mentre il secondo costa
+   1.2s e 0.5s per 5 fatti, cioe' 100-240 ms per fatto. Chi paga i 36 secondi
+   e' il primo che ingerisce dopo l'avvio, ed e' la stessa forma di T26a.
+
+4. DA PASSARE A ws5 Tara, e non e' del mio ticket: col delegate-only acceso e
+   nessun daemon i fatti sono stati scritti SENZA embedding — "recall keyword
+   finche' il daemon non torna", detto cinque volte. Il messaggio c'e' ed e'
+   onesto; il fatto che il primo ingest di una sessione finisca in memoria
+   senza vettore no.
