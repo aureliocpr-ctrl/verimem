@@ -22,10 +22,11 @@ import json
 import os
 import threading
 import time
-import uuid
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+from .ids import id_nuovo
 
 __all__ = ["audit_enabled", "JsonlAuditSink", "AccessAuditMiddleware"]
 
@@ -80,7 +81,7 @@ class AccessAuditMiddleware:
             return
         scope.setdefault("state", {})           # the auth dep stashes tenant here
         start = time.monotonic()
-        req_id = uuid.uuid4().hex[:16]
+        req_id = id_nuovo(16)
         captured = {"status": 0}
 
         async def send_wrapper(message: Any) -> None:

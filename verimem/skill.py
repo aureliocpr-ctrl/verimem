@@ -16,7 +16,6 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass, field
@@ -28,6 +27,7 @@ import numpy as np
 
 from . import embedding
 from .config import CONFIG
+from .ids import id_nuovo
 from .observability import emit, get_log
 
 log = get_log()
@@ -40,7 +40,7 @@ SkillStage = Literal["nrem", "rem", "manual", "schema"]
 
 @dataclass
 class Skill:
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    id: str = field(default_factory=lambda: id_nuovo(12))
     version: int = 1
     name: str = ""
     trigger: str = ""

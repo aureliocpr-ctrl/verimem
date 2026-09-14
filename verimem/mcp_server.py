@@ -982,7 +982,7 @@ def _build_fact(
 ) -> Any:
     """Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109).
 
-    Pre-#46b used the Fact default_factory uuid.uuid4().hex[:12] (random).
+    Pre-#46b used the Fact default_factory id_nuovo(12) (random).
     This produced silent duplication when callers re-stored the same content:
     each `hippo_remember(prop, topic)` call generated a fresh id, audit
     logged ok_new every time, but the DB accumulated duplicate rows.
@@ -13778,7 +13778,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # CRITIC-CORRECTED 2026-05-14 (job 18fcf29972455067 counterexample
             # confidence 0.90): the premise that this entry point would emit
             # `ok_replaced` was WRONG. `_build_fact` constructs Fact() without
-            # an explicit id; the Fact default_factory uses uuid.uuid4().hex[:12]
+            # an explicit id; the Fact default_factory uses id_nuovo(12)
             # (random — see semantic.py:39), NOT a content hash. So every
             # hippo_remember call generates a fresh random id, the SELECT
             # pre-INSERT check never matches, was_replaced is always False,

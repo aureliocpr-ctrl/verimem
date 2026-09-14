@@ -29,8 +29,9 @@ daemon that calls it is a separate, later piece.
 from __future__ import annotations
 
 import re
-import uuid
 from typing import Any
+
+from .ids import id_nuovo
 
 __all__ = ["compose_once", "subject_key", "_copula_parse"]
 
@@ -334,7 +335,7 @@ def compose_once(mem: Any, *, topic: str | None = None, run_id: str | None = Non
     """One composition pass over the live store. Returns an honest report:
     ``{eligible, candidates, admitted, rejected_gate, skipped_known,
     admitted_ids}`` — every bound and every skip is counted, never silent."""
-    run = run_id or uuid.uuid4().hex[:8]
+    run = run_id or id_nuovo(8)
     facts = [f for f in mem.semantic.all()
              if not f.superseded_by
              # Giro 2: 'user_belief' excluded — composing over an unverified

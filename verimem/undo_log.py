@@ -33,9 +33,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-import uuid
 from dataclasses import dataclass
 from typing import Literal
+
+from .ids import id_nuovo
 
 UNDO_TTL_SECONDS: int = 7 * 24 * 3600  # 7 days
 
@@ -173,7 +174,7 @@ def snapshot_pre_op(
     pre_row = _row_to_dict(conn, fact_id)
     if pre_row is None:
         return None
-    op_id = uuid.uuid4().hex[:16]
+    op_id = id_nuovo(16)
     now = time.time()
     conn.execute(
         """INSERT INTO facts_undo_log

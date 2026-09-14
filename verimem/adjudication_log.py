@@ -21,10 +21,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from .ids import id_nuovo
 from .tamper_evidence import GENESIS_HASH
 from .tamper_evidence import entry_hash as _entry_hash
 
@@ -166,7 +166,7 @@ class AdjudicationLog:
         The read-of-previous-head + insert runs under ``BEGIN IMMEDIATE`` so two
         concurrent writers to the same DB cannot both chain off the same head and fork
         the chain (SQLite serializes the write lock)."""
-        rid = uuid.uuid4().hex[:16]
+        rid = id_nuovo(16)
         # float() every numeric field BEFORE hashing: SQLite REAL affinity stores an int
         # ts as a float, so verify() would recompute a float and false-flag intact data
         # (opus critic FIX 2). Coerce here so the hashed value == the stored value.

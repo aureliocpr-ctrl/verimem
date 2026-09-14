@@ -56,9 +56,9 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-import uuid
 from typing import Any
 
+from .ids import id_nuovo
 from .tamper_evidence import GENESIS_HASH
 from .tamper_evidence import entry_hash as _entry_hash
 
@@ -150,7 +150,7 @@ def record_mutation(conn: sqlite3.Connection, *, principal: str, action: str,
         raise ValueError(
             f"unknown mutation action {action!r} — auditable actions are "
             f"{MUTATION_ACTIONS}")
-    rid = uuid.uuid4().hex[:16]
+    rid = id_nuovo(16)
     # float() before hashing: SQLite REAL affinity stores an int ts as a
     # float, so verify() would recompute a float and false-flag intact data.
     ts_val = float(ts) if ts is not None else time.time()

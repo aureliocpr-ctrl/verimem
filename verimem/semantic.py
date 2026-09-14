@@ -38,7 +38,6 @@ import os
 import sqlite3
 import threading
 import time
-import uuid
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
@@ -58,6 +57,7 @@ from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PR
 from .ann_gate import default_min_n as _ann_default_min_n
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
+from .ids import id_nuovo
 from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
 from .mutation_audit import (
     count_conn as _audit_count_conn,
@@ -1602,7 +1602,7 @@ def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
 
 @dataclass
 class Fact:
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    id: str = field(default_factory=lambda: id_nuovo(12))
     proposition: str = ""
     topic: str = ""
     confidence: float = 0.5

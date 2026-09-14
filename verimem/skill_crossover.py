@@ -17,8 +17,8 @@ for the procedural-skill format used by HippoAgent.
 from __future__ import annotations
 
 import random
-import uuid
 
+from .ids import id_nuovo
 from .skill import Skill
 
 
@@ -64,7 +64,7 @@ def crossover_skill_bodies(
     )
 
     return Skill(
-        id=uuid.uuid4().hex[:12],
+        id=id_nuovo(12),
         name=f"{parent_a.name}_x_{parent_b.name}",
         trigger=child_trigger,
         body=child_body,

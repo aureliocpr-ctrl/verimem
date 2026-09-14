@@ -14,8 +14,8 @@ The clone inherits content but starts with:
 from __future__ import annotations
 
 import time
-import uuid
 
+from .ids import id_nuovo
 from .skill import Skill
 
 
@@ -32,7 +32,7 @@ def clone_skill(
         None, the clone keeps the same `name` as the original.
     """
     return Skill(
-        id=uuid.uuid4().hex[:12],
+        id=id_nuovo(12),
         version=1,
         name=new_name if new_name else original.name,
         trigger=original.trigger,

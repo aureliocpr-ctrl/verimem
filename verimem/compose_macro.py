@@ -11,8 +11,7 @@ callable unit. The composed skill inherits:
 """
 from __future__ import annotations
 
-import uuid
-
+from .ids import id_nuovo
 from .skill import Skill
 
 
@@ -48,7 +47,7 @@ def compose_macro(
     body = "\n".join(body_lines)
 
     composed = Skill(
-        id=uuid.uuid4().hex[:12],
+        id=id_nuovo(12),
         name=name or auto_name,
         trigger=trigger or auto_trigger,
         body=body,
