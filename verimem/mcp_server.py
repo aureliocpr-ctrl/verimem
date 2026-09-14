@@ -13983,20 +13983,31 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # the curated store (store() can divert a non-quarantined write to telemetry
             # without a 'quarantined' status; retiring the old against a diverted new drops
             # both from curated recall — opus final critic).
-            if (not _deferred and getattr(fact, "status", "") != "quarantined"
-                    and getattr(_gate, "supersede_fact_ids", None)
-                    and a.semantic.get(fact.id) is not None):
-                for _old_id in _gate.supersede_fact_ids:
-                    try:
-                        a.semantic.supersede(
-                            _old_id, fact.id, principal=_MCP_PRINCIPAL,
-                            reason="same-source evolution")
-                    except Exception as _exc:  # noqa: BLE001 — never break the write
-                        # surface it (SDK parity): new admitted, old NOT retired =
-                        # stale-beside-new, the state the feature prevents.
-                        log.warning(
-                            "same-source supersede of %s failed (new %s admitted, old "
-                            "NOT retired): %s", _old_id, fact.id, _exc)
+            # ⚠️ LA PROVA DI RAGGIUNGIBILITA' NON STA PIU' QUI, e toglierla da
+            # questa riga e' una CURA, non una semplificazione. Prima la
+            # condizione era «… and supersede_fact_ids and semantic.get(...)»:
+            # il primo termine faceva da INTERRUTTORE al secondo, e senza
+            # niente da ritirare `get` non veniva mai chiamato. Estraendo la
+            # funzione unica ho tolto il termine sul campo — il presidio che
+            # vieta di nominarlo qui mi ci ha portato — e `get` ha iniziato a
+            # essere chiamato a OGNI scrittura ammessa: quattro test rossi
+            # sulla gamba macos, perche' il loro doppio del semantic ha
+            # `store` e `count` e non `get`. La prova ora sta dentro
+            # `applica_verdetto`, DOPO il controllo degli id: stesso ordine di
+            # prima, un posto solo.
+            if (not _deferred
+                    and getattr(fact, "status", "") != "quarantined"):
+                # …dalla superficie unica, estratta il 2026-09-12: questo
+                # ciclo esisteva qui e, quasi uguale, nell'SDK — e la riga di
+                # comando non lo aveva affatto. Le guardie di ammissione
+                # restano di ogni porta (vedi il docstring della funzione):
+                # qui il vocabolario e' `_deferred` + lo stato del fatto.
+                from .supersession_policy import (
+                    applica_verdetto as _applica_verdetto,
+                )
+                _applica_verdetto(_gate, fact, a.semantic,
+                                  principal=_MCP_PRINCIPAL, ammesso=True,
+                                  log=log)
             # NOTE: provenance columns (writer_role, meta_narrative) are
             # persisted inline by SemanticMemory.store() via the v6 schema
             # — see _migrate_v5_to_v6 + INSERT clause.

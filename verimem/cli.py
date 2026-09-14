@@ -4577,6 +4577,16 @@ def facts_add(
             self.semantic = sm
     agent = _AgentShim(sm)
 
+    class _AvvisoSuConsole:
+        """Un ritiro fallito lo deve vedere CHI STA SCRIVENDO, non un file di
+        log: qui c'e' una persona davanti a un terminale, e «nuovo ammesso,
+        vecchio non ritirato» e' proprio lo stato che la supersessione esiste
+        per evitare."""
+
+        @staticmethod
+        def warning(msg: str, *args: object) -> None:
+            console.print(f"[red]{(msg % args) if args else msg}[/red]")
+
     # buco #2 LIVE (2026-06-03): repo_root per la verifica di ESISTENZA dei ref
     # nel gate (commit:/file: fabbricati -> downgrade). _facts_sm() non setta
     # repo_root sullo store, quindi risolviamo CONFIG.project_root come fa
@@ -4703,6 +4713,7 @@ def facts_add(
             "legacy_unverified", "orphaned", "quarantined",
         }:
             final_status = "model_claim"
+        from .supersession_policy import applica_verdetto as _applica_verdetto
         from .supersession_policy import source_signature_of
         f = Fact(
             proposition=prop,
@@ -4761,6 +4772,34 @@ def facts_add(
         # `engram facts backfill` / next warm op). Daemon warm -> embeds now.
         sm.store(f, hook_token=hook_token, embed="auto")
         inserted.append(f.id)
+        # …E IL VERDETTO DI SUPERSESSIONE VIENE APPLICATO, che fino al
+        # 2026-09-12 su questa porta non succedeva. Il gate qui sopra decide
+        # gia' quali valori la scrittura ritira (`supersede_fact_ids`) e lo
+        # dichiara pure — «a newer same-source value supersedes a stored fact
+        # — the older value is superseded» — ma questo file non nominava quel
+        # campo in nessun punto (misurato: zero occorrenze) e leggeva solo
+        # `gate.action`. Il verdetto arrivava alla porta e cadeva: sonda del
+        # 12/09 con `--validate full`, avviso `L3-supersession` emesso e
+        # `superseded_by` NULLO nel database. Le altre due porte lo
+        # applicavano da mesi, quindi la stessa coppia di scritture lasciava
+        # un fatto vivo da SDK e due da qui.
+        # 📌 La chiamata sta in `supersession_policy.applica_verdetto`, una
+        # sola per tutte e tre: era gia' scritta due volte, e la terza copia
+        # avrebbe fatto divergere anche questa (le due esistenti gia'
+        # divergono su una guardia).
+        _ritirati, _maniglie = _applica_verdetto(
+            gate, f, sm, principal="cli:local",
+            ammesso=(gate.action != "downgrade"
+                     and final_status != "quarantined"),
+            log=_AvvisoSuConsole)
+        for _vecchio in _ritirati:
+            _op = _maniglie.get(_vecchio) or "nessuna maniglia"
+            # UN RITIRO NON SI FA IN SILENZIO: e' la stessa ragione per cui
+            # esiste il registro dei ritiri. Chi scrive vede che cosa e'
+            # uscito dalla lettura, e la maniglia per rimetterlo.
+            console.print(
+                f"  [yellow]superseded:[/yellow] {_vecchio[:12]} "
+                f"[dim]-> {f.id[:12]}  undo: {_op}[/dim]")
         # ⚠️ LO STATO **DOPO** LA SCRITTURA, non quello deciso prima: uno
         # screen dentro `store()` puo' ribaltare un fatto che il gate aveva
         # ammesso, e guardando `final_status` quel ribalto non si vedeva —
@@ -5246,6 +5285,27 @@ def riga_di_recall(h: object) -> str:
         s += f" [{colore}]moat {float(gs):.1f}[/{colore}]"
     else:
         s += " [dim]moat --[/dim]"
+    # …E SE E' UNA VERSIONE SUPERATA, LA RIGA LO DICE. Il campo c'era gia':
+    # `_fact_view` porta `superseded_by` sempre, `None` quando il fatto e'
+    # vivo, e il suo docstring spiega perche' fu aggiunto — «un fatto ritirato
+    # tornava attraverso ognuna di queste superfici IDENTICO a uno vivo». La
+    # cura pero' si era fermata sull'OGGETTO: questa riga, che e' cio' che un
+    # utente legge, portava testo, somiglianza e moat e non nominava il campo.
+    # Con `--include-superseded` (e con `--as-of`, dove gli esiti sono
+    # superati per costruzione) arrivavano DUE risposte alla stessa domanda,
+    # con due numeri diversi, e niente diceva quale delle due fosse quella
+    # vecchia. Misurato dalla porta, non dall'SDK: dall'SDK il campo si legge
+    # e il difetto non si vede — e' il livello a cui si guarda che decide.
+    #
+    # Si stampa la COLONNA GREZZA accorciata, non un nome nuovo tipo
+    # «ritirato»: il docstring di `_fact_view` lo chiede esplicitamente («un
+    # secondo nome per un fatto e' come due verita' cominciano a divergere»),
+    # e l'id serve a chi vuole chiedere il successore.
+    # Nella vista curata questo ramo non scatta mai: li' `superseded_by` e'
+    # None per definizione, quindi la riga di tutti i giorni non cambia.
+    sup = h.get("superseded_by") if isinstance(h, dict) else None
+    if sup:
+        s += f" [yellow]superseded by {str(sup)[:8]}[/yellow]"
     return f"- {txt}{s}"
 
 

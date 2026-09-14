@@ -30,6 +30,7 @@ from typing import Any
 from .anti_confab_gate import _is_advisory_layer, run_validation_gate  # noqa: F401
 from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
+from .supersession_policy import applica_verdetto as _applica_verdetto
 
 _LOG = logging.getLogger(__name__)
 
@@ -970,24 +971,27 @@ class Memory:
         # for writes that earned admission on their own evidence.
         _graded_admit = any(str(w.get("layer", "")).endswith("-graded")
                             for w in warnings)
+        # ⚠️ Anche qui la prova di raggiungibilita' e' scesa dentro
+        # `applica_verdetto`, e per la stessa ragione: sulla porta gemella il
+        # termine sul campo faceva da interruttore a `get`, e toglierlo ha
+        # fatto chiamare `get` a ogni scrittura ammessa. Il difetto si e'
+        # visto li' perche' quel doppio non ha `get`; qui non si sarebbe
+        # visto, ed e' esattamente il motivo per cui la stessa correzione va
+        # fatta su tutte e due invece che dove il rosso e' uscito.
         if (_disposition == "admitted" and not _graded_admit
-                and not chronicle  # a hidden chronicle must not retire a curated fact
-                and getattr(gate, "supersede_fact_ids", None)
-                and self.semantic.get(fact.id) is not None):
-            for _old_id in gate.supersede_fact_ids:
-                try:
-                    _sup_res = self.semantic.supersede(
-                        _old_id, fact.id,
-                        principal=principal or self._principal,
-                        reason="same-source evolution")
-                    _superseded.append(_old_id)
-                    if _sup_res.get("undo_op_id"):
-                        _superseded_undo[_old_id] = _sup_res["undo_op_id"]
-                except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
-                    # surface it: the new fact is admitted but the old was NOT retired —
-                    # the stale-beside-new state the feature exists to prevent (opus critic).
-                    _LOG.warning("same-source supersede of %s failed (new %s admitted, old "
-                                 "NOT retired): %s", _old_id, fact.id, exc)
+                and not chronicle):  # una cronaca nascosta non ritira un fatto curato
+            # …e lo FA la superficie unica, non questo blocco: il ciclo era
+            # scritto qui e, quasi uguale, nel server di strumenti, mentre la
+            # riga di comando non lo aveva affatto. Estratto il 2026-09-12
+            # insieme alla cura di quella terza porta — vedi
+            # `supersession_policy.applica_verdetto` per il perche' le guardie
+            # di ammissione restano di ciascun chiamante.
+            _ritirati, _maniglie = _applica_verdetto(
+                gate, fact, self.semantic,
+                principal=principal or self._principal,
+                ammesso=True, log=_LOG)
+            _superseded.extend(_ritirati)
+            _superseded_undo.update(_maniglie)
         # Review-queue backpressure (P0 ciclo 2, punto 4): a write that JOINS
         # the quarantine/review backlog says how deep that backlog is. Only
         # this write — annotating an admitted one would be noise on a page

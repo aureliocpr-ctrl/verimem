@@ -315,3 +315,76 @@ def classify_write_relation(new_fact: Any, old_fact: Any) -> str:
     if tn is None or to is None or tn <= to:
         return "conflict"
     return "evolution"
+
+
+def applica_verdetto(
+    gate: Any, fact: Any, sm: Any, *, principal: str, ammesso: bool,
+    log: Any = None,
+) -> tuple[list[str], dict[str, str]]:
+    """APPLICA il verdetto di supersessione che il gate ha gia' emesso.
+
+    Il gate produce ``supersede_fact_ids`` — i fatti che la nuova scrittura
+    ritira come ``same-source evolution`` — e fino al 2026-09-12 ogni porta se
+    lo applicava per conto suo. Le copie erano DUE, e una terza stava per
+    nascere: ``client.py`` (SDK) e ``mcp_server.py`` (server di strumenti)
+    chiamavano ``semantic.supersede`` ognuna con le sue guardie, mentre
+    ``cli.py`` **non nominava mai quel campo** (misurato: zero occorrenze). La
+    riga di comando riceveva il verdetto e lo lasciava cadere: il gate
+    stampava «the older value is superseded» e nel database ``superseded_by``
+    restava nullo.
+
+    ⚠️ E LE DUE COPIE ERANO GIA' DIVERGENTI, che e' il motivo per cui questa
+    funzione esiste invece di una terza copia: l'SDK non ritira quando la
+    scrittura e' stata ammessa in forma DEGRADATA (``*-graded``, «uno score-12
+    che ritira un valore fondato e' una perdita netta»), il server di
+    strumenti quella guardia non ce l'aveva. La differenza NON viene unificata
+    qui: ogni porta continua a decidere se la propria scrittura e' ammessa e
+    lo dichiara con ``ammesso``, perche' i tre vocabolari di ammissione sono
+    diversi e sceglierne uno e' una decisione di prodotto, non un effetto
+    collaterale di un'estrazione. Cio' che diventa uno solo e' **cosa si fa
+    quando il verdetto c'e'**.
+
+    Args:
+        gate: il risultato del gate (si legge ``supersede_fact_ids``).
+        fact: il fatto appena scritto — il vincitore della supersessione.
+        sm: la memoria semantica su cui applicare il ritiro.
+        principal: identita' che esegue, per il registro delle mutazioni.
+        ammesso: la porta dichiara che la sua scrittura e' stata ammessa. Una
+            scrittura fermata o degradata NON ritira niente.
+        log: logger opzionale; un fallimento non rompe mai la scrittura.
+
+    Returns:
+        ``(ritirati, maniglie)`` — gli id effettivamente ritirati e la mappa
+        ``{id ritirato: op_id per annullare}``. Sono DUE cose: un ritiro puo'
+        riuscire senza lasciare una maniglia, e contarlo solo quando la
+        maniglia c'e' perderebbe proprio i ritiri irreversibili, che sono
+        quelli di cui bisogna sapere. Entrambi vuoti quando non c'e' niente
+        da ritirare.
+    """
+    ids = list(getattr(gate, "supersede_fact_ids", None) or [])
+    if not ammesso or not ids:
+        return [], {}
+    # il vincitore dev'essere DAVVERO nel corpus curato: `store()` puo'
+    # dirottare una scrittura non quarantinata verso la telemetria, e ritirare
+    # il vecchio contro un nuovo dirottato li toglierebbe entrambi dalla
+    # lettura di default.
+    if sm.get(getattr(fact, "id", "")) is None:
+        return [], {}
+    ritirati: list[str] = []
+    maniglie: dict[str, str] = {}
+    for vecchio in ids:
+        try:
+            esito = sm.supersede(vecchio, fact.id, principal=principal,
+                                 reason="same-source evolution")
+            ritirati.append(vecchio)
+            if esito.get("undo_op_id"):
+                maniglie[vecchio] = esito["undo_op_id"]
+        except Exception as exc:  # noqa: BLE001 — un ritiro fallito non rompe la scrittura
+            # …ma non resta muto: nuovo ammesso e vecchio NON ritirato e'
+            # esattamente lo stato «stantio accanto al nuovo» che questa
+            # funzione esiste per evitare.
+            if log is not None:
+                log.warning(
+                    "same-source supersede of %s failed (new %s admitted, old "
+                    "NOT retired): %s", vecchio, getattr(fact, "id", "?"), exc)
+    return ritirati, maniglie
