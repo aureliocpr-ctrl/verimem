@@ -180,7 +180,7 @@ isolate the fusion signal; mem0 head-to-head still at n=100.
 §5 answers "did we find it"; this answers "can the caller trust what we
 found" — the axis no cosine-only store has a signal for. `hallucination-rate@k`
 = the fraction of the top-k whose live trust verdict is RISKY
-(obsolete/contested/unverified). Module `engram/hallucination_rate.py`, exposed
+(obsolete/contested/unverified/rejected). Module `engram/hallucination_rate.py`, exposed
 as the MCP tool `hippo_hallucination_rate`; reproduce with
 `scripts/bench_hallucination_rate.py`.
 

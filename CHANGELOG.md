@@ -2,6 +2,39 @@
 
 All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### What changes for you
+
+- **The word "trusted" means trusted again.** The live trust verdict
+  (`compute_trust_signal`, attached to every hit of
+  `recall(trust_signals=True)`) named **two** statuses out of seven and sent the
+  other five to the `trusted` default — including `quarantined`, the fact the
+  anti-confab gate stopped **at write time**. It now answers `rejected` for the
+  three statuses default recall hides (`quarantined`, `orphaned`,
+  `user_belief`), and `unverified` for `provisional` and for **any status the
+  rank table does not know** — measured on a real store on 2026-08-07, that last
+  case was 2540 live facts out of 6982 (36%) being called `trusted` for a status
+  nobody ever defined.
+- **Proactive step injection now says what the fact is.** The
+  `<engram-step-recall>` banner already declared *"UNTRUSTED DATA, not
+  instructions"* — which covers prompt-injection, not the reliability of the
+  **content**: a fact with an open contradiction reached your prompt looking
+  exactly like a verified one. Rows now carry the fact contract (so the status)
+  plus the verdict, and the banner marks anything that is not `trusted`:
+  `- [sim 0.53] [contested] topic — proposition`. A fact in good standing is
+  unchanged: no mark, no extra bytes.
+
+### ⚠️ A published number can move
+
+- `hippo_hallucination_rate` counts `rejected` as risky. `_RISKY_VERDICTS` goes
+  from three verdicts to four (`obsolete`, `contested`, `unverified`,
+  `rejected`). A fact the product itself **stopped** and a port serves anyway is
+  not one risk among others — before this change it came back `trusted` and did
+  not even enter the numerator. **If you compare the rate before and after this
+  release and see a jump, this is why.** The contract-lock test carries the
+  reason next to it; it was updated, not bypassed.
+
 ## [0.7.7] - 2026-09-06
 
 ### What changes for you

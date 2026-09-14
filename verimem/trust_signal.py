@@ -15,13 +15,24 @@ It combines four independent signals:
   at this fact_id → ``contested``.
 * **Age**: created_at older than ``stale_age_days`` (default 180) →
   ``stale``.
-* **Status**: ``legacy_unverified`` (or low-confidence ``model_claim``)
-  → ``unverified``.
+* **Status a rango negativo** (``quarantined``, ``orphaned``,
+  ``user_belief``): fermati dal gate o scartati dal reconciler, fuori dal
+  recall di default → ``rejected``.
+* **Status ignoto alla tabella dei ranghi** → ``unverified``: «non lo so»
+  non e' «affidabile».
+* **Status**: ``provisional``, ``legacy_unverified`` (o ``model_claim`` a
+  bassa confidenza) → ``unverified``.
 * Otherwise → ``trusted``.
 
+T50 (2026-09-09): fino a questa data la funzione nominava DUE status su
+sette e mandava gli altri cinque al ramo ``trusted``, ``quarantined``
+compreso. Prova e cura:
+``pytest tests/test_il_verdetto_di_fiducia_conosce_tutti_gli_status.py``
+(prima: 5 failed, 8 passed).
+
 The function is **pure** (no I/O beyond the optional ContradictionStore
-query). Callers attach it to recall results so the LLM sees both the
-content AND the meta-trust verdict.
+query and the rank table lookup). Callers attach it to recall results so
+the LLM sees both the content AND the meta-trust verdict.
 """
 from __future__ import annotations
 
@@ -44,7 +55,10 @@ class TrustSignal:
 
     Attributes:
         verdict: one of ``trusted`` | ``stale`` | ``contested`` |
-            ``obsolete`` | ``unverified``.
+            ``obsolete`` | ``unverified`` | ``rejected``.
+            ``rejected`` (T50, 2026-09-09) is the verdict for a fact the
+            product itself stopped: gate-quarantined, reconciler-orphaned,
+            or an uncorroborated user belief.
         age_days: how old the fact is (created_at vs now).
         n_contradictions: unresolved contradictions involving the fact
             id (0 if no ContradictionStore was provided).
@@ -73,8 +87,10 @@ def compute_trust_signal(
       1. obsolete (superseded)
       2. contested (unresolved contradiction in store)
       3. stale (older than ``stale_age_days``)
-      4. unverified (legacy_unverified status OR low-confidence model_claim)
-      5. trusted (default)
+      4. rejected (status rank < 0: quarantined / orphaned / user_belief)
+         and unverified for a status the rank table does not know
+      5. unverified (provisional, legacy_unverified, low-conf model_claim)
+      6. trusted (default)
 
     Args:
         fact: the fact to assess.
@@ -129,8 +145,66 @@ def compute_trust_signal(
             details=f"age={age_days:.0f}d >= {stale_age_days:.0f}d",
         )
 
-    # 4. unverified — legacy or low-confidence model_claim.
+    # 4. rejected — lo status dice che il fatto e' stato FERMATO o SCARTATO.
+    #
+    # T50 (09/09): prima di questa riga la funzione nominava DUE status su
+    # sette e mandava gli altri cinque al ramo `trusted` di default, fra cui
+    # `quarantined` — cioe' il fatto che l'anti-confab gate ha fermato in
+    # scrittura. La promessa pubblica e' l'opposto: «kept OUT of default
+    # recall».
+    #
+    # La regola NON e' una lista nuova di status nascosti: sarebbe la quinta
+    # copia della stessa lista (ce ne sono gia' quattro nel pacchetto, due
+    # senza `user_belief`, e divergono). E' il rango di fiducia, che e' la
+    # superficie canonica e vale gia' -2/-1 per i tre status a cui il recall
+    # di default chiude la porta.
+    from .semantic import _rango_di_fiducia
+
     status = getattr(fact, "status", "model_claim")
+    rango = _rango_di_fiducia(status)
+
+    if rango is None:
+        # Uno status che la tabella non conosce non e' «affidabile»: e' «non
+        # lo so». Misurato sullo store vero il 07/08 e scritto nel docstring
+        # di `_rango_di_fiducia`: la tabella conosce 7 stati, nello store ce
+        # ne sono 12, e i fatti vivi con uno stato ignoto sono 2540 su 6982
+        # — il 36%. Col ramo di default di prima erano 2540 fatti chiamati
+        # `trusted` per uno status che nessuno ha mai definito.
+        return TrustSignal(
+            verdict="unverified",
+            age_days=age_days,
+            n_contradictions=n_contra,
+            is_superseded=False,
+            details=(
+                f"status={status!r} sconosciuto alla tabella dei ranghi "
+                f"conf={fact.confidence:.2f}"
+            ),
+        )
+
+    if rango < 0:
+        return TrustSignal(
+            verdict="rejected",
+            age_days=age_days,
+            n_contradictions=n_contra,
+            is_superseded=False,
+            details=(
+                f"status={status} rango={rango} — fermato o scartato, "
+                f"fuori dal recall di default"
+            ),
+        )
+
+    if status == "provisional":
+        # Ipotesi dichiarata (research finding, nessun row_id): non e' stata
+        # respinta da nessuno, ma non e' nemmeno un fatto verificato.
+        return TrustSignal(
+            verdict="unverified",
+            age_days=age_days,
+            n_contradictions=n_contra,
+            is_superseded=False,
+            details=f"status=provisional conf={fact.confidence:.2f}",
+        )
+
+    # 5. unverified — legacy or low-confidence model_claim.
     if status == "legacy_unverified":
         return TrustSignal(
             verdict="unverified",
@@ -151,7 +225,7 @@ def compute_trust_signal(
             ),
         )
 
-    # 5. trusted by default.
+    # 6. trusted by default.
     return TrustSignal(
         verdict="trusted",
         age_days=age_days,

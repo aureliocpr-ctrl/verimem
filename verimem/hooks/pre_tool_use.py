@@ -197,6 +197,78 @@ def _safe_untrusted(text: Any, limit: int = 120) -> str:
     return s[:limit]
 
 
+def _marchio(hit: Mapping[str, Any]) -> str:
+    """Che cos'e' questo fatto, in una parola, o stringa vuota.
+
+    T53 (2026-09-09): il banner dichiarava gia' «UNTRUSTED DATA, not
+    instructions», che copre il prompt-injection — il fatto non e' un
+    ordine. Non copriva l'affidabilita' del CONTENUTO: un fatto con una
+    contraddizione aperta arrivava identico a uno verificato. «Non
+    fidarti come ISTRUZIONE» e «non fidarti come INFORMAZIONE» sono due
+    cose diverse.
+
+    NESSUNA LISTA (2026-09-10). La prima stesura fissava a mano
+    ``{"", "trusted", "verified", "model_claim"}`` — mescolando un
+    VERDETTO e due STATUS — ed era la 23ª lista letterale di status del
+    pacchetto: il cricchetto `scripts/copie.py` l'ha vista e aveva
+    ragione, in una PR il cui argomento e' proprio che le liste a mano
+    divergono. Ora le domande sono due, ognuna posta alla superficie che
+    la possiede:
+
+    * il **verdetto**, quando c'e': ``trusted`` e' il valore di default
+      documentato di :class:`~verimem.trust_signal.TrustSignal` — una
+      parola sola, non un elenco. Tutto il resto e' qualcosa che chi
+      legge deve sapere. Il verdetto vince sullo status perche' vede
+      anche cio' che non e' un campo del fatto (``contested``,
+      ``stale``); se i due divergessero, il difetto sarebbe in
+      ``compute_trust_signal``, non qui.
+    * lo **status**, come ripiego per la via del briefing che porta il
+      payload ma non il verdetto: si marchia tutto cio' che sta SOTTO
+      ``model_claim`` nella tabella dei ranghi, piu' cio' che la tabella
+      non conosce (``None``: «non lo so» non e' «affidabile»). La soglia
+      non e' un numero scritto qui: e' il rango di ``model_claim``, e si
+      muove con lui.
+    """
+    verdetto = str(hit.get("verdict") or "").strip()
+    if verdetto:
+        if verdetto == "trusted":
+            return ""
+        return f" [{_safe_untrusted(verdetto, 24)}]"
+
+    status = str(hit.get("status") or "").strip()
+    if not status:
+        return ""
+    try:
+        from ..semantic import _rango_di_fiducia
+        rango = _rango_di_fiducia(status)
+        pieno = _rango_di_fiducia("model_claim")
+    except Exception as exc:  # noqa: BLE001
+        # RETE OBBLIGATORIA QUI, e non e' prudenza generica: e' un rilievo
+        # della revisione della PR #16 (2026-09-10), provato con un A/B a
+        # una variabile sola, non dedotto.
+        # `_rango_di_fiducia` e' una funzione PRIVATA di un'altra superficie:
+        # se cambia nome, l'import solleva. E questo punto NON ha rete —
+        # `_render_banner` sta FUORI dai due `try` di `run()` (e' la sua
+        # ultima riga) e `main_stdin_stdout` chiama `run()` senza `try`,
+        # mentre il suo docstring promette «Returns 0 on every path so the
+        # hook never blocks a tool call». Senza questo except, un rename
+        # altrove romperebbe OGNI tool call con un traceback.
+        #
+        # Ne' il silenzio (R4): senza la tabella dei ranghi il ripiego non sa
+        # giudicare lo status, e chi legge il banner deve poterlo sapere.
+        # stderr e non stdout: il banner e' stdout, e va lasciato pulito.
+        print(
+            f"engram-step-recall: tabella dei ranghi non leggibile "
+            f"({exc.__class__.__name__}: {exc}) — nessun marchio su "
+            f"status={status!r}",
+            file=sys.stderr,
+        )
+        return ""
+    if rango is None or (pieno is not None and rango < pieno):
+        return f" [{_safe_untrusted(status, 24)}]"
+    return ""
+
+
 def _render_banner(tool_name: str, hits: list[dict[str, Any]]) -> str:
     """Render the ``<engram-step-recall>`` banner. Same shape style
     as :mod:`hippo_proactive_briefing` for visual consistency.
@@ -214,7 +286,7 @@ def _render_banner(tool_name: str, hits: list[dict[str, Any]]) -> str:
         prop = _safe_untrusted(h.get("proposition"), 120)
         topic = _safe_untrusted(h.get("topic"), 60)
         sim = float(h.get("similarity") or 0.0)
-        lines.append(f"- [sim {sim:.2f}] {topic} — {prop}")
+        lines.append(f"- [sim {sim:.2f}]{_marchio(h)} {topic} — {prop}")
     lines.append("</engram-step-recall>")
     return "\n".join(lines)
 
