@@ -143,9 +143,26 @@ jobs:
         # dell'autore e lo squash non li porta in main, quindi chiedere di
         # riscriverli e' attrito che non compra niente. Su main e sui rami di
         # integrazione l'opzione NON si passa: li' quei messaggi restano.
+        # 🔴 16/09 — LA BASE E' `origin/<base_ref>`, NON `base.sha`. Quel campo e'
+        # CONGELATO all'apertura della richiesta: appena qualcuno porta il tronco
+        # dentro il proprio ramo, tutti i commit di main da allora entrano nel
+        # range e vengono giudicati come se fossero suoi. Misurato oggi su due
+        # richieste che ho aggiornato io:
+        #
+        #   #23  base.sha congelato -> 35 commit, 6 BOCCIATI e tutti e sei su main
+        #        (d60cc326, b4ccb627, 31f5f2c3, 161553ca, 15b36c61, b67e1204 —
+        #         `git merge-base --is-ancestor <sha> origin/main` risponde SI)
+        #   #23  origin/main..HEAD ->  9 commit, 2 bocciati e sono SUOI
+        #   #24  base.sha congelato -> 34 commit  ·  origin/main..HEAD -> 4
+        #
+        # ⇒ Aggiornare un ramo lo rendeva rosso per la storia del tronco, e la
+        # colpa appariva dell'autore. Con la base MOBILE i commit gia' in main
+        # escono per costruzione, e resta solo cio' che la richiesta aggiunge.
+        # (`fetch-depth: 0` qui sopra e' cio' che rende raggiungibile `origin/…`.)
         run: |
+          git fetch --no-tags --quiet origin '${{ github.base_ref }}'
           python scripts/messaggio_pulito.py --righe-solo-rapporto \
-            --range '${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}'
+            --range 'origin/${{ github.base_ref }}..${{ github.event.pull_request.head.sha }}'
 
       - name: Il corpo di questa PR
         if: github.event_name == 'pull_request'
