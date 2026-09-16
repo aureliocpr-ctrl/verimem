@@ -356,6 +356,18 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
     elif not any(INTESTAZIONE_DOD in c for c in commenti):
         problemi.append(f"nessun commento porta «{INTESTAZIONE_DOD}»: la "
                         f"richiesta non dichiara cosa considera finito")
+    else:
+        # Il commento che porta la DoD deve dire anche DA DOVE viene la
+        # richiesta: quale riga del registro previene, e quale decisione segue.
+        # Senza, fra un anno la casella spuntata resta e la ragione no.
+        dod = next(c for c in commenti if INTESTAZIONE_DOD in c)
+        mancanti = [e for e, r in CAMPI_DELLA_PROVENIENZA.items() if not r.search(dod)]
+        if mancanti:
+            problemi.append(
+                "il commento della Definition of Done non porta "
+                + ", ".join(f"«{m}»" for m in mancanti)
+                + ": una casella spuntata dice CHE e' finito, non PERCHE' e'"
+                  " stato fatto ne' quale difetto gia' visto impedisce")
 
     # ⚠️ I nomi e i percorsi si cercano su TUTTO il corpo, non sulla sola prosa:
     # una riga in fondo e' pubblica quanto la prima, e finisce su main con lei.
@@ -370,7 +382,40 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
     return problemi
 
 
-DOD_IN_COMMENTO = [INTESTAZIONE_DOD + "\n- [x] RED at the port\n- [ ] GREEN\n"]
+#: I due campi che il commento della Definition of Done deve portare, con la
+#: forma minima che il controllo accetta. Il VALORE non si giudica qui — un
+#: numero di riga o «nessuna, non tocca il nucleo» sono entrambi validi e chi
+#: legge li verifica nelle due pagine: questo controllo pretende che ci SIANO.
+#:
+#: ⚠️ PERCHE' DUE E NON DIECI. Una Definition of Done di dieci caselle esiste
+#: gia' (CONTRIBUTING.md) e il controllo la pretende gia' qui sopra. Aggiungerne
+#: altre dieci ne farebbe venti, e una lista di venti caselle si spunta senza
+#: leggerla: sarebbe un rito. Questi due campi non sono caselle — sono due
+#: puntatori, e chiedono la cosa che nessuna delle dieci chiede: da dove viene
+#: la richiesta e quale difetto gia' visto impedisce.
+CAMPI_DELLA_PROVENIENZA = {
+    "Registro: riga <n>": re.compile(r"^\s*Registro:\s*\S", re.I | re.M),
+    "Decisione: <n>": re.compile(r"^\s*Decisione:\s*\S", re.I | re.M),
+}
+
+#: ⚠️ QUESTO FIXTURE E' CONDIVISO DA OTTO CASI, e cinque di essi si aspettano
+#: «pulito». Aggiungendo la pretesa dei due campi senza aggiungerli QUI, quei
+#: cinque cadono tutti insieme: e' il rosso 5-su-40 riportato dal pari il 16/09,
+#: e non e' un difetto del controllo ma del fixture rimasto indietro. Un caso di
+#: prova che rappresenta «la richiesta fatta bene» deve essere aggiornato nello
+#: stesso commit in cui «fatta bene» cambia significato.
+DOD_IN_COMMENTO = [
+    INTESTAZIONE_DOD
+    + "\n- [x] RED at the port\n- [ ] GREEN\n"
+    + "\nRegistro: riga 4\nDecisione: nessuna, non tocca il nucleo\n"
+]
+
+#: Lo stesso commento SENZA i due campi: e' il caso che deve essere bocciato, ed
+#: e' anche il controllo negativo del fixture qui sopra. Se un giorno questo
+#: passasse, la pretesa non starebbe piu' mordendo.
+DOD_SENZA_PROVENIENZA = [
+    INTESTAZIONE_DOD + "\n- [x] RED at the port\n- [ ] GREEN\n"
+]
 
 # (nome, corpo, commenti, ci aspettiamo che sia pulito)
 CASI_CORPO: list[tuple[str, str, list[str] | None, bool]] = [
@@ -385,6 +430,17 @@ CASI_CORPO: list[tuple[str, str, list[str] | None, bool]] = [
     # ⚠️ Il controllo che NON GIRA lo dice: se `commenti` non arriva, il
     # verdetto non e' verde, e' «NON MISURATO».
     ("commenti non passati al controllo", "Una.\n", None, False),
+    # I due campi della provenienza: la DoD c'e', ma non dice da dove viene.
+    ("la DoD non porta i due campi", "Una.\n", DOD_SENZA_PROVENIENZA, False),
+    ("la DoD porta solo il registro", "Una.\n",
+     [INTESTAZIONE_DOD + "\n- [x] GREEN\n\nRegistro: riga 4\n"], False),
+    ("la DoD porta solo la decisione", "Una.\n",
+     [INTESTAZIONE_DOD + "\n- [x] GREEN\n\nDecisione: D-0003\n"], False),
+    # «nessuna» e' un VALORE, non un'assenza: una richiesta che non tocca il
+    # nucleo lo dichiara invece di lasciare il campo vuoto.
+    ("«nessuna» e' una decisione dichiarata", "Una.\n",
+     [INTESTAZIONE_DOD + "\n- [x] GREEN\n\nRegistro: riga 7\n"
+      "Decisione: nessuna, non tocca il nucleo\n"], True),
     # Le caselle non sono prosa NEANCHE nel corpo: se qualcuno le lascia li',
     # non fanno scattare la lunghezza — ma la DoD deve stare comunque in un
     # commento, perche' il corpo diventa il messaggio su main.

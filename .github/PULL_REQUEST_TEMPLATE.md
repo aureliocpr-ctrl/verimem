@@ -8,9 +8,17 @@
 
 ### Definition of Done
 
-     e sotto le dieci caselle (le trovi in CONTRIBUTING.md). Se nessun commento
-     la porta, la richiesta è rossa; se i commenti non arrivano al controllo,
-     dice «NON MISURATO» invece di tacere.
+     e sotto le caselle (le trovi in CONTRIBUTING.md) PIÙ le due righe che il
+     controllo pretende in fondo a quel commento:
+
+Registro: riga <n>
+Decisione: <n>          oppure   Decisione: nessuna, non tocca il nucleo
+
+     La prima dice quale riga del registro degli errori questa richiesta
+     impedisce di ripetere, la seconda quale decisione segue. Se nessun commento
+     porta l'intestazione, o la porta senza quelle due righe, la richiesta è
+     rossa; se i commenti non arrivano al controllo, dice «NON MISURATO» invece
+     di tacere.
 
      Questo modello è CORTO di proposito: titolo e corpo diventano parola per
      parola il commit che resta nel log pubblico, e le righe che lasci qui le

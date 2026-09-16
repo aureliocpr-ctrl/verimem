@@ -92,15 +92,38 @@ le regole che seguono.
 
    - [ ] RED at the port, with the output in the PR
    - [ ] GREEN
+   - [ ] every verdict computed is also READ — no field produced and dropped
    - [ ] map entry updated
    - [ ] README claim linked or removed
    - [ ] docstring carries the date and the command
-   - [ ] reviewer is not the author
+   - [ ] reviewer is not the author, and has run it
    - [ ] QA sign-off
    - [ ] fact saved with its source
-   - [ ] CI green on the tip
+   - [ ] CI has run and is green on the tip — zero checks is not green
    - [ ] no new copies
+   - [ ] if a box above does not hold, this comment says WHICH and why
+
+   Registro: riga <n>
+   Decisione: <n>
    ```
+
+   **Le due righe in fondo non sono caselle, sono puntatori**, e il controllo le
+   pretende: `Registro: riga <n>` dice quale riga del registro degli errori
+   questa richiesta impedisce di ripetere; `Decisione: <n>` quale decisione
+   segue, oppure `Decisione: nessuna, non tocca il nucleo`. Una casella spuntata
+   dice CHE è finito; questi due dicono PERCHÉ è stato fatto — ed è la parte che
+   fra un anno non si ricostruisce da sola.
+
+   **Tre delle caselle sopra sono cambiate, e ognuna per un difetto misurato**:
+   *«every verdict computed is also read»* perché tre difetti (un verdetto di
+   versionamento calcolato e mai letto dalla riga di comando, uno alla porta
+   degli strumenti, un campo della ricevuta calcolato a sedici righe da dove la
+   ricevuta si compone) **passavano tutte e dieci le caselle precedenti**: i test
+   guardano chi calcola, non chi legge. *«CI has run and is green»* perché
+   quattro richieste aperte avevano **zero** controlli eseguiti e nessuno se
+   n'era accorto: una richiesta senza controlli non è in attesa, è invisibile.
+   *«reviewer … has run it»* perché «non è l'autore» non dice che l'abbia
+   eseguito.
 
 3. **Le misure lunghe, le tabelle e i log non si buttano: si spostano** — in un
    commento della richiesta, oppure in `docs/stato-reale/`.
