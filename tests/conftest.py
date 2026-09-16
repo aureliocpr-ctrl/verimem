@@ -13,6 +13,7 @@ _os.environ.setdefault("HIPPO_EMBEDDING_DIM", "384")
 
 import hashlib
 import re
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -670,10 +671,23 @@ def pytest_collection_modifyitems(config, items):
         raccolta_intera = not chiesto or chiesto <= {"tests", ".", ""}
         mancanti = sorted(attesi - visti)
         if raccolta_intera and mancanti:
-            raise pytest.UsageError(
+            messaggio = (
                 f"tests/accettazione.txt elenca {len(mancanti)} file che la "
                 f"raccolta non ha prodotto: {', '.join(mancanti)}. "
                 "Sono stati rinominati o tolti? Aggiorna l'elenco nello stesso "
                 "commit: una suite di accettazione che si svuota resta verde, "
                 "ed e' il modo piu' silenzioso di non accorgersene."
             )
+            # Il testo si stampa PRIMA di sollevare, su stderr e su righe sue.
+            # Rilievo del pari (2026-09-16): sollevando e basta, pytest lo
+            # appiccica in coda al riepilogo dei warning — riga 15360 su 15450,
+            # attaccata a un'altra riga. Un avviso che nessuno vede e' un
+            # avviso che non c'e', ed e' la classe di difetto che questa suite
+            # esiste per rendere visibile.
+            print(
+                "\n" + "=" * 78
+                + "\nSUITE DI ACCETTAZIONE: L'ELENCO NON CORRISPONDE\n"
+                + "=" * 78 + f"\n{messaggio}\n" + "=" * 78 + "\n",
+                file=sys.stderr, flush=True,
+            )
+            raise pytest.UsageError(messaggio)
