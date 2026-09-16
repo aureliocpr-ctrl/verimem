@@ -13627,23 +13627,86 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # document store is lazy: writes that never reach the independence
             # question open no connection.
             from .evidence_independence import LazyDocumentStore
-            _gate = run_validation_gate(
-                proposition=proposition,
-                verified_by=verified_by,
-                topic=topic,
-                agent=a,
-                validate=_validate_kw,
-                gate_mode=_gate_mode_kw,
-                force_persist=_force_persist,
-                writer_role=_writer_role,
-                meta_narrative=_meta_narrative,
-                repo_root=_gate_repo_root,
-                source=_source,
-                grounding_llm=_grounding_llm,
-                ground_write=_ground_write,
-                claimant=_MCP_PRINCIPAL,
-                documents=LazyDocumentStore(),
+
+            def _giudica_ora():
+                return run_validation_gate(
+                    proposition=proposition,
+                    verified_by=verified_by,
+                    topic=topic,
+                    agent=a,
+                    validate=_validate_kw,
+                    gate_mode=_gate_mode_kw,
+                    force_persist=_force_persist,
+                    writer_role=_writer_role,
+                    meta_narrative=_meta_narrative,
+                    repo_root=_gate_repo_root,
+                    source=_source,
+                    grounding_llm=_grounding_llm,
+                    ground_write=_ground_write,
+                    claimant=_MCP_PRINCIPAL,
+                    documents=LazyDocumentStore(),
+                )
+
+            # T90 — UNA CHIAMATA ALLA PORTA NON PUO' NON TORNARE (I5/I7).
+            #
+            # Misurato 4 su 4 il 15-16/09: la prima scrittura con fonte da qui
+            # non torna (424 s, poi «Connection closed», EXIT=124), e non e'
+            # lentezza: 35 s di lavoro vero (RSS a 737,9 MB) e poi 0,34 s di CPU
+            # in 236 s di attesa, cioe' lo 0,1%. La causa dell'arresto e' sotto
+            # Python e resta IGNOTA (sei candidati esclusi eseguendo, la pila si
+            # ferma in `create_module` di scipy dentro sklearn): quella e' T90b,
+            # con un debugger nativo. Qui si cura il SINTOMO, ed e' il contratto:
+            # o il fatto e' giudicato, o entra DICHIARANDO che non lo e' stato.
+            #
+            # ⚠️ IL THREAD BLOCCATO RESTA BLOCCATO: non si interrompe un thread
+            # dentro una LoadLibrary. Si smette di ASPETTARLO. Per questo il
+            # processo si segna degradato: la scrittura dopo non ripaga il tetto
+            # per riscoprire la stessa cosa.
+            #
+            # ⚠️ E NON SI AMMETTE NIENTE AL BUIO: l'esito e' `downgrade`, cioe'
+            # il fatto entra QUARANTINATO — la parola che questo prodotto usa
+            # gia' per «non posso garantire». Ammetterlo come pulito sarebbe
+            # curare un'attesa infinita creando un corpus sporco.
+            from ._tetto_del_giudizio import (
+                TETTO_S,
+                questo_processo_e_degradato,
+                ragione_del_salto,
+                segna_degradato,
             )
+            _salto: str | None = None
+            if questo_processo_e_degradato():
+                #: gia' sbattuto contro il tetto in questo processo: si dichiara
+                #: SUBITO, senza rimettersi in coda dietro un thread fermo.
+                _salto = ragione_del_salto()
+            else:
+                try:
+                    import anyio
+                    with anyio.fail_after(TETTO_S):
+                        # ⚠️ `abandon_on_cancel=True` E' LA RIGA CHE FA
+                        # FUNZIONARE IL TETTO, e l'ho imparata sbagliando: con
+                        # il default (`False`, letto nella firma di anyio
+                        # 4.12.1) la cancellazione aspetta che il thread
+                        # FINISCA — e il thread e' proprio quello che non
+                        # finisce mai. Il primo GREEN e' rimasto appeso 623 s
+                        # con il tetto a 60 s: il tetto c'era e non poteva
+                        # scattare.
+                        _gate = await anyio.to_thread.run_sync(
+                            _giudica_ora, abandon_on_cancel=True)
+                except TimeoutError:
+                    _salto = ragione_del_salto()
+                    segna_degradato(
+                        f"il giudizio non e' tornato entro {TETTO_S:.0f} s "
+                        f"(strumento {name}); il thread resta appeso")
+            if _salto is not None:
+                from .anti_confab_gate import GateResult
+                _gate = GateResult(
+                    action="downgrade",
+                    warnings=[{"layer": "L4", "reason": _salto,
+                               "tetto_s": TETTO_S}],
+                    advice=("il giudizio non ha girato: il fatto e' entrato "
+                            "quarantinato. `verimem doctor` dice se questo "
+                            "processo e' degradato."),
+                )
             _gate_warnings: list[dict[str, Any]] = list(_gate.warnings)
             if _gate.action == "reject":
                 _audit(name, arguments, outcome="rejected_anti_confab")

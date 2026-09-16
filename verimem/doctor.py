@@ -564,6 +564,32 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception as e:  # noqa: BLE001
         add("daemon", WARN, f"probe failed: {e}")
 
+    # -- il tetto del giudizio, e se un processo ci ha gia' sbattuto ----------
+    # Il numero si STAMPA: un tetto che decide il comportamento e vive solo
+    # dentro un file e' la classe «il numero dichiarato non e' quello
+    # applicato», gia' pagata due volte. E lo stato degradato lo si legge da
+    # qui perche' `doctor` e' un altro processo: una variabile di modulo
+    # sarebbe invisibile proprio a chi deve vederla.
+    try:
+        from . import _tetto_del_giudizio as _tg
+        _degradato = _tg.stato_degradato()
+        if _degradato is None:
+            add("tetto-giudizio", OK,
+                f"il giudizio ha un tetto di {_tg.TETTO_S:.0f} s "
+                f"(VERIMEM_JUDGE_BUDGET_S); nessun processo degradato")
+        else:
+            import datetime as _dt
+            _q = _dt.datetime.fromtimestamp(
+                _degradato.get("quando", 0)).strftime("%m-%d %H:%M")
+            add("tetto-giudizio", WARN,
+                f"processo {_degradato.get('pid')} DEGRADATO dal {_q}: "
+                f"{_degradato.get('motivo')} — le sue scritture entrano "
+                f"quarantinate e lo dicono nella ricevuta",
+                "riavvia quel processo; il fatto resta quarantinato finche' "
+                "qualcuno non lo rigiudica")
+    except Exception as e:  # noqa: BLE001
+        add("tetto-giudizio", WARN, f"non leggibile: {e}")
+
     # -- moat judge (the product's #1 claim) -----------------------------------
     # Below this share of entailment-judged facts the moat-judge check WARNS
     # instead of passing. The alarm used to fire only at exactly zero, so a
