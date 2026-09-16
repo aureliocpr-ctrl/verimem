@@ -251,6 +251,12 @@ markers = [
   "security: security-focused tests (auth, sandbox, injection)",
   "network: tests that require network access",
   "perf: performance benchmarks (run with --benchmark-only)",
+  # La suite di accettazione: i file che esercitano una PORTA sulle due
+  # operazioni del nucleo (scrivi con la fonte, richiama) piu' il verdetto e la
+  # ricevuta. Non lo scrive nessun test: lo applica `pytest_collection_modifyitems`
+  # leggendo `tests/accettazione.txt`, un file per riga. Si esegue con
+  # `pytest -m accettazione`.
+  "accettazione: the acceptance suite of the core (see tests/accettazione.txt)",
   # Dichiarato il 2026-08-01 perche' `--strict-markers` (riga 235) fa fallire la
   # COLLECTION se un marker usato non e' in questa lista, e il conftest lo
   # applica in `pytest_collection_modifyitems`. In locale non si vedeva:
