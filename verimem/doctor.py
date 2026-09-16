@@ -500,10 +500,17 @@ def run_doctor() -> list[dict[str, Any]]:
         # e' quella che conta per chi ha perso lo store.
         # FAIL e non WARN: qui il prodotto non puo' funzionare, e un WARN
         # accanto a `writable=True` si legge come «va quasi bene».
+        # T91: un percorso da solo non distingue «isolato» da «sembrava
+        # isolato». Chi pone ENGRAM_DATA_DIR con HIPPO_DATA_DIR gia' viva
+        # nell'ambiente legge qui il percorso che NON ha chiesto, e senza il
+        # nome della variabile che ha vinto non ha modo di capire perche'.
+        from ._compat import provenienza_data_dir as _prov
+        _chi_decide = " — " + _prov().dichiarazione()
         _illeggibili = _stores_illeggibili(d)
         add("data-dir",
             FAIL if (not writable or _illeggibili) else OK,
             f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})"
+            + _chi_decide
             + _divergenza,
             # ⚠️ QUI C'ERA UN COMANDO CHE NON ESISTE: «controlla `verimem backup
             # list`». Chi seguiva il consiglio riceveva `No such command`, e

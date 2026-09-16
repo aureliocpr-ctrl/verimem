@@ -71,6 +71,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import NamedTuple
 
 _PREFIX_OLD = "HIPPO_"
 _PREFIX_NEW = "ENGRAM_"
@@ -170,8 +171,36 @@ _ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
 _avvisato_alias_discordi = False
 
 
-def _env_data_dir() -> str:
-    """L'override della data dir dall'ambiente, o "" se nessun alias e' posto.
+class ProvenienzaDataDir(NamedTuple):
+    """Chi ha deciso la data dir, non solo quale sia.
+
+    ``alias`` e' "" quando nessuna variabile e' posta (vince il disco);
+    ``ignorati`` elenca gli alias posti su un percorso DIVERSO da quello scelto.
+    """
+
+    percorso: str
+    alias: str
+    ignorati: dict[str, str]
+
+    def dichiarazione(self) -> str:
+        """Una riga per una porta: chi ha deciso, e che cosa e' stato ignorato.
+
+        T91 (14/09): tre variabili puntate a uno store di prova e la scrittura
+        finita nello store vero. La precedenza esisteva gia' — mancava il modo
+        di VEDERLA: l'unico segnale era un RuntimeWarning, che di default si
+        stampa una volta per posizione e che nessuno legge.
+        """
+        if not self.alias:
+            return "data dir: nessuna variabile posta (default sul disco)"
+        riga = f"data dir decisa da {self.alias}"
+        if self.ignorati:
+            riga += " — ignorati: " + ", ".join(
+                f"{n}={v}" for n, v in self.ignorati.items())
+        return riga
+
+
+def provenienza_data_dir() -> ProvenienzaDataDir:
+    """L'override della data dir dall'ambiente, CON la sua provenienza.
 
     Quando piu' alias sono posti su percorsi DIVERSI lo dice — una volta per
     processo. Sceglierne uno in silenzio e' esattamente cio' che ha prodotto la
@@ -184,10 +213,13 @@ def _env_data_dir() -> str:
     posti = {n: v.strip() for n in _ALIAS_DATA_DIR
              if (v := os.environ.get(n, "")) and v.strip()}
     if not posti:
-        return ""
-    scelto = next(posti[n] for n in _ALIAS_DATA_DIR if n in posti)
-    distinti = {str(Path(v).expanduser().resolve()) for v in posti.values()}
-    if len(distinti) > 1 and not _avvisato_alias_discordi:
+        return ProvenienzaDataDir("", "", {})
+    vincente = next(n for n in _ALIAS_DATA_DIR if n in posti)
+    scelto = posti[vincente]
+    atteso = str(Path(scelto).expanduser().resolve())
+    ignorati = {n: v for n, v in posti.items()
+                if n != vincente and str(Path(v).expanduser().resolve()) != atteso}
+    if ignorati and not _avvisato_alias_discordi:
         _avvisato_alias_discordi = True
         import warnings
         warnings.warn(
@@ -196,7 +228,17 @@ def _env_data_dir() -> str:
             + f" — using {scelto} (HIPPO_DATA_DIR wins, it is the explicit "
               "isolation handle). Unset the ones you did not mean.",
             RuntimeWarning, stacklevel=3)
-    return scelto
+    return ProvenienzaDataDir(scelto, vincente, ignorati)
+
+
+def _env_data_dir() -> str:
+    """Il percorso soltanto — la provenienza sta in :func:`provenienza_data_dir`.
+
+    Resta una funzione sola perche' due copie della precedenza divergerebbero:
+    e' la stessa ragione per cui esiste un solo resolver invece di un
+    ``os.environ.get`` per modulo.
+    """
+    return provenienza_data_dir().percorso
 
 
 def data_dir() -> Path:

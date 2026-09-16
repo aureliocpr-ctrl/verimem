@@ -4813,6 +4813,19 @@ def facts_add(
         for fid in inserted:
             console.print(f"  id={fid[:12]}  status="
                           + ("quarantined" if fid in quarantined else "ok"))
+        # T91: DOVE ha scritto, e chi l'ha deciso. La ricevuta e' l'unico
+        # momento in cui chi credeva di aver isolato lo store puo' accorgersi
+        # del contrario: il 14/09 tre variabili puntavano a uno store di prova
+        # e la scrittura era finita in quello vero, senza che nessuna porta lo
+        # dicesse.
+        # ⚠️ `soft_wrap=True`: senza, rich manda a capo E ABBREVIA il percorso
+        # (`C:\Users\aur...\quello-vero`), cioe' stampa una dichiarazione che
+        # non si puo' leggere — il difetto che questa riga doveva curare,
+        # ripetuto un livello piu' in basso. Misurato: il test non trovava il
+        # percorso nel proprio output.
+        from ._compat import provenienza_data_dir as _prov
+        console.print(f"  [dim]store: {sm.db_path}[/dim]", soft_wrap=True)
+        console.print(f"  [dim]{_prov().dichiarazione()}[/dim]", soft_wrap=True)
     else:
         # audit#3-r3 R6: an `add` that persisted NOTHING is a failure — exit
         # non-zero so a bulk pipeline (cat findings.jsonl | engram facts add

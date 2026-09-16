@@ -1175,10 +1175,24 @@ class Memory:
             _out_qb = None
         from .local_grounding import esecutore_dell_ultimo_giudizio
         _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
+        from ._compat import provenienza_data_dir
+        _provenienza_store = provenienza_data_dir()
         _out = {
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
+            #: DOVE ha scritto, e CHI l'ha deciso (T91). Alla porta MCP non
+            #: c'e' una console da leggere: se la ricevuta non lo dice, un
+            #: chiamante che credeva di aver isolato lo store non ha nessun
+            #: modo di accorgersi del contrario. Il 14/09 tre variabili
+            #: puntavano a uno store di prova e la scrittura e' finita in
+            #: quello vero. `store_decided_by` manca quando nessuna variabile
+            #: e' posta: un campo assente dice «l'ha deciso il disco».
+            "store": str(self.semantic.db_path),
+            **({"store_decided_by": _provenienza_store.alias}
+               if _provenienza_store.alias else {}),
+            **({"store_env_ignored": _provenienza_store.ignorati}
+               if _provenienza_store.ignorati else {}),
             #: ⚠️ DICHIARA, NON PROMETTE. `True` quando questa scrittura ha
             #: SOSTITUITO una riga con lo stesso id; `False` quando ne ha
             #: creata una nuova. NON dice che due `add` con lo stesso testo
