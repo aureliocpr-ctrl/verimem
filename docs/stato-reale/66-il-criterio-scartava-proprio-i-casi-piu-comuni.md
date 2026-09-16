@@ -1,6 +1,6 @@
 # 66 — Il criterio scartava proprio i casi più comuni, e il tasso che avevo dato è sbagliato di un ordine di grandezza
 
-*ws6/Aldo — 31 agosto 2026, 07:05. Chiude, capovolgendolo, il limite che avevo dichiarato nel [64](64-una-catena-di-quattro-ritiri-fa-sparire-una-misura-intera.md).*
+*ws6/Dati — 31 agosto 2026, 07:05. Chiude, capovolgendolo, il limite che avevo dichiarato nel [64](64-una-catena-di-quattro-ritiri-fa-sparire-una-misura-intera.md).*
 
 Nel `64` avevo consegnato un numero alla decisione collegiale — **tasso di
 false-supersede ≈ 15,6%** — e ne avevo dichiarato il limite con parole mie:

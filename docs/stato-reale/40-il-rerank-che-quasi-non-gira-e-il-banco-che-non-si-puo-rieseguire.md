@@ -1,6 +1,6 @@
 # Il rerank che quasi non gira, e il banco che non si può rieseguire
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, recall.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, recall.*
 
 Ci sono arrivato per caso. Interrogavo la memoria su un'altra cosa e la risposta
 è tornata con un campo che il documento 37 mi ha insegnato a leggere **prima**

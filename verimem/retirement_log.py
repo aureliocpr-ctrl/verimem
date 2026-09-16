@@ -550,9 +550,45 @@ def retirement_breakdown(sm, *, limit: int = 10,
             par).fetchone()[0])
         _tot_ritiri = int(conn.execute(
             f"SELECT COUNT(*) FROM facts f WHERE {w}", par).fetchone()[0])
+        # QUANTI GIORNI compone ogni voce, e quanta parte cade nel piu' denso.
+        # Senza questi due numeri una tabella di ritiri mette sulla stessa
+        # colonna una manutenzione conclusa e un tasso in corso: misurato sul
+        # corpus vero il 2026-09-13, 1463 ritiri in 35,9 SECONDI di una notte
+        # di luglio (su fatti scritti in una settimana di maggio) stavano
+        # accanto a 530 distribuiti su 36 giorni, e la somma veniva letta come
+        # «perdita». Il dato c'era gia' — `first_at`/`last_at` si calcolavano
+        # qui sotto — e non arrivava a chi legge.
+        _per_giorno: dict[str, dict[str, int]] = {}
+        for _m, _g, _n in conn.execute(
+                f"""SELECT f.superseded_reason,
+                           date(f.superseded_at, 'unixepoch', 'localtime'),
+                           COUNT(*)
+                    FROM facts f WHERE {w} AND f.superseded_at IS NOT NULL
+                    GROUP BY 1, 2""", par):
+            _per_giorno.setdefault(_m or _SENZA_MOTIVO, {})[_g] = int(_n)
+
+        def _forma(motivo: str, n: int) -> dict[str, Any]:
+            """Tasso o evento, e il denominatore accanto al numero.
+
+            ⚠️ NESSUNA SOGLIA: «evento» vuol dire che i ritiri di quella voce
+            cadono in UN GIORNO SOLO — un criterio che si verifica, non un
+            numero scelto a tavolino in mezzo ai numeri del corpus. Il caso
+            misto (due giorni, quasi tutto in uno) lo racconta
+            ``quota_giorno_max``, che sta accanto e non decide niente.
+            """
+            _gg = _per_giorno.get(motivo, {})
+            _tot_g = len(_gg)
+            return {
+                "giorni": _tot_g,
+                "forma": "evento" if _tot_g == 1 else "tasso",
+                "quota": (n / _tot_ritiri) if _tot_ritiri else 0.0,
+                "quota_giorno_max": (max(_gg.values()) / n) if _gg and n else 0.0,
+            }
+
         motivi = [
-            {"reason": r[0] or _SENZA_MOTIVO, "n": int(r[1]),
-             "first_at": r[2], "last_at": r[3]}
+            {"reason": (r[0] or _SENZA_MOTIVO), "n": int(r[1]),
+             "first_at": r[2], "last_at": r[3],
+             **_forma(r[0] or _SENZA_MOTIVO, int(r[1]))}
             for r in conn.execute(
                 f"""SELECT f.superseded_reason, COUNT(*),
                            MIN(f.superseded_at), MAX(f.superseded_at)

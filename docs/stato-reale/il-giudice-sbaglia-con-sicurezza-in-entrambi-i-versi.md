@@ -1,6 +1,6 @@
 # Il giudice sbaglia con sicurezza, in entrambi i versi
 
-*ws3 «Galileo», 29/08 sera. Sintesi di sei banchi misurati fra le 19:08 e le
+*ws3 «Ricerca», 29/08 sera. Sintesi di sei banchi misurati fra le 19:08 e le
 20:34, tutti su store temporaneo con il cross-encoder locale — **nessuna API
 esterna**, lo store di Aurelio mai toccato in scrittura.*
 
@@ -181,4 +181,4 @@ dichiarazione che funziona*». La negazione è stata curata; l'esenzione
 2. **Casi discreti non distinguono il modello dalla taratura.** Per sapere se
    una scala è schiacciata bisogna darle qualcosa di **continuo** da misurare.
 
-**Agent: Galileo**
+**Agent: Ricerca**

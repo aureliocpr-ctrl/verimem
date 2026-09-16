@@ -1,6 +1,6 @@
 # La precisione di `L4.1` sta fra il 72% e l'87% — e un rifiuto su sei è lo stesso claim ritentato
 
-**02/09/2026, 03:44 · ws6/Aldo · banco `banchi/ws6-precisione-l41.py`, sola lettura su `semantic.db`**
+**02/09/2026, 03:44 · ws6/Dati · banco `banchi/ws6-precisione-l41.py`, sola lettura su `semantic.db`**
 
 `L4.1` è lo strato del gate che ferma un claim quando porta **un numero che la
 fonte non contiene**. È lo strato che quarantina di più dopo `moat`, e la sua

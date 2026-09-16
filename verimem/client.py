@@ -1173,6 +1173,8 @@ class Memory:
                 self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
+        from .local_grounding import esecutore_dell_ultimo_giudizio
+        _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
         _out = {
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
@@ -1185,6 +1187,13 @@ class Memory:
             #: c'e' e vale `False` si legge diverso da un campo che manca.
             "replaced": bool(_sostituito),
             "grounding_score": gate.grounding_score,
+            #: CHI ha giudicato QUESTA scrittura: "daemon" (il servizio
+            #: condiviso) o "in-process" (il modello caricato qui); assente se
+            #: nessuno ha giudicato. Dal 2026-09-12 il punteggio puo' arrivare
+            #: da due posti con costi, latenze e guasti diversi, e la ricevuta
+            #: li mostrava identici: un numero senza il suo esecutore non si
+            #: puo' nemmeno confrontare con un altro.
+            **({"judged_by": _chi_ha_giudicato} if _chi_ha_giudicato else {}),
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
@@ -3956,10 +3965,47 @@ class Memory:
             pass
         return removed
 
-    def get_all(self, *, topic: str | None = None, limit: int = 100) -> list[dict[str, Any]]:
-        """List stored facts (with provenance), newest-relevant first. mem0/Zep parity."""
+    def get_all(self, *, topic: str | None = None, limit: int = 100,
+                include_hidden: bool = False) -> list[dict[str, Any]]:
+        """List stored facts (with provenance), newest-relevant first. mem0/Zep parity.
+
+        T49 (2026-09-09). Fino a questa riga il default serviva anche i fatti
+        che il gate aveva FERMATO — misurato dall'SDK con un fatto a
+        `grounding_score` 0.249:
+
+            {"text": "la serratura del deposito nord e' stata forzata",
+             "status": "quarantined", "grounding_score": 0.2490530...,
+             "confidence_tier": "low"}
+
+        Il README promette il contrario alla riga 443 — «stored but OUT of
+        default recall» — e chi integra l'SDK legge quella riga, non questa.
+        L'ottavo ingresso di T49 non e' MCP, ed e' stato trovato leggendo
+        i chiamanti di `list_facts` fuori dal server.
+
+        ⚠️ E' UN CAMBIO DI COMPORTAMENTO PUBBLICO, non un dettaglio interno:
+        un integratore che oggi conta le righe ne vedra' di meno. E' voluto —
+        quelle in meno sono esattamente quelle che il prodotto dichiara di non
+        servire — e chi le vuole ha `include_hidden=True`, che le rende
+        tutte con il loro `status` accanto.
+
+        Args:
+            topic: se dato, restringe a quel topic.
+            limit: massimo righe.
+            include_hidden: `True` per avere anche 'quarantined',
+                'orphaned' e 'user_belief' — la scelta di chi ripara il corpus,
+                non quella di chi legge la memoria per usarla.
+
+        ⚠️ IL NOME NON COMBACIA CON QUELLO DEL MOTORE, ed e' deliberato: sotto
+        c'e' `list_facts(hide_low_trust=…)`. `include_hidden` sta qui per
+        simmetria con `include_superseded`, che e' l'altro «mostrami anche cio'
+        che di norma non vedi» di questa stessa classe — la porta pubblica parla
+        la lingua della porta, non quella del motore. Se un giorno il filtro
+        interno cambia criterio, questo nome regge lo stesso.
+        """
         return [self._fact_view(f)
-                for f in self.semantic.list_facts(limit=limit, topic=topic)]
+                for f in self.semantic.list_facts(
+                    limit=limit, topic=topic,
+                    hide_low_trust=not include_hidden)]
 
     def update(self, fact_id: str, text: str, *, topic: str | None = None) -> dict[str, Any]:
         """Revise a fact. Engram facts are immutable + auditable, so an update STORES a new

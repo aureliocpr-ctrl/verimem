@@ -1,7 +1,7 @@
 # Il disegno esploso — lo STORE: tabelle, migrazioni, campi, e chi li scrive
 
 **05/09/2026, 23:10.** Tutto misurato con `sqlite3` in sola lettura sullo store
-di casa (`C:\Users\aurel\.engram\semantic\semantic.db`), non a memoria. Dove non
+di casa (`C:\Users\<utente>\.engram\semantic\semantic.db`), non a memoria. Dove non
 ho misurato, c'è scritto **non misurato**.
 
 > ⚠️ **Non ho potuto leggere `DISEGNO-ESPLOSO.md`**: il ramo indicato,
@@ -29,8 +29,8 @@ trust_ledger_totals        116
 un altro file.**
 
 ```
-C:\Users\aurel\.engram\entity_kg\entity_kg.db   entities=10921  entity_facts=37047
-C:\Users\aurel\.engram\semantic\semantic.db     entities=0      entity_facts=0
+C:\Users\<utente>\.engram\entity_kg\entity_kg.db   entities=10921  entity_facts=37047
+C:\Users\<utente>\.engram\semantic\semantic.db     entities=0      entity_facts=0
 ```
 
 ⚠️ Ma **`semantic.db` porta comunque quelle cinque tabelle e undici indici

@@ -66,6 +66,9 @@ def _mem(tmp_path, monkeypatch, *, scorer_delay: float, budget: str = "0.2"):
 
     def slow_scorer():
         def score(pairs):
+            # OROLOGIO-OK: non aspetta una soglia — FINGE un cross-encoder lento
+            # perche' il budget sfori. Una grana piu' grossa lo rende solo piu'
+            # lento, mai piu' veloce: non puo' far sparire lo sforamento.
             time.sleep(scorer_delay)
             return [0.5] * len(pairs)
         return score
@@ -264,7 +267,12 @@ def test_a_tripped_breaker_rearms_after_the_cooldown(monkeypatch):
     for _ in range(5):
         semantic._rerank_breaker_record(True)
     assert semantic._rerank_breaker_tripped(), "before the cooldown the trip stands"
-    time.sleep(0.35)
+    # T38 — IL TEMPO SI SPOSTA, NON SI ASPETTA. Prima: `time.sleep(0.35)` contro
+    # un cooldown di 0,3 s, cioe' 50 ms di margine = TRE TICK di un orologio che
+    # su py3.12 Windows scatta ogni 15,625 ms (GetTickCount64). Tre tick non
+    # sono un margine: sono tre letture. Spostando l'istante dello scatto il
+    # margine diventa 10 SECONDI e la cella non dipende piu' dall'orologio.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     assert not semantic._rerank_breaker_tripped(), "cooldown elapsed -> re-armed"
     semantic._rerank_breaker_record(True)
     assert not semantic._rerank_breaker_tripped(), (
@@ -278,6 +286,10 @@ def test_cooldown_zero_keeps_the_trip_standing(monkeypatch):
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0")
     for _ in range(5):
         semantic._rerank_breaker_record(True)
+    # OROLOGIO-OK: qui il cooldown e' ZERO, cioe' non c'e' nessuna soglia da
+    # superare — lo scatto e' permanente per costruzione e questa attesa non
+    # decide niente. E' l'unica delle sei attese del file IMMUNE alla grana
+    # dell'orologio, e per questo resta uno `sleep`.
     time.sleep(0.05)
     assert semantic._rerank_breaker_tripped(), "0 opts out: permanent trip"
 
@@ -288,7 +300,8 @@ def test_cold_trip_rearms_and_forgets_the_cold_count(monkeypatch):
     for _ in range(3):
         semantic._rerank_breaker_cold_overrun()
     assert semantic._rerank_breaker_tripped()
-    time.sleep(0.35)
+    # T38 — stesso metro della cella qui sopra: 50 ms erano tre tick.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     assert not semantic._rerank_breaker_tripped()
     semantic._rerank_breaker_cold_overrun()
     assert not semantic._rerank_breaker_tripped(), (
@@ -301,7 +314,9 @@ def test_fusion_breaker_rearms_after_the_cooldown(monkeypatch):
     for _ in range(5):
         semantic._fusion_breaker_record(True)
     assert semantic._fusion_breaker_tripped()
-    time.sleep(0.35)
+    # T38 — il gemello della fusione ha lo STESSO difetto e la stessa cura: era
+    # l'unica delle tre a 50 ms che nessuno aveva collegato al breaker.
+    semantic._FUSION_BREAKER["tripped_at"] -= 10.0
     assert not semantic._fusion_breaker_tripped(), "fusion twin re-arms too"
     semantic._fusion_breaker_record(True)
     assert not semantic._fusion_breaker_tripped(), "clean window after re-arm"
@@ -330,7 +345,13 @@ def test_the_recall_gate_sees_the_rearm(tmp_path, monkeypatch):
     for _ in range(3):
         _cerca(mem)
     assert semantic._rerank_breaker_tripped(), "sanity: tripped on slow CE"
-    time.sleep(2.1)
+    # T38 — 2,1 contro 2,0 erano 100 ms, cioe' 6,4 tick: il margine piu' largo
+    # del file, e comunque un margine misurato in tick. Lo spostamento NON
+    # tradisce l'intento dichiarato qui sopra — «this test never calls the
+    # function between cooldown and queries» — perche' scrivere il campo non
+    # chiama `_rerank_breaker_tripped()`: a ri-armare resta solo il gate.
+    # E la cella smette di costare due secondi di attesa vera.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
     for _ in range(3):
         _cerca(mem)
     assert semantic._rerank_breaker_tripped(), (
@@ -367,13 +388,24 @@ def test_no_overrun_is_lost_when_a_rearm_is_in_flight(monkeypatch):
     for _ in range(3):
         semantic._rerank_breaker_record(True)
     assert semantic._RERANK_BREAKER["tripped"], "sanity: tripped"
-    time.sleep(0.06)                       # cooldown elapsed -> next read re-arms
+    # 🔴 T38 — QUESTA ERA LA PIU' ESPOSTA DI TUTTO IL FILE, e non di poco:
+    # `sleep(0.06)` contro un cooldown di 0,05 s lascia 10 ms di margine,
+    # cioe' 0,64 TICK di un orologio che su py3.12 Windows scatta ogni
+    # 15,625 ms. Sotto UN tick il margine non esiste: non era «stretto», era
+    # inferiore alla grandezza minima che quell'orologio sa rappresentare, e
+    # un sonno REALE di 60 ms poteva essere LETTO 46. Ora il tempo si sposta.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0   # cooldown scaduto: la
+    #                                    prossima lettura ri-arma, e non c'e'
+    #                                    nessun orologio da interrogare.
 
     lento = threading.Event()
     vero_window = semantic._rerank_breaker_window
 
     def window_lento():
         lento.set()
+        # OROLOGIO-OK: non aspetta nessuna soglia — ALLUNGA di proposito la
+        # finestra insicura perche' il recorder ci caschi dentro. Se l'orologio
+        # e' piu' grosso, questa attesa funziona ancora meglio.
         time.sleep(0.3)                    # the re-arm is now mid-flight
         return vero_window()
 
@@ -445,13 +477,52 @@ def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     what it was measuring and then wrote 'tripped: False' — the regime block,
     which exists precisely so a number is never orphaned from the state that
     produced it, would have been lying. Observers get a PURE reader; only the
-    gate re-arms."""
+    gate re-arms.
+
+    ⚠️ T38 — QUESTA CELLA CRONOMETRAVA INVECE DI MISURARE, ed e' costata due
+    rossi su windows py3.12 a due giorni di distanza (08/09 e run 34472648985
+    del 10/09), sempre sulla stessa riga::
+
+        AssertionError: the gate, and only the gate, re-arms after the cooldown
+
+    Diceva `setenv(COOLDOWN_S, "0.05")` + `time.sleep(0.06)`: **dieci
+    millisecondi di margine** su un runner condiviso, dentro una suite gia' in
+    corsa da mezz'ora. La proprieta' da dimostrare — «l'osservatore non
+    ri-arma, il gate si'» — e' BOOLEANA e non ha soglie: legarla a una corsa
+    fra due orologi la rende vera per fortuna.
+
+    Ora il tempo si SPOSTA invece di passare: si porta indietro l'istante del
+    trip, e il cooldown risulta scaduto **per costruzione**, con dieci secondi
+    di margine invece di dieci millisecondi. Nessuno `sleep`, nessuna corsa,
+    e la cella diventa deterministica su qualunque macchina.
+
+    📌 Stessa cura di `2021247f` («la cella misura la PROPRIETA' VERA, che e'
+    booleana e non ha soglie»), li' su una soglia di preload.
+
+    📌 RESTA DA FARE, e il numero e' SEI, non una. Contate da @ws1 con `ast`
+    sui nodi (non con un regex, che avrebbe contato anche il `sleep` CITATO in
+    questo docstring): sei celle di questo file legano un cooldown a uno
+    `sleep`. Una sola ha lo stesso margine di 10 ms —
+    `test_no_overrun_is_lost_when_a_rearm_is_in_flight` (riga 353) — e li' i
+    thread servono davvero, quindi la cura non e' la stessa. Le altre cinque
+    hanno 50-100 ms: **piu' larghe, non immuni**.
+    Non entrano in questa PR (R6, una cosa sola), ma il ticket che resta ha
+    ora la sua dimensione vera.
+
+    ⚠️ NOTA SU UN MIO ERRORE, tenuta qui perche' e' la specie che si ripete:
+    la prima stesura citava `test_..._re_arm_is_atomic`, un nome che NON
+    ESISTE in questo file (`grep -c` → 0). L'avevo reso PLAUSIBILE invece di
+    copiarlo, e sarebbe rimasto nel repo come puntatore a un test
+    immaginario. Trovato da @ws1 cercandolo.
+    """
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
     monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
     semantic._rerank_breaker_reset()
     for _ in range(3):
         semantic._rerank_breaker_record(True)
-    time.sleep(0.06)                      # cooldown elapsed
+    # il cooldown e' scaduto PER COSTRUZIONE: il trip e' avvenuto dieci secondi
+    # fa, non sessanta millisecondi fa.
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
 
     assert semantic._rerank_breaker_tripped_now() is True, (
         "the pure reader must report the state as it IS")
@@ -465,7 +536,7 @@ def test_observing_the_breaker_does_not_rearm_it(monkeypatch):
     monkeypatch.setenv("ENGRAM_FUSION_BREAKER_N", "3")
     for _ in range(3):
         semantic._fusion_breaker_record(True)
-    time.sleep(0.06)
+    semantic._FUSION_BREAKER["tripped_at"] -= 10.0
     assert semantic._fusion_breaker_tripped_now() is True
     assert semantic._FUSION_BREAKER["tripped"] is True, "twin: same contract"
 
@@ -483,3 +554,152 @@ def test_the_regime_recorder_uses_the_pure_readers() -> None:
             f"measuring; use the *_tripped_now() pure reader")
     assert "_rerank_breaker_tripped_now()" in src
     assert "_fusion_breaker_tripped_now()" in src
+
+
+def test_la_cella_del_cooldown_regge_a_un_riarmo_concorrente(monkeypatch):
+    """T38 — il RED vero, reso deterministico e messo a presidio.
+
+    La cella qui sopra cadeva su windows py3.12 l'08/09 e il 10/09 (run
+    34472648985).
+
+    ✅ LA CAUSA E' NOTA DAL 10/09 SERA, misurata da @ws3, ed e' la prima
+    ipotesi che IO avevo dichiarato FALSIFICATA. Su Windows `time.monotonic`
+    cambia implementazione con la versione di Python::
+
+        py3.13+    QueryPerformanceCounter()   risoluzione 1e-07
+        py<=3.12   GetTickCount64()            risoluzione 0.015625  (15,6 ms)
+
+    La cella che cade e' `windows-latest / py3.12`: l'unica della matrice con
+    l'orologio a scatti. Un sonno REALE di 60 ms viene LETTO 46 ms quando i
+    tick cadono male — sotto il cooldown di 50 — quindi il gate non ri-arma e
+    l'assert salta col messaggio esatto della CI. Misurato su un interprete
+    con lo stesso orologio: **5 fallimenti su 40 = 12,5%**, che combacia col
+    13,3% osservato in CI.
+
+    🪞 IO L'AVEVO ESCLUSA, E SBAGLIANDO IN UN MODO CHE VALE PIU' DELL'ERRORE:
+    avevo misurato `time.get_clock_info('monotonic').resolution = 1e-07` e
+    `sleep(0.06)` fra 60,3 e 61,6 ms — **sulla macchina di sviluppo, che ha
+    py3.13**. La cella che cade ha py3.12. **Ho falsificato un'ipotesi VERA
+    misurando nell'ambiente sbagliato, e l'ho scritta come chiusa nel
+    messaggio di commit `d6e7fa6e`**: chi legge quel commit trova una strada
+    dichiarata morta che invece era quella giusta.
+    ⇒ Una misura vale nell'ambiente in cui e' stata presa. «Falsificato» senza
+    dire DOVE non e' falsificato: e' un'altra domanda con la stessa risposta.
+
+    ⇒ QUESTO NON CAMBIA LA CURA, e va detto anche questo. Fra le due stesure di questo docstring l'ipotesi che
+    citava — un rerank lasciato in volo che finisce dentro la finestra dello
+    `sleep` — e' stata RITIRATA DAL SUO AUTORE con il banco che la smentisce:
+    un rerank vero in volo, otto giri, **zero rossi**, `GATE=False` in tutti e
+    otto. La ragione e' nella nota dell'autore del rerank (righe 324-327):
+    **lo sforamento lo registra il CALLER al timeout del budget, non il
+    worker**, quindi un worker in volo non tocca il breaker. In tutto: cinque
+    ipotesi, cinque cadute, 31 esecuzioni su questa macchina e mai un rosso.
+
+    ⇒ QUESTA CELLA NON SPIEGA IL ROSSO DI CI: prova un MECCANISMO per cui la
+    cella gemella puo' cadere, e prova che con il tempo spostato non cade piu'.
+    Il meccanismo e' reale e misurato; **che sia lui a scattare in CI e' una
+    congettura senza prova**. Chi riaprira' T38 parta da qui e non dia per
+    chiusa la causa.
+
+    Il meccanismo, misurato::
+
+        A  record in volo, breaker GIA' scattato -> tripped_at NON cambia
+           (`_rerank_breaker_record` e `_rerank_breaker_cold_overrun` sono
+            entrambi guardati da `not tripped`), il gate resta False
+        B  un GATE in volo che RI-ARMA, e i record che ri-scattano subito
+           dopo -> tripped_at riscritto ad adesso, gate=True, LA CELLA CADE
+
+    ⇒ non basta un *rerank* in volo: serve un *recall* in volo che chieda al
+    gate se puo' rerankare. Questa cella riproduce lo scenario B **senza
+    thread** — il ri-armo e' sincrono, quindi e' deterministico su qualunque
+    macchina — e verifica che con il tempo SPOSTATO invece che ATTESO la cella
+    regga lo stesso.
+
+    Se qualcuno rimettesse uno `sleep` al posto dello spostamento, questa
+    cella lo prenderebbe: con `tripped_at` riscritto ad adesso, un cooldown
+    atteso di 60 ms non e' mai scaduto.
+    """
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_COOLDOWN_S", "0.05")
+    monkeypatch.setenv("ENGRAM_RERANK_BREAKER_N", "3")
+    semantic._rerank_breaker_reset()
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)
+
+    # --- lo scenario B, sincrono: qualcuno ri-arma e fa ri-scattare ---
+    semantic._RERANK_BREAKER["tripped_at"] -= 1.0     # per lui il cooldown e' scaduto
+    assert semantic._rerank_breaker_tripped() is False, "sanity: il gate ha ri-armato"
+    for _ in range(3):
+        semantic._rerank_breaker_record(True)          # ri-scatta: tripped_at = adesso
+    assert semantic._RERANK_BREAKER["tripped"] is True, "sanity: ri-scattato"
+
+    # --- e ora la cella fa quello che fa la sua gemella curata ---
+    semantic._RERANK_BREAKER["tripped_at"] -= 10.0
+    assert semantic._rerank_breaker_tripped() is False, (
+        "con il tempo SPOSTATO il cooldown e' scaduto per costruzione, anche "
+        "se un ri-armo concorrente ha appena riscritto tripped_at")
+
+
+def test_in_questo_file_nessuna_attesa_cronometra_piu_una_soglia() -> None:
+    """IL PRESIDIO DI T38 — e guarda il CODICE, non il testo.
+
+    Il difetto costato due giorni: un `sleep(0.06)` contro un cooldown di
+    0,05 s lasciava 10 ms di margine, cioe' 0,64 TICK dell'orologio che
+    `time.monotonic` usa su Windows con py<=3.12 (`GetTickCount64`, grana
+    0,015625 s = 15,625 ms). Sotto un tick il margine non esiste: un sonno
+    REALE di 60 ms viene LETTO 46 e l'assert salta. Su py3.13+ lo stesso
+    codice usa `QueryPerformanceCounter` (1e-07) e non cade mai — per questo
+    non si riproduceva in locale, e per questo tre di noi hanno misurato
+    sull'interprete sbagliato e hanno dichiarato falsificata l'ipotesi VERA.
+
+    Questa cella impedisce che ricapiti: ogni chiamata a `sleep` di questo
+    file deve portare, nelle righe sopra, un commento `OROLOGIO-OK:` che
+    dichiari PERCHE' non sta cronometrando una soglia. Chi ne aggiunge una
+    nuda la trova rossa, con la grana dell'orologio scritta nel messaggio.
+
+    ⚠️ CERCA CON `ast`, NON CON UNA SOTTOSTRINGA: in questo stesso file la
+    stringa «time.sleep(» compare dentro i docstring che RACCONTANO il
+    difetto. Un criterio testuale pescherebbe la prosa e direbbe rosso su una
+    cura gia' applicata — la forma di errore che abbiamo pagato piu' spesso.
+    """
+    import ast
+    from pathlib import Path
+
+    testo = Path(__file__).read_text(encoding="utf-8")
+    righe = testo.splitlines()
+    info = time.get_clock_info("monotonic")
+
+    # DUE FALSI NEGATIVI, trovati da Marie in revisione e curati qui.
+    #
+    # (1) `from time import sleep` SFUGGIVA: il criterio guardava solo
+    #     `ast.Attribute` (`time.sleep(...)`), e una chiamata nuda `sleep(...)`
+    #     e' un `ast.Name`. Chi importava direttamente passava il presidio.
+    # (2) LA FINESTRA ERA CONDIVISA: cercando il marcatore nelle 7 righe sopra,
+    #     due `sleep` a meno di sette righe di distanza se lo PRESTAVANO — al
+    #     secondo bastava il commento del primo. Ora la finestra si ferma alla
+    #     chiamata precedente, quindi ogni attesa deve avere il SUO.
+    chiamate = sorted(
+        nodo.lineno
+        for nodo in ast.walk(ast.parse(testo))
+        if isinstance(nodo, ast.Call)
+        and ((isinstance(nodo.func, ast.Attribute) and nodo.func.attr == "sleep")
+             or (isinstance(nodo.func, ast.Name) and nodo.func.id == "sleep"))
+    )
+
+    nude = []
+    for i, riga_n in enumerate(chiamate):
+        confine = chiamate[i - 1] if i else 0          # non oltre la precedente
+        inizio = max(confine, riga_n - 7)
+        sopra = "\n".join(righe[inizio:riga_n])
+        if "OROLOGIO-OK" not in sopra:
+            nude.append(f"riga {riga_n}: {righe[riga_n - 1].strip()}")
+
+    assert not nude, (
+        "attesa NUDA in un banco a orologio. IL CRITERIO E' IL MARCATORE, non "
+        "una soglia: ogni `sleep` deve portare il SUO `OROLOGIO-OK: <perche'>` "
+        "nelle righe sopra (e non vale quello della chiamata precedente). "
+        f"Qui gira {info.implementation} con grana {info.resolution} s "
+        f"({info.resolution * 1000:.3f} ms) — e' la misura di quanto costa "
+        "sbagliare: su una gamba con grana 15,625 ms un margine di 10 ms non "
+        "esiste. Sposta il tempo (`tripped_at -= 10.0`) invece di aspettarlo, "
+        "oppure dichiara perche' quell'attesa non cronometra nulla.\n"
+        + "\n".join(nude))

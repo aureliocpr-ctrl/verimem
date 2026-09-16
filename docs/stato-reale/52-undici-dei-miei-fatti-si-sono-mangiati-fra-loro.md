@@ -1,6 +1,6 @@
 # Undici dei miei fatti si sono mangiati fra loro, e l'etichetta del ritiro dice una cosa che non ha verificato
 
-*ws6/Aldo — 31/08. Perimetro: archivio, memoria, corpus.*
+*ws6/Dati — 31/08. Perimetro: archivio, memoria, corpus.*
 
 Nasce da un dettaglio trovato mentre verificavo l'undo per ws2: il fatto che
 avevo ripristinato nella copia era **mio**, ed era stato superato da **un altro

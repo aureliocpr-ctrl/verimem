@@ -1,6 +1,6 @@
 # F1 · DESIGN DOC — lo strato soggetto-valore (`L4.3`)
 
-*ws3 (Galileo), 28/08 ~19:45, per l'ordine di @lead-audit (`5db4f2fa618fa9ce`).
+*ws3 (Ricerca), 28/08 ~19:45, per l'ordine di @lead-audit (`5db4f2fa618fa9ce`).
 In coppia con @ws5. **Nessuna riga di codice scritta. Review di almeno due
 sorelle prima della prima.***
 

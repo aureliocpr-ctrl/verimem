@@ -1979,6 +1979,199 @@ def _advisory_l4_skipped() -> dict[str, str]:
 _GROUNDING_SPAN_BUDGET = int(os.environ.get("VERIMEM_GROUNDING_SPAN_BUDGET", "400"))
 
 
+def _controlli_lessicali_sui_numeri(proposition, source, warnings) -> None:
+    """I controlli che confrontano i NUMERI del claim con quelli della fonte.
+
+    Estratti dal ramo del giudice il 2026-09-13, e il perche' e' che non ne
+    hanno bisogno: leggono `proposition` e `source`, non toccano il punteggio.
+    Finche' sono vissuti dentro quel ramo, mentre il giudice CARICAVA — cioe'
+    alla prima scrittura di ogni macchina fredda — un numero che la fonte non
+    contiene entrava senza che nessuno lo guardasse.
+
+    ⚠️ SI CHIAMA SOLO QUANDO C'E' UNA FONTE, e non e' un dettaglio: senza
+    fonte «assente dalla fonte» non vuol dire niente, e `L4.1-ambiguo` guarda
+    la sola proposizione — si accenderebbe su ogni scrittura ordinaria.
+    Presidio: `test_CONTROLLO_senza_FONTE_non_cambia_niente`.
+
+    `warnings` si modifica SUL POSTO, come faceva il codice da cui viene.
+    """
+    # L4.1 — IL CONTROLLO DETERMINISTICO CHE MANCAVA, e sta QUI perché
+    # qui la fonte c'è. Misurato a fonte e giudice invariati:
+    #
+    #   A  inventa un'ENTITÀ (fornitore Verdi)  ammessi 0/4  il moat li ferma
+    #   B  DETTAGLIO non detto su entità VERA   ammessi 5/5  con g 97,1–99,5
+    #        «L'ordine 77 conteneva 40 pezzi.»          g=97.1
+    #        «Bianchi ha partecipato per 45 minuti»     g=98.7
+    #        «L'ordine 77 vale 1200 euro.»              g=98.0
+    #
+    # (B) è la forma in cui un LLM allucina davvero — non inventa un
+    # fornitore inesistente, inventa la durata e l'importo — ed entra
+    # col punteggio più alto del sistema.
+    #
+    # 📌 AGGIORNAMENTO 26/08 — LA CURA HA CHIUSO LA METÀ CHE SAPEVA
+    # CONTARE, e senza questa nota il blocco qui sopra manda chi legge
+    # nella direzione sbagliata. I tre esempi del «5/5» sono TUTTI E TRE
+    # NUMERICI («40 pezzi», «45 minuti», «1200 euro»), ed è esattamente
+    # ciò che L4.1 — la cura introdotta qui — ha chiuso: misurato a
+    # batteria su otto lingue, il dettaglio numerico aggiunto è fermato
+    # 8/8. Ma la CLASSE B non è chiusa: su un dettaglio NON numerico
+    # («…con corriere espresso», «…in sala riunioni», «…all'unanimità»)
+    # un layer deterministico non può arrivare per costruzione, e il
+    # giudice non lo vede::
+    #
+    #     dettaglio NON numerico aggiunto   IT 8/10   EN 9/10 ammessi
+    #     (10 tipi diversi, 10 fonti, IT/EN appaiati, VERI 19/20 ammessi)
+    #     docs/stato-reale/banchi/, banco «la batteria italiana: caso o classe»
+    #
+    # ⇒ Il «5/5» qui sopra NON descrive lo stato di oggi per i numeri e
+    # LO DESCRIVE ANCORA per il resto. E la diagnosi che segue — il
+    # 91,8% dei verdetti agli estremi, nessuna soglia può separare —
+    # regge e spiega proprio il residuo: misurata la stessa cosa su tre
+    # classi, il gate trattiene ciò che la fonte CONTRADDICE (0/10,
+    # 1/10, 2/10) e ammette ciò di cui la fonte TACE (8/10, 9/10).
+    #
+    # 🔑 La diagnosi: «nessun rilevatore L1 riceve la fonte, il
+    # confronto claim↔fonte esiste in UN SOLO posto, dentro il
+    # cross-encoder, che è esattamente quello che sbaglia su questa
+    # classe». E il numero che la rende strutturale: il 91,8%
+    # dei verdetti sta agli estremi (1324 su 1673 sopra 99) — NESSUNA
+    # SOGLIA PUÒ SEPARARE, perché il giudice dà lo stesso punteggio a
+    # un fatto vero e a un dettaglio inventato.
+    #
+    # ⚠️ Non sostituisce il moat e non lo contraddice: si affianca. Il
+    # moat dice «la fonte lo implica», questo dice «questo NUMERO nella
+    # fonte non c'è» — che è la domanda a cui un modello di entailment
+    # non risponde («sa dire questo CONTRADDICE la fonte, non sa
+    # dire questo NON C'È nella fonte»).
+    # L4.1-bis — I NUMERI CHE NON ABBIAMO POTUTO MISURARE LO DICONO.
+    # Il fatto ENTRA: questo non è un veto, è un avviso, e la differenza
+    # è la regola di casa «un avviso non ha bisogno della popolazione
+    # opposta, un veto sì».
+    # ⚠️ Senza questa riga la cura di `_PUNTO_AMBIGUO` sposta il difetto
+    # invece di chiuderlo: prima «45.000 euro» contro «45 euro» veniva
+    # AMMESSO da un confronto falso, dopo viene ammesso da NESSUN
+    # confronto — e per chi legge il fatto le due cose sono identiche.
+    # L'ha imposta una verifica indipendente, smentendo la prima
+    # proposta: «togliere l'accusa
+    # non distingue le due popolazioni, i falsi negativi nascono
+    # convertendo i veri positivi in silenzio».
+    from .quantity_match import numeri_ambigui
+    _ambigui = numeri_ambigui(proposition)
+    if _ambigui:
+        _aa = ", ".join(_ambigui[:4])
+        warnings.append({
+            "layer": "L4.1-ambiguo",
+            "reason": (f"il claim contiene numeri che NON sono stati "
+                       f"verificati contro la fonte: {_aa}"),
+            "advice": ("il punto puo' essere separatore decimale o delle "
+                       "migliaia e le due letture differiscono di mille "
+                       "volte: riscrivi il numero senza separatori "
+                       "(45000) per farlo verificare"),
+            "matched_text": _aa,
+        })
+    from .valore_non_nella_fonte import (
+        assenti_che_la_fonte_scrive_a_parole,
+        valori_non_nella_fonte,
+    )
+    _assenti = valori_non_nella_fonte(proposition, source)
+    # LA FONTE LO DICE, SOLO A PAROLE. Misurato il 16/08 usando il
+    # prodotto: fonte «SEI combinazioni», claim «6 combinazioni», tre
+    # casi con `withheld_despite_judge=True` e grounding 99,3-99,9 —
+    # il layer tratteneva un fatto VERO mentre il giudice era contento.
+    # Qui il numero nella fonte c'e': cambia la forma in cui e' scritto.
+    # ⚖️ DECLASSA, non ammette: il valore esce dal veto ed entra in un
+    # AVVISO col suo nome, perche' l'equivalenza cifra-parola non e'
+    # certa come quella di «nessun X» (`sei` e' anche il verbo essere).
+    # E' la regola dichiarata a L4.1-bis qui sopra — «un avviso non ha
+    # bisogno della popolazione opposta, un veto si'» — ed e' cio' che
+    # permette di tenere dentro le parole ambigue: un omonimo costa un
+    # avviso in piu' su un fatto che entra, non un numero che passa.
+    _a_parole = assenti_che_la_fonte_scrive_a_parole(_assenti, source)
+    if _a_parole:
+        _pp = ", ".join(
+            (f"{v.come_scritto()} {v.unita}".strip())
+            for v in _a_parole[:4])
+        warnings.append({
+            "layer": "L4.1-a-parole",
+            "reason": (f"la fonte non scrive questi valori in cifra ma "
+                       f"contiene il numerale corrispondente: {_pp}"),
+            "advice": ("il numero sembra esserci, scritto a parole: "
+                       "verifica che sia lo stesso e non un omonimo "
+                       "(«sei» e' anche il verbo essere)"),
+            "matched_text": _pp,
+        })
+        _assenti = [a for a in _assenti if a not in _a_parole]
+    if _assenti:
+        # ⚠️ `come_scritto()` E NON `f"{v.valore:g}"`: quel formato tiene
+        # sei cifre significative e ARROTONDA, quindi il gate nominava
+        # una cifra che l'utente non aveva scritto — «2607.26760» usciva
+        # come «2607.27», e «1706.03762» come «1706.04». Caso reale
+        # incontrato usando il prodotto (id=21b5710c46f5), su un
+        # claim che citava la propria fonte verbatim.
+        # Per un gate che esiste per fermare i numeri inventati, era il
+        # difetto peggiore possibile: non diceva «non capisco», diceva
+        # con precisione una cosa falsa.
+        _vv = ", ".join(
+            (f"{v.come_scritto()} {v.unita}".strip()) for v in _assenti[:4])
+        warnings.append({
+            "layer": "L4.1",
+            "reason": (f"il claim afferma un valore che la fonte non "
+                       f"contiene: {_vv}"),
+            "advice": ("un numero che la fonte non dice non e' un "
+                       "numero verificato: correggi il valore, oppure "
+                       "passa la fonte che lo contiene"),
+            "matched_text": _vv,
+        })
+    # L4.2 — L'ALTRA META' DELLO STESSO BUCO, misurata sulla cura
+    # qui sopra: «14 valvole» entrava a 100.0 perche' la fonte diceva
+    # «14 operai». L4.1 chiede se il VALORE c'e'; questo chiede se
+    # parla della STESSA COSA. Cifra riusata: fermati 0/3 prima.
+    # Non si sovrappongono: valori_riusati_da_altro_contesto salta per
+    # costruzione i valori assenti, che sono il perimetro di L4.1.
+    from .vicinato_del_valore import valori_riusati_da_altro_contesto
+    _riusati = valori_riusati_da_altro_contesto(proposition, source)
+    if _riusati:
+        _rr = "; ".join(
+            f"{r.valore:g} qui e' «{r.nel_claim}», nella fonte "
+            f"«{r.nella_fonte}»" for r in _riusati[:3])
+        warnings.append({
+            "layer": "L4.2",
+            "reason": (f"il claim riusa un numero della fonte "
+                       f"riferendolo a un'altra grandezza: {_rr}"),
+            "advice": ("la cifra compare nella fonte ma parla d'altro: "
+                       "correggi la grandezza, oppure passa la fonte "
+                       "che sostiene questo valore"),
+            "matched_text": _rr,
+        })
+    # L4.3 — LO SCAMBIO DI ATTRIBUZIONE, il terzo taglio dello stesso
+    # buco. L4.1 chiede se il VALORE c'e', L4.2 se parla della stessa
+    # GRANDEZZA, questo se e' predicato dello stesso SOGGETTO: «la
+    # cauzione e' 148000» contro una fonte dove 148000 e' l'importo
+    # contrattuale e la cauzione e' 22000. Il numero c'e' e la grandezza
+    # e' nominata: i due layer sopra tacciono per costruzione.
+    #
+    # PERCHE' ORA (2026-09-03): il modulo esisteva dal 28/08 con 21 test
+    # verdi e non lo chiamava NESSUNO — era il 39esimo modulo
+    # irraggiungibile che faceva fallire
+    # `test_nessun_modulo_nasce_irraggiungibile`. Due misure
+    # indipendenti dicono che il buco e' vivo: il suo docstring (su 12
+    # scambi L4.1 parla 0 volte, e il giudice si sgretola con la
+    # lunghezza della fonte: 7/12 ammessi a 453 caratteri, 10/12 a 930)
+    # e una misura indipendente del 02/09, per un'altra via: 9 frasi su
+    # 10 che cambiano SOLO di chi si parla passano il giudice con gli
+    # stessi punteggi delle vere.
+    #
+    # AVVISO, NON VETO, e per la ragione scritta a ~2928 per L4.2: «una
+    # cura che rompe un presidio verde scritto da un altro non si
+    # consegna». Nasce dichiarando; il passaggio a veto e' una decisione
+    # collegiale come lo fu il declassamento di L1.20.
+    # Presidio: tests/test_l43_arriva_alla_porta.py
+    from .soggetto_valore import avviso_soggetto_valore
+    _l43 = avviso_soggetto_valore(proposition, source)
+    if _l43:
+        warnings.append(_l43)
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -2629,185 +2822,18 @@ def run_validation_gate(
             # was taken, so emitting the advisory there was dead code (that was
             # the silent fail-open opus caught).
             _emit_l4_skipped()
+            # ⚠️ E I CONTROLLI SUI NUMERI GIRANO LO STESSO. Vivevano nel ramo
+            # `else` — cioe' solo quando il giudice aveva dato un punteggio —
+            # pur non avendone bisogno: leggono claim e fonte. Finche' e'
+            # stato cosi', mentre il giudice CARICAVA un valore che la fonte
+            # non contiene entrava senza che nessuno lo guardasse, e la
+            # finestra e' la prima scrittura di ogni macchina fredda.
+            _controlli_lessicali_sui_numeri(proposition, source, warnings)
         else:
             grounding_val = float(gscore)  # persist the score even when it PASSES
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
-            # L4.1 — IL CONTROLLO DETERMINISTICO CHE MANCAVA, e sta QUI perché
-            # qui la fonte c'è. Misurato a fonte e giudice invariati:
-            #
-            #   A  inventa un'ENTITÀ (fornitore Verdi)  ammessi 0/4  il moat li ferma
-            #   B  DETTAGLIO non detto su entità VERA   ammessi 5/5  con g 97,1–99,5
-            #        «L'ordine 77 conteneva 40 pezzi.»          g=97.1
-            #        «Bianchi ha partecipato per 45 minuti»     g=98.7
-            #        «L'ordine 77 vale 1200 euro.»              g=98.0
-            #
-            # (B) è la forma in cui un LLM allucina davvero — non inventa un
-            # fornitore inesistente, inventa la durata e l'importo — ed entra
-            # col punteggio più alto del sistema.
-            #
-            # 📌 AGGIORNAMENTO 26/08 — LA CURA HA CHIUSO LA METÀ CHE SAPEVA
-            # CONTARE, e senza questa nota il blocco qui sopra manda chi legge
-            # nella direzione sbagliata. I tre esempi del «5/5» sono TUTTI E TRE
-            # NUMERICI («40 pezzi», «45 minuti», «1200 euro»), ed è esattamente
-            # ciò che L4.1 — la cura introdotta qui — ha chiuso: misurato a
-            # batteria su otto lingue, il dettaglio numerico aggiunto è fermato
-            # 8/8. Ma la CLASSE B non è chiusa: su un dettaglio NON numerico
-            # («…con corriere espresso», «…in sala riunioni», «…all'unanimità»)
-            # un layer deterministico non può arrivare per costruzione, e il
-            # giudice non lo vede::
-            #
-            #     dettaglio NON numerico aggiunto   IT 8/10   EN 9/10 ammessi
-            #     (10 tipi diversi, 10 fonti, IT/EN appaiati, VERI 19/20 ammessi)
-            #     docs/stato-reale/banchi/, banco «la batteria italiana: caso o classe»
-            #
-            # ⇒ Il «5/5» qui sopra NON descrive lo stato di oggi per i numeri e
-            # LO DESCRIVE ANCORA per il resto. E la diagnosi che segue — il
-            # 91,8% dei verdetti agli estremi, nessuna soglia può separare —
-            # regge e spiega proprio il residuo: misurata la stessa cosa su tre
-            # classi, il gate trattiene ciò che la fonte CONTRADDICE (0/10,
-            # 1/10, 2/10) e ammette ciò di cui la fonte TACE (8/10, 9/10).
-            #
-            # 🔑 La diagnosi: «nessun rilevatore L1 riceve la fonte, il
-            # confronto claim↔fonte esiste in UN SOLO posto, dentro il
-            # cross-encoder, che è esattamente quello che sbaglia su questa
-            # classe». E il numero che la rende strutturale: il 91,8%
-            # dei verdetti sta agli estremi (1324 su 1673 sopra 99) — NESSUNA
-            # SOGLIA PUÒ SEPARARE, perché il giudice dà lo stesso punteggio a
-            # un fatto vero e a un dettaglio inventato.
-            #
-            # ⚠️ Non sostituisce il moat e non lo contraddice: si affianca. Il
-            # moat dice «la fonte lo implica», questo dice «questo NUMERO nella
-            # fonte non c'è» — che è la domanda a cui un modello di entailment
-            # non risponde («sa dire questo CONTRADDICE la fonte, non sa
-            # dire questo NON C'È nella fonte»).
-            # L4.1-bis — I NUMERI CHE NON ABBIAMO POTUTO MISURARE LO DICONO.
-            # Il fatto ENTRA: questo non è un veto, è un avviso, e la differenza
-            # è la regola di casa «un avviso non ha bisogno della popolazione
-            # opposta, un veto sì».
-            # ⚠️ Senza questa riga la cura di `_PUNTO_AMBIGUO` sposta il difetto
-            # invece di chiuderlo: prima «45.000 euro» contro «45 euro» veniva
-            # AMMESSO da un confronto falso, dopo viene ammesso da NESSUN
-            # confronto — e per chi legge il fatto le due cose sono identiche.
-            # L'ha imposta una verifica indipendente, smentendo la prima
-            # proposta: «togliere l'accusa
-            # non distingue le due popolazioni, i falsi negativi nascono
-            # convertendo i veri positivi in silenzio».
-            from .quantity_match import numeri_ambigui
-            _ambigui = numeri_ambigui(proposition)
-            if _ambigui:
-                _aa = ", ".join(_ambigui[:4])
-                warnings.append({
-                    "layer": "L4.1-ambiguo",
-                    "reason": (f"il claim contiene numeri che NON sono stati "
-                               f"verificati contro la fonte: {_aa}"),
-                    "advice": ("il punto puo' essere separatore decimale o delle "
-                               "migliaia e le due letture differiscono di mille "
-                               "volte: riscrivi il numero senza separatori "
-                               "(45000) per farlo verificare"),
-                    "matched_text": _aa,
-                })
-            from .valore_non_nella_fonte import (
-                assenti_che_la_fonte_scrive_a_parole,
-                valori_non_nella_fonte,
-            )
-            _assenti = valori_non_nella_fonte(proposition, source)
-            # LA FONTE LO DICE, SOLO A PAROLE. Misurato il 16/08 usando il
-            # prodotto: fonte «SEI combinazioni», claim «6 combinazioni», tre
-            # casi con `withheld_despite_judge=True` e grounding 99,3-99,9 —
-            # il layer tratteneva un fatto VERO mentre il giudice era contento.
-            # Qui il numero nella fonte c'e': cambia la forma in cui e' scritto.
-            # ⚖️ DECLASSA, non ammette: il valore esce dal veto ed entra in un
-            # AVVISO col suo nome, perche' l'equivalenza cifra-parola non e'
-            # certa come quella di «nessun X» (`sei` e' anche il verbo essere).
-            # E' la regola dichiarata a L4.1-bis qui sopra — «un avviso non ha
-            # bisogno della popolazione opposta, un veto si'» — ed e' cio' che
-            # permette di tenere dentro le parole ambigue: un omonimo costa un
-            # avviso in piu' su un fatto che entra, non un numero che passa.
-            _a_parole = assenti_che_la_fonte_scrive_a_parole(_assenti, source)
-            if _a_parole:
-                _pp = ", ".join(
-                    (f"{v.come_scritto()} {v.unita}".strip())
-                    for v in _a_parole[:4])
-                warnings.append({
-                    "layer": "L4.1-a-parole",
-                    "reason": (f"la fonte non scrive questi valori in cifra ma "
-                               f"contiene il numerale corrispondente: {_pp}"),
-                    "advice": ("il numero sembra esserci, scritto a parole: "
-                               "verifica che sia lo stesso e non un omonimo "
-                               "(«sei» e' anche il verbo essere)"),
-                    "matched_text": _pp,
-                })
-                _assenti = [a for a in _assenti if a not in _a_parole]
-            if _assenti:
-                # ⚠️ `come_scritto()` E NON `f"{v.valore:g}"`: quel formato tiene
-                # sei cifre significative e ARROTONDA, quindi il gate nominava
-                # una cifra che l'utente non aveva scritto — «2607.26760» usciva
-                # come «2607.27», e «1706.03762» come «1706.04». Caso reale
-                # incontrato usando il prodotto (id=21b5710c46f5), su un
-                # claim che citava la propria fonte verbatim.
-                # Per un gate che esiste per fermare i numeri inventati, era il
-                # difetto peggiore possibile: non diceva «non capisco», diceva
-                # con precisione una cosa falsa.
-                _vv = ", ".join(
-                    (f"{v.come_scritto()} {v.unita}".strip()) for v in _assenti[:4])
-                warnings.append({
-                    "layer": "L4.1",
-                    "reason": (f"il claim afferma un valore che la fonte non "
-                               f"contiene: {_vv}"),
-                    "advice": ("un numero che la fonte non dice non e' un "
-                               "numero verificato: correggi il valore, oppure "
-                               "passa la fonte che lo contiene"),
-                    "matched_text": _vv,
-                })
-            # L4.2 — L'ALTRA META' DELLO STESSO BUCO, misurata sulla cura
-            # qui sopra: «14 valvole» entrava a 100.0 perche' la fonte diceva
-            # «14 operai». L4.1 chiede se il VALORE c'e'; questo chiede se
-            # parla della STESSA COSA. Cifra riusata: fermati 0/3 prima.
-            # Non si sovrappongono: valori_riusati_da_altro_contesto salta per
-            # costruzione i valori assenti, che sono il perimetro di L4.1.
-            from .vicinato_del_valore import valori_riusati_da_altro_contesto
-            _riusati = valori_riusati_da_altro_contesto(proposition, source)
-            if _riusati:
-                _rr = "; ".join(
-                    f"{r.valore:g} qui e' «{r.nel_claim}», nella fonte "
-                    f"«{r.nella_fonte}»" for r in _riusati[:3])
-                warnings.append({
-                    "layer": "L4.2",
-                    "reason": (f"il claim riusa un numero della fonte "
-                               f"riferendolo a un'altra grandezza: {_rr}"),
-                    "advice": ("la cifra compare nella fonte ma parla d'altro: "
-                               "correggi la grandezza, oppure passa la fonte "
-                               "che sostiene questo valore"),
-                    "matched_text": _rr,
-                })
-            # L4.3 — LO SCAMBIO DI ATTRIBUZIONE, il terzo taglio dello stesso
-            # buco. L4.1 chiede se il VALORE c'e', L4.2 se parla della stessa
-            # GRANDEZZA, questo se e' predicato dello stesso SOGGETTO: «la
-            # cauzione e' 148000» contro una fonte dove 148000 e' l'importo
-            # contrattuale e la cauzione e' 22000. Il numero c'e' e la grandezza
-            # e' nominata: i due layer sopra tacciono per costruzione.
-            #
-            # PERCHE' ORA (2026-09-03): il modulo esisteva dal 28/08 con 21 test
-            # verdi e non lo chiamava NESSUNO — era il 39esimo modulo
-            # irraggiungibile che faceva fallire
-            # `test_nessun_modulo_nasce_irraggiungibile`. Due misure
-            # indipendenti dicono che il buco e' vivo: il suo docstring (su 12
-            # scambi L4.1 parla 0 volte, e il giudice si sgretola con la
-            # lunghezza della fonte: 7/12 ammessi a 453 caratteri, 10/12 a 930)
-            # e una misura indipendente del 02/09, per un'altra via: 9 frasi su
-            # 10 che cambiano SOLO di chi si parla passano il giudice con gli
-            # stessi punteggi delle vere.
-            #
-            # AVVISO, NON VETO, e per la ragione scritta a ~2928 per L4.2: «una
-            # cura che rompe un presidio verde scritto da un altro non si
-            # consegna». Nasce dichiarando; il passaggio a veto e' una decisione
-            # collegiale come lo fu il declassamento di L1.20.
-            # Presidio: tests/test_l43_arriva_alla_porta.py
-            from .soggetto_valore import avviso_soggetto_valore
-            _l43 = avviso_soggetto_valore(proposition, source)
-            if _l43:
-                warnings.append(_l43)
+            _controlli_lessicali_sui_numeri(proposition, source, warnings)
             # L4-negazione — NON un verdetto, una DICHIARAZIONE, e solo quando
             # il moat ha gia' deciso di bocciare. Il giudice e' un
             # cross-encoder di ENTAILMENT e non ha l'assunzione di mondo
@@ -3088,6 +3114,11 @@ def run_validation_gate(
                         })
     elif source and not _have_judge:
         _emit_l4_skipped()
+        # La SECONDA porta senza giudice: nessuno configurato, invece di uno
+        # configurato che non ha saputo rispondere. Conseguenza identica, ramo
+        # diverso — una cura scritta nell'altro non arriva qui, e per questo la
+        # chiamata e' ripetuta invece che spostata.
+        _controlli_lessicali_sui_numeri(proposition, source, warnings)
 
     # An L1 detector answers "no evidence in verified_by; add one of ...". Often
     # the writer HAS it and put it in the sentence: "Wave 72 done, last commit

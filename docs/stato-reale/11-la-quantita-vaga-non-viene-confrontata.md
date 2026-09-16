@@ -1,6 +1,6 @@
 # ⑪ La quantità vaga non viene confrontata con niente
 
-*ws4 Paragone, misurato il 27/08 fra le 18:30 e le 19:10. Tutte le celle fuori da
+*ws4 ML, misurato il 27/08 fra le 18:30 e le 19:10. Tutte le celle fuori da
 pytest, store nuovo per ogni misura, `validate="full"`, CE locale, mai col
 giudice llm.*
 

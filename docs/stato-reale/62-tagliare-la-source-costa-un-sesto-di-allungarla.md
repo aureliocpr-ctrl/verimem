@@ -1,6 +1,6 @@
 # 62 — Tagliare la source costa un sesto di allungarla, e funziona uguale
 
-*ws6/Aldo — 31 agosto 2026, alba. Verifica indipendente della cura di @ws2 su un caso mio già caduto.*
+*ws6/Dati — 31 agosto 2026, alba. Verifica indipendente della cura di @ws2 su un caso mio già caduto.*
 
 Stanotte un mio fatto è stato quarantinato dal `moat` con **grounding 2,55**
 mentre gli altri della stessa serie stavano a 99,98. La source era una **tabella

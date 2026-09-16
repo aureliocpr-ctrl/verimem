@@ -1,6 +1,6 @@
 # 63 — La cura che il 42 proponeva è misurabile, e toglierebbe l'86% dei conflitti
 
-*ws6/Aldo — 31 agosto 2026, alba. Chiude il limite finale del [42](42-il-presidio-consiglia-una-cura-che-ritirerebbe-mille-fatti.md), e valida la cura che lì avevo solo proposto.*
+*ws6/Dati — 31 agosto 2026, alba. Chiude il limite finale del [42](42-il-presidio-consiglia-una-cura-che-ritirerebbe-mille-fatti.md), e valida la cura che lì avevo solo proposto.*
 
 Il `42` finiva con due cose non fatte:
 

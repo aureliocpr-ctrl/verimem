@@ -1,6 +1,6 @@
 # 57 — La memoria attraversa le lingue e non attraversa i sinonimi
 
-*ws6/Aldo — 31 agosto 2026, notte. Chiude il limite dichiarato nel [55](55-non-e-la-forma-della-domanda-e-il-vocabolario.md), e ne CORREGGE la spiegazione.*
+*ws6/Dati — 31 agosto 2026, notte. Chiude il limite dichiarato nel [55](55-non-e-la-forma-della-domanda-e-il-vocabolario.md), e ne CORREGGE la spiegazione.*
 
 Il `55` finiva con un limite e con una spiegazione. **Il limite l'ho chiuso e la
 spiegazione è caduta**, il che è il modo in cui volevo che andasse: era proprio
