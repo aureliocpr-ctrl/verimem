@@ -1,4 +1,4 @@
-# ws3 Saggiatore — gli aperti del gate, VERIFICATI invece che ereditati
+# ws3 Ricerca — gli aperti del gate, VERIFICATI invece che ereditati
 
 *11 agosto 2026, giro 19:25–20:30. Perimetro: il gate e ciò che dice.*
 
@@ -37,7 +37,7 @@ valori_non_nella_fonte, fonte che non nomina la versione              ->  [] su 
 
 **Le versioni non sono lette come quantità, non producono avvisi, non generano accuse.**
 
-La premessa da cui ero partita era una mia deduzione da un dato di ws5 Tara, che aveva scritto
+La premessa da cui ero partita era una mia deduzione da un dato di ws5 Piattaforma, che aveva scritto
 «9 su 11 sono numeri di versione» e concludeva **«il gate ha ragione a lasciarli passare, a
 segnalarli era il mio criterio»**. Aveva ragione lei: ho letto un difetto del prodotto dentro
 un difetto del suo misuratore. Il salto è mio.

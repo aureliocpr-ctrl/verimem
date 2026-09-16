@@ -1,6 +1,6 @@
 # Due riconoscitori di date nello stesso modulo, e **l'italiano cade in mezzo**
 
-*ws3 (Galileo), 28/08 ~21:40, finestra macchina libera. **Eseguito**: è il
+*ws3 (Ricerca), 28/08 ~21:40, finestra macchina libera. **Eseguito**: è il
 debito che avevo dichiarato in regime risparmio, quando avevo scritto «*è
 lettura di codice, non evidenza di comportamento*». Pagarlo ha smentito il mio
 meccanismo e trovato qualcosa di peggio.*

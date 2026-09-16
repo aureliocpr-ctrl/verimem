@@ -1173,6 +1173,8 @@ class Memory:
                 self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
+        from .local_grounding import esecutore_dell_ultimo_giudizio
+        _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
         _out = {
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
@@ -1185,6 +1187,13 @@ class Memory:
             #: c'e' e vale `False` si legge diverso da un campo che manca.
             "replaced": bool(_sostituito),
             "grounding_score": gate.grounding_score,
+            #: CHI ha giudicato QUESTA scrittura: "daemon" (il servizio
+            #: condiviso) o "in-process" (il modello caricato qui); assente se
+            #: nessuno ha giudicato. Dal 2026-09-12 il punteggio puo' arrivare
+            #: da due posti con costi, latenze e guasti diversi, e la ricevuta
+            #: li mostrava identici: un numero senza il suo esecutore non si
+            #: puo' nemmeno confrontare con un altro.
+            **({"judged_by": _chi_ha_giudicato} if _chi_ha_giudicato else {}),
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }

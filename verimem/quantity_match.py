@@ -999,6 +999,30 @@ _IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
 #:   dichiarato nel banco `test_un_codice_non_e_una_quantita_in_nessuna_lingua`.
 _IDENTIFICATORE_UNICODE_RE = re.compile(r"(?<![\w-])[^\W\d_]{1,6}-\d{1,6}(?!\d)")
 
+#: L'ID DI UN FATTO NON E' UN VALORE DA CERCARE NELLA FONTE — e finche' lo e'
+#: stato ha quarantinato fatti veri, a intermittenza, per mesi.
+#:
+#: Misurato il 2026-09-12 in una caduta di CI (gamba ubuntu py3.12): il claim
+#: «… come nel fatto 78222643329e» contro una fonte che quel codice non nomina
+#: usciva `layers=['L4.1']`, `status=quarantined`, con il giudice a **99.948**.
+#: L'estrattore spezzava il codice alla lettera finale e leggeva `78222643329`
+#: come una quantita' che la fonte non contiene. E' proprio la classe che
+#: `_IDENTIFICATORE_UNICODE_RE` gia' toglie — `cli-354` — ma nella forma NUDA,
+#: senza il trattino che la rendeva riconoscibile.
+#:
+#: ⚖️ IL CRITERIO E' LA CIFRA **E** LA LETTERA, ed e' scelto stretto apposta:
+#: si toglie solo cio' che NON PUO' essere un numero decimale. Un codice di
+#: sole cifre resta indistinguibile da una quantita' e **resta dentro**: e' un
+#: limite dichiarato, non una svista, e il banco lo scrive.
+#: 📌 Otto caratteri e non meno: sotto quella soglia «abc123» e simili sono
+#: parole di uso comune, e togliere li' costerebbe piu' di quanto renda.
+#: 📌 Sulla FONTE non si applica (`come_fonte=True` salta le potature): la',
+#: leggere un codice come numero AGGIUNGE un valore alla fonte, cioe' toglie
+#: veti invece di metterne — il verso sicuro.
+_ID_ESADECIMALE_NUDO_RE = re.compile(
+    r"(?<![\w-])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{8,}(?![\w-])",
+    re.IGNORECASE)
+
 
 def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     """Entrambi i testi portano un codice di record, e non ne condividono nemmeno uno?
@@ -1042,13 +1066,18 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
 def _senza_identificatori(testo: str) -> str:
     """Il testo con i codici di record sostituiti da SPAZI.
 
+    DUE forme, stessa idea: quella col trattino (`cli-354`) e quella NUDA di un
+    id esadecimale (`78222643329e`). La seconda e' arrivata dopo, da una caduta
+    vera: vedi `_ID_ESADECIMALE_NUDO_RE` per la misura e per il limite.
+
     Spazi e non stringa vuota: le posizioni restano quelle originali, cosi' chi
     ragiona per offset non si sposta — e qui sotto ci ragiona
     `_spans_delle_date`, che senza questa accortezza salterebbe di qualche
     carattere per ogni codice incontrato.
     """
-    return _IDENTIFICATORE_UNICODE_RE.sub(
-        lambda m: " " * (m.end() - m.start()), testo or "")
+    _vuoto = lambda m: " " * (m.end() - m.start())  # noqa: E731
+    return _ID_ESADECIMALE_NUDO_RE.sub(
+        _vuoto, _IDENTIFICATORE_UNICODE_RE.sub(_vuoto, testo or ""))
 
 
 #: Un numero che **nomina** una parte del documento non è una grandezza
@@ -1118,7 +1147,11 @@ def extract_quantities(text: str, *,
                                fonte quello non e' una citazione, e' contenuto
         _senza_identificatori  `cli.py-354-` e' il formato di `git grep -C`,
                                non un codice prodotto: `cli.py:100:` dava 100,
-                               `cli.py-354-` dava nulla
+                               `cli.py-354-` dava nulla. ⚠️ Dal 2026-09-13
+                               toglie anche l'ID NUDO (`78222643329e`), che e'
+                               la stessa classe senza il trattino: prima
+                               veniva spezzato alla lettera e il prefisso di
+                               cifre letto come quantita' assente dalla fonte
         _spans_dei_riferimenti «art. 15» in un CLAIM e' un puntatore a una
                                norma, non un valore da confrontare (28/08,
                                `29ab5544`). In una FONTE quel 15 e' contenuto:

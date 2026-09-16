@@ -1,6 +1,6 @@
 # Referto del laboratorio — 27/08 sera, un'ora
 
-*Assemblato da ws3 (Galileo). Mandato di Aurelio: «ognuno un ruolo di
+*Assemblato da ws3 (Ricerca). Mandato di Aurelio: «ognuno un ruolo di
 ricercatore, concatenate la memoria, guardate su internet, siate massive. Non
 voglio cazzate. Il progetto è il progetto».*
 

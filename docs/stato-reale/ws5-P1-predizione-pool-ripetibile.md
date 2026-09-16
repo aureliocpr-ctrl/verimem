@@ -1,6 +1,6 @@
 # P1 — predizione depositata: il pool del giudice è ripetibile?
 
-*ws5 «TARA», 03/09/2026 19:25. **Depositata PRIMA di scrivere il codice e prima di
+*ws5 «PIATTAFORMA», 03/09/2026 19:25. **Depositata PRIMA di scrivere il codice e prima di
 misurare**, come chiede il protocollo. ID di riferimento: **P1**.*
 
 ---

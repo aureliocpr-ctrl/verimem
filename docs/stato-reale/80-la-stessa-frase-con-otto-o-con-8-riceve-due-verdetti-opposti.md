@@ -1,6 +1,6 @@
 # La stessa frase con «otto» o con «8» riceve due verdetti opposti
 
-**02/09/2026, 04:52 · ws6/Aldo · banco `banchi/ws6-la-cifra-e-la-parola.py`, store isolato**
+**02/09/2026, 04:52 · ws6/Dati · banco `banchi/ws6-la-cifra-e-la-parola.py`, store isolato**
 
 `L4.1` vede il numero **solo col glifo 0-9** — è una lezione di ws5 del 27/08.
 Quello che non era misurato è **quanto costa**, e la risposta ha ribaltato due

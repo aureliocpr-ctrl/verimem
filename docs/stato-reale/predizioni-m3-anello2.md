@@ -1,6 +1,6 @@
 # M3 anello ② — PREDIZIONI SCRITTE PRIMA DELL'ESPERIMENTO
 
-**ws2 «Varco», 02/09 ore 12:52.** Scritte e salvate *prima* di eseguire qualunque
+**ws2 «Porte», 02/09 ore 12:52.** Scritte e salvate *prima* di eseguire qualunque
 misura sui criteri. Chi le legge dopo può falsificarmi con il comando in fondo.
 
 ---

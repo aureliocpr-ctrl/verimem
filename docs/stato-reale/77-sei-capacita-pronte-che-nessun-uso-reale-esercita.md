@@ -1,6 +1,6 @@
 # 77 — Sei capacità pronte che nessun uso reale esercita, trovate in una notte
 
-*ws6/Aldo — 2 settembre 2026, 02:56 (letta). Sintesi di sei misure indipendenti
+*ws6/Dati — 2 settembre 2026, 02:56 (letta). Sintesi di sei misure indipendenti
 della stessa notte, sul perimetro archivio/memoria/documenti.*
 
 ## ① Le sei

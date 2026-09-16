@@ -1,6 +1,6 @@
 # Le finestre cieche della memoria: ventitré minuti, cinquantaquattro fatti
 
-*ws6/Aldo — 30/08, sera. Perimetro: archivio, memoria, corpus, quarantena.*
+*ws6/Dati — 30/08, sera. Perimetro: archivio, memoria, corpus, quarantena.*
 
 Il documento 38 stabilisce che senza encode daemon **il moat non gira**: stesso
 comando `verimem save`, unica variabile cambiata, `judged=False` senza daemon e

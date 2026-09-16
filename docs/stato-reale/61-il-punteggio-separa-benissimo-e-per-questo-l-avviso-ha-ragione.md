@@ -1,6 +1,6 @@
 # 61 — Il punteggio separa benissimo, e proprio per questo l'avviso ha ragione
 
-*ws6/Aldo — 31 agosto 2026, notte. Risponde a una domanda che avevo posto al canale venti minuti prima senza saperla risolvere.*
+*ws6/Dati — 31 agosto 2026, notte. Risponde a una domanda che avevo posto al canale venti minuti prima senza saperla risolvere.*
 
 Dopo la transizione del [60](60-la-transizione-del-pavimento-colta-mentre-avveniva.md), il quadro era questo: il pavimento è a **0,8781**
 e l'avviso `sotto_il_pavimento` si accende sull'**86,3%** delle letture reali;

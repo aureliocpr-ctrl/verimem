@@ -46,18 +46,31 @@ def test_un_file_che_cresce_troppo_smette_e_lo_dichiara(tmp_path, monkeypatch):
     ridumpi più volte, e tetto minuscolo perché scatti."""
     monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
     monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
-    # Dal 06/09 il tetto DURANTE la chiamata richiede il sorvegliante avviato
-    # (prima ne partiva uno per chiamata, e quell'avvio bloccava le richieste
-    # quando un preload stava caricando una DLL). In produzione lo avvia
-    # `mcp_server.main()`; qui lo avvia il banco, di proposito e per iscritto.
+    # ⚠️ DA T68 QUESTA CELLA MISURA IL TAGLIO ALLA CHIUSURA, non il tetto
+    # durante la chiamata: il sorvegliante non annulla piu' il dump (lo annulla
+    # solo chi lo ha armato), quindi mentre la chiamata e' appesa NULLA ferma
+    # la crescita. Il commento di prima descriveva un meccanismo rimosso, ed e'
+    # il caso peggiore: verde per una strada diversa da quella che racconta.
+    # Si continua ad avviare il sorvegliante perche' e' la configurazione di
+    # produzione, e perche' proprio in quella il fallback alla chiusura veniva
+    # SALTATO — il difetto curato insieme a questo, cella qui sotto.
+    # 📌 Il file cresce eccome, mentre la chiamata e' appesa: quello che questa
+    # cella misura e' che alla fine la coda viene TAGLIATA e quel che resta
+    # sta dentro il tetto.
     w.avvia_il_sorvegliante()
     with w.hang_trace("prova_lenta", 0.05):
         time.sleep(1.2)
     file = list(tmp_path.glob("hang-*.txt"))
     assert file, "nessun trace scritto per una chiamata oltre budget"
     testo = file[0].read_text(encoding="utf-8", errors="replace")
-    assert file[0].stat().st_size < 200_000, (
-        f"il tetto non ha fermato la crescita: {file[0].stat().st_size} byte")
+    # LA SOGLIA ERA MUTA: 200 000 contro un tetto di 4096 e' un gioco di 48
+    # volte, e non distingueva "fermato al tetto" da "cresciuto e poi tagliato".
+    # Da quando la chiusura TAGLIA la coda, il file che resta deve stare dentro
+    # il tetto piu' la nota, e la cella puo' chiedere proprio quello.
+    dimensione = file[0].stat().st_size
+    assert dimensione <= w._MAX_FILE_BYTES + 2000, (
+        f"il file finale e' di {dimensione} byte contro un tetto di "
+        f"{w._MAX_FILE_BYTES}: la coda non e' stata tagliata alla chiusura")
     assert "tetto" in testo.lower() or "troncato" in testo.lower(), (
         "il file è stato troncato senza dire perché: chi legge non distingue "
         f"un tetto da un file corrotto\n{testo[-300:]}")
@@ -146,5 +159,71 @@ def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypa
             "un altro test era ancora vivo, quindi questa cella non ha misurato il "
             "fallback ma il caso opposto. Il verde non vale.\n"
             + testo[-400:])
+    finally:
+        w._ferma_il_sorvegliante.clear()
+
+
+def test_col_sorvegliante_vivo_il_tetto_si_applica_lo_stesso_alla_chiusura(
+        tmp_path, monkeypatch):
+    """IL DIFETTO CHE T68 AVEVA APERTO NEL PRODOTTO, e che questa cella chiude.
+
+    Il fallback alla chiusura girava SOLO se il sorvegliante non era vivo, e il
+    presupposto era: "se e' vivo, il tetto lo ha gia' applicato lui durante la
+    chiamata". Da quando il dump ha un proprietario quel presupposto e' CADUTO:
+    il sorvegliante dichiara ma non disarma piu'. Quindi nel server MCP - che il
+    sorvegliante lo avvia - il tetto non si applicava piu' IN NESSUNO DEI DUE
+    RAMI, e il caso misurato che doveva prevenire era un file da 24.211.732 byte.
+
+    ⚠️ E' il costo dichiarato nella PR di T68, rivelatosi piu' grande di come
+    l'avevo scritto: avevo dichiarato la crescita DURANTE la chiamata, non che
+    saltasse anche la chiusura.
+
+    Nessuna corsa e nessuna finestra da centrare: il sorvegliante qui e' un
+    FINTO sempre-vivo che non cicla e non scrive. La cella misura una cosa sola:
+    quale ramo prende la chiusura quando `is_alive()` risponde di si'.
+    """
+    class _SorveglianteFintoSempreVivo:
+        """Non cicla e non scrive niente: serve solo a rispondere `True`."""
+
+        def is_alive(self) -> bool:
+            return True
+
+    monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
+    # 1 byte: qualunque file scritto sfonda. Qui non si misura la soglia, si
+    # misura QUALE RAMO si prende, e una soglia larga renderebbe la cella muta.
+    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 1)
+    # ISOLAMENTO, come nella cella qui sopra: sostituire la variabile NON ferma
+    # il thread vero che un altro test abbia avviato, e quello scriverebbe la
+    # SUA nota nel mio file. Si prende il riferimento prima, si ferma, si aspetta.
+    vivo = w._sorvegliante_unico
+    monkeypatch.setattr(w, "_sorvegliante_unico", _SorveglianteFintoSempreVivo())
+    w._ferma_il_sorvegliante.set()
+    if vivo is not None and vivo.is_alive():
+        vivo.join(timeout=5.0)
+    try:
+        with w.hang_trace("col_sorvegliante", 0.05):
+            time.sleep(0.3)
+
+        # ⚠️ IL CONTROLLO ROVESCIATO GUARDA IL THREAD, NON IL TESTO, e la
+        # ragione e' misurata. Cercare la nota del sorvegliante nel file non
+        # puo' accendersi MAI: lui la scrive in append, ma il writer di
+        # faulthandler tiene il proprio offset e ci ripassa sopra — misurato su
+        # questo modulo con un sorvegliante vero vivo, 0 occorrenze sia durante
+        # la chiamata (7831 byte) sia dopo la chiusura (271 byte). Prima era
+        # scritto cosi', e passava sempre: un controllo che non puo' fallire
+        # non e' un controllo. La domanda vera e' «c'era un thread vero in
+        # giro?», e a quella risponde il thread.
+        assert vivo is None or not vivo.is_alive(), (
+            "un sorvegliante VERO era ancora vivo durante questa cella: puo' "
+            "aver toccato il file, quindi la misura non e' quella che dice di "
+            "essere. Il join a inizio cella non lo ha fermato.")
+
+        file = list(tmp_path.glob("hang-*.txt"))
+        assert file, "nessun trace scritto per una chiamata oltre budget"
+        testo = file[0].read_text(encoding="utf-8", errors="replace")
+        assert "rilevato alla CHIUSURA" in testo, (
+            "col sorvegliante vivo la chiusura NON ha applicato il tetto: e' il "
+            "ramo che prende il server MCP, dove il file cresce e nessuno lo "
+            "dichiara. Coda del trace: " + testo[-300:])
     finally:
         w._ferma_il_sorvegliante.clear()

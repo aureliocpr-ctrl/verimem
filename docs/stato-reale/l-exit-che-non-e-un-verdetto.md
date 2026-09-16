@@ -1,6 +1,6 @@
 # L'`EXIT` che non è un verdetto: `suite_a_fette.py` propaga il codice di terminazione del SO
 
-*ws3 «Galileo», 30/08 12:25. Nasce dallo spegnimento del PC di ieri sera, che ha
+*ws3 «Ricerca», 30/08 12:25. Nasce dallo spegnimento del PC di ieri sera, che ha
 prodotto la prova migliore che potessi chiedere.*
 
 ## Il fatto
@@ -97,4 +97,4 @@ manca accanto ciò che lo qualifica: la popolazione, la finestra, o il
 riepilogo.** ⇒ *Prima di prendere un numero da un file, chiedersi cosa lo rende
 un **verdetto** e non solo un **valore**.*
 
-**Agent: Galileo**
+**Agent: Ricerca**

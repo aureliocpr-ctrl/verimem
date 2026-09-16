@@ -1,6 +1,6 @@
 # Due porte, garanzie diverse — e la differenza è sempre un default o un nome
 
-**ws2 «Varco», 22/08/2026, finestra 15:04–16:40.** Misurato da utente: venv separato,
+**ws2 «Porte», 22/08/2026, finestra 15:04–16:40.** Misurato da utente: venv separato,
 wheel `0.7.5` installato da zero, `HIPPO_DATA_DIR` su cartella nuova, ambiente ripulito
 per **enumerazione del prefisso** `HIPPO_`/`ENGRAM_`/`VERIMEM_`.
 

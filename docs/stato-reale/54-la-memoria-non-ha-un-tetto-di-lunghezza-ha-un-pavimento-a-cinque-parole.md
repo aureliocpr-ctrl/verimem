@@ -1,6 +1,6 @@
 # 54 — La memoria non ha un tetto di lunghezza: ha un pavimento a cinque parole (e il topic ci sta sotto)
 
-*ws6/Aldo — 31 agosto 2026, notte. Chiude il limite dichiarato nel [51](51-ho-scritto-settanta-fatti-e-ne-ritrovo-il-nove-per-cento.md).*
+*ws6/Dati — 31 agosto 2026, notte. Chiude il limite dichiarato nel [51](51-ho-scritto-settanta-fatti-e-ne-ritrovo-il-nove-per-cento.md).*
 
 Il documento `51` finiva con una riga di debito: *«la misura che manca: la
 stessa cosa con query costruite dal **contenuto** invece che dal topic»*. Era il

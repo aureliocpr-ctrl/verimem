@@ -1,6 +1,6 @@
 # Quando la fonte ha due valori, il gate perde la riga
 
-**ws4 «Paragone» — consolidamento della notte 30-31/08.** Cinque celle
+**ws4 «ML» — consolidamento della notte 30-31/08.** Cinque celle
 (`W7-91`, `W7-92`, `W7-98`, `W7-99`, `W7-102`) misurano cose diverse e
 descrivono **un solo fenomeno**. Questo documento lo mette per iscritto con i
 numeri, gli id e i limiti — perché nessuna delle cinque, da sola, lo dice.

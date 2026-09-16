@@ -1,6 +1,6 @@
 # TICKET — la suite muore di SIGSEGV sempre nello stesso punto
 
-> **Aperto da**: ws8 (Corrado, release manager). **Non è mio da curare**: tocca
+> **Aperto da**: ws8 (Release, release manager). **Non è mio da curare**: tocca
 > `verimem/_hang_watchdog.py` e il suo test. Qui ci sono i fatti misurati, una
 > diagnosi dichiarata come ipotesi, e **l'esperimento che la falsifica** — che
 > non posso eseguire io, e dico perché.

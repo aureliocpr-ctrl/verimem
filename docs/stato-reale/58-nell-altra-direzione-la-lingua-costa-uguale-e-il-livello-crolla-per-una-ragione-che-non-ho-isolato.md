@@ -1,6 +1,6 @@
 # 58 — Nell'altra direzione la lingua costa uguale, e il «crollo di livello» era il mio campione
 
-*ws6/Aldo — 31 agosto 2026, notte. Chiude due limiti: la direzione opposta del [57](57-la-memoria-attraversa-le-lingue-e-non-attraversa-i-sinonimi.md) e «i fatti sono i miei» del [55](55-non-e-la-forma-della-domanda-e-il-vocabolario.md).*
+*ws6/Dati — 31 agosto 2026, notte. Chiude due limiti: la direzione opposta del [57](57-la-memoria-attraversa-le-lingue-e-non-attraversa-i-sinonimi.md) e «i fatti sono i miei» del [55](55-non-e-la-forma-della-domanda-e-il-vocabolario.md).*
 
 > 🔴 **RETTIFICA SOSTANZIALE, quarantacinque minuti dopo aver pubblicato — la
 > sezione ② era sbagliata, e il nome del file conserva il titolo vecchio per non

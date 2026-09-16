@@ -3899,7 +3899,22 @@ def facts_retirement_log(
         bd = _bd(sm, topic=topic, limit=limit)
         console.print(f"[bold]{bd['total_retired']}[/bold] retired total")
         for r in bd["by_reason"]:
-            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {safe_cut(r['reason'], 64)}")
+            # LA FORMA ACCANTO AL NUMERO, non solo nel dizionario. Il campo
+            # esisteva sull'oggetto e non sulla porta e' il difetto che questo
+            # stesso ramo ha appena curato altrove: una voce fatta in un
+            # giorno solo e una distribuita su mesi si leggono uguali finche'
+            # la riga non lo dice. Sul corpus vero (2026-09-13) la prima voce
+            # sono 1463 ritiri in 35,9 secondi di una notte di luglio.
+            _f = r.get("forma", "?")
+            _colore = "yellow" if _f == "evento" else "dim"
+            _q = f"{100.0 * r.get('quota', 0.0):.1f}%"
+            _gg = r.get("giorni", 0)
+            _dove = (f"{_gg}g" if _f == "tasso"
+                     else f"1g {100.0 * r.get('quota_giorno_max', 0.0):.0f}%")
+            console.print(
+                f"  [cyan]{r['n']:>6}[/cyan] [dim]{_q:>6}[/dim] "
+                f"[{_colore}]{_f:<7}[/{_colore}] [dim]{_dove:>7}[/dim]  "
+                f"{safe_cut(r['reason'], 46)}")
         console.print("[dim]— by day —[/dim]")
         for d in bd["by_day"]:
             console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
@@ -4471,6 +4486,9 @@ def facts_add(
     """
     from .anti_confab_gate import run_validation_gate
     from .client import (
+        _blocking_layers,
+    )
+    from .client import (
         chi_ha_quarantinato as _chi_ha_quarantinato,
     )
     from .client import (
@@ -4760,10 +4778,28 @@ def facts_add(
             # 🔑 La decisione NON e' ricopiata qui: si chiama la stessa
             # funzione del write path, perche' una regola con due copie
             # diverge, e questa e' gia' la seconda porta.
+            # ⚠️ `agito` DEVE portare i layer bloccanti, come fa il write path
+            # (`client.py`, `_hit_layers`): senza, il ciclo su
+            # `_BLOCK_LAYER_PRIORITY` non trova niente e la funzione cade
+            # sulla sua ULTIMA riga, `'gate'`. Qui c'era `[]`, cioe' la stessa
+            # espressione dell'altra porta con un buco nel ramo `downgrade`.
+            # 🔑 Il difetto era invisibile perche' i rami piu' comuni non
+            # passano di qui: `store-screen` viene dal marcatore, `moat` e
+            # `L1` dai warning, e su quelli le due porte concordavano gia'.
+            # Divergevano solo i layer che arrivano DA `agito` — L3, L4.1,
+            # SOURCE_TRUST, L4-skipped — e sono quelli che un utente vede
+            # quando il giudice ammette e un controllo lessicale ferma.
+            # ♻️ RESIDUO NOTO, dichiarato in revisione: la funzione e' unica ma
+            # QUESTA ESPRESSIONE no — vive identica anche nel write path,
+            # letterale `["store-screen"]` compreso. E' la stessa classe di
+            # difetto un piano piu' sotto, e la prossima porta che nasce la
+            # ricopiera'. Chi la unifica tocca una firma condivisa: si fa
+            # apposta, non di passaggio.
             _causa = _chi_ha_quarantinato(
                 _esito_del_moat(gate, gate.warnings, source=src or None),
                 gate.warnings,
-                agito=([] if gate.action == "downgrade" else ["store-screen"]),
+                agito=(_blocking_layers(gate.warnings)
+                       if gate.action == "downgrade" else ["store-screen"]),
             )
             _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
 

@@ -1,6 +1,6 @@
 # W2-27 — la divergenza regge, il **meccanismo** che ho pubblicato **no**
 
-*ws3 (Galileo), 29/08 00:44. **Corregge il commit `621d9ab3`**, pubblicato 15 minuti prima.*
+*ws3 (Ricerca), 29/08 00:44. **Corregge il commit `621d9ab3`**, pubblicato 15 minuti prima.*
 
 ## Cosa avevo pubblicato
 
@@ -63,4 +63,4 @@ sul corpus è servito solo a dire che **532 fatti su 15245 (3,49%)** hanno un
 `verified_by` popolato: la mia prima conta ne diceva **15245**, perché `'[]'` è
 una stringa **non vuota**. Terzo misuratore difettoso della stessa nottata.
 
-Agent: Galileo
+Agent: Ricerca
