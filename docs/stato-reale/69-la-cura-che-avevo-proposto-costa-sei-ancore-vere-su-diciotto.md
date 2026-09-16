@@ -1,6 +1,6 @@
 # 69 — La cura che avevo proposto io costa sei ancore vere su diciotto, e il banco che la promuoveva l'avevo scritto io
 
-*ws6/Aldo — 1 settembre 2026, 21:12. Ritira la raccomandazione del [67](67-la-data-nella-domanda-spegne-la-risposta.md).*
+*ws6/Dati — 1 settembre 2026, 21:12. Ritira la raccomandazione del [67](67-la-data-nella-domanda-spegne-la-risposta.md).*
 
 Nel `67` avevo scritto, in grassetto: **«il candidato alla cura è il trigger»** —
 cioè la regex `_AS_OF_ANCHOR_RE`, che accetta l'articolo «il» (e `on` in inglese)

@@ -12,12 +12,22 @@ CONTRACT — observability ONLY:
   * never cancels/returns the call (it only LOGS; fixing is a separate concern),
   * a fast call leaves NO file (the header-only file is cleaned up).
 
-IL TETTO SUI FILE, e quando e' attivo (contratto, 2026-09-06):
-  * il tetto e' attivo MENTRE la chiamata e' in corso SOLO se il
-    sorvegliante e' stato avviato all'avvio del processo
-    (`avvia_il_sorvegliante()`, che `mcp_server.main()` chiama);
-  * altrimenti si applica alla CHIUSURA del contesto: tardi, perche' il
-    file e' gia' cresciuto, ma mai "mai".
+IL TETTO SUI FILE, e quando e' attivo (contratto, riscritto 2026-09-12):
+  * si applica alla CHIUSURA del contesto, in ogni processo, e TAGLIA: si
+    tiene la testa (dove sta la diagnosi) e si butta la coda. Tardi, perche'
+    il file nel frattempo e' cresciuto sul disco, ma il file che resta e'
+    dentro il tetto;
+  * ⚠️ L'ECCEZIONE, che e' proprio il guasto per cui questo modulo esiste:
+    se il processo MUORE invece di fallire - l'access violation raccontata
+    in `_annulla_il_dump` - il `finally` non viene eseguito e il file resta
+    intero sul disco. Un processo morto non taglia niente;
+  * MENTRE la chiamata e' in corso NESSUNO ferma piu' la crescita. Il
+    sorvegliante, se avviato, la DICHIARA nel file appena sfonda, ma non
+    disarma il timer: il dump lo annulla solo chi lo ha armato, e il
+    proprietario e' la chiamata che e' appesa. Vedi `_annulla_il_dump`.
+  ⚠️ Questo contratto prometteva il tetto DURANTE la chiamata col
+    sorvegliante avviato. Non e' piu' vero da quando il dump ha un
+    proprietario, e la riga qui sopra e' l'unica che regge.
 
 PERCHE' NON SI AVVIA UN THREAD PER CHIAMATA. Misurato il 2026-09-06 sul
 server MCP (12 dump su 12, nove minuti, frame identici): il thread che
@@ -78,9 +88,46 @@ _da_sorvegliare: list[Path] = []
 _sorvegliante_unico: threading.Thread | None = None
 _ferma_il_sorvegliante = threading.Event()
 
+#: Chi ha ARMATO il dump attualmente in corso (`threading.get_ident()`), o None.
+#: Il dump ha un proprietario, e solo lui lo annulla — vedi `_annulla_il_dump`.
+_proprietario_del_dump: int | None = None
+
+
+def _annulla_il_dump() -> None:
+    """Annulla il dump SOLO se lo chiama chi lo ha armato.
+
+    IL DIFETTO CHE QUESTA FUNZIONE CHIUDE (misurato 2026-09-11 in integrazione,
+    su Windows con py3.12): il processo moriva con `Windows fatal exception:
+    access violation`, con due thread dentro questo modulo nello stesso istante
+    — il sorvegliante qui, e il chiamante dentro `hang_trace` con i dump armati.
+
+    `dump_traceback_later(..., file=f)` fa scrivere i dump a un writer interno
+    di CPython su quel descrittore. Annullare da un thread che NON possiede quel
+    dump puo' liberare sotto il writer cio' che sta usando: da fuori si vede
+    come una violazione di accesso, e il processo non si ferma — muore.
+
+    Quindi l'annullamento non e' piu' un'azione che chiunque puo' fare: e' un
+    diritto di chi ha armato. Chi non e' il proprietario non aspetta e non
+    fallisce — semplicemente non annulla.
+    """
+    if _proprietario_del_dump != threading.get_ident():
+        return
+    try:
+        faulthandler.cancel_dump_traceback_later()
+    except Exception:  # noqa: BLE001 - mai far fallire la chiamata osservata
+        pass
+
 
 def _cicla_e_sorveglia() -> None:
-    """Guarda il file corrente, se c'e', e disarma il timer quando sfonda."""
+    """Guarda il file corrente, se c'e', e DICHIARA il tetto quando sfonda.
+
+    ⚠️ COSA NON FA PIU', e il prezzo va letto qui e non scoperto dopo: NON
+    disarma il timer. Il dump lo annulla solo chi lo ha armato, quindi durante
+    una chiamata appesa il file PUO' CONTINUARE A CRESCERE oltre il tetto. A
+    fermarlo resta il fallback alla chiusura, che esiste gia' ed e' coperto da
+    una cella. Abbiamo scambiato un file che puo' crescere con un processo che
+    non muore.
+    """
     while not _ferma_il_sorvegliante.wait(_CONTROLLO_S):
         try:
             if not _da_sorvegliare:
@@ -88,13 +135,13 @@ def _cicla_e_sorveglia() -> None:
             percorso = _da_sorvegliare[-1]
             if percorso.stat().st_size <= _MAX_FILE_BYTES:
                 continue
-            faulthandler.cancel_dump_traceback_later()
+            _annulla_il_dump()          # da qui: non e' il proprietario, non annulla
             with open(percorso, "a", encoding="utf-8") as g:
                 g.write(
                     f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
                     f"raggiunto: i dump successivi ripetevano lo stesso "
-                    f"stack e sono stati fermati. Il primo dump qui sopra "
-                    f"e' quello che contiene la diagnosi.\n")
+                    f"stack. Il primo dump qui sopra e' quello che contiene "
+                    f"la diagnosi; il resto si ferma alla chiusura.\n")
             _da_sorvegliare.clear()
         except Exception:  # noqa: BLE001 - mai far fallire la chiamata osservata
             pass
@@ -169,6 +216,11 @@ def hang_trace(label: str, budget_s: float):
         )
         f.flush()
         faulthandler.dump_traceback_later(budget_s, repeat=True, file=f)
+        # Da qui il dump ha un PROPRIETARIO: questo thread. Nessun altro puo'
+        # annullarlo — `_annulla_il_dump()` lo verifica prima di toccare
+        # faulthandler.
+        global _proprietario_del_dump
+        _proprietario_del_dump = threading.get_ident()
         armed = True
         _pota_i_vecchi()
         # Sorvegliante del tetto: il dump lo scrive faulthandler in C e non si
@@ -195,10 +247,9 @@ def hang_trace(label: str, budget_s: float):
     finally:
         _da_sorvegliare.clear()
         if armed:
-            try:
-                faulthandler.cancel_dump_traceback_later()
-            except Exception:  # noqa: BLE001
-                pass
+            # Il proprietario annulla il proprio dump, ed e' l'unico che puo'.
+            _annulla_il_dump()
+            globals()["_proprietario_del_dump"] = None
         if f is not None:
             try:
                 size = f.tell()
@@ -207,25 +258,47 @@ def hang_trace(label: str, budget_s: float):
                     path.unlink(missing_ok=True)
             except Exception:  # noqa: BLE001
                 pass
-        # FALLBACK (lead, 06/09 08:40): fuori dal server nessuno ha avviato
-        # il sorvegliante, e senza questo il tetto non si applicherebbe MAI.
-        # Qui si applica alla CHIUSURA: tardi - il file e' gia' cresciuto -
-        # ma mai "mai". Chi vuole il tetto DURANTE la chiamata avvia il
-        # sorvegliante all'avvio del processo.
+        # IL TETTO SI APPLICA QUI, e adesso SEMPRE.
+        # Questo blocco girava solo se il sorvegliante NON era vivo, e il
+        # presupposto era: "se e' vivo, il tetto e' gia' stato applicato
+        # durante la chiamata". Da quando il dump ha un proprietario quel
+        # presupposto e' caduto - il sorvegliante dichiara ma non disarma -
+        # e nel server MCP, che il sorvegliante lo avvia, il tetto non si
+        # applicava PIU' IN NESSUNO DEI DUE RAMI. Togliere la condizione e'
+        # la meta' della cura che mancava.
+        # ⚠️ LA NOTA DEL SORVEGLIANTE NON SOPRAVVIVE, e va detto qui: lui
+        # scrive in append OLTRE il tetto, e il taglio tiene la testa. Il file
+        # finale porta UNA nota, questa. Chi cerca la nota del sorvegliante in
+        # un trace tagliato non la trova, e non e' un guasto: e' il taglio.
         # Sta QUI, dopo cancel_dump_traceback_later() e dopo f.close():
         # scriverlo prima avrebbe messo la riga in mezzo ai dump ancora
         # in corso, e il size letto da f.tell() non l'avrebbe vista.
-        if (_sorvegliante_unico is None or not _sorvegliante_unico.is_alive()):
-            try:
-                if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
-                    with open(path, "a", encoding="utf-8") as g:
-                        g.write(
-                            f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte "
-                            f"superato e rilevato alla CHIUSURA: nessun "
-                            f"sorvegliante era attivo in questo processo, "
-                            f"quindi i dump non sono stati fermati mentre "
-                            f"la chiamata era in corso. Il primo dump qui "
-                            f"sopra e' quello che contiene la diagnosi.\n")
-            except Exception:  # noqa: BLE001 - mai far fallire la chiamata
-                pass
+        try:
+            if path is not None and path.stat().st_size > _MAX_FILE_BYTES:
+                # SI TAGLIA, non si annota soltanto. Fino a qui il tetto
+                # DICHIARAVA la violazione e lasciava il file intero: il caso
+                # da 24.211.732 byte si sarebbe riformato identico, con una
+                # riga in fondo a dire che era troppo grande. Il valore da
+                # salvare sta scritto nel messaggio stesso - la diagnosi e' nel
+                # PRIMO dump - quindi si tiene la TESTA e si butta la coda.
+                with open(path, "rb") as h:
+                    testa = h.read(_MAX_FILE_BYTES)
+                # Mai spezzare l'ultima riga a meta': si taglia su un a capo,
+                # altrimenti l'ultimo carattere puo' restare mutilato e il
+                # trace diventa illeggibile proprio in fondo.
+                fine = testa.rfind(b"\n")
+                if fine > 0:
+                    testa = testa[:fine + 1]
+                nota = (
+                    f"\n[watchdog] tetto di {_MAX_FILE_BYTES} byte superato e "
+                    f"rilevato alla CHIUSURA: la CODA e' stata TAGLIATA. "
+                    f"Durante la chiamata nulla ferma la crescita, perche' il "
+                    f"dump lo annulla solo chi lo ha armato ed e' la chiamata "
+                    f"appesa. Il primo dump qui sopra e' quello che contiene "
+                    f"la diagnosi.\n")
+                with open(path, "wb") as g:
+                    g.write(testa)
+                    g.write(nota.encode("utf-8", errors="replace"))
+        except Exception:  # noqa: BLE001 - mai far fallire la chiamata
+            pass
         _ARMED.release()

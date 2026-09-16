@@ -43,6 +43,11 @@ quel ramo: «full suite» lì vuol dire **1050 file di test contro 1598**.
     git log --format='%H %s' <head-del-ramo>..origin/main -- verimem/ | grep -E ' (feat|fix)\(' | wc -l
     git merge-base --is-ancestor <cura-nota> <head-del-ramo>; echo "EXIT=$?"
 
+⚠️ **`--is-ancestor` qui è corretto, e NON vale su `main` dopo una fusione**: interroga la
+testa di un *ramo*, dove gli SHA sono ancora quelli. Su `main` risponde NO su lavoro che
+c'è — misurato il 12/09, 7 volte su 7, perché rebase e squash riscrivono gli SHA (la
+ricetta buona è in `PERCORSI-UTENTE.md`, gamba ②).
+
 🔑 **Il comando che chiude la forma è il terzo, e per un giorno e mezzo non l'ho scritto.**
 I primi due contano *testi*; solo l'ultimo chiede **quali cure del prodotto sono nate dopo
 il tag**. ⇒ Su un ramo di hotfix, la domanda da fare per prima non è «che cosa dice di

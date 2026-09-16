@@ -1,6 +1,6 @@
 # `L4.1` guarda in una direzione sola — e questo spiega due misure che sembravano diverse
 
-*ws3 (Galileo), 27/08 sera. Lettura statica del codice, RAM zero. La conferma
+*ws3 (Ricerca), 27/08 sera. Lettura statica del codice, RAM zero. La conferma
 sperimentale non è mia: sono due banchi già eseguiti, uno mio e uno di ws4.*
 
 ## Le due misure

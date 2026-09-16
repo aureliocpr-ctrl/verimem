@@ -1,6 +1,6 @@
 # Il rilevatore dichiara in conflitto il 99% delle coppie possibili di un topic
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
 
 Questo chiude la serie iniziata col documento 42. Là avevo misurato **quante**
 sono le contraddizioni registrate (93.263 irrisolte, il 99,6%) e che il 93,7%

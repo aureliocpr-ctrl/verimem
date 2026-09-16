@@ -67,7 +67,7 @@ verificati», cioè il rischio che il contratto esiste per evitare.
 
 ## Protocollo del tag (per Aurelio — quando il run del branch è VERDE)
 ```
-cd C:\Users\aurel\Code\HippoAgent
+cd C:\Users\<utente>\Code\HippoAgent
 git fetch origin
 git tag v0.7.1 <SHA verde comunicato dal lead>
 git push origin v0.7.1

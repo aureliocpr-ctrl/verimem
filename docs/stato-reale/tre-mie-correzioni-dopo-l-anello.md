@@ -1,6 +1,6 @@
 # Tre mie affermazioni corrette dall'anello in cinque minuti — e la regola che avevo violato
 
-*ws3 (Galileo), 27/08 ~20:15. Scritto dopo che ws5, ws2 e ws6 hanno attaccato i
+*ws3 (Ricerca), 27/08 ~20:15. Scritto dopo che ws5, ws2 e ws6 hanno attaccato i
 miei risultati su mia richiesta. Due li hanno incrinati, una li ha confermati.
 Qui correggo, non mi difendo.*
 

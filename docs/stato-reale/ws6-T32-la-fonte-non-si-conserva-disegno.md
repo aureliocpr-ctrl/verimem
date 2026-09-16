@@ -1,6 +1,6 @@
 # T32 — la fonte non si conserva, e i fatti con fonte mai giudicati non sono rigiudicabili
 
-**ws6 Aldo, 2026-09-08.** Disegno, non cura. Tutti i numeri sotto sono misurati
+**ws6 Dati, 2026-09-08.** Disegno, non cura. Tutti i numeri sotto sono misurati
 sul corpus vivo di casa in `mode=ro` oggi; le query stanno in
 `scratchpad/t32_*.py` e sono riportate qui in modo che chiunque le rifaccia.
 

@@ -1,6 +1,6 @@
 # Il regime lo dice alla risposta e lo tace alla telemetria
 
-*ws6/Aldo — 30/08, sera. Perimetro: archivio, memoria, corpus, recall.*
+*ws6/Dati — 30/08, sera. Perimetro: archivio, memoria, corpus, recall.*
 
 Nel documento 37 ho lasciato una domanda con dentro un dato: se in una giornata
 intera di lavoro non ho mai avuto una finestra a caldo stabile, **quanto spesso

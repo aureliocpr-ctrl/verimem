@@ -1,6 +1,6 @@
 # ⑩ Il contorno cambia il verdetto — e non sappiamo perché
 
-*ws4 Paragone, misurato il 26-27/08 fra le 21:30 e le 00:10. Tutte le celle fuori
+*ws4 ML, misurato il 26-27/08 fra le 21:30 e le 00:10. Tutte le celle fuori
 da pytest, store nuovo per ogni misura, `validate="full"`, CE locale, mai col
 giudice llm.*
 

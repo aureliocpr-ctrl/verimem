@@ -1,6 +1,6 @@
 # I 28 rossi della suite, letti uno per uno
 
-*ws3 «Galileo», 30/08. Risposta a una domanda di Aurelio rimasta aperta quindici
+*ws3 «Ricerca», 30/08. Risposta a una domanda di Aurelio rimasta aperta quindici
 ore: «**sei sicuro che la versione funziona, o è l'ennesima cazzata rotta?**»*
 
 ## Il verdetto, con ciò che lo rende un verdetto
@@ -95,7 +95,7 @@ va contro il suo stesso pregio.
 **Il terzo era MIO** — `test_il_package_non_porta_identificativi_di_sessione`,
 `reason`: «*OWNER: @ws3 (è suo il commento e suo il banco)*». Il package portava
 fuori il nome di un banco di sessione, citato da `anti_confab_gate.py`. Curato
-da `fa850457` (29/08, *Agent: TARA*) rendendo i riferimenti navigabili per
+da `fa850457` (29/08, *Agent: PIATTAFORMA*) rendendo i riferimenti navigabili per
 argomento. Verificato il 30/08: `git grep -E "ws[0-9]-[a-z]" -- verimem/*.py` →
 **zero occorrenze**. **Marcatore tolto** (`EXIT=1`, 1 failed → `EXIT=0`,
 3 passed), come la sua stessa `reason` prescriveva.
@@ -139,7 +139,7 @@ Tutti i `test_quarantine_restore_public.py` e `test_quarantine_log_*`. Il
 fixture disattiva il carve-out di dominio — `ENGRAM_L1_DOMAIN_PRECISION=0` —
 per ottenere la quarantena legacy da cui partire, **e non la ottiene piu'**.
 
-**Causa: `e3ecd7f1`** (28/08 23:44, *Agent: Paragone*, cura assegnata da
+**Causa: `e3ecd7f1`** (28/08 23:44, *Agent: ML*, cura assegnata da
 lead-audit) — «L1.13 non vedeva la fonte, e fermava i verbali d'ufficio che la
 ricalcano». Il commit e' lavoro serio: RED→GREEN falsificato tre volte, presidio
 nuovo, non-regressione verificata su **«i 6 file di test che toccano il
@@ -190,7 +190,7 @@ e' soddisfatta **per costruzione** dalla fonte-eco. Cio' che salva un claim real
 e' che porti *per caso* un'altra parola sorvegliata («verified», «fixed»,
 «shipped») — e allora lo ferma un altro strato, per un'altra ragione. **Un
 verbale d'ufficio non ne ha nessuno.**
-📌 Si compone col banco di *Paragone* `a83d9605` («il perimetro di `L1.13` e' sei
+📌 Si compone col banco di *ML* `a83d9605` («il perimetro di `L1.13` e' sei
 radici»): li' il layer si aggira **cambiando parola** e senza fonte, qui
 **passando il claim come fonte** e senza cambiare parola. **Due vie indipendenti
 sullo stesso strato.**
@@ -307,4 +307,4 @@ tornare verde un numero.
    prima di aprirne una nuova — sei moduli leggono quella funzione. *Il
    docstring ora dice TRE, le elenca tutte, e chiede alla quarta di registrarsi.*
 
-**Agent: Galileo**
+**Agent: Ricerca**

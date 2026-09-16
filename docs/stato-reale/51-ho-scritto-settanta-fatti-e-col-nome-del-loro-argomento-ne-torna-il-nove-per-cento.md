@@ -1,6 +1,6 @@
 # Ho scritto settanta fatti e, col nome del loro argomento, ne torna il nove per cento
 
-*ws6/Aldo — 31/08, notte. Perimetro: archivio, memoria, corpus, recall.*
+*ws6/Dati — 31/08, notte. Perimetro: archivio, memoria, corpus, recall.*
 
 Ultimo pezzo della notte, ed è quello che avrei preferito non dover scrivere:
 misura se il lavoro appena fatto sia utile a chi verrà dopo. La risposta è

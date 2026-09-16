@@ -373,21 +373,46 @@ class LocalGroundingJudge:
         return self._scorer
 
     def coppia(self, source: str, fact: str, *,
-               focus_budget: int | None = None) -> tuple[str, str]:
+               focus_budget: int | None = None,
+               applica_finestra: bool = True) -> tuple[str, str]:
         """La coppia (span, fatto) che il CE giudica.
 
         Estratta da ``score`` perche' ha DUE esecutori: lo scorer in-process e
-        il daemon condiviso (``_gate_via_daemon``). La selezione dello span e'
-        puro testo e costa poco, quindi resta di qua in entrambi i casi: al
-        daemon si manda la coppia gia' pronta, cosi' non c'e' un secondo posto
-        dove il budget possa essere applicato in modo diverso."""
+        il daemon condiviso (``_gate_via_daemon``).
+
+        ⚠️ QUI C'ERA SCRITTO «costa poco», ED E' STATO VERO FINO AL 2026-08-19.
+        La selezione dello span e' puro testo davvero; ma la RIDUZIONE ALLA
+        FINESTRA conta i TOKEN, e per contarli carica il tokenizzatore del
+        modello, che tira dentro `transformers` e con lui `torch`. Misurato il
+        2026-09-12 alla porta, in un server che DELEGA il giudizio::
+
+            server importato                     171,9 MB
+            dopo `try_local_score`              1464,0 MB   in 31,73 s
+              scorer locale caricato = False    <- il giudizio l'ha fatto il daemon
+
+        1292 MB e 31,7 secondi per PREPARARE una domanda che poi si delega. Con
+        `applica_finestra=False` lo span esce grezzo e la finestra la applica
+        chi il tokenizzatore ce l'ha gia' caricato: il daemon.
+
+        Il budget resta in UN POSTO SOLO, come prima: al daemon si manda il
+        NUMERO (`max_length`), non una seconda regola per applicarlo."""
         budget = int(focus_budget) if focus_budget else self.focus_budget
         span = select_relevant_span(source or "", fact or "", budget=budget)
-        return (self._entro_la_finestra(span),
+        return (self._entro_la_finestra(span) if applica_finestra else span,
                 fact or "")
 
-    def _entro_la_finestra(self, span: str) -> str:
+    def _entro_la_finestra(self, span: str,
+                           max_length: int | None = None) -> str:
         """Riduce lo span finche' entra nella finestra del CE, contando TOKEN.
+
+        ⚠️ `max_length` ARRIVA COME PARAMETRO, e non e' un dettaglio di stile.
+        Nel daemon questa funzione gira su UN THREAD PER CONNESSIONE: passare il
+        budget scrivendolo su `self.max_length` - come faceva la prima versione
+        di questa cura - lo rende uno STATO CONDIVISO MUTATO da piu' thread.
+        Due richieste con budget diversi si sovrascrivono il valore a vicenda, e
+        il danno non e' un errore ma un TAGLIO SBAGLIATO: uno span ridotto con
+        la finestra di un altro, senza che nessuno se ne accorga. Rilievo in
+        revisione, 2026-09-12.
 
         `focus_budget` e' in CARATTERI, `max_length` in TOKEN: le due unita'
         coincidono solo sulla prosa. Misurato 2026-08-19 col tokenizzatore del
@@ -414,13 +439,14 @@ class LocalGroundingJudge:
         if tok is None:
             return span
         conta = lambda s: len(tok.encode(s, add_special_tokens=False))  # noqa: E731
-        if conta(span) <= self.max_length:
+        limite = int(max_length) if max_length else self.max_length
+        if conta(span) <= limite:
             return span
         righe = span.splitlines()
         while len(righe) > 1:
             righe.pop()
             candidato = _A_CAPO.join(righe)
-            if conta(candidato) <= self.max_length:
+            if conta(candidato) <= limite:
                 return candidato
         return righe[0] if righe else span
 
@@ -835,7 +861,40 @@ def _delegate_only() -> bool:
 _GATE_DELEGATO = {"ok": False}
 
 
-def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
+#: Gia' avvisato in questo processo che il daemon ha giudicato su uno span
+#: non ridotto: si dice UNA volta, non a ogni scrittura.
+_avvisato_finestra_non_applicata = False
+
+#: CHI ha giudicato l'ultima scrittura DI QUESTO THREAD.
+#:
+#: ⚠️ THREAD-LOCAL, e non e' un dettaglio: il server serve una connessione per
+#: thread, e una variabile di modulo direbbe a una scrittura chi ha giudicato
+#: quella di un altro. E' la stessa forma che in questa PR aveva gia' morso una
+#: volta (il budget della finestra passato per attributo condiviso): un dato che
+#: appartiene a UNA richiesta non si tiene in un posto che sta a tutte.
+#:
+#: `_GATE_DELEGATO` non serve a questo: dice che in QUESTO PROCESSO il daemon ha
+#: risposto almeno una volta, che e' una domanda diversa e resta vera per sempre.
+_esecutore = threading.local()
+
+
+def esecutore_dell_ultimo_giudizio() -> str | None:
+    """``"daemon"``, ``"in-process"``, oppure ``None`` se nessuno ha giudicato.
+
+    Serve alla ricevuta: dal 2026-09-12 il punteggio puo' arrivare da due posti,
+    e chi legge una ricevuta deve poter distinguere «giudicato dal servizio
+    condiviso» da «giudicato qui» — sono due cose con costi, latenze e modalita'
+    di guasto diverse, e finora la ricevuta le mostrava identiche.
+    """
+    return getattr(_esecutore, "chi", None)
+
+
+def _registra_esecutore(chi: str | None) -> None:
+    _esecutore.chi = chi
+
+
+def _gate_via_daemon(pairs, *, info=None,
+                     max_length: int | None = None) -> list[float] | None:
     """Punteggi del giudice del moat dal daemon condiviso, o None per degradare.
 
     Speculare a ``semantic._rerank_via_daemon``, e per la stessa ragione con una
@@ -874,6 +933,12 @@ def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
         try:
             conn.settimeout(_emb._SERVICE_READ_TIMEOUT_S)
             req = {"gate_pairs": [[p[0], p[1]] for p in pairs]}
+            if max_length:
+                # «riduci tu lo span a questa finestra»: si manda il NUMERO,
+                # non la regola. Un daemon che non lo conosce lo ignora, ma non
+                # ci arriva mai — il client lo manda solo se il daemon ha
+                # dichiarato `applies_window`.
+                req["max_length"] = int(max_length)
             if info.get("token"):
                 req["token"] = info["token"]
             _svc.send_msg(conn, req)
@@ -885,6 +950,23 @@ def _gate_via_daemon(pairs, *, info=None) -> list[float] | None:
         # in cui client e daemon non ripartono nello stesso istante.
         if resp and resp.get("ok") and isinstance(resp.get("scores"), list):
             _GATE_DELEGATO["ok"] = True
+            if resp.get("window_applied") is False:
+                # IL RIPIEGO NON E' MUTO. Il punteggio e' valido, ma e' stato
+                # calcolato su uno span che NESSUNO ha ridotto: il modello lo
+                # tronca dalla coda, cioe' proprio la perdita che la riduzione
+                # esiste per evitare. Si dice una volta per processo, non a
+                # ogni scrittura, perche' un avviso a ogni giro diventa rumore
+                # e il rumore non lo legge nessuno.
+                global _avvisato_finestra_non_applicata
+                if not _avvisato_finestra_non_applicata:
+                    _avvisato_finestra_non_applicata = True
+                    import warnings
+                    warnings.warn(
+                        "il daemon ha giudicato su uno span NON ridotto alla "
+                        "finestra del modello: il punteggio vale, ma la coda "
+                        "dello span e' stata troncata dal modello invece che "
+                        f"scelta. Motivo dal daemon: {resp.get('window_error')}",
+                        RuntimeWarning, stacklevel=2)
             return [float(s) for s in resp["scores"]]
     except Exception:  # noqa: BLE001 — qualunque intoppo -> si degrada come prima
         return None
@@ -954,10 +1036,25 @@ def try_local_score(source: str, fact: str, *,
     # daemon assente o muto -> None -> warm in background e il chiamante
     # fa esattamente cio' che faceva prima.
     if judge._scorer is None and _delegate_only():
+        # LA FINESTRA LA APPLICA IL DAEMON, se sa farlo. Costruire la coppia
+        # gia' ridotta costa al server 1292 MB e 31,7 s di tokenizzatore per
+        # una domanda che poi delega (misurato alla porta il 2026-09-12).
+        # `applies_window` lo DICHIARA il daemon nel file di scoperta: un
+        # daemon vecchio non lo scrive, e allora si fa come prima — la
+        # riduzione di qua, col suo costo, e mai una perdita di qualita'
+        # silenziosa.
+        from . import encode_service as _svc
+        info = _svc.read_discovery()
+        il_daemon_riduce = bool(info and info.get("applies_window"))
         punteggi = _gate_via_daemon(
-            [judge.coppia(source, fact, focus_budget=focus_budget)])
+            [judge.coppia(source, fact, focus_budget=focus_budget,
+                          applica_finestra=not il_daemon_riduce)],
+            info=info,
+            max_length=judge.max_length if il_daemon_riduce else None)
         if punteggi:
+            _registra_esecutore("daemon")
             return judge.normalizza(punteggi[0]), judge.threshold
+        _registra_esecutore(None)
         warm_local_judge_async()
         return None
     # LOAD phase — a missing / unloadable model is a legitimate "no local judge":
@@ -966,6 +1063,7 @@ def try_local_score(source: str, fact: str, *,
     try:
         judge._ensure_scorer()
     except Exception:  # noqa: BLE001 — model absent/unloadable -> fail over
+        _registra_esecutore(None)
         if not _warned_fallback:
             _warned_fallback = True
             import warnings
@@ -979,13 +1077,15 @@ def try_local_score(source: str, fact: str, *,
     # laundering it into "no judge -> admit" (opus re-review 2026-07-18, finding B:
     # this is the default out-of-the-box path, where the earlier fix did not reach).
     score = judge.score(source, fact, focus_budget=focus_budget)
+    _registra_esecutore("in-process")
     return score, judge.threshold
 
 
 __all__ = ["LocalGroundingJudge", "make_finetuned_scorer", "get_local_judge",
            "set_local_judge", "reset_local_judge", "get_local_threshold",
            "try_local_score", "local_ce_available", "warm_local_judge_async",
-           "judge_state", "_gate_via_daemon", "daemon_del_giudice_annunciato",
+           "judge_state", "esecutore_dell_ultimo_giudizio",
+           "_gate_via_daemon", "daemon_del_giudice_annunciato",
            "ensure_gate_model", "DEFAULT_GATE_MODEL_URL",
            "DEFAULT_GATE_MODEL_SHA256", "DEFAULT_GATE_MODEL_HUB_ID",
            "DEFAULT_MODEL_DIR"]
