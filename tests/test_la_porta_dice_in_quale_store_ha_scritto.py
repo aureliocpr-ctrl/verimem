@@ -172,6 +172,24 @@ def test_la_ricevuta_della_porta_mcp_nomina_lo_store(tmp_path: Path, monkeypatch
             f"variabile non ha deciso: {os.environ[chi]} vs {percorso}")
 
 
+def test_una_ricevuta_non_fa_cadere_una_scrittura_riuscita() -> None:
+    """Se il percorso non è noto, la ricevuta lo DICE — non solleva.
+
+    ⚠️ Questa cella nasce da un rosso vero: `str(a.semantic.db_path)` alla porta
+    MCP ha fatto cadere 15 celle in CI con `AttributeError: '_FakeSemantic'
+    object has no attribute 'db_path'`, riprodotto in locale `10 failed`. Ed è
+    la SECONDA volta con lo stesso doppio di test: il 13/09 non aveva `get`.
+    Il campo di una ricevuta descrive una scrittura già avvenuta: se non sa,
+    dice `unknown`, e `unknown` non è `default` — «non lo so» non è «l'ha
+    deciso il disco»."""
+    from verimem._compat import provenienza_data_dir
+
+    prov = provenienza_data_dir()
+
+    assert prov.deciso_da_per("") == "unknown"
+    assert prov.deciso_da_per(None) == "unknown"  # type: ignore[arg-type]
+
+
 def test_senza_variabili_la_ricevuta_dice_default(tmp_path: Path, monkeypatch) -> None:
     """Nessuna variabile posta: il campo c'è lo stesso e vale `default`.
 

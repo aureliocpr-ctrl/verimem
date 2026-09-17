@@ -188,6 +188,10 @@ class ProvenienzaDataDir(NamedTuple):
     #: e nemmeno da «sto leggendo una versione vecchia». (I7)
     DISCO = "default"
 
+    #: Quando il percorso dello store non e' noto. Distinto da ``default``:
+    #: quello dice «l'ha deciso il disco», questo dice «non lo so».
+    IGNOTO = "unknown"
+
     def deciso_da(self) -> str:
         """Il nome dell'alias che ha vinto, oppure ``default``. Mai vuoto."""
         return self.alias or self.DISCO
@@ -202,10 +206,15 @@ class ProvenienzaDataDir(NamedTuple):
         e `store_decided_by: HIPPO_DATA_DIR` che ne indicava un'altra.
         Qui si guarda il percorso VERO: l'alias vale solo se punta li'.
         """
+        if not percorso:
+            # Il percorso non e' noto (un doppio di test che non espone
+            # `db_path`, o uno store non ancora aperto): non si dichiara
+            # `default`, che sarebbe una risposta alla domanda sbagliata.
+            return self.IGNOTO
         try:
             atteso = Path(percorso).expanduser().resolve()
         except (OSError, ValueError):
-            return self.DISCO
+            return self.IGNOTO
         for nome in _ALIAS_DATA_DIR:
             valore = os.environ.get(nome, "").strip()
             if not valore:
