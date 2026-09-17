@@ -55,7 +55,18 @@ class Livello:
     nome: str
     stato: str
     ragione: str | None = None
+    #: ⚠️ IL NUMERO VIAGGIA CON LA SUA SCALA, ANCHE QUI. La prima stesura
+    #: teneva `scala` e `modello` solo sulla RICEVUTA: due livelli che
+    #: punteggiano su scale diverse — il moat 99.5 su 0-100 e il giudice delle
+    #: relazioni 0.87 su 0-1 — finivano sotto un'etichetta sola, e chi legge
+    #: 0.87 su «0-100» vede un punteggio bassissimo dove invece e' alto. E'
+    #: esattamente il difetto che questo campo esiste per impedire, riprodotto
+    #: dentro la cura: il 13/09 un margine di 0,31 l'avevo letto ~60 confrontando
+    #: due scale. Trovato dal pari, non da me.
     punteggio: float | None = None
+    scala: str | None = None
+    soglia: float | None = None
+    modello: str | None = None
 
     def __post_init__(self) -> None:
         if not self.nome:
@@ -70,10 +81,16 @@ class Livello:
                 f"il livello {self.nome!r} e' {self.stato!r} senza ragione: "
                 "uno stato diverso da 'eseguito' senza ragione dice meno di un "
                 "campo assente, perche' sembra una risposta")
+        if self.punteggio is not None and (self.scala is None or self.modello is None):
+            raise ValueError(
+                f"il livello {self.nome!r} porta un punteggio senza scala o senza "
+                "modello: due livelli punteggiano su scale diverse, e un numero "
+                "senza la sua scala non e' una misura")
 
     def come_dizionario(self) -> dict[str, Any]:
-        return {"nome": self.nome, "stato": self.stato,
-                "ragione": self.ragione, "punteggio": self.punteggio}
+        return {"nome": self.nome, "stato": self.stato, "ragione": self.ragione,
+                "punteggio": self.punteggio, "scala": self.scala,
+                "soglia": self.soglia, "modello": self.modello}
 
 
 @dataclass(frozen=True)
