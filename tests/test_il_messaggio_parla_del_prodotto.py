@@ -466,7 +466,18 @@ def test_il_modello_della_richiesta_passa_il_controllo_che_lo_accompagna() -> No
         "\nIl prodotto dichiara una cosa in piu' a chi lo usa.\n\n"
         "Provato dal banco: resta rosso quando fallisce.\n", 1)
 
-    commenti = json.dumps(["### Definition of Done\n- [x] GREEN"])
+    # ⚠️ IL COMMENTO DI PROVA NON SI RISCRIVE QUI: si prende dal controllo.
+    # Il 16/09 questa cella e' diventata rossa perche' il criterio ha stretto —
+    # la Definition of Done deve portare anche «Registro:» e «Decisione:» — e
+    # QUESTO commento era una SECONDA copia di «una richiesta fatta bene»,
+    # rimasta indietro mentre la prima (`DOD_IN_COMMENTO`, dentro lo script)
+    # veniva aggiornata. Due copie della stessa cosa si muovono in tempi
+    # diversi: e' la ragione per cui questa cella esiste, capitata alla cella
+    # stessa. Adesso la copia e' UNA, e sta dove sta il criterio.
+    sys.path.insert(0, str(RADICE / "scripts"))
+    import messaggio_pulito as mp
+
+    commenti = json.dumps(mp.DOD_IN_COMMENTO)
     (percorso := RADICE / "commenti_di_prova.json").write_text(commenti, encoding="utf-8")
     corpo_file = RADICE / "corpo_di_prova.md"
     corpo_file.write_text(corpo, encoding="utf-8")
