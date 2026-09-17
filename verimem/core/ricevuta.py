@@ -41,8 +41,10 @@ ESITI = ("ammesso", "degradato", "fermato", "rifiutato")
 #: e una guardia ha ritirato l'avviso (specifica del cancello, 17/09).
 STATI_LIVELLO = ("eseguito", "saltato", "osservato", "ritirato")
 
-#: Il valore di `store`/`variabile` quando la scrittura e' passata dalla corsia
-#: remota, il cui codice non e' stato misurato da qui (limite dichiarato).
+#: Il valore di `store_decided_by` quando la scrittura e' passata dalla corsia
+#: remota, il cui codice non e' stato misurato da qui (limite dichiarato). Un
+#: `None` direbbe «l'ha deciso il disco», che qui sarebbe falso: si scrive la
+#: ragione, non il silenzio.
 NON_MISURATO_REMOTA = "non misurato: corsia remota"
 
 
@@ -89,7 +91,8 @@ class Ricevuta:
     fermato_da: str | None = None
     ritirati: tuple[str, ...] = ()
     store: str | None = None
-    variabile: str | None = None
+    store_decided_by: str | None = None
+    store_env_ignored: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
         if self.esito not in ESITI:
@@ -140,8 +143,18 @@ class Ricevuta:
             "livelli": [liv.come_dizionario() for liv in self.livelli],
             "fermato_da": self.fermato_da,
             "ritirati": list(self.ritirati),
+            #: ⚠️ SEMPRE PRESENTI, ANCHE VUOTI. Il percorso SDK di #63 li
+            #: OMETTE quando non c'e' un alias («un campo assente dice: l'ha
+            #: deciso il disco»), e finche' si guarda una porta sola funziona.
+            #: Ma alla porta degli strumenti quei campi risultano assenti
+            #: SEMPRE — misurato: la porta ricostruisce il proprio dizionario e
+            #: li perde — quindi sotto quella convenzione «assente» vuol dire
+            #: due cose opposte: «l'ha deciso il disco» e «questa porta lo
+            #: butta». Presenti sempre: `store_decided_by=None` dice la prima,
+            #: e una chiave che manca diventa di nuovo un difetto visibile.
             "store": self.store,
-            "variabile": self.variabile,
+            "store_decided_by": self.store_decided_by,
+            "store_env_ignored": list(self.store_env_ignored),
         }
 
 
@@ -159,5 +172,6 @@ class Ricevuta:
 #: non di un commento: la proprieta' della fetta 1 confronta le chiavi.
 CHIAVI = (
     "esito", "id", "punteggio", "soglia", "margine", "scala", "modello",
-    "giudice", "livelli", "fermato_da", "ritirati", "store", "variabile",
+    "giudice", "livelli", "fermato_da", "ritirati",
+    "store", "store_decided_by", "store_env_ignored",
 )
