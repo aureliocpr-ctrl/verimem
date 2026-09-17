@@ -7,6 +7,12 @@
 # tests that call an internal function directly, nor the ports of the tools
 # around the core (dreams, skills, episodes, swarm, dashboard, entities).
 #
+# HOW TO READ IT.  python scripts/suite_accettazione.py
+#   One line out: the true number, or ROTTA and why. Do NOT pipe the raw pytest
+#   command into `tail -1`: with a broken list that tail printed "13317 tests
+#   collected" while the collection had failed with exit 4 (measured 2026-09-17).
+#   The guard had fired; pytest's own summary printed after it.
+#
 # HOW TO RUN IT.  pytest -m accettazione
 #
 # HOW IT IS BUILT. A file enters WHOLE, not test by test: a parametrised node id
