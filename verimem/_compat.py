@@ -171,6 +171,20 @@ _ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
 _avvisato_alias_discordi = False
 
 
+def _forma_confrontabile(percorso: str | Path) -> str:
+    """Un percorso in forma confrontabile, SENZA toccare il disco.
+
+    `expanduser` legge solo l'ambiente, `normpath` e `normcase` sono
+    manipolazioni di stringa: nessuna lettura, nessun symlink seguito. Serve a
+    dire se due percorsi sono lo stesso posto per chi li ha scritti, non per il
+    filesystem.
+    """
+    try:
+        return os.path.normcase(os.path.normpath(os.path.expanduser(str(percorso))))
+    except (OSError, ValueError, TypeError):
+        return ""
+
+
 class ProvenienzaDataDir(NamedTuple):
     """Chi ha deciso la data dir, non solo quale sia.
 
@@ -205,25 +219,27 @@ class ProvenienzaDataDir(NamedTuple):
         meta' parlano di due store diversi — misurato: `store` in una data dir
         e `store_decided_by: HIPPO_DATA_DIR` che ne indicava un'altra.
         Qui si guarda il percorso VERO: l'alias vale solo se punta li'.
+
+        ⚠️ Il confronto e' puramente TESTUALE: nessun `resolve()`, nessun
+        accesso al disco. Una ricevuta descrive una scrittura gia' avvenuta e
+        non deve fare I/O per dirlo — e `resolve()` su un valore che viene
+        dall'ambiente e' anche cio' che CodeQL segnala come `py/path-injection`
+        (high), giustamente: l'unico modo di non usare un percorso non
+        controllato come percorso e' non usarlo affatto.
+        LIMITE DICHIARATO: due percorsi che differiscono solo per un symlink
+        non vengono riconosciuti come lo stesso, e la risposta e' `default`.
         """
         if not percorso:
             # Il percorso non e' noto (un doppio di test che non espone
             # `db_path`, o uno store non ancora aperto): non si dichiara
             # `default`, che sarebbe una risposta alla domanda sbagliata.
             return self.IGNOTO
-        try:
-            atteso = Path(percorso).expanduser().resolve()
-        except (OSError, ValueError):
+        atteso = _forma_confrontabile(percorso)
+        if not atteso:
             return self.IGNOTO
         for nome in _ALIAS_DATA_DIR:
-            valore = os.environ.get(nome, "").strip()
-            if not valore:
-                continue
-            try:
-                radice = Path(valore).expanduser().resolve()
-            except (OSError, ValueError):
-                continue
-            if radice == atteso or radice in atteso.parents:
+            radice = _forma_confrontabile(os.environ.get(nome, "").strip())
+            if radice and (atteso == radice or atteso.startswith(radice + os.sep)):
                 return nome
         return self.DISCO
 
@@ -261,9 +277,14 @@ def provenienza_data_dir() -> ProvenienzaDataDir:
         return ProvenienzaDataDir("", "", {})
     vincente = next(n for n in _ALIAS_DATA_DIR if n in posti)
     scelto = posti[vincente]
-    atteso = str(Path(scelto).expanduser().resolve())
+    # Stesso confronto di `deciso_da_per`, e per le stesse due ragioni: niente
+    # I/O per rispondere a una domanda sull'ambiente, e niente percorso non
+    # controllato usato come percorso (`py/path-injection`). Due modi di
+    # confrontare percorsi nello stesso modulo divergerebbero, come le due
+    # precedenze che hanno prodotto l'incidente del 30/07.
+    atteso = _forma_confrontabile(scelto)
     ignorati = {n: v for n, v in posti.items()
-                if n != vincente and str(Path(v).expanduser().resolve()) != atteso}
+                if n != vincente and _forma_confrontabile(v) != atteso}
     if ignorati and not _avvisato_alias_discordi:
         _avvisato_alias_discordi = True
         import warnings
