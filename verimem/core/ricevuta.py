@@ -148,4 +148,16 @@ class Ricevuta:
 #: Le chiavi che ogni porta DEVE rendere: ne' una di piu', ne' una di meno.
 #: Serve alla proprieta' della fetta 1 («stessa ricevuta sulle tre porte») per
 #: avere un elenco da confrontare che non sia scritto dentro il test.
-CHIAVI = tuple(Ricevuta(esito="ammesso").come_dizionario().keys())
+#:
+#: ⚠️ ESPLICITE, NON PRESE DA UN ESEMPLARE. La prima stesura faceva
+#: `tuple(Ricevuta(esito="ammesso").come_dizionario().keys())`: costruiva
+#: un'istanza AL MOMENTO DELL'IMPORT — un invariante futuro che rendesse
+#: obbligatorio un campo avrebbe fatto esplodere l'import dell'intero nucleo, e
+#: con esso ogni porta che lo importa. E un elenco preso da UN esemplare
+#: descrive quell'esemplare, non il tipo.
+#: Che questo elenco e `come_dizionario()` non divergano e' compito di un test,
+#: non di un commento: la proprieta' della fetta 1 confronta le chiavi.
+CHIAVI = (
+    "esito", "id", "punteggio", "soglia", "margine", "scala", "modello",
+    "giudice", "livelli", "fermato_da", "ritirati", "store", "variabile",
+)
