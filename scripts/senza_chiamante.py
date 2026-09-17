@@ -60,9 +60,9 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 PACCHETTO = RADICE / "verimem"
 PYPROJECT = RADICE / "pyproject.toml"
 
-TETTO_C2 = 35          # nessuna porta: né import, né entry point, né python -m
+TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 62           # irraggiungibili da ogni porta, chiusura transitiva (35 C2 + 5 C1 + 22 solo-per-catena)
+TETTO_D = 43           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 10 solo-per-catena)
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
