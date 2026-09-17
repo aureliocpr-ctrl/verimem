@@ -10,7 +10,15 @@ Fetta 1 (oggi): la ricevuta. Le porte NON sono ancora toccate: lo saranno nella
 """
 from __future__ import annotations
 
-from .ricevuta import CHIAVI, ESITI, NON_MISURATO_REMOTA, STATI_LIVELLO, Livello, Ricevuta
+from .ricevuta import (
+                       ALIAS_NON_ATTRIBUIBILE,
+                       CHIAVI,
+                       ESITI,
+                       NON_MISURATO_REMOTA,
+                       STATI_LIVELLO,
+                       Livello,
+                       Ricevuta,
+)
 
-__all__ = ["CHIAVI", "ESITI", "NON_MISURATO_REMOTA", "STATI_LIVELLO",
-           "Livello", "Ricevuta"]
+__all__ = ["ALIAS_NON_ATTRIBUIBILE", "CHIAVI", "ESITI",
+           "NON_MISURATO_REMOTA", "STATI_LIVELLO", "Livello", "Ricevuta"]

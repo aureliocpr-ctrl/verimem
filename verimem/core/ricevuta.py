@@ -47,6 +47,17 @@ STATI_LIVELLO = ("eseguito", "saltato", "osservato", "ritirato")
 #: ragione, non il silenzio.
 NON_MISURATO_REMOTA = "non misurato: corsia remota"
 
+#: Il valore di `store_decided_by` quando l'alias risulta posto ma NON si puo'
+#: attribuire a chi ha chiamato.
+#: ⚠️ RIPRODOTTO IL 17/09 SU QUESTA MACCHINA: `VERIMEM_DATA_DIR` era vuota
+#: prima di `import verimem` e l'import l'ha POSTA (il mirror di compatibilita'
+#: riempie gli alias). Quindi «l'alias e' posto» non prova che l'abbia posto un
+#: umano, e un processo figlio lanciato dopo l'import li eredita gia' puntati
+#: alla cartella di casa. Chi riempie questo campo DEVE prendere l'istantanea
+#: degli alias PRIMA di importare `verimem`; se non l'ha fatto, scrive questo
+#: valore invece di un nome, perche' un nome qui sarebbe una risposta falsa.
+ALIAS_NON_ATTRIBUIBILE = "non attribuibile: alias riempiti dall'import"
+
 
 @dataclass(frozen=True)
 class Livello:
