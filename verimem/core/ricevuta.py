@@ -1,0 +1,151 @@
+"""La ricevuta: una sola, uguale da qualunque porta entri la scrittura.
+
+PERCHE' ESISTE — misurato il 16/09 sulle tre porte con lo stesso ingresso:
+
+    porta   chiavi rese   nome della lista degli avvisi
+    SDK         14        `warnings`
+    MCP         24        `anti_confab_warnings`   (e ANCHE `warning`, singolare)
+    CLI          0        nessuna ricevuta: stampa e basta
+
+Non sono tre formati di comodo: sono tre contratti diversi per la stessa
+operazione, e chi legge non puo' sapere quale ha in mano senza sapere da dove e'
+entrato. Il 13/09 un banco mio ha letto `nuovo["warnings"]` da una ricevuta che
+rende `anti_confab_warnings`: la lista tornava VUOTA e l'ho letta come «nessuno
+schermo ha parlato», mentre ne avevano parlato due. La diagnosi sbagliata e'
+finita sul canale. Classe: copia invece di superficie unica.
+
+CHE COSA PROMETTE QUESTO MODULO, e cosa NON promette:
+  · promette che una ricevuta INCOERENTE non possa esistere — gli invarianti
+    stanno nel costruttore e sollevano `ValueError`, non nei commenti;
+  · NON promette che le tre porte la usino: quella e' la fetta 1b, una porta
+    per volta, e finche' non e' finita questo e' un TERZO schema, non l'unico.
+
+⚠️ UN BUCO PORTA LA PROPRIA RAGIONE. `store=None` da solo direbbe «non lo so»
+   e «non c'e'» con lo stesso silenzio. Dove il dato non e' stato misurato si
+   scrive il PERCHE' (`NON_MISURATO_REMOTA`): un generico e' peggio di un buco,
+   perche' dal buco nessuno deduce.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Any
+
+#: L'esito della SCRITTURA. Quattro valori, chiusi.
+#: ⚠️ Non confonderlo con `Livello.stato`: fino al 17/09 i due campi portavano
+#: lo stesso nome `esito` in due documenti diversi, ed e' la classe di errore
+#: che in questo progetto costa di piu' — una parola per due oggetti.
+ESITI = ("ammesso", "degradato", "fermato", "rifiutato")
+
+#: Lo stato di UN LIVELLO del cancello, quattro valori chiusi: ha girato e
+#: deciso · non ha girato · ha girato senza decidere · ha girato, ha trovato,
+#: e una guardia ha ritirato l'avviso (specifica del cancello, 17/09).
+STATI_LIVELLO = ("eseguito", "saltato", "osservato", "ritirato")
+
+#: Il valore di `store`/`variabile` quando la scrittura e' passata dalla corsia
+#: remota, il cui codice non e' stato misurato da qui (limite dichiarato).
+NON_MISURATO_REMOTA = "non misurato: corsia remota"
+
+
+@dataclass(frozen=True)
+class Livello:
+    """Che cosa ha fatto UN livello del cancello, e perche'."""
+
+    nome: str
+    stato: str
+    ragione: str | None = None
+    punteggio: float | None = None
+
+    def __post_init__(self) -> None:
+        if not self.nome:
+            raise ValueError("Livello senza nome: un livello anonimo non e' leggibile")
+        if self.stato not in STATI_LIVELLO:
+            raise ValueError(
+                f"stato {self.stato!r} non ammesso: uno di {STATI_LIVELLO}")
+        #: Un livello che NON ha deciso deve dire perche': e' la meta' della
+        #: ricevuta che oggi non esiste da nessuna porta.
+        if self.stato != "eseguito" and not self.ragione:
+            raise ValueError(
+                f"il livello {self.nome!r} e' {self.stato!r} senza ragione: "
+                "uno stato diverso da 'eseguito' senza ragione dice meno di un "
+                "campo assente, perche' sembra una risposta")
+
+    def come_dizionario(self) -> dict[str, Any]:
+        return {"nome": self.nome, "stato": self.stato,
+                "ragione": self.ragione, "punteggio": self.punteggio}
+
+
+@dataclass(frozen=True)
+class Ricevuta:
+    """Quello che il nucleo rende a OGNI porta, senza aggiunte ne' tagli."""
+
+    esito: str
+    id: str | None = None
+    punteggio: float | None = None
+    soglia: float | None = None
+    scala: str | None = None
+    modello: str | None = None
+    giudice: str | None = None
+    livelli: tuple[Livello, ...] = ()
+    fermato_da: str | None = None
+    ritirati: tuple[str, ...] = ()
+    store: str | None = None
+    variabile: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.esito not in ESITI:
+            raise ValueError(f"esito {self.esito!r} non ammesso: uno di {ESITI}")
+
+        #: IL CONTROLLO NEGATIVO, PER COSTRUZIONE. Una ricevuta «ammessa» con
+        #: un `fermato_da` pieno e' una contraddizione: qui non si corregge, si
+        #: RIFIUTA. Chi la costruisse cosi' ha un difetto a monte, e deve
+        #: vederlo alla costruzione e non tre porte piu' in la'.
+        if self.esito == "ammesso" and self.fermato_da:
+            raise ValueError(
+                "ricevuta incoerente: esito 'ammesso' con "
+                f"fermato_da={self.fermato_da!r}")
+        if self.esito in ("fermato", "rifiutato") and not self.fermato_da:
+            raise ValueError(
+                f"ricevuta incoerente: esito {self.esito!r} senza fermato_da. "
+                "Chi ferma ha un nome: un generico qui e' peggio di un buco")
+
+        #: UN PUNTEGGIO SENZA LA SUA SCALA INGANNA, e questo progetto l'ha
+        #: pagato: il 13/09 ho calcolato un margine di ~60 confrontando un
+        #: punteggio su scala 0-100 con un taglio di un'altra scala. Il margine
+        #: vero era 0,31. Da qui in poi i tre numeri viaggiano insieme.
+        if self.punteggio is not None and (self.scala is None or self.modello is None):
+            raise ValueError(
+                "punteggio senza scala o senza modello: un numero di cui non si "
+                "sa la scala non e' una misura")
+        if self.punteggio is not None and self.soglia is None:
+            raise ValueError("punteggio senza soglia: il margine non e' calcolabile")
+
+    @property
+    def margine(self) -> float | None:
+        """`punteggio - soglia`, calcolato QUI e mai dal chiamante."""
+        if self.punteggio is None or self.soglia is None:
+            return None
+        return float(self.punteggio) - float(self.soglia)
+
+    def come_dizionario(self) -> dict[str, Any]:
+        """L'unica serializzazione. Le porte rendono QUESTO, senza ritocchi."""
+        return {
+            "esito": self.esito,
+            "id": self.id,
+            "punteggio": self.punteggio,
+            "soglia": self.soglia,
+            "margine": self.margine,
+            "scala": self.scala,
+            "modello": self.modello,
+            "giudice": self.giudice,
+            "livelli": [liv.come_dizionario() for liv in self.livelli],
+            "fermato_da": self.fermato_da,
+            "ritirati": list(self.ritirati),
+            "store": self.store,
+            "variabile": self.variabile,
+        }
+
+
+#: Le chiavi che ogni porta DEVE rendere: ne' una di piu', ne' una di meno.
+#: Serve alla proprieta' della fetta 1 («stessa ricevuta sulle tre porte») per
+#: avere un elenco da confrontare che non sia scritto dentro il test.
+CHIAVI = tuple(Ricevuta(esito="ammesso").come_dizionario().keys())
