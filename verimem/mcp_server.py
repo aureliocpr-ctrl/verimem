@@ -14237,6 +14237,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _judged_out = _judged_at_all(_gs_out)
             from .local_grounding import esecutore_dell_ultimo_giudizio
             _chi_ha_giudicato_qui = esecutore_dell_ultimo_giudizio()
+            from ._compat import provenienza_data_dir as _prov_dd
+            _provenienza_store_mcp = _prov_dd()
             return _ok({
                 "ok": True,
                 # Seconda chiave, e il posto e' la meta' della cura: la
@@ -14284,6 +14286,15 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "status": getattr(fact, "status", "model_claim"),
                 "verified_by": list(getattr(fact, "verified_by", [])),
                 "source_signature": getattr(fact, "source_signature", None),
+                # DOVE ha scritto e CHI l'ha deciso (T91) — e su QUESTA porta
+                # conta piu' che altrove: e' l'unica senza una console da
+                # leggere, quindi se la ricevuta tace il chiamante non ha
+                # nessun altro posto dove guardare. Il campo e' ripetuto qui e
+                # non ereditato da `client.py` per la ragione scritta dodici
+                # righe piu' sotto: questa lista e' esplicita, e un campo
+                # aggiunto alla libreria non arriverebbe mai fin qui.
+                "store": str(a.semantic.db_path),
+                "store_decided_by": _provenienza_store_mcp.deciso_da_per(a.semantic.db_path),
                 # Cycle 138: surface anti-confab warnings so the caller
                 # (LLM or operator) sees what fired and can adjust the
                 # proposition / verified_by before retry.

@@ -12,11 +12,13 @@ non si riproduce, gli altri due non provano niente e il banco e' rotto.
 """
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
 from typer.testing import CliRunner
 
+from verimem._compat import _ALIAS_DATA_DIR as _ALIAS
 from verimem.cli import app
 
 runner = CliRunner()
@@ -121,6 +123,72 @@ def test_la_ricevuta_della_libreria_nomina_lo_store(tmp_path: Path, monkeypatch)
     assert ricevuta.get("store_decided_by") == "HIPPO_DATA_DIR", (
         "la ricevuta non dice quale variabile ha deciso lo store.\n"
         f"{ricevuta}")
+
+
+def test_la_ricevuta_della_porta_mcp_nomina_lo_store(tmp_path: Path, monkeypatch) -> None:
+    """La terza porta DAVVERO: il gestore MCP, chiamato in-process.
+
+    ⚠️ «È lo stesso dict della libreria» era una mia affermazione, non una
+    misura, ed era falsa: `mcp_server.py` ricostruisce la ricevuta campo per
+    campo — il commento accanto lo dichiara («questa lista di campi è
+    ESPLICITA, quindi un campo aggiunto in `client.py` non arriverebbe mai su
+    questa porta»). Un pari ha contato 17 chiavi qui contro 10 alla libreria.
+    """
+    import asyncio
+    import json
+
+    vero, creduto = _due_store(tmp_path, monkeypatch)
+    monkeypatch.setenv("HIPPO_HOSTED", "0")
+    import verimem.mcp_server as server
+
+    risposta = asyncio.run(server._call_tool_impl("hippo_remember", {  # noqa: SLF001
+        "proposition": "La soglia di ammissione vale 7.0s.",
+        "topic": "prova/t91",
+    }))
+    ricevuta = json.loads(risposta[0].text)
+
+    assert ricevuta.get("ok") is True, ricevuta
+    assert ricevuta.get("store"), (
+        "la ricevuta della porta MCP non dice in quale store ha scritto, ed è "
+        f"l'unica porta senza una console da leggere.\n{ricevuta}")
+    assert "store_decided_by" in ricevuta, ricevuta
+
+    # ⚠️ NON si pretende che sia `vero`: il server apre lo store alla
+    # costruzione e se lo tiene, quindi l'ambiente posto qui può non averlo
+    # deciso. Si pretende che le due metà della dichiarazione parlino DELLO
+    # STESSO store — che è il contratto: chi ha deciso QUESTO percorso.
+    chi = ricevuta["store_decided_by"]
+    percorso = Path(ricevuta["store"]).resolve()
+    if chi == "default":
+        assert all(
+            Path(v).resolve() not in percorso.parents
+            for v in (os.environ.get(n, "") for n in _ALIAS)
+            if v
+        ), f"dice `default` ma una variabile punta proprio lì: {ricevuta}"
+    else:
+        radice = Path(os.environ[chi]).resolve()
+        assert radice == percorso or radice in percorso.parents, (
+            f"la ricevuta dichiara `{chi}` accanto a un percorso che quella "
+            f"variabile non ha deciso: {os.environ[chi]} vs {percorso}")
+
+
+def test_senza_variabili_la_ricevuta_dice_default(tmp_path: Path, monkeypatch) -> None:
+    """Nessuna variabile posta: il campo c'è lo stesso e vale `default`.
+
+    Un'assenza non è una dichiarazione: chi legge non distingue «l'ha deciso il
+    disco» da «questa porta non lo dice» né da «sto leggendo una versione
+    vecchia del prodotto»."""
+    for nome in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR"):
+        monkeypatch.delenv(nome, raising=False)
+    from verimem import Memory
+    from verimem._compat import ProvenienzaDataDir
+
+    db = tmp_path / "solo-disco" / "semantic" / "semantic.db"
+    db.parent.mkdir(parents=True, exist_ok=True)
+    ricevuta = Memory(path=str(db)).add("La soglia di ammissione vale 3.0s.",
+                                        topic="prova/t91")
+
+    assert ricevuta.get("store_decided_by") == ProvenienzaDataDir.DISCO, ricevuta
 
 
 def test_doctor_dice_quale_variabile_ha_deciso_lo_store(tmp_path: Path, monkeypatch) -> None:

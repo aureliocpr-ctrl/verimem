@@ -182,6 +182,42 @@ class ProvenienzaDataDir(NamedTuple):
     alias: str
     ignorati: dict[str, str]
 
+    #: Il valore che le ricevute emettono quando nessuna variabile e' posta.
+    #: ⚠️ NON si omette il campo: un'assenza non e' una dichiarazione — chi
+    #: legge non distingue «l'ha deciso il disco» da «questa porta non lo dice»
+    #: e nemmeno da «sto leggendo una versione vecchia». (I7)
+    DISCO = "default"
+
+    def deciso_da(self) -> str:
+        """Il nome dell'alias che ha vinto, oppure ``default``. Mai vuoto."""
+        return self.alias or self.DISCO
+
+    def deciso_da_per(self, percorso: str | Path) -> str:
+        """Chi ha deciso QUEL percorso — non chi deciderebbe adesso.
+
+        ⚠️ Un processo longevo (il server MCP) apre lo store all'avvio e se lo
+        tiene: l'ambiente puo' cambiare dopo. Dichiarare l'alias corrente
+        accanto a un percorso deciso prima produce una ricevuta le cui due
+        meta' parlano di due store diversi — misurato: `store` in una data dir
+        e `store_decided_by: HIPPO_DATA_DIR` che ne indicava un'altra.
+        Qui si guarda il percorso VERO: l'alias vale solo se punta li'.
+        """
+        try:
+            atteso = Path(percorso).expanduser().resolve()
+        except (OSError, ValueError):
+            return self.DISCO
+        for nome in _ALIAS_DATA_DIR:
+            valore = os.environ.get(nome, "").strip()
+            if not valore:
+                continue
+            try:
+                radice = Path(valore).expanduser().resolve()
+            except (OSError, ValueError):
+                continue
+            if radice == atteso or radice in atteso.parents:
+                return nome
+        return self.DISCO
+
     def dichiarazione(self) -> str:
         """Una riga per una porta: chi ha deciso, e che cosa e' stato ignorato.
 
@@ -222,11 +258,17 @@ def provenienza_data_dir() -> ProvenienzaDataDir:
     if ignorati and not _avvisato_alias_discordi:
         _avvisato_alias_discordi = True
         import warnings
+        # ⚠️ Il nome del vincitore era scritto A MANO («HIPPO_DATA_DIR wins»)
+        # mentre il vincitore e' CALCOLATO: con HIPPO_DATA_DIR non posta vince
+        # ENGRAM_DATA_DIR e il messaggio dichiarava l'alias sbagliato. Un numero
+        # (o un nome) dichiarato che non e' quello applicato e' peggio del
+        # silenzio: chi lo legge va a togliere la variabile che non c'entra.
         warnings.warn(
             "DATA_DIR aliases disagree: "
             + ", ".join(f"{n}={posti[n]}" for n in _ALIAS_DATA_DIR if n in posti)
-            + f" — using {scelto} (HIPPO_DATA_DIR wins, it is the explicit "
-              "isolation handle). Unset the ones you did not mean.",
+            + f" — using {scelto} ({vincente} wins: first of "
+            + ", ".join(_ALIAS_DATA_DIR)
+            + " that is set). Unset the ones you did not mean.",
             RuntimeWarning, stacklevel=3)
     return ProvenienzaDataDir(scelto, vincente, ignorati)
 

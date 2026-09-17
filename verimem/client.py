@@ -1186,11 +1186,14 @@ class Memory:
             #: chiamante che credeva di aver isolato lo store non ha nessun
             #: modo di accorgersi del contrario. Il 14/09 tre variabili
             #: puntavano a uno store di prova e la scrittura e' finita in
-            #: quello vero. `store_decided_by` manca quando nessuna variabile
-            #: e' posta: un campo assente dice «l'ha deciso il disco».
+            #: quello vero.
+            #: ⚠️ `store_decided_by` c'e' SEMPRE — vale `default` quando nessuna
+            #: variabile e' posta. Prima lo omettevo, col commento «un campo
+            #: assente dice: l'ha deciso il disco»: non lo dice. Un'assenza non
+            #: e' una dichiarazione, e chi legge non distingue «l'ha deciso il
+            #: disco» da «questa porta non lo dichiara».
             "store": str(self.semantic.db_path),
-            **({"store_decided_by": _provenienza_store.alias}
-               if _provenienza_store.alias else {}),
+            "store_decided_by": _provenienza_store.deciso_da_per(self.semantic.db_path),
             **({"store_env_ignored": _provenienza_store.ignorati}
                if _provenienza_store.ignorati else {}),
             #: ⚠️ DICHIARA, NON PROMETTE. `True` quando questa scrittura ha
