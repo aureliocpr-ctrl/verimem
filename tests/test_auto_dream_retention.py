@@ -11,7 +11,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from verimem.auto_dream_worker import _prune_old_dreams
+from attic.auto_dream_worker import _prune_old_dreams
 
 
 def _mk(d: Path, mtime: float) -> None:

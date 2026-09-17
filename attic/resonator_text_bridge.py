@@ -55,7 +55,7 @@ def _get_embed_model() -> Any:
         # Stesso lock degli altri import pesanti: `sentence_transformers`
         # trascina `transformers`, che il giudice importa altrove. Solo
         # l'import — la costruzione del modello resta fuori dal blocco.
-        from ._import_lock import lock_import
+        from verimem._import_lock import lock_import
         with lock_import():
             from sentence_transformers import SentenceTransformer
         _EMBED_MODEL = SentenceTransformer("all-MiniLM-L6-v2")
@@ -147,7 +147,7 @@ def text_to_atoms_cached(
     if method == "hash":
         return text_to_atoms_via_hash(text, n_roles, atoms_per_role)
     elif method == "embed":
-        from verimem.resonator_memory import _build_alphabet
+        from attic.resonator_memory import _build_alphabet
         codebooks = _build_alphabet(n_roles, atoms_per_role, d, seed=seed)
         return text_to_atoms_via_embed(text, codebooks, seed=seed)
     else:

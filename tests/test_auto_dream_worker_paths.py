@@ -19,7 +19,7 @@ from __future__ import annotations
 import sqlite3
 from pathlib import Path
 
-from verimem.auto_dream_worker import _live_dirs_from
+from attic.auto_dream_worker import _live_dirs_from
 
 
 def _touch_flat(engram_dir: Path) -> Path:

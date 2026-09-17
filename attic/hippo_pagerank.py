@@ -49,9 +49,9 @@ from __future__ import annotations
 import networkx as nx
 import numpy as np
 
-from . import embedding
-from .memory import EpisodicMemory
-from .skill import SkillLibrary
+from verimem import embedding
+from verimem.memory import EpisodicMemory
+from verimem.skill import SkillLibrary
 
 
 def _normalize(v: np.ndarray) -> np.ndarray:

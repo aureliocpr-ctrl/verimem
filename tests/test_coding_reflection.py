@@ -33,7 +33,7 @@ import pytest
 
 # RED MARKER: this import must fail at the very top so collection errors
 # are visible before any test attempts to run.
-from verimem.coding_reflection import (
+from attic.coding_reflection import (
     capture_coding_error,
     extract_error_signature,
     recall_similar_errors,

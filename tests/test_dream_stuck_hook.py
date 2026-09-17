@@ -171,7 +171,7 @@ class TestBuildStuckRetrySeed:
 
 
 # ---------------------------------------------------------------------------
-# Integration: verimem.auto_dream_worker._propose_via_engram now calls the
+# Integration: attic.auto_dream_worker._propose_via_engram now calls the
 # hook and splices the suffix into ``instructions`` passed to
 # ``propose_dream_tasks``. These two tests pin the wiring; the unit tests
 # above already cover seed semantics in isolation.
@@ -182,7 +182,7 @@ class TestProposeViaEngramHookWiring:
     def test_augments_instructions_when_stuck_present(
         self, tmp_path: Path,
     ) -> None:
-        from verimem.auto_dream_worker import _propose_via_engram
+        from attic.auto_dream_worker import _propose_via_engram
 
         engram_dir = tmp_path / "engram"
         skills_dir = engram_dir / "skills"
@@ -211,7 +211,7 @@ class TestProposeViaEngramHookWiring:
 
     def test_no_augment_when_no_stuck(self, tmp_path: Path) -> None:
         """Empty corpus → instructions is the base text, byte-identical."""
-        from verimem.auto_dream_worker import _propose_via_engram
+        from attic.auto_dream_worker import _propose_via_engram
 
         engram_dir = tmp_path / "engram"
         skills_dir = engram_dir / "skills"

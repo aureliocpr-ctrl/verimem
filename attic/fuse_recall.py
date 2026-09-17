@@ -15,9 +15,9 @@ lifting lives in the underlying primitives.
 Composes-over
 -------------
 * ``verimem.multi_signal_fusion.rrf_fuse``       (cycle 191)
-* ``verimem.rank_list_builders.recency_rank``    (cycle 196)
-* ``verimem.rank_list_builders.confidence_rank`` (cycle 196)
-* ``verimem.rank_list_builders.recency_decayed_rank`` (cycle 196)
+* ``attic.rank_list_builders.recency_rank``    (cycle 196)
+* ``attic.rank_list_builders.confidence_rank`` (cycle 196)
+* ``attic.rank_list_builders.recency_decayed_rank`` (cycle 196)
 
 The cosine/keyword signals are NOT pulled in here — that requires
 loading sentence-transformers (cycle #24 17s warm-up on cold-start).
@@ -35,12 +35,12 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from verimem.multi_signal_fusion import DEFAULT_K, rrf_fuse
-from verimem.rank_list_builders import (
+from attic.rank_list_builders import (
     confidence_rank,
     recency_decayed_rank,
     recency_rank,
 )
+from verimem.multi_signal_fusion import DEFAULT_K, rrf_fuse
 
 Signal = Literal["recency", "confidence", "recency_decayed"]
 

@@ -25,8 +25,8 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from .legacy_audit import classify_legacy_fact
-from .semantic import Fact, SemanticMemory
+from verimem.legacy_audit import classify_legacy_fact
+from verimem.semantic import Fact, SemanticMemory
 
 _SAMPLE_LIMIT = 5
 

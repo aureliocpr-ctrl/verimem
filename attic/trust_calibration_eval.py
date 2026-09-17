@@ -24,12 +24,12 @@ from __future__ import annotations
 import random
 from dataclasses import dataclass
 
-from verimem.semantic import Fact
-from verimem.trust_calibration import (
+from attic.trust_calibration import (
     brier_score,
     expected_calibration_error,
     reliability_table,
 )
+from verimem.semantic import Fact
 from verimem.trust_signal import compute_trust_signal
 
 # The implied P(reliable) for each categorical verdict. This mapping is itself

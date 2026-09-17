@@ -1,7 +1,7 @@
 """Cycle 248 — adaptive_thresholds tests."""
 from __future__ import annotations
 
-from verimem.adaptive_threshold import adaptive_thresholds
+from attic.adaptive_threshold import adaptive_thresholds
 
 
 class TestAdaptiveThresholds:

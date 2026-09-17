@@ -33,10 +33,10 @@ import re
 import time
 from typing import TYPE_CHECKING
 
-from .episode import Episode
+from verimem.episode import Episode
 
 if TYPE_CHECKING:
-    from .memory import EpisodicMemory
+    from verimem.memory import EpisodicMemory
 
 
 # Last 'TypeError: msg', 'ValueError: msg', 'XxxException: msg', etc.

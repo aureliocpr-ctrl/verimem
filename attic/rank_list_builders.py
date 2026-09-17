@@ -26,7 +26,7 @@ import sqlite3
 from pathlib import Path
 from typing import Literal
 
-from verimem.time_decay_score import decay_score
+from attic.time_decay_score import decay_score
 
 
 def recency_rank(

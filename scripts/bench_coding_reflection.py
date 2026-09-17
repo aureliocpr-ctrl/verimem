@@ -32,7 +32,7 @@ from pathlib import Path
 # Ensure repo root on sys.path so this can run standalone.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from verimem.coding_reflection import (
+from attic.coding_reflection import (
     capture_coding_error,
     extract_error_signature,
     recall_similar_errors,

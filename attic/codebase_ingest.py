@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .semantic import SemanticMemory
+    from verimem.semantic import SemanticMemory
 
 # Default ignore set — common Python project chaff. Operators can extend
 # via the ``skip_dirs`` kwarg of ``ingest_codebase``.
@@ -233,7 +233,7 @@ def ingest_codebase(
       • errors_skipped (int) — files that failed parse / decode
       • duration_ms (float)
     """
-    from .semantic import Fact  # local — avoids circular import at import time
+    from verimem.semantic import Fact  # local — avoids circular import at import time
 
     t0 = time.perf_counter()
     repo_name = repo_root.name or "repo"

@@ -42,8 +42,8 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-from .agent import VerimemAgent
-from .observability import emit, get_log
+from verimem.agent import VerimemAgent
+from verimem.observability import emit, get_log
 
 log = get_log()
 

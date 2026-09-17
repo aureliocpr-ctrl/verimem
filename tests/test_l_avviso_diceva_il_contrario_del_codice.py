@@ -94,7 +94,7 @@ def test_la_CLI_onora_l_isolamento_esplicito(dirs):
 def test_il_worker_dei_sogni_onora_l_isolamento_esplicito(dirs):
     """Gira in background e scrive: se non è isolato, sporca durante la suite."""
     isolato, _ = dirs
-    from verimem.auto_dream_worker import _resolve_engram_dir
+    from attic.auto_dream_worker import _resolve_engram_dir
     assert pathlib.Path(_resolve_engram_dir()).resolve() == isolato.resolve(), (
         f"il worker ha scelto {_resolve_engram_dir()}")
 
