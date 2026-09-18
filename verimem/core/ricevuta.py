@@ -5,7 +5,21 @@ PERCHE' ESISTE — misurato il 16/09 sulle tre porte con lo stesso ingresso:
     porta   chiavi rese   nome della lista degli avvisi
     SDK         14        `warnings`
     MCP         24        `anti_confab_warnings`   (e ANCHE `warning`, singolare)
-    CLI          0        nessuna ricevuta: stampa e basta
+    CLI         11        `warnings`, ma su un'uscita che una macchina non legge
+
+⚠️ LA RIGA DELLA CLI DICEVA «0 — nessuna ricevuta: stampa e basta», ED ERA
+   FALSA. Misurato il 18/09 eseguendo `save --json` su uno store isolato: rende
+   undici chiavi, e in comune con quelle qui sotto ne ha UNA SOLA, `id`. Il
+   banco del 16/09 aveva letto l'uscita per l'umano e ne aveva concluso che una
+   ricevuta non ci fosse: lo zero misurava il banco, non il prodotto.
+   E l'uscita macchina che c'è non è leggibile da una macchina — due righe di
+   log strutturato escono su stdout PRIMA del JSON, e `json.load` muore con
+   «Extra data: line 1 column 5». Uno script che oggi legge quell'uscita è già
+   rotto, senza aspettare noi.
+   ⚠️ I DUE NUMERI SOPRA VENGONO DALLO STESSO BANCO che ha sbagliato il terzo:
+   finché non sono rimisurati eseguendo, vanno letti come ipotesi, non come
+   misure. Un banco che sbaglia una porta su tre non ha sbagliato una riga: ha
+   un difetto, e le altre due righe le ha scritte lo stesso difetto.
 
 Non sono tre formati di comodo: sono tre contratti diversi per la stessa
 operazione, e chi legge non puo' sapere quale ha in mano senza sapere da dove e'
