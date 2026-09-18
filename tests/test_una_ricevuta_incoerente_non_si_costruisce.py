@@ -31,6 +31,7 @@ from verimem.core import (
     STATI_LIVELLO,
     Livello,
     Ricevuta,
+    Ritiro,
 )
 
 #: Il minimo che una ricevuta deve portare: l'esito, dove si e' scritto, e chi
@@ -209,9 +210,9 @@ def test_la_ricevuta_si_serializza_davvero():
     silenzio fino al primo che provava a scriverla su un canale."""
     r = _sana(punteggio=99.5, soglia=40.0, scala="s", modello="m",
               livelli=(Livello(nome="L4", stato="saltato", ragione="R2"),),
-              ritirati=(Livello(nome="abc123", stato="ritirato", ragione="superseded da def456"),))
+              ritirati=(Ritiro(id="abc123", ragione="superseded da def456"),))
     tornata = json.loads(json.dumps(r.come_dizionario()))
-    assert tornata["ritirati"][0]["nome"] == "abc123"
+    assert tornata["ritirati"][0]["id"] == "abc123"
     assert tornata["ritirati"][0]["ragione"] == "superseded da def456"
     assert tornata["livelli"][0]["nome"] == "L4"
 
@@ -219,8 +220,12 @@ def test_la_ricevuta_si_serializza_davvero():
 def test_un_ritiro_senza_ragione_non_e_un_ritiro():
     """`ritirati` era l'unico campo che nessun caso riempiva: il pari ha
     predetto il difetto PRIMA di guardare, proprio perche' non era esercitato.
-    Un identificatore da solo non puo' dire PERCHE' e' stato ritirato."""
-    _sana(ritirati=(Livello(nome="abc123", stato="ritirato", ragione="superseded da def456"),))
+    Un identificatore da solo non puo' dire PERCHE' e' stato ritirato.
+
+    E un `Livello` non va bene nemmeno lui: un avviso ritirato da una guardia
+    E' un livello del cancello, un fatto ritirato dalla supersessione NO. Una
+    classe per due oggetti e' la forma che in questo progetto costa di piu'."""
+    _sana(ritirati=(Ritiro(id="abc123", ragione="superseded da def456"),))
     with pytest.raises(ValueError, match="ritirati porta"):
         _sana(ritirati=("abc123",))
 
@@ -234,9 +239,9 @@ def test_un_nome_dentro_livelli_non_passa():
 def test_un_ritiro_e_serializzabile_con_la_sua_ragione():
     """La cella che il pari ha chiesto: una ricevuta con un livello RITIRATO,
     serializzata davvero. Prima `ritirati` usciva grezzo e json.dumps moriva."""
-    r = _sana(ritirati=(Livello(nome="abc123", stato="ritirato", ragione="superseded da def456"),))
+    r = _sana(ritirati=(Ritiro(id="abc123", ragione="superseded da def456"),))
     tornata = json.loads(json.dumps(r.come_dizionario()))
-    assert tornata["ritirati"][0]["stato"] == "ritirato"
+    assert tornata["ritirati"][0]["ragione"] == "superseded da def456"
 
 
 def test_la_regola_della_scala_e_UNA_SOLA_per_la_ricevuta_e_per_il_livello():
@@ -248,3 +253,18 @@ def test_la_regola_della_scala_e_UNA_SOLA_per_la_ricevuta_e_per_il_livello():
         Livello(nome="L4", stato="eseguito", punteggio=0.87, modello="m")
     coda = "punteggio senza scala o senza modello"
     assert coda in str(alto.value) and coda in str(basso.value)
+
+
+def test_un_ritiro_pretende_id_E_ragione():
+    Ritiro(id="abc123", ragione="superseded da def456")
+    for manca in (dict(id="", ragione="r"), dict(id="abc", ragione="")):
+        with pytest.raises(ValueError, match="identificatore E la ragione"):
+            Ritiro(**manca)
+
+
+def test_un_livello_dentro_ritirati_non_passa():
+    """Il tipo giusto e' `Ritiro`: `Livello` ci e' stato per un giro, ed era
+    una parola per due oggetti."""
+    _sana(ritirati=(Ritiro(id="a", ragione="r"),))
+    with pytest.raises(ValueError, match="ritirati porta"):
+        _sana(ritirati=(Livello(nome="L4", stato="eseguito"),))

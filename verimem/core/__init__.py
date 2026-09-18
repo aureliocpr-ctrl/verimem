@@ -19,7 +19,8 @@ from .ricevuta import (
                        STATI_LIVELLO,
                        Livello,
                        Ricevuta,
+                       Ritiro,
 )
 
 __all__ = ["ALIAS_NON_ATTRIBUIBILE", "CHIAVI", "DECISO_DAL_DEFAULT", "ESITI",
-           "NON_MISURATO_REMOTA", "STATI_LIVELLO", "Livello", "Ricevuta"]
+           "NON_MISURATO_REMOTA", "STATI_LIVELLO", "Livello", "Ricevuta", "Ritiro"]

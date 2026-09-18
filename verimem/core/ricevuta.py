@@ -22,16 +22,13 @@ banco mio ha letto `nuovo["warnings"]` da una porta che rende
 mentre ne avevano parlato due, e la diagnosi sbagliata e' finita sul canale.
 Classe: copia invece di superficie unica.
 
-CHE COSA PROMETTE QUESTO MODULO, e cosa NON promette:
-  · promette che una ricevuta INCOERENTE non possa esistere — gli invarianti
-    stanno nel costruttore e sollevano `ValueError`, non nei commenti;
-  · NON promette che le tre porte la usino: quella e' la fetta 1b, una porta
-    per volta, e finche' non e' finita questo e' un TERZO schema, non l'unico.
+PROMETTE che una ricevuta INCOERENTE non possa esistere: gli invarianti stanno
+nel costruttore e sollevano `ValueError`, non nei commenti. NON promette che le
+tre porte la usino — quella e' la 1b, una porta per volta, e finche' non e'
+finita questo e' un TERZO schema, non l'unico.
 
-⚠️ UN BUCO PORTA LA PROPRIA RAGIONE. `store=None` da solo direbbe «non lo so»
-   e «non c'e'» con lo stesso silenzio. Dove il dato non e' stato misurato si
-   scrive il PERCHE' (`NON_MISURATO_REMOTA`): un generico e' peggio di un buco,
-   perche' dal buco nessuno deduce.
+⚠️ UN BUCO PORTA LA PROPRIA RAGIONE: `store=None` direbbe «non lo so» e «non
+   c'e'» con lo stesso silenzio. Dove non si e' misurato si scrive il PERCHE'.
 """
 from __future__ import annotations
 
@@ -43,26 +40,19 @@ from typing import Any
 #: ed e' l'errore che qui costa di piu' — una parola per due oggetti.
 ESITI = ("ammesso", "degradato", "fermato", "rifiutato")
 
-#: Lo stato di UN LIVELLO del cancello, quattro valori chiusi: ha girato e
-#: deciso · non ha girato · ha girato senza decidere · ha girato, ha trovato,
-#: e una guardia ha ritirato l'avviso (specifica del cancello, 17/09).
+#: Lo stato di UN LIVELLO del cancello: ha girato e deciso · non ha girato · ha
+#: girato senza decidere · una guardia ne ha ritirato l'avviso (T93).
 STATI_LIVELLO = ("eseguito", "saltato", "osservato", "ritirato")
 
-#: Il valore di `store_decided_by` quando la scrittura e' passata dalla corsia
-#: remota, il cui codice non e' stato misurato da qui (limite dichiarato). Un
-#: `None` direbbe «l'ha deciso il disco», che qui sarebbe falso: si scrive la
-#: ragione, non il silenzio.
+#: Corsia remota: codice mai misurato da qui (limite dichiarato). Un `None`
+#: direbbe «l'ha deciso il disco», che sarebbe falso: si scrive la ragione.
 NON_MISURATO_REMOTA = "non misurato: corsia remota"
 
-#: Il valore di `store_decided_by` quando l'alias risulta posto ma NON si puo'
-#: attribuire a chi ha chiamato.
-#: ⚠️ RIPRODOTTO IL 17/09 SU QUESTA MACCHINA: `VERIMEM_DATA_DIR` era vuota
-#: prima di `import verimem` e l'import l'ha POSTA (il mirror di compatibilita'
-#: riempie gli alias). Quindi «l'alias e' posto» non prova che l'abbia posto un
-#: umano, e un processo figlio lanciato dopo l'import li eredita gia' puntati
-#: alla cartella di casa. Chi riempie questo campo DEVE prendere l'istantanea
-#: degli alias PRIMA di importare `verimem`; se non l'ha fatto, scrive questo
-#: valore invece di un nome, perche' un nome qui sarebbe una risposta falsa.
+#: `store_decided_by` quando l'alias risulta posto ma NON si puo' attribuire a
+#: chi ha chiamato. ⚠️ RIPRODOTTO il 17/09: `VERIMEM_DATA_DIR` era vuota prima
+#: di `import verimem` e l'import l'ha POSTA. Quindi «l'alias e' posto» non
+#: prova che l'abbia posto un umano. Chi riempie il campo prende l'istantanea
+#: PRIMA di importare; se non l'ha fatto scrive questo, non un nome.
 ALIAS_NON_ATTRIBUIBILE = "non attribuibile: alias riempiti dall'import"
 
 #: `store_decided_by` quando NESSUN alias era posto: lo store e' quello di
@@ -94,14 +84,11 @@ class Livello:
     nome: str
     stato: str
     ragione: str | None = None
-    #: ⚠️ IL NUMERO VIAGGIA CON LA SUA SCALA, ANCHE QUI. La prima stesura
-    #: teneva `scala` e `modello` solo sulla RICEVUTA: due livelli che
-    #: punteggiano su scale diverse — il moat 99.5 su 0-100 e il giudice delle
-    #: relazioni 0.87 su 0-1 — finivano sotto un'etichetta sola, e chi legge
-    #: 0.87 su «0-100» vede un punteggio bassissimo dove invece e' alto. E'
-    #: esattamente il difetto che questo campo esiste per impedire, riprodotto
-    #: dentro la cura: il 13/09 un margine di 0,31 l'avevo letto ~60 confrontando
-    #: due scale. Trovato dal pari, non da me.
+    #: ⚠️ LA SCALA STA ANCHE QUI. La prima stesura la teneva solo sulla
+    #: RICEVUTA: il moat 99.5 su 0-100 e il giudice delle relazioni 0.87 su 0-1
+    #: finivano sotto un'etichetta sola, e chi legge 0.87 su «0-100» vede un
+    #: numero bassissimo dov'e' alto. Il difetto che il campo esiste per
+    #: impedire, riprodotto dentro la cura. Trovato dal pari, non da me.
     punteggio: float | None = None
     scala: str | None = None
     soglia: float | None = None
@@ -130,6 +117,29 @@ class Livello:
 
 
 @dataclass(frozen=True)
+class Ritiro:
+    """Un fatto che QUESTA scrittura ha ritirato, con la sua ragione.
+
+    ⚠️ NON e' un `Livello`, e per un giro lo e' stato: «ritirato» resta uno
+    STATO di `Livello` perche' un avviso ritirato da una guardia E' un livello,
+    un fatto ritirato dalla supersessione no. Una classe per due oggetti e' la
+    forma che qui costa di piu', e stava entrando nel modulo che la combatte.
+    """
+
+    id: str
+    ragione: str
+
+    def __post_init__(self) -> None:
+        if not self.id or not self.ragione:
+            raise ValueError(
+                "un ritiro porta l'identificatore E la ragione: senza ragione "
+                "e' un fatto sparito, non un fatto ritirato")
+
+    def come_dizionario(self) -> dict[str, Any]:
+        return {"id": self.id, "ragione": self.ragione}
+
+
+@dataclass(frozen=True)
 class Ricevuta:
     """Quello che il nucleo rende a OGNI porta, senza aggiunte ne' tagli."""
 
@@ -149,10 +159,8 @@ class Ricevuta:
     giudice: str | None = None
     livelli: tuple[Livello, ...] = ()
     fermato_da: str | None = None
-    #: ⚠️ OGGETTI, NON NOMI. Un ritiro con il solo identificatore non puo'
-    #: dire PERCHE' e' stato ritirato, ed e' la stessa meta' di ricevuta che
-    #: manca dappertutto: il fatto senza la ragione. Rilievo del pari, 18/09.
-    ritirati: tuple[Livello, ...] = ()
+    #: ⚠️ OGGETTI, NON NOMI: un identificatore da solo non dice PERCHE'.
+    ritirati: tuple[Ritiro, ...] = ()
     store_env_ignored: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -208,10 +216,10 @@ class Ricevuta:
                     f"livelli porta {type(_liv).__name__}: qui vanno oggetti "
                     "Livello, non i loro nomi")
         for _rid in self.ritirati:
-            if not isinstance(_rid, Livello):
+            if not isinstance(_rid, Ritiro):
                 raise ValueError(
                     f"ritirati porta {type(_rid).__name__}: qui vanno oggetti "
-                    "Livello, perche' un ritiro deve poter dire la sua ragione")
+                    "Ritiro, che portano l'identificatore E la ragione")
 
     @property
     def margine(self) -> float | None:
@@ -235,12 +243,11 @@ class Ricevuta:
             "fermato_da": self.fermato_da,
             "ritirati": [_r.come_dizionario() for _r in self.ritirati],
             #: ⚠️ SEMPRE PRESENTI, ANCHE VUOTI. Il percorso SDK di #63 li
-            #: OMETTE quando non c'e' un alias («un campo assente dice: l'ha
-            #: deciso il disco»), e finche' si guarda una porta sola funziona.
-            #: Ma alla porta degli strumenti quei campi risultano assenti
-            #: SEMPRE — misurato: la porta ricostruisce il proprio dizionario e
-            #: li perde — quindi sotto quella convenzione «assente» vuol dire
-            #: due cose opposte: «l'ha deciso il disco» e «questa porta lo
+            #: OMETTE quando non c'e' un alias, e finche' si guarda una porta
+            #: sola funziona. Ma alla porta degli strumenti risultano assenti
+            #: SEMPRE (misurato: quella porta ricostruisce il dizionario e li
+            #: perde), quindi «assente» vuol dire due cose opposte: «l'ha
+            #: deciso il disco» e «questa porta lo
             #: butta». Presenti sempre e con un VALORE sempre: «l'ha deciso il
             #: disco» si scrive DECISO_DAL_DEFAULT, perche' un significato
             #: affidato al None lo legge come «non lo so» il primo che passa.
@@ -250,18 +257,13 @@ class Ricevuta:
         }
 
 
-#: Le chiavi che ogni porta DEVE rendere: ne' una di piu', ne' una di meno.
-#: Serve alla proprieta' della fetta 1 («stessa ricevuta sulle tre porte») per
-#: avere un elenco da confrontare che non sia scritto dentro il test.
-#:
-#: ⚠️ ESPLICITE, NON PRESE DA UN ESEMPLARE. La prima stesura faceva
-#: `tuple(Ricevuta(esito="ammesso").come_dizionario().keys())`: costruiva
-#: un'istanza AL MOMENTO DELL'IMPORT — un invariante futuro che rendesse
-#: obbligatorio un campo avrebbe fatto esplodere l'import dell'intero nucleo, e
-#: con esso ogni porta che lo importa. E un elenco preso da UN esemplare
-#: descrive quell'esemplare, non il tipo.
-#: Che questo elenco e `come_dizionario()` non divergano e' compito di un test,
-#: non di un commento: la proprieta' della fetta 1 confronta le chiavi.
+#: Le chiavi che ogni porta DEVE rendere: ne' una di piu', ne' una di meno, in
+#: un elenco che non viva dentro il test che le confronta.
+#: ⚠️ ESPLICITE, NON DA UN ESEMPLARE: la prima stesura le prendeva da
+#: `Ricevuta(esito="ammesso")` costruita ALL'IMPORT. La profezia si e' avverata
+#: lo STESSO GIORNO — `store` e `store_decided_by` sono diventati obbligatori, e
+#: quella riga avrebbe fatto esplodere l'import del nucleo e di ogni porta.
+#: Che elenco e `come_dizionario()` non divergano lo prova un test, non questo.
 CHIAVI = (
     "esito", "id", "punteggio", "soglia", "margine", "scala", "modello",
     "giudice", "livelli", "fermato_da", "ritirati",
