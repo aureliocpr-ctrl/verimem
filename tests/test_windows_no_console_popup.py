@@ -143,7 +143,7 @@ class TestDaemonSpawnHasCreateNoWindow:
     """
 
     def test_detach_flags_include_create_no_window(self) -> None:
-        from attic.daemon_spawn import _DETACH_FLAGS, _IS_WINDOWS
+        from verimem.daemon_spawn import _DETACH_FLAGS, _IS_WINDOWS
         if not _IS_WINDOWS:
             # POSIX: _DETACH_FLAGS is 0 by design (start_new_session
             # is used instead). Nothing to assert here.
