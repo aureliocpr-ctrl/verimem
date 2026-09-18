@@ -56,9 +56,16 @@ PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 #: numero puo' SCENDERE quando si collega, si cancella o si ARCHIVIA qualcosa; se
 #: sale, un modulo e' nato staccato e il test lo dice subito. Non e' un obiettivo
 #: di qualita': e' un cricchetto.
-#: Poi a 1 quando sono usciti anche i 41 dell'archivio: resta `test_isolation`,
-#: che nessuna porta raggiunge ma che il conftest usa come guardia (T94).
-IRRAGGIUNGIBILI_NOTI = 1
+#: Poi a 1 quando sono usciti i 41 dell'archivio, e RIALZATO a 3 lo stesso
+#: giorno: `daemon_runner` e `daemon_spawn` erano stati archiviati per errore
+#: e sono tornati. Un cricchetto che SALE va motivato o non e' un cricchetto:
+#: qui sale perche' due moduli VIVI rientrano nel pacchetto, non perche'
+#: qualcosa e' nato staccato. Li importa `hooks/hippo_session_start.py` (via
+#: lo shim `engram.`), e un gancio e' una superficie d'uso che nessuna delle
+#: tre porte raggiunge: senza di loro il banner perde la sezione dei demoni
+#: IN SILENZIO, dentro un `except`. I tre che restano: test_isolation (T94),
+#: daemon_runner, daemon_spawn. `atomic_claims` sta in INNESTO_IN_ARRIVO.
+IRRAGGIUNGIBILI_NOTI = 3
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
