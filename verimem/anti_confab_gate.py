@@ -251,8 +251,12 @@ def _is_advisory_layer(layer: str) -> bool:
     #: ⚠️ VALE PER LA COESISTENZA, NON PER TUTTA LA FAMIGLIA `L3`:
     #: `L3-supersession` («the older value is superseded») una decisione la
     #: prende, e resta un layer che agisce.
+    #: T93 (18/09): `-withdrawn` e' un avviso PRODOTTO e poi tolto da una
+    #: guardia (discorso riportato con disclaimer, smentita). Si vede nella
+    #: ricevuta e NON decide: senza questa riga il ritiro tornerebbe a
+    #: quarantinare cio' che oggi passa, che e' il contrario della cura.
     return (s.endswith("-observe") or s.endswith("-graded")
-            or s == "L3-coexistence")
+            or s.endswith("-withdrawn") or s == "L3-coexistence")
 
 
 def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
@@ -1699,7 +1703,10 @@ def _l1_warnings(
         _STATE_FAMILY = {"L1", "L1.8", "L1.10", "L1.11", "L1.12", "L1.13",
                          "L1.14", "L1.15", "L1.16", "L1.17", "L1.18",
                          "L1.20", "L1.21"}
-        out = [w for w in out if w.get("layer") not in _STATE_FAMILY]
+        out = [w if w.get("layer") not in _STATE_FAMILY else
+               {**w, "layer": f"{w.get('layer')}-withdrawn",
+                "ritirato_da": "reported-speech-with-disclaimer"}
+               for w in out]
     # LA SMENTITA NON E' IL CLAIM (2026-08-04). Nove detector su dodici
     # leggevano «Il modulo NON funziona in produzione» come la dichiarazione
     # che funziona: la parola c'era, il «non» davanti non veniva guardato da
@@ -1715,7 +1722,10 @@ def _l1_warnings(
     # Emerso misurando la cura precedente su L1.15: era
     # giusta e riguardava un detector solo.
     if out:
-        out = [w for w in out if not _e_una_smentita(proposition, w)]
+        out = [w if not _e_una_smentita(proposition, w) else
+               {**w, "layer": f"{w.get('layer')}-withdrawn",
+                "ritirato_da": "denial-not-claim"}
+               for w in out]
     return out
 
 
