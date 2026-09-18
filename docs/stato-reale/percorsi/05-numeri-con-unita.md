@@ -103,12 +103,52 @@ scambia per un difetto — cosa che stavo per fare io. ⚠️ **Quell'avvertenza
 sulla CLI e NON nel dict della libreria**, che porta `score`, `threshold`,
 `margin` e `confidence_tier` senza la riga che dice come si legge quel numero.
 
-## ✅ Le due porte concordano, e questo è il verde
+## ✅ LE TRE PORTE CONCORDANO BIT PER BIT, e questo è il verde
 
-Stessi casi, stessa fonte, dalle due porte: **verdetto e punteggio coincidono a
-tutte le cifre decimali** (`98.5478515625`, `89.97882843017578`,
-`96.00535583496094`, `5.5289530754089355`). Quello che cambia fra le porte non è
-il giudizio: è **quanta della sua ragione la ricevuta ti fa vedere**.
+    caso                       CLI               libreria          MCP               uguale
+    A  400 metri quadri        adm  98.5478515625  adm  98.5478515625  adm  98.5478515625   SI
+    C  eliporto (inventa)      adm  89.9788284301  adm  89.9788284301  adm  89.9788284301   SI
+    E  400 metri CUBI          adm  96.0053558349  adm  96.0053558349  adm  96.0053558349   SI
+    F  401 metri quadri        qua   5.5289530754  qua   5.5289530754  qua   5.5289530754   SI
+
+**Verdetto e punteggio coincidono a tutte le cifre decimali.** Quello che cambia
+fra le porte non è il giudizio: è **quanta della sua ragione la ricevuta ti fa
+vedere**, e la porta che ne mostra meno è quella che un agente usa di più:
+
+| | come dichiara il limite |
+|---|---|
+| **MCP** | `"moat": "judged 96.0 — the source SCORES as supporting this fact: that is the judge's score, not a check that the fact follows from it"` |
+| **CLI** | `grounded 96.0 — scored as supported by the source (the judge's score, not a check that it follows)` |
+| **libreria** | 🔴 `{"moat": "passed", "grounding_score": 96.005…}` — **l'avvertenza non c'è** |
+
+⚠️ **I VERBI sono diversi anche in scrittura**: `save` (CLI), `add(content=…)`
+(libreria), `hippo_remember(proposition=…)` (MCP). Tre nomi per la stessa cosa —
+ma la porta MCP rifiuta bene: *«the required key `proposition` is missing or
+blank; these keys were not recognised and were IGNORED: ['content']»*.
+
+## 🔑 IL PRODOTTO SA GIÀ CHE QUESTA SCRITTURA È SOSPETTA, E NON LO DICE
+
+Dal log della porta MCP, sul caso E:
+
+    coherence_warning  details='jaccard=0.75'  kind=near_duplicate
+                       fact_id=af2a01ff644f  other_fact_id=f62eed3830d6
+
+⇒ «400 metri cubi» **viene riconosciuto come quasi-duplicato** di «400 metri
+quadri», con il suo punteggio. Ma la ricevuta che l'agente riceve porta:
+
+    "anti_confab_warnings": []
+
+**Il segnale è calcolato, finisce nel log, e non entra nella ricevuta.** È la
+classe della *giuntura* — un verdetto calcolato e non letto — e qui vale doppio,
+perché è esattamente il caso che `L4.1` non vede.
+
+🎯 **La cura più economica non è scrivere un controllo sulle unità: è far
+arrivare alla ricevuta un segnale che il prodotto già produce.** Chi cura ha il
+`fact_id`, il `jaccard`, la riga di log e il campo vuoto da riempire.
+
+⚠️ **Il limite di questa misura**: le tre porte sono confrontate **in scrittura**,
+su quattro casi e una fonte sola. Il resto del percorso ① (correzione, storia,
+`as-of`) è stato fatto su CLI e libreria, **non** su MCP.
 
 ## Tre modi di cadere
 1. **Il comando non esiste** → la pagina è sbagliata.
@@ -127,8 +167,9 @@ Al 18/09, **sera** (dopo il giro sulla seconda porta):
 - **(1) e (2) rossi**, e ora con il meccanismo: `L4.1` gira ma confronta la cifra,
   non l'unità.
 - **(3) rosso**: il richiamo serve il valore con l'unità sbagliata.
-- **(4) VERDE su due porte su tre**: CLI e libreria danno lo stesso verdetto con
-  lo stesso punteggio a tutte le cifre decimali. **La porta MCP non è misurata.**
+- **(4) VERDE su TUTT'E TRE le porte**: CLI, libreria e MCP danno lo stesso
+  verdetto con lo stesso punteggio a tutte le cifre decimali, sui quattro casi
+  qui sopra. ⚠️ Misurato **in scrittura**; il resto del percorso non su MCP.
 
 ⇒ Resta il percorso messo peggio, ed è quello su cui il prodotto ha più prove
 interne — 221 test interni misurati il 15/09, 33 file su 37 senza una riga che
