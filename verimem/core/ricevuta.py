@@ -7,26 +7,20 @@ PERCHE' ESISTE — misurato il 16/09 sulle tre porte con lo stesso ingresso:
     MCP         24        `anti_confab_warnings`   (e ANCHE `warning`, singolare)
     CLI         11        `warnings`, ma su un'uscita che una macchina non legge
 
-⚠️ LA RIGA DELLA CLI DICEVA «0 — nessuna ricevuta: stampa e basta», ED ERA
-   FALSA. Misurato il 18/09 eseguendo `save --json` su uno store isolato: rende
-   undici chiavi, e in comune con quelle qui sotto ne ha UNA SOLA, `id`. Il
-   banco del 16/09 aveva letto l'uscita per l'umano e ne aveva concluso che una
-   ricevuta non ci fosse: lo zero misurava il banco, non il prodotto.
-   E l'uscita macchina che c'è non è leggibile da una macchina — due righe di
-   log strutturato escono su stdout PRIMA del JSON, e `json.load` muore con
-   «Extra data: line 1 column 5». Uno script che oggi legge quell'uscita è già
-   rotto, senza aspettare noi.
-   ⚠️ I DUE NUMERI SOPRA VENGONO DALLO STESSO BANCO che ha sbagliato il terzo:
-   finché non sono rimisurati eseguendo, vanno letti come ipotesi, non come
-   misure. Un banco che sbaglia una porta su tre non ha sbagliato una riga: ha
-   un difetto, e le altre due righe le ha scritte lo stesso difetto.
+⚠️ LA RIGA DELLA CLI DICEVA «0» ED ERA FALSA: il banco del 16/09 leggeva
+   l'uscita per l'umano. Misurato il 18/09 eseguendo `save --json`: undici
+   chiavi, UNA sola in comune con quelle qui sotto (`id`), e su uno stdout che
+   una macchina non legge — due righe di giornale cadono prima del JSON e
+   `json.load` muore con «Extra data: line 1 column 5». I DUE NUMERI SOPRA
+   vengono dallo stesso banco che ha sbagliato il terzo: ipotesi, finche'
+   qualcuno non li riesegue.
 
-Non sono tre formati di comodo: sono tre contratti diversi per la stessa
-operazione, e chi legge non puo' sapere quale ha in mano senza sapere da dove e'
-entrato. Il 13/09 un banco mio ha letto `nuovo["warnings"]` da una ricevuta che
-rende `anti_confab_warnings`: la lista tornava VUOTA e l'ho letta come «nessuno
-schermo ha parlato», mentre ne avevano parlato due. La diagnosi sbagliata e'
-finita sul canale. Classe: copia invece di superficie unica.
+Non sono tre formati di comodo: sono tre contratti per la stessa operazione, e
+chi legge non sa quale ha in mano senza sapere da dove e' entrato. Il 13/09 un
+banco mio ha letto `nuovo["warnings"]` da una porta che rende
+`anti_confab_warnings`: lista VUOTA, letta come «nessuno schermo ha parlato»
+mentre ne avevano parlato due, e la diagnosi sbagliata e' finita sul canale.
+Classe: copia invece di superficie unica.
 
 CHE COSA PROMETTE QUESTO MODULO, e cosa NON promette:
   · promette che una ricevuta INCOERENTE non possa esistere — gli invarianti
@@ -44,10 +38,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-#: L'esito della SCRITTURA. Quattro valori, chiusi.
-#: ⚠️ Non confonderlo con `Livello.stato`: fino al 17/09 i due campi portavano
-#: lo stesso nome `esito` in due documenti diversi, ed e' la classe di errore
-#: che in questo progetto costa di piu' — una parola per due oggetti.
+#: L'esito della SCRITTURA. Quattro valori, chiusi. ⚠️ Non e' `Livello.stato`:
+#: fino al 17/09 i due campi si chiamavano entrambi `esito` in due documenti,
+#: ed e' l'errore che qui costa di piu' — una parola per due oggetti.
 ESITI = ("ammesso", "degradato", "fermato", "rifiutato")
 
 #: Lo stato di UN LIVELLO del cancello, quattro valori chiusi: ha girato e
@@ -72,22 +65,20 @@ NON_MISURATO_REMOTA = "non misurato: corsia remota"
 #: valore invece di un nome, perche' un nome qui sarebbe una risposta falsa.
 ALIAS_NON_ATTRIBUIBILE = "non attribuibile: alias riempiti dall'import"
 
-#: Il valore di `store_decided_by` quando NESSUN alias era posto: lo store e'
-#: quello di casa. Prima qui c'era `None`, e il docstring spiegava che quel
-#: `None` «dice che l'ha deciso il disco» — un significato affidato al
-#: silenzio, che e' la cosa che questo modulo esiste per togliere. Una parola
-#: costa una parola e non si confonde con «non lo so».
+#: `store_decided_by` quando NESSUN alias era posto: lo store e' quello di
+#: casa. Prima era `None`, cioe' un significato affidato al silenzio: la cosa
+#: che questo modulo esiste per togliere. Una parola non si confonde con «non
+#: lo so».
 DECISO_DAL_DEFAULT = "default: nessun alias d'ambiente"
 
 
 def _il_punteggio_porta_la_sua_scala(dove: str, punteggio, scala, modello) -> None:
     """Un numero di cui non si sa la scala non e' una misura.
 
-    ⚠️ ERA SCRITTA DUE VOLTE — in `Livello` e in `Ricevuta` — con due
-    messaggi diversi. Due copie della stessa regola divergono: basta che
-    una delle due si allenti e la ricevuta ammette dal livello cio' che
-    vieta in cima. E' la classe ① (copia invece di superficie unica), cioe'
-    la ragione per cui questo modulo esiste, dentro questo modulo.
+    ⚠️ ERA SCRITTA DUE VOLTE, in `Livello` e in `Ricevuta`, con due messaggi
+    diversi. Due copie divergono: basta che una si allenti e la ricevuta
+    ammette dal livello cio' che vieta in cima. Classe ①, dentro il modulo
+    che esiste per toglierla.
     """
     if punteggio is not None and (scala is None or modello is None):
         raise ValueError(
@@ -143,13 +134,11 @@ class Ricevuta:
     """Quello che il nucleo rende a OGNI porta, senza aggiunte ne' tagli."""
 
     esito: str
-    #: ⚠️ OBBLIGATORI, E SENZA DEFAULT. Stavano in fondo come `str | None =
-    #: None` mentre il docstring di questo modulo vietava quel None: la regola
-    #: viveva nel commento e non nel costruttore — che e' esattamente il difetto
-    #: per cui gli invarianti stanno qui dentro. Visto in lettura, non da me.
-    #: `store` e' un percorso, oppure NON_MISURATO_REMOTA.
-    #: `store_decided_by` e' il nome dell'alias, oppure DECISO_DAL_DEFAULT,
-    #: oppure ALIAS_NON_ATTRIBUIBILE / NON_MISURATO_REMOTA. Mai vuoto, mai None.
+    #: ⚠️ OBBLIGATORI, SENZA DEFAULT. Stavano come `str | None = None` mentre
+    #: il docstring vietava quel None: la regola viveva nel commento e non nel
+    #: costruttore. Visto in lettura, non da me. `store` e' un percorso oppure
+    #: NON_MISURATO_REMOTA; `store_decided_by` e' l'alias, DECISO_DAL_DEFAULT o
+    #: la ragione. Mai vuoto, mai None.
     store: str
     store_decided_by: str
     id: str | None = None
@@ -206,16 +195,13 @@ class Ricevuta:
                 "un alias, DECISO_DAL_DEFAULT, oppure la ragione per cui non "
                 "e' attribuibile")
 
-        #: LE DUE TUPLE PORTANO OGGETTI DIVERSI e nessuno lo controllava:
-        #: `livelli` contiene `Livello`, `ritirati` contiene IDENTIFICATORI.
-        #: Uno scambio non dava errore alla costruzione e spaccava dopo — un
-        #: Livello dentro `ritirati` usciva GREZZO da come_dizionario() e
-        #: json.dumps moriva con «Object of type Livello is not JSON
-        #: serializable»; una stringa dentro `livelli` moriva in lettura.
-        #: Una ricevuta che non si serializza non e' una ricevuta. E
-        #: `ritirati` era l'unico campo che nessun banco riempiva: il pari
-        #: ha predetto il difetto PRIMA di guardare, cercando il campo non
-        #: esercitato. Dove non si e' mai guardato, il difetto sta li'.
+        #: GLI ELEMENTI, non solo le tuple: uno scambio non dava errore alla
+        #: costruzione e spaccava dopo — un nome dentro `livelli` moriva in
+        #: lettura, e prima che `ritirati` portasse oggetti json.dumps moriva
+        #: con «Object of type Livello is not JSON serializable». Una ricevuta
+        #: che non si serializza non e' una ricevuta. `ritirati` era l'unico
+        #: campo che nessun banco riempiva: il pari ha predetto il difetto
+        #: PRIMA di guardare. Dove non si e' mai guardato, il difetto sta li'.
         for _liv in self.livelli:
             if not isinstance(_liv, Livello):
                 raise ValueError(
@@ -255,8 +241,7 @@ class Ricevuta:
             #: SEMPRE — misurato: la porta ricostruisce il proprio dizionario e
             #: li perde — quindi sotto quella convenzione «assente» vuol dire
             #: due cose opposte: «l'ha deciso il disco» e «questa porta lo
-            #: butta». Presenti sempre, e con un VALORE sempre: dal 18/09
-            #: `store_decided_by` non puo' piu' essere None — «l'ha deciso il
+            #: butta». Presenti sempre e con un VALORE sempre: «l'ha deciso il
             #: disco» si scrive DECISO_DAL_DEFAULT, perche' un significato
             #: affidato al None lo legge come «non lo so» il primo che passa.
             "store": self.store,
