@@ -234,12 +234,20 @@ async def test_CONTROLLO_NEGATIVO_una_scrittura_fermata_dichiara_chi_l_ha_fermat
         "hippo_remember", {"proposition": vanto, "topic": TOPIC}))[0])
 
     def _fermato_da(r: dict) -> str:
-        for campo in ("fermato_da", "quarantined_by", "withheld_by"):
-            if r.get(campo):
-                return f"{campo}={r[campo]!r}"
-        avvisi = r.get("warnings") or []
-        strati = [w.get("layer") for w in avvisi if isinstance(w, dict) and w.get("layer")]
-        return f"warnings[].layer={strati}" if strati else ""
+        """SOLO `fermato_da` della Ricevuta nuova. Un nome, non quattro.
+
+        ⚠️ RILIEVO DEL PARI (@ws4, 18/09), accettato: la prima stesura accettava
+        `fermato_da` **oppure** `quarantined_by` **oppure** `withheld_by`
+        **oppure** un `layer` dentro `warnings`. Con quattro nomi il controllo
+        era VERDE anche con le porte divergenti — cioè verde PRIMA della cura,
+        che è il difetto che questo file esiste per rendere visibile. Oggi
+        nessuna porta rende `fermato_da`, quindi la cella è rossa su tutte e
+        tre; diventerà verde quando la fetta 1b la renderà, e non un minuto
+        prima. Per memoria, ciò che le porte rendono ADESSO:
+            SDK  quarantined_by='L1'   MCP  quarantined_by='L1'   CLI  (niente)
+        """
+        valore = r.get("fermato_da")
+        return f"fermato_da={valore!r}" if valore else ""
 
     cli = _json_dallo_stdout(_stdout_della_cli(vanto, fonte=""))
     esiti = {"SDK": _fermato_da(sdk), "MCP": _fermato_da(mcp),
