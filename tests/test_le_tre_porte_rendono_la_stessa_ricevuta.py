@@ -194,8 +194,19 @@ async def test_le_tre_porte_rendono_la_stessa_ricevuta(isolated_corpus):
         mancanti = sorted(CAMPI_CHE_CONTANO - k)
         if mancanti:
             differenze.append(f"{porta} non rende: {mancanti}")
+    # ⚠️ UN CAMPO A `None` NON E' UNA DIVERGENZA DI CONTRATTO: e' un campo che
+    # in QUESTO regime nessuno ha prodotto. Il 18/09 avevo pubblicato
+    # «grounding_score: float su SDK/MCP, NoneType sulla CLI» come divergenza —
+    # e l'A/B a una variabile sulla STESSA riga di comando dice che era il mio
+    # banco:
+    #     ambiente dell'utente  -> 11 chiavi, grounding_score 98.87, judged_by 'daemon'
+    #     ambiente del banco    -> 10 chiavi, grounding_score None,  judged_by None
+    # (il sottoprocesso eredita `HIPPO_OFFLINE=1` e l'embedder stub che il
+    # conftest impone, mentre SDK e MCP girano in-process col giudice finto che
+    # un punteggio lo rende). Il tipo si confronta solo sui valori PRODOTTI.
     for campo in sorted(comuni):
-        tipi = {porta: f[campo] for porta, f in forme.items() if campo in f}
+        tipi = {porta: f[campo] for porta, f in forme.items()
+                if campo in f and f[campo] != "NoneType"}
         if len(set(tipi.values())) > 1:
             differenze.append(f"stesso nome, tipo diverso: {campo} -> {tipi}")
 
