@@ -62,10 +62,53 @@ Anti-confab trust check   TRUSTED ✓
   the moat judged the source at 97.3
 ```
 
-🔑 **La riga `checked:` è il meccanismo, ed è il motivo per cui questo percorso
-esiste**: hanno girato **lo screen lessicale e il moat**. Il controllo che
-confronta le **quantità** non compare fra quelli eseguiti — e senza di lui
-«450 mq» e «450 m³» sono lo stesso numero con parole intorno.
+🔑 **La riga `checked:` è il meccanismo**: hanno girato **lo screen lessicale e il
+moat**.
+
+## ⚠️ QUELLO CHE AVEVO CONCLUSO DA QUESTA RIGA ERA SBAGLIATO
+
+Il 18/09 avevo scritto: *«il controllo che confronta le quantità non compare fra
+quelli eseguiti»*. **È falso, e l'ho falsificato la sera stessa dalla porta
+libreria.** `L4.1` **esiste, gira e funziona**: sei scritture, una sola fonte
+(*«Perizia del 2026-09-01: il capannone 12 misura 400 mq.»*), wheel `0.7.6`.
+
+    caso                                              esito         punteggio  layer che gira
+    A  sostenuta dalla fonte (400 mq)                 admitted          98.55  []
+    B  CONTRADDICE: 900 metri quadri                  quarantined        0.81  L4-grounding, L4.1
+    C  INVENTA: tre piani interrati e un eliporto     admitted          89.98  []
+    D  FUORI TEMA: la torre Eiffel è alta 330 m       quarantined        0.24  L4-grounding, L4.1
+    E  stessa CIFRA, unità diversa: 400 metri CUBI    admitted          96.01  []
+    F  cifra diversa di UNO: 401 metri quadri         quarantined        5.53  L4.1, L4-grounding
+
+**Una differenza di UN metro quadro viene fermata (5.53). Il passaggio da
+superficie a volume passa con 96.01.** Il motivo sta scritto nei rifiuti: B e D
+cadono con *«il claim afferma un valore che la fonte non contiene: 900 metro /
+330 metro»*. ⇒ **`L4.1` confronta il VALORE, non l'unità**: `400 == 400`, quindi
+non ha nulla da segnalare.
+
+🔴 **Non era un'assenza: era una cecità.** La differenza cambia la cura — non
+«aggiungere un controllo sulle quantità», ma **far confrontare anche l'unità a
+quello che c'è già**. Chi cura guardi lì.
+
+📌 **E il caso C va letto con la difesa che il prodotto dichiara.** «tre piani
+interrati e un eliporto» passa a 89.98 con `layers=[]` — nessun controllo gira,
+perché non c'è una quantità da confrontare. Ma la ricevuta della CLI dice:
+
+    grounded 98.5 — scored as supported by the source
+                    (the judge's score, not a check that it follows)
+
+⇒ Il prodotto **non promette** che la fonte implichi la proposizione: dichiara che
+quello è il voto del giudice. È un **limite dichiarato**, e va difeso da chi lo
+scambia per un difetto — cosa che stavo per fare io. ⚠️ **Quell'avvertenza c'è
+sulla CLI e NON nel dict della libreria**, che porta `score`, `threshold`,
+`margin` e `confidence_tier` senza la riga che dice come si legge quel numero.
+
+## ✅ Le due porte concordano, e questo è il verde
+
+Stessi casi, stessa fonte, dalle due porte: **verdetto e punteggio coincidono a
+tutte le cifre decimali** (`98.5478515625`, `89.97882843017578`,
+`96.00535583496094`, `5.5289530754089355`). Quello che cambia fra le porte non è
+il giudizio: è **quanta della sua ragione la ricevuta ti fa vedere**.
 
 ## Tre modi di cadere
 1. **Il comando non esiste** → la pagina è sbagliata.
@@ -79,6 +122,16 @@ confronta le **quantità** non compare fra quelli eseguiti — e senza di lui
 3. il richiamo serve **il valore con l'unità giusta**;
 4. le tre porte si comportano **uguale**.
 
-Al 18/09: **(1), (2) e (3) sono rossi** sulla riga di comando, **(4) non è
-misurato**. È il percorso messo peggio dei quattro, ed è quello su cui il
-prodotto ha più prove interne: una ragione in più per provarlo **alla porta**.
+Al 18/09, **sera** (dopo il giro sulla seconda porta):
+
+- **(1) e (2) rossi**, e ora con il meccanismo: `L4.1` gira ma confronta la cifra,
+  non l'unità.
+- **(3) rosso**: il richiamo serve il valore con l'unità sbagliata.
+- **(4) VERDE su due porte su tre**: CLI e libreria danno lo stesso verdetto con
+  lo stesso punteggio a tutte le cifre decimali. **La porta MCP non è misurata.**
+
+⇒ Resta il percorso messo peggio, ed è quello su cui il prodotto ha più prove
+interne — 221 test interni misurati il 15/09, 33 file su 37 senza una riga che
+tocchi una porta. **Il prodotto sa distinguere le unità a livello di funzione; a
+livello di porta, a parità di cifra, no.** È la ragione per cui questo percorso
+esiste, e ora ha i suoi numeri invece del suo sospetto.

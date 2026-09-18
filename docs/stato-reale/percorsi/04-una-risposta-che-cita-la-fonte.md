@@ -70,6 +70,26 @@ con la sua ragione vale più di una risposta senza fonte.
 ## Tre modi di cadere
 1. **Il comando non esiste** → la pagina è sbagliata. *(Successo: `verimem explain`
    NON esiste in `0.7.6`; il comando è `ask`.)*
+
+   ⚠️ **E QUESTA RIGA, COM'ERA SCRITTA IL 18/09, ERA FALSA — la correggo il giorno
+   stesso.** Avevo dedotto «`explain` non esiste in 0.7.6» dall'unica porta che
+   avevo provato. Dalla porta **libreria**, stesso wheel, `Memory.explain` **c'è**,
+   con la firma `explain(query, k=5, *, deep=False, as_of='auto', min_relevance=…)`.
+   ⇒ Non esiste **come comando della CLI**. È una proprietà della *porta*, e
+   l'avevo scritta come proprietà del *prodotto*.
+
+   🔑 **I VERBI NON SONO GLI STESSI FRA LE PORTE**, ed è la prima cosa che incontra
+   chi passa dall'una all'altra. Misurato il 18/09 sui 43 nomi pubblici di `Memory`:
+
+   | verbo | CLI | libreria |
+   |---|---|---|
+   | `explain` | ❌ | ✅ |
+   | `trust` | ✅ | ❌ (`source_trust`, `consistency_trust`) |
+   | scrivere | `save` | `add` |
+   | `remember` | ❌ | ❌ (non esiste da nessuna parte) |
+
+   ⇒ Prima di chiedersi se le porte **rispondono** uguale, bisogna poter **fare**
+   la stessa domanda. Qui non si può, e nessuna pagina lo diceva.
 2. **La risposta arriva senza la fonte** → difetto del prodotto: apri un ticket
    con l'output. **È il punto 1 del passo 2, ed è aperto.**
 3. **L'astensione arriva senza motivo** → idem. Al 18/09 **non** succede:
