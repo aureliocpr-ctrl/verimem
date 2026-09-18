@@ -23,6 +23,7 @@ letto», la stessa di T56 e T77.
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 
@@ -56,22 +57,70 @@ async def _ricevuta_mcp() -> dict:
     return json.loads(blocchi[0])
 
 
-def _ricevuta_cli() -> dict:
-    """Ciò che la CLI rende LEGGIBILE a un consumatore.
+def _stdout_della_cli() -> str:
+    """Lo stdout di una scrittura con fonte dalla CLI, come lo vede uno script.
 
-    `verimem remember` non ha `--json` (verificato: le opzioni sono `--topic`,
-    `--source`, `--valid-until`, `--db`), quindi stampa prosa colorata. Un
-    consumatore non ha una ricevuta: ha un testo. Qui si tenta di leggerlo come
-    JSON e, quando non lo è, si rende il vocabolario vuoto — che è esattamente
-    ciò che quel consumatore può usare.
+    ⚠️ CORREZIONE DEL 18/09, e la premessa sbagliata era mia. La prima stesura
+    usava `verimem remember`, che il `--json` non ce l'ha, e ne concludeva
+    «la CLI non rende NIENTE». È vero di QUEL comando, non della porta: il
+    comando di scrittura con la ricevuta leggibile è `save`, e il `--json` c'è
+    (`cli.py:5428`). Misurare il comando sbagliato e chiamarlo «la porta» è la
+    stessa forma di difetto che questo file esiste per rendere visibile.
+
+    Sottoprocesso e non `CliRunner`: quest'ultimo mescola stdout e stderr, e con
+    i flussi mescolati non si può dire se a sporcare la ricevuta sia il prodotto
+    o il banco. Qui si legge lo stdout da solo, che è ciò che riceve chi mette
+    `| jq` in fondo.
     """
-    from typer.testing import CliRunner
+    import os
+    import subprocess
+    import sys
+    import tempfile
 
-    from verimem.cli import app
-    esito = CliRunner().invoke(
-        app, ["remember", TESTO, "--topic", TOPIC, "--source", FONTE])
+    radice = pathlib.Path(__file__).resolve().parents[1]
+    store = pathlib.Path(tempfile.mkdtemp(prefix="ws1_cli_"))
+    (store / "semantic").mkdir(parents=True, exist_ok=True)
+    env = dict(os.environ)
+    env.update({"ENGRAM_DATA_DIR": str(store), "HIPPO_DATA_DIR": str(store),
+                "VERIMEM_DATA_DIR": str(store), "PYTHONPATH": str(radice)})
+    #: 🪞 SI TOGLIE, E SENZA QUESTA RIGA IL TEST MENTE. `mcp_server.py:52` fa
+    #: `os.environ["HIPPO_LOG_STDERR"] = "1"` AL MOMENTO DELL'IMPORT: questo
+    #: file importa la porta MCP, quindi il sottoprocesso EREDITAVA quella
+    #: variabile e vedeva uno stdout pulito che l'utente non ha. Misurato con
+    #: un A/B a una variabile sullo stesso comando:
+    #:     senza la variabile   stdout 759 caratteri -> NON e' JSON   exit 0
+    #:     con  la variabile    stdout 482 caratteri -> JSON pulito   exit 0
+    #: Qui si misura il regime di chi usa il prodotto, non quello che l'import
+    #: di un'altra porta ha lasciato nell'ambiente.
+    env.pop("HIPPO_LOG_STDERR", None)
+    esito = subprocess.run(
+        [sys.executable, "-m", "verimem.cli", "save", TESTO,
+         "--topic", TOPIC, "--source", FONTE, "--json"],
+        cwd=str(radice), env=env, capture_output=True, text=True,
+        encoding="utf-8", errors="replace", timeout=600,
+    )
+    return esito.stdout or ""
+
+
+def _ricevuta_cli() -> dict:
+    """La ricevuta della CLI, estratta dallo stdout anche se non è pulito.
+
+    Il test qui sotto (`…_e_leggibile_da_sola`) inchioda il fatto che oggi
+    **non** lo è: una riga di giornale la precede sullo stesso flusso. Qui si
+    prende comunque l'ultimo oggetto JSON, perché il confronto fra le tre
+    ricevute deve poter girare anche mentre quel difetto è aperto — altrimenti
+    un difetto ne nasconderebbe un altro.
+    """
+    testo = _stdout_della_cli()
+    for riga in reversed(testo.splitlines()):
+        riga = riga.strip()
+        if riga.startswith("{"):
+            try:
+                return json.loads(riga)
+            except json.JSONDecodeError:
+                continue
     try:
-        return json.loads(esito.stdout)
+        return json.loads(testo)
     except (json.JSONDecodeError, ValueError):
         return {}
 
@@ -89,6 +138,31 @@ async def test_CONTROLLO_ogni_porta_rende_qualcosa(isolated_corpus):
     mcp = await _ricevuta_mcp()
     assert sdk, "la porta SDK non ha reso nessuna ricevuta: il banco non misura"
     assert mcp, "la porta MCP non ha reso nessuna ricevuta: il banco non misura"
+
+
+def test_la_ricevuta_json_della_cli_e_leggibile_da_sola():
+    """`save --json` promette una ricevuta a macchina: deve poterla LEGGERE.
+
+    Misurato il 18/09: `exit_code 0`, 759 caratteri su stdout, e
+    `json.loads(stdout)` **fallisce** — una riga di giornale (`flow.write …
+    layers=[] …`) precede l'oggetto JSON sullo STESSO flusso. Chi mette `| jq`
+    in fondo riceve un errore di parsing con esito ZERO: il caso peggiore, uno
+    script che crede di aver funzionato.
+
+    📌 E quella riga porta `layers=[]`, cioè proprio il campo che nessuna delle
+    tre ricevute rende: il dato esiste, viaggia sul canale sbagliato.
+    """
+    testo = _stdout_della_cli()
+    assert testo.strip(), "la CLI non ha stampato niente su stdout"
+    try:
+        json.loads(testo)
+    except json.JSONDecodeError as e:
+        prima = "\n".join(testo.splitlines()[:2])[:300]
+        raise AssertionError(
+            "`save --json` non produce uno stdout leggibile come JSON "
+            f"({e.__class__.__name__}): qualcosa scrive sullo stesso flusso "
+            f"prima della ricevuta.\n  prime righe:\n{prima}"
+        ) from None
 
 
 @pytest.mark.asyncio
