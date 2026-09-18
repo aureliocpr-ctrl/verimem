@@ -133,7 +133,14 @@ INNESTO_IN_ARRIVO = {
     "atomic_claims": "06/09: decomponi() e' entrato inerte con 3fd1ed31; l'innesto "
                      "(muro 1, pezzi 3a/3b/3b-bis) sta su origin/lead/innesto-"
                      "decomposizione, revertato da main alle 08:42 (460f230e) "
-                     "finche' P-A e P-B non sono misurate a RAM ok",
+                     "finche' P-A e P-B non sono misurate a RAM ok. "
+                     "RIDATATA il 18/09: la misura di P-A e P-B a RAM ok NON "
+                     "risulta fatta, ne' sul canale ne' nei registri, e oltre "
+                     "questo e' NON VERIFICATO. Il 18/09 il taglio del contorno "
+                     "stava per archiviare questo modulo: si e' fermato perche' "
+                     "questa riga esiste — un grafo di importazioni non vede "
+                     "un'intenzione dichiarata. T111 decide: innestare o "
+                     "archiviare, dopo il metro del 19/09",
 }
 
 
