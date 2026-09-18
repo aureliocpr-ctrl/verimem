@@ -192,6 +192,27 @@ class Ricevuta:
                 "un alias, DECISO_DAL_DEFAULT, oppure la ragione per cui non "
                 "e' attribuibile")
 
+        #: LE DUE TUPLE PORTANO OGGETTI DIVERSI e nessuno lo controllava:
+        #: `livelli` contiene `Livello`, `ritirati` contiene IDENTIFICATORI.
+        #: Uno scambio non dava errore alla costruzione e spaccava dopo — un
+        #: Livello dentro `ritirati` usciva GREZZO da come_dizionario() e
+        #: json.dumps moriva con «Object of type Livello is not JSON
+        #: serializable»; una stringa dentro `livelli` moriva in lettura.
+        #: Una ricevuta che non si serializza non e' una ricevuta. E
+        #: `ritirati` era l'unico campo che nessun banco riempiva: il pari
+        #: ha predetto il difetto PRIMA di guardare, cercando il campo non
+        #: esercitato. Dove non si e' mai guardato, il difetto sta li'.
+        for _liv in self.livelli:
+            if not isinstance(_liv, Livello):
+                raise ValueError(
+                    f"livelli porta {type(_liv).__name__}: qui vanno oggetti "
+                    "Livello, non i loro nomi")
+        for _rid in self.ritirati:
+            if not isinstance(_rid, str) or not _rid:
+                raise ValueError(
+                    f"ritirati porta {type(_rid).__name__}: qui vanno gli "
+                    "identificatori ritirati, stringhe non vuote")
+
     @property
     def margine(self) -> float | None:
         """`punteggio - soglia`, calcolato QUI e mai dal chiamante."""

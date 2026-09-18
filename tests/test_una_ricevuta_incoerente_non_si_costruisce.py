@@ -18,6 +18,8 @@ DUE REGOLE CHE QUESTO FILE SI DA', perche' un negativo fatto male passa sempre:
 """
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from verimem.core import (
@@ -196,3 +198,38 @@ def test_i_livelli_finiscono_nel_dizionario_con_i_loro_campi():
     assert liv["nome"] == "L4"
     assert liv["stato"] == "saltato"
     assert liv["ragione"] == "R2"
+
+
+# --------------------------------------------- gli elementi delle due tuple
+
+def test_la_ricevuta_si_serializza_davvero():
+    """`come_dizionario()` esiste per essere serializzato, e finche' nessuno
+    chiama json.dumps «serializzabile» e' una promessa, non una misura. Era la
+    promessa che mancava: un Livello finito in `ritirati` la rompeva in
+    silenzio fino al primo che provava a scriverla su un canale."""
+    r = _sana(punteggio=99.5, soglia=40.0, scala="s", modello="m",
+              livelli=(Livello(nome="L4", stato="saltato", ragione="R2"),),
+              ritirati=("abc123",))
+    tornata = json.loads(json.dumps(r.come_dizionario()))
+    assert tornata["ritirati"] == ["abc123"]
+    assert tornata["livelli"][0]["nome"] == "L4"
+
+
+def test_un_livello_dentro_ritirati_non_passa():
+    """`ritirati` era l'unico campo che nessun caso riempiva: il pari ha
+    predetto il difetto PRIMA di guardare, proprio perche' non era esercitato."""
+    _sana(ritirati=("abc123",))
+    with pytest.raises(ValueError, match="ritirati porta"):
+        _sana(ritirati=(Livello(nome="L4", stato="eseguito"),))
+
+
+def test_un_nome_dentro_livelli_non_passa():
+    _sana(livelli=(Livello(nome="L4", stato="eseguito"),))
+    with pytest.raises(ValueError, match="livelli porta"):
+        _sana(livelli=("L4",))
+
+
+def test_un_identificatore_vuoto_non_e_un_ritiro():
+    _sana(ritirati=("abc123",))
+    with pytest.raises(ValueError, match="ritirati porta"):
+        _sana(ritirati=("",))
