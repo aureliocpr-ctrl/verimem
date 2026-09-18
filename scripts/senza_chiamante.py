@@ -66,15 +66,19 @@ PYPROJECT = RADICE / "pyproject.toml"
 # li chiami: e' la fetta 1, ed e' voluto — l'oggetto esiste per primo, le tre
 # porte lo adottano una per volta nella 1b. Finche' dura, questo criterio li
 # vede come «pubblicati e irraggiungibili», e ha ragione: oggi lo sono.
+# I numeri sono MISURATI su questa base (main 4cc66030), non riportati: la
+# prima stesura diceva 36 e 64, misurati su una base precedente, e nel
+# frattempo un'altra richiesta li ha abbassati. Un tetto ereditato da un
+# albero diverso non e' un tetto, e' un ricordo.
 # +1 su C2 (`core/__init__.py`, che nessuno importa) e +2 su D (anche
 # `core/ricevuta.py`, raggiungibile solo dal primo, che non ha porta).
-# LA RIDISCESA A 35 E 62 E' OBBLIGATORIA QUANDO LA TERZA PORTA RENDE LA
+# LA RIDISCESA A 29 E 42 E' OBBLIGATORIA QUANDO LA TERZA PORTA RENDE LA
 # RICEVUTA (1b.3), ed e' un ticket con un nome: T104. Se questi numeri sono
-# ancora 36 e 64 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
+# ancora 30 e 44 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
 # legge sta misurando la nostra pazienza, non il pacchetto.
-TETTO_C2 = 29          # nessuna porta: né import, né entry point, né python -m
+TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 42           # irraggiungibili da ogni porta, chiusura transitiva (29 C2 + 3 C1 + 10 solo-per-catena)
+TETTO_D = 44           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 11 solo-per-catena)
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
