@@ -178,8 +178,31 @@ jobs:
           TITOLO: ${{ github.event.pull_request.title }}
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
-            --paginate --jq '[.[].body]' > commenti_della_richiesta.json
+          # ⚠️⚠️ I COMMENTI SI ATTENDONO, NON SI FOTOGRAFANO. Questa lettura
+          # era una sola, e il job ci arriva ~25 s dopo l'apertura: il commento
+          # con la Definition of Done nasce DOPO, perche' nessuno puo' aprire
+          # una richiesta e commentarla nello stesso istante. Il 18/09 il
+          # cancello ha cosi' bocciato le tre richieste aperte quel giorno —
+          # #68 (+27 s), #69 (+24 s), #71 (+26 s) — mentre #65 e #66 passavano
+          # solo perche' il loro run vincente era di un giorno DOPO il commento.
+          # Cinque su cinque: l'esito dipendeva dall'ordine, non dal contenuto.
+          #
+          # `on:` non ha `issue_comment`, quindi il controllo non si ripete mai
+          # da se': senza questa attesa il rosso resta finche' qualcuno non
+          # rilancia a mano. Si esce al PRIMO tentativo utile, quindi la
+          # richiesta gia' commentata non paga niente.
+          for tentativo in 1 2 3 4; do
+            gh api "repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/comments" \
+              --paginate --jq '[.[].body]' > commenti_della_richiesta.json
+            if grep -q 'Definition of Done' commenti_della_richiesta.json; then
+              echo "commenti letti al tentativo $tentativo"
+              break
+            fi
+            if [ "$tentativo" -lt 4 ]; then
+              echo "nessuna Definition of Done al tentativo $tentativo: attendo 30 s"
+              sleep 30
+            fi
+          done
           python - <<'PY'
           import os, pathlib
           pathlib.Path("corpo_della_richiesta.txt").write_text(

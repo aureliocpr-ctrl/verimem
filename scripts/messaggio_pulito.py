@@ -354,8 +354,25 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
         problemi.append("NON MISURATO: la Definition of Done in un commento "
                         "(nessun commento passato al controllo)")
     elif not any(INTESTAZIONE_DOD in c for c in commenti):
-        problemi.append(f"nessun commento porta «{INTESTAZIONE_DOD}»: la "
-                        f"richiesta non dichiara cosa considera finito")
+        # ⚠️⚠️ QUESTA DIAGNOSI HA MENTITO, e per venti minuti ha bocciato le
+        # richieste che facevano la cosa giusta. Diceva «nessun commento porta
+        # la DoD» mentre il commento c'era: il controllo leggeva i commenti
+        # ~25 s dopo l'apertura, e il commento nasce dopo — nessuno puo' aprire
+        # una richiesta e commentarla nello stesso istante. Misurato il 18/09
+        # su cinque richieste: #68, #69, #71 rosse con la DoD presente; #65 e
+        # #66 verdi solo perche' il loro run era di UN GIORNO dopo il commento.
+        #
+        # ⇒ La cura vera e' l'attesa, e sta nel workflow. Questa e' l'altra
+        # meta': un'assenza si dichiara CON L'ISTANTE IN CUI SI E' GUARDATO,
+        # altrimenti chi legge conclude di aver sbagliato e riscrive una cosa
+        # giusta. Un messaggio che mente su cio' che vede costa piu' di un
+        # rosso muto.
+        problemi.append(f"al momento di questo controllo nessun commento "
+                        f"portava «{INTESTAZIONE_DOD}»: la richiesta non "
+                        f"dichiara cosa considera finito. ⚠️ Se l'hai aggiunto "
+                        f"DOPO l'apertura, il contenuto e' gia' giusto e non va "
+                        f"riscritto: rilancia il controllo "
+                        f"(`gh run rerun <id> --failed`)")
     else:
         # Il commento che porta la DoD deve dire anche DA DOVE viene la
         # richiesta: quale riga del registro previene, e quale decisione segue.
