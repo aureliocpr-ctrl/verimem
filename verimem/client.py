@@ -462,6 +462,52 @@ def esito_del_moat(gate, warnings, *, source) -> str:
     return "passed"
 
 
+def significato_del_punteggio(esito: str) -> str:
+    """CHE COSA VUOL DIRE il punteggio, in un posto solo — T115.
+
+    `esito_del_moat` qui sopra dice CHE COSA HA FATTO il moat; questa dice che
+    cosa significa, ed esiste perche' la stessa frase viveva scritta a mano in
+    tre uscite e una delle tre diceva il contrario delle altre due::
+
+        scrittura MCP   judged 98.9 — the source SCORES as supporting this
+                        fact: that is the judge's score, not a check that the
+                        fact follows from it
+        scrittura CLI   grounded 98.9 — scored as supported by the source
+                        (the judge's score, not a check that it follows)
+        LETTURA         [verificato: la fonte lo implica, 98.9]
+
+    ⚠️ La terza non e' una variante di forma: promette un'IMPLICAZIONE che
+    nessuno ha verificato, e la promette su un fatto SENZA verdetto — misurato
+    il 18/09 alla porta MCP, `status='model_claim'`, `grounding_score=98.868`.
+    Il commento sopra quella riga (`temporal_context.py:194`) dichiarava gia'
+    l'intenzione giusta — «Si marca SOLO quando il verdetto c'e'» — mentre la
+    condizione guardava `isinstance(_gs, (int, float))`, cioe' il TIPO del
+    campo. `test_la_riga_che_mente.py` aveva curato la scrittura ad agosto: la
+    lettura e' rimasta indietro, che e' la classe «una cura nasce su una
+    superficie e le altre restano indietro».
+
+    🔑 IL SIGNIFICATO DIPENDE SOLO DALL'ESITO — non dal punteggio e non dalla
+    soglia: 99.98 su una fonte che NEGA il fatto e 99.98 su una citazione
+    letterale sono indistinguibili per il giudice (`test_la_riga_che_mente`).
+    Per questo la firma non prende il numero: il numero e' l'ETICHETTA, che
+    ogni porta stampa a modo suo (`judged N`, `grounded N`), e il significato
+    e' questa riga qui, uguale per tutte. Erano proprio le tre etichette
+    diverse a far sembrare «allineate a mano» tre frasi che non lo erano.
+
+    Una lingua sola, inglese, come il resto della riga di `history_line`
+    (`[current, since …]`, `PREVIOUSLY:`, `DISPUTED:`): una seconda lingua e'
+    la giuntura esatta in cui due copie ricominciano a divergere.
+    """
+    if esito == "passed":
+        return ("the source SCORES as supporting this fact: that is the "
+                "judge's score, not a check that the fact follows from it")
+    if esito == "failed":
+        return ("the source does NOT entail this fact: that is why it is "
+                "quarantined")
+    return ("the entailment moat did not run on this write; the score next to "
+            "it is not a verdict on the source")
+
+
 def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
     """Quale layer ha deciso la quarantena: ``moat`` / ``L1`` / ``gate``.
 

@@ -14220,10 +14220,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     _SN(grounding_score=_gs_out),
                     [w for w in (_gate_warnings or []) if isinstance(w, dict)],
                     source=_source)
+                # 2026-09-18 (T115): il TESTO non e' piu' scritto qui. Le tre
+                # uscite (questa, `cli.py` e la riga di lettura di
+                # `temporal_context`) lo prendono da
+                # `significato_del_punteggio`, perche' scritte a mano avevano
+                # gia' divergito: la lettura prometteva «la fonte lo implica»
+                # mentre queste due dicevano l'opposto. Qui il rendering resta
+                # identico byte per byte; cambia solo DA DOVE viene la frase.
+                from verimem.client import significato_del_punteggio as _sig
                 if _esito_moat == "failed":
-                    _moat = (
-                        f"judged {float(_gs_out):.1f} — the source does NOT "
-                        "entail this fact: that is why it is quarantined")
+                    _moat = f"judged {float(_gs_out):.1f} — {_sig(_esito_moat)}"
                 elif _esito_moat == "passed":
                     # CHI ha trattenuto, se non e' stato il moat. Senza questo
                     # la riga direbbe il vero e lascerebbe comunque il lettore
@@ -14234,19 +14240,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         and str(w.get("layer", "")).startswith("L1")})
                     _trattenuto = getattr(fact, "status", "") == "quarantined"
                     _moat = (
-                        f"judged {float(_gs_out):.1f} — the source SCORES as "
-                        "supporting this fact: that is the judge's score, not "
-                        "a check that the fact follows from it"
+                        f"judged {float(_gs_out):.1f} — {_sig(_esito_moat)}"
                         + (f"; the moat PASSED — this fact is quarantined by "
                            f"{', '.join(_altri)}, not by the moat"
                            if _trattenuto and _altri else
                            "; the moat passed, and the fact is quarantined by "
                            "another screen" if _trattenuto else ""))
                 else:
-                    _moat = (
-                        f"{_esito_moat} — the entailment moat did not run on "
-                        f"this write; the {float(_gs_out):.1f} next to it is "
-                        "not a verdict on the source")
+                    # ⚠️ UNA COSA CAMBIA QUI, e la dichiaro invece di lasciarla
+                    # scoprire: il numero non e' piu' DENTRO la frase («the
+                    # 98.9 next to it» -> «the score next to it»). Su questo
+                    # ramo `_gs_out` puo' essere None (`not_run:unknown`), e il
+                    # punteggio esce comunque nel suo campo della ricevuta.
+                    _moat = f"{_esito_moat} — {_sig(_esito_moat)}"
             elif not _source:
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "

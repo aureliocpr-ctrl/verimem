@@ -5526,11 +5526,26 @@ def save_cmd(
             # rispondere che la fonte lo implica (identico in EN). Il gate non
             # ha verificato nulla — ha dato un punteggio e non ha trovato
             # contraddizioni — e su una citazione letterale il punteggio e' lo
-            # stesso: indistinguibili. Qui la formulazione e' allineata a
-            # quella di `mcp_server`, cosi' le due porte dicono la stessa cosa.
-            console.print(f"  grounded {float(_gs):.1f} [dim]— scored as "
-                          f"supported by the source (the judge's score, not a "
-                          f"check that it follows)[/dim]")
+            # stesso: indistinguibili.
+            #
+            # 18/09 (T115) — «ALLINEATA A MANO» NON ERA ALLINEATA. Qui c'era
+            # scritto che la formulazione era allineata a quella di
+            # `mcp_server` «cosi' le due porte dicono la stessa cosa»: le due
+            # stringhe erano DIVERSE, e una terza uscita (la riga di lettura di
+            # `temporal_context`) diceva l'opposto di entrambe. Ora il
+            # significato viene da `significato_del_punteggio`; l'etichetta
+            # col numero resta quella di questa porta.
+            #
+            # ⚠️ RESIDUO DICHIARATO, e non e' questo il posto per curarlo: il
+            # ramo qui sopra sceglie con `_passa` (punteggio >= taglio), non
+            # con `esito_del_moat`. Sono due calcoli dello stesso esito, ed e'
+            # il difetto che `mcp_server` si e' curato il 28/08 — un fatto
+            # trattenuto da L1 con il moat PASSATO si sente rispondere «the
+            # judge found no support». Unificare il selettore tocca il ramo
+            # bocciato, che due banchi fissano: ticket a parte.
+            from verimem.client import significato_del_punteggio as _sig
+            console.print(f"  grounded {float(_gs):.1f} "
+                          f"[dim]— {_sig('passed')}[/dim]")
         else:
             _soglia = (f" (cut {float(_cut):.0f})"
                        if isinstance(_cut, (int, float)) else "")
