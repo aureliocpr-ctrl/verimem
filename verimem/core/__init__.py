@@ -13,6 +13,7 @@ from __future__ import annotations
 from .ricevuta import (
                        ALIAS_NON_ATTRIBUIBILE,
                        CHIAVI,
+                       DECISO_DAL_DEFAULT,
                        ESITI,
                        NON_MISURATO_REMOTA,
                        STATI_LIVELLO,
@@ -20,5 +21,5 @@ from .ricevuta import (
                        Ricevuta,
 )
 
-__all__ = ["ALIAS_NON_ATTRIBUIBILE", "CHIAVI", "ESITI",
+__all__ = ["ALIAS_NON_ATTRIBUIBILE", "CHIAVI", "DECISO_DAL_DEFAULT", "ESITI",
            "NON_MISURATO_REMOTA", "STATI_LIVELLO", "Livello", "Ricevuta"]

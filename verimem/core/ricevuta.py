@@ -72,6 +72,13 @@ NON_MISURATO_REMOTA = "non misurato: corsia remota"
 #: valore invece di un nome, perche' un nome qui sarebbe una risposta falsa.
 ALIAS_NON_ATTRIBUIBILE = "non attribuibile: alias riempiti dall'import"
 
+#: Il valore di `store_decided_by` quando NESSUN alias era posto: lo store e'
+#: quello di casa. Prima qui c'era `None`, e il docstring spiegava che quel
+#: `None` «dice che l'ha deciso il disco» — un significato affidato al
+#: silenzio, che e' la cosa che questo modulo esiste per togliere. Una parola
+#: costa una parola e non si confonde con «non lo so».
+DECISO_DAL_DEFAULT = "default: nessun alias d'ambiente"
+
 
 @dataclass(frozen=True)
 class Livello:
@@ -123,6 +130,15 @@ class Ricevuta:
     """Quello che il nucleo rende a OGNI porta, senza aggiunte ne' tagli."""
 
     esito: str
+    #: ⚠️ OBBLIGATORI, E SENZA DEFAULT. Stavano in fondo come `str | None =
+    #: None` mentre il docstring di questo modulo vietava quel None: la regola
+    #: viveva nel commento e non nel costruttore — che e' esattamente il difetto
+    #: per cui gli invarianti stanno qui dentro. Visto in lettura, non da me.
+    #: `store` e' un percorso, oppure NON_MISURATO_REMOTA.
+    #: `store_decided_by` e' il nome dell'alias, oppure DECISO_DAL_DEFAULT,
+    #: oppure ALIAS_NON_ATTRIBUIBILE / NON_MISURATO_REMOTA. Mai vuoto, mai None.
+    store: str
+    store_decided_by: str
     id: str | None = None
     punteggio: float | None = None
     soglia: float | None = None
@@ -132,8 +148,6 @@ class Ricevuta:
     livelli: tuple[Livello, ...] = ()
     fermato_da: str | None = None
     ritirati: tuple[str, ...] = ()
-    store: str | None = None
-    store_decided_by: str | None = None
     store_env_ignored: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -164,6 +178,20 @@ class Ricevuta:
         if self.punteggio is not None and self.soglia is None:
             raise ValueError("punteggio senza soglia: il margine non e' calcolabile")
 
+        #: DOVE SI SCRIVE, SI SCRIVE SEMPRE. Una stringa vuota qui sarebbe il
+        #: buco muto che NON_MISURATO_REMOTA esiste per impedire: chi legge non
+        #: saprebbe se il dato manca o se nessuno l'ha guardato.
+        if not self.store:
+            raise ValueError(
+                "store vuoto: una scrittura ha sempre un posto dove va, o dove "
+                "non e' andata. Se non lo sai, scrivi il perche' "
+                "(NON_MISURATO_REMOTA), non il silenzio")
+        if not self.store_decided_by:
+            raise ValueError(
+                "store_decided_by vuoto: chi ha scelto lo store ha un nome — "
+                "un alias, DECISO_DAL_DEFAULT, oppure la ragione per cui non "
+                "e' attribuibile")
+
     @property
     def margine(self) -> float | None:
         """`punteggio - soglia`, calcolato QUI e mai dal chiamante."""
@@ -192,8 +220,10 @@ class Ricevuta:
             #: SEMPRE — misurato: la porta ricostruisce il proprio dizionario e
             #: li perde — quindi sotto quella convenzione «assente» vuol dire
             #: due cose opposte: «l'ha deciso il disco» e «questa porta lo
-            #: butta». Presenti sempre: `store_decided_by=None` dice la prima,
-            #: e una chiave che manca diventa di nuovo un difetto visibile.
+            #: butta». Presenti sempre, e con un VALORE sempre: dal 18/09
+            #: `store_decided_by` non puo' piu' essere None — «l'ha deciso il
+            #: disco» si scrive DECISO_DAL_DEFAULT, perche' un significato
+            #: affidato al None lo legge come «non lo so» il primo che passa.
             "store": self.store,
             "store_decided_by": self.store_decided_by,
             "store_env_ignored": list(self.store_env_ignored),
