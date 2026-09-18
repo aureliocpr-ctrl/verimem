@@ -134,6 +134,32 @@ def _service_enabled() -> bool:
     return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _FALSY
 
 
+#: ⚠️ QUELLO CHE `scipy.linalg` NON TRASCINA, e che percio' resta da importare
+#: quando la richiesta e' gia' in corso. La catena della prima scrittura e'
+#: `transformers` -> `sklearn` -> `scipy`, e `sklearn` non entra con
+#: `scipy.linalg`: con il daemon SPENTO il warm di sopra basta (3 giri su 3),
+#: con il daemon ACCESO — il caso dell'applicazione — no. Misurato alla porta
+#: MCP vera il 2026-09-17, stesso comando, una variabile sola::
+#:
+#:     senza questi:  chiamata 1  180.35 s  SCADUTO, store di prova 0
+#:     con questi  :  chiamata 1   33.90 s, chiamata 2 0.41 s, scritture 2 su 2
+#:
+#: ⚠️ `transformers` NON E' IN QUESTA LISTA ED E' UNA SCELTA, non una svista:
+#: da solo porta la memoria da 20,6 a 769,4 MB, mentre questi cinque la portano
+#: da 20,7 a 141,5. Sono 626 MB per ogni processo che apre il server, anche per
+#: chi legge soltanto, in cambio di 24 s sulla PRIMA scrittura e una volta
+#: sola. Presidiato da
+#: tests/test_il_preload_scalda_anche_sklearn_e_scipy.py, terza cella: se
+#: qualcuno ce lo rimette per far passare un rosso, il banco cade.
+_LIBRERIE_CHE_SCIPY_LINALG_NON_TRASCINA = (
+    "scipy.special",
+    "scipy.interpolate",
+    "scipy.optimize",
+    "scipy.stats",
+    "sklearn.utils.validation",
+)
+
+
 def _scalda_le_librerie_del_giudice(*, log=None) -> None:
     """Carica le LIBRERIE che il giudice usera', all'avvio e non sotto richiesta.
 
@@ -196,12 +222,34 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
     try:
         from ._import_lock import lock_import
         with lock_import():
+            import scipy.interpolate  # noqa: F401
             import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
+            import scipy.optimize  # noqa: F401
+            import scipy.special  # noqa: F401
+            import scipy.stats  # noqa: F401
         if log is not None:
             log.info("mcp_preload_librerie_del_giudice_pronte")
     except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
         if log is not None:
             log.warning("mcp_preload_librerie_del_giudice_fallito", error=str(exc))
+    # SKLEARN STA IN UN BLOCCO SUO, e non e' pignoleria: non e' una dipendenza
+    # dichiarata (pyproject.toml porta scipy, non scikit-learn). Dove manca, i
+    # quattro di sopra devono restare caricati lo stesso — tenerlo nello stesso
+    # `try` farebbe dichiarare fallito un warm che invece ha funzionato, e
+    # nasconderebbe il warm buono dietro una libreria facoltativa.
+    #
+    # E dentro il lock ci vanno SOLO import: niente ciclo, niente __import__.
+    # Misurato il 18/09: il ciclo faceva cadere il presidio del lock
+    # («preload.py: dentro un with lock_import() c'e' qualcosa che non e' un
+    # import: For») e __import__ quello dei sink, che lo elenca con eval ed
+    # exec. Due presidi di casa, tutti e due nel giusto.
+    try:
+        from ._import_lock import lock_import
+        with lock_import():
+            import sklearn.utils.validation  # noqa: F401
+    except Exception as exc:  # noqa: BLE001 — facoltativa per disegno
+        if log is not None:
+            log.info("mcp_preload_sklearn_assente", error=str(exc))
 
 
 #: Quanto costa il modello del giudice, misurato il 2026-09-06 nel venv del
