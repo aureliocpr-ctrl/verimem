@@ -179,6 +179,12 @@ def _forma_confrontabile(percorso: str | Path) -> str:
     dire se due percorsi sono lo stesso posto per chi li ha scritti, non per il
     filesystem.
     """
+    # ⚠️ Il vuoto esce vuoto: `os.path.normpath("")` restituisce «.», cioe' la
+    # directory corrente, e un alias NON POSTO diventerebbe un percorso valido.
+    # Misurato: con le tre variabili a None la ricevuta dichiarava `unknown`
+    # («ce n'erano, nessuna combacia») invece di `default` («non ce n'erano»).
+    if not percorso or not str(percorso).strip():
+        return ""
     try:
         return os.path.normcase(os.path.normpath(os.path.expanduser(str(percorso))))
     except (OSError, ValueError, TypeError):
@@ -237,11 +243,19 @@ class ProvenienzaDataDir(NamedTuple):
         atteso = _forma_confrontabile(percorso)
         if not atteso:
             return self.IGNOTO
+        posta = False
         for nome in _ALIAS_DATA_DIR:
             radice = _forma_confrontabile(os.environ.get(nome, "").strip())
-            if radice and (atteso == radice or atteso.startswith(radice + os.sep)):
+            if not radice:
+                continue
+            posta = True
+            if atteso == radice or atteso.startswith(radice + os.sep):
                 return nome
-        return self.DISCO
+        # ⚠️ Variabili poste ma nessuna che combaci (il caso symlink qui sopra):
+        # `default` significa UNA cosa sola, «nessuna variabile era posta, ha
+        # deciso il disco». Dirlo qui sarebbe una dichiarazione falsa — cioe' il
+        # difetto che questo campo cura, rifatto un livello piu' in basso.
+        return self.DISCO if not posta else self.IGNOTO
 
     def dichiarazione(self) -> str:
         """Una riga per una porta: chi ha deciso, e che cosa e' stato ignorato.

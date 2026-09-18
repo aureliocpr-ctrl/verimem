@@ -160,11 +160,14 @@ def test_la_ricevuta_della_porta_mcp_nomina_lo_store(tmp_path: Path, monkeypatch
     chi = ricevuta["store_decided_by"]
     percorso = Path(ricevuta["store"]).resolve()
     if chi == "default":
+        assert not any(os.environ.get(n, "").strip() for n in _ALIAS), (
+            f"dice `default`, che significa «nessuna variabile posta», ma una "
+            f"c'è: {ricevuta}")
+    elif chi == "unknown":
         assert all(
-            Path(v).resolve() not in percorso.parents
-            for v in (os.environ.get(n, "") for n in _ALIAS)
-            if v
-        ), f"dice `default` ma una variabile punta proprio lì: {ricevuta}"
+            Path(v).resolve() != percorso and Path(v).resolve() not in percorso.parents
+            for v in (os.environ.get(n, "").strip() for n in _ALIAS) if v
+        ), f"dice `unknown` ma una variabile punta proprio lì: {ricevuta}"
     else:
         radice = Path(os.environ[chi]).resolve()
         assert radice == percorso or radice in percorso.parents, (
@@ -188,6 +191,25 @@ def test_una_ricevuta_non_fa_cadere_una_scrittura_riuscita() -> None:
 
     assert prov.deciso_da_per("") == "unknown"
     assert prov.deciso_da_per(None) == "unknown"  # type: ignore[arg-type]
+
+
+def test_un_alias_che_non_combacia_non_diventa_default(tmp_path: Path, monkeypatch) -> None:
+    """Variabili poste ma nessuna punta allo store usato: `unknown`, non `default`.
+
+    ⚠️ `default` significa UNA cosa sola — nessuna variabile era posta, ha deciso
+    il disco. Dirlo quando le variabili ci sono e semplicemente non combaciano
+    (il caso symlink dichiarato nel docstring) è una dichiarazione falsa, cioè
+    esattamente il difetto che questa PR cura, rifatto un livello più in basso."""
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path / "una-cartella"))
+    monkeypatch.setenv("ENGRAM_DATA_DIR", str(tmp_path / "un-altra"))
+    monkeypatch.delenv("VERIMEM_DATA_DIR", raising=False)
+    from verimem._compat import provenienza_data_dir
+
+    risposta = provenienza_data_dir().deciso_da_per(tmp_path / "terza" / "semantic.db")
+
+    assert risposta == "unknown", (
+        "con due alias posti e nessuno che combacia la ricevuta dichiara "
+        f"`{risposta}`: dice che non c'era nessuna variabile, e non è vero")
 
 
 def test_senza_variabili_la_ricevuta_dice_default(tmp_path: Path, monkeypatch) -> None:
