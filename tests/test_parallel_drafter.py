@@ -1,6 +1,6 @@
 """Cycle 228 (2026-05-23) — H8c parallel drafter (B4 NUCLEAR catena).
 
-RED marker: ``from verimem.parallel_drafter import parallel_draft_communities``
+RED marker: ``from attic.parallel_drafter import parallel_draft_communities``
 must fail on master.
 
 H8c hypothesis (cross-project bridge — META-PROCESS B4 NUCLEAR step 2):
@@ -29,7 +29,7 @@ from pathlib import Path
 import numpy as np
 
 # RED MARKER
-from verimem.parallel_drafter import parallel_draft_communities
+from attic.parallel_drafter import parallel_draft_communities
 
 
 def _cluster_emb(seed: int, noise: float, sample: int) -> bytes:

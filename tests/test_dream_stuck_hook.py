@@ -1,6 +1,6 @@
 """Cycle 175.1 (2026-05-22) — dream_stuck_hook contract tests.
 
-Hook between ``verimem.active_learning.select_stuck_candidates`` and the
+Hook between ``attic.active_learning.select_stuck_candidates`` and the
 Auto-Dream pipeline. Pure seed builder: returns a dict that
 ``auto_dream_worker._propose_via_engram`` can splice into the
 ``instructions`` text passed to ``propose_dream_tasks``.
@@ -13,7 +13,7 @@ Scope cycle 175.1 — SOFT retry:
   >10% promotion rate in 20 dream cycles) does NOT fire with the soft
   retry alone — see ``docs/cycle174_active_learning_design.md``.
 
-RED marker: ``import verimem.dream_stuck_hook`` must fail on master.
+RED marker: ``import attic.dream_stuck_hook`` must fail on master.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from unittest.mock import patch
 import pytest
 
 # RED MARKER
-from verimem.dream_stuck_hook import build_stuck_retry_seed
+from attic.dream_stuck_hook import build_stuck_retry_seed
 from verimem.skill import Skill, SkillLibrary
 
 # ---------------------------------------------------------------------------
@@ -151,11 +151,11 @@ class TestBuildStuckRetrySeed:
         self, skill_db_with_stuck: Path,
     ) -> None:
         """Composition contract: build_stuck_retry_seed must forward to
-        verimem.active_learning.select_stuck_candidates with the same DB
+        attic.active_learning.select_stuck_candidates with the same DB
         path + max_n kwarg. Falsifies any future implementation that
         re-implements the SELECT logic instead of composing."""
         with patch(
-            "verimem.dream_stuck_hook.select_stuck_candidates",
+            "attic.dream_stuck_hook.select_stuck_candidates",
             return_value=["id-alpha", "id-beta"],
         ) as mock_sel:
             out = build_stuck_retry_seed(

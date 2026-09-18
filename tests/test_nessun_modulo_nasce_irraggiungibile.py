@@ -51,12 +51,14 @@ PKG = Path(__file__).resolve().parent.parent / "verimem"
 #: con cui si corregge il prodotto.
 PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 
-#: Misurato il 2026-07-31 (38), riabbassato il 2026-09-18 (32) quando 20 moduli
+#: Misurato il 2026-07-31 (38), riabbassato il 2026-09-18 a 32 quando 20 moduli
 #: che nessuna porta raggiungeva sono usciti dal pacchetto verso `attic/`. Il
 #: numero puo' SCENDERE quando si collega, si cancella o si ARCHIVIA qualcosa; se
 #: sale, un modulo e' nato staccato e il test lo dice subito. Non e' un obiettivo
 #: di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 32
+#: Poi a 1 quando sono usciti anche i 41 dell'archivio: resta `test_isolation`,
+#: che nessuna porta raggiunge ma che il conftest usa come guardia (T94).
+IRRAGGIUNGIBILI_NOTI = 1
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
@@ -88,7 +90,7 @@ def _eseguibile(f: Path) -> bool:
 
     `python -m verimem.X` E' UNA PORTA. Il primo giro non lo considerava e
     dichiarava irraggiungibile `compose_daemon`, che il README documenta
-    testualmente: «Run it one-shot (python -m verimem.compose_daemon --db ...)»
+    testualmente: «Run it one-shot (python -m attic.compose_daemon --db ...)»
     — provato, funziona, e lo `--help` spiega che lo scheduling resta all'OS
     per scelta. Il censimento sovrastimava il problema, che e' il modo in cui
     uno strumento di misura fa perdere tempo invece di farne guadagnare.

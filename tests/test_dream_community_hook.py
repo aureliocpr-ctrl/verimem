@@ -13,7 +13,7 @@ prioritises **topologically-cohesive** clusters when proposing skill
 synthesis tasks, instead of relying only on episode-cosine clustering
 (cycle #34/#35).
 
-RED marker: ``from verimem.dream_community_hook import
+RED marker: ``from attic.dream_community_hook import
 build_community_seed`` must fail on master.
 """
 from __future__ import annotations
@@ -24,10 +24,9 @@ from unittest.mock import patch
 
 import pytest
 
-from tests.causal_fixture_helper import add_causal_clique_edges
-
 # RED MARKER
-from verimem.dream_community_hook import build_community_seed
+from attic.dream_community_hook import build_community_seed
+from tests.causal_fixture_helper import add_causal_clique_edges
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (
@@ -142,7 +141,7 @@ class TestBuildCommunitySeed:
         """Composition contract: build_community_seed must forward to
         verimem.community_detector.detect_communities."""
         with patch(
-            "verimem.dream_community_hook.detect_communities",
+            "attic.dream_community_hook.detect_communities",
             return_value={
                 "algorithm": "louvain",
                 "n_communities": 2,

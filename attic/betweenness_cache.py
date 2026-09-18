@@ -38,7 +38,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from verimem.highway_nodes import get_highway_nodes
+from attic.highway_nodes import get_highway_nodes
 
 _DEFAULT_CACHE_NAME = "betweenness_cache.json"
 _DEFAULT_MAX_AGE_S = 30 * 60.0  # 30 min, matches Auto-Dream cadence

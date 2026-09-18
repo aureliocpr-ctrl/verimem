@@ -28,8 +28,8 @@ import time
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from .contradiction import Contradiction, ContradictionStore
-    from .semantic import Fact, SemanticMemory
+    from verimem.contradiction import Contradiction, ContradictionStore
+    from verimem.semantic import Fact, SemanticMemory
 
 
 _FP_AGE_MAX_DAYS = 30.0

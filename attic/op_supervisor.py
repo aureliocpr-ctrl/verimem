@@ -7,7 +7,7 @@ quando una memory op fails N volte consecutive entro window, circuit
 
 B4 concatenazione → STATO SUPERIORE engineering:
   clp.agentos.supervisor (process-level Erlang supervisor, LOOP 342)
-  + verimem.syscall_bridge (typed boundary cycle 364)
+  + attic.syscall_bridge (typed boundary cycle 364)
   + circuit-breaker pattern (Hystrix/Polly)
   ⇒ OS-native memory layer ora ha FAULT-ISOLATION at operation level.
 

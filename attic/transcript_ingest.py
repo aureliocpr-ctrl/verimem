@@ -17,8 +17,8 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from .redaction import redact_secrets
-from .transcript_index import TranscriptIndex, Turn
+from verimem.redaction import redact_secrets
+from verimem.transcript_index import TranscriptIndex, Turn
 
 #: Root di default dei transcript di Claude Code.
 DEFAULT_PROJECTS_DIR = Path.home() / ".claude" / "projects"
@@ -177,12 +177,12 @@ def find_current_session(projects_dir=None) -> Path | None:
 def main(argv: list[str] | None = None) -> int:
     """CLI: ingesta i transcript di Claude Code nel Tier C.
 
-    Un SessionEnd hook può chiamare ``python -m verimem.transcript_ingest``
+    Un SessionEnd hook può chiamare ``python -m attic.transcript_ingest``
     (default ``--current``) per la cattura automatica. Onora
     ``HIPPO_TRANSCRIPT_DB`` per la destinazione dello store.
     """
     ap = argparse.ArgumentParser(
-        prog="verimem.transcript_ingest",
+        prog="attic.transcript_ingest",
         description="Ingest Claude Code session transcripts into the Tier C index.",
     )
     ap.add_argument("--all", action="store_true",
