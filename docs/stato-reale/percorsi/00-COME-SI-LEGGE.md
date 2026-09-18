@@ -109,3 +109,9 @@ mai avuto). Aprire un ticket vale più che correggere la riga.
 | `01-da-zero-a-un-fatto-verificato.md` | da zero, dieci minuti | U-C |
 | `02-un-agente-che-lavora-un-ora.md` | l'agente che lavora | U-A |
 | `03-due-istanze-sullo-stesso-store.md` | due istanze, uno store | U-B |
+| `04-una-risposta-che-cita-la-fonte.md` | rispondere mostrando su cosa ci si regge | — |
+| `05-numeri-con-unita.md` | misure: la cifra senza unità non è un dato | — |
+
+I due in fondo sono nati il 18/09 e **non** hanno una lettera: la pagina dei
+percorsi ne descrive tre, questi sono i due campi d'uso che nessuno dei tre
+copriva. Chi riconcilia le due liste tolga questa nota.
