@@ -82,13 +82,19 @@ on:
   pull_request: {}
   push:
     branches: [main]
+  # Un commento con la Definition of Done arriva SEMPRE dopo che il check ha
+  # gia' letto i commenti: la richiesta non esiste prima di essere aperta, e il
+  # passo legge nei primi secondi. Misurato il 18/09 su tre richieste: il
+  # commento e' nato 20 s, 26 s e 10 s dopo il run che lo cercava.
+  issue_comment:
+    types: [created, edited]
   workflow_dispatch: {}
 
 permissions:
   contents: read
 
 concurrency:
-  group: messaggi-${{ github.ref }}
+  group: messaggi-${{ github.event_name }}-${{ github.ref }}
   # ⚠️ `false`, e il motivo l'ho misurato su questa stessa PR. Con
   # `cancel-in-progress: true` ogni push cancellava il run del push precedente:
   # cinque SHA su sette sono rimasti `cancelled`, cioe' SENZA VERDETTO — ed e'
@@ -100,6 +106,7 @@ concurrency:
 
 jobs:
   messaggi:
+    if: github.event_name != 'issue_comment'
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -236,3 +243,34 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: |
           python scripts/messaggio_pulito.py --range "HEAD~40..HEAD" || true
+
+  riapri:
+    # Il commento non giudica: RILANCIA il run `pull_request` della richiesta,
+    # cosi' a diventare verde e' il check VERO, quello su cui si fonde. Un job
+    # che giudicasse qui creerebbe un check DIVERSO, e la richiesta resterebbe
+    # rossa con accanto un verde che non ferma niente.
+    if: >-
+      github.event_name == 'issue_comment'
+      && github.event.issue.pull_request != null
+      && contains(github.event.comment.body, '### Definition of Done')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+      pull-requests: read
+    steps:
+      - name: Il commento riapre il cancello
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NUMERO: ${{ github.event.issue.number }}
+          DEPOSITO: ${{ github.repository }}
+        run: |
+          tip="$(gh api "repos/$DEPOSITO/pulls/$NUMERO" --jq .head.sha)"
+          echo "richiesta #$NUMERO, tip $tip"
+          id="$(gh api             "repos/$DEPOSITO/actions/runs?head_sha=$tip&event=pull_request"             --jq '[.workflow_runs[] | select(.name == "messaggi")][0].id // empty')"
+          if [ -z "$id" ]; then
+            echo "nessun run del cancello su quel tip: niente da rilanciare"
+            exit 0
+          fi
+          echo "rilancio il run $id"
+          gh api -X POST "repos/$DEPOSITO/actions/runs/$id/rerun-failed-jobs"             || gh api -X POST "repos/$DEPOSITO/actions/runs/$id/rerun"
