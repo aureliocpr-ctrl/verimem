@@ -180,6 +180,10 @@ dev = [
   "pytest-benchmark>=5.0.0",
   "respx>=0.21.0",   # HTTPX request mocking for test_llm_client / test_tools_extra_web
   "hypothesis>=6.100",  # property-based invariants (G5 gate tests) — was only installed by hand
+  # Il tetto per test. Era installato su una macchina di sviluppo e NON qui:
+  # in locale il tetto avrebbe funzionato e in CI la chiave `timeout` sarebbe
+  # stata ignorata in silenzio — una rete che c'e' solo dove non serve.
+  "pytest-timeout>=2.3.0",
   "ruff>=0.4.0",
   "build>=1.2.0",
 ]
@@ -238,6 +242,28 @@ verimem = [
 testpaths = ["tests"]
 addopts = "-v --tb=short --strict-markers"
 asyncio_mode = "auto"
+# IL TETTO PER TEST — perche' un blocco diventi un rosso col NOME e lo STACK.
+# Il 18/09 il job macOS di main e' stato cancellato dopo il tetto di 50 minuti
+# (ci.yml:229): il log si ferma al 40%, tace 35 minuti e alla chiusura GitHub
+# termina quattro processi Python orfani. Un job ucciso non dice QUALE test e'
+# fermo; un tetto per test lo nomina e stampa gli stack.
+#
+# I 300 s sono MISURATI, e su due macchine diverse perche' quella che si blocca
+# non e' questa:
+#   · sul runner macOS di un job VERDE (run 35258321068, 11598 righe di esito in
+#     1470 s) il silenzio piu' lungo fra due test consecutivi e' 44,5 s -> il
+#     tetto deve stare sopra 134 s;
+#   · su una macchina di sviluppo l'elemento piu' lento e' 54,2 s, di cui 49,5 s
+#     di SETUP (il giudice che carica) sul file che seguiva il blocco.
+# 300 s sta sopra entrambi con margine, e dieci volte sotto il tetto del job.
+timeout = 300
+# `thread` e non `signal`: su Windows `signal` non c'e', e non interrompe un
+# thread fermo dentro un import. `thread` stampa lo stack di TUTTI i thread, che
+# e' cio' che manca oggi per dire dove si ferma il giudice.
+timeout_method = "thread"
+# NIENTE `timeout_func_only`: il blocco misurato vive nel CARICAMENTO, cioe'
+# nel setup e nelle fixture, non nella chiamata. Un tetto che guarda solo la
+# chiamata lascerebbe fuori proprio il caso per cui esiste.
 filterwarnings = [
   # Promote internal deprecation warnings to errors so we don't ship them.
   "ignore::DeprecationWarning:_pytest.*",
