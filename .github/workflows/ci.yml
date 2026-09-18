@@ -226,7 +226,19 @@ jobs:
     # giorni (fade02f0 py3.10 il 03/09, bb93d120 py3.12 il 04/09, entrambi a 35:00
     # esatti, «The operation was canceled»). 50 lascia il tappo (un hang non aspetta
     # 6 ore) senza tagliare un run sano. Un job rosso resta rosso.
-    timeout-minutes: ${{ matrix.os == 'windows-latest' && 90 || 50 }}
+    # 2026-09-18: windows da 90 a 120. Le quattro misure qui sopra erano
+    # 47,6-60,3; oggi la suite su windows dura 83 MINUTI e il tetto ne lasciava
+    # 90: sette minuti di margine, il 9%. Il job 105705553276 e' stato
+    # cancellato a 90 min 22 s DOPO che pytest aveva gia' chiuso verde quattro
+    # secondi prima - «12857 passed, 44 skipped, 45 deselected, 132 xfailed in
+    # 5011.34s (1:23:31)» - quindi non si e' perso un verdetto incerto, si e'
+    # buttato un verdetto GIA' FATTO, e a chi controlla `gh pr checks` lo mostra
+    # come `fail`.
+    # ⚠️ Questo NON rende windows piu' veloce: restano 83 minuti per giro, e il
+    #   punto aperto scritto qui sopra resta intero - una gamba scaduta e' muta.
+    #   Se anche a 120 si cancella, la suite sta crescendo e la cura non e'
+    #   alzare ancora: e' tagliare cosa gira su windows.
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 120 || 50 }}
     strategy:
       fail-fast: false
         # Cost-aware matrix (2026-07-04): ubuntu across all supported Python
