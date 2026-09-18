@@ -297,11 +297,38 @@ def autotest() -> int:
     b = analizza(PACCHETTO, modulo_finto="modulo_finto_senza_porta")
     uscita_b = stampa(b, dettaglio=False)
     print()
-    if uscita_a == 0 and uscita_b == 1:
-        print("AUTOTEST VERDE: (a) esce 0 e (b) esce 1 — il cricchetto morde.")
+    # T99 — LA PROPRIETA' E' RELATIVA, NON ASSOLUTA. Fino al 2026-09-18 qui
+    # c'era `if uscita_a == 0 and uscita_b == 1`, che pretendeva il pacchetto
+    # com'e' VERDE: con l'albero legittimamente rosso (qualcuno ha appena
+    # staccato un modulo) stampava «AUTOTEST ROSSO: (a) esce 1 (atteso 0)» e
+    # mandava a cercare il difetto NELLO STRUMENTO proprio mentre il cricchetto
+    # stava mordendo. Misurato abbassando un tetto: C2 35/28 con l'albero rosso,
+    # 36/28 col finto — il rilevatore lo vedeva benissimo.
+    # Le proprieta' sono DUE, con DUE cure diverse, e si dichiarano separate:
+    #   · il RILEVATORE vede il finto  -> C2 sale di esattamente 1 (se no: codice)
+    #   · il TETTO morde -> se l'albero e' verde, il finto lo fa diventare rosso
+    #     (se no: il tetto e' sopra il valore misurato, si abbassa)
+    # Con l'albero gia' rosso la seconda non e' osservabile: si SCRIVE, invece di
+    # trasformarla in un rosso dello strumento.
+    c2_a = len(a["C2_nessuna_porta"])
+    c2_b = len(b["C2_nessuna_porta"])
+    if c2_b != c2_a + 1:
+        print(f"AUTOTEST ROSSO: il RILEVATORE non vede il modulo finto — C2 passa "
+              f"da {c2_a} a {c2_b}, atteso {c2_a + 1}. Non e' un tetto: e' il codice.")
+        return 1
+    print(f"il rilevatore vede il finto: C2 {c2_a} -> {c2_b}.")
+    if uscita_a != 0:
+        print(f"L'ALBERO E' ROSSO PER CONTO SUO (a esce {uscita_a}): il verdetto sta "
+              "nelle righe sopra e non e' un difetto di questo strumento. Il "
+              "rilevatore funziona, quindi l'autotest passa.")
         return 0
-    print(f"AUTOTEST ROSSO: (a) esce {uscita_a} (atteso 0), (b) esce {uscita_b} (atteso 1).")
-    return 1
+    if uscita_b != 1:
+        print(f"AUTOTEST ROSSO: l'albero e' verde ma il finto non lo fa diventare "
+              f"rosso (b esce {uscita_b}, atteso 1) — un TETTO e' sopra il valore "
+              "misurato: abbassalo nello stesso commit che lo ha fatto scendere.")
+        return 1
+    print("AUTOTEST VERDE: il rilevatore vede il finto e il cricchetto morde.")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:
