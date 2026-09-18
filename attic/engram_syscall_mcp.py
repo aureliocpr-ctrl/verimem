@@ -7,7 +7,7 @@ callable from any MCP-compatible host (Claude Code, Cursor, etc).
 A3 honest: NOT singolarità — engineering integration. Single-file
 MCP server, NO modification to the 10804-LOC engram/mcp_server.py
 monolith. These tools can later be wired into the main server
-or run this stand-alone via `python -m verimem.engram_syscall_mcp`.
+or run this stand-alone via `python -m attic.engram_syscall_mcp`.
 
 Tools exposed (5):
   engram_invoke_recall — typed top-k recall with audit
@@ -20,7 +20,7 @@ All tools route through engram_invoke (cycle 364) so they get the
 full safety stack: manifest validation + supervisor circuit-breaker
 + rate limiting + audit + optional capability token.
 
-Run: python -m verimem.engram_syscall_mcp
+Run: python -m attic.engram_syscall_mcp
 """
 from __future__ import annotations
 
@@ -46,7 +46,7 @@ def tool_engram_invoke_recall(query: str, k: int = 5,
 
     Returns {ok, result: {hits: [(fact_id, score)]}, audit_id, blocked_by}.
     """
-    from verimem.syscall_bridge import engram_invoke
+    from attic.syscall_bridge import engram_invoke
     return engram_invoke(
         "recall", {"query": query, "k": k}, actor=actor,
         capability_token=capability_token,
@@ -58,7 +58,7 @@ def tool_engram_invoke_mesh_query(text: str,
                                     actor: str = "mcp_client",
                                     capability_token: str | None = None) -> dict:
     """Publish a query on the mesh recall channel (vec_bus broadcast)."""
-    from verimem.syscall_bridge import engram_invoke
+    from attic.syscall_bridge import engram_invoke
     return engram_invoke(
         "mesh_query", {"text": text, "channel": channel, "sender": actor},
         actor=actor, capability_token=capability_token,
@@ -71,7 +71,7 @@ def tool_engram_invoke_mesh_fetch(channel: str,
                                     actor: str = "mcp_client",
                                     capability_token: str | None = None) -> dict:
     """Fetch recent mesh messages on a channel."""
-    from verimem.syscall_bridge import engram_invoke
+    from attic.syscall_bridge import engram_invoke
     return engram_invoke(
         "mesh_fetch",
         {"channel": channel, "since_ts": since_ts, "skip_own": skip_own},
@@ -81,7 +81,7 @@ def tool_engram_invoke_mesh_fetch(channel: str,
 
 def tool_engram_invoke_audit_tail(n: int = 20) -> list[dict]:
     """Read last N entries from verimem syscall audit JSONL."""
-    from verimem.syscall_bridge import engram_audit_tail
+    from attic.syscall_bridge import engram_audit_tail
     return engram_audit_tail(n=n)
 
 
@@ -94,7 +94,7 @@ def tool_engram_dashboard(format: str = "text", tail: int = 30) -> str:
 
     Returns: rendered string.
     """
-    from verimem.dashboard_widget import collect_state, render_json, render_text
+    from attic.dashboard_widget import collect_state, render_json, render_text
     state = collect_state(tail_n=tail)
     return render_json(state) if format == "json" else render_text(state)
 
@@ -220,7 +220,7 @@ def main() -> int:
     # MCP server transport path: lazy-imported only if SDK available
     print("[engram-syscall-mcp] MCP SDK available — server mode TBD by "
           "Wiring pending. Tool definitions available via "
-          "verimem.engram_syscall_mcp.get_tool_definitions()",
+          "attic.engram_syscall_mcp.get_tool_definitions()",
           file=sys.stderr)
     print(json.dumps({
         "server": "engram-syscall-mcp",

@@ -2,7 +2,7 @@
 
 Same composable pattern as cycle 175.1 dream_stuck_hook + cycle 187
 dream_community_hook. RED marker: ``from
-verimem.dream_thompson_hook import build_thompson_seed`` must fail.
+attic.dream_thompson_hook import build_thompson_seed`` must fail.
 """
 from __future__ import annotations
 
@@ -13,7 +13,7 @@ from unittest.mock import patch
 import pytest
 
 # RED MARKER
-from verimem.dream_thompson_hook import build_thompson_seed
+from attic.dream_thompson_hook import build_thompson_seed
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS skills (
@@ -86,7 +86,7 @@ class TestBuildThompsonSeed:
     ) -> None:
         """Composition contract: forwards to cycle 210 primitive."""
         with patch(
-            "verimem.dream_thompson_hook.thompson_sample_candidates",
+            "attic.dream_thompson_hook.thompson_sample_candidates",
             return_value=["mocked-id-1", "mocked-id-2"],
         ) as mock_sampler:
             out = build_thompson_seed(
@@ -111,7 +111,7 @@ class TestBuildThompsonSeed:
     ) -> None:
         """thompson_sample_candidates raise → empty seed, no crash."""
         with patch(
-            "verimem.dream_thompson_hook.thompson_sample_candidates",
+            "attic.dream_thompson_hook.thompson_sample_candidates",
             side_effect=RuntimeError("sampler down"),
         ):
             out = build_thompson_seed(skill_db_warmup, rng_seed=42)

@@ -9,7 +9,7 @@ are real numbers.
 """
 from __future__ import annotations
 
-from verimem.anchor_suspect import (
+from attic.anchor_suspect import (
     INSUFFICIENT_SUPPORT,
     RECORDS_SUSPECTED,
     SOURCE_NOT_TRUSTED,

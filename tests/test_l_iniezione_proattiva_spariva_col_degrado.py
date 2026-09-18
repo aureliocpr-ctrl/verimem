@@ -31,8 +31,8 @@ import tempfile
 import pytest
 
 import verimem.semantic as sem
+from attic.proactive_step_injector import StepInjector
 from verimem.client import Memory
-from verimem.proactive_step_injector import StepInjector
 
 PASSO = "controlla la superficie del magazzino K-77"
 
@@ -115,7 +115,7 @@ def test_il_docstring_dichiara_TUTTI_i_default_che_il_codice_ha():
     import inspect
     import re
 
-    import verimem.proactive_step_injector as psi
+    import attic.proactive_step_injector as psi
 
     doc = psi.__doc__ or ""
     for nome, par in inspect.signature(StepInjector.inject).parameters.items():

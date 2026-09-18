@@ -57,8 +57,8 @@ from pathlib import Path
 
 import numpy as np
 
-from . import embedding
-from .skill import Skill, SkillLibrary
+from verimem import embedding
+from verimem.skill import Skill, SkillLibrary
 
 
 def load_skills_with_embeddings(
@@ -102,7 +102,7 @@ def load_episode_reference_counts(
     a 547-episode corpus.
     """
     if data_dir is None:
-        from .config import CONFIG
+        from verimem.config import CONFIG
         data_dir = CONFIG.data_dir
     ep_db = Path(data_dir) / "episodes" / "episodes.db"
     counts: Counter[str] = Counter()

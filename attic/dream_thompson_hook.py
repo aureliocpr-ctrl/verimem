@@ -15,7 +15,7 @@ documented in fact ``d778cce2faa8`` (cycle 174 audit).
 
 Composes-over
 -------------
-* ``verimem.thompson_sampling.thompson_sample_candidates`` (cycle 210)
+* ``attic.thompson_sampling.thompson_sample_candidates`` (cycle 210)
 
 Defensive: missing DB / sampler raises → empty seed, never raises.
 """
@@ -24,7 +24,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from verimem.thompson_sampling import thompson_sample_candidates
+from attic.thompson_sampling import thompson_sample_candidates
 
 _EMPTY_SEED: dict[str, Any] = {
     "thompson_skill_ids": [],

@@ -1,7 +1,7 @@
 """Cycle 175.1 (2026-05-22) — dream_stuck_hook: composition seed.
 
 Connects the active-learning stuck-list cron (cycle 175,
-``verimem.active_learning.select_stuck_candidates``) to the Auto-Dream
+``attic.active_learning.select_stuck_candidates``) to the Auto-Dream
 trigger pipeline. The hook is intentionally tiny: a pure composition
 that returns a structured seed for the caller to splice into the
 ``instructions`` text passed to ``verimem.dream.propose_dream_tasks``.
@@ -37,7 +37,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from verimem.active_learning import select_stuck_candidates
+from attic.active_learning import select_stuck_candidates
 
 #: Returned when there are no stuck candidates or the DB is missing.
 #: Both keys MUST be present so callers can splice unconditionally.
@@ -74,7 +74,7 @@ def build_stuck_retry_seed(
     Args:
         skill_db: path to ``skills_index.db``.
         max_n: cap on number of stuck ids returned (default 3 — matches
-            the ``verimem.active_learning.select_stuck_candidates``
+            the ``attic.active_learning.select_stuck_candidates``
             default; keep both in lockstep so the soft retry size is
             consistent across the pipeline).
 

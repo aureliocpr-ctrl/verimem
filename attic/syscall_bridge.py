@@ -91,7 +91,7 @@ def _op_recall(args: dict) -> dict:
     omitted for caller-mediated lookup (privacy primitive consistent
     with mesh_memory).
     """
-    from verimem.mesh_memory import local_topk_embeddings
+    from attic.mesh_memory import local_topk_embeddings
 
     query = args.get("query")
     if not query or not isinstance(query, str):
@@ -113,7 +113,7 @@ def _op_recall(args: dict) -> dict:
 
 def _op_topk_embeddings(args: dict) -> dict:
     """topk_embeddings(query_vec_bytes, k, db_path) — privacy-preserving."""
-    from verimem.mesh_memory import local_topk_embeddings
+    from attic.mesh_memory import local_topk_embeddings
     qv = args.get("query_vec_bytes")
     k = int(args.get("k", 5))
     if not isinstance(qv, (bytes, bytearray)):
@@ -129,7 +129,7 @@ def _op_topk_embeddings(args: dict) -> dict:
 
 def _op_mesh_query(args: dict) -> dict:
     """mesh_query(text, channel) — publish query embedding on vec_bus."""
-    from verimem.mesh_memory import mesh_publish_query
+    from attic.mesh_memory import mesh_publish_query
     text = args.get("text")
     if not text or not isinstance(text, str):
         return {"ok": False, "error": "text (str) required"}
@@ -140,7 +140,7 @@ def _op_mesh_query(args: dict) -> dict:
 
 def _op_mesh_fetch(args: dict) -> dict:
     """mesh_fetch(channel, since_ts) — fetch recent mesh messages."""
-    from verimem.mesh_memory import mesh_fetch_recent
+    from attic.mesh_memory import mesh_fetch_recent
     channel = args.get("channel")
     if not channel:
         return {"ok": False, "error": "channel required"}
@@ -157,7 +157,7 @@ def _op_mesh_fetch(args: dict) -> dict:
 
 def _op_resonant_merge(args: dict) -> dict:
     """resonant_merge(query_vec, local_embs, remote_embs, beta)."""
-    from verimem.mesh_memory import mesh_resonant_merge
+    from attic.mesh_memory import mesh_resonant_merge
     qv = args.get("query_vec_bytes")
     if not isinstance(qv, (bytes, bytearray)):
         return {"ok": False, "error": "query_vec_bytes (bytes) required"}
@@ -246,7 +246,7 @@ def engram_invoke(
 
     # 1b. Capability token check (cycle 368): if required or provided
     if require_token or capability_token is not None:
-        from verimem.capability_token import verify_token
+        from attic.capability_token import verify_token
         if capability_token is None:
             rec = {**base_record, "blocked_by": "missing_capability_token",
                    "ok": False, "elapsed_sec": time.time() - t_start}
@@ -276,7 +276,7 @@ def engram_invoke(
 
     # 2a. Supervisor circuit-breaker (cycle 365): check if op circuit allows
     if use_supervisor:
-        from verimem.op_supervisor import get_default_supervisor
+        from attic.op_supervisor import get_default_supervisor
         sup = get_default_supervisor()
         ck = sup.check(op)
         if not ck["allowed"]:
@@ -311,7 +311,7 @@ def engram_invoke(
     except Exception as e:  # noqa: BLE001
         # Record failure with supervisor (circuit-breaker counts this)
         if use_supervisor:
-            from verimem.op_supervisor import get_default_supervisor
+            from attic.op_supervisor import get_default_supervisor
             get_default_supervisor().record_failure(
                 op, reason=f"{type(e).__name__}: {str(e)[:100]}",
             )
@@ -330,7 +330,7 @@ def engram_invoke(
     # Handler returned dict — feed ok status to supervisor
     op_ok = bool(result.get("ok", True))
     if use_supervisor:
-        from verimem.op_supervisor import get_default_supervisor
+        from attic.op_supervisor import get_default_supervisor
         sup = get_default_supervisor()
         if op_ok:
             sup.record_success(op)

@@ -1,6 +1,6 @@
 """Cycle #110.E (2026-05-16) — production spawn_callable.
 
-`verimem.daemon_runner.maybe_spawn_daemon` takes an injected
+`attic.daemon_runner.maybe_spawn_daemon` takes an injected
 `spawn_callable`. In production the SessionStart hook wires it to
 `production_spawn` which fires a real *detached* subprocess so the
 hook itself doesn't block on the child.

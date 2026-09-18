@@ -12,7 +12,7 @@ deterministic SELECT, no bandit / no randomness. Pure function
 the next Auto-Dream cycle. Falsifiable hypothesis H1 lives in the
 design doc; this file pins the function's contract.
 
-RED→GREEN: this file must fail import on verimem.active_learning.
+RED→GREEN: this file must fail import on attic.active_learning.
 """
 from __future__ import annotations
 
@@ -23,7 +23,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER
-from verimem.active_learning import select_stuck_candidates
+from attic.active_learning import select_stuck_candidates
 from verimem.skill import Skill, SkillLibrary
 
 # ---------------------------------------------------------------------------

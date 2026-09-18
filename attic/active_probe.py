@@ -33,10 +33,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from .composer import _copula_parse, subject_key
-from .epistemic import guarantee_rank, make_refuted, make_unbeaten
-from .self_provenance import is_self_ref
-from .source_trust import canonical_source
+from verimem.composer import _copula_parse, subject_key
+from verimem.epistemic import guarantee_rank, make_refuted, make_unbeaten
+from verimem.self_provenance import is_self_ref
+from verimem.source_trust import canonical_source
 
 __all__ = ["probe_fact"]
 

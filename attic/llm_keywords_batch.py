@@ -1,7 +1,7 @@
 """Cycle 168.1 (2026-05-22) — batch caller for LLM-augmented trigger_keywords.
 
 Composes over the cycle-168 pure function
-``verimem.llm_keywords_augment.extract_keywords`` and adds the missing
+``attic.llm_keywords_augment.extract_keywords`` and adds the missing
 piece: walk ``semantic.db`` rows with NULL / shallow
 ``trigger_keywords``, call the injected LLM, and persist the result
 via ``UPDATE facts``. The LLM call itself remains injection-only
@@ -47,7 +47,7 @@ import sqlite3
 from collections.abc import Callable
 from pathlib import Path
 
-from verimem.llm_keywords_augment import extract_keywords
+from attic.llm_keywords_augment import extract_keywords
 
 _EMPTY_SUMMARY: dict[str, int] = {
     "selected": 0,

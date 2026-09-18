@@ -128,7 +128,7 @@ def _persist_emergence_drafts(
     ``{"n_written": 0}`` on any failure mode (missing DB, no
     candidates, persist error). Never raises.
     """
-    from verimem.skill_draft_persist import persist_drafts
+    from attic.skill_draft_persist import persist_drafts
     from verimem.skill_drafter import draft_skill_from_community
     from verimem.skill_emergence_detector import detect_emerging_skills
 
@@ -174,7 +174,7 @@ def _propose_via_engram(*, engram_dir: Path) -> dict[str, Any]:
     Cycle 175.1 (2026-05-22) augments ``instructions`` with a soft retry
     hint for stuck-band candidates (trials ∈ [3, 10], fitness ∈
     (0.3, 0.5)). The hint is gathered by
-    ``verimem.dream_stuck_hook.build_stuck_retry_seed`` which composes
+    ``attic.dream_stuck_hook.build_stuck_retry_seed`` which composes
     over the cycle 175 ``select_stuck_candidates`` primitive. The
     cluster algorithm inside ``propose_dream_tasks`` is free to ignore
     the hint — soft retry by design. Hard retry deferred to 175.3
@@ -185,11 +185,11 @@ def _propose_via_engram(*, engram_dir: Path) -> dict[str, Any]:
     spawn a fresh process, so this only pays at fire-time).
     """
     from attic.adaptive_threshold import adaptive_thresholds
+    from attic.dream_community_hook import build_community_seed
+    from attic.dream_emergence_hook import build_emergence_seed
+    from attic.dream_stuck_hook import build_stuck_retry_seed
+    from attic.dream_thompson_hook import build_thompson_seed
     from verimem.dream import propose_dream_tasks
-    from verimem.dream_community_hook import build_community_seed
-    from verimem.dream_emergence_hook import build_emergence_seed
-    from verimem.dream_stuck_hook import build_stuck_retry_seed
-    from verimem.dream_thompson_hook import build_thompson_seed
 
     live_dirs = _live_dirs_from(engram_dir)
     shadow_root = engram_dir / "dreams" / f"auto-{int(time.time())}"
@@ -468,7 +468,7 @@ def _emetti_la_passata(out: dict[str, Any], now: float) -> None:
 
 
 def main() -> int:
-    from verimem.auto_dream_trigger import maybe_trigger_dream
+    from attic.auto_dream_trigger import maybe_trigger_dream
 
     engram_dir = _resolve_engram_dir()
     status = maybe_trigger_dream(

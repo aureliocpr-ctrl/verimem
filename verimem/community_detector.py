@@ -15,7 +15,7 @@ gracefully on pathologically large corpora.
 Composes-over, not replaces:
   * ``verimem.consolidation`` (pairwise cosine clustering, cycle #144)
   * ``verimem.facts_cluster_by_topic`` (string equality)
-  * ``verimem.hippo_pagerank`` (global centrality)
+  * ``attic.hippo_pagerank`` (global centrality)
 
 This function adds the **topological** view that the three above miss
 — facts grouped by ``lineage_to`` + ``causal_edges`` adjacency rather
