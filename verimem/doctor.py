@@ -793,6 +793,66 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
 
+    # -- il rifiuto del cancello -----------------------------------------------
+    # IL REFERTO NON NOMINAVA MAI IL RIFIUTO, misurato il 2026-09-18:
+    #
+    #     verimem doctor | grep -ic "reject"   ->   0
+    #
+    # e i due esiti non sono la stessa cosa. Un fatto quarantinato ESISTE nello
+    # store e si conta; un fatto rifiutato NON ENTRA, quindi di lui non resta
+    # niente da contare: l'unica traccia e' il libro mastro.
+    #
+    # E LO ZERO VA SPIEGATO, o si legge al rovescio. Il rifiuto scatta solo con
+    # gate_mode="reject" e il preset di partenza (balanced) lascia la manopola a
+    # None: «0 rifiuti» non vuol dire «il cancello non rifiuta mai», vuol dire
+    # che non gli e' mai stato CHIESTO. Misurato sul registro vero lo stesso
+    # giorno: admitted 10449, quarantined 1303, abstained 32, rejected assente.
+    #
+    # E DICE DI CHI PARLA, che e' la meta' della riga. Misurato: una scrittura
+    # dalla porta MCP entra nello store e il registro NON si muove — il libro
+    # mastro e' agganciato a `Memory.add()` e la porta MCP scrive un livello
+    # sotto. Senza la popolazione, la frase sarebbe vera su CLI e libreria e
+    # verrebbe letta come vera su tutto: il modo peggiore di sbagliare.
+    try:
+        from ._compat import data_dir as _dd_rif
+        _db_rif = _dd_rif() / "semantic" / "semantic.db"
+        _conteggi: dict[str, int] = {}
+        if _db_rif.exists():
+            import sqlite3 as _sq_rif
+            _cn_rif = _sq_rif.connect(f"file:{_db_rif}?mode=ro", uri=True)
+            try:
+                _conteggi = {str(a): int(n) for a, n in _cn_rif.execute(
+                    "SELECT action, COUNT(*) FROM trust_ledger GROUP BY action")}
+            except _sq_rif.Error:
+                _conteggi = {}
+            finally:
+                _cn_rif.close()
+        _porte_rif = (
+            "il libro mastro copre CLI e libreria, NON la porta MCP: una "
+            "scrittura da li' entra nello store e il registro non si muove "
+            "(misurato 2026-09-18)")
+        _n_rif = _conteggi.get("rejected", 0)
+        _tot_rif = sum(_conteggi.values())
+        if not _conteggi:
+            add("rifiuto", WARN,
+                f"nessun libro mastro leggibile in {_db_rif}: di rifiuti "
+                f"questo referto non sa dire NIENTE, che non e' «zero». "
+                f"{_porte_rif}")
+        elif _n_rif == 0:
+            add("rifiuto", OK,
+                f"mai richiesto (preset balanced, gate_mode None): 0 su "
+                f"{_tot_rif} decisioni registrate. Il cancello rifiuta solo "
+                f"con gate_mode=\"reject\", e il preset di partenza lascia la "
+                f"manopola a None: lo zero dice che non e' stato CHIESTO, non "
+                f"che non sia mai successo. {_porte_rif}",
+                "per chiederlo: preset strict, oppure gate_mode=\"reject\" "
+                "sulla singola scrittura")
+        else:
+            add("rifiuto", OK,
+                f"{_n_rif} rifiuti su {_tot_rif} decisioni registrate. "
+                f"{_porte_rif}")
+    except Exception as _e_rif:  # noqa: BLE001 — un referto non deve mai morire
+        _non_ho_potuto_guardare(add, "rifiuto", _e_rif)
     # -- vettori di un altro modello --------------------------------------------
     # Misurato il 2026-08-07: un backup del corpus non e' piu' interrogabile dopo un
     # cambio di modello — gli snapshot di maggio hanno vettori a 384
