@@ -57,7 +57,8 @@ async def _ricevuta_mcp() -> dict:
     return json.loads(blocchi[0])
 
 
-def _stdout_della_cli() -> str:
+def _stdout_della_cli(testo: str = "", fonte: str | None = None,
+                      extra_env: dict | None = None) -> str:
     """Lo stdout di una scrittura con fonte dalla CLI, come lo vede uno script.
 
     ⚠️ CORREZIONE DEL 18/09, e la premessa sbagliata era mia. La prima stesura
@@ -93,25 +94,21 @@ def _stdout_della_cli() -> str:
     #: Qui si misura il regime di chi usa il prodotto, non quello che l'import
     #: di un'altra porta ha lasciato nell'ambiente.
     env.pop("HIPPO_LOG_STDERR", None)
+    env.update(extra_env or {})
+    comando = [sys.executable, "-m", "verimem.cli", "save", testo or TESTO,
+               "--topic", TOPIC, "--json"]
+    sorgente = FONTE if fonte is None else fonte
+    if sorgente:
+        comando += ["--source", sorgente]
     esito = subprocess.run(
-        [sys.executable, "-m", "verimem.cli", "save", TESTO,
-         "--topic", TOPIC, "--source", FONTE, "--json"],
-        cwd=str(radice), env=env, capture_output=True, text=True,
+        comando, cwd=str(radice), env=env, capture_output=True, text=True,
         encoding="utf-8", errors="replace", timeout=600,
     )
     return esito.stdout or ""
 
 
-def _ricevuta_cli() -> dict:
-    """La ricevuta della CLI, estratta dallo stdout anche se non è pulito.
-
-    Il test qui sotto (`…_e_leggibile_da_sola`) inchioda il fatto che oggi
-    **non** lo è: una riga di giornale la precede sullo stesso flusso. Qui si
-    prende comunque l'ultimo oggetto JSON, perché il confronto fra le tre
-    ricevute deve poter girare anche mentre quel difetto è aperto — altrimenti
-    un difetto ne nasconderebbe un altro.
-    """
-    testo = _stdout_della_cli()
+def _json_dallo_stdout(testo: str) -> dict:
+    """L'ultimo oggetto JSON dello stdout, anche quando il flusso è sporco."""
     for riga in reversed(testo.splitlines()):
         riga = riga.strip()
         if riga.startswith("{"):
@@ -123,6 +120,18 @@ def _ricevuta_cli() -> dict:
         return json.loads(testo)
     except (json.JSONDecodeError, ValueError):
         return {}
+
+
+def _ricevuta_cli() -> dict:
+    """La ricevuta della CLI, estratta dallo stdout anche se non è pulito.
+
+    Il test qui sotto (`…_e_leggibile_da_sola`) inchioda il fatto che oggi
+    **non** lo è: una riga di giornale la precede sullo stesso flusso. Qui si
+    prende comunque l'ultimo oggetto JSON, perché il confronto fra le tre
+    ricevute deve poter girare anche mentre quel difetto è aperto — altrimenti
+    un difetto ne nasconderebbe un altro.
+    """
+    return _json_dallo_stdout(_stdout_della_cli())
 
 
 def _forma(r: dict) -> dict:
@@ -221,9 +230,74 @@ async def test_CONTROLLO_NEGATIVO_una_scrittura_fermata_dichiara_chi_l_ha_fermat
         strati = [w.get("layer") for w in avvisi if isinstance(w, dict) and w.get("layer")]
         return f"warnings[].layer={strati}" if strati else ""
 
-    esiti = {"SDK": _fermato_da(sdk), "MCP": _fermato_da(mcp)}
+    cli = _json_dallo_stdout(_stdout_della_cli(vanto, fonte=""))
+    esiti = {"SDK": _fermato_da(sdk), "MCP": _fermato_da(mcp),
+             "CLI": _fermato_da(cli)}
     assert all(esiti.values()), (
         "una scrittura trattenuta non dichiara CHI l'ha fermata su ogni porta: "
         f"{esiti}. Senza questo campo la ricevuta e' muta proprio nel caso in "
         "cui l'utente deve sapere perche' il suo fatto non e' entrato."
+    )
+
+
+@pytest.mark.asyncio
+async def test_CONTROLLO_NEGATIVO_T96_una_scrittura_degradata_non_si_chiama_ammessa(
+        isolated_corpus):
+    """T96. Una scrittura AMMESSA IN FORMA DEGRADATA non è una scrittura ammessa.
+
+    Il meccanismo, letto prima di scrivere il test: con
+    ``ENGRAM_GRADED_ADMISSION=1`` (`anti_confab_gate.py:175-190`) un punteggio
+    sotto la soglia su un fatto CON fonte non va più in quarantena — il fatto
+    resta come `model_claim` a bassa fiducia e la ricevuta registra lo scarto
+    con uno strato ``L4-grounding-graded`` (`:2875-2892`).
+
+    ⇒ Il negativo: nessuna porta può dire «ammesso» SENZA portarsi dietro quel
+    marchio. Se una lo dice, chi legge quella ricevuta crede di avere un fatto
+    verificato e ne ha uno tenuto per cortesia.
+
+    ⚠️ Se la degradazione non si accende, il test lo DICE invece di passare: un
+    controllo che non trova il caso non ha misurato niente.
+    """
+    import os
+
+    claim = "La coda ha 999 elementi."
+    fonte = "verbale: la coda aveva 500 elementi / rettifica: 540 elementi"
+    acceso = {"ENGRAM_GRADED_ADMISSION": "1"}
+    for chiave, valore in acceso.items():
+        os.environ[chiave] = valore
+    try:
+        from verimem.client import open_memory
+        sdk = dict(open_memory().add(claim, topic=TOPIC, source=fonte) or {})
+        from tests.test_mcp_thin import _invoke_tool
+        mcp = json.loads((await _invoke_tool(
+            "hippo_remember",
+            {"proposition": claim, "topic": TOPIC, "source": fonte}))[0])
+        cli = _json_dallo_stdout(
+            _stdout_della_cli(claim, fonte=fonte, extra_env=acceso))
+    finally:
+        for chiave in acceso:
+            os.environ.pop(chiave, None)
+
+    def _degradata(r: dict) -> bool:
+        return "-graded" in json.dumps(r, default=str)
+
+    def _dice_ammesso(r: dict) -> bool:
+        disp = (r.get("adjudication") or {}).get("disposition")
+        return str(disp).lower() in ("admitted", "ammesso")
+
+    porte = {"SDK": sdk, "MCP": mcp, "CLI": cli}
+    if not any(_degradata(r) for r in porte.values()):
+        raise AssertionError(
+            "il caso degradato non si e' acceso su NESSUNA porta: il controllo "
+            "non ha misurato niente. Disposizioni: "
+            + str({p: (r.get("adjudication") or {}).get("disposition")
+                   for p, r in porte.items()})
+        )
+    mute = {p: (r.get("adjudication") or {}).get("disposition")
+            for p, r in porte.items()
+            if _dice_ammesso(r) and not _degradata(r)}
+    assert not mute, (
+        "una scrittura degradata viene chiamata «ammessa» senza il marchio "
+        f"«-graded» da queste porte: {mute}. Chi legge crede di avere un fatto "
+        "verificato e ne ha uno tenuto in forma degradata."
     )
