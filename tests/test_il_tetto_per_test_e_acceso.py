@@ -54,18 +54,21 @@ def test_il_tetto_e_quello_misurato(pytestconfig):
     )
 
 
-def test_il_tetto_copre_anche_il_setup():
+def test_il_tetto_copre_anche_il_setup(pytestconfig):
     """`timeout_func_only` spegnerebbe il tetto proprio dove vive il blocco.
 
     Misurato il 18/09: sul file che seguiva il punto fermo, 49,5 s dei 54,2 s
     stanno nel SETUP — il giudice che carica. Un tetto che guarda solo la
     chiamata lascia fuori il caso per cui è nato.
+
+    ⚠️ RILIEVO DEL LEAD, accettato: la prima stesura chiamava
+    `_pytest.config.get_config()` e leggeva `cfg._parser._inidict` — due API
+    private che costruiscono una configurazione NUOVA. Misurava un'esecuzione
+    che non era questa, cioè non misurava niente. Qui si chiede la
+    configurazione VIVA, e il presidio viene in regalo: se il plugin non è
+    caricato l'opzione non è registrata, `getini` alza, e la cella è rossa.
     """
-    from _pytest.config import get_config  # noqa: PLC0415 - solo qui
-    cfg = get_config()
-    solo_chiamata = cfg.getini("timeout_func_only") if \
-        "timeout_func_only" in {o for o in cfg._parser._inidict} else False
-    assert not solo_chiamata, (
+    assert not pytestconfig.getini("timeout_func_only"), (
         "`timeout_func_only` è acceso: il tetto non guarderebbe setup e "
         "fixture, dove il blocco misurato vive."
     )
