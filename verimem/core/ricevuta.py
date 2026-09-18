@@ -80,6 +80,22 @@ ALIAS_NON_ATTRIBUIBILE = "non attribuibile: alias riempiti dall'import"
 DECISO_DAL_DEFAULT = "default: nessun alias d'ambiente"
 
 
+def _il_punteggio_porta_la_sua_scala(dove: str, punteggio, scala, modello) -> None:
+    """Un numero di cui non si sa la scala non e' una misura.
+
+    ⚠️ ERA SCRITTA DUE VOLTE — in `Livello` e in `Ricevuta` — con due
+    messaggi diversi. Due copie della stessa regola divergono: basta che
+    una delle due si allenti e la ricevuta ammette dal livello cio' che
+    vieta in cima. E' la classe ① (copia invece di superficie unica), cioe'
+    la ragione per cui questo modulo esiste, dentro questo modulo.
+    """
+    if punteggio is not None and (scala is None or modello is None):
+        raise ValueError(
+            f"{dove}: punteggio senza scala o senza modello — due livelli "
+            "punteggiano su scale diverse, e un numero senza la sua scala "
+            "non e' una misura")
+
+
 @dataclass(frozen=True)
 class Livello:
     """Che cosa ha fatto UN livello del cancello, e perche'."""
@@ -113,11 +129,8 @@ class Livello:
                 f"il livello {self.nome!r} e' {self.stato!r} senza ragione: "
                 "uno stato diverso da 'eseguito' senza ragione dice meno di un "
                 "campo assente, perche' sembra una risposta")
-        if self.punteggio is not None and (self.scala is None or self.modello is None):
-            raise ValueError(
-                f"il livello {self.nome!r} porta un punteggio senza scala o senza "
-                "modello: due livelli punteggiano su scale diverse, e un numero "
-                "senza la sua scala non e' una misura")
+        _il_punteggio_porta_la_sua_scala(
+            f"il livello {self.nome!r}", self.punteggio, self.scala, self.modello)
 
     def come_dizionario(self) -> dict[str, Any]:
         return {"nome": self.nome, "stato": self.stato, "ragione": self.ragione,
@@ -147,7 +160,10 @@ class Ricevuta:
     giudice: str | None = None
     livelli: tuple[Livello, ...] = ()
     fermato_da: str | None = None
-    ritirati: tuple[str, ...] = ()
+    #: ⚠️ OGGETTI, NON NOMI. Un ritiro con il solo identificatore non puo'
+    #: dire PERCHE' e' stato ritirato, ed e' la stessa meta' di ricevuta che
+    #: manca dappertutto: il fatto senza la ragione. Rilievo del pari, 18/09.
+    ritirati: tuple[Livello, ...] = ()
     store_env_ignored: tuple[str, ...] = ()
 
     def __post_init__(self) -> None:
@@ -171,10 +187,8 @@ class Ricevuta:
         #: pagato: il 13/09 ho calcolato un margine di ~60 confrontando un
         #: punteggio su scala 0-100 con un taglio di un'altra scala. Il margine
         #: vero era 0,31. Da qui in poi i tre numeri viaggiano insieme.
-        if self.punteggio is not None and (self.scala is None or self.modello is None):
-            raise ValueError(
-                "punteggio senza scala o senza modello: un numero di cui non si "
-                "sa la scala non e' una misura")
+        _il_punteggio_porta_la_sua_scala(
+            "la ricevuta", self.punteggio, self.scala, self.modello)
         if self.punteggio is not None and self.soglia is None:
             raise ValueError("punteggio senza soglia: il margine non e' calcolabile")
 
@@ -208,10 +222,10 @@ class Ricevuta:
                     f"livelli porta {type(_liv).__name__}: qui vanno oggetti "
                     "Livello, non i loro nomi")
         for _rid in self.ritirati:
-            if not isinstance(_rid, str) or not _rid:
+            if not isinstance(_rid, Livello):
                 raise ValueError(
-                    f"ritirati porta {type(_rid).__name__}: qui vanno gli "
-                    "identificatori ritirati, stringhe non vuote")
+                    f"ritirati porta {type(_rid).__name__}: qui vanno oggetti "
+                    "Livello, perche' un ritiro deve poter dire la sua ragione")
 
     @property
     def margine(self) -> float | None:
@@ -233,7 +247,7 @@ class Ricevuta:
             "giudice": self.giudice,
             "livelli": [liv.come_dizionario() for liv in self.livelli],
             "fermato_da": self.fermato_da,
-            "ritirati": list(self.ritirati),
+            "ritirati": [_r.come_dizionario() for _r in self.ritirati],
             #: ⚠️ SEMPRE PRESENTI, ANCHE VUOTI. Il percorso SDK di #63 li
             #: OMETTE quando non c'e' un alias («un campo assente dice: l'ha
             #: deciso il disco»), e finche' si guarda una porta sola funziona.
