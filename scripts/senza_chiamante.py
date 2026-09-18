@@ -69,7 +69,7 @@ PYPROJECT = RADICE / "pyproject.toml"
 # +1 su C2 (`core/__init__.py`, che nessuno importa) e +2 su D (anche
 # `core/ricevuta.py`, raggiungibile solo dal primo, che non ha porta).
 # LA RIDISCESA A 35 E 62 E' OBBLIGATORIA QUANDO LA TERZA PORTA RENDE LA
-# RICEVUTA (1b.3), ed e' un ticket con un nome: T99. Se questi numeri sono
+# RICEVUTA (1b.3), ed e' un ticket con un nome: T104. Se questi numeri sono
 # ancora 36 e 64 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
 # legge sta misurando la nostra pazienza, non il pacchetto.
 TETTO_C2 = 29          # nessuna porta: né import, né entry point, né python -m
