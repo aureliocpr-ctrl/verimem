@@ -305,11 +305,19 @@ diverso:
 lettore si aspetta, e che trattiene 97 fatti. Chi non inietta un LLM non perde
 una difesa: ne prende una che taglia più in alto e non gliel'ha detto nessuno.
 
-🔴 **E la seconda frase che questa pagina scriveva era falsa allo stesso
-modo**: «il prodotto lo dichiara nella ricevuta invece di fingere un verdetto».
-Oggi **la ricevuta non dice quale giudice ha deciso** (`T134`, in cura). Quindi
-chi legge un verdetto **non sa con quale soglia è stato dato**, ed è esattamente
-la differenza fra i due regimi dichiarati in cima a questa pagina.
+✅ **E una seconda frase di questa pagina è stata SMENTITA da una misura, in
+meglio.** Scriveva che *«la ricevuta non dice quale giudice ha deciso»*. **Lo
+dice**, e con più dettaglio di quanto servisse:
+
+    adjudication  {'disposition': 'admitted', 'evidence_class': 'cross_encoder',
+                   'judge': {'backend': 'local', 'model': 'local_gate_ce_v2',
+                             'version': None}, 'score': …}
+    judged_by     in-process
+
+Il campo distingue `backend: local` da `backend: claude-band`, cioè **i due
+regimi di questa pagina si leggono nella ricevuta**, ed è popolato su **tutte e
+tre le porte** (misurato). ⇒ Chi legge un verdetto può sapere chi gliel'ha dato:
+**questa era una accusa, ed è caduta.**
 
 ### ⑤ Il presidio anti-autocertificazione legge il VERBO, non chi parla — `T144`
 
