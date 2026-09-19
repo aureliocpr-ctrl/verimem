@@ -212,22 +212,35 @@ def test_ogni_comando_citato_dal_nucleo_esiste_nella_cli() -> None:
                           r"(?:\s+([a-z][a-z0-9-]{2,}))?", COMANDO_DI_MIGRAZIONE)]
     assert citati, f"la costante non nomina nessun comando: {COMANDO_DI_MIGRAZIONE}"
 
-    for parti in citati:
-        argomenti = [p for p in parti if p]
+    def _chiedi(*argomenti: str) -> tuple[int, str]:
+        """Interroga la porta e torna (codice, testo), mai None.
+
+        ⚠️ `capture_output` promette stringhe e in CI su Windows ha consegnato
+        `None`: la cella cadeva con `TypeError: argument of type 'NoneType' is
+        not iterable`, che non dice niente su ciò che stava misurando. Un test
+        che si rompe invece di parlare è muto proprio quando serve. Qui le due
+        pipe vengono unite e normalizzate a stringa, così un'assenza di output
+        diventa un'informazione — «la porta non ha detto niente» — invece di
+        un'eccezione.
+        """
         esito = subprocess.run(
             [sys.executable, "-m", "verimem.cli", *argomenti, "--help"],
             capture_output=True, text=True, timeout=180)
-        assert esito.returncode == 0 and "No such command" not in esito.stdout, (
+        return esito.returncode, (esito.stdout or "") + (esito.stderr or "")
+
+    for parti in citati:
+        argomenti = [p for p in parti if p]
+        codice, detto = _chiedi(*argomenti)
+        assert codice == 0 and "No such command" not in detto, (
             f"la costante promette `verimem {' '.join(argomenti)}` ma la porta "
-            f"risponde:\n{esito.stdout[:400]}{esito.stderr[:200]}")
+            f"risponde con codice {codice}:\n{detto[:500] or '(nessun output)'}")
 
     # CONTROLLO POSITIVO: la stessa domanda su un comando inventato deve
     # FALLIRE, o questa cella direbbe di sì a qualunque cosa.
-    inventato = subprocess.run(
-        [sys.executable, "-m", "verimem.cli", "questo-non-esiste", "--help"],
-        capture_output=True, text=True, timeout=180)
-    assert inventato.returncode != 0 or "No such command" in inventato.stdout, (
-        "la porta accetta un comando inventato: è cieco il righello, non la CLI")
+    codice, detto = _chiedi("questo-non-esiste")
+    assert codice != 0 or "No such command" in detto, (
+        f"la porta accetta un comando inventato: è cieco il righello, non la "
+        f"CLI. Codice {codice}, ha detto: {detto[:300] or '(niente)'}")
 
 
 # ------------------------------------------------------- controllo positivo --
