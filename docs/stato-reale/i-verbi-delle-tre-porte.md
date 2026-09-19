@@ -106,6 +106,31 @@ comando arrivano tutti.
 ⚠️ E resta un campo che **una porta sola** dichiara: `fermato_da`. Una ricevuta
 unica non è unica finché un campo lo dice una porta su tre.
 
+### E `3/14` non vuol dire che la libreria dica poco: dice che **rinomina**
+
+Rimisurato **da chi scrive questa pagina** — non più citato da altri — sul
+sorgente del tronco, store temporaneo, una scrittura senza fonte. Il build l'ha
+stampato il prodotto stesso (`build=c8f53dfc`):
+
+    presenti: 3 / 14
+    mancanti:     esito, fermato_da, giudice, livelli, margine, modello,
+                  punteggio, ritirati, scala, soglia, store_env_ignored
+    chiavi rese:  adjudication, advice, grounding_score, id, moat, replaced,
+                  status, store, store_decided_by, stored, warnings
+
+⚠️ **Undici mancanti, e undici chiavi rese.** La libreria non risponde con
+*meno* informazione: risponde con **altri nomi** — `status` dove il nucleo dice
+`esito`, `grounding_score` dove dice `punteggio`. Le corrispondenze sono
+**plausibili, non provate**: nessuno ha ancora dimostrato che `status` porti
+esattamente quello che porta `esito`.
+
+🔑 È **il criterio di questa pagina applicato a questa pagina**: *un nome
+diverso grida, un campo che cambia nome tace*. «Undici campi non arrivano» si
+legge come un'assenza, e quello che si misura è in gran parte una **rinomina** —
+che è peggio, perché `risposta.get("punteggio")` torna `None` senza dire che quel
+numero è lì sotto `grounding_score`.
+
+
 **Questo è il numero da guardare, non la tabella dei nomi.** Tre misure
 indipendenti — tre persone, tre strade — avevano dato `3/14` su libreria e MCP
 lo stesso giorno, e la quarta misura ha mostrato che la CLI era già oltre.
@@ -114,7 +139,25 @@ porte**: se non ci arriva, la ricevuta unica non è unica.
 
 ---
 
-⚠️ **Questa pagina scade.** È misurata su un wheel preciso, e il wheel cambia a
-ogni lotto (tre punti del tronco in una mattina, tre sha diversi). Chi la rilegge
-fra un mese **rimisuri prima di fidarsi**: il comando è nello script dei quattro
-casi, e il confronto degli sha costa 2 MB.
+⚠️ **Questa pagina scade, e il numero che scade per primo è `3/14`.**
+
+**La cura è già aperta**: c'è una richiesta che fa rispondere la libreria con la
+ricevuta del nucleo da tutte e quattro le sue uscite (`#96`). ⚠️ **Non è fusa
+mentre questa riga viene scritta** — quindi il `3/14` qui sopra è il numero di
+adesso, non una condanna, e chi legge dopo deve guardare lì per primo.
+
+**Rimisurare costa quattro righe, e non serve lo script di nessuno** — questo
+è il comando che ha prodotto i numeri qui sopra:
+
+    from verimem.core.ricevuta import CHIAVI     # il bersaglio: 14 campi
+    from verimem import Memory
+    r = Memory("una/cartella/prova.db").add("<il fatto>")
+    print(len(set(CHIAVI) & set(r)), "/", len(CHIAVI), sorted(set(CHIAVI) - set(r)))
+
+⇒ Tre avvertenze che costano un giro a chi non le ha:
+- il bersaglio si **importa**, non si ricopia: chi conta a occhio i campi
+  annotati ne trova 13, perché `margine` è una property;
+- `Memory(...)` vuole **un file**, non una cartella: con una cartella risponde
+  `sqlite3.OperationalError: unable to open database file`, che non lo dice;
+- `Memory()` senza argomenti apre lo **store vero**. Per misurare si passa un
+  file temporaneo, altrimenti si scrive nella memoria di produzione.
