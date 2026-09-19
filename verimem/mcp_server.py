@@ -1996,7 +1996,8 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "Semantic recall over past episodes. Returns the top-k "
                 "episodes most similar to the query, with their outcomes "
-                "and final answers — useful for grounding new tasks."
+                "and final answers — useful for grounding new tasks. "
+                "Episodes only: for FACTS use hippo_facts_recall."
             ),
             inputSchema={
                 "type": "object",
@@ -8880,8 +8881,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             oc = arguments.get("outcome", "any")
             outcome_filter = oc if oc in ("success", "failure") else None
             hits = a.memory.recall(query, k=k, outcome_filter=outcome_filter)
-            _audit(name, arguments, outcome="ok")
-            return _ok([
+            _episodi = [
                 {
                     "id": ep.id, "task": ep.task_text, "outcome": ep.outcome,
                     "answer_preview": ep.final_answer[:200],
@@ -8891,7 +8891,37 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "when": _iso_day(getattr(ep, "created_at", 0.0)),
                 }
                 for ep, score in hits
-            ])
+            ]
+            _blocchi = _ok(_episodi)
+            # IL CARTELLO (T107). Questa porta non e' rotta: rende EPISODI per
+            # contratto, e `[]` e' la risposta giusta quando episodi non ce ne
+            # sono. Cio' che mancava e' il cartello per chi ha bussato qui
+            # cercando un FATTO. Misurato il 2026-09-19, stesso store e stessa
+            # domanda:
+            #     hippo_recall        -> lista di 0
+            #     hippo_facts_recall  -> items: 1   (il fatto)
+            #
+            # VA IN UN SECONDO BLOCCO, non dentro la lista: un oggetto che non
+            # e' un episodio in mezzo agli episodi lo iterrebbe chi itera. Cosi'
+            # `content[0]` resta la lista nuda e chi la parsa non si accorge di
+            # niente (presidiato da una cella del banco).
+            #
+            # E SOLO A LISTA VUOTA CON FATTI NELLO STORE: se ci sono episodi e'
+            # rumore, e il rumore si impara a saltare.
+            if not _episodi:
+                try:
+                    _quanti_fatti = a.semantic.count()
+                except Exception:  # noqa: BLE001 — un cartello non rompe una lettura
+                    _quanti_fatti = 0
+                if _quanti_fatti:
+                    _blocchi.append(t.TextContent(type="text", text=(
+                        f"No episode matches this query, but the store holds "
+                        f"{_quanti_fatti} facts. This port returns EPISODES "
+                        f"only — for FACTS use hippo_facts_recall (semantic) "
+                        f"or hippo_facts_search (lexical)."
+                    )))
+            _audit(name, arguments, outcome="ok")
+            return _blocchi
 
         if name == "hippo_document_promote_chunk":
             # Roadmap #1 last brick: chunk -> gated Fact with exact citation.
