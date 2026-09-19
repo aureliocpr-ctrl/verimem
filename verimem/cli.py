@@ -97,6 +97,15 @@ lab_app = typer.Typer(
     help="Lab live dashboards (multi-agent chat watcher etc.)",
     no_args_is_help=True,
 )
+# D-0012: la via d'uscita del blocco. Aprire uno store vecchio non lo migra più,
+# quindi migrarlo deve essere qualcosa che si PUÒ chiedere: un rifiuto che manda
+# a un comando inesistente è peggio del silenzio, perché il silenzio non promette
+# — e chi va a cercare apre il file a mano, cioè fa la cosa che il blocco impedisce.
+store_app = typer.Typer(
+    help="Operazioni sul file dello store (migrazione, con backup verificato).",
+    no_args_is_help=True,
+)
+app.add_typer(store_app, name="store")
 app.add_typer(skills_app, name="skills")
 app.add_typer(episodes_app, name="episodes")
 app.add_typer(providers_app, name="providers")
@@ -6155,3 +6164,35 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+@store_app.command("migrate")
+def store_migrate_cmd(
+    file: str = typer.Argument(..., help="Il file .db dello store da migrare"),
+    backup_in: str = typer.Option(
+        None, "--backup-in",
+        help="Dove scrivere il backup (default: accanto allo store)"),
+) -> None:
+    """Porta uno store alla versione di questo codice, dopo un backup verificato.
+
+    Il backup si verifica CONTANDO le righe, non fidandosi della copia: una
+    copia che esiste non e' una copia che contiene, e l'impronta del file non
+    serve perche' il backup di SQLite compatta e lo sha cambia a contenuto
+    identico.
+    """
+    from pathlib import Path as _Path
+
+    from .schema import StoreTroppoNuovo
+    from .store_migrate import BackupNonVerificato, migra_lo_store
+
+    percorso = _Path(file).expanduser()
+    if not percorso.is_file():
+        console.print(f"[red]non esiste:[/red] {percorso}")
+        raise typer.Exit(2)
+    try:
+        ricevuta = migra_lo_store(
+            percorso, _Path(backup_in).expanduser() if backup_in else None)
+    except (BackupNonVerificato, StoreTroppoNuovo) as exc:
+        console.print(f"[red]non migrato:[/red] {exc}")
+        raise typer.Exit(1) from exc
+    console.print(str(ricevuta))

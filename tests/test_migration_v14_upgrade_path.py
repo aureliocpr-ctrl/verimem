@@ -19,12 +19,15 @@ from __future__ import annotations
 import re
 import sqlite3
 
+import pytest
+
 from verimem.semantic import (
     _SCHEMA,
     _SEMANTIC_TARGET_VERSION,
     Fact,
     SemanticMemory,
 )
+from verimem.store_migrate import migra_lo_store
 
 
 def _make_v13_db(path):
@@ -70,14 +73,41 @@ def test_target_version_covers_every_registered_migration():
     assert _SEMANTIC_TARGET_VERSION >= 14
 
 
-def test_v13_store_gets_the_epistemic_column_on_open(tmp_path):
+def test_un_v13_non_si_migra_piu_aprendolo(tmp_path):
+    """D-0012: il percorso di aggiornamento passa da un comando, non dall'apertura.
+
+    ⚠️ È il contratto CAMBIATO, e va letto insieme al bug che apre questo file.
+    Prima, aprire uno store v13 lo riparava: comodo, e per questo pericoloso —
+    lo stesso meccanismo aggiornava in silenzio un backup aperto per leggerlo,
+    che così smetteva di essere un backup (misurato su copie: v7 → v17, +21
+    colonne, senza avviso e senza ritorno).
+
+    La riparazione non è sparita, si è spostata dove si vede: `verimem store
+    migrate`, dopo un backup verificato contando le righe. Tutto ciò che questo
+    file proteggeva — la colonna arriva, i fatti sopravvivono, scrivere
+    funziona — è tenuto fermo dalle celle qui sotto, che ora passano di lì.
+    """
+    from verimem.schema import StoreDaMigrare
+
+    db = tmp_path / "old.db"
+    _make_v13_db(db)
+    prima = db.read_bytes()
+
+    with pytest.raises(StoreDaMigrare):
+        SemanticMemory(db_path=db)
+
+    assert db.read_bytes() == prima, (
+        "il rifiuto è arrivato dopo aver toccato il file")
+
+
+def test_v13_store_gets_the_epistemic_column_on_migrate(tmp_path):
     db = tmp_path / "old.db"
     _make_v13_db(db)
     cols = [r[1] for r in sqlite3.connect(db).execute(
         "PRAGMA table_info(facts)")]
     assert "epistemic" not in cols, "il fixture deve partire DAVVERO da v13"
 
-    SemanticMemory(db_path=db)          # aprire = migrare
+    ricevuta = migra_lo_store(db)       # migrare = chiederlo
 
     cols = [r[1] for r in sqlite3.connect(db).execute(
         "PRAGMA table_info(facts)")]
@@ -86,12 +116,15 @@ def test_v13_store_gets_the_epistemic_column_on_open(tmp_path):
         "SELECT version FROM _schema_version WHERE db_id='semantic'"
     ).fetchone()[0]
     assert ver >= 14
+    assert "epistemic" in ricevuta.colonne_aggiunte.get("facts", ()), (
+        f"la ricevuta non dice di averla aggiunta: {ricevuta}")
 
 
 def test_write_works_after_upgrade(tmp_path):
     """Il sintomo esatto di Aurelio: scrivere su uno store aggiornato."""
     db = tmp_path / "old.db"
     _make_v13_db(db)
+    migra_lo_store(db)
     mem = SemanticMemory(db_path=db)
     fact = Fact(proposition="Zephyrus signed with Kraken", topic="news")
     mem.store(fact, embed="sync")       # store() → None by design; id sul Fact
@@ -100,20 +133,25 @@ def test_write_works_after_upgrade(tmp_path):
 
 
 def test_existing_facts_survive_the_upgrade(tmp_path):
-    """Migrare non perde memoria."""
+    """Migrare non perde memoria. E ora il backup lo dimostra contando."""
     db = tmp_path / "old.db"
     _make_v13_db(db)
+    ricevuta = migra_lo_store(db)
     mem = SemanticMemory(db_path=db)
     props = [f.proposition for f in mem.all()]
     assert "the office is in Milan" in props
+    assert ricevuta.righe_verificate >= 1, (
+        "il backup dichiara zero righe verificate: non ha contato niente")
 
 
 def test_upgrade_is_idempotent(tmp_path):
-    """Riaprire due volte non esplode (la migrazione non ri-gira)."""
+    """Migrare due volte non esplode (la migrazione non ri-gira)."""
     db = tmp_path / "old.db"
     _make_v13_db(db)
-    SemanticMemory(db_path=db)
-    SemanticMemory(db_path=db)
+    migra_lo_store(db)
+    seconda = migra_lo_store(db)
     cols = [r[1] for r in sqlite3.connect(db).execute(
         "PRAGMA table_info(facts)")]
     assert cols.count("epistemic") == 1
+    assert not seconda.colonne_aggiunte, (
+        f"la seconda migrazione dice di aver aggiunto qualcosa: {seconda}")
