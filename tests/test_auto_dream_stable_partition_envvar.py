@@ -20,7 +20,7 @@ from unittest.mock import patch
 
 import pytest
 
-from attic import auto_dream_worker as adw
+from verimem import auto_dream_worker as adw
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS facts (

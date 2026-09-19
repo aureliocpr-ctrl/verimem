@@ -230,7 +230,20 @@ def analizza(pacchetto: pathlib.Path, pyproject: pathlib.Path = PYPROJECT,
         for chi in chi_lo_importa:
             avanti[chi].add(bersaglio)
     veri = set(moduli)
-    porte = ({"", "__main__"} | entry) & veri
+    # I C1 SONO PORTE DI PARTENZA, deciso il 19/09. Questo script si
+    # contraddiceva da solo: la riga di C2 dice «nessuna porta: ne' import, ne'
+    # entry point, **ne' python -m**» — cioe' ammette che `python -m` E' una
+    # porta — e poi D contava i C1 fra gli «irraggiungibili da OGNI porta».
+    # Lo stesso albero risultava percio' VERDE per `_eseguibile()` in
+    # tests/test_nessun_modulo_nasce_irraggiungibile.py («`python -m verimem.X`
+    # E' UNA PORTA») e ROSSO per questo script.
+    # Mettendo i C1 fra le porte, la loro catena esce da D per costruzione e non
+    # per sottrazione: D diventa C2 + cio' che solo C2 raggiunge. C1 resta
+    # sorvegliata a parte, fuori dal tetto, perche' «raggiungibile con
+    # `python -m`» non vuol dire «qualcuno lo usa»: la regola che decide se un
+    # C1 merita di stare nel pacchetto e' il ticket T126 — ci sta solo se una
+    # pagina (README o docs) documenta quel comando.
+    porte = ({"", "__main__"} | entry | set(c1)) & veri
     visti: set[str] = set()
     coda = list(porte)
     while coda:
