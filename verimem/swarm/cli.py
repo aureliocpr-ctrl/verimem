@@ -127,6 +127,7 @@ def logs_cmd(
     proc = subprocess.run(
         ["claude", "logs", short_id],
         capture_output=True, text=True, timeout=15.0, check=False,
+        encoding="utf-8", errors="replace",
         **quiet_popen_kwargs(),
     )
     sys.stdout.write(proc.stdout)

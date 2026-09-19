@@ -136,7 +136,9 @@ class GhostSisterTransport:
     def _pid_alive(self, pid: int) -> bool:
         r = subprocess.run(["powershell", "-NoProfile", "-Command",
                             f"[bool](Get-Process -Id {pid} -ErrorAction SilentlyContinue)"],
-                           capture_output=True, text=True, timeout=15, **quiet_popen_kwargs())
+                           capture_output=True, text=True, timeout=15,
+                           encoding="utf-8", errors="replace",
+                           **quiet_popen_kwargs())
         return "True" in r.stdout
 
     @staticmethod
@@ -188,13 +190,15 @@ class GhostSisterTransport:
         r = subprocess.run(["clp", "ai-eye", "--pid", str(pid), "--read",
                             "--tail", str(n)],
                            capture_output=True, text=True, timeout=30, shell=True,
+                           encoding="utf-8", errors="replace",
                            **quiet_popen_kwargs())
         return r.stdout or ""
 
     def _inject_enter(self, pid: int) -> None:
         subprocess.run(["clp", "ai-eye", "--pid", str(pid), "--inject", "",
                         "--newline"], capture_output=True, text=True, timeout=30,
-                       shell=True, **quiet_popen_kwargs())
+                       shell=True, encoding="utf-8", errors="replace",
+                       **quiet_popen_kwargs())
 
     def _kill_tree(self, pid: int) -> None:
         subprocess.run(["cmd", "/c", f"taskkill /PID {pid} /T /F"],
@@ -224,6 +228,7 @@ class GhostSisterTransport:
              f"Leggi il file {posix} e segui le sue istruzioni alla lettera. [{marker}]",
              "--verify", marker, "--newline"],
             capture_output=True, text=True, timeout=60, shell=True,
+            encoding="utf-8", errors="replace",
             **quiet_popen_kwargs())
         if '"ok": true' not in (inj.stdout or "").lower():
             return None

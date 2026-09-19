@@ -127,6 +127,8 @@ def spawn_agent(
         cmd,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         cwd=cwd,
         env=env,
         timeout=timeout_sec,

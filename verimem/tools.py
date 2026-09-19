@@ -64,6 +64,8 @@ class PythonExecutor:
                     input=stdin,
                     capture_output=True,
                     text=True,
+                    encoding="utf-8",
+                    errors="replace",
                     timeout=self.timeout_s,
                     cwd=tmp,
                     **quiet_popen_kwargs(),  # cycle #136: no win pop-up
