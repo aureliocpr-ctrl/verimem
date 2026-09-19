@@ -76,9 +76,24 @@ PYPROJECT = RADICE / "pyproject.toml"
 # RICEVUTA (1b.3), ed e' un ticket con un nome: T104. Se questi numeri sono
 # ancora 30 e 44 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
 # legge sta misurando la nostra pazienza, non il pacchetto.
-TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
+# ⚠️ E SALE UNA SECONDA VOLTA, IL 19/09, PER LA STESSA RAGIONE E CON LA STESSA
+# SCADENZA. `verimem/schema.py` — i tre stati di uno store e il rifiuto di
+# migrarlo aprendolo — entra nel pacchetto prima che una porta lo chiami: è la
+# fetta 3, e il cablaggio è deciso e datato (D-0009: il cambio si ferma in
+# `migrations.ensure_schema_version`, l'apertura si dichiara in
+# `SemanticMemory.__init__`). Finché quel cablaggio non c'è, il criterio lo vede
+# come «pubblicato e irraggiungibile», e ha ragione: oggi lo è.
+# MISURATI su questa base (`36850858`, main `068baf45`), non riportati da
+# un'altra richiesta: C2 31, D 45. Un tetto ereditato da un albero diverso non è
+# un tetto, è un ricordo — e i numeri qui sopra lo dicono già una volta.
+# +1 su C2 e +1 su D: un modulo solo, che nessuno importa e che non raggiunge
+# nessun altro (`schema.py` non importa moduli del pacchetto).
+# LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
+# ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
+# criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
+TETTO_C2 = 31          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 44           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 11 solo-per-catena)
+TETTO_D = 45           # irraggiungibili da ogni porta, chiusura transitiva (31 C2 + 3 C1 + 11 solo-per-catena)
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
