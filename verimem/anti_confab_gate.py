@@ -3246,9 +3246,16 @@ def run_validation_gate(
     # ⚠️ Cio' che questo NON chiude: i verbali veri fermati da `L1.13`/`L1.15`/
     # `L1.16` cadono esattamente come prima. Quello e' un difetto della
     # specifica dei lessicali, non di questo layer.
+    # ⚠️ IL FILTRO `_is_advisory_layer` NON E' UN ORNAMENTO. Questo contatore
+    # guardava i layer per PREFISSO, e un avviso che «si vede e non decide»
+    # entrava lo stesso nella decisione di trattenere: finche' i ritirati
+    # venivano CANCELLATI la cosa non si vedeva, perche' non c'era niente da
+    # contare. Marcandoli, una scrittura ammessa diventava quarantenata — un
+    # marcatore non marca chi non lo conosce.
     _l1_oltre_l120 = any(
         str(w.get("layer", "")).startswith("L1")
-        and str(w.get("layer", "")) != "L1.20" for w in warnings)
+        and str(w.get("layer", "")) != "L1.20"
+        and not _is_advisory_layer(str(w.get("layer", ""))) for w in warnings)
     l1_escalates = (_l1_oltre_l120 and not _personal_fp and not _world_fp
                     and not _domain_advisory and not _domain_precision_fp)
     if _domain_precision_fp and not _personal_fp and not _world_fp \
