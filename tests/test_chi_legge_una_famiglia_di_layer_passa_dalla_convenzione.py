@@ -43,11 +43,20 @@ PACCHETTO = Path(__file__).resolve().parents[1] / "verimem"
 #: stessa funzione. Una deroga che copre cio' che non hai guardato non e' una
 #: deroga: e' un tappeto.
 DEROGHE: dict[str, tuple[int, str]] = {
-    "anti_confab_gate.py::run_validation_gate": (5, (
-        "Cinque confronti, GUARDATI uno per uno e non contati:\n"
-        "  · il contatore che DECIDE se trattenere — e' il difetto vero, "
-        "    curato nella richiesta che marca gli avvisi ritirati: USCITA con "
-        "    quella fusione, e questo numero scende a 4 nello stesso commit;\n"
+    "anti_confab_gate.py::advisory_eligible": (1, (
+        "La lista che il confronto scorre e' gia' filtrata dalla convenzione "
+        "DUE RIGHE SOPRA (`ws = [... not _is_advisory_layer(...)]`): il "
+        "confronto e' conforme nella sostanza, e a non vederlo e' questo "
+        "banco, che guarda una sola espressione per volta. Derogato invece "
+        "che curato perche' la cura sarebbe nel BANCO, non nel prodotto, e "
+        "un presidio che insegue i propri falsi positivi smette di essere "
+        "leggibile. USCITA: quando il filtro e il confronto staranno nella "
+        "stessa espressione, se qualcuno tocchera' quella funzione."
+    )),
+    "anti_confab_gate.py::run_validation_gate": (4, (
+        "Erano cinque e sono quattro: il quinto — il contatore che DECIDE se "
+        "trattenere, il difetto vero — e' uscito con la fusione che marca gli "
+        "avvisi ritirati, e il numero e' sceso qui come era scritto.\n"
         "  · `has_l1`, che alimenta i due marcatori di osservabilita' e deve "
         "    restare INTERO di proposito (lo dice il commento del modulo): "
         "    ESCE quando l'osservabilita' legge i marcatori invece dei layer;\n"
@@ -112,16 +121,29 @@ def _raccogli(percorso: Path) -> list[tuple[str, int, str]]:
             for n in ast.walk(f):
                 dentro.setdefault(id(n), f.name)
 
-    #: ISTRUZIONE che contiene ogni nodo. ⚠️ La prima versione guardava una
-    #: finestra di RIGHE per cercare `_is_advisory_layer`, e con il filtro
-    #: tolto restava verde: nel testo intorno la convenzione era citata **in un
-    #: commento**. Il banco si vantava nel docstring di non essere un grep, ed
-    #: era mezzo grep. Qui la convenzione si cerca nell'ALBERO dell'istruzione.
-    istruzione: dict[int, ast.stmt] = {}
+    #: ESPRESSIONE che contiene ogni nodo. ⚠️ DUE VERSIONI SBAGLIATE PRIMA DI
+    #: QUESTA, e la seconda è costata quattro ore di tronco rosso il 19/09.
+    #: ① una finestra di RIGHE: con il filtro tolto restava verde, perché nel
+    #:   testo intorno la convenzione era citata **in un commento**;
+    #: ② l'ISTRUZIONE contenitrice, cercata con `setdefault` in BFS — ma
+    #:   `ast.FunctionDef` **è una `ast.stmt`**, e in BFS vince lei: l'albero
+    #:   guardato diventava la funzione INTERA, e una sola chiamata alla
+    #:   convenzione in un punto qualunque assolveva tutti i confronti di
+    #:   quella funzione. A spegnere il sensore è stata una cura VERA entrata
+    #:   in `run_validation_gate`: i 5 confronti derogati sono diventati 0
+    #:   visti, e senza il cricchetto sarebbe passato per un miglioramento.
+    #: Qui si guarda l'espressione FIGLIA dell'istruzione che contiene il
+    #: confronto: il test di un `if`, il valore di un assegnamento. Il corpo
+    #: dell'`if` non c'entra — quello che conta è se la convenzione partecipa
+    #: alla DECISIONE, non se compare da qualche parte lì vicino.
+    radice: dict[int, ast.expr] = {}
     for s in ast.walk(albero):
-        if isinstance(s, ast.stmt):
-            for n in ast.walk(s):
-                istruzione.setdefault(id(n), s)
+        if not isinstance(s, ast.stmt):
+            continue
+        for e in ast.iter_child_nodes(s):
+            if isinstance(e, ast.expr):
+                for n in ast.walk(e):
+                    radice[id(n)] = e  # BFS: l'istruzione più interna vince
 
     trovati = []
     for nodo in ast.walk(albero):
@@ -129,7 +151,7 @@ def _raccogli(percorso: Path) -> list[tuple[str, int, str]]:
             continue
         if not _legge_un_layer(nodo, sorgente):
             continue
-        st = istruzione.get(id(nodo))
+        st = radice.get(id(nodo))
         if st is not None and _usa_la_convenzione(st):
             continue
         trovati.append((percorso.name, nodo.lineno,
@@ -193,6 +215,35 @@ def test_CONTROLLO_POSITIVO_il_banco_vede_davvero_i_confronti():
     assert derogati, (
         "il banco non trova nemmeno le deroghe note: sta misurando il vuoto "
         f"(confronti visti: {len(tutti)})")
+
+
+def test_CONTROLLO_POSITIVO_il_banco_vede_IL_FILE_DOVE_IL_DIFETTO_VIVE():
+    """La cella che mancava, e per volerne una in meno il tronco e' stato rosso.
+
+    Il controllo qui sopra si accontenta di UN confronto in tutto il pacchetto,
+    e quell'uno stava in un altro file: intanto in `anti_confab_gate.py` — dove
+    questa forma e' nata tre volte — il presidio non ne vedeva piu' nemmeno
+    uno. Un controllo positivo che non nomina il posto dove il difetto vive non
+    e' un controllo: e' un'altra misura che puo' spegnersi da sola.
+
+    ⚠️ Confronta CIO' CHE C'E' NEL FILE con CIO' CHE IL BANCO RIPORTA: non un
+    numero atteso, che invecchia, ma le due letture della stessa cosa.
+    """
+    percorso = PACCHETTO / "anti_confab_gate.py"
+    sorgente = percorso.read_text(encoding="utf-8", errors="replace")
+    nel_file = [n for n in ast.walk(ast.parse(sorgente))
+                if isinstance(n, ast.Call) and _e_confronto_di_famiglia(n)
+                and _legge_un_layer(n, sorgente)]
+    assert nel_file, (
+        "il file non confronta piu' nessuna famiglia di layer: o il prodotto e' "
+        "stato curato del tutto, e allora questo banco va rimisurato, o il "
+        "lettore si e' rotto")
+    visti = [v for v in _violazioni() if v[0] == percorso.name]
+    assert visti, (
+        f"{len(nel_file)} confronti di famiglia nel file e il presidio ne "
+        "riporta ZERO. Non e' una cura: e' il sensore scollegato — e la volta "
+        "scorsa a spegnerlo e' bastata UNA chiamata alla convenzione, in un "
+        "punto qualunque della stessa funzione")
 
 
 def test_CONTROLLO_NEGATIVO_chi_solo_REGISTRA_non_e_obbligato():
