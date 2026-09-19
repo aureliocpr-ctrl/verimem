@@ -17,37 +17,38 @@ riquadro qui sotto, che ha sostituito un blocco per posizione e si è portata vi
 quello che stava in mezzo: la pagina annunciava «fonte unica per tutti i casi» e
 poi non la mostrava.*
 
-> ## 🔴 LO STESSO INGRESSO DÀ ESITI DIVERSI SU MACCHINE DIVERSE
+> ## 🔴 UN'ABBREVIAZIONE NELLA FONTE DISARMA IL CONTROLLO SULLE UNITÀ
 >
-> **È il fatto più importante di questa pagina, e non riguarda un numero: riguarda
-> la promessa.** Le stesse tre frasi, la stessa fonte, scritte **alla porta** da
-> tre persone diverse nello stesso pomeriggio:
+> **È il fatto più importante di questa pagina, e non è un numero: è il modo in cui
+> i documenti veri sono scritti.** Lo stesso claim falso — *«400 metri cubi»*
+> contro una fonte che dice 400 metri quadri — passa o viene trattenuto **a
+> seconda di come la fonte scrive l'unità**:
 >
->     caso                      chi scrive qui   un pari     un altro pari
->     400 metri quadri (vero)     98.5478515625   98.548        98.97
->     400 metri CUBI (il buco)    96.0053558350   96.005        75.81  ['L4-review']
->                                    admitted     admitted    quarantined
->     401 metri quadri (falso)     5.5289530754    5.529         —
->                                  quarantined   quarantined
+>     fonte PER ESTESO   «…misura 400 metri quadri.»  ->  quarantined  75.81  ['L4-review']
+>     fonte ABBREVIATA   «…misura 400 mq.»            ->  admitted     96.01  []
 >
-> ⇒ **Due colonne su tre coincidono a tutte le cifre; la terza differisce anche
-> sul caso VERO** (98.97 contro 98.548), quindi non è solo il giudice di banda
-> che entra: **cambia il punteggio di base, ed è `T147`** — stesso modello,
-> stesso ingresso, punteggio diverso su macchine diverse; da chiudere con lo sha
-> del file del modello, la versione di torch e cpu/gpu su ciascuna. Dove le prime due non fanno scattare
-> nessuno strato (`strati=[]`), la terza fa scattare `L4-review` — *tenuto per
-> revisione* — o, col giudice di banda acceso, `L4-grounding` a 0.00.
+>     controllo, stesso giro, claim VERO «400 metri quadri»:
+>     contro la fonte per esteso  98.97      contro la fonte abbreviata  98.55
 >
-> ⚠️ **Per chi usa il prodotto questo conta più del numero**: sullo stesso testo
-> e sulla stessa fonte, una macchina **ammette** e un'altra **trattiene**. La
-> promessa non è «il moat ferma X»: è «il moat ferma X **con quello che hai
-> installato**», e oggi **la ricevuta non dice quale giudice ha risposto**
-> (`T134`).
+> ⇒ **`mq`, `mc`, `kg`, `km²` sono esattamente come scrivono perizie, verbali e
+> fatture.** Il giudice valuta la **coppia**: «400 metri cubi» contro «400 mq» non
+> è lo stesso ingresso di «400 metri cubi» contro «400 metri quadri», e nel primo
+> caso la contraddizione di unità non viene vista.
 >
-> 🗓️ Le cifre della prima colonna sono prese sul wheel `0.7.7` di `bdf7453b`
-> col giudice locale del 2/07, **e il regime di banda non è stato registrato** —
-> la stesura precedente di questo riquadro lo dichiarava «cross-encoder da solo»
-> senza averlo verificato, ed è stato corretto.
+> 🗓️ ⚠️ **Tutti i numeri di questa pagina sono presi con la fonte ABBREVIATA**
+> — cioè **sul ramo in cui il moat protegge di meno**. Chi li rifà con una fonte
+> per esteso otterrà numeri diversi, e migliori.
+>
+> 🔬 Misurato cambiando **una sola cosa**, la fonte, nello stesso processo e
+> sulla stessa macchina. Non è misura di chi scrive questa pagina.
+>
+> 🔮 **E per un'ora questo riquadro ha detto un'altra cosa**: che lo stesso
+> ingresso desse esiti diversi **su macchine diverse**. Era falso, e l'errore
+> stava **nel banco, non nel prodotto** — due persone confrontavano due fonti
+> diverse credendo di confrontare la stessa. Prima di accorgercene avevamo
+> confrontato gli sha256 dei modelli, le versioni di torch, trenta variabili
+> d'ambiente e lo stato del giudice: **le due stringhe, che costavano due
+> secondi, per ultime.**
 
 ---
 
@@ -86,7 +87,7 @@ sono la stessa cosa, e il secondo oggi manca: è `T134`, alla voce ④ qui sotto
 
 ---
 
-### ④ Quando **non può** giudicare trattiene — misurato su **una macchina su tre**
+### ④ Quando **non può** giudicare trattiene — e con la fonte per esteso **lo ferma**
 
 È la parte della promessa che nessuno scrive, e va detta qui perché è quella
 che decide cosa succede il giorno in cui qualcosa non funziona:
@@ -99,15 +100,16 @@ today's held-for-review behavior»* — e il giudice di banda è **un pezzo di
 prodotto**, non un accessorio: `band_escalation.py` scala prima a un modello
 locale e poi alla CLI come ripiego, e `ENGRAM_BAND_LLM=0` serve a uscirne.
 
-⚠️ **E qui va detto il limite di questa lode, che è il limite di una misura
-sola**: `L4-review` è scattato su **una macchina delle tre** del riquadro in
-cima. Sulle altre due, senza alcuno strato, lo stesso caso esce **ammesso a
-96**. Quindi non è una proprietà del prodotto — è quello che fa **quella**
-macchina, ed è la stessa incertezza di `T147`.
+⚠️ **Questa riga ha avuto una diagnosi sbagliata per un'ora**: diceva che
+`L4-review` scatta su *«una macchina su tre»*. Non era la macchina — era la
+**fonte**. Con la fonte per esteso lo stesso claim falso viene **trattenuto** a
+75.81; con la fonte abbreviata esce **ammesso** a 96, senza strati.
 
-⇒ Se il comportamento a prova di guasto vale ovunque, **due macchine su tre non
-lo mostrano**: fino a `T147` chiuso, questa riga è una promessa su una macchina,
-non sul prodotto. Misura di un pari, non di chi scrive questa pagina.
+⇒ Quindi il comportamento a prova di guasto **c'è**, e questa è la lode: quando
+il giudizio non è pieno il prodotto **tiene per revisione invece di ammettere**.
+Ma lo fa **sull'ingresso che riesce a leggere**, e un'abbreviazione nella fonte
+gli toglie il caso di mano prima che arrivi fin lì. Misura di un pari, non di
+chi scrive questa pagina.
 
 ## ❌ Quello che il moat NON controlla — con il ticket accanto
 
@@ -162,9 +164,9 @@ una misura: è un segnale. **Il numero definitivo di questa riga arriva con
 ### ③ Le unità composte — `T105`
 
     «Il capannone 12 misura 400 metri CUBI.»      ->  admitted, punteggio 96.01
-      ⚠️ è la PRIMA COLONNA del riquadro in cima: due macchine su tre danno
-         questo numero, la terza trattiene lo stesso claim (75.81, `L4-review`)
-         e col giudice di banda acceso lo ferma a 0.00 — `T134`.
+      ⚠️ questo numero vale con la fonte **abbreviata** («400 mq»). Con la
+         fonte per esteso lo stesso claim è **trattenuto** a 75.81 (`L4-review`):
+         il riquadro in cima.
 
 Stessa cifra, **unità diversa**: passa. Non è una svista del controllo — è il
 suo perimetro: `L4.1` confronta il valore *a parità di unità*, e due unità
@@ -213,20 +215,40 @@ la differenza fra i due regimi dichiarati in cima a questa pagina.
 Cambiando **una sola parola** in una frase vera e sostenuta dalla stessa fonte il
 claim cade; e un claim **falso**, che la fonte contraddice, passa:
 
-    4 verbali VERI su 10 cadono per il verbo
+    5 verbali VERI su 10 cadono per il verbo        (erano 4 il 29/08)
     «sospeso», FALSO e contraddetto dalla fonte, passa a 98.64
 
 ⇒ Il presidio guarda **come** è detta la cosa, non **chi** la dice né se la fonte
 la sostiene: un verbo «da modello» fa cadere una frase vera, e un verbo innocuo
 fa passare una falsa.
 
-⚠️ **Questi due numeri sono del 29/08/2026**, misurati da un pari, e il banco che
-li produce è nel repo:
-[`banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py`](banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py)
-(commit `951dc1fa`). **Tre settimane e molte fusioni fa.** La voce sta qui perché
-il difetto è strutturale e il banco è eseguibile — ma il numero **va rifatto sul
-wheel di oggi** prima di citarlo come corrente, e finché non lo è, porta la sua
-data.
+🗓️ **Rimisurati sul tronco di oggi**, con lo stesso banco del 29/08 mai
+toccato da allora — [`banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py`](banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py),
+commit `951dc1fa` — così che **l'unica cosa cambiata è il tronco**. Store
+temporaneo, tre giri con gli stessi numeri al centesimo:
+
+| | 29/08 | oggi | |
+|---|---|---|---|
+| veri caduti per il verbo | 4 su 10 | **5 su 10** | è **peggiorato** |
+| «sospeso» (falso) | 98.64 | **98.64** | identico al centesimo |
+
+Il quinto caduto è **`concluso`**, declassato da `L1.13` con **grounding 99.90**.
+
+🔎 **E si sa perché**, isolato con un bisect a una variabile:
+
+    e1f5e041 (parent)   concluso  persist    99.90   —        -> 4 caduti
+    1a4b8635            concluso  downgrade  99.90   L1.13    -> 5 caduti
+    (tronco di oggi)    concluso  downgrade  99.90   L1.13    -> 5 caduti
+
+`1a4b8635` è *«la guardia anti-eco: il perdono di `L1.13` non si compra passando
+il claim come fonte»*, del **30/08 — il giorno dopo il banco**.
+
+⇒ **Una cura giusta ha aggiunto un falso negativo.** Ha chiuso una scappatoia
+vera, e nel farlo ha tolto il perdono anche a un verbale di terzi **che la fonte
+sostiene**. Il grounding resta `99.90`: **non è il giudice che ha cambiato idea,
+è il lessico.** È la cosa da ricordare di questa voce, più dei due numeri.
+
+⚠️ Misura di un pari, non di chi scrive questa pagina.
 
 ---
 
@@ -241,6 +263,10 @@ cambiare è il verbo: lascia passare un falso e trattiene un vero.
 ⚠️ **Il primo della lista è il più comune.** Aggiungere alla fonte qualcosa che
 la fonte non dice non fa scattare niente, perché non c'è niente da confrontare:
 `layers=[]`.
+
+🔴 **E prima ancora: è debole quando non riconosce quello che la fonte dice.**
+Un'unità **abbreviata** — `mq`, `mc`, `kg` — gli toglie di mano la contraddizione
+prima di arrivare al confronto. Il documento vero è quasi sempre scritto così.
 
 ⇒ Il punteggio accanto a un fatto ammesso **è il voto di un giudice, non una
 dimostrazione**. La ricevuta lo dice; questa pagina dice quando quel voto vale
