@@ -60,6 +60,58 @@ def _write_version(conn: sqlite3.Connection, db_id: str, version: int) -> None:
     )
 
 
+#: Il db che porta il nucleo. Per gli altri (`episodes`, `skills_index`) non
+#: esiste un criterio di schema, quindi il controllo qui sotto non si applica:
+#: rifiutare senza un criterio sarebbe rumore, non protezione.
+_DB_ID_DEL_NUCLEO = "semantic"
+
+
+def _rifiuta_una_stampa_infondata(
+    conn: sqlite3.Connection,
+    db_id: str,
+    target_version: int,
+) -> None:
+    """La stampa cieca a un passo è legittima solo se il presupposto regge.
+
+    Il presupposto è scritto qui sopra: «no DDL yet», cioè la versione nuova
+    non chiede colonne che non ci sono. Su un bootstrap fresco è vero e la
+    stampa è giusta. Su uno store che un nucleo ce l'ha già, nessuno lo
+    verificava: il numero saliva e le colonne restavano quelle di prima, così
+    due store che dichiarano la stessa versione possono avere schemi diversi —
+    e chi legge la versione per decidere si fida di un'etichetta.
+
+    Verificarlo si può perché il nucleo dichiara cosa si aspetta a ogni
+    versione. Dove il criterio non c'è (altro db, versione non mappata, nucleo
+    ancora assente) il comportamento resta quello di prima: non si inventa un
+    rifiuto su una domanda a cui non si sa rispondere.
+    """
+    if db_id != _DB_ID_DEL_NUCLEO:
+        return
+    from verimem.schema import (
+        ATTESE_PER_VERSIONE,
+        colonne_del_nucleo,
+        schema_corrisponde_su,
+    )
+
+    if target_version not in ATTESE_PER_VERSIONE:
+        return
+    presenti = colonne_del_nucleo(conn)
+    if not presenti:
+        return
+    if schema_corrisponde_su(conn, target_version):
+        return
+
+    mancanti = sorted(ATTESE_PER_VERSIONE[target_version] - presenti)
+    raise RuntimeError(
+        f"refusing to stamp db_id={db_id!r} as version {target_version} with "
+        f"zero DDL applied: that version declares columns the file does not "
+        f"have ({mancanti}). The one-step stamp exists for a fresh bootstrap, "
+        f"where there is nothing to apply; here it would promote the number "
+        f"while leaving the schema behind. Register the migration for "
+        f"{target_version} instead of stamping over it."
+    )
+
+
 def ensure_schema_version(
     conn: sqlite3.Connection,
     db_id: str,
@@ -123,6 +175,7 @@ def ensure_schema_version(
 
     if not pending:
         # No migrations defined yet; just stamp the version.
+        _rifiuta_una_stampa_infondata(conn, db_id, target_version)
         try:
             conn.execute("BEGIN IMMEDIATE")
             _write_version(conn, db_id, target_version)
