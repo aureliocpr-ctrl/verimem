@@ -6185,15 +6185,15 @@ def store_migrate_cmd(
 
     percorso = _Path(file).expanduser()
     if not percorso.is_file():
-        console.print(f"[red]non esiste:[/red] {percorso}")
+        console.print(f"[red]non esiste:[/red] {percorso}", soft_wrap=True)
         raise typer.Exit(2)
     try:
         ricevuta = migra_lo_store(
             percorso, _Path(backup_in).expanduser() if backup_in else None)
     except (BackupNonVerificato, StoreTroppoNuovo) as exc:
-        console.print(f"[red]non migrato:[/red] {exc}")
+        console.print(f"[red]non migrato:[/red] {exc}", soft_wrap=True)
         raise typer.Exit(1) from exc
-    console.print(str(ricevuta))
+    console.print(str(ricevuta), soft_wrap=True)
 
 # ⚠️ QUALUNQUE COMANDO VA DEFINITO SOPRA QUESTA RIGA.
 # Con `python -m verimem.cli` il modulo gira come __main__, quindi `main()`
