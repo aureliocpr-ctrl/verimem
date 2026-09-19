@@ -30,6 +30,7 @@ import subprocess
 import sys
 import textwrap
 
+from tests._esito import esito
 from verimem.gate_router import AGENT_CLAIM, USER_INPUT
 from verimem.l1_completion_detector import detect_unsupported_completion_claim
 
@@ -124,10 +125,16 @@ def test_alla_porta_mcp_l_eco_con_user_resta_fuori_dal_recall():
             print("STATUS=%s" % (m.group(1) if m else "?"))
         asyncio.run(uno())
     """)
-    esito = subprocess.run([sys.executable, "-c", codice], capture_output=True,
-                           text=True, timeout=600)
-    riga = [r for r in esito.stdout.splitlines() if r.startswith("STATUS=")]
-    assert riga, f"la porta non ha risposto:\n{esito.stdout}\n{esito.stderr}"
+    # ⚠️ L'ESITO DEL PROCESSO SI GUARDA, e non e' una formalita': un processo
+    # ucciso lascia un output TRONCO, e allora ogni assert qui sotto direbbe
+    # «manca la stringa STATUS=» invece di «il processo e' morto», con la causa
+    # tagliata via dalla piattaforma. `tests/_esito.py` esiste per questo, e la
+    # prima stesura di questo banco non lo usava: me l'ha detto il presidio.
+    risultato = subprocess.run([sys.executable, "-c", codice],
+                               capture_output=True, text=True, timeout=600)
+    testo = esito(risultato)
+    riga = [r for r in testo.splitlines() if r.startswith("STATUS=")]
+    assert riga, f"la porta non ha risposto: {testo}"
     assert riga[0] == "STATUS=quarantined", (
         f"alla porta l'eco con writer_role=user e' entrata SERVIBILE: {riga[0]}")
 
