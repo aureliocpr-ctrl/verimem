@@ -55,10 +55,19 @@ def test_l_etichetta_e_SEMPRE_uno_dei_layer_che_hanno_agito():
     """L'invariante, sulle forme in cui il moat boccia con layer diversi.
 
     Non è una ripetizione del test sopra: quello pianta UN valore atteso,
-    questo dice che la proprietà vale per QUALSIASI layer, così la cura non
-    può essere un `if` sul nome 'L4-grounding'.
+    questo dice che la proprietà vale per QUALSIASI layer della famiglia, così
+    la cura non può essere un `if` sul nome 'L4-grounding'.
+
+    ⚠️ RISTRETTO ALLA FAMIGLIA `L4`, e lo dichiaro perché l'ho scritto più
+    largo e la cura non lo soddisfaceva. La prima versione chiedeva lo stesso
+    di un `L2-contraddizione`, ma se il moat ha bocciato il decisore è il moat:
+    nominare il layer di un'altra famiglia non sarebbe «dare il nome proprio»,
+    sarebbe spostare la precedenza che il codice dichiara intoccabile. Era il
+    test a pretendere la cosa sbagliata — non la cura a essere timida — e
+    l'alternativa (lasciarlo largo e allargare la cura) cambierebbe CHI decide
+    per guadagnare un'etichetta.
     """
-    for layer in ("L4-grounding", "L4.1", "L4-review", "L2-contraddizione"):
+    for layer in ("L4-grounding", "L4.1", "L4-review", "L4-quantita"):
         etichetta = chi_ha_quarantinato(
             "failed", [{"layer": layer}], agito=[layer])
         assert etichetta == layer, (

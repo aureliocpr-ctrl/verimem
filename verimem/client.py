@@ -531,6 +531,30 @@ def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
     if "store-screen" in set(agito):
         return "store-screen"
     if moat == "failed":
+        # T150 (19/09): «moat» e' la FAMIGLIA, non il decisore. Il layer che ha
+        # trattenuto e' gia' in mano — `L4-grounding`, `L4.1`, `L4-review` — e
+        # rispondere con il nome della famiglia lascia la colonna NON
+        # INCROCIABILE con i layer della ricevuta: chi legge vede
+        # `quarantined_by='moat'` accanto a `['L4-grounding']` e non puo' sapere
+        # se sono la stessa decisione o due. Stessa classe di T77, dove la CLI
+        # scriveva «gate» al posto del layer. La famiglia non si perde: resta nel
+        # campo `moat: failed` della ricevuta, che e' il posto dove e' un FATTO
+        # e non un'etichetta.
+        #
+        # ⛔ SOLO I LAYER `L4`, e non e' timidezza: se il moat ha bocciato, il
+        # decisore e' il moat, e nominare un layer di un'altra famiglia (un `L3`
+        # che coesiste, un `L1` che avvisa) sposterebbe la PRECEDENZA che il
+        # blocco qui sopra dichiara intoccabile. Si da' il nome proprio dentro la
+        # famiglia che ha deciso, non si cambia chi decide.
+        _l4 = [str(_a) for _a in agito if _a and str(_a).startswith("L4")]
+        for _p in _BLOCK_LAYER_PRIORITY:
+            for _a in _l4:
+                if _a.startswith(_p):
+                    return _a
+        if _l4:
+            return _l4[0]
+        # Nessun layer L4 fra quelli che hanno agito: non c'e' un nome proprio da
+        # dare e la famiglia e' meglio del generico. Mai «gate» (T77).
         return "moat"
     # 2026-09-03 (lead): `L1-domain-precision-observe` e `L1-domain-advisory-
     # observe` INIZIANO con «L1» ma sono marcatori di osservazione («surfaced,
