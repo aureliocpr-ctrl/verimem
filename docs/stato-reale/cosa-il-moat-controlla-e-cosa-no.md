@@ -10,31 +10,35 @@ Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`, versione `0.7.7`), in
 venv pulito, con `verimem remember` sulla riga di comando e le stesse scritture
 sulla libreria e sulla porta MCP. Fonte unica per tutti i casi:
 
-> ## 🔴 IL REGIME DI QUESTI NUMERI NON È REGISTRATO, E DUE DI ESSI NON SI RIPRODUCONO
+> ## 🔴 LO STESSO INGRESSO DÀ ESITI DIVERSI SU MACCHINE DIVERSE
 >
-> La prima stesura di questo riquadro diceva che i numeri qui sotto sono presi
-> «col solo cross-encoder, senza modello linguistico iniettato». **Non è una
-> misura: è una deduzione.** Chi ha misurato non ha registrato `ENGRAM_BAND_LLM`
-> né quale giudice di banda fosse raggiungibile sulla macchina.
+> **È il fatto più importante di questa pagina, e non riguarda un numero: riguarda
+> la promessa.** Le stesse tre frasi, la stessa fonte, scritte **alla porta** da
+> tre persone diverse nello stesso pomeriggio:
 >
-> Un pari ha rifatto lo stesso ingresso sull'albero di oggi, **una variabile
-> sola**:
+>     caso                      chi scrive qui   un pari     un altro pari
+>     400 metri quadri (vero)     98.5478515625   98.548        98.97
+>     400 metri CUBI (il buco)    96.0053558350   96.005        75.81  ['L4-review']
+>                                    admitted     admitted    quarantined
+>     401 metri quadri (falso)     5.5289530754    5.529         —
+>                                  quarantined   quarantined
 >
->     CE DA SOLO  (ENGRAM_BAND_LLM=0)   400 metri cubi -> quarantined  75.81  ['L4-review']
->     CON LA BANDA                      400 metri cubi -> quarantined   0.00  ['L4-grounding']
->     questa pagina                     400 metri cubi -> admitted     96.01
+> ⇒ **Due colonne su tre coincidono a tutte le cifre; la terza differisce anche
+> sul caso VERO** (98.97 contro 98.548), quindi non è solo il giudice di banda
+> che entra: cambia il punteggio di base. Dove le prime due non fanno scattare
+> nessuno strato (`strati=[]`), la terza fa scattare `L4-review` — *tenuto per
+> revisione* — o, col giudice di banda acceso, `L4-grounding` a 0.00.
 >
-> ⇒ **`admitted 96.01` non si riproduce in nessuno dei due**: non è «un regime
-> contro l'altro», è un terzo stato. E sui casi di controllo i due alberi
-> divergono di poco ma divergono (`900 quadri`: 0.79 contro 0.81 · `400 quadri`:
-> 98.97 contro 98.55), quindi **lo scarto grande non lo spiega l'albero**: da
-> chi ha scritto questa pagina lo strato `L4-review` non è scattato.
+> ⚠️ **Per chi usa il prodotto questo conta più del numero**: sullo stesso testo
+> e sulla stessa fonte, una macchina **ammette** e un'altra **trattiene**. La
+> promessa non è «il moat ferma X»: è «il moat ferma X **con quello che hai
+> installato**», e oggi **la ricevuta non dice quale giudice ha risposto**
+> (`T134`).
 >
-> **Finché il numero non è rifatto**, ogni cifra qui sotto va letta così: presa
-> sul wheel `0.7.7` di `bdf7453b` col giudice locale del 2/07, **regime di banda
-> ignoto**. I difetti che la pagina descrive restano — sono dichiarati nel
-> codice — ma **le cifre sono da riprendere**, e chi le rifarà registri anche
-> `ENGRAM_BAND_LLM` e quale giudice ha risposto.
+> 🗓️ Le cifre della prima colonna sono prese sul wheel `0.7.7` di `bdf7453b`
+> col giudice locale del 2/07, **e il regime di banda non è stato registrato** —
+> la stesura precedente di questo riquadro lo dichiarava «cross-encoder da solo»
+> senza averlo verificato, ed è stato corretto.
 
 ---
 
