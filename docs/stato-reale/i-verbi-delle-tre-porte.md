@@ -12,7 +12,8 @@
 > pagina esiste **solo** perché una corrispondenza fra nomi fa risparmiare
 > mezz'ora a chi cambia porta — non perché misuri qualcosa.
 >
-> **Il numero che misura davvero la distanza sta in fondo, ed è `3/14`.**
+> **Il numero che misura davvero la distanza sta in fondo, ed è diverso per ogni
+> porta: `14/14` alla riga di comando, `3/14` alla libreria e alla porta MCP.**
 
 Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`), versione `0.7.7`, in
 venv pulito. Le celle «non c'è» sono **verificate** (assenza provata eseguendo);
@@ -83,12 +84,31 @@ serializzazione. **Le porte rendono QUESTO, senza ritocchi**»*.
     modello               --      --
     giudice               --      --        TOTALE            3/14     3/14
 
-⇒ **Undici campi su quattordici non arrivano a nessuna porta**, fra cui i
-quattro che dicono *come* è stato giudicato (`punteggio`, `soglia`, `scala`,
-`modello`) e `margine`.
+⚠️ **LE COLONNE QUI SOPRA SONO DUE, NON TRE**, e la prima stesura di questa
+pagina scriveva accanto *«undici campi non arrivano a nessuna porta»*: una
+proprietà di **tre** porte affermata avendone misurate **due**. La CLI non era
+nella tabella. **Riga corretta il 19/09 la sera, con la misura di un pari.**
+
+### E sul tronco la CLI è già a `14/14`
+
+Misurato sul tronco `c4bec04c` da chi ha curato la prima fetta — **non da chi
+scrive questa pagina**:
+
+    CLI        14/14      ← la ricevuta unica è arrivata qui per prima
+    libreria    3/14
+    MCP         3/14
+
+⇒ **Il numero non è più uno solo.** Undici campi su quattordici non arrivano
+**alla libreria e alla porta MCP** — fra cui i quattro che dicono *come* è stato
+giudicato (`punteggio`, `soglia`, `scala`, `modello`) e `margine`. Alla riga di
+comando arrivano tutti.
+
+⚠️ E resta un campo che **una porta sola** dichiara: `fermato_da`. Una ricevuta
+unica non è unica finché un campo lo dice una porta su tre.
 
 **Questo è il numero da guardare, non la tabella dei nomi.** Tre misure
-indipendenti — tre persone, tre strade — hanno dato `3/14` lo stesso giorno.
+indipendenti — tre persone, tre strade — avevano dato `3/14` su libreria e MCP
+lo stesso giorno, e la quarta misura ha mostrato che la CLI era già oltre.
 Quando la ricevuta unica entra, il criterio è **`14/14` su tutte e tre le
 porte**: se non ci arriva, la ricevuta unica non è unica.
 
