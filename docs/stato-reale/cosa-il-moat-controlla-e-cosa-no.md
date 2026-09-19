@@ -32,7 +32,9 @@ poi non la mostrava.*
 >
 > ⇒ **Due colonne su tre coincidono a tutte le cifre; la terza differisce anche
 > sul caso VERO** (98.97 contro 98.548), quindi non è solo il giudice di banda
-> che entra: cambia il punteggio di base. Dove le prime due non fanno scattare
+> che entra: **cambia il punteggio di base, ed è `T147`** — stesso modello,
+> stesso ingresso, punteggio diverso su macchine diverse; da chiudere con lo sha
+> del file del modello, la versione di torch e cpu/gpu su ciascuna. Dove le prime due non fanno scattare
 > nessuno strato (`strati=[]`), la terza fa scattare `L4-review` — *tenuto per
 > revisione* — o, col giudice di banda acceso, `L4-grounding` a 0.00.
 >
@@ -84,7 +86,7 @@ sono la stessa cosa, e il secondo oggi manca: è `T134`, alla voce ④ qui sotto
 
 ---
 
-### ④ Quando **non può** giudicare, trattiene — non ammette
+### ④ Quando **non può** giudicare trattiene — misurato su **una macchina su tre**
 
 È la parte della promessa che nessuno scrive, e va detta qui perché è quella
 che decide cosa succede il giorno in cui qualcosa non funziona:
@@ -97,13 +99,19 @@ today's held-for-review behavior»* — e il giudice di banda è **un pezzo di
 prodotto**, non un accessorio: `band_escalation.py` scala prima a un modello
 locale e poi alla CLI come ripiego, e `ENGRAM_BAND_LLM=0` serve a uscirne.
 
-⇒ **Chi non ha né l'uno né l'altro non resta senza difesa: resta con una
-difesa che trattiene invece di ammettere.** Misura di un pari sull'albero di
-oggi, non di chi scrive questa pagina.
+⚠️ **E qui va detto il limite di questa lode, che è il limite di una misura
+sola**: `L4-review` è scattato su **una macchina delle tre** del riquadro in
+cima. Sulle altre due, senza alcuno strato, lo stesso caso esce **ammesso a
+96**. Quindi non è una proprietà del prodotto — è quello che fa **quella**
+macchina, ed è la stessa incertezza di `T147`.
+
+⇒ Se il comportamento a prova di guasto vale ovunque, **due macchine su tre non
+lo mostrano**: fino a `T147` chiuso, questa riga è una promessa su una macchina,
+non sul prodotto. Misura di un pari, non di chi scrive questa pagina.
 
 ## ❌ Quello che il moat NON controlla — con il ticket accanto
 
-### ① L'aggiunta non sostenuta — *questa voce non ha un ticket*
+### ① L'aggiunta non sostenuta — `T146`
 
     fonte  «Perizia del 2026-09-01: il capannone 12 misura 400 mq.»
     claim  «Il capannone 12 ha tre piani interrati e un eliporto.»
@@ -131,8 +139,8 @@ Misurato da chi scrive questa pagina: sei casi, una fonte, wheel `0.7.6`, e le
 tre porte danno lo stesso punteggio a tutte le cifre. Il banco completo sta in
 [`percorsi/05-numeri-con-unita.md`](percorsi/05-numeri-con-unita.md).
 
-**Le altre tre voci hanno un ticket, questa no.** Va aperto; il numero lo dà chi
-tiene il registro.
+**Questa voce è nata senza ticket** — la pagina lo dichiarava — e il numero
+è arrivato dopo: `T146`.
 
 
 ### ② Giudizi, valutazioni e previsioni — `T140`
