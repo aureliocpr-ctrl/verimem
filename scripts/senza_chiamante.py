@@ -96,9 +96,9 @@ PYPROJECT = RADICE / "pyproject.toml"
 # LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
 # ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
 # criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
-TETTO_C2 = 31          # nessuna porta: né import, né entry point, né python -m
+TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 45           # irraggiungibili da ogni porta, chiusura transitiva (31 C2 + 3 C1 + 11 solo-per-catena)
+TETTO_D = 43           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 10 solo-per-catena)
 # ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
 # prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
 # hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
