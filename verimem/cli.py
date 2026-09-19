@@ -46,6 +46,20 @@ def _radice(
         help="Print the installed version and exit."),
 ) -> None:
     """Verimem CLI."""
+    #: ⚠️ QUI, E NON DENTRO I COMANDI. `--json` sta su sette comandi: curarne
+    #: uno solo sarebbe una copia, e la copia e' il difetto da cui nasce tutta
+    #: la fetta. Questo callback e' l'unico punto per cui ogni comando passa.
+    #: · si guarda `sys.argv` perche' `--json` e' un'opzione dei SOTTOcomandi e
+    #:   qui typer non l'ha ancora parsata;
+    #: · per TOKEN ESATTO, non per sottostringa: `--json-qualcosa` non e'
+    #:   `--json`, e un `in` su una stringa non lo distinguerebbe;
+    #: · PRIMA di qualunque log, perche' `cache_logger_on_first_use` lega il
+    #:   logger alla sua uscita al primo uso e dopo non si sposta piu'.
+    #: Misurato il 19/09: senza, `json.load` muore con «Extra data: line 1
+    #: column 5»; con, stdout e' una riga sola e il giornale sta su stderr.
+    if "--json" in sys.argv[1:]:
+        from .observability import route_logs_to_stderr
+        route_logs_to_stderr()
     if version:
         from . import __version__
         console.print(__version__)
@@ -5472,7 +5486,15 @@ def save_cmd(
         raise _lineage_exit(exc) from exc
     if json_out:
         import json as _json
-        print(_json.dumps(r, ensure_ascii=False, default=str))
+
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        #: L'UNIONE HA UNA SCADENZA (20/09, ticket nella DoD): finche' le altre
+        #: due porte non rendono la Ricevuta, togliere le vecchie chiavi
+        #: romperebbe chi le legge oggi. Su una chiave in collisione vince la
+        #: NUOVA, ed e' un dizionario solo: due dizionari affiancati sarebbero
+        #: di nuovo due schemi.
+        _uscita = {**r, **ricevuta_dal_cancello(r).come_dizionario()}
+        print(_json.dumps(_uscita, ensure_ascii=False, default=str))
         raise typer.Exit(0 if r.get("stored") else 1)
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
