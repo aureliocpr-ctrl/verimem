@@ -5405,9 +5405,29 @@ def riga_stored_quarantined(r: dict) -> str:
     ESTRATTA dal comando per poterla misurare su una ricevuta COSTRUITA: il
     testo dipende solo dalla ricevuta, e farlo passare da una scrittura vera
     significherebbe misurare il giudice invece della riga.
+
+    ⚠️ DICEVA SEMPRE «the injection/contradiction screens fired», qualunque
+    layer avesse trattenuto la scrittura. Una coppia scritta a mano, non un
+    dato: con `L4.1` (un numero che la fonte non contiene) o `L4-grounding`
+    (il giudice) nominava due schermi che NON avevano parlato, e due righe
+    piu' sotto la stessa ricevuta stampava i layer veri, che la smentivano.
+    Chi leggeva andava a cercare un'iniezione di prompt in una frase che
+    conteneva solo un numero sbagliato.
+
+    ⛔ `_blocking_layers` e NON la lista dei warning: gli avvisi `*-observe`
+    hanno parlato ma non hanno fermato niente, e dargli il merito del blocco
+    e' lo stesso difetto con il segno invertito.
+
+    Senza layer che hanno agito la riga NON inventa un colpevole: dice che la
+    scrittura e' trattenuta e rimanda agli avvisi. Un nome falso e' peggio di
+    un nome mancante.
     """
-    return ("[yellow]stored QUARANTINED[/yellow] — the injection/"
-            "contradiction screens fired; see warnings below")
+    from .client import _blocking_layers
+    agito = _blocking_layers(r.get("warnings") or [])
+    if agito:
+        return (f"[yellow]stored QUARANTINED[/yellow] — held by "
+                f"{', '.join(agito)}; see warnings below")
+    return "[yellow]stored QUARANTINED[/yellow] — see warnings below"
 
 
 def riga_moat_non_verificato(moat: str | None) -> str:
