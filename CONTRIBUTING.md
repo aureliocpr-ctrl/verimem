@@ -87,6 +87,19 @@ le regole che seguono.
    Questo è il testo da incollare in quel commento, con l'intestazione
    **esatta** che il controllo cerca:
 
+   > ⚠️ **SE STAI AIUTANDO QUALCUN ALTRO, MANDAGLI IL LINK A QUESTA SEZIONE —
+   > non incollargli il modello in un commento della sua richiesta.** Il 19/09
+   > è successo esattamente questo: un pari ha incollato il modello in sette
+   > richieste per spiegare cosa scrivere, e il controllo l'ha letto come una
+   > dichiarazione. Le sette sono diventate verdi con «commenti dopo il mio: 0»
+   > su tutte e sette — nessuno dei loro autori aveva dichiarato niente.
+   >
+   > Da allora il controllo **ignora ciò che sta dentro un blocco recintato**,
+   > quindi un modello incollato così non fa più passare nessuno. Ma la regola
+   > resta, e non è difensiva: **la checklist la scrive chi ha fatto il lavoro,
+   > perché è una dichiarazione, non un modulo.** Un modello incollato da terzi
+   > toglie all'autore l'unica cosa che quel commento doveva portare.
+
    ```markdown
    ### Definition of Done
 

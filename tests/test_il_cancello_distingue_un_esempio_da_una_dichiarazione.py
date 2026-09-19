@@ -74,6 +74,29 @@ def test_anche_col_marcatore_a_tilde_e_con_un_linguaggio():
         )
 
 
+def test_il_nulla_cade_ANCORA():
+    """⚠️ IL NEGATIVO, e sta qui perché me l'ha insegnato il presidio di un pari.
+
+    Corrado aveva curato lo stesso difetto in parallelo, e il suo RED aveva tre
+    gambe dove il mio ne aveva due: *un esempio recintato passa, una
+    dichiarazione vera passa, **il nulla cade***. La terza nel mio file non
+    c'era — il comportamento era giusto (lo copre l'autotest dello script) ma
+    **il presidio esplicito no**, e un presidio che vive in un solo posto
+    protegge solo quel posto.
+
+    Senza questa gamba, una cura futura che togliesse i recinti con troppa
+    larghezza — fino a svuotare il commento — passerebbe le prime due e
+    resterebbe verde: nessun commento e un commento svuotato si somigliano.
+    """
+    for nome, commenti in (("nessun commento", []),
+                           ("un commento che non dichiara niente", ["ciao, come va"])):
+        problemi = mp.controlla_corpo(CORPO, commenti=commenti)
+        assert problemi, (
+            f"{nome}: il cancello ha lasciato passare una richiesta in cui "
+            "NESSUNO ha dichiarato che cosa considera finito"
+        )
+
+
 def test_LA_DICHIARAZIONE_VERA_PASSA_ANCORA():
     """⚠️ IL CONTROLLO POSITIVO, e qui vale doppio.
 
