@@ -216,6 +216,20 @@ def _is_domain_professional_fact(proposition: str) -> bool:
         return False
 
 
+#: I LAYER NUMERICI DETERMINISTICI CHE VALGONO IL GIUDICE — superficie unica.
+#: `has_grounding_fail` (qui sotto) e la promozione dei documenti leggevano
+#: questo insieme da DUE elenchi scritti a mano, e il commento del secondo
+#: diceva «stesso insieme del primo»: due copie che si dichiarano gemelle sono
+#: la prima classe di difetto di questo progetto, e bastava che un layer nuovo
+#: entrasse in uno solo perche' la stessa scrittura fosse trattenuta a una
+#: porta e ammessa all'altra. Adesso la lista e' una.
+#: ⛔ CHI ENTRA QUI TRATTIENE, quindi ci entra solo un verdetto DETERMINISTICO:
+#: `L4.1` (il valore non c'e' nella fonte) e `L4.2-grandezza` (le unita' dei
+#: due lati nominano grandezze diverse). `L4.2` senza suffisso NO: quello e'
+#: l'euristica delle parole vicine, misurata sbagliare 1 riformulato su 5.
+LAYER_NUMERICI_COME_IL_GIUDICE = ("L4-grounding", "L4.1", "L4.2-grandezza")
+
+
 # Spostata qui da client.py il 2026-09-03 (lead): `advisory_eligible` (sotto) deve
 # scartare i marcatori di osservazione con la STESSA regola di `_blocking_layers`
 # e `chi_ha_quarantinato`, e il gate non puo' importare client.py (circolare).
@@ -2140,10 +2154,36 @@ def _controlli_lessicali_sui_numeri(proposition, source, warnings) -> None:
     # costruzione i valori assenti, che sono il perimetro di L4.1.
     from .vicinato_del_valore import valori_riusati_da_altro_contesto
     _riusati = valori_riusati_da_altro_contesto(proposition, source)
-    if _riusati:
-        _rr = "; ".join(
+
+    def _elenco(gruppo):
+        return "; ".join(
             f"{r.valore:g} qui e' «{r.nel_claim}», nella fonte "
-            f"«{r.nella_fonte}»" for r in _riusati[:3])
+            f"«{r.nella_fonte}»" for r in gruppo[:3])
+
+    # ⚠️ DUE LIVELLI PERCHE' SONO DUE GRADI DI CERTEZZA (T105, 19/09).
+    # Il campo `certo` separa il verdetto delle UNITA' — i due lati attaccano
+    # lo stesso numero a grandezze NOTE e DIVERSE, volume contro area, e
+    # nessuna parola condivisa puo' renderle la stessa misura — da quello
+    # delle PAROLE attorno al numero, che e' l'euristica di sempre e sui
+    # riformulati veri sbaglia 1 volta su 5. Solo il primo esce con un layer
+    # suo, `L4.2-grandezza`, che vale il giudice; il secondo resta `L4.2` e
+    # NON trattiene, esattamente come prima di questa cura.
+    _certi = [r for r in _riusati if r.certo]
+    _euristici = [r for r in _riusati if not r.certo]
+    if _certi:
+        _rc = _elenco(_certi)
+        warnings.append({
+            "layer": "L4.2-grandezza",
+            "reason": (f"il claim e la fonte attaccano lo stesso numero a "
+                       f"grandezze diverse (le unita' lo dicono): {_rc}"),
+            "advice": ("il numero c'e' nella fonte ma misura un'altra "
+                       "grandezza — un volume non sostiene un'area: "
+                       "correggi l'unita', oppure passa la fonte che "
+                       "sostiene questo valore"),
+            "matched_text": _rc,
+        })
+    if _euristici:
+        _rr = _elenco(_euristici)
         warnings.append({
             "layer": "L4.2",
             "reason": (f"il claim riusa un numero della fonte "
@@ -3161,7 +3201,13 @@ def run_validation_gate(
     # non si consegna. Resta come AVVISO: dichiara che il numero e' riusato da
     # un altro contesto e lascia decidere — la forma di hidden_records,
     # quarantined_by, floor_applied_by, ranking.
-    has_grounding_fail = any(w.get("layer") in ("L4-grounding", "L4.1")
+    # ⚠️ T105 (19/09): `L4.2-grandezza` invece SI', e non contraddice il
+    # capoverso qui sopra — lo restringe. Quel 20% viene dalle PAROLE vicine al
+    # numero; il caso nuovo lo decidono le UNITA' (volume contro area), dove il
+    # riformulato non esiste per costruzione. Raggio misurato prima di
+    # scriverlo, in sola lettura sullo store vero: 8757 fatti con uno span, 8
+    # con unita' note da entrambe le parti, ZERO con grandezze diverse.
+    has_grounding_fail = any(w.get("layer") in LAYER_NUMERICI_COME_IL_GIUDICE
                              for w in warnings)
     has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
     # WF3 2026-06-19 PRECISION FIX: the L1 lexical dev-claim detectors fire on ordinary
