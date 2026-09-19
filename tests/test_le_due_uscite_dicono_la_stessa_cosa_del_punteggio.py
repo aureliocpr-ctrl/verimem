@@ -108,6 +108,36 @@ async def test_la_scrittura_e_la_storia_non_si_contraddicono(isolated_corpus):
     )
 
 
+def test_CONTROLLO_POSITIVO_senza_punteggio_la_riga_non_promette_NIENTE():
+    """L'unica cella che deve essere VERDE ANCHE PRIMA della cura.
+
+    Rilievo di un pari, accolto: le altre due cadono entrambe su main, e una
+    si chiama «CONTROLLO» ma **caratterizza il difetto**, non fa da controllo
+    positivo. Se domani qualcosa di ambientale rompesse tutto il banco — un
+    import, una firma cambiata, un modulo spostato — due rossi su due non si
+    distinguerebbero dal difetto che il banco esiste per mostrare.
+
+    Questa regge da entrambe le parti, perché misura la proprietà che le due
+    versioni CONDIVIDONO: senza punteggio non si marca niente. Se cade, il
+    guasto è nell'ambiente o nella funzione, non nella frase.
+    """
+    from verimem.temporal_context import history_line
+
+    class _FattoMaiGiudicato:
+        proposition = TESTO
+        grounding_score = None
+        status = "model_claim"
+        id = "f-senza"
+
+    riga = history_line(_FattoMaiGiudicato(), [])
+    assert riga.strip() == TESTO, (
+        f"un fatto MAI giudicato ha ricevuto un marcatore: {riga!r}. "
+        "La riga deve portare la sola proposizione: `grounding_score` None "
+        "vuol dire che nessuno ha guardato la fonte, e dirlo su ogni riga "
+        "sommergerebbe il segnale (temporal_context.py:194-201).")
+    assert not _dice_implicazione(riga)
+
+
 def test_CONTROLLO_la_riga_si_accende_col_NUMERO_non_col_VERDETTO():
     """Il controllo che spiega il difetto invece di limitarsi a vederlo.
 
