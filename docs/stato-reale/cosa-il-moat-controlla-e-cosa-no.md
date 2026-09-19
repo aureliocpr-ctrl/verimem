@@ -39,8 +39,21 @@ poi non la mostrava.*
 > — cioè **sul ramo in cui il moat protegge di meno**. Chi li rifà con una fonte
 > per esteso otterrà numeri diversi, e migliori.
 >
-> 🔬 Misurato cambiando **una sola cosa**, la fonte, nello stesso processo e
-> sulla stessa macchina. Non è misura di chi scrive questa pagina.
+> 🔬 **Rimisurato da chi scrive questa pagina, cambiando UNA SOLA COSA.** La
+> prima misura — di un pari — cambiava **due** cose fra le due fonti: l'unità *e
+> la data*. Qui cambia solo l'unità, stessa data, stesso processo, stessa
+> macchina:
+>
+>     fonte «Perizia del 2026-09-01: … 400 mq.»           + «400 metri cubi»
+>                                          ->  model_claim   96.00531768798828  []
+>     fonte «Perizia del 2026-09-01: … 400 metri quadri.»  + «400 metri cubi»
+>                                          ->  quarantined   74.09764862060547  []
+>     controllo, claim VERO «400 metri quadri»:  98.548 (abbreviata)  ·  98.897 (esteso)
+>
+> ⇒ **L'effetto resta con una variabile sola: non era la data, è l'unità.** E la
+> data *sposta il punteggio* senza cambiare il verdetto (74.10 qui, 75.81 nella
+> misura del pari, che aveva anche un'altra data) — una ragione in più per
+> cambiare **una cosa per volta**.
 >
 > 🔮 **E per un'ora questo riquadro ha detto un'altra cosa**: che lo stesso
 > ingresso desse esiti diversi **su macchine diverse**. Era falso, e l'errore
@@ -108,8 +121,14 @@ locale e poi alla CLI come ripiego, e `ENGRAM_BAND_LLM=0` serve a uscirne.
 ⇒ Quindi il comportamento a prova di guasto **c'è**, e questa è la lode: quando
 il giudizio non è pieno il prodotto **tiene per revisione invece di ammettere**.
 Ma lo fa **sull'ingresso che riesce a leggere**, e un'abbreviazione nella fonte
-gli toglie il caso di mano prima che arrivi fin lì. Misura di un pari, non di
-chi scrive questa pagina.
+gli toglie il caso di mano prima che arrivi fin lì.
+
+⚠️ **E il nome dello strato regge su una misura sola.** Rifacendo con la fonte
+per esteso — una variabile sola — il claim falso è **trattenuto lo stesso**
+(`quarantined`, 74.10) **ma `layers` è vuoto**: nessuno strato lo dichiara, lo
+ferma il punteggio sotto soglia. Quindi il fatto che il prodotto trattenga è
+**confermato due volte**; che sia `L4-review` a farlo è visto **una volta sola**,
+ed è la parte da rimisurare prima di scriverla come meccanismo.
 
 ## ❌ Quello che il moat NON controlla — con il ticket accanto
 
