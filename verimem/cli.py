@@ -5399,6 +5399,17 @@ def _node_line(node: dict) -> str:
             f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
 
 
+def riga_stored_quarantined(r: dict) -> str:
+    """La riga di riepilogo di una scrittura trattenuta.
+
+    ESTRATTA dal comando per poterla misurare su una ricevuta COSTRUITA: il
+    testo dipende solo dalla ricevuta, e farlo passare da una scrittura vera
+    significherebbe misurare il giudice invece della riga.
+    """
+    return ("[yellow]stored QUARANTINED[/yellow] — the injection/"
+            "contradiction screens fired; see warnings below")
+
+
 def riga_moat_non_verificato(moat: str | None) -> str:
     """Il testo di «not verified», col rimedio GIUSTO per lo stato del giudice.
 
@@ -5634,8 +5645,7 @@ def save_cmd(
         console.print(f"  root checkpoint (no prior session fact under "
                       f"'{seg}')")
     if r.get("status") == "quarantined":
-        console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
-                      "contradiction screens fired; see warnings below")
+        console.print(riga_stored_quarantined(r))
         for w in (r.get("warnings") or [])[:3]:
             # 400, not 100: the L4 advice now ends with WHICH clause the source
             # does not carry, and at 100 chars the cut landed on the first
