@@ -2030,7 +2030,41 @@ def correct_cmd(
     # scritto: lo stato peggiore dei due, perche' lo store e' cambiato e il
     # comando dice di essere fallito. I messaggi qui sotto restano su `old_id`,
     # che e' quello che l'utente ha digitato e si aspetta di rileggere.
-    esito = sm.supersede(vecchio.id, nuovo, principal=_principale(), reason=reason)
+    # T156: da qui in giu' il fatto NUOVO e' gia' nello store. Se la
+    # supersessione fallisce e si esce cosi', resta dentro un fatto che non
+    # corregge niente — orfano — e l'utente ha letto «fallito»: lo stesso
+    # esito peggiore contro cui avvisa la guardia qui sopra, un passo piu' in
+    # la'. Il prodotto lo sa gia' e lo scrive (`supersession_policy`: «new
+    # admitted, old NOT retired»), ma nessuno agiva su quell'avviso.
+    # Si disfa con `delete_with_undo`, che prende lo snapshot PRIMA di
+    # togliere la riga: il fatto non e' perso, e' ripristinabile. Nessun
+    # meccanismo nuovo. L'atomicita' vera sarebbe una transazione sola sopra
+    # scrittura e supersessione, e oggi non e' praticabile: `store()` scrive
+    # da un worker con la sua connessione, `supersede()` ne apre un'altra.
+    try:
+        esito = sm.supersede(vecchio.id, nuovo, principal=_principale(),
+                             reason=reason)
+    except Exception as errore:  # noqa: BLE001 — qualunque guasto lascia lo store sporco
+        try:
+            disfatto = sm.delete_with_undo(nuovo, principal=_principale())
+        except Exception as secondo:  # noqa: BLE001
+            # Il caso peggiore: due passi falliti. Lo store RESTA sporco, e
+            # l'unica cosa che non puo' mancare e' dire a che punto si e'
+            # arrivati — senza, chi legge non ha modo di rimettere a posto.
+            console.print(
+                f"[red]la correzione e' fallita e il fatto nuovo NON e' stato "
+                f"disfatto[/red]: {nuovo} e' rimasto nello store senza "
+                f"correggere {old_id}\n"
+                f"  passo 1, supersessione : {errore}\n"
+                f"  passo 2, disfacimento  : {secondo}\n"
+                f"  toglilo a mano con: verimem facts forget {nuovo}")
+            raise typer.Exit(2) from errore
+        console.print(
+            f"[red]la correzione e' fallita:[/red] {errore}\n"
+            f"  {old_id} NON e' stato corretto e resta in piedi\n"
+            f"  {nuovo} e' stato disfatto (op_id={disfatto.get('op_id')}), "
+            f"ripristinabile con `verimem facts undo`")
+        raise typer.Exit(1) from errore
     if esito.get("idempotent_noop"):
         console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
                       f"(gia' dichiarato, nessun cambiamento)")
