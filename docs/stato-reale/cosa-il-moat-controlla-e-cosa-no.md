@@ -22,7 +22,7 @@ riquadro qui sotto, che ha sostituito un blocco per posizione e si è portata vi
 quello che stava in mezzo: la pagina annunciava «fonte unica per tutti i casi» e
 poi non la mostrava.*
 
-> ## ✅ L'ABBREVIAZIONE NELLA FONTE DISARMAVA IL CONTROLLO. **È CURATA** — ma il giudice non è guarito
+> ## ⚠️ L'ABBREVIAZIONE DISARMAVA IL CONTROLLO. **È CURATA PER LE GRAFIE CHE IL PRODOTTO LEGGE** — e `m3` non è fra quelle
 >
 > **È il fatto più importante di questa pagina, e non è un numero: è il modo in cui
 > i documenti veri sono scritti.** Lo stesso claim falso — *«400 metri cubi»*
@@ -88,6 +88,21 @@ poi non la mostrava.*
 > `96.005` prima e dopo. È la differenza fra **una difesa aggiunta** e **una
 > cecità corretta**, e chi legge la promessa deve saperla — perché dice cosa
 > aspettarsi dai casi che quello strato **non** copre.
+>
+> 🔴 **E LA CURA HA UN PERIMETRO, misurato: dipende da COME È SCRITTA
+> l'unità nel claim.** Stessa fonte (`«400 mq»`), stesso claim falso, quattro
+> grafie:
+>
+>     «400 metri cubi»   quarantined  96.005   ['L4.2-grandezza']   fermato
+>     «400 mc»           quarantined  96.679   ['L4.2-grandezza']   fermato
+>     «400 m3»           model_claim  91.948   []                   ← PASSA
+>     «400 m2»           model_claim  100.0                         giusto: è la stessa grandezza della fonte
+>
+> ⇒ **La sigla `m3` non viene letta come un'unità, quindi non c'è niente da
+> confrontare e lo strato non scatta.** È il buco che resta — e cade proprio
+> sulla grafia che perizie, fatture e capitolati usano **più** della forma per
+> esteso. L'ultima riga è il controllo negativo e va letta come una buona
+> notizia: la cura **non** inciampa su due grafie della stessa grandezza.
 >
 > 📌 E la ragione che lo strato dà è leggibile: *«il claim e la fonte attaccano
 > lo stesso numero a grandezze diverse (le unità lo dicono)»*. ⚠️ Ma arriva nei
