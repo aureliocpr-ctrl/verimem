@@ -1237,16 +1237,43 @@ def run_doctor() -> list[dict[str, Any]]:
 
         # QUALE giudice, perche' senza il numero non si interpreta: la stessa
         # installazione ammette a 40 col giudice locale e a 70 con gli altri.
-        _giudice = "local"
+        #
+        # ⛔ IL PROVIDER VISIBILE NON E' IL GIUDICE CHE SCRIVE. Fino al
+        # 2026-09-19 questa riga prendeva `_autodetect_provider()`, che guarda
+        # l'AMBIENTE — basta una chiave in una variabile — e dichiarava la sua
+        # soglia come «in force». Ma il write path usa il giudice
+        # EFFETTIVAMENTE adoperato (`fact_grounding_score_ex(grounding_llm,
+        # ...)`), e senza un LLM INIETTATO ripiega sul cross-encoder locale.
+        # Misurato in due processi puliti, stessa build:
+        #     nessun provider       doctor 40   write path 40
+        #     OPENAI_API_KEY finta  doctor 70   write path 40
+        # Una chiave mai usata da nessuno spostava di trenta punti il numero
+        # che questa superficie esiste apposta per dire.
+        _visibile = None
         try:
             from .llm import _autodetect_provider
             _p = _autodetect_provider()
             if _p and _p != "mock":
-                _giudice = _p
+                _visibile = _p
         except Exception:  # noqa: BLE001
             pass
+        # Il ripiego del write path, che e' il caso di ogni chiamante che non
+        # inietta un LLM — cioe' il default di tutte le porte.
+        _giudice = "local"
         _soglia = resolve_write_threshold_for(_giudice)
         _dichiarata = get_local_threshold() if _giudice == "local" else None
+        # 🔑 E si dice a QUALE CONDIZIONE quel provider conterebbe. Tacerlo
+        # sarebbe l'errore speculare: chi un LLM lo inietta davvero leggerebbe
+        # 40 e concluderebbe che la sua chiave non serve a niente.
+        _se_iniettato = ""
+        if _visibile:
+            _se_iniettato = (
+                f"; the `{_visibile}` provider is visible in your environment "
+                f"and would raise the bar to "
+                f"{resolve_write_threshold_for(_visibile):.0f} — but only for "
+                f"a caller that INJECTS it into the write path, which no "
+                f"entry point does by default"
+            )
         _nota = ""
         if _dichiarata is not None and _dichiarata > 90.0:
             # DUE decimali e non zero: il valore vero e' 99.64 e `:.0f` lo
@@ -1304,7 +1331,7 @@ def run_doctor() -> list[dict[str, Any]]:
             # proprio per sapere che regole sono in vigore ADESSO.
             f"admission threshold in force: {_soglia:.0f}/100, decided by the "
             f"`{_giudice}` judge{_nota} — a write scoring below it is "
-            f"quarantined{_banda}. Env set by you: "
+            f"quarantined{_banda}{_se_iniettato}. Env set by you: "
             + (f"{len(_suoi)} ({_elenco})" if _suoi
                else "none (every parameter is at its built-in default)")
             + f"; {len(_creati)} more were created by the "
