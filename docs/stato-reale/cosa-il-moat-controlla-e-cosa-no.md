@@ -10,6 +10,23 @@ Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`, versione `0.7.7`), in
 venv pulito, con `verimem remember` sulla riga di comando e le stesse scritture
 sulla libreria e sulla porta MCP. Fonte unica per tutti i casi:
 
+> ## ⚠️ OGNI NUMERO DI QUESTA PAGINA È DI **UN REGIME**
+>
+> Misurati **col solo giudice locale cross-encoder, senza modello linguistico
+> iniettato**. Con un LLM iniettato la banda intermedia viene giudicata davvero,
+> e **lo stesso ingresso può avere esito opposto**. Non è un'ipotesi: un pari ha
+> rifatto dalla porta, su `c4bec04c`, il caso delle unità composte —
+>
+>     questa pagina (CE solo)   400 metri cubi  ->  admitted     96.01   layers=[]
+>     con un LLM iniettato      400 metri cubi  ->  quarantined   0.00   ['L4-grounding']
+>
+> ⇒ **96 punti e l'esito rovesciato, sullo stesso testo e sulla stessa fonte.**
+> È `T134`. Quindi: i numeri qui sotto dicono *quanto protegge la configurazione
+> di base*, che è quella che un utente ha appena installato — **non il massimo
+> che il prodotto sa fare.** Dove il regime cambia la risposta, la riga lo dice
+> accanto al numero.
+
+
     «Perizia del 2026-09-01: il capannone 12 misura 400 mq.»
 
 ---
@@ -99,6 +116,8 @@ una misura: è un segnale. **Il numero definitivo di questa riga arriva con
 ### ③ Le unità composte — `T105`
 
     «Il capannone 12 misura 400 metri CUBI.»      ->  admitted, punteggio 96.01
+      ⚠️ col solo cross-encoder. Con un modello linguistico iniettato lo stesso
+         claim è quarantined a 0.00 (`L4-grounding`) — `T134`, misura di un pari.
 
 Stessa cifra, **unità diversa**: passa. Non è una svista del controllo — è il
 suo perimetro: `L4.1` confronta il valore *a parità di unità*, e due unità
