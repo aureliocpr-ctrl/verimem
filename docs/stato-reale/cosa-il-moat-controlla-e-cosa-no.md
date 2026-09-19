@@ -35,6 +35,19 @@ poi non la mostrava.*
 >     controllo, stesso giro, claim VERO «400 metri quadri»:
 >     contro la fonte per esteso  98.97      contro la fonte abbreviata  98.55
 >
+> 🔎 **La causa è strutturale, ed è stata trovata**: la tabella dei sinonimi di
+> unità conosce **solo il tempo** (23 voci: `d/day`, `h/hour`, `min`, `ms`, `s`).
+> **Nessuna unità di lunghezza, area, volume, massa o potenza.** Quindi `mq` e
+> `metri quadri` sono **chiavi diverse**, come `kg` e `chilogrammi`, `km` e
+> `chilometri`: non è un caso particolare, è **tutte le grandezze tranne una**.
+>
+> ⚖️ **E la frequenza vera, perché il difetto va pesato oltre che dichiarato**:
+> nello store di oggi quelle abbreviazioni sono **25 occorrenze su 67 278**
+> (0,04%) — il corpus è tecnico, non fatto di perizie. **Largo in teoria,
+> stretto in questo corpus**, e le due cose vanno lette insieme: se il prodotto
+> deve servire verbali, fatture e perizie il difetto conta; su ciò che c'è
+> scritto oggi tocca un caso su duemilasettecento.
+>
 > ⇒ **`mq`, `mc`, `kg`, `km²` sono esattamente come scrivono perizie, verbali e
 > fatture.** Il giudice valuta la **coppia**: «400 metri cubi» contro «400 mq» non
 > è lo stesso ingresso di «400 metri cubi» contro «400 metri quadri», e nel primo
@@ -221,9 +234,33 @@ dice» — ma nessun numero è in conflitto, quindi `L4.1` non ha nulla da
 confrontare. Stessa cosa per le valutazioni («è migliorato») e le previsioni
 («basterà fino a fine mese»).
 
-**Misurato su un campione minuscolo: n=3, punteggi 97-99.** ⚠️ Tre casi non sono
-una misura: è un segnale. **Il numero definitivo di questa riga arriva con
-`T140`** — un banco di quaranta casi, metà scritti da chi non misura, in corso.
+**✅ IL NUMERO DEFINITIVO È ARRIVATO** — la stesura precedente diceva *«n=3,
+punteggi 97-99, è un segnale non una misura»*. Trenta coppie, misurate **alla
+porta** da chi non le ha scritte:
+
+    «la fonte non lo dice»   COLTI   :  4/20      giudizio 1/7 · valutazione 1/7 · previsione 2/6
+    «la fonte lo sostiene»   AMMESSI :  6/10      (4 falsi allarmi)
+
+⇒ **Sedici su venti passano, e non al limite: passano con punteggi di piena
+fiducia** — `99,60` *«l'impianto rispetterà i livelli di servizio»*, `98,31` *«la
+copertura dei test è buona»*, `97,38` *«i tempi di risposta sono migliorati»*.
+
+🔴 **E non è un limite di dominio netto: è incoerenza dentro la stessa classe.**
+Due valutazioni comparative, identiche nella forma, e in nessuna delle due la
+fonte contiene il termine di paragone:
+
+    «Il consumo è sceso rispetto all'anno scorso»   g= 0,00   TRATTENUTO
+    «I tempi di risposta sono migliorati»            g=97,38   AMMESSO
+
+Un limite *«fuori dal dominio per costruzione»* darebbe un comportamento
+**uniforme**. Qui il giudice a volte vede e a volte no — e chi legge non può
+sapere in quale dei due casi si trova.
+
+🧪 **Il regime, letto dalla ricevuta e non assunto**: 27 scritture giudicate dal
+cross-encoder, 3 in banda. ⚠️ **E una dichiarazione che va col numero, non sotto
+di esso**: i venti casi li ha scritti chi firma questa pagina, dopo aver letto
+i tre esempi di chi ha misurato. Vale come misura di una popolazione scritta da
+un'altra persona, **non come misura cieca**.
 
 ### ③ Le unità composte — `T105`
 
