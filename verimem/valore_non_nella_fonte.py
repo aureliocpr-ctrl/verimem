@@ -241,6 +241,43 @@ def _valori_da_token_che_la_fonte_contiene(proposition: str, source: str) -> set
     return perdonati
 
 
+#: `1,5 x 10^3` · `4 x 10^-4` · `2,5 × 10^5` · `6 * 10^4`. Il segno di
+#: moltiplicazione ha tre forme in giro per i testi veri (`x` ascii, `×`
+#: unicode, `*`) e l'esponente puo' essere negativo. La mantissa ammette la
+#: virgola perche' e' come l'italiano la scrive.
+_SCIENTIFICA_RE = re.compile(
+    r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*[x×*]\s*10\^(-?\d+)")
+
+
+def _espandi_notazione_scientifica(testo: str) -> str:
+    """Riscrive `1,5 x 10^3` come `1500`, lasciando intatto tutto il resto.
+
+    Serve al solo confronto claim-fonte: il testo espanso non viene mai
+    memorizzato ne' mostrato al posto dell'originale, tranne che nel nome del
+    valore accusato — dove `2500` e' comunque piu' chiaro di `2.5` per chi
+    legge l'avviso.
+
+    ⚠️ NON tocca la notazione con esponente in apice (`10³`) ne' `1.5e3`:
+    nessuna delle due compare nei casi misurati, e una regex che le prendesse
+    tutte rischierebbe di catturare codici prodotto. Quando qualcuno le
+    misurera', si aggiungono qui con la loro cella di banco.
+    """
+    if not testo or "10^" not in testo:
+        return testo
+
+    def _sost(m: re.Match) -> str:
+        try:
+            valore = float(m.group(1).replace(",", ".")) * (10 ** int(m.group(2)))
+        except (ValueError, OverflowError):   # pragma: no cover — regex ristretta
+            return m.group(0)
+        # `%g` scriverebbe 1500 come `1500` ma 0.0004 come `0.0004` e 1e+20
+        # come `1e+20`, reintroducendo la notazione che stiamo togliendo.
+        intero = int(valore)
+        return str(intero) if valore == intero else repr(valore)
+
+    return _SCIENTIFICA_RE.sub(_sost, testo)
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -255,6 +292,31 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     """
     if not proposition or not source:
         return []
+    # `1,5 x 10^3` E `1500` SONO LO STESSO NUMERO, e il layer non lo sapeva.
+    # Misurato il 02/09 sul banco T5.1: sulla notazione scientifica il gate
+    # fermava 6 VERI su 6, e in TRE casi a fermarli era questo layer DA SOLO
+    # mentre il moat li approvava (`withheld_despite_judge`)::
+    #
+    #     caso 8   grounding 89,91   layers ['L4.1']
+    #     caso 9   grounding 99,37   layers ['L4.1']
+    #     caso 11  grounding 98,45   layers ['L4.1']
+    #
+    # perche' `_QUANT_RE` legge `1,5 x 10^3` come TRE numeri separati — 1.5, 10
+    # e 3 — e nessuno dei tre sta nella fonte che dice `1500`.
+    #
+    # ⚠️ E IL DIFETTO NON ERA SOLO SUI VERI: prima di questa riga il claim FALSO
+    # `2,5 x 10^3` produceva gli STESSI assenti del vero (`['2.5','3','10']`
+    # contro `['1.5','3','10']`) ⇒ su questa classe il layer non distingueva
+    # affatto le due popolazioni. Espandere la notazione non toglie un
+    # controllo: gliene da' uno che non aveva.
+    #
+    # ⚖️ E STA QUI, NON IN `extract_quantities`, per la stessa ragione gia'
+    # scritta piu' sotto per «nessun X vale 0»: insegnare la notazione al
+    # parser propagherebbe la conversione ai sei moduli del gate che lo usano,
+    # mentre qui l'equivalenza vive SOLO nel confronto claim-fonte e non entra
+    # nel corpus.
+    proposition = _espandi_notazione_scientifica(proposition)
+    source = _espandi_notazione_scientifica(source)
     nel_claim = extract_quantities(proposition)
     if not nel_claim:
         return []
