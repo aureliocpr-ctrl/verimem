@@ -10,24 +10,31 @@ Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`, versione `0.7.7`), in
 venv pulito, con `verimem remember` sulla riga di comando e le stesse scritture
 sulla libreria e sulla porta MCP. Fonte unica per tutti i casi:
 
-> ## ⚠️ OGNI NUMERO DI QUESTA PAGINA È DI **UN REGIME**
+> ## 🔴 IL REGIME DI QUESTI NUMERI NON È REGISTRATO, E DUE DI ESSI NON SI RIPRODUCONO
 >
-> Misurati **col solo giudice locale cross-encoder, senza modello linguistico
-> iniettato**. Con un LLM iniettato la banda intermedia viene giudicata davvero,
-> e **lo stesso ingresso può avere esito opposto**. Non è un'ipotesi: un pari ha
-> rifatto dalla porta, su `c4bec04c`, il caso delle unità composte —
+> La prima stesura di questo riquadro diceva che i numeri qui sotto sono presi
+> «col solo cross-encoder, senza modello linguistico iniettato». **Non è una
+> misura: è una deduzione.** Chi ha misurato non ha registrato `ENGRAM_BAND_LLM`
+> né quale giudice di banda fosse raggiungibile sulla macchina.
 >
->     questa pagina (CE solo)   400 metri cubi  ->  admitted     96.01   layers=[]
->     con un LLM iniettato      400 metri cubi  ->  quarantined   0.00   ['L4-grounding']
+> Un pari ha rifatto lo stesso ingresso sull'albero di oggi, **una variabile
+> sola**:
 >
-> ⇒ **96 punti e l'esito rovesciato, sullo stesso testo e sulla stessa fonte.**
-> È `T134`. Quindi: i numeri qui sotto dicono *quanto protegge la configurazione
-> di base*, che è quella che un utente ha appena installato — **non il massimo
-> che il prodotto sa fare.** Dove il regime cambia la risposta, la riga lo dice
-> accanto al numero.
-
-
-    «Perizia del 2026-09-01: il capannone 12 misura 400 mq.»
+>     CE DA SOLO  (ENGRAM_BAND_LLM=0)   400 metri cubi -> quarantined  75.81  ['L4-review']
+>     CON LA BANDA                      400 metri cubi -> quarantined   0.00  ['L4-grounding']
+>     questa pagina                     400 metri cubi -> admitted     96.01
+>
+> ⇒ **`admitted 96.01` non si riproduce in nessuno dei due**: non è «un regime
+> contro l'altro», è un terzo stato. E sui casi di controllo i due alberi
+> divergono di poco ma divergono (`900 quadri`: 0.79 contro 0.81 · `400 quadri`:
+> 98.97 contro 98.55), quindi **lo scarto grande non lo spiega l'albero**: da
+> chi ha scritto questa pagina lo strato `L4-review` non è scattato.
+>
+> **Finché il numero non è rifatto**, ogni cifra qui sotto va letta così: presa
+> sul wheel `0.7.7` di `bdf7453b` col giudice locale del 2/07, **regime di banda
+> ignoto**. I difetti che la pagina descrive restano — sono dichiarati nel
+> codice — ma **le cifre sono da riprendere**, e chi le rifarà registri anche
+> `ENGRAM_BAND_LLM` e quale giudice ha risposto.
 
 ---
 
@@ -65,6 +72,23 @@ verifica che la proposizione segua dalla fonte:
 sono la stessa cosa, e il secondo oggi manca: è `T134`, alla voce ④ qui sotto.
 
 ---
+
+### ④ Quando **non può** giudicare, trattiene — non ammette
+
+È la parte della promessa che nessuno scrive, e va detta qui perché è quella
+che decide cosa succede il giorno in cui qualcosa non funziona:
+
+    senza il giudice di banda   400 metri cubi -> quarantined  75.81  ['L4-review']
+
+`L4-review` vuol dire **tenuto per revisione**. Il modulo lo dichiara come
+comportamento a prova di guasto — *«no CLI, a CLI error, a timeout … keep
+today's held-for-review behavior»* — e il giudice di banda è **un pezzo di
+prodotto**, non un accessorio: `band_escalation.py` scala prima a un modello
+locale e poi alla CLI come ripiego, e `ENGRAM_BAND_LLM=0` serve a uscirne.
+
+⇒ **Chi non ha né l'uno né l'altro non resta senza difesa: resta con una
+difesa che trattiene invece di ammettere.** Misura di un pari sull'albero di
+oggi, non di chi scrive questa pagina.
 
 ## ❌ Quello che il moat NON controlla — con il ticket accanto
 
