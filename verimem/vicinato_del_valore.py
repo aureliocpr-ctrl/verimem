@@ -347,6 +347,20 @@ def valori_riusati_da_altro_contesto(
                 certo=True,
             ))
             continue
+        # ⚠️ LA STESSA DOMANDA, DALL'ALTRO LATO — e la risposta mancava (T153).
+        # Il criterio di questo layer è «le parole di contenuto attorno al
+        # numero non si sovrappongono». Se il CLAIM non ne porta nessuna — il
+        # numero chiude la frase, o sta in un elenco — non c'è niente da
+        # sovrapporre, e senza questa riga il vuoto veniva letto come una
+        # differenza. Misurato sullo store prima della cura: su 1386 accuse di
+        # `L4.2`, 354 (il 25,5%) hanno un lato senza parole accanto.
+        # ⛔ E NON VALE DOVE IL VERDETTO NON PASSA DALLE PAROLE: se le due
+        # UNITÀ nominano grandezze note e diverse (volume contro area) la
+        # differenza c'è anche senza parole accanto, e quella guardia va
+        # PRIMA di questa. Chi ribasa la richiesta di T105 sopra questa lo
+        # tenga: l'ordine è la cura, non un dettaglio di stile.
+        if not claim_dopo and not claim_prima:
+            continue  # il claim non offre parole: il criterio non ha dati
         if _prefissi(claim_dopo) & _prefissi(fonte_dopo):
             continue  # stessa grandezza: è una riformulazione, il caso normale
         if _prefissi(claim_prima) & _prefissi(fonte_prima):
