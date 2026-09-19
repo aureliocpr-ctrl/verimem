@@ -77,13 +77,28 @@ poi non la mostrava.*
 > in basso, e questo riquadro è quello che si legge per primo — rilievo di un
 > pari, ed è la stessa classe che questa pagina esiste per chiudere.
 >
-> ⚠️ **E c'è UNA MISURA CHE MANCA, dichiarata qui invece che scoperta dopo:**
-> nessuno ha ancora provato *«fonte abbreviata + 400 metri cubi»* **con la banda
-> ATTIVA**. Se anche con la banda il claim falso passa, il difetto è **del
-> prodotto** e questo riquadro è giusto com'è; se con la banda viene trattenuto,
-> il difetto è **di un regime** e il riquadro lo sta dicendo più largo di quello
-> che è. **È due celle e un minuto**, e non è stata fatta perché richiede un
-> secondo modello acceso insieme al giudice.
+> ✅ **E LA MISURA CHE MANCAVA È STATA FATTA** — era l'unico fianco scoperto di
+> questo riquadro, ed è chiuso. Su **`dca8b406`** (il tronco, non l'albero delle
+> righe qui sopra) e con la **banda ATTIVA**, cioè il regime di chi ha un modello
+> locale o la CLI a disposizione:
+>
+>     ABBREVIATA + «400 metri cubi»   model_claim   96.00531768798828   []
+>     PER ESTESO + «400 metri cubi»   quarantined    0.0                 ['L4-grounding']
+>
+> ⇒ **Il claim falso passa ANCHE con la banda attiva, allo stesso punteggio.**
+> Quindi **il difetto è del prodotto, non di un regime**, e questa è la ragione
+> per cui il riquadro può stare al presente.
+>
+> 📊 **E il `96.00531768798828` è lo stesso numero, cifra per cifra, su due
+> alberi diversi e in due regimi diversi**, misurato da tre persone. Un numero
+> che non si muove così è un numero su cui si può scrivere una promessa.
+>
+> ⚠️ **Il divario vero è più grande di quello scritto sopra**: `0.0` contro
+> `96.01` su main, dove le righe di questo riquadro dicono `74.10` contro
+> `96.01`. **Il riquadro è più debole del vero, non più forte.** Non scriviamo
+> `0.0` come numero della pagina perché fra le due misure sono cambiate **due
+> cose** — l'albero *e* il regime — e un confronto a due variabili non si
+> attribuisce. Serve un giro a una variabile sola.
 >
 > 🔮 **E per un'ora questo riquadro ha detto un'altra cosa**: che lo stesso
 > ingresso desse esiti diversi **su macchine diverse**. Era falso, e l'errore
