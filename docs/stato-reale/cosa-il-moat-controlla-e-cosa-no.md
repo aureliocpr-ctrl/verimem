@@ -12,6 +12,11 @@ sulla libreria e sulla porta MCP. Fonte unica per tutti i casi:
 
     «Perizia del 2026-09-01: il capannone 12 misura 400 mq.»
 
+🔤 *In questa pagina scriviamo **ammesso** dove la ricevuta scrive
+`status='model_claim'`: è più chiaro per chi legge, ma sono **due nomi per lo
+stesso esito** — se un giorno il vocabolario si unifica, questa pagina è uno dei
+posti da aggiornare.*
+
 ⚠️ *Questa citazione è stata cancellata per un'ora da una riscrittura del
 riquadro qui sotto, che ha sostituito un blocco per posizione e si è portata via
 quello che stava in mezzo: la pagina annunciava «fonte unica per tutti i casi» e
@@ -54,6 +59,19 @@ poi non la mostrava.*
 > data *sposta il punteggio* senza cambiare il verdetto (74.10 qui, 75.81 nella
 > misura del pari, che aveva anche un'altra data) — una ragione in più per
 > cambiare **una cosa per volta**.
+>
+> 🌡️ **IL REGIME DI TUTTI QUESTI NUMERI: banda SPENTA** (`ENGRAM_BAND_LLM=0`),
+> cioè senza la scalata a un modello linguistico. La pagina lo diceva solo più
+> in basso, e questo riquadro è quello che si legge per primo — rilievo di un
+> pari, ed è la stessa classe che questa pagina esiste per chiudere.
+>
+> ⚠️ **E c'è UNA MISURA CHE MANCA, dichiarata qui invece che scoperta dopo:**
+> nessuno ha ancora provato *«fonte abbreviata + 400 metri cubi»* **con la banda
+> ATTIVA**. Se anche con la banda il claim falso passa, il difetto è **del
+> prodotto** e questo riquadro è giusto com'è; se con la banda viene trattenuto,
+> il difetto è **di un regime** e il riquadro lo sta dicendo più largo di quello
+> che è. **È due celle e un minuto**, e non è stata fatta perché richiede un
+> secondo modello acceso insieme al giudice.
 >
 > 🔮 **E per un'ora questo riquadro ha detto un'altra cosa**: che lo stesso
 > ingresso desse esiti diversi **su macchine diverse**. Era falso, e l'errore
