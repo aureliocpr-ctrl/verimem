@@ -66,10 +66,27 @@ def _write_version(conn: sqlite3.Connection, db_id: str, version: int) -> None:
 _DB_ID_DEL_NUCLEO = "semantic"
 
 
+def _file_della_connessione(conn: sqlite3.Connection) -> str:
+    """Il percorso del db principale, o `?` se non si legge.
+
+    Serve al messaggio di rifiuto: chi lo riceve deve sapere SU QUALE file,
+    perché un processo che ne apre tre (semantic, episodes, skills) altrimenti
+    va a cercare.
+    """
+    try:
+        for _, nome, file in conn.execute("PRAGMA database_list"):
+            if nome == "main":
+                return file or "(in memoria)"
+    except sqlite3.DatabaseError:
+        pass
+    return "?"
+
+
 def _rifiuta_una_stampa_infondata(
     conn: sqlite3.Connection,
     db_id: str,
     target_version: int,
+    current: int,
 ) -> None:
     """La stampa cieca a un passo è legittima solo se il presupposto regge.
 
@@ -89,6 +106,7 @@ def _rifiuta_una_stampa_infondata(
         return
     from verimem.schema import (
         ATTESE_PER_VERSIONE,
+        COMANDO_DI_MIGRAZIONE,
         colonne_del_nucleo,
         schema_corrisponde_su,
     )
@@ -102,13 +120,17 @@ def _rifiuta_una_stampa_infondata(
         return
 
     mancanti = sorted(ATTESE_PER_VERSIONE[target_version] - presenti)
+    percorso = _file_della_connessione(conn)
     raise RuntimeError(
-        f"refusing to stamp db_id={db_id!r} as version {target_version} with "
-        f"zero DDL applied: that version declares columns the file does not "
-        f"have ({mancanti}). The one-step stamp exists for a fresh bootstrap, "
-        f"where there is nothing to apply; here it would promote the number "
-        f"while leaving the schema behind. Register the migration for "
-        f"{target_version} instead of stamping over it."
+        f"refusing to stamp db_id={db_id!r} from version {current} to "
+        f"{target_version} with zero DDL applied: version {target_version} "
+        f"declares columns the file does not have ({mancanti}). "
+        f"File: {percorso}. "
+        f"The one-step stamp exists for a fresh bootstrap, where there is "
+        f"nothing to apply; here it would promote the number while leaving "
+        f"the schema behind. Register the migration for {target_version}, or "
+        f"migrate the store on purpose: "
+        f"{COMANDO_DI_MIGRAZIONE.format(percorso=percorso)}"
     )
 
 
@@ -175,7 +197,7 @@ def ensure_schema_version(
 
     if not pending:
         # No migrations defined yet; just stamp the version.
-        _rifiuta_una_stampa_infondata(conn, db_id, target_version)
+        _rifiuta_una_stampa_infondata(conn, db_id, target_version, current)
         try:
             conn.execute("BEGIN IMMEDIATE")
             _write_version(conn, db_id, target_version)
