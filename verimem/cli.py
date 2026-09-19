@@ -5476,7 +5476,8 @@ def riga_dei_quarantinati(n: int) -> str:
     ESTRATTA per poterla misurare su un numero costruito: dipende solo dal
     conteggio, e farla passare da uno store vero misurerebbe il corpus.
     """
-    return f"  quarantined: {n}  [dim]unsupported claims stored hidden[/dim]"
+    from .trust_ledger import etichetta_dei_quarantinati
+    return f"  quarantined: {n}  [dim]{etichetta_dei_quarantinati()}[/dim]"
 
 
 def riga_moat_non_verificato(moat: str | None) -> str:

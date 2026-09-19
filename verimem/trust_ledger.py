@@ -1,7 +1,7 @@
 """Trust ledger — the persistent counter of what the gate actually DID.
 
 Every memory vendor claims accuracy; none can show the user how many
-unsupported claims were quarantined, how many contradicted writes were
+writes were held back, how many contradicted writes were
 rejected, how many times the system said "I don't know" instead of
 fabricating. Those events already happen inside Verimem on every call —
 they just evaporated when the call returned. This module persists them.
@@ -26,6 +26,31 @@ import sqlite3
 import time
 from pathlib import Path
 from typing import Any
+
+
+#: La parola con cui le due superfici che l'utente vede — la riga del riepilogo
+#: e la card della pagina — descrivono le scritture trattenute.
+#:
+#: ⚠️ DICEVA «unsupported claims», e attribuiva una CAUSA che vale per sei
+#: scritture su dieci. Misurato il 2026-09-19 su questo stesso registro::
+#:
+#:     quarantinate            1316
+#:       senza L4-grounding     524      <- il giudice non ha MAI detto «non sostenuto»
+#:       con solo L4-grounding  494
+#:
+#: Le altre sono fermate da un numero che la fonte non contiene, da una
+#: grandezza riferita ad altro, da una negazione, da una coesistenza, da
+#: un'auto-affermazione o dalla banda incerta — che dichiara di se' «held for
+#: review, NOT admitted», cioe' trattenuto e non insostenuto.
+#:
+#: ⛔ UNA FUNZIONE E NON DUE STRINGHE: la parola viveva in due posti e curarne
+#: uno solo le avrebbe fatte divergere. La causa vera e' gia' a schermo in
+#: entrambe — «by layer» nella riga sotto, «Gate layers that fired» nella
+#: pagina — quindi qui si descrive l'ESITO e si rimanda a chi ha deciso.
+def etichetta_dei_quarantinati() -> str:
+    """Il testo che descrive le scritture trattenute, uguale su ogni porta."""
+    return "held back — see which gate layer stopped each"
+
 
 _ACTIONS = ("admitted", "quarantined", "rejected", "abstained")
 
