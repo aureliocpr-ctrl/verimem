@@ -172,6 +172,40 @@ def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
     assert _impronta_del_nucleo(p) == prima, "e il nucleo è rimasto intatto"
 
 
+def test_aprire_dichiara_quale_store_e_come_l_ha_trovato(tmp_path: Path,
+                                                        monkeypatch) -> None:
+    """L'altra metà di D-0009: se l'apertura tocca lo schema, lo dica.
+
+    `SemanticMemory.__init__` esegue lo script dello schema aprendo, e restare
+    fuori dalla scala è una scelta MOTIVATA nel codice (due bump dimenticati
+    ruppero le scritture in produzione). Quindi la cura non è vietare: è che
+    l'apertura dichiari QUALE file ha aperto e COME L'HA TROVATO.
+
+    Lo stato va letto prima del tocco, perché dopo non esiste più: una volta
+    eseguito lo script, «com'era» non è più recuperabile da nessuna parte.
+    """
+    import verimem.observability as obs
+    from verimem.semantic import SemanticMemory
+
+    visti: list[tuple[str, dict]] = []
+    monkeypatch.setattr(obs, "emit",
+                        lambda nome, **p: visti.append((nome, p)))
+
+    p = _store_a_versione(tmp_path, versione=16)
+    SemanticMemory(db_path=p)
+
+    aperture = [(n, c) for n, c in visti if n == "store.opened"]
+    assert aperture, (
+        f"aprire non ha dichiarato niente: eventi visti {[n for n, _ in visti]}. "
+        f"Uno store aperto senza dichiarazione è esattamente il caso in cui non "
+        f"si sa più quale file il prodotto ha toccato")
+    _, campi = aperture[0]
+    assert campi.get("percorso") == str(p), (
+        f"la dichiarazione non dice QUALE store: {campi}")
+    assert campi.get("versione_applicativa") == 16, (
+        f"la dichiarazione non dice come l'ha trovato PRIMA del tocco: {campi}")
+
+
 def test_la_versione_del_nucleo_ha_sempre_un_criterio() -> None:
     """Presidio: se il nucleo sale di versione, la mappa delle attese lo segue.
 

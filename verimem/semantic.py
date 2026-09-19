@@ -2642,6 +2642,15 @@ class SemanticMemory:
         self.db_path = db_path or CONFIG.semantic_db
         self.repo_root = Path(repo_root).resolve() if repo_root else None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # D-0009, prima metà: com'era PRIMA del tocco. Va letto qui e non più
+        # tardi perché lo script dello schema, tre righe sotto, lo sovrascrive:
+        # dopo, «com'era» non è recuperabile da nessuna parte. La lettura è in
+        # sola lettura e non tocca niente (schema.leggi_stato).
+        try:
+            from .schema import leggi_stato as _leggi_stato
+            _stato_all_apertura = _leggi_stato(self.db_path)
+        except Exception:  # noqa: BLE001 — dichiarare non deve rompere l'apertura
+            _stato_all_apertura = None
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
             # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
@@ -2761,6 +2770,35 @@ class SemanticMemory:
             _replay_pending_facts(self)
         except Exception:  # noqa: BLE001 — a corrupt journal must not brick the db
             _LOG.warning("pending-facts replay failed at init", exc_info=True)
+
+        # D-0009, seconda metà: DICHIARARE l'apertura.
+        #
+        # Aprire esegue lo script dello schema, e restare fuori dalla scala è
+        # una scelta motivata poche righe sopra (due bump dimenticati ruppero
+        # le scritture in produzione). Quindi non si vieta: si dice quale file
+        # è stato aperto e in che stato lo si è trovato — che è l'informazione
+        # che mancava quando uno store è stato toccato al posto di un altro.
+        #
+        # In fondo all'init e non in cima: qui l'apertura è avvenuta davvero.
+        # Dichiararla prima significherebbe annunciare un'apertura che una
+        # riga più sotto può ancora fallire.
+        if _stato_all_apertura is not None:
+            try:
+                from .observability import emit as _emit
+                _emit(
+                    "store.opened",
+                    percorso=str(self.db_path),
+                    marcatura=_stato_all_apertura.marcatura.value,
+                    versione=_stato_all_apertura.versione,
+                    versione_applicativa=_stato_all_apertura.versione_applicativa,
+                    # `perche` è vero all'istante della lettura e dice anche
+                    # «il file non esiste», cioè il caso dello store creato da
+                    # questa apertura. Un campo calcolato QUI direbbe sempre
+                    # che esiste: a questo punto l'abbiamo creato noi.
+                    perche=_stato_all_apertura.perche,
+                )
+            except Exception:  # noqa: BLE001 — l'osservabilità non rompe l'init
+                pass
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
