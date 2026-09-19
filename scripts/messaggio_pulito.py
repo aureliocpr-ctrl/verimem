@@ -119,7 +119,80 @@ CANDIDATO_PERCORSO = re.compile(r"[A-Za-z0-9_.\-/]*/[A-Za-z0-9_.\-]*")
 _RECINTO = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[^\n`]*$", re.MULTILINE)
 
 
-def _senza_blocchi_recintati(testo: str) -> str:
+#: Una riga CITATA: il `>` di Markdown, cioe' quello che il pulsante «Quote
+#: reply» di GitHub mette davanti a ogni riga del commento citato.
+_CITAZIONE = re.compile(r"^[ \t]{0,3}>", re.MULTILINE)
+
+#: Un commento HTML, anche su piu' righe: chi legge la pagina non lo vede, e un
+#: controllo che lo legge giudica su un testo che nessun umano ha davanti.
+_COMMENTO_HTML = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _senza_righe_citate(testo: str) -> str:
+    """Il testo senza le righe che iniziano con `>`.
+
+    ⚠️ IL PULSANTE «QUOTE REPLY» E' UNA PORTA. Chi risponde citando un commento
+    che porta la Definition of Done se la ritrova nel proprio, riga per riga,
+    con un `>` davanti — e senza questo taglio avrebbe **ri-dichiarato** al posto
+    dell'autore, senza volerlo e senza accorgersene. E' lo stesso incidente del
+    modello incollato, da un'altra porta: rilievo di un pari, non mio.
+    """
+    return "\n".join(r for r in testo.splitlines() if not _CITAZIONE.match(r))
+
+
+def _senza_blocchi_rientrati(testo: str) -> str:
+    """Il testo senza i blocchi di codice RIENTRATI di quattro spazi.
+
+    ⚠️ IL CRITERIO E' QUELLO DI MARKDOWN, NON «quattro spazi». Un blocco
+    indentato comincia dopo una riga VUOTA: le righe rientrate che continuano un
+    elenco non lo sono, e toglierle boccerebbe chi scrive una checklist annidata
+    — cioe' proprio chi dichiara sul serio. Una cura piu' larga del difetto
+    colpisce chi ha fatto la cosa giusta, e costa piu' del difetto.
+    """
+    fuori: list[str] = []
+    dentro = False
+    vuota_prima = True
+    for riga in testo.splitlines():
+        rientrata = riga.startswith("    ") or riga.startswith("\t")
+        if not riga.strip():
+            fuori.append(riga)
+            vuota_prima = True
+            continue
+        if rientrata and (dentro or vuota_prima):
+            dentro = True
+        else:
+            dentro = False
+            fuori.append(riga)
+        vuota_prima = False
+    return "\n".join(fuori)
+
+
+def _solo_il_testo_dichiarato(testo: str) -> str:
+    """Il testo senza cio' che e' MOSTRATO invece che dichiarato.
+
+    ⚠️ IL NOME DICE IL CRITERIO, non la tecnica: si chiamava
+    `_senza_blocchi_recintati` finche' toglieva i soli recinti, e quando @Marie
+    ha misurato che ne restavano fuori tre forme il nome sarebbe diventato
+    falso. Un nome che descrive meno di quel che fa e' la prima cosa che inganna
+    chi lo legge dopo.
+
+    Le QUATTRO forme, e ognuna e' una porta vera:
+      ``` ``` / ~~~     un modello incollato per spiegare        (19/09, sette richieste verdi)
+      rientro di 4      la stessa cosa nell'altra sintassi       (rilievo di Marie)
+      `>` in testa      il pulsante «Quote reply» di GitHub      (rilievo di Marie)
+      <!-- -->          invisibile a chi legge la pagina         (rilievo di Marie)
+
+    🔑 L'ultima e' la peggiore delle quattro: un commento HTML **nessun umano lo
+    vede**, quindi un controllo che lo leggesse giudicherebbe su un testo che
+    l'autore non ha davanti — e chi guarda la pagina non capirebbe perche'.
+    """
+    testo = _COMMENTO_HTML.sub("\n", testo)
+    testo = _senza_recinti(testo)
+    testo = _senza_righe_citate(testo)
+    return _senza_blocchi_rientrati(testo)
+
+
+def _senza_recinti(testo: str) -> str:
     """Il testo senza cio' che sta dentro ``` ``` o ~~~ ~~~.
 
     ⚠️ IL CRITERIO E' «DICHIARATO», NON «PRESENTE». Un modello incollato dentro
@@ -399,7 +472,7 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
     # cui spiegava che NON voleva far passare richieste senza dichiarazioni.
     # ⇒ Cercavo una STRINGA, e una stringa la trova anche dentro un recinto.
     if commenti is not None:
-        commenti = [_senza_blocchi_recintati(c) for c in commenti]
+        commenti = [_solo_il_testo_dichiarato(c) for c in commenti]
 
     if commenti is None:
         problemi.append("NON MISURATO: la Definition of Done in un commento "

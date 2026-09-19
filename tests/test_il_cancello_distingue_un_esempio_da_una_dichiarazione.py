@@ -52,6 +52,60 @@ def _dentro_un_recinto(testo: str, marcatore: str = "```", lingua: str = "") -> 
             f"{marcatore}{lingua}\n{testo}\n{marcatore}\n\nSpero sia chiaro.\n")
 
 
+def _rientrato(testo: str) -> str:
+    """Il modello come blocco di codice RIENTRATO di quattro spazi."""
+    righe = "\n".join("    " + r for r in testo.splitlines())
+    return f"Ecco il modello:\n\n{righe}\n\nCopialo pure.\n"
+
+
+def _citato(testo: str) -> str:
+    """Il modello come lo rende il pulsante «Quote reply» di GitHub."""
+    righe = "\n".join("> " + r for r in testo.splitlines())
+    return f"{righe}\n\nConcordo con quanto sopra.\n"
+
+
+def _in_un_commento_html(testo: str) -> str:
+    """Il modello dentro un commento HTML: invisibile a chi legge la pagina."""
+    return f"Ci penso io.\n\n<!--\n{testo}\n-->\n"
+
+
+#: ⚠️ LE SEI FORME, e NON le ho trovate io. Le ha misurate @Marie con la mia
+#: stessa funzione dopo che l'avevo dichiarata curata, e TRE passavano ancora:
+#: il blocco rientrato, la citazione con «>» e il commento HTML. Una cura
+#: provata solo dai casi di chi l'ha scritta copre i casi che aveva in mente.
+LE_SEI_FORME = [
+    ("recinto con tre backtick", lambda t: _dentro_un_recinto(t)),
+    ("recinto con un linguaggio", lambda t: _dentro_un_recinto(t, "```", "markdown")),
+    ("recinto con le tilde", lambda t: _dentro_un_recinto(t, "~~~")),
+    ("recinto con quattro backtick", lambda t: _dentro_un_recinto(t, "````")),
+    ("blocco RIENTRATO di quattro spazi", _rientrato),
+    ("citazione con «>» (Quote reply)", _citato),
+    ("commento HTML (invisibile a chi legge)", _in_un_commento_html),
+]
+
+
+def test_LE_SEI_FORME_di_Marie_cadono_tutte():
+    """Nessuna delle forme in cui un modello si MOSTRA vale come dichiarazione.
+
+    ⚠️ La più insidiosa non è il recinto: è la **citazione**. Il pulsante «Quote
+    reply» di GitHub mette un «>» davanti a ogni riga del commento citato, e chi
+    risponde a un commento che porta la Definition of Done se la ritrova nel
+    proprio — avrebbe dichiarato al posto dell'autore **senza volerlo e senza
+    accorgersene**. Il difetto non ha bisogno di nessuno che incolli: basta il
+    pulsante.
+
+    ⚠️ La più grave è il commento HTML: nessun umano lo vede sulla pagina,
+    quindi un controllo che lo legge giudica su un testo che l'autore non ha
+    davanti, e chi guarda non capisce perché.
+    """
+    for nome, forma in LE_SEI_FORME:
+        problemi = mp.controlla_corpo(CORPO, commenti=[forma(DICHIARAZIONE_VERA)])
+        assert problemi, (
+            f"{nome}: il modello è passato come se qualcuno avesse dichiarato. "
+            "È la forma che questo presidio esiste per fermare"
+        )
+
+
 def test_un_esempio_dentro_un_recinto_NON_vale_come_dichiarazione():
     """La gamba che era rossa: il modello incollato non deve far passare nulla."""
     problemi = mp.controlla_corpo(CORPO, commenti=[_dentro_un_recinto(DICHIARAZIONE_VERA)])
