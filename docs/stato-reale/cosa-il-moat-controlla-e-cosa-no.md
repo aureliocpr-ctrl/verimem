@@ -61,6 +61,9 @@ verifica che la proposizione segua dalla fonte:
     «the source SCORES as supporting this fact: that is the judge's score,
      not a check that the fact follows from it»
 
+⚠️ **Dice quale CONTROLLO ha girato, non quale GIUDICE ha deciso.** I due non
+sono la stessa cosa, e il secondo oggi manca: è `T134`, alla voce ④ qui sotto.
+
 ---
 
 ## ❌ Quello che il moat NON controlla — con il ticket accanto
@@ -135,15 +138,51 @@ essere ritrovabile retroattivamente nel corpus, e viceversa»*. Quel «viceversa
 significa che **ciò che non viene fermato alla scrittura non viene trovato
 neanche dopo**: non è «passa e poi lo troviamo».
 
-### ④ La banda intermedia senza un modello linguistico — `D-0011`
+### ④ La banda intermedia: senza un LLM non è che manchi un giudizio — cambia la SOGLIA — `D-0011`, `T139`, `T134`
 
-Il giudice locale è un cross-encoder. Nella **banda intermedia** dei punteggi il
-verdetto dipende da un secondo giudizio che **richiede un modello linguistico
-iniettato**: senza quello, quella banda **non viene giudicata**, e il prodotto
-lo dichiara nella ricevuta invece di fingere un verdetto.
+Il giudice locale è un cross-encoder, e nella **banda intermedia** dei punteggi
+il prodotto prevede un secondo giudizio che **richiede un modello linguistico
+iniettato**.
 
-⇒ **Chi usa il prodotto senza iniettare un LLM non ha quella difesa.** Non è un
-difetto: è una scelta, e sta qui perché l'utente la sappia prima e non dopo.
+🔴 **Questa pagina scriveva che senza quel modello la banda «non viene
+giudicata». È FALSO, ed è stato corretto prima della pubblicazione** — una
+proprietà del prodotto dedotta invece che misurata. Quello che succede è
+diverso:
+
+    senza LLM iniettato   la banda la giudica il CROSS-ENCODER DA SOLO,
+                          con la soglia del backend dichiarato: 70 invece di 40
+    conseguenza misurata  97 fatti dello store finiscono in banda,
+                          e sono TUTTI quarantinati        (`T139`, misura di oggi)
+
+⇒ **Non è un buco nella difesa: è una difesa più severa** di quella che il
+lettore si aspetta, e che trattiene 97 fatti. Chi non inietta un LLM non perde
+una difesa: ne prende una che taglia più in alto e non gliel'ha detto nessuno.
+
+🔴 **E la seconda frase che questa pagina scriveva era falsa allo stesso
+modo**: «il prodotto lo dichiara nella ricevuta invece di fingere un verdetto».
+Oggi **la ricevuta non dice quale giudice ha deciso** (`T134`, in cura). Quindi
+chi legge un verdetto **non sa con quale soglia è stato dato**, ed è esattamente
+la differenza fra i due regimi dichiarati in cima a questa pagina.
+
+### ⑤ Il presidio anti-autocertificazione legge il VERBO, non chi parla — `T144`
+
+Cambiando **una sola parola** in una frase vera e sostenuta dalla stessa fonte il
+claim cade; e un claim **falso**, che la fonte contraddice, passa:
+
+    4 verbali VERI su 10 cadono per il verbo
+    «sospeso», FALSO e contraddetto dalla fonte, passa a 98.64
+
+⇒ Il presidio guarda **come** è detta la cosa, non **chi** la dice né se la fonte
+la sostiene: un verbo «da modello» fa cadere una frase vera, e un verbo innocuo
+fa passare una falsa.
+
+⚠️ **Questi due numeri sono del 29/08/2026**, misurati da un pari, e il banco che
+li produce è nel repo:
+[`banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py`](banchi/ws5-quale-parola-fa-cadere-un-verbale-vero.py)
+(commit `951dc1fa`). **Tre settimane e molte fusioni fa.** La voce sta qui perché
+il difetto è strutturale e il banco è eseguibile — ma il numero **va rifatto sul
+wheel di oggi** prima di citarlo come corrente, e finché non lo è, porta la sua
+data.
 
 ---
 
@@ -152,7 +191,8 @@ difetto: è una scelta, e sta qui perché l'utente la sappia prima e non dopo.
 Il moat **confronta le quantità e cerca le contraddizioni**: è forte dove c'è un
 numero da confrontare o una frase da contraddire. **È debole dove non c'è
 nessuna delle due** — un dettaglio aggiunto, un giudizio, una previsione,
-un'unità che cambia nome.
+un'unità che cambia nome. E **sbaglia in tutte e due le direzioni** quando a
+cambiare è il verbo: lascia passare un falso e trattiene un vero.
 
 ⚠️ **Il primo della lista è il più comune.** Aggiungere alla fonte qualcosa che
 la fonte non dice non fa scattare niente, perché non c'è niente da confrontare:
