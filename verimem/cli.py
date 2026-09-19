@@ -1276,6 +1276,49 @@ def _open_memory(db: str | None = None):
     return open_memory(db) if db else open_memory()
 
 
+def riga_il_giudice_era_daccordo(r: dict) -> str | None:
+    """La riga da dire quando il MOAT ha passato e a fermare e' stato un altro.
+
+    ⚠️ ESISTEVA GIA', SCRITTA A MANO, IN UN SOLO COMANDO. `remember` la stampa
+    dal 2026-08-08; il CHECKPOINT no, e li' il ramo del referto si sceglieva
+    confrontando il punteggio col taglio (`_passa`). Con quella condizione la
+    stessa scrittura riceveva due bugie di segno opposto (T124, misurato il
+    19/09 su una ricevuta costruita):
+
+        col taglio NELLA ricevuta   «grounded 95.5 — the source SCORES as
+                                     supporting this fact» su un QUARANTINATO
+        col taglio ASSENTE          «not grounded 95.5 — the judge found no
+                                     support» — con 95.5, e col moat PASSATO
+
+    La seconda manda a riscrivere la FONTE mentre la cura e' aggiungere una
+    prova a `verified_by`. E' la stessa attribuzione falsa che `mcp_server` si
+    e' curata il 28/08, rimasta su questa porta.
+
+    🔑 DUE MODI DI SAPERE CHE IL GIUDICE ERA D'ACCORDO, e servono entrambi:
+    il punteggio sopra il taglio (quando la ricevuta porta il taglio) **oppure**
+    il campo `moat` che dice `passed` — che e' il verdetto gia' calcolato da
+    `client.esito_del_moat`, e l'unico segnale disponibile quando il taglio non
+    c'e'. Senza il secondo il caso senza taglio resta scoperto: e' esattamente
+    la cella che questa cura deve spegnere.
+
+    Rende `None` quando non si puo' dire: mai una frase inventata.
+    """
+    _gs = r.get("grounding_score")
+    if not isinstance(_gs, (int, float)) or isinstance(_gs, bool):
+        return None
+    _cut = (r.get("adjudication") or {}).get("threshold")
+    _sopra_il_taglio = (isinstance(_cut, (int, float))
+                        and float(_gs) >= float(_cut))
+    if not (_sopra_il_taglio or str(r.get("moat") or "") == "passed"):
+        return None
+    _dove = (f" sul taglio di {float(_cut):.0f}"
+             if isinstance(_cut, (int, float)) else "")
+    return (f"  [green]il giudice era d'accordo[/green] [dim]— "
+            f"{float(_gs):.1f}{_dove}: la fonte SOSTIENE il fatto, e' un "
+            f"controllo di dettaglio ad averlo fermato. Correggi quel "
+            f"dettaglio, non la frase[/dim]")
+
+
 def _dichiara_store(m, *, motivo: str = "") -> None:
     """Stampa QUALE store ha risposto, e quanti fatti contiene.
 
@@ -1434,15 +1477,14 @@ def remember_cmd(
     # chi scrive e' la differenza fra «riformula la frase» e «hai sbagliato UN
     # numero». Il dato c'era gia' nel verdetto: si stampa.
     _ws_ = r.get("warnings") or []
-    _gs_ = r.get("grounding_score")
-    if _ws_ and isinstance(_gs_, (int, float)):
-        _cut_ = (r.get("adjudication") or {}).get("threshold")
-        if isinstance(_cut_, (int, float)) and float(_gs_) >= float(_cut_):
-            console.print(
-                f"  [green]il giudice era d'accordo[/green] [dim]— "
-                f"{float(_gs_):.1f} sul taglio di {float(_cut_):.0f}: la fonte "
-                f"SOSTIENE il fatto, e' un controllo di dettaglio ad averlo "
-                f"fermato. Correggi quel dettaglio, non la frase[/dim]")
+    if _ws_:
+        #: 19/09 (T124): la riga non e' piu' scritta qui. Stava in questo
+        #: comando soltanto, e il CHECKPOINT diceva il contrario sulla stessa
+        #: ricevuta: ora la rende `riga_il_giudice_era_daccordo`, e a chiamarla
+        #: sono tutt'e due.
+        _accordo_ = riga_il_giudice_era_daccordo(r)
+        if _accordo_:
+            console.print(_accordo_)
     if not r.get("stored"):
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
@@ -5554,7 +5596,20 @@ def save_cmd(
         _cut = _adj.get("threshold")
         _passa = (float(_gs) >= float(_cut)) if isinstance(
             _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
-        if _passa:
+        #: ⚠️ 19/09 (T124) — PRIMA DI TUTTO: HA FERMATO QUALCUN ALTRO?
+        #: `_passa` qui sotto confronta il punteggio col taglio, e il moat non
+        #: e' l'unico a trattenere. Quando a fermare e' L1 con il moat PASSATO,
+        #: quel confronto produceva due bugie di segno opposto — «grounded
+        #: 95.5» su un quarantinato, oppure «not grounded 95.5 — the judge
+        #: found no support» sullo stesso caso senza il taglio in ricevuta.
+        #: La riga giusta esisteva gia' in `remember` e ora e' una funzione
+        #: sola: si dice CHI ha fermato, non chi ha il punteggio.
+        _trattenuto = (_adj.get("disposition") == "quarantined"
+                       or r.get("status") == "quarantined")
+        _accordo = riga_il_giudice_era_daccordo(r) if _trattenuto else None
+        if _accordo:
+            console.print(_accordo)
+        elif _passa:
             # 25/08 — LA SECONDA PORTA. `76d5dc1c` cura il ramo BOCCIATO qui e
             # `mcp_server` ha avuto la stessa cura sul suo canale; il ramo degli
             # AMMESSI asseriva ancora l'implicazione in entrambe. Misurato alla
