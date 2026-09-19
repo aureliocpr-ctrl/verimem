@@ -75,7 +75,15 @@ PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 #: sta in `verimem/hooks/`, un sottopacchetto che questa misura non apre.
 #: I quattro che restano: test_isolation (T94), daemon_runner, daemon_spawn,
 #: proactive_step_injector.
-IRRAGGIUNGIBILI_NOTI = 4
+#: IL QUINTO, il 19/09 col lotto C: `schema` — i tre stati di uno store e il
+#: rifiuto di migrarlo aprendolo. Entra nel pacchetto prima del suo cablaggio,
+#: che e' deciso e datato (D-0009: il cambio si ferma in
+#: `migrations.ensure_schema_version`, l'apertura si dichiara in
+#: `SemanticMemory.__init__`), e finche' quel cablaggio non c'e' questo criterio
+#: lo vede irraggiungibile, con ragione. La ridiscesa e' il ticket T125, la
+#: stessa scadenza che `scripts/senza_chiamante.py` porta scritta accanto al
+#: proprio tetto: due presidi, una sola ragione, due posti in cui va tolta.
+IRRAGGIUNGIBILI_NOTI = 5
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:

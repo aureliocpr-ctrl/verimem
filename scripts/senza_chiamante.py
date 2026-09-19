@@ -60,40 +60,61 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 PACCHETTO = RADICE / "verimem"
 PYPROJECT = RADICE / "pyproject.toml"
 
-# ⚠️ QUESTO TETTO E' SALITO UNA VOLTA, IL 18/09, E DEVE RISCENDERE.
-# Di solito qui si scende. I due file del nucleo (`verimem/core/__init__.py` e
-# `verimem/core/ricevuta.py`) sono entrati nel pacchetto PRIMA che una porta
-# li chiami: e' la fetta 1, ed e' voluto — l'oggetto esiste per primo, le tre
-# porte lo adottano una per volta nella 1b. Finche' dura, questo criterio li
-# vede come «pubblicati e irraggiungibili», e ha ragione: oggi lo sono.
-# I numeri sono MISURATI su questa base (main 4cc66030), non riportati: la
-# prima stesura diceva 36 e 64, misurati su una base precedente, e nel
-# frattempo un'altra richiesta li ha abbassati. Un tetto ereditato da un
-# albero diverso non e' un tetto, e' un ricordo.
-# +1 su C2 (`core/__init__.py`, che nessuno importa) e +2 su D (anche
-# `core/ricevuta.py`, raggiungibile solo dal primo, che non ha porta).
-# LA RIDISCESA A 29 E 42 E' OBBLIGATORIA QUANDO LA TERZA PORTA RENDE LA
-# RICEVUTA (1b.3), ed e' un ticket con un nome: T104. Se questi numeri sono
-# ancora 30 e 44 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
-# legge sta misurando la nostra pazienza, non il pacchetto.
-# ⚠️ E SALE UNA SECONDA VOLTA, IL 19/09, PER LA STESSA RAGIONE E CON LA STESSA
-# SCADENZA. `verimem/schema.py` — i tre stati di uno store e il rifiuto di
-# migrarlo aprendolo — entra nel pacchetto prima che una porta lo chiami: è la
-# fetta 3, e il cablaggio è deciso e datato (D-0009: il cambio si ferma in
-# `migrations.ensure_schema_version`, l'apertura si dichiara in
-# `SemanticMemory.__init__`). Finché quel cablaggio non c'è, il criterio lo vede
-# come «pubblicato e irraggiungibile», e ha ragione: oggi lo è.
-# MISURATI su questa base (`36850858`, main `068baf45`), non riportati da
-# un'altra richiesta: C2 31, D 45. Un tetto ereditato da un albero diverso non è
-# un tetto, è un ricordo — e i numeri qui sopra lo dicono già una volta.
-# +1 su C2 e +1 su D: un modulo solo, che nessuno importa e che non raggiunge
-# nessun altro (`schema.py` non importa moduli del pacchetto).
-# LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
-# ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
-# criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
-TETTO_C2 = 31          # nessuna porta: né import, né entry point, né python -m
-TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 45           # irraggiungibili da ogni porta, chiusura transitiva (31 C2 + 3 C1 + 11 solo-per-catena)
+# I TRE TETTI, MISURATI IL 19/09 SU QUESTO ALBERO (394 moduli), non riportati da
+# un albero precedente e non sommati a mente. Questo ramo ha detto 2/2, 4/4,
+# 5/6, 7/10, 7/30, 7/9 e ora 8/10: ogni volta su un albero diverso, e un tetto
+# ereditato da un albero diverso non e' un tetto, e' un ricordo.
+#
+# TRE COSE TENGONO SU QUESTI NUMERI, e vanno lette insieme.
+#
+# (1) I DUE FILE DEL NUCLEO. `verimem/core/__init__.py` e
+# `verimem/core/ricevuta.py` entrano nel pacchetto PRIMA che una porta li
+# chiami: e' la fetta 1, ed e' voluto — l'oggetto esiste per primo, le tre porte
+# lo adottano una per volta nella 1b. Finche' dura, questo criterio li vede come
+# «pubblicati e irraggiungibili», e ha ragione: oggi lo sono. LA RIDISCESA e'
+# obbligatoria quando la terza porta rende la ricevuta (1b.3): ticket T104.
+#
+# (2) `verimem/schema.py` — i tre stati di uno store e il rifiuto di migrarlo
+# aprendolo — entra allo stesso modo prima del suo cablaggio, che e' deciso e
+# datato (D-0009: il cambio si ferma in `migrations.ensure_schema_version`,
+# l'apertura si dichiara in `SemanticMemory.__init__`). LA RIDISCESA e'
+# obbligatoria quando D-0009 cabla il modulo: ticket T125. Due salite in due
+# giorni sono il massimo che questo criterio possa reggere restando un
+# cricchetto: la terza va discussa, non scritta.
+#
+# (3) PERCHE' D E' 10 E NON 31. Fino al mattino del 19/09 i C1 — i moduli che si
+# raggiungono solo con `python -m` — finivano dentro D, «irraggiungibili da OGNI
+# porta». Era una contraddizione INTERNA a questo file: la riga di C2 qui sotto
+# dice «nessuna porta: ne' import, ne' entry point, **ne' python -m**», cioe'
+# ammette che `python -m` E' una porta. Decisa la strada (a): i C1 sono porte di
+# partenza nel cammino, la loro catena esce da D per costruzione, e D = C2 + cio'
+# che solo C2 raggiunge. Con i C1 contati, D valeva 31 su un albero come questo:
+# quel numero misurava la contraddizione, non il pacchetto.
+#
+# C1 = 5, sorvegliata e FUORI dal tetto. Non e' un lasciapassare: «raggiungibile
+# con `python -m`» non vuol dire «qualcuno lo usa». La regola che decide se un C1
+# merita di stare nel pacchetto e' il ticket T126 — ci sta solo se una pagina
+# (README o docs) documenta quel comando; altrimenti va in archivio.
+#
+# GLI OTTO DI C2 (nessuna porta, nemmeno `python -m`), per nome, perche' un
+# numero senza nomi non si controlla:
+#   atomic_claims                 innesto dichiarato, con data e ramo (T111)
+#   core/__init__                 la fetta 1 (`core/ricevuta` sta in D, non in C2)
+#   schema                        la fetta 3, cablaggio in arrivo (T125)
+#   daemon_runner, daemon_spawn   li importa hooks/hippo_session_start.py via lo
+#                                 shim engram.
+#   hooks/__init__, hooks/pre_tool_use
+#                                 lo importa .claude/hooks/hippo_pre_tool_use.py
+#                                 via lo shim, dentro `except ImportError:
+#                                 return 0` — spegnimento MUTO: archiviarlo non
+#                                 rompeva niente, lo spegneva
+#   test_isolation                guardia del conftest (T94)
+# Cinque di questi otto li raggiunge un GANCIO, cioe' una superficie d'uso che
+# non e' ne' la CLI ne' l'MCP ne' l'SDK. Un gancio e' una superficie, non un
+# import morto.
+TETTO_C2 = 8           # nessuna porta: né import, né entry point, né python -m
+TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto; T126)
+TETTO_D = 10           # 8 C2 + core/ricevuta e proactive_step_injector, raggiunti solo da C2
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
