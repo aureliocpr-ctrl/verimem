@@ -60,6 +60,18 @@ poi non la mostrava.*
 > misura del pari, che aveva anche un'altra data) — una ragione in più per
 > cambiare **una cosa per volta**.
 >
+> 🧭 **Misurato su `c4bec04c`** — lo sha l'ha stampato il prodotto
+> (`build=c4bec04c`), non chi scrive — **e una cura di questo caso è già in una
+> richiesta aperta**: un layer dedicato (`L4.2-grandezza`) che scatta quando
+> entrambe le unità sono note e nominano grandezze diverse. Misurato alla porta
+> da chi l'ha scritta: *«400 metri cubi» contro «400 mq»* → **`quarantined`**,
+> mentre *«400 m2» contro «400 mq»* — stessa unità, scritta in due modi — resta
+> ammesso.
+>
+> ⇒ **Questo riquadro descrive il prodotto PRIMA di quella cura.** Su una
+> versione che la contiene, il claim falso è trattenuto: leggi sempre lo sha
+> accanto ai numeri.
+>
 > 🌡️ **IL REGIME DI TUTTI QUESTI NUMERI: banda SPENTA** (`ENGRAM_BAND_LLM=0`),
 > cioè senza la scalata a un modello linguistico. La pagina lo diceva solo più
 > in basso, e questo riquadro è quello che si legge per primo — rilievo di un
