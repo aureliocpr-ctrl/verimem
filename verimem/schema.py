@@ -1,8 +1,12 @@
 """Lo schema del nucleo: le sei tabelle, e in che stato sta uno store.
 
 ⚠️ NON ANCORA CABLATO. Questo modulo esiste, è provato da un banco suo e non è
-chiamato da nessuno: la fetta 3 parte quando T90b è fusa (due lavori sul nucleo
-in volo restano due). Fino ad allora nessun percorso del prodotto cambia.
+chiamato da nessuno, e il pacchetto lo sa: il criterio dei moduli senza porta
+l'ha contato (C2 31, D 45) e i suoi tetti sono saliti di uno per lasciarlo
+passare. **Quella salita è un debito con un nome — T125 — e scade quando il
+cablaggio arriva**: il cambio si ferma in `migrations.ensure_schema_version`,
+l'apertura si dichiara in `SemanticMemory.__init__` (D-0009). Se i tetti sono
+ancora 31 e 45 dopo quel cablaggio, non è più un cricchetto a scendere.
 
 Le sei tabelle del nucleo (D-0003): ``facts``, ``facts_undo_log``,
 ``audit_mutations``, ``trust_ledger``, ``trust_ledger_totals``,
