@@ -105,9 +105,18 @@ poi non la mostrava.*
 > notizia: la cura **non** inciampa su due grafie della stessa grandezza.
 >
 > 📌 E la ragione che lo strato dà è leggibile: *«il claim e la fonte attaccano
-> lo stesso numero a grandezze diverse (le unità lo dicono)»*. ⚠️ Ma arriva nei
-> `layers` **di una porta su tre**: sulla libreria e sulla porta MCP il fatto
-> esce `quarantined` con `layers` vuoto, e il perché va cercato altrove.
+> lo stesso numero a grandezze diverse (le unità lo dicono)»*. ⚠️ Ma **sta in un campo
+> diverso a seconda della porta**: la riga di comando la mette in `layers`; la
+> libreria **non ha affatto quel campo** e dice la stessa cosa in
+> `quarantined_by` e `warnings`. Chi legge `layers` sull'SDK non trova un elenco
+> vuoto: non trova la chiave, e un `.get("layers")` restituisce `None` che si
+> legge come *«nessun controllo»*.
+>
+> 🟢 **E c'è un campo che dichiara da solo la cosa più importante di questo
+> riquadro**: `withheld_despite_judge = True`. È il prodotto che dice *«ho
+> trattenuto anche se il giudice era d'accordo»* — cioè esattamente **claim
+> fermato, giudice non guarito**, scritto nella ricevuta prima che lo scrivessimo
+> noi.
 >
 > 🌡️ **IL REGIME DI TUTTI QUESTI NUMERI: banda SPENTA** (`ENGRAM_BAND_LLM=0`),
 > cioè senza la scalata a un modello linguistico. La pagina lo diceva solo più
