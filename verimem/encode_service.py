@@ -217,7 +217,20 @@ def _default_gate_fn(pairs):
     """
     from .local_grounding import get_local_judge
 
-    scorer = get_local_judge()._ensure_scorer()
+    giudice = get_local_judge()
+    scorer = giudice._ensure_scorer()
+    # ⛔ T157 — E QUI SI PRENDE ANCHE IL TOKENIZZATORE, altrimenti non arriva
+    # MAI. Lo carica solo chi riduce uno span, e ridurre lo chiede solo un
+    # client a cui questo daemon ha promesso la finestra: se la promessa e'
+    # onesta, la promessa resta `False` per sempre e la delega non si sveglia.
+    # IL COSTO E' MISURATO, e si paga QUI perche' qui `transformers` e' gia'
+    # dentro per via dello scorer:
+    #     scorer (che si paga comunque)     31287 ms   +1213 MB
+    #     tokenizzatore DOPO lo scorer       1272 ms    +132 MB   (+4%, +11%)
+    #     tokenizzatore SENZA lo scorer     28880 ms    +905 MB   <- l'avvio
+    # All'avvio costerebbe l'import di `transformers`, che e' quasi tutto il
+    # conto; dopo lo scorer e' un'aggiunta del quattro per cento.
+    giudice._tokenizzatore()
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
@@ -250,6 +263,7 @@ class EncodeServer:
         # poter COSTRUIRE in un test il caso «daemon vecchio che non sa
         # giudicare» (gate_fn=None) per verificare che il client degradi.
         self._gate_fn = _default_gate_fn if gate_fn is _ASSENTE else gate_fn
+        self._finestra_dichiarata = False
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -386,6 +400,11 @@ class EncodeServer:
             coppie = [(str(p[0]), str(p[1])) for p in req["gate_pairs"]]
             risposta = {"ok": True,
                         "scores": [float(s) for s in self._gate_fn(coppie)]}
+            # ⛔ T157 — la scoperta si scrive all'AVVIO, ma il tokenizzatore
+            # arriva dopo: senza questa riga il file direbbe «non riduco» per
+            # tutta la vita del processo, anche con il giudice ormai pronto.
+            if _puo_ridurre_lo_span() and not self._finestra_dichiarata:
+                self._write_discovery()
             if _finestra_non_applicata is not None:
                 # Chi ha chiesto la riduzione deve sapere che non c'e' stata:
                 # il punteggio e' valido ma calcolato su uno span troncato
@@ -421,6 +440,8 @@ class EncodeServer:
                     return
 
     def _write_discovery(self) -> None:
+        self._finestra_dichiarata = (self._gate_fn is not None
+                                     and _puo_ridurre_lo_span())
         self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
         # The scratch name carries the pid: two daemons publishing at the same
         # moment would otherwise write the SAME .json.tmp, and the loser's
@@ -445,8 +466,7 @@ class EncodeServer:
                 # qualita' senza accorgersene.
                 # Si promette cio' che si sa di poter fare: la stessa
                 # domanda che la riduzione usa per decidere (T157).
-                "applies_window": (self._gate_fn is not None
-                                   and _puo_ridurre_lo_span()),
+                "applies_window": self._finestra_dichiarata,
             }),
             encoding="utf-8",
         )

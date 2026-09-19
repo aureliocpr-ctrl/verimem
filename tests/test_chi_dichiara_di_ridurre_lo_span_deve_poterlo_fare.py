@@ -91,3 +91,41 @@ def test_senza_funzione_di_gate_resta_come_prima(tmp_path, monkeypatch):
     """L'altra meta' della condizione non si perde per strada."""
     info = _scoperta(tmp_path, monkeypatch, gate_fn=None, tok=True)
     assert info["applies_window"] is False, info
+
+
+def test_quando_il_tokenizzatore_arriva_la_scoperta_si_riscrive(
+        tmp_path, monkeypatch):
+    """La meta' non riduttiva: senza di questa la delega non si sveglia MAI.
+
+    Il file di scoperta si scrive all'avvio, e il tokenizzatore lo carica solo
+    chi riduce uno span — cosa che un client chiede solo a un daemon che gli
+    ha promesso la finestra. Con la sola promessa onesta il giro si chiude su
+    se' stesso: `False` all'avvio, `False` per sempre, e la riduzione resta
+    sempre a carico del client.
+
+    Qui si esercita `_handle_request`, non si ricopia la sua riga.
+    """
+    giudice = _GiudiceFinto(con_tokenizzatore=False)
+    monkeypatch.setattr(lg, "_judge", giudice, raising=False)
+    info = _scoperta(tmp_path, monkeypatch, gate_fn=lambda p: [1.0], tok=False)
+    assert info["applies_window"] is False, info
+
+    s = object.__new__(svc.EncodeServer)
+    s._discovery_path = tmp_path / "scoperta.json"
+    s._port, s._sock = 59999, None
+    s._host, s._model_name, s._model_dim = "127.0.0.1", "m", 768
+    s._token = "t"
+    s._finestra_dichiarata = False
+    # il gate finto fa cio' che fa quello vero: porta il tokenizzatore
+    def _gate(coppie):
+        giudice._tok = object()
+        return [1.0 for _ in coppie]
+    s._gate_fn = _gate
+    monkeypatch.setattr(lg, "_judge", giudice, raising=False)
+
+    # ⚠️ il token serve: senza, `_handle_request` risponde «unauthorized»
+    # e non arriva mai al gate — il banco lo ha detto subito.
+    s._handle_request({"token": "t", "gate_pairs": [("a", "b")]})
+
+    riletta = json.loads((tmp_path / "scoperta.json").read_text(encoding="utf-8"))
+    assert riletta["applies_window"] is True, riletta
