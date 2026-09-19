@@ -255,17 +255,27 @@ def _is_advisory_layer(layer: str) -> bool:
     #: guardia (discorso riportato con disclaimer, smentita). Si vede nella
     #: ricevuta e NON decide: senza questa riga il ritiro tornerebbe a
     #: quarantinare cio' che oggi passa, che e' il contrario della cura.
-    #: T133 (19/09): `-skipped` e' un livello che NON HA GUARDATO. Non puo'
+    #: T133 (19/09): `L1-skipped` e' un livello che NON HA GUARDATO. Non puo'
     #: decidere per definizione, e senza questa riga il marcatore del salto
     #: entrerebbe nel contatore dell'escalation (che guarda i layer `L1*`) e
     #: farebbe trattenere proprio le note che la corsia cronaca esiste per far
     #: passare — lo stesso difetto che #80 ha appena chiuso, rifatto da me.
-    #: ⚠️ Allarga una convenzione condivisa: oggi l'unico altro `-skipped` e'
-    #: `L4-skipped`, e i suoi due lettori (`client.py:456` e `:4307`) usano
-    #: confronti ESATTI, non la convenzione. Verificato prima di scrivere.
+    #: ⚠️⚠️ NOME ESATTO, NON IL SUFFISSO, E IL PERCHE' E' UN REPERTO: la prima
+    #: versione scriveva `s.endswith("-skipped")` e ha fatto cadere le tre
+    #: gambe della CI su `test_blocking_layers_keeps_l4_skipped_advisory`
+    #: (`assert [] == ['L4-skipped']`). Il suffisso era GIA' IN USO con la
+    #: regola OPPOSTA: `L4-skipped` («nessun giudice disponibile») e' un avviso
+    #: che PUO' essere la ragione quando e' l'unica nota, ed e' per questo
+    #: l'ultima voce di `_BLOCK_LAYER_PRIORITY`. Convivono due nozioni di
+    #: «avviso» che non sono la stessa — questa convenzione dice «non puo' MAI
+    #: essere la ragione», `L4-skipped` dice «se non c'e' altro, sono io» — e
+    #: il suffisso le fondeva in una. Cercando chi legge quel nome avevo
+    #: trovato due confronti esatti (`client.py:456` e `:4307`) e mi ero
+    #: fermata: il terzo lettore non lo NOMINA in un confronto, lo TIENE in una
+    #: tabella che `_blocking_layers` filtra con questa funzione.
     return (s.endswith("-observe") or s.endswith("-graded")
-            or s.endswith("-skipped")
-            or s.endswith("-withdrawn") or s == "L3-coexistence")
+            or s.endswith("-withdrawn")
+            or s in ("L3-coexistence", "L1-skipped"))
 
 
 def advisory_eligible(warnings: Iterable[dict] | None) -> bool:

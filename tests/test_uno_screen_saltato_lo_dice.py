@@ -88,6 +88,32 @@ def test_il_verdetto_NON_cambia(tmp_path):
         "la nota viene trattenuta: il marcatore del salto e' diventato un veto")
 
 
+def test_il_marcatore_del_salto_NON_TRAVOLGE_L4_skipped():
+    """⚠️ LA CELLA CHE HA PRESO LA CI, e la scrivo qui perche' l'errore e' mio.
+
+    La prima versione della cura allargava la convenzione con un SUFFISSO
+    (`endswith("-skipped")`) e ha fatto cadere le tre gambe su
+    `test_blocking_layers_keeps_l4_skipped_advisory`: `assert [] ==
+    ['L4-skipped']`. Il suffisso era gia' in uso con la regola OPPOSTA.
+
+        convenzione `_is_advisory_layer`   non puo' MAI essere la ragione
+        `L4-skipped`                       se e' l'unica nota, la ragione e' lui
+
+    Le due nozioni di «avviso» convivono, e un suffisso condiviso le fondeva in
+    una. Questa cella tiene i due lati insieme, cosi' chi tocca la convenzione
+    vede la coppia e non solo il proprio caso.
+    """
+    from verimem.client import _blocking_layers
+    assert _is_advisory_layer("L1-skipped") is True
+    assert _is_advisory_layer("L4-skipped") is False, (
+        "il marcatore di T133 ha travolto `L4-skipped`: un avviso che il "
+        "prodotto tiene fra gli attribuibili (ultima voce di "
+        "`_BLOCK_LAYER_PRIORITY`) non deve sparire perche' un altro livello "
+        "ha scelto lo stesso suffisso")
+    assert _blocking_layers(
+        [{"layer": "L4-skipped"}, {"layer": "L1-skipped"}]) == ["L4-skipped"]
+
+
 def test_CONTROLLO_NEGATIVO_una_scrittura_normale_non_guadagna_il_marcatore(tmp_path):
     """Senza questa cella, marcare TUTTE le ricevute passerebbe — e un
     marcatore che c'e' sempre non significa piu' niente."""
