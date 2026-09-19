@@ -22,7 +22,7 @@ Falsifiable hypothesis H1 (pre-registered in the design doc):
 
 This module is the *selection* primitive only. The decision to actually
 emit a dream task from the selected ids is the caller's job (a thin
-hook in ``attic.auto_dream_trigger.maybe_trigger_dream`` — added in a
+hook in ``verimem.auto_dream_trigger.maybe_trigger_dream`` — added in a
 follow-up commit if H1 holds in pilot).
 
 Pure-function contract

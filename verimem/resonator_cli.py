@@ -19,9 +19,9 @@ Falsifiable contracts (vedi tests/test_resonator_cli.py):
   (c) reset zeros aggregate + cleanup cleanup
 
 Usage:
-    python -m attic.resonator_cli remember "fact text"
-    python -m attic.resonator_cli recall
-    python -m attic.resonator_cli stats
+    python -m verimem.resonator_cli remember "fact text"
+    python -m verimem.resonator_cli recall
+    python -m verimem.resonator_cli stats
 """
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ def _load_state(
     state_path: Path = DEFAULT_STATE_PATH,
 ) -> Any:
     """Load state if exists, else fresh."""
-    from attic.resonator_memory import ResonatorMemory
+    from verimem.resonator_memory import ResonatorMemory
     if state_path.exists():
         return ResonatorMemory.load(state_path)
     return ResonatorMemory(
@@ -83,7 +83,7 @@ def _append_text_index(
 
 
 def cmd_remember(text: str, state_path: Path, index_path: Path) -> dict[str, Any]:
-    from attic.resonator_text_bridge import text_to_atoms_via_hash
+    from verimem.resonator_text_bridge import text_to_atoms_via_hash
     mem = _load_state(state_path)
     indices = text_to_atoms_via_hash(text, DEFAULT_K, DEFAULT_M)
     r = mem.remember_tuple(indices)

@@ -244,7 +244,7 @@ def _emerging_skills_set(
     corpora > 1500 facts. Using adaptive ensures the downstream bench
     is comparable to the production Auto-Dream pipeline behaviour.
     """
-    from attic.adaptive_threshold import adaptive_thresholds
+    from verimem.adaptive_threshold import adaptive_thresholds
     from verimem.skill_emergence_detector import detect_emerging_skills
 
     purity, cohesion = adaptive_thresholds(n_facts)
