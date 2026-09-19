@@ -6162,8 +6162,6 @@ def main() -> None:
     app()
 
 
-if __name__ == "__main__":
-    main()
 
 
 @store_app.command("migrate")
@@ -6196,3 +6194,11 @@ def store_migrate_cmd(
         console.print(f"[red]non migrato:[/red] {exc}")
         raise typer.Exit(1) from exc
     console.print(str(ricevuta))
+
+# ⚠️ QUALUNQUE COMANDO VA DEFINITO SOPRA QUESTA RIGA.
+# Con `python -m verimem.cli` il modulo gira come __main__, quindi `main()`
+# parte QUI: un decoratore scritto più in basso non viene mai eseguito e il
+# comando non esiste — pur esistendo per chi importa il modulo, che è il
+# livello a cui un test si accorge di nulla.
+if __name__ == "__main__":
+    main()

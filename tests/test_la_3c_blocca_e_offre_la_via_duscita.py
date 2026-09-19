@@ -186,28 +186,48 @@ def test_uno_store_piu_nuovo_del_codice_si_rifiuta(tmp_path: Path) -> None:
 def test_ogni_comando_citato_dal_nucleo_esiste_nella_cli() -> None:
     """Il presidio esteso a `schema.py`, dov'è nato il difetto.
 
-    ⚠️ Il posto giusto è dove il messaggio ESCE. Una prima versione di questo
-    presidio leggeva il sorgente di `migrations` ed era verde mentre il difetto
-    c'era, perché il testo vive in `schema.py` e arriva lì per import. Qui si
-    guarda la costante che PROMETTE un comando: se nomina `verimem <x>`, quel
-    comando deve esistere.
+    ⚠️ SI CHIEDE ALLA PORTA, NON ALL'IMPORT, e questa cella ha già sbagliato
+    due volte prima di arrivarci — sempre verde, sempre col difetto presente:
+
+        1. leggeva il sorgente di `migrations`: il testo vive in `schema.py` e
+           arriva lì per import, quindi nel file guardato non compariva;
+        2. chiedeva a `typer.main.get_command(app)` dopo aver importato il
+           modulo. Importare esegue TUTTO il file, quindi il comando risultava
+           registrato — ma con `python -m verimem.cli` il modulo gira come
+           `__main__` e `main()` parte a metà file: un comando definito più in
+           basso non viene mai registrato. La CLI rispondeva
+           `No such command 'migrate'` mentre questa cella era verde.
+
+    Il livello a cui misuri decide il verdetto: l'unico che conta è il
+    sottoprocesso, cioè quello che l'utente digita davvero.
     """
     import re
+    import subprocess
+    import sys
 
-    from typer.main import get_command
-
-    from verimem.cli import app
     from verimem.schema import COMANDO_DI_MIGRAZIONE
 
-    veri = set(get_command(app).commands)
-    assert veri, "nessun comando estratto dalla CLI: è cieco il righello"
+    citati = [m.groups() for m in
+              re.finditer(r"\bverimem\s+([a-z][a-z0-9-]{2,})"
+                          r"(?:\s+([a-z][a-z0-9-]{2,}))?", COMANDO_DI_MIGRAZIONE)]
+    assert citati, f"la costante non nomina nessun comando: {COMANDO_DI_MIGRAZIONE}"
 
-    citati = {m.group(1) for m in
-              re.finditer(r"\bverimem\s+([a-z][a-z0-9-]{2,})",
-                          COMANDO_DI_MIGRAZIONE)}
-    assert not (citati - veri), (
-        f"la costante promette comandi che la CLI non ha: "
-        f"{sorted(citati - veri)}. Dice: {COMANDO_DI_MIGRAZIONE}")
+    for parti in citati:
+        argomenti = [p for p in parti if p]
+        esito = subprocess.run(
+            [sys.executable, "-m", "verimem.cli", *argomenti, "--help"],
+            capture_output=True, text=True, timeout=180)
+        assert esito.returncode == 0 and "No such command" not in esito.stdout, (
+            f"la costante promette `verimem {' '.join(argomenti)}` ma la porta "
+            f"risponde:\n{esito.stdout[:400]}{esito.stderr[:200]}")
+
+    # CONTROLLO POSITIVO: la stessa domanda su un comando inventato deve
+    # FALLIRE, o questa cella direbbe di sì a qualunque cosa.
+    inventato = subprocess.run(
+        [sys.executable, "-m", "verimem.cli", "questo-non-esiste", "--help"],
+        capture_output=True, text=True, timeout=180)
+    assert inventato.returncode != 0 or "No such command" in inventato.stdout, (
+        "la porta accetta un comando inventato: è cieco il righello, non la CLI")
 
 
 # ------------------------------------------------------- controllo positivo --

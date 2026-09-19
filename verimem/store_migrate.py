@@ -45,7 +45,7 @@ class BackupNonVerificato(RuntimeError):
 
 
 @dataclass(frozen=True)
-class Ricevuta:
+class RicevutaDiMigrazione:
     """Che cosa è stato fatto a quale file. Il valore di questo comando sta qui.
 
     `colonne_aggiunte` è vuoto quando lo store era già allineato: la migrazione
@@ -131,7 +131,7 @@ def backup_verificato(percorso: Path, destinazione: Path | None = None) -> tuple
 
 
 def migra_lo_store(percorso: str | Path,
-                   destinazione_backup: Path | None = None) -> Ricevuta:
+                   destinazione_backup: Path | None = None) -> RicevutaDiMigrazione:
     """Porta uno store alla versione di questo codice, dopo un backup verificato.
 
     L'ordine non è negoziabile: **prima il backup**, poi la migrazione. Un
@@ -167,7 +167,7 @@ def migra_lo_store(percorso: str | Path,
         for tabella, colonne in dopo.items()
         if tabella in prima and colonne != prima[tabella]
     }
-    return Ricevuta(
+    return RicevutaDiMigrazione(
         percorso=percorso,
         versione_prima=effettiva,
         versione_dopo=leggi_stato(percorso).versione_applicativa,
@@ -178,4 +178,4 @@ def migra_lo_store(percorso: str | Path,
     )
 
 
-__all__ = ["BackupNonVerificato", "Ricevuta", "backup_verificato", "migra_lo_store"]
+__all__ = ["BackupNonVerificato", "RicevutaDiMigrazione", "backup_verificato", "migra_lo_store"]
