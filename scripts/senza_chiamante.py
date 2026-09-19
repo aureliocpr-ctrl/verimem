@@ -60,45 +60,48 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 PACCHETTO = RADICE / "verimem"
 PYPROJECT = RADICE / "pyproject.toml"
 
-# ⚠️ QUESTO TETTO E' SALITO IL 18/09 ED E' RISCESO IL 19/09, a 1b.1.
-# ERA PREVISTO PER 1b.3, cioe' a tutte e tre le porte agganciate: e' bastata
-# la PRIMA. La raggiungibilita' e' transitiva — appena `cli.py` ha importato
-# `verimem.core`, il pacchetto ha smesso di vedere DUE moduli irraggiungibili,
-# non uno. Il ticket T104 si chiude qui, con due porte ancora da fare.
-# Quello che segue resta scritto perche' racconta perche' il tetto era salito.
-# Di solito qui si scende. I due file del nucleo (`verimem/core/__init__.py` e
-# `verimem/core/ricevuta.py`) sono entrati nel pacchetto PRIMA che una porta
-# li chiami: e' la fetta 1, ed e' voluto — l'oggetto esiste per primo, le tre
-# porte lo adottano una per volta nella 1b. Finche' dura, questo criterio li
-# vede come «pubblicati e irraggiungibili», e ha ragione: oggi lo sono.
-# I numeri sono MISURATI su questa base (main 4cc66030), non riportati: la
-# prima stesura diceva 36 e 64, misurati su una base precedente, e nel
-# frattempo un'altra richiesta li ha abbassati. Un tetto ereditato da un
-# albero diverso non e' un tetto, e' un ricordo.
-# +1 su C2 (`core/__init__.py`, che nessuno importa) e +2 su D (anche
-# `core/ricevuta.py`, raggiungibile solo dal primo, che non ha porta).
-# LA RIDISCESA A 29 E 42 E' OBBLIGATORIA QUANDO LA TERZA PORTA RENDE LA
-# RICEVUTA (1b.3), ed e' un ticket con un nome: T104. Se questi numeri sono
-# ancora 30 e 44 dopo 1b.3, il cricchetto non e' piu' a scendere e chi lo
-# legge sta misurando la nostra pazienza, non il pacchetto.
-# ⚠️ E SALE UNA SECONDA VOLTA, IL 19/09, PER LA STESSA RAGIONE E CON LA STESSA
-# SCADENZA. `verimem/schema.py` — i tre stati di uno store e il rifiuto di
-# migrarlo aprendolo — entra nel pacchetto prima che una porta lo chiami: è la
-# fetta 3, e il cablaggio è deciso e datato (D-0009: il cambio si ferma in
-# `migrations.ensure_schema_version`, l'apertura si dichiara in
-# `SemanticMemory.__init__`). Finché quel cablaggio non c'è, il criterio lo vede
-# come «pubblicato e irraggiungibile», e ha ragione: oggi lo è.
-# MISURATI su questa base (`36850858`, main `068baf45`), non riportati da
-# un'altra richiesta: C2 31, D 45. Un tetto ereditato da un albero diverso non è
-# un tetto, è un ricordo — e i numeri qui sopra lo dicono già una volta.
-# +1 su C2 e +1 su D: un modulo solo, che nessuno importa e che non raggiunge
-# nessun altro (`schema.py` non importa moduli del pacchetto).
-# LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
-# ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
-# criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
-TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
-TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 43           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 10 solo-per-catena)
+# I TRE TETTI, MISURATI IL 19/09 SU QUESTO ALBERO (395 moduli). Questo ramo ha
+# detto 2/2, 4/4, 5/6, 7/10, 7/30, 7/9, 8/10 e ora 7/8: ogni volta su un albero
+# diverso, e un tetto ereditato da un albero diverso non e' un tetto, e' un
+# ricordo.
+#
+# ✅ T104 SI E' CHIUSO, e questo cricchetto lo ha registrato da solo. Il commento
+# che stava qui prometteva: «la ridiscesa e' obbligatoria quando la terza porta
+# rende la ricevuta (1b.3), ed e' un ticket con un nome: T104». La porta CLI ora
+# rende la ricevuta del nucleo, e `core/__init__` e `core/ricevuta` sono USCITI
+# da C2 e da D senza che nessuno abbia toccato questo file: C2 8 -> 7, D 10 -> 8.
+# Una promessa scritta accanto a un numero si e' pagata da se', ed e' il motivo
+# per cui va scritta accanto al numero e non in un documento.
+#
+# CIO' CHE RESTA, e perche'. I SETTE DI C2 (nessuna porta: ne' import, ne' entry
+# point, ne' `python -m`), per nome, perche' un numero senza nomi non si
+# controlla:
+#   atomic_claims                 innesto dichiarato, con data e ramo (T111)
+#   schema                        la fetta 3: entra prima del suo cablaggio, che
+#                                 e' deciso e datato (D-0009). Ridiscesa: T125,
+#                                 ed e' la sola promessa ancora aperta qui
+#   daemon_runner, daemon_spawn   li importa hooks/hippo_session_start.py via lo
+#                                 shim engram.
+#   hooks/__init__, hooks/pre_tool_use
+#                                 lo importa .claude/hooks/hippo_pre_tool_use.py
+#                                 via lo shim, dentro `except ImportError:
+#                                 return 0` — spegnimento MUTO: archiviarlo non
+#                                 rompeva niente, lo spegneva
+#   test_isolation                guardia del conftest (T94)
+# L'ottavo di D e' `proactive_step_injector`, raggiunto solo da
+# `hooks.pre_tool_use`, che una porta non ce l'ha.
+# CINQUE DEI SETTE li raggiunge un GANCIO: una superficie d'uso che non e' ne'
+# la CLI ne' l'MCP ne' l'SDK. Un gancio e' una superficie, non un import morto.
+#
+# C1 = 5, sorvegliata e FUORI dal tetto, perche' `python -m` E' una porta — lo
+# dice la riga di C2 qui sopra, che esclude anche quella. I C1 sono percio' punti
+# di partenza del cammino e la loro catena esce da D per costruzione: con i C1
+# contati dentro, D valeva 31 su un albero come questo, e quel numero misurava
+# una contraddizione interna a questo file, non il pacchetto. «Raggiungibile con
+# `python -m`» non vuol dire «qualcuno lo usa»: quella e' la domanda di T126.
+TETTO_C2 = 7           # nessuna porta: né import, né entry point, né python -m
+TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto; T126)
+TETTO_D = 8            # 7 C2 + proactive_step_injector, raggiunto solo da C2
 # ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
 # prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
 # hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
