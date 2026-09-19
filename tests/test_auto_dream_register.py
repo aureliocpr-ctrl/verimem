@@ -105,7 +105,7 @@ class TestAutoDreamRegisterIntegration:
         conn.close()
 
         # Stub propose_dream_tasks to avoid downstream LLM dependency.
-        import attic.auto_dream_worker as m
+        import verimem.auto_dream_worker as m
         import verimem.dream as dream_mod
 
         def _fake_propose(*, live_dirs, shadow_root, **kw):

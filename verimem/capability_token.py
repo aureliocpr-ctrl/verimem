@@ -9,8 +9,8 @@ and naturally expire.
 B4 concatenazione → STATO SUPERIORE engram completo:
   clp.agentos.syscall typed boundary (LOOP 361)
   + manifest validator anti-hallucination (LOOP 359-360)
-  + attic.op_supervisor circuit breaker (cycle 365)
-  + attic.syscall_bridge audit + rate-limit (cycle 364)
+  + verimem.op_supervisor circuit breaker (cycle 365)
+  + verimem.syscall_bridge audit + rate-limit (cycle 364)
   + HMAC capability token (this module)
   ⇒ Engram operations now have AuthZ + AuthN equivalent via shared
     secret + token, layered over the existing safety stack.

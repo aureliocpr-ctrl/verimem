@@ -1,4 +1,4 @@
-"""CLI entrypoint dell'ingest Tier C (attic.transcript_ingest.main).
+"""CLI entrypoint dell'ingest Tier C (verimem.transcript_ingest.main).
 
 Abilita l'auto-cattura (un SessionEnd hook chiamerà questo entrypoint), ma
 restando in-repo e testabile: NON installa alcun hook standing.
@@ -15,8 +15,8 @@ from __future__ import annotations
 import json
 import os
 
-from attic.transcript_ingest import find_current_session, main
 from verimem.transcript_index import TranscriptIndex
+from verimem.transcript_ingest import find_current_session, main
 
 _REC = [{
     "type": "user", "uuid": "x1", "sessionId": "S",

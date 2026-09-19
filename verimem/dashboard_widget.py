@@ -6,7 +6,7 @@ Diagnostic visibility over the engram syscall bridge stack:
   - rate-limit recent calls per op
   - token verification stats (parses last N audit entries)
 
-CLI entry: `python -m attic.dashboard_widget --tail 20 --json` or
+CLI entry: `python -m verimem.dashboard_widget --tail 20 --json` or
 plain text default. Designed to be wrapped by clp dashboard subcommand
 or invoked stand-alone for ops monitoring.
 
@@ -44,8 +44,8 @@ def collect_state(tail_n: int = 50) -> dict[str, Any]:
     Returns single dict aggregating audit + circuit + rate-limit +
     manifest. All sources read-only, no side effects.
     """
-    from attic.op_supervisor import get_default_supervisor
-    from attic.syscall_bridge import (
+    from verimem.op_supervisor import get_default_supervisor
+    from verimem.syscall_bridge import (
         _RATE_BUCKETS,
         ENGRAM_OPS_MANIFEST,
         engram_audit_tail,

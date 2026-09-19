@@ -89,7 +89,7 @@ def _prepara(monkeypatch, *, heal=None, rompi=None):
 
 
 def _esegui(tmp_path, monkeypatch, **kw):
-    from attic.auto_dream_worker import run_maintenance
+    from verimem.auto_dream_worker import run_maintenance
     _prepara(monkeypatch, **kw)
 
     class _Finto:
