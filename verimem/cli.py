@@ -1938,7 +1938,12 @@ def correct_cmd(
                       "remoto[/red] — la supersessione e' un'operazione dello "
                       "store, non del client")
         raise typer.Exit(2)
-    vecchio = sm.get(old_id)
+    # T154: l'id che il prodotto STAMPA (`facts list` ne mostra otto caratteri)
+    # deve funzionare nel comando che lo chiede. `_fact_id_resolve` esiste per
+    # questo — «8-char ids are common in output» — risolve il prefisso e si
+    # ferma quando e' ambiguo; due comandi la chiamavano gia', questo no, e
+    # rispondeva «fatto non trovato» su un fatto che c'era.
+    vecchio = _fact_id_resolve(sm, old_id)
     if vecchio is None:
         # Prima di scrivere, non dopo: un `correct` su un id sbagliato che
         # lasciasse nello store un fatto nuovo orfano E nessuna correzione
@@ -1977,7 +1982,13 @@ def correct_cmd(
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)
 
-    esito = sm.supersede(old_id, nuovo, principal=_principale(), reason=reason)
+    # T154: qui va l'id RISOLTO, non quello che ha scritto l'utente. Risolverlo
+    # solo per la ricerca e poi passare il troncato alla supersessione lascia
+    # `SupersedeError: old_id ... not found` DOPO che il fatto nuovo e' stato
+    # scritto: lo stato peggiore dei due, perche' lo store e' cambiato e il
+    # comando dice di essere fallito. I messaggi qui sotto restano su `old_id`,
+    # che e' quello che l'utente ha digitato e si aspetta di rileggere.
+    esito = sm.supersede(vecchio.id, nuovo, principal=_principale(), reason=reason)
     if esito.get("idempotent_noop"):
         console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
                       f"(gia' dichiarato, nessun cambiamento)")
