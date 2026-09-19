@@ -1333,6 +1333,8 @@ def remember_cmd(
         "The store to write to, when it is not the one this folder resolves "
         "to. Same option as on `recall`: a fact written where you cannot read "
         "it back is worse than one not written.")),
+    json_out: bool = typer.Option(False, "--json", help=(
+        "Print the receipt as one JSON object and nothing else.")),
 ) -> None:
     """Store one fact through the full moat — the 2-second quickstart.
 
@@ -1385,6 +1387,18 @@ def remember_cmd(
     if _vu is not None:
         kw["valid_until"] = _vu
     r = m.add(text, **kw)
+    if json_out:
+        import json as _json
+
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        #: LO STESSO adattatore e LA STESSA unione di `save`: due traduzioni
+        #: per lo stesso oggetto sarebbero due schemi, che e' il difetto da cui
+        #: nasce la fetta. `remember` e' il verbo del FATTO — `save` scrive un
+        #: checkpoint e per quella via lo schermo lessicale non gira — quindi
+        #: e' questa la porta che deve rendere una ricevuta leggibile.
+        print(_json.dumps({**r, **ricevuta_dal_cancello(r).come_dizionario()},
+                          ensure_ascii=False, default=str))
+        raise typer.Exit(0 if r.get("stored") else 1)
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")

@@ -16,8 +16,13 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.adattatore_ricevuta import GIUDICE_NON_DICHIARATO, ricevuta_dal_cancello
-from verimem.core import CHIAVI
+from verimem.adattatore_ricevuta import (
+    BLOCCANTE_NON_DICHIARATO,
+    DAL_CANCELLO_ALL_ESITO,
+    GIUDICE_NON_DICHIARATO,
+    ricevuta_dal_cancello,
+)
+from verimem.core import CHIAVI, ESITI
 
 #: Il minimo che `client.py` mette sempre: dove ha scritto e chi l'ha deciso.
 DAL_CANCELLO = {
@@ -55,7 +60,9 @@ def test_fermata_SENZA_un_nome_dichiara_che_il_nome_non_c_e():
     """
     r = _con(status="quarantined")          # nessun quarantined_by
     assert r.esito == "fermato"
-    assert r.fermato_da and "non dichiarato" in r.fermato_da
+    #: Si confronta con la COSTANTE, non con una sottostringa: la prima
+    #: stesura cercava «non dichiarato» e cadeva su «non ha dichiarato».
+    assert r.fermato_da == BLOCCANTE_NON_DICHIARATO
 
 
 def test_una_scrittura_non_entrata_e_rifiutata():
@@ -110,3 +117,54 @@ def test_uno_stato_di_livello_sconosciuto_non_fa_esplodere_la_porta():
     all'utente: l'adattatore e' un traduttore, non un secondo cancello."""
     r = _con(warnings=[{"layer": "L4", "stato": "boh", "reason": "R2"}])
     assert r.livelli[0].stato == "eseguito"
+
+
+# ------------------------------------------- la tabella, valore per valore
+
+@pytest.mark.parametrize("disposition, atteso", [
+    ("admitted", "ammesso"),
+    ("quarantined", "fermato"),
+    ("rejected", "rifiutato"),
+    ("routed_telemetry", "rifiutato"),
+    ("empty", "rifiutato"),
+])
+def test_ogni_valore_del_cancello_ha_la_sua_riga(disposition, atteso):
+    """Una cella per ogni valore che il cancello emette davvero.
+
+    I quattro valori vengono da `client.py` (le `disposition` passate a
+    `_adjudication`) piu' lo stato `empty`. Se il cancello ne aggiungesse uno,
+    questa cella non lo coprirebbe — ed e' per quello che esiste anche quella
+    sotto, sul valore NON previsto.
+    """
+    r = _con(adjudication={"disposition": disposition}, stored=False)
+    assert r.esito == atteso
+
+
+def test_un_valore_FUORI_tabella_non_diventa_rifiutato_in_silenzio():
+    """Il difetto che la tabella toglie: `if not stored: rifiutato`.
+
+    Per esclusione, una scrittura VUOTA sarebbe diventata «rifiutata» — un
+    esito FALSO, cioe' la giuntura che la ricevuta esiste per togliere. Ora un
+    valore che la tabella non prevede porta IL VALORE VERO nel campo che dice
+    chi ha deciso, cosi' chi legge aggiunge la riga che manca invece di
+    indovinare.
+    """
+    r = _con(adjudication={"disposition": "una_cosa_nuova"}, stored=False)
+    assert r.esito == "rifiutato"
+    assert "una_cosa_nuova" in r.fermato_da
+
+
+def test_l_ammissione_graduata_e_degradata_non_ammessa():
+    """Il quarto valore di `ESITI` esiste per questo: ammessa CON una riserva.
+
+    Chiamarla «ammessa» perderebbe la riserva; chiamarla «fermata» direbbe il
+    falso. E' il caso per cui `degradato` e' stato concesso.
+    """
+    r = _con(adjudication={"disposition": "admitted"},
+             warnings=[{"layer": "L4-grounding-graded", "reason": "riserva"}])
+    assert r.esito == "degradato"
+
+
+def test_la_tabella_rende_solo_esiti_dichiarati():
+    """Nessuna riga puo' produrre una parola che `ESITI` non conosce."""
+    assert {e for e, _ in DAL_CANCELLO_ALL_ESITO.values()} <= set(ESITI)

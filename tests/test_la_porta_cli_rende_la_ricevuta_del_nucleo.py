@@ -185,3 +185,20 @@ def test_CONTROLLO_NEGATIVO_senza_json_la_pagina_umana_non_cambia(store: Path):
     assert esito.stdout.strip(), "senza --json lo stdout e' diventato muto"
     with pytest.raises(json.JSONDecodeError):
         json.loads(esito.stdout)      # resta prosa, non diventa JSON
+
+
+def test_remember_il_verbo_del_FATTO_rende_la_stessa_ricevuta(store: Path):
+    """`remember` e' la porta di chi scrive un FATTO, e non aveva uscita macchina.
+
+    `save` scrive un CHECKPOINT: passa come nota di sessione e per quella via
+    lo schermo lessicale non gira — misurato, quattro frasi di auto-elogio
+    ammesse tutte. Chi scrive fatti usa `remember`, quindi e' li' che una
+    ricevuta leggibile serve davvero; e deve essere LA STESSA, dallo stesso
+    adattatore, o sono due schemi sulla stessa porta.
+    """
+    esito = _cli("remember", "Il callback della CLI gira prima del primo log.",
+                 "--topic", "prova/1b1", "--json", store=store)
+    reso = json.loads(esito.stdout)
+    mancanti = sorted(set(CHIAVI) - set(reso))
+    assert not mancanti, f"remember non rende: {mancanti}"
+    assert reso["store"] and reso["store_decided_by"]
