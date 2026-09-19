@@ -125,11 +125,28 @@ def test_presidio_L1_resta_L1(mem):
     assert r.get("quarantined_by") == "L1", r.get("quarantined_by")
 
 
-def test_presidio_il_moat_resta_moat(mem):
+def test_presidio_il_moat_nomina_il_suo_layer(mem):
+    """T150 (19/09): l'etichetta nomina il LAYER, non la famiglia.
+
+    Si chiamava `test_presidio_il_moat_resta_moat` e pretendeva `'moat'`. Il
+    valore qui sotto è MISURATO su questo stesso caso dopo la cura, non
+    scelto: `assert 'L4-grounding' == 'moat'`. `moat` non sparisce — resta nel
+    campo `moat: failed` della ricevuta, dove è un fatto e non un'etichetta.
+
+    ⚠️ Il presidio che conta davvero è quello SOPRA (`test_presidio_L1_resta_L1`):
+    se la cura avesse spostato la precedenza fra famiglie, sarebbe caduto
+    quello. È rimasto verde, ed è la ragione per cui questa riga si può
+    cambiare senza aver cambiato chi decide.
+    """
     r = mem.add("Il modulo di fatturazione ha 9999 utenti attivi.",
                 topic="az/w", source="Verbale: il modulo ha 12 utenti attivi.")
     assert r.get("status") == "quarantined"
-    assert r.get("quarantined_by") == "moat", r.get("quarantined_by")
+    _qb = r.get("quarantined_by")
+    assert _qb == "L4-grounding", _qb
+    assert r.get("moat") == "failed", (
+        f"la famiglia e' andata persa: moat={r.get('moat')!r}. L'etichetta "
+        "nomina il layer PERCHE' la famiglia e' gia' detta da questo campo"
+    )
 
 
 def test_presidio_un_fatto_ammesso_non_dichiara_nessun_decisore(mem):
