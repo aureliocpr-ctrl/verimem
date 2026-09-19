@@ -22,7 +22,7 @@ riquadro qui sotto, che ha sostituito un blocco per posizione e si è portata vi
 quello che stava in mezzo: la pagina annunciava «fonte unica per tutti i casi» e
 poi non la mostrava.*
 
-> ## 🔴 UN'ABBREVIAZIONE NELLA FONTE DISARMA IL CONTROLLO SULLE UNITÀ
+> ## ✅ L'ABBREVIAZIONE NELLA FONTE DISARMAVA IL CONTROLLO. **È CURATA** — ma il giudice non è guarito
 >
 > **È il fatto più importante di questa pagina, e non è un numero: è il modo in cui
 > i documenti veri sono scritti.** Lo stesso claim falso — *«400 metri cubi»*
@@ -54,8 +54,8 @@ poi non la mostrava.*
 > caso la contraddizione di unità non viene vista.
 >
 > 🗓️ ⚠️ **Tutti i numeri di questa pagina sono presi con la fonte ABBREVIATA**
-> — cioè **sul ramo in cui il moat protegge di meno**. Chi li rifà con una fonte
-> per esteso otterrà numeri diversi, e migliori.
+> — cioè **sul ramo in cui il moat proteggeva di meno**, e i numeri del *prima*
+> restano qui perché sono la ragione per cui la cura esiste.
 >
 > 🔬 **Rimisurato da chi scrive questa pagina, cambiando UNA SOLA COSA.** La
 > prima misura — di un pari — cambiava **due** cose fra le due fonti: l'unità *e
@@ -73,17 +73,26 @@ poi non la mostrava.*
 > misura del pari, che aveva anche un'altra data) — una ragione in più per
 > cambiare **una cosa per volta**.
 >
-> 🧭 **Misurato su `c4bec04c`** — lo sha l'ha stampato il prodotto
-> (`build=c4bec04c`), non chi scrive — **e una cura di questo caso è già in una
-> richiesta aperta**: un layer dedicato (`L4.2-grandezza`) che scatta quando
-> entrambe le unità sono note e nominano grandezze diverse. Misurato alla porta
-> da chi l'ha scritta: *«400 metri cubi» contro «400 mq»* → **`quarantined`**,
-> mentre *«400 m2» contro «400 mq»* — stessa unità, scritta in due modi — resta
-> ammesso.
+> 🟢 **LA CURA È ENTRATA, e questo è il prima/dopo misurato con lo STESSO
+> righello** — quattro casi, tre porte, stessa fonte abbreviata, sha stampato dal
+> prodotto:
 >
-> ⇒ **Questo riquadro descrive il prodotto PRIMA di quella cura.** Su una
-> versione che la contiene, il claim falso è trattenuto: leggi sempre lo sha
-> accanto ai numeri.
+>     caso C «400 metri cubi» contro «400 mq»
+>     PRIMA                    DOPO
+>     model_claim  96.00531768798828    ->  quarantined  96.00531768798828
+>     (ammesso)                             (trattenuto, `L4.2-grandezza`)
+>
+> ⇒ **L'esito si ribalta su tutte e tre le porte. Il punteggio non si muove di
+> una cifra.** Il claim è fermato da **uno strato sopra**, non perché il giudice
+> abbia imparato a distinguere `mq` da metri cubi: per lui quella coppia vale
+> `96.005` prima e dopo. È la differenza fra **una difesa aggiunta** e **una
+> cecità corretta**, e chi legge la promessa deve saperla — perché dice cosa
+> aspettarsi dai casi che quello strato **non** copre.
+>
+> 📌 E la ragione che lo strato dà è leggibile: *«il claim e la fonte attaccano
+> lo stesso numero a grandezze diverse (le unità lo dicono)»*. ⚠️ Ma arriva nei
+> `layers` **di una porta su tre**: sulla libreria e sulla porta MCP il fatto
+> esce `quarantined` con `layers` vuoto, e il perché va cercato altrove.
 >
 > 🌡️ **IL REGIME DI TUTTI QUESTI NUMERI: banda SPENTA** (`ENGRAM_BAND_LLM=0`),
 > cioè senza la scalata a un modello linguistico. La pagina lo diceva solo più
