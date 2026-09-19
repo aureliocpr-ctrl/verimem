@@ -112,6 +112,47 @@ FORBICI = re.compile(r"^[#;!$%^&|:]?\s*-+\s*>8\s*-+\s*$", re.MULTILINE)
 
 CANDIDATO_PERCORSO = re.compile(r"[A-Za-z0-9_.\-/]*/[A-Za-z0-9_.\-]*")
 
+#: L'apertura di un blocco recintato: tre o piu' backtick, oppure tre o piu'
+#: tilde, con o senza il nome del linguaggio. Si chiude col MEDESIMO marcatore,
+#: lungo almeno quanto quello che ha aperto — cosi' come lo intende Markdown, e
+#: come serve qui: un recinto di quattro backtick puo' contenerne tre.
+_RECINTO = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[^\n`]*$", re.MULTILINE)
+
+
+def _senza_blocchi_recintati(testo: str) -> str:
+    """Il testo senza cio' che sta dentro ``` ``` o ~~~ ~~~.
+
+    ⚠️ IL CRITERIO E' «DICHIARATO», NON «PRESENTE». Un modello incollato dentro
+    un recinto e' una CITAZIONE: serve a mostrare a qualcuno che cosa scrivere,
+    e leggerlo come una dichiarazione fa passare esattamente le richieste in cui
+    nessuno ha dichiarato niente (misurato il 19/09 su sette).
+
+    ⚠️ E il difetto si propaga ATTRAVERSO L'AIUTO: piu' uno e' utile — una
+    guida, una risposta, un esempio in un commento — piu' richieste rende verdi.
+    Per questo il taglio si fa qui, in una funzione sola, e non in ognuno dei
+    punti che cercano qualcosa dentro un commento.
+
+    🔑 Un recinto APERTO e mai chiuso mangia tutto fino alla fine: e' come lo
+    rende Markdown, ed e' anche il verso giusto dell'errore — chi lascia un
+    recinto aperto ottiene un rosso, non un verde.
+    """
+    pezzi: list[str] = []
+    resto = testo
+    while True:
+        apre = _RECINTO.search(resto)
+        if not apre:
+            pezzi.append(resto)
+            break
+        pezzi.append(resto[:apre.start()])
+        marcatore = apre.group(1)[0] * len(apre.group(1))
+        dopo = resto[apre.end():]
+        chiude = re.search(rf"^[ \t]{{0,3}}{re.escape(marcatore[0])}{{{len(marcatore)},}}[ \t]*$",
+                           dopo, re.MULTILINE)
+        if not chiude:
+            break          # recinto aperto: il resto e' tutto dentro
+        resto = dopo[chiude.end():]
+    return "\n".join(p.strip("\n") for p in pezzi if p.strip())
+
 
 def _percorsi_del_repo(radice: str | None = None) -> frozenset[str]:
     """Ogni percorso tracciato, nell'indice E in HEAD.
@@ -350,6 +391,16 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
                         f"{RIGHE_DI_PROSA_MASSIME}): il resto va in un commento "
                         f"della richiesta, non nel corpo che diventa il messaggio")
 
+    # ⚠️⚠️ SI LEGGE CIO' CHE E' DICHIARATO, NON CIO' CHE E' MOSTRATO. Un modello
+    # incollato dentro ``` ``` per aiutare qualcuno NON e' una dichiarazione, e
+    # il 19/09 questo controllo lo leggeva come tale: sette richieste sono
+    # diventate verdi con «commenti dopo il mio: 0» su tutte e sette, perche' un
+    # pari aveva incollato il modello in un commento — nello stesso messaggio in
+    # cui spiegava che NON voleva far passare richieste senza dichiarazioni.
+    # ⇒ Cercavo una STRINGA, e una stringa la trova anche dentro un recinto.
+    if commenti is not None:
+        commenti = [_senza_blocchi_recintati(c) for c in commenti]
+
     if commenti is None:
         problemi.append("NON MISURATO: la Definition of Done in un commento "
                         "(nessun commento passato al controllo)")
@@ -443,6 +494,10 @@ CASI_CORPO: list[tuple[str, str, list[str] | None, bool]] = [
      "Una.\n\nDue.\n\nTre.\n\nQuattro.\n", DOD_IN_COMMENTO, False),
     # La terza pretesa: la DoD non sparisce, si sposta.
     ("nessun commento porta la DoD", "Una.\n", ["un commento qualunque"], False),
+    # 🔴 19/09: il MODELLO incollato per aiutare non e' una dichiarazione. Sette
+    # richieste verdi con «commenti dopo il mio: 0» su tutte e sette.
+    ("la DoD dentro un recinto e' un ESEMPIO, non una dichiarazione", "Una.\n",
+     ["Ti mancano due righe:\n\n```\n" + DOD_IN_COMMENTO[0] + "\n```\n"], False),
     ("nessun commento affatto", "Una.\n", [], False),
     # ⚠️ Il controllo che NON GIRA lo dice: se `commenti` non arriva, il
     # verdetto non e' verde, e' «NON MISURATO».
