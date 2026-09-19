@@ -86,14 +86,16 @@ PYPROJECT = RADICE / "pyproject.toml"
 # MISURATI su questa base (`36850858`, main `068baf45`), non riportati da
 # un'altra richiesta: C2 31, D 45. Un tetto ereditato da un albero diverso non è
 # un tetto, è un ricordo — e i numeri qui sopra lo dicono già una volta.
-# +1 su C2 e +1 su D: un modulo solo, che nessuno importa e che non raggiunge
-# nessun altro (`schema.py` non importa moduli del pacchetto).
-# LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
-# ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
-# criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
-TETTO_C2 = 31          # nessuna porta: né import, né entry point, né python -m
+# +1 su C2 e +1 su D erano il prestito chiesto allora, con la ridiscesa scritta
+# come obbligo e un ticket suo (T125).
+# DEBITO CHIUSO: D-0009 ha cablato il modulo — `migrations` e `semantic` ora lo
+# importano — quindi i due tetti tornano dov'erano. Il cricchetto lo ha chiesto
+# da sé prima che lo facessi («C2 è SCESA (30 < 31): abbassa il tetto»), che è
+# il modo giusto perché un prestito si chiuda: non per memoria di chi l'ha
+# preso, ma perché lo strumento non lo lascia passare.
+TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 45           # irraggiungibili da ogni porta, chiusura transitiva (31 C2 + 3 C1 + 11 solo-per-catena)
+TETTO_D = 44           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 11 solo-per-catena)
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
