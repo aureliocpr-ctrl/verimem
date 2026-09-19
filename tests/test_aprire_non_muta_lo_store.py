@@ -172,17 +172,72 @@ def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
     assert _impronta_del_nucleo(p) == prima, "e il nucleo è rimasto intatto"
 
 
-def test_il_rifiuto_dice_i_due_numeri_il_file_e_il_comando(tmp_path: Path) -> None:
+def test_un_comando_suggerito_dalla_scala_esiste_nella_cli() -> None:
+    """Un rimedio che nomina un comando inesistente è peggio del silenzio.
+
+    Il silenzio non promette. Un rimando a `verimem <qualcosa>` che la CLI non
+    conosce manda chi legge a cercare, e chi cerca nel momento sbagliato apre
+    lo store a mano — cioè fa proprio la cosa che il rifiuto voleva impedire.
+    È già successo qui: `verimem store migrate` fu scritto con l'intenzione
+    giusta e puntava al vuoto, perché quel comando non esiste ancora.
+
+    ⚠️ IL POSTO GIUSTO È IL MESSAGGIO CHE ESCE, non il sorgente del modulo.
+    La prima versione di questa cella leggeva le stringhe letterali di
+    `migrations` ed era VERDE mentre il difetto c'era: il testo del comando
+    vive in `schema.py` e arriva qui da un import, quindi nel sorgente di
+    questo modulo non compare. Un righello che guarda il file sbagliato non
+    dice «non c'è», dice «non guardo lì».
+
+    Cercarlo invece in tutto il prodotto darebbe quasi solo prosa — «verimem
+    server unreachable» è un sostantivo, non un invito a digitare — e infatti
+    due righelli diversi hanno sovra-riportato prima di restringere. Il
+    rifiuto vero, provocato, è il solo posto dove la domanda è netta.
+    """
+    import re as _re
+
+    from typer.main import get_command
+
+    from verimem.cli import app
+    from verimem.migrations import ensure_schema_version
+
+    veri = set(get_command(app).commands)
+    assert veri, "nessun comando estratto dalla CLI: è cieco il righello, non la CLI"
+
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        p = _store_a_versione(Path(d), versione=16)
+        con = sqlite3.connect(p)
+        try:
+            with pytest.raises(RuntimeError) as caduto:
+                ensure_schema_version(con, db_id="semantic", target_version=17,
+                                      migrations=[])
+        finally:
+            con.close()
+
+    citati = {m.group(1) for m in
+              _re.finditer(r"\bverimem\s+([a-z][a-z0-9-]{2,})", str(caduto.value))}
+    inesistenti = sorted(citati - veri)
+    assert not inesistenti, (
+        f"il rifiuto suggerisce comandi che la CLI non ha: {inesistenti}. "
+        f"Comandi veri: {len(veri)}. O il comando si scrive, o il messaggio "
+        f"dice quello che oggi si può fare davvero. Dice: {caduto.value}")
+
+
+def test_il_rifiuto_dice_i_due_numeri_il_file_e_come_uscirne(tmp_path: Path) -> None:
     """D-0009: un rifiuto che non dice come uscirne costringe a cercare.
 
     E chi cerca nel momento sbagliato apre il file a mano, cioè fa proprio la
     cosa che il rifiuto voleva impedire. Quattro elementi, non tre: la versione
-    TROVATA, quella richiesta, QUALE file, e il comando che scioglie il blocco.
-    La versione trovata serve perché senza di lei il messaggio dice che
-    qualcosa non va senza dire da dove si parte.
+    TROVATA, quella richiesta, QUALE file, e la via d'uscita. La versione
+    trovata serve perché senza di lei il messaggio dice che qualcosa non va
+    senza dire da dove si parte.
+
+    La via d'uscita è quella che ESISTE oggi — fare un backup e poi aprire con
+    il prodotto — non il comando che vorremmo avere. Diventerà `verimem store
+    migrate` quando quel comando esisterà (D-0012), e a quel punto sarà la
+    cella qui sopra a pretendere che esista davvero.
     """
     from verimem.migrations import ensure_schema_version
-    from verimem.schema import COMANDO_DI_MIGRAZIONE
 
     p = _store_a_versione(tmp_path, versione=16)
     con = sqlite3.connect(p)
@@ -198,7 +253,7 @@ def test_il_rifiuto_dice_i_due_numeri_il_file_e_il_comando(tmp_path: Path) -> No
         ("la versione trovata (16)", "16"),
         ("la versione richiesta (17)", "17"),
         ("il file", p.name),
-        ("il comando", COMANDO_DI_MIGRAZIONE.split(" {")[0]),
+        ("la via d'uscita (il backup)", "back the file up"),
     ) if pezzo not in testo]
     assert not mancano, f"al rifiuto mancano {mancano}. Dice: {testo}"
 
