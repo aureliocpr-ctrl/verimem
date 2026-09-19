@@ -560,6 +560,29 @@ def get_local_threshold() -> float | None:
     return get_local_judge().threshold
 
 
+def il_giudice_puo_ridurre_lo_span() -> bool:
+    """Il giudice locale puo' RIDURRE uno span alla finestra del modello?
+
+    Un posto solo, e lo leggono entrambi: chi lo DICHIARA nel file di scoperta
+    (`encode_service._write_discovery`) e chi lo FA (`encode_service`, quando
+    arriva `max_length`). Finche' erano due criteri diversi, il daemon
+    prometteva guardando la funzione di gate e rinunciava guardando il
+    tokenizzatore: misurato il 2026-09-19 sul daemon vivo (`applies_window:
+    True`, `RuntimeWarning: tokenizzatore non ancora caricato`), con il client
+    che si faceva da parte fidandosi della promessa — e la coda dello span
+    tagliata dal modello invece che scelta.
+
+    ⚠️ NON basta `judge_state() == "ready"`, che sarebbe stata la cura ovvia:
+    quello guarda `_scorer` mentre la riduzione guarda `_tok`, e sono due
+    caricamenti distinti. Sarebbe lo stesso difetto con un nome migliore.
+
+    ⚠️ NON costruisce il giudice per rispondere: legge il singleton se c'e'
+    gia'. Quando non c'e', la risposta e' «non riduco» — il verso SICURO: la
+    riduzione la paga il client, e nessuno perde qualita' in silenzio.
+    """
+    return getattr(_judge, "_tok", None) is not None
+
+
 def judge_state() -> str:
     """Lo stato del giudice locale in UNA parola, per tutte le superfici.
 

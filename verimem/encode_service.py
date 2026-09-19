@@ -181,6 +181,17 @@ def _default_rerank_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
+def _puo_ridurre_lo_span() -> bool:
+    """Ponte verso la superficie unica, con import LOCALE.
+
+    A livello di modulo sarebbe un ciclo: `local_grounding` importa gia'
+    questo modulo (`from . import encode_service as _svc`) per leggere il file
+    di scoperta. L'import locale e' lo stesso verso che quel modulo usa qui.
+    """
+    from .local_grounding import il_giudice_puo_ridurre_lo_span
+    return il_giudice_puo_ridurre_lo_span()
+
+
 def _default_gate_fn(pairs):
     """Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola.
 
@@ -347,7 +358,7 @@ class EncodeServer:
                     # chiamante vedrebbe un daemon muto. Nel daemon vero il
                     # tokenizzatore c'e' gia', perche' e' lo stesso processo
                     # che tiene il modello del giudice.
-                    if getattr(_giudice, "_tok", None) is None:
+                    if not _puo_ridurre_lo_span():
                         raise RuntimeError(
                             "tokenizzatore non ancora caricato in questo "
                             "daemon: lo span non viene ridotto")
@@ -432,7 +443,10 @@ class EncodeServer:
                 # scrive questa chiave, e il client allora riduce di qua come
                 # ha sempre fatto: il costo resta suo, ma nessuno perde
                 # qualita' senza accorgersene.
-                "applies_window": self._gate_fn is not None,
+                # Si promette cio' che si sa di poter fare: la stessa
+                # domanda che la riduzione usa per decidere (T157).
+                "applies_window": (self._gate_fn is not None
+                                   and _puo_ridurre_lo_span()),
             }),
             encoding="utf-8",
         )
