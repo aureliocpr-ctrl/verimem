@@ -78,3 +78,27 @@ def test_CONTROLLO_NEGATIVO_la_cura_non_fabbrica_ritiri():
     assert not [w for w in avvisi if w.get("ritirato_da")], (
         "la cura ha marcato come ritirato un avviso di una frase che non "
         f"attiva nessuna guardia: {[w.get('layer') for w in avvisi]}")
+
+
+def test_AL_LIVELLO_DELLA_PORTA_un_ritiro_non_trattiene_la_scrittura(tmp_path):
+    """IL RILIEVO DEL PARI, e aveva ragione: le celle sopra chiedono a
+    `_is_advisory_layer` — la funzione che questa cura MODIFICA — se la modifica
+    ha funzionato. E' interrogare la guardia sul proprio effetto.
+
+    Questa cella misura dove il difetto si vedeva davvero: alla PORTA. Il 19/09
+    la marcatura, senza la cura al contatore, faceva diventare `quarantined` una
+    scrittura che prima era ammessa — e nessuna delle celle sopra se ne
+    accorgeva, perche' guardavano tutte il layer e nessuna il VERDETTO.
+    """
+    from verimem.client import Memory
+
+    r = Memory(tmp_path / "m.db").add(RIPORTATA, topic="prova/t93")
+    strati = [w.get("layer") for w in (r.get("warnings") or [])]
+
+    assert r.get("status") != "quarantined", (
+        "una claim attribuita CON il suo disclaimer viene trattenuta: il "
+        "ritiro e' diventato un veto.\n"
+        f"  status = {r.get('status')}\n  strati = {strati}")
+    assert any(str(s).endswith("-withdrawn") for s in strati), (
+        "il banco non sta misurando il ritiro: senza un avviso marcato qui, "
+        f"la cella sopra passerebbe anche a cura spenta. strati = {strati}")
