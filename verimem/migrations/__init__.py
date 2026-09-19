@@ -60,6 +60,86 @@ def _write_version(conn: sqlite3.Connection, db_id: str, version: int) -> None:
     )
 
 
+#: Il db che porta il nucleo. Per gli altri (`episodes`, `skills_index`) non
+#: esiste un criterio di schema, quindi il controllo qui sotto non si applica:
+#: rifiutare senza un criterio sarebbe rumore, non protezione.
+_DB_ID_DEL_NUCLEO = "semantic"
+
+
+def _file_della_connessione(conn: sqlite3.Connection) -> str:
+    """Il percorso del db principale, o `?` se non si legge.
+
+    Serve al messaggio di rifiuto: chi lo riceve deve sapere SU QUALE file,
+    perché un processo che ne apre tre (semantic, episodes, skills) altrimenti
+    va a cercare.
+    """
+    try:
+        for _, nome, file in conn.execute("PRAGMA database_list"):
+            if nome == "main":
+                return file or "(in memoria)"
+    except sqlite3.DatabaseError:
+        pass
+    return "?"
+
+
+def _rifiuta_una_stampa_infondata(
+    conn: sqlite3.Connection,
+    db_id: str,
+    target_version: int,
+    current: int,
+) -> None:
+    """La stampa cieca a un passo è legittima solo se il presupposto regge.
+
+    Il presupposto è scritto qui sopra: «no DDL yet», cioè la versione nuova
+    non chiede colonne che non ci sono. Su un bootstrap fresco è vero e la
+    stampa è giusta. Su uno store che un nucleo ce l'ha già, nessuno lo
+    verificava: il numero saliva e le colonne restavano quelle di prima, così
+    due store che dichiarano la stessa versione possono avere schemi diversi —
+    e chi legge la versione per decidere si fida di un'etichetta.
+
+    Verificarlo si può perché il nucleo dichiara cosa si aspetta a ogni
+    versione. Dove il criterio non c'è (altro db, versione non mappata, nucleo
+    ancora assente) il comportamento resta quello di prima: non si inventa un
+    rifiuto su una domanda a cui non si sa rispondere.
+    """
+    if db_id != _DB_ID_DEL_NUCLEO:
+        return
+    from verimem.schema import (
+        ATTESE_PER_VERSIONE,
+        colonne_del_nucleo,
+        schema_corrisponde_su,
+    )
+
+    if target_version not in ATTESE_PER_VERSIONE:
+        return
+    presenti = colonne_del_nucleo(conn)
+    if not presenti:
+        return
+    if schema_corrisponde_su(conn, target_version):
+        return
+
+    mancanti = sorted(ATTESE_PER_VERSIONE[target_version] - presenti)
+    percorso = _file_della_connessione(conn)
+    # ⚠️ LA VIA D'USCITA È QUELLA CHE ESISTE OGGI, non quella che vorremmo.
+    # `schema.COMANDO_DI_MIGRAZIONE` nomina `verimem store migrate`, che la CLI
+    # non ha: un rimedio che manda a un comando inesistente è peggio del
+    # silenzio, perché il silenzio non promette e manda comunque a cercare —
+    # e chi cerca nel momento sbagliato apre lo store a mano, cioè fa la cosa
+    # che questo rifiuto esiste per impedire. Una cella tiene fermo che ogni
+    # comando nominato qui esista davvero.
+    raise RuntimeError(
+        f"refusing to stamp db_id={db_id!r} from version {current} to "
+        f"{target_version} with zero DDL applied: version {target_version} "
+        f"declares columns the file does not have ({mancanti}). "
+        f"File: {percorso}. "
+        f"The one-step stamp exists for a fresh bootstrap, where there is "
+        f"nothing to apply; here it would promote the number while leaving "
+        f"the schema behind. Register the migration for {target_version}; to "
+        f"migrate this store instead, back the file up first and then open it "
+        f"with the product, which applies the ladder."
+    )
+
+
 def ensure_schema_version(
     conn: sqlite3.Connection,
     db_id: str,
@@ -123,6 +203,7 @@ def ensure_schema_version(
 
     if not pending:
         # No migrations defined yet; just stamp the version.
+        _rifiuta_una_stampa_infondata(conn, db_id, target_version, current)
         try:
             conn.execute("BEGIN IMMEDIATE")
             _write_version(conn, db_id, target_version)
