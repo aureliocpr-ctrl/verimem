@@ -148,10 +148,44 @@ def canonical_source_of(fact: Any) -> str:
     Una cura che colpisce il bersaglio per una ragione che non si sa spiegare
     non si consegna: e' la stessa lezione di «misurare una cura a livello di
     FUNZIONE», dove il verdetto isolato diceva il contrario dell'end-to-end.
-    Resta il pezzo che CONSERVA l'impronta in ``client.add`` — additivo, non
-    cambia comportamento — e il test la documenta come xfail strict.
+
+    ✅ 2026-09-20, T161: LA RAGIONE ORA SI SA, E NON ERA QUESTA FUNZIONE. Il
+    candidato che il gate le passava portava cinque campi — ``verified_by``,
+    ``created_at``, ``asserted_at``, ``writer_principal``, ``proposition`` — e
+    ``source_signature`` non era fra questi. Chi leggeva la firma vedeva
+    ``None`` su un lato SEMPRE, quindi la riga 2 della tabella cadeva per un
+    campo assente e non per il criterio: ogni aggiornamento diventava un
+    conflitto. La firma nemmeno mancava — al punto di chiamata la variabile
+    ``source`` c'e' e veniva ridotta a ``cand_ha_source=bool(...)``, cioe' la
+    domanda «ce l'ha?» al posto della risposta «quale?». E' la stessa cosa gia'
+    successa con ``writer_principal``, raccontata dieci righe sopra nel file del
+    gate: il valore arrivava fin li' accanto e si fermava una chiamata prima.
+
+    Misurato sullo store vivo prima di toccare il codice: 533 supersessioni
+    ``same-source evolution``, 533 su 533 con entrambi i lati senza
+    ``verified_by``, 159 con ``source_signature`` diversa; con la cascata qui
+    sotto ne restano 374, e dieci delle 159 lette a mano sono dieci oggetti
+    diversi — fra cui i due bracci di uno stesso A/B.
+
+    LA CASCATA, e il suo ordine e' il contratto: chi dichiara un autore e'
+    giudicato da quello; chi non lo dichiara ma cita una fonte e' giudicato
+    dalla fonte; chi non dichiara niente resta nel secchio comune, e per lui
+    non cambia nulla.
+
+    ⚠️ Il primo gradino guarda la PRESENZA di ``verified_by``, non il valore che
+    ``canonical_source`` ne ricava. Scritto come «se il risultato non e' user»,
+    il gradino saltava chi si era firmato con un riferimento che la reputazione
+    non sa classificare — ``verified_by=["commit abc123"]`` esce comunque
+    ``"user"`` — e quel fatto finiva giudicato dalla sua fonte pur avendo
+    dichiarato un autore. Preso da una cella di questo banco, non a ragionamento.
     """
-    return canonical_source(getattr(fact, "verified_by", None) or None)
+    dichiarato = getattr(fact, "verified_by", None) or None
+    if dichiarato:
+        return canonical_source(dichiarato)
+    firma = getattr(fact, "source_signature", None)
+    if firma and str(firma).strip():
+        return f"source:{str(firma).strip()}"
+    return canonical_source(None)
 
 
 #: Le code di `writer_principal` che NON sono un'identita': dicono da quale

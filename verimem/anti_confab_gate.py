@@ -741,7 +741,8 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
                       new_status: str | None = None,
                       claimant: str | None = None,
                       proposition: str | None = None,
-                      cand_ha_source: bool = True) -> list[str]:
+                      cand_ha_source: bool = True,
+                      cand_source_signature: str | None = None) -> list[str]:
     """Partition contradicting OLD fact ids into EVOLUTIONS (same canonical source +
     later valid-time + at least as trusted → appended to ``supersede_ids``, retired) and
     genuine CONFLICTS (returned, to quarantine the new write). This gives contradictions
@@ -776,9 +777,17 @@ def _route_evolutions(agent: Any, verified_by: Any, asserted_at: float | None,
     # con `is_same_source` gia' corretta e venti test verdi, il banco end-to-end
     # restava a «1 vivo su 2» — la funzione sapeva distinguere, il chiamante non
     # le passava di che.
+    # ⚠️ `source_signature` STA QUI PERCHE' CHI GIUDICA LA LEGGE (T161). Il
+    # candidato portava cinque campi e non lei, quindi `canonical_source_of`
+    # vedeva `None` su questo lato SEMPRE: la cura del 2026-08-04 che leggeva la
+    # firma fu ritirata credendo che il criterio fosse sbagliato, e il criterio
+    # era innocente — mancava il campo. E' la stessa cosa gia' successa con
+    # `writer_principal`, raccontata poche righe sopra: il valore arrivava fin
+    # qui accanto e si fermava una chiamata prima.
     cand = _ty.SimpleNamespace(verified_by=verified_by, created_at=_t.time(),
                                asserted_at=asserted_at,
                                writer_principal=claimant,
+                               source_signature=cand_source_signature,
                                proposition=proposition or "")
     _nr = _STATUS_RANK.get(new_status or "model_claim", 2)
     conflicts: list[str] = []
@@ -2419,12 +2428,19 @@ def run_validation_gate(
             _conflicts = ev
             _sup_prima = len(supersede_ids)
             if _supersede_same_source_on() and ev:
+                from .supersession_policy import (
+                    source_signature_of as _source_signature_of,
+                )
+
                 _conflicts = _route_evolutions(agent, verified_by, asserted_at, ev,
                                                supersede_ids, status,
                                                claimant=claimant,
                                                proposition=proposition,
                                                cand_ha_source=bool(
-                                                   source and str(source).strip()))
+                                                   source and str(source).strip()),
+                                               cand_source_signature=(
+                                                   _source_signature_of(source)
+                                                   if source else None))
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
@@ -2507,10 +2523,17 @@ def run_validation_gate(
                 # il difetto — la lezione «dopo ogni cura chiedi: chi ALTRO fa
                 # la stessa cosa?». Misurato: col solo percorso lessicale curato
                 # il fatto di anna veniva ritirato lo stesso, da QUI.
+                # E `source_signature` anche qui, per la stessa ragione e con
+                # la stessa lezione: chi giudica la legge (T161), e curare un
+                # gemello solo lascia il difetto intatto nell'altro.
+                from .supersession_policy import (
+                    source_signature_of as _sig_of,
+                )
                 _new = _ty.SimpleNamespace(
                     id="__candidate__", proposition=proposition,
                     topic=topic, created_at=_t.time(), verified_by=verified_by,
                     asserted_at=asserted_at, writer_principal=claimant,
+                    source_signature=_sig_of(source) if source else None,
                 )
                 _sibs = _live_topic_siblings(_sm, topic, limit=200)
                 if _l3_subject_filter():
