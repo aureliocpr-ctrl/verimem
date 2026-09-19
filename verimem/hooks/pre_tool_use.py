@@ -260,7 +260,7 @@ def run(
     # turns it off via env var (a non-test caller can do
     # `HIPPO_HOOK_DISABLE=1` and skip the whole machinery).
     try:
-        from verimem.proactive_step_injector import (  # noqa: PLC0415
+        from ..proactive_step_injector import (  # noqa: PLC0415
             StepInjector,
         )
         injector = StepInjector(agent)

@@ -29,8 +29,8 @@ import argparse
 import json
 from typing import Any
 
-from .composer import compose_once
-from .self_provenance import self_write_check
+from verimem.composer import compose_once
+from verimem.self_provenance import self_write_check
 
 __all__ = ["nightly_compose"]
 
@@ -66,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--budget", type=int, default=100)
     ap.add_argument("--topic", default=None)
     args = ap.parse_args(argv)
-    from .client import Memory
+    from verimem.client import Memory
     mem = Memory(args.db)
     report = nightly_compose(mem, budget_candidates=args.budget,
                              topic=args.topic)

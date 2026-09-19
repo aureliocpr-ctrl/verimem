@@ -2,7 +2,7 @@
 
 Cycle #69 (2026-05-14). Designed to be spawned via:
 
-    python -m attic.auto_dream_worker
+    python -m verimem.auto_dream_worker
 
 The hook decides *whether* to spawn (env-gate + corpus-size check
 via lightweight SQLite read). If the hook spawns this worker, the
@@ -37,7 +37,7 @@ def _resolve_engram_dir() -> Path:
     doppio: il worker gira in BACKGROUND, quindi scriveva nel corpus vivo
     mentre la suite credeva di essere isolata.
     """
-    from verimem._compat import _env_data_dir
+    from ._compat import _env_data_dir
     cand = _env_data_dir()
     if cand:
         return Path(cand)
@@ -184,7 +184,7 @@ def _propose_via_engram(*, engram_dir: Path) -> dict[str, Any]:
     Imports are local so the module is cheap to import (the hook will
     spawn a fresh process, so this only pays at fire-time).
     """
-    from attic.adaptive_threshold import adaptive_thresholds
+    from verimem.adaptive_threshold import adaptive_thresholds
     from verimem.dream import propose_dream_tasks
     from verimem.dream_community_hook import build_community_seed
     from verimem.dream_emergence_hook import build_emergence_seed
@@ -444,7 +444,7 @@ def _emetti_la_passata(out: dict[str, Any], now: float) -> None:
         _cons = out.get("consolidate") or {}
         _scan = out.get("scan") or {}
         _heal = out.get("healed") or {}
-        from verimem.flow_events import emit_flow
+        from .flow_events import emit_flow
         emit_flow(
             "flow.dream", phase="maintenance", ran=True,
             promoted=_quanti(_cl.get("promoted")),

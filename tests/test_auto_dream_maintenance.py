@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from attic.auto_dream_worker import run_maintenance
+from verimem.auto_dream_worker import run_maintenance
 from verimem.memory import EpisodicMemory
 from verimem.semantic import Fact, SemanticMemory
 
