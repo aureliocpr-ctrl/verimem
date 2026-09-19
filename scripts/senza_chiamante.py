@@ -60,7 +60,12 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 PACCHETTO = RADICE / "verimem"
 PYPROJECT = RADICE / "pyproject.toml"
 
-# ⚠️ QUESTO TETTO E' SALITO UNA VOLTA, IL 18/09, E DEVE RISCENDERE.
+# ⚠️ QUESTO TETTO E' SALITO IL 18/09 ED E' RISCESO IL 19/09, a 1b.1.
+# ERA PREVISTO PER 1b.3, cioe' a tutte e tre le porte agganciate: e' bastata
+# la PRIMA. La raggiungibilita' e' transitiva — appena `cli.py` ha importato
+# `verimem.core`, il pacchetto ha smesso di vedere DUE moduli irraggiungibili,
+# non uno. Il ticket T104 si chiude qui, con due porte ancora da fare.
+# Quello che segue resta scritto perche' racconta perche' il tetto era salito.
 # Di solito qui si scende. I due file del nucleo (`verimem/core/__init__.py` e
 # `verimem/core/ricevuta.py`) sono entrati nel pacchetto PRIMA che una porta
 # li chiami: e' la fetta 1, ed e' voluto — l'oggetto esiste per primo, le tre
@@ -91,9 +96,14 @@ PYPROJECT = RADICE / "pyproject.toml"
 # LA RIDISCESA A 30 E 44 È OBBLIGATORIA QUANDO D-0009 CABLA IL MODULO, ed è un
 # ticket con un nome: T125. Due salite in due giorni sono il massimo che questo
 # criterio può reggere restando un cricchetto: la terza va discussa, non scritta.
-TETTO_C2 = 31          # nessuna porta: né import, né entry point, né python -m
+TETTO_C2 = 30          # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 45           # irraggiungibili da ogni porta, chiusura transitiva (31 C2 + 3 C1 + 11 solo-per-catena)
+TETTO_D = 43           # irraggiungibili da ogni porta, chiusura transitiva (30 C2 + 3 C1 + 10 solo-per-catena)
+# ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
+# prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
+# hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
+# si sommano a mente: il numero qui sotto e' MISURATO su questa base dopo il
+# ribasamento, non calcolato dai due delta.
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
