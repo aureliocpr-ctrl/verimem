@@ -1,7 +1,7 @@
 r"""T105 — «400 metri cubi» e «400 metri quadri» non sono lo stesso fatto.
 
 IL DIFETTO, misurato il 19/09 e confermato dal censimento di un pari
-(12 unita' composte su 16 troncate, e in inglese 61 024 occorrenze):
+(12 unita' composte su 16 troncate):
 
     extract_quantities('...400 metri cubi')    -> {('metro', 400.0), ...}
     extract_quantities('...400 metri quadri')  -> {('metro', 400.0), ...}
@@ -44,8 +44,12 @@ def test_metri_cubi_e_metri_quadri_NON_sono_la_stessa_unita():
 
 
 def test_in_inglese_si_perde_il_SOSTANTIVO_invece_dell_aggettivo():
-    """L'altro ordine: «cubic meters» contro «cubic inches». Il censimento
-    dice 61 024 occorrenze, quindi non e' un caso di laboratorio."""
+    """L'altro ordine: «cubic meters» contro «cubic inches».
+
+    E qui l'errore che passa e' grande **61 024 volte** (1 m3 = 61 023,7 in3):
+    non e' la FREQUENZA a rendere il caso grave — quella non l'ho misurata — e'
+    la TAGLIA dello sbaglio che il gate lascia passare per un fatto coerente.
+    """
     metri = _unita("The tank holds 400 cubic meters")
     pollici = _unita("The tank holds 400 cubic inches")
     assert metri != pollici, (

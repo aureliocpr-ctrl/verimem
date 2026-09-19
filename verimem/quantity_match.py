@@ -1137,8 +1137,10 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
 #: cadeva fuori: «metri cubi» e «metri quadri» arrivavano al confronto come lo
 #: STESSO `metro`, quindi il modulo vedeva stessa unita' e stesso valore e
 #: concludeva — correttamente per il suo contratto — che non c'era conflitto.
-#: Il censimento sul corpus: 12 unita' composte su 16 troncate, e in inglese
-#: 61 024 occorrenze.
+#: Il censimento sul corpus: 12 unita' composte su 16 troncate. E in inglese la
+#: stessa forma sbaglia di piu': fra «cubic meters» e «cubic inches» ci sono
+#: 61 024 volte (1 m3 = 61 023,7 in3), e senza il qualificatore quell'errore
+#: passa per un fatto coerente.
 #:
 #: ⚠️ LE DUE LINGUE LE SCRIVONO NELL'ORDINE OPPOSTO, e una cura che ne regge uno
 #: solo lascia meta' del difetto: l'italiano perde l'AGGETTIVO che segue
