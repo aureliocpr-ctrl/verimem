@@ -91,23 +91,50 @@ def test_il_primo_blocco_NON_cambia_di_un_byte(tmp_path):
 
 def test_con_episodi_NESSUN_cartello(tmp_path):
     """Se la lista NON e' vuota il cartello non si accende: sarebbe rumore, e
-    il rumore si impara a saltare."""
+    il rumore si impara a saltare.
+
+    ⚠️ QUESTA CELLA GUIDA IL RAMO, NON MISURA LA PORTA, e la differenza va
+    dichiarata perche' e' un livello piu' basso delle altre tre. Il primo
+    disegno registrava un episodio vero e lo richiamava: in CI e' caduto su
+    tutti e tre i sistemi —
+
+        AssertionError: la cella non misura niente: con un episodio registrato
+        la lista e' ancora vuota ({'blocchi': 2, 'quanti': 0})
+
+    — perche' sul runner l'episodio registrato NON viene richiamato (embedder
+    stub sotto pytest, trappola gia' nota). La cella si e' rifiutata di passare
+    a vuoto, ed e' esattamente cio' per cui era scritta: senza quella pretesa
+    sarebbe stata verde misurando niente.
+
+    Qui la lista non vuota si ottiene INTERCETTANDO `recall`, cosi' il ramo
+    `if not _episodi` viene percorso ovunque, con o senza modello. La pretesa
+    «quanti > 0» resta, e ora presidia che l'intercettazione abbia funzionato:
+    se non funziona, la cella cade invece di dire il falso.
+    """
     r = _in_un_processo_pulito(tmp_path, (
+        "class _Ep:\n"
+        "    id = 'ep-finto'\n"
+        "    task_text = 'un episodio finto per guidare il ramo'\n"
+        "    outcome = 'success'\n"
+        "    final_answer = 'risposta finta'\n"
+        "    num_steps = 1\n"
+        "    created_at = 0.0\n"
+        # ⚠️ PRIMA la scrittura, POI l'intercettazione: `M._agent` nasce
+        # alla PRIMA chiamata, e prima di quella vale None. Misurato:
+        # «AttributeError: 'NoneType' object has no attribute 'memory'».
         "porta('hippo_remember', {'proposition': PROP, 'source': FONTE,\n"
         "                         'topic': 'prova/t107'})\n"
-        "porta('hippo_record_episode', {'task_text': DOMANDA,\n"
-        "        'final_answer': 'primo cassetto', 'outcome': 'success'})\n"
+        "M._agent.memory.recall = lambda *a, **k: [(_Ep(), 0.99)]\n"
         "b = porta('hippo_recall', {'query': DOMANDA, 'limit': 5})\n"
         "print(json.dumps({'blocchi': len(b),\n"
         "                  'quanti': len(json.loads(b[0].text))}))\n"))
     assert r["quanti"] > 0, (
-        f"la cella non misura niente: con un episodio registrato la lista e' "
-        f"ancora vuota ({r}). Senza episodi nel risultato, «nessun cartello» "
-        f"sarebbe vero per il motivo sbagliato.")
+        f"l'intercettazione di `recall` non ha avuto effetto: la lista e' "
+        f"ancora vuota ({r}). La cella non misura il ramo che dice di "
+        f"misurare, quindi cade invece di passare.")
     assert r["blocchi"] == 1, (
         f"la lista ha {r['quanti']} episodi e il cartello si e' acceso lo "
         f"stesso ({r['blocchi']} blocchi): e' rumore.")
-
 
 def test_la_descrizione_di_recall_nomina_la_porta_dei_fatti(tmp_path):
     """LA META' DELLA CURA, e la piu' economica: la riga che un modello legge
