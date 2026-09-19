@@ -40,11 +40,22 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.anti_confab_gate import _l1_warnings
+from verimem.anti_confab_gate import _is_advisory_layer, _l1_warnings
 
 
 def _layer(prop: str) -> set[str]:
-    return {str(w.get("layer")) for w in (_l1_warnings(prop, []) or [])}
+    """I livelli che DECIDONO, non tutti quelli che compaiono.
+
+    Fino al 18/09 una smentita non produceva nessun avviso perche' la guardia
+    li CANCELLAVA; da quando li marca invece di cancellarli
+    (`<layer>-withdrawn`, «si vede e non decide»), l'avviso compare pur non
+    contando. La proprieta' di questo file non e' «la lista e' vuota»: e' «una
+    smentita non viene punita», che il docstring dice con le sue parole — «chi
+    e' onesto viene quarantinato e chi tace no». Quindi si filtra con la
+    superficie unica, la stessa che usa la decisione di trattenere.
+    """
+    return {str(w.get("layer")) for w in (_l1_warnings(prop, []) or [])
+            if not _is_advisory_layer(str(w.get("layer", "")))}
 
 
 #: (affermativo, negato) — l'affermativo DEVE scattare, il negato NO.
