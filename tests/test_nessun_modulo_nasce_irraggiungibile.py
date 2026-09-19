@@ -63,9 +63,19 @@ PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 #: qualcosa e' nato staccato. Li importa `hooks/hippo_session_start.py` (via
 #: lo shim `engram.`), e un gancio e' una superficie d'uso che nessuna delle
 #: tre porte raggiunge: senza di loro il banner perde la sezione dei demoni
-#: IN SILENZIO, dentro un `except`. I tre che restano: test_isolation (T94),
-#: daemon_runner, daemon_spawn. `atomic_claims` sta in INNESTO_IN_ARRIVO.
-IRRAGGIUNGIBILI_NOTI = 3
+#: IN SILENZIO, dentro un `except`. `atomic_claims` sta in INNESTO_IN_ARRIVO.
+#:
+#: IL QUARTO, aggiunto il 19/09 con la stessa ragione dei due demoni:
+#: `proactive_step_injector`. Lo raggiunge `.claude/hooks/hippo_pre_tool_use.py`,
+#: che importa `engram.hooks.pre_tool_use` e da li' l'injector — dentro un
+#: `except ImportError: return 0`, quindi archiviarlo non rompeva niente:
+#: il gancio avrebbe smesso di funzionare restituendo 0.
+#: E questo conteggio NON lo avrebbe visto comunque, perche' `_irraggiungibili()`
+#: guarda `PKG.glob("*.py")` — solo il primo livello — e chi importa l'injector
+#: sta in `verimem/hooks/`, un sottopacchetto che questa misura non apre.
+#: I quattro che restano: test_isolation (T94), daemon_runner, daemon_spawn,
+#: proactive_step_injector.
+IRRAGGIUNGIBILI_NOTI = 4
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
@@ -97,7 +107,7 @@ def _eseguibile(f: Path) -> bool:
 
     `python -m verimem.X` E' UNA PORTA. Il primo giro non lo considerava e
     dichiarava irraggiungibile `compose_daemon`, che il README documenta
-    testualmente: «Run it one-shot (python -m attic.compose_daemon --db ...)»
+    testualmente: «Run it one-shot (python -m verimem.compose_daemon --db ...)»
     — provato, funziona, e lo `--help` spiega che lo scheduling resta all'OS
     per scelta. Il censimento sovrastimava il problema, che e' il modo in cui
     uno strumento di misura fa perdere tempo invece di farne guadagnare.
