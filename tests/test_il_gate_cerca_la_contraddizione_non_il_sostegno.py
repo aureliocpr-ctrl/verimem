@@ -197,6 +197,7 @@ def test_a_fermare_il_vanto_canonico_e_L1_non_il_moat():
     imparato a vedere il vanto — aggiornare il banco, non il prodotto.
     """
     stato, punteggio, moat = _esito(CANONICA, con_fonte=True)
+    raise AssertionError(f"T127-SONDA sul runner: moat={moat!r} g={punteggio!r} stato={stato!r}")
     assert stato == "quarantined", f"atteso quarantined, ottenuto {stato}"
     assert moat == "passed", (
         "il moat non dice piu' `passed` sul vanto canonico: se ora lo giudica, "
