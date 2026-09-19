@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import functools
 import logging
 import re
 import sqlite3
@@ -597,6 +598,33 @@ def persisti_chi_ha_quarantinato(db_path, fact_id: str, causa: str) -> bool:
         return False
 
 
+def _con_la_ricevuta(funzione):
+    """Applica la `Ricevuta` del nucleo a QUALUNQUE uscita della scrittura.
+
+    ⚠️ `add()` non ha un punto di uscita, ne ha QUATTRO: il caso normale e i
+    tre scomodi — la scrittura vuota, quella rifiutata, quella instradata alla
+    telemetria. Curare solo il ritorno principale avrebbe lasciato il vecchio
+    schema proprio dove la ricevuta serve di piu': quando qualcosa NON e'
+    andato come il chiamante si aspettava. Qui la traduzione avviene UNA volta,
+    per tutte e quattro.
+
+    L'unione `vecchie | nuove` ha una scadenza (1b.4): su una chiave in
+    collisione vince la nuova, ed e' un dizionario solo. Quattordici file di
+    prodotto leggono ancora `stored` o `warnings`, e toglierle oggi li
+    romperebbe.
+    """
+    @functools.wraps(funzione)
+    def guscio(*args, **kwargs):
+        grezzo = funzione(*args, **kwargs)
+        #: Una guardia e non un `assert`: se un ramo futuro rendesse altro, il
+        #: chiamante riceve cio' che riceveva prima invece di un errore.
+        if not isinstance(grezzo, dict):
+            return grezzo
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        return {**grezzo, **ricevuta_dal_cancello(grezzo).come_dizionario()}
+    return guscio
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -657,6 +685,7 @@ class Memory:
         self.grounding_llm = grounding_llm or llm
 
     # ---- write -------------------------------------------------------------
+    @_con_la_ricevuta
     def add(
         self, content: str | list[dict], *, topic: str = "user",
         source: str | None = None,

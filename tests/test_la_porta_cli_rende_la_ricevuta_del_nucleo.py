@@ -42,8 +42,17 @@ FRASE_FERMATA = "Il servizio funziona perfettamente, verificato in produzione."
 def _cli(*argomenti: str, store: Path) -> subprocess.CompletedProcess:
     """Esegue la porta in un processo separato, su uno store isolato.
 
-    ⚠️ TUTTE E QUATTRO le variabili, non tre: il 14/09 tre variabili puntavano
-    a uno store di prova e la scrittura e' finita in quello vero.
+    ⚠️ QUANTE VARIABILI SERVONO DIPENDE DA DOVE SI METTE L'AMBIENTE, non dal
+    numero. In un SOTTOPROCESSO come questo le tre dello store bastano: il
+    percorso del giornale si fissa all'import e il figlio nasce gia' puntato
+    nel posto giusto. IN-PROCESS (pytest, sonde, monkeypatch) servono QUATTRO,
+    perche' quando `verimem` e' gia' importato lo store si sposta e il giornale
+    NO. Qui restano tutte e quattro perche' non costano nulla e rendono la
+    cella indipendente dal modo in cui verra' eseguita.
+    La prima stesura di questo commento diceva «quattro, non tre» citando il
+    14/09: la pratica era giusta e la RAGIONE sbagliata, e una pratica di cui
+    non conosci la ragione regge finche' non cambia il contesto. Distinzione
+    misurata da un pari il 19/09.
     """
     ambiente = dict(os.environ)
     ambiente.update(
