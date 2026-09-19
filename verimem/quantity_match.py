@@ -1131,6 +1131,75 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
 
 
+#: UNITA' COMPOSTE: due parole che nominano UNA grandezza sola.
+#:
+#: PERCHE' (19/09). L'unita' era «UNA parola dopo il numero» e il qualificatore
+#: cadeva fuori: «metri cubi» e «metri quadri» arrivavano al confronto come lo
+#: STESSO `metro`, quindi il modulo vedeva stessa unita' e stesso valore e
+#: concludeva — correttamente per il suo contratto — che non c'era conflitto.
+#: Il censimento sul corpus: 12 unita' composte su 16 troncate, e in inglese
+#: 61 024 occorrenze.
+#:
+#: ⚠️ LE DUE LINGUE LE SCRIVONO NELL'ORDINE OPPOSTO, e una cura che ne regge uno
+#: solo lascia meta' del difetto: l'italiano perde l'AGGETTIVO che segue
+#: («metri **cubi**»), l'inglese perde il SOSTANTIVO che segue («**cubic**
+#: meters»). Qui si guardano entrambe le direzioni.
+#:
+#: ⚠️ E NON SI ALLARGA LA CATTURA DEL REGEX, di proposito. Il modulo porta gia'
+#: la cicatrice: allargare `[A-Za-z]` a «una lettera di qualunque alfabeto» rese
+#: incomplete le liste a valle (`_NON_UNIT_WORDS`) che nessuno aveva sbagliato.
+#: Qui la seconda parola si LEGGE dal testo e non entra in nessuna lista: a
+#: valle arriva una chiave normalizzata come prima, o esattamente cio' che
+#: arrivava prima.
+_QUALIFICATORE_UNITA = {
+    "cubo": "3", "cubi": "3", "cubico": "3", "cubici": "3",
+    "cubic": "3", "cubica": "3", "cubiche": "3",
+    "quadro": "2", "quadri": "2", "quadrato": "2", "quadrati": "2",
+    "square": "2", "quadrata": "2", "quadrate": "2",
+}
+#: ⚠️ LE CHIAVI SONO LE FORME **NORMALIZZATE**, non quelle scritte: `norm_unit`
+#: gira prima. Le ho lette dal prodotto invece di dedurle, e tre non erano quelle
+#: che avrei scritto a memoria — «inches» -> `inche`, «piedi» -> `piedo`,
+#: «feet» -> `feet` (il plurale irregolare non si tocca).
+_TESTA_UNITA = {
+    "metro": "m", "meter": "m", "metre": "m",
+    "piede": "ft", "piedo": "ft", "foot": "ft", "feet": "ft",
+    "pollice": "in", "pollici": "in", "inch": "in", "inche": "in",
+}
+_PAROLA_DOPO_RE = re.compile(r"\s{0,3}([^\W\d_]+)")
+
+#: La GRANDEZZA di un'unita', per le sole unita' che questo modulo compone o
+#: riconosce come abbreviazioni correnti. Serve a una domanda sola: «queste due
+#: unita' misurano cose diverse?». Non e' una tavola di conversione e non deve
+#: diventarlo: qui non si converte niente, si distingue soltanto.
+_GRANDEZZA = {
+    "m2": "area", "mq": "area", "ft2": "area", "in2": "area",
+    "m3": "volume", "mc": "volume", "ft3": "volume", "in3": "volume",
+}
+
+
+def _unita_composta(claim: str, unit_s: str, fine: int) -> str | None:
+    """La chiave dell'unita' COMPOSTA, se le due parole ne nominano una.
+
+    Rende ``None`` quando non c'e' nulla da comporre — e allora il chiamante usa
+    `norm_unit` come sempre. Non tocca il caso normale.
+    """
+    if not unit_s or fine < 0:
+        return None
+    prima = norm_unit(unit_s)
+    dopo_m = _PAROLA_DOPO_RE.match(claim, fine)
+    if not dopo_m:
+        return None
+    dopo = norm_unit(dopo_m.group(1))
+    #: italiano: testa + qualificatore   («metri cubi»)
+    if prima in _TESTA_UNITA and dopo in _QUALIFICATORE_UNITA:
+        return _TESTA_UNITA[prima] + _QUALIFICATORE_UNITA[dopo]
+    #: inglese: qualificatore + testa    («cubic meters»)
+    if prima in _QUALIFICATORE_UNITA and dopo in _TESTA_UNITA:
+        return _TESTA_UNITA[dopo] + _QUALIFICATORE_UNITA[prima]
+    return None
+
+
 def extract_quantities(text: str, *,
                        come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
@@ -1223,7 +1292,8 @@ def extract_quantities(text: str, *,
             val = float(num_s.replace(",", "."))
         except ValueError:  # pragma: no cover — regex guarantees numeric
             continue
-        out.add((norm_unit(unit_s), val))
+        out.add((_unita_composta(claim, unit_s, m.end(2) if m.group(2) else -1)
+                 or norm_unit(unit_s), val))
     return out
 
 
@@ -1593,6 +1663,19 @@ def conflict_from_parts(
         for (ub, vb) in qb:
             if ua == ub and va != vb:
                 return (ua, va, vb)
+            #: STESSA cifra, GRANDEZZA diversa — «400 metri cubi» contro una
+            #: fonte che dice «400 mq». Il contratto storico («valore diverso,
+            #: stessa unita'») non lo vedeva, e fino al 19/09 nemmeno poteva:
+            #: l'estrattore rendeva `metro` per entrambi.
+            #: ⚠️ SI ACCUSA SOLO QUANDO ENTRAMBE LE UNITA' SONO NOTE e nominano
+            #: grandezze diverse. Due unita' sconosciute, o una sola nota, o un
+            #: numero NUDO nella fonte non sono un conflitto: sarebbe inventare.
+            #: Il perimetro e' ristretto **e dichiarato** (`_GRANDEZZA`), perche'
+            #: un normalizzatore di unita' senza confini diventa un dizionario
+            #: infinito che tace sul primo caso che non conosce.
+            if (ua != ub and _GRANDEZZA.get(ua) and _GRANDEZZA.get(ub)
+                    and _GRANDEZZA[ua] != _GRANDEZZA[ub]):
+                return (f"{ua}/{ub}", va, vb)
     return None
 
 
