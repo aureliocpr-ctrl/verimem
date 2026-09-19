@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from attic.compose_daemon import nightly_compose
+from verimem.compose_daemon import nightly_compose
 
 
 class _Judge:

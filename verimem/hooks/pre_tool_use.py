@@ -4,7 +4,7 @@ Closes the cycle-168 critic finding from PR #108 ("StepInjector dead
 code = no MCP wrapper / no consumer"). The hook reads the Claude Code
 PreToolUse JSON payload on stdin, extracts a sub-goal "step text"
 from the tool call, runs
-:meth:`attic.proactive_step_injector.StepInjector.inject` against the
+:meth:`verimem.proactive_step_injector.StepInjector.inject` against the
 local HippoAgent semantic store, and writes a short
 ``<engram-step-recall>…</engram-step-recall>`` banner to stdout so the
 host LLM sees the relevant facts BEFORE the tool fires.
@@ -260,7 +260,7 @@ def run(
     # turns it off via env var (a non-test caller can do
     # `HIPPO_HOOK_DISABLE=1` and skip the whole machinery).
     try:
-        from attic.proactive_step_injector import (  # noqa: PLC0415
+        from ..proactive_step_injector import (  # noqa: PLC0415
             StepInjector,
         )
         injector = StepInjector(agent)

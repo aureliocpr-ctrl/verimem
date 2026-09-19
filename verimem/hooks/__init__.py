@@ -6,7 +6,7 @@ the heavy import work into the engram package (testable from pytest
 without subprocess).
 
 Submodules:
-  * :mod:`attic.hooks.pre_tool_use` — PreToolUse hook that consumes
-    :class:`attic.proactive_step_injector.StepInjector` between tool
+  * :mod:`verimem.hooks.pre_tool_use` — PreToolUse hook that consumes
+    :class:`verimem.proactive_step_injector.StepInjector` between tool
     calls. Closes the cycle-168 critic finding from PR #108.
 """

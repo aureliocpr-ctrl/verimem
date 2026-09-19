@@ -21,7 +21,7 @@ return value / stdout, nothing else.
 Scheduling stays with the OS (cron / Windows Task Scheduler) — local-first,
 one-shot CLI:
 
-    python -m attic.compose_daemon --db path/to/store.db [--budget 100]
+    python -m verimem.compose_daemon --db path/to/store.db [--budget 100]
 """
 from __future__ import annotations
 
