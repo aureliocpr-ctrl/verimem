@@ -10,6 +10,13 @@ Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`, versione `0.7.7`), in
 venv pulito, con `verimem remember` sulla riga di comando e le stesse scritture
 sulla libreria e sulla porta MCP. Fonte unica per tutti i casi:
 
+    «Perizia del 2026-09-01: il capannone 12 misura 400 mq.»
+
+⚠️ *Questa citazione è stata cancellata per un'ora da una riscrittura del
+riquadro qui sotto, che ha sostituito un blocco per posizione e si è portata via
+quello che stava in mezzo: la pagina annunciava «fonte unica per tutti i casi» e
+poi non la mostrava.*
+
 > ## 🔴 LO STESSO INGRESSO DÀ ESITI DIVERSI SU MACCHINE DIVERSE
 >
 > **È il fatto più importante di questa pagina, e non riguarda un numero: riguarda
@@ -147,8 +154,9 @@ una misura: è un segnale. **Il numero definitivo di questa riga arriva con
 ### ③ Le unità composte — `T105`
 
     «Il capannone 12 misura 400 metri CUBI.»      ->  admitted, punteggio 96.01
-      ⚠️ col solo cross-encoder. Con un modello linguistico iniettato lo stesso
-         claim è quarantined a 0.00 (`L4-grounding`) — `T134`, misura di un pari.
+      ⚠️ è la PRIMA COLONNA del riquadro in cima: due macchine su tre danno
+         questo numero, la terza trattiene lo stesso claim (75.81, `L4-review`)
+         e col giudice di banda acceso lo ferma a 0.00 — `T134`.
 
 Stessa cifra, **unità diversa**: passa. Non è una svista del controllo — è il
 suo perimetro: `L4.1` confronta il valore *a parità di unità*, e due unità
