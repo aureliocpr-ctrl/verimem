@@ -362,7 +362,17 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 #: La coda in HIRAGANA di un'unita' giapponese. Non e' una lista di verbi: e'
 #: la struttura ortografica della lingua (okurigana), che scrive le desinenze
 #: in hiragana e lascia sostantivi e unita' in katakana o kanji.
-_CODA_HIRAGANA_RE = re.compile(r"[ぁ-ゟ]+$")
+#: ⏱️ NON E' UNA REGEX, ED E' IL PUNTO. `re.compile(r"[ぁ-ゟ]+$").sub("", w)`
+#: faceva la stessa cosa in tempo QUADRATICO: su una parola di molti hiragana
+#: che non finisce in hiragana il `+$` fa ripartire il motore da ogni
+#: posizione, e sono **12 432,8 ms** su 40 000 caratteri (misurato; CodeQL
+#: `py/polynomial-redos`, alert 1491). `str.rstrip` toglie dalla coda i
+#: caratteri dell'insieme in una passata sola, senza backtracking.
+#: ⚠️ L'insieme e' LO STESSO intervallo di prima — U+3041..U+309F — e
+#: l'equivalenza sui nove casi del presidio (code verbali tolte, contatori
+#: `つ`/`まい`/`ぴき` conservati) e' una cella del banco: una cura che va piu'
+#: veloce cambiando un risultato sarebbe un difetto nuovo con un cronometro.
+_CODA_HIRAGANA = "".join(chr(c) for c in range(0x3041, 0x30A0))
 
 
 def _senza_coda_verbale_giapponese(w: str) -> str:
@@ -407,7 +417,7 @@ def _senza_coda_verbale_giapponese(w: str) -> str:
     «ミリグラム含», dove 含 è la radice di 含まれる. Il taglio migliora e non
     chiude, ed è dichiarato invece che taciuto.
     """
-    tagliata = _CODA_HIRAGANA_RE.sub("", w)
+    tagliata = w.rstrip(_CODA_HIRAGANA)
     return tagliata if tagliata else w
 
 
