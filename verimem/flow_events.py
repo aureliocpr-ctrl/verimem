@@ -320,6 +320,7 @@ def _ambient() -> dict[str, Any]:
 
 def emit_write(*, stored: bool, status: str, fact_id: str, topic: str,
                layers: Any = None, grounding_score: Any = None,
+               judge_backend: str | None = None,
                **extra: Any) -> None:
     """L'UNICO emettitore di ``flow.write`` — una funzione, piu' porte.
 
@@ -350,9 +351,23 @@ def emit_write(*, stored: bool, status: str, fact_id: str, topic: str,
               fact_id=str(fact_id), topic=str(topic),
               layers=list(layers or []),
               grounding_score=_gs, judged=_judged_at_all(_gs),
+              # ⚠️ `judge_backend` FA DUE COSE, e la seconda è il motivo per cui
+              # sta nel payload e non solo nella firma: (1) decide la SOGLIA —
+              # la cut di ammissione è 40 col CE locale e 70 con claude, e
+              # senza il backend questa colonna confrontava 90, un margine
+              # prudente e non una cut; (2) ENTRA nell'evento, perché la
+              # ricevuta la stessa verità la porta già in
+              # `adjudication.judge.backend` e una vista sul corpus che volesse
+              # applicare la cut per-fatto oggi non ha dove leggerla. Non è un
+              # campo in più: è la stessa verità in tre posti invece di due.
+              # Chi non lo passa ottiene il comportamento di prima e nessun
+              # campo nuovo.
               withheld_despite_judge=(str(status) in ("quarantined",
                                                       "rejected")
-                                      and _judged_true(_gs)),
+                                      and _judged_true(
+                                          _gs, backend=judge_backend)),
+              **({"judge_backend": str(judge_backend)}
+                 if judge_backend else {}),
               **extra)
 
 

@@ -1041,7 +1041,8 @@ class Memory:
         # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
         _emit_write(stored=True, status=str(fact.status),
                     fact_id=str(fact.id), topic=str(topic),
-                    layers=_hit_layers, grounding_score=_gs_evt)
+                    layers=_hit_layers, grounding_score=_gs_evt,
+                    judge_backend=getattr(gate, "judge", None))
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
@@ -1334,7 +1335,8 @@ class Memory:
         # cambia forma.
         from .retirement_log import judged_true as _judged_true
         if (str(fact.status) in ("quarantined", "rejected")
-                and _judged_true(gate.grounding_score)):
+                and _judged_true(gate.grounding_score,
+                                 backend=getattr(gate, "judge", None))):
             _out["withheld_despite_judge"] = True
         if _superseded:
             _out["superseded"] = _superseded

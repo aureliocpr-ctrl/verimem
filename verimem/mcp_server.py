@@ -14456,10 +14456,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # `quarantined_by` qui sopra. DESCRITTIVO: `True` dice che un
                 # layer ha trattenuto mentre il giudice era a favore, NON che
                 # il gate abbia sbagliato.
+                # ⚠️ IL BACKEND DECIDE LA SOGLIA: 40 col CE locale, 70 con
+                # claude. Senza, questa colonna confrontava 90 — un margine
+                # prudente, non una cut di ammissione — e taceva sulla fascia
+                # [cut, 90). `_gate` e' lo stesso oggetto da cui nasce
+                # `_adj_out` qui sotto, quindi il giudice e' quello di QUESTA
+                # scrittura e non un valore di ambiente. Stessa espressione
+                # nelle altre tre porte: un criterio, una scrittura.
                 **({"withheld_despite_judge": True}
                    if (str(getattr(fact, "status", "")) in ("quarantined",
                                                             "rejected")
-                       and _judged_true_mcp(_gs_out)) else {}),
+                       and _judged_true_mcp(
+                           _gs_out,
+                           backend=getattr(_gate, "judge", None))) else {}),
                 # Il verdetto per esteso: chi ha deciso, con che punteggio,
                 # contro quale soglia e a che distanza. Non condizionale —
                 # la promessa e' «ogni scrittura», ammesse comprese.
