@@ -56,18 +56,24 @@ class _F:
         self.asserted_at = None
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "IL DIFETTO E' VIVO: due cartelle cliniche distinte risultano «la stessa "
-    "fonte» perche' nessuna delle due ha un verified_by. La cura — leggere la "
-    "source_signature in canonical_source_of — e' stata scritta, misurata e "
-    "RITIRATA il 2026-08-04: colpisce il bersaglio (2 vivi invece di 1) ma "
-    "rompe il presidio qui sotto, e la funzione isolata e' corretta in tutti e "
-    "tre i casi, quindi il comportamento cambia in un punto piu' a valle che "
-    "non e' stato isolato. Una cura che funziona per una ragione che non si sa "
-    "spiegare non si consegna."))
 def test_due_source_diverse_non_sono_la_stessa_fonte():
     """Il cuore: due cartelle cliniche distinte non sono «la stessa fonte», e
-    il secondo paziente non è un aggiornamento del primo."""
+    il secondo paziente non è un aggiornamento del primo.
+
+    ✅ IL MARCATORE `xfail(strict)` È STATO TOLTO IL 2026-09-20 (T161), e la
+    ragione per cui c'era merita di restare scritta. Diceva: «la cura — leggere
+    la source_signature in canonical_source_of — è stata scritta, misurata e
+    RITIRATA il 2026-08-04: colpisce il bersaglio ma rompe il presidio qui
+    sotto, e la funzione isolata è corretta in tutti e tre i casi, quindi il
+    comportamento cambia in un punto più a valle che non è stato isolato. Una
+    cura che funziona per una ragione che non si sa spiegare non si consegna».
+
+    Il punto più a valle era il candidato che il gate costruisce e passa alla
+    policy: cinque campi, e `source_signature` non fra questi — quindi un lato
+    leggeva `None` sempre. La ragione ora si sa, e con essa la cura si consegna.
+    Il presidio qui sotto resta e deve restare verde: è lui a dire se la cura è
+    tornata a essere quella sbagliata.
+    """
     rossi = _F(source_signature="sha256:cartella-rossi")
     bianchi = _F(source_signature="sha256:cartella-bianchi")
     assert not is_same_source(rossi, bianchi)
