@@ -408,7 +408,16 @@ class EncodeServer:
             # ⛔ T157 — la scoperta si scrive all'AVVIO, ma il tokenizzatore
             # arriva dopo: senza questa riga il file direbbe «non riduco» per
             # tutta la vita del processo, anche con il giudice ormai pronto.
-            if _puo_ridurre_lo_span() and not self._finestra_dichiarata:
+            # ⚠️ SOLO se questo server ha un file di scoperta. Un server
+            # costruito senza (il banco di T73 usa `object.__new__`) non ha
+            # nulla da riscrivere, e la prima stesura di questa riga lo faceva
+            # esplodere in `_write_discovery` con
+            # «no attribute '_discovery_path'». In locale il ramo non si
+            # attivava e la falsificazione era CIECA proprio qui: l'ha visto
+            # la CI, 11 volte su tre sistemi.
+            if (getattr(self, "_discovery_path", None) is not None
+                    and _puo_ridurre_lo_span()
+                    and not self._finestra_dichiarata):
                 self._write_discovery()
             if _finestra_non_applicata is not None:
                 # Chi ha chiesto la riduzione deve sapere che non c'e' stata:

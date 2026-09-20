@@ -129,3 +129,37 @@ def test_quando_il_tokenizzatore_arriva_la_scoperta_si_riscrive(
 
     riletta = json.loads((tmp_path / "scoperta.json").read_text(encoding="utf-8"))
     assert riletta["applies_window"] is True, riletta
+
+
+def test_un_server_senza_file_di_scoperta_non_esplode_nel_giudicare(monkeypatch):
+    """IL PERCORSO SU CUI LA MIA FALSIFICAZIONE ERA CIECA.
+
+    La riscrittura della scoperta vive dentro `_handle_request`. Un server
+    costruito senza `_discovery_path` — cosa che fa il banco di T73 con
+    `object.__new__` — non ha nulla da riscrivere, e la prima stesura lo
+    faceva esplodere:
+
+        AttributeError: 'EncodeServer' object has no attribute
+        '_discovery_path'   (encode_service.py:450, in `_write_discovery`)
+
+    Undici volte, su ubuntu, macos e windows. In locale il ramo non si
+    attivava — il giudice iniettato dal banco non soddisfa la condizione — e
+    il mio «tolgo e rimetto» ha misurato un percorso che sulla mia macchina
+    non viene mai preso. La cella sta qui per farlo vivere dove non vivevo.
+    """
+    class _GiudicePronto:
+        _tok = object()
+
+    monkeypatch.setattr(lg, "_judge", _GiudicePronto(), raising=False)
+
+    s = object.__new__(svc.EncodeServer)
+    s._token = "t"
+    s._gate_fn = lambda coppie: [1.0 for _ in coppie]
+    s._rerank_fn = None
+    s._encode_fn = None
+    # ⚠️ NIENTE `_discovery_path`: e' esattamente il caso che cadeva.
+
+    risposta = s._handle_request({"token": "t", "gate_pairs": [("a", "b")]})
+
+    assert risposta.get("ok") is True, risposta
+    assert risposta.get("scores") == [1.0], risposta
