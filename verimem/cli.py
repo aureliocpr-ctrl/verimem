@@ -3310,7 +3310,7 @@ def facts_list(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts list")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     if _scoped:
         try:  # fail fast on a malformed scope id
@@ -3410,7 +3410,7 @@ def facts_recall(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts recall")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _rtopic = topic
     if _scoped and topic:
@@ -3475,7 +3475,7 @@ def facts_search(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts search")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _stopic = topic
     if _scoped and topic:
@@ -3567,7 +3567,7 @@ def facts_get(fact_id: str, db: str = typer.Option(None, "--db")) -> None:
 
     Accepts a full id or an unambiguous prefix.
     """
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts get")
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
