@@ -245,8 +245,16 @@ def _valori_da_token_che_la_fonte_contiene(proposition: str, source: str) -> set
 #: moltiplicazione ha tre forme in giro per i testi veri (`x` ascii, `×`
 #: unicode, `*`) e l'esponente puo' essere negativo. La mantissa ammette la
 #: virgola perche' e' come l'italiano la scrive.
+#:
+#: ⚠️ I QUANTIFICATORI SONO LIMITATI, e non e' cosmesi: con `\d+` su un testo
+#: che arriva dall'esterno questa e' una `py/polynomial-redos` — un claim con
+#: migliaia di zeri consecutivi fa lavorare il motore in tempo polinomiale, e il
+#: gate legge testo di cui non controlla la forma. I limiti coprono ogni numero
+#: reale (una mantissa di 15 cifre, un esponente di 4: `10^9999`) e rendono il
+#: costo lineare. Misurato: l'avviso CodeQL alto sparisce e le celle del banco
+#: non cambiano di una cifra.
 _SCIENTIFICA_RE = re.compile(
-    r"(?<![\w.])(\d+(?:[.,]\d+)?)\s*[x×*]\s*10\^(-?\d+)")
+    r"(?<![\w.])(\d{1,15}(?:[.,]\d{1,15})?)[ 	]{0,4}[x×*][ 	]{0,4}10\^(-?\d{1,4})")
 
 
 def _espandi_notazione_scientifica(testo: str) -> str:
