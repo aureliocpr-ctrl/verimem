@@ -29,12 +29,23 @@ scrittura passa un cancello di ammissione; un'affermazione che la fonte non
 regge viene **conservata ma non servita** — resta nello store, marcata, fuori
 dal richiamo, e la ricevuta dice chi l'ha fermata.
 
-Misurato sul pacchetto pubblicato, non sul repo (Porte, percorso ① del 04/09):
+Misurato sul pacchetto pubblicato, non sul repo, **con l'ingresso scritto qui
+accanto al numero** — il quickstart del README, che chiunque può rieseguire:
 
 ```
-self-claim non sostenuta →  status=quarantined  quarantined_by=moat
-                            grounding 0.19  layers=['L1.15','L4-grounding','L4-negazione']
+fonte:  "We migrated the analytics store to Postgres last quarter."
+claim:  "Analytics runs on MongoDB."          # la fonte dice il contrario
+
+status=quarantined · quarantined_by=L4-grounding · grounding=0.62
 ```
+
+⚠️ **Questa riga prima citava un'altra misura, e non era rifacibile.** Diceva
+*«grounding 0.19, layers=['L1.15','L4-grounding','L4-negazione']»* rimandando al
+percorso ①, dove quel numero non c'è; l'ingresso non era scritto in nessuna
+pagina, e nel registro delle scritture quei tre strati **insieme non compaiono
+mai** (11 889 righe; `L1.15` una volta sola, in un test di luglio). Un numero
+che il lettore non può rifare è una promessa, non una misura: è stato sostituito
+con uno che si rifà in tre righe.
 
 🔴 **E la condizione senza la quale questa frase non vale, scritta qui e non in
 fondo: il giudice deve essere caldo.** Se non lo è, la scrittura con `source`

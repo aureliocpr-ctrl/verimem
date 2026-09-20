@@ -13,7 +13,7 @@
 > mezz'ora a chi cambia porta — non perché misuri qualcosa.
 >
 > **Il numero che misura davvero la distanza sta in fondo, ed è diverso per ogni
-> porta: `14/14` alla riga di comando, `3/14` alla libreria e alla porta MCP.**
+> porta: `14/14` alla riga di comando e alla libreria, `3/14` alla porta MCP.**
 
 Misurato il 19/09/2026 sul wheel di `main` (`bdf7453b`), versione `0.7.7`, in
 venv pulito. Le celle «non c'è» sono **verificate** (assenza provata eseguendo);
@@ -68,7 +68,7 @@ leggere `risposta.get("warnings")` su una porta che chiama quel campo
 `anti_confab_warnings` costa una lista vuota che si legge come «nessun avviso».
 **La prima è una noia, la seconda è un difetto.**
 
-## Il numero che conta: `3/14`
+## Il numero che conta: `3/14`, e oggi vale per **una porta sola**
 
 Il nucleo dichiara la propria ricevuta in `verimem/core/ricevuta.py`, costante
 `CHIAVI`, **quattordici campi**, e `come_dizionario()` porta scritto: *«L'unica
@@ -95,8 +95,8 @@ Misurato sul tronco `c4bec04c` da chi ha curato la prima fetta — **non da chi
 scrive questa pagina**:
 
     CLI        14/14      ← la ricevuta unica è arrivata qui per prima
-    libreria    3/14
-    MCP         3/14
+    libreria   14/14      ← arrivata dopo, misurata sul ramo che la porta
+    MCP         3/14      ← l'unica rimasta indietro
 
 ⇒ **Il numero non è più uno solo.** Undici campi su quattordici non arrivano
 **alla libreria e alla porta MCP** — fra cui i quattro che dicono *come* è stato
@@ -139,7 +139,10 @@ porte**: se non ci arriva, la ricevuta unica non è unica.
 
 ---
 
-⚠️ **Questa pagina scade, e il numero che scade per primo è `3/14`.**
+⚠️ **Questa pagina scade, e il `3/14` è già scaduto per la libreria**: era il
+numero di ieri, ed è diventato `14/14` con la cura che porta la ricevuta del
+nucleo a tutte e quattro le uscite della libreria. Resta `3/14` sulla porta MCP,
+che è l'ultima.
 
 **La cura è già aperta**: c'è una richiesta che fa rispondere la libreria con la
 ricevuta del nucleo da tutte e quattro le sue uscite (`#96`). ⚠️ **Non è fusa

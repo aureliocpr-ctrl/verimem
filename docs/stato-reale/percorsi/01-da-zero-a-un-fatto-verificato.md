@@ -93,7 +93,7 @@ dal testo e una no. La seconda **non deve** tornare come verità.
 ✅ **La ricevuta attesa sulla seconda**, misurata il 06/09:
 
 ```
-status=quarantined · quarantined_by=moat · grounding=0.69
+status=quarantined · quarantined_by=L4-grounding · grounding=0.62
 ```
 
 ⚠️ **Guarda lo `status`, non l'assenza del testo.** Una ricerca che rende zero
