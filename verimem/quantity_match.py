@@ -525,7 +525,14 @@ _OPENERS, _CLOSERS = "([{", ")]}"
 #: footnote from a phrase.
 _SECTION_DELIMS = "|\n\r.;—-•"
 #: An upper-case label may sit between the delimiter and the marker.
-_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]*\s*$")
+#: ⏱️ TETTI (CodeQL alert 1236). Sulla corsa PURA di maiuscole questa regex e'
+#: lineare — ed e' il motivo per cui una verifica del 25/07 l'aveva giudicata
+#: falso positivo, provando sei famiglie di corse pure. Sulla corsa che NON
+#: chiude il match («AAAA…!») riparte da ogni posizione: **702,2 ms** su 8000
+#: caratteri. Una popolazione mancante, non una lettura sbagliata.
+#: Sessantaquattro caratteri di etichetta e otto spazi coprono
+#: «EMPIRICAL EVIDENCE:» e i suoi parenti; l'equivalenza e' nel banco.
+_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]{0,64}\s{0,8}$")
 
 
 def _inside_brackets(text: str, pos: int) -> bool:
@@ -1806,7 +1813,12 @@ _VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
 _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 
 #: L'inizio di una frase, dove la maiuscola e' punteggiatura e non un nome.
-_APRE_LA_FRASE_RE = re.compile(r"(?:^|[.;:!?\n]\s*|^\s*[-•*]\s*)([A-Z][a-zA-Z]{2,})")
+#: ⏱️ TETTI (CodeQL alert 1275): `\n` sta sia nella classe dei delimitatori sia
+#: in `\s*`, e quell'ambiguita' fa riprovare il motore a ogni capo riga —
+#: **486,8 ms** su 8000 newline. Otto spazi dopo un delimitatore e trentadue
+#: lettere per una parola sono generosi, e l'equivalenza e' nel banco.
+_APRE_LA_FRASE_RE = re.compile(
+    r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})([A-Z][a-zA-Z]{2,32})")
 
 def _nomi_propri(testo: str) -> set[str]:
     """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.

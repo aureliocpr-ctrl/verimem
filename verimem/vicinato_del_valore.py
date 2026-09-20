@@ -178,7 +178,22 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
 
 #: Un numero dentro un composto — «03:27», «2026-09-06», «3/40», «2.14.0» — non
 #: e' un numero a se'. Non i decimali semplici («97.05»), che restano numeri.
-_COMPOSTO = re.compile(r"\d+(?:[:/-]\d+)+|\d+(?:\.\d+){2,}")
+#: ⏱️⏱️ TETTI, E QUESTA E' L'UNICA DELLE QUATTRO CHE IL PRODOTTO RAGGIUNGE
+#: DAVVERO con testo dell'utente: `_COMPOSTO.findall(proposition)` due funzioni
+#: piu' sotto, senza finestra. Misurato dalla PORTA, non dalla regex isolata:
+#: `valori_riusati_da_altro_contesto` su una proposizione di 8000 caratteri
+#: costava **1659,2 ms**, con crescita x4,5 (CodeQL alert 1460).
+#: I tetti: dodici cifre per componente e **trentadue componenti**, e i due
+#: numeri vengono dal CORPUS, non dal mio giudizio.
+#: ⚠️ Con sei componenti cambiavano lettura sette proposizioni su 18 313, tutte
+#: OID — «1.3.6.1.5.5.7.1.24» troncato a «1.3.6.1.5.5.7». Con sedici ne
+#: restava una: un elenco di diciotto numeri di richiesta separati da barra.
+#: Con trentadue: **zero**. Le celle del banco non avrebbero visto nessuno dei
+#: due casi — quei testi non li ho scelti io.
+#: Il tetto protegge comunque: il lavoro per posizione resta limitato, ed e'
+#: questo che toglie il quadratico, non quanto e' stretto il numero.
+_COMPOSTO = re.compile(
+    r"\d{1,12}(?:[:/-]\d{1,12}){1,32}|\d{1,12}(?:\.\d{1,12}){2,32}")
 
 
 def _prefissi(parole: set[str]) -> set[str]:
