@@ -1445,6 +1445,29 @@ def remember_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    # ⛔ T174 — E PERCHE' E' ENTRATO. Fino al 2026-09-20 questa riga era tutto
+    # cio' che un utente riceveva per un SI': nove parole. Per un NO la stessa
+    # CLI ne stampa ventidue di righe — layer, advice, il suggerimento sul
+    # ruolo. Il prodotto argomentava i suoi no e non i suoi si'.
+    # ⚠️ E ne serviva un'altra, che la misura ha trovato e la richiesta non
+    # nominava: un fatto puo' entrare AMMESSO con `moat: not_run:no_judge`,
+    # cioe' senza che NESSUNO abbia giudicato, e la riga era identica al caso
+    # giudicato 99.87. Due si' diversissimi scritti uguali.
+    # I numeri NON si ricalcolano qui: vengono dallo stesso adattatore che
+    # costruisce `--json`, cosi' le due uscite non possono divergere.
+    if str(disp) == "admitted":
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        _ric = ricevuta_dal_cancello(r).come_dizionario()
+        _p, _s = _ric.get("punteggio"), _ric.get("soglia")
+        if _p is None or _s is None:
+            console.print(
+                f"  [yellow]non giudicato[/yellow] ({_ric.get('moat')}) — "
+                "nessuno ha controllato che il fatto segua dalla sua fonte")
+        else:
+            console.print(
+                f"  giudicato [b]{_p:.2f}[/b]/100 da `{_ric.get('giudice')}`"
+                f" (modello {_ric.get('modello')}), soglia {_s:.0f}"
+                f" — margine +{_p - _s:.2f}")
     # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
     # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
     # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
