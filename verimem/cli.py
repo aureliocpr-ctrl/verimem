@@ -1673,6 +1673,7 @@ def recall_cmd(
     #: misurato in CI, `test_cli_remember_and_recall_use_open_memory`
     #: è caduto per questo. Il percorso si passa solo quando c'è —
     #: chi non usa `--db` continua a vedere la firma di sempre.
+    _pretendi_uno_store_che_esiste(db, "verimem recall")
     m = _open_memory(db) if db else _open_memory()
     #: CHI NOMINA UNO STORE HA DIRITTO DI VEDERE QUALE E' STATO APERTO. Senza
     #: questa riga `--db` curerebbe meta' difetto: il comando leggerebbe il
@@ -2201,6 +2202,7 @@ def trust_stats_cmd(
     broken down by status. The numbers competitors don't show.
     """
     from .client import Memory
+    _pretendi_uno_store_che_esiste(db, "verimem stats")
     m = Memory(db) if db else Memory()
     s = m.trust_stats()
     if json_out:
@@ -3185,7 +3187,45 @@ def _facts_data_dir() -> Path:
     return CONFIG.data_dir
 
 
-def _facts_sm(db: str | None = None):
+def _pretendi_uno_store_che_esiste(db, comando: str) -> None:
+    """Un comando di LETTURA non crea lo store che dice di leggere.
+
+    ⚠️ IL DIFETTO CHE QUESTA FUNZIONE TOGLIE, misurato il 2026-09-20 su sette
+    porte: `--db` su un percorso che non esiste faceva nascere uno store nuovo
+    e vuoto, che il comando poi trovava vuoto — perché l'aveva appena creato
+    lui — e raccontava come «nessun fatto», con EXIT=0 su sei porte su sette:
+
+        facts list 0 · facts get 1 · facts search 0 · facts recall 0
+        recall 0 · stats 0 (98304 byte) · audit verify 0 — 73728 byte l'uno
+
+    Basta un refuso nel percorso e la risposta a «fammi vedere la mia memoria»
+    è «è vuota», mentre i fatti stanno intatti nel file accanto. 73728 byte è
+    anche la dimensione del file vuoto alla radice di uno store reale, quello
+    che teniamo fra le trappole note: un fantasma così nasce da qualche parte.
+
+    Vale solo per chi NOMINA un percorso: senza `--db` la cartella si risolve
+    come sempre, e scrivere in uno store nuovo continua a crearlo, perché lì la
+    creazione è il mestiere del comando.
+    """
+    if not db:
+        return
+    percorso = Path(db)
+    if percorso.exists():
+        return
+    console.print(
+        f"[red]questo store non esiste:[/red] {percorso}\n"
+        f"`{comando}` legge soltanto, quindi non lo creo: un file nuovo e "
+        f"vuoto risponderebbe «nessun fatto» a una domanda che non ho potuto "
+        f"leggere, e la memoria vera resterebbe dov'è. Controlla il percorso. "
+        f"Se volevi davvero uno store nuovo, scrivici dentro — per esempio\n"
+        f"    verimem remember \"...\" --db {percorso}",
+        soft_wrap=True,   # un percorso spezzato a capo non si copia, e si
+                          # stampa solo perché qualcuno lo copi
+    )
+    raise typer.Exit(1)
+
+
+def _facts_sm(db: str | None = None, comando: str = "questo comando"):
     """Build a SemanticMemory pointed at the corpus.
 
     ``db`` is the store the caller NAMED (`--db`); without it, the one this
@@ -3204,6 +3244,12 @@ def _facts_sm(db: str | None = None):
     """
     from .semantic import SemanticMemory
     if db:
+        # Chi NOMINA un percorso per leggere intende un file che c'è: se non
+        # c'è, dirlo vale più che fabbricarne uno vuoto e chiamarlo risposta.
+        # Le quattro porte `facts` che arrivano qui con un `--db` leggono tutte;
+        # il giorno che una di loro dovrà creare, la guardia si sposta nelle
+        # chiamate invece di stare qui.
+        _pretendi_uno_store_che_esiste(db, comando)
         scelto = Path(db)
         scelto.parent.mkdir(parents=True, exist_ok=True)
         return SemanticMemory(db_path=scelto)
@@ -6034,6 +6080,7 @@ def audit_anchor_cmd(
 
     from verimem.audit_anchor import build_payload, sign_anchor
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit anchor")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
     adj = _audit_adj_log(sm)
     ep_path = _audit_episodes_db(sm, episodes_db)
@@ -6083,6 +6130,7 @@ def audit_verify_cmd(
     anchored-head-at-count) and exits 1 naming the chain and check that
     failed."""
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit verify")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
 
     if anchor is not None:
