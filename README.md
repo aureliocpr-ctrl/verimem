@@ -130,10 +130,18 @@ rather than producing a number that looks like this one without it.
   Two known gaps close only with an llm judge: a *plausible added inference the source never states* (e.g. "…which
   reduced latency") scores high and is admitted — and that gap is the one this
   README used to leave without a number while quantifying every smaller one.
-  **Measured 2026-08-25** (`docs/stato-reale/banco-osservatore-il-tasso.py`, 96 cases
-  = 8 source types x 6 cases x 2 languages, CE-only judge): **25 of 48 such
-  unsupported claims were admitted** — IT 54.2%, EN 50.0%, and **8 of the 48 IT/EN pairs — true and false alike
-  get the OPPOSITE verdict in the two languages, in both directions**. Read it as
+  **Re-measured 2026-09-20** on trunk `febd56b3`
+  (`docs/stato-reale/banco-osservatore-il-tasso.py`, 96 cases = 8 source types x
+  6 cases x 2 languages, local CE judge, empty store): **16 of 48 such
+  unsupported claims were admitted** — IT 45.8%, EN 20.8% — and **11 of the 48
+  IT/EN pairs get the OPPOSITE verdict in the two languages, in both
+  directions**. The same bench, run three times, moves in two directions at
+  once: admitted falsehoods **25/48 (25 Aug) → 26/48 (1 Sep) → 16/48 (20 Sep)**,
+  while cross-language disagreement **8 → 9 → 11**. The gate lets fewer
+  omission-shaped falsehoods through than it used to, and agrees with itself
+  across languages **less** than it used to — both numbers come from the same
+  run, and the bench is in the repo, so re-run it on your own tree before
+  trusting either. Read it as
   the bound it is: on omission-shaped falsehoods the CE-only judge is close to a
   coin toss, which is why `Memory(llm=...)` is the configuration to use when the
   workload is *what the source did not say*; and an *entity-substitution*
