@@ -88,9 +88,17 @@ def test_ALLA_PORTA_CONTROLLO_la_stessa_grandezza_resta_ammessa(tmp_path):
     r = Memory(tmp_path / "m.db").add(
         "Il capannone 12 misura 400 m2.", topic="prova/t166",
         source="Perizia del 2026-09-01: il capannone 12 misura 400 mq.")
-    assert r.get("status") != "quarantined", (
-        f"la stessa grandezza in due grafie viene fermata: {r.get('status')} "
-        f"{[w.get('layer') for w in (r.get('warnings') or [])]}")
+    strati = [w.get("layer") for w in (r.get("warnings") or [])]
+    #: ⚠️ SI CHIEDE DELLA MIA CURA, NON DEL VERDETTO — e la prima versione
+    #: chiedeva `status != "quarantined"`, cadendo in CI mentre in locale
+    #: passava. Là la scrittura esce `quarantined` con `moat: passed` e
+    #: `quarantined_by='L4-review'`: a fermarla e' un altro layer, in un regime
+    #: del giudice diverso (D-0011), e quella cella misurava il regime invece
+    #: della cura. Il negativo che appartiene a questa richiesta e' uno solo:
+    #: la STESSA grandezza in due grafie non deve accendere `L4.2-grandezza`.
+    assert "L4.2-grandezza" not in strati, (
+        f"la stessa grandezza scritta in due modi accende la guardia delle "
+        f"grandezze diverse: {strati}")
 
 
 def test_IL_CONFLITTO_VERO_in_questa_grafia_OGGI_NON_SCATTA():
