@@ -705,16 +705,36 @@ def test_cli_chain_orphans_window(tmp_path, monkeypatch):
 
 
 def test_cli_digest_json_contract(tmp_path, monkeypatch):
+    """Il contratto è «chi chiede JSON riceve JSON SU STDOUT».
+
+    ⚠️ QUESTA CELLA LEGGE `r.stdout`, NON `r.output`, e la differenza è tutta
+    la misura. `CliRunner()` su click 8.1.8 nasce con `mix_stderr=True`, quindi
+    `r.output` è stdout **più** stderr: chiamare JSON quell'impasto significa
+    pretendere che il prodotto non dica mai niente di diagnostico, e basta una
+    riga di log perché la cella cada.
+
+    Misurato il 2026-09-20 in sottoprocesso, cioè come lo usa una persona:
+
+        stdout : {"window_hours": 1.0, "n_facts": 1, "by_status": ...   JSON puro
+        stderr : 2026-09-20T15:26:05 [info] store.opened marcatura=...
+
+    Il prodotto separa già i due canali come si deve — dati su stdout, log su
+    stderr — e una pipe verso `jq` funziona. Era la cella a mischiarli, e lo si
+    è visto solo quando la dichiarazione dell'apertura dello store ha aggiunto
+    una riga di log: il difetto non è nato allora, è diventato visibile allora.
+    """
     import json as _json
+
+    from typer.testing import CliRunner
 
     from verimem.cli import app
     _iso_cli_env(tmp_path, monkeypatch)
-    runner = _runner()
+    runner = CliRunner(mix_stderr=False)
     runner.invoke(app, ["save", "First checkpoint of the run.",
                         "-t", "project/alpha"])
     r = runner.invoke(app, ["digest", "--hours", "1", "--json"])
     assert r.exit_code == 0, r.output
-    d = _json.loads(r.output)
+    d = _json.loads(r.stdout)
     assert d["n_facts"] == 1
     assert "by_status" in d and "orphan_ratio" in d
 
