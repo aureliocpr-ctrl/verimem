@@ -29,12 +29,20 @@ def _base_dello_stesso_giorno(ora_di_lancio: float) -> float:
     """La base che una cella usa quando i suoi eventi devono cadere TUTTI nello
     stesso giorno UTC.
 
-    ⚠️ ADESSO RESTITUISCE L'OROLOGIO, ed e' il difetto: una cella che costruisce
-    `base`, `base+60`, `base+120` e poi asserisce «un solo bucket» dipende
-    dall'ORA in cui gira. Negli ultimi 120 s del giorno UTC gli eventi cadono su
-    due giorni e l'asserzione fallisce con `assert 2 == 1`.
+    Ancorata a MEZZOGIORNO UTC del giorno in cui la suite gira: resta dentro
+    `window_days=30` (non serve alzarlo) e mette 12 ore di margine da entrambi
+    i confini, cosi' una cella puo' aggiungere minuti o ore senza cambiare
+    giorno.
+
+    ⚠️ PRIMA RESTITUIVA L'OROLOGIO, e negli ultimi 120 s del giorno UTC gli
+    eventi cadevano su due giorni: `assert 2 == 1`, ~1 run su 720.
+
+    ⛔ NON e' un pattern nuovo: il file curava gia' lo stesso difetto in
+    `test_one_bucket_per_day` (timestamp fisso + `window_days` alto) e in
+    `test_week_bucketing` (ancoraggio al lunedi'). Qui si usa l'ancoraggio,
+    che lascia i parametri del prodotto ai loro valori veri.
     """
-    return ora_di_lancio
+    return ora_di_lancio - (ora_di_lancio % 86400.0) + 43200.0
 
 
 def test_one_bucket_per_day():
