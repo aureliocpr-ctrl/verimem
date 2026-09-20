@@ -85,21 +85,31 @@ def test_l_enum_pubblicato_dalla_porta_mcp_e_quello_misurato():
     """Fissa cio' che i client vedono OGGI, cosi' un cambiamento si nota."""
     wr = _schema_di("hippo_remember").get("writer_role") or {}
     assert wr, "hippo_remember non pubblica piu' writer_role"
-    assert wr.get("enum") == ["agent_inference", "user",
-                              "system_hook", "trusted_hook"]
+    # ⚠️ NON PIU' UNA LISTA SCRITTA A MANO. Fissava i quattro valori di
+    # allora «cosi' un cambiamento si nota», e il 2026-09-20 il cambiamento
+    # c'e' stato: l'enum ora si GENERA dalle liste canoniche del router
+    # (T165, scelta (c1)). Ricopiare qui i sette valori rifarebbe lo stesso
+    # nodo un giro piu' in la'; si misura invece la PROPRIETA' che la cura
+    # garantisce — pubblicato e canonico non divergono.
+    from verimem.gate_router import _EXTERNAL_ROLES, _TRUSTED_ROLES
+    canonici = {"agent_inference", "user"} | set(_EXTERNAL_ROLES) | set(
+        _TRUSTED_ROLES)
+    assert set(wr.get("enum") or []) == canonici, (
+        f"l'enum pubblicato e i ruoli canonici sono divergenti: "
+        f"pubblicati {sorted(wr.get('enum') or [])}, canonici {sorted(canonici)}")
     assert wr.get("default") == "agent_inference"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="DEBITO DICHIARATO, non difetto da correggere qui: la porta MCP non "
-    "pubblica `external_content`, quindi un client non puo' dire che la fonte "
-    "e' di terzi e la cura del 2026-08-28 resta irraggiungibile (0 fatti su "
-    "17.411 sul corpus vivo). Accenderla e' un cambiamento di comportamento "
-    "che indebolisce la guardia anti-eco del 30/08 e va deciso, non fatto di "
-    "straforo: il giorno in cui l'enum cambia, `strict` fa tornare rossa "
-    "questa cella e la decisione diventa visibile.",
-)
+# ✅ DEBITO SALDATO IL 2026-09-20 (T165, scelta (c1) del lead).
+# Questa cella era `xfail(strict=True)` con scritto: «accenderla e' un
+# cambiamento di comportamento che indebolisce la guardia anti-eco del 30/08 e
+# va deciso, non fatto di straforo: il giorno in cui l'enum cambia, `strict` fa
+# tornare rossa questa cella e la decisione diventa visibile». Ha funzionato
+# esattamente cosi': l'enum e' cambiato e la cella e' diventata rossa in CI.
+# La decisione e' stata presa, e la guardia anti-eco NON e' indebolita — e'
+# piu' forte di allora: dal 2026-09-19 (#99) l'eco non compra il perdono di
+# L1.13 con NESSUN ruolo dichiarato, `external_content` compreso, e una cella
+# di quel banco lo tiene fermo. Il debito era condizionato a quella cura.
 def test_ogni_classe_di_provenienza_e_raggiungibile_dalla_porta_mcp():
     pubblicati = set((_schema_di("hippo_remember").get("writer_role") or {}).get("enum") or [])
     irraggiungibili = {
@@ -121,7 +131,12 @@ def test_la_descrizione_non_dice_a_chi_ingerisce_documenti_cosa_fare():
     """
     wr = _schema_di("hippo_remember").get("writer_role") or {}
     testo = (wr.get("description") or "").lower()
-    assert "external" not in testo and "document" not in testo, (
-        "la descrizione ora nomina documenti/contenuto esterno: se la strada "
-        "e' stata aperta, aggiorna anche l'enum e la cella xfail qui sopra"
-    )
+    # 🔁 GIRATA IL 2026-09-20, ed e' il verso che questa cella stessa
+    # chiedeva: «il giorno in cui la descrizione imparasse a nominare i
+    # documenti, il fallimento direbbe "bene, ora aggiorna anche l'enum"».
+    # L'enum e' aggiornato, quindi ora e' la descrizione a dover stare al
+    # passo: pubblicare sette valori e spiegarne quattro lascerebbe chi
+    # ingerisce documenti senza sapere cosa scrivere.
+    assert "external" in testo or "document" in testo, (
+        "l'enum accetta i ruoli documentali ma la descrizione non li nomina: "
+        "chi ingerisce un documento non sa quale valore usare")
