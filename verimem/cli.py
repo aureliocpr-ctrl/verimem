@@ -3190,18 +3190,12 @@ def _facts_data_dir() -> Path:
 def _pretendi_uno_store_che_esiste(db, comando: str) -> None:
     """Un comando di LETTURA non crea lo store che dice di leggere.
 
-    ⚠️ IL DIFETTO CHE QUESTA FUNZIONE TOGLIE, misurato il 2026-09-20 su sette
-    porte: `--db` su un percorso che non esiste faceva nascere uno store nuovo
-    e vuoto, che il comando poi trovava vuoto — perché l'aveva appena creato
-    lui — e raccontava come «nessun fatto», con EXIT=0 su sei porte su sette:
-
-        facts list 0 · facts get 1 · facts search 0 · facts recall 0
-        recall 0 · stats 0 (98304 byte) · audit verify 0 — 73728 byte l'uno
-
-    Basta un refuso nel percorso e la risposta a «fammi vedere la mia memoria»
-    è «è vuota», mentre i fatti stanno intatti nel file accanto. 73728 byte è
-    anche la dimensione del file vuoto alla radice di uno store reale, quello
-    che teniamo fra le trappole note: un fantasma così nasce da qualche parte.
+    ⚠️ IL DIFETTO CHE TOGLIE: `--db` su un percorso che non esiste faceva
+    nascere uno store nuovo e vuoto, che il comando poi trovava vuoto — perché
+    l'aveva appena creato lui — e raccontava come «nessun fatto». Basta un
+    refuso e la risposta a «fammi vedere la mia memoria» è «è vuota», mentre i
+    fatti stanno intatti nel file accanto. Le sette porte misurate e i byte che
+    ognuna creava stanno in `tests/test_un_comando_di_lettura_non_crea_lo_store`.
 
     Vale solo per chi NOMINA un percorso: senza `--db` la cartella si risolve
     come sempre, e scrivere in uno store nuovo continua a crearlo, perché lì la
