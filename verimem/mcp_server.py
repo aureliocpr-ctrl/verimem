@@ -2971,10 +2971,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     },
                     "writer_role": {
                         "type": "string",
-                        "enum": [
-                            "agent_inference", "user",
-                            "system_hook", "trusted_hook",
-                        ],
+                        # ⛔ GENERATO, non scritto a mano. Fino al 2026-09-20
+                        # questa lista viveva qui e le liste canoniche stavano
+                        # in `gate_router`: la ricevuta consigliava
+                        # «set writer_role='external_content'» e questa stessa
+                        # porta rispondeva «schema violation», perche'
+                        # `external_content` non era fra i quattro valori. Il
+                        # prodotto dava un'istruzione che lui stesso rifiuta.
+                        # Ora i valori vengono da dove sono DEFINITI: se
+                        # domani quelle liste cambiano, la porta segue.
+                        "enum": _RUOLI_AMMESSI_DALLA_PORTA(),
                         "default": "agent_inference",
                         "description": (
                             "Cycle 2026-05-27 round 12 F-fix provenance. "
@@ -7952,6 +7958,20 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             },
         ),
     ]
+
+
+def _RUOLI_AMMESSI_DALLA_PORTA() -> list[str]:
+    """I `writer_role` che questa porta accetta, dalle liste canoniche.
+
+    Una superficie sola: `gate_router` sa quali ruoli esistono e cosa
+    significano, e qui si legge di la'. Serve perche' il consiglio che la
+    ricevuta stampa nomina un valore preso da quelle liste, e una porta che
+    lo rifiuta manda l'utente contro un errore facendogli fare esattamente
+    cio' che il prodotto gli ha detto.
+    """
+    from .gate_router import _EXTERNAL_ROLES, _TRUSTED_ROLES
+    return sorted({"agent_inference", "user"}
+                  | set(_EXTERNAL_ROLES) | set(_TRUSTED_ROLES))
 
 
 @server.list_tools()
