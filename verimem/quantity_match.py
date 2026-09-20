@@ -110,7 +110,19 @@ _QUANT_RE = re.compile(
     # (`1,234`), quindi non entra qui e resta all'ambiguita' dichiarata —
     # esattamente come `_PUNTO_AMBIGUO` fa con `45.000`. Allargare a `[.,]\d+`
     # avrebbe letto «1,234 facts» come milleduecentotrentaquattro virgola.
-    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    # ⚠️ L'UNITA' PUO' FINIRE CON UNA CIFRA, MA SOLO SE E' UNA DI QUESTE OTTO
+    # FORME. «400 m3» e' un volume e «400 m2» un'area; il gruppo qui sotto
+    # esclude le cifre, quindi quella grafia usciva SENZA unita' e
+    # volume-contro-area non veniva colto (ammesso a 91,95 alla porta).
+    # ⛔ LA GENERALIZZAZIONE E' FALSIFICATA, e il numero sta qui perche' non
+    # torni: ammettere UNA CIFRA QUALUNQUE (`[^\W\d_]+\d?`) cambia la lettura
+    # di 1311 proposizioni su 18 310 e legge come grandezze gli spezzoni di
+    # SHA — `e2` 103 volte, `bdb6` 82, `a7` 63, `ad7` 61, `aefa1` 61. La lista
+    # chiusa ha invece raggio ZERO sul corpus, e il presidio sta nel banco.
+    # L'alternativa va PRIMA del gruppo generico: la regex prova da sinistra,
+    # e su «m3x» ricade sul generico come faceva prima.
+    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)"
+    r"(?:\s{0,3}-?\s{0,3}((?:mm|cm|km|ft|in|m)[23]|[^\W\d_]+))?"
     r"(?![A-Za-z0-9_])(?!\.\d)(?!,\d)",
     re.UNICODE,
 )
