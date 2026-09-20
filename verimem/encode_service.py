@@ -181,7 +181,7 @@ def _default_rerank_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
-def _puo_ridurre_lo_span() -> bool:
+def _puo_ridurre_lo_span(giudice: object | None = None) -> bool:
     """Ponte verso la superficie unica, con import LOCALE.
 
     A livello di modulo sarebbe un ciclo: `local_grounding` importa gia'
@@ -189,7 +189,7 @@ def _puo_ridurre_lo_span() -> bool:
     di scoperta. L'import locale e' lo stesso verso che quel modulo usa qui.
     """
     from .local_grounding import il_giudice_puo_ridurre_lo_span
-    return il_giudice_puo_ridurre_lo_span()
+    return il_giudice_puo_ridurre_lo_span(giudice)
 
 
 def _default_gate_fn(pairs):
@@ -235,6 +235,12 @@ def _default_gate_fn(pairs):
 
 
 class EncodeServer:
+    #: ⛔ DI CLASSE, non di istanza: il banco di T73 costruisce con
+    #: `object.__new__(EncodeServer)` e SALTA il costruttore. Un default
+    #: qui esiste per chiunque, ed e' il valore onesto: finche' nessuno
+    #: ha scritto la scoperta, questo daemon non ha dichiarato nulla.
+    _finestra_dichiarata: bool = False
+
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
     def __init__(
@@ -263,7 +269,6 @@ class EncodeServer:
         # poter COSTRUIRE in un test il caso «daemon vecchio che non sa
         # giudicare» (gate_fn=None) per verificare che il client degradi.
         self._gate_fn = _default_gate_fn if gate_fn is _ASSENTE else gate_fn
-        self._finestra_dichiarata = False
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -372,7 +377,7 @@ class EncodeServer:
                     # chiamante vedrebbe un daemon muto. Nel daemon vero il
                     # tokenizzatore c'e' gia', perche' e' lo stesso processo
                     # che tiene il modello del giudice.
-                    if not _puo_ridurre_lo_span():
+                    if not _puo_ridurre_lo_span(_giudice):
                         raise RuntimeError(
                             "tokenizzatore non ancora caricato in questo "
                             "daemon: lo span non viene ridotto")

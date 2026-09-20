@@ -560,7 +560,7 @@ def get_local_threshold() -> float | None:
     return get_local_judge().threshold
 
 
-def il_giudice_puo_ridurre_lo_span() -> bool:
+def il_giudice_puo_ridurre_lo_span(giudice: object | None = None) -> bool:
     """Il giudice locale puo' RIDURRE uno span alla finestra del modello?
 
     Un posto solo, e lo leggono entrambi: chi lo DICHIARA nel file di scoperta
@@ -579,7 +579,15 @@ def il_giudice_puo_ridurre_lo_span() -> bool:
     ⚠️ NON costruisce il giudice per rispondere: legge il singleton se c'e'
     gia'. Quando non c'e', la risposta e' «non riduco» — il verso SICURO: la
     riduzione la paga il client, e nessuno perde qualita' in silenzio.
+    ⚠️ ACCETTA IL GIUDICE, e non e' un dettaglio: la prima stesura leggeva
+    SOLO la globale `_judge`, mentre chi riduce lavora sull'oggetto che ha in
+    mano da `get_local_judge()`. Due oggetti diversi — cioe' esattamente il
+    difetto che questa funzione esiste per chiudere, rifatto in forma nuova.
+    L'ha colto il banco di T73 (2026-09-20): «la risposta dichiara un problema
+    che non c'e' stato».
     """
+    if giudice is not None:
+        return getattr(giudice, "_tok", None) is not None
     return getattr(_judge, "_tok", None) is not None
 
 
