@@ -741,11 +741,39 @@ def test_cli_digest_json_contract(tmp_path, monkeypatch):
         runner = CliRunner(mix_stderr=False)
     except TypeError:          # click >= 8.2: i canali sono già separati
         runner = CliRunner()
-    runner.invoke(app, ["save", "First checkpoint of the run.",
-                        "-t", "project/alpha"])
+    scritto = runner.invoke(app, ["save", "First checkpoint of the run.",
+                                  "-t", "project/alpha"])
     r = runner.invoke(app, ["digest", "--hours", "1", "--json"])
-    assert r.exit_code == 0, r.output
-    d = _json.loads(r.stdout)
+
+    # ⚠️ QUANDO QUESTA CELLA CADE, CADE MUTA: eseguita dopo altri test dà
+    # `JSONDecodeError: Expecting value: line 1 column 1 (char 0)`, cioè
+    # stdout VUOTO, e il traceback non dice altro. Misurato il 21/09 sul
+    # merge: da sola 49 passed, dentro la fetta che la precede 1 failed.
+    # Quattro ipotesi falsificate finora — la variabile dell'encode delegate
+    # (la fetta senza di essa la lascia rossa), gli alias della data dir (A/B
+    # a due e a tre: identico), l'import di `mcp_server`, una redirezione di
+    # `sys.stdout` fra i file che la precedono. Finché la causa è ignota,
+    # almeno il rosso deve raccontare cosa ha ricevuto.
+    diagnostica = (
+        f"digest: exit={r.exit_code} len(stdout)={len(r.stdout or '')} "
+        f"len(stderr)={len(getattr(r, 'stderr', '') or '')} "
+        f"stdout[:200]={(r.stdout or '')[:200]!r} "
+        f"stderr[-300:]={(getattr(r, 'stderr', '') or '')[-300:]!r} "
+        f"| save: exit={scritto.exit_code} "
+        f"stdout[:160]={(scritto.stdout or '')[:160]!r}")
+
+    assert r.exit_code == 0, diagnostica
+    assert r.stdout, f"il comando non ha scritto niente su stdout. {diagnostica}"
+    # ⚠️ LA DIAGNOSTICA VA QUI, e la prima stesura l'aveva messa negli assert
+    # che PASSANO: il fallimento è sul parse, quindi un messaggio appeso alle
+    # righe precedenti non si stampa mai. E «Expecting value: line 1 column 1
+    # (char 0)» non vuol dire stringa vuota — vuol dire che il PRIMO carattere
+    # non apre un JSON, che è tutta un'altra diagnosi.
+    try:
+        d = _json.loads(r.stdout)
+    except ValueError as errore:
+        raise AssertionError(
+            f"stdout non è JSON ({errore}). {diagnostica}") from None
     assert d["n_facts"] == 1
     assert "by_status" in d and "orphan_ratio" in d
 
