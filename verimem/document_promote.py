@@ -246,6 +246,19 @@ def promote_chunk_to_fact(
     # apre un secondo store vuoto, e le scritture finiscono dove nessuno
     # guarda. `semantic_memory.db_path` e' l'unico percorso che non puo'
     # divergere da quello che il chiamante sta gia' usando.
+    #
+    # COSTA 9,1 ms (mediana di 5 giri: 14,7 il primo, poi 8,4 · 8,7 · 9,4 ·
+    # 9,1), e per questo si costruisce qui invece di tenerla in una cache
+    # globale: una promozione paga il gate e la scrittura, che sono un altro
+    # ordine di grandezza, e una cache per `db_path` aggiungerebbe stato
+    # condiviso per risparmiare 9 ms. Se un giorno la promozione diventasse
+    # massiva, il numero da rimisurare e' questo, non da ricordare.
+    #
+    # ⚠️ DUE CONNESSIONI ALLO STESSO FILE convivono nel processo — quella
+    # dell'agent e quella di questa `Memory` — ed e' voluto: SQLite lo regge
+    # (WAL + `busy_timeout=60000`, gia' impostati da `_connect`), e l'unica
+    # cosa che non deve succedere e' che siano due FILE diversi, che e'
+    # esattamente cio' che la prima cella del banco misura.
     from .client import Memory
 
     _autoreferenziale = prop.split() == chunk_text.split()
