@@ -1278,6 +1278,14 @@ class Memory:
             _out_qb = None
         from .local_grounding import esecutore_dell_ultimo_giudizio
         _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
+        #: E PERCHE' ha giudicato lui. `judged_by` da solo e' un'etichetta:
+        #: dice «in-process» sia quando il daemon non e' stato interpellato
+        #: sia quando non ha risposto, e chi legge non sa se la sua
+        #: installazione stia lavorando come crede. La ragione e' registrata
+        #: NELL'ISTANTE della decisione — riletta dopo direbbe altro, perche'
+        #: lo scorer si popola quando il modello finisce di caricare.
+        from .local_grounding import perche_ha_giudicato as _perche_giudizio
+        _perche_ha_giudicato = _perche_giudizio()
         from ._compat import provenienza_data_dir
         _provenienza_store = provenienza_data_dir()
         _out = {
@@ -1317,6 +1325,18 @@ class Memory:
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        # LA RAGIONE DEL GIUDIZIO IN CASA, nel formato che il prodotto usa
+        # gia' per `duplicate_check_skipped` e per «encode delegate
+        # unavailable»: layer, reason, advice. Non cambia il verdetto — la
+        # scrittura e' gia' decisa qui sopra — aggiunge solo cio' che la
+        # ricevuta taceva.
+        if _chi_ha_giudicato == "in-process" and _perche_ha_giudicato:
+            _out["warnings"] = list(_out.get("warnings") or []) + [{
+                "layer": "giudice_in_processo",
+                "reason": f"ha giudicato questo processo: {_perche_ha_giudicato}",
+                "advice": ("se ti aspettavi il daemon condiviso, «verimem "
+                           "doctor» dice se e' raggiungibile"),
+            }]
         # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
         # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
         # ma non arrivava a chi scrive: la ricevuta diceva `moat: passed`,
