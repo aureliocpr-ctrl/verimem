@@ -1467,7 +1467,11 @@ def remember_cmd(
             console.print(
                 f"  giudicato [b]{_p:.2f}[/b]/100 da `{_ric.get('giudice')}`"
                 f" (modello {_ric.get('modello')}), soglia {_s:.0f}"
-                f" — margine +{_p - _s:.2f}")
+                # ⚠️ IL MARGINE SI LEGGE, non si ricalcola: la riga sopra
+                # promette «i numeri NON si ricalcolano qui» e una sottrazione
+                # fatta a mano la smentirebbe — due formule per lo stesso
+                # numero sono due verita' che un giorno divergono.
+                f" — margine +{_ric.get('margine'):.2f}")
     # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
     # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
     # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
