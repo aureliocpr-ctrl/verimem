@@ -14081,14 +14081,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # da qui era invisibile alla sala motore.
             # UN SOLO emettitore, non una quarta copia: `judged` e
             # `withheld_despite_judge` li deriva lui dal punteggio.
+            # T181 — la ragione viaggia da TUTTE le porte che possono fermare
+            # una scrittura, non solo dall'SDK: i warning da cui si ricava
+            # sono già qui, usati poche righe sotto per i layer, e curare una
+            # porta sola lascerebbe il journal a metà proprio su quella che il
+            # commento qui sopra descrive come «invisibile alla sala motore».
+            from verimem.client import _reason_from_warnings as _ragione_da
             from verimem.flow_events import emit_write as _emit_write
+            _rag = (_ragione_da(list(_gate_warnings or []))
+                    if str(getattr(fact, "status", "")) == "quarantined"
+                    else "")
             _emit_write(
                 stored=True, status=str(getattr(fact, "status", "")),
                 fact_id=str(getattr(fact, "id", "")),
                 topic=str(getattr(fact, "topic", "")),
                 layers=[w.get("layer") for w in (_gate_warnings or [])
                         if isinstance(w, dict) and w.get("layer")],
-                grounding_score=getattr(fact, "grounding_score", None))
+                grounding_score=getattr(fact, "grounding_score", None),
+                **({"quarantined_reason_excerpt": _rag} if _rag else {}))
             # 2026-06-02 (P0a — una memoria che conserva claim errati e'
             # quasi inutile): auto-invalidate older facts the anti-confab
             # gate (L3) flagged as contradicted by THIS just-stored fact.

@@ -137,6 +137,54 @@ def test_l_evento_porta_anche_la_ragione(scrittura_trattenuta) -> None:
         "la ragione dovrebbe cominciare dal layer che ha agito")
 
 
+# --------------------------------------------------------- conta le porte ----
+#: Le scritture non escono da un punto solo: `emit_write` è chiamato da tre
+#: posti che possono fermare un fatto — l'SDK quando lo trattiene, l'SDK quando
+#: lo RESPINGE, e la porta MCP, che il commento accanto a sé descrive come
+#: quella «invisibile alla sala motore». Curarne una e dichiarare chiuso il
+#: difetto è la classe di errore che ci costa più tempo: una cosa scritta in un
+#: punto solo di tre.
+#:
+#: Esente una sola chiamata, e per una ragione che non è comodità:
+#: `routed_telemetry` non è un fatto fermato, è telemetria instradata.
+STATUS_SENZA_TRATTENIMENTO = {"routed_telemetry"}
+
+
+def test_tutte_le_porte_che_fermano_una_scrittura_dicono_il_perche() -> None:
+    """Se domani nasce una quarta porta, questa cella la vede: cerca le
+    chiamate nel sorgente, non i comportamenti che qualcuno ha pensato di
+    esercitare."""
+    import ast as _ast
+
+    scoperte: list[str] = []
+    trovate = 0
+    for modulo in ("verimem/client.py", "verimem/mcp_server.py"):
+        albero = _ast.parse((RADICE / modulo).read_text(encoding="utf-8"))
+        for nodo in _ast.walk(albero):
+            if not isinstance(nodo, _ast.Call):
+                continue
+            nome = getattr(nodo.func, "id", None) or getattr(nodo.func, "attr", None)
+            if nome not in ("_emit_write", "emit_write"):
+                continue
+            testo = _ast.unparse(nodo)
+            stato = next((k.value for k in nodo.keywords if k.arg == "status"), None)
+            if (isinstance(stato, _ast.Constant)
+                    and stato.value in STATUS_SENZA_TRATTENIMENTO):
+                continue
+            trovate += 1
+            if "quarantined_reason_excerpt" not in testo:
+                scoperte.append(f"{modulo}:{nodo.lineno}")
+
+    assert trovate >= 3, (
+        f"trovate solo {trovate} chiamate che possono fermare una scrittura: "
+        f"il righello sta guardando un codice che non c'è più, non un difetto "
+        f"assente")
+    assert not scoperte, (
+        f"queste porte fermano una scrittura senza dire perché: {scoperte}. "
+        f"Il journal le registrerà con i layer e senza ragione, e chi legge "
+        f"dopo non potrà sapere quale dettaglio ha fermato il fatto")
+
+
 # ------------------------------------------------- il tetto, provato non assunto --
 def test_la_ragione_rispetta_il_tetto_degli_estratti(scrittura_trattenuta) -> None:
     """Il suffisso `_excerpt` deve far scattare il taglio: se un giorno la

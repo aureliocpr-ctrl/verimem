@@ -898,9 +898,15 @@ class Memory:
         _layers = _blocking_layers(warnings)
         if action == "reject":
             self._record_trust("rejected", layers=_layers, topic=topic)
+            # T181 — anche qui il perché, non solo il chi: un fatto RESPINTO
+            # non entra affatto, quindi il journal è l'unico posto dove quella
+            # scrittura lascia traccia. Senza la ragione resta un rifiuto senza
+            # motivo, che è la forma meno utile di rifiuto.
             _emit_write(stored=False, status="rejected", fact_id="",
                         topic=str(topic), layers=_layers,
-                        grounding_score=_gs_evt)
+                        grounding_score=_gs_evt,
+                        **({"quarantined_reason_excerpt": _r}
+                           if (_r := _reason_from_warnings(warnings)) else {}))
             _adj = _adjudication(gate, disposition="rejected",
                                  verified_by=verified_by, warnings=warnings)
             self._audit_record(_adj, topic=topic, proposition=text, fact_id=None,
