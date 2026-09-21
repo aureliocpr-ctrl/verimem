@@ -44,6 +44,12 @@ def promote_chunk_to_fact(
     topic: str = "documents/promoted",
     confidence: float = 0.5,
     embed: str | None = None,
+    #: 1b.3 — CHI sta scrivendo, dichiarato dal chiamante. La porta MCP passa
+    #: il suo `_MCP_PRINCIPAL`: senza, una promozione entrata da un agente
+    #: resta indistinguibile da una scrittura interna, ed e' proprio la
+    #: distinzione per cui quel timbro esiste. `None` lascia ad `add()` il suo
+    #: default, cosi' i chiamanti che non lo passano si comportano come prima.
+    principal: str | None = None,
 ) -> dict:
     """Store ``hit`` (a DocumentIndex search result) as a gated Fact.
 
@@ -215,24 +221,56 @@ def promote_chunk_to_fact(
         )
         punteggio = None
 
-    fact = Fact(
-        proposition=prop,
-        topic=topic,
-        confidence=confidence,
-        status=stato,
-        verified_by=[citation],            # the checkable file citation
-        source_episodes=[citation] + ([f"doc_version:{version}"] if version else []),
-        writer_role=PROMOTE_WRITER_ROLE,
-        grounding_score=punteggio,
-    )
+    # 1b.3 — SI SCRIVE DA `Memory.add()`, non costruendo il `Fact` a mano.
+    # Costruirlo qui voleva dire rifare a mano cio' che `add()` fa per tutti, e
+    # dimenticarne i pezzi: il fatto promosso non portava `writer_principal`
+    # (chi l'ha scritto) ne' `source_signature` (l'impronta della fonte), e la
+    # risposta non aveva nessuno dei nomi del nucleo. Non era una scelta: era
+    # una copia invecchiata, che ogni campo nuovo nato in `add()` allontanava
+    # di un altro passo.
+    #
+    # ⚠️ LA DECISIONE DI DOMINIO DI QUESTA VIA RESTA, e si esprime scegliendo
+    # i parametri invece che saltando il motore. `source` e `ground` dicono
+    # due cose diverse, e il prodotto le tiene separate apposta:
+    #   · `source=chunk_text`  -> DA DOVE viene: serve l'impronta, sempre;
+    #   · `ground=False`       -> NON rigiudicare quando la proposizione E' il
+    #     chunk, perche' il moat confermerebbe solo che il testo dice cio' che
+    #     dice (e' la stessa ragione gia' scritta per `nota_punteggio`).
+    # Cosi' la promozione di un chunk grezzo continua a passare come prima e
+    # porta la provenienza; un `claim` distillato invece viene giudicato
+    # contro il chunk, che e' il controllo vero.
+    #
+    # ⚠️ E LA `Memory` SI COSTRUISCE DAL FILE CHE QUESTO STORE HA GIA' APERTO.
+    # `Memory(path)` vuole il FILE del database: passargli una cartella alza
+    # `OperationalError`, e passargli un percorso sbagliato NON fallisce —
+    # apre un secondo store vuoto, e le scritture finiscono dove nessuno
+    # guarda. `semantic_memory.db_path` e' l'unico percorso che non puo'
+    # divergere da quello che il chiamante sta gia' usando.
+    from .client import Memory
+
+    _autoreferenziale = prop.split() == chunk_text.split()
     try:
-        if embed is not None:
-            semantic_memory.store(fact, embed=embed)
-        else:
-            semantic_memory.store(fact)
+        _ricevuta = Memory(getattr(semantic_memory, "db_path", None)).add(
+            prop,
+            topic=topic,
+            source=chunk_text,
+            ground=not _autoreferenziale,
+            confidence=confidence,
+            verified_by=[citation],        # the checkable file citation
+            source_episodes=(
+                [citation] + ([f"doc_version:{version}"] if version else [])),
+            writer_role=PROMOTE_WRITER_ROLE,
+            principal=principal,
+        )
     except Exception as exc:  # noqa: BLE001 — gate rejection is a result, not a crash
         return {"stored": False, "fact_id": None, "citation": citation,
                 "error": f"gate rejected: {exc!s:.120}"}
+    if not _ricevuta.get("stored"):
+        return {"stored": False, "fact_id": None, "citation": citation,
+                "error": f"gate rejected: {_ricevuta.get('advice') or ''!s:.120}"}
+    fact = semantic_memory.get(str(_ricevuta.get("id") or "")) or Fact(
+        proposition=prop, topic=topic, confidence=confidence)
+    stato = str(getattr(fact, "status", stato) or stato)
     if stato == "quarantined":
         # CHI HA DECISO, nella colonna che le tre porte del write path gia'
         # compilano con lo stesso vocabolario (`chi_ha_quarantinato`: moat /
@@ -257,4 +295,12 @@ def promote_chunk_to_fact(
             # con il solo punteggio erano indistinguibili — 99.98 in ENTRAMBI
             # i casi, perche' la fonte contiene davvero la frase.
             "trattenuto_da": _trattenuto_da,
-            "status": stato}
+            "status": stato,
+            # 1b.3 — LE CHIAVI DEL NUCLEO, che `add()` rende gia': qui si
+            # smette di buttarle via. L'unione mette le nuove SOPRA le
+            # vecchie, e le vecchie restano finche' dura il debito, cosi' i
+            # lettori di `stored`/`status`/`citation` continuano a funzionare.
+            # Non c'e' una seconda traduzione: quella la fa `add()`, una
+            # volta, per tutte le porte — che e' il senso della fetta.
+            **{k: v for k, v in _ricevuta.items()
+               if k not in ("stored", "status", "grounding_score")}}

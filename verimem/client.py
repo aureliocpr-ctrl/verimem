@@ -752,6 +752,13 @@ class Memory:
         # writer_role='external_content'») era irraggiungibile: sul corpus
         # vivo, external_content = 0 fatti su 8217.
         writer_role: str | None = None,
+        #: 1b.3 — LA PROVENIENZA PUNTUALE, per le porte che ce l'hanno.
+        #: La promozione di un chunk porta una citazione verificabile
+        #: (`file:<doc>:<start>-<end>`) e la teneva solo perche' costruiva il
+        #: `Fact` a mano, fuori da qui. Senza questo ingresso, «tutti passano
+        #: da `add()`» si pagherebbe **perdendo la citazione del documento** —
+        #: cioe' curando una copia e creando un danno nuovo.
+        source_episodes: list[str] | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -937,6 +944,9 @@ class Memory:
             fact.valid_until = float(valid_until)
         if derives_from:
             fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
+        if source_episodes:
+            fact.source_episodes = [str(x) for x in source_episodes
+                                    if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
         # Prima del blocco meta_narrative, che sovrascrive di proposito: quella
