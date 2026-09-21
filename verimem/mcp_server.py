@@ -8136,7 +8136,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     if validation_error:
         _audit(name, arguments, outcome="rejected_schema",
                error=validation_error)
-        return _err(f"input validation failed: {validation_error}")
+        # T184 — IL RIFIUTO NOMINA ANCHE LE CHIAVI CHE HA IGNORATO. Far
+        # rispettare `required` ha un effetto che il banco di
+        # `test_il_messaggio_dice_quale_chiave_ha_buttato` ha colto subito: il
+        # messaggio dello schema («'proposition' is a required property»)
+        # ARRIVA PRIMA di quello ricco, e chi ha scritto `content` invece di
+        # `proposition` va a cercare perche' la sua proposizione sia vuota —
+        # cioe' nel posto sbagliato. Una validazione che anticipa un messaggio
+        # migliore non e' un guadagno: e' una regressione mascherata da rigore.
+        # Qui si aggiunge cio' che quella strada diceva, e si tiene la sua
+        # regola: ⛔ SOLO I NOMI, MAI I VALORI — un errore che riecheggia il
+        # contenuto e' un altro posto dove finisce un dato da cancellare.
+        schema_del_tool = _SCHEMAS_BY_TOOL.get(name) or _DERIVED_SCHEMAS.get(name) or {}
+        dichiarate = set(schema_del_tool.get("properties") or {})
+        ignorate = sorted(k for k in (arguments or {}) if k not in dichiarate)
+        coda = (f"; these keys were not recognised and were IGNORED: "
+                f"{ignorate}" if ignorate and dichiarate else "")
+        return _err(f"input validation failed: {validation_error}{coda}")
     # architecture-A MCP tier: when a shared memory server is configured, the
     # hot WRITE tool delegates to it BEFORE any heavy local agent is built -
     # so N sessions behind one server never each load models / fight the file.
