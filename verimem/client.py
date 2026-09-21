@@ -1039,10 +1039,28 @@ class Memory:
         # mai-giudicati ESISTONO (6 NULL su 250 scritti in un giorno, 4 dei
         # quali con una source_signature) e il feed non li distingueva.
         # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
+        # T181 — accanto a CHI ha fermato il fatto, anche PERCHÉ. L'evento
+        # portava `layers`, `grounding_score`, `judged` e
+        # `withheld_despite_judge`, e nessuna traccia del dettaglio contestato:
+        # chi apre il journal dopo non poteva sapere quale numero o quale
+        # parola avesse fermato la scrittura senza rieseguire il gate sullo
+        # stesso testo — possibile solo avendo ancora il claim E la fonte.
+        #
+        # La stringa NON è nuova: `_reason_from_warnings` è la stessa che
+        # compone la ricevuta, e sceglie il layer bloccante di priorità più
+        # alta escludendo gli advisory. Il suffisso `_excerpt` NON è cosmetico:
+        # è ciò che fa tagliare il valore a `MAX_ESTRATTO` dentro
+        # `observability.emit`, dove il tetto è scritto una volta sola «e non
+        # nei chiamanti». Un nome senza quel suffisso porterebbe nel journal
+        # stringhe di lunghezza arbitraria.
+        _ragione = (_reason_from_warnings(warnings)
+                    if fact.status == "quarantined" else "")
         _emit_write(stored=True, status=str(fact.status),
                     fact_id=str(fact.id), topic=str(topic),
                     layers=_hit_layers, grounding_score=_gs_evt,
-                    judge_backend=getattr(gate, "judge", None))
+                    judge_backend=getattr(gate, "judge", None),
+                    **({"quarantined_reason_excerpt": _ragione}
+                       if _ragione else {}))
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
