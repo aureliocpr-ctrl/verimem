@@ -73,7 +73,11 @@ def _scrivi_isolato(tmp_path) -> tuple[subprocess.CompletedProcess, Path]:
     esito = subprocess.run(
         [sys.executable, "-m", "verimem.cli", "remember", CLAIM,
          "--topic", "banco/t181"],
-        cwd=RADICE, env=ambiente, capture_output=True, text=True, timeout=600,
+        cwd=RADICE, env=ambiente, capture_output=True, text=True,
+        # `encoding` accanto a `text=True`: senza, su Windows la lettura usa
+        # cp1252, il thread lettore muore sul primo byte che non sa decodificare
+        # e il canale torna None con il processo a 0 — misurato su #95 il 21/09.
+        encoding="utf-8", errors="replace", timeout=600,
     )
     return esito, journal
 
