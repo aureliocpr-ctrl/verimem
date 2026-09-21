@@ -1026,7 +1026,19 @@ class Memory:
             self._record_trust("admitted", layers=None, topic=topic)
         # layers in the flow event = which defense actually ACTED (same
         # attribution as the ledger): the Live Engine Room lights the real
-        # stage, not a generic box. Metadata only, never fact content.
+        # stage, not a generic box.
+        #
+        # ⚠️ QUESTA RIGA DICEVA «Metadata only, never fact content», e dal
+        # 2026-09-21 non è più vera alla lettera: quando una scrittura viene
+        # fermata l'evento porta anche `quarantined_reason_excerpt`, cioè il
+        # layer che ha agito più IL DETTAGLIO CONTESTATO — un numero, una
+        # parola, il frammento su cui il controllo è scattato. Serviva: senza,
+        # il journal diceva che un fatto era stato fermato e mai da che cosa.
+        #
+        # Quello che resta vero, ed è il confine: **la proposizione non entra**.
+        # Nel journal finisce la ragione del rifiuto, non il fatto rifiutato, e
+        # quella ragione è tagliata a `MAX_ESTRATTO` dal suffisso `_excerpt` —
+        # un campo di lunghezza limitata, non il testo che l'utente ha scritto.
         # `judged` accanto a `status`: senza, nel feed un fatto verificato
         # 99.9 e uno MAI GIUDICATO sono entrambi "ADMITTED" — cioè la
         # distinzione che questo prodotto vende sparisce proprio dalla
