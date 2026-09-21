@@ -729,7 +729,17 @@ def test_cli_digest_json_contract(tmp_path, monkeypatch):
     `TypeError` — lì i canali nascono già separati. `pyproject` non fissa una
     versione di click, quindi la cella deve reggere entrambe o diventa rossa
     su una macchina per la libreria che ci trova, non per il prodotto.
-    `r.stdout` si legge in tutti e due i casi.
+
+    E il ramo `except` non è la precauzione, è **la strada normale**: misurato
+    il 2026-09-21 su click 8.5.0 e 8.2.1 (typer 0.27.2, py3.13), `mix_stderr`
+    solleva `TypeError` e 8.5.0 è ciò che `pip` installa oggi in un ambiente
+    nuovo. Su quelle versioni `r.output` NON è `r.stdout`.
+
+    ⇒ SI LEGGE SEMPRE `r.stdout`, MAI `r.output`. Il primo è il canale dei
+    dati su entrambe le click; il secondo, su 8.1, è dati **più** diagnostica
+    mescolati, e chiamare JSON quell'impasto significa pretendere che il
+    prodotto non dica mai niente — basta una riga di log per far cadere la
+    cella, che è esattamente com'è cominciata questa storia.
     """
     import json as _json
 
