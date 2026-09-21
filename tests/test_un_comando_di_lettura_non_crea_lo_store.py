@@ -44,7 +44,15 @@ def _cli(*argomenti: str) -> subprocess.CompletedProcess:
     """Il comando vero, nel worktree di questo codice."""
     return subprocess.run(
         [sys.executable, "-m", "verimem.cli", *argomenti],
-        cwd=RADICE, capture_output=True, text=True, timeout=300,
+        cwd=RADICE, capture_output=True, text=True,
+        # ⚠️ `encoding` ACCANTO a `text=True`, e non è pignoleria: senza,
+        # la lettura usa la codifica di SISTEMA (cp1252 su Windows) e il
+        # thread lettore muore sul primo byte che non sa decodificare —
+        # «il processo esce 0 e il canale torna None», dice il prodotto nel
+        # docstring di `_proc_quiet`. È successo qui: su windows-latest la
+        # cella è morta con `returncode=0 stdout is None: True`, e la regola
+        # era scritta dal 3 settembre.
+        encoding="utf-8", errors="replace", timeout=300,
     )
 
 
