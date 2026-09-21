@@ -36,18 +36,20 @@ FONTE = ("Il collaudo della linea 3 si e' ultimato il 12 marzo con esito "
          "positivo e la linea e' stata approvata dalla commissione.")
 
 
-def _scoperta_a_porta_chiusa(dove) -> None:
-    """Un file di scoperta che punta a una porta che non risponde.
-
-    ⚠️ Porta 1: riservata e mai in ascolto. Non si tocca nessun daemon vero —
-    si scrive solo un file in uno store di prova.
-    """
-    dove.mkdir(parents=True, exist_ok=True)
-    (dove / "encode_service.json").write_text(json.dumps({
-        "pid": os.getpid(), "port": 1, "host": "127.0.0.1",
-        "model": "finto", "dim": 768, "started_at": 0, "token": "t",
-        "applies_window": False,
-    }), encoding="utf-8")
+# ⛔ NIENTE «SCOPERTA A PORTA CHIUSA»: NON FUNZIONA, e la prima stesura di
+# questo banco credeva di si'. `encode_service.DISCOVERY_PATH` e' FISSO nella
+# home — `Path.home() / ".engram" / "encode_service.json"` — e NON segue
+# `HIPPO_DATA_DIR`: un file scritto nello store di prova non viene mai letto,
+# e la cella misurava un regime che non aveva prodotto lei.
+# Misurato il 2026-09-21: con delega richiesta e «porta chiusa» scritta nello
+# store, la ricevuta torna `judged_by=daemon, moat=passed` — cioe' ha parlato
+# col daemon VERO, non con la porta finta.
+# ⇒ Qui il regime si forza con l'unica leva che agisce davvero e che non tocca
+# il daemon di nessuno: `HIPPO_ENCODE_DELEGATE_ONLY`. Scrivere nel file della
+# home sarebbe l'altra strada, ed e' esclusa: quel file e' del daemon condiviso
+# di tutti.
+# 📌 E il fatto che la scoperta non sia isolata per store e' un reperto suo,
+# gemello di T91 («le variabili dello store non isolano tutto»).
 
 
 def _cli(tmp_path, *argomenti: str, delega: bool) -> str:
@@ -79,8 +81,12 @@ def _ricevuta(testo: str) -> dict:
 
 
 def test_se_giudica_il_processo_la_ricevuta_dice_perche(tmp_path):
-    """RED: oggi `judged_by` dice «in-process» e nient'altro."""
-    _scoperta_a_porta_chiusa(tmp_path)
+    """RED: oggi `judged_by` dice «in-process» e nient'altro.
+
+    Il regime si forza con `HIPPO_ENCODE_DELEGATE_ONLY=0`: la delega non
+    e' richiesta, quindi giudica il processo. E' l'unica leva che agisce
+    senza toccare il file di scoperta condiviso.
+    """
     r = _ricevuta(_cli(tmp_path, "remember", CLAIM, "--source", FONTE,
                        "--topic", "prova/t179", "--json", delega=False))
     chi = str(r.get("judged_by") or "")
@@ -96,7 +102,6 @@ def test_se_giudica_il_processo_la_ricevuta_dice_perche(tmp_path):
 
 def test_il_giudizio_non_cambia(tmp_path):
     """NON-REGRESSIONE: la PR fa parlare la ricevuta, non sposta il verdetto."""
-    _scoperta_a_porta_chiusa(tmp_path)
     r = _ricevuta(_cli(tmp_path, "remember", CLAIM, "--source", FONTE,
                        "--topic", "prova/t179b", "--json", delega=False))
     assert r.get("esito") in ("ammesso", "quarantinato", "respinto"), r

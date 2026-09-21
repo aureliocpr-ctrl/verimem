@@ -889,21 +889,8 @@ def esecutore_dell_ultimo_giudizio() -> str | None:
     return getattr(_esecutore, "chi", None)
 
 
-def _registra_esecutore(chi: str | None, perche: str | None = None) -> None:
+def _registra_esecutore(chi: str | None) -> None:
     _esecutore.chi = chi
-    _esecutore.perche = perche
-
-
-def perche_ha_giudicato() -> str | None:
-    """La ragione per cui ha giudicato CHI ha giudicato, o None.
-
-    Registrata NELL'ISTANTE della decisione, che e' l'unico momento in cui e'
-    vera: `judge._scorer` si popola quando il modello finisce di caricare,
-    quindi la stessa condizione letta dopo puo' dire un'altra cosa. Serve a
-    far dire alla ricevuta PERCHE' ha giudicato il processo e non il daemon —
-    oggi dice solo CHI, che per chi usa il prodotto e' un'etichetta.
-    """
-    return getattr(_esecutore, "perche", None)
 
 
 def _gate_via_daemon(pairs, *, info=None,
@@ -1048,14 +1035,7 @@ def try_local_score(source: str, fact: str, *,
     # prodotto esiste per non fare». Il degrado resta quello di sempre:
     # daemon assente o muto -> None -> warm in background e il chiamante
     # fa esattamente cio' che faceva prima.
-    # ⛔ LE DUE CONDIZIONI SI LEGGONO QUI, UNA VOLTA SOLA: sono lo stato
-    # esatto su cui il ramo viene scelto, e rilette dopo direbbero altro —
-    # `_scorer` si popola quando il modello finisce di caricare. Il
-    # comportamento non cambia di una virgola: e' lo stesso `if` con le stesse
-    # due domande, solo chieste una volta e ricordate per poterle raccontare.
-    _scorer_gia_in_casa = judge._scorer is not None
-    _delega_richiesta = _delegate_only()
-    if not _scorer_gia_in_casa and _delega_richiesta:
+    if judge._scorer is None and _delegate_only():
         # LA FINESTRA LA APPLICA IL DAEMON, se sa farlo. Costruire la coppia
         # gia' ridotta costa al server 1292 MB e 31,7 s di tokenizzatore per
         # una domanda che poi delega (misurato alla porta il 2026-09-12).
@@ -1097,12 +1077,7 @@ def try_local_score(source: str, fact: str, *,
     # laundering it into "no judge -> admit" (opus re-review 2026-07-18, finding B:
     # this is the default out-of-the-box path, where the earlier fix did not reach).
     score = judge.score(source, fact, focus_budget=focus_budget)
-    _registra_esecutore("in-process", perche=(
-        "lo scorer era gia' caricato in questo processo, quindi la domanda "
-        "non e' stata girata al daemon"
-        if _scorer_gia_in_casa else
-        "la delega al daemon non e' richiesta in questo processo "
-        "(HIPPO_ENCODE_DELEGATE_ONLY non attivo)"))
+    _registra_esecutore("in-process")
     return score, judge.threshold
 
 
