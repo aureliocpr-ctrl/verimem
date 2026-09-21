@@ -4500,8 +4500,15 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         "judge": _judge_of_record_dict(judge),
         "score": score,
         "threshold": thr,
+        # Il margine è una proprietà CALCOLATA, e si rende com'è: la ricevuta
+        # porta `score` e `threshold` interi, e chi rifà la sottrazione deve
+        # ritrovare questo campo. Arrotondato a quattro decimali non lo
+        # ritrovava, e il numero tolto non era recuperabile da nessuna parte:
+        # misurato il 2026-09-21, la porta MCP non espone affatto `margine`,
+        # quindi lì il valore pieno moriva qui. Il posto dove si sceglie
+        # quante cifre mostrare è chi STAMPA, non chi calcola.
         "margin": (None if score is None or thr is None
-                   else round(float(score) - float(thr), 4)),
+                   else float(score) - float(thr)),
         "reason": reason,
         "confidence_tier": _confidence_tier(score, judge, thr),
     }
