@@ -49,6 +49,8 @@ from pathlib import Path
 
 import pytest
 
+from tests._esito import esito as _esito_del_processo
+
 RADICE = Path(__file__).resolve().parents[1]
 
 #: Un self-claim senza fonte: lo ferma lo screen lessicale, senza chiamare il
@@ -98,8 +100,18 @@ def _eventi_di_scrittura(journal: Path) -> list[dict]:
 
 @pytest.fixture(scope="module")
 def scrittura_trattenuta(tmp_path_factory):
+    """⚠️ L'ESITO DEL PROCESSO SI DICHIARA PRIMA DI GUARDARE IL JOURNAL.
+
+    Un processo morto lascia un journal a metà, e ogni cella qui sotto
+    riferirebbe «nessun evento» invece di «il comando è morto»: il fallimento
+    del banco maschererebbe il fallimento che il banco esiste per mostrare.
+    `atteso=0` è misurato, non supposto — la scrittura di un self-claim viene
+    trattenuta dal gate ma il comando esce comunque 0 (returncode 0,
+    len(stdout) 1390, len(stderr) 0, 21/09).
+    """
     tmp_path = tmp_path_factory.mktemp("t181")
     esito, journal = _scrivi_isolato(tmp_path)
+    _esito_del_processo(esito, atteso=0)
     return esito, _eventi_di_scrittura(journal)
 
 
