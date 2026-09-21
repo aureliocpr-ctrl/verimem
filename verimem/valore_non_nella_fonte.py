@@ -45,6 +45,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 
 from .quantity_match import (
     _QUANT_RE,
@@ -250,11 +251,24 @@ def _valori_da_token_che_la_fonte_contiene(proposition: str, source: str) -> set
 #: che arriva dall'esterno questa e' una `py/polynomial-redos` — un claim con
 #: migliaia di zeri consecutivi fa lavorare il motore in tempo polinomiale, e il
 #: gate legge testo di cui non controlla la forma. I limiti coprono ogni numero
-#: reale (una mantissa di 15 cifre, un esponente di 4: `10^9999`) e rendono il
+#: reale (una mantissa di 15 cifre, un esponente di 4) e rendono il
 #: costo lineare. Misurato: l'avviso CodeQL alto sparisce e le celle del banco
 #: non cambiano di una cifra.
 _SCIENTIFICA_RE = re.compile(
-    r"(?<![\w.])(\d{1,15}(?:[.,]\d{1,15})?)[ 	]{0,4}[x×*][ 	]{0,4}10\^(-?\d{1,4})")
+#: ⚠️ I QUANTIFICATORI SONO SALITI DA 15 A 40, e la ragione e' che il tetto
+#: vero ora sta ALTROVE. Il 15 era stato scelto per chiudere una `polynomial
+#: ReDoS` («coprono ogni numero reale»), ma tagliava mantisse legittime: una
+#: misura con 18 cifre decimali non veniva nemmeno riconosciuta. Il costo resta
+#: lineare perche' il quantificatore resta LIMITATO, e cio' che protegge il
+#: confronto e' `_CIFRE_MASSIME` sul RISULTATO, dove il numero entra davvero.
+    r"(?<![\w.])(\d{1,40}(?:[.,]\d{1,40})?)[ 	]{0,4}[x×*][ 	]{0,4}10\^(-?\d{1,4})")
+
+
+#: Quante cifre puo' avere il numero ESPANSO. Non e' una stima: e' il numero che
+#: entra nel confronto claim-fonte, e oltre questa lunghezza non e' piu' una
+#: misura che qualcuno ha scritto in una perizia — `10^9999` darebbe diecimila
+#: cifre. Il valore piu' lungo osservato nei nostri banchi ha 18 cifre.
+_CIFRE_MASSIME = 40
 
 
 def _espandi_notazione_scientifica(testo: str) -> str:
@@ -274,14 +288,32 @@ def _espandi_notazione_scientifica(testo: str) -> str:
         return testo
 
     def _sost(m: re.Match) -> str:
+        # ⚠️ ARITMETICA ESATTA, E IL PERCHE' NON E' L'ELEGANZA. Con `float` il
+        # prodotto INVENTAVA un valore sopra le 15 cifre significative:
+        # `123456789012345 x 10^3` usciva `123456789012344992`. Un valore
+        # mancante si nota — il layer accusa e chi legge va a guardare — un
+        # valore inventato no: il confronto claim-fonte avviene contro un numero
+        # che non sta in nessuno dei due testi. `Decimal.scaleb` sposta la
+        # virgola senza toccare le cifre.
         try:
-            valore = float(m.group(1).replace(",", ".")) * (10 ** int(m.group(2)))
-        except (ValueError, OverflowError):   # pragma: no cover — regex ristretta
+            valore = Decimal(m.group(1).replace(",", ".")).scaleb(int(m.group(2)))
+        except (ValueError, ArithmeticError):  # pragma: no cover — regex ristretta
             return m.group(0)
-        # `%g` scriverebbe 1500 come `1500` ma 0.0004 come `0.0004` e 1e+20
-        # come `1e+20`, reintroducendo la notazione che stiamo togliendo.
-        intero = int(valore)
-        return str(intero) if valore == intero else repr(valore)
+        # ⚠️ IL TETTO STA SUL RISULTATO, non sul tipo. Con l'aritmetica esatta
+        # `10^9999` si espanderebbe DAVVERO, in diecimila cifre che finirebbero
+        # nel testo dato al confronto. Prima non succedeva per un motivo
+        # accidentale (il float andava in overflow) e il commento di questo
+        # modulo lo raccontava al contrario — «un esponente di 4: 10^9999» —
+        # mentre `1,5 x 10^9999` non e' mai stato espanso. Ora il limite e'
+        # esplicito, e oltre il limite il ripiego resta il testo INTATTO.
+        scritto = format(valore, "f")
+        if len(scritto.lstrip("-").replace(".", "")) > _CIFRE_MASSIME:
+            return m.group(0)
+        # `%g` scriverebbe 1500 come `1500` ma 1e+20 come `1e+20`,
+        # reintroducendo la notazione che stiamo togliendo; `format(…, "f")` no.
+        if "." in scritto:
+            scritto = scritto.rstrip("0").rstrip(".")
+        return scritto or "0"
 
     return _SCIENTIFICA_RE.sub(_sost, testo)
 
