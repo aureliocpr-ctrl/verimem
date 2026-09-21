@@ -286,6 +286,57 @@ def _espandi_notazione_scientifica(testo: str) -> str:
     return _SCIENTIFICA_RE.sub(_sost, testo)
 
 
+#: Le estensioni che fanno di un token un NOME DI FILE. Sta qui e in nessun
+#: altro posto: una lista scritta due volte diverge, e su questo prodotto e' gia'
+#: successo tre volte in due giorni con una soglia. Il banco la LEGGE da qui
+#: invece di ricopiarla, e prova ogni voce.
+ESTENSIONI_DI_FILE = frozenset({
+    "md", "py", "txt", "json", "yml", "yaml", "toml", "db", "log", "csv",
+    "jsonl",
+})
+
+#: `00-ESAME.md` · `08-i-656-mb-le-quattro-strade.md` · `docs/stato-reale/77-x.md`.
+#: Il token INTERO, non la sua testa: in «08-i-656-mb» il `656` sta nel titolo
+#: quanto lo `08`, e con l'unita' attaccata verrebbe letto come una grandezza.
+#: ⚠️ NIENTE REGEX COSTRUITA, e la ragione e' un carattere INVISIBILE: la prima
+#: versione chiudeva il pattern con un `\b` dentro una stringa non raw, e quel
+#: `\b` e' diventato un BACKSPACE (`\x08`) — la regex cercava un carattere di
+#: controllo e non matchava mai. `print` del pattern non lo mostrava, `repr` si'.
+#: Il riconoscimento e' per TOKEN: nessun backtracking e nessun ReDoS (questo
+#: modulo ne ha gia' pagato uno il 20/09), e la lista resta in un posto solo.
+def _e_un_nome_di_file(token: str) -> bool:
+    """`00-ESAME.md` si', `README.md` no (niente da escludere), `22` no."""
+    if "." not in token or not any(c.isdigit() for c in token):
+        return False
+    coda = token.rsplit(".", 1)[-1].strip(".,;:!?)\"'").lower()
+    return coda in ESTENSIONI_DI_FILE
+
+
+def _senza_i_nomi_di_file(testo: str) -> str:
+    """Il testo con i nomi di file sostituiti da un segnaposto.
+
+    ⚠️ IL PERIMETRO, e la ragione per cui la cura sta QUI e non in
+    `extract_quantities`: quel parser lo usano sei moduli del gate, e insegnargli
+    i nomi di file propagherebbe la conversione a tutti in silenzio — la stessa
+    ragione gia' scritta sopra per la notazione scientifica. Qui si toglie una
+    LETTURA al confronto claim-fonte, non una capacita' al parser, e il banco ha
+    una cella che diventa rossa il giorno in cui questa cura si sposta di modulo.
+
+    IL DIFETTO, misurato sullo store il 21/09: quattro fatti VERI col giudice fra
+    99,69 e 99,98 trattenuti perche' il numero del nome di un DOCUMENTO non sta
+    nella fonte — `03-cose-spente.md` accusava `03`, `00-ESAME.md` accusava `00`.
+    La provenienza e' provata togliendo il nome dal claim: l'accusa sparisce.
+    Raggio sul corpus (18 285 fatti): 134 letture cambiano, 0,73%, di cui 10 su
+    fatti trattenuti. Una versione piu' larga — «un token con una barra e una
+    cifra» — ne cambiava 4845 perche' prendeva `4/5` e `F#8/F#9`: percio'
+    l'esclusione e' legata alla SOLA estensione nota.
+    """
+    if not testo or "." not in testo:
+        return testo
+    return " ".join("<FILE>" if _e_un_nome_di_file(t) else t
+                    for t in testo.split())
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -300,6 +351,11 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     """
     if not proposition or not source:
         return []
+    # `00-ESAME.md` NON afferma che qualcosa vale zero: il numero e' nel TITOLO.
+    # Si toglie da entrambi i testi, perche' un nome di file nella FONTE non
+    # deve nemmeno perdonare un valore che il claim afferma davvero.
+    proposition = _senza_i_nomi_di_file(proposition)
+    source = _senza_i_nomi_di_file(source)
     # `1,5 x 10^3` E `1500` SONO LO STESSO NUMERO, e il layer non lo sapeva.
     # Misurato il 02/09 sul banco T5.1: sulla notazione scientifica il gate
     # fermava 6 VERI su 6, e in TRE casi a fermarli era questo layer DA SOLO
