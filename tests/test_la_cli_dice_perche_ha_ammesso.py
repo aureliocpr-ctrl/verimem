@@ -84,21 +84,17 @@ def _cli(tmp_path, *argomenti: str) -> str:
     env["ENGRAM_EVENT_LOG"] = str(tmp_path / "eventi.jsonl")
     r = subprocess.run([sys.executable, "-m", "verimem.cli", *argomenti],
                        capture_output=True, text=True, timeout=900, env=env)
-    # ⚠️ `atteso=None` E IL PERCHE', perche' un esito non guardato e' come non
-    # averlo: il comando puo' USCIRE CON 1 DOPO AVER STAMPATO la ricevuta —
-    # riprodotto il 2026-09-21 con 392 byte su stdout e
-    # «AssertionError: Artifact of type=precompile already registered in
-    # mega-cache artifact factory», che e' un errore di torch in uscita e NON
-    # del prodotto. E' il ticket T182 e si cura li'; qui si misura il
-    # CONTENUTO della riga, che c'e'. Non si maschera: `esito` continua a
-    # unire stdout e stderr e a dire se il processo e' morto, e se un giorno
-    # T182 chiude questa riga torna a `atteso=0`.
-    return esito(r, atteso=None)
+    # ⚠️ L'ESITO SI GUARDA, e da oggi si pretende ZERO: T182 e' chiusa —
+    # era `USERNAME` assente dall'ambiente ridotto qui sopra, che faceva
+    # scrivere due processi sotto lo stesso nome di cache. Un comando che
+    # stampa la ricevuta e POI muore non deve piu' passare di qui: chi lo
+    # chiama da uno script si ferma lo stesso.
+    return esito(r, atteso=0)
 
 
 def _estrai(testo: str) -> str:
     """Il json dentro un'uscita che porta anche avvisi, telemetria e — quando
-    si presenta T182 — un traceback con graffe sue.
+    puo' presentarsi, un traceback con graffe sue.
 
     ⚠️ Non si prende «dalla prima graffa all'ultima»: con il traceback in
     mezzo quel taglio produce un pezzo che non e' json, e l'errore che si
