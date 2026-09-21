@@ -722,6 +722,14 @@ def test_cli_digest_json_contract(tmp_path, monkeypatch):
     stderr — e una pipe verso `jq` funziona. Era la cella a mischiarli, e lo si
     è visto solo quando la dichiarazione dell'apertura dello store ha aggiunto
     una riga di log: il difetto non è nato allora, è diventato visibile allora.
+
+    ⚠️ IL RUNNER SI COSTRUISCE IN DUE MODI PERCHÉ LE DUE CLICK NON SONO LA
+    STESSA: su 8.1 `mix_stderr` esiste e va messo a `False` per separare i
+    canali; su 8.2 quel parametro è stato tolto e passarlo solleva
+    `TypeError` — lì i canali nascono già separati. `pyproject` non fissa una
+    versione di click, quindi la cella deve reggere entrambe o diventa rossa
+    su una macchina per la libreria che ci trova, non per il prodotto.
+    `r.stdout` si legge in tutti e due i casi.
     """
     import json as _json
 
@@ -729,7 +737,10 @@ def test_cli_digest_json_contract(tmp_path, monkeypatch):
 
     from verimem.cli import app
     _iso_cli_env(tmp_path, monkeypatch)
-    runner = CliRunner(mix_stderr=False)
+    try:
+        runner = CliRunner(mix_stderr=False)
+    except TypeError:          # click >= 8.2: i canali sono già separati
+        runner = CliRunner()
     runner.invoke(app, ["save", "First checkpoint of the run.",
                         "-t", "project/alpha"])
     r = runner.invoke(app, ["digest", "--hours", "1", "--json"])
