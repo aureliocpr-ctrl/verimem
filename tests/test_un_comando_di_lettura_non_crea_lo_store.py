@@ -107,13 +107,25 @@ def test_lo_stesso_comando_su_uno_store_vero_continua_a_funzionare(tmp_path) -> 
     mem.add("Il magazzino contiene 100 pezzi.", topic="banco/porta", ground=False)
 
     esito = _cli("facts", "list", "--db", str(percorso))
+    # ⚠️ `capture_output=True` promette due stringhe, e su windows-latest/py3.12
+    # questa cella è morta con `TypeError: argument of type 'NoneType' is not
+    # iterable` — cioè `stdout` era None, che quella promessa esclude. Finché
+    # non si sa perché, la cella non deve esplodere su un `in`: deve DIRE che
+    # cosa ha ricevuto, altrimenti il prossimo giro costa un'ora di CI per
+    # riscoprire lo stesso nulla.
+    uscita = esito.stdout if esito.stdout is not None else ""
+    diagnostica = (f"returncode={esito.returncode} "
+                   f"stdout is None: {esito.stdout is None} "
+                   f"len(stdout)={len(uscita)} "
+                   f"stderr={(esito.stderr or '')[-400:]!r}")
 
     assert esito.returncode == 0, (
-        f"il comando non legge più uno store che esiste: EXIT="
-        f"{esito.returncode}\n--- stdout ---\n{esito.stdout[-600:]}")
-    assert "100 pezzi" in esito.stdout or "magazzino" in esito.stdout, (
+        f"il comando non legge più uno store che esiste. {diagnostica}\n"
+        f"--- stdout ---\n{uscita[-600:]}")
+    assert "100 pezzi" in uscita or "magazzino" in uscita, (
         f"lo store esiste e ha un fatto dentro, ma il comando non lo mostra: "
-        f"la cura ha rotto la lettura.\n--- stdout ---\n{esito.stdout[-800:]}")
+        f"la cura ha rotto la lettura, oppure l'uscita non è arrivata affatto. "
+        f"{diagnostica}\n--- stdout ---\n{uscita[-800:]}")
 
 
 # ------------------------------------------------------- controllo negativo --
