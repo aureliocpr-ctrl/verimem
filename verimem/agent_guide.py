@@ -26,7 +26,8 @@ a claim the source simply does not mention is admitted 8/10 IT, 9/10 EN
 a FIGURE is almost always stopped, the same detail without one almost never.
 The contradiction case is closer to the promise but not at it — a swapped
 entity gets through 1/10 IT and 2/10 EN, a contradiction that takes an
-inference 3/10 IT. The gap is tracked in RELEASE_GATE.md until it is closed.
+inference 3/10 IT. The gap is tracked as G0 in RELEASE_GATE.md until it is
+closed.
 
 Tool names below are written verimem_*. That prefix is what you get when the
 server runs with VERIMEM_TOOL_NAMESPACE=verimem (the wiring example does set
@@ -47,7 +48,8 @@ can rely on it:
 - WITH a `source`: the entailment moat, the strong check — the fact is admitted
   only if the source TEXT actually supports it. TODAY that holds for a source
   that contradicts the fact; a fact the source does not mention still gets
-  through most of the time (numbers at the top, gap tracked in RELEASE_GATE.md).
+  through most of the time (numbers at the top, gap tracked as G0 in
+  RELEASE_GATE.md).
   `verified_by` records WHO vouches for a fact and does not run this check;
   pass the source text to get it.
 - WITHOUT a source: there is nothing to check the fact against, so the moat does
