@@ -1,7 +1,8 @@
 """Verimem — verified persistent memory for LLM agents.
 
-Writes pass an admission gate; a fact its source does not support is
-QUARANTINED — stored, but kept out of default recall.
+Writes pass an admission gate; a claim its source openly contradicts is
+QUARANTINED — stored, but kept out of default recall. A claim the source merely
+does not mention is usually admitted; the measured numbers are in the README.
 
 Architecture: hippocampal-cortical inspired learning loop.
 - Wake: ReAct execution, episodic recording.

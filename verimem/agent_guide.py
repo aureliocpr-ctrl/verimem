@@ -17,8 +17,13 @@ from __future__ import annotations
 #: only — each tool's exact arguments live in its own schema.
 VERIMEM_AGENT_GUIDE = """\
 Verimem is a VERIFIED-memory server for AI agents: writes pass an anti-confab
-gate, and a fact its source does not support is QUARANTINED — stored, but kept
-OUT of default recall, so you never get it back as truth.
+gate, and a claim its source OPENLY CONTRADICTS is QUARANTINED — stored, but
+kept OUT of default recall, so you never get it back as truth. That is narrower
+than "a claim its source does not support", and the gap is measured: on short
+sources a claim the source simply does NOT MENTION is admitted 8/10 in Italian
+and 9/10 in English. The contradiction case has edges too — a swapped entity
+gets through 1/10 IT and 2/10 EN, a contradiction that takes an inference 3/10
+in Italian. The full table and the benches behind it are in the README.
 
 Tool names below are written verimem_*. That prefix is what you get when the
 server runs with VERIMEM_TOOL_NAMESPACE=verimem (the wiring example does set
@@ -36,8 +41,10 @@ can rely on it:
   screen is not literally universal, and a self-claim written that way is stored
   as `model_claim` with no lexical warning at all. The moat is UNAFFECTED: with
   a source it runs in both modes, so a source is what protects you either way.
-- WITH a `source`: the entailment moat, the strong check — the fact is admitted
-  only if the source TEXT actually supports it. `verified_by` records WHO
+- WITH a `source`: the entailment moat, the strong check — the fact is judged
+  against the source TEXT, and a fact the source contradicts is quarantined. A
+  fact the source does not mention usually passes (numbers above), so a source
+  protects you from contradiction, not from omission. `verified_by` records WHO
   vouches for a fact and does not run this check; pass the source text to get
   it.
 - WITHOUT a source: there is nothing to check the fact against, so the moat does

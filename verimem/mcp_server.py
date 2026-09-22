@@ -344,9 +344,11 @@ def _fatti_per_il_recupero(
         agent, *, limit: int = 10000) -> tuple[list, int, str | None]:
     """I fatti che una porta di RECUPERO puo' servire, piu' quanti ne ha tolti.
 
-    T49 (2026-09-09). Il server dichiara a ogni client che si collega: «a fact
+    T49 (2026-09-09). Il server dichiarava a ogni client che si collega: «a fact
     its source does not support is QUARANTINED — stored, but kept OUT of
-    default recall, so you never get it back as truth». Misurato dalla porta,
+    default recall, so you never get it back as truth» — citata com'era, perche'
+    e' la riga che T49 ha misurato; la sua PRIMA meta' prometteva piu' del
+    README ed e' stata allineata da T200. Misurato dalla porta,
     NON era vero: nove ingressi rendevano un fatto quarantenato a grounding
     0,25 — `hippo_oracle_query`, `hippo_chain_facts`, `hippo_prompt_skeleton`,
     `hippo_cross_agent_consensus`, `hippo_forward_chain` (che lo usa come
