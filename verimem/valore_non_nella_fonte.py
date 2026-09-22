@@ -16,12 +16,22 @@ punteggio più alto del sistema.
 
 LA DIAGNOSI HA UN INDIRIZZO PRECISO::
 
-    «Nessun rilevatore L1 riceve la fonte. Il confronto claim↔fonte esiste in
-     UN SOLO posto: dentro il cross-encoder, che è esattamente quello che
-     sbaglia su questa classe.
-        L1  vede il claim, NON la fonte
+    «Il confronto claim↔fonte esiste in UN SOLO posto che DECIDE: dentro il
+     cross-encoder, che è esattamente quello che sbaglia su questa classe.
+        L1  vede il claim; della fonte non guarda i VALORI
         L4  vede claim + fonte, ma confonde PLAUSIBILE con IMPLICATO
-     ⇒ manca un controllo DETERMINISTICO claim↔fonte»
+     ⇒ manca un controllo DETERMINISTICO claim↔fonte sui numeri»
+
+⏱️ LA DIAGNOSI È DATATA, e una riga di essa è scaduta. Diceva «nessun
+rilevatore L1 riceve la fonte»: vero quando è stata scritta il 2026-08-05,
+FALSO dal 2026-09-20. Oggi `l1_completion_detector` la riceve in due punti —
+`_la_fonte_e_solo_l_eco` (riga 185, e alla 214 confronta i due testi
+normalizzati) e `_il_participio_e_nella_fonte` (riga 217). Quello che resta
+vero, ed è la ragione di questo modulo, è più stretto: quei due controlli
+guardano le PAROLE, non i valori numerici, quindi un dettaglio inventato
+passa comunque. Un'affermazione di assenza invecchia da sola: questa è stata
+corretta appena un pari ha misurato il contrario, non quando qualcuno se l'è
+ricordata.
 
 e il numero che la rende strutturale: il 91,8% dei verdetti del moat sta
 agli estremi (1324 su 1673 sopra 99) — **nessuna soglia può separare**, perché
