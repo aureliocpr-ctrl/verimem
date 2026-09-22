@@ -44,10 +44,30 @@ def mem(tmp_path):
 
 
 def _gate_che_risponde(monkeypatch, *, action, warnings, score):
+    """Il giudice finto va messo DOVE il giudice viene chiamato.
+
+    ⚠️ T192. Questo helper sostituiva solo `anti_confab_gate.
+    run_validation_gate`, e bastava finche' `promote_chunk_to_fact` chiamava
+    il gate per conto suo. Ora il giudice gira una volta sola dentro
+    `Memory.add()`, e `client.py` importa quella funzione **in cima al
+    modulo** (`from .anti_confab_gate import … run_validation_gate`, riga 31):
+    `client.run_validation_gate` e' quindi un riferimento SEPARATO, che un
+    patch sul modulo d'origine non raggiunge.
+
+    E' anche il motivo per cui il doppio giudizio non si vedeva da qui: il
+    banco sostituiva il primo giudice e misurava il secondo, che rispondeva
+    per conto proprio — «assert 'quarantined' == 'model_claim'» su un gate
+    che, secondo il mock, aveva detto `persist`.
+
+    Non cambia cosa presidia questo banco: cambia solo che il finto va messo
+    su **entrambi** i nomi, perche' entrambi sono strade allo stesso giudice.
+    """
     def _finto(**kw):
         return GateResult(action=action, warnings=list(warnings), grounding_score=score,
                           threshold=40.0, judge="stub")
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _finto)
+    import verimem.client as _client
+    monkeypatch.setattr(_client, "run_validation_gate", _finto)
 
 
 def _quarantined_by(mem, fact_id: str):

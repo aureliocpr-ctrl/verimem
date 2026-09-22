@@ -752,6 +752,26 @@ class Memory:
         # writer_role='external_content'») era irraggiungibile: sul corpus
         # vivo, external_content = 0 fatti su 8217.
         writer_role: str | None = None,
+        #: T192 — DI CHI E' QUESTA PROPOSIZIONE, per il GATE soltanto.
+        #: `writer_role` faceva due mestieri con un valore solo: dice al gate
+        #: di chi e' il claim (la chiamata qui sotto) e resta scritto sul
+        #: fatto come TIMBRO (`fact.writer_role`, piu' in basso). Finche'
+        #: viaggiavano insieme, una via che scrive testo altrui sotto il
+        #: proprio nome non aveva modo di dirlo: la promozione di un chunk
+        #: timbra `document_promote` — e un banco lo PRETENDE, con la sua
+        #: ragione (`test_document_promote.py:51`, «no trusted-hook bypass»)
+        #: — mentre al gate deve dire che quel testo e' di un documento, non
+        #: dell'agente che si vanta. L'unico modo di dirlo era cambiare il
+        #: timbro, cioe' perdere l'informazione su CHI ha scritto per poter
+        #: dire DI CHI e' il testo.
+        #: ⚠️ NON E' UNA LEVA NUOVA PER CHI ARRIVA DA FUORI, ed e' la sola
+        #: ragione per cui si puo' aggiungere: la porta MCP chiama `add()`
+        #: con parametri ESPLICITI (`topic`, `verified_by`, `source`,
+        #: `asserted_at`), mai con `**arguments`, e questo non e' fra quelli.
+        #: Chi e' gia' in-process puo' passare `writer_role` direttamente, che
+        #: e' una leva strettamente piu' forte — stesso ragionamento con cui
+        #: `provenance_trusted=True` vive qui e non sul canale MCP.
+        gate_writer_role: str | None = None,
         #: 1b.3 — LA PROVENIENZA PUNTUALE, per le porte che ce l'hanno.
         #: La promozione di un chunk porta una citazione verificabile
         #: (`file:<doc>:<start>-<end>`) e la teneva solo perche' costruiva il
@@ -844,7 +864,9 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
             narrative_l1_skip=meta_narrative,
-            writer_role=writer_role,
+            # T192: al gate va DI CHI E' il testo, al fatto va CHI l'ha
+            # scritto. Senza `gate_writer_role` si comportano come prima.
+            writer_role=gate_writer_role or writer_role,
             # Superficie in-process (SDK/CLI): chi arriva qui puo' comunque
             # passare validate="off", una leva strettamente piu' forte. Il
             # canale MCP NON deve inoltrarlo — presidio in
