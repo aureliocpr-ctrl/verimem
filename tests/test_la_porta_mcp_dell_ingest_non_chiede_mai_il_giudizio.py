@@ -48,7 +48,14 @@ def _oracolo(chiamate: list[tuple[str, str]]):
     """Il giudice perfetto: registra ogni domanda e boccia cio' che il dialogo
     non dice. Se la porta accende il moat, l'inventato finisce quarantinato."""
 
-    def _grounds(dialogue: str, proposition: str):
+    def _grounds(dialogue: str, proposition: str, **_extra):
+        # `**_extra`: questo è un DOPPIO della funzione vera, e la funzione vera
+        # ha acquisito un argomento (`banda`) che a questa cella non interessa.
+        # Un doppio con la firma copiata a mano fallisce con TypeError appena il
+        # prodotto cresce di un parametro — e il rosso che ne esce parla del
+        # doppio, non del comportamento che la cella difende (la porta chiede o
+        # non chiede il giudizio). Ignorare gli argomenti in più tiene il
+        # presidio sul suo mestiere.
         chiamate.append((dialogue[:20], proposition))
         return (proposition != INVENTATO), (0.0 if proposition == INVENTATO else 99.0)
 
