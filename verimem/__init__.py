@@ -3,7 +3,8 @@
 Writes pass an admission gate; a fact its source does not support is
 QUARANTINED — stored, but kept out of default recall. That is the contract; today
 it has a measured gap — a claim the source simply does not mention is admitted
-8/10 IT, 9/10 EN (README) — tracked in RELEASE_GATE.md until it is closed.
+8/10 IT, 9/10 EN (README figure, published 2026-08-26 in c62da996) — tracked in
+RELEASE_GATE.md until it is closed.
 
 Architecture: hippocampal-cortical inspired learning loop.
 - Wake: ReAct execution, episodic recording.

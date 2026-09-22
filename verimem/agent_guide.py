@@ -21,8 +21,10 @@ gate, and a fact its source does not support is QUARANTINED — stored, but kept
 OUT of default recall, so you never get it back as truth.
 That is the contract, and TODAY it has a measured gap you should know about:
 a claim the source simply does not mention is admitted 8/10 IT, 9/10 EN
-(README, measured on short sources through the public `remember --source`
-port). The contradiction case is closer to the promise but not at it — a swapped
+(README figure, published 2026-08-26 in c62da996; short sources, public
+`remember --source` port). Read it as two halves: an added detail that carries
+a FIGURE is almost always stopped, the same detail without one almost never.
+The contradiction case is closer to the promise but not at it — a swapped
 entity gets through 1/10 IT and 2/10 EN, a contradiction that takes an
 inference 3/10 IT. The gap is tracked in RELEASE_GATE.md until it is closed.
 

@@ -346,10 +346,7 @@ def _fatti_per_il_recupero(
 
     T49 (2026-09-09). Il server dichiara a ogni client che si collega: «a fact
     its source does not support is QUARANTINED — stored, but kept OUT of
-    default recall, so you never get it back as truth». E' il contratto, e
-    resta; da T200 gli sta accanto il limite misurato della sua PRIMA meta'
-    (un claim che la fonte non menziona entra 8/10 IT, 9/10 EN, README), mentre
-    questa funzione cura la SECONDA — «kept OUT of default recall». Misurato dalla porta,
+    default recall, so you never get it back as truth». Misurato dalla porta,
     NON era vero: nove ingressi rendevano un fatto quarantenato a grounding
     0,25 — `hippo_oracle_query`, `hippo_chain_facts`, `hippo_prompt_skeleton`,
     `hippo_cross_agent_consensus`, `hippo_forward_chain` (che lo usa come
