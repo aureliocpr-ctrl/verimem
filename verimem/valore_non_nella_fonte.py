@@ -235,7 +235,7 @@ def _dichiara_un_assenza(testo: str) -> bool:
 # viene perdonata e resta fermata — c'è un controllo positivo che lo pin-a.
 #
 # 📌 E sta QUI e non in `extract_quantities`: è la stessa scelta già dichiarata
-# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i sei moduli
+# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i nove moduli
 # del gate che lo leggono; qui l'equivalenza vive solo nel confronto.
 _TOKEN_CON_VERSIONE = re.compile(
     r"(?<![\w.-])[A-Za-z][\w.]*-\d+(?:\.\d+)+(?![\w-])")
@@ -358,7 +358,13 @@ def _senza_i_nomi_di_file(testo: str) -> str:
     """Il testo con i nomi di file sostituiti da un segnaposto.
 
     ⚠️ IL PERIMETRO, e la ragione per cui la cura sta QUI e non in
-    `extract_quantities`: quel parser lo usano sei moduli del gate, e insegnargli
+    `extract_quantities`: quel parser lo usano NOVE moduli, e insegnargli
+    (misurato il 2026-09-22 con gli import, due forme: nove importano
+    `extract_quantities` — anti_confab_gate, corroboration,
+    evidence_requirement, fact_priority, facts_conflict, soggetto_valore,
+    validate_claim, questo modulo, vicinato_del_valore — e undici importano
+    qualcosa da `quantity_match`. Il «sei» scritto qui prima non era piu' vero,
+    e un numero in un commento non si aggiorna da solo: si conta.)
     i nomi di file propagherebbe la conversione a tutti in silenzio — la stessa
     ragione gia' scritta sopra per la notazione scientifica. Qui si toglie una
     LETTURA al confronto claim-fonte, non una capacita' al parser, e il banco ha
@@ -497,7 +503,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     #
     # ⚖️ E STA QUI, NON IN `extract_quantities`, per la stessa ragione gia'
     # scritta piu' sotto per «nessun X vale 0»: insegnare la notazione al
-    # parser propagherebbe la conversione ai sei moduli del gate che lo usano,
+    # parser propagherebbe la conversione ai nove moduli che lo usano,
     # mentre qui l'equivalenza vive SOLO nel confronto claim-fonte e non entra
     # nel corpus.
     proposition = _espandi_notazione_scientifica(proposition)
@@ -537,7 +543,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     # misurata. Insegnare al parser che «nessun X» vale 0 creerebbe quantità
     # dove il testo non ne misura nessuna — nel corpus reale «zero costo»,
     # «zero MCP», «Zero API» sono frequentissimi — e quelle quantità fantasma
-    # finirebbero nei sei moduli del gate che leggono `extract_quantities`,
+    # finirebbero nei nove moduli che leggono `extract_quantities`,
     # alimentando i rilevatori di conflitto. Qui invece l'equivalenza vive solo
     # nel confronto fra claim e fonte: non entra nel corpus e non crea nulla.
     #
