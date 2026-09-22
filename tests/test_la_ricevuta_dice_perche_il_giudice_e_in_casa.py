@@ -80,24 +80,73 @@ def _ricevuta(testo: str) -> dict:
     raise AssertionError(f"nessuna ricevuta nell'uscita: {testo[-400:]}")
 
 
-def test_se_giudica_il_processo_la_ricevuta_dice_perche(tmp_path):
-    """RED: oggi `judged_by` dice «in-process» e nient'altro.
+def test_chi_non_ha_chiesto_il_daemon_non_riceve_l_avviso(tmp_path):
+    """LA CURA (C): un avviso che esce SEMPRE non informa, riempie.
 
-    Il regime si forza con `HIPPO_ENCODE_DELEGATE_ONLY=0`: la delega non
-    e' richiesta, quindi giudica il processo. E' l'unica leva che agisce
-    senza toccare il file di scoperta condiviso.
+    Prima stesura di questa PR: l'avviso usciva su ogni giudizio in casa — il
+    caso normale — e in CI ha fatto cadere SEI celle di altri su tre sistemi
+    (run 35650184556): chi conta gli avvisi (`assert n_avvisi == 0`), chi
+    garantisce che un fatto ammesso non riceva la seconda voce
+    (`assert "giudice era d" not in out`) e chi legge col parser la riga che
+    parla di delega. Nessuna di quelle celle era sbagliata: era sbagliato
+    l'avviso.
+    ⇒ Qui la delega NON e' richiesta: chi scrive non ha mai chiesto il daemon,
+    e la ricevuta non deve dirgli niente.
     """
     r = _ricevuta(_cli(tmp_path, "remember", CLAIM, "--source", FONTE,
                        "--topic", "prova/t179", "--json", delega=False))
-    chi = str(r.get("judged_by") or "")
-    if "process" not in chi:
-        raise AssertionError(
-            f"non ha giudicato il processo, la cella non misura: judged_by={chi!r}")
+    avvisi = [w for w in (r.get("warnings") or [])
+              if str(w.get("layer")) == "giudice_in_processo"]
+    assert not avvisi, (
+        "la ricevuta avvisa chi non ha chiesto il daemon: e' il rumore che ha "
+        f"fatto cadere sei celle altrui. {json.dumps(avvisi, ensure_ascii=False)[:300]}")
 
-    testo = json.dumps(r, ensure_ascii=False).lower()
-    assert ("delegate" in testo or "delega" in testo or "daemon" in testo), (
-        "la ricevuta dice CHI ha giudicato e non PERCHE' non l'ha fatto il "
-        f"daemon: {json.dumps(r, ensure_ascii=False)[:400]}")
+
+def test_se_avevi_chiesto_il_daemon_e_ha_giudicato_il_processo_lo_dice(tmp_path, monkeypatch):
+    """IL CASO (ii), quello che ha aperto T179: la promessa disattesa.
+
+    Delega richiesta E scorer gia' caricato in questo processo: la riga 1038
+    non entra nel ramo del daemon, il giudizio resta in casa, e il daemon non
+    viene interrogato nemmeno se risponde. E' l'unico caso in cui la ricevuta
+    deve parlare.
+
+    ⛔ NON si misura dalla CLI: ogni comando e' un processo nuovo, e il
+    presupposto («scorer gia' in casa») nasce solo DENTRO un processo che ha
+    gia' giudicato una volta. Qui lo si costruisce esplicitamente, invece di
+    sperare che la seconda scrittura lo trovi caldo.
+    """
+    monkeypatch.setenv("HIPPO_ENCODE_DELEGATE_ONLY", "1")
+    monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
+    from verimem import local_grounding as lg
+    from verimem.client import Memory
+
+    # ⚠️ IL GIUDICE E' UN SINGLETON DI MODULO: caricarlo qui e non spegnerlo
+    # lascerebbe uno scorer CALDO alle celle che vengono dopo, e una che
+    # presuppone il giudice freddo cadrebbe per colpa mia, lontano da qui.
+    # `test_flow_warmup_dichiarato.py` lo resetta PRIMA e DOPO con una
+    # fixture: qui il `finally` fa lo stesso lavoro senza aggiungere fixture.
+    lg.reset_local_judge()
+    try:
+        giudice = lg.get_local_judge()
+        giudice._ensure_scorer()   # ⇐ il presupposto, costruito e non sperato
+        assert giudice._scorer is not None, (
+            "lo scorer non si e' caricato: la cella non puo' misurare il caso "
+            "(ii), e questo e' un guasto del banco, non un motivo per passare")
+
+        m = Memory(tmp_path / "m.db")
+        r = m.add(CLAIM, topic="prova/t179c", source=FONTE)
+    finally:
+        lg.reset_local_judge()
+
+    chi = str(r.get("judged_by") or "")
+    assert "process" in chi, (
+        f"non ha giudicato il processo, la cella non misura: judged_by={chi!r}")
+    avvisi = [w for w in (r.get("warnings") or [])
+              if str(w.get("layer")) == "giudice_in_processo"]
+    assert avvisi, (
+        "avevi chiesto il daemon, ha giudicato il processo, e la ricevuta tace: "
+        f"{json.dumps(r.get('warnings'), ensure_ascii=False)[:300]}")
+    assert "avevi chiesto il daemon" in str(avvisi[0].get("reason")), avvisi[0]
 
 
 def test_il_giudizio_non_cambia(tmp_path):

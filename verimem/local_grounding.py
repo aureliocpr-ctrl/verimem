@@ -889,9 +889,16 @@ def esecutore_dell_ultimo_giudizio() -> str | None:
     return getattr(_esecutore, "chi", None)
 
 
-def _registra_esecutore(chi: str | None, perche: str | None = None) -> None:
+def _registra_esecutore(chi: str | None, perche: str | None = None,
+                        delega_richiesta: bool = False) -> None:
     _esecutore.chi = chi
     _esecutore.perche = perche
+    #: SE CHI SCRIVE AVEVA CHIESTO IL DAEMON. Serve a non dire niente a chi non
+    #: lo ha mai chiesto: la ricevuta parla solo quando una promessa e' stata
+    #: disattesa. Senza questo, l'avviso esce su OGNI scrittura giudicata in
+    #: casa — il caso normale — e diventa rumore (misurato: sei celle rosse su
+    #: tre sistemi, run 35650184556).
+    _esecutore.delega_richiesta = delega_richiesta
 
 
 def perche_ha_giudicato() -> str | None:
@@ -904,6 +911,16 @@ def perche_ha_giudicato() -> str | None:
     oggi dice solo CHI, che per chi usa il prodotto e' un'etichetta.
     """
     return getattr(_esecutore, "perche", None)
+
+
+def la_delega_era_richiesta() -> bool:
+    """Se chi ha scritto aveva chiesto il daemon, nell'istante del giudizio.
+
+    Distingue i due casi che `judged_by=in-process` confonde: chi non ha mai
+    chiesto la delega (e a cui non interessa saperlo) e chi l'ha chiesta e non
+    l'ha avuta lo stesso.
+    """
+    return bool(getattr(_esecutore, "delega_richiesta", False))
 
 
 def _gate_via_daemon(pairs, *, info=None,
@@ -1072,7 +1089,7 @@ def try_local_score(source: str, fact: str, *,
             info=info,
             max_length=judge.max_length if il_daemon_riduce else None)
         if punteggi:
-            _registra_esecutore("daemon")
+            _registra_esecutore("daemon", delega_richiesta=True)
             return judge.normalizza(punteggi[0]), judge.threshold
         _registra_esecutore(None)
         warm_local_judge_async()
@@ -1097,7 +1114,7 @@ def try_local_score(source: str, fact: str, *,
     # laundering it into "no judge -> admit" (opus re-review 2026-07-18, finding B:
     # this is the default out-of-the-box path, where the earlier fix did not reach).
     score = judge.score(source, fact, focus_budget=focus_budget)
-    _registra_esecutore("in-process", perche=(
+    _registra_esecutore("in-process", delega_richiesta=_delega_richiesta, perche=(
         "lo scorer era gia' caricato in questo processo, quindi la domanda "
         "non e' stata girata al daemon"
         if _scorer_gia_in_casa else

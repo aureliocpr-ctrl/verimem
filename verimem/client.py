@@ -1284,8 +1284,10 @@ class Memory:
         #: installazione stia lavorando come crede. La ragione e' registrata
         #: NELL'ISTANTE della decisione — riletta dopo direbbe altro, perche'
         #: lo scorer si popola quando il modello finisce di caricare.
+        from .local_grounding import la_delega_era_richiesta as _delega_chiesta
         from .local_grounding import perche_ha_giudicato as _perche_giudizio
         _perche_ha_giudicato = _perche_giudizio()
+        _aveva_chiesto_il_daemon = _delega_chiesta()
         from ._compat import provenienza_data_dir
         _provenienza_store = provenienza_data_dir()
         _out = {
@@ -1330,10 +1332,17 @@ class Memory:
         # unavailable»: layer, reason, advice. Non cambia il verdetto — la
         # scrittura e' gia' decisa qui sopra — aggiunge solo cio' che la
         # ricevuta taceva.
-        if _chi_ha_giudicato == "in-process" and _perche_ha_giudicato:
+        # ⚖️ SOLO A CHI IL DAEMON LO AVEVA CHIESTO. Un avviso che esce su ogni
+        # scrittura giudicata in casa — il caso normale — non informa nessuno:
+        # riempie la ricevuta e spegne l'attenzione su quelli che contano. Qui
+        # parla quando una promessa e' stata disattesa: delega richiesta, e il
+        # giudizio finito in casa lo stesso.
+        if (_chi_ha_giudicato == "in-process" and _perche_ha_giudicato
+                and _aveva_chiesto_il_daemon):
             _out["warnings"] = list(_out.get("warnings") or []) + [{
                 "layer": "giudice_in_processo",
-                "reason": f"ha giudicato questo processo: {_perche_ha_giudicato}",
+                "reason": ("avevi chiesto il daemon condiviso e ha giudicato "
+                           f"questo processo: {_perche_ha_giudicato}"),
                 "advice": ("se ti aspettavi il daemon condiviso, «verimem "
                            "doctor» dice se e' raggiungibile"),
             }]
