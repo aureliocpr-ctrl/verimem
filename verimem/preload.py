@@ -116,11 +116,52 @@ def _deve_scaldare_il_giudice() -> bool:
             in {"1", "true", "yes", "on"})
 
 
+def _il_daemon_sa_giudicare() -> bool:
+    """Una sonda di GIUDIZIO al daemon condiviso, come quella del reranker
+    (`_segnala_rerank_delegato`, qui sopra).
+
+    ⚠️ NON `encode_service.daemon_usable()`: quella dice se il daemon serve il
+    nostro modello di EMBEDDING (`info.get("model") == CONFIG.embedding_model`),
+    non se sa giudicare. Un daemon che serve l'embedder e non il giudizio
+    farebbe saltare il precarico, e la prima scrittura resterebbe non giudicata
+    — esattamente il buco che il precarico esiste per chiudere.
+    `_gate_via_daemon` torna i punteggi se il daemon giudica, e None in ogni
+    altro caso (niente scoperta, niente `gate_pairs`, socket caduto).
+    """
+    try:
+        from .local_grounding import _gate_via_daemon
+        return _gate_via_daemon([("probe", "probe")]) is not None
+    except Exception:  # noqa: BLE001 — una sonda non fa morire il boot
+        return False
+
+
 def _warm_moat_judge(*, log=None) -> None:
     """Carica il giudice del moat fuori dal thread di richiesta. Best-effort:
     il fallimento e' gia' memorizzato sul giudice e l'advisory continua a
-    funzionare — un warm non fa mai morire il boot."""
+    funzionare — un warm non fa mai morire il boot.
+
+    T203: SOLO SE IL DAEMON NON SA GIUDICARE. Caricarlo comunque metteva torch
+    e il cross-encoder in OGNI server MCP — dieci agenti, dieci giudici — e,
+    una volta pieno `judge._scorer`, `try_local_score` smetteva di chiedere al
+    daemon per tutta la vita del server anche con la delega richiesta. Se il
+    daemon giudica, il modello resta suo; se non giudica entro l'attesa
+    dell'embedder, il precarico resta quello di prima, dove serve.
+    """
     try:
+        if _service_enabled():
+            # Il daemon lo avvia gia' il thread dell'embedder (sotto il lock di
+            # spawn): qui si SONDA e si aspetta, senza avviarne un secondo.
+            deadline = time.time() + _DAEMON_WARM_WAIT_S
+            while True:
+                if _il_daemon_sa_giudicare():
+                    if log is not None:
+                        log.info("mcp_preload_moat_judge_delegato_al_daemon")
+                    return
+                if time.time() >= deadline:
+                    break
+                time.sleep(1.0)
+            if log is not None:
+                log.info("mcp_preload_moat_judge_daemon_non_giudica_carico_in_casa")
         from .local_grounding import get_local_judge
         get_local_judge()._ensure_scorer()
         if log is not None:
