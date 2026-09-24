@@ -134,6 +134,32 @@ def _unita_non_allineabili(fatto: str, claim: str) -> bool:
     return not (u_fatto & u_claim)
 
 
+def _misure_diverse(fatto: str, claim: str) -> bool:
+    """Vero quando le due frasi portano quantita' CON UNITA' e ne differisce
+    piu' d'una: due momenti o due oggetti misurati, non lo stesso valore in
+    disaccordo.
+
+    E' la decisione numerica di T175 portata fino al giudice di entailment,
+    gemella di :func:`_unita_non_allineabili`. Misurato il 24/09: dopo la cura
+    numerica il giudice ritirava ancora «costa 0.08 ms sul corpus reale di 7950
+    righe» davanti a «costa 21.36 ms su un corpus sintetico di 200000 righe»
+    (punteggio 0.39 sotto il taglio di 50), e un aggiornamento vero prendeva un
+    punteggio dello stesso ordine (10 contro 20 impulsi: 0.60). Il punteggio non
+    separa le due popolazioni; la forma si': in un aggiornamento cambia UNA
+    quantita'.
+
+    ⚠️ I numeri NUDI restano fuori, come nel ramo numerico: il contatore che
+    «vale 7» e poi «vale 12» resta al giudice (T210).
+    """
+    q_fatto = {(u, v) for u, v in _extract_quantities(fatto) if u}
+    q_claim = {(u, v) for u, v in _extract_quantities(claim) if u}
+    if not q_fatto or not q_claim:
+        return False
+    if not ({u for u, _ in q_fatto} & {u for u, _ in q_claim}):
+        return False  # grandezze diverse: e' il caso di _unita_non_allineabili
+    return len(q_fatto - q_claim) > 1 or len(q_claim - q_fatto) > 1
+
+
 def _extract_salients(text: str) -> tuple[set[str], set[str]]:
     """Estrae (capitalized_names, years) dalla stringa.
 
@@ -884,6 +910,7 @@ def validate_claim(
                     and not _contrasting_attrs(
                         _content_tokens(f.proposition), _content_tokens(claim))
                     and not _unita_non_allineabili(f.proposition, claim)
+                    and not _misure_diverse(f.proposition, claim)
                     and _giudice_contraddice(f.proposition, claim)):
                 kind_detail = (
                     "entailment",

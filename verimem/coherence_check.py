@@ -29,8 +29,8 @@ Design choices (V1):
 Three warning kinds:
 * ``near_duplicate``: token-Jaccard above threshold (default 0.7).
 * ``numeric_clash``: same topic, similarity >= 0.75, and the shared
-  detector sees ONE quantity changed with nothing else different
-  (``value_tolerance`` is accepted for compatibility and no longer used).
+  detector sees ONE quantity with a unit changed, by more than
+  ``value_tolerance`` (relative, 5% by default).
 * ``boolean_clash``: same topic, similarity >= 0.75, exactly one
   side carries a negation marker.
 """
@@ -42,6 +42,7 @@ from typing import TYPE_CHECKING
 
 from .contradiction import (
     _cosine,
+    _entro_la_tolleranza,
     _has_negation,
 )
 from .quantity_match import numeric_conflict
@@ -122,10 +123,11 @@ def check_against_siblings(
 
         # 2. numeric clash — only worth the cosine call if the SHARED numeric
         # detector sees one (T175, 24/09: the same decision as the write path
-        # and the batch, instead of a second compare on bare numbers;
-        # `value_tolerance` no longer applies).
+        # and the batch, instead of a second compare on bare numbers);
+        # `value_tolerance` still applies to the two values it returns.
         clash = numeric_conflict(fact.proposition or "", sib.proposition or "")
-        if clash is not None:
+        if clash is not None and not _entro_la_tolleranza(
+                clash[1], clash[2], value_tolerance):
             sim = _cosine(fact, sib)
             if sim >= numeric_sim_threshold:
                 unit, va, vb = clash

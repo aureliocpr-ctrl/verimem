@@ -1727,20 +1727,27 @@ def conflict_from_parts(
         return None  # una parola su decine: prose diverse, non stesso soggetto
     if contrasting_attrs(ca, cb):
         return None  # different attribute (kept: catches pairs that share words)
-    #: T175 — UN AGGIORNAMENTO CAMBIA UNA QUANTITA', E NIENT'ALTRO.
+    #: T175 — UN AGGIORNAMENTO CAMBIA UNA QUANTITA'.
     #: Fino al 24/09 bastava UNA unita' condivisa con due valori: il ciclo usciva
     #: alla prima discordanza. Cosi' «la suite aveva 7 failed e 8585 passed» e
     #: «la suite ha 8623 passed e EXIT=0» — due momenti diversi — erano un
     #: conflitto su `passed`, e il fatto vecchio veniva ritirato.
-    #: Il criterio doppio chiede DUE cose insieme:
-    #:   (a) una sola quantita' diversa per lato, della stessa unita': un'unita'
-    #:       presente in una sola frase e' gia' una seconda differenza, e i
-    #:       numeri NUDI contano come gli altri;
-    #:   (b) nessuna parola distintiva diversa (`da ^ db` vuota).
-    #: Se differisce altro, i due fatti COESISTONO: e' il lato sicuro, perche'
-    #: un falso conflitto declassa un fatto vero.
-    solo_a, solo_b = qa - qb, qb - qa
-    if len(solo_a) == 1 and len(solo_b) == 1 and not (da ^ db):
+    #: Ora, fra le quantita' CON UNITA', il conflitto c'e' solo se ne differisce
+    #: UNA per lato, della stessa unita'; un'unita' presente in una sola frase e'
+    #: gia' una seconda differenza. Se ne differiscono due o piu', sono due
+    #: momenti o due oggetti e i fatti COESISTONO: e' il lato sicuro, perche' un
+    #: falso conflitto declassa un fatto vero.
+    #: ⛔ Due cose provate il 24/09 e ritirate dal raggio, da NON rimettere:
+    #:   · un criterio sulle PAROLE diverse («nessuna parola distintiva cambia»):
+    #:     e' il criterio strutturale falsificato il 25/07, perde «Sessions are
+    #:     stored with a TTL of 30 minutes» contro «Sessions expire after 45
+    #:     minutes» (tests/test_exclusive_words_mean_other_subject.py);
+    #:   · i numeri NUDI contati come quantita': riaprono i casi di identita'
+    #:     («la release 2.1» contro «la release 3.0»,
+    #:     tests/test_un_numero_nudo_non_si_confronta.py).
+    solo_a = {(u, v) for (u, v) in qa if u} - qb
+    solo_b = {(u, v) for (u, v) in qb if u} - qa
+    if len(solo_a) == 1 and len(solo_b) == 1:
         ((ua, va),), ((ub, vb),) = solo_a, solo_b
         if ua == ub and va != vb:
             return (ua, va, vb)

@@ -206,6 +206,12 @@ def _values_clash(
     return False
 
 
+def _entro_la_tolleranza(va: float, vb: float, tolerance: float) -> bool:
+    """Vero se i due valori distano meno della tolleranza RELATIVA: la stessa
+    misura di `_values_clash` (100 contro 104 al 5% non e' uno scontro)."""
+    return abs(va - vb) / max(abs(va), abs(vb), 1e-9) <= tolerance
+
+
 def _cosine(fact_a: Fact, fact_b: Fact) -> float:
     """Compute cosine on freshly-encoded propositions.
 
@@ -279,14 +285,16 @@ def detect_numeric_clashes(
                     continue
                 #: T175 (24/09): la decisione numerica e' quella della
                 #: scrittura, `numeric_conflict` con tutte le sue guardie
-                #: (una sola quantita' diversa e nessuna parola diversa, indici
-                #: di evento, codici di record). Prima qui c'era `_values_clash`
-                #: sui soli numeri, senza unita' ne' parole, e ritirava due task
-                #: con un numero nel nome e due campioni S-001 e S-002.
-                #: `value_tolerance` non si applica piu': il confronto e' quello
-                #: del rilevatore condiviso.
-                if numeric_conflict(a.proposition or "",
-                                    b.proposition or "") is None:
+                #: (una sola quantita' con unita' diversa, indici di evento,
+                #: codici di record). Prima qui c'era `_values_clash` sui soli
+                #: numeri, senza unita' ne' parole, e ritirava due task con un
+                #: numero nel nome e due campioni S-001 e S-002.
+                #: `value_tolerance` resta il contratto del batch e si applica
+                #: ai due valori che il rilevatore condiviso restituisce.
+                clash = numeric_conflict(a.proposition or "",
+                                         b.proposition or "")
+                if clash is None or _entro_la_tolleranza(
+                        clash[1], clash[2], value_tolerance):
                     continue
                 sim = _cosine(a, b)
                 if sim < similarity_threshold:

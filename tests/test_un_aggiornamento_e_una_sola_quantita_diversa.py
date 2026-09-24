@@ -9,20 +9,27 @@ decidevano ciascuna a modo suo, e la cella le prova tutte e due:
              fino al 24/09 decideva con `_values_clash` sui soli numeri, senza
              unità né parole.
 
-Il criterio (nota di disegno approvata il 22/09, decisioni del 24/09):
-  (a) una sola quantità diversa per lato, della stessa unità; un'unità presente
-      in una sola frase è già una seconda differenza; i numeri nudi contano;
-  (b) nessuna parola distintiva diversa (`da ^ db` vuota).
+Il criterio (decisioni del 24/09, dopo il raggio sui test esistenti):
+  fra le quantità CON UNITÀ, il conflitto c'è solo se ne differisce UNA per
+  lato, della stessa unità. Se ne differiscono di più, i fatti coesistono.
+  In SCRITTURA la stessa decisione vale anche per il giudice di entailment: se
+  differisce più di una quantità con unità, il suo «non trovo sostegno» non è
+  una contraddizione (il punteggio non separa un aggiornamento da due misure).
+
+Due strade provate e ritirate dal raggio, da non rimettere: un criterio sulle
+parole diverse (il criterio strutturale falsificato il 25/07) e i numeri nudi
+contati come quantità (riaprono i casi di identità del 04/08).
+
+⚠️ PREZZO DICHIARATO: «con e senza indice» si RITIRA su tutte e due le
+superfici. Cambia una sola quantità con unità (21.36 ms contro 0.127 ms), e
+«con un indice» contro «senza» è un soggetto che solo chi scrive può dichiarare:
+la cura è T216, l'about dichiarato.
 
 Fuori da qui, e perché:
   · il capannone 1 contro il capannone 2 (il verbo diventa l'unità): T211;
-  · T149 in SCRITTURA lo ritira il giudice di entailment, non il ramo numerico:
-    T210. Nel BATCH invece sta qui, perché lì decide il ramo numerico.
-
-⚠️ COESISTENZA DICHIARATA, accettata il 24/09: nel batch, dopo la
-cura, «il contatore … vale 7» e «… vale 12» non si ritirano più. La regola
-posizionale degli indici (una parola seguita da un numero nudo) li legge come
-due indici. In scrittura quel caso resta al giudice.
+  · i numeri NUDI in scrittura (T149, il contatore che vale 7 e poi 12): li
+    ritira il giudice, e non si curano con una soglia: T210. Nel BATCH quei
+    numeri restano fuori dal confronto, come oggi, e le coppie coesistono.
 
 Le coppie sono vere: le prime quattro vengono dallo store, le altre dai casi
 misurati il 23-24/09.
@@ -96,7 +103,7 @@ SCRITTURA = [
     ("la suite in due momenti", "coesiste", *SUITE_IN_DUE_MOMENTI),
     ("due corpora", "coesiste", *DUE_CORPORA),
     ("tre fette e una", "coesiste", *TRE_FETTE_E_UNA),
-    ("con e senza indice", "coesiste", *CON_E_SENZA_INDICE),
+    ("con e senza indice, prezzo dichiarato", "RITIRA", *CON_E_SENZA_INDICE),
     ("contatore nudo, al giudice", "RITIRA", *CONTATORE_NUDO),
     ("controllo positivo", "RITIRA", *CONTATORE_CON_UNITA),
 ]
@@ -108,7 +115,7 @@ def test_in_scrittura_un_aggiornamento_e_una_sola_quantita_diversa(
         nome, atteso, vecchio, nuovo):
     osservato, perche = _giudizio(vecchio, nuovo)
     assert osservato == atteso, (
-        f"{nome}: il gate in scrittura dice {osservato}, il criterio doppio "
+        f"{nome}: il gate in scrittura dice {osservato}, la decisione condivisa "
         f"dice {atteso}.\n  vecchio: {vecchio}\n  nuovo:   {nuovo}\n"
         f"  perché (advice di validate_claim): {perche}")
 
@@ -135,7 +142,7 @@ BATCH = [
     ("la suite in due momenti", "coesiste", *SUITE_IN_DUE_MOMENTI),
     ("due corpora", "coesiste", *DUE_CORPORA),
     ("tre fette e una", "coesiste", *TRE_FETTE_E_UNA),
-    ("con e senza indice", "coesiste", *CON_E_SENZA_INDICE),
+    ("con e senza indice, prezzo dichiarato", "RITIRA", *CON_E_SENZA_INDICE),
     ("T149, due task diversi", "coesiste", *T149),
     ("S-001 e S-002, due campioni", "coesiste", *DUE_CAMPIONI),
     ("contatore nudo, coesistenza dichiarata", "coesiste", *CONTATORE_NUDO),
