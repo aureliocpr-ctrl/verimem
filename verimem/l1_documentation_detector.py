@@ -53,12 +53,32 @@ _DOC_PATTERN = re.compile(
 #: oggetto, e da solo non si distingue da «I explained my plan to Maria»; se ha
 #: una fonte, a giudicarlo resta il moat.
 _VERBI_DEL_DIRE_EN = ("explained", "described")
-_USO_ATTIVO_EN = re.compile(
-    r"\s+(?:a|an|the|this|that|these|those|his|her|their|my|our|its|your|"
-    r"him|them|me|us|it|how|what|why|where|when|who|whom|to|some|all|each|"
-    r"every|several|many|one|two|three)\b",
-    re.IGNORECASE,
-)
+#: Le parole che, SUBITO dopo il verbo, aprono un complemento oggetto o una
+#: frase oggettiva. ⚠️ SENZA REGEX, e su una finestra finita: la seconda
+#: stesura usava `\s+(?:a|an|the|…)\b` sul testo dopo la parola, e CodeQL
+#: l'ha segnalata come la prima (py/polynomial-redos, #1498, riga 89 di
+#: 5220080e). Qui si prende la prima parola di una finestra corta dopo il
+#: verbo e la si cerca in un insieme: il costo non dipende dal testo.
+_APRONO_UN_OGGETTO_EN = frozenset({
+    "a", "an", "the", "this", "that", "these", "those", "his", "her", "their",
+    "my", "our", "its", "your", "him", "them", "me", "us", "it", "how", "what",
+    "why", "where", "when", "who", "whom", "to", "some", "all", "each",
+    "every", "several", "many", "one", "two", "three",
+})
+_FINESTRA_OGGETTO = 40
+_PUNTEGGIATURA_AI_BORDI = ".,;:!?\"'()[]«»“”‘’"
+
+
+def _apre_un_oggetto(proposition: str, fine: int) -> bool:
+    """Subito dopo il verbo (spazio, poi una parola) c'è un oggetto o una
+    frase oggettiva? Come la regex che sostituisce: serve uno spazio subito
+    dopo il verbo, e «described:» o «described.» restano dichiarazioni."""
+    dopo = proposition[fine:fine + _FINESTRA_OGGETTO]
+    if not dopo[:1].isspace():
+        return False
+    parti = dopo.split(maxsplit=1)
+    return bool(parti) and (
+        parti[0].strip(_PUNTEGGIATURA_AI_BORDI).lower() in _APRONO_UN_OGGETTO_EN)
 _PARTICIPI_DEL_DIRE_IT = re.compile(r"(?:spiegat|descritt)[oaie]", re.IGNORECASE)
 _FORME_DI_AVERE = frozenset({
     "ho", "hai", "ha", "abbiamo", "avete", "hanno", "avevo", "avevi", "aveva",
@@ -73,12 +93,11 @@ _FORME_DI_AVERE = frozenset({
 #: «l'ho spiegato» resta preso), e si chiede se una delle ultime DUE sia una
 #: forma di avere («ha descritto», «ha già descritto»).
 _FINESTRA_AUSILIARE = 48
-_SEPARATORI_DI_PAROLA = re.compile(r"[\s'’]+")
 
 
 def _retto_da_avere(prima: str) -> bool:
-    parole = [p for p in _SEPARATORI_DI_PAROLA.split(
-        prima[-_FINESTRA_AUSILIARE:].lower()) if p]
+    finestra = prima[-_FINESTRA_AUSILIARE:].lower()
+    parole = finestra.replace("'", " ").replace("’", " ").split()
     return any(p in _FORME_DI_AVERE for p in parole[-2:])
 
 
@@ -86,7 +105,7 @@ def _uso_attivo(proposition: str, m: re.Match[str]) -> bool:
     """La parola trovata è un verbo del dire usato in forma ATTIVA (T206)?"""
     parola = m.group(0).lower()
     if parola in _VERBI_DEL_DIRE_EN:
-        return _USO_ATTIVO_EN.match(proposition, m.end()) is not None
+        return _apre_un_oggetto(proposition, m.end())
     if _PARTICIPI_DEL_DIRE_IT.fullmatch(parola):
         return _retto_da_avere(proposition[:m.start()])
     return False
