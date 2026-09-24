@@ -445,12 +445,20 @@ class Risultati(list):
         self.nascosti_dalla_freschezza = nascosti_dalla_freschezza
 
 
-def esito_del_moat(gate, warnings, *, source) -> str:
+def esito_del_moat(gate, warnings, *, source, chiesto: bool = True) -> str:
     """Che cosa ha fatto il moat, DERIVATO da cio' che il gate ha gia' detto.
 
     Non duplica la logica del gate: legge i layer che il gate ha emesso. Se un
     giorno cambiano quei nomi, il test dei quattro casi distinti lo prende.
+
+    T204 (23/09): le porte che la chiamano sono DUE, la scrittura e l'ingest,
+    e le stringhe sono un solo insieme. ``chiesto=False`` vuol dire che il
+    giudizio non e' stato chiesto (``ground=False``): il giudice non e' mancato,
+    nessuno l'ha chiamato. Viene PRIMA di tutto il resto, anche della fonte
+    assente, perche' e' la ragione primaria: la scelta di chi scrive.
     """
+    if not chiesto:
+        return "not_run:not_asked"
     _layers = {str(w.get("layer", "")) for w in warnings}
     if not source:
         return "not_run:no_source"
@@ -1239,7 +1247,8 @@ class Memory:
         # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
         # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
         # casi distinti lo prende.
-        _moat = esito_del_moat(gate, warnings, source=source)
+        _moat = esito_del_moat(gate, warnings, source=source,
+                               chiesto=bool(ground))
         # E CHI HA DECISO LA QUARANTENA. Trovato e poi ampliato:
         #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
         #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED

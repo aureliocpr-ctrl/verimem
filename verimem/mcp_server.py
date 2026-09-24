@@ -8639,6 +8639,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                               f"state — quarantined by the moat, kept out of "
                               f"default recall (not deleted: see "
                               f"hippo_quarantine_log / _restore)")
+                # T204: e ciò che il giudice NON ha giudicato va detto allo
+                # stesso modo. «stored» col giudice assente si leggeva identico
+                # a «stored» col giudice che ammetteva tutto; le parole sono
+                # quelle del campo `moat`, lo stesso insieme della scrittura.
+                _esiti = res.get("moat") or {}
+                _non_giudicati = {e: n for e, n in _esiti.items()
+                                  if e in ("not_run:no_judge", "not_run:unknown")}
+                if _non_giudicati:
+                    _quali = ", ".join(f"{e}: {n}" for e, n in sorted(_non_giudicati.items()))
+                    _nota += (f"; {sum(_non_giudicati.values())} of them were NOT "
+                              f"judged — the grounding judge was asked but did "
+                              f"not run ({_quali}), so they are stored as "
+                              f"unverified model_claim; `verimem doctor` says why")
+                _non_chiesti = int(_esiti.get("not_run:not_asked") or 0)
+                if _non_chiesti:
+                    _nota += (f"; the grounding judge was not asked for "
+                              f"{_non_chiesti} of them (ground=false: "
+                              f"not_run:not_asked)")
             return _ok({**res, "note": _nota})
 
         if name == "hippo_import_conversations":
