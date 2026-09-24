@@ -705,16 +705,85 @@ def test_cli_chain_orphans_window(tmp_path, monkeypatch):
 
 
 def test_cli_digest_json_contract(tmp_path, monkeypatch):
+    """Il contratto è «chi chiede JSON riceve JSON SU STDOUT».
+
+    ⚠️ QUESTA CELLA LEGGE `r.stdout`, NON `r.output`, e la differenza è tutta
+    la misura. `CliRunner()` su click 8.1.8 nasce con `mix_stderr=True`, quindi
+    `r.output` è stdout **più** stderr: chiamare JSON quell'impasto significa
+    pretendere che il prodotto non dica mai niente di diagnostico, e basta una
+    riga di log perché la cella cada.
+
+    Misurato il 2026-09-20 in sottoprocesso, cioè come lo usa una persona:
+
+        stdout : {"window_hours": 1.0, "n_facts": 1, "by_status": ...   JSON puro
+        stderr : 2026-09-20T15:26:05 [info] store.opened marcatura=...
+
+    Il prodotto separa già i due canali come si deve — dati su stdout, log su
+    stderr — e una pipe verso `jq` funziona. Era la cella a mischiarli, e lo si
+    è visto solo quando la dichiarazione dell'apertura dello store ha aggiunto
+    una riga di log: il difetto non è nato allora, è diventato visibile allora.
+
+    ⚠️ IL RUNNER SI COSTRUISCE IN DUE MODI PERCHÉ LE DUE CLICK NON SONO LA
+    STESSA: su 8.1 `mix_stderr` esiste e va messo a `False` per separare i
+    canali; su 8.2 quel parametro è stato tolto e passarlo solleva
+    `TypeError` — lì i canali nascono già separati. `pyproject` non fissa una
+    versione di click, quindi la cella deve reggere entrambe o diventa rossa
+    su una macchina per la libreria che ci trova, non per il prodotto.
+
+    E il ramo `except` non è la precauzione, è **la strada normale**: misurato
+    il 2026-09-21 su click 8.5.0 e 8.2.1 (typer 0.27.2, py3.13), `mix_stderr`
+    solleva `TypeError` e 8.5.0 è ciò che `pip` installa oggi in un ambiente
+    nuovo. Su quelle versioni `r.output` NON è `r.stdout`.
+
+    ⇒ SI LEGGE SEMPRE `r.stdout`, MAI `r.output`. Il primo è il canale dei
+    dati su entrambe le click; il secondo, su 8.1, è dati **più** diagnostica
+    mescolati, e chiamare JSON quell'impasto significa pretendere che il
+    prodotto non dica mai niente — basta una riga di log per far cadere la
+    cella, che è esattamente com'è cominciata questa storia.
+    """
     import json as _json
+
+    from typer.testing import CliRunner
 
     from verimem.cli import app
     _iso_cli_env(tmp_path, monkeypatch)
-    runner = _runner()
-    runner.invoke(app, ["save", "First checkpoint of the run.",
-                        "-t", "project/alpha"])
+    try:
+        runner = CliRunner(mix_stderr=False)
+    except TypeError:          # click >= 8.2: i canali sono già separati
+        runner = CliRunner()
+    scritto = runner.invoke(app, ["save", "First checkpoint of the run.",
+                                  "-t", "project/alpha"])
     r = runner.invoke(app, ["digest", "--hours", "1", "--json"])
-    assert r.exit_code == 0, r.output
-    d = _json.loads(r.output)
+
+    # ⚠️ QUANDO QUESTA CELLA CADE, CADE MUTA: eseguita dopo altri test dà
+    # `JSONDecodeError: Expecting value: line 1 column 1 (char 0)`, cioè
+    # stdout VUOTO, e il traceback non dice altro. Misurato il 21/09 sul
+    # merge: da sola 49 passed, dentro la fetta che la precede 1 failed.
+    # Quattro ipotesi falsificate finora — la variabile dell'encode delegate
+    # (la fetta senza di essa la lascia rossa), gli alias della data dir (A/B
+    # a due e a tre: identico), l'import di `mcp_server`, una redirezione di
+    # `sys.stdout` fra i file che la precedono. Finché la causa è ignota,
+    # almeno il rosso deve raccontare cosa ha ricevuto.
+    diagnostica = (
+        f"digest: exit={r.exit_code} len(stdout)={len(r.stdout or '')} "
+        f"len(stderr)={len(getattr(r, 'stderr', '') or '')} "
+        f"stdout[:200]={(r.stdout or '')[:200]!r} "
+        f"stderr[-300:]={(getattr(r, 'stderr', '') or '')[-300:]!r} "
+        f"| save: exit={scritto.exit_code} "
+        f"stdout[:160]={(scritto.stdout or '')[:160]!r}")
+
+    assert r.exit_code == 0, diagnostica
+    assert r.stdout, f"il comando non ha scritto niente su stdout. {diagnostica}"
+    # ⚠️ LA DIAGNOSTICA VA QUI, e la prima stesura l'aveva messa negli assert
+    # che PASSANO: il fallimento è sul parse, quindi un messaggio appeso alle
+    # righe precedenti non si stampa mai. E «Expecting value: line 1 column 1
+    # (char 0)» non vuol dire stringa vuota — vuol dire che il PRIMO carattere
+    # non apre un JSON, che è tutta un'altra diagnosi.
+    try:
+        d = _json.loads(r.stdout)
+    except ValueError as errore:
+        raise AssertionError(
+            f"stdout non è JSON ({errore}). {diagnostica}") from None
     assert d["n_facts"] == 1
     assert "by_status" in d and "orphan_ratio" in d
 

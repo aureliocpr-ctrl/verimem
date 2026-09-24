@@ -200,9 +200,6 @@ def schema_corrisponde(percorso: str | Path, versione: int) -> bool:
     `ATTESE_PER_VERSIONE` non è «va bene», è «non ho un criterio» — e marcare
     senza criterio è esattamente il buco di T121.
     """
-    attese = ATTESE_PER_VERSIONE.get(versione)
-    if attese is None:
-        return False
     p = Path(percorso)
     if not p.is_file():
         return False
@@ -211,12 +208,34 @@ def schema_corrisponde(percorso: str | Path, versione: int) -> bool:
     except sqlite3.Error:
         return False
     try:
-        colonne = {r[1] for r in con.execute('PRAGMA table_info("facts")')}
-    except sqlite3.DatabaseError:
-        return False
+        return schema_corrisponde_su(con, versione)
     finally:
         con.close()
-    return attese <= colonne
+
+
+def colonne_del_nucleo(con: sqlite3.Connection) -> set[str]:
+    """Le colonne di `facts` su una connessione già aperta; vuoto se non c'è.
+
+    Vuoto vuol dire «questo file non ha ancora un nucleo», che è lo stato di
+    uno store appena creato — non «un nucleo con zero colonne».
+    """
+    try:
+        return {r[1] for r in con.execute('PRAGMA table_info("facts")')}
+    except sqlite3.DatabaseError:
+        return set()
+
+
+def schema_corrisponde_su(con: sqlite3.Connection, versione: int) -> bool:
+    """`schema_corrisponde` per chi ha già la connessione in mano.
+
+    Serve a chi deve decidere DENTRO una transazione, dove riaprire il file in
+    sola lettura darebbe una risposta su uno stato diverso da quello che sta
+    per scrivere.
+    """
+    attese = ATTESE_PER_VERSIONE.get(versione)
+    if attese is None:
+        return False
+    return attese <= colonne_del_nucleo(con)
 
 
 class StoreTroppoNuovo(RuntimeError):

@@ -6042,11 +6042,30 @@ def digest_cmd(
     story is — the trust-transparent session narrative."""
     _continuity_guard(local)
     from .continuity import collect_digest
-    d = collect_digest(_facts_sm(), hours=hours)
     if json_out:
+        # ⚠️ CON `--json` STDOUT È UN CANALE DI DATI, non una pagina da
+        # leggere: chi lo chiede quasi sempre lo infila in `jq`. Aprire lo
+        # store emette `store.opened`, e quella riga finiva DAVANTI al JSON —
+        # misurato il 2026-09-21: `len(stdout)=877`, `len(stderr)=0`, primi
+        # caratteri la riga di log colorata, e il parse moriva sul primo byte
+        # («Expecting value: line 1 column 1», che NON vuol dire stdout vuoto).
+        #
+        # ⚠️ `route_logs_to_stderr()` qui non basta, ed è la sua stessa
+        # docstring a dirlo: «loggers already bound to stdout by earlier use
+        # keep their factory». In un processo che ha già scritto un log — una
+        # suite, una sessione REPL — la riconfigurazione arriva tardi. Provato
+        # il 2026-09-21: dopo la chiamata, `stdout` restava 827 byte di log.
+        #
+        # Quindi si sposta il CANALE per il tempo della raccolta, non la
+        # configurazione del logger: qualunque cosa stampi mentre lo store si
+        # apre finisce su stderr, e su stdout resta solo il JSON.
+        import contextlib
+        with contextlib.redirect_stdout(sys.stderr):
+            d = collect_digest(_facts_sm(), hours=hours)
         import json as _json
         print(_json.dumps(d, ensure_ascii=False, default=str))
         raise typer.Exit(0)
+    d = collect_digest(_facts_sm(), hours=hours)
     console.print(f"[bold]last {hours:g}h[/bold]  {d['n_facts']} facts  "
                   f"velocity {d['velocity_per_hour']}/h  "
                   f"orphans {d['orphan_ratio']:.0%}")
