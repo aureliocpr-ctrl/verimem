@@ -150,8 +150,14 @@ def _score_via_claude(source: str, fact: str) -> float | None:
     from .grounding_gate import _FACT_SYSTEM
     user = f"Source: {source}\n\nCandidate fact: {fact}\n\nScore:"
     try:
+        # --safe-mode: without it the CLI starts with the writer's whole profile
+        # — their MCP servers, their hooks, and their CLAUDE.md, which lands in
+        # the judge's prompt — so the verdict depended on who writes, and every
+        # band write booted one more MCP server. It keeps subscription auth;
+        # --bare would not (API key only). A CLI that does not know the flag
+        # exits non-zero, which below falls back to held-for-review.
         r = subprocess.run(
-            [cli, "-p", "--output-format", "text",
+            [cli, "-p", "--safe-mode", "--output-format", "text",
              "--append-system-prompt", _FACT_SYSTEM],
             input=user, capture_output=True, text=True,
             timeout=_timeout_s(), encoding="utf-8", errors="replace",
