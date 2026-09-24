@@ -38,7 +38,9 @@ sul portatile di chi esegue ci sia un servizio acceso.
 
 from __future__ import annotations
 
+import ast
 import inspect
+import textwrap
 
 import pytest
 
@@ -164,11 +166,51 @@ def test_se_il_daemon_non_risponde_si_degrada_come_sempre(
     assert lg.try_local_score("la fonte", "il claim") is None
 
 
+def _la_condizione_della_delega(funzione) -> str:
+    """Il testo della condizione che decide l'ingresso nel ramo del daemon,
+    RICOSTRUITO da dove vive: il test dell'`if` che consulta la delega, piu'
+    OGNI assegnazione ai nomi che quel test usa.
+
+    La prima stesura di questo presidio leggeva una riga di testo: quella che
+    iniziava con `if` e conteneva `_delegate_only()`. Il 21/09 (T179) le due
+    condizioni sono state lette UNA volta, nell'istante della decisione, in due
+    assegnazioni prima dell'`if`: la proprieta' e' rimasta vera, la FORMA e'
+    cambiata, e il presidio non trovava piu' niente. Qui si legge l'oggetto.
+
+    ⚠️ Si confronta il TESTO ricostruito (`ast.unparse`), non i soli nomi:
+    `_load_failed` nel prodotto compare come attributo (`judge._load_failed`)
+    e come STRINGA (`getattr(j, "_load_failed", False)`). Raccogliere solo gli
+    `ast.Name` le perderebbe entrambe, e il presidio nuovo sarebbe piu' debole
+    del vecchio, che cercava la sottostringa.
+    """
+    albero = ast.parse(textwrap.dedent(inspect.getsource(funzione)))
+    alimenta: dict[str, list[ast.expr]] = {}
+    for nodo in ast.walk(albero):
+        if (isinstance(nodo, ast.Assign) and len(nodo.targets) == 1
+                and isinstance(nodo.targets[0], ast.Name)):
+            # TUTTE le assegnazioni a quel nome, non l'ultima: una mutazione
+            # non deve poter sfuggire perche' «sovrascritta» nel dizionario.
+            alimenta.setdefault(nodo.targets[0].id, []).append(nodo.value)
+    trovate = []
+    for nodo in ast.walk(albero):
+        if not isinstance(nodo, ast.If):
+            continue
+        nomi = {n.id for n in ast.walk(nodo.test) if isinstance(n, ast.Name)}
+        pezzi = [nodo.test] + [v for n in sorted(nomi) for v in alimenta.get(n, [])]
+        testo = " ; ".join(ast.unparse(p) for p in pezzi)
+        if "_delegate_only" in testo:
+            trovate.append(testo)
+    # PIU' FORTE, NON PIU' LARGO: il vecchio prendeva la PRIMA riga che
+    # combaciava e ignorava le altre. Due condizioni di delega vogliono dire che
+    # qualcuno ha aggiunto una strada che questo presidio non guarderebbe.
+    assert len(trovate) == 1, (
+        f"attesa UNA condizione che consulta la delega, trovate {len(trovate)}: "
+        f"{trovate}")
+    return trovate[0]
+
+
 def test_la_condizione_non_nomina_piu_il_fallimento_locale():
     """Il presidio strutturale, che dice al prossimo PERCHE' la clausola non
     c'e': un campo che descrive QUESTO processo non decide di un ALTRO."""
-    riga = next((r.strip()
-                 for r in inspect.getsource(lg.try_local_score).splitlines()
-                 if "_delegate_only()" in r and r.strip().startswith("if")), "")
-    assert riga, "la riga della delega non si trova piu': parser da rivedere"
-    assert "_load_failed" not in riga, riga
+    condizione = _la_condizione_della_delega(lg.try_local_score)
+    assert "_load_failed" not in condizione, condizione
