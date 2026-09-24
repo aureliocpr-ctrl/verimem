@@ -44,7 +44,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from . import embedding
-from .quantity_match import negation_conflict
+from .quantity_match import negation_conflict, numeric_conflict
 from .semantic import Fact, SemanticMemory
 
 # ---------------------------------------------------------------------------
@@ -277,13 +277,16 @@ def detect_numeric_clashes(
                 key = tuple(sorted([a.id, b.id]))
                 if key in seen_pairs:
                     continue
-                a_vals = _extract_numbers(a.proposition)
-                b_vals = _extract_numbers(b.proposition)
-                # Cycle #123: pass propositions for type-aware compare.
-                if not _values_clash(
-                    a_vals, b_vals, tolerance=value_tolerance,
-                    text_a=a.proposition, text_b=b.proposition,
-                ):
+                #: T175 (24/09): la decisione numerica e' quella della
+                #: scrittura, `numeric_conflict` con tutte le sue guardie
+                #: (una sola quantita' diversa e nessuna parola diversa, indici
+                #: di evento, codici di record). Prima qui c'era `_values_clash`
+                #: sui soli numeri, senza unita' ne' parole, e ritirava due task
+                #: con un numero nel nome e due campioni S-001 e S-002.
+                #: `value_tolerance` non si applica piu': il confronto e' quello
+                #: del rilevatore condiviso.
+                if numeric_conflict(a.proposition or "",
+                                    b.proposition or "") is None:
                     continue
                 sim = _cosine(a, b)
                 if sim < similarity_threshold:

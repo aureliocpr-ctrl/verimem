@@ -52,6 +52,9 @@ from .quantity_match import (
     extract_versions as _extract_versions,
 )
 from .quantity_match import (
+    identificatori_di_record as _identificatori_di_record,
+)
+from .quantity_match import (
     negation_conflict as _negation_conflict,
 )
 from .quantity_match import (
@@ -791,7 +794,9 @@ def validate_claim(
                 numeric_agree = True  # same unit & value → confirmed
             f_conflict = _conflict_from_parts(
                 claim_quants, claim_content, f_quants, f_content,
-                ia=_event_indices(claim), ib=_event_indices(f.proposition))
+                ia=_event_indices(claim), ib=_event_indices(f.proposition),
+                ra=_identificatori_di_record(claim),
+                rb=_identificatori_di_record(f.proposition))
             if f_conflict:
                 numeric_contra.append(f)
                 if not numeric_advice:

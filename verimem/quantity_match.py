@@ -1094,13 +1094,23 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     stretto (lettere-trattino-cifre), presente nel 15% del corpus, con una
     semantica sola: e' un codice di record.
     """
-    ia = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_a or "")}
+    ia = identificatori_di_record(text_a)
     if not ia:
         return False
-    ib = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_b or "")}
+    ib = identificatori_di_record(text_b)
     if not ib:
         return False
     return not (ia & ib)
+
+
+def identificatori_di_record(text: str) -> set[str]:
+    """I codici di record del testo («s-001»), in minuscolo.
+
+    È la metà riusabile di :func:`_identificatori_disgiunti`: si calcola una
+    volta per fatto e si passa a :func:`conflict_from_parts` come ``ra``/``rb``,
+    così anche gli scanner che confrontano coppie precalcolate hanno la guardia.
+    """
+    return {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text or "")}
 
 
 def _senza_identificatori(testo: str) -> str:
@@ -1680,21 +1690,31 @@ def conflict_from_parts(
     qb: set[tuple[str, float]], cb: set[str],
     *, ia: set[tuple[str, int]] | None = None,
     ib: set[tuple[str, int]] | None = None,
+    ra: set[str] | None = None,
+    rb: set[str] | None = None,
 ) -> tuple[str, float, float] | None:
     """Core numeric-conflict check on PRE-COMPUTED quantities/content tokens.
 
     Lets a batch scan precompute ``(quantities, content_tokens)`` once per
     fact and reuse them across the O(n²) pair loop without re-parsing.
-    Guards identical to :func:`numeric_conflict`.
+    Guards identical to :func:`numeric_conflict` WHEN the caller passes the
+    indices and the record codes below: until 24/09 only that function applied
+    the record-code guard, while the write path and the report scanner called
+    this one directly, and «S-001» against «S-002» came out as a conflict.
 
     ``ia``/``ib`` are the pre-computed :func:`event_indices`. When both sides
     index the same KIND with different numbers they are different subjects, and
     no shared unit makes them comparable — pass them and the pair is refused
-    before any value is compared. Optional so existing batch callers keep
-    working; :func:`numeric_conflict` always supplies them.
+    before any value is compared.
+
+    ``ra``/``rb`` are the pre-computed :func:`identificatori_di_record`. Two
+    record codes that share nothing name two records, not one record with two
+    values. Both pairs of arguments are optional so older callers keep working.
     """
     if ia and ib and _indices_disjoint(ia, ib):
         return None  # different subject: "fatto 3" vs "fatto 5"
+    if ra and rb and not (ra & rb):
+        return None  # two record codes, two records: "S-001" vs "S-002"
     if not qa or not qb:
         return None
     units_a = {u for (u, _v) in qa if u}
@@ -1707,12 +1727,27 @@ def conflict_from_parts(
         return None  # una parola su decine: prose diverse, non stesso soggetto
     if contrasting_attrs(ca, cb):
         return None  # different attribute (kept: catches pairs that share words)
+    #: T175 — UN AGGIORNAMENTO CAMBIA UNA QUANTITA', E NIENT'ALTRO.
+    #: Fino al 24/09 bastava UNA unita' condivisa con due valori: il ciclo usciva
+    #: alla prima discordanza. Cosi' «la suite aveva 7 failed e 8585 passed» e
+    #: «la suite ha 8623 passed e EXIT=0» — due momenti diversi — erano un
+    #: conflitto su `passed`, e il fatto vecchio veniva ritirato.
+    #: Il criterio doppio chiede DUE cose insieme:
+    #:   (a) una sola quantita' diversa per lato, della stessa unita': un'unita'
+    #:       presente in una sola frase e' gia' una seconda differenza, e i
+    #:       numeri NUDI contano come gli altri;
+    #:   (b) nessuna parola distintiva diversa (`da ^ db` vuota).
+    #: Se differisce altro, i due fatti COESISTONO: e' il lato sicuro, perche'
+    #: un falso conflitto declassa un fatto vero.
+    solo_a, solo_b = qa - qb, qb - qa
+    if len(solo_a) == 1 and len(solo_b) == 1 and not (da ^ db):
+        ((ua, va),), ((ub, vb),) = solo_a, solo_b
+        if ua == ub and va != vb:
+            return (ua, va, vb)
     for (ua, va) in qa:
         if not ua:
-            continue  # bare unitless number → too ambiguous
+            continue  # bare unitless number: nessuna grandezza da confrontare
         for (ub, vb) in qb:
-            if ua == ub and va != vb:
-                return (ua, va, vb)
             #: STESSA cifra, GRANDEZZA diversa — «400 metri cubi» contro una
             #: fonte che dice «400 mq». Il contratto storico («valore diverso,
             #: stessa unita'») non lo vedeva, e fino al 19/09 nemmeno poteva:
@@ -2803,6 +2838,7 @@ __all__ = [
     "distinctive_tokens",
     "conflict_from_parts",
     "numeric_conflict",
+    "identificatori_di_record",
     "extract_versions",
     "version_conflict",
     "extract_dates",
