@@ -236,14 +236,20 @@ class TestEnvScrub:
     ):
         monkeypatch.setenv("ANTHROPIC_API_KEY", "secret123")
         monkeypatch.setenv("AWS_ACCESS_KEY_ID", "secret456")
-        monkeypatch.setenv("PATH", "/usr/bin")  # not scrubbed
+        # T215 (24/09): PATH stays the real one; it is not a secret and the
+        # scrub keeps it, which is what lets the child find python. It used to
+        # be set to "/usr/bin": on Windows cmd.exe then could not find python,
+        # the child never ran, and "secret123 not in stdout" held for that
+        # reason alone. The positive control below proves the child ran.
         # Use python -c to print the env from inside the subprocess.
         r = shell.execute(
-            'python -c "import os; print(os.environ.get(\\"ANTHROPIC_API_KEY\\", \\"NONE\\"))"',
+            "python -c \"import os; print(os.environ.get('ANTHROPIC_API_KEY', 'NONE'))\"",
             cwd=tmp_path,
         )
         assert r.action == "allow"
-        # The scrubbed env should NOT have the secret.
+        assert r.returncode == 0, (r.returncode, r.stderr)
+        # The child ran, and the scrubbed env has no key: it prints NONE.
+        assert r.stdout.strip() == "NONE", (r.stdout, r.stderr)
         assert "secret123" not in r.stdout
 
 

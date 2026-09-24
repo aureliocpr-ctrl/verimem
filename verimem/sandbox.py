@@ -699,10 +699,14 @@ class SandboxedShell:
             scrubbed_env = _scrub_env(
                 dict(os.environ), self.policy.env_scrub_prefixes,
             )
+            # T215 (24/09): la codifica si dichiara. Senza, su Windows il thread
+            # lettore moriva sul primo byte non leggibile e l'uscita del figlio
+            # spariva con azione «allow»; un byte illeggibile diventa U+FFFD.
             popen_kw_strict: dict = {
                 "shell": False, "cwd": str(cwd_resolved),
                 "env": scrubbed_env, "stdout": subprocess.PIPE,
                 "stderr": subprocess.PIPE, "text": True,
+                "encoding": "utf-8", "errors": "replace",
             }
             if sys.platform == "win32":
                 popen_kw_strict["creationflags"] = (
@@ -833,10 +837,12 @@ class SandboxedShell:
         )
         t0 = time.perf_counter()
         # Platform-specific knobs for "create a new process group".
+        # T215 (24/09): encoding ed errors dichiarati, come nella via strict.
         popen_kw: dict = {
             "shell": True, "cwd": str(cwd_resolved),
             "env": scrubbed_env, "stdout": subprocess.PIPE,
             "stderr": subprocess.PIPE, "text": True,
+            "encoding": "utf-8", "errors": "replace",
         }
         if sys.platform == "win32":
             popen_kw["creationflags"] = (
