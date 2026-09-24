@@ -60,12 +60,26 @@ _USO_ATTIVO_EN = re.compile(
     re.IGNORECASE,
 )
 _PARTICIPI_DEL_DIRE_IT = re.compile(r"(?:spiegat|descritt)[oaie]", re.IGNORECASE)
-_AUSILIARE_AVERE_PRIMA = re.compile(
-    r"\b(?:ho|hai|ha|abbiamo|avete|hanno|avevo|avevi|aveva|avevamo|avevate|"
-    r"avevano|avrò|avrai|avrà|avremo|avrete|avranno|avrei|avrebbe|avremmo|"
-    r"avrebbero|abbia|abbiano)\s+(?:\w+\s+)?$",
-    re.IGNORECASE,
-)
+_FORME_DI_AVERE = frozenset({
+    "ho", "hai", "ha", "abbiamo", "avete", "hanno", "avevo", "avevi", "aveva",
+    "avevamo", "avevate", "avevano", "avrò", "avrai", "avrà", "avremo", "avrete",
+    "avranno", "avrei", "avrebbe", "avremmo", "avrebbero", "abbia", "abbiano",
+})
+#: ⚠️ LINEARE PER COSTRUZIONE. La prima stesura cercava
+#: `\s+(?:\w+\s+)?$` su tutto il testo prima della parola, e CodeQL l'ha
+#: segnalata (py/polynomial-redos, alto): su una stringa con molti spazi il
+#: costo cresce col quadrato della lunghezza. Qui si guarda solo una finestra
+#: finita prima della parola, divisa in parole su spazi e apostrofi (così
+#: «l'ho spiegato» resta preso), e si chiede se una delle ultime DUE sia una
+#: forma di avere («ha descritto», «ha già descritto»).
+_FINESTRA_AUSILIARE = 48
+_SEPARATORI_DI_PAROLA = re.compile(r"[\s'’]+")
+
+
+def _retto_da_avere(prima: str) -> bool:
+    parole = [p for p in _SEPARATORI_DI_PAROLA.split(
+        prima[-_FINESTRA_AUSILIARE:].lower()) if p]
+    return any(p in _FORME_DI_AVERE for p in parole[-2:])
 
 
 def _uso_attivo(proposition: str, m: re.Match[str]) -> bool:
@@ -74,7 +88,7 @@ def _uso_attivo(proposition: str, m: re.Match[str]) -> bool:
     if parola in _VERBI_DEL_DIRE_EN:
         return _USO_ATTIVO_EN.match(proposition, m.end()) is not None
     if _PARTICIPI_DEL_DIRE_IT.fullmatch(parola):
-        return _AUSILIARE_AVERE_PRIMA.search(proposition[:m.start()]) is not None
+        return _retto_da_avere(proposition[:m.start()])
     return False
 
 
