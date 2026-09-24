@@ -33,6 +33,51 @@ _DOC_PATTERN = re.compile(
     re.IGNORECASE,
 )
 
+#: T206 (24/09) — «explained», «described», «spiegato», «descritto» sono verbi
+#: del DIRE prima che della documentazione. «Maria described a view of a
+#: waterfall», «John explained that he hopes …», «Maria ha descritto il
+#: panorama» sono fatti personali, e lo strato li fermava sulla sola parola: la
+#: memoria p025 del pilota LoCoMo, sostenuta dal suo turno e ammessa dal giudice
+#: a 98,38, finiva in quarantena. I veri positivi che i test di questo strato
+#: proteggono sono tutti PARTICIPI, lo STATO di un artefatto («Behavior
+#: described in docs», «Il caso è descritto»). Qui si riconosce l'uso ATTIVO e
+#: lo si lascia passare:
+#:   - inglese: il verbo seguito SUBITO da un complemento oggetto o da una frase
+#:     oggettiva (articolo, dimostrativo, possessivo, pronome, «that», «how»…);
+#:   - italiano: il participio retto da AVERE, cioè il passato prossimo attivo,
+#:     con al più una parola in mezzo («ha già descritto»).
+#: «documented / documentato» NON cambia: «I documented the API» è proprio la
+#: dichiarazione di cui lo strato deve chiedere la prova.
+#: ⚠️ IL LIMITE, dichiarato e tenuto da una cella: «I explained the new API in
+#: the docs» non viene più preso da questo strato. È un verbo del dire con un
+#: oggetto, e da solo non si distingue da «I explained my plan to Maria»; se ha
+#: una fonte, a giudicarlo resta il moat.
+_VERBI_DEL_DIRE_EN = ("explained", "described")
+_USO_ATTIVO_EN = re.compile(
+    r"\s+(?:a|an|the|this|that|these|those|his|her|their|my|our|its|your|"
+    r"him|them|me|us|it|how|what|why|where|when|who|whom|to|some|all|each|"
+    r"every|several|many|one|two|three)\b",
+    re.IGNORECASE,
+)
+_PARTICIPI_DEL_DIRE_IT = re.compile(r"(?:spiegat|descritt)[oaie]", re.IGNORECASE)
+_AUSILIARE_AVERE_PRIMA = re.compile(
+    r"\b(?:ho|hai|ha|abbiamo|avete|hanno|avevo|avevi|aveva|avevamo|avevate|"
+    r"avevano|avrò|avrai|avrà|avremo|avrete|avranno|avrei|avrebbe|avremmo|"
+    r"avrebbero|abbia|abbiano)\s+(?:\w+\s+)?$",
+    re.IGNORECASE,
+)
+
+
+def _uso_attivo(proposition: str, m: re.Match[str]) -> bool:
+    """La parola trovata è un verbo del dire usato in forma ATTIVA (T206)?"""
+    parola = m.group(0).lower()
+    if parola in _VERBI_DEL_DIRE_EN:
+        return _USO_ATTIVO_EN.match(proposition, m.end()) is not None
+    if _PARTICIPI_DEL_DIRE_IT.fullmatch(parola):
+        return _AUSILIARE_AVERE_PRIMA.search(proposition[:m.start()]) is not None
+    return False
+
+
 _DOC_EVIDENCE_PREFIXES: tuple[str, ...] = (
     "docs:", "md:", "readme:", "readme.md:",
     "changelog:", "comment:",
@@ -69,7 +114,10 @@ def detect_unsupported_doc_claim(
 ) -> DocClaimWarning | None:
     if not proposition:
         return None
-    m = _DOC_PATTERN.search(proposition)
+    # La prima parola che NON sia un verbo del dire in forma attiva (T206): una
+    # frase può contenere tutte e due le cose, e allora resta una dichiarazione.
+    m = next((x for x in _DOC_PATTERN.finditer(proposition)
+              if not _uso_attivo(proposition, x)), None)
     if m is None:
         return None
     matched_text = m.group(0)

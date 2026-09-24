@@ -20,10 +20,14 @@ I LIVELLI, dichiarati:
   perde il fatto; il giudice è iniettato a punteggio alto, nessun modello da
   caricare, così il moat ammette e l'unica cosa che può fermare la scrittura è
   uno strato lessicale — la variabile è una sola;
-- una cella rossa sta alla FUNZIONE, per nominare la parola che scatta;
-- i negativi (la dichiarazione di documentazione vera resta fermata) e il
-  controllo positivo (con la prova `docs:` lo strato tace) passano oggi e
-  devono passare dopo la cura: sono ciò che la cura non deve muovere.
+- due celle rosse stanno alla FUNZIONE, per nominare la parola che scatta:
+  p025 («described») e il passato prossimo italiano («ha descritto»), che alla
+  porta entrava già per una ragione che la cura non tocca;
+- i negativi (la dichiarazione di documentazione vera resta fermata, alla porta
+  e alla funzione) e il controllo positivo (con la prova `docs:` lo strato
+  tace) passano prima e dopo la cura: sono ciò che la cura non deve muovere;
+- una cella tiene il LIMITE DICHIARATO della cura: un verbo del dire con un
+  oggetto non viene più preso, anche quando parla di documentazione.
 """
 from __future__ import annotations
 
@@ -97,9 +101,46 @@ def test_alla_porta_il_fatto_personale_sostenuto_entra(porta, fatto, fonte):
 
 
 def test_la_parola_di_p025_non_e_una_dichiarazione_di_documentazione():
-    """Livello: la funzione. Rossa oggi, e dice QUALE parola scatta."""
+    """Livello: la funzione. Rossa prima della cura, e dice QUALE parola scatta."""
     w = detect_unsupported_doc_claim(proposition=P025, verified_by=[])
     assert w is None, f"L1.14 scatta su {getattr(w, 'matched_text', w)!r}"
+
+
+def test_il_passato_prossimo_attivo_italiano_non_e_una_dichiarazione():
+    """Livello: la funzione. «ha descritto» è AVERE + participio: un'azione di
+    chi parla, non lo stato di un artefatto. Rossa prima della cura (il 23/09
+    la sonda dava `detector='descritto'`)."""
+    w = detect_unsupported_doc_claim(
+        proposition="Maria ha descritto il panorama dalla cima come mozzafiato.",
+        verified_by=[])
+    assert w is None, f"L1.14 scatta su {getattr(w, 'matched_text', w)!r}"
+
+
+@pytest.mark.parametrize("frase, parola", [
+    pytest.param("I documented the new endpoint.", "documented",
+                 id="documented-attivo-resta"),
+    pytest.param("Il caso è stato descritto.", "descritto",
+                 id="passivo-con-essere-resta"),
+    pytest.param("Behavior described in docs", "described",
+                 id="participio-inglese-resta"),
+])
+def test_NEGATIVO_la_dichiarazione_resta_una_dichiarazione(frase, parola):
+    """Ciò che la cura NON deve muovere: «documented» in ogni forma, il passivo
+    con ESSERE, il participio senza oggetto."""
+    w = detect_unsupported_doc_claim(proposition=frase, verified_by=[])
+    assert w is not None and w.matched_text.lower() == parola, (
+        f"{frase!r}: atteso L1.14 su {parola!r}, trovato {w!r}")
+
+
+def test_IL_LIMITE_DICHIARATO_un_verbo_del_dire_con_oggetto_non_e_piu_preso():
+    """⚠️ Il prezzo della cura, scritto qui perché non si perda: «I explained the
+    new API in the docs» è un verbo del dire con un oggetto e da solo non si
+    distingue da «I explained my plan to Maria». Da questo strato non viene più
+    preso; se ha una fonte, a giudicarlo resta il moat. Se un giorno questa
+    cella diventa rossa, qualcuno ha ristretto la cura: va detto."""
+    w = detect_unsupported_doc_claim(
+        proposition="I explained the new API in the docs.", verified_by=[])
+    assert w is None, f"atteso il limite dichiarato, trovato {w!r}"
 
 
 @pytest.mark.parametrize("fatto, fonte", DICHIARAZIONI_DI_DOCUMENTAZIONE)
