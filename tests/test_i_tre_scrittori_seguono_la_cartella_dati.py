@@ -73,7 +73,11 @@ def test_l_audit_delle_chiamate_sandbox_exec_segue_la_cartella_dati(home_finta):
     assert not _file_sotto(home_finta), _file_sotto(home_finta)
 
 
-def test_il_debug_del_campionamento_segue_la_cartella_dati(home_finta):
+def test_il_debug_del_campionamento_segue_la_cartella_dati(home_finta, monkeypatch):
+    """Da T213 la traccia è spenta di default: qui si accende, perché la cella
+    chiede DOVE finisce quando c'è (`test_il_debug_del_campionamento_e_spento_di_default.py`
+    tiene il resto)."""
+    monkeypatch.setenv("ENGRAM_SAMPLING_DEBUG_LOG", "1")
     from verimem.llm import MCPSamplingLLM
 
     class _SessioneFinta:

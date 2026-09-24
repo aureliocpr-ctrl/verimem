@@ -317,6 +317,20 @@ class ClaudeCLILLM:
 
 # ---- MCP Sampling (cycle #71 — subscription via host) --------------------
 
+def _traccia_del_campionamento_accesa() -> bool:
+    """La traccia di debug del campionamento, SPENTA di default (T213, 24/09).
+
+    Scriveva a ogni risposta 200 caratteri del prompt di sistema, 300 del primo
+    messaggio e 600 della risposta in ``mcp_sampling_debug.log`` (e sul ramo del
+    fallimento gli stessi 300 del messaggio): contenuto dell'utente su disco
+    senza che l'avesse chiesto. Non è una capacità del prodotto, è una traccia
+    per chi indaga: si accende con ``ENGRAM_SAMPLING_DEBUG_LOG=1`` (``true``,
+    ``yes``, ``on``), letta a ogni chiamata, e il file sta nella cartella dati.
+    """
+    return os.environ.get("ENGRAM_SAMPLING_DEBUG_LOG", "").strip().lower() in (
+        "1", "true", "yes", "on")
+
+
 class MCPSamplingLLM:
     """LLM client that delegates to the MCP host via sampling/createMessage.
 
@@ -405,20 +419,22 @@ class MCPSamplingLLM:
         except Exception as exc:
             # CYCLE #71 BIS — log the failure BEFORE re-raising as LLMError
             # so we can see what the host actually replied (or refused).
-            try:
-                # T208: nella cartella dati scelta, non nella home fissa.
-                from .config import cartella_dati_attuale
-                dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
-                dbg.parent.mkdir(parents=True, exist_ok=True)
-                with dbg.open("a", encoding="utf-8") as f:
-                    f.write(f"\n--- {time.time():.0f} FAILED "
-                            f"exc_type={type(exc).__name__} ---\n")
-                    f.write(f"SYSTEM: {(system or '')[:200]}\n")
-                    f.write(f"USER[0]: "
-                            f"{(str(messages[0].get('content', '')) if messages else '')[:300]}\n")
-                    f.write(f"EXC: {str(exc)[:600]}\n")
-            except Exception:  # noqa: BLE001
-                pass
+            # T213: only when the debug trace is on (off by default).
+            if _traccia_del_campionamento_accesa():
+                try:
+                    # T208: nella cartella dati scelta, non nella home fissa.
+                    from .config import cartella_dati_attuale
+                    dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
+                    dbg.parent.mkdir(parents=True, exist_ok=True)
+                    with dbg.open("a", encoding="utf-8") as f:
+                        f.write(f"\n--- {time.time():.0f} FAILED "
+                                f"exc_type={type(exc).__name__} ---\n")
+                        f.write(f"SYSTEM: {(system or '')[:200]}\n")
+                        f.write(f"USER[0]: "
+                                f"{(str(messages[0].get('content', '')) if messages else '')[:300]}\n")
+                        f.write(f"EXC: {str(exc)[:600]}\n")
+                except Exception:  # noqa: BLE001
+                    pass
             raise LLMError(f"MCP sampling failed: {exc}") from exc
         latency = time.time() - t0
         # Extract text from result.content (TextContent | Image | Audio).
@@ -443,20 +459,22 @@ class MCPSamplingLLM:
         # CYCLE #71 BIS debug — dump raw sampling response to file for
         # forensics when consolidate produces 0 skills despite routing OK.
         # Tag with timestamp to keep separate samples per run.
-        try:
-            # T208: nella cartella dati scelta, non nella home fissa.
-            from .config import cartella_dati_attuale
-            dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
-            dbg.parent.mkdir(parents=True, exist_ok=True)
-            with dbg.open("a", encoding="utf-8") as f:
-                f.write(f"\n--- {time.time():.0f} model={model} "
-                        f"latency={latency:.2f}s len={len(text)} ---\n")
-                f.write(f"SYSTEM: {(system or '')[:200]}\n")
-                f.write(f"USER[0]: "
-                        f"{(messages[0].get('content', '') if messages else '')[:300]}\n")
-                f.write(f"RESP: {text[:600]}\n")
-        except Exception:  # noqa: BLE001
-            pass
+        # T213: only when the debug trace is on (off by default).
+        if _traccia_del_campionamento_accesa():
+            try:
+                # T208: nella cartella dati scelta, non nella home fissa.
+                from .config import cartella_dati_attuale
+                dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
+                dbg.parent.mkdir(parents=True, exist_ok=True)
+                with dbg.open("a", encoding="utf-8") as f:
+                    f.write(f"\n--- {time.time():.0f} model={model} "
+                            f"latency={latency:.2f}s len={len(text)} ---\n")
+                    f.write(f"SYSTEM: {(system or '')[:200]}\n")
+                    f.write(f"USER[0]: "
+                            f"{(messages[0].get('content', '') if messages else '')[:300]}\n")
+                    f.write(f"RESP: {text[:600]}\n")
+            except Exception:  # noqa: BLE001
+                pass
 
         emit(
             "llm_call", provider="mcp_sampling", model=model,
