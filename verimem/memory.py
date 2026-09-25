@@ -118,7 +118,9 @@ def _encode_episode_within_budget(text: str, budget_s: float | None = None):
     if "err" in box:
         # DELEGATE-ONLY (MCP server, no daemon, cold): degrade — the episode is
         # stored DEFERRED — instead of propagating (no cold-load happened).
+        # E si chiede il daemon, come il ramo lento qui sopra (25/09).
         if isinstance(box["err"], embedding.EncodeDelegateUnavailable):
+            embedding.chiedi_un_daemon()
             return None
         raise box["err"]
     return box.get("vec")
@@ -652,10 +654,11 @@ class EpisodicMemory:
                 # PERIMETRO: solo EncodeDelegateUnavailable — indisponibilita' del
                 # delegato, non un errore di encoding. Ogni altra eccezione
                 # propaga (banco: test_CONTROLLO_un_errore_DIVERSO...).
+                embedding.chiedi_un_daemon()
                 _LOG.warning(
                     "episode store: encode delegate unavailable → l'episodio "
-                    "viene scritto SENZA embedding (sentinel; il backfill lo "
-                    "ricalcola quando il daemon torna)")
+                    "viene scritto SENZA embedding (sentinel); chiesto un "
+                    "daemon: il vettore lo rifa' la prima recall che lo trova")
                 emb = None
 
         if emb is None:
@@ -751,6 +754,13 @@ class EpisodicMemory:
                    outcome=episode.outcome, task_id=episode.task_id,
                    steps=episode.num_steps, salience=round(salience, 3))
         return was_existing if return_replaced else None
+
+    def _ci_sono_vettori_da_rifare(self) -> bool:
+        """Lo stesso criterio di `backfill_pending_embeddings` qui sotto."""
+        with self._connect() as conn:
+            return conn.execute(
+                "SELECT 1 FROM episodes WHERE length(summary_embedding) = 0 "
+                "LIMIT 1").fetchone() is not None
 
     def backfill_pending_embeddings(self, *, limit: int | None = None) -> int:
         """Embed episodes persisted with the DEFER sentinel (empty
@@ -1748,6 +1758,12 @@ class EpisodicMemory:
         # senza guard lo slice/argpartition con k negativo sversa il corpus.
         if k <= 0:
             return []
+        # Gli episodi rimasti senza vettore si rifanno qui, prima di cercare,
+        # come i fatti in `semantic.recall` (25/09): nessun avvio di server li
+        # guariva, perche' `self_heal` rifa' soltanto i fatti.
+        embedding.guarisci_se_il_daemon_c_e(
+            f"episodi:{self.db_path}", self._ci_sono_vettori_da_rifare,
+            lambda n: self.backfill_pending_embeddings(limit=n))
         # FORGIA pezzo #25 — Hopfield pattern completion as an
         # alternative recall path. When opted in, we delegate to
         # `hopfield_recall` which uses softmax(β · M @ cue) attention
