@@ -7,8 +7,8 @@ and prints a short <engram-proactive> banner to stdout if hits found.
 
 CYCLE #54 (2026-05-14): added telemetry (JSONL log) + per-session
 dedup. Every firing appends one line to
-`~/.engram/audit/briefing.jsonl`. Per-session cache at
-`~/.engram/audit/session_seen.json` prevents the same fact from
+`<data dir>/audit/briefing.jsonl`. Per-session cache at
+`<data dir>/audit/session_seen.json` prevents the same fact from
 re-appearing across turns of one session — keeps the banner novel.
 
 WHY KEYWORD-BASED (not embedding):
@@ -110,15 +110,22 @@ _CHITCHAT_PATTERNS = [
 
 
 def _find_data_dir() -> Path | None:
-    """Same priority as the SessionStart hook."""
-    for env_key in ("ENGRAM_DATA_DIR", "HIPPO_DATA_DIR"):
+    """The data dir the product uses: the FIRST alias that is set wins, in the
+    product's order (HIPPO_DATA_DIR, ENGRAM_DATA_DIR, VERIMEM_DATA_DIR,
+    `_compat._ALIAS_DATA_DIR`), and the home stores are tried only when none is
+    set. T208, second batch (25/09): this read ENGRAM before HIPPO, ignored
+    VERIMEM, and fell back to the home when the chosen dir had no store yet, so
+    the briefing log landed in a store the user had not chosen."""
+    for env_key in ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR"):
         v = os.environ.get(env_key)
         if v:
             p = Path(v)
             if (p / "semantic").exists() or (p / "semantic.db").exists():
                 return p
+            return None
     for cand in (Path.home() / ".engram",
-                 Path.home() / ".hippoagent" / "data"):
+                 Path.home() / ".hippoagent" / "data",
+                 Path.home() / ".verimem"):
         if (cand / "semantic").exists() or (cand / "semantic.db").exists():
             return cand
     return None

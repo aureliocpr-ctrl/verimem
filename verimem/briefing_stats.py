@@ -1,7 +1,8 @@
 """Cycle #54 — proactive-briefing telemetry reader.
 
 Reads the JSONL log written by the UserPromptSubmit hook
-(`~/.engram/audit/briefing.jsonl`) and produces:
+(`<data dir>/audit/briefing.jsonl`: the data dir the user chose, `~/.engram`
+only by default) and produces:
   - global stats (n firings, hit rate, latency P50/P95)
   - top_matched histogram (helps tune `min_matched`)
   - suggested_min_matched: best threshold that maximises
