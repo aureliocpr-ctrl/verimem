@@ -27,7 +27,8 @@ Deny-by-default: a command that matches NO allowlist regex AND NO denylist
 regex is REJECTED. Allowlist must explicitly authorize.
 
 Audit: every validate + execute call writes JSONL line to
-~/.engram/audit/sandbox-YYYYMMDD.jsonl.
+<data dir>/audit/sandbox-YYYYMMDD.jsonl — the data dir the user chose
+(``HIPPO_DATA_DIR`` / ``ENGRAM_DATA_DIR``), ``~/.engram`` only by default.
 """
 from __future__ import annotations
 
@@ -44,7 +45,24 @@ from datetime import datetime
 from pathlib import Path
 from typing import Literal
 
-DEFAULT_AUDIT_ROOT = Path.home() / ".engram" / "audit"
+
+def radice_audit() -> Path:
+    """La cartella dell'audit, dentro la cartella dati ATTUALE (T208, 24/09).
+
+    Era la costante ``Path.home() / ".engram" / "audit"``, fissata all'import:
+    con ``ENGRAM_DATA_DIR`` altrove l'audit finiva comunque nella home, e un
+    banco con i tre alias isolati ha lasciato righe nello store vero (23/09).
+    """
+    from .config import cartella_dati_attuale
+    return cartella_dati_attuale() / "audit"
+
+
+def __getattr__(nome: str) -> Path:
+    """``DEFAULT_AUDIT_ROOT`` resta per chi lo importa, ma si calcola a ogni
+    accesso: una costante di modulo fissava la home dell'import."""
+    if nome == "DEFAULT_AUDIT_ROOT":
+        return radice_audit()
+    raise AttributeError(f"module {__name__!r} has no attribute {nome!r}")
 
 
 # Cycle 2026-05-27 round 14 FIX 2 (agy audit Critical sandbox.py:74-98).
@@ -515,10 +533,11 @@ class SandboxedShell:
         self,
         policy: SandboxPolicy | None = None,
         *,
-        audit_root: Path | str = DEFAULT_AUDIT_ROOT,
+        audit_root: Path | str | None = None,
     ) -> None:
         self.policy = policy or SandboxPolicy()
-        self.audit_root = Path(audit_root)
+        self.audit_root = (Path(audit_root) if audit_root is not None
+                           else radice_audit())
         self.audit_root.mkdir(parents=True, exist_ok=True)
 
     @property
@@ -943,11 +962,11 @@ class SandboxedShell:
 __all__ = [
     "Action",
     "DEFAULT_ALLOWLIST_PATTERNS",
-    "DEFAULT_AUDIT_ROOT",
     "DEFAULT_DENYLIST_PATTERNS",
     "ExecResult",
     "NETWORK_PATTERNS",
     "SandboxPolicy",
     "SandboxedShell",
     "ValidationResult",
+    "radice_audit",
 ]
