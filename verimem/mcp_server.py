@@ -9042,7 +9042,11 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "promoting it would put it back in circulation as a fact.")
             res = promote_chunk_to_fact(
                 a.semantic, hit, claim=arguments.get("claim"),
-                topic=arguments.get("topic", "documents/promoted"))
+                topic=arguments.get("topic", "documents/promoted"),
+                # 1b.3: il timbro di questa porta, come gia' fanno le altre
+                # due vie di scrittura. NON si legge dagli argomenti: un
+                # principal fornito dal client sarebbe un tentativo di spoof.
+                principal=_MCP_PRINCIPAL)
             _audit(name, arguments,
                    outcome="ok" if res.get("stored") else "rejected")
             return _ok(res)
