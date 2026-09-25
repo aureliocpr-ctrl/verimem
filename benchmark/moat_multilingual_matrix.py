@@ -19,9 +19,11 @@ Exit: 0 if false-block <= 5% and value/numeric escapes == 0 (the shipped bound);
 """
 from __future__ import annotations
 
+import json
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 os.environ["ENGRAM_ENCODE_SERVICE"] = "0"
@@ -77,7 +79,7 @@ CASES = [
 ]
 
 
-def main(reps: int = 7) -> int:
+def main(reps: int = 7, out: str | None = None) -> int:
     from verimem import Memory
     m = Memory(str(Path(tempfile.mkdtemp(prefix="verimem_matrix_")) / "m.db"))
     stats: dict = {}
@@ -92,31 +94,65 @@ def main(reps: int = 7) -> int:
             st["quar" if m.add(bad_t.format(s=s, y=y), source=src)["status"] == "quarantined"
                else "esc"] += 1
 
+    s = summarize(stats)
     print(f"{'lang/kind':<14} {'entailed adm':>13} {'false-block':>11} "
           f"{'confab quar':>12} {'escape':>7}")
-    tot = {"ok": 0, "fb": 0, "quar": 0, "esc": 0}
-    num_esc = 0
-    for (lang, kind), st in sorted(stats.items()):
+    for cell, st in s["cells"].items():
         n_ok = st["ok"] + st["fb"]
         n_bad = st["quar"] + st["esc"]
-        print(f"{lang+'/'+kind:<14} {st['ok']:>8}/{n_ok:<4} {st['fb']:>11} "
+        print(f"{cell:<14} {st['ok']:>8}/{n_ok:<4} {st['fb']:>11} "
               f"{st['quar']:>8}/{n_bad:<3} {st['esc']:>7}")
+    print(f"\nTOTAL entailed {s['entailed_admitted']}/{s['entailed_n']} "
+          f"(false-block {s['false_block_pct']:.1f}%) · "
+          f"confab {s['confab_quarantined']}/{s['confab_n']} quarantined "
+          f"(escape {s['escape_pct']:.1f}%; numeric escapes {s['numeric_escapes']})")
+    print("VERDICT:", "PASS — value/numeric moat holds across languages; "
+          "entity-substitution gap is the documented llm-judge case" if s["pass"]
+          else "FAIL — a value/numeric contradiction escaped or entailed over-blocked")
+    if out:
+        s.update(bench="moat_multilingual_matrix", reps=reps, commit=_commit(),
+                 measured_on=time.strftime("%Y-%m-%d"), runs="one run of the whole matrix")
+        Path(out).write_text(json.dumps(s, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
+        print("written:", out)
+    return 0 if s["pass"] else 1
+
+
+def summarize(stats: dict) -> dict:
+    """The numbers the matrix publishes, computed in ONE place from the per-cell counts:
+    main() prints them, ``--out`` writes them for the registry (benchmark/repro_all.py,
+    T218), and a matrix rebuilt from two runs uses the same function."""
+    cells = {f"{lang}/{kind}": dict(st) for (lang, kind), st in sorted(stats.items())}
+    tot = {"ok": 0, "fb": 0, "quar": 0, "esc": 0}
+    num_esc = num_bad = 0
+    for (_lang, kind), st in stats.items():
         for k in tot:
             tot[k] += st[k]
         if kind == "numeric":
             num_esc += st["esc"]
-    n_ok = tot["ok"] + tot["fb"]
-    n_bad = tot["quar"] + tot["esc"]
-    fb_rate = 100 * tot["fb"] / max(1, n_ok)
-    print(f"\nTOTAL entailed {tot['ok']}/{n_ok} (false-block {fb_rate:.1f}%) · "
-          f"confab {tot['quar']}/{n_bad} quarantined "
-          f"(escape {100*tot['esc']/max(1, n_bad):.1f}%; numeric escapes {num_esc})")
-    ok = fb_rate <= 5.0 and num_esc == 0
-    print("VERDICT:", "PASS — value/numeric moat holds across languages; "
-          "entity-substitution gap is the documented llm-judge case" if ok
-          else "FAIL — a value/numeric contradiction escaped or entailed over-blocked")
-    return 0 if ok else 1
+            num_bad += st["quar"] + st["esc"]
+    n_ok, n_bad = tot["ok"] + tot["fb"], tot["quar"] + tot["esc"]
+    fb_pct = 100 * tot["fb"] / max(1, n_ok)
+    return {"cells": cells,
+            "entailed_admitted": tot["ok"], "entailed_n": n_ok, "false_block_pct": fb_pct,
+            "confab_quarantined": tot["quar"], "confab_n": n_bad, "escapes": tot["esc"],
+            "escape_pct": 100 * tot["esc"] / max(1, n_bad),
+            "numeric_escapes": num_esc, "numeric_confab_n": num_bad,
+            "pass": fb_pct <= 5.0 and num_esc == 0}
+
+
+def _commit() -> str | None:
+    """The commit of the checkout the bench runs from, or None: the bench never fails for it."""
+    try:
+        import subprocess
+        r = subprocess.run(["git", "rev-parse", "HEAD"], cwd=Path(__file__).resolve().parent,
+                           capture_output=True, encoding="utf-8", timeout=10)
+        return r.stdout.strip() or None
+    except Exception:  # noqa: BLE001
+        return None
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    import argparse
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--out", help="write the published numbers as JSON (for benchmark/repro_all.py)")
+    sys.exit(main(out=ap.parse_args().out))
