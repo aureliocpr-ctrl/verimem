@@ -832,6 +832,29 @@ def _owner_is_zombie(path: Path) -> bool:
     return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
+def daemon_in_arrivo(lock_path: Path | None = None) -> bool:
+    """True se un daemon tiene il lock, e' vivo e non e' uno zombie.
+
+    E' la domanda di chi ASPETTA il daemon, e non e' «il daemon serve?»
+    (`daemon_usable`): un daemon appena nato tiene il lock PRIMA di caricare il
+    modello e di scrivere la scoperta, quindi per qualche decina di secondi
+    esiste e non risponde. Chi a quel punto smette di aspettare e carica il
+    modello in casa paga i gigabyte che il daemon esiste per non far pagare:
+    misurato il 25/09 all'avvio della macchina, un server MCP nato 7 s dopo il
+    daemon ha caricato torch e il giudice (2474 MB) mentre gli altri dieci
+    stavano a 357 MB.
+
+    Le regole sono quelle del lock, non una copia: vivo per `_pid_alive`, e non
+    piu' atteso quando `_owner_is_zombie` lo dichiara zombie (fuori dalla
+    grazia di `_ZOMBIE_GRACE_S` e senza servire).
+    """
+    path = lock_path or DAEMON_LOCK_PATH
+    owner = _read_lock_owner(path)
+    if not owner:
+        return False
+    return _pid_alive(owner) and not _owner_is_zombie(path)
+
+
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
     """Atomically claim the one-daemon-per-machine lock.
 
@@ -992,6 +1015,34 @@ def _spawn_detached() -> None:
     )
 
 
+def servizio_spento() -> bool:
+    """True se chi usa il prodotto ha spento il daemon condiviso
+    (ENGRAM_ENCODE_SERVICE=0, false, no, off).
+
+    Una funzione e non una riga dentro `ensure_running`, perche' la stessa
+    domanda la fa `verimem doctor` (25/09): col servizio spento il warmup non
+    lancia niente, e il doctor consigliava proprio il warmup."""
+    return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    )
+
+
+def lancio_recente() -> float | None:
+    """Da quanti secondi e' stato chiesto un lancio del daemon, se da meno di
+    `_SPAWN_COOLDOWN_S`; altrimenti None.
+
+    E' la regola con cui `ensure_running` non rilancia («someone spawned
+    recently; let it finish warming»), messa dove anche `verimem doctor` la
+    legge: nei primi secondi dopo il warmup il processo del daemon non ha
+    ancora preso il suo lock, e questo file e' l'unico segno che sta
+    arrivando."""
+    try:
+        eta = time.time() - _SPAWN_LOCK_PATH.stat().st_mtime
+    except OSError:
+        return None
+    return eta if eta < _SPAWN_COOLDOWN_S else None
+
+
 def ensure_running() -> bool:
     """Ensure the shared encode daemon is up; spawn it (windowless) if not.
 
@@ -999,9 +1050,7 @@ def ensure_running() -> bool:
     (the daemon needs ~20s to warm — callers fall back to in-process meanwhile).
     A lock-file cooldown means concurrent callers (the N MCP servers + CLI)
     spawn at most one daemon. Disabled by ENGRAM_ENCODE_SERVICE=0."""
-    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
-        "0", "false", "no", "off",
-    ):
+    if servizio_spento():
         return False
     if daemon_usable():
         return True
@@ -1044,12 +1093,8 @@ def ensure_running() -> bool:
             DISCOVERY_PATH.unlink()
         except OSError:
             pass
-    try:
-        if (_SPAWN_LOCK_PATH.exists()
-                and time.time() - _SPAWN_LOCK_PATH.stat().st_mtime < _SPAWN_COOLDOWN_S):
-            return False  # someone spawned recently; let it finish warming
-    except OSError:
-        pass
+    if lancio_recente() is not None:
+        return False  # someone spawned recently; let it finish warming
     try:
         _SPAWN_LOCK_PATH.parent.mkdir(parents=True, exist_ok=True)
         _SPAWN_LOCK_PATH.write_text(str(time.time()), encoding="utf-8")

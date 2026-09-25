@@ -3290,9 +3290,24 @@ class Memory:
         self._floor_stantio = False
         if n >= 0:
             try:
+                # MISURABILE, accanto al valore (25/09): lo zero ha due
+                # significati — quello voluto di uno store troppo piccolo per
+                # le sonde, e uno misurato — e `verimem doctor`, che non
+                # ricalcola, li distingue solo se la stima lo scrive qui. Un
+                # valore sopra zero ha avuto le sue sonde per costruzione; lo
+                # zero si chiede alla stessa costruzione. `None` se la domanda
+                # fallisce: chi legge ripiega sul conteggio dei fatti.
+                misurabile: bool | None = val > 0.0
+                if not misurabile:
+                    try:
+                        from .relevance_floor import pavimento_misurabile
+                        misurabile = pavimento_misurabile(self.semantic)
+                    except Exception:  # noqa: BLE001 — un campo in meno, non un errore
+                        misurabile = None
                 f.write_text(
                     _json.dumps({"floor": val, "n_facts": n,
-                                 "n_metric": "servibili"}),
+                                 "n_metric": "servibili",
+                                 "misurabile": misurabile}),
                     encoding="utf-8")
             except Exception:  # noqa: BLE001 — non poter scrivere non è un errore
                 pass

@@ -23,8 +23,8 @@ from __future__ import annotations
 import os
 import random
 
-__all__ = ["scrambled_probes", "estimate_relevance_floor", "env_floor",
-           "env_floor_if_set"]
+__all__ = ["scrambled_probes", "estimate_relevance_floor", "pavimento_misurabile",
+           "env_floor", "env_floor_if_set"]
 
 _FLOOR_OFF = {"off", "none", "0", "0.0", ""}
 
@@ -101,6 +101,8 @@ def env_floor_if_set(var: str = "ENGRAM_MIN_RELEVANCE") -> float | str | None:
 _MIN_FACTS = 2          # cross-fact scrambling needs at least two sources
 _PROBE_WORDS = 10       # ~question-length probes
 _MAX_POOL_FACTS = 200   # cap the word pool: enough diversity, bounded cost
+_N_SONDE = 32           # probes per estimate (estimate_relevance_floor default)
+_SEME = 0               # their seed: the same probes every time
 
 
 _MAX_WORDS_PER_FACT = 2
@@ -207,8 +209,22 @@ def scrambled_probes_da_testi(testi, *, n: int = 32,
     return probes
 
 
-def estimate_relevance_floor(sm, *, n_probes: int = 32, quantile: float = 0.95,
-                             seed: int = 0, k: int = 5) -> float:
+def pavimento_misurabile(sm) -> bool:
+    """True se lo store basta a costruire le sonde di rumore della stima.
+
+    Distingue i due zeri di `estimate_relevance_floor`: quello VOLUTO di uno
+    store troppo piccolo («a floor guessed from nothing would be worse than
+    none») e uno zero MISURATO su un corpus che le sonde le ha. Il primo e' il
+    valore giusto e rifare la stima lo ridarebbe identico; il secondo e' il
+    caso del 30/08 (0.0 su 13795 fatti per sei ore). Stessa costruzione della
+    stima, con i suoi stessi parametri: chi salva il pavimento lo scrive
+    accanto al valore, e `verimem doctor` lo legge senza ricalcolare (25/09)."""
+    return bool(scrambled_probes(sm, n=_N_SONDE, seed=_SEME))
+
+
+def estimate_relevance_floor(sm, *, n_probes: int = _N_SONDE,
+                             quantile: float = 0.95, seed: int = _SEME,
+                             k: int = 5) -> float:
     """The store's noise ceiling: ``quantile`` of the max recall score of
     scrambled probes. 0.0 (floor off) when the store is too small to measure
     — a floor guessed from nothing would be worse than none."""
