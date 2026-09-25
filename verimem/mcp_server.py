@@ -747,7 +747,15 @@ def _avvisi_di_lettura(agent, query: str, *, ripiego: str | None = None) -> dict
 
 
 def _err(msg: str) -> list[t.TextContent]:
-    return [t.TextContent(type="text", text=json.dumps({"error": msg}))]
+    # T184 — `stored` C'E' ANCHE QUANDO SI RIFIUTA, e vale `False`. Prima una
+    # risposta d'errore portava il solo `error`: chi legge `stored` per sapere
+    # se qualcosa e' entrato nello store trovava la chiave MANCANTE, cioe'
+    # `r.get("stored")` -> `None`, che non e' `False`. E' la stessa distinzione
+    # che il prodotto documenta su `replaced` («un campo che c'e' e vale False
+    # si legge diverso da un campo che manca»), applicata al campo che dice se
+    # una scrittura e' avvenuta — dove la differenza costa di piu'.
+    return [t.TextContent(type="text",
+                          text=json.dumps({"error": msg, "stored": False}))]
 
 
 #: I nomi che una scrittura puo' portare. Servono a dire QUALE chiave e' stata
@@ -1813,7 +1821,33 @@ def _derive_lenient_schema(
             lean[key] = lp
     if not lean:
         return None
-    return {"type": "object", "properties": lean, "additionalProperties": True}
+    derivato: dict[str, Any] = {
+        "type": "object", "properties": lean, "additionalProperties": True}
+    # T184 — `required` NON SI LASCIA CADERE PIU', e la ragione per cui cadeva
+    # va affrontata, non ignorata: «without ever rejecting a call the handler
+    # would have accepted». Vero — e il punto e' proprio quello. I gestori
+    # ACCETTANO quelle chiamate perche' leggono i campi obbligatori con un
+    # ripiego vuoto (`arguments.get("query", "")`, misurati 130 il 20/09), e
+    # cio' che accettano non e' un servizio: e' come
+    # `hippo_document_promote_chunk` senza `text` abbia scritto nello store un
+    # fatto la cui proposizione e' la stringa 'None', `status: model_claim`,
+    # servibile nel recall. Un fatto INVENTATO dal prodotto perche' nessuno ha
+    # detto no.
+    #
+    # Prima: 123 tool pubblicavano `required`, 9 lo facevano rispettare (i soli
+    # con schema scritto a mano), 114 no. Lo schema che il client legge da
+    # `list_tools()` non era quello con cui la porta validava: uno prometteva
+    # `required`, l'altro non lo applicava.
+    richiesti = input_schema.get("required")
+    if isinstance(richiesti, list):
+        #: solo i campi che esistono davvero fra le proprieta': un `required`
+        #: che nomina un campo non dichiarato e' un errore dello schema, e
+        #: rifiutare ogni chiamata per quello sarebbe curare un refuso con un
+        #: blocco totale.
+        veri = [c for c in richiesti if isinstance(c, str) and c in lean]
+        if veri:
+            derivato["required"] = veri
+    return derivato
 
 
 async def _ensure_derived_schemas() -> None:
@@ -8102,7 +8136,23 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
     if validation_error:
         _audit(name, arguments, outcome="rejected_schema",
                error=validation_error)
-        return _err(f"input validation failed: {validation_error}")
+        # T184 — IL RIFIUTO NOMINA ANCHE LE CHIAVI CHE HA IGNORATO. Far
+        # rispettare `required` ha un effetto che il banco di
+        # `test_il_messaggio_dice_quale_chiave_ha_buttato` ha colto subito: il
+        # messaggio dello schema («'proposition' is a required property»)
+        # ARRIVA PRIMA di quello ricco, e chi ha scritto `content` invece di
+        # `proposition` va a cercare perche' la sua proposizione sia vuota —
+        # cioe' nel posto sbagliato. Una validazione che anticipa un messaggio
+        # migliore non e' un guadagno: e' una regressione mascherata da rigore.
+        # Qui si aggiunge cio' che quella strada diceva, e si tiene la sua
+        # regola: ⛔ SOLO I NOMI, MAI I VALORI — un errore che riecheggia il
+        # contenuto e' un altro posto dove finisce un dato da cancellare.
+        schema_del_tool = _SCHEMAS_BY_TOOL.get(name) or _DERIVED_SCHEMAS.get(name) or {}
+        dichiarate = set(schema_del_tool.get("properties") or {})
+        ignorate = sorted(k for k in (arguments or {}) if k not in dichiarate)
+        coda = (f"; these keys were not recognised and were IGNORED: "
+                f"{ignorate}" if ignorate and dichiarate else "")
+        return _err(f"input validation failed: {validation_error}{coda}")
     # architecture-A MCP tier: when a shared memory server is configured, the
     # hot WRITE tool delegates to it BEFORE any heavy local agent is built -
     # so N sessions behind one server never each load models / fight the file.
