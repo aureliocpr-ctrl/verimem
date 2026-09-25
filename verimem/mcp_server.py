@@ -851,8 +851,10 @@ def _sandbox_replay_audit(
     """Task #48 — append one replayable JSONL record for a sandbox_exec
     tool call. The stdout/stderr sha256 hashes let a replay of the same
     cmd+cwd be verified byte-deterministic. Distinct from SandboxedShell's
-    library-level audit (~/.engram/audit/, no hashes): this is the TOOL-CALL
-    layer. Dir override via ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern).
+    library-level audit (<data dir>/audit/, no hashes): this is the TOOL-CALL
+    layer, in <data dir>/sandbox-audit/. Dir override via
+    ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern). T208 (24/09): the default was
+    ``Path.home() / ".engram"``, which ignored the data dir the user chose.
 
     Called on EVERY decision path — allow/deny/dry_run/timeout/error from
     execute() AND the cwd fail-CLOSED deny (critic O3 #3 counterexample fix:
@@ -862,9 +864,11 @@ def _sandbox_replay_audit(
     try:
         import hashlib
         from pathlib import Path
+
+        from verimem.config import cartella_dati_attuale
         adir = Path(
             os.environ.get("ENGRAM_SANDBOX_AUDIT_DIR")
-            or (Path.home() / ".engram" / "sandbox-audit")
+            or (cartella_dati_attuale() / "sandbox-audit")
         )
         adir.mkdir(parents=True, exist_ok=True)
         so = stdout or ""
@@ -1918,7 +1922,8 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "unsandboxed host shell. Deny-by-default: a command matching "
                 "no allowlist regex (and no denylist) is REJECTED. Destructive "
                 "ops (rm -rf, format, dd, curl|sh, etc) are always denied. "
-                "Every call is audited to ~/.engram/audit/sandbox-*.jsonl. "
+                "Every call is audited to <data dir>/audit/sandbox-*.jsonl "
+                "(the data dir the user chose; ~/.engram by default). "
                 "Set dry_run=true to validate without executing. Returns the "
                 "ExecResult: action (allow|deny|dry_run|timeout|error), "
                 "returncode, stdout, stderr, matched_rule, reason."
@@ -6786,7 +6791,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "CYCLE #54 (2026-05-14) — observability for the "
                 "proactive briefing hook. Reads "
-                "~/.engram/audit/briefing.jsonl (written by the "
+                "<data dir>/audit/briefing.jsonl (written by the "
                 "UserPromptSubmit hook on every firing) and returns "
                 "aggregate stats: hit_rate, P50/P95 latency, "
                 "top_matched histogram, and a suggested "
@@ -11887,14 +11892,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_briefing_stats":
             # Resolve audit log path from canonical data dir.
-            from verimem._compat import _env_data_dir
             from verimem.briefing_stats import compute_stats
+            from verimem.config import cartella_dati_attuale
 
             # L'ordine degli alias e' dichiarato in `_compat._ALIAS_DATA_DIR`
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             jsonl_path = Path(data_dir) / "audit" / "briefing.jsonl"
             payload = compute_stats(
                 jsonl_path,
@@ -11905,7 +11910,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_refresh":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import SelfModelStore
             from verimem.self_model_refresh import (
                 compute_diff,
@@ -11916,7 +11921,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )
@@ -11975,14 +11980,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_get":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import SelfModelStore
 
             # L'ordine degli alias e' dichiarato in `_compat._ALIAS_DATA_DIR`
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )
@@ -11991,7 +11996,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_update":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import (
                 SelfModelStore,
                 SelfModelTooLarge,
@@ -12001,7 +12006,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )

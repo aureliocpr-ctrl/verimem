@@ -558,3 +558,17 @@ class Config:
 
 CONFIG = Config()
 CONFIG.ensure_dirs()
+
+
+def cartella_dati_attuale() -> Path:
+    """La cartella dati del prodotto, letta ADESSO (T208, 24/09).
+
+    `CONFIG.data_dir` è l'unico risolutore (precedenza `HIPPO_DATA_DIR` →
+    `ENGRAM_DATA_DIR` → default), e chi isola uno store lo cambia dopo
+    l'import. Leggerlo alla chiamata, invece di fissare `Path.home() /
+    ".engram"` in una costante, è ciò che fa seguire la scelta dell'utente
+    anche agli scrittori secondari: l'audit della sandbox, l'audit delle
+    chiamate `sandbox_exec`, il debug del campionamento. Prima scrivevano
+    nella home qualunque cartella dati fosse stata scelta.
+    """
+    return Path(str(CONFIG.data_dir))

@@ -31,17 +31,37 @@ import sys
 from pathlib import Path
 from typing import Any
 
-DEFAULT_STATE_PATH = Path.home() / ".engram" / "resonator" / "memory.npz"
-DEFAULT_INDEX_PATH = Path.home() / ".engram" / "resonator" / "index.jsonl"
+
+def _percorso_stato() -> Path:
+    """Lo stato del resonator nella cartella dati ATTUALE (T208, secondo lotto, 25/09):
+    era ``Path.home() / ".engram"`` fissata all'import, quindi con la cartella dati
+    altrove il resonator scriveva comunque nella home."""
+    from verimem.config import cartella_dati_attuale
+    return cartella_dati_attuale() / "resonator" / "memory.npz"
+
+
+def _percorso_indice() -> Path:
+    from verimem.config import cartella_dati_attuale
+    return cartella_dati_attuale() / "resonator" / "index.jsonl"
+
+
+def __getattr__(nome: str) -> Path:
+    """I due nomi di prima restano per chi li importa, calcolati a ogni accesso."""
+    if nome == "DEFAULT_STATE_PATH":
+        return _percorso_stato()
+    if nome == "DEFAULT_INDEX_PATH":
+        return _percorso_indice()
+    raise AttributeError(f"module {__name__!r} has no attribute {nome!r}")
 DEFAULT_D = 4096
 DEFAULT_M = 32
 DEFAULT_K = 3
 
 
 def _load_state(
-    state_path: Path = DEFAULT_STATE_PATH,
+    state_path: Path | None = None,
 ) -> Any:
     """Load state if exists, else fresh."""
+    state_path = state_path or _percorso_stato()
     from verimem.resonator_memory import ResonatorMemory
     if state_path.exists():
         return ResonatorMemory.load(state_path)
@@ -51,16 +71,18 @@ def _load_state(
 
 
 def _save_state(
-    mem: Any, state_path: Path = DEFAULT_STATE_PATH,
+    mem: Any, state_path: Path | None = None,
 ) -> dict[str, Any]:
+    state_path = state_path or _percorso_stato()
     state_path.parent.mkdir(parents=True, exist_ok=True)
     return mem.save(state_path)
 
 
 def _load_text_index(
-    index_path: Path = DEFAULT_INDEX_PATH,
+    index_path: Path | None = None,
 ) -> dict[tuple[int, ...], str]:
     """Load text→indices reverse mapping (JSONL)."""
+    index_path = index_path or _percorso_indice()
     if not index_path.exists():
         return {}
     mapping: dict[tuple[int, ...], str] = {}
@@ -74,8 +96,9 @@ def _load_text_index(
 
 def _append_text_index(
     indices: tuple[int, ...], text: str,
-    index_path: Path = DEFAULT_INDEX_PATH,
+    index_path: Path | None = None,
 ) -> None:
+    index_path = index_path or _percorso_indice()
     index_path.parent.mkdir(parents=True, exist_ok=True)
     entry = {"indices": list(indices), "text": text}
     with open(index_path, "a", encoding="utf-8") as f:
@@ -148,10 +171,10 @@ def cmd_reset(state_path: Path, index_path: Path) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--state-path", type=Path, default=DEFAULT_STATE_PATH,
+        "--state-path", type=Path, default=None,
     )
     parser.add_argument(
-        "--index-path", type=Path, default=DEFAULT_INDEX_PATH,
+        "--index-path", type=Path, default=None,
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
     sub_r = sub.add_parser("remember")
@@ -160,6 +183,9 @@ def main() -> int:
     sub.add_parser("stats")
     sub.add_parser("reset")
     args = parser.parse_args()
+    # T208, secondo lotto: i default si risolvono QUI, alla chiamata, non all'import
+    args.state_path = args.state_path or _percorso_stato()
+    args.index_path = args.index_path or _percorso_indice()
 
     if args.cmd == "remember":
         out = cmd_remember(args.text, args.state_path, args.index_path)

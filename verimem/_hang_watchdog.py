@@ -54,10 +54,21 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-_TRACE_DIR = Path(
-    os.environ.get("HIPPO_HANG_TRACE_DIR")
-    or (Path.home() / ".engram" / "hang-traces")
-)
+#: Dove finiscono le tracce. `None` vuol dire «alla chiamata»: `HIPPO_HANG_TRACE_DIR`
+#: se posta, altrimenti la cartella dati ATTUALE. T208, secondo lotto (25/09): era la
+#: home fissata all'import, quindi con la cartella dati altrove le tracce finivano
+#: comunque in `~/.engram`. Un valore posto qui (i test lo fanno) vince.
+_TRACE_DIR: Path | None = None
+
+
+def _cartella_tracce() -> Path:
+    if _TRACE_DIR is not None:
+        return Path(_TRACE_DIR)
+    scelta = os.environ.get("HIPPO_HANG_TRACE_DIR")
+    if scelta:
+        return Path(scelta)
+    from .config import cartella_dati_attuale
+    return cartella_dati_attuale() / "hang-traces"
 # Below this many bytes the file is header-only (nothing was dumped) → delete.
 _HEADER_MAX_BYTES = 300
 _ARMED = threading.Lock()
@@ -183,7 +194,7 @@ def _pota_i_vecchi() -> None:
     modulo: una cartella assente o non scrivibile costa la potatura, mai la
     chiamata che si sta osservando."""
     try:
-        file = sorted(_TRACE_DIR.glob("hang-*.txt"),
+        file = sorted(_cartella_tracce().glob("hang-*.txt"),
                       key=lambda p: p.stat().st_mtime)
         for p in file[:max(0, len(file) - _MAX_FILES)]:
             p.unlink(missing_ok=True)
@@ -194,7 +205,7 @@ def _pota_i_vecchi() -> None:
 @contextmanager
 def hang_trace(label: str, budget_s: float):
     """Wrap a tool call. If it runs longer than ``budget_s`` seconds, append a
-    full all-thread stack dump to a per-call file under ``_TRACE_DIR``."""
+    full all-thread stack dump to a per-call file under ``_cartella_tracce()``."""
     if not budget_s or budget_s <= 0:
         yield
         return
@@ -206,9 +217,10 @@ def hang_trace(label: str, budget_s: float):
     path = None
     armed = False
     try:
-        _TRACE_DIR.mkdir(parents=True, exist_ok=True)
+        cartella = _cartella_tracce()
+        cartella.mkdir(parents=True, exist_ok=True)
         safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in str(label))[:40]
-        path = _TRACE_DIR / f"hang-{int(time.time())}-{os.getpid()}-{safe}.txt"
+        path = cartella / f"hang-{int(time.time())}-{os.getpid()}-{safe}.txt"
         f = open(path, "w", encoding="utf-8")
         f.write(
             f"HANG WATCHDOG  tool={label}  pid={os.getpid()}  budget={budget_s}s\n"
