@@ -924,6 +924,22 @@ def _registra_esecutore(chi: str | None) -> None:
     _esecutore.chi = chi
 
 
+#: PERCHE' il daemon non ha giudicato l'ultima richiesta DI QUESTO THREAD,
+#: quando l'ha detto lui (``ok: false``). `_gate_via_daemon` rende uguali due
+#: silenzi diversi — torna None in entrambi — e chi aspetta il daemon deve
+#: poterli separare: il daemon che RIFIUTA («this daemon cannot judge») non
+#: giudichera' mai, quello che non ha ancora risposto perche' sta caricando il
+#: giudice giudichera' fra poco. Thread-local per la ragione di `_esecutore`:
+#: e' la risposta a UNA richiesta.
+_rifiuto_del_giudice = threading.local()
+
+
+def rifiuto_dell_ultima_sonda() -> str | None:
+    """Il motivo con cui il daemon ha RIFIUTATO l'ultima richiesta di giudizio
+    di questo thread, o None se ha giudicato o non ha risposto affatto."""
+    return getattr(_rifiuto_del_giudice, "motivo", None)
+
+
 def _gate_via_daemon(pairs, *, info=None,
                      max_length: int | None = None) -> list[float] | None:
     """Punteggi del giudice del moat dal daemon condiviso, o None per degradare.
@@ -945,6 +961,7 @@ def _gate_via_daemon(pairs, *, info=None,
     esattamente cio' che faceva prima. E anche quando questo client scade, il
     daemon **continua a caricare**: il processo dopo lo trova caldo.
     """
+    _rifiuto_del_giudice.motivo = None
     if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
         "0", "false", "no", "off",
     ):
@@ -999,6 +1016,9 @@ def _gate_via_daemon(pairs, *, info=None,
                         f"scelta. Motivo dal daemon: {resp.get('window_error')}",
                         RuntimeWarning, stacklevel=2)
             return [float(s) for s in resp["scores"]]
+        if isinstance(resp, dict) and resp.get("ok") is False:
+            # Il daemon ha RISPOSTO di no: un rifiuto, non un silenzio.
+            _rifiuto_del_giudice.motivo = str(resp.get("error") or "ok: false")
     except Exception:  # noqa: BLE001 — qualunque intoppo -> si degrada come prima
         return None
     return None
