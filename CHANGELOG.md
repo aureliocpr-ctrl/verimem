@@ -23,7 +23,7 @@ All notable changes to Verimem follow [Keep a Changelog](https://keepachangelog.
   SDK's `permissive` preset, and means nothing checks that the conversation
   said it.
 
-## [0.7.7] - 2026-09-06
+## [0.7.7] - not released yet (main declares 0.7.7.dev0)
 
 ### What changes for you
 
