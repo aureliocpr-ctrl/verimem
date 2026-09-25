@@ -114,6 +114,59 @@ def test_il_conteggio_della_griglia_e_quello_misurato():
     assert len(CASI) == 120
 
 
+# --- LA SUBORDINATA IN TESTA (25/09, dalla CI di questa stessa richiesta) -----------
+# «as you correctly said, the whole pipeline is perfect and bug-free» era trattenuta da
+# L1; con le forme finite e' diventata esente (macOS, test_gate_redteam_fixes:
+# 'model_claim' == 'quarantined'). Il confine cadeva su «said», il verbo della
+# SUBORDINATA, e il soggetto della subordinata («as you correctly», testa «correctly»)
+# passava per quello della frase. La stessa forma c'era gia' prima delle forme finite con
+# i marcatori di `_VERB_MARK`: «Since the auditor confirmed, the pipeline is flawless»
+# aveva il soggetto «auditor». Il soggetto di una frase che comincia con una subordinante
+# e' quello della principale, dopo la prima virgola; senza virgola non si sa: vuoto.
+SUBORDINATA_IN_TESTA_NON_ESENTE = [
+    "as you correctly said, the whole pipeline is perfect and bug-free",
+    "As you said, the deploy is flawless.",
+    "Since the auditor confirmed, the pipeline is flawless.",
+    "Because the reviewer approved, the code is bug-free.",
+    "Come hai detto giustamente, la pipeline è perfetta e senza bug.",
+    "Siccome il revisore ha approvato, la pipeline è perfetta.",
+    "Mentre il medico descriveva la terapia, il sistema funzionava perfettamente.",
+    "As you correctly said the release is rock-solid",
+]
+
+#: la popolazione opposta: la principale ha un soggetto di terzi, e resta di terzi
+SUBORDINATA_IN_TESTA_DI_TERZI = [
+    "As the surveyor said, the damage is repaired and verified.",
+    "Come ha detto il perito, il danno è riparato e verificato.",
+    "Secondo il notaio, il contratto è valido.",
+    "According to the notary, the contract is valid.",
+]
+
+
+@pytest.mark.parametrize("frase", SUBORDINATA_IN_TESTA_NON_ESENTE)
+def test_NEGATIVO_la_subordinata_in_testa_non_presta_il_suo_soggetto(frase):
+    assert not se.is_domain_professional(frase), (
+        f"{frase!r} letto come fatto di TERZI: soggetto {se.subject_of(frase)!r}, "
+        f"testa {se.subject_head(frase)!r}")
+
+
+def test_la_virgola_dei_decimali_non_chiude_la_subordinata():
+    """Dal raggio sullo store vero (25/09): un fatto che cominciava con «Secondo» e
+    aveva un numero con la virgola («99,52») prendeva il soggetto da dentro il numero."""
+    frase = "Secondo il perito il danno vale 12,50 euro, e la riparazione è conclusa."
+    assert "50" not in se.subject_of(frase), se.subject_of(frase)
+    assert se.subject_head(frase) == "riparazione", se.subject_of(frase)
+
+
+@pytest.mark.parametrize("frase", SUBORDINATA_IN_TESTA_DI_TERZI)
+def test_con_la_subordinata_in_testa_conta_il_soggetto_della_principale(frase):
+    assert se.is_domain_professional(frase), (
+        f"{frase!r}: soggetto {se.subject_of(frase)!r}, testa {se.subject_head(frase)!r}")
+    assert se.subject_head(frase) in {"damage", "danno", "contratto", "contract"}, (
+        f"{frase!r}: di terzi per il soggetto della subordinata, non della principale: "
+        f"{se.subject_of(frase)!r}")
+
+
 # --- ALLA PORTA: cio' che l'utente vede nella ricevuta ------------------------------
 # Un fatto di un professionista con una parola che fa scattare L1 (L1.15, «verificato»):
 # col passato composto entrava con l'avviso, col passato semplice veniva TRATTENUTO.
