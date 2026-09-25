@@ -98,7 +98,14 @@ jobs:
         shell: bash
         run: |
           "$BIN/verimem" warmup
-          "$BIN/verimem" doctor
+          # Il contratto del doctor (cli.py): 0 tutto ok, 1 avvisi, 2 guasti.
+          # Su un'installazione nuova gli avvisi ci sono subito dopo il warmup
+          # (demone ancora in avvio, store vuoto): il job si ferma sui guasti,
+          # e l'uscita del doctor resta intera nel log.
+          rc=0
+          "$BIN/verimem" doctor || rc=$?
+          echo "verimem doctor: exit $rc"
+          test "$rc" -le 1
       - name: la lista chiusa, dal wheel e fuori dal repo
         shell: bash
         run: |
