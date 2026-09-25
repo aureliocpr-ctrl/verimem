@@ -43,6 +43,24 @@ def store(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     return deposito
 
 
+def _indicizza() -> dict:
+    """Indicizza DAVVERO il documento e rende un hit vero, come fa un utente.
+
+    ⚠️ Da #126 la porta rilegge il testo dall'INDICE e rifiuta un chunk che
+    questo store non ha indicizzato («no indexed chunk at doc-collaudo:0-72»):
+    promuovere coordinate inventate era il contratto di prima. Le tre celle
+    che lo facevano sono cadute sul tronco appena le due richieste si sono
+    incontrate; qui si promuove un chunk che l'indice ha restituito.
+    """
+    from verimem.document_index import DocumentIndex
+
+    idx = DocumentIndex()
+    idx.index_document("doc-collaudo", TESTO, uri="file://doc-collaudo")
+    hits = idx.search("collaudo della linea 3", k=1)
+    assert hits, "il banco non ha prodotto nessun hit: non sta misurando niente"
+    return hits[0]
+
+
 def _promuovi(**extra) -> dict:
     """Chiama il tool come lo chiama un client, e rende la ricevuta."""
     from verimem.mcp_server import call_tool
@@ -51,9 +69,11 @@ def _promuovi(**extra) -> dict:
     #: `['text','source_id','start','end']`. Chiamando con `content` il tool
     #: NON rifiuta — scrive un fatto con `proposition='None'` e
     #: `citation='file:None:None-None'`. Quello e' un difetto suo, aperto a
-    #: parte; qui si misura la promozione VERA, con gli argomenti giusti.
-    argomenti = {"text": TESTO, "source_id": "doc-collaudo",
-                 "start": 0, "end": len(TESTO), "topic": TOPIC}
+    #: parte; qui si misura la promozione VERA, con gli argomenti giusti,
+    #: presi dall'indice e non scritti a mano.
+    hit = _indicizza()
+    argomenti = {"text": hit["text"], "source_id": hit["source_id"],
+                 "start": hit["start"], "end": hit["end"], "topic": TOPIC}
     argomenti.update(extra)
     risposta = asyncio.run(call_tool("hippo_document_promote_chunk", argomenti))
     r = json.loads(risposta[0].text) if risposta else {}
