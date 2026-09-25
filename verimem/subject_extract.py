@@ -23,7 +23,12 @@ _DET = {"the", "a", "an", "this", "that", "these", "those", "il", "lo", "la",
         "le", "gli", "un", "una", "uno", "i"}
 
 # First-person / agent-voice markers → never a third-party domain fact.
-_FIRST_PERSON = re.compile(r"\b(?:I|we|We|my|My|our|Our|us|me)\b")
+# T212 (25/09): anche l'italiano. «Io ho descritto la terapia» passava come fatto di
+# TERZI, perche' la lista conosceva solo la prima persona inglese (classe: liste
+# monolingue).
+_FIRST_PERSON = re.compile(
+    r"\b(?:I|we|We|my|My|our|Our|us|me"
+    r"|[Ii]o|[Nn]oi|[Mm]io|[Mm]ia|[Mm]iei|[Mm]ie|[Nn]ostro|[Nn]ostra|[Nn]ostri|[Nn]ostre)\b")
 
 # Finite verbs / copulas that terminate the leading subject NP.
 _VERB_MARK = re.compile(
@@ -53,6 +58,105 @@ _VERB_MARK = re.compile(
     #          misurato minimo** — le due cose vanno dette insieme.
     r"|\be'(?=\s)",
     re.IGNORECASE)
+
+#: T212 (25/09) — LE FORME FINITE SEMPLICI, NELLE DUE LINGUE. `_VERB_MARK` e' un
+#: elenco chiuso: ausiliari italiani e una lista di verbi inglesi, spesso in UNA forma
+#: sola. Misurato il 24/09 su 120 frasi parallele (tre soggetti di terzi, cinque verbi,
+#: quattro forme): esenti col passato composto it 15/15 ed en 15/15, col passato semplice
+#: it 0/15 ed en 6/15, col presente it 0/15 ed en 3/15, con l'imperfetto it 0/15. Lo
+#: stesso fatto era di terzi o no secondo il TEMPO del verbo.
+#: Qui ogni verbo del registro dei professionisti (riferire, prescrivere, firmare,
+#: decidere, pagare…) porta TUTTE le sue forme finite: presente, passato semplice o
+#: remoto, imperfetto, singolare e plurale. Il confine del soggetto e' il PRIMO fra un
+#: marcatore di `_VERB_MARK` e una di queste forme.
+#: ⚠️ ACCOPPIATE con le teste (vedi SOFTWARE_HEADS): un verbo in piu' rende
+#: risolvibile un soggetto in piu', e se la testa e' un sistema o un codice deve stare
+#: nella lista, o una frase sul proprio lavoro diventa «di terzi». Per questo i verbi del
+#: registro OPERATIVO italiano (funzionare, compilare, girare, eseguire) NON stanno qui:
+#: sono il registro con cui un agente parla del proprio lavoro.
+#: ⚠️ Una forma che e' anche un nome («la cura», «la firma», «la visita») in PRIMA
+#: posizione dopo l'articolo lascia il soggetto vuoto: la carve-out non si applica e L1
+#: resta com'era. E' il verso sicuro.
+_FORME_EN = """
+describe describes described explain explains explained prescribe prescribes prescribed
+confirm confirms recommend recommends recommended diagnose diagnoses diagnosed
+suggest suggests suggested indicate indicates indicated conclude concludes concluded
+decide decides decided announce announces announced propose proposes proposed
+predict predicts predicted deliver delivers delivered receive receives received
+examine examines examined assess assesses assessed admit admits admitted argue argues
+argued say says said tell tells told find finds found give gives gave send sends sent
+sell sells sold buy buys bought write writes wrote owns owned manage manages managed
+teach teaches taught treats treated observe observes observed noted stated showed
+estimated measured paid ordered booked visited studied reviewed discharged
+verify verifies verified
+"""
+_FORME_IT = """
+descrive descrivono descrisse descrissero descriveva descrivevano
+spiega spiegano spiegò spiegarono spiegava spiegavano
+prescrive prescrivono prescrisse prescrissero prescriveva prescrivevano
+conferma confermano confermò confermarono confermava confermavano
+riferisce riferiscono riferì riferirono riferiva riferivano
+raccomanda raccomandano raccomandò raccomandarono raccomandava raccomandavano
+consiglia consigliano consigliò consigliarono consigliava consigliavano
+diagnostica diagnosticano diagnosticò diagnosticarono diagnosticava diagnosticavano
+cura curano curò curarono curava curavano
+dichiara dichiarano dichiarò dichiararono dichiarava dichiaravano
+dice dicono disse dissero diceva dicevano
+osserva osservano osservò osservarono osservava osservavano
+nota notano notò notarono notava notavano
+trova trovano trovò trovarono trovava trovavano
+mostra mostrano mostrò mostrarono mostrava mostravano
+suggerisce suggeriscono suggerì suggerirono suggeriva suggerivano
+indica indicano indicò indicarono indicava indicavano
+scrive scrivono scrisse scrissero scriveva scrivevano
+sostiene sostengono sostenne sostennero sosteneva sostenevano
+afferma affermano affermò affermarono affermava affermavano
+conclude concludono concluse conclusero concludeva concludevano
+decide decidono decise decisero decideva decidevano
+stabilisce stabiliscono stabilì stabilirono stabiliva stabilivano
+annuncia annunciano annunciò annunciarono annunciava annunciavano
+propone propongono propose proposero proponeva proponevano
+presenta presentano presentò presentarono presentava presentavano
+richiede richiedono richiese richiesero richiedeva richiedevano
+rinvia rinviano rinviò rinviarono rinviava rinviavano
+stima stimano stimò stimarono stimava stimavano
+misura misurano misurò misurarono misurava misuravano
+prevede prevedono previde previdero prevedeva prevedevano
+paga pagano pagò pagarono pagava pagavano
+compra comprano comprò comprarono comprava compravano
+vende vendono vendette vendettero vendé vendeva vendevano
+riceve ricevono ricevette ricevettero riceveva ricevevano
+manda mandano mandò mandarono mandava mandavano
+consegna consegnano consegnò consegnarono consegnava consegnavano
+ordina ordinano ordinò ordinarono ordinava ordinavano
+prenota prenotano prenotò prenotarono prenotava prenotavano
+visita visitano visitò visitarono visitava visitavano
+firma firmano firmò firmarono firmava firmavano
+approva approvano approvò approvarono approvava approvavano
+respinge respingono respinse respinsero respingeva respingevano
+esamina esaminano esaminò esaminarono esaminava esaminavano
+valuta valutano valutò valutarono valutava valutavano
+gestisce gestiscono gestì gestirono gestiva gestivano
+possiede possiedono possedette possedettero possedeva possedevano
+insegna insegnano insegnò insegnarono insegnava insegnavano
+studia studiano studiò studiarono studiava studiavano
+dimette dimettono dimise dimisero dimetteva dimettevano
+ricovera ricoverano ricoverò ricoverarono ricoverava ricoveravano
+opera operano operò operarono operava operavano
+lamenta lamentano lamentò lamentarono lamentava lamentavano
+verifica verificano verificò verificarono verificava verificavano
+"""
+_VERBI_FINITI = frozenset((_FORME_EN + _FORME_IT).split())
+#: una parola: lettere (anche accentate) e apostrofi interni; niente cifre
+_PAROLA = re.compile(r"[^\W\d_](?:[^\W\d_]|['’])*")
+
+
+def _primo_verbo_finito(testo: str) -> int | None:
+    """Dove comincia la prima forma di `_VERBI_FINITI`, o None."""
+    for m in _PAROLA.finditer(testo):
+        if m.group(0).lower() in _VERBI_FINITI:
+            return m.start()
+    return None
 
 #: Adverbs that sit between the subject NP and its verb ('the team STILL runs') —
 #: stripped from the NP tail so they never become a bogus head noun.
@@ -116,6 +220,18 @@ SOFTWARE_HEADS = frozenset({
     # `feature`/`implementation` che sono gia' fra le teste inglesi.
     "funzionalita", "funzionalità", "funzionalita'",
     "implementazione", "implementazioni",
+    # T212 (25/09) — QUARTA VOLTA, e questa volta insieme ai verbi: le forme finite
+    # semplici rendono risolvibili «Il sistema descrive…», «L'applicativo confermò…».
+    # Le teste italiane del registro software che mancavano, SOLO quelle univoche.
+    # ⚠️ Le teste a doppio uso restano FUORI, come la regola delle teste inglesi dice
+    # sotto: «collaudo» e' anche il collaudo di un impianto fatto da una commissione
+    # (lo ha preso `test_e_apostrofo_e_un_marcatore_di_verbo`, rosso quando c'era),
+    # «codice» il codice civile, «applicazione» quella di una norma, «componente» il
+    # membro di un consiglio, «rilascio» quello di un permesso. Una frase sul proprio
+    # lavoro con una di queste teste e un verbo del lessico resta un limite noto:
+    # i verbi OPERATIVI (funziona, compila, gira) non sono nel lessico, quindi «Il
+    # codice funziona» continua a non avere un soggetto e L1 la trattiene.
+    "sistema", "sistemi", "applicativo", "applicativi", "software", "deploy",
 
     "service", "services", "migration", "migrations", "build", "builds",
     "deployment", "deployments", "feature", "features", "endpoint", "endpoints",
@@ -191,9 +307,14 @@ def subject_of(text: str) -> str:
         return ""
     t = _HONORIFIC.sub(lambda m: m.group(0)[:-1], t)
     m = _VERB_MARK.search(t)
-    if not m or m.start() == 0:
+    confine = m.start() if m else None
+    #: T212: il confine e' il PRIMO fra un marcatore e una forma finita del lessico
+    forma = _primo_verbo_finito(t)
+    if forma is not None and (confine is None or forma < confine):
+        confine = forma
+    if confine is None or confine == 0:
         return ""
-    np = t[:m.start()].strip().rstrip(",;:")
+    np = t[:confine].strip().rstrip(",;:")
     toks = np.split()
     if toks and toks[0].lower() in _DET:
         toks = toks[1:]
@@ -219,7 +340,15 @@ _PRONOUNS = frozenset({"it", "they", "he", "she", "this", "that", "you",
                        "i", "we", "one", "someone", "something", "everything",
                        "anything", "nothing", "everyone", "anyone", "somebody",
                        "nobody", "none", "all", "both", "each", "several",
-                       "many", "most", "others"})
+                       "many", "most", "others",
+                       # T212 (25/09): anche i pronomi italiani, che con le forme
+                       # finite del lessico diventano teste risolvibili
+                       "io", "tu", "lui", "lei", "noi", "voi", "loro", "esso",
+                       "essa", "essi", "esse", "questo", "questa", "questi",
+                       "queste", "quello", "quella", "quelli", "quelle", "tutto",
+                       "tutti", "tutte", "niente", "nulla", "qualcuno",
+                       "qualcosa", "ognuno", "ciascuno", "nessuno", "alcuni",
+                       "molti", "altri", "ciò"})
 
 
 def _subject_tokens(text: str) -> list[str]:
