@@ -158,6 +158,24 @@ def _primo_verbo_finito(testo: str) -> int | None:
             return m.start()
     return None
 
+#: T212 (25/09, dalla CI della sua stessa richiesta) — LA SUBORDINATA IN TESTA. In una
+#: frase che comincia con una subordinante il verbo della subordinata viene PRIMA di
+#: quello principale, e il confine del soggetto ci cadeva sopra: «as you correctly said,
+#: the whole pipeline is perfect and bug-free» dava il soggetto «as you correctly» (testa
+#: «correctly»), di terzi, e L1 non girava piu' (test_gate_redteam_fixes, macOS:
+#: 'model_claim' == 'quarantined'). La forma c'era gia' con i marcatori di `_VERB_MARK`:
+#: «Since the auditor confirmed, the pipeline is flawless» aveva il soggetto «auditor».
+#: Il soggetto e' quello della principale, dopo la prima virgola; senza virgola non si sa
+#: dove la principale comincia, e il soggetto resta vuoto: il verso sicuro. Le locuzioni
+#: che aprono con un complemento seguito da virgola («secondo», «according») hanno la
+#: principale nello stesso posto. «prima» non c'e': in testa e' quasi sempre avverbio.
+_SUBORDINANTI = frozenset("""
+as since because while whilst although though if when whenever whereas unless once
+after before until like according
+come poiché poiche' siccome mentre sebbene benché benche' se quando perché perche'
+finché finche' appena dopo secondo
+""".split())
+
 #: Adverbs that sit between the subject NP and its verb ('the team STILL runs') —
 #: stripped from the NP tail so they never become a bogus head noun.
 _TRAIL_ADV = {"still", "now", "already", "currently", "also", "just", "often",
@@ -306,6 +324,12 @@ def subject_of(text: str) -> str:
     if not t:
         return ""
     t = _HONORIFIC.sub(lambda m: m.group(0)[:-1], t)
+    #: la subordinata in testa non presta il suo soggetto (vedi `_SUBORDINANTI`)
+    if t.split(None, 1)[0].lower().rstrip(",;:") in _SUBORDINANTI:
+        # la virgola di un decimale («99,52») non chiude la subordinata: misurato sul
+        # raggio del 25/09, il soggetto veniva preso da dentro il numero
+        virgola = re.search(r"(?<!\d),|,(?!\d)", t)
+        return subject_of(t[virgola.end():]) if virgola else ""
     m = _VERB_MARK.search(t)
     confine = m.start() if m else None
     #: T212: il confine e' il PRIMO fra un marcatore e una forma finita del lessico
