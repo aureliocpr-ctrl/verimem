@@ -3137,6 +3137,17 @@ def run_validation_gate(
                     # else: llm adjudicated entailed -> admitted clean,
                     # judge-of-record 'claude-band' on the receipt.
                 else:
+                    # W7-52: when the escalation was asked and did not decide,
+                    # say why — an expired OAuth session looked exactly like
+                    # no escalation at all. One derivation for the three
+                    # warnings below; None when no escalation was asked.
+                    _perche = None
+                    if grounding_llm is None:
+                        from . import band_escalation as _be
+                        _perche = _be.perche_non_ha_deciso()
+                    _nota = (f"; the band escalation did not decide: {_perche}"
+                             if _perche else "")
+                    _campo = {"escalation": _perche} if _perche else {}
                     if _graded_admission():
                         # no adjudicator available: under graded admission the
                         # borderline write persists as low-confidence instead
@@ -3146,11 +3157,12 @@ def run_validation_gate(
                             "layer": "L4-review-graded",
                             "reason": f"graded admission: borderline grounding "
                                       f"({gscore:.0f}) in the CE review band — "
-                                      "admitted as low-confidence, NOT verified",
+                                      "admitted as low-confidence, NOT verified" + _nota,
                             "advice": "the local CE is not confident the source "
                                       "entails this claim; stored as an unproven "
                                       "low-confidence memory.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
                     elif gscore >= _ce_band_tau_hi():
                         # Il ramo scatta per DUE motivi diversi (la condizione
@@ -3184,22 +3196,25 @@ def run_validation_gate(
                             "reason": f"the claim announces a {_rel or 'relation'} "
                                       f"the source never states, but the CE scored "
                                       f"{gscore:.0f} — admitted WITH this notice, "
-                                      f"not verified as a stated fact",
+                                      f"not verified as a stated fact" + _nota,
                             "advice": "check that the source really states this "
                                       "link and not only its parts; pass "
                                       "Memory(llm=...) to have it adjudicated.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
                     else:
                         warnings.append({
                             "layer": "L4-review",
                             "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
                                       f"band [{_threshold_of_record:.0f}, "
-                                      f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
+                                      f"{_ce_band_tau_hi():.0f}) - held for review, not admitted"
+                                      + _nota,
                             "advice": "the local CE is not confident the source entails this "
                                       "claim; pass Memory(llm=...) to adjudicate the borderline "
                                       "zone, or review the held fact.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
     elif source and not _have_judge:
         _emit_l4_skipped()
