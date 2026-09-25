@@ -563,6 +563,32 @@ def run_doctor() -> list[dict[str, Any]]:
                 f"discovery file present but daemon not usable "
                 f"(model={info.get('model')!r} vs config={CONFIG.embedding_model!r})",
                 "it respawns on demand; or run `verimem warmup` to spawn+warm now")
+        # SENZA SCOPERTA NON VUOL DIRE SENZA DAEMON (25/09, dal job di
+        # accettazione): subito dopo `verimem warmup` il daemon e' stato
+        # lanciato e sta caricando il modello, e la scoperta la scrive solo
+        # quando e' pronto. Il consiglio era «run `verimem warmup` once», cioe'
+        # il comando appena finito. E col servizio spento il warmup non lancia
+        # niente: li' il rimedio e' l'interruttore. I segni sono quelli che il
+        # daemon stesso usa (il suo lock, il lancio recente di
+        # `ensure_running`), non una stima di qui.
+        elif svc.servizio_spento():
+            add("daemon", WARN,
+                "shared encode daemon switched off (ENGRAM_ENCODE_SERVICE="
+                f"{os.environ.get('ENGRAM_ENCODE_SERVICE', '')!r}) — each "
+                "process cold-loads the model on its first encode (~20s)",
+                "unset ENGRAM_ENCODE_SERVICE to share one warm model: while it "
+                "is off, no command starts the daemon")
+        elif svc.daemon_in_arrivo():
+            add("daemon", OK,
+                "shared encode daemon starting — it holds its lock and is "
+                "loading the model; it warms from cache in ~20s (a first "
+                "download takes longer), and until then a process's first "
+                "encode cold-loads the model")
+        elif (_lancio := svc.lancio_recente()) is not None:
+            add("daemon", OK,
+                f"shared encode daemon starting — launched {max(_lancio, 0.0):.0f}s "
+                "ago, the process has not taken its lock yet; it warms from "
+                "cache in ~20s (a first download takes longer)")
         else:
             add("daemon", WARN,
                 "no shared encode daemon — first encode in each process "
@@ -1517,6 +1543,17 @@ def run_doctor() -> list[dict[str, Any]]:
     # e circa due secondi. Il doctor dice che serve; `warmup` lo fa.
     try:
         from ._compat import data_dir
+        from .relevance_floor import _MIN_FACTS as _MIN_FACTS_DEL_PAVIMENTO
+
+        def _misurabile(d: dict, n_salvato: int) -> bool:
+            """Lo zero salvato e' uno zero MISURATO? Lo dice il campo che la
+            stima scrive accanto al valore; in un file scritto prima che lo
+            scrivesse, sotto le fonti minime delle sonde non puo' esserlo."""
+            m = d.get("misurabile")
+            if isinstance(m, bool):
+                return m
+            return n_salvato >= _MIN_FACTS_DEL_PAVIMENTO
+
         _db = data_dir() / "semantic" / "semantic.db"
         _fj = _db.with_suffix(_db.suffix + ".floor.json")
         if not _db.exists():
@@ -1550,6 +1587,19 @@ def run_doctor() -> list[dict[str, Any]]:
                     "served a stale floor (reads no longer recompute it: that "
                     "cost 24s inside a query)",
                     "verimem warmup")
+            elif _val == 0.0 and not _misurabile(_d, _n_salv):
+                # LO ZERO VOLUTO (25/09, dal job di accettazione): su uno store
+                # troppo piccolo per costruire le sonde di rumore la stima
+                # risponde 0.0 per scelta, e il warmup lo ridarebbe identico.
+                # Il consiglio era «verimem warmup» su 0 fatti, subito dopo il
+                # warmup.
+                add("relevance-floor", OK,
+                    f"{_eta} — too few facts to calibrate a floor yet (the "
+                    "estimate builds its noise probes from at least "
+                    f"{_MIN_FACTS_DEL_PAVIMENTO} facts): 0.0 is the designed "
+                    "value on a store this small, not a fault. It is computed "
+                    "again once the corpus grows past the drift — this check "
+                    "says when")
             elif _val == 0.0:
                 # LO ZERO NON E' INERTE: e' falsy, quindi dove lo si controlla
                 # con un `if` non vale «pavimento a zero», vale «nessun
