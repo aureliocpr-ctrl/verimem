@@ -41,22 +41,40 @@ def test_il_primo_dump_non_si_tocca_mai(tmp_path, monkeypatch):
         "una chiamata VELOCE ha lasciato un file: il header-only va rimosso")
 
 
-def test_un_file_che_cresce_troppo_smette_e_lo_dichiara(tmp_path, monkeypatch):
-    """Il caso misurato, in piccolo: budget minuscolo perché il watchdog
-    ridumpi più volte, e tetto minuscolo perché scatti."""
+def test_una_chiamata_appesa_lascia_un_solo_dump(tmp_path, monkeypatch):
+    """T197: UN dump per chiamata oltre il budget, non uno ogni ``budget_s``.
+
+    Ogni dump ripetuto rifaceva il giro di faulthandler su tutti i thread senza
+    il GIL, senza aggiungere diagnosi (lo stack di uno stallo e' fermo). La
+    stessa famiglia e' caduta su tutte e tre le piattaforme: macOS fermo 33
+    minuti nella cella qui sotto, due run nello stesso punto; SIGSEGV su ubuntu
+    nella gemella di `test_hang_watchdog.py`; access violation su Windows (T68).
+    Il tetto resta quello di produzione: nessun taglio nasconde quanti sono.
+    """
     monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
-    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
-    # ⚠️ DA T68 QUESTA CELLA MISURA IL TAGLIO ALLA CHIUSURA, non il tetto
-    # durante la chiamata: il sorvegliante non annulla piu' il dump (lo annulla
-    # solo chi lo ha armato), quindi mentre la chiamata e' appesa NULLA ferma
-    # la crescita. Il commento di prima descriveva un meccanismo rimosso, ed e'
-    # il caso peggiore: verde per una strada diversa da quella che racconta.
-    # Si continua ad avviare il sorvegliante perche' e' la configurazione di
-    # produzione, e perche' proprio in quella il fallback alla chiusura veniva
-    # SALTATO — il difetto curato insieme a questo, cella qui sotto.
-    # 📌 Il file cresce eccome, mentre la chiamata e' appesa: quello che questa
-    # cella misura e' che alla fine la coda viene TAGLIATA e quel che resta
-    # sta dentro il tetto.
+    with w.hang_trace("prova_appesa", 0.05):
+        time.sleep(0.6)
+    file = list(tmp_path.glob("hang-*.txt"))
+    assert file, "nessun trace scritto per una chiamata oltre budget"
+    testo = file[0].read_text(encoding="utf-8", errors="replace")
+    dump = testo.count("Timeout (")
+    assert dump == 1, (
+        f"{dump} dump per UNA chiamata appesa (budget 0,05 s, 0,6 s di attesa): "
+        "il watchdog ridumpa a ogni budget invece di una volta")
+
+
+def test_un_file_che_cresce_troppo_smette_e_lo_dichiara(tmp_path, monkeypatch):
+    """Il tetto sul file, in piccolo: un dump solo (T197) e un tetto minuscolo
+    perche' quel dump lo sfondi."""
+    monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
+    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 256)
+    # QUESTA CELLA MISURA IL TAGLIO ALLA CHIUSURA: il dump e' uno, e se da solo
+    # sfonda il tetto la chiusura ne tiene la testa e scrive perche'.
+    # Si avvia il sorvegliante perche' e' la configurazione di produzione, e
+    # perche' proprio in quella il fallback alla chiusura veniva SALTATO (T68,
+    # cella in fondo al file).
+    # ⚠️ Fino al 25/09 il tetto qui era 4096 e lo sfondavano i dump RIPETUTI:
+    # su macOS la suite si e' fermata 33 minuti proprio in questa cella (T197).
     w.avvia_il_sorvegliante()
     with w.hang_trace("prova_lenta", 0.05):
         time.sleep(1.2)
@@ -115,9 +133,10 @@ def test_potare_non_puo_far_fallire_una_chiamata(tmp_path, monkeypatch):
 def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypatch):
     """Il DEGRADO DICHIARATO: fuori dal server nessuno avvia il sorvegliante.
 
-    Il tetto non si applica piu' durante la chiamata — il file cresce — ma non
-    sparisce: alla chiusura il watchdog lo rileva e lo SCRIVE nel file, cosi'
-    chi legge un trace enorme sa perche' e' enorme.
+    Senza sorvegliante nessuno dichiara il tetto durante la chiamata, ma il
+    tetto non sparisce: alla chiusura il watchdog lo rileva e lo SCRIVE nel
+    file, cosi' chi legge un trace enorme sa perche' e' enorme. Tetto di 256
+    byte perche' lo sfondi il dump UNICO (T197).
 
     ⚠️ ISOLAMENTO OBBLIGATORIO: il sorvegliante e' UNICO E GLOBALE. Se un altro
     test lo ha avviato prima, questa cella misurerebbe il caso opposto e
@@ -125,7 +144,7 @@ def test_senza_sorvegliante_il_tetto_si_applica_alla_chiusura(tmp_path, monkeypa
     azzera esplicitamente invece di sperare.
     """
     monkeypatch.setattr(w, "_TRACE_DIR", tmp_path)
-    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 4096)
+    monkeypatch.setattr(w, "_MAX_FILE_BYTES", 256)
     # ISOLAMENTO VERO: azzerare la variabile NON ferma il thread che un test
     # precedente ha avviato — misurato il 06/09, questa cella cadeva proprio
     # per quello. Si prende il riferimento PRIMA, lo si ferma, e lo si
