@@ -760,33 +760,6 @@ class Memory:
         # writer_role='external_content'») era irraggiungibile: sul corpus
         # vivo, external_content = 0 fatti su 8217.
         writer_role: str | None = None,
-        #: T192 — DI CHI E' QUESTA PROPOSIZIONE, per il GATE soltanto.
-        #: `writer_role` faceva due mestieri con un valore solo: dice al gate
-        #: di chi e' il claim (la chiamata qui sotto) e resta scritto sul
-        #: fatto come TIMBRO (`fact.writer_role`, piu' in basso). Finche'
-        #: viaggiavano insieme, una via che scrive testo altrui sotto il
-        #: proprio nome non aveva modo di dirlo: la promozione di un chunk
-        #: timbra `document_promote` — e un banco lo PRETENDE, con la sua
-        #: ragione (`test_document_promote.py:51`, «no trusted-hook bypass»)
-        #: — mentre al gate deve dire che quel testo e' di un documento, non
-        #: dell'agente che si vanta. L'unico modo di dirlo era cambiare il
-        #: timbro, cioe' perdere l'informazione su CHI ha scritto per poter
-        #: dire DI CHI e' il testo.
-        #: ⚠️ NON E' UNA LEVA NUOVA PER CHI ARRIVA DA FUORI, ed e' la sola
-        #: ragione per cui si puo' aggiungere: la porta MCP chiama `add()`
-        #: con parametri ESPLICITI (`topic`, `verified_by`, `source`,
-        #: `asserted_at`), mai con `**arguments`, e questo non e' fra quelli.
-        #: Chi e' gia' in-process puo' passare `writer_role` direttamente, che
-        #: e' una leva strettamente piu' forte — stesso ragionamento con cui
-        #: `provenance_trusted=True` vive qui e non sul canale MCP.
-        gate_writer_role: str | None = None,
-        #: 1b.3 — LA PROVENIENZA PUNTUALE, per le porte che ce l'hanno.
-        #: La promozione di un chunk porta una citazione verificabile
-        #: (`file:<doc>:<start>-<end>`) e la teneva solo perche' costruiva il
-        #: `Fact` a mano, fuori da qui. Senza questo ingresso, «tutti passano
-        #: da `add()`» si pagherebbe **perdendo la citazione del documento** —
-        #: cioe' curando una copia e creando un danno nuovo.
-        source_episodes: list[str] | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -872,9 +845,7 @@ class Memory:
             validate=validate, source=source, grounding_llm=self.grounding_llm,
             ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
             narrative_l1_skip=meta_narrative,
-            # T192: al gate va DI CHI E' il testo, al fatto va CHI l'ha
-            # scritto. Senza `gate_writer_role` si comportano come prima.
-            writer_role=gate_writer_role or writer_role,
+            writer_role=writer_role,
             # Superficie in-process (SDK/CLI): chi arriva qui puo' comunque
             # passare validate="off", una leva strettamente piu' forte. Il
             # canale MCP NON deve inoltrarlo — presidio in
@@ -974,9 +945,6 @@ class Memory:
             fact.valid_until = float(valid_until)
         if derives_from:
             fact.derives_from = [str(x) for x in derives_from if str(x).strip()]
-        if source_episodes:
-            fact.source_episodes = [str(x) for x in source_episodes
-                                    if str(x).strip()]
         if lineage_to:
             fact.lineage_to = [str(x) for x in lineage_to if str(x).strip()]
         # Prima del blocco meta_narrative, che sovrascrive di proposito: quella
@@ -1320,6 +1288,16 @@ class Memory:
             _out_qb = None
         from .local_grounding import esecutore_dell_ultimo_giudizio
         _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
+        #: E PERCHE' ha giudicato lui. `judged_by` da solo e' un'etichetta:
+        #: dice «in-process» sia quando il daemon non e' stato interpellato
+        #: sia quando non ha risposto, e chi legge non sa se la sua
+        #: installazione stia lavorando come crede. La ragione e' registrata
+        #: NELL'ISTANTE della decisione — riletta dopo direbbe altro, perche'
+        #: lo scorer si popola quando il modello finisce di caricare.
+        from .local_grounding import la_delega_era_richiesta as _delega_chiesta
+        from .local_grounding import perche_ha_giudicato as _perche_giudizio
+        _perche_ha_giudicato = _perche_giudizio()
+        _aveva_chiesto_il_daemon = _delega_chiesta()
         from ._compat import provenienza_data_dir
         _provenienza_store = provenienza_data_dir()
         _out = {
@@ -1359,6 +1337,25 @@ class Memory:
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        # LA RAGIONE DEL GIUDIZIO IN CASA, nel formato che il prodotto usa
+        # gia' per `duplicate_check_skipped` e per «encode delegate
+        # unavailable»: layer, reason, advice. Non cambia il verdetto — la
+        # scrittura e' gia' decisa qui sopra — aggiunge solo cio' che la
+        # ricevuta taceva.
+        # ⚖️ SOLO A CHI IL DAEMON LO AVEVA CHIESTO. Un avviso che esce su ogni
+        # scrittura giudicata in casa — il caso normale — non informa nessuno:
+        # riempie la ricevuta e spegne l'attenzione su quelli che contano. Qui
+        # parla quando una promessa e' stata disattesa: delega richiesta, e il
+        # giudizio finito in casa lo stesso.
+        if (_chi_ha_giudicato == "in-process" and _perche_ha_giudicato
+                and _aveva_chiesto_il_daemon):
+            _out["warnings"] = list(_out.get("warnings") or []) + [{
+                "layer": "giudice_in_processo",
+                "reason": ("avevi chiesto il daemon condiviso e ha giudicato "
+                           f"questo processo: {_perche_ha_giudicato}"),
+                "advice": ("se ti aspettavi il daemon condiviso, «verimem "
+                           "doctor» dice se e' raggiungibile"),
+            }]
         # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
         # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
         # ma non arrivava a chi scrive: la ricevuta diceva `moat: passed`,
