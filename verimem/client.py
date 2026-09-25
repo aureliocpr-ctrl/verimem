@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import dataclasses
 import functools
 import logging
 import re
@@ -655,6 +656,78 @@ def _con_la_ricevuta(funzione):
         from .adattatore_ricevuta import ricevuta_dal_cancello
         return {**grezzo, **ricevuta_dal_cancello(grezzo).come_dizionario()}
     return guscio
+
+
+@dataclasses.dataclass(frozen=True)
+class ProfiloDiPorta:
+    """Che cosa distingue una porta dall'altra — e SOLO questo.
+
+    Fino al 25/09/2026 ogni porta aveva la sua copia del motore: gate,
+    costruzione del fatto, ritiri, evento, ricevuta. E ogni copia era
+    incompleta in un punto diverso: `key_facts` non emetteva l'evento, l'SDK
+    faceva un fatto nuovo a ogni ripetizione, MCP rendeva 3 chiavi del nucleo
+    su 14 (la tabella e' in `tests/test_la_stessa_scrittura_da_ogni_porta.py`).
+    Qui restano le differenze che una porta ha DAVVERO, di fiducia o di
+    trasporto; tutto il resto lo fa `Memory.add()` per tutte.
+
+    ⚠️ Le semantiche di fiducia sono quelle che ogni porta aveva gia', lette
+    dalle chiamate al gate del 25/09, e NON sono ridecise qui: la riga di
+    comando tratta `verified_by` come non fidato, esattamente come faceva
+    `facts add`. Che sia giusto e' una domanda aperta — ma adesso si legge in
+    un posto solo, invece che in tre chiamate al gate sparse in tre file.
+    """
+
+    nome: str
+    #: `verified_by` viene da codice fidato (l'applicazione che usa l'SDK) o da
+    #: un chiamante che non lo e' (un client MCP lo scrive negli argomenti).
+    provenienza_fidata: bool
+    #: `meta_narrative=True` salta la famiglia L1 (l'operatore in processo) o
+    #: la salta solo col token del server, che il gate verifica.
+    narrativa_salta_l1: bool
+    #: `validate="off"` e `force_persist` onorati, oppure negati e dichiarati
+    #: nella ricevuta in `gate_knobs_denied`.
+    manopole_permesse: bool
+    #: `sync` aspetta l'embedding; `auto` lo rinvia se il daemon e' freddo.
+    embed: str
+    #: Una richiesta interattiva non aspetta un lucchetto di SQLite occupato:
+    #: il salvataggio ha un tempo massimo e, se lo supera, si completa in
+    #: background — con TUTTI i passi che vengono dopo, non solo l'INSERT.
+    salvataggio_a_budget: bool
+
+
+PORTA_SDK = ProfiloDiPorta(
+    nome="sdk", provenienza_fidata=True, narrativa_salta_l1=True,
+    manopole_permesse=True, embed="sync", salvataggio_a_budget=False)
+PORTA_CLI = ProfiloDiPorta(
+    nome="cli", provenienza_fidata=False, narrativa_salta_l1=False,
+    manopole_permesse=True, embed="auto", salvataggio_a_budget=False)
+PORTA_MCP = ProfiloDiPorta(
+    nome="mcp", provenienza_fidata=False, narrativa_salta_l1=False,
+    manopole_permesse=False, embed="auto", salvataggio_a_budget=True)
+
+
+def id_dal_contenuto(testo: str, topic: str, firma: str | None = None) -> str:
+    """L'id di un fatto, derivato da cio' che il fatto E' (D-0013 c, 20/09).
+
+    La stessa frase, nello stesso topic, sostenuta dalla stessa fonte, e' UN
+    fatto da qualunque porta entri: una ripetizione sostituisce la riga invece
+    di duplicarla (T162: fino al 25/09 era vero solo su MCP). Due fonti diverse
+    che sostengono la stessa frase sono DUE fatti, ciascuno con la sua
+    provenienza: senza la firma nell'id la seconda sovrascriveva la prima in
+    silenzio (misurato il 20/09: 99.92 sovrascritto da 98.56).
+
+    📌 Senza fonte il payload e' la lista a DUE `[testo, topic]` di prima, byte
+    per byte: gli id che la porta MCP ha gia' scritto restano quelli, e la
+    ripetizione di una frase senza fonte li sostituisce invece di affiancarli.
+    Con la fonte e' la lista a TRE. `json.dumps` di una lista e' iniettivo
+    perche' delimita e fa l'escape (la collisione di `f"{a}\\x00{b}"` fu
+    trovata il 14/05), e una lista a due non e' mai uguale a una lista a tre.
+    """
+    import hashlib
+    import json as _json
+    parti = [testo, topic] if firma is None else [testo, topic, firma]
+    payload = _json.dumps(parti, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:12]
 
 
 class Memory:
