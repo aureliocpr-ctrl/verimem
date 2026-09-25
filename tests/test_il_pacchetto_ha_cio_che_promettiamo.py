@@ -680,7 +680,13 @@ def _release_dichiarata_nel_readme(testo: str) -> str | None:
     # 📌 Limite dichiarato: se un giorno anche «**more than N commits** ahead»
     # andasse a capo, l'altra funzione qui sopra si romperebbe allo stesso modo.
     # Non l'ho reso robusto perche' non l'ho visto succedere — ma e' scritto.
-    m = re.search(r"latest release[\s>]+is[\s>]+\*\*([0-9]+\.[0-9]+\.[0-9]+)", testo)
+    # ⚠️ 25/09: dall'08/09 (5ac8d9f1) il README dice «The latest PUBLISHED release
+    # is **0.7.6»: questo regex voleva «latest release is» e rendeva None, cioe'
+    # la terza uscita era spenta su un README che dichiara il vero (320 commit da
+    # v0.7.6). Nessuno lo ha visto finche' la distanza non ha superato la soglia:
+    # quella sera cadevano tutte le richieste in fila, a 151-155.
+    m = re.search(r"latest[\s>]+(?:published[\s>]+)?release[\s>]+is[\s>]+"
+                  r"\*\*([0-9]+\.[0-9]+\.[0-9]+)", testo)
     return m.group(1) if m else None
 
 
@@ -703,9 +709,20 @@ def test_CONTROLLO_il_riconoscimento_della_dichiarazione_e_armato():
     # prima versione falliva, ed e' qui perche' un controllo che prova solo la forma
     # comoda non controlla niente.
     assert _release_dichiarata_nel_readme("The latest release\n> is **0.7.0 (22 July)**") == "0.7.0"
+    assert _release_dichiarata_nel_readme(
+        "The latest published release is **0.7.6\n> (2026-09-04)**") == "0.7.6"
     assert _release_dichiarata_nel_readme("niente release qui") is None
     vero = _distanza_dichiarata_nel_readme(README.read_text(encoding="utf-8"))
     assert vero is not None, (
         "il README non dichiara piu' la distanza: la terza uscita non e' piu' percorsa "
         "e il test della versione tornera' rosso — corretto, ma sappilo da qui."
+    )
+    # ⚠️ 25/09: qui sopra la DISTANZA si controllava sul README vero, la RELEASE solo
+    # su frasi scritte in questo file. Cosi' la release e' sparita dal riconoscimento
+    # l'08/09 senza che niente diventasse rosso. Le due meta' della dichiarazione si
+    # controllano insieme, sullo stesso testo che legge il test della versione.
+    rilascio = _release_dichiarata_nel_readme(README.read_text(encoding="utf-8"))
+    assert rilascio is not None, (
+        "il README dichiara la distanza ma non si riconosce DA QUALE release: la "
+        "terza uscita del test della versione e' spenta anche se il README dice il vero."
     )
