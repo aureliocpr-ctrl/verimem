@@ -8683,6 +8683,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                               f"state — quarantined by the moat, kept out of "
                               f"default recall (not deleted: see "
                               f"hippo_quarantine_log / _restore)")
+                # T204: e ciò che il giudice NON ha giudicato va detto allo
+                # stesso modo. «stored» col giudice assente si leggeva identico
+                # a «stored» col giudice che ammetteva tutto; le parole sono
+                # quelle del campo `moat`, lo stesso insieme della scrittura.
+                _esiti = res.get("moat") or {}
+                _non_giudicati = {e: n for e, n in _esiti.items()
+                                  if e in ("not_run:no_judge", "not_run:unknown")}
+                if _non_giudicati:
+                    _quali = ", ".join(f"{e}: {n}" for e, n in sorted(_non_giudicati.items()))
+                    _nota += (f"; {sum(_non_giudicati.values())} of them were NOT "
+                              f"judged — the grounding judge was asked but did "
+                              f"not run ({_quali}), so they are stored as "
+                              f"unverified model_claim; `verimem doctor` says why")
+                _non_chiesti = int(_esiti.get("not_run:not_asked") or 0)
+                if _non_chiesti:
+                    _nota += (f"; the grounding judge was not asked for "
+                              f"{_non_chiesti} of them (ground=false: "
+                              f"not_run:not_asked)")
             return _ok({**res, "note": _nota})
 
         if name == "hippo_import_conversations":
@@ -8993,9 +9011,79 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_document_promote_chunk":
             # Roadmap #1 last brick: chunk -> gated Fact with exact citation.
+            #
+            # T191 — IL TESTO LO METTE L'INDICE, NON CHI CHIAMA. Qui c'era
+            # `hit = {k: arguments.get(k) for k in ("text", …)}`: le coordinate
+            # e il testo arrivavano insieme dal client e nessuno li confrontava
+            # con niente. Misurato su `42a09da9` chiamando il tool come lo
+            # chiama un client, senza indicizzare nulla:
+            #     stored = True | status = model_claim
+            #     citation = file:documento-che-non-esiste.md:0-60
+            # cioe' un'auto-attestazione entrava SERVIBILE con una provenienza
+            # che la faceva sembrare verificata da un file. La stessa frase da
+            # `hippo_remember`, stesso store e stessa esecuzione: `quarantined`.
+            #
+            # ⚠️ E IL SECONDO EFFETTO ERA PEGGIORE. Il tier documenti ha uno
+            # screen anti-injection che gira all'INDICIZZAZIONE (`flagged`,
+            # audit E3 del 2026-07-11) perche' un chunk con un payload,
+            # «restituito verbatim dal search nel contesto dell'agente, lo
+            # dirotta». Chi promuoveva senza passare dall'indice saltava anche
+            # quello e metteva il payload direttamente NEI FATTI:
+            #     detect_injection lo riconosce? True
+            #     promosso dalla porta -> stored= True status= model_claim
+            #
+            # La cura non e' un controllo nuovo: e' usare l'invariante che
+            # `document_index` dichiara gia' («indexed_text[start:end] ==
+            # text») e rileggere il chunk. Il `text` del chiamante non serve:
+            # o coincide con l'indice, e allora basta l'indice, o non coincide,
+            # ed e' proprio quello che non va usato. Risponde alla domanda
+            # lasciata aperta il 03/09 in
+            # `test_la_porta_mcp_non_sa_dire_che_la_fonte_e_di_terzi.py`: chi
+            # attesta che una fonte e' di terzi non puo' essere chi scrive —
+            # lo attesta l'indice, l'unico che ha visto il documento.
+            from verimem.document_index import DocumentIndex
             from verimem.document_promote import promote_chunk_to_fact
-            hit = {k: arguments.get(k) for k in
-                   ("text", "source_id", "start", "end", "version")}
+
+            _coord = (arguments.get("source_id"), arguments.get("start"),
+                      arguments.get("end"))
+            try:
+                hit = DocumentIndex().chunk_at(
+                    str(_coord[0]), int(_coord[1]), int(_coord[2]),
+                    version=arguments.get("version"))
+            except (TypeError, ValueError):
+                # Coordinate non numeriche: e' un errore del chiamante, e si
+                # dice com'e' invece di promuovere qualcosa a caso.
+                hit = None
+            # ⚠️ IL RIFIUTO E' UNA RICEVUTA, NON UN ERRORE NUDO. `_err()` rende
+            # `{"error": …}` e basta: chi legge deve DEDURRE che non e' stato
+            # scritto niente dall'assenza di `stored`, e un campo che manca si
+            # legge diverso da un campo che vale `False`. Qui si dice tutte e
+            # due le cose — non ho scritto, ed ecco perche' — con le stesse
+            # chiavi della risposta buona, cosi' chi chiama non cambia codice
+            # per leggere un no.
+            def _rifiuto(motivo: str) -> list[t.TextContent]:
+                _audit(name, arguments, outcome="rejected")
+                return _ok({"stored": False, "fact_id": None, "error": motivo,
+                            "citation": (f"file:{_coord[0]}:{_coord[1]}-"
+                                         f"{_coord[2]}"),
+                            "status": None, "grounding_score": None})
+
+            if hit is None:
+                return _rifiuto(
+                    f"no indexed chunk at {_coord[0]}:{_coord[1]}-{_coord[2]}. "
+                    "This tool promotes a chunk that THIS store has indexed: "
+                    "the text is read from the index, never from the call. "
+                    "Index the document first (hippo_document_index_file), "
+                    "then pass the source_id/start/end that "
+                    "hippo_document_semantic_search returned.")
+            if hit.get("flagged"):
+                # Un chunk marcato e' gia' nascosto dal recall dei documenti:
+                # promuoverlo in un fatto lo rimetterebbe in circolo da una
+                # porta che quella protezione non ce l'ha.
+                return _rifiuto(
+                    f"chunk {_coord[0]}:{_coord[1]}-{_coord[2]} is flagged by "
+                    "the injection screen and is hidden from document recall; "
+                    "promoting it would put it back in circulation as a fact.")
             res = promote_chunk_to_fact(
                 a.semantic, hit, claim=arguments.get("claim"),
                 topic=arguments.get("topic", "documents/promoted"))

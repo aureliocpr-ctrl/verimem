@@ -19,6 +19,15 @@ VERIMEM_AGENT_GUIDE = """\
 Verimem is a VERIFIED-memory server for AI agents: writes pass an anti-confab
 gate, and a fact its source does not support is QUARANTINED — stored, but kept
 OUT of default recall, so you never get it back as truth.
+That is the contract, and TODAY it has a measured gap you should know about:
+a claim the source simply does not mention is admitted 8/10 IT, 9/10 EN
+(README figure, published 2026-08-26 in c62da996; short sources, public
+`remember --source` port). Read it as two halves: an added detail that carries
+a FIGURE is almost always stopped, the same detail without one almost never.
+The contradiction case is closer to the promise but not at it — a swapped
+entity gets through 1/10 IT and 2/10 EN, a contradiction that takes an
+inference 3/10 IT. The gap is tracked as G0 in RELEASE_GATE.md until it is
+closed.
 
 Tool names below are written verimem_*. That prefix is what you get when the
 server runs with VERIMEM_TOOL_NAMESPACE=verimem (the wiring example does set
@@ -37,9 +46,12 @@ can rely on it:
   as `model_claim` with no lexical warning at all. The moat is UNAFFECTED: with
   a source it runs in both modes, so a source is what protects you either way.
 - WITH a `source`: the entailment moat, the strong check — the fact is admitted
-  only if the source TEXT actually supports it. `verified_by` records WHO
-  vouches for a fact and does not run this check; pass the source text to get
-  it.
+  only if the source TEXT actually supports it. TODAY that holds for a source
+  that contradicts the fact; a fact the source does not mention still gets
+  through most of the time (numbers at the top, gap tracked as G0 in
+  RELEASE_GATE.md).
+  `verified_by` records WHO vouches for a fact and does not run this check;
+  pass the source text to get it.
 - WITHOUT a source: there is nothing to check the fact against, so the moat does
   not run and the fact is stored as an unverified `model_claim`. Pass a source
   whenever you have one — it is what separates a claim from a verified fact.

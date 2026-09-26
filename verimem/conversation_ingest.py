@@ -192,10 +192,32 @@ def _ingest_ground_threshold() -> float:
     return env_float("ENGRAM_INGEST_GROUND_THRESHOLD", _INGEST_GROUND_THRESHOLD)
 
 
+class _Giudizio(tuple):
+    """``(admit, score)`` — unpacks into two values exactly as before — plus
+    ``perche``, the reason a score is MISSING: ``"no_judge"`` when the local
+    judge is not available, ``"unknown"`` when judging raised.
+
+    T204 (2026-09-23): the ingest's receipt has to say whether the judge ran,
+    with the same words the write port uses (``client.esito_del_moat``), and a
+    bare ``(True, None)`` could not tell the two causes apart. A tuple that
+    still unpacks to two values keeps every existing caller and test double
+    working: a double that returns a plain tuple simply carries no reason.
+    """
+
+    perche: str | None
+
+    def __new__(cls, admit: bool, score: float | None,
+                perche: str | None = None):
+        t = super().__new__(cls, (admit, score))
+        t.perche = perche
+        return t
+
+
 def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
     """The moat on the ingest path: does the DIALOGUE entail the extracted fact?
 
-    Returns ``(admit, score)``. Uses the local CE (free, no per-fact LLM call,
+    Returns ``(admit, score)`` as a :class:`_Giudizio`, which also says why a
+    score is missing. Uses the local CE (free, no per-fact LLM call,
     AUROC 1.0 on this domain). Fail-open: CE unavailable → ``(True, None)``,
     never break an ingest for a missing model — and ``None``, not 0.0, because
     "never asked" is not "asked and failed".
@@ -211,10 +233,30 @@ def _grounds(dialogue: str, proposition: str) -> tuple[bool, float | None]:
         from .local_grounding import try_local_score
         r = try_local_score(dialogue, proposition)
         if r is None:
-            return True, None
-        return float(r[0]) >= _ingest_ground_threshold(), float(r[0])
+            return _Giudizio(True, None, "no_judge")
+        return _Giudizio(float(r[0]) >= _ingest_ground_threshold(), float(r[0]))
     except Exception:  # noqa: BLE001 — the moat must never crash the ingest
-        return True, None
+        return _Giudizio(True, None, "unknown")
+
+
+def _esito_del_giudizio(chiesto: bool, admit: bool, score: float | None,
+                        perche: str | None, dialogue: str) -> str:
+    """The moat outcome of ONE extracted fact, from the SAME function the write
+    port uses (T204): the ingest hands ``client.esito_del_moat`` the signals the
+    gate would have emitted, instead of keeping a second vocabulary that could
+    drift. ``L4-skipped`` when the judge was asked and is not there,
+    ``L4-grounding`` when it scored the fact below the cut; a score missing for
+    any other reason reads as ``not_run:unknown``."""
+    from types import SimpleNamespace
+
+    from .client import esito_del_moat
+    avvisi: list[dict] = []
+    if chiesto and score is None and perche == "no_judge":
+        avvisi.append({"layer": "L4-skipped"})
+    elif chiesto and score is not None and not admit:
+        avvisi.append({"layer": "L4-grounding"})
+    return esito_del_moat(SimpleNamespace(grounding_score=score), avvisi,
+                          source=dialogue, chiesto=chiesto)
 
 
 def conversation_provenance_ref(conversation_id: str) -> str:
@@ -319,7 +361,12 @@ def ingest_conversation(
 
     res: dict = {"stored": 0, "rejected": 0, "fact_ids": [],
                  "extracted": 0, "gapfilled": 0, "consolidated": 0,
-                 "error": None, "truncated": False}
+                 "error": None, "truncated": False,
+                 # T204: what the moat did, counted per outcome with the
+                 # write port's strings (esito_del_moat). Always present, so
+                 # an ingest where nothing was judged cannot read like one
+                 # where everything passed.
+                 "moat": {}}
     # mod.9: the cap is DECLARED (res["truncated"]) and overridable — a silent
     # cut of a 1MB conversation to 12k chars looked like full coverage.
     dialogue, res["truncated"] = render_conversation(
@@ -386,10 +433,20 @@ def ingest_conversation(
         status = "user_belief" if is_belief else "model_claim"
         _score: float | None = None
         if ground and not is_belief:
-            _admit, _score = _grounds(dialogue, prop)
+            _giudizio = _grounds(dialogue, prop)
+            _admit, _score = _giudizio
             if not _admit:
                 status = "quarantined"
                 res["quarantined"] = res.get("quarantined", 0) + 1
+            _esito = _esito_del_giudizio(True, _admit, _score,
+                                         getattr(_giudizio, "perche", None),
+                                         dialogue)
+        elif not is_belief:
+            _esito = _esito_del_giudizio(False, True, None, None, dialogue)
+        # T204: a belief is not judged by design and stays out of the count;
+        # every other extracted fact is counted under what the moat did.
+        if not is_belief:
+            res["moat"][_esito] = res["moat"].get(_esito, 0) + 1
         fact = Fact(
             proposition=prop,
             topic=topic,

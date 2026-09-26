@@ -97,6 +97,15 @@ lab_app = typer.Typer(
     help="Lab live dashboards (multi-agent chat watcher etc.)",
     no_args_is_help=True,
 )
+# D-0012: la via d'uscita del blocco. Aprire uno store vecchio non lo migra più,
+# quindi migrarlo deve essere qualcosa che si PUÒ chiedere: un rifiuto che manda
+# a un comando inesistente è peggio del silenzio, perché il silenzio non promette
+# — e chi va a cercare apre il file a mano, cioè fa la cosa che il blocco impedisce.
+store_app = typer.Typer(
+    help="Operazioni sul file dello store (migrazione, con backup verificato).",
+    no_args_is_help=True,
+)
+app.add_typer(store_app, name="store")
 app.add_typer(skills_app, name="skills")
 app.add_typer(episodes_app, name="episodes")
 app.add_typer(providers_app, name="providers")
@@ -1445,6 +1454,33 @@ def remember_cmd(
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    # ⛔ T174 — E PERCHE' E' ENTRATO. Fino al 2026-09-20 questa riga era tutto
+    # cio' che un utente riceveva per un SI': nove parole. Per un NO la stessa
+    # CLI ne stampa ventidue di righe — layer, advice, il suggerimento sul
+    # ruolo. Il prodotto argomentava i suoi no e non i suoi si'.
+    # ⚠️ E ne serviva un'altra, che la misura ha trovato e la richiesta non
+    # nominava: un fatto puo' entrare AMMESSO con `moat: not_run:no_judge`,
+    # cioe' senza che NESSUNO abbia giudicato, e la riga era identica al caso
+    # giudicato 99.87. Due si' diversissimi scritti uguali.
+    # I numeri NON si ricalcolano qui: vengono dallo stesso adattatore che
+    # costruisce `--json`, cosi' le due uscite non possono divergere.
+    if str(disp) == "admitted":
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        _ric = ricevuta_dal_cancello(r).come_dizionario()
+        _p, _s = _ric.get("punteggio"), _ric.get("soglia")
+        if _p is None or _s is None:
+            console.print(
+                f"  [yellow]non giudicato[/yellow] ({_ric.get('moat')}) — "
+                "nessuno ha controllato che il fatto segua dalla sua fonte")
+        else:
+            console.print(
+                f"  giudicato [b]{_p:.2f}[/b]/100 da `{_ric.get('giudice')}`"
+                f" (modello {_ric.get('modello')}), soglia {_s:.0f}"
+                # ⚠️ IL MARGINE SI LEGGE, non si ricalcola: la riga sopra
+                # promette «i numeri NON si ricalcolano qui» e una sottrazione
+                # fatta a mano la smentirebbe — due formule per lo stesso
+                # numero sono due verita' che un giorno divergono.
+                f" — margine +{_ric.get('margine'):.2f}")
     # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
     # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
     # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
@@ -1706,6 +1742,7 @@ def recall_cmd(
     #: misurato in CI, `test_cli_remember_and_recall_use_open_memory`
     #: è caduto per questo. Il percorso si passa solo quando c'è —
     #: chi non usa `--db` continua a vedere la firma di sempre.
+    _pretendi_uno_store_che_esiste(db, "verimem recall")
     m = _open_memory(db) if db else _open_memory()
     #: CHI NOMINA UNO STORE HA DIRITTO DI VEDERE QUALE E' STATO APERTO. Senza
     #: questa riga `--db` curerebbe meta' difetto: il comando leggerebbe il
@@ -2279,6 +2316,7 @@ def trust_stats_cmd(
     broken down by status. The numbers competitors don't show.
     """
     from .client import Memory
+    _pretendi_uno_store_che_esiste(db, "verimem stats")
     m = Memory(db) if db else Memory()
     s = m.trust_stats()
     if json_out:
@@ -3263,7 +3301,39 @@ def _facts_data_dir() -> Path:
     return CONFIG.data_dir
 
 
-def _facts_sm(db: str | None = None):
+def _pretendi_uno_store_che_esiste(db, comando: str) -> None:
+    """Un comando di LETTURA non crea lo store che dice di leggere.
+
+    ⚠️ IL DIFETTO CHE TOGLIE: `--db` su un percorso che non esiste faceva
+    nascere uno store nuovo e vuoto, che il comando poi trovava vuoto — perché
+    l'aveva appena creato lui — e raccontava come «nessun fatto». Basta un
+    refuso e la risposta a «fammi vedere la mia memoria» è «è vuota», mentre i
+    fatti stanno intatti nel file accanto. Le sette porte misurate e i byte che
+    ognuna creava stanno in `tests/test_un_comando_di_lettura_non_crea_lo_store`.
+
+    Vale solo per chi NOMINA un percorso: senza `--db` la cartella si risolve
+    come sempre, e scrivere in uno store nuovo continua a crearlo, perché lì la
+    creazione è il mestiere del comando.
+    """
+    if not db:
+        return
+    percorso = Path(db)
+    if percorso.exists():
+        return
+    console.print(
+        f"[red]questo store non esiste:[/red] {percorso}\n"
+        f"`{comando}` legge soltanto, quindi non lo creo: un file nuovo e "
+        f"vuoto risponderebbe «nessun fatto» a una domanda che non ho potuto "
+        f"leggere, e la memoria vera resterebbe dov'è. Controlla il percorso. "
+        f"Se volevi davvero uno store nuovo, scrivici dentro — per esempio\n"
+        f"    verimem remember \"...\" --db {percorso}",
+        soft_wrap=True,   # un percorso spezzato a capo non si copia, e si
+                          # stampa solo perché qualcuno lo copi
+    )
+    raise typer.Exit(1)
+
+
+def _facts_sm(db: str | None = None, comando: str = "questo comando"):
     """Build a SemanticMemory pointed at the corpus.
 
     ``db`` is the store the caller NAMED (`--db`); without it, the one this
@@ -3282,6 +3352,12 @@ def _facts_sm(db: str | None = None):
     """
     from .semantic import SemanticMemory
     if db:
+        # Chi NOMINA un percorso per leggere intende un file che c'è: se non
+        # c'è, dirlo vale più che fabbricarne uno vuoto e chiamarlo risposta.
+        # Le quattro porte `facts` che arrivano qui con un `--db` leggono tutte;
+        # il giorno che una di loro dovrà creare, la guardia si sposta nelle
+        # chiamate invece di stare qui.
+        _pretendi_uno_store_che_esiste(db, comando)
         scelto = Path(db)
         scelto.parent.mkdir(parents=True, exist_ok=True)
         return SemanticMemory(db_path=scelto)
@@ -3342,7 +3418,7 @@ def facts_list(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts list")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     if _scoped:
         try:  # fail fast on a malformed scope id
@@ -3442,7 +3518,7 @@ def facts_recall(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts recall")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _rtopic = topic
     if _scoped and topic:
@@ -3507,7 +3583,7 @@ def facts_search(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts search")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _stopic = topic
     if _scoped and topic:
@@ -3599,7 +3675,7 @@ def facts_get(fact_id: str, db: str = typer.Option(None, "--db")) -> None:
 
     Accepts a full id or an unambiguous prefix.
     """
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts get")
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
@@ -6163,6 +6239,7 @@ def audit_anchor_cmd(
 
     from verimem.audit_anchor import build_payload, sign_anchor
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit anchor")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
     adj = _audit_adj_log(sm)
     ep_path = _audit_episodes_db(sm, episodes_db)
@@ -6212,6 +6289,7 @@ def audit_verify_cmd(
     anchored-head-at-count) and exits 1 naming the chain and check that
     failed."""
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit verify")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
 
     if anchor is not None:
@@ -6291,5 +6369,43 @@ def main() -> None:
     app()
 
 
+
+
+@store_app.command("migrate")
+def store_migrate_cmd(
+    file: str = typer.Argument(..., help="Il file .db dello store da migrare"),
+    backup_in: str = typer.Option(
+        None, "--backup-in",
+        help="Dove scrivere il backup (default: accanto allo store)"),
+) -> None:
+    """Porta uno store alla versione di questo codice, dopo un backup verificato.
+
+    Il backup si verifica CONTANDO le righe, non fidandosi della copia: una
+    copia che esiste non e' una copia che contiene, e l'impronta del file non
+    serve perche' il backup di SQLite compatta e lo sha cambia a contenuto
+    identico.
+    """
+    from pathlib import Path as _Path
+
+    from .schema import StoreTroppoNuovo
+    from .store_migrate import BackupNonVerificato, migra_lo_store
+
+    percorso = _Path(file).expanduser()
+    if not percorso.is_file():
+        console.print(f"[red]non esiste:[/red] {percorso}", soft_wrap=True)
+        raise typer.Exit(2)
+    try:
+        ricevuta = migra_lo_store(
+            percorso, _Path(backup_in).expanduser() if backup_in else None)
+    except (BackupNonVerificato, StoreTroppoNuovo) as exc:
+        console.print(f"[red]non migrato:[/red] {exc}", soft_wrap=True)
+        raise typer.Exit(1) from exc
+    console.print(str(ricevuta), soft_wrap=True)
+
+# ⚠️ QUALUNQUE COMANDO VA DEFINITO SOPRA QUESTA RIGA.
+# Con `python -m verimem.cli` il modulo gira come __main__, quindi `main()`
+# parte QUI: un decoratore scritto più in basso non viene mai eseguito e il
+# comando non esiste — pur esistendo per chi importa il modulo, che è il
+# livello a cui un test si accorge di nulla.
 if __name__ == "__main__":
     main()

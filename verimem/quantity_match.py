@@ -121,7 +121,18 @@ _QUANT_RE = re.compile(
     # chiusa ha invece raggio ZERO sul corpus, e il presidio sta nel banco.
     # L'alternativa va PRIMA del gruppo generico: la regex prova da sinistra,
     # e su «m3x» ricade sul generico come faceva prima.
-    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)"
+    # ⚠️ IL CANCELLETTO: `#96` NOMINA una richiesta, non afferma una grandezza.
+    # T149, misurato su tre fermate vissute da un pari che salvava le misure
+    # di una sera col prodotto: `L4.1` accusava il claim di «un valore che la
+    # fonte non contiene: 96», con il giudice a 99,93 e
+    # `withheld_despite_judge=True`. Raggio sullo store: 1339 proposizioni
+    # contengono `#<numero>`, 2 sono quarantenate con L4.1 fra i colpevoli —
+    # ed entrambe hanno il giudice sopra 90, cioe' sono per intero la classe
+    # «il moat era d'accordo e un dettaglio ha fermato».
+    # ⛔ SOLO IL CANCELLETTO, e il perche' del NO all'ovvia estensione sta nel
+    # banco: «i numeri dopo `=` non contano» spegnerebbe `EXIT=0` contro
+    # `EXIT=1`, cioe' meta' dell'evidenza che questo prodotto confronta.
+    r"(?<![A-Za-z0-9_#])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)"
     r"(?:\s{0,3}-?\s{0,3}((?:mm|cm|km|ft|in|m)[23]|[^\W\d_]+))?"
     r"(?![A-Za-z0-9_])(?!\.\d)(?!,\d)",
     re.UNICODE,

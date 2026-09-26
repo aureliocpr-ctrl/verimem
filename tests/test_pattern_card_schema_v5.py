@@ -175,7 +175,10 @@ def test_migration_v4_to_v5_adds_columns(tmp_path: Path) -> None:
 
     # Re-open via SemanticMemory — the migration ladder should run v4→v5.
     from verimem.semantic import SemanticMemory
+    from verimem.store_migrate import migra_lo_store
 
+    # D-0012: la migrazione si chiede, non si subisce aprendo.
+    migra_lo_store(db_path)
     sm = SemanticMemory(db_path=db_path)
 
     # Columns now present.

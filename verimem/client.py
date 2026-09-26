@@ -445,12 +445,20 @@ class Risultati(list):
         self.nascosti_dalla_freschezza = nascosti_dalla_freschezza
 
 
-def esito_del_moat(gate, warnings, *, source) -> str:
+def esito_del_moat(gate, warnings, *, source, chiesto: bool = True) -> str:
     """Che cosa ha fatto il moat, DERIVATO da cio' che il gate ha gia' detto.
 
     Non duplica la logica del gate: legge i layer che il gate ha emesso. Se un
     giorno cambiano quei nomi, il test dei quattro casi distinti lo prende.
+
+    T204 (23/09): le porte che la chiamano sono DUE, la scrittura e l'ingest,
+    e le stringhe sono un solo insieme. ``chiesto=False`` vuol dire che il
+    giudizio non e' stato chiesto (``ground=False``): il giudice non e' mancato,
+    nessuno l'ha chiamato. Viene PRIMA di tutto il resto, anche della fonte
+    assente, perche' e' la ragione primaria: la scelta di chi scrive.
     """
+    if not chiesto:
+        return "not_run:not_asked"
     _layers = {str(w.get("layer", "")) for w in warnings}
     if not source:
         return "not_run:no_source"
@@ -1239,7 +1247,8 @@ class Memory:
         # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
         # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
         # casi distinti lo prende.
-        _moat = esito_del_moat(gate, warnings, source=source)
+        _moat = esito_del_moat(gate, warnings, source=source,
+                               chiesto=bool(ground))
         # E CHI HA DECISO LA QUARANTENA. Trovato e poi ampliato:
         #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
         #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
@@ -1279,6 +1288,16 @@ class Memory:
             _out_qb = None
         from .local_grounding import esecutore_dell_ultimo_giudizio
         _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
+        #: E PERCHE' ha giudicato lui. `judged_by` da solo e' un'etichetta:
+        #: dice «in-process» sia quando il daemon non e' stato interpellato
+        #: sia quando non ha risposto, e chi legge non sa se la sua
+        #: installazione stia lavorando come crede. La ragione e' registrata
+        #: NELL'ISTANTE della decisione — riletta dopo direbbe altro, perche'
+        #: lo scorer si popola quando il modello finisce di caricare.
+        from .local_grounding import la_delega_era_richiesta as _delega_chiesta
+        from .local_grounding import perche_ha_giudicato as _perche_giudizio
+        _perche_ha_giudicato = _perche_giudizio()
+        _aveva_chiesto_il_daemon = _delega_chiesta()
         from ._compat import provenienza_data_dir
         _provenienza_store = provenienza_data_dir()
         _out = {
@@ -1318,6 +1337,25 @@ class Memory:
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        # LA RAGIONE DEL GIUDIZIO IN CASA, nel formato che il prodotto usa
+        # gia' per `duplicate_check_skipped` e per «encode delegate
+        # unavailable»: layer, reason, advice. Non cambia il verdetto — la
+        # scrittura e' gia' decisa qui sopra — aggiunge solo cio' che la
+        # ricevuta taceva.
+        # ⚖️ SOLO A CHI IL DAEMON LO AVEVA CHIESTO. Un avviso che esce su ogni
+        # scrittura giudicata in casa — il caso normale — non informa nessuno:
+        # riempie la ricevuta e spegne l'attenzione su quelli che contano. Qui
+        # parla quando una promessa e' stata disattesa: delega richiesta, e il
+        # giudizio finito in casa lo stesso.
+        if (_chi_ha_giudicato == "in-process" and _perche_ha_giudicato
+                and _aveva_chiesto_il_daemon):
+            _out["warnings"] = list(_out.get("warnings") or []) + [{
+                "layer": "giudice_in_processo",
+                "reason": ("avevi chiesto il daemon condiviso e ha giudicato "
+                           f"questo processo: {_perche_ha_giudicato}"),
+                "advice": ("se ti aspettavi il daemon condiviso, «verimem "
+                           "doctor» dice se e' raggiungibile"),
+            }]
         # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
         # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
         # ma non arrivava a chi scrive: la ricevuta diceva `moat: passed`,
@@ -4500,8 +4538,15 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         "judge": _judge_of_record_dict(judge),
         "score": score,
         "threshold": thr,
+        # Il margine è una proprietà CALCOLATA, e si rende com'è: la ricevuta
+        # porta `score` e `threshold` interi, e chi rifà la sottrazione deve
+        # ritrovare questo campo. Arrotondato a quattro decimali non lo
+        # ritrovava, e il numero tolto non era recuperabile da nessuna parte:
+        # misurato il 2026-09-21, la porta MCP non espone affatto `margine`,
+        # quindi lì il valore pieno moriva qui. Il posto dove si sceglie
+        # quante cifre mostrare è chi STAMPA, non chi calcola.
         "margin": (None if score is None or thr is None
-                   else round(float(score) - float(thr), 4)),
+                   else float(score) - float(thr)),
         "reason": reason,
         "confidence_tier": _confidence_tier(score, judge, thr),
     }

@@ -2626,6 +2626,7 @@ class SemanticMemory:
         db_path: Path | None = None,
         *,
         repo_root: Path | None = None,
+        _migrazione_autorizzata: bool = False,
     ) -> None:
         """Open / create the semantic-memory SQLite DB.
 
@@ -2642,6 +2643,26 @@ class SemanticMemory:
         self.db_path = db_path or CONFIG.semantic_db
         self.repo_root = Path(repo_root).resolve() if repo_root else None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # D-0012: IL BLOCCO STA QUI, PRIMA DELLO SCRIPT, e la posizione è il
+        # punto. Tre righe più sotto lo schema viene eseguito: su uno store
+        # vecchio quello È la migrazione — misurato su copie, un file a v7
+        # diventa v17 alla prima apertura, +21 colonne su `facts` e una tabella
+        # in più, senza avviso e senza ritorno. Un backup aperto per leggerlo
+        # smetteva di essere un backup.
+        #
+        # Non blocca chi crea (`verifica_apribile` lascia passare uno store che
+        # non dichiara nessuna versione) né chi è già allineato: sul campo vero
+        # sono 6 store su 76, e chiuderli fuori sarebbe la cura peggiore del
+        # male. Blocca i 25 più vecchi del codice, che sono backup, snapshot e
+        # archivi — cioè esattamente i file per cui aprire non deve migrare.
+        #
+        # L'unica porta che passa di qui con l'autorizzazione è
+        # `store_migrate.migra_lo_store`, dove la migrazione è stata CHIESTA e
+        # arriva dopo un backup verificato contando le righe.
+        if not _migrazione_autorizzata:
+            from .schema import leggi_stato as _leggi_stato
+            from .schema import verifica_apribile as _verifica_apribile
+            _verifica_apribile(_leggi_stato(self.db_path))
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
             # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
