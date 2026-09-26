@@ -1853,16 +1853,21 @@ _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 _APRE_LA_FRASE_RE = re.compile(
     r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})([A-Z][a-zA-Z]{2,32})")
 
-#: LE APERTURE CHE NON SONO NOMI, DAL LATO INGLESE. La lista qui sotto la
+#: LE APERTURE CHE NON SONO NOMI, NELLE DUE LINGUE. La lista qui sotto la
 #: legge SOLO `_nomi_propri`, ed e' separata da `_NON_UNIT_WORDS` apposta:
 #: quella la legge anche il riconoscimento delle unita', e allungarla per i
 #: nomi cambierebbe quali parole dopo un numero contano come unita'.
 #: Misurato il 25/09 sulle memorie estratte da conversazioni inglesi vere:
 #: «Both», «Being» e «Working» a inizio frase erano contati come nomi propri,
 #: e due memorie VERE su 62 venivano segnalate per un «nome» che la fonte non
-#: aveva. Dentro stanno solo parole che non possono essere un nome in nessuna
-#: lettura: «Will» e «May» restano fuori, perche' lo possono essere.
-_APERTURE_INGLESI_NON_NOMI = frozenset({
+#: aveva. E il 26/09 sullo store vero, in sola lettura, dal lato italiano: fra
+#: i fatti ammessi con una parola maiuscola assente dalla loro fonte, «Nell»
+#: 63 volte, «Sull» 13, «Due» 11, «Senza» 11, «Dentro» 7, «Sotto» 6,
+#: «Secondo» 6, «Tre» 5 — l'elisione, le preposizioni e i numeri in apertura.
+#: Dentro stanno solo parole che non possono essere un nome in nessuna
+#: lettura: «Will», «May», «Otto», «Ora», «Mai», «Sei», «Mille» e «Cento»
+#: restano fuori, perche' possono essere un nome di persona o di luogo.
+_APERTURE_NON_NOMI = frozenset({
     # articoli, determinanti, quantificatori
     "a", "an", "the", "this", "that", "these", "those", "both", "each", "every",
     "all", "some", "any", "no", "many", "most", "several", "such", "another",
@@ -1893,6 +1898,22 @@ _APERTURE_INGLESI_NON_NOMI = frozenset({
     "furthermore", "additionally", "actually", "here", "there", "now", "later",
     "soon", "already", "again", "overall", "instead", "otherwise", "perhaps",
     "maybe", "then", "first", "next", "last",
+    # numeri in lettere
+    "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "hundred", "thousand",
+    # italiano: le forme elise, che la regex dei nomi taglia all'apostrofo
+    "nell", "sull", "dall", "dell", "coll", "quell", "nessun",
+    # italiano: preposizioni e avverbi che aprono una frase
+    "senza", "dentro", "sotto", "sopra", "secondo", "verso", "oltre", "durante",
+    "mediante", "presso", "circa", "invece", "inoltre", "infatti", "tuttavia",
+    "pertanto", "ecco", "oggi", "ieri", "domani", "qui", "qua", "sempre",
+    "spesso",
+    # italiano: dimostrativi e quantificatori
+    "questo", "questa", "questi", "queste", "quello", "quella", "quelli",
+    "quelle", "ogni", "ciascun", "ciascuno", "alcuni", "alcune", "molti",
+    "molte", "tutti", "tutte", "nessuno",
+    # italiano: numeri in lettere
+    "due", "tre", "quattro", "cinque", "sette", "nove", "dieci",
 })
 
 #: UN GERUNDIO CHE APRE LA FRASE COL SUO COMPLEMENTO E' UN'AZIONE, NON UN NOME,
@@ -1979,7 +2000,7 @@ def _nomi_propri(testo: str) -> set[str]:
               if m.group(2).lower() in _COMPLEMENTO_DEL_GERUNDIO}
     return {w for w in _CAPS_NAME_RE.findall(testo)
             if not (w in apre and (w.lower() in _NON_UNIT_WORDS
-                                   or w.lower() in _APERTURE_INGLESI_NON_NOMI))
+                                   or w.lower() in _APERTURE_NON_NOMI))
             and w not in azioni}
 
 
