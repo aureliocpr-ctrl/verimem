@@ -21,13 +21,11 @@ IL TETTO SUI FILE, e quando e' attivo (contratto, riscritto 2026-09-12):
     se il processo MUORE invece di fallire - l'access violation raccontata
     in `_annulla_il_dump` - il `finally` non viene eseguito e il file resta
     intero sul disco. Un processo morto non taglia niente;
-  * MENTRE la chiamata e' in corso NESSUNO ferma piu' la crescita. Il
-    sorvegliante, se avviato, la DICHIARA nel file appena sfonda, ma non
-    disarma il timer: il dump lo annulla solo chi lo ha armato, e il
-    proprietario e' la chiamata che e' appesa. Vedi `_annulla_il_dump`.
-  ⚠️ Questo contratto prometteva il tetto DURANTE la chiamata col
-    sorvegliante avviato. Non e' piu' vero da quando il dump ha un
-    proprietario, e la riga qui sopra e' l'unica che regge.
+  * il dump e' UNO per chiamata oltre il budget (dal 25/09, T197): il file
+    non cresce piu' mentre la chiamata resta appesa. Se quel dump da solo
+    sfonda il tetto, il sorvegliante, se avviato, lo DICHIARA nel file, e
+    la chiusura taglia la coda. Il dump lo annulla solo chi lo ha armato:
+    vedi `_annulla_il_dump`.
 
 PERCHE' NON SI AVVIA UN THREAD PER CHIAMATA. Misurato il 2026-09-06 sul
 server MCP (12 dump su 12, nove minuti, frame identici): il thread che
@@ -62,13 +60,13 @@ _TRACE_DIR = Path(
 _HEADER_MAX_BYTES = 300
 _ARMED = threading.Lock()
 
-#: Tetto per file. `dump_traceback_later(..., repeat=True)` ridà l'INTERO dump
-#: di tutti i thread a ogni intervallo finché la chiamata non finisce: su uno
-#: stallo di dieci minuti con budget 30s sono venti dump, e dal secondo in poi
-#: è lo stesso stack — zero informazione in più a costo pieno. Misurato il
-#: 2026-07-31 su una macchina reale: un singolo trace di `hippo_health` da
-#: **24.211.732 byte**. Il PRIMO dump, quello che contiene la diagnosi, non
-#: viene mai toccato da questo tetto.
+#: Tetto per file. Fino al 25/09 il dump si ripeteva (`repeat=True`) a ogni
+#: intervallo finché la chiamata non finiva: su uno stallo di dieci minuti con
+#: budget 30s venti dump, e dal secondo in poi lo stesso stack — zero
+#: informazione in più a costo pieno. Misurato il 2026-07-31: un singolo trace
+#: di `hippo_health` da **24.211.732 byte**. Oggi il dump e' UNO (vedi
+#: `hang_trace`), e il tetto resta come rete per un dump singolo enorme. Il
+#: PRIMO dump, quello che contiene la diagnosi, non viene mai toccato.
 _MAX_FILE_BYTES = int(os.environ.get("HIPPO_HANG_TRACE_MAX_BYTES") or 2_000_000)
 
 #: Quanti trace tenere nella cartella. Erano 300 per 34 MB, accumulati in mesi:
@@ -215,7 +213,18 @@ def hang_trace(label: str, budget_s: float):
             "the stacks below were dumped because the call exceeded the budget:\n"
         )
         f.flush()
-        faulthandler.dump_traceback_later(budget_s, repeat=True, file=f)
+        # UN DUMP, NON UNO OGNI `budget_s` (T197, 25/09). Il dump lo scrive un
+        # thread C che percorre gli stati di TUTTI i thread senza il GIL, e
+        # ripeterlo ripeteva il rischio senza aggiungere diagnosi (lo stack di
+        # uno stallo e' fermo: e' il motivo del tetto qui sopra). La stessa
+        # famiglia e' caduta su tutte e tre le piattaforme dentro questi dump
+        # ripetuti: SIGSEGV su ubuntu (`test_slow_body_leaves_a_stack_dump`,
+        # escluso dalla suite dal 05/09), access violation su Windows (T68),
+        # e su macOS la suite ferma per 33 minuti dentro
+        # `test_un_file_che_cresce_troppo_smette_e_lo_dichiara`, due run nello
+        # stesso punto. Dopo il dump il thread C esce, e annullare non deve
+        # piu' aspettarne uno che sta ancora scrivendo.
+        faulthandler.dump_traceback_later(budget_s, repeat=False, file=f)
         # Da qui il dump ha un PROPRIETARIO: questo thread. Nessun altro puo'
         # annullarlo — `_annulla_il_dump()` lo verifica prima di toccare
         # faulthandler.
