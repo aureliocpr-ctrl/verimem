@@ -172,6 +172,37 @@ def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
     assert _impronta_del_nucleo(p) == prima, "e il nucleo è rimasto intatto"
 
 
+def test_il_rifiuto_dice_i_due_numeri_il_file_e_il_comando(tmp_path: Path) -> None:
+    """D-0009: un rifiuto che non dice come uscirne costringe a cercare.
+
+    E chi cerca nel momento sbagliato apre il file a mano, cioè fa proprio la
+    cosa che il rifiuto voleva impedire. Quattro elementi, non tre: la versione
+    TROVATA, quella richiesta, QUALE file, e il comando che scioglie il blocco.
+    La versione trovata serve perché senza di lei il messaggio dice che
+    qualcosa non va senza dire da dove si parte.
+    """
+    from verimem.migrations import ensure_schema_version
+    from verimem.schema import COMANDO_DI_MIGRAZIONE
+
+    p = _store_a_versione(tmp_path, versione=16)
+    con = sqlite3.connect(p)
+    try:
+        with pytest.raises(RuntimeError) as caduto:
+            ensure_schema_version(con, db_id="semantic", target_version=17,
+                                  migrations=[])
+    finally:
+        con.close()
+
+    testo = str(caduto.value)
+    mancano = [nome for nome, pezzo in (
+        ("la versione trovata (16)", "16"),
+        ("la versione richiesta (17)", "17"),
+        ("il file", p.name),
+        ("il comando", COMANDO_DI_MIGRAZIONE.split(" {")[0]),
+    ) if pezzo not in testo]
+    assert not mancano, f"al rifiuto mancano {mancano}. Dice: {testo}"
+
+
 def test_aprire_dichiara_quale_store_e_come_l_ha_trovato(tmp_path: Path,
                                                         monkeypatch) -> None:
     """L'altra metà di D-0009: se l'apertura tocca lo schema, lo dica.
