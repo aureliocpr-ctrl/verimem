@@ -20,7 +20,8 @@ Schema v7 (added 2026-05-27 cycle 13):
     );
 
 TTL 7 giorni: after that the undo entry can be pruned (separate cleanup task).
-The fact row itself is unaffected by undo log TTL.
+The fact row itself is unaffected by undo log TTL. A retirement's entry
+(``supersede``) never expires and is never pruned: see ``OP_CHE_NON_SCADONO``.
 
 API:
     snapshot_pre_op(conn, op_type, fact_id) -> op_id
@@ -53,6 +54,12 @@ class UndoEntry:
     created_at: float
     undone_at: float | None
     ttl_expires_at: float
+
+
+#: T88 — the ops whose undo never expires. A retirement leaves the row in
+#: place (it only marks it), so undoing it is always possible and must stay
+#: so; the 7-day TTL is for a ``forget``, where the row is gone.
+OP_CHE_NON_SCADONO: frozenset[str] = frozenset({"supersede"})
 
 
 def ensure_undo_table(conn: sqlite3.Connection) -> None:
@@ -227,7 +234,7 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
             "fact_id": fact_id, "action": "already_undone",
             "undone_at": undone_at,
         }
-    if time.time() > float(ttl):
+    if op_type not in OP_CHE_NON_SCADONO and time.time() > float(ttl):
         return {
             "ok": False, "op_id": op_id, "op_type": op_type,
             "fact_id": fact_id, "action": "expired",
@@ -260,15 +267,17 @@ def list_undoable(
     conn: sqlite3.Connection, *, limit: int = 20,
 ) -> list[UndoEntry]:
     """Return the N most recent undoable ops (newest first, not yet undone,
-    not yet expired)."""
+    not yet expired — an op in ``OP_CHE_NON_SCADONO`` never expires)."""
+    mai = sorted(OP_CHE_NON_SCADONO)
     cur = conn.cursor()
     cur.execute(
         "SELECT op_id, op_type, fact_id, pre_row_json, "
         "created_at, undone_at, ttl_expires_at "
         "FROM facts_undo_log "
-        "WHERE undone_at IS NULL AND ttl_expires_at > ? "
+        "WHERE undone_at IS NULL AND (ttl_expires_at > ? "
+        f"OR op_type IN ({','.join('?' * len(mai))})) "
         "ORDER BY created_at DESC LIMIT ?",
-        (time.time(), int(limit)),
+        (time.time(), *mai, int(limit)),
     )
     out: list[UndoEntry] = []
     for r in cur.fetchall():
@@ -314,15 +323,22 @@ def invalidate_handles_for(
 
 
 def prune_expired_undo_log(conn: sqlite3.Connection) -> int:
-    """Delete undo entries past their TTL. Returns count deleted."""
+    """Delete undo entries past their TTL. Returns count deleted.
+
+    T88: the handles of a RETIREMENT (``supersede``) are never pruned — a
+    retired row is still there, so undoing it is always possible, and a wrong
+    retirement must stay reversible after the 7 days of a ``forget``."""
+    mai = sorted(OP_CHE_NON_SCADONO)
     cur = conn.execute(
-        "DELETE FROM facts_undo_log WHERE ttl_expires_at < ?",
-        (time.time(),),
+        "DELETE FROM facts_undo_log WHERE ttl_expires_at < ? "
+        f"AND op_type NOT IN ({','.join('?' * len(mai))})",
+        (time.time(), *mai),
     )
     return int(cur.rowcount)
 
 
 __all__ = [
+    "OP_CHE_NON_SCADONO",
     "UNDO_TTL_SECONDS",
     "OpType",
     "UndoEntry",

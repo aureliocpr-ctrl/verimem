@@ -157,9 +157,9 @@ def retirement_log(
     Returns:
         list of dicts: loser_id/topic/status/created_at, winner_id/topic/
         status/created_at, reason, superseded_at, reversible, undo_op_id.
-        ``reversible`` is True iff a not-yet-undone, not-expired
-        ``facts_undo_log`` row of op_type='supersede' exists for the loser —
-        rows retired BEFORE the helm existed report False honestly.
+        ``reversible`` is True iff a not-yet-undone ``facts_undo_log`` row
+        of op_type='supersede' exists for the loser (it does not expire:
+        T88) — rows retired BEFORE the helm existed report False honestly.
     """
     where = ["f.superseded_by IS NOT NULL"]
     params: list[Any] = []
@@ -230,7 +230,6 @@ def retirement_log(
     # è minore di tutto, quindi in DESC finisce in fondo esattamente dove lo
     # metteva lo zero (verificato), e sul corpus reale i ritiri senza data
     # sono 0 su 1794.
-    import time as _time
     with sm._connect() as conn:
         # facts_undo_log may not exist on very old stores — create it the
         # same lazy way semantic.py does, so the JOIN never crashes.
@@ -242,27 +241,23 @@ def retirement_log(
         from .mutation_audit import TABLE_SQL as _AUDIT_DDL
         conn.execute(_AUDIT_DDL)
         rows = conn.execute(sql, (*params, int(limit))).fetchall()
-    ora = _time.time()
     out: list[dict[str, Any]] = []
     for r in rows:
         d = {k: r[k] for k in r.keys()}
-        _ttl = d.pop("undo_ttl", None)
+        d.pop("undo_ttl", None)
         _undone = d.pop("undo_undone_at", None)
-        # TRE modi di non essere annullabile, e l'operatore fa cose diverse
+        # DUE modi di non essere annullabile, e l'operatore fa cose diverse
         # in ciascuno: nessuno scatto = la build che ha eseguito il ritiro
         # non lascia appigli (i cinque ritiri della manutenzione automatica
-        # del 2026-08-05 sono tutti cosi'); finestra scaduta = lo scatto
-        # c'era e il prodotto ha funzionato, sono passati i sette giorni;
-        # gia' annullato = c'e' stato un ping-pong, e cercare l'undo e'
-        # cercare la cosa sbagliata. Un solo False per i tre e' un'etichetta
-        # che non distingue il ramo.
+        # del 2026-08-05 sono tutti cosi'); gia' annullato = c'e' stato un
+        # ping-pong, e cercare l'undo e' cercare la cosa sbagliata. Il terzo,
+        # «finestra scaduta», non esiste piu' (T88): lo scatto di un ritiro
+        # non scade, perche' la riga ritirata e' ancora li'
+        # (`undo_log.OP_CHE_NON_SCADONO`).
         if d.get("undo_op_id") is None:
             d["reversible"], d["irreversible_because"] = False, "no snapshot"
         elif _undone is not None:
             d["reversible"], d["irreversible_because"] = False, "already undone"
-        elif (_ttl or 0) <= ora:
-            d["reversible"] = False
-            d["irreversible_because"] = "undo window expired"
         else:
             d["reversible"], d["irreversible_because"] = True, None
         # «RITIRATO IN FAVORE DI X» si legge come «l'informazione vive in
@@ -840,8 +835,6 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
     where = ""
     params: list[Any] = []
     if topic is not None:
-        # segnaposto NOMINATO: la query porta anche `:ora` per la finestra
-        # di undo, e mescolare `?` e nomi nella stessa istruzione non si fa
         where = "WHERE topic LIKE :topic"
         params.append(topic + "%")
     sql = f"""
@@ -865,20 +858,19 @@ def survivability_counts(sm, *, topic: str | None = None) -> dict[str, Any]:
                -- quanti dei RITIRATI si possono ancora annullare: la
                -- finestra di riparazione ha una dimensione, e «1796
                -- ritirati» non diceva se se ne recupera uno o mille.
+               -- Senza scadenza (T88): lo scatto di un ritiro non scade.
                SUM(CASE WHEN superseded_by IS NOT NULL AND EXISTS (
                         SELECT 1 FROM facts_undo_log u
                         WHERE u.fact_id = facts.id
                           AND u.op_type = 'supersede'
-                          AND u.undone_at IS NULL
-                          AND u.ttl_expires_at > :ora)
+                          AND u.undone_at IS NULL)
                         THEN 1 ELSE 0 END)                 AS retired_reversible
         FROM facts {where}
     """
-    import time as _time
     with sm._connect() as conn:
         from .undo_log import ensure_undo_table
         ensure_undo_table(conn)
-        _p = {"ora": _time.time(), **({"topic": params[0]} if params else {})}
+        _p = {"topic": params[0]} if params else {}
         row = conn.execute(sql, _p).fetchone()
         # LA RIPARTIZIONE, perche' `judged` da solo e' una MEDIA fra due
         # mondi. Il 2026-08-07 e' stato misurato che `clp save` non chiama
