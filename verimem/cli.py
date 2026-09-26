@@ -4295,7 +4295,7 @@ def facts_safety() -> None:
     from datetime import datetime as _dt
 
     from .backup import list_backups
-    from .sandbox import DEFAULT_AUDIT_ROOT
+    from .sandbox import radice_audit
     from .tool_registry import REGISTRY
 
     sm = _facts_sm()
@@ -4341,8 +4341,9 @@ def facts_safety() -> None:
     n_writes_mem = len(REGISTRY.writes_memory())
     n_executes = len(REGISTRY.executes_command())
 
-    # Sandbox audit (last 5).
-    audit_dir = Path(DEFAULT_AUDIT_ROOT)
+    # Sandbox audit (last 5). Letto dove la sandbox lo SCRIVE (T208): la
+    # cartella dati attuale, non la home fissata all'import.
+    audit_dir = radice_audit()
     sandbox_events: list[str] = []
     if audit_dir.exists():
         log_today = audit_dir / f"sandbox-{_dt.now():%Y%m%d}.jsonl"

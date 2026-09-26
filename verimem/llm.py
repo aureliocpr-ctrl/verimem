@@ -406,8 +406,9 @@ class MCPSamplingLLM:
             # CYCLE #71 BIS — log the failure BEFORE re-raising as LLMError
             # so we can see what the host actually replied (or refused).
             try:
-                from pathlib import Path
-                dbg = Path.home() / ".engram" / "mcp_sampling_debug.log"
+                # T208: nella cartella dati scelta, non nella home fissa.
+                from .config import cartella_dati_attuale
+                dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
                 dbg.parent.mkdir(parents=True, exist_ok=True)
                 with dbg.open("a", encoding="utf-8") as f:
                     f.write(f"\n--- {time.time():.0f} FAILED "
@@ -443,8 +444,9 @@ class MCPSamplingLLM:
         # forensics when consolidate produces 0 skills despite routing OK.
         # Tag with timestamp to keep separate samples per run.
         try:
-            from pathlib import Path
-            dbg = Path.home() / ".engram" / "mcp_sampling_debug.log"
+            # T208: nella cartella dati scelta, non nella home fissa.
+            from .config import cartella_dati_attuale
+            dbg = cartella_dati_attuale() / "mcp_sampling_debug.log"
             dbg.parent.mkdir(parents=True, exist_ok=True)
             with dbg.open("a", encoding="utf-8") as f:
                 f.write(f"\n--- {time.time():.0f} model={model} "

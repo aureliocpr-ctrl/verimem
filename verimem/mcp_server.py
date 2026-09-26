@@ -851,8 +851,10 @@ def _sandbox_replay_audit(
     """Task #48 — append one replayable JSONL record for a sandbox_exec
     tool call. The stdout/stderr sha256 hashes let a replay of the same
     cmd+cwd be verified byte-deterministic. Distinct from SandboxedShell's
-    library-level audit (~/.engram/audit/, no hashes): this is the TOOL-CALL
-    layer. Dir override via ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern).
+    library-level audit (<data dir>/audit/, no hashes): this is the TOOL-CALL
+    layer, in <data dir>/sandbox-audit/. Dir override via
+    ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern). T208 (24/09): the default was
+    ``Path.home() / ".engram"``, which ignored the data dir the user chose.
 
     Called on EVERY decision path — allow/deny/dry_run/timeout/error from
     execute() AND the cwd fail-CLOSED deny (critic O3 #3 counterexample fix:
@@ -862,9 +864,11 @@ def _sandbox_replay_audit(
     try:
         import hashlib
         from pathlib import Path
+
+        from verimem.config import cartella_dati_attuale
         adir = Path(
             os.environ.get("ENGRAM_SANDBOX_AUDIT_DIR")
-            or (Path.home() / ".engram" / "sandbox-audit")
+            or (cartella_dati_attuale() / "sandbox-audit")
         )
         adir.mkdir(parents=True, exist_ok=True)
         so = stdout or ""
@@ -1918,7 +1922,8 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "unsandboxed host shell. Deny-by-default: a command matching "
                 "no allowlist regex (and no denylist) is REJECTED. Destructive "
                 "ops (rm -rf, format, dd, curl|sh, etc) are always denied. "
-                "Every call is audited to ~/.engram/audit/sandbox-*.jsonl. "
+                "Every call is audited to <data dir>/audit/sandbox-*.jsonl "
+                "(the data dir the user chose; ~/.engram by default). "
                 "Set dry_run=true to validate without executing. Returns the "
                 "ExecResult: action (allow|deny|dry_run|timeout|error), "
                 "returncode, stdout, stderr, matched_rule, reason."

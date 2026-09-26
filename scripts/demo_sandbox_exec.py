@@ -78,7 +78,9 @@ async def main() -> None:
           ("action", "stdout_truncated", "stdout_full_len", "stdout"))
 
     # Show today's audit trail location + last line.
-    audit_dir = Path.home() / ".engram" / "audit"
+    # T208: dove la sandbox lo scrive davvero, cioè nella cartella dati scelta.
+    from verimem.sandbox import radice_audit
+    audit_dir = radice_audit()
     logs = sorted(audit_dir.glob("sandbox-*.jsonl")) if audit_dir.exists() else []
     print("\n=== 6. AUDIT LOG ===")
     if logs:
@@ -90,7 +92,9 @@ async def main() -> None:
         print("  (no audit log found — sandbox writes on execute/validate)")
 
     # Replayable tool-call audit (with output hashes).
-    replay_dir = Path.home() / ".engram" / "sandbox-audit"
+    from verimem.config import cartella_dati_attuale
+    replay_dir = Path(os.environ.get("ENGRAM_SANDBOX_AUDIT_DIR")
+                      or (cartella_dati_attuale() / "sandbox-audit"))
     rlogs = sorted(replay_dir.glob("*.jsonl")) if replay_dir.exists() else []
     print("\n=== 7. REPLAYABLE AUDIT (output hashes) ===")
     if rlogs:
