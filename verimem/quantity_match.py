@@ -1853,6 +1853,75 @@ _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 _APRE_LA_FRASE_RE = re.compile(
     r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})([A-Z][a-zA-Z]{2,32})")
 
+#: LE APERTURE CHE NON SONO NOMI, DAL LATO INGLESE. La lista qui sotto la
+#: legge SOLO `_nomi_propri`, ed e' separata da `_NON_UNIT_WORDS` apposta:
+#: quella la legge anche il riconoscimento delle unita', e allungarla per i
+#: nomi cambierebbe quali parole dopo un numero contano come unita'.
+#: Misurato il 25/09 sulle memorie estratte da conversazioni inglesi vere:
+#: «Both», «Being» e «Working» a inizio frase erano contati come nomi propri,
+#: e due memorie VERE su 62 venivano segnalate per un «nome» che la fonte non
+#: aveva. Dentro stanno solo parole che non possono essere un nome in nessuna
+#: lettura: «Will» e «May» restano fuori, perche' lo possono essere.
+_APERTURE_INGLESI_NON_NOMI = frozenset({
+    # articoli, determinanti, quantificatori
+    "a", "an", "the", "this", "that", "these", "those", "both", "each", "every",
+    "all", "some", "any", "no", "many", "most", "several", "such", "another",
+    "either", "neither", "few", "much", "other",
+    # pronomi e possessivi
+    "he", "she", "it", "we", "they", "you", "his", "her", "its", "our", "their",
+    "my", "your", "him", "them", "who", "whom", "whose", "which", "what",
+    "someone", "everyone", "everybody", "nobody", "something", "everything",
+    "nothing", "anyone", "anything",
+    # ausiliari e modali
+    "is", "are", "was", "were", "be", "been", "being", "am", "do", "does", "did",
+    "doing", "have", "has", "had", "having", "can", "could", "should", "would",
+    "must", "might", "shall",
+    # congiunzioni e subordinanti
+    "and", "but", "or", "nor", "so", "yet", "because", "although", "though",
+    "while", "if", "when", "whenever", "where", "since", "unless", "until",
+    "after", "before", "once", "whether",
+    # preposizioni
+    "about", "above", "across", "against", "along", "among", "around", "at",
+    "behind", "below", "beside", "between", "beyond", "by", "despite", "down",
+    "during", "except", "for", "from", "in", "inside", "into", "like", "near",
+    "of", "off", "on", "onto", "out", "outside", "over", "through", "throughout",
+    "to", "toward", "towards", "under", "upon", "with", "within", "without",
+    # avverbi che aprono una frase
+    "also", "however", "therefore", "thus", "still", "just", "only", "even",
+    "recently", "currently", "today", "yesterday", "tomorrow", "always", "never",
+    "often", "sometimes", "usually", "finally", "meanwhile", "moreover",
+    "furthermore", "additionally", "actually", "here", "there", "now", "later",
+    "soon", "already", "again", "overall", "instead", "otherwise", "perhaps",
+    "maybe", "then", "first", "next", "last",
+})
+
+#: UN GERUNDIO CHE APRE LA FRASE COL SUO COMPLEMENTO E' UN'AZIONE, NON UN NOME,
+#: in tutte e due le lingue: «Working on cars…», «Being in an environment…»,
+#: «Scrivendo il test…». Serve il complemento subito dopo: «Beijing hosts» e
+#: «Orlando e'» restano nomi. Misurato il 25/09 sullo store vero, in sola
+#: lettura: 184 fatti su 18388 aprono cosi', con 61 parole distinte, e nessuna
+#: e' un nome — quasi tutte gerundi italiani («Scrivendo», «Interrogando»,
+#: «Cercando») che fino a qui contavano come nomi propri. Il caso che la regola
+#: sbaglierebbe, un nome in -ando seguito da una preposizione in apertura
+#: («Armando con la moglie…»), sullo stesso store e' zero.
+#: ⏱️ Tetti come in `_APRE_LA_FRASE_RE`: nessun quantificatore aperto.
+_GERUNDIO_IN_APERTURA_RE = re.compile(
+    r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})"
+    r"([A-Z][a-z]{2,32}(?:ing|ando|endo))\s{1,8}([a-zA-Z]{1,32})")
+_COMPLEMENTO_DEL_GERUNDIO = frozenset({
+    # inglese: preposizioni, articoli, possessivi, pronomi
+    "on", "in", "at", "with", "for", "to", "the", "a", "an", "his", "her",
+    "their", "my", "our", "your", "its", "it", "this", "that", "these", "those",
+    "as", "like", "about", "from", "out", "up", "down", "over", "into",
+    "through", "without", "by", "around",
+    # italiano: preposizioni e articoli
+    "il", "lo", "la", "i", "gli", "le", "un", "una", "uno", "di", "da", "con",
+    "su", "per", "tra", "fra", "al", "allo", "alla", "ai", "agli", "alle", "del",
+    "dello", "della", "dei", "degli", "delle", "nel", "nello", "nella", "nei",
+    "negli", "nelle", "sul", "sullo", "sulla", "sui", "sugli", "sulle", "col",
+    "coi",
+})
+
 def _nomi_propri(testo: str) -> set[str]:
     """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.
 
@@ -1906,8 +1975,12 @@ def _nomi_propri(testo: str) -> set[str]:
     """
     testo = testo or ""
     apre = {m.group(1) for m in _APRE_LA_FRASE_RE.finditer(testo)}
+    azioni = {m.group(1) for m in _GERUNDIO_IN_APERTURA_RE.finditer(testo)
+              if m.group(2).lower() in _COMPLEMENTO_DEL_GERUNDIO}
     return {w for w in _CAPS_NAME_RE.findall(testo)
-            if not (w in apre and w.lower() in _NON_UNIT_WORDS)}
+            if not (w in apre and (w.lower() in _NON_UNIT_WORDS
+                                   or w.lower() in _APERTURE_INGLESI_NON_NOMI))
+            and w not in azioni}
 
 
 def _named_subjects_disjoint(text_a: str, text_b: str) -> bool:
