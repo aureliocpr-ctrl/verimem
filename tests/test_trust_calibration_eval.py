@@ -8,13 +8,13 @@ property did NOT hold, the harness would be measuring noise.
 """
 from __future__ import annotations
 
-from verimem.contradiction import ContradictionStore
-from verimem.semantic import SemanticMemory
-from verimem.trust_calibration_eval import (
+from attic.trust_calibration_eval import (
     evaluate_calibration,
     make_calibration_dataset,
     register_contradictions,
 )
+from verimem.contradiction import ContradictionStore
+from verimem.semantic import SemanticMemory
 
 _NOW = 1_000_000_000.0
 

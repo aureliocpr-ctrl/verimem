@@ -16,12 +16,22 @@ punteggio più alto del sistema.
 
 LA DIAGNOSI HA UN INDIRIZZO PRECISO::
 
-    «Nessun rilevatore L1 riceve la fonte. Il confronto claim↔fonte esiste in
-     UN SOLO posto: dentro il cross-encoder, che è esattamente quello che
-     sbaglia su questa classe.
-        L1  vede il claim, NON la fonte
+    «Il confronto claim↔fonte esiste in UN SOLO posto che DECIDE: dentro il
+     cross-encoder, che è esattamente quello che sbaglia su questa classe.
+        L1  vede il claim; della fonte non guarda i VALORI
         L4  vede claim + fonte, ma confonde PLAUSIBILE con IMPLICATO
-     ⇒ manca un controllo DETERMINISTICO claim↔fonte»
+     ⇒ manca un controllo DETERMINISTICO claim↔fonte sui numeri»
+
+⏱️ LA DIAGNOSI È DATATA, e una riga di essa è scaduta. Diceva «nessun
+rilevatore L1 riceve la fonte»: vero quando è stata scritta il 2026-08-05,
+FALSO dal 2026-09-20. Oggi `l1_completion_detector` la riceve in due punti —
+`_la_fonte_e_solo_l_eco` (riga 185, e alla 214 confronta i due testi
+normalizzati) e `_il_participio_e_nella_fonte` (riga 217). Quello che resta
+vero, ed è la ragione di questo modulo, è più stretto: quei due controlli
+guardano le PAROLE, non i valori numerici, quindi un dettaglio inventato
+passa comunque. Un'affermazione di assenza invecchia da sola: questa è stata
+corretta appena un pari ha misurato il contrario, non quando qualcuno se l'è
+ricordata.
 
 e il numero che la rende strutturale: il 91,8% dei verdetti del moat sta
 agli estremi (1324 su 1673 sopra 99) — **nessuna soglia può separare**, perché
@@ -45,6 +55,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from decimal import Decimal
 
 from .quantity_match import (
     _QUANT_RE,
@@ -224,7 +235,7 @@ def _dichiara_un_assenza(testo: str) -> bool:
 # viene perdonata e resta fermata — c'è un controllo positivo che lo pin-a.
 #
 # 📌 E sta QUI e non in `extract_quantities`: è la stessa scelta già dichiarata
-# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i sei moduli
+# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i nove moduli
 # del gate che lo leggono; qui l'equivalenza vive solo nel confronto.
 _TOKEN_CON_VERSIONE = re.compile(
     r"(?<![\w.-])[A-Za-z][\w.]*-\d+(?:\.\d+)+(?![\w-])")
@@ -241,6 +252,216 @@ def _valori_da_token_che_la_fonte_contiene(proposition: str, source: str) -> set
     return perdonati
 
 
+#: `1,5 x 10^3` · `4 x 10^-4` · `2,5 × 10^5` · `6 * 10^4`. Il segno di
+#: moltiplicazione ha tre forme in giro per i testi veri (`x` ascii, `×`
+#: unicode, `*`) e l'esponente puo' essere negativo. La mantissa ammette la
+#: virgola perche' e' come l'italiano la scrive.
+#:
+#: ⚠️ I QUANTIFICATORI SONO LIMITATI, e non e' cosmesi: con `\d+` su un testo
+#: che arriva dall'esterno questa e' una `py/polynomial-redos` — un claim con
+#: migliaia di zeri consecutivi fa lavorare il motore in tempo polinomiale, e il
+#: gate legge testo di cui non controlla la forma. I limiti coprono ogni numero
+#: reale (una mantissa di 15 cifre, un esponente di 4) e rendono il
+#: costo lineare. Misurato: l'avviso CodeQL alto sparisce e le celle del banco
+#: non cambiano di una cifra.
+_SCIENTIFICA_RE = re.compile(
+#: ⚠️ I QUANTIFICATORI SONO SALITI DA 15 A 40, e la ragione e' che il tetto
+#: vero ora sta ALTROVE. Il 15 era stato scelto per chiudere una `polynomial
+#: ReDoS` («coprono ogni numero reale»), ma tagliava mantisse legittime: una
+#: misura con 18 cifre decimali non veniva nemmeno riconosciuta. Il costo resta
+#: lineare perche' il quantificatore resta LIMITATO, e cio' che protegge il
+#: confronto e' `_CIFRE_MASSIME` sul RISULTATO, dove il numero entra davvero.
+    r"(?<![\w.])(\d{1,40}(?:[.,]\d{1,40})?)[ 	]{0,4}[x×*][ 	]{0,4}10\^(-?\d{1,4})")
+
+
+#: Quante cifre puo' avere il numero ESPANSO. Non e' una stima: e' il numero che
+#: entra nel confronto claim-fonte, e oltre questa lunghezza non e' piu' una
+#: misura che qualcuno ha scritto in una perizia — `10^9999` darebbe diecimila
+#: cifre. Il valore piu' lungo osservato nei nostri banchi ha 18 cifre.
+_CIFRE_MASSIME = 40
+
+
+def _espandi_notazione_scientifica(testo: str) -> str:
+    """Riscrive `1,5 x 10^3` come `1500`, lasciando intatto tutto il resto.
+
+    Serve al solo confronto claim-fonte: il testo espanso non viene mai
+    memorizzato ne' mostrato al posto dell'originale, tranne che nel nome del
+    valore accusato — dove `2500` e' comunque piu' chiaro di `2.5` per chi
+    legge l'avviso.
+
+    ⚠️ NON tocca la notazione con esponente in apice (`10³`) ne' `1.5e3`:
+    nessuna delle due compare nei casi misurati, e una regex che le prendesse
+    tutte rischierebbe di catturare codici prodotto. Quando qualcuno le
+    misurera', si aggiungono qui con la loro cella di banco.
+    """
+    if not testo or "10^" not in testo:
+        return testo
+
+    def _sost(m: re.Match) -> str:
+        # ⚠️ ARITMETICA ESATTA, E IL PERCHE' NON E' L'ELEGANZA. Con `float` il
+        # prodotto INVENTAVA un valore sopra le 15 cifre significative:
+        # `123456789012345 x 10^3` usciva `123456789012344992`. Un valore
+        # mancante si nota — il layer accusa e chi legge va a guardare — un
+        # valore inventato no: il confronto claim-fonte avviene contro un numero
+        # che non sta in nessuno dei due testi. `Decimal.scaleb` sposta la
+        # virgola senza toccare le cifre.
+        try:
+            valore = Decimal(m.group(1).replace(",", ".")).scaleb(int(m.group(2)))
+        except (ValueError, ArithmeticError):  # pragma: no cover — regex ristretta
+            return m.group(0)
+        # ⚠️ IL TETTO STA SUL RISULTATO, non sul tipo. Con l'aritmetica esatta
+        # `10^9999` si espanderebbe DAVVERO, in diecimila cifre che finirebbero
+        # nel testo dato al confronto. Prima non succedeva per un motivo
+        # accidentale (il float andava in overflow) e il commento di questo
+        # modulo lo raccontava al contrario — «un esponente di 4: 10^9999» —
+        # mentre `1,5 x 10^9999` non e' mai stato espanso. Ora il limite e'
+        # esplicito, e oltre il limite il ripiego resta il testo INTATTO.
+        scritto = format(valore, "f")
+        if len(scritto.lstrip("-").replace(".", "")) > _CIFRE_MASSIME:
+            return m.group(0)
+        # `%g` scriverebbe 1500 come `1500` ma 1e+20 come `1e+20`,
+        # reintroducendo la notazione che stiamo togliendo; `format(…, "f")` no.
+        if "." in scritto:
+            scritto = scritto.rstrip("0").rstrip(".")
+        return scritto or "0"
+
+    return _SCIENTIFICA_RE.sub(_sost, testo)
+
+
+#: Le estensioni che fanno di un token un NOME DI FILE. Sta qui e in nessun
+#: altro posto: una lista scritta due volte diverge, e su questo prodotto e' gia'
+#: successo tre volte in due giorni con una soglia. Il banco la LEGGE da qui
+#: invece di ricopiarla, e prova ogni voce.
+ESTENSIONI_DI_FILE = frozenset({
+    "md", "py", "txt", "json", "yml", "yaml", "toml", "db", "log", "csv",
+    "jsonl",
+})
+
+#: `00-ESAME.md` · `08-i-656-mb-le-quattro-strade.md` · `docs/stato-reale/77-x.md`.
+#: Il token INTERO, non la sua testa: in «08-i-656-mb» il `656` sta nel titolo
+#: quanto lo `08`, e con l'unita' attaccata verrebbe letto come una grandezza.
+#: ⚠️ NIENTE REGEX COSTRUITA, e la ragione e' un carattere INVISIBILE: la prima
+#: versione chiudeva il pattern con un `\b` dentro una stringa non raw, e quel
+#: `\b` e' diventato un BACKSPACE (`\x08`) — la regex cercava un carattere di
+#: controllo e non matchava mai. `print` del pattern non lo mostrava, `repr` si'.
+#: Il riconoscimento e' per TOKEN: nessun backtracking e nessun ReDoS (questo
+#: modulo ne ha gia' pagato uno il 20/09), e la lista resta in un posto solo.
+def _e_un_nome_di_file(token: str) -> bool:
+    """`00-ESAME.md` si', `README.md` no (niente da escludere), `22` no."""
+    if "." not in token or not any(c.isdigit() for c in token):
+        return False
+    coda = token.rsplit(".", 1)[-1].strip(".,;:!?)\"'").lower()
+    return coda in ESTENSIONI_DI_FILE
+
+
+def _senza_i_nomi_di_file(testo: str) -> str:
+    """Il testo con i nomi di file sostituiti da un segnaposto.
+
+    ⚠️ IL PERIMETRO, e la ragione per cui la cura sta QUI e non in
+    `extract_quantities`: quel parser lo usano NOVE moduli, e insegnargli
+    (misurato il 2026-09-22 con gli import, due forme: nove importano
+    `extract_quantities` — anti_confab_gate, corroboration,
+    evidence_requirement, fact_priority, facts_conflict, soggetto_valore,
+    validate_claim, questo modulo, vicinato_del_valore — e undici importano
+    qualcosa da `quantity_match`. Il «sei» scritto qui prima non era piu' vero,
+    e un numero in un commento non si aggiorna da solo: si conta.)
+    i nomi di file propagherebbe la conversione a tutti in silenzio — la stessa
+    ragione gia' scritta sopra per la notazione scientifica. Qui si toglie una
+    LETTURA al confronto claim-fonte, non una capacita' al parser, e il banco ha
+    una cella che diventa rossa il giorno in cui questa cura si sposta di modulo.
+
+    IL DIFETTO, misurato sullo store il 21/09: quattro fatti VERI col giudice fra
+    99,69 e 99,98 trattenuti perche' il numero del nome di un DOCUMENTO non sta
+    nella fonte — `03-cose-spente.md` accusava `03`, `00-ESAME.md` accusava `00`.
+    La provenienza e' provata togliendo il nome dal claim: l'accusa sparisce.
+    Raggio sul corpus (18 285 fatti): 134 letture cambiano, 0,73%, di cui 10 su
+    fatti trattenuti. Una versione piu' larga — «un token con una barra e una
+    cifra» — ne cambiava 4845 perche' prendeva `4/5` e `F#8/F#9`: percio'
+    l'esclusione e' legata alla SOLA estensione nota.
+    """
+    if not testo or "." not in testo:
+        return testo
+    return " ".join("<FILE>" if _e_un_nome_di_file(t) else t
+                    for t in testo.split())
+
+
+def _radici_dei_nomi_di_file(testo: str) -> frozenset[str]:
+    """Le radici dei nomi di file del testo: da `00-ESAME.md` esce `00-esame`.
+
+    Serve per la NORMALIZZAZIONE fra i due testi: chi cita un documento non
+    scrive sempre l'estensione, e `00-ESAME` e `00-ESAME.md` sono lo stesso
+    nome. Confrontate a minuscole perche' la differenza di maiuscole in un
+    titolo non e' un'affermazione su un numero.
+    """
+    fuori = set()
+    for tok in (testo or "").split():
+        pulito = tok.strip(".,;:!?)(\"'")
+        if not _e_un_nome_di_file(pulito):
+            continue
+        radice = pulito.rsplit(".", 1)[0]
+        if not radice:
+            continue
+        fuori.add(radice.lower())
+        # ⚠️ ANCHE IL SOLO NOME, senza la cartella: la fonte scrive
+        # `docs/stato-reale/00-ESAME.md` e il claim scrive `00-ESAME`. Senza
+        # questa riga la normalizzazione riconosceva solo i nomi citati senza
+        # percorso, ed erano DUE CELLE su cinque del banco di questa richiesta —
+        # la mia prima versione era piu' STRETTA del difetto, per una volta, e
+        # se ne e' accorto il presidio scritto da chi ha trovato il rovescio.
+        base = radice.replace("\\", "/").rsplit("/", 1)[-1]
+        if base:
+            fuori.add(base.lower())
+    return frozenset(fuori)
+
+
+def _senza_i_nomi_normalizzati(testo: str, radici_dell_altro: frozenset[str]) -> str:
+    """Il testo con i nomi di file tolti, CONTANDO come nome anche un token che
+    coincide con la radice di un nome di file dell'ALTRO testo.
+
+    ⚖️ PERCHE' NORMALIZZARE E NON CANCELLARE DALLA FONTE. La prima versione di
+    questa cura toglieva i nomi di file da entrambi i testi, e quella simmetria
+    ha aperto un difetto uguale e contrario: `00-ESAME` nel claim contro
+    `00-ESAME.md` nella fonte accusava `00`, perche' dalla fonte il nome era
+    stato cancellato e non poteva piu' assolvere nessuno. Misurato sulle coppie
+    vere dello store: questa normalizzazione cambia 3 letture su 8876, tutte e
+    tre accuse in meno, zero accuse nuove.
+
+    ⚠️ E IL COSTO, misurato e non teorico: la strada scartata (smettere di
+    pulire la fonte) cambiava QUATTRO letture, non tre. La quarta e' il fatto
+    `2bf35b09d120`, dove il claim dice «estrae i numeri 07 e 13» e la fonte
+    porta quei numeri solo dentro `..._2026-07-13.json`: li' l'assoluzione era
+    giusta e questa cura non la da'. Il caso gemello — claim «il capannone
+    misura 400 metri», fonte «vedi 400-piani.md» — ha la STESSA forma e il
+    giudizio opposto, e nessuna regola sui token puo' distinguerli: per farlo
+    servirebbe sapere se il claim parla del NOME o del MONDO. Si tiene l'accusa
+    perche' un'accusa sbagliata si legge nella ricevuta, un perdono sbagliato
+    no.
+    La strada scartata era togliere la pulizia dalla FONTE. Lo avrebbe curato,
+    e avrebbe aperto il suo rovescio: un valore che la fonte porta SOLO dentro
+    un nome di file (claim «il capannone misura 400 metri», fonte «vedi
+    400-piani.md») sarebbe stato perdonato. Oggi quel caso ha raggio zero sul
+    corpus, e un raggio zero non e' una ragione: e' un debito che paga chi
+    arriva dopo.
+    Quindi non si cancella niente in piu' e non si smette di cancellare: si
+    RICONOSCE che le due grafie dello stesso nome sono lo stesso nome. La fonte
+    continua a non assolvere un numero che sta solo in un titolo, e il claim che
+    nomina un documento senza estensione non viene piu' accusato del numero di
+    quel documento.
+    """
+    if not testo:
+        return testo
+    if "." not in testo and not radici_dell_altro:
+        return testo
+    fuori = []
+    for tok in testo.split():
+        pulito = tok.strip(".,;:!?)(\"'")
+        if _e_un_nome_di_file(pulito) or pulito.lower() in radici_dell_altro:
+            fuori.append("<FILE>")
+        else:
+            fuori.append(tok)
+    return " ".join(fuori)
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -255,6 +476,38 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     """
     if not proposition or not source:
         return []
+    # `00-ESAME.md` NON afferma che qualcosa vale zero: il numero e' nel TITOLO.
+    # Si toglie da entrambi i testi, perche' un nome di file nella FONTE non
+    # deve nemmeno perdonare un valore che il claim afferma davvero.
+    _radici_claim = _radici_dei_nomi_di_file(proposition)
+    _radici_fonte = _radici_dei_nomi_di_file(source)
+    proposition = _senza_i_nomi_normalizzati(proposition, _radici_fonte)
+    source = _senza_i_nomi_normalizzati(source, _radici_claim)
+    # `1,5 x 10^3` E `1500` SONO LO STESSO NUMERO, e il layer non lo sapeva.
+    # Misurato il 02/09 sul banco T5.1: sulla notazione scientifica il gate
+    # fermava 6 VERI su 6, e in TRE casi a fermarli era questo layer DA SOLO
+    # mentre il moat li approvava (`withheld_despite_judge`)::
+    #
+    #     caso 8   grounding 89,91   layers ['L4.1']
+    #     caso 9   grounding 99,37   layers ['L4.1']
+    #     caso 11  grounding 98,45   layers ['L4.1']
+    #
+    # perche' `_QUANT_RE` legge `1,5 x 10^3` come TRE numeri separati — 1.5, 10
+    # e 3 — e nessuno dei tre sta nella fonte che dice `1500`.
+    #
+    # ⚠️ E IL DIFETTO NON ERA SOLO SUI VERI: prima di questa riga il claim FALSO
+    # `2,5 x 10^3` produceva gli STESSI assenti del vero (`['2.5','3','10']`
+    # contro `['1.5','3','10']`) ⇒ su questa classe il layer non distingueva
+    # affatto le due popolazioni. Espandere la notazione non toglie un
+    # controllo: gliene da' uno che non aveva.
+    #
+    # ⚖️ E STA QUI, NON IN `extract_quantities`, per la stessa ragione gia'
+    # scritta piu' sotto per «nessun X vale 0»: insegnare la notazione al
+    # parser propagherebbe la conversione ai nove moduli che lo usano,
+    # mentre qui l'equivalenza vive SOLO nel confronto claim-fonte e non entra
+    # nel corpus.
+    proposition = _espandi_notazione_scientifica(proposition)
+    source = _espandi_notazione_scientifica(source)
     nel_claim = extract_quantities(proposition)
     if not nel_claim:
         return []
@@ -290,7 +543,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     # misurata. Insegnare al parser che «nessun X» vale 0 creerebbe quantità
     # dove il testo non ne misura nessuna — nel corpus reale «zero costo»,
     # «zero MCP», «Zero API» sono frequentissimi — e quelle quantità fantasma
-    # finirebbero nei sei moduli del gate che leggono `extract_quantities`,
+    # finirebbero nei nove moduli che leggono `extract_quantities`,
     # alimentando i rilevatori di conflitto. Qui invece l'equivalenza vive solo
     # nel confronto fra claim e fonte: non entra nel corpus e non crea nulla.
     #

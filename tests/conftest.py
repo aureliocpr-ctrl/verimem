@@ -13,6 +13,7 @@ _os.environ.setdefault("HIPPO_EMBEDDING_DIM", "384")
 
 import hashlib
 import re
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -578,6 +579,47 @@ _CE_MOAT_TESTS = frozenset({
 })
 
 
+#: L'elenco della suite di accettazione: un file di test per riga, commenti con
+#: `#`. Sta in un file e non in un marcatore dentro i test perche' il criterio
+#: e' una MISURA (quali file esercitano una porta sul nucleo) e una misura si
+#: rifa': cambiarla deve costare una riga qui, non un passaggio su 85 file.
+_ELENCO_ACCETTAZIONE = Path(__file__).parent / "accettazione.txt"
+
+
+def _rel_da_tests(percorso) -> str:
+    """Il percorso del file RELATIVO a `tests/`, con le barre in avanti.
+
+    ⚠️ Non il nome: `tests/test_cli.py` e `tests/swarm/test_cli.py` esistono
+    tutti e due, e confrontare il BASENAME marcava anche il secondo. Misurato:
+    con il basename la raccolta dava 656 item invece dei 651 dei file elencati
+    — cinque test entravano nella suite di accettazione da cartelle che
+    l'elenco non nomina. E' la stessa forma di difetto che questo elenco esiste
+    per rendere visibile: una FORMA (il nome) scambiata per l'OGGETTO (il file).
+    """
+    try:
+        return Path(str(percorso)).resolve().relative_to(
+            Path(__file__).parent.resolve()).as_posix()
+    except (ValueError, OSError):
+        return Path(str(percorso)).name
+
+
+def _file_di_accettazione() -> set[str]:
+    """I nomi dei file elencati. Elenco assente -> insieme VUOTO, mai «tutti».
+
+    Il verso conta: se il file sparisce, `-m accettazione` raccoglie ZERO e chi
+    lo esegue se ne accorge subito. Il contrario — un marcatore che in assenza
+    di elenco prende tutto — darebbe una suite di 13265 test che sembra piu'
+    ricca e non e' quella che si sta promettendo.
+    """
+    if not _ELENCO_ACCETTAZIONE.exists():
+        return set()
+    return {
+        riga.strip()
+        for riga in _ELENCO_ACCETTAZIONE.read_text(encoding="utf-8").splitlines()
+        if riga.strip() and not riga.lstrip().startswith("#")
+    }
+
+
 def pytest_collection_modifyitems(config, items):
     """Skip the CE-moat tests when the local CE gate model isn't cached, e
     tienili sullo STESSO worker quando la suite gira in parallelo.
@@ -601,7 +643,51 @@ def pytest_collection_modifyitems(config, items):
     skip_ce = pytest.mark.skip(
         reason="local CE gate model not cached (CI warms with --no-gate)")
     gruppo_ce = pytest.mark.xdist_group("ce_moat")
+    attesi = _file_di_accettazione()
+    visti: set[str] = set()
+    marchio_acc = pytest.mark.accettazione
     for item in items:
         nid = item.nodeid.replace("\\", "/")
         if any(nid.endswith(suffix) for suffix in _CE_MOAT_TESTS):
             item.add_marker(gruppo_ce if ce_pronto else skip_ce)
+        nome = _rel_da_tests(getattr(item, "fspath", ""))
+        if nome in attesi:
+            visti.add(nome)
+            item.add_marker(marchio_acc)
+
+    # ── LA GUARDIA DELL'ELENCO ────────────────────────────────────────────
+    # Un elenco generato da una misura punta a file che domani possono essere
+    # rinominati o tolti: se nessuno se ne accorge, la suite di accettazione si
+    # svuota e resta VERDE — un sensore scollegato, e proprio su cio' che deve
+    # dire se il prodotto funziona. Qui una riga che non corrisponde a nessun
+    # file raccolto fa fallire la RACCOLTA, col nome di chi manca.
+    #
+    # ⚠️ Vale solo sulla raccolta INTERA. Con `pytest tests/test_x.py` ne
+    # mancherebbero 84 su 85 per costruzione, e il rosso sarebbe una bugia:
+    # percio' si guarda cosa e' stato chiesto sulla riga di comando.
+    if attesi:
+        chiesto = {Path(a.split("::")[0]).as_posix().rstrip("/")
+                   for a in (config.args or [])}
+        raccolta_intera = not chiesto or chiesto <= {"tests", ".", ""}
+        mancanti = sorted(attesi - visti)
+        if raccolta_intera and mancanti:
+            messaggio = (
+                f"tests/accettazione.txt elenca {len(mancanti)} file che la "
+                f"raccolta non ha prodotto: {', '.join(mancanti)}. "
+                "Sono stati rinominati o tolti? Aggiorna l'elenco nello stesso "
+                "commit: una suite di accettazione che si svuota resta verde, "
+                "ed e' il modo piu' silenzioso di non accorgersene."
+            )
+            # Il testo si stampa PRIMA di sollevare, su stderr e su righe sue.
+            # Rilievo del pari (2026-09-16): sollevando e basta, pytest lo
+            # appiccica in coda al riepilogo dei warning — riga 15360 su 15450,
+            # attaccata a un'altra riga. Un avviso che nessuno vede e' un
+            # avviso che non c'e', ed e' la classe di difetto che questa suite
+            # esiste per rendere visibile.
+            print(
+                "\n" + "=" * 78
+                + "\nSUITE DI ACCETTAZIONE: L'ELENCO NON CORRISPONDE\n"
+                + "=" * 78 + f"\n{messaggio}\n" + "=" * 78 + "\n",
+                file=sys.stderr, flush=True,
+            )
+            raise pytest.UsageError(messaggio)

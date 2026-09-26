@@ -42,11 +42,84 @@ prima, quindi un rallentamento vero su ubuntu si scopre in 30 minuti anziche' 45
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
 
 CI = Path(__file__).resolve().parents[1] / ".github" / "workflows" / "ci.yml"
+
+
+def _ci_parsato() -> dict:
+    import yaml
+    return yaml.safe_load(CI.read_text(encoding="utf-8"))
+
+
+def _job_che_calcola_la_matrice(ci: dict) -> dict | None:
+    """Il job da cui `test` prende la matrice, letto dal `needs.<job>.outputs`
+    che l'espressione nomina — non da un nome scritto qui: se il job venisse
+    rinominato, un nome fisso farebbe tacere il presidio."""
+    matrix = ci.get("jobs", {}).get("test", {}).get("strategy", {}).get("matrix")
+    if not isinstance(matrix, str):
+        return None
+    m = re.search(r"needs\.([A-Za-z0-9_-]+)\.outputs\.([A-Za-z0-9_-]+)", matrix)
+    if not m:
+        return None
+    return ci.get("jobs", {}).get(m.group(1))
+
+
+def _matrici_fra_cui_si_sceglie(ci: dict) -> dict[str, dict]:
+    """Le matrici che il workflow puo' scegliere, per nome.
+
+    ⚠️ 12/09 — QUESTA FUNZIONE ESISTE PERCHE' L'OGGETTO SI E' SPOSTATO. La
+    matrice stava tutta in `jobs.test.strategy.matrix`; da quando la calcola un
+    job, quel campo e' `${{ fromJSON(needs.<job>.outputs.<out>) }}` e le
+    matrici vere sono le righe `<out>={...}` dentro lo script di quel job.
+
+    Sostiene le tre forme viste finora — statica, espressione in linea,
+    calcolata da un job — e se non ne riconosce nessuna torna **vuoto**: chi
+    chiama pretende che il risultato non sia vuoto, cosi' una quarta forma
+    ferma il banco invece di passare in silenzio.
+    """
+    import json
+
+    jobs = ci.get("jobs", {})
+    matrix = jobs.get("test", {}).get("strategy", {}).get("matrix")
+
+    if isinstance(matrix, dict):
+        return {"statica": matrix}
+
+    if not isinstance(matrix, str):
+        return {}
+
+    job = _job_che_calcola_la_matrice(ci)
+    testo = matrix
+    if job is not None:
+        testo = "\n".join(str(p.get("run", "")) for p in job.get("steps", []))
+
+    fuori: dict[str, dict] = {}
+    nome = None
+    for riga in testo.splitlines():
+        n = re.search(r"nome=([A-Za-z0-9_-]+)", riga)
+        if n:
+            nome = n.group(1)
+        for grezzo in re.findall(r"(\{.*\})", riga):
+            for taglio in range(len(grezzo), 1, -1):
+                try:
+                    d = json.loads(grezzo[:taglio])
+                except ValueError:
+                    continue
+                if isinstance(d, dict) and ("os" in d or "include" in d):
+                    fuori[nome or f"ramo-{len(fuori) + 1}"] = d
+                break
+    return fuori
+
+
+def _piattaforme_di(matrice: dict) -> set[str]:
+    dentro = {str(v.get("os", "")) for v in matrice.get("include", []) if isinstance(v, dict)}
+    campo = matrice.get("os", [])
+    return dentro | {str(x) for x in (campo if isinstance(campo, list) else [campo])}
+
 
 
 @pytest.fixture
@@ -199,43 +272,90 @@ class TestIlTettoDistingueLeGambe:
             f"che non esiste, con un errore che non nomina la causa. "
             f"if = {cond!r}")
 
-    def test_nessuna_PIATTAFORMA_sparisce_dalla_matrice(self, job_test):
-        """⚠️ IL PRESIDIO CHE SERVE PERCHE' LA RIGA SOPRA E' UN'ESPRESSIONE.
+    def test_nessuna_PIATTAFORMA_sparisce_dalla_matrice(self):
+        """⚠️ IL PRESIDIO CHE SERVE PERCHE' LA MATRICE NON E' PIU' NEL FILE.
 
-        Dal 15/08 `include` non e' piu' una lista ma un'espressione di Actions:
-        windows entra solo su `main` e sui PR, perche' occupa un posto per
-        un'ora e blocca la coda ubuntu (misurato: ubuntu 4 in esecuzione contro
-        24 in coda, windows 6 contro 1).
+        Windows e macos non possono sparire in silenzio: windows prova la
+        portabilita' e occupa un posto per un'ora (misurato: ubuntu 4 in
+        esecuzione contro 24 in coda, windows 6 contro 1); macos costa 22
+        minuti, un quarto di windows, e per questo gira su ogni push.
 
-        🔑 Quell'espressione la valuta il runner, non `yaml`: **in locale non e'
-        falsificabile**, e un refuso che la svuota non produce nessun errore —
-        produce una CI che gira su meno piattaforme e resta verde. Un test che
-        legge il tetto o le chiavi di cache non se ne accorge: guardano altro.
-        ⇒ Qui si pretende che l'espressione **nomini entrambe le piattaforme e
-        abbia entrambi i rami**. E' un controllo sul TESTO, ed e' legittimo
-        proprio perche' l'oggetto misurato e' il testo: la semantica sta sul
-        runner e da qui non si raggiunge.
+        🔑 Ne' l'espressione ne' lo script li valuta `yaml`: li valuta il
+        runner. In locale la semantica non e' raggiungibile, e un refuso che
+        svuota un ramo non produce nessun errore — produce una CI che gira su
+        meno piattaforme E RESTA VERDE. Qui si pretende che **ogni ramo** fra
+        cui il workflow puo' scegliere nomini tutt'e due le piattaforme.
+
+        🔴 12/09 — QUESTO TEST E' STATO RISCRITTO PERCHE' L'OGGETTO SI E'
+        SPOSTATO, non perche' la proprieta' sia cambiata. Da quando la matrice
+        e' calcolata da un job, `jobs.test.strategy.matrix` e' una stringa: la
+        versione vecchia moriva con `AttributeError: 'str' object has no
+        attribute 'get'`, che dice «il banco e' rotto», non «una piattaforma e'
+        sparita». Un presidio che non sa piu' dove guardare si porta sulla
+        superficie nuova; rilassarlo sarebbe stato scambiare un banco cieco per
+        un verde.
         """
-        inc = job_test["strategy"]["matrix"].get("include")
-        if isinstance(inc, list):        # forma statica: nulla da presidiare
-            piattaforme = {str(v.get("os", "")) for v in inc}
-            assert "macos-latest" in piattaforme, piattaforme
-            return
-        testo = str(inc)
-        assert "windows-latest" in testo, (
-            f"la matrice non nomina piu' windows: se e' stata tolta di "
-            f"proposito questo test va riscritto, ma se e' un refuso "
-            f"nell'espressione la CI smette di provare windows RESTANDO VERDE. "
-            f"include = {testo[:160]}")
-        assert testo.count("macos-latest") >= 2, (
-            f"macos deve comparire in ENTRAMBI i rami dell'espressione — gira "
-            f"su ogni push perche' costa 22 minuti, un quarto di windows. "
-            f"Comparendo una volta sola sparirebbe da meta' dei run. "
-            f"include = {testo[:160]}")
-        assert "refs/heads/main" in testo and "pull_request" in testo, (
-            f"la condizione non nomina piu' main o i pull request: windows "
-            f"girerebbe sempre (e la coda torna quella di oggi) oppure mai "
-            f"(e la portabilita' non e' piu' provata). include = {testo[:160]}")
+        matrici = _matrici_fra_cui_si_sceglie(_ci_parsato())
+        assert matrici, (
+            "non ho riconosciuto nessuna matrice: il workflow ha una QUARTA "
+            "forma e questo banco misurerebbe il vuoto. Aggiungila a "
+            "_matrici_fra_cui_si_sceglie invece di togliere l'asserzione.")
+        for nome, matrice in sorted(matrici.items()):
+            piattaforme = _piattaforme_di(matrice)
+            assert "windows-latest" in piattaforme, (
+                f"il ramo «{nome}» non nomina piu' windows: se e' stato tolto "
+                f"di proposito questo test va riscritto, ma se e' un refuso la "
+                f"CI smette di provare windows RESTANDO VERDE. "
+                f"piattaforme = {sorted(piattaforme)}")
+            assert "macos-latest" in piattaforme, (
+                f"il ramo «{nome}» non nomina piu' macos, che gira su ogni push "
+                f"perche' costa 22 minuti. Mancando da un ramo sparirebbe da "
+                f"tutti i run che scelgono quel ramo. "
+                f"piattaforme = {sorted(piattaforme)}")
+
+    def test_il_presidio_VEDE_un_ramo_a_cui_manca_una_piattaforma(self):
+        """Il controllo positivo, che deve ACCENDERSI.
+
+        Senza, un lettore che non trovasse mai niente — perche' cerca nel posto
+        sbagliato, come e' appena successo — sarebbe indistinguibile da un
+        workflow sano. E' la forma che questo progetto ha gia' pagato.
+        """
+        malato = {"jobs": {
+            "quale_matrice": {"steps": [{"run": (
+                "if [ \"$EVENTO\" = \"pull_request\" ]; then\n"
+                "  echo 'nome=ridotta' >> \"$GITHUB_OUTPUT\"\n"
+                "  echo 'matrice={\"include\":[{\"os\":\"ubuntu-latest\"},"
+                "{\"os\":\"windows-latest\"}]}' >> \"$GITHUB_OUTPUT\"\n"
+                "else\n"
+                "  echo 'nome=piena' >> \"$GITHUB_OUTPUT\"\n"
+                "  echo 'matrice={\"os\":[\"ubuntu-latest\"],\"include\":["
+                "{\"os\":\"windows-latest\"},{\"os\":\"macos-latest\"}]}' >> \"$GITHUB_OUTPUT\"\n"
+                "fi\n")}]},
+            "test": {"strategy": {"matrix":
+                     "${{ fromJSON(needs.quale_matrice.outputs.matrice) }}"}}}}
+
+        matrici = _matrici_fra_cui_si_sceglie(malato)
+
+        assert set(matrici) == {"ridotta", "piena"}, sorted(matrici)
+        assert "macos-latest" not in _piattaforme_di(matrici["ridotta"]), (
+            "il lettore non ha visto la piattaforma mancante nel ramo ridotto: "
+            "sul file vero direbbe verde qualunque cosa ci sia scritta")
+        assert "macos-latest" in _piattaforme_di(matrici["piena"])
+
+    def test_la_scelta_della_matrice_nomina_ancora_i_PULL_REQUEST(self):
+        """Il ramo corto esiste per le richieste: se la condizione smette di
+        nominarle, o gira sempre corto (e la copertura cala in silenzio) o non
+        gira mai corto (e la coda torna quella di prima). In tutt'e due i casi
+        il cambiamento e' muto, quindi va presidiato il TESTO della condizione.
+        """
+        ci = _ci_parsato()
+        job = _job_che_calcola_la_matrice(ci)
+        if job is None:
+            pytest.skip("matrice non calcolata da un job: niente condizione da leggere")
+        testo = "\n".join(str(p.get("run", "")) for p in job.get("steps", []))
+        assert "pull_request" in testo, (
+            f"la scelta della matrice non nomina piu' i pull request: "
+            f"script = {testo[:200]!r}")
 
     def test_il_lavoro_lento_del_gate_non_e_stato_aggiunto_di_nascosto(self):
         """GUARDIANO PER LA CURA DI UN'ALTRA: togliere `--no-gate` dal warmup

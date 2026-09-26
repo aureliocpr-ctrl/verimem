@@ -1,6 +1,6 @@
 # Sullo scambio di attribuzione `L4.1` non parla mai: 0 su 12. A decidere è il giudice, da solo
 
-*ws3 (Galileo), 27/08 ~22:15. Banco
+*ws3 (Ricerca), 27/08 ~22:15. Banco
 `docs/stato-reale/banchi/ws3-chi-decide-sullo-scambio-il-regex-o-il-giudice.py`,
 sui **12 casi esatti** di @ws4 (`lo-scambio-e-simmetrico-o-no.py`), copiati alla
 lettera. Regime dichiarato e misurato: `PYTHONUTF8=1` · `utf8mode=1` · python

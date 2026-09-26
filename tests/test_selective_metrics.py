@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.selective_metrics import (
+from attic.selective_metrics import (
     aurc,
     e_aurc,
     isotonic_fit,

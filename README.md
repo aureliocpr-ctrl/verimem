@@ -43,7 +43,9 @@ went 9.6 → 35.9 against a cut of 40) and on some phrasings flips the verdict.
 border — on entity substitution ZH and JA hold as well as EN (1–2 in 10), KO 3,
 AR 5, HI 7, and Thai fails outright at 10/10; on the implicit class the shape holds but the
 order does not — there AR is the worst (4 in 5), not HI. Negation alone is
-still unmeasured outside IT/EN; in Thai it fails 6/10. **Figures**: the 8/10–9/10 above is an average over two halves that behave in opposite ways. An added detail that contains a **figure** is caught **0/18** — every case, across EN, ZH, JA, KO, AR and HI — because the check is lexical and looks for the digit in the source, so it has no reason to depend on the script and does not. The same detail **without a figure** slips through **16/18**, and is already 3/3 in English: here there is no gradient to speak of. Read that row as «almost always stopped if there is a number, almost never if there isn't», not as «2 in 10 stopped» (`docs/stato-reale/banchi/ws3-la-seconda-garanzia-fuori-da-it-en.py`; no true claim was wrongly rejected in any script, 0/1 each).
+still unmeasured outside IT/EN; in Thai it fails 6/10. **Figures**: the 8/10–9/10 above is an average over two halves that behave in opposite ways. An added detail that contains a **figure** is caught **18/18** — every case, across EN, ZH, JA, KO, AR and HI — because the check is lexical and looks for the digit in the source, so it has no reason to depend on the script and does not. The same detail **without a figure** slips through **16/18**, and is already 3/3 in English: here there is no gradient to speak of. Read that row as «almost always stopped if there is a number, almost never if there isn't», not as «2 in 10 stopped» (`docs/stato-reale/banchi/ws3-la-seconda-garanzia-fuori-da-it-en.py`; no true claim was wrongly rejected in any script, 0/1 each).
+
+These are not all of them, and this page is not where they live: every limit we have measured — with the number, the command and the date that produced it, including the ones that do not fit here — is in [`docs/LIMITS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/LIMITS.md). Read it before you trust a number above.
 
 [![PyPI](https://img.shields.io/pypi/v/verimem)](https://pypi.org/project/verimem/)
 [![CI](https://github.com/aureliocpr-ctrl/verimem/actions/workflows/ci.yml/badge.svg)](https://github.com/aureliocpr-ctrl/verimem/actions)
@@ -128,10 +130,18 @@ rather than producing a number that looks like this one without it.
   Two known gaps close only with an llm judge: a *plausible added inference the source never states* (e.g. "…which
   reduced latency") scores high and is admitted — and that gap is the one this
   README used to leave without a number while quantifying every smaller one.
-  **Measured 2026-08-25** (`docs/stato-reale/banco-osservatore-il-tasso.py`, 96 cases
-  = 8 source types x 6 cases x 2 languages, CE-only judge): **25 of 48 such
-  unsupported claims were admitted** — IT 54.2%, EN 50.0%, and **8 of the 48 IT/EN pairs — true and false alike
-  get the OPPOSITE verdict in the two languages, in both directions**. Read it as
+  **Re-measured 2026-09-20** on trunk `febd56b3`
+  (`docs/stato-reale/banco-osservatore-il-tasso.py`, 96 cases = 8 source types x
+  6 cases x 2 languages, local CE judge, empty store): **16 of 48 such
+  unsupported claims were admitted** — IT 45.8%, EN 20.8% — and **11 of the 48
+  IT/EN pairs get the OPPOSITE verdict in the two languages, in both
+  directions**. The same bench, run three times, moves in two directions at
+  once: admitted falsehoods **25/48 (25 Aug) → 26/48 (1 Sep) → 16/48 (20 Sep)**,
+  while cross-language disagreement **8 → 9 → 11**. The gate lets fewer
+  omission-shaped falsehoods through than it used to, and agrees with itself
+  across languages **less** than it used to — both numbers come from the same
+  run, and the bench is in the repo, so re-run it on your own tree before
+  trusting either. Read it as
   the bound it is: on omission-shaped falsehoods the CE-only judge is close to a
   coin toss, which is why `Memory(llm=...)` is the configuration to use when the
   workload is *what the source did not say*; and an *entity-substitution*

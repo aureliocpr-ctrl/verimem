@@ -1,21 +1,25 @@
-# Description
+<!-- Tre righe qui. 1: cosa cambia per chi usa il prodotto. 2: come è provato,
+     col comando e il numero. Il perché sta in CONTRIBUTING.md. -->
 
-<!-- one paragraph: what changed and why -->
 
-# Type
 
-- [ ] bugfix
-- [ ] feature
-- [ ] docs
-- [ ] refactor
-- [ ] benchmark / experiment
+<!-- ⚠️ POI APRI UN COMMENTO SU QUESTA RICHIESTA E INCOLLACI LA CHECKLIST. Il
+     controllo cerca QUESTA riga, esattamente così, nei commenti:
 
-# Tests
+### Definition of Done
 
-- [ ] `HIPPO_OFFLINE=1 pytest` passes locally
-- [ ] added tests for new behaviour (or explained why not)
-- [ ] dashboard pages still load and JS console is clean
+     e sotto le caselle (le trovi in CONTRIBUTING.md) PIÙ le due righe che il
+     controllo pretende in fondo a quel commento:
 
-# Notes for reviewers
+Registro: riga <n>
+Decisione: <n>          oppure   Decisione: nessuna, non tocca il nucleo
 
-<!-- anything subtle, gotchas, design tradeoffs -->
+     La prima dice quale riga del registro degli errori questa richiesta
+     impedisce di ripetere, la seconda quale decisione segue. Se nessun commento
+     porta l'intestazione, o la porta senza quelle due righe, la richiesta è
+     rossa; se i commenti non arrivano al controllo, dice «NON MISURATO» invece
+     di tacere.
+
+     Questo modello è CORTO di proposito: titolo e corpo diventano parola per
+     parola il commit che resta nel log pubblico, e le righe che lasci qui le
+     conta il controllo. -->

@@ -72,7 +72,15 @@ def daemon_che_rifiuta(monkeypatch):
 
 def test_controllo_positivo_un_daemon_che_risponde_bene_serve_il_vettore(
         monkeypatch) -> None:
-    """Se cade, il finto daemon non è agganciato e il resto non misura nulla."""
+    """Se cade, il finto daemon non è agganciato e il resto non misura nulla.
+
+    ⚠️ IL VETTORE FINTO HA LA TAGLIA VERA dal 2026-09-13 (T86): prima ne aveva
+    TRE valori, e dal 13/09 il client rifiuta una risposta la cui lunghezza non
+    è quella del modello attivo — un vettore di taglia sbagliata scriveva un
+    fatto che il `recall` non rende mai. Un daemon che «risponde bene» non può
+    quindi rispondere con tre numeri: il doppio è stato reso realistico, non la
+    guardia rilassata.
+    """
     import numpy as np
 
     from verimem import encode_service as svc
@@ -84,8 +92,10 @@ def test_controllo_positivo_un_daemon_che_risponde_bene_serve_il_vettore(
     import socket as _s
     monkeypatch.setattr(_s, "create_connection", lambda *a, **k: _ConnFinta())
     monkeypatch.setattr(svc, "send_msg", lambda *a, **k: None)
-    monkeypatch.setattr(svc, "recv_msg",
-                        lambda *a, **k: {"ok": True, "vec": [0.1, 0.2, 0.3]})
+    monkeypatch.setattr(
+        svc, "recv_msg",
+        lambda *a, **k: {"ok": True,
+                         "vec": [0.1] * E.CONFIG.embedding_dim})
     vec = E._encode_via_service("prova")
     assert vec is not None, "il finto daemon non è agganciato: banco cieco"
     assert isinstance(vec, np.ndarray)

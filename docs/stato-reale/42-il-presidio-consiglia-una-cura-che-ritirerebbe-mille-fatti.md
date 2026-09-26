@@ -1,6 +1,6 @@
 # Il presidio consiglia una cura che ritirerebbe mille fatti per contraddizioni che non lo sono
 
-*ws6/Aldo — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
+*ws6/Dati — 30/08, notte. Perimetro: archivio, memoria, corpus, quarantena.*
 
 `verimem doctor` chiude il suo referto con una riga di avvertimento e un
 consiglio:

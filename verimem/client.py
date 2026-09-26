@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import functools
 import logging
 import re
 import sqlite3
@@ -30,6 +31,7 @@ from typing import Any
 from .anti_confab_gate import _is_advisory_layer, run_validation_gate  # noqa: F401
 from .flow_events import emit_flow as _emit_flow
 from .semantic import Fact, SemanticMemory
+from .supersession_policy import applica_verdetto as _applica_verdetto
 
 _LOG = logging.getLogger(__name__)
 
@@ -443,12 +445,20 @@ class Risultati(list):
         self.nascosti_dalla_freschezza = nascosti_dalla_freschezza
 
 
-def esito_del_moat(gate, warnings, *, source) -> str:
+def esito_del_moat(gate, warnings, *, source, chiesto: bool = True) -> str:
     """Che cosa ha fatto il moat, DERIVATO da cio' che il gate ha gia' detto.
 
     Non duplica la logica del gate: legge i layer che il gate ha emesso. Se un
     giorno cambiano quei nomi, il test dei quattro casi distinti lo prende.
+
+    T204 (23/09): le porte che la chiamano sono DUE, la scrittura e l'ingest,
+    e le stringhe sono un solo insieme. ``chiesto=False`` vuol dire che il
+    giudizio non e' stato chiesto (``ground=False``): il giudice non e' mancato,
+    nessuno l'ha chiamato. Viene PRIMA di tutto il resto, anche della fonte
+    assente, perche' e' la ragione primaria: la scelta di chi scrive.
     """
+    if not chiesto:
+        return "not_run:not_asked"
     _layers = {str(w.get("layer", "")) for w in warnings}
     if not source:
         return "not_run:no_source"
@@ -459,6 +469,52 @@ def esito_del_moat(gate, warnings, *, source) -> str:
     if "L4-grounding" in _layers:
         return "failed"
     return "passed"
+
+
+def significato_del_punteggio(esito: str) -> str:
+    """CHE COSA VUOL DIRE il punteggio, in un posto solo — T115.
+
+    `esito_del_moat` qui sopra dice CHE COSA HA FATTO il moat; questa dice che
+    cosa significa, ed esiste perche' la stessa frase viveva scritta a mano in
+    tre uscite e una delle tre diceva il contrario delle altre due::
+
+        scrittura MCP   judged 98.9 — the source SCORES as supporting this
+                        fact: that is the judge's score, not a check that the
+                        fact follows from it
+        scrittura CLI   grounded 98.9 — scored as supported by the source
+                        (the judge's score, not a check that it follows)
+        LETTURA         [verificato: la fonte lo implica, 98.9]
+
+    ⚠️ La terza non e' una variante di forma: promette un'IMPLICAZIONE che
+    nessuno ha verificato, e la promette su un fatto SENZA verdetto — misurato
+    il 18/09 alla porta MCP, `status='model_claim'`, `grounding_score=98.868`.
+    Il commento sopra quella riga (`temporal_context.py:194`) dichiarava gia'
+    l'intenzione giusta — «Si marca SOLO quando il verdetto c'e'» — mentre la
+    condizione guardava `isinstance(_gs, (int, float))`, cioe' il TIPO del
+    campo. `test_la_riga_che_mente.py` aveva curato la scrittura ad agosto: la
+    lettura e' rimasta indietro, che e' la classe «una cura nasce su una
+    superficie e le altre restano indietro».
+
+    🔑 IL SIGNIFICATO DIPENDE SOLO DALL'ESITO — non dal punteggio e non dalla
+    soglia: 99.98 su una fonte che NEGA il fatto e 99.98 su una citazione
+    letterale sono indistinguibili per il giudice (`test_la_riga_che_mente`).
+    Per questo la firma non prende il numero: il numero e' l'ETICHETTA, che
+    ogni porta stampa a modo suo (`judged N`, `grounded N`), e il significato
+    e' questa riga qui, uguale per tutte. Erano proprio le tre etichette
+    diverse a far sembrare «allineate a mano» tre frasi che non lo erano.
+
+    Una lingua sola, inglese, come il resto della riga di `history_line`
+    (`[current, since …]`, `PREVIOUSLY:`, `DISPUTED:`): una seconda lingua e'
+    la giuntura esatta in cui due copie ricominciano a divergere.
+    """
+    if esito == "passed":
+        return ("the source SCORES as supporting this fact: that is the "
+                "judge's score, not a check that the fact follows from it")
+    if esito == "failed":
+        return ("the source does NOT entail this fact: that is why it is "
+                "quarantined")
+    return ("the entailment moat did not run on this write; the score next to "
+            "it is not a verdict on the source")
 
 
 def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
@@ -484,6 +540,30 @@ def chi_ha_quarantinato(moat: str, warnings, *, agito=()) -> str:
     if "store-screen" in set(agito):
         return "store-screen"
     if moat == "failed":
+        # T150 (19/09): «moat» e' la FAMIGLIA, non il decisore. Il layer che ha
+        # trattenuto e' gia' in mano — `L4-grounding`, `L4.1`, `L4-review` — e
+        # rispondere con il nome della famiglia lascia la colonna NON
+        # INCROCIABILE con i layer della ricevuta: chi legge vede
+        # `quarantined_by='moat'` accanto a `['L4-grounding']` e non puo' sapere
+        # se sono la stessa decisione o due. Stessa classe di T77, dove la CLI
+        # scriveva «gate» al posto del layer. La famiglia non si perde: resta nel
+        # campo `moat: failed` della ricevuta, che e' il posto dove e' un FATTO
+        # e non un'etichetta.
+        #
+        # ⛔ SOLO I LAYER `L4`, e non e' timidezza: se il moat ha bocciato, il
+        # decisore e' il moat, e nominare un layer di un'altra famiglia (un `L3`
+        # che coesiste, un `L1` che avvisa) sposterebbe la PRECEDENZA che il
+        # blocco qui sopra dichiara intoccabile. Si da' il nome proprio dentro la
+        # famiglia che ha deciso, non si cambia chi decide.
+        _l4 = [str(_a) for _a in agito if _a and str(_a).startswith("L4")]
+        for _p in _BLOCK_LAYER_PRIORITY:
+            for _a in _l4:
+                if _a.startswith(_p):
+                    return _a
+        if _l4:
+            return _l4[0]
+        # Nessun layer L4 fra quelli che hanno agito: non c'e' un nome proprio da
+        # dare e la famiglia e' meglio del generico. Mai «gate» (T77).
         return "moat"
     # 2026-09-03 (lead): `L1-domain-precision-observe` e `L1-domain-advisory-
     # observe` INIZIANO con «L1» ma sono marcatori di osservazione («surfaced,
@@ -550,6 +630,33 @@ def persisti_chi_ha_quarantinato(db_path, fact_id: str, causa: str) -> bool:
         return False
 
 
+def _con_la_ricevuta(funzione):
+    """Applica la `Ricevuta` del nucleo a QUALUNQUE uscita della scrittura.
+
+    ⚠️ `add()` non ha un punto di uscita, ne ha QUATTRO: il caso normale e i
+    tre scomodi — la scrittura vuota, quella rifiutata, quella instradata alla
+    telemetria. Curare solo il ritorno principale avrebbe lasciato il vecchio
+    schema proprio dove la ricevuta serve di piu': quando qualcosa NON e'
+    andato come il chiamante si aspettava. Qui la traduzione avviene UNA volta,
+    per tutte e quattro.
+
+    L'unione `vecchie | nuove` ha una scadenza (1b.4): su una chiave in
+    collisione vince la nuova, ed e' un dizionario solo. Quattordici file di
+    prodotto leggono ancora `stored` o `warnings`, e toglierle oggi li
+    romperebbe.
+    """
+    @functools.wraps(funzione)
+    def guscio(*args, **kwargs):
+        grezzo = funzione(*args, **kwargs)
+        #: Una guardia e non un `assert`: se un ramo futuro rendesse altro, il
+        #: chiamante riceve cio' che riceveva prima invece di un errore.
+        if not isinstance(grezzo, dict):
+            return grezzo
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        return {**grezzo, **ricevuta_dal_cancello(grezzo).come_dizionario()}
+    return guscio
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -610,6 +717,7 @@ class Memory:
         self.grounding_llm = grounding_llm or llm
 
     # ---- write -------------------------------------------------------------
+    @_con_la_ricevuta
     def add(
         self, content: str | list[dict], *, topic: str = "user",
         source: str | None = None,
@@ -941,7 +1049,8 @@ class Memory:
         # La causa resta ignota, ed è meglio dirlo che spiegarla a caso.
         _emit_write(stored=True, status=str(fact.status),
                     fact_id=str(fact.id), topic=str(topic),
-                    layers=_hit_layers, grounding_score=_gs_evt)
+                    layers=_hit_layers, grounding_score=_gs_evt,
+                    judge_backend=getattr(gate, "judge", None))
         _disposition = ("quarantined" if fact.status == "quarantined"
                         else "admitted")
         # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE, classified by
@@ -970,24 +1079,27 @@ class Memory:
         # for writes that earned admission on their own evidence.
         _graded_admit = any(str(w.get("layer", "")).endswith("-graded")
                             for w in warnings)
+        # ⚠️ Anche qui la prova di raggiungibilita' e' scesa dentro
+        # `applica_verdetto`, e per la stessa ragione: sulla porta gemella il
+        # termine sul campo faceva da interruttore a `get`, e toglierlo ha
+        # fatto chiamare `get` a ogni scrittura ammessa. Il difetto si e'
+        # visto li' perche' quel doppio non ha `get`; qui non si sarebbe
+        # visto, ed e' esattamente il motivo per cui la stessa correzione va
+        # fatta su tutte e due invece che dove il rosso e' uscito.
         if (_disposition == "admitted" and not _graded_admit
-                and not chronicle  # a hidden chronicle must not retire a curated fact
-                and getattr(gate, "supersede_fact_ids", None)
-                and self.semantic.get(fact.id) is not None):
-            for _old_id in gate.supersede_fact_ids:
-                try:
-                    _sup_res = self.semantic.supersede(
-                        _old_id, fact.id,
-                        principal=principal or self._principal,
-                        reason="same-source evolution")
-                    _superseded.append(_old_id)
-                    if _sup_res.get("undo_op_id"):
-                        _superseded_undo[_old_id] = _sup_res["undo_op_id"]
-                except Exception as exc:  # noqa: BLE001 — a supersede failure must not break the write
-                    # surface it: the new fact is admitted but the old was NOT retired —
-                    # the stale-beside-new state the feature exists to prevent (opus critic).
-                    _LOG.warning("same-source supersede of %s failed (new %s admitted, old "
-                                 "NOT retired): %s", _old_id, fact.id, exc)
+                and not chronicle):  # una cronaca nascosta non ritira un fatto curato
+            # …e lo FA la superficie unica, non questo blocco: il ciclo era
+            # scritto qui e, quasi uguale, nel server di strumenti, mentre la
+            # riga di comando non lo aveva affatto. Estratto il 2026-09-12
+            # insieme alla cura di quella terza porta — vedi
+            # `supersession_policy.applica_verdetto` per il perche' le guardie
+            # di ammissione restano di ciascun chiamante.
+            _ritirati, _maniglie = _applica_verdetto(
+                gate, fact, self.semantic,
+                principal=principal or self._principal,
+                ammesso=True, log=_LOG)
+            _superseded.extend(_ritirati)
+            _superseded_undo.update(_maniglie)
         # Review-queue backpressure (P0 ciclo 2, punto 4): a write that JOINS
         # the quarantine/review backlog says how deep that backlog is. Only
         # this write — annotating an admitted one would be noise on a page
@@ -1135,7 +1247,8 @@ class Memory:
         # Si DERIVA da ciò che il gate ha già detto, non si duplica la sua
         # logica: se un giorno cambiano i nomi dei layer, il test dei quattro
         # casi distinti lo prende.
-        _moat = esito_del_moat(gate, warnings, source=source)
+        _moat = esito_del_moat(gate, warnings, source=source,
+                               chiesto=bool(ground))
         # E CHI HA DECISO LA QUARANTENA. Trovato e poi ampliato:
         #     moat passa + parola L1 : moat=passed  gs=96.810  QUARANTINED
         #     moat passa, niente L1  : moat=passed  gs=99.278  QUARANTINED
@@ -1173,10 +1286,39 @@ class Memory:
                 self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
+        from .local_grounding import esecutore_dell_ultimo_giudizio
+        _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
+        #: E PERCHE' ha giudicato lui. `judged_by` da solo e' un'etichetta:
+        #: dice «in-process» sia quando il daemon non e' stato interpellato
+        #: sia quando non ha risposto, e chi legge non sa se la sua
+        #: installazione stia lavorando come crede. La ragione e' registrata
+        #: NELL'ISTANTE della decisione — riletta dopo direbbe altro, perche'
+        #: lo scorer si popola quando il modello finisce di caricare.
+        from .local_grounding import la_delega_era_richiesta as _delega_chiesta
+        from .local_grounding import perche_ha_giudicato as _perche_giudizio
+        _perche_ha_giudicato = _perche_giudizio()
+        _aveva_chiesto_il_daemon = _delega_chiesta()
+        from ._compat import provenienza_data_dir
+        _provenienza_store = provenienza_data_dir()
         _out = {
             "moat": _moat,
             **({"quarantined_by": _out_qb} if _out_qb else {}),
             "stored": True, "id": fact.id, "status": fact.status,
+            #: DOVE ha scritto, e CHI l'ha deciso (T91). Alla porta MCP non
+            #: c'e' una console da leggere: se la ricevuta non lo dice, un
+            #: chiamante che credeva di aver isolato lo store non ha nessun
+            #: modo di accorgersi del contrario. Il 14/09 tre variabili
+            #: puntavano a uno store di prova e la scrittura e' finita in
+            #: quello vero.
+            #: ⚠️ `store_decided_by` c'e' SEMPRE — vale `default` quando nessuna
+            #: variabile e' posta. Prima lo omettevo, col commento «un campo
+            #: assente dice: l'ha deciso il disco»: non lo dice. Un'assenza non
+            #: e' una dichiarazione, e chi legge non distingue «l'ha deciso il
+            #: disco» da «questa porta non lo dichiara».
+            "store": str(self.semantic.db_path),
+            "store_decided_by": _provenienza_store.deciso_da_per(self.semantic.db_path),
+            **({"store_env_ignored": _provenienza_store.ignorati}
+               if _provenienza_store.ignorati else {}),
             #: ⚠️ DICHIARA, NON PROMETTE. `True` quando questa scrittura ha
             #: SOSTITUITO una riga con lo stesso id; `False` quando ne ha
             #: creata una nuova. NON dice che due `add` con lo stesso testo
@@ -1185,9 +1327,35 @@ class Memory:
             #: c'e' e vale `False` si legge diverso da un campo che manca.
             "replaced": bool(_sostituito),
             "grounding_score": gate.grounding_score,
+            #: CHI ha giudicato QUESTA scrittura: "daemon" (il servizio
+            #: condiviso) o "in-process" (il modello caricato qui); assente se
+            #: nessuno ha giudicato. Dal 2026-09-12 il punteggio puo' arrivare
+            #: da due posti con costi, latenze e guasti diversi, e la ricevuta
+            #: li mostrava identici: un numero senza il suo esecutore non si
+            #: puo' nemmeno confrontare con un altro.
+            **({"judged_by": _chi_ha_giudicato} if _chi_ha_giudicato else {}),
             "warnings": warnings, "advice": gate.advice,
             "adjudication": _adj,
         }
+        # LA RAGIONE DEL GIUDIZIO IN CASA, nel formato che il prodotto usa
+        # gia' per `duplicate_check_skipped` e per «encode delegate
+        # unavailable»: layer, reason, advice. Non cambia il verdetto — la
+        # scrittura e' gia' decisa qui sopra — aggiunge solo cio' che la
+        # ricevuta taceva.
+        # ⚖️ SOLO A CHI IL DAEMON LO AVEVA CHIESTO. Un avviso che esce su ogni
+        # scrittura giudicata in casa — il caso normale — non informa nessuno:
+        # riempie la ricevuta e spegne l'attenzione su quelli che contano. Qui
+        # parla quando una promessa e' stata disattesa: delega richiesta, e il
+        # giudizio finito in casa lo stesso.
+        if (_chi_ha_giudicato == "in-process" and _perche_ha_giudicato
+                and _aveva_chiesto_il_daemon):
+            _out["warnings"] = list(_out.get("warnings") or []) + [{
+                "layer": "giudice_in_processo",
+                "reason": ("avevi chiesto il daemon condiviso e ha giudicato "
+                           f"questo processo: {_perche_ha_giudicato}"),
+                "advice": ("se ti aspettavi il daemon condiviso, «verimem "
+                           "doctor» dice se e' raggiungibile"),
+            }]
         # UN LAYER HA TRATTENUTO NONOSTANTE IL GIUDICE. Il campo esisteva
         # gia' — derivato in `flow_events.emit_write` e scritto nel journal —
         # ma non arrivava a chi scrive: la ricevuta diceva `moat: passed`,
@@ -1205,7 +1373,8 @@ class Memory:
         # cambia forma.
         from .retirement_log import judged_true as _judged_true
         if (str(fact.status) in ("quarantined", "rejected")
-                and _judged_true(gate.grounding_score)):
+                and _judged_true(gate.grounding_score,
+                                 backend=getattr(gate, "judge", None))):
             _out["withheld_despite_judge"] = True
         if _superseded:
             _out["superseded"] = _superseded
@@ -4369,8 +4538,15 @@ def _adjudication(gate: Any, *, disposition: str, verified_by: Any,
         "judge": _judge_of_record_dict(judge),
         "score": score,
         "threshold": thr,
+        # Il margine è una proprietà CALCOLATA, e si rende com'è: la ricevuta
+        # porta `score` e `threshold` interi, e chi rifà la sottrazione deve
+        # ritrovare questo campo. Arrotondato a quattro decimali non lo
+        # ritrovava, e il numero tolto non era recuperabile da nessuna parte:
+        # misurato il 2026-09-21, la porta MCP non espone affatto `margine`,
+        # quindi lì il valore pieno moriva qui. Il posto dove si sceglie
+        # quante cifre mostrare è chi STAMPA, non chi calcola.
         "margin": (None if score is None or thr is None
-                   else round(float(score) - float(thr), 4)),
+                   else float(score) - float(thr)),
         "reason": reason,
         "confidence_tier": _confidence_tier(score, judge, thr),
     }

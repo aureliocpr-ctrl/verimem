@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import os
 import sqlite3
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -33,6 +32,7 @@ import numpy as np
 
 from . import embedding as emb
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
+from .ids import id_nuovo
 from .redaction import redact_secrets
 
 #: Modello assunto per le righe pre-stamp (``embedding_model`` NULL = MiniLM
@@ -58,7 +58,7 @@ class Turn:
     ts: float = 0.0
     source_path: str = ""
     source_offset: int = 0
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
+    id: str = field(default_factory=lambda: id_nuovo(16))
     confidence: float = DEFAULT_CONFIDENCE
     source_type: str = SOURCE_TYPE
 

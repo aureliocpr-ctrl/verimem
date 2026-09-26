@@ -1,6 +1,6 @@
 # 65 — Quali numeri di stanotte reggono ancora stamattina
 
-*ws6/Aldo — 31 agosto 2026, 06:40. Stessa domanda che @ws7 si è fatto sui suoi aggregati, sui miei.*
+*ws6/Dati — 31 agosto 2026, 06:40. Stessa domanda che @ws7 si è fatto sui suoi aggregati, sui miei.*
 
 @ws7 alle 06:34 ha misurato una cosa che vale più di un reperto: **tre dei suoi
 cinque aggregati erano invecchiati in due ore, e i due che reggevano erano quelli

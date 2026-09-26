@@ -155,15 +155,18 @@ def promote_chunk_to_fact(
                if claim is not None and layer.startswith("L1")
                and not _is_advisory_layer(layer) and not _l1_advisory]
         # I LAYER NUMERICI DETERMINISTICI CONTANO COME IL GIUDICE. Stesso
-        # insieme di `anti_confab_gate.has_grounding_fail` (L4-grounding,
-        # L4.1); `L4.2`, `L4.1-ambiguo` e `L4.1-a-parole` restano avvisi, come
-        # nel gate. Misurato il 04/09 sullo stesso banco: 40 frasi reali con
+        # insieme di `anti_confab_gate.has_grounding_fail` — e dal 19/09 e'
+        # LETTERALMENTE lo stesso, importato, invece di un elenco gemello
+        # scritto a mano qui: `L4.2`, `L4.1-ambiguo` e `L4.1-a-parole` restano
+        # avvisi, come nel gate. Misurato il 04/09 sullo stesso banco: 40 frasi reali con
         # un numero cambiato di +1 promosse contro il LORO chunk, 25 AMMESSE a
         # 99-100 — e il gate su quelle frasi rispondeva `downgrade` con L4.1
         # («5», «4 fatto», «443, 1500»). Il verdetto c'era e veniva ignorato:
         # un valore che la fonte non contiene usciva con la citazione esatta
         # del documento in `verified_by`.
-        _l4 = [layer for layer in _layers if layer in ("L4-grounding", "L4.1")]
+        from .anti_confab_gate import LAYER_NUMERICI_COME_IL_GIUDICE
+        _l4 = [layer for layer in _layers
+               if layer in LAYER_NUMERICI_COME_IL_GIUDICE]
         _agito = sorted(set(_l1 + _l4))
         _sotto_taglio = (isinstance(punteggio, (int, float))
                          and isinstance(_soglia, (int, float))

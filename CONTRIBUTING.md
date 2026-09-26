@@ -70,11 +70,99 @@ Tests use `subprocess` + `assert` + a `print('PASS')` sentinel. No fixtures need
 
 ## Pull requests
 
-1. Open an issue first for non-trivial changes (sleep-stage logic, schema, fitness).
-2. Branch from `main`, name it `feat/...`, `fix/...`, `docs/...`.
-3. Keep tests green (`HIPPO_OFFLINE=1 pytest`).
-4. Update README/CHANGELOG when relevant.
-5. Squash if the history is noisy; otherwise normal merge is fine.
+**Il titolo e il corpo che scrivi DIVENTANO il commit che resta nel log
+pubblico.** Non è una convenzione di stile: il repository fonde in squash con
+`squash_merge_commit_title: PR_TITLE` e `squash_merge_commit_message: PR_BODY`
+(letto il 13/09/2026 con `gh api repos/<owner>/<repo>`). Da qui vengono tutte
+le regole che seguono.
+
+1. **Il corpo sta in tre righe di prosa.** Riga 1: cosa cambia per chi usa il
+   prodotto — non cosa hai fatto. Riga 2: come è provato, col comando e il
+   numero. Riga 3, facoltativa: dove sta il resto.
+2. **La Definition of Done va nel PRIMO COMMENTO, non nel corpo.** Con le dieci
+   caselle dentro, il commit di fusione arrivava a quindici righe e il controllo
+   sui messaggi lo bocciava: il verde di un cancello garantiva il rosso
+   dell'altro (misurato il 13/09 su tre casi costruiti). Le caselle non
+   raccontano niente a chi legge il registro fra un anno.
+   Questo è il testo da incollare in quel commento, con l'intestazione
+   **esatta** che il controllo cerca:
+
+   > ⚠️ **SE STAI AIUTANDO QUALCUN ALTRO, MANDAGLI IL LINK A QUESTA SEZIONE —
+   > non incollargli il modello in un commento della sua richiesta.** Il 19/09
+   > è successo esattamente questo: un pari ha incollato il modello in sette
+   > richieste per spiegare cosa scrivere, e il controllo l'ha letto come una
+   > dichiarazione. Le sette sono diventate verdi con «commenti dopo il mio: 0»
+   > su tutte e sette — nessuno dei loro autori aveva dichiarato niente.
+   >
+   > Da allora il controllo **ignora ciò che sta dentro un blocco recintato**,
+   > quindi un modello incollato così non fa più passare nessuno. Ma la regola
+   > resta, e non è difensiva: **la checklist la scrive chi ha fatto il lavoro,
+   > perché è una dichiarazione, non un modulo.** Un modello incollato da terzi
+   > toglie all'autore l'unica cosa che quel commento doveva portare.
+
+   ```markdown
+   ### Definition of Done
+
+   - [ ] RED at the port, with the output in the PR
+   - [ ] GREEN
+   - [ ] every verdict computed is also READ — no field produced and dropped
+   - [ ] map entry updated
+   - [ ] README claim linked or removed
+   - [ ] docstring carries the date and the command
+   - [ ] reviewer is not the author, and has run it
+   - [ ] QA sign-off
+   - [ ] fact saved with its source
+   - [ ] CI has run and is green on the tip — zero checks is not green
+   - [ ] no new copies
+   - [ ] if a box above does not hold, this comment says WHICH and why
+
+   Registro: riga <n>
+   Decisione: <n>
+   ```
+
+   **Le due righe in fondo non sono caselle, sono puntatori**, e il controllo le
+   pretende: `Registro: riga <n>` dice quale riga del registro degli errori
+   questa richiesta impedisce di ripetere; `Decisione: <n>` quale decisione
+   segue, oppure `Decisione: nessuna, non tocca il nucleo`. Una casella spuntata
+   dice CHE è finito; questi due dicono PERCHÉ è stato fatto — ed è la parte che
+   fra un anno non si ricostruisce da sola.
+
+   **Tre delle caselle sopra sono cambiate, e ognuna per un difetto misurato**:
+   *«every verdict computed is also read»* perché tre difetti (un verdetto di
+   versionamento calcolato e mai letto dalla riga di comando, uno alla porta
+   degli strumenti, un campo della ricevuta calcolato a sedici righe da dove la
+   ricevuta si compone) **passavano tutte e dieci le caselle precedenti**: i test
+   guardano chi calcola, non chi legge. *«CI has run and is green»* perché
+   quattro richieste aperte avevano **zero** controlli eseguiti e nessuno se
+   n'era accorto: una richiesta senza controlli non è in attesa, è invisibile.
+   *«reviewer … has run it»* perché «non è l'autore» non dice che l'abbia
+   eseguito.
+
+3. **Le misure lunghe, le tabelle e i log non si buttano: si spostano** — in un
+   commento della richiesta, oppure in `docs/stato-reale/`.
+4. **Niente nomi di persona e niente percorsi locali**, né nel titolo né nel
+   corpo né sotto: quel testo è pubblico.
+5. **Il ramo si chiama `<tuo-prefisso>/<cosa>`**, e si parte da `main`.
+6. **Si entra sempre in squash**, con titolo e corpo letti nel comando e
+   `--match-head-commit`: un permesso vale sullo SHA che nomina, e scade appena
+   l'autore spinge.
+
+Il controllo che gira su ogni richiesta è lo stesso che giudica i messaggi:
+
+```
+python scripts/messaggio_pulito.py --corpo <file> --titolo <file> --commenti <file.json>
+python scripts/messaggio_pulito.py --autotest      # il controllo morde ancora?
+```
+
+Se i commenti non gli arrivano, non dice «verde»: dice **NON MISURATO**.
+
+La suite non si esegue più con `HIPPO_OFFLINE=1 pytest`: si esegue a fette, e
+l'esito si legge dal file, non dall'uscita di una pipe — che sostituisce il
+codice di uscita della suite.
+
+```
+python scripts/suite_a_fette.py --fette 3
+```
 
 ## Reporting experiments
 

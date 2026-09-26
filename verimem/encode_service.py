@@ -181,6 +181,17 @@ def _default_rerank_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
+def _puo_ridurre_lo_span(giudice: object | None = None) -> bool:
+    """Ponte verso la superficie unica, con import LOCALE.
+
+    A livello di modulo sarebbe un ciclo: `local_grounding` importa gia'
+    questo modulo (`from . import encode_service as _svc`) per leggere il file
+    di scoperta. L'import locale e' lo stesso verso che quel modulo usa qui.
+    """
+    from .local_grounding import il_giudice_puo_ridurre_lo_span
+    return il_giudice_puo_ridurre_lo_span(giudice)
+
+
 def _default_gate_fn(pairs):
     """Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola.
 
@@ -206,11 +217,30 @@ def _default_gate_fn(pairs):
     """
     from .local_grounding import get_local_judge
 
-    scorer = get_local_judge()._ensure_scorer()
+    giudice = get_local_judge()
+    scorer = giudice._ensure_scorer()
+    # ⛔ T157 — E QUI SI PRENDE ANCHE IL TOKENIZZATORE, altrimenti non arriva
+    # MAI. Lo carica solo chi riduce uno span, e ridurre lo chiede solo un
+    # client a cui questo daemon ha promesso la finestra: se la promessa e'
+    # onesta, la promessa resta `False` per sempre e la delega non si sveglia.
+    # IL COSTO E' MISURATO, e si paga QUI perche' qui `transformers` e' gia'
+    # dentro per via dello scorer:
+    #     scorer (che si paga comunque)     31287 ms   +1213 MB
+    #     tokenizzatore DOPO lo scorer       1272 ms    +132 MB   (+4%, +11%)
+    #     tokenizzatore SENZA lo scorer     28880 ms    +905 MB   <- l'avvio
+    # All'avvio costerebbe l'import di `transformers`, che e' quasi tutto il
+    # conto; dopo lo scorer e' un'aggiunta del quattro per cento.
+    giudice._tokenizzatore()
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
 class EncodeServer:
+    #: ⛔ DI CLASSE, non di istanza: il banco di T73 costruisce con
+    #: `object.__new__(EncodeServer)` e SALTA il costruttore. Un default
+    #: qui esiste per chiunque, ed e' il valore onesto: finche' nessuno
+    #: ha scritto la scoperta, questo daemon non ha dichiarato nulla.
+    _finestra_dichiarata: bool = False
+
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
     def __init__(
@@ -313,6 +343,57 @@ class EncodeServer:
             return {"ok": True,
                     "scores": [float(s) for s in self._rerank_fn(coppie)]}
         if "gate_pairs" in req:
+            # `max_length`: il client ha chiesto di RIDURRE QUI lo span alla
+            # finestra del modello. Lo fa il daemon perche' il tokenizzatore
+            # ce l'ha gia' caricato: farlo nel server costava 1292 MB e 31,7 s
+            # a chi poi delegava comunque il giudizio (misurato 2026-09-12).
+            # Se la riduzione non riesce si giudica lo span intero e il
+            # modello tronca da se'. ⚠️ E NON E' «il comportamento di prima»,
+            # come diceva questa riga: PRIMA la riduzione la faceva il client
+            # prima di mandare, quindi il modello non troncava mai. Se questo
+            # ripiego scatta si torna alla perdita che `_entro_la_finestra`
+            # esiste per rendere leggibile — il 42% dello span buttato DALLA
+            # CODA, dopo che il selettore l'aveva scelto. Percio' il ripiego
+            # resta (mai far cadere un giudizio) ma NON E' PIU' MUTO: lo dice
+            # nella risposta, e chi l'ha chiesto lo sente.
+            _finestra_non_applicata: str | None = None
+            if req.get("max_length"):
+                try:
+                    from .local_grounding import get_local_judge
+                    _giudice = get_local_judge()
+                    # ⚠️ IL BUDGET VIAGGIA DENTRO LA RICHIESTA E SI APPLICA
+                    # SULLA RICHIESTA. Qui gira un thread per connessione: la
+                    # prima versione scriveva il budget su `_giudice.max_length`
+                    # e lo rimetteva a posto nel `finally`, cioe' mutava uno
+                    # stato CONDIVISO. Due richieste con budget diversi si
+                    # sovrascrivevano il valore, e il danno non sarebbe stato un
+                    # errore ma uno span tagliato con la finestra di un altro.
+                    # Nessun attributo del giudice viene toccato.
+                    # ⚠️ QUI NON SI CARICA NIENTE. Si riduce solo se il
+                    # tokenizzatore e' GIA' in memoria: caricarlo adesso
+                    # sposterebbe i ~31 secondi dal client al daemon, ma sulla
+                    # connessione SINCRONA del client, che scade prima — il
+                    # difetto cambierebbe posto invece di sparire, e il
+                    # chiamante vedrebbe un daemon muto. Nel daemon vero il
+                    # tokenizzatore c'e' gia', perche' e' lo stesso processo
+                    # che tiene il modello del giudice.
+                    if not _puo_ridurre_lo_span(_giudice):
+                        raise RuntimeError(
+                            "tokenizzatore non ancora caricato in questo "
+                            "daemon: lo span non viene ridotto")
+                    _finestra = int(req["max_length"])
+                    req = dict(req)
+                    req["gate_pairs"] = [
+                        [_giudice._entro_la_finestra(str(p[0]), _finestra),
+                         str(p[1])]
+                        for p in req["gate_pairs"]]
+                except Exception as exc:  # noqa: BLE001 — mai far cadere un giudizio
+                    # Il fail-open resta, il silenzio no. Un `except` muto qui
+                    # nasconde due cose diverse - una firma sbagliata e un
+                    # tokenizzatore assente - e in tutt'e due i casi il verdetto
+                    # esce da uno span troncato dalla coda senza che nessuno lo
+                    # sappia.
+                    _finestra_non_applicata = f"{type(exc).__name__}: {exc}"
             # Il GIUDICE DEL MOAT, che e' un modello diverso dal reranker. Qui
             # non si guadagna solo latenza: finche' viveva nel processo che
             # scrive, le scritture che arrivavano durante il warm venivano
@@ -322,8 +403,29 @@ class EncodeServer:
             if self._gate_fn is None:
                 return {"ok": False, "error": "this daemon cannot judge"}
             coppie = [(str(p[0]), str(p[1])) for p in req["gate_pairs"]]
-            return {"ok": True,
-                    "scores": [float(s) for s in self._gate_fn(coppie)]}
+            risposta = {"ok": True,
+                        "scores": [float(s) for s in self._gate_fn(coppie)]}
+            # ⛔ T157 — la scoperta si scrive all'AVVIO, ma il tokenizzatore
+            # arriva dopo: senza questa riga il file direbbe «non riduco» per
+            # tutta la vita del processo, anche con il giudice ormai pronto.
+            # ⚠️ SOLO se questo server ha un file di scoperta. Un server
+            # costruito senza (il banco di T73 usa `object.__new__`) non ha
+            # nulla da riscrivere, e la prima stesura di questa riga lo faceva
+            # esplodere in `_write_discovery` con
+            # «no attribute '_discovery_path'». In locale il ramo non si
+            # attivava e la falsificazione era CIECA proprio qui: l'ha visto
+            # la CI, 11 volte su tre sistemi.
+            if (getattr(self, "_discovery_path", None) is not None
+                    and _puo_ridurre_lo_span()
+                    and not self._finestra_dichiarata):
+                self._write_discovery()
+            if _finestra_non_applicata is not None:
+                # Chi ha chiesto la riduzione deve sapere che non c'e' stata:
+                # il punteggio e' valido ma calcolato su uno span troncato
+                # dalla coda, che e' un'altra cosa.
+                risposta["window_applied"] = False
+                risposta["window_error"] = _finestra_non_applicata
+            return risposta
         return {"ok": False,
                 "error": "request must contain 'text', 'texts', "
                          "'rerank_pairs', 'gate_pairs', or 'ping'"}
@@ -352,6 +454,8 @@ class EncodeServer:
                     return
 
     def _write_discovery(self) -> None:
+        self._finestra_dichiarata = (self._gate_fn is not None
+                                     and _puo_ridurre_lo_span())
         self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
         # The scratch name carries the pid: two daemons publishing at the same
         # moment would otherwise write the SAME .json.tmp, and the loser's
@@ -368,6 +472,15 @@ class EncodeServer:
                 "dim": self._model_dim,
                 "started_at": time.time(),
                 "token": self._token,
+                # CHE COSA SO FARE, dichiarato invece che indovinato: questo
+                # daemon riduce lui lo span alla finestra del modello se il
+                # client gli manda `max_length`. Un daemon piu' vecchio non
+                # scrive questa chiave, e il client allora riduce di qua come
+                # ha sempre fatto: il costo resta suo, ma nessuno perde
+                # qualita' senza accorgersene.
+                # Si promette cio' che si sa di poter fare: la stessa
+                # domanda che la riduzione usa per decidere (T157).
+                "applies_window": self._finestra_dichiarata,
             }),
             encoding="utf-8",
         )

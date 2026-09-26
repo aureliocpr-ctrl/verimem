@@ -31,6 +31,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from .ids import id_nuovo
+
 
 def _backup_sqlite(src: Path, dst: Path) -> None:
     """Hot-copia un DB SQLite usando l'API backup (safe con WAL/concurrent reader).
@@ -253,7 +255,6 @@ def propose_dream_tasks(
         - Artifact file dream_tasks.json salvato per audit/replay.
     """
     import json as _json
-    import uuid
 
     from verimem.memory import EpisodicMemory
     from verimem.prompts import DREAMER_NREM_SYSTEM, DREAMER_NREM_USER_TEMPLATE
@@ -300,10 +301,10 @@ def propose_dream_tasks(
     clusters = clusters[:max_clusters]
 
     # 6. Genera dream task per ogni cluster (prompt structured per LLM-host).
-    dream_id = uuid.uuid4().hex[:12]
+    dream_id = id_nuovo(12)
     pending_tasks: list[dict[str, Any]] = []
     for cluster in clusters:
-        task_id = uuid.uuid4().hex[:12]
+        task_id = id_nuovo(12)
         n_success = sum(1 for e in cluster if e.outcome == "success")
         n_failure = sum(1 for e in cluster if e.outcome == "failure")
         body = "\n\n".join(

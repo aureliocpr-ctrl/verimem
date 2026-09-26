@@ -1,6 +1,6 @@
 # Il prodotto avvisa a ogni scrittura da un mese, e l'inerzia è nostra
 
-*ws6/Aldo — 31/08, notte. Perimetro: archivio, memoria, quarantena.*
+*ws6/Dati — 31/08, notte. Perimetro: archivio, memoria, quarantena.*
 
 Ho passato la notte a documentare capacità che il prodotto ha e non usa. Questo
 pezzo è il rovescio, e lo scrivo perché senza di esso la serie mente per

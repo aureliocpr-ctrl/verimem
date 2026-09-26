@@ -122,7 +122,21 @@ def test_quarantined_by_nomina_chi_ha_deciso():
 
 
 def test_CONTROLLO_dove_parla_un_gruppo_solo_l_etichetta_e_giusta():
-    """L'altra popolazione: il campo non e' rotto sempre, e va detto."""
+    """L'altra popolazione: il campo non e' rotto sempre, e va detto.
+
+    ⚠️ RISCRITTO il 19/09 (T150), e il perché conta più della riga. Questo si
+    chiama `test_CONTROLLO_…l_etichetta_e_giusta` ma asseriva
+    `quarantined_by == "moat"`: cioè dichiarava GIUSTO il nome della famiglia.
+    Un controllo che pianta il valore vecchio non protegge la popolazione
+    sana — la congela, e con un nome che dice il contrario di quello che fa.
+    Chi avesse curato il difetto trovandolo rosso avrebbe letto «anche il caso
+    a un gruppo solo ha l'etichetta sbagliata» mentre l'etichetta era appena
+    diventata giusta.
+
+    Adesso controlla l'INVARIANTE invece di un valore: l'etichetta è uno dei
+    layer che hanno agito. Vale prima e dopo qualunque cura, e cade solo se
+    qualcuno rimette un nome di famiglia in quella colonna.
+    """
     fonte = "    40 pezzi     NO\n    12 colli     NO\n    3 bolle      NO"
     mem = Memory(str(Path(tempfile.mkdtemp()) / "qc.db"))
     ric = mem.add(
@@ -136,10 +150,12 @@ def test_CONTROLLO_dove_parla_un_gruppo_solo_l_etichetta_e_giusta():
             f"il caso di controllo non e' piu' trattenuto ({ric.get('status')}): "
             "rimisurare, il confronto fra i due casi non regge"
         )
-    assert str(ric.get("quarantined_by")) == "moat", (
-        f"anche il caso a un gruppo solo ha l'etichetta sbagliata "
-        f"({ric.get('quarantined_by')!r}): il difetto e' piu' esteso di quanto "
-        "questo banco dichiari"
+    etichetta = str(ric.get("quarantined_by"))
+    agito = [str(w.get("layer")) for w in (ric.get("warnings") or [])
+             if not _is_advisory_layer(str(w.get("layer")))]
+    assert etichetta in agito, (
+        f"l'etichetta e' {etichetta!r} ma i layer che hanno AGITO sono "
+        f"{agito}: anche il caso a un gruppo solo deve nominare chi ha deciso"
     )
 
 

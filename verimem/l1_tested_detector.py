@@ -66,8 +66,17 @@ _TESTED_PATTERN = re.compile(
 #: e' un claim, `--verified-by` no.
 _ADIACENTE_DI_CODICE = frozenset("-=:/_")
 #: La parola come valore di un parametro di stato, dove il nome precede.
-_NOME_DI_PARAMETRO = re.compile(r"(?:\w*status|\w*state|--?\w+)\s+$",
-                                re.IGNORECASE)
+#: ⏱️ I TETTI NON SONO ORNAMENTO: `\w*` dentro un'alternativa costringe il
+#: motore a riprovare da ogni posizione, e su 8000 caratteri sono **1287,6 ms**
+#: (CodeQL `py/polynomial-redos`, alert 1265). Con un tetto il lavoro per
+#: posizione e' costante. 32 caratteri per un nome di parametro e 8 spazi dopo
+#: sono generosi: l'equivalenza sui casi d'uso e' una cella del banco.
+#: ⚠️ DAL PERCORSO DEL PRODOTTO QUESTA NON ERA RAGGIUNGIBILE, e si vede due
+#: righe sotto: chi la chiama le passa `testo[inizio-40:inizio]`, quaranta
+#: caratteri. Il tetto qui e' igiene e chiude l'avviso, non toglie un rischio
+#: che l'utente correva — e dirlo e' parte della cura.
+_NOME_DI_PARAMETRO = re.compile(
+    r"(?:\w{0,32}status|\w{0,32}state|--?\w{1,32})\s{1,8}$", re.IGNORECASE)
 
 
 def _e_sintassi(testo: str, inizio: int, fine: int) -> bool:

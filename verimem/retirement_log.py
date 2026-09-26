@@ -80,7 +80,7 @@ _BANDA_CONTESA_ALTA = 70.0
 SERVABLE_WHERE = "superseded_by IS NULL AND status NOT IN ('quarantined')"
 
 
-def judged_true(score: Any) -> bool:
+def judged_true(score: Any, *, backend: str | None = None) -> bool:
     """Whether the moat's verdict on this fact counts as «the source
     supports it». The ONE definition — the live feed asks it about a
     single write, :func:`verdict_mismatches` asks it of the whole corpus,
@@ -89,8 +89,23 @@ def judged_true(score: Any) -> bool:
     verdict is not a verdict."""
     if score is None:
         return False
+    # ⚠️ LA CUT DI AMMISSIONE NON È 90, e 90 non è nemmeno una cut: è un
+    # margine prudente. Il cancello ammette a `resolve_write_threshold_for` del
+    # giudice che ha prodotto il punteggio — 40 col CE locale, 70 con claude —
+    # e fra la cut applicata e il 90 c'è una fascia dove il giudice ha detto
+    # sì, un layer ha trattenuto, e questa funzione rispondeva `False`.
+    # Misurato sul corpus il 20/09, quarantinati: 29 fatti in [70,90), cioè
+    # sopra OGNI cut e sotto questo margine, che nessuna colonna nominava.
+    # `backend` è opzionale di proposito: dove il giudice NON è noto — la vista
+    # sul corpus legge `grounding_score` e non chi l'ha prodotto — chiedere una
+    # cut per-fatto sarebbe inventarla, e il chiamante sceglie il suo margine
+    # dichiarandolo. Senza `backend` il comportamento è quello di prima.
+    taglio = _VERDETTO_VERO
+    if backend:
+        from .grounding_gate import resolve_write_threshold_for
+        taglio = resolve_write_threshold_for(str(backend))
     try:
-        return float(score) >= _VERDETTO_VERO
+        return float(score) >= taglio
     except (TypeError, ValueError):
         return False
 
@@ -305,6 +320,19 @@ def verdict_mismatches(sm, *, limit: int = 50,
     """
     where_t = "AND topic LIKE ?" if topic else ""
     par: list[Any] = [topic + "%"] if topic else []
+    # ⚠️ LA CUT DI QUESTA VISTA NON E' 90, ED E' UNA SCELTA DICHIARATA. Il
+    # giudice per-fatto NON e' nella riga — lo store ha `grounding_score`, non
+    # chi l'ha prodotto — quindi qui non si puo' chiedere la cut del backend
+    # come fanno la ricevuta, il journal e la porta MCP. Si usa la PIU' ALTA
+    # delle due cut applicate (70): sopra 70 il giudice ha detto si' con
+    # QUALUNQUE cut, quindi ogni riga elencata e' certa e il totale resta un
+    # limite inferiore — lo stesso criterio con cui `_VERDETTO_FALSO` usa 40
+    # per la colonna opposta. Misurato sul corpus il 20/09: con 90 restavano
+    # fuori 29 fatti quarantinati in [70,90), sopra ogni cut e sotto il
+    # margine, che nessuna colonna nominava. I 99 di `[40,70)` NON entrano qui:
+    # restano in `contested_band`, che dichiara una cosa diversa (l'esito
+    # dipendeva dal minuto, non dal testo), e fonderle cancellerebbe una
+    # distinzione che questo prodotto ha gia' pagato.
     q_true = f"""
         SELECT id AS fact_id, topic, status, grounding_score, created_at
         FROM facts
@@ -331,7 +359,7 @@ def verdict_mismatches(sm, *, limit: int = 50,
     """
     with sm._connect() as conn:
         veri = [dict(r) for r in conn.execute(
-            q_true, (_VERDETTO_VERO, *par, int(limit)))]
+            q_true, (_BANDA_CONTESA_ALTA, *par, int(limit)))]
         falsi = [dict(r) for r in conn.execute(
             q_false, (_VERDETTO_FALSO, *par, int(limit)))]
         banda = [dict(r) for r in conn.execute(
@@ -339,11 +367,24 @@ def verdict_mismatches(sm, *, limit: int = 50,
     return {
         "measured_at": _istante(),
         "judged_true_but_withheld": veri,
+        #: ⚠️ LA RAGIONE VIAGGIA COL NUMERO, non sotto. La cut di questa
+        #: colonna e' la PIU' ALTA delle due applicate perche' la riga porta il
+        #: punteggio e non chi l'ha prodotto: senza il giudice per-fatto una cut
+        #: piu' bassa elencherebbe righe incerte. Chi legge il conteggio deve
+        #: sapere che e' un MINIMO, o lo legge come un totale.
+        "judged_true_but_withheld_meaning": (
+            f"above {_BANDA_CONTESA_ALTA:.0f} the judge said yes with ANY of "
+            f"the applied cuts ({_VERDETTO_FALSO:.0f} local CE, "
+            f"{_BANDA_CONTESA_ALTA:.0f} claude), so every row listed is "
+            "certain and the count is a LOWER BOUND, not a total. Rows written "
+            "from now on carry `judge_backend` in the journal: with it the cut "
+            "can be resolved per fact, without it this bound applies."),
         "judged_false_but_served": falsi,
         "contested_band": banda,
         "topic": topic,
         "thresholds": (
-            f"judged_true = grounding_score >= {_VERDETTO_VERO:.0f} AND "
+            f"judged_true = grounding_score >= "
+            f"{_BANDA_CONTESA_ALTA:.0f} AND "
             f"quarantined · judged_false = grounding_score < "
             f"{_VERDETTO_FALSO:.0f} AND servable (LOWER BOUND: below "
             f"{_VERDETTO_FALSO:.0f} any cut rejects) · contested_band = "
@@ -550,9 +591,45 @@ def retirement_breakdown(sm, *, limit: int = 10,
             par).fetchone()[0])
         _tot_ritiri = int(conn.execute(
             f"SELECT COUNT(*) FROM facts f WHERE {w}", par).fetchone()[0])
+        # QUANTI GIORNI compone ogni voce, e quanta parte cade nel piu' denso.
+        # Senza questi due numeri una tabella di ritiri mette sulla stessa
+        # colonna una manutenzione conclusa e un tasso in corso: misurato sul
+        # corpus vero il 2026-09-13, 1463 ritiri in 35,9 SECONDI di una notte
+        # di luglio (su fatti scritti in una settimana di maggio) stavano
+        # accanto a 530 distribuiti su 36 giorni, e la somma veniva letta come
+        # «perdita». Il dato c'era gia' — `first_at`/`last_at` si calcolavano
+        # qui sotto — e non arrivava a chi legge.
+        _per_giorno: dict[str, dict[str, int]] = {}
+        for _m, _g, _n in conn.execute(
+                f"""SELECT f.superseded_reason,
+                           date(f.superseded_at, 'unixepoch', 'localtime'),
+                           COUNT(*)
+                    FROM facts f WHERE {w} AND f.superseded_at IS NOT NULL
+                    GROUP BY 1, 2""", par):
+            _per_giorno.setdefault(_m or _SENZA_MOTIVO, {})[_g] = int(_n)
+
+        def _forma(motivo: str, n: int) -> dict[str, Any]:
+            """Tasso o evento, e il denominatore accanto al numero.
+
+            ⚠️ NESSUNA SOGLIA: «evento» vuol dire che i ritiri di quella voce
+            cadono in UN GIORNO SOLO — un criterio che si verifica, non un
+            numero scelto a tavolino in mezzo ai numeri del corpus. Il caso
+            misto (due giorni, quasi tutto in uno) lo racconta
+            ``quota_giorno_max``, che sta accanto e non decide niente.
+            """
+            _gg = _per_giorno.get(motivo, {})
+            _tot_g = len(_gg)
+            return {
+                "giorni": _tot_g,
+                "forma": "evento" if _tot_g == 1 else "tasso",
+                "quota": (n / _tot_ritiri) if _tot_ritiri else 0.0,
+                "quota_giorno_max": (max(_gg.values()) / n) if _gg and n else 0.0,
+            }
+
         motivi = [
-            {"reason": r[0] or _SENZA_MOTIVO, "n": int(r[1]),
-             "first_at": r[2], "last_at": r[3]}
+            {"reason": (r[0] or _SENZA_MOTIVO), "n": int(r[1]),
+             "first_at": r[2], "last_at": r[3],
+             **_forma(r[0] or _SENZA_MOTIVO, int(r[1]))}
             for r in conn.execute(
                 f"""SELECT f.superseded_reason, COUNT(*),
                            MIN(f.superseded_at), MAX(f.superseded_at)

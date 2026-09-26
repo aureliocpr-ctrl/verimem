@@ -38,7 +38,6 @@ import os
 import sqlite3
 import threading
 import time
-import uuid
 from collections import deque
 from collections.abc import Callable, Iterable, Iterator
 from contextlib import contextmanager
@@ -58,6 +57,7 @@ from ._telemetry_prefixes import TELEMETRY_TOPIC_PREFIXES as _TELEMETRY_TOPIC_PR
 from .ann_gate import default_min_n as _ann_default_min_n
 from .config import _LEGACY_EMBEDDING_MODEL, CONFIG
 from .freshness import is_stale
+from .ids import id_nuovo
 from .mutation_audit import TABLE_SQL as _MUTATION_AUDIT_TABLE
 from .mutation_audit import (
     count_conn as _audit_count_conn,
@@ -166,6 +166,30 @@ def _encode_prepared_within_budget(
         # back to keyword, save defers — instead of propagating (no in-process
         # cold-load happened, so nothing to wait on).
         if isinstance(box["err"], embedding.EncodeDelegateUnavailable):
+            # …MA SI CHIEDE ANCHE UN DAEMON NUOVO, come fa il ramo dell'overrun
+            # otto righe piu' su. Senza questa riga lo stato degradato SI
+            # AUTOCONSERVA: ogni scrittura fallisce identica e nessuna chiede
+            # mai il daemon giusto.
+            # Misurato il 2026-09-09 sulla macchina di Aurelio: il servizio di
+            # encoding e' morto ed e' rinato alle 23:02:29 con un modello
+            # diverso da quello dello store (MiniLM-L12-v2/384 contro
+            # e5-base/768, 18.107 fatti sani a 768). `daemon_usable` lo rifiuta
+            # — correttamente — e per 64 MINUTI nessuno ha chiesto il
+            # sostituto: 14 fatti sono entrati con l'embedding differito senza
+            # che chi scriveva lo sapesse. Il lock del singleton NON c'entrava
+            # (`_owner_is_zombie` e' model-aware e risultava rubabile): mancava
+            # solo la richiesta.
+            # Il commento qui sopra — «nothing to wait on» — resta vero
+            # dell'ATTESA, e non e' una ragione per non svegliare il daemon:
+            # sono due cose diverse e il perimetro della frase era piu' largo
+            # del suo contenuto.
+            # Best-effort come il gemello: un errore qui non deve trasformare
+            # un differimento riuscito in una scrittura persa.
+            try:
+                from . import encode_service as _es
+                _es.ensure_running()
+            except Exception:  # noqa: BLE001 — svegliare e' un di piu', mai un obbligo
+                pass
             return None
         raise box["err"]
     return box.get("vec")
@@ -1602,7 +1626,7 @@ def _migrate_v13_to_v14(conn: sqlite3.Connection) -> None:
 
 @dataclass
 class Fact:
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    id: str = field(default_factory=lambda: id_nuovo(12))
     proposition: str = ""
     topic: str = ""
     confidence: float = 0.5
@@ -2602,6 +2626,7 @@ class SemanticMemory:
         db_path: Path | None = None,
         *,
         repo_root: Path | None = None,
+        _migrazione_autorizzata: bool = False,
     ) -> None:
         """Open / create the semantic-memory SQLite DB.
 
@@ -2618,6 +2643,26 @@ class SemanticMemory:
         self.db_path = db_path or CONFIG.semantic_db
         self.repo_root = Path(repo_root).resolve() if repo_root else None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # D-0012: IL BLOCCO STA QUI, PRIMA DELLO SCRIPT, e la posizione è il
+        # punto. Tre righe più sotto lo schema viene eseguito: su uno store
+        # vecchio quello È la migrazione — misurato su copie, un file a v7
+        # diventa v17 alla prima apertura, +21 colonne su `facts` e una tabella
+        # in più, senza avviso e senza ritorno. Un backup aperto per leggerlo
+        # smetteva di essere un backup.
+        #
+        # Non blocca chi crea (`verifica_apribile` lascia passare uno store che
+        # non dichiara nessuna versione) né chi è già allineato: sul campo vero
+        # sono 6 store su 76, e chiuderli fuori sarebbe la cura peggiore del
+        # male. Blocca i 25 più vecchi del codice, che sono backup, snapshot e
+        # archivi — cioè esattamente i file per cui aprire non deve migrare.
+        #
+        # L'unica porta che passa di qui con l'autorizzazione è
+        # `store_migrate.migra_lo_store`, dove la migrazione è stata CHIESTA e
+        # arriva dopo un backup verificato contando le righe.
+        if not _migrazione_autorizzata:
+            from .schema import leggi_stato as _leggi_stato
+            from .schema import verifica_apribile as _verifica_apribile
+            _verifica_apribile(_leggi_stato(self.db_path))
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
             # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,

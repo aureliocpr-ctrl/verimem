@@ -46,6 +46,20 @@ def _radice(
         help="Print the installed version and exit."),
 ) -> None:
     """Verimem CLI."""
+    #: ⚠️ QUI, E NON DENTRO I COMANDI. `--json` sta su sette comandi: curarne
+    #: uno solo sarebbe una copia, e la copia e' il difetto da cui nasce tutta
+    #: la fetta. Questo callback e' l'unico punto per cui ogni comando passa.
+    #: · si guarda `sys.argv` perche' `--json` e' un'opzione dei SOTTOcomandi e
+    #:   qui typer non l'ha ancora parsata;
+    #: · per TOKEN ESATTO, non per sottostringa: `--json-qualcosa` non e'
+    #:   `--json`, e un `in` su una stringa non lo distinguerebbe;
+    #: · PRIMA di qualunque log, perche' `cache_logger_on_first_use` lega il
+    #:   logger alla sua uscita al primo uso e dopo non si sposta piu'.
+    #: Misurato il 19/09: senza, `json.load` muore con «Extra data: line 1
+    #: column 5»; con, stdout e' una riga sola e il giornale sta su stderr.
+    if "--json" in sys.argv[1:]:
+        from .observability import route_logs_to_stderr
+        route_logs_to_stderr()
     if version:
         from . import __version__
         console.print(__version__)
@@ -115,6 +129,15 @@ lab_app = typer.Typer(
     help="Lab live dashboards (multi-agent chat watcher etc.)",
     no_args_is_help=True,
 )
+# D-0012: la via d'uscita del blocco. Aprire uno store vecchio non lo migra più,
+# quindi migrarlo deve essere qualcosa che si PUÒ chiedere: un rifiuto che manda
+# a un comando inesistente è peggio del silenzio, perché il silenzio non promette
+# — e chi va a cercare apre il file a mano, cioè fa la cosa che il blocco impedisce.
+store_app = typer.Typer(
+    help="Operazioni sul file dello store (migrazione, con backup verificato).",
+    no_args_is_help=True,
+)
+app.add_typer(store_app, name="store")
 app.add_typer(skills_app, name="skills")
 app.add_typer(episodes_app, name="episodes")
 app.add_typer(providers_app, name="providers")
@@ -1294,6 +1317,49 @@ def _open_memory(db: str | None = None):
     return open_memory(db) if db else open_memory()
 
 
+def riga_il_giudice_era_daccordo(r: dict) -> str | None:
+    """La riga da dire quando il MOAT ha passato e a fermare e' stato un altro.
+
+    ⚠️ ESISTEVA GIA', SCRITTA A MANO, IN UN SOLO COMANDO. `remember` la stampa
+    dal 2026-08-08; il CHECKPOINT no, e li' il ramo del referto si sceglieva
+    confrontando il punteggio col taglio (`_passa`). Con quella condizione la
+    stessa scrittura riceveva due bugie di segno opposto (T124, misurato il
+    19/09 su una ricevuta costruita):
+
+        col taglio NELLA ricevuta   «grounded 95.5 — the source SCORES as
+                                     supporting this fact» su un QUARANTINATO
+        col taglio ASSENTE          «not grounded 95.5 — the judge found no
+                                     support» — con 95.5, e col moat PASSATO
+
+    La seconda manda a riscrivere la FONTE mentre la cura e' aggiungere una
+    prova a `verified_by`. E' la stessa attribuzione falsa che `mcp_server` si
+    e' curata il 28/08, rimasta su questa porta.
+
+    🔑 DUE MODI DI SAPERE CHE IL GIUDICE ERA D'ACCORDO, e servono entrambi:
+    il punteggio sopra il taglio (quando la ricevuta porta il taglio) **oppure**
+    il campo `moat` che dice `passed` — che e' il verdetto gia' calcolato da
+    `client.esito_del_moat`, e l'unico segnale disponibile quando il taglio non
+    c'e'. Senza il secondo il caso senza taglio resta scoperto: e' esattamente
+    la cella che questa cura deve spegnere.
+
+    Rende `None` quando non si puo' dire: mai una frase inventata.
+    """
+    _gs = r.get("grounding_score")
+    if not isinstance(_gs, (int, float)) or isinstance(_gs, bool):
+        return None
+    _cut = (r.get("adjudication") or {}).get("threshold")
+    _sopra_il_taglio = (isinstance(_cut, (int, float))
+                        and float(_gs) >= float(_cut))
+    if not (_sopra_il_taglio or str(r.get("moat") or "") == "passed"):
+        return None
+    _dove = (f" sul taglio di {float(_cut):.0f}"
+             if isinstance(_cut, (int, float)) else "")
+    return (f"  [green]il giudice era d'accordo[/green] [dim]— "
+            f"{float(_gs):.1f}{_dove}: la fonte SOSTIENE il fatto, e' un "
+            f"controllo di dettaglio ad averlo fermato. Correggi quel "
+            f"dettaglio, non la frase[/dim]")
+
+
 def _dichiara_store(m, *, motivo: str = "") -> None:
     """Stampa QUALE store ha risposto, e quanti fatti contiene.
 
@@ -1351,6 +1417,8 @@ def remember_cmd(
         "The store to write to, when it is not the one this folder resolves "
         "to. Same option as on `recall`: a fact written where you cannot read "
         "it back is worse than one not written.")),
+    json_out: bool = typer.Option(False, "--json", help=(
+        "Print the receipt as one JSON object and nothing else.")),
 ) -> None:
     """Store one fact through the full moat — the 2-second quickstart.
 
@@ -1403,9 +1471,48 @@ def remember_cmd(
     if _vu is not None:
         kw["valid_until"] = _vu
     r = m.add(text, **kw)
+    if json_out:
+        import json as _json
+
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        #: LO STESSO adattatore e LA STESSA unione di `save`: due traduzioni
+        #: per lo stesso oggetto sarebbero due schemi, che e' il difetto da cui
+        #: nasce la fetta. `remember` e' il verbo del FATTO — `save` scrive un
+        #: checkpoint e per quella via lo schermo lessicale non gira — quindi
+        #: e' questa la porta che deve rendere una ricevuta leggibile.
+        print(_json.dumps({**r, **ricevuta_dal_cancello(r).come_dizionario()},
+                          ensure_ascii=False, default=str))
+        raise typer.Exit(0 if r.get("stored") else 1)
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     fid = r.get("id") or "-"
     console.print(f"[green]{disp}[/green] id={fid} topic={topic}")
+    # ⛔ T174 — E PERCHE' E' ENTRATO. Fino al 2026-09-20 questa riga era tutto
+    # cio' che un utente riceveva per un SI': nove parole. Per un NO la stessa
+    # CLI ne stampa ventidue di righe — layer, advice, il suggerimento sul
+    # ruolo. Il prodotto argomentava i suoi no e non i suoi si'.
+    # ⚠️ E ne serviva un'altra, che la misura ha trovato e la richiesta non
+    # nominava: un fatto puo' entrare AMMESSO con `moat: not_run:no_judge`,
+    # cioe' senza che NESSUNO abbia giudicato, e la riga era identica al caso
+    # giudicato 99.87. Due si' diversissimi scritti uguali.
+    # I numeri NON si ricalcolano qui: vengono dallo stesso adattatore che
+    # costruisce `--json`, cosi' le due uscite non possono divergere.
+    if str(disp) == "admitted":
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        _ric = ricevuta_dal_cancello(r).come_dizionario()
+        _p, _s = _ric.get("punteggio"), _ric.get("soglia")
+        if _p is None or _s is None:
+            console.print(
+                f"  [yellow]non giudicato[/yellow] ({_ric.get('moat')}) — "
+                "nessuno ha controllato che il fatto segua dalla sua fonte")
+        else:
+            console.print(
+                f"  giudicato [b]{_p:.2f}[/b]/100 da `{_ric.get('giudice')}`"
+                f" (modello {_ric.get('modello')}), soglia {_s:.0f}"
+                # ⚠️ IL MARGINE SI LEGGE, non si ricalcola: la riga sopra
+                # promette «i numeri NON si ricalcolano qui» e una sottrazione
+                # fatta a mano la smentirebbe — due formule per lo stesso
+                # numero sono due verita' che un giorno divergono.
+                f" — margine +{_ric.get('margine'):.2f}")
     # 2026-08-08 — DIRE QUALE DELLE DUE VOCI HA PARLATO. Il gate ne ha due e
     # chiedono cose diverse: il giudice «questa fonte sostiene il fatto?» e i
     # controlli «ogni cifra del fatto sta nella fonte?». Chi scrive MISURE le
@@ -1438,15 +1545,14 @@ def remember_cmd(
     # chi scrive e' la differenza fra «riformula la frase» e «hai sbagliato UN
     # numero». Il dato c'era gia' nel verdetto: si stampa.
     _ws_ = r.get("warnings") or []
-    _gs_ = r.get("grounding_score")
-    if _ws_ and isinstance(_gs_, (int, float)):
-        _cut_ = (r.get("adjudication") or {}).get("threshold")
-        if isinstance(_cut_, (int, float)) and float(_gs_) >= float(_cut_):
-            console.print(
-                f"  [green]il giudice era d'accordo[/green] [dim]— "
-                f"{float(_gs_):.1f} sul taglio di {float(_cut_):.0f}: la fonte "
-                f"SOSTIENE il fatto, e' un controllo di dettaglio ad averlo "
-                f"fermato. Correggi quel dettaglio, non la frase[/dim]")
+    if _ws_:
+        #: 19/09 (T124): la riga non e' piu' scritta qui. Stava in questo
+        #: comando soltanto, e il CHECKPOINT diceva il contrario sulla stessa
+        #: ricevuta: ora la rende `riga_il_giudice_era_daccordo`, e a chiamarla
+        #: sono tutt'e due.
+        _accordo_ = riga_il_giudice_era_daccordo(r)
+        if _accordo_:
+            console.print(_accordo_)
     if not r.get("stored"):
         console.print(f"[yellow]not stored:[/yellow] {r.get('status')}")
 
@@ -1668,6 +1774,7 @@ def recall_cmd(
     #: misurato in CI, `test_cli_remember_and_recall_use_open_memory`
     #: è caduto per questo. Il percorso si passa solo quando c'è —
     #: chi non usa `--db` continua a vedere la firma di sempre.
+    _pretendi_uno_store_che_esiste(db, "verimem recall")
     m = _open_memory(db) if db else _open_memory()
     #: CHI NOMINA UNO STORE HA DIRITTO DI VEDERE QUALE E' STATO APERTO. Senza
     #: questa riga `--db` curerebbe meta' difetto: il comando leggerebbe il
@@ -1942,7 +2049,12 @@ def correct_cmd(
                       "remoto[/red] — la supersessione e' un'operazione dello "
                       "store, non del client")
         raise typer.Exit(2)
-    vecchio = sm.get(old_id)
+    # T154: l'id che il prodotto STAMPA (`facts list` ne mostra otto caratteri)
+    # deve funzionare nel comando che lo chiede. `_fact_id_resolve` esiste per
+    # questo — «8-char ids are common in output» — risolve il prefisso e si
+    # ferma quando e' ambiguo; due comandi la chiamavano gia', questo no, e
+    # rispondeva «fatto non trovato» su un fatto che c'era.
+    vecchio = _fact_id_resolve(sm, old_id)
     if vecchio is None:
         # Prima di scrivere, non dopo: un `correct` su un id sbagliato che
         # lasciasse nello store un fatto nuovo orfano E nessuna correzione
@@ -1981,7 +2093,47 @@ def correct_cmd(
                       "favore di uno non ammesso li perderebbe entrambi[/dim]")
         raise typer.Exit(1)
 
-    esito = sm.supersede(old_id, nuovo, principal=_principale(), reason=reason)
+    # T154: qui va l'id RISOLTO, non quello che ha scritto l'utente. Risolverlo
+    # solo per la ricerca e poi passare il troncato alla supersessione lascia
+    # `SupersedeError: old_id ... not found` DOPO che il fatto nuovo e' stato
+    # scritto: lo stato peggiore dei due, perche' lo store e' cambiato e il
+    # comando dice di essere fallito. I messaggi qui sotto restano su `old_id`,
+    # che e' quello che l'utente ha digitato e si aspetta di rileggere.
+    # T156: da qui in giu' il fatto NUOVO e' gia' nello store. Se la
+    # supersessione fallisce e si esce cosi', resta dentro un fatto che non
+    # corregge niente — orfano — e l'utente ha letto «fallito»: lo stesso
+    # esito peggiore contro cui avvisa la guardia qui sopra, un passo piu' in
+    # la'. Il prodotto lo sa gia' e lo scrive (`supersession_policy`: «new
+    # admitted, old NOT retired»), ma nessuno agiva su quell'avviso.
+    # Si disfa con `delete_with_undo`, che prende lo snapshot PRIMA di
+    # togliere la riga: il fatto non e' perso, e' ripristinabile. Nessun
+    # meccanismo nuovo. L'atomicita' vera sarebbe una transazione sola sopra
+    # scrittura e supersessione, e oggi non e' praticabile: `store()` scrive
+    # da un worker con la sua connessione, `supersede()` ne apre un'altra.
+    try:
+        esito = sm.supersede(vecchio.id, nuovo, principal=_principale(),
+                             reason=reason)
+    except Exception as errore:  # noqa: BLE001 — qualunque guasto lascia lo store sporco
+        try:
+            disfatto = sm.delete_with_undo(nuovo, principal=_principale())
+        except Exception as secondo:  # noqa: BLE001
+            # Il caso peggiore: due passi falliti. Lo store RESTA sporco, e
+            # l'unica cosa che non puo' mancare e' dire a che punto si e'
+            # arrivati — senza, chi legge non ha modo di rimettere a posto.
+            console.print(
+                f"[red]la correzione e' fallita e il fatto nuovo NON e' stato "
+                f"disfatto[/red]: {nuovo} e' rimasto nello store senza "
+                f"correggere {old_id}\n"
+                f"  passo 1, supersessione : {errore}\n"
+                f"  passo 2, disfacimento  : {secondo}\n"
+                f"  toglilo a mano con: verimem facts forget {nuovo}")
+            raise typer.Exit(2) from errore
+        console.print(
+            f"[red]la correzione e' fallita:[/red] {errore}\n"
+            f"  {old_id} NON e' stato corretto e resta in piedi\n"
+            f"  {nuovo} e' stato disfatto (op_id={disfatto.get('op_id')}), "
+            f"ripristinabile con `verimem facts undo`")
+        raise typer.Exit(1) from errore
     if esito.get("idempotent_noop"):
         console.print(f"[green]superseded[/green] {old_id} -> {nuovo} "
                       f"(gia' dichiarato, nessun cambiamento)")
@@ -2196,6 +2348,7 @@ def trust_stats_cmd(
     broken down by status. The numbers competitors don't show.
     """
     from .client import Memory
+    _pretendi_uno_store_che_esiste(db, "verimem stats")
     m = Memory(db) if db else Memory()
     s = m.trust_stats()
     if json_out:
@@ -2220,7 +2373,7 @@ def trust_stats_cmd(
         _head = "[bold]Gate actions (no writes recorded yet)[/bold]"
     console.print(_head)
     console.print(f"  admitted:    {led['admitted']}")
-    console.print(f"  quarantined: {led['quarantined']}  [dim]unsupported claims stored hidden[/dim]")
+    console.print(riga_dei_quarantinati(led["quarantined"]))
     console.print(f"  rejected:    {led['rejected']}  [dim]not stored at all[/dim]")
     console.print(f"  abstained:   {led['abstained']}  [dim]honest 'I don't know' on reads[/dim]")
     if s["by_layer"]:
@@ -3180,7 +3333,39 @@ def _facts_data_dir() -> Path:
     return CONFIG.data_dir
 
 
-def _facts_sm(db: str | None = None):
+def _pretendi_uno_store_che_esiste(db, comando: str) -> None:
+    """Un comando di LETTURA non crea lo store che dice di leggere.
+
+    ⚠️ IL DIFETTO CHE TOGLIE: `--db` su un percorso che non esiste faceva
+    nascere uno store nuovo e vuoto, che il comando poi trovava vuoto — perché
+    l'aveva appena creato lui — e raccontava come «nessun fatto». Basta un
+    refuso e la risposta a «fammi vedere la mia memoria» è «è vuota», mentre i
+    fatti stanno intatti nel file accanto. Le sette porte misurate e i byte che
+    ognuna creava stanno in `tests/test_un_comando_di_lettura_non_crea_lo_store`.
+
+    Vale solo per chi NOMINA un percorso: senza `--db` la cartella si risolve
+    come sempre, e scrivere in uno store nuovo continua a crearlo, perché lì la
+    creazione è il mestiere del comando.
+    """
+    if not db:
+        return
+    percorso = Path(db)
+    if percorso.exists():
+        return
+    console.print(
+        f"[red]questo store non esiste:[/red] {percorso}\n"
+        f"`{comando}` legge soltanto, quindi non lo creo: un file nuovo e "
+        f"vuoto risponderebbe «nessun fatto» a una domanda che non ho potuto "
+        f"leggere, e la memoria vera resterebbe dov'è. Controlla il percorso. "
+        f"Se volevi davvero uno store nuovo, scrivici dentro — per esempio\n"
+        f"    verimem remember \"...\" --db {percorso}",
+        soft_wrap=True,   # un percorso spezzato a capo non si copia, e si
+                          # stampa solo perché qualcuno lo copi
+    )
+    raise typer.Exit(1)
+
+
+def _facts_sm(db: str | None = None, comando: str = "questo comando"):
     """Build a SemanticMemory pointed at the corpus.
 
     ``db`` is the store the caller NAMED (`--db`); without it, the one this
@@ -3199,6 +3384,12 @@ def _facts_sm(db: str | None = None):
     """
     from .semantic import SemanticMemory
     if db:
+        # Chi NOMINA un percorso per leggere intende un file che c'è: se non
+        # c'è, dirlo vale più che fabbricarne uno vuoto e chiamarlo risposta.
+        # Le quattro porte `facts` che arrivano qui con un `--db` leggono tutte;
+        # il giorno che una di loro dovrà creare, la guardia si sposta nelle
+        # chiamate invece di stare qui.
+        _pretendi_uno_store_che_esiste(db, comando)
         scelto = Path(db)
         scelto.parent.mkdir(parents=True, exist_ok=True)
         return SemanticMemory(db_path=scelto)
@@ -3259,7 +3450,7 @@ def facts_list(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts list")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     if _scoped:
         try:  # fail fast on a malformed scope id
@@ -3359,7 +3550,7 @@ def facts_recall(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts recall")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _rtopic = topic
     if _scoped and topic:
@@ -3424,7 +3615,7 @@ def facts_search(
     from .scope import lead_prefix as _lead_prefix
     from .scope import matches_scope as _matches_scope
     from .scope import scoped_topic as _scoped_topic
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts search")
     _scoped = user_id is not None or agent_id is not None or run_id is not None
     _stopic = topic
     if _scoped and topic:
@@ -3516,7 +3707,7 @@ def facts_get(fact_id: str, db: str = typer.Option(None, "--db")) -> None:
 
     Accepts a full id or an unambiguous prefix.
     """
-    sm = _facts_sm(db)
+    sm = _facts_sm(db, "verimem facts get")
     f = _fact_id_resolve(sm, fact_id)
     if f is None:
         console.print(f"[red]not found:[/red] {fact_id}")
@@ -3937,7 +4128,22 @@ def facts_retirement_log(
         bd = _bd(sm, topic=topic, limit=limit)
         console.print(f"[bold]{bd['total_retired']}[/bold] retired total")
         for r in bd["by_reason"]:
-            console.print(f"  [cyan]{r['n']:>6}[/cyan]  {safe_cut(r['reason'], 64)}")
+            # LA FORMA ACCANTO AL NUMERO, non solo nel dizionario. Il campo
+            # esisteva sull'oggetto e non sulla porta e' il difetto che questo
+            # stesso ramo ha appena curato altrove: una voce fatta in un
+            # giorno solo e una distribuita su mesi si leggono uguali finche'
+            # la riga non lo dice. Sul corpus vero (2026-09-13) la prima voce
+            # sono 1463 ritiri in 35,9 secondi di una notte di luglio.
+            _f = r.get("forma", "?")
+            _colore = "yellow" if _f == "evento" else "dim"
+            _q = f"{100.0 * r.get('quota', 0.0):.1f}%"
+            _gg = r.get("giorni", 0)
+            _dove = (f"{_gg}g" if _f == "tasso"
+                     else f"1g {100.0 * r.get('quota_giorno_max', 0.0):.0f}%")
+            console.print(
+                f"  [cyan]{r['n']:>6}[/cyan] [dim]{_q:>6}[/dim] "
+                f"[{_colore}]{_f:<7}[/{_colore}] [dim]{_dove:>7}[/dim]  "
+                f"{safe_cut(r['reason'], 46)}")
         console.print("[dim]— by day —[/dim]")
         for d in bd["by_day"]:
             console.print(f"  [cyan]{d['n']:>6}[/cyan]  {d['day']}")
@@ -4515,6 +4721,9 @@ def facts_add(
     """
     from .anti_confab_gate import run_validation_gate
     from .client import (
+        _blocking_layers,
+    )
+    from .client import (
         chi_ha_quarantinato as _chi_ha_quarantinato,
     )
     from .client import (
@@ -4602,6 +4811,16 @@ def facts_add(
         def __init__(self, sm) -> None:
             self.semantic = sm
     agent = _AgentShim(sm)
+
+    class _AvvisoSuConsole:
+        """Un ritiro fallito lo deve vedere CHI STA SCRIVENDO, non un file di
+        log: qui c'e' una persona davanti a un terminale, e «nuovo ammesso,
+        vecchio non ritirato» e' proprio lo stato che la supersessione esiste
+        per evitare."""
+
+        @staticmethod
+        def warning(msg: str, *args: object) -> None:
+            console.print(f"[red]{(msg % args) if args else msg}[/red]")
 
     # buco #2 LIVE (2026-06-03): repo_root per la verifica di ESISTENZA dei ref
     # nel gate (commit:/file: fabbricati -> downgrade). _facts_sm() non setta
@@ -4729,6 +4948,7 @@ def facts_add(
             "legacy_unverified", "orphaned", "quarantined",
         }:
             final_status = "model_claim"
+        from .supersession_policy import applica_verdetto as _applica_verdetto
         from .supersession_policy import source_signature_of
         f = Fact(
             proposition=prop,
@@ -4787,6 +5007,34 @@ def facts_add(
         # `engram facts backfill` / next warm op). Daemon warm -> embeds now.
         sm.store(f, hook_token=hook_token, embed="auto")
         inserted.append(f.id)
+        # …E IL VERDETTO DI SUPERSESSIONE VIENE APPLICATO, che fino al
+        # 2026-09-12 su questa porta non succedeva. Il gate qui sopra decide
+        # gia' quali valori la scrittura ritira (`supersede_fact_ids`) e lo
+        # dichiara pure — «a newer same-source value supersedes a stored fact
+        # — the older value is superseded» — ma questo file non nominava quel
+        # campo in nessun punto (misurato: zero occorrenze) e leggeva solo
+        # `gate.action`. Il verdetto arrivava alla porta e cadeva: sonda del
+        # 12/09 con `--validate full`, avviso `L3-supersession` emesso e
+        # `superseded_by` NULLO nel database. Le altre due porte lo
+        # applicavano da mesi, quindi la stessa coppia di scritture lasciava
+        # un fatto vivo da SDK e due da qui.
+        # 📌 La chiamata sta in `supersession_policy.applica_verdetto`, una
+        # sola per tutte e tre: era gia' scritta due volte, e la terza copia
+        # avrebbe fatto divergere anche questa (le due esistenti gia'
+        # divergono su una guardia).
+        _ritirati, _maniglie = _applica_verdetto(
+            gate, f, sm, principal="cli:local",
+            ammesso=(gate.action != "downgrade"
+                     and final_status != "quarantined"),
+            log=_AvvisoSuConsole)
+        for _vecchio in _ritirati:
+            _op = _maniglie.get(_vecchio) or "nessuna maniglia"
+            # UN RITIRO NON SI FA IN SILENZIO: e' la stessa ragione per cui
+            # esiste il registro dei ritiri. Chi scrive vede che cosa e'
+            # uscito dalla lettura, e la maniglia per rimetterlo.
+            console.print(
+                f"  [yellow]superseded:[/yellow] {_vecchio[:12]} "
+                f"[dim]-> {f.id[:12]}  undo: {_op}[/dim]")
         # ⚠️ LO STATO **DOPO** LA SCRITTURA, non quello deciso prima: uno
         # screen dentro `store()` puo' ribaltare un fatto che il gate aveva
         # ammesso, e guardando `final_status` quel ribalto non si vedeva —
@@ -4804,10 +5052,28 @@ def facts_add(
             # 🔑 La decisione NON e' ricopiata qui: si chiama la stessa
             # funzione del write path, perche' una regola con due copie
             # diverge, e questa e' gia' la seconda porta.
+            # ⚠️ `agito` DEVE portare i layer bloccanti, come fa il write path
+            # (`client.py`, `_hit_layers`): senza, il ciclo su
+            # `_BLOCK_LAYER_PRIORITY` non trova niente e la funzione cade
+            # sulla sua ULTIMA riga, `'gate'`. Qui c'era `[]`, cioe' la stessa
+            # espressione dell'altra porta con un buco nel ramo `downgrade`.
+            # 🔑 Il difetto era invisibile perche' i rami piu' comuni non
+            # passano di qui: `store-screen` viene dal marcatore, `moat` e
+            # `L1` dai warning, e su quelli le due porte concordavano gia'.
+            # Divergevano solo i layer che arrivano DA `agito` — L3, L4.1,
+            # SOURCE_TRUST, L4-skipped — e sono quelli che un utente vede
+            # quando il giudice ammette e un controllo lessicale ferma.
+            # ♻️ RESIDUO NOTO, dichiarato in revisione: la funzione e' unica ma
+            # QUESTA ESPRESSIONE no — vive identica anche nel write path,
+            # letterale `["store-screen"]` compreso. E' la stessa classe di
+            # difetto un piano piu' sotto, e la prossima porta che nasce la
+            # ricopiera'. Chi la unifica tocca una firma condivisa: si fa
+            # apposta, non di passaggio.
             _causa = _chi_ha_quarantinato(
                 _esito_del_moat(gate, gate.warnings, source=src or None),
                 gate.warnings,
-                agito=([] if gate.action == "downgrade" else ["store-screen"]),
+                agito=(_blocking_layers(gate.warnings)
+                       if gate.action == "downgrade" else ["store-screen"]),
             )
             _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
 
@@ -4821,6 +5087,19 @@ def facts_add(
         for fid in inserted:
             console.print(f"  id={fid[:12]}  status="
                           + ("quarantined" if fid in quarantined else "ok"))
+        # T91: DOVE ha scritto, e chi l'ha deciso. La ricevuta e' l'unico
+        # momento in cui chi credeva di aver isolato lo store puo' accorgersi
+        # del contrario: il 14/09 tre variabili puntavano a uno store di prova
+        # e la scrittura era finita in quello vero, senza che nessuna porta lo
+        # dicesse.
+        # ⚠️ `soft_wrap=True`: senza, rich manda a capo E ABBREVIA il percorso
+        # (`C:\Users\aur...\quello-vero`), cioe' stampa una dichiarazione che
+        # non si puo' leggere — il difetto che questa riga doveva curare,
+        # ripetuto un livello piu' in basso. Misurato: il test non trovava il
+        # percorso nel proprio output.
+        from ._compat import provenienza_data_dir as _prov
+        console.print(f"  [dim]store: {sm.db_path}[/dim]", soft_wrap=True)
+        console.print(f"  [dim]{_prov().dichiarazione()}[/dim]", soft_wrap=True)
     else:
         # audit#3-r3 R6: an `add` that persisted NOTHING is a failure — exit
         # non-zero so a bulk pipeline (cat findings.jsonl | engram facts add
@@ -5254,6 +5533,27 @@ def riga_di_recall(h: object) -> str:
         s += f" [{colore}]moat {float(gs):.1f}[/{colore}]"
     else:
         s += " [dim]moat --[/dim]"
+    # …E SE E' UNA VERSIONE SUPERATA, LA RIGA LO DICE. Il campo c'era gia':
+    # `_fact_view` porta `superseded_by` sempre, `None` quando il fatto e'
+    # vivo, e il suo docstring spiega perche' fu aggiunto — «un fatto ritirato
+    # tornava attraverso ognuna di queste superfici IDENTICO a uno vivo». La
+    # cura pero' si era fermata sull'OGGETTO: questa riga, che e' cio' che un
+    # utente legge, portava testo, somiglianza e moat e non nominava il campo.
+    # Con `--include-superseded` (e con `--as-of`, dove gli esiti sono
+    # superati per costruzione) arrivavano DUE risposte alla stessa domanda,
+    # con due numeri diversi, e niente diceva quale delle due fosse quella
+    # vecchia. Misurato dalla porta, non dall'SDK: dall'SDK il campo si legge
+    # e il difetto non si vede — e' il livello a cui si guarda che decide.
+    #
+    # Si stampa la COLONNA GREZZA accorciata, non un nome nuovo tipo
+    # «ritirato»: il docstring di `_fact_view` lo chiede esplicitamente («un
+    # secondo nome per un fatto e' come due verita' cominciano a divergere»),
+    # e l'id serve a chi vuole chiedere il successore.
+    # Nella vista curata questo ramo non scatta mai: li' `superseded_by` e'
+    # None per definizione, quindi la riga di tutti i giorni non cambia.
+    sup = h.get("superseded_by") if isinstance(h, dict) else None
+    if sup:
+        s += f" [yellow]superseded by {str(sup)[:8]}[/yellow]"
     return f"- {txt}{s}"
 
 
@@ -5304,6 +5604,45 @@ def _node_line(node: dict) -> str:
     return (f"  {node['id'][:12]}  {ts}  {node['status']:<12} "
             f"{_moat_cell(node.get('grounding_score'))}  "
             f"{(node['topic'] or '(no topic)')[:48]}{mark}{arrow}{extra}")
+
+
+def riga_stored_quarantined(r: dict) -> str:
+    """La riga di riepilogo di una scrittura trattenuta.
+
+    ESTRATTA dal comando per poterla misurare su una ricevuta COSTRUITA: il
+    testo dipende solo dalla ricevuta, e farlo passare da una scrittura vera
+    significherebbe misurare il giudice invece della riga.
+
+    ⚠️ DICEVA SEMPRE «the injection/contradiction screens fired», qualunque
+    layer avesse trattenuto la scrittura. Una coppia scritta a mano, non un
+    dato: con `L4.1` (un numero che la fonte non contiene) o `L4-grounding`
+    (il giudice) nominava due schermi che NON avevano parlato, e due righe
+    piu' sotto la stessa ricevuta stampava i layer veri, che la smentivano.
+    Chi leggeva andava a cercare un'iniezione di prompt in una frase che
+    conteneva solo un numero sbagliato.
+
+    ⛔ `_blocking_layers` e NON la lista dei warning: gli avvisi `*-observe`
+    hanno parlato ma non hanno fermato niente, e dargli il merito del blocco
+    e' lo stesso difetto con il segno invertito.
+
+    Senza layer che hanno agito la riga NON inventa un colpevole: dice che la
+    scrittura e' trattenuta e rimanda agli avvisi. Un nome falso e' peggio di
+    un nome mancante.
+    """
+    from .client import _blocking_layers
+    agito = _blocking_layers(r.get("warnings") or [])
+    if agito:
+        return (f"[yellow]stored QUARANTINED[/yellow] — held by "
+                f"{', '.join(agito)}; see warnings below")
+    return "[yellow]stored QUARANTINED[/yellow] — see warnings below"
+def riga_dei_quarantinati(n: int) -> str:
+    """La riga del riepilogo che conta le scritture trattenute.
+
+    ESTRATTA per poterla misurare su un numero costruito: dipende solo dal
+    conteggio, e farla passare da uno store vero misurerebbe il corpus.
+    """
+    from .trust_ledger import etichetta_dei_quarantinati
+    return f"  quarantined: {n}  [dim]{etichetta_dei_quarantinati()}[/dim]"
 
 
 def riga_moat_non_verificato(moat: str | None) -> str:
@@ -5407,7 +5746,15 @@ def save_cmd(
         raise _lineage_exit(exc) from exc
     if json_out:
         import json as _json
-        print(_json.dumps(r, ensure_ascii=False, default=str))
+
+        from .adattatore_ricevuta import ricevuta_dal_cancello
+        #: L'UNIONE HA UNA SCADENZA (20/09, ticket nella DoD): finche' le altre
+        #: due porte non rendono la Ricevuta, togliere le vecchie chiavi
+        #: romperebbe chi le legge oggi. Su una chiave in collisione vince la
+        #: NUOVA, ed e' un dizionario solo: due dizionari affiancati sarebbero
+        #: di nuovo due schemi.
+        _uscita = {**r, **ricevuta_dal_cancello(r).come_dizionario()}
+        print(_json.dumps(_uscita, ensure_ascii=False, default=str))
         raise typer.Exit(0 if r.get("stored") else 1)
     disp = (r.get("adjudication") or {}).get("disposition") or r.get("status")
     console.print(f"[green]{disp}[/green] id={r.get('id') or '-'} "
@@ -5453,7 +5800,20 @@ def save_cmd(
         _cut = _adj.get("threshold")
         _passa = (float(_gs) >= float(_cut)) if isinstance(
             _cut, (int, float)) else (_adj.get("disposition") != "quarantined")
-        if _passa:
+        #: ⚠️ 19/09 (T124) — PRIMA DI TUTTO: HA FERMATO QUALCUN ALTRO?
+        #: `_passa` qui sotto confronta il punteggio col taglio, e il moat non
+        #: e' l'unico a trattenere. Quando a fermare e' L1 con il moat PASSATO,
+        #: quel confronto produceva due bugie di segno opposto — «grounded
+        #: 95.5» su un quarantinato, oppure «not grounded 95.5 — the judge
+        #: found no support» sullo stesso caso senza il taglio in ricevuta.
+        #: La riga giusta esisteva gia' in `remember` e ora e' una funzione
+        #: sola: si dice CHI ha fermato, non chi ha il punteggio.
+        _trattenuto = (_adj.get("disposition") == "quarantined"
+                       or r.get("status") == "quarantined")
+        _accordo = riga_il_giudice_era_daccordo(r) if _trattenuto else None
+        if _accordo:
+            console.print(_accordo)
+        elif _passa:
             # 25/08 — LA SECONDA PORTA. `76d5dc1c` cura il ramo BOCCIATO qui e
             # `mcp_server` ha avuto la stessa cura sul suo canale; il ramo degli
             # AMMESSI asseriva ancora l'implicazione in entrambe. Misurato alla
@@ -5461,11 +5821,26 @@ def save_cmd(
             # rispondere che la fonte lo implica (identico in EN). Il gate non
             # ha verificato nulla — ha dato un punteggio e non ha trovato
             # contraddizioni — e su una citazione letterale il punteggio e' lo
-            # stesso: indistinguibili. Qui la formulazione e' allineata a
-            # quella di `mcp_server`, cosi' le due porte dicono la stessa cosa.
-            console.print(f"  grounded {float(_gs):.1f} [dim]— scored as "
-                          f"supported by the source (the judge's score, not a "
-                          f"check that it follows)[/dim]")
+            # stesso: indistinguibili.
+            #
+            # 18/09 (T115) — «ALLINEATA A MANO» NON ERA ALLINEATA. Qui c'era
+            # scritto che la formulazione era allineata a quella di
+            # `mcp_server` «cosi' le due porte dicono la stessa cosa»: le due
+            # stringhe erano DIVERSE, e una terza uscita (la riga di lettura di
+            # `temporal_context`) diceva l'opposto di entrambe. Ora il
+            # significato viene da `significato_del_punteggio`; l'etichetta
+            # col numero resta quella di questa porta.
+            #
+            # ⚠️ RESIDUO DICHIARATO, e non e' questo il posto per curarlo: il
+            # ramo qui sopra sceglie con `_passa` (punteggio >= taglio), non
+            # con `esito_del_moat`. Sono due calcoli dello stesso esito, ed e'
+            # il difetto che `mcp_server` si e' curato il 28/08 — un fatto
+            # trattenuto da L1 con il moat PASSATO si sente rispondere «the
+            # judge found no support». Unificare il selettore tocca il ramo
+            # bocciato, che due banchi fissano: ticket a parte.
+            from verimem.client import significato_del_punteggio as _sig
+            console.print(f"  grounded {float(_gs):.1f} "
+                          f"[dim]— {_sig('passed')}[/dim]")
         else:
             _soglia = (f" (cut {float(_cut):.0f})"
                        if isinstance(_cut, (int, float)) else "")
@@ -5518,8 +5893,7 @@ def save_cmd(
         console.print(f"  root checkpoint (no prior session fact under "
                       f"'{seg}')")
     if r.get("status") == "quarantined":
-        console.print("[yellow]stored QUARANTINED[/yellow] — the injection/"
-                      "contradiction screens fired; see warnings below")
+        console.print(riga_stored_quarantined(r))
         for w in (r.get("warnings") or [])[:3]:
             # 400, not 100: the L4 advice now ends with WHICH clause the source
             # does not carry, and at 100 chars the cut landed on the first
@@ -5909,6 +6283,7 @@ def audit_anchor_cmd(
 
     from verimem.audit_anchor import build_payload, sign_anchor
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit anchor")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
     adj = _audit_adj_log(sm)
     ep_path = _audit_episodes_db(sm, episodes_db)
@@ -5958,6 +6333,7 @@ def audit_verify_cmd(
     anchored-head-at-count) and exits 1 naming the chain and check that
     failed."""
     from verimem.semantic import SemanticMemory
+    _pretendi_uno_store_che_esiste(db, "verimem audit verify")
     sm = SemanticMemory(db_path=db) if db is not None else _facts_sm()
 
     if anchor is not None:
@@ -6037,5 +6413,43 @@ def main() -> None:
     app()
 
 
+
+
+@store_app.command("migrate")
+def store_migrate_cmd(
+    file: str = typer.Argument(..., help="Il file .db dello store da migrare"),
+    backup_in: str = typer.Option(
+        None, "--backup-in",
+        help="Dove scrivere il backup (default: accanto allo store)"),
+) -> None:
+    """Porta uno store alla versione di questo codice, dopo un backup verificato.
+
+    Il backup si verifica CONTANDO le righe, non fidandosi della copia: una
+    copia che esiste non e' una copia che contiene, e l'impronta del file non
+    serve perche' il backup di SQLite compatta e lo sha cambia a contenuto
+    identico.
+    """
+    from pathlib import Path as _Path
+
+    from .schema import StoreTroppoNuovo
+    from .store_migrate import BackupNonVerificato, migra_lo_store
+
+    percorso = _Path(file).expanduser()
+    if not percorso.is_file():
+        console.print(f"[red]non esiste:[/red] {percorso}", soft_wrap=True)
+        raise typer.Exit(2)
+    try:
+        ricevuta = migra_lo_store(
+            percorso, _Path(backup_in).expanduser() if backup_in else None)
+    except (BackupNonVerificato, StoreTroppoNuovo) as exc:
+        console.print(f"[red]non migrato:[/red] {exc}", soft_wrap=True)
+        raise typer.Exit(1) from exc
+    console.print(str(ricevuta), soft_wrap=True)
+
+# ⚠️ QUALUNQUE COMANDO VA DEFINITO SOPRA QUESTA RIGA.
+# Con `python -m verimem.cli` il modulo gira come __main__, quindi `main()`
+# parte QUI: un decoratore scritto più in basso non viene mai eseguito e il
+# comando non esiste — pur esistendo per chi importa il modulo, che è il
+# livello a cui un test si accorge di nulla.
 if __name__ == "__main__":
     main()

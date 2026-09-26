@@ -24,9 +24,10 @@ from __future__ import annotations
 import json
 import sqlite3
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
+
+from .ids import id_nuovo
 
 __all__ = ["Decision", "DecisionStore"]
 
@@ -82,7 +83,7 @@ class DecisionStore:
                ts: float | None = None) -> str:
         """Store a decision; return its id. ``evidence`` are fact ids CITED at
         decision time (resolvable via the fact corpus)."""
-        did = uuid.uuid4().hex[:16]
+        did = id_nuovo(16)
         with self._conn() as conn:
             conn.execute(
                 "INSERT INTO decisions (id, decision, topic, alternatives, "

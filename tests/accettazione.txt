@@ -1,0 +1,109 @@
+# The acceptance suite: one test file per line.
+#
+# WHAT IT IS. The files that exercise a PORT of the product from the outside
+# (`open_memory()`, the CLI entry point, the MCP tool dispatch) on the two core
+# operations -- write a fact with its source, recall it -- plus the verdict and
+# the receipt that go with them. Everything else is not in here: neither the
+# tests that call an internal function directly, nor the ports of the tools
+# around the core (dreams, skills, episodes, swarm, dashboard, entities).
+#
+# HOW TO RUN IT.  pytest -m accettazione
+#
+# HOW IT IS BUILT. A file enters WHOLE, not test by test: a parametrised node id
+# changes whenever a case is renamed, and a list of node ids would rot in
+# silence. The price, stated: the suite also picks up the tests that sit next to
+# the core ones in the same file, so the number collected is larger than the
+# number of core tests that selected the file.
+#
+# THE GUARD. A line here that matches no collected file FAILS the collection
+# (tests/conftest.py). A list that rots quietly is a disconnected sensor, and
+# this suite is the one thing that must not go green by being empty.
+#
+# Measured 2026-09-16 on 9991 test functions: 887 touch a port, 345 of those are
+# on the core, and they live in the 85 files below.
+
+test_adjudication_receipt.py
+test_agent_guide_single_source.py
+test_all_write_channels_judge_a_source.py
+test_anchor_recall.py
+test_ask_taceva_dove_recall_avvisava.py
+test_chain_surfaces_show_the_verdict.py
+test_chi_ha_deciso_la_quarantena.py
+test_chi_ha_quarantinato_si_sa_anche_domani.py
+test_chi_perde_un_fatto_per_eta_lo_sa.py
+test_cli.py
+test_cli_consolidate.py
+test_cli_facts.py
+test_cli_facts_add.py
+test_cli_facts_jsonl_null_confidence.py
+test_cli_facts_scope.py
+test_cli_flow_tail.py
+test_cli_save_names_what_it_retired.py
+test_cli_save_reports_grounding.py
+test_cli_trust.py
+test_cli_trust_declares_what_ran.py
+test_continuity.py
+test_control_room_porte.py
+test_correct_dice_quale_ramo_ha_preso.py
+test_due_tool_stessa_domanda_due_garanzie.py
+test_fact_forget_scope_r3.py
+test_facts_add_exit_code_audit3.py
+test_facts_forget_topic.py
+test_facts_list_cli_mostra_il_verdetto.py
+test_facts_recall_e_search_cli_mostrano_il_verdetto.py
+test_gate_model_fetch_and_doctor.py
+test_i_key_facts_dicono_che_fine_hanno_fatto.py
+test_il_campo_moat_dice_anche_i_no.py
+test_il_messaggio_dice_quale_chiave_ha_buttato.py
+test_il_nome_dell_attore_arriva_fino_al_campo.py
+test_il_quarto_canale_di_scrittura.py
+test_import_senza_consenso_non_scrive_niente.py
+test_inventario_dei_tier.py
+test_json_esce_json_anche_quando_non_c_e_niente.py
+test_l_anteprima_mostra_la_riga_che_risponde.py
+test_la_citazione_mostrata_e_quella_cercabile.py
+test_la_cli_dichiara_i_fatti_scaduti.py
+test_la_cli_guarda_al_passato_come_le_altre_porte.py
+test_la_cli_sa_scrivere_una_scadenza.py
+test_la_porta_della_recall_le_espone_tutte.py
+test_la_porta_mcp_dice_perche_il_moat_non_e_girato.py
+test_la_quarantena_e_la_stessa_su_ogni_canale.py
+test_la_ricevuta_della_porta_mcp_dice_se_ha_giudicato.py
+test_la_ricevuta_mcp_dice_se_ha_giudicato.py
+test_la_ricevuta_non_dice_entails_quando_boccia.py
+test_la_riga_che_mente.py
+test_la_riserva_arriva_a_chi_legge.py
+test_la_scheda_di_un_fatto_dice_se_e_scaduto.py
+test_la_serie_della_quarantena_su_ogni_porta.py
+test_la_vista_finta_invecchia.py
+test_le_porte_aprono_lo_store_che_indichi.py
+test_le_versioni_di_un_documento_si_possono_chiedere.py
+test_lo_scope_tiene_le_TRE_chiavi_fuori_dal_server.py
+test_mcp_anti_confab_scan.py
+test_mcp_contradiction.py
+test_mcp_decay.py
+test_mcp_facts_conflict.py
+test_mcp_lineage_explain_top.py
+test_mcp_lineage_trace.py
+test_mcp_recall_filter_provenance.py
+test_mcp_remember_facts.py
+test_mcp_search_and_list.py
+test_mcp_server.py
+test_mcp_thin.py
+test_multitenancy_b1.py
+test_ogni_superficie_di_lettura_dichiara_i_sostituiti.py
+test_p0_independence_wiring.py
+test_principal_provenance.py
+test_quando_un_tool_mcp_esplode_dice_QUALE.py
+test_query_seeds_resolve_against_store.py
+test_recall_dice_quando_e_sotto_il_pavimento.py
+test_remember_xml_sanitize.py
+test_remote_memory.py
+test_requalify_quarantined.py
+test_save_puo_dire_quando_e_vero.py
+test_status_shows_truth_health.py
+test_tamper_anchor_receipt.py
+test_una_cancellazione_dice_cosa_ha_lasciato.py
+test_una_correzione_si_fa_dal_canale_che_ha_scritto.py
+test_validate_claim.py
+test_write_path_auto_supersede_scan68.py

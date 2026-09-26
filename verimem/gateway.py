@@ -38,6 +38,8 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
+from .trust_ledger import etichetta_dei_quarantinati as _etichetta_dei_quarantinati
+
 try:  # fastapi è la stessa dipendenza opzionale della dashboard
     from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request
     from fastapi.responses import HTMLResponse, Response, StreamingResponse
@@ -168,7 +170,7 @@ _DASHBOARD_HTML = """<!doctype html>
       <div class="card admitted"><div class="n" id="n-admitted">0</div>
         <div class="l">writes admitted</div></div>
       <div class="card quarantined"><div class="n" id="n-quarantined">0</div>
-        <div class="l">unsupported claims quarantined</div></div>
+        <div class="l">__ETICHETTA_QUARANTINATI__</div></div>
       <div class="card rejected"><div class="n" id="n-rejected">0</div>
         <div class="l">writes rejected (not stored)</div></div>
       <div class="card abstained"><div class="n" id="n-abstained">0</div>
@@ -234,6 +236,9 @@ _DASHBOARD_HTML = """<!doctype html>
 </body>
 </html>
 """
+
+_DASHBOARD_HTML = _DASHBOARD_HTML.replace(
+    "__ETICHETTA_QUARANTINATI__", _etichetta_dei_quarantinati())
 
 _KEYS_SCHEMA = """
 CREATE TABLE IF NOT EXISTS gateway_keys (

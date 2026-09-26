@@ -34,7 +34,7 @@ from pathlib import Path
 # Allow `python scripts/bench_with_without_hippo.py` from repo root.
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from verimem.bench_harness import (  # noqa: E402
+from attic.bench_harness import (  # noqa: E402
     ProviderSpec,
     aggregate,
     aggregate_by_iter,

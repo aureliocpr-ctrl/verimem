@@ -165,12 +165,24 @@ def test_il_taglio_e_LO_STESSO_della_vista_sul_corpus(banco, monkeypatch):
     assert (r["id"] in ids) is p["withheld_despite_judge"]
 
 
-def test_sotto_il_taglio_nessuna_delle_due_superfici_lo_chiama_contraddizione(
-        banco, monkeypatch):
-    """L'altro lato della stessa prova: un verdetto ALTO ma sotto il
-    taglio prudente non è «vero» per nessuna delle due superfici. Senza
-    questo caso il test sopra passerebbe anche con due soglie diverse
-    purché entrambe stiano sotto 100."""
+def test_le_due_superfici_CONCORDANO_anche_nella_fascia(banco, monkeypatch):
+    """L'altro lato della stessa prova, e la FUNZIONE di questa cella non
+    cambia: le due superfici devono dire la STESSA cosa. Cambia il numero.
+
+    ⚠️ AGGIORNATA IL 20/09, e la ragione va scritta perché il caso scelto qui
+    era proprio quello che il difetto nascondeva. Prima questa cella usava 85
+    come esempio di «alto ma sotto il taglio prudente» e pretendeva `False` da
+    entrambe le superfici. Ma 85 è **sopra ogni cut applicata** (40 col CE
+    locale, 70 con claude): il giudice l'aveva ammesso, un layer l'ha
+    trattenuto, e la colonna diceva `no` perché confrontava 90 — un margine,
+    non una cut. Misurato sul corpus: 21 fatti vivi quarantinati in [70,90),
+    sopra ogni cut e sotto il margine, che nessuna colonna nominava.
+
+    ⇒ Con la cut applicata le due superfici concordano ancora, su «sì» invece
+    che su «no» — ed è questo che la cella misura. La protezione originale
+    («non passerebbe con due soglie diverse purché entrambe sotto 100») resta,
+    spostata sul caso sotto la cut qui in coda: là entrambe dicono no.
+    """
     from verimem.retirement_log import verdict_mismatches
 
     _verdetto(monkeypatch, 85.0)
@@ -179,7 +191,35 @@ def test_sotto_il_taglio_nessuna_delle_due_superfici_lo_chiama_contraddizione(
 
     assert r["status"] == "quarantined"
     p = _write(banco)[-1]["payload"]
-    assert p["withheld_despite_judge"] is False
+    assert p["withheld_despite_judge"] is True, (
+        "85 e' sopra ogni cut applicata: il giudice lo ammette, un layer lo "
+        f"trattiene, e il journal deve dirlo — payload={p}")
+    assert p.get("judge_backend") == "local", (
+        "il journal non porta il giudice: senza, la cut non si puo' risolvere "
+        f"per fatto e la vista resta sul limite inferiore — payload={p}")
+    ids = [x["fact_id"]
+           for x in verdict_mismatches(m.semantic)["judged_true_but_withheld"]]
+    assert r["id"] in ids, (
+        "il journal lo chiama trattenuto-nonostante-il-giudice e la vista no: "
+        "due superfici, una soglia — e' l'invariante di questa cella")
+
+
+def test_SOTTO_la_cut_nessuna_delle_due_superfici_lo_chiama_contraddizione(
+        banco, monkeypatch):
+    """LA PROTEZIONE ORIGINALE, spostata dove vale: sotto la cut applicata il
+    giudice NON lo sostiene, e nessuna delle due superfici deve chiamarlo
+    trattenuto-nonostante-il-giudice. Senza questo caso la cella sopra
+    passerebbe anche con due soglie diverse purche' entrambe stiano sotto 85."""
+    from verimem.retirement_log import verdict_mismatches
+
+    _verdetto(monkeypatch, 20.0)
+    m = Memory(banco / "m.db")
+    r = m.add(_CLAIM, topic="rilasci", source=_FONTE)
+
+    assert r["status"] == "quarantined"
+    p = _write(banco)[-1]["payload"]
+    assert p["withheld_despite_judge"] is False, (
+        f"20 e' sotto qualunque cut: nessun «nonostante» — payload={p}")
     ids = [x["fact_id"]
            for x in verdict_mismatches(m.semantic)["judged_true_but_withheld"]]
     assert r["id"] not in ids

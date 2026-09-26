@@ -110,7 +110,30 @@ _QUANT_RE = re.compile(
     # (`1,234`), quindi non entra qui e resta all'ambiguita' dichiarata —
     # esattamente come `_PUNTO_AMBIGUO` fa con `45.000`. Allargare a `[.,]\d+`
     # avrebbe letto «1,234 facts» come milleduecentotrentaquattro virgola.
-    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    # ⚠️ L'UNITA' PUO' FINIRE CON UNA CIFRA, MA SOLO SE E' UNA DI QUESTE OTTO
+    # FORME. «400 m3» e' un volume e «400 m2» un'area; il gruppo qui sotto
+    # esclude le cifre, quindi quella grafia usciva SENZA unita' e
+    # volume-contro-area non veniva colto (ammesso a 91,95 alla porta).
+    # ⛔ LA GENERALIZZAZIONE E' FALSIFICATA, e il numero sta qui perche' non
+    # torni: ammettere UNA CIFRA QUALUNQUE (`[^\W\d_]+\d?`) cambia la lettura
+    # di 1311 proposizioni su 18 310 e legge come grandezze gli spezzoni di
+    # SHA — `e2` 103 volte, `bdb6` 82, `a7` 63, `ad7` 61, `aefa1` 61. La lista
+    # chiusa ha invece raggio ZERO sul corpus, e il presidio sta nel banco.
+    # L'alternativa va PRIMA del gruppo generico: la regex prova da sinistra,
+    # e su «m3x» ricade sul generico come faceva prima.
+    # ⚠️ IL CANCELLETTO: `#96` NOMINA una richiesta, non afferma una grandezza.
+    # T149, misurato su tre fermate vissute da un pari che salvava le misure
+    # di una sera col prodotto: `L4.1` accusava il claim di «un valore che la
+    # fonte non contiene: 96», con il giudice a 99,93 e
+    # `withheld_despite_judge=True`. Raggio sullo store: 1339 proposizioni
+    # contengono `#<numero>`, 2 sono quarantenate con L4.1 fra i colpevoli —
+    # ed entrambe hanno il giudice sopra 90, cioe' sono per intero la classe
+    # «il moat era d'accordo e un dettaglio ha fermato».
+    # ⛔ SOLO IL CANCELLETTO, e il perche' del NO all'ovvia estensione sta nel
+    # banco: «i numeri dopo `=` non contano» spegnerebbe `EXIT=0` contro
+    # `EXIT=1`, cioe' meta' dell'evidenza che questo prodotto confronta.
+    r"(?<![A-Za-z0-9_#])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)"
+    r"(?:\s{0,3}-?\s{0,3}((?:mm|cm|km|ft|in|m)[23]|[^\W\d_]+))?"
     r"(?![A-Za-z0-9_])(?!\.\d)(?!,\d)",
     re.UNICODE,
 )
@@ -362,7 +385,17 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 #: La coda in HIRAGANA di un'unita' giapponese. Non e' una lista di verbi: e'
 #: la struttura ortografica della lingua (okurigana), che scrive le desinenze
 #: in hiragana e lascia sostantivi e unita' in katakana o kanji.
-_CODA_HIRAGANA_RE = re.compile(r"[ぁ-ゟ]+$")
+#: ⏱️ NON E' UNA REGEX, ED E' IL PUNTO. `re.compile(r"[ぁ-ゟ]+$").sub("", w)`
+#: faceva la stessa cosa in tempo QUADRATICO: su una parola di molti hiragana
+#: che non finisce in hiragana il `+$` fa ripartire il motore da ogni
+#: posizione, e sono **12 432,8 ms** su 40 000 caratteri (misurato; CodeQL
+#: `py/polynomial-redos`, alert 1491). `str.rstrip` toglie dalla coda i
+#: caratteri dell'insieme in una passata sola, senza backtracking.
+#: ⚠️ L'insieme e' LO STESSO intervallo di prima — U+3041..U+309F — e
+#: l'equivalenza sui nove casi del presidio (code verbali tolte, contatori
+#: `つ`/`まい`/`ぴき` conservati) e' una cella del banco: una cura che va piu'
+#: veloce cambiando un risultato sarebbe un difetto nuovo con un cronometro.
+_CODA_HIRAGANA = "".join(chr(c) for c in range(0x3041, 0x30A0))
 
 
 def _senza_coda_verbale_giapponese(w: str) -> str:
@@ -407,7 +440,7 @@ def _senza_coda_verbale_giapponese(w: str) -> str:
     «ミリグラム含», dove 含 è la radice di 含まれる. Il taglio migliora e non
     chiude, ed è dichiarato invece che taciuto.
     """
-    tagliata = _CODA_HIRAGANA_RE.sub("", w)
+    tagliata = w.rstrip(_CODA_HIRAGANA)
     return tagliata if tagliata else w
 
 
@@ -525,7 +558,14 @@ _OPENERS, _CLOSERS = "([{", ")]}"
 #: footnote from a phrase.
 _SECTION_DELIMS = "|\n\r.;—-•"
 #: An upper-case label may sit between the delimiter and the marker.
-_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]*\s*$")
+#: ⏱️ TETTI (CodeQL alert 1236). Sulla corsa PURA di maiuscole questa regex e'
+#: lineare — ed e' il motivo per cui una verifica del 25/07 l'aveva giudicata
+#: falso positivo, provando sei famiglie di corse pure. Sulla corsa che NON
+#: chiude il match («AAAA…!») riparte da ogni posizione: **702,2 ms** su 8000
+#: caratteri. Una popolazione mancante, non una lettura sbagliata.
+#: Sessantaquattro caratteri di etichetta e otto spazi coprono
+#: «EMPIRICAL EVIDENCE:» e i suoi parenti; l'equivalenza e' nel banco.
+_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]{0,64}\s{0,8}$")
 
 
 def _inside_brackets(text: str, pos: int) -> bool:
@@ -999,6 +1039,30 @@ _IDENTIFICATORE_RE = re.compile(r"\b[A-Za-z]{1,6}-\d{1,6}\b")
 #:   dichiarato nel banco `test_un_codice_non_e_una_quantita_in_nessuna_lingua`.
 _IDENTIFICATORE_UNICODE_RE = re.compile(r"(?<![\w-])[^\W\d_]{1,6}-\d{1,6}(?!\d)")
 
+#: L'ID DI UN FATTO NON E' UN VALORE DA CERCARE NELLA FONTE — e finche' lo e'
+#: stato ha quarantinato fatti veri, a intermittenza, per mesi.
+#:
+#: Misurato il 2026-09-12 in una caduta di CI (gamba ubuntu py3.12): il claim
+#: «… come nel fatto 78222643329e» contro una fonte che quel codice non nomina
+#: usciva `layers=['L4.1']`, `status=quarantined`, con il giudice a **99.948**.
+#: L'estrattore spezzava il codice alla lettera finale e leggeva `78222643329`
+#: come una quantita' che la fonte non contiene. E' proprio la classe che
+#: `_IDENTIFICATORE_UNICODE_RE` gia' toglie — `cli-354` — ma nella forma NUDA,
+#: senza il trattino che la rendeva riconoscibile.
+#:
+#: ⚖️ IL CRITERIO E' LA CIFRA **E** LA LETTERA, ed e' scelto stretto apposta:
+#: si toglie solo cio' che NON PUO' essere un numero decimale. Un codice di
+#: sole cifre resta indistinguibile da una quantita' e **resta dentro**: e' un
+#: limite dichiarato, non una svista, e il banco lo scrive.
+#: 📌 Otto caratteri e non meno: sotto quella soglia «abc123» e simili sono
+#: parole di uso comune, e togliere li' costerebbe piu' di quanto renda.
+#: 📌 Sulla FONTE non si applica (`come_fonte=True` salta le potature): la',
+#: leggere un codice come numero AGGIUNGE un valore alla fonte, cioe' toglie
+#: veti invece di metterne — il verso sicuro.
+_ID_ESADECIMALE_NUDO_RE = re.compile(
+    r"(?<![\w-])(?=[0-9a-f]*[a-f])(?=[0-9a-f]*[0-9])[0-9a-f]{8,}(?![\w-])",
+    re.IGNORECASE)
+
 
 def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     """Entrambi i testi portano un codice di record, e non ne condividono nemmeno uno?
@@ -1042,13 +1106,18 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
 def _senza_identificatori(testo: str) -> str:
     """Il testo con i codici di record sostituiti da SPAZI.
 
+    DUE forme, stessa idea: quella col trattino (`cli-354`) e quella NUDA di un
+    id esadecimale (`78222643329e`). La seconda e' arrivata dopo, da una caduta
+    vera: vedi `_ID_ESADECIMALE_NUDO_RE` per la misura e per il limite.
+
     Spazi e non stringa vuota: le posizioni restano quelle originali, cosi' chi
     ragiona per offset non si sposta — e qui sotto ci ragiona
     `_spans_delle_date`, che senza questa accortezza salterebbe di qualche
     carattere per ogni codice incontrato.
     """
-    return _IDENTIFICATORE_UNICODE_RE.sub(
-        lambda m: " " * (m.end() - m.start()), testo or "")
+    _vuoto = lambda m: " " * (m.end() - m.start())  # noqa: E731
+    return _ID_ESADECIMALE_NUDO_RE.sub(
+        _vuoto, _IDENTIFICATORE_UNICODE_RE.sub(_vuoto, testo or ""))
 
 
 #: Un numero che **nomina** una parte del documento non è una grandezza
@@ -1102,6 +1171,77 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
 
 
+#: UNITA' COMPOSTE: due parole che nominano UNA grandezza sola.
+#:
+#: PERCHE' (19/09). L'unita' era «UNA parola dopo il numero» e il qualificatore
+#: cadeva fuori: «metri cubi» e «metri quadri» arrivavano al confronto come lo
+#: STESSO `metro`, quindi il modulo vedeva stessa unita' e stesso valore e
+#: concludeva — correttamente per il suo contratto — che non c'era conflitto.
+#: Il censimento sul corpus: 12 unita' composte su 16 troncate. E in inglese la
+#: stessa forma sbaglia di piu': fra «cubic meters» e «cubic inches» ci sono
+#: 61 024 volte (1 m3 = 61 023,7 in3), e senza il qualificatore quell'errore
+#: passa per un fatto coerente.
+#:
+#: ⚠️ LE DUE LINGUE LE SCRIVONO NELL'ORDINE OPPOSTO, e una cura che ne regge uno
+#: solo lascia meta' del difetto: l'italiano perde l'AGGETTIVO che segue
+#: («metri **cubi**»), l'inglese perde il SOSTANTIVO che segue («**cubic**
+#: meters»). Qui si guardano entrambe le direzioni.
+#:
+#: ⚠️ E NON SI ALLARGA LA CATTURA DEL REGEX, di proposito. Il modulo porta gia'
+#: la cicatrice: allargare `[A-Za-z]` a «una lettera di qualunque alfabeto» rese
+#: incomplete le liste a valle (`_NON_UNIT_WORDS`) che nessuno aveva sbagliato.
+#: Qui la seconda parola si LEGGE dal testo e non entra in nessuna lista: a
+#: valle arriva una chiave normalizzata come prima, o esattamente cio' che
+#: arrivava prima.
+_QUALIFICATORE_UNITA = {
+    "cubo": "3", "cubi": "3", "cubico": "3", "cubici": "3",
+    "cubic": "3", "cubica": "3", "cubiche": "3",
+    "quadro": "2", "quadri": "2", "quadrato": "2", "quadrati": "2",
+    "square": "2", "quadrata": "2", "quadrate": "2",
+}
+#: ⚠️ LE CHIAVI SONO LE FORME **NORMALIZZATE**, non quelle scritte: `norm_unit`
+#: gira prima. Le ho lette dal prodotto invece di dedurle, e tre non erano quelle
+#: che avrei scritto a memoria — «inches» -> `inche`, «piedi» -> `piedo`,
+#: «feet» -> `feet` (il plurale irregolare non si tocca).
+_TESTA_UNITA = {
+    "metro": "m", "meter": "m", "metre": "m",
+    "piede": "ft", "piedo": "ft", "foot": "ft", "feet": "ft",
+    "pollice": "in", "pollici": "in", "inch": "in", "inche": "in",
+}
+_PAROLA_DOPO_RE = re.compile(r"\s{0,3}([^\W\d_]+)")
+
+#: La GRANDEZZA di un'unita', per le sole unita' che questo modulo compone o
+#: riconosce come abbreviazioni correnti. Serve a una domanda sola: «queste due
+#: unita' misurano cose diverse?». Non e' una tavola di conversione e non deve
+#: diventarlo: qui non si converte niente, si distingue soltanto.
+_GRANDEZZA = {
+    "m2": "area", "mq": "area", "ft2": "area", "in2": "area",
+    "m3": "volume", "mc": "volume", "ft3": "volume", "in3": "volume",
+}
+
+
+def _unita_composta(claim: str, unit_s: str, fine: int) -> str | None:
+    """La chiave dell'unita' COMPOSTA, se le due parole ne nominano una.
+
+    Rende ``None`` quando non c'e' nulla da comporre — e allora il chiamante usa
+    `norm_unit` come sempre. Non tocca il caso normale.
+    """
+    if not unit_s or fine < 0:
+        return None
+    prima = norm_unit(unit_s)
+    dopo_m = _PAROLA_DOPO_RE.match(claim, fine)
+    if not dopo_m:
+        return None
+    dopo = norm_unit(dopo_m.group(1))
+    #: italiano: testa + qualificatore   («metri cubi»)
+    if prima in _TESTA_UNITA and dopo in _QUALIFICATORE_UNITA:
+        return _TESTA_UNITA[prima] + _QUALIFICATORE_UNITA[dopo]
+    #: inglese: qualificatore + testa    («cubic meters»)
+    if prima in _QUALIFICATORE_UNITA and dopo in _TESTA_UNITA:
+        return _TESTA_UNITA[dopo] + _QUALIFICATORE_UNITA[prima]
+    return None
+
+
 def extract_quantities(text: str, *,
                        come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
@@ -1118,7 +1258,11 @@ def extract_quantities(text: str, *,
                                fonte quello non e' una citazione, e' contenuto
         _senza_identificatori  `cli.py-354-` e' il formato di `git grep -C`,
                                non un codice prodotto: `cli.py:100:` dava 100,
-                               `cli.py-354-` dava nulla
+                               `cli.py-354-` dava nulla. ⚠️ Dal 2026-09-13
+                               toglie anche l'ID NUDO (`78222643329e`), che e'
+                               la stessa classe senza il trattino: prima
+                               veniva spezzato alla lettera e il prefisso di
+                               cifre letto come quantita' assente dalla fonte
         _spans_dei_riferimenti «art. 15» in un CLAIM e' un puntatore a una
                                norma, non un valore da confrontare (28/08,
                                `29ab5544`). In una FONTE quel 15 e' contenuto:
@@ -1190,7 +1334,8 @@ def extract_quantities(text: str, *,
             val = float(num_s.replace(",", "."))
         except ValueError:  # pragma: no cover — regex guarantees numeric
             continue
-        out.add((norm_unit(unit_s), val))
+        out.add((_unita_composta(claim, unit_s, m.end(2) if m.group(2) else -1)
+                 or norm_unit(unit_s), val))
     return out
 
 
@@ -1560,6 +1705,19 @@ def conflict_from_parts(
         for (ub, vb) in qb:
             if ua == ub and va != vb:
                 return (ua, va, vb)
+            #: STESSA cifra, GRANDEZZA diversa — «400 metri cubi» contro una
+            #: fonte che dice «400 mq». Il contratto storico («valore diverso,
+            #: stessa unita'») non lo vedeva, e fino al 19/09 nemmeno poteva:
+            #: l'estrattore rendeva `metro` per entrambi.
+            #: ⚠️ SI ACCUSA SOLO QUANDO ENTRAMBE LE UNITA' SONO NOTE e nominano
+            #: grandezze diverse. Due unita' sconosciute, o una sola nota, o un
+            #: numero NUDO nella fonte non sono un conflitto: sarebbe inventare.
+            #: Il perimetro e' ristretto **e dichiarato** (`_GRANDEZZA`), perche'
+            #: un normalizzatore di unita' senza confini diventa un dizionario
+            #: infinito che tace sul primo caso che non conosce.
+            if (ua != ub and _GRANDEZZA.get(ua) and _GRANDEZZA.get(ub)
+                    and _GRANDEZZA[ua] != _GRANDEZZA[ub]):
+                return (f"{ua}/{ub}", va, vb)
     return None
 
 
@@ -1688,7 +1846,12 @@ _VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
 _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 
 #: L'inizio di una frase, dove la maiuscola e' punteggiatura e non un nome.
-_APRE_LA_FRASE_RE = re.compile(r"(?:^|[.;:!?\n]\s*|^\s*[-•*]\s*)([A-Z][a-zA-Z]{2,})")
+#: ⏱️ TETTI (CodeQL alert 1275): `\n` sta sia nella classe dei delimitatori sia
+#: in `\s*`, e quell'ambiguita' fa riprovare il motore a ogni capo riga —
+#: **486,8 ms** su 8000 newline. Otto spazi dopo un delimitatore e trentadue
+#: lettere per una parola sono generosi, e l'equivalenza e' nel banco.
+_APRE_LA_FRASE_RE = re.compile(
+    r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})([A-Z][a-zA-Z]{2,32})")
 
 def _nomi_propri(testo: str) -> set[str]:
     """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.

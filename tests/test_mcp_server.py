@@ -1175,16 +1175,54 @@ async def test_call_tool_import_conversations_list_and_consent(
 @pytest.mark.asyncio
 async def test_call_tool_document_promote_chunk(
         monkeypatch: pytest.MonkeyPatch, tmp_path, fake_agent: _FakeAgent) -> None:
-    """chunk -> gated Fact via MCP: model_claim + exact file citation."""
+    """chunk -> gated Fact via MCP: model_claim + exact file citation.
+
+    ⚠️ RISCRITTO PER T191, e il perche' conta piu' del come. La versione
+    precedente passava `text` e `source_id/start/end` DIRETTAMENTE al tool
+    senza che nessun documento fosse mai stato indicizzato — `atti/rogito.txt`
+    non esisteva. Provava la cosa giusta (chunk -> fatto con la citazione
+    esatta) per una strada che era il difetto: la porta credeva al testo del
+    chiamante, e da li' un client senza alcun documento faceva entrare
+    un'auto-attestazione come `model_claim` con una provenienza inventata
+    (`file:documento-che-non-esiste.md:0-60`).
+
+    Ora il documento si indicizza davvero e le coordinate arrivano dal
+    `search`, come le userebbe un utente: **indicizza -> cerca -> promuovi**.
+    Il contratto verificato e' lo stesso di prima; cambia che la strada e'
+    quella vera, e il test e' diventato end-to-end dalla porta.
+    """
+    import verimem.document_index as di
     from verimem.semantic import SemanticMemory
 
+    monkeypatch.setenv("HIPPO_DOCINDEX_DB", str(tmp_path / "docidx.db"))
+    monkeypatch.setenv("ENGRAM_DOC_ROOTS", str(tmp_path))
+    monkeypatch.setattr(di, "_DefaultEmbedder", _FakeDocEmbedder)  # no model load
     fake_agent.semantic = SemanticMemory(db_path=tmp_path / "s.db")
+
+    filler = "Le clausole accessorie restano invariate per tutta la durata. " * 6
+    rogito = "Il rogito della casa di Albi risale al 12 marzo 2019. "
+    atto = tmp_path / "rogito.txt"
+    atto.write_text(filler + rogito + filler, encoding="utf-8")
+    r = json.loads((await _invoke_tool(
+        "hippo_document_index_file", {"path": str(atto)}))[0])
+    assert r.get("chunks_indexed", 0) >= 1, r
+
+    hits = json.loads((await _invoke_tool(
+        "hippo_document_semantic_search",
+        {"query": "rogito casa Albi marzo 2019", "k": 3}))[0])
+    assert hits, "semantic search must return the indexed chunk"
+    # Si sceglie il chunk che CONTIENE la frase, non `hits[0]`: l'embedder del
+    # test e' un bag-of-words e l'ordine non e' il punto di questa cella.
+    top = next((h for h in hits if "rogito" in h["text"].lower()), None)
+    assert top is not None, f"nessun hit contiene la frase: {[h['text'][:40] for h in hits]}"
+
     out = json.loads((await _invoke_tool("hippo_document_promote_chunk", {
-        "text": "Il rogito della casa di Albi risale al 12 marzo 2019.",
-        "source_id": "atti/rogito.txt", "start": 224, "end": 279, "version": 1,
+        "text": top["text"], "source_id": top["source_id"],
+        "start": top["start"], "end": top["end"], "version": top["version"],
         "claim": "Il rogito della casa di Albi e del 12 marzo 2019."}))[0])
-    assert out["stored"] is True
-    assert out["citation"] == "file:atti/rogito.txt:224-279"
+    assert out["stored"] is True, out
+    assert out["citation"] == (
+        f"file:{top['source_id']}:{top['start']}-{top['end']}")
     f = fake_agent.semantic.get(out["fact_id"])
     assert f.status == "model_claim" and "12 marzo 2019" in f.proposition
 

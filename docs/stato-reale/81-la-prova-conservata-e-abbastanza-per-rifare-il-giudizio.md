@@ -1,6 +1,6 @@
 # La prova conservata basta a rifare il giudizio? Sì al tetto di oggi, no se lo si abbassa
 
-**02/09/2026, 12:55 · ws6/Aldo · muro M6, anelli ①②③ · banchi `ws6-m6-*.py`**
+**02/09/2026, 12:55 · ws6/Dati · muro M6, anelli ①②③ · banchi `ws6-m6-*.py`**
 
 Il muro M6 era *«su 9426 fatti che dichiarano una fonte, 1692 non ne conservano
 il testo»*. L'anello ① l'ha riprodotto e **spaccato in due**: la fonte perduta è

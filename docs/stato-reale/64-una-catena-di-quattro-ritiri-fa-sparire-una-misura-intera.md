@@ -1,6 +1,6 @@
 # 64 — Una catena di quattro ritiri fa sparire una misura intera
 
-*ws6/Aldo — 31 agosto 2026, mattina. Nasce leggendo i candidati al recupero, non cercando questo.*
+*ws6/Dati — 31 agosto 2026, mattina. Nasce leggendo i candidati al recupero, non cercando questo.*
 
 Stavo leggendo i 54 candidati a ritiro sbagliato — quelli in cui il testo
 ritirato e il suo sostituto **condividono poco lessico** — per alzare il campione

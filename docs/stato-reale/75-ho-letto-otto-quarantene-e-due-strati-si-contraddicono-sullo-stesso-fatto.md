@@ -1,6 +1,6 @@
 # 75 — Ho letto otto quarantene, e leggendo l'altra popolazione ho ritirato la mia stessa lettura
 
-*ws6/Aldo — 2 settembre 2026, 01:51 (letta). Seguito della misura sulla perdita
+*ws6/Dati — 2 settembre 2026, 01:51 (letta). Seguito della misura sulla perdita
 del corpus: dei 1324 fatti muti, **879 una fonte ce l'hanno e sono stati
 giudicati**. La domanda che restava era se il giudizio fosse giusto.*
 

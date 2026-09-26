@@ -99,8 +99,16 @@ def test_multiple_requests_one_connection(server):
 
 
 def test_embedding_uses_service_when_available(monkeypatch, tmp_path):
+    # T86 (2026-09-13): il finto serve la TAGLIA del modello attivo, con i tre
+    # valori riconoscibili in testa. Dal 13/09 il client rifiuta una risposta
+    # lunga diversamente da `CONFIG.embedding_dim` — tre valori scrivevano un
+    # fatto che il `recall` non rende mai. Qui il doppio è stato reso
+    # realistico: l'asserto che conta resta «il vettore viene DAL SERVIZIO»,
+    # ed è la testa a dirlo.
+    _riconoscibile = [9.0, 8.0, 7.0]
+    _lungo = _riconoscibile + [0.0] * (embedding.CONFIG.embedding_dim - 3)
     srv = encode_service.EncodeServer(
-        encode_fn=lambda t: [9.0, 8.0, 7.0],
+        encode_fn=lambda t: list(_lungo),
         discovery_path=tmp_path / "d.json",
         model_name="t",
     )
@@ -120,7 +128,9 @@ def test_embedding_uses_service_when_available(monkeypatch, tmp_path):
         monkeypatch.delenv("ENGRAM_ENCODE_SERVICE", raising=False)
         embedding._reset_model_for_tests()  # clear the single-text encode cache
         vec = embedding.encode("svc-unique-query-1")
-        assert vec.tolist() == [9.0, 8.0, 7.0]
+        assert vec.tolist()[:3] == _riconoscibile, (
+            "il vettore non viene dal servizio: il client è ripiegato in casa")
+        assert len(vec) == embedding.CONFIG.embedding_dim
     finally:
         srv.stop()
         thread.join(timeout=2)

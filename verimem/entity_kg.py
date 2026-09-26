@@ -20,7 +20,6 @@ import sqlite3
 import threading
 import time
 import unicodedata
-import uuid
 from collections.abc import Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass, field
@@ -34,6 +33,7 @@ import networkx as nx
 
 from ._sqlite_pragma import read_connection
 from .config import CONFIG
+from .ids import id_nuovo
 
 _SCHEMA = """
 -- Schema v3: name_norm/alias_norm sono Python-lowered (str.lower(),
@@ -447,7 +447,7 @@ def _migrate_v5_entity_edges(conn: sqlite3.Connection) -> None:
 class Entity:
     canonical_name: str = ""
     type: str = ""
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    id: str = field(default_factory=lambda: id_nuovo(12))
     created_at: float = field(default_factory=time.time)
 
 

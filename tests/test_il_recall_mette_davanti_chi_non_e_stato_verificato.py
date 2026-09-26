@@ -33,8 +33,8 @@ import sqlite3
 
 import pytest
 
-from verimem.fuse_recall import _DEFAULT_SIGNALS
-from verimem.rank_list_builders import confidence_rank
+from attic.fuse_recall import _DEFAULT_SIGNALS
+from attic.rank_list_builders import confidence_rank
 
 
 def _store_minimo(path):

@@ -1,6 +1,6 @@
 # La popolazione che `02i` chiedeva di misurare: **36 fatti su 14.472**
 
-*ws3 (Galileo), 27/08 sera. Misura in sola lettura sullo store reale, nessuna
+*ws3 (Ricerca), 27/08 sera. Misura in sola lettura sullo store reale, nessuna
 scrittura. Chiude una domanda aperta — e la risposta sconsiglia la cura che la
 accompagnava.*
 

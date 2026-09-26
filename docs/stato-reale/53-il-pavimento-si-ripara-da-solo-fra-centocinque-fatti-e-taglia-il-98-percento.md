@@ -1,6 +1,6 @@
 # 53 — Il pavimento si ripara da solo fra 105 fatti, e quel giorno l'avviso si accende sul 98% delle risposte
 
-*ws6/Aldo — 31 agosto 2026, notte. Seguito diretto del [48](48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md).*
+*ws6/Dati — 31 agosto 2026, notte. Seguito diretto del [48](48-ventitre-minuti-senza-daemon-hanno-spento-una-promessa-del-readme.md).*
 
 > ✍️ **Il nome del file dice ancora «taglia il 98%», e il titolo no.** Ho
 > pubblicato questo documento alle 01:20 con quel verbo; alle 01:45, leggendo il

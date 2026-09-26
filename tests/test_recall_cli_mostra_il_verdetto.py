@@ -77,3 +77,36 @@ def test_un_punteggio_basso_non_si_confonde_con_uno_alto():
 def test_non_si_rompe_su_una_riga_incompleta(hit):
     """Una lettura non deve mai cadere per come e' fatto un hit."""
     assert isinstance(riga_di_recall(hit), str)
+# --- la versione superata si riconosce (T56, cella 2) -----------------------
+
+
+def test_una_versione_superata_lo_dice_e_nomina_chi_la_sostituisce():
+    """Chiedendo anche i superati arrivano DUE risposte alla stessa domanda:
+    senza un segno, chi legge ha due valori e nessun ordine.
+
+    Il campo esisteva gia' nel dizionario dell'SDK (`_fact_view` porta
+    `superseded_by`, `None` quando il fatto e' vivo); a mancare era la riga
+    che l'utente legge. Si pretende il segno E l'id del successore: senza
+    l'id il segno dice «questa e' vecchia» e non «ecco quella nuova».
+    """
+    r = _piano(riga_di_recall({"text": FATTO, "score": 0.9,
+                               "grounding_score": 94.5,
+                               "superseded_by": "a8b1b7d03471cafe"}))
+    assert "superseded by" in r, r
+    assert "a8b1b7d0" in r, r
+    assert "8443" in r, "il fatto deve restare leggibile: " + r
+
+
+def test_CONTROLLO_un_fatto_VIVO_non_porta_quel_segno():
+    """⚠️ IL NEGATIVO, senza il quale il test sopra passerebbe anche con un
+    segno stampato SEMPRE — e la riga di tutti i giorni direbbe a ogni
+    risposta che e' superata. `superseded_by` e' presente e vale `None` sui
+    fatti vivi: e' `None` che deve restare muto, non l'assenza della chiave.
+    """
+    vivo = _piano(riga_di_recall({"text": FATTO, "score": 0.9,
+                                  "grounding_score": 94.5,
+                                  "superseded_by": None}))
+    assert "superseded" not in vivo, vivo
+    senza_chiave = _piano(riga_di_recall({"text": FATTO, "score": 0.9,
+                                          "grounding_score": 94.5}))
+    assert "superseded" not in senza_chiave, senza_chiave

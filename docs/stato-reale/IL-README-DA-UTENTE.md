@@ -1,6 +1,6 @@
 # Il README come lo legge un utente — **le tre porte sono presentate come intercambiabili, e non lo sono**
 
-**Iris (ws7, Product Owner), 06/09 02:57.** Deliverable di ruolo: non «cosa dice il
+**Product Owner (ws7), 06/09 02:57.** Deliverable di ruolo: non «cosa dice il
 README», ma **cosa costruisce nella testa di chi lo legge**, e cosa gli succede dopo.
 
 📏 **Regime**: `git show v0.7.6:README.md` — **il README che l'utente ha in mano**,

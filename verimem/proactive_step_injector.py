@@ -40,7 +40,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .briefing import get_briefing
+from verimem.briefing import get_briefing
 
 
 class StepInjector:

@@ -28,11 +28,11 @@ import json
 import os
 import sqlite3
 import time
-import uuid
 from dataclasses import dataclass, field
 from pathlib import Path
 
 from .config import CONFIG
+from .ids import id_nuovo
 
 
 def _content_hash(content: str) -> str:
@@ -51,7 +51,7 @@ class Document:
     content_hash: str = ""
     version: int = 0
     fetched_at: float = 0.0
-    id: str = field(default_factory=lambda: uuid.uuid4().hex[:16])
+    id: str = field(default_factory=lambda: id_nuovo(16))
 
 
 def default_db_path() -> Path:
@@ -152,7 +152,7 @@ class DocumentStore:
                 (source_id,),
             ).fetchone()
             version = int(row["m"]) + 1
-            doc_id = uuid.uuid4().hex[:16]
+            doc_id = id_nuovo(16)
             m = dict(meta or {})
             if principal is not None:
                 m["indexed_by"] = principal
