@@ -1,47 +1,54 @@
-"""T120 — chi apre uno store non deve cambiarlo. Quattro porte, quattro celle.
+"""Aprire uno store non deve cambiare IL NUCLEO (D-0009).
 
-⚠️ QUESTE CELLE SONO ROSSE OGGI, DI PROPOSITO, e non vanno committate finché la
-cura non c'è: sono il RED di T120, tenuto fuori dal ramo per non spedire un
-banco che fallisce. Misurato il 19/09 su copie di uno store a v16:
+⚠️ LA GRANDEZZA MISURATA QUI È IL NUCLEO, NON IL FILE, e la differenza non è
+una sfumatura: misurando i byte, quattro costruttrici su quattro risultano
+colpevoli; misurando le sei tabelle del nucleo, una sola lo è.
 
-    adjudication_log.AdjudicationLog     CAMBIA  77.824 -> 102.400 byte  v16 -> 16
-    decay_job._ensure_last_decay_column  CAMBIA  77.824 ->  81.920 byte  v16 -> 16
-    gateway.GatewayKeys                  CAMBIA  77.824 ->  90.112 byte  v16 -> 16
-    document_index.DocumentIndex         CAMBIA  77.824 ->  94.208 byte  v16 -> 16
+    costruttore                          NUCLEO    tabelle proprie aggiunte
+    adjudication_log.AdjudicationLog     intatto   adjudications
+    decay_job._ensure_last_decay_column  CAMBIA    (nessuna) -> facts: last_decay_at
+    gateway.GatewayKeys                  intatto   gateway_keys
+    document_index.DocumentIndex         intatto   chunks, sqlite_sequence
 
-Le quattro eseguono DDL fuori dalla scala delle migrazioni, quindi
-`ensure_schema_version` non le vede e il rifiuto della fetta 3 non le tocca. E
-la versione dichiarata NON cambia: lo schema si muove e il numero resta fermo —
-T121 col segno rovesciato.
+Tre sono CO-INQUILINE: creano la propria tabella nello stesso file SQLite. Il
+file cresce, il nucleo resta identico, e vietarlo sarebbe una cura contro un
+comportamento legittimo. Le loro celle qui sono verdi e servono da presidio: se
+un domani una di loro tocca `facts`, questo banco lo dice prima della CI.
 
-Il negativo di ogni cella è nella cella stessa: se il file NON cambia bisogna
-prima escludere che il costruttore non sia stato invocato affatto, e per questo
-ognuna verifica anche che qualcosa sia stato costruito.
+Una sola aggiunge una colonna a `facts` fuori dalla scala delle migrazioni, e
+quella è la violazione: la scala non la vede, quindi la versione dichiarata
+resta ferma mentre lo schema si muove.
 """
 from __future__ import annotations
 
-import hashlib
 import sqlite3
 from pathlib import Path
 
 import pytest
 
+from verimem.schema import TABELLE_DEL_NUCLEO
+
 
 def _store_a_versione(tmp_path: Path, versione: int = 16) -> Path:
-    """Uno store con le tabelle del nucleo e una versione dichiarata.
+    """Uno store con una tabella del nucleo e una versione dichiarata.
 
-    Costruito qui e non copiato da `~/.engram`: un banco non tocca lo store di
-    nessuno, nemmeno in lettura. Il righello che misura sul campo vive nello
-    studio (`strumenti/chi_muta_aprendo.py`) e lavora solo su copie.
+    Costruito qui e non copiato da uno store vero: un banco non tocca lo store
+    di nessuno, nemmeno in lettura.
+
+    La tabella delle versioni si crea col DDL DEL PRODOTTO e non a mano: una
+    copia qui dentro diverge in silenzio dall'originale, e il primo rosso di
+    questo banco è stato proprio quello — `no such column: upgraded_at`, cioè
+    una cella rossa per un difetto suo invece che del prodotto.
     """
+    from verimem.migrations import _VERSION_TABLE_DDL
+
     p = tmp_path / "semantic.db"
     con = sqlite3.connect(p)
     con.execute("CREATE TABLE facts (id TEXT PRIMARY KEY, proposition TEXT, "
                 "topic TEXT, created_at REAL)")
     con.execute("INSERT INTO facts (id, proposition, topic, created_at) "
-                "VALUES ('uno', 'La soglia vale 19.0s.', 'prova/t120', 0.0)")
-    con.execute("CREATE TABLE _schema_version (db_id TEXT PRIMARY KEY, "
-                "version INTEGER NOT NULL)")
+                "VALUES ('uno', 'La soglia vale 19.0s.', 'prova/nucleo', 0.0)")
+    con.execute(_VERSION_TABLE_DDL)
     con.execute("INSERT INTO _schema_version (db_id, version) VALUES ('semantic', ?)",
                 (versione,))
     con.commit()
@@ -49,9 +56,25 @@ def _store_a_versione(tmp_path: Path, versione: int = 16) -> Path:
     return p
 
 
-def _impronta(p: Path) -> tuple[int, str]:
-    dati = p.read_bytes()
-    return len(dati), hashlib.sha256(dati).hexdigest()
+def _impronta_del_nucleo(p: Path) -> dict[str, tuple[str, ...]]:
+    """Le tabelle del nucleo presenti e le loro colonne. Nient'altro.
+
+    Quello che una co-inquilina aggiunge di suo NON entra qui: è la ragione per
+    cui questo righello dà un verdetto diverso da uno che pesa il file.
+    """
+    con = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+    try:
+        presenti = {
+            nome for (nome,) in con.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table'")
+            if nome in TABELLE_DEL_NUCLEO
+        }
+        return {
+            nome: tuple(r[1] for r in con.execute(f'PRAGMA table_info("{nome}")'))
+            for nome in sorted(presenti)
+        }
+    finally:
+        con.close()
 
 
 def _versione(p: Path) -> int | None:
@@ -64,29 +87,58 @@ def _versione(p: Path) -> int | None:
         con.close()
 
 
-def _apre_senza_mutare(p: Path, apri) -> None:
-    """Il contratto, uguale per tutte e quattro: aprire non cambia il file."""
-    prima = _impronta(p)
+def _apre_senza_toccare_il_nucleo(p: Path, apri) -> None:
+    """Il contratto: aprire può aggiungere roba propria, non toccare il nucleo."""
+    prima = _impronta_del_nucleo(p)
     versione_prima = _versione(p)
 
     apri(p)
 
-    dopo = _impronta(p)
-    assert dopo == prima, (
-        f"aprire ha cambiato il file: {prima[0]} -> {dopo[0]} byte, "
-        f"sha {prima[1][:12]} -> {dopo[1][:12]}. Chi apre uno store per leggerlo "
-        f"non deve riscriverne lo schema — e la versione dichiarata è passata da "
-        f"{versione_prima} a {_versione(p)}, cioè il numero non racconta il cambio."
-    )
+    dopo = _impronta_del_nucleo(p)
+    if dopo != prima:
+        cambiate = {
+            t: set(dopo.get(t, ())) ^ set(prima.get(t, ()))
+            for t in set(prima) | set(dopo)
+            if prima.get(t) != dopo.get(t)
+        }
+        raise AssertionError(
+            f"aprire ha cambiato il nucleo: {cambiate}. Chi apre uno store non "
+            f"deve riscriverne lo schema fuori dalla scala delle migrazioni — e "
+            f"la versione dichiarata è passata da {versione_prima} a "
+            f"{_versione(p)}, cioè il numero non racconta il cambio")
 
 
-def test_il_registro_delle_aggiudicazioni_apre_senza_mutare(tmp_path: Path) -> None:
+def test_il_registro_delle_aggiudicazioni_non_tocca_il_nucleo(tmp_path: Path) -> None:
+    """Verde oggi: crea `adjudications`, che è roba sua. Presidio per domani."""
     from verimem.adjudication_log import AdjudicationLog
 
-    _apre_senza_mutare(_store_a_versione(tmp_path), lambda p: AdjudicationLog(p))
+    _apre_senza_toccare_il_nucleo(_store_a_versione(tmp_path),
+                                  lambda p: AdjudicationLog(p))
 
 
-def test_la_potatura_apre_senza_mutare(tmp_path: Path) -> None:
+def test_le_chiavi_del_gateway_non_toccano_il_nucleo(tmp_path: Path) -> None:
+    """Verde oggi: crea `gateway_keys`, che è roba sua. Presidio per domani."""
+    from verimem.gateway import GatewayKeys
+
+    _apre_senza_toccare_il_nucleo(_store_a_versione(tmp_path), lambda p: GatewayKeys(p))
+
+
+def test_l_indice_dei_documenti_non_tocca_il_nucleo(tmp_path: Path) -> None:
+    """Verde oggi: crea `chunks`, che è roba sua. Presidio per domani."""
+    from verimem.document_index import DocumentIndex
+
+    _apre_senza_toccare_il_nucleo(_store_a_versione(tmp_path),
+                                  lambda p: DocumentIndex(db_path=p))
+
+
+def test_la_potatura_non_aggiunge_colonne_al_nucleo_di_nascosto(tmp_path: Path) -> None:
+    """ROSSO: aggiunge `facts.last_decay_at` fuori dalla scala.
+
+    La colonna serve — senza, ogni passata ricalcola da `created_at` e il
+    corpus collassa al pavimento. Non è la colonna a essere sbagliata: è che
+    nasce fuori dalla scala, quindi `_schema_version` non la racconta e due
+    store alla stessa versione dichiarata possono avere schemi diversi.
+    """
     from verimem.decay_job import _ensure_last_decay_column
 
     def apri(p: Path) -> None:
@@ -97,98 +149,85 @@ def test_la_potatura_apre_senza_mutare(tmp_path: Path) -> None:
         finally:
             con.close()
 
-    _apre_senza_mutare(_store_a_versione(tmp_path), apri)
+    _apre_senza_toccare_il_nucleo(_store_a_versione(tmp_path), apri)
 
 
-def test_le_chiavi_del_gateway_aprono_senza_mutare(tmp_path: Path) -> None:
-    from verimem.gateway import GatewayKeys
+def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
+        tmp_path: Path) -> None:
+    """ROSSO: la stampa cieca a un passo promuove 16 -> 17 senza le colonne.
 
-    _apre_senza_mutare(_store_a_versione(tmp_path), lambda p: GatewayKeys(p))
+    ⚠️ La stampa cieca è DELIBERATA e il commento nel prodotto la difende
+    («the legitimate no-DDL-yet case»): su un bootstrap fresco non c'è DDL da
+    applicare e stampare è giusto. Il difetto non è che esista, è che nessuno
+    verifichi il presupposto — e `schema_corrisponde()` sa verificarlo.
 
-
-def test_l_indice_dei_documenti_apre_senza_mutare(tmp_path: Path) -> None:
-    from verimem.document_index import DocumentIndex
-
-    _apre_senza_mutare(_store_a_versione(tmp_path), lambda p: DocumentIndex(db_path=p))
-
-
-def test_la_scala_delle_migrazioni_non_migra_senza_che_glielo_chiedano(tmp_path: Path) -> None:
-    """La predizione della fetta 3b, dove il cambio deve fermarsi (D-0009).
-
-    È la cella principale: `ensure_schema_version` è il punto in cui la
-    migrazione AVVIENE, e con il cablaggio deve rifiutare invece di applicare.
-    Misurato oggi su una copia a v16 con `target=17`: la dimensione resta
-    77.824 byte ma lo sha cambia (`7c6cd1c9869f` -> `c07482c27923`) e la
-    versione passa a 17 — cioè il file è stato riscritto e il numero promosso
-    senza che nessuno l'abbia chiesto.
-
-    ⚠️ Il salto di UN passo è l'unico che ci arriva: due o più il codice li
-    rifiuta già («migration ladder is not contiguous», misurato su 16->18 e
-    16->25). La cura non deve riscrivere quella difesa, solo chiudere il passo
-    che le sfugge.
+    Il salto di UN passo è l'unico che ci arriva: due o più il codice li
+    rifiuta già («migration ladder is not contiguous»). La cura non deve
+    riscrivere quella difesa, solo chiudere il passo che le sfugge.
     """
     from verimem.migrations import ensure_schema_version
 
     p = _store_a_versione(tmp_path, versione=16)
-    prima = _impronta(p)
+    prima = _impronta_del_nucleo(p)
 
     con = sqlite3.connect(p)
     try:
-        ensure_schema_version(con, db_id="semantic", target_version=17, migrations=[])
+        ensure_schema_version(con, db_id="semantic", target_version=17,
+                              migrations=[])
     finally:
         con.close()
 
-    assert _impronta(p) == prima, (
-        f"la scala ha migrato un file senza che nessuno lo chiedesse: la versione "
-        f"è passata da 16 a {_versione(p)} e lo schema non è cambiato di "
-        f"conseguenza — il numero promosso senza le colonne che lo sostengono"
-    )
+    assert _versione(p) == 16, (
+        f"la scala ha promosso la versione a {_versione(p)} applicando zero "
+        f"DDL: le colonne della 17 non ci sono ({prima.get('facts')}), quindi "
+        f"il numero dichiara uno schema che il file non ha")
 
 
 def test_la_versione_del_nucleo_ha_sempre_un_criterio() -> None:
-    """Presidio: se il nucleo sale di versione, la mappa delle attese deve seguirlo.
+    """Presidio: se il nucleo sale di versione, la mappa delle attese lo segue.
 
-    ⚠️ Questa cella è VERDE oggi e serve per domani. `schema_corrisponde` torna
-    False quando non ha un criterio per una versione — scelta giusta — ma
-    significa che alzare `VERSIONE_DEL_NUCLEO` a 18 senza aggiungere la voce 18
-    ad `ATTESE_PER_VERSIONE` spegne `marca()` IN SILENZIO: rifiuterebbe sempre,
-    con un messaggio corretto («non ho un criterio per la 18») che nessuno sta
-    leggendo mentre cambia un numero.
-
-    Il limite oggi è dichiarato e accettato — la mappa conosce solo la 17, per
-    due colonne — e la fetta 3b lo estende quando sposta le DDL. Fino ad allora
-    è questa cella a tenerlo fermo.
+    `schema_corrisponde` torna False quando non ha un criterio per una versione
+    — scelta giusta — ma significa che alzare `VERSIONE_DEL_NUCLEO` a 18 senza
+    aggiungere la voce 18 ad `ATTESE_PER_VERSIONE` spegne in silenzio chi si
+    appoggia a lei, con un messaggio corretto che nessuno sta leggendo mentre
+    cambia un numero.
     """
     from verimem.schema import ATTESE_PER_VERSIONE, VERSIONE_DEL_NUCLEO
 
     assert VERSIONE_DEL_NUCLEO in ATTESE_PER_VERSIONE, (
         f"il codice dichiara la versione {VERSIONE_DEL_NUCLEO} ma "
         f"`ATTESE_PER_VERSIONE` conosce solo {sorted(ATTESE_PER_VERSIONE)}: "
-        f"`marca()` rifiuterebbe ogni store, e il messaggio direbbe la verità "
-        f"a nessuno")
+        f"ogni store verrebbe rifiutato, e il messaggio direbbe la verità a "
+        f"nessuno")
     assert ATTESE_PER_VERSIONE[VERSIONE_DEL_NUCLEO], (
         "il criterio c'è ma è vuoto: un insieme vuoto è contenuto in qualunque "
         "schema, quindi `schema_corrisponde` direbbe sempre True")
 
 
-def test_il_banco_guarda_un_file_che_esiste_davvero(tmp_path: Path) -> None:
-    """CONTROLLO POSITIVO: se le quattro celle sopra diventassero verdi, questa
-    dice che non è perché il banco ha smesso di guardare.
+def test_il_righello_vede_una_colonna_vera(tmp_path: Path) -> None:
+    """CONTROLLO POSITIVO: se le celle sopra diventassero verdi, questa dice
+    che non è perché il righello ha smesso di guardare.
 
-    Un file costruito male, o un'impronta che non cambia mai, farebbe passare
-    tutto: qui si verifica che l'impronta SAPPIA cambiare."""
+    Un'impronta che non cambia mai farebbe passare tutto. Qui si verifica che
+    sappia cambiare — e che guardi il NUCLEO: la tabella aggiunta da una
+    co-inquilina non deve entrarci, o il verdetto tornerebbe quello sbagliato.
+    """
     p = _store_a_versione(tmp_path)
-    prima = _impronta(p)
+    base = _impronta_del_nucleo(p)
 
     con = sqlite3.connect(p)
-    con.execute("CREATE TABLE prova_del_banco (x INTEGER)")
+    con.execute("ALTER TABLE facts ADD COLUMN prova_del_banco TEXT")
+    con.execute("CREATE TABLE roba_di_un_co_inquilino (x INTEGER)")
     con.commit()
     con.close()
 
-    assert _impronta(p) != prima, (
-        "l'impronta non è cambiata nemmeno creando una tabella: il misuratore è "
-        "rotto, e le quattro celle sopra non provano niente")
-    assert _versione(p) == 16, "e la versione si legge"
+    dopo = _impronta_del_nucleo(p)
+    assert dopo != base, (
+        "l'impronta non è cambiata nemmeno aggiungendo una colonna a `facts`: "
+        "il righello è cieco e le celle sopra non provano niente")
+    assert "roba_di_un_co_inquilino" not in dopo, (
+        "il righello ha contato una tabella che non è del nucleo: misurerebbe "
+        "il file invece dell'invariante, ed è l'errore che questo banco corregge")
 
 
 @pytest.mark.parametrize("nome", ["adjudication_log", "decay_job", "gateway",
