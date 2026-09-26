@@ -6,7 +6,8 @@ determinanti e gli ausiliari inglesi, e nessun gerundio. Sulle memorie estratte 
 conversazioni inglesi vere «Both», «Being» e «Working» contavano come nomi propri, e sul
 riconoscitore si reggono il confronto «stesso soggetto?» di `quantity_match` e il controllo
 dei nomi che la fonte non ha. Sullo store vero, 184 fatti su 18388 aprivano con un gerundio
-italiano contato come nome.
+italiano contato come nome. E il 26/09, sempre sullo store vero, il lato italiano delle
+aperture: «Nell'», «Sull'», «Senza», «Due», «Questo» contavano come nomi propri.
 
 Le frasi qui sono scritte apposta, della stessa forma di quelle misurate: il testo delle
 conversazioni vere ha una licenza che non entra in questo repository.
@@ -29,6 +30,11 @@ NON_SONO_NOMI = [
     ("However, Nora won the regional tournament.", "However", {"Nora"}),
     ("Scrivendo il test ho trovato il difetto in Verimem.", "Scrivendo", {"Verimem"}),
     ("Cercando nel registro, Aldo ha visto la riga.", "Cercando", {"Aldo"}),
+    # il lato italiano, misurato sullo store vero il 26/09: elisione, preposizioni, numeri
+    ("Nell'ultimo turno Aldo ha visto la riga.", "Nell", {"Aldo"}),
+    ("Senza fonte Marco non scrive il fatto.", "Senza", {"Marco"}),
+    ("Due volte Luca ha rifatto il conto.", "Due", {"Luca"}),
+    ("Questo test di Nadia regge.", "Questo", {"Nadia"}),
 ]
 
 SONO_NOMI = [
@@ -39,6 +45,8 @@ SONO_NOMI = [
     ("Will joined the club in March.", {"Will", "March"}),
     ("May runs the bakery with Tom.", {"May", "Tom"}),
     ("John admires the defence of the Lakers.", {"John", "Lakers"}),
+    ("Otto ha chiuso la richiesta.", {"Otto"}),
+    ("Cento e' una citta' vicino a Ferrara.", {"Cento", "Ferrara"}),
 ]
 
 

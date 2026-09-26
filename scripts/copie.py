@@ -50,7 +50,7 @@ TETTI = {
     "def__signature": 5,
     "corpi__signature": 4,
     # 16 -> 18 il 25/09: le due liste del riconoscitore dei nomi propri
-    # (`quantity_match._APERTURE_INGLESI_NON_NOMI`, `_COMPLEMENTO_DEL_GERUNDIO`).
+    # (`quantity_match._APERTURE_NON_NOMI`, `_COMPLEMENTO_DEL_GERUNDIO`).
     # Nessuna delle 16 va bene, misurato: `soggetto_valore._FUNZIONALI` copre
     # 26 delle 179 aperture e `vicinato_del_valore._GRAMMATICA` 33, e tutte e
     # due contengono is/are/was/were/be, che come complemento del gerundio
