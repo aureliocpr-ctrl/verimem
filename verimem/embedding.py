@@ -200,6 +200,70 @@ def _delegate_only() -> bool:
     )
 
 
+def chiedi_un_daemon() -> None:
+    """Il delegato non c'e': si chiede un daemon, senza aspettarlo.
+
+    UNA funzione per tutti i punti che degradano per
+    ``EncodeDelegateUnavailable``. Il 09/09 la sveglia e' entrata in uno solo
+    dei quattro (la recall di ``semantic.py``), e il 24/09 otto scritture
+    sincrone di fila sono entrate senza vettore senza che nessuna chiedesse il
+    daemon: e' tornato quando un'altra chiamata, per altri motivi, l'ha
+    svegliato. Best-effort: svegliare e' un di piu', e un errore qui non deve
+    trasformare un differimento riuscito in una scrittura persa.
+    """
+    try:
+        from . import encode_service as _es
+        _es.ensure_running()
+    except Exception:  # noqa: BLE001 — svegliare non e' mai un obbligo
+        pass
+
+
+#: Ogni quanto, per ogni store, una lettura guarda se ci sono vettori da
+#: rifare: una SELECT con LIMIT, che costa poco ma non va fatta a ogni lettura.
+GUARIGIONE_OGNI_S = 30.0
+#: Quante righe una lettura rifa' PRIMA di rispondere: via daemon sono decine di
+#: millisecondi l'una, e la domanda che cerca proprio quei fatti li trova.
+GUARIGIONE_PER_LETTURA = 20
+_prossima_guarigione: dict[str, float] = {}
+_guarigione_lock = threading.Lock()
+
+
+def guarisci_se_il_daemon_c_e(chiave: str, ci_sono_righe_da_rifare, rifai) -> int:
+    """Rifa' i vettori rimasti indietro, SE il daemon adesso risponde.
+
+    Chi scrive senza daemon rinvia il vettore, e fino al 25/09 quel vettore
+    tornava solo all'avvio del prossimo server MCP (``self_heal``): otto fatti
+    scritti il 24/09 fra le 22:56 e le 22:59 sono rimasti invisibili alla
+    recall per significato fino al riavvio del giorno dopo, e in un processo
+    CLI o SDK non tornava mai. Adesso lo rifa' la prima lettura che trova il
+    daemon: ``GUARIGIONE_PER_LETTURA`` righe prima di rispondere, le altre alle
+    letture seguenti.
+
+    Solo via daemon (``daemon_usable``): mai il modello caricato in questo
+    processo per guarire, che e' il blocco che il rinvio esiste per evitare. Mai
+    un errore verso chi legge. ``chiave`` distingue gli store (e fatti da
+    episodi) nello stesso processo.
+    """
+    import time as _time
+    adesso = _time.monotonic()
+    with _guarigione_lock:
+        if adesso < _prossima_guarigione.get(chiave, 0.0):
+            return 0
+        _prossima_guarigione[chiave] = adesso + GUARIGIONE_OGNI_S
+    try:
+        if not ci_sono_righe_da_rifare():
+            return 0
+        from . import encode_service as _es
+        if not _es.daemon_usable():
+            return 0
+        return int(rifai(GUARIGIONE_PER_LETTURA) or 0)
+    except Exception as exc:  # noqa: BLE001 — guarire e' un di piu'
+        import logging
+        logging.getLogger(__name__).warning(
+            "guarigione dei vettori saltata (%s): %s", chiave, exc)
+        return 0
+
+
 _SERVICE_FALSY = {"0", "false", "no", "off"}
 
 
