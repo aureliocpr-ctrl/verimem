@@ -44,6 +44,12 @@ def promote_chunk_to_fact(
     topic: str = "documents/promoted",
     confidence: float = 0.5,
     embed: str | None = None,
+    #: 1b.3 — CHI sta scrivendo, dichiarato dal chiamante. La porta MCP passa
+    #: il suo `_MCP_PRINCIPAL`: senza, una promozione entrata da un agente
+    #: resta indistinguibile da una scrittura interna, ed e' proprio la
+    #: distinzione per cui quel timbro esiste. `None` lascia ad `add()` il suo
+    #: default, cosi' i chiamanti che non lo passano si comportano come prima.
+    principal: str | None = None,
 ) -> dict:
     """Store ``hit`` (a DocumentIndex search result) as a gated Fact.
 
@@ -51,7 +57,6 @@ def promote_chunk_to_fact(
     "error": str | None}``. Fail-safe: a gate rejection reports, never raises.
     """
     from .redaction import redact_secrets
-    from .semantic import Fact
 
     text = (claim if claim is not None else str(hit.get("text", ""))).strip()
     citation = chunk_citation(hit)
@@ -80,174 +85,134 @@ def promote_chunk_to_fact(
     # l'input che L4 vuole — source = il chunk, claim = la frase. Il caso d'uso
     # principale del modulo E' il caso d'uso principale del moat.
     chunk_text = str(hit.get("text", "") or "").strip()
-    stato = "model_claim"                  # a claim, never laundered truth
-    _trattenuto_da = ""                    # quale layer ha fermato, se uno ha fermato
-    punteggio = None
-    _warnings: list = []                   # gli avvisi del verdetto, per la causa
-    _agito: list[str] = []                 # i layer che hanno BLOCCATO
-    _moat = "passed"                       # il giudice: passed / failed
-    try:
-        from .anti_confab_gate import run_validation_gate
-        verdetto = run_validation_gate(
-            proposition=prop, verified_by=[citation], topic=topic,
-            agent=None, writer_role=PROMOTE_WRITER_ROLE,
-            source=chunk_text or None, ground_write=True,
-        )
-        punteggio = verdetto.grounding_score
-        # QUARANTINA QUANDO IL MOAT BOCCIA, non quando l'azione e'
-        # `downgrade`. La prima versione di questa riga guardava
-        # `action in ("reject","downgrade")` ed era SBAGLIATA: `downgrade`
-        # copre due situazioni diverse, e un test gia' in repo l'ha presa —
-        # «frase grezza spacciata per verificata senza prove» promossa con
-        # `status="verified"` da' `action=downgrade` con `grounding 98.78`,
-        # cioe' il contenuto e' implicato dalla fonte e a decadere e' solo lo
-        # STATUS. Trattarlo come una quarantena avrebbe nascosto un fatto
-        # buono per un difetto di provenienza, che `store()` gia' corregge da
-        # solo. Misurato: contraddetta 0.44 e confabulazione 0.38 sono
-        # `downgrade` quanto quella, e vanno trattenute — la differenza sta
-        # nel PUNTEGGIO, non nell'azione, e il verdetto porta la sua soglia.
-        _soglia = getattr(verdetto, "threshold", None)
-        # ...MA UN LAYER L1 NON E' UNA QUESTIONE DI PUNTEGGIO, e il criterio
-        # qui sopra non poteva vederlo. Misurato sul percorso reale (lo si e'
-        # isolato, io l'ho riprodotto):
-        #     «Ho verificato che la funzione ora funziona»   add() quarantined
-        #                                          promote() model_claim 99.9572
-        #     «Il modulo e' stato testato ed e' pronto»      99.9825
-        #     «Il bug e' stato risolto e il sistema e' stabile»  99.9840
-        #     quarantinati da add() 3/3  ·  SERVIBILI via promozione 3/3
-        # E il punteggio non e' un errore del moat: e' il piu' alto del corpus
-        # perche' la frase sta LETTERALMENTE dentro il documento, quindi la
-        # fonte la implica davvero.
-        # 🔑 La distinzione che mancava non e' fra punteggi: e' fra «il
-        # documento RIPORTA X» e «X e' vero». Per un dato oggettivo («il
-        # magazzino contiene 300 pallet») coincidono; per un'auto-attestazione
-        # no — il moat conferma la CITAZIONE, non il fatto.
-        # ⚠️ Non tocca la scelta documentata qui sopra, perche' non guarda
-        # l'azione: guarda DA QUALE LAYER viene il downgrade. Un `downgrade`
-        # da L4/provenienza resta ammesso (contenuto implicato, decade solo lo
-        # status); L1.x significa auto-attestazione senza prova, ed e' cio' che
-        # `facts add` cestina dall'altra porta. Presidi in
-        # test_il_vanto_entrava_dalla_porta_dei_documenti.py: i tre dati
-        # oggettivi dello stesso documento continuano a promuoversi.
-        # ⚠️ SOLO CON UN `claim` ESPLICITO, e la distinzione l'ha insegnata un
-        # test che veniva da main (test_il_chunk_grezzo_CONTINUA_a_passare):
-        # senza `claim` la proposizione E' IL CHUNK, cioe' il documento stesso,
-        # e un documento che contiene «la migrazione e' completa» non e'
-        # l'agente che rivendica un merito — e' un testo che riporta una frase.
-        # Applicarci L1 era lo stesso errore di categoria che ho curato ieri
-        # sul router di provenienza (F1 C2), rifatto da un'altra porta.
-        # Con `claim`, invece, chi promuove sta DISTILLANDO un'affermazione e se
-        # ne fa carico: li' L1 ha giurisdizione, ed e' il caso del vanto.
-        from .anti_confab_gate import _is_advisory_layer
-        _warnings = list(verdetto.warnings or [])
-        _layers = [str(w.get("layer", "")) for w in _warnings]
-        # UN MARCATORE `*-observe` NON E' UN LAYER IN PIU': dice che il gate ha
-        # TENUTO gli L1 che accompagna come avviso (precisione di dominio,
-        # default ON dal 22/07: soggetto di terzi). Qui cominciava per «L1» e
-        # veniva contato come blocco — misurato il 04/09 su una copia
-        # dell'indice vivo: 3 frasi VERE su 40 quarantinate con
-        # `L1-domain-precision-observe,L1.10,L1.15`. Su un fatto legale
-        # distillato («settlement resolved») e' il ritorno dell'86,7% di falsi
-        # positivi curato il 21/07, da un'altra porta.
-        _l1_advisory = any(_is_advisory_layer(layer) for layer in _layers
-                           if layer.startswith("L1"))
-        _l1 = [layer for layer in _layers
-               if claim is not None and layer.startswith("L1")
-               and not _is_advisory_layer(layer) and not _l1_advisory]
-        # I LAYER NUMERICI DETERMINISTICI CONTANO COME IL GIUDICE. Stesso
-        # insieme di `anti_confab_gate.has_grounding_fail` — e dal 19/09 e'
-        # LETTERALMENTE lo stesso, importato, invece di un elenco gemello
-        # scritto a mano qui: `L4.2`, `L4.1-ambiguo` e `L4.1-a-parole` restano
-        # avvisi, come nel gate. Misurato il 04/09 sullo stesso banco: 40 frasi reali con
-        # un numero cambiato di +1 promosse contro il LORO chunk, 25 AMMESSE a
-        # 99-100 — e il gate su quelle frasi rispondeva `downgrade` con L4.1
-        # («5», «4 fatto», «443, 1500»). Il verdetto c'era e veniva ignorato:
-        # un valore che la fonte non contiene usciva con la citazione esatta
-        # del documento in `verified_by`.
-        from .anti_confab_gate import LAYER_NUMERICI_COME_IL_GIUDICE
-        _l4 = [layer for layer in _layers
-               if layer in LAYER_NUMERICI_COME_IL_GIUDICE]
-        _agito = sorted(set(_l1 + _l4))
-        _sotto_taglio = (isinstance(punteggio, (int, float))
-                         and isinstance(_soglia, (int, float))
-                         and punteggio < _soglia)
-        _moat = "failed" if (_sotto_taglio or "L4-grounding" in _layers) else "passed"
-        if verdetto.action == "reject" or _agito or _sotto_taglio:
-            stato = "quarantined"
-            if _agito:
-                # Chi promuove deve sapere che e' stato L1 o L4.1 e non il
-                # moat: il punteggio dira' 99.9 e senza il layer la ricevuta
-                # sembrerebbe contraddirsi da sola.
-                _trattenuto_da = ",".join(_agito)
-    except Exception:  # noqa: BLE001 — un gate irraggiungibile non fa passare
-        # ... e non fa nemmeno cadere la promozione: resta un `model_claim`
-        # senza verdetto, che e' cio' che era prima e che il lettore riconosce
-        # da `grounding_score=None` («mai giudicato», non «giudicato e
-        # passato»).
-        punteggio = None
+    # T192 — IL GIUDICE GIRA UNA VOLTA SOLA, E GIRA DENTRO `add()`.
+    #
+    # Qui c'erano ~170 righe che chiamavano `run_validation_gate` e ne
+    # rileggevano il verdetto con una politica scritta a mano: quali L1
+    # contano, quali `*-observe` no, quali layer numerici valgono il giudice,
+    # dove sta la soglia. Poi `Memory.add()` — che questa via chiama subito
+    # dopo — rifaceva tutto con la PROPRIA politica e SOVRASCRIVEVA il
+    # risultato. Due giudici sulla stessa scrittura, e il secondo vinceva
+    # sempre: il verdetto calcolato qui non veniva letto da nessuno.
+    #
+    # Misurato il 21/09 sul ramo che aveva introdotto il secondo passaggio:
+    #     3 failed, 7 passed in 32.95s   (ramo)
+    #     10 passed in 35.16s            (main pulito, stesso comando)
+    # e i tre rossi dicevano esattamente questo — `'quarantined' ==
+    # 'model_claim'` su un L1 tenuto advisory, su un `L4.1-ambiguo`, e sul
+    # chunk grezzo. Non erano tre difetti: era un disaccordo fra due copie
+    # della stessa regola.
+    #
+    # ⚠️ E LA POLITICA NON SI PERDE, perche' DUE TERZI NON ERANO MAI STATI
+    # DI QUESTA VIA. Il gate li ha gia' dentro, e sono le stesse righe:
+    #     anti_confab_gate.py:230   LAYER_NUMERICI_COME_IL_GIUDICE
+    #     anti_confab_gate.py:3249  has_grounding_fail = any(... in quelli)
+    #     anti_confab_gate.py:237   _is_advisory_layer  (un `*-observe` non
+    #                               e' un layer in piu')
+    # Copiarli qui voleva dire mantenerne due versioni e scoprire che
+    # divergevano da un rosso. Restava DAVVERO di questa via una cosa sola:
+    # **di chi e' la proposizione**, ed e' quella che si dichiara qui sotto.
+    #
+    # SENZA `claim` LA PROPOSIZIONE E' IL CHUNK, cioe' testo di un documento,
+    # e i detector L1.x gradano la sincerita' dell'AGENTE: applicarli li' e'
+    # l'errore di categoria che `gate_router` esiste per evitare. CON un
+    # `claim` chi promuove sta DISTILLANDO un'affermazione e se ne fa carico,
+    # quindi L1 ha giurisdizione — ed e' il caso del vanto, presidiato da
+    # `test_il_vanto_entrava_dalla_porta_dei_documenti.py`.
+    #
+    # Il timbro NON cambia: `writer_role` resta `document_promote` perche' un
+    # banco lo pretende con la sua ragione (`test_document_promote.py:51`,
+    # «no trusted-hook bypass»). Cambia solo cio' che il gate sente dire, e
+    # per questo `add()` ha ora due ingressi invece di uno.
+    from .client import Memory
+    from .gate_router import EXTERNAL_CONTENT
+
+    # ⚠️ LA `Memory` SI COSTRUISCE DAL FILE CHE QUESTO STORE HA GIA' APERTO.
+    # `Memory(path)` vuole il FILE del database: passargli una cartella alza
+    # `OperationalError`, e passargli un percorso sbagliato NON fallisce —
+    # apre un secondo store vuoto, e le scritture finiscono dove nessuno
+    # guarda. `semantic_memory.db_path` e' l'unico percorso che non puo'
+    # divergere da quello che il chiamante sta gia' usando. Due connessioni
+    # allo stesso file convivono (WAL + `busy_timeout`, gia' impostati da
+    # `_connect`); due FILE diversi no, ed e' cio' che la prima cella del
+    # banco misura.
+    _autoreferenziale = prop.split() == chunk_text.split()
 
     # UN PUNTEGGIO TAUTOLOGICO NON E' UN VERDETTO. Senza `claim` la
-    # proposizione E' il chunk, quindi il moat verifica «X implica X» e
-    # risponde ~100 per costruzione. Misurato il 2026-08-04 su tre documenti
-    # senza niente in comune: 99.95, 99.96, 99.98 — mentre le stesse tre fonti
-    # con una claim che NON dicono danno 0.00, 0.23, 0.00. Il gate funziona; e'
-    # la domanda a non esserci.
-    #
-    # Pubblicarlo sarebbe peggio che tacerlo: il prodotto insegna a leggere
-    # quel numero come «the moat's verdict on that fact» e a trust-condizionare
-    # su di esso, e la promozione mette in `verified_by` la citazione esatta del
-    # file. Il fatto uscirebbe con il punteggio piu' alto del corpus E una
-    # provenienza puntuale, mentre nessuno ha verificato niente — il documento
-    # puo' dire qualunque cosa. Lo stesso testo che `facts add` quarantina
-    # entrava da qui come model_claim con 99.97.
-    #
-    # `None` e' la descrizione esatta di questo caso ed e' quella che il
-    # prodotto gia' insegna: «null means NEVER JUDGED, not judged and failed».
-    # Il chunk grezzo continua a passare: cambia solo che non porta piu' un
-    # verdetto che non ha. Confronto sulle parole, non sui caratteri, perche' la
-    # redazione dei segreti puo' aver riscritto `prop`.
-    nota_punteggio = None
-    if punteggio is not None and prop.split() == chunk_text.split():
-        nota_punteggio = (
-            "no grounding verdict: the proposition IS the source chunk, so the "
-            "moat would only confirm that the text says what it says. Pass a "
-            "distilled `claim` to get a real entailment check against the chunk."
-        )
-        punteggio = None
-
-    fact = Fact(
-        proposition=prop,
-        topic=topic,
-        confidence=confidence,
-        status=stato,
-        verified_by=[citation],            # the checkable file citation
-        source_episodes=[citation] + ([f"doc_version:{version}"] if version else []),
-        writer_role=PROMOTE_WRITER_ROLE,
-        grounding_score=punteggio,
-    )
+    # proposizione E' il chunk, quindi il moat verificherebbe «X implica X» e
+    # risponderebbe ~100 per costruzione. Misurato il 2026-08-04 su tre
+    # documenti senza niente in comune: 99.95, 99.96, 99.98 — mentre le stesse
+    # tre fonti con una claim che NON dicono danno 0.00, 0.23, 0.00. Il gate
+    # funziona; e' la domanda a non esserci. Pubblicare quel numero sarebbe
+    # peggio che tacerlo, perche' il prodotto insegna a leggerlo come «the
+    # moat's verdict on that fact» e la promozione mette in `verified_by` la
+    # citazione esatta del file: il fatto uscirebbe col punteggio piu' alto
+    # del corpus E una provenienza puntuale, mentre nessuno ha verificato
+    # niente. `ground=False` dice al motore di non fare quella domanda, e
+    # `None` e' la descrizione esatta del risultato — «null means NEVER
+    # JUDGED, not judged and failed», che e' quanto il prodotto gia' insegna.
+    # Confronto sulle parole, non sui caratteri, perche' la redazione dei
+    # segreti puo' aver riscritto `prop`.
+    nota_punteggio = (
+        "no grounding verdict: the proposition IS the source chunk, so the "
+        "moat would only confirm that the text says what it says. Pass a "
+        "distilled `claim` to get a real entailment check against the chunk."
+    ) if _autoreferenziale else None
     try:
-        if embed is not None:
-            semantic_memory.store(fact, embed=embed)
-        else:
-            semantic_memory.store(fact)
+        _ricevuta = Memory(getattr(semantic_memory, "db_path", None)).add(
+            prop,
+            topic=topic,
+            source=chunk_text,
+            ground=not _autoreferenziale,
+            confidence=confidence,
+            verified_by=[citation],        # the checkable file citation
+            source_episodes=(
+                [citation] + ([f"doc_version:{version}"] if version else [])),
+            writer_role=PROMOTE_WRITER_ROLE,
+            # T192 — L'UNICA DECISIONE DI DOMINIO CHE RESTA A QUESTA VIA.
+            # Il timbro sopra dice CHI scrive; questo dice al gate DI CHI e'
+            # il testo. Senza `claim` la proposizione e' il chunk, cioe' un
+            # documento, e L1.x non ha giurisdizione; con un `claim` chi
+            # promuove ha distillato una frase e se ne fa carico, quindi L1
+            # torna a valere e il moat la giudica contro il chunk.
+            gate_writer_role=None if claim is not None else EXTERNAL_CONTENT,
+            principal=principal,
+        )
     except Exception as exc:  # noqa: BLE001 — gate rejection is a result, not a crash
         return {"stored": False, "fact_id": None, "citation": citation,
                 "error": f"gate rejected: {exc!s:.120}"}
-    if stato == "quarantined":
-        # CHI HA DECISO, nella colonna che le tre porte del write path gia'
-        # compilano con lo stesso vocabolario (`chi_ha_quarantinato`: moat /
-        # L1 / il layer che ha agito). Il fatto nasce gia' quarantinato dallo
-        # `store()`, quindi `quarantine_fact` sarebbe un no-op: si scrive la
-        # sola causa, e se fallisce si perde la causa, non il fatto. Misurato
-        # il 04/09 nello store di banco: 56 quarantinati su 56 senza autore.
-        try:
-            from .client import chi_ha_quarantinato, persisti_chi_ha_quarantinato
-            persisti_chi_ha_quarantinato(
-                semantic_memory.db_path, fact.id,
-                chi_ha_quarantinato(_moat, _warnings, agito=_agito))
-        except Exception:  # noqa: BLE001 — la causa e' un di piu', il fatto e' scritto
-            pass
-    return {"stored": True, "fact_id": fact.id, "citation": citation,
+    if not _ricevuta.get("stored"):
+        return {"stored": False, "fact_id": None, "citation": citation,
+                "error": f"gate rejected: {_ricevuta.get('advice') or ''!s:.120}"}
+    # SI LEGGE LA RICEVUTA, non si rilegge il fatto e non si ricalcola niente.
+    # `add()` ha gia' deciso, gia' scritto e gia' compilato `quarantined_by`
+    # nella colonna che le tre porte del write path riempiono con lo stesso
+    # vocabolario (`chi_ha_quarantinato`: moat / L1 / il layer che ha agito).
+    # Qui c'era una `persisti_chi_ha_quarantinato` che rifaceva quel lavoro
+    # con il verdetto della copia locale: una seconda scrittura per dire una
+    # cosa che era gia' scritta, e che poteva dirla DIVERSA.
+    stato = str(_ricevuta.get("status") or "model_claim")
+    # QUALE LAYER, non quale famiglia — ed e' una distinzione che la ricevuta
+    # fa gia', in due campi diversi. Misurato sul vanto distillato:
+    #     fermato_da     = 'L1'        quarantined_by = 'L1'
+    #     livelli        = [{'nome': 'L1.15', …}, {'nome': 'L1.20', …}]
+    # `fermato_da` dice la FAMIGLIA, che e' il vocabolario con cui le tre
+    # porte riempiono la colonna; `livelli` dice i NOMI. Chi promuove ha
+    # bisogno dei nomi: «L1» non gli dice se e' stato il rilevatore del
+    # «testato» o quello della frase-vetrina, e leggere «L1» dove prima
+    # c'era «L1.15» e' la stessa perdita curata in T77, quando una porta
+    # scriveva «gate» al posto del layer. Il banco lo pretende in entrambi i
+    # modi: nome nella ricevuta, famiglia nella colonna.
+    # Vuoto quando non ha fermato nessuno: un elenco di avvisi su un fatto
+    # ammesso direbbe «trattenuto da» di qualcosa che e' passato.
+    _trattenuto_da = ",".join(
+        str(_l.get("nome")) for _l in (_ricevuta.get("livelli") or [])
+        if isinstance(_l, dict) and _l.get("nome")) if stato == "quarantined" else ""
+    # `None` quando non e' stato giudicato — e con `ground=False`, cioe' sul
+    # chunk grezzo, e' esattamente il caso: mai giudicato, non giudicato e
+    # passato.
+    punteggio = _ricevuta.get("grounding_score")
+    return {"stored": True, "fact_id": _ricevuta.get("id"), "citation": citation,
             "error": None, "grounding_note": nota_punteggio,
             # Il punteggio del giudice esce anche in ricevuta: prima andava
             # riletto dal fatto (None = mai giudicato, come sempre).
@@ -257,4 +222,12 @@ def promote_chunk_to_fact(
             # con il solo punteggio erano indistinguibili — 99.98 in ENTRAMBI
             # i casi, perche' la fonte contiene davvero la frase.
             "trattenuto_da": _trattenuto_da,
-            "status": stato}
+            "status": stato,
+            # 1b.3 — LE CHIAVI DEL NUCLEO, che `add()` rende gia': qui si
+            # smette di buttarle via. L'unione mette le nuove SOPRA le
+            # vecchie, e le vecchie restano finche' dura il debito, cosi' i
+            # lettori di `stored`/`status`/`citation` continuano a funzionare.
+            # Non c'e' una seconda traduzione: quella la fa `add()`, una
+            # volta, per tutte le porte — che e' il senso della fetta.
+            **{k: v for k, v in _ricevuta.items()
+               if k not in ("stored", "status", "grounding_score")}}
