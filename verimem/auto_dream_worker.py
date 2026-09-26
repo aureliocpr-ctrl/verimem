@@ -352,7 +352,8 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
     worker), and mutations are REVERSIBLE (supersede-not-delete / additive master nodes).
 
     Steps: cycle_light (promote/retire) -> auto_consolidate (cluster master nodes) ->
-    scan_corpus + heal_contradictions (supersede the weaker side of a real conflict).
+    scan_corpus + heal_contradictions (supersede the weaker side of a real conflict;
+    the kinds in ``contradiction.TIPI_CHE_HEAL_NON_ESEGUE`` are left open and counted).
     Opt-out: ENGRAM_AUTO_CONSOLIDATE=0. Cooldown: ENGRAM_CONSOLIDATE_COOLDOWN_S (default 4h)."""
     now = time.time() if now is None else now
     if not _maintenance_enabled():

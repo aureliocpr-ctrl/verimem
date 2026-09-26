@@ -414,15 +414,34 @@ class ContradictionStore:
             )
             return cur.rowcount == 1
 
-    def list_unresolved(self, *, limit: int = 100) -> list[Contradiction]:
+    def list_unresolved(self, *, limit: int = 100,
+                        exclude_kinds: frozenset[str] = frozenset(),
+                        ) -> list[Contradiction]:
+        esclusi = sorted(exclude_kinds)
+        filtro = (f"AND kind NOT IN ({','.join('?' * len(esclusi))}) "
+                  if esclusi else "")
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT * FROM contradictions "
-                "WHERE resolved_at IS NULL "
+                "WHERE resolved_at IS NULL " + filtro +
                 "ORDER BY detected_at DESC LIMIT ?",
-                (int(limit),),
+                (*esclusi, int(limit)),
             ).fetchall()
         return [self._row_to_contradiction(r) for r in rows]
+
+    def unresolved_ids_of_kinds(self, kinds: frozenset[str]) -> list[str]:
+        """Gli id delle contraddizioni APERTE di questi tipi: quelle che un
+        passaggio lascia stare devono potersi contare."""
+        tipi = sorted(kinds)
+        if not tipi:
+            return []
+        with self._connect() as conn:
+            rows = conn.execute(
+                "SELECT id FROM contradictions WHERE resolved_at IS NULL "
+                f"AND kind IN ({','.join('?' * len(tipi))})",
+                tipi,
+            ).fetchall()
+        return [r[0] for r in rows]
 
     def list_all(self, *, limit: int = 100) -> list[Contradiction]:
         with self._connect() as conn:
@@ -501,12 +520,27 @@ class ContradictionStore:
 # ---------------------------------------------------------------------------
 
 
+#: I TUOI FATTI NON SI PERDONO. Il 23 e il 24/09 il passaggio automatico
+#: (``auto_dream_worker.run_maintenance``, all'avvio di una sessione, ogni 4 ore)
+#: ha ritirato 41 fatti di uno store vero contro un fatto di prova: gli scontri
+#: ``numeric_clash`` li registra ``detect_numeric_clashes`` con un confronto sui
+#: soli numeri, che sui 251 ritiri misurati il 24/09 ne vede 251, quasi tutti
+#: falsi, e in quello store gli scontri aperti di quel tipo erano 75006.
+#: Finche' la decisione numerica nuova non e' fusa (T175 con T211 e T216, una
+#: richiesta sola), ``heal_contradictions`` NON esegue quel tipo, per NESSUN
+#: chiamante (il passaggio automatico e lo strumento MCP): li lascia aperti e li
+#: conta. La richiesta che porta la decisione nuova toglie il tipo da qui e
+#: rilegge gli scontri gia' registrati con la decisione nuova prima di agire.
+TIPI_CHE_HEAL_NON_ESEGUE: frozenset[str] = frozenset({"numeric_clash"})
+
+
 def heal_contradictions(
     memory: SemanticMemory,
     store: ContradictionStore | None = None,
     *,
     principal: str,
     limit: int = 200,
+    skip_kinds: frozenset[str] = TIPI_CHE_HEAL_NON_ESEGUE,
 ) -> dict[str, list[str]]:
     """Self-healing pass over ALREADY-detected contradictions.
 
@@ -532,6 +566,11 @@ def heal_contradictions(
     il lato ignoto veniva RITIRATO: sullo store vero erano 257 coppie, 227 con
     un `model_claim` che ritirava un `user_manual`. Vedi
     ``semantic._rango_di_fiducia``.
+
+    ``skip_kinds`` — tipi di contraddizione su cui questo passaggio NON agisce:
+    restano aperti, non si leggono nemmeno (il ``limit`` vale per gli altri), e
+    i loro id escono in ``left_open_kinds``, perche' un passo spento deve
+    dirlo. Di default e' :data:`TIPI_CHE_HEAL_NON_ESEGUE` (vedi sopra).
     """
     from .semantic import _rango_di_fiducia
 
@@ -542,7 +581,8 @@ def heal_contradictions(
     skipped: list[str] = []
     skipped_ignoto: list[str] = []
     missing: list[str] = []
-    for c in store.list_unresolved(limit=limit):
+    left_open = store.unresolved_ids_of_kinds(skip_kinds) if skip_kinds else []
+    for c in store.list_unresolved(limit=limit, exclude_kinds=skip_kinds):
         fa = memory.get(c.fact_a_id)
         fb = memory.get(c.fact_b_id)
         if fa is None or fb is None:
@@ -610,6 +650,7 @@ def heal_contradictions(
         "skipped_equal_trust": skipped,
         "skipped_unknown_trust": skipped_ignoto,
         "missing": missing,
+        "left_open_kinds": left_open,
     }
 
 
