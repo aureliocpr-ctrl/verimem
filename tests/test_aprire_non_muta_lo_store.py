@@ -15,9 +15,15 @@ file cresce, il nucleo resta identico, e vietarlo sarebbe una cura contro un
 comportamento legittimo. Le loro celle qui sono verdi e servono da presidio: se
 un domani una di loro tocca `facts`, questo banco lo dice prima della CI.
 
-Una sola aggiunge una colonna a `facts` fuori dalla scala delle migrazioni, e
-quella è la violazione: la scala non la vede, quindi la versione dichiarata
-resta ferma mentre lo schema si muove.
+Una sola aggiunge una colonna a `facts` fuori dalla scala delle migrazioni —
+ma NON aprendo: `_ensure_last_decay_column` ha un solo chiamante in tutto il
+prodotto (`decay_job.py:168`, dentro `run_decay_pass`), quindi è la potatura a
+migrare fuori scala, non un'apertura. È un difetto vero e vive nel suo banco,
+perché mescolarlo qui direbbe «aprire» di una cosa che apertura non è.
+
+Resta invece qui la scala stessa: `ensure_schema_version` promuoveva la
+versione di un passo senza applicare DDL, e quella è la porta da cui il nucleo
+cambia numero senza cambiare schema.
 """
 from __future__ import annotations
 
@@ -131,27 +137,6 @@ def test_l_indice_dei_documenti_non_tocca_il_nucleo(tmp_path: Path) -> None:
                                   lambda p: DocumentIndex(db_path=p))
 
 
-def test_la_potatura_non_aggiunge_colonne_al_nucleo_di_nascosto(tmp_path: Path) -> None:
-    """ROSSO: aggiunge `facts.last_decay_at` fuori dalla scala.
-
-    La colonna serve — senza, ogni passata ricalcola da `created_at` e il
-    corpus collassa al pavimento. Non è la colonna a essere sbagliata: è che
-    nasce fuori dalla scala, quindi `_schema_version` non la racconta e due
-    store alla stessa versione dichiarata possono avere schemi diversi.
-    """
-    from verimem.decay_job import _ensure_last_decay_column
-
-    def apri(p: Path) -> None:
-        con = sqlite3.connect(p)
-        try:
-            _ensure_last_decay_column(con)
-            con.commit()
-        finally:
-            con.close()
-
-    _apre_senza_toccare_il_nucleo(_store_a_versione(tmp_path), apri)
-
-
 def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
         tmp_path: Path) -> None:
     """ROSSO: la stampa cieca a un passo promuove 16 -> 17 senza le colonne.
@@ -172,15 +157,19 @@ def test_la_scala_non_promuove_un_numero_che_lo_schema_non_sostiene(
 
     con = sqlite3.connect(p)
     try:
-        ensure_schema_version(con, db_id="semantic", target_version=17,
-                              migrations=[])
+        with pytest.raises(RuntimeError, match="zero DDL"):
+            ensure_schema_version(con, db_id="semantic", target_version=17,
+                                  migrations=[])
     finally:
         con.close()
 
+    # Il rifiuto conta solo se il file è rimasto dov'era: un'eccezione dopo la
+    # scrittura lascerebbe lo store promosso e il chiamante convinto del
+    # contrario, che è peggio del difetto di partenza.
     assert _versione(p) == 16, (
-        f"la scala ha promosso la versione a {_versione(p)} applicando zero "
-        f"DDL: le colonne della 17 non ci sono ({prima.get('facts')}), quindi "
-        f"il numero dichiara uno schema che il file non ha")
+        f"la scala ha rifiutato MA aveva già promosso la versione a "
+        f"{_versione(p)}: il rifiuto arriva dopo la scrittura")
+    assert _impronta_del_nucleo(p) == prima, "e il nucleo è rimasto intatto"
 
 
 def test_la_versione_del_nucleo_ha_sempre_un_criterio() -> None:
