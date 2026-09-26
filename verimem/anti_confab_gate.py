@@ -2922,6 +2922,7 @@ def run_validation_gate(
             fact_grounding_score_ex,
             resolve_write_threshold_for,
         )
+        _claim_caduto = None     # T221: il claim piu' debole, se decide il voto
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
             # T221 — IL GIUDIZIO PER AFFERMAZIONE. Misurato il 23/09 su 100 memorie
@@ -2929,7 +2930,6 @@ def run_validation_gate(
             # citato entravano, mediana 99,43, perche' la parte che la fonte sostiene
             # trascinava quella che non sostiene. Il voto e' quello dell'affermazione
             # piu' debole; una frase semplice (un claim) si giudica una volta sola.
-            _claim_caduto = None
             if gscore is not None:
                 gscore, _claim_caduto = _il_claim_piu_debole(
                     grounding_llm, source, proposition, float(gscore), _judge_used,
@@ -2969,12 +2969,17 @@ def run_validation_gate(
             grounding_val = float(gscore)  # persist the score even when it PASSES
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
-            if _claim_caduto is not None and gscore < _threshold_of_record:
+            _in_fascia = (_judge_used == "local" and _ce_band_enforced()
+                          and gscore < _ce_band_tau_hi())
+            if _claim_caduto is not None and (gscore < _threshold_of_record or _in_fascia):
+                _come = ("the source does not support this one"
+                         if gscore < _threshold_of_record
+                         else "the judge is not sure the source supports this one")
                 warnings.append({
                     "layer": "L4-claim",
-                    "reason": (f"the memory makes more than one claim and the source "
-                               f"does not support this one: «{_claim_caduto}» "
-                               f"(grounding {gscore:.1f}); the verdict is the weakest claim"),
+                    "reason": (f"the memory makes more than one claim and {_come}: "
+                               f"«{_claim_caduto}» (grounding {gscore:.1f}); the verdict "
+                               f"is the weakest claim"),
                     "advice": ("save the claims this source supports, and give this one "
                                "the source that says it"),
                     "matched_text": _claim_caduto,

@@ -61,6 +61,23 @@ def test_la_parte_che_la_fonte_non_dice_ferma_la_memoria(monkeypatch):
     assert "They are now asleep on the sofa." in testo, testo   # the receipt names the claim
 
 
+def test_il_claim_in_fascia_e_nominato_nella_ricevuta(monkeypatch):
+    # the weakest claim lands in the review band [40, 80): the write is held, and the
+    # receipt says WHICH claim the judge doubts, not only the band's number
+    monkeypatch.setenv("VERIMEM_CE_BAND_ENFORCE", "1")
+    gate, visti = _gate(
+        monkeypatch,
+        "Mara took her dogs to the beach today and they are now asleep on the sofa.",
+        {"Mara took her dogs to the beach today and": 95.0,
+         "Mara took her dogs to the beach today.": 97.0,
+         "They are now asleep on the sofa.": 60.0})
+    assert gate.action != "persist", (gate.action, gate.grounding_score, visti)
+    claim = [w for w in gate.warnings if w.get("layer") == "L4-claim"]
+    assert claim, [w.get("layer") for w in gate.warnings]
+    assert "They are now asleep on the sofa." in claim[0]["reason"], claim
+    assert "not sure" in claim[0]["reason"], claim
+
+
 def test_una_memoria_vera_di_due_affermazioni_resta_ammessa(monkeypatch):
     gate, visti = _gate(
         monkeypatch,
