@@ -63,6 +63,9 @@ def captured(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> dict[str, Any]:
         return real(**{**kwargs, "grounding_llm": None})
 
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _spy)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _spy)
     return seen
 
 

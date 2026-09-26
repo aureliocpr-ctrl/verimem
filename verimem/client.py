@@ -1614,6 +1614,11 @@ class Memory:
             **({"deferred": True} if _rinviata else {}),
             **({"gate_knobs_denied": _manopole_negate}
                if _manopole_negate else {}),
+            #: I fatti che il gate ha trovato CONTRADDETTI da questa scrittura:
+            #: un dato del verdetto, reso a ogni porta (la porta MCP ci
+            #: appoggia il suo ritiro, decisione aperta di 1b.3).
+            **({"contradicting_fact_ids": list(gate.contradicting_fact_ids)}
+               if getattr(gate, "contradicting_fact_ids", None) else {}),
             "grounding_score": gate.grounding_score,
             #: CHI ha giudicato QUESTA scrittura: "daemon" (il servizio
             #: condiviso) o "in-process" (il modello caricato qui); assente se

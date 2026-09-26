@@ -58,6 +58,9 @@ async def test_write_path_supersedes_gate_contradiction(tmp_path, monkeypatch):
             action="persist", contradicting_fact_ids=["oldcap"],
         )
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _fake_gate)
 
     blocks = await _invoke_tool("hippo_remember", {
         "proposition": "ai-eye NON pilota agy (ConPTY): timeout verificato 2026-06-02",
@@ -85,6 +88,9 @@ async def test_mcp_applies_supersede_fact_ids_when_admitted(tmp_path, monkeypatc
     def _fake_gate(**kw):
         return anti_confab_gate.GateResult(action="persist", supersede_fact_ids=["oldval"])
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _fake_gate)
 
     blocks = await _invoke_tool("hippo_remember", {
         "proposition": "the plan costs 150", "topic": "t", "status": "model_claim"})
@@ -104,6 +110,9 @@ async def test_mcp_supersede_skipped_when_new_quarantined(tmp_path, monkeypatch)
     def _fake_gate(**kw):
         return anti_confab_gate.GateResult(action="downgrade", supersede_fact_ids=["oldval"])
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _fake_gate)
 
     await _invoke_tool("hippo_remember", {
         "proposition": "the plan costs 150", "topic": "t", "status": "model_claim"})
@@ -122,6 +131,9 @@ async def test_mcp_supersede_failure_is_logged(tmp_path, monkeypatch):
     def _fake_gate(**kw):
         return anti_confab_gate.GateResult(action="persist", supersede_fact_ids=["oldval"])
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _fake_gate)
 
     def _boom(*a, **k):
         raise RuntimeError("supersede boom")
@@ -147,6 +159,9 @@ async def test_write_path_no_supersede_when_gate_silent(tmp_path, monkeypatch):
     def _fake_gate(**kw):
         return anti_confab_gate.GateResult(action="persist")
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _fake_gate)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _fake_gate)
 
     blocks = await _invoke_tool("hippo_remember", {
         "proposition": "un altro fatto qualunque",
