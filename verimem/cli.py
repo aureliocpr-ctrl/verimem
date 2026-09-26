@@ -4676,21 +4676,7 @@ def facts_add(
 
         cat findings.jsonl | engram facts add --jsonl-stdin
     """
-    from .anti_confab_gate import run_validation_gate
-    from .client import (
-        _blocking_layers,
-    )
-    from .client import (
-        chi_ha_quarantinato as _chi_ha_quarantinato,
-    )
-    from .client import (
-        esito_del_moat as _esito_del_moat,
-    )
-    from .client import (
-        persisti_chi_ha_quarantinato as _persisti_chi_ha_quarantinato,
-    )
     from .scope import scoped_topic as _scoped_topic
-    from .semantic import Fact
 
     # B-1: validate flag-supplied scope ids eagerly so a malformed id fails
     # fast (exit non-zero) rather than silently skipping every payload.
@@ -4764,10 +4750,6 @@ def facts_add(
 
     sm = _facts_sm()
 
-    class _AgentShim:
-        def __init__(self, sm) -> None:
-            self.semantic = sm
-    agent = _AgentShim(sm)
 
     class _AvvisoSuConsole:
         """Un ritiro fallito lo deve vedere CHI STA SCRIVENDO, non un file di
@@ -4788,6 +4770,10 @@ def facts_add(
         _gate_repo_root = getattr(sm, "repo_root", None) or _CFG.project_root
     except Exception:  # noqa: BLE001 — never break the write path
         _gate_repo_root = getattr(sm, "repo_root", None)
+
+    from .client import PORTA_CLI, Memory
+    _motore = Memory(semantic=sm, porta=PORTA_CLI, repo_root=_gate_repo_root)
+    _motore._avvisi_dei_ritiri = _AvvisoSuConsole
 
     inserted: list[str] = []
     quarantined: list[str] = []
@@ -4875,164 +4861,38 @@ def facts_add(
         hook_token = os.environ.get("ENGRAM_HOOK_TOKEN")
 
         # Apply cycle 138 anti-confab gate locally.
-        gate = run_validation_gate(
-            proposition=prop,
-            verified_by=vb,
-            topic=tpc,
-            agent=agent,
-            validate=v_lvl,
-            gate_mode=g_mode,
-            force_persist=force,
-            writer_role=wr,
-            meta_narrative=mn,
-            hook_token=hook_token,
-            repo_root=_gate_repo_root,
-            # La coppia esatta di `verimem save` (cli.py) e della cura di
-            # `key_facts`: senza `ground_write` il canale ricadrebbe su
-            # ENGRAM_GROUNDING_WRITE, che nessun file dell'albero imposta.
-            source=src or None,
-            ground_write=True if src else None,
-        )
-        if gate.action == "reject":
-            console.print(
-                f"[red]rejected:[/red] {prop[:60]!r} — {gate.advice}"
-            )
-            rejected.append(prop[:60])
-            continue
-        final_status = "quarantined" if gate.action == "downgrade" else st
-        if final_status not in {
+        # 🔑 1b.3 — LA RIGA DI COMANDO NON COSTRUISCE PIU' IL FATTO. Qui c'era
+        # una copia del motore, e il suo commento raccontava che era «la terza
+        # volta che questo `Fact(` costruito a mano perde un campo che
+        # `client.py` scrive»: il punteggio si', la firma no; poi la causa
+        # della quarantena; e mai l'etichetta di affidabilita' ne' il
+        # principal. Ora scrive `Memory.add()`, lo stesso di ogni porta.
+        if st not in {
             "verified", "model_claim", "provisional",
             "legacy_unverified", "orphaned", "quarantined",
         }:
-            final_status = "model_claim"
-        from .supersession_policy import applica_verdetto as _applica_verdetto
-        from .supersession_policy import source_signature_of
-        f = Fact(
-            proposition=prop,
-            topic=tpc,
-            confidence=conf,
-            verified_by=vb,
-            status=final_status,
-            writer_role=wr,
-            meta_narrative=mn,
-            # Il verdetto va PERSISTITO, non solo calcolato: un giudizio che
-            # muore col processo non e' provenienza, e ogni lettura successiva
-            # chiamerebbe il fatto non giudicato. E' il modo in cui
-            # `Memory.add` lo scrive.
-            grounding_score=getattr(gate, "grounding_score", None),
-            # ⚠️ E ANCHE L'IMPRONTA DELLA FONTE, per la stessa ragione della riga
-            # sopra — che era li' da sola. Chi ha scritto quel commento guardava
-            # `Memory.add` e ne ha copiato UN campo su due: il punteggio si', la
-            # provenienza no. E' la terza volta che questo `Fact(` costruito a
-            # mano perde un campo che `client.py` scrive: `quarantined_by` lo
-            # racconta `test_chi_ha_quarantinato_si_sa_anche_domani.py`.
-            #
-            # 🔬 COSTO MISURATO sul corpus vivo il 2026-09-06: **345 fatti** dal
-            # 04/08 al 04/09 con un `grounding_score` (la source c'era, il moat
-            # l'ha giudicata) e nessuna firma; il 98,0% da `cli:local`, la stessa
-            # quota di chi la firma ce l'ha. Senza firma quei fatti restano fuori
-            # dalla coesistenza fra fonti distinte (`L3-fonti-distinte`), che la
-            # esige su ENTRAMBI i lati: due misure diverse scritte cosi'
-            # continuavano a ritirarsi a vicenda.
-            #
-            # 📌 Non e' una quinta copia della regola: `source_signature_of` e'
-            # la stessa funzione che usa `client.add`, estratta il 06/09 proprio
-            # perche' il calcolo serviva in due posti.
-            #
-            # ⚠️ IL VERBO QUI SOPRA E' CAMBIATO PER UN PRESIDIO, non per stile
-            # (2b82497f, 07/09). `test_nessun_numero_altrui_senza_una_misura_nostra`
-            # cerca un numero entro 100 caratteri dal nome di un concorrente, e
-            # nella sua lista c'e' anche il prodotto Letta/MemGPT. Il participio
-            # italiano di «leggere» al femminile singolare e' identico a quel nome
-            # proprio: accanto alla percentuale qui sopra faceva scattare l'accusa.
-            #
-            # Falso positivo, e il presidio ha ragione lo stesso: per un nome
-            # proprio non esiste criterio strutturale, e la lista e' l'unico modo.
-            # Misurato il 2026-09-07: quel participio e i suoi tre fratelli
-            # compaiono 57 volte in 24 file di `verimem/`, e una sola cadeva
-            # dentro la finestra — questa. Le altre 56 restano latenti, e la
-            # prossima si accendera' quando qualcuno ci scrivera' accanto una
-            # cifra: il presidio non e' rumoroso, e' a innesco raro.
-            #
-            # 🔑 E la nota che stai leggendo ha acceso l'accusa una seconda volta,
-            # perche' spiegava il caso citando insieme la parola e la cifra: per
-            # documentare il difetto bisogna scriverlo senza riprodurlo.
-            source_signature=source_signature_of(src) if src else None,
-        )
-        # 2026-06-05: embed="auto" so `engram facts add` never cold-blocks
-        # ~22s when the encode daemon is down (defers; heal via
-        # `engram facts backfill` / next warm op). Daemon warm -> embeds now.
-        sm.store(f, hook_token=hook_token, embed="auto")
-        inserted.append(f.id)
-        # …E IL VERDETTO DI SUPERSESSIONE VIENE APPLICATO, che fino al
-        # 2026-09-12 su questa porta non succedeva. Il gate qui sopra decide
-        # gia' quali valori la scrittura ritira (`supersede_fact_ids`) e lo
-        # dichiara pure — «a newer same-source value supersedes a stored fact
-        # — the older value is superseded» — ma questo file non nominava quel
-        # campo in nessun punto (misurato: zero occorrenze) e leggeva solo
-        # `gate.action`. Il verdetto arrivava alla porta e cadeva: sonda del
-        # 12/09 con `--validate full`, avviso `L3-supersession` emesso e
-        # `superseded_by` NULLO nel database. Le altre due porte lo
-        # applicavano da mesi, quindi la stessa coppia di scritture lasciava
-        # un fatto vivo da SDK e due da qui.
-        # 📌 La chiamata sta in `supersession_policy.applica_verdetto`, una
-        # sola per tutte e tre: era gia' scritta due volte, e la terza copia
-        # avrebbe fatto divergere anche questa (le due esistenti gia'
-        # divergono su una guardia).
-        _ritirati, _maniglie = _applica_verdetto(
-            gate, f, sm, principal="cli:local",
-            ammesso=(gate.action != "downgrade"
-                     and final_status != "quarantined"),
-            log=_AvvisoSuConsole)
-        for _vecchio in _ritirati:
+            st = "model_claim"
+        _r = _motore.add(
+            prop, topic=tpc, source=src or None, verified_by=vb,
+            validate=v_lvl, gate_mode=g_mode, force_persist=force,
+            ground=True if src else None, meta_narrative=mn,
+            writer_role=wr, confidence=conf, status=st,
+            hook_token=hook_token)
+        if not _r.get("stored"):
+            console.print(
+                f"[red]rejected:[/red] {prop[:60]!r} — {_r.get('advice')}"
+            )
+            rejected.append(prop[:60])
+            continue
+        inserted.append(_r["id"])
+        _maniglie = _r.get("superseded_undo_ops") or {}
+        for _vecchio in _r.get("superseded") or []:
             _op = _maniglie.get(_vecchio) or "nessuna maniglia"
-            # UN RITIRO NON SI FA IN SILENZIO: e' la stessa ragione per cui
-            # esiste il registro dei ritiri. Chi scrive vede che cosa e'
-            # uscito dalla lettura, e la maniglia per rimetterlo.
             console.print(
                 f"  [yellow]superseded:[/yellow] {_vecchio[:12]} "
-                f"[dim]-> {f.id[:12]}  undo: {_op}[/dim]")
-        # ⚠️ LO STATO **DOPO** LA SCRITTURA, non quello deciso prima: uno
-        # screen dentro `store()` puo' ribaltare un fatto che il gate aveva
-        # ammesso, e guardando `final_status` quel ribalto non si vedeva —
-        # la riga finiva quarantinata e senza autore, che e' il buco che
-        # questa porta ha appena smesso di avere.
-        if f.status == "quarantined":
-            quarantined.append(f.id)
-            # E CHI HA DECISO. Questa porta persisteva il verdetto NUMERICO
-            # (`grounding_score`, qui sopra) e non l'AUTORE: un fatto
-            # quarantinato da `facts add` non sapeva dire domani chi
-            # l'avesse fermato, mentre lo stesso fatto scritto da `save` lo
-            # sapeva. Misurato il 20/08 con un A/B a un fattore — stesso
-            # claim, stessa source, stesso punteggio 92.16 — `save` scriveva
-            # 'gate' e questa riga scriveva None.
-            # 🔑 La decisione NON e' ricopiata qui: si chiama la stessa
-            # funzione del write path, perche' una regola con due copie
-            # diverge, e questa e' gia' la seconda porta.
-            # ⚠️ `agito` DEVE portare i layer bloccanti, come fa il write path
-            # (`client.py`, `_hit_layers`): senza, il ciclo su
-            # `_BLOCK_LAYER_PRIORITY` non trova niente e la funzione cade
-            # sulla sua ULTIMA riga, `'gate'`. Qui c'era `[]`, cioe' la stessa
-            # espressione dell'altra porta con un buco nel ramo `downgrade`.
-            # 🔑 Il difetto era invisibile perche' i rami piu' comuni non
-            # passano di qui: `store-screen` viene dal marcatore, `moat` e
-            # `L1` dai warning, e su quelli le due porte concordavano gia'.
-            # Divergevano solo i layer che arrivano DA `agito` — L3, L4.1,
-            # SOURCE_TRUST, L4-skipped — e sono quelli che un utente vede
-            # quando il giudice ammette e un controllo lessicale ferma.
-            # ♻️ RESIDUO NOTO, dichiarato in revisione: la funzione e' unica ma
-            # QUESTA ESPRESSIONE no — vive identica anche nel write path,
-            # letterale `["store-screen"]` compreso. E' la stessa classe di
-            # difetto un piano piu' sotto, e la prossima porta che nasce la
-            # ricopiera'. Chi la unifica tocca una firma condivisa: si fa
-            # apposta, non di passaggio.
-            _causa = _chi_ha_quarantinato(
-                _esito_del_moat(gate, gate.warnings, source=src or None),
-                gate.warnings,
-                agito=(_blocking_layers(gate.warnings)
-                       if gate.action == "downgrade" else ["store-screen"]),
-            )
-            _persisti_chi_ha_quarantinato(sm.db_path, f.id, _causa)
+                f"[dim]-> {_r['id'][:12]}  undo: {_op}[/dim]")
+        if _r.get("status") == "quarantined":
+            quarantined.append(_r["id"])
 
     # Summary
     if inserted:

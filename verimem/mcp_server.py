@@ -70,7 +70,6 @@ from mcp.server.stdio import stdio_server  # noqa: E402
 from .agent import VerimemAgent  # noqa: E402
 from .config import CONFIG  # noqa: E402
 from .fact_contract import fact_payload  # noqa: E402
-from .grounding_gate import confidence_tier as _calcola_tier  # noqa: E402
 from .observability import emit, get_log  # noqa: E402
 from .text_cut import safe_cut  # noqa: E402
 
@@ -161,6 +160,26 @@ def _ag() -> VerimemAgent:
         raise RuntimeError(
             "verimem: the agent build failed; see the server log")
     return _agent
+
+
+def _memoria(*, manopole_concesse: bool = False):
+    """Il motore con cui questo server scrive un fatto: `Memory.add()`, lo
+    stesso di ogni altra porta (1b.3, 26/09).
+
+    🔑 Si costruisce sull'OGGETTO store dell'agente, non sul suo percorso: col
+    percorso si aprirebbe una seconda connessione allo stesso file, e con un
+    percorso sbagliato un secondo store vuoto che non fallisce. Non si tiene
+    in cache: il profilo dipende dall'ambiente dell'operatore (le manopole), e
+    l'agente cambia con lo store di adesso.
+    """
+    import dataclasses as _dc
+
+    from .client import PORTA_MCP, Memory
+    a = _ag()
+    return Memory(
+        semantic=a.semantic, principal=_MCP_PRINCIPAL,
+        grounding_llm=getattr(getattr(a, "wake", None), "llm", None),
+        porta=_dc.replace(PORTA_MCP, manopole_permesse=manopole_concesse))
 
 
 # --- architecture-A MCP tier: delegate the hot memory ops to a shared server
@@ -979,12 +998,13 @@ def _content_hash_id(proposition: str, topic: str) -> str:
     `json.dumps([proposition, topic])` is unambiguous (it length-prefixes
     + escapes embedded quotes/NULs as `\\u0000`), so the input-to-bytes
     map is genuinely injective.
+
+    📌 Dal 26/09 (1b.3) la formula vive in UN posto, `client.id_dal_contenuto`,
+    che il motore usa per ogni porta: senza fonte e' questa stessa lista a
+    due, byte per byte, e gli id gia' scritti non si muovono.
     """
-    import hashlib
-    import json as _json
-    payload = _json.dumps([proposition, topic],
-                          ensure_ascii=False).encode("utf-8")
-    return hashlib.sha256(payload).hexdigest()[:12]
+    from .client import id_dal_contenuto
+    return id_dal_contenuto(proposition, topic)
 
 
 #: P0 v9 (2026-07-22): the identity THIS server stamps on every write it
@@ -997,78 +1017,6 @@ def _content_hash_id(proposition: str, topic: str) -> str:
 _MCP_PRINCIPAL = "mcp:unbound"
 
 
-def _build_fact(
-    proposition: str, topic: str = "",
-    confidence: float = 0.9,
-    source_episodes: list[str] | None = None,
-    *,
-    verified_by: list[str] | None = None,
-    status: str = "model_claim",
-    source_signature: str | None = None,
-    writer_role: str = "agent_inference",
-    meta_narrative: bool = False,
-    valid_until: float | None = None,
-    derives_from: list[str] | None = None,
-    writer_principal: str | None = None,
-    #: L'etichetta di affidabilità del gate. Default None **apposta**: chi non la
-    #: passa si comporta come prima di questa modifica, e i chiamanti che non
-    #: hanno un gate sotto mano non devono inventarne una.
-    #: Si calcola con ``_calcola_tier``, importato in cima da ``grounding_gate``
-    #: e NON da ``client``: quel modulo la espone solo come wrapper
-    #: (``client._confidence_tier``), e il server non deve dipendere dal client
-    #: per tre righe che stanno nel gate.
-    confidence_tier: str | None = None,
-) -> Any:
-    """Build a Fact object with a CONTENT-DERIVED id (cycle #46b + #109).
-
-    Pre-#46b used the Fact default_factory id_nuovo(12) (random).
-    This produced silent duplication when callers re-stored the same content:
-    each `hippo_remember(prop, topic)` call generated a fresh id, audit
-    logged ok_new every time, but the DB accumulated duplicate rows.
-
-    Now the id is `_content_hash_id(proposition, topic)`. Genuine idempotency:
-    re-storing the same content triggers SemanticMemory.store's INSERT OR
-    REPLACE path (which existed but was unreachable via this entry point),
-    emitting `ok_replaced` in the audit log so hippo_audit_summary
-    (cycle #43) reflects the actual rate.
-
-    Cycle #109 (2026-05-16): added kw-only ``verified_by``, ``status``,
-    ``source_signature`` for provenance schema. Default
-    ``status='model_claim'`` keeps backward compatibility with every
-    caller that doesn't supply provenance metadata. Validation of
-    ``status`` against ``_VALID_STATUSES`` is enforced by
-    ``SemanticMemory.store`` (not here) — this factory is permissive.
-    """
-    from .semantic import Fact
-    return Fact(
-        id=_content_hash_id(proposition, topic),
-        proposition=proposition,
-        topic=topic,
-        confidence=float(confidence),
-        source_episodes=list(source_episodes or []),
-        verified_by=list(verified_by or []),
-        status=status,
-        source_signature=source_signature,
-        writer_role=writer_role,
-        meta_narrative=bool(meta_narrative),
-        # v10 (2026-06-14) valid-time: scadenza opzionale (epoch secondi).
-        # None = nessuna scadenza (default). Il recall applica l'hard-expire.
-        valid_until=valid_until,
-        # v11 (2026-06-19) typed logical-derivation edge (ATMS depends_on).
-        derives_from=list(derives_from or []),
-        # P0 v9: server-stamped identity (see _MCP_PRINCIPAL).
-        writer_principal=writer_principal,
-        # 2026-08-15: mancava, e mancava a TUTTI E SOLI i fatti scritti via MCP
-        # (misurato sul corpus: mcp:* 145 su 145 senza etichetta, cli:* 4011 su
-        # 4011 con). Non era un ramo che sbagliava il calcolo: questa funzione
-        # costruisce il Fact dentro il server, non passa da `client.add()`, e
-        # `mcp_server` non importava nemmeno la funzione che l'etichetta la
-        # calcola. Restava None PER COSTRUZIONE — e i due esemplari che l'hanno
-        # fatta notare avevano punteggi agli antipodi (0,19 e 99,95) con lo
-        # stesso esito: l'etichetta non dipendeva dalla qualità del fatto, ma
-        # dalla PORTA da cui entrava.
-        confidence_tier=confidence_tier,
-    )
 
 
 def _justified_contradicted_ids(facts: list, ag: Any, *, min_cosine: float = 0.86) -> list:
@@ -9810,9 +9758,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             #     facts.source_episodes populated with this new ep.id so
             #     cycle #52's `hippo_lineage_trace` can walk
             #     episode→facts. The fact id is content-hash derived
-            #     (_build_fact uses _content_hash_id from cycle #46b),
-            #     so re-calling with the same (proposition, topic) is
-            #     genuinely idempotent — INSERT OR REPLACE overwrites
+            #     by the engine (`client.id_dal_contenuto`, 1b.3), so
+            #     re-calling with the same (proposition, topic, source)
+            #     is genuinely idempotent — INSERT OR REPLACE overwrites
             #     cleanly. Per-fact errors are logged but do NOT abort
             #     the episode (episode is already committed by here).
             #
@@ -9870,31 +9818,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         "proposition": prop, "topic": fact_topic,
                     }
                     try:
-                        # FIX (2026-06-14 audit save-path, gate_bypass): i
-                        # key_facts scrivevano un Fact SALTANDO l'anti-confab
-                        # gate (a differenza di hippo_remember) -> un claim
-                        # confabulato entrava a status='model_claim' (rank 2,
-                        # default-recallable), scavalcando i detector L1.x.
-                        # Ora passa per lo STESSO run_validation_gate, simmetrico
-                        # a hippo_remember: reject -> skip il fatto; downgrade ->
-                        # status='quarantined' (fuori dal recall di default).
-                        # writer_role/meta_narrative ai default -> NESSUN
-                        # trusted-hook bypass (i key_facts NON sono fidati).
-                        from .anti_confab_gate import run_validation_gate as _rvg
-                        from .evidence_independence import LazyDocumentStore
-                        _kf_gate = _rvg(
-                            proposition=prop, verified_by=_kf_refs,
-                            topic=fact_topic,
-                            agent=a,
-                            repo_root=getattr(
-                                getattr(a, "semantic", None), "repo_root", None,
-                            ),
-                            claimant=_MCP_PRINCIPAL,
-                            documents=LazyDocumentStore(),
-                            source=_kf_source,
-                            ground_write=True if _kf_source else None,
-                        )
-                        _kf_gs = getattr(_kf_gate, "grounding_score", None)
+                        # 🔑 1b.3 — UN KEY FACT E' UNA SCRITTURA COME LE ALTRE.
+                        # Fino al 25/09 questo ramo aveva un suo gate, un suo
+                        # `_build_fact` e uno `store_within_budget` nudo: nessun
+                        # evento di scrittura, nessun ritiro, nessuna causa della
+                        # quarantena, nessuna ricevuta. Ora scrive `Memory.add()`,
+                        # e l'esito di ogni key fact porta la ricevuta intera.
+                        _kr = _memoria().add(
+                            prop, topic=fact_topic, source=_kf_source,
+                            verified_by=_kf_refs, confidence=fact_conf,
+                            source_episodes=[ep.id],
+                            ground=True if _kf_source else None)
+                        _kf_esito = {**_kr, **_kf_esito}
+                        _kf_gs = _kr.get("grounding_score")
                         _kf_esito["moat"] = (
                             f"judged {float(_kf_gs):.1f}"
                             if isinstance(_kf_gs, (int, float))
@@ -9905,56 +9841,26 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                   "could not judge — a source was given but no "
                                   "judge answered; this is NOT a pass")
                         )
-                        if _kf_gate.action == "reject":
+                        _kf_perche = [
+                            w.get("reason") or w.get("layer")
+                            for w in (_kr.get("warnings") or [])
+                            if isinstance(w, dict)][:3]
+                        if not _kr.get("stored"):
                             log.warning(
                                 "record_episode_key_fact_rejected_anti_confab",
                                 proposition_excerpt=safe_cut(prop, 80),
                             )
                             _kf_esito.update({
                                 "status": "rejected", "id": None,
-                                "why": [w.get("reason") or w.get("layer")
-                                        for w in (_kf_gate.warnings or [])][:3],
+                                "why": _kf_perche,
                             })
                             key_facts_outcome.append(_kf_esito)
                             continue
-                        fact = _build_fact(
-                            proposition=prop, topic=fact_topic,
-                            confidence=fact_conf,
-                            source_episodes=[ep.id],
-                            verified_by=_kf_refs,
-                            status=(
-                                "quarantined"
-                                if _kf_gate.action == "downgrade"
-                                else "model_claim"
-                            ),
-                            # P0 v9 critic fix: key_facts is a SECOND MCP
-                            # write path — stamp it like hippo_remember.
-                            writer_principal=_MCP_PRINCIPAL,
-                            # …e per la stessa ragione porta l'etichetta del
-                            # gate: era stata dimenticata esattamente dove il
-                            # principal era stato ricordato.
-                            confidence_tier=_calcola_tier(
-                                _kf_gs,
-                                getattr(_kf_gate, "judge", None),
-                                getattr(_kf_gate, "threshold", None),
-                            ),
-                        )
-                        # audit#3-r3 R20 (cont.): budget the key-fact write too
-                        # — it hits the SAME semantic.db lock, so an unbudgeted
-                        # store here re-introduced the up-to-60s block the
-                        # episode store above was just fixed for.
-                        # store_within_budget is imported on the episode-store
-                        # path above, which always runs (and succeeds) before
-                        # this loop is reached.
-                        store_within_budget(a.semantic, fact, embed="auto")
-                        fact_ids.append(fact.id)
-                        _kf_esito.update({"status": fact.status, "id": fact.id})
-                        if fact.status == "quarantined":
-                            # Il caso che il chiamante NON poteva vedere: il
-                            # fatto e' scritto ma fuori dal recall di default.
-                            _kf_esito["why"] = [
-                                w.get("reason") or w.get("layer")
-                                for w in (_kf_gate.warnings or [])][:3]
+                        fact_ids.append(_kr["id"])
+                        _kf_esito.update({"status": _kr.get("status"),
+                                          "id": _kr["id"]})
+                        if _kr.get("status") == "quarantined":
+                            _kf_esito["why"] = _kf_perche
                             _kf_esito["note"] = (
                                 "stored but OUT of default recall — it will "
                                 "not come back from a normal search")
@@ -13748,107 +13654,28 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             source_signature = arguments.get("source_signature")
             if source_signature is not None:
                 source_signature = str(source_signature)
-            # Cycle 138 (2026-05-18) — anti-confab gate on write. The
-            # gate runs BEFORE _build_fact so a downgrade — which writes
-            # 'quarantined', not the 'provisional' this line used to name —
-            # is reflected in the constructed Fact, and a reject short-
-            # circuits the persist path entirely.
-            from .anti_confab_gate import run_validation_gate
+            # Il gate, la costruzione del fatto e il salvataggio li fa
+            # `Memory.add()` (1b.3, 26/09): qui si leggono solo gli argomenti.
+            # `source_signature` si legge per poterlo DICHIARARE ignorato: la
+            # firma la calcola il motore, dalla fonte.
             _validate_kw = arguments.get("validate")
             _gate_mode_kw = arguments.get("gate_mode")
             _force_persist = bool(arguments.get("force_persist", False))
-            # 0.8 WS1 knob policy: the MCP surface is UNTRUSTED (shared
-            # server, args from any client), so the gate-WEAKENING knobs —
-            # validate="off" (gate never runs) and force_persist=True
-            # (overrides a downgrade/reject verdict) — are honoured only
-            # when the OPERATOR opted in via VERIMEM_MCP_TRUST_GATE_KNOBS.
-            # Otherwise they are neutralized and the response says so
-            # (gate_knobs_denied) — observable, never silent. Strengthening
-            # values (validate="full", gate_mode="reject") always pass;
-            # gate_mode cannot weaken (its two values are downgrade|reject,
-            # and downgrade IS the default). Same trust rule as
-            # writer_principal: tool args never set policy.
-            _knobs_denied: list[str] = []
-            if os.environ.get("VERIMEM_MCP_TRUST_GATE_KNOBS",
-                              "").strip().lower() not in ("1", "true",
-                                                          "yes", "on"):
-                if str(_validate_kw or "").strip().lower() == "off":
-                    _knobs_denied.append("validate=off")
-                    # Defer to the OPERATOR's default (None -> _resolve_level
-                    # reads ENGRAM_VALIDATE_DEFAULT), never a handler-chosen
-                    # constant: forcing "fast" still let an untrusted client
-                    # downgrade a full-level operator out of the L3
-                    # contradiction checks (critic counterexample on 4a37b09).
-                    _validate_kw = None
-                if _force_persist:
-                    _knobs_denied.append("force_persist")
-                    _force_persist = False
-            # Cycle 2026-05-27 round 12 F-fix: trusted-hook bypass for
-            # retrospective continuity facts. writer_role + meta_narrative
-            # together skip L1.x detectors. Defense in depth: an attacker
-            # who only controls the proposition text or topic cannot
-            # promote themselves to TRUSTED_HOOKS — those values are
-            # validated at the enum level (schema) and persisted as
-            # provenance metadata for later audit.
-            #
-            # ⚠️ E DA QUESTA PORTA IL BYPASS NON SI OTTIENE, dal 2026-06-02:
-            # `run_validation_gate` lo ha reso TOKEN-GATED
-            # (`verify_trusted_writer`, fail-closed senza ENGRAM_HOOK_TOKEN)
-            # proprio perche' «writer_role is client-spoofable via MCP
-            # arguments», e la corsia `narrative_l1_skip` e' dichiarata per le
-            # sole superfici IN-PROCESS. Questo commento diceva ancora che i
-            # due argomenti «together skip L1.x», che qui non e' vero da tre
-            # mesi. Misurato il 2026-08-30 alle 23:16, stesso claim, A/B fra
-            # le due porte:
-            #
-            #     MCP  meta_narrative=True  -> quarantined  L1.10,L1.15,L1.20
-            #     SDK  meta_narrative=True  -> model_claim  (nessuno strato)
-            #
-            # L'asimmetria e' VOLUTA e presidiata
-            # (`test_mcp_arguments_meta_narrative_does_not_skip_l1`). Qui si
-            # allinea solo la prosa: chi legge questa riga credeva che da MCP
-            # il bypass fosse raggiungibile.
-            # E l'enum e' applicato dal SERVER, non dal client: un valore fuori
-            # lista torna `rejected_schema` con il messaggio che nomina i
-            # quattro ammessi (verificato alla porta lo stesso giorno).
+            # 1b.3: le manopole che spengono il gate (`validate="off"`,
+            # `force_persist`) le nega o le onora il MOTORE, secondo il
+            # profilo di questa porta, e le dichiara nella ricevuta. Qui si
+            # dice solo se l'operatore del server le ha concesse: un client MCP
+            # e' non fidato per definizione.
+            _manopole_concesse = os.environ.get(
+                "VERIMEM_MCP_TRUST_GATE_KNOBS", "").strip().lower() in (
+                    "1", "true", "yes", "on")
             _writer_role = str(
                 arguments.get("writer_role") or "agent_inference"
             )
             _meta_narrative = bool(arguments.get("meta_narrative", False))
-            # buco #2 LIVE (2026-06-03): passa repo_root al gate cosi' la
-            # verifica di ESISTENZA dei ref (commit:/file:) e' attiva sul path
-            # reale. Rispecchia il repo_root dello store (= CONFIG.project_root
-            # via agent.build in produzione, lo stesso root del verified_by
-            # hard-gate di SemanticMemory). Coerenza: la "capacita' di verifica"
-            # e' UN solo setting (store.repo_root) onorato da entrambi i gate.
-            # Store senza repo_root (fixture/custom) -> None -> gate format-only
-            # invariato (nessuna regressione sui test che non lo settano).
-            _gate_repo_root = getattr(
-                getattr(a, "semantic", None), "repo_root", None,
-            )
-            # SEMANTIC write-path grounding (L4, study R10/R11): when the caller passes
-            # the originating `source`, verify it ENTAILS the proposition. Opt-in via
-            # ENGRAM_GROUNDING_WRITE inside the gate; the agent exposes a DEFERRED LLM
-            # (a.wake.llm / LazyLLM) so no backend is built unless the check actually runs.
             _source = arguments.get("source")
-            _grounding_llm = getattr(getattr(a, "wake", None), "llm", None)
-            # 2026-07-29: ASK for the check when a source is given, instead of
-            # falling through to ENGRAM_GROUNDING_WRITE — which nothing in the
-            # source tree sets, so this channel stored sourced writes unjudged
-            # and answered `ok: true` all the same. Not a new contract:
-            # ebab6e92 (2026-07-17) documented "the moat is ON by default" and
-            # was right about the SDK path, whose `balanced` preset passes
-            # ground=True; its evidence line names the hardening-audit probe,
-            # which runs on that same path. This makes the second channel keep
-            # the promise the first one already made.
-            #
-            # Cost measured over 4 MCP writes: steady 0.10s -> 0.46s per write;
-            # the first pays the CE cold-load (~29s) ONCE PER PROCESS, i.e.
-            # once per session on a long-lived server. No source means nothing
-            # to entail, so nothing is requested and nothing is loaded.
-            #
-            # An explicit env value still wins in the OFF direction: whoever
-            # has already switched the moat off keeps it off.
+            # «Non mi hai dato niente da controllare» e «sono spento» mandano
+            # chi scrive a correggere cose diverse: tre stati, non due.
             _gw_env = os.environ.get("ENGRAM_GROUNDING_WRITE", "").strip().lower()
             if _gw_env in ("0", "off", "false", "no"):
                 _ground_write = False
@@ -13856,72 +13683,6 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _ground_write = True
             else:
                 _ground_write = None
-            # P0 ciclo 2c: the identity is the SERVER's (_MCP_PRINCIPAL), never
-            # a tool argument — same trust boundary as writer_principal. The
-            # document store is lazy: writes that never reach the independence
-            # question open no connection.
-            from .evidence_independence import LazyDocumentStore
-            _gate = run_validation_gate(
-                proposition=proposition,
-                verified_by=verified_by,
-                topic=topic,
-                agent=a,
-                validate=_validate_kw,
-                gate_mode=_gate_mode_kw,
-                force_persist=_force_persist,
-                writer_role=_writer_role,
-                meta_narrative=_meta_narrative,
-                repo_root=_gate_repo_root,
-                source=_source,
-                grounding_llm=_grounding_llm,
-                ground_write=_ground_write,
-                claimant=_MCP_PRINCIPAL,
-                documents=LazyDocumentStore(),
-            )
-            _gate_warnings: list[dict[str, Any]] = list(_gate.warnings)
-            if _gate.action == "reject":
-                _audit(name, arguments, outcome="rejected_anti_confab")
-                return _ok({
-                    "ok": False,
-                    "rejected": True,
-                    "reason": "anti_confab_gate",
-                    "advice": _gate.advice,
-                    "anti_confab_warnings": _gate_warnings,
-                    "contradicting_fact_ids": list(
-                        _gate.contradicting_fact_ids
-                    ),
-                    # 0.8 WS1: a caller whose weakening knobs were refused
-                    # must see WHY the gate still fired (observability on
-                    # the reject path too, not only on success).
-                    "gate_knobs_denied": _knobs_denied,
-                })
-            if _gate.action == "downgrade":
-                # Cycle 138: preserve audit but lower trust so default
-                # recall hides the suspect claim. Schema v7 'quarantined'
-                # is the dedicated status for "anti-confab gate fired at
-                # write time" — distinct from 'orphaned' (post-hoc L2
-                # mutation) and from 'provisional' (research/hypothesis
-                # which has its own URL-ref gate cycle #109).
-                status = "quarantined"
-            elif not _meta_narrative:
-                # Tier-1 evidence requirement (opt-in, default OFF): a
-                # SPECIFIC unsourced claim that cleared L1+L3 is neither hype
-                # nor a contradiction, but asserting a specific value with
-                # zero provenance is the subtle-confab risk — CAP its
-                # confidence so it ranks below sourced/corroborated facts and
-                # reads as unverified. (status='provisional' is URL-gated by
-                # the store layer; a new status would touch the whole trust
-                # ladder — confidence is the natural continuous trust dial.)
-                # Trusted-hook meta-narrative writes are exempt; sourced /
-                # generic writes and the disabled default pass through.
-                from .evidence_requirement import resolve_write_confidence
-                confidence = resolve_write_confidence(
-                    proposition, verified_by,
-                    requested_confidence=confidence,
-                )
-            # B-1 multi-tenancy: scope the topic by user/agent/run (zero-schema
-            # prefix), AFTER the anti-confab gate (it saw the base topic) and
-            # BEFORE store, so the scope is persisted + filterable at recall.
             from .scope import parse_scope as _parse_scope
             from .scope import scoped_topic as _scoped_topic
             _uid = arguments.get("user_id")
@@ -13963,293 +13724,94 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 _derives_raw = arguments.get("derives_from") or []
                 if isinstance(_derives_raw, str):
                     _derives_raw = [d.strip() for d in _derives_raw.split(",") if d.strip()]
-                # R27 step2 auto-detect (OPT-IN, env ENGRAM_DERIVATION_AUTODETECT): only when
-                # NO explicit derives_from and a `source` is given. id-mention ONLY (containment
-                # over-links 38% on the real corpus — measured). Precision-first: a deliberate
-                # id-citation in the source is the strongest available auto-signal; still a
-                # heuristic (citation != proven derivation), hence default OFF.
                 if (not _derives_raw and _source
                         and os.environ.get("ENGRAM_DERIVATION_AUTODETECT", "").strip().lower()
                         in ("1", "true", "yes", "on")):
                     try:
+                        from .client import id_dal_contenuto as _id_dal_contenuto
                         from .derivation_detect import detect_derivations
+                        from .supersession_policy import source_signature_of as _firma_di
                         _live = a.semantic.list_facts(limit=10000, offset=0)
                         _derives_raw = detect_derivations(
                             str(_source), _live,
-                            exclude_id=_content_hash_id(proposition, topic))
+                            exclude_id=_id_dal_contenuto(
+                                proposition, topic, _firma_di(_source)))
                     except Exception:
                         _derives_raw = []
-                fact = _build_fact(
-                    proposition, topic=topic,
-                    confidence=confidence,
-                    verified_by=verified_by,
-                    status=status,
-                    source_signature=source_signature,
-                    writer_role=_writer_role,
-                    meta_narrative=_meta_narrative,
+                # 🔑 1b.3 — LA PORTA NON COSTRUISCE PIU' IL FATTO. Fino al 25/09
+                # qui c'era una copia del motore: gate, `_build_fact`,
+                # `store_within_budget`, ritiri, evento, ricevuta a 3 chiavi del
+                # nucleo su 14. Ora scrive `Memory.add()`, lo stesso di ogni
+                # porta, sullo stesso oggetto store dell'agente; questa porta
+                # traduce gli argomenti e formatta la risposta.
+                _r = _memoria(manopole_concesse=_manopole_concesse).add(
+                    proposition, topic=topic, source=_source or None,
+                    verified_by=verified_by, validate=_validate_kw,
+                    gate_mode=_gate_mode_kw, force_persist=_force_persist,
+                    ground=_ground_write, meta_narrative=_meta_narrative,
+                    writer_role=_writer_role, confidence=confidence,
                     valid_until=valid_until,
                     derives_from=[str(d) for d in _derives_raw],
-                    writer_principal=_MCP_PRINCIPAL,
-                    # L'etichetta del gate che ha appena giudicato questa
-                    # scrittura: `_gate` è lo stesso oggetto su cui i rami
-                    # sopra decidono reject e downgrade.
-                    confidence_tier=_calcola_tier(
-                        getattr(_gate, "grounding_score", None),
-                        getattr(_gate, "judge", None),
-                        getattr(_gate, "threshold", None),
-                    ),
-                )
+                    status=status)
             except ValueError as exc:
-                # Invalid status enum bubbles up here (validation
-                # happens at SemanticMemory.store; this catch is
-                # defensive for the unlikely future where _build_fact
-                # validates client-side).
                 _audit(name, arguments, outcome="rejected_invalid_status")
                 return _err(f"invalid status: {exc}")
-            # Cycle #46 (2026-05-14, fact 685d31c9d85b): opt-in
-            # observability for INSERT OR REPLACE on SemanticMemory.store.
-            #
-            # CRITIC-CORRECTED 2026-05-14 (job 18fcf29972455067 counterexample
-            # confidence 0.90): the premise that this entry point would emit
-            # `ok_replaced` was WRONG. `_build_fact` constructs Fact() without
-            # an explicit id; the Fact default_factory uses id_nuovo(12)
-            # (random — see semantic.py:39), NOT a content hash. So every
-            # hippo_remember call generates a fresh random id, the SELECT
-            # pre-INSERT check never matches, was_replaced is always False,
-            # outcome is always "ok_new". Two calls with identical
-            # (proposition, topic) produce TWO distinct rows — not idempotency,
-            # duplication.
-            #
-            # This handler is now WIRED for observability but the canonical
-            # entry point doesn't actually exercise overwrites. Replacement
-            # is only triggered when a CALLER passes an explicit fact.id
-            # that already exists — used by sleep.py:443 (NREM consolidation)
-            # and any internal merge/dedup utility that hashes content.
-            #
-            # Cycle #46b (next) addresses genuine idempotency at the
-            # hippo_remember entry point via content-hash id derivation.
-            # For NOW the audit log will record ok_new from all
-            # hippo_remember calls — that's an honest signal: nothing was
-            # overwritten BY DESIGN at this layer.
-            # Cycle #119 (2026-05-17): default coherence_hook wires the
-            # cycle #116 detector into prod. The hook scans the topic
-            # of the just-stored fact for near-duplicate / numeric_clash /
-            # boolean_clash siblings and emits one structured event per
-            # warning on the in-process BUS. Zero mutation — pure signal.
-            from .coherence_check import scan_topic_for_warnings as _scan_topic
-            def _default_coherence_hook(stored_fact, sm_):
-                try:
-                    warnings = _scan_topic(stored_fact, sm_)
-                except Exception as exc:  # noqa: BLE001 — hook never breaks store
-                    log.warning(
-                        "coherence_hook scan failed: fact_id=%s topic=%s error=%s",
-                        stored_fact.id, stored_fact.topic, exc,
-                    )
-                    return
-                for w in warnings:
-                    emit(
-                        "coherence_warning",
-                        kind=w.kind,
-                        fact_id=stored_fact.id,
-                        topic=stored_fact.topic,
-                        other_fact_id=w.other_fact_id,
-                        details=w.details,
-                    )
-            # v12 (moonshot #1): persist the write-time grounding score the gate just
-            # computed (source⊢fact entailment, AUROC 0.971) onto the fact, so recall/
-            # answering can condition on a trust coordinate no competitor has. None when
-            # no source / ENGRAM_GROUNDING_WRITE off → column stays NULL (unchanged).
-            if getattr(_gate, "grounding_score", None) is not None:
-                fact.grounding_score = _gate.grounding_score
-            from .semantic import store_within_budget
-            _deferred = False
-            try:
-                _res = store_within_budget(
-                    a.semantic, fact, return_replaced=True,
-                    coherence_hook=_default_coherence_hook,
-                    embed="auto",  # non-blocking encode: defer if daemon cold
-                )
-                _deferred = bool(_res.get("deferred"))
-                # DEFERRED (2026-06-06): a long background write held the SQLite
-                # write lock; the write completes in the background so the caller
-                # never blocks up to busy_timeout=60s. Result is unknown until then.
-                was_replaced = None if _deferred else _res.get("result")
-            except TypeError:
-                # Backwards-compat for any custom SemanticMemory subclass
-                # that hasn't picked up the kwarg yet — fall back to
-                # legacy call shape, log the conservative "ok" outcome.
-                a.semantic.store(fact)
-                was_replaced = None
-            outcome = "ok_deferred" if _deferred else (
-                "ok_replaced" if was_replaced else (
-                    "ok_new" if was_replaced is False else "ok"
-                )
-            )
-            # …E CHI HA DECISO LA QUARANTENA, che qui non si scriveva.
-            # Stessa forma del difetto che questo file ha gia' pagato con
-            # `flow.write` (il commento sotto): il Fact si costruisce qui e si
-            # chiama `store()` senza passare da `Memory.add()`, dove viveva la
-            # scrittura dell'autore. E' la porta da cui scrivono gli AGENTI, ed
-            # e' quella che nel corpus ha lasciato piu' righe mute: al 20/08
-            # `agent_inference` conta 1445 quarantinati con 4 autori e
-            # `system_hook` 297 con ZERO.
-            # 🔑 Non una quarta copia della regola: le stesse funzioni del
-            # write path. `store-screen` non si applica qui — lo status lo
-            # decide il ramo `downgrade` sopra, non uno screen dentro store().
-            # ⚠️ Se la scrittura e' DIFFERITA la riga non c'e' ancora e
-            # l'UPDATE non trova nulla: la causa si perde, il fatto no. E' lo
-            # stesso fail-open dichiarato nel write path, e vale la stessa
-            # ragione — un fatto senza causa e' il comportamento di sempre, un
-            # fatto non scritto sarebbe un danno nuovo.
-            # 28/08 — LA CAUSA SI CALCOLAVA, SI SCRIVEVA, E NON TORNAVA A CHI
-            # AVEVA SCRITTO. Il valore di `_chi_q` finiva dritto dentro
-            # `_persisti_q` senza passare da una variabile: nel database c'era,
-            # nella risposta no. Il presidio esisteva
-            # (`tests/test_chi_ha_deciso_la_quarantena.py`) e i suoi quattro
-            # test passano tutti da `Memory(...)`, cioe' dall'SDK — mentre chi
-            # scrive in questo prodotto e' quasi sempre un agente, e un agente
-            # passa da qui. Sapere e non dire e' peggio del non sapere, perche'
-            # non si vede.
-            _out_qb = None
-            if str(getattr(fact, "status", "")) == "quarantined":
-                # …E ANCHE `agito`, che e' il terzo passo dello stesso
-                # difetto. Il commento qui sopra dice «le stesse funzioni del
-                # write path», ed e' vero: era la stessa FUNZIONE ma non la
-                # stessa CHIAMATA. `agito` e' un parametro opzionale
-                # (`*, agito=()`), e senza di esso il ramo che nomina il layer
-                # non ha niente su cui girare: `chi_ha_quarantinato` cadeva
-                # sempre sull'ultima riga, `return "gate"`.
-                # Misurato alla porta, stesso claim e stessa esecuzione sulle
-                # due superfici: SDK `quarantined_by='L4.1'`, MCP `'gate'` —
-                # e nella STESSA ricevuta MCP `anti_confab_warnings` portava
-                # gia' `layer='L4.1'`. La porta sapeva e non lo diceva nel
-                # campo che serve a dirlo.
-                # `_blocking_layers` e non i warning grezzi: sono i layer che
-                # BLOCCANO, esclusi gli avvisi `*-observe`, se no si
-                # nominerebbe come decisore un layer che non ha deciso.
-                # `store-screen` resta fuori per la ragione gia' dichiarata
-                # sopra — qui lo status lo decide il ramo `downgrade`.
-                from .client import _blocking_layers as _bl
-                from .client import (
-                    chi_ha_quarantinato as _chi_q,
-                )
-                from .client import (
-                    esito_del_moat as _esito_moat,
-                )
-                from .client import (
-                    persisti_chi_ha_quarantinato as _persisti_q,
-                )
-                _out_qb = _chi_q(
-                    _esito_moat(_gate, _gate_warnings,
-                                source=_source or None),
-                    _gate_warnings,
-                    agito=_bl(_gate_warnings))
-                _persisti_q(
-                    a.semantic.db_path, str(getattr(fact, "id", "")),
-                    _out_qb,
-                )
-            # E IL VERDETTO PER ESTESO, che due promesse scritte davano per
-            # dovuto e che questa porta non consegnava. Il docstring di
-            # `_adjudication` dice «the write verdict, ALWAYS returned to the
-            # caller»; quello di `tests/test_adjudication_receipt.py` dice
-            # «EVERY write returns a VISIBLE verdict». Entrambe presidiate — e
-            # gli otto test di quel file passano tutti da `Memory(...)`, cioe'
-            # dall'SDK. Misurato il 28/08 con claim e fonte identici e la sola
-            # porta a cambiare: SDK restituiva `adjudication` con 8 campi, MCP
-            # restituiva 14 chiavi di primo livello e non quella — le sue in
-            # piu' sono ECO DELL'INGRESSO (proposition, topic, verified_by,
-            # confidence), mentre quelle che dicono PERCHE' stavano di la'.
-            # Una promessa presidiata su una porta sola non e' presidiata: e'
-            # vera dove il test guarda.
-            from .client import _adjudication as _adj_fn
-            _adj_out = _adj_fn(
-                _gate,
-                disposition=("quarantined"
-                             if str(getattr(fact, "status", "")) == "quarantined"
-                             else "admitted"),
-                verified_by=verified_by,
-                warnings=_gate_warnings)
-            # LA PORTA MCP SCRIVEVA SENZA DIRLO: 141 scritture ad agosto e
-            # ZERO eventi (2026-08-07; verificato sul log reale: 8247
-            # flow.write, `mcp` zero). Non era un tag mancante — `flow.write`
-            # compariva zero volte in questo file, perche' qui si costruisce
-            # il Fact e si chiama `semantic.store()` senza passare da
-            # `Memory.add()`, dove viveva l'emissione. Un agente che scrive
-            # da qui era invisibile alla sala motore.
-            # UN SOLO emettitore, non una quarta copia: `judged` e
-            # `withheld_despite_judge` li deriva lui dal punteggio.
-            from verimem.flow_events import emit_write as _emit_write
-            _emit_write(
-                stored=True, status=str(getattr(fact, "status", "")),
-                fact_id=str(getattr(fact, "id", "")),
-                topic=str(getattr(fact, "topic", "")),
-                layers=[w.get("layer") for w in (_gate_warnings or [])
-                        if isinstance(w, dict) and w.get("layer")],
-                grounding_score=getattr(fact, "grounding_score", None))
-            # 2026-06-02 (P0a — una memoria che conserva claim errati e'
-            # quasi inutile): auto-invalidate older facts the anti-confab
-            # gate (L3) flagged as contradicted by THIS just-stored fact.
-            # Reuses supersede() — old rows stay in DB for lineage and drop
-            # out of the default recall (WHERE superseded_by IS NULL). The
-            # safety rule lives in auto_supersede_on_contradiction: only
-            # STRICTLY-lower-trust facts are superseded, so a downgraded
-            # (quarantined) or weak new fact supersedes nothing. Best-effort:
-            # a supersede failure never breaks the write.
-            if not _deferred and getattr(_gate, "contradicting_fact_ids", None):
+            _gate_warnings: list[dict[str, Any]] = [
+                w for w in (_r.get("warnings") or []) if isinstance(w, dict)]
+            # LA FIRMA DELLA FONTE NON LA DICHIARA IL CLIENT. L'argomento c'era
+            # e finiva nel fatto: una firma senza fonte faceva passare due
+            # misure per «due fonti distinte». La calcola solo il motore, dalla
+            # fonte; l'argomento si ignora e si dice, accanto alle manopole.
+            _knobs_denied = list(_r.get("gate_knobs_denied") or [])
+            if source_signature is not None:
+                _knobs_denied.append("source_signature")
+            if not _r.get("stored"):
+                _audit(name, arguments, outcome="rejected_anti_confab")
+                return _ok({
+                    **_r,
+                    "ok": False,
+                    "rejected": True,
+                    "reason": "anti_confab_gate",
+                    "advice": _r.get("advice"),
+                    "anti_confab_warnings": _gate_warnings,
+                    "contradicting_fact_ids": list(
+                        _r.get("contradicting_fact_ids") or []),
+                    "gate_knobs_denied": _knobs_denied,
+                })
+            _deferred = bool(_r.get("deferred"))
+            # ⚠️ Il ritiro sulla contraddizione L3 esiste SOLO su questa porta
+            # ed e' una decisione aperta del lead (1b.3: nel motore per tutte,
+            # fuori da tutte, o dentro `applica_verdetto`). Fino alla decisione
+            # resta qui com'era, e la ricevuta del motore porta gli id.
+            _contraddetti = list(_r.get("contradicting_fact_ids") or [])
+            if not _deferred and _contraddetti:
                 try:
                     a.semantic.auto_supersede_on_contradiction(
-                        fact.id,
-                        list(_gate.contradicting_fact_ids),
+                        _r["id"], _contraddetti,
                         principal=_MCP_PRINCIPAL,
                         reason=(
                             "auto-supersede @ write: anti-confab gate L3 "
-                            f"flagged contradiction (superseded by {fact.id})"
+                            f"flagged contradiction (superseded by {_r['id']})"
                         ),
                     )
                 except Exception:  # noqa: BLE001 — never break the write
                     pass
-            # Same-source EVOLUTION supersession (ENGRAM_SUPERSEDE_SAME_SOURCE): retire the
-            # OLD value(s) the gate classified as a same-source evolution — but ONLY if the
-            # new fact was ADMITTED (a quarantined new must not retire the old; there is no
-            # rank rule on this path, so the admit-guard is explicit). Mirrors Memory.add()
-            # (SDK). Best-effort: a supersede failure never breaks the write.
-            # admit-guard: only if the new write is admitted AND actually retrievable from
-            # the curated store (store() can divert a non-quarantined write to telemetry
-            # without a 'quarantined' status; retiring the old against a diverted new drops
-            # both from curated recall — opus final critic).
-            # ⚠️ LA PROVA DI RAGGIUNGIBILITA' NON STA PIU' QUI, e toglierla da
-            # questa riga e' una CURA, non una semplificazione. Prima la
-            # condizione era «… and supersede_fact_ids and semantic.get(...)»:
-            # il primo termine faceva da INTERRUTTORE al secondo, e senza
-            # niente da ritirare `get` non veniva mai chiamato. Estraendo la
-            # funzione unica ho tolto il termine sul campo — il presidio che
-            # vieta di nominarlo qui mi ci ha portato — e `get` ha iniziato a
-            # essere chiamato a OGNI scrittura ammessa: quattro test rossi
-            # sulla gamba macos, perche' il loro doppio del semantic ha
-            # `store` e `count` e non `get`. La prova ora sta dentro
-            # `applica_verdetto`, DOPO il controllo degli id: stesso ordine di
-            # prima, un posto solo.
-            if (not _deferred
-                    and getattr(fact, "status", "") != "quarantined"):
-                # …dalla superficie unica, estratta il 2026-09-12: questo
-                # ciclo esisteva qui e, quasi uguale, nell'SDK — e la riga di
-                # comando non lo aveva affatto. Le guardie di ammissione
-                # restano di ogni porta (vedi il docstring della funzione):
-                # qui il vocabolario e' `_deferred` + lo stato del fatto.
-                from .supersession_policy import (
-                    applica_verdetto as _applica_verdetto,
-                )
-                _applica_verdetto(_gate, fact, a.semantic,
-                                  principal=_MCP_PRINCIPAL, ammesso=True,
-                                  log=log)
-            # NOTE: provenance columns (writer_role, meta_narrative) are
-            # persisted inline by SemanticMemory.store() via the v6 schema
-            # — see _migrate_v5_to_v6 + INSERT clause.
+            from types import SimpleNamespace as _SN_ricevuta
+
+            from .supersession_policy import source_signature_of as _firma_di
+            fact = _SN_ricevuta(
+                id=_r.get("id"), status=_r.get("status", "model_claim"),
+                grounding_score=_r.get("grounding_score"),
+                verified_by=list(verified_by),
+                source_signature=_firma_di(_source) if _source else None)
+            _gate = _SN_ricevuta(judge=_r.get("giudice") or _r.get("judged_by"))
+            was_replaced = None if _deferred else bool(_r.get("replaced"))
+            _out_qb = _r.get("quarantined_by")
+            _adj_out = _r.get("adjudication")
+            confidence = _r.get("confidence", confidence)
+            outcome = "ok_deferred" if _deferred else (
+                "ok_replaced" if was_replaced else "ok_new")
             _audit(name, arguments, outcome=outcome)
-            # Cycle #134 (2026-05-17): live dashboard fact_stored event.
-            # Fires after the store succeeds so the SSE stream can render
-            # the new fact in real time. Best-effort — emission failure
-            # never blocks the response.
             try:
                 emit(
                     "fact_stored",
@@ -14257,12 +13819,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     topic=topic,
                     confidence=confidence,
                     replaced=bool(was_replaced),
-                    status=getattr(fact, "status", "model_claim"),
+                    status=fact.status,
                     proposition_excerpt=proposition,
                 )
-                # Cycle #134: emit anti_confab_warning when the L1 detector
-                # fires on the just-stored proposition. The dashboard uses
-                # this to flag suspect facts in red within sub-second.
                 from .anti_confabulation import (
                     detect_unsupported_diagnosis_claim,
                     detect_unsupported_shipped_claim,
@@ -14273,7 +13832,6 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     ("l1_5", detect_unsupported_diagnosis_claim),
                     ("l1_7", detect_unsupported_task_state_claim),
                 ):
-                    # Detectors are kw-only: proposition + verified_by.
                     _w = _detect(
                         proposition=proposition,
                         verified_by=verified_by,
@@ -14492,6 +14050,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _provenienza_store_mcp = _prov_dd()
             _store_mcp = str(getattr(a.semantic, "db_path", "") or "")
             return _ok({
+                **_r,
                 "ok": True,
                 # Seconda chiave, e il posto e' la meta' della cura: la
                 # diagnosi c'era gia' piu' in basso e non si vedeva.

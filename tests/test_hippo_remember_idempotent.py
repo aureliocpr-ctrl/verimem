@@ -158,14 +158,19 @@ async def test_different_topic_different_id(agent: _StubAgent) -> None:
 @pytest.mark.asyncio
 async def test_id_deterministic_across_processes(agent: _StubAgent) -> None:
     """The id derivation must be a pure function — same input, same output,
-    regardless of process state. We can test this by calling the internal
-    _build_fact factory directly."""
-    f1 = mcp_server._build_fact("the cat is on the mat", topic="lit/example")
-    f2 = mcp_server._build_fact("the cat is on the mat", topic="lit/example")
-    assert f1.id == f2.id
+    regardless of process state.
+
+    Since 1b.3 (26/09) the server no longer builds the Fact: the engine
+    derives the id for every door (`client.id_dal_contenuto`), and the server's
+    `_content_hash_id` delegates to it. Both are checked, and against each
+    other: two formulas would be two ids for the same write."""
+    from verimem.client import id_dal_contenuto
+
+    a = id_dal_contenuto("the cat is on the mat", "lit/example")
+    assert a == id_dal_contenuto("the cat is on the mat", "lit/example")
+    assert a == mcp_server._content_hash_id("the cat is on the mat", "lit/example")
     # And different from a different content
-    f3 = mcp_server._build_fact("the dog is on the mat", topic="lit/example")
-    assert f1.id != f3.id
+    assert a != id_dal_contenuto("the dog is on the mat", "lit/example")
 
 
 @pytest.mark.asyncio
