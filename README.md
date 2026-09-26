@@ -124,9 +124,9 @@ rather than producing a number that looks like this one without it.
   with an `L4-skipped` advisory.
   **Honest scope of the CE-only judge** (measured, `benchmark/moat_multilingual_matrix.py`):
   it catches *value/numeric contradictions* across EN/IT/FR/ES and off-topic
-  confabs — but **not all of them**: the 2026-07-18 run had 0 numeric escapes in
-  the 4-domain matrix, and re-running the same command on 2026-08-25 reports **4**
-  (one per language) and exits 1. Run it yourself before trusting either number.
+  confabs: in the 4-domain matrix **<!-- g4:matrix-numeric -->0 of 84<!-- /g4 --> numeric contradictions escape**
+  (<!-- g4:matrix-when -->2026-09-24/25, commit 0a649f01<!-- /g4 -->; earlier runs of the same command: 0 on
+  2026-07-18, 4 on 2026-08-25, one per language). Run it yourself before trusting any of them.
   Two known gaps close only with an llm judge: a *plausible added inference the source never states* (e.g. "…which
   reduced latency") scores high and is admitted — and that gap is the one this
   README used to leave without a number while quantifying every smaller one.
@@ -146,13 +146,13 @@ rather than producing a number that looks like this one without it.
   coin toss, which is why `Memory(llm=...)` is the configuration to use when the
   workload is *what the source did not say*; and an *entity-substitution*
   contradiction (swapping one allergen/product for another) can score mid-range
-  in some languages — measured **25% escape on Spanish entity-substitution confabs
-  (7 of 28)**; across the whole 4-language matrix that is **7.1%** (8 of 112 over
+  in some languages — on 2026-07-18, before the band below, **25% escape on Spanish entity-substitution confabs
+  (7 of 28)**; across the whole 4-language matrix that was **7.1%** (8 of 112 over
   EN/IT/FR/ES, and one of those escapes is Italian):
   `docs/EVIDENCE-stress-2026-07-18.md` §D, `benchmark/moat_multilingual_matrix.py`.
   A two-threshold band (**on by default**, `VERIMEM_CE_BAND_ENFORCE=0` reverts) holds
   the CE's uncertain middle zone, cutting the Spanish entity-substitution escape from
-  **6.2% → 1.8% of all 112 confabs** with **zero** new false-blocks on entailed
+  **6.2% → <!-- g4:matrix-es-entity-band -->1.8% of all 112 confabs<!-- /g4 -->** with **zero** new false-blocks on entailed
   facts, at the cost of **over-review 1/19 on hard true classes** (measured; the band
   *holds for review*, it does not block) — and the band **escalates to one llm adjudication** OFFLINE-FIRST instead of parking
   the write: a local **ollama** judge (auto-detected; default `qwen2.5:7b-instruct` —
@@ -163,7 +163,7 @@ rather than producing a number that looks like this one without it.
   write is held for review. The verdict admits (judge-of-record `local-band`/`claude-band`
   on the receipt) or blocks; any escalation failure falls back to held-for-review, an
   unreadable verdict never admits (`VERIMEM_BAND_LLM=0` opts out). An air-gapped box with
-  ollama thus gets the full moat with no network. That residual — the same **1.8%** above, not a
+  ollama thus gets the full moat with no network. That residual — the Spanish entity-substitution escape above, not a
   second measurement, and it is a Spanish entity-substitution — scores high and still needs
   a full llm judge (`docs/EVIDENCE-external-2026-07-19.md`). A third
   measured limit: the CE **hard-rejects true facts that require arithmetic or a
@@ -171,9 +171,9 @@ rather than producing a number that looks like this one without it.
   "March 6") or a low-resource language — those need an llm judge too. The moat is
   strongest with an llm; the free CE is the no-setup multilingual default.
   **External certification (out-of-distribution, `docs/EVIDENCE-external-2026-07-19.md`):**
-  on our own 4-language structured-contradiction matrix the CE scores 0% false-block
-  (re-measured 2026-08-25: still 0.0%, 112/112 entailed admitted) / **5.4% escape**
-  (1.8% was the 2026-07-18 run; the same command today reports 5.4%);
+  on our own 4-language structured-contradiction matrix the CE scores
+  **<!-- g4:matrix-summary -->0.0% false-block (112/112 entailed admitted) / 1.8% escape (110/112 confabs quarantined), 2026-09-24/25 on commit 0a649f01<!-- /g4 -->**
+  (earlier runs of the same command: 1.8% escape on 2026-07-18, 5.4% on 2026-08-25);
   on **TruthfulQA heldout** — *plausible misconceptions* it never trained on — it scores **AUROC 0.829**, and at the default cut ~24% of true
   paraphrases are declined and ~18% of plausible misconceptions escape (74% of those
   scoring ≥80, the plausible-inference blind spot). Read honestly: the CE-only judge
@@ -711,7 +711,7 @@ measured result with the raw file in the repo, not a design intention:
 | Capability | Verimem (measured) | mem0 / Zep / MemOS |
 |---|---|---|
 | Abstains instead of fabricating when the store can't support an answer | **1.000 across seven consecutive full e2e runs** — and on questions that DO have an answer it abstains **0.20**, against **0.30** for the plain-RAG baseline ([BENCHMARKS](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md)). A 1.000 alone cannot distinguish "abstains when it should" from "abstains always", so both halves belong together | not measured by their leaderboards |
-| Write-path gate (unsupported "it works" claims quarantined — stored, not served) | grounding judge AUROC **0.96–0.97** across models/seeds (0.971 sonnet-4 R10 on SNLI, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model — ⚠️ **this last one has no committed results file**: `benchmark/epistemic_harness.py` computes `pooled_auroc`, but no artefact in `benchmark/results/` stores it, and the three `0.974` you will find there are different quantities with the same digits — an abstention canary and two accuracies. The two figures before it are traceable; this one is reproducible only by re-running the harness) — ⚠️ those are the **injected LLM judge** (the seeds named are `sonnet-4`/`sonnet-5`); with no LLM injected the write gate still runs, on the **local CE**, which scores **AUROC 0.829** on TruthfulQA heldout (row above). The gate is there either way; the number is not the same one | no write gate |
+| Write-path gate (unsupported "it works" claims quarantined — stored, not served) | grounding judge AUROC **0.96–0.97** across models/seeds (<!-- g4:gate-auroc -->0.971<!-- /g4 --> sonnet-4 R10 on SNLI, 0.963 sonnet-5 re-run 2026-07-16, 0.974 pooled multi-model — ⚠️ **this last one has no committed results file**: `benchmark/epistemic_harness.py` computes `pooled_auroc`, but no artefact in `benchmark/results/` stores it, and the three `0.974` you will find there are different quantities with the same digits — an abstention canary and two accuracies. The two figures before it are traceable; this one is reproducible only by re-running the harness) — ⚠️ those are the **injected LLM judge** (the seeds named are `sonnet-4`/`sonnet-5`); with no LLM injected the write gate still runs, on the **local CE**, which scores **AUROC 0.829** on TruthfulQA heldout (row above). The gate is there either way; the number is not the same one | no write gate |
 | Conflicting well-grounded memories resolved by provenance (`answer`, trust-conditioned) ⚠️ **needs an injected LLM**: `answer()` is keyword-only on `llm` and raises `TypeError` without one, so this row is unavailable on a plain install | correct **0.17 → 0.92**; on the 2 truly unresolvable conflicts it did **not** abstain — it picked a side both times ([bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/wellgrounded_distractor_bench.py), sonnet-5) | served as-is |
 | Trust axes under adversarial pressure ([TrustMem-Bench](https://github.com/aureliocpr-ctrl/verimem/blob/main/benchmark/trustmem_bench.py), deterministic, run it yourself) | **60/60** | mem0 **2.0.4**: 40/60 (forget-leak reproduced live) |
 | Bi-temporal history & time travel (`as_of`, "changed from X to Y on date Z") | shipped, tested | latest-value only (mem0 **2.0.4**) |
