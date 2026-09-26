@@ -106,7 +106,6 @@ def _rifiuta_una_stampa_infondata(
         return
     from verimem.schema import (
         ATTESE_PER_VERSIONE,
-        COMANDO_DI_MIGRAZIONE,
         colonne_del_nucleo,
         schema_corrisponde_su,
     )
@@ -121,6 +120,13 @@ def _rifiuta_una_stampa_infondata(
 
     mancanti = sorted(ATTESE_PER_VERSIONE[target_version] - presenti)
     percorso = _file_della_connessione(conn)
+    # ⚠️ LA VIA D'USCITA È QUELLA CHE ESISTE OGGI, non quella che vorremmo.
+    # `schema.COMANDO_DI_MIGRAZIONE` nomina `verimem store migrate`, che la CLI
+    # non ha: un rimedio che manda a un comando inesistente è peggio del
+    # silenzio, perché il silenzio non promette e manda comunque a cercare —
+    # e chi cerca nel momento sbagliato apre lo store a mano, cioè fa la cosa
+    # che questo rifiuto esiste per impedire. Una cella tiene fermo che ogni
+    # comando nominato qui esista davvero.
     raise RuntimeError(
         f"refusing to stamp db_id={db_id!r} from version {current} to "
         f"{target_version} with zero DDL applied: version {target_version} "
@@ -128,9 +134,9 @@ def _rifiuta_una_stampa_infondata(
         f"File: {percorso}. "
         f"The one-step stamp exists for a fresh bootstrap, where there is "
         f"nothing to apply; here it would promote the number while leaving "
-        f"the schema behind. Register the migration for {target_version}, or "
-        f"migrate the store on purpose: "
-        f"{COMANDO_DI_MIGRAZIONE.format(percorso=percorso)}"
+        f"the schema behind. Register the migration for {target_version}; to "
+        f"migrate this store instead, back the file up first and then open it "
+        f"with the product, which applies the ladder."
     )
 
 
