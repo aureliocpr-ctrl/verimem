@@ -131,6 +131,11 @@ def summarize(stats: dict) -> dict:
             num_esc += st["esc"]
             num_bad += st["quar"] + st["esc"]
     n_ok, n_bad = tot["ok"] + tot["fb"], tot["quar"] + tot["esc"]
+    for st in cells.values():
+        # a cell's escapes as a share of ALL confabs: the README quotes the Spanish
+        # entity-substitution escape this way, and it is not the overall escape rate
+        # as soon as another cell escapes too
+        st["esc_pct_of_all_confabs"] = 100 * st["esc"] / max(1, n_bad)
     fb_pct = 100 * tot["fb"] / max(1, n_ok)
     return {"cells": cells,
             "entailed_admitted": tot["ok"], "entailed_n": n_ok, "false_block_pct": fb_pct,

@@ -42,6 +42,28 @@ REGISTRY: dict[str, dict] = {
         "command": "python -m benchmark.fact_grounding_bench --out benchmark/results/fact_grounding.json",
         "cost": "claude-p",
     },
+    "moat-multilingual": {
+        "claim": "multilingual contradiction matrix (EN/IT/FR/ES, 224 writes): numeric escapes, "
+                 "confabs quarantined, entailed admitted",
+        "docs": [
+            {"file": "README.md", "id": "matrix-numeric", "text": "{e} of {n}",
+             "fields": {"e": ["numeric_escapes"], "n": ["numeric_confab_n"]}},
+            {"file": "README.md", "id": "matrix-when", "text": "{when}, commit {c:.8}",
+             "fields": {"when": ["measured_on"], "c": ["commit"]}},
+            {"file": "README.md", "id": "matrix-es-entity-band", "text": "{v:.1f}% of all {n} confabs",
+             "fields": {"v": ["cells", "ES/entity", "esc_pct_of_all_confabs"], "n": ["confab_n"]}},
+            {"file": "README.md", "id": "matrix-summary",
+             "text": "{fb:.1f}% false-block ({ok}/{nok} entailed admitted) / {esc:.1f}% escape "
+                     "({q}/{nb} confabs quarantined), {when} on commit {c:.8}",
+             "fields": {"fb": ["false_block_pct"], "ok": ["entailed_admitted"], "nok": ["entailed_n"],
+                        "esc": ["escape_pct"], "q": ["confab_quarantined"], "nb": ["confab_n"],
+                        "when": ["measured_on"], "c": ["commit"]}},
+        ],
+        "artifact": "moat_multilingual_matrix.json",
+        "value_at": ["escape_pct"],
+        "command": "python -m benchmark.moat_multilingual_matrix --out benchmark/results/moat_multilingual_matrix.json",
+        "cost": "local",
+    },
     "moat-downstream": {
         "claim": "downstream hallucination 95.9% -> 12.2% with gate ON (seed 7)",
         "artifact": "halumem_moat_fixedpair.json",
