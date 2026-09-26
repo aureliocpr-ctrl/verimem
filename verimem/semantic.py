@@ -2640,26 +2640,31 @@ class SemanticMemory:
         self.db_path = db_path or CONFIG.semantic_db
         self.repo_root = Path(repo_root).resolve() if repo_root else None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        # D-0012: IL BLOCCO STA QUI, PRIMA DELLO SCRIPT, e la posizione è il
-        # punto. Tre righe più sotto lo schema viene eseguito: su uno store
-        # vecchio quello È la migrazione — misurato su copie, un file a v7
-        # diventa v17 alla prima apertura, +21 colonne su `facts` e una tabella
-        # in più, senza avviso e senza ritorno. Un backup aperto per leggerlo
-        # smetteva di essere un backup.
+        # D-0012 + D-0009 — DUE METÀ DELLA STESSA DECISIONE, e qui convivono:
+        # prima si decide SE aprire, poi si dichiara COSA si è aperto. Lo stato
+        # si legge UNA volta per ramo e serve a tutte e due: `verifica_apribile`
+        # lo giudica, `_stato_all_apertura` lo conserva per la dichiarazione in
+        # fondo all'init. Va letto QUI perché lo script dello schema, tre righe
+        # sotto, lo sovrascrive: dopo, «com'era» non è più recuperabile.
         #
-        # Non blocca chi crea (`verifica_apribile` lascia passare uno store che
-        # non dichiara nessuna versione) né chi è già allineato: sul campo vero
-        # sono 6 store su 76, e chiuderli fuori sarebbe la cura peggiore del
-        # male. Blocca i 25 più vecchi del codice, che sono backup, snapshot e
-        # archivi — cioè esattamente i file per cui aprire non deve migrare.
-        #
-        # L'unica porta che passa di qui con l'autorizzazione è
-        # `store_migrate.migra_lo_store`, dove la migrazione è stata CHIESTA e
-        # arriva dopo un backup verificato contando le righe.
+        # ⚠️ I DUE RAMI NON HANNO LA STESSA SEVERITÀ, ed è voluto. Quando il
+        # blocco è in vigore un errore di lettura DEVE fermare l'apertura — è il
+        # caso in cui aprire migrerebbe un backup senza che nessuno l'abbia
+        # chiesto. Quando la migrazione è autorizzata resta solo la
+        # dichiarazione, e lì un errore non deve rompere niente: si dichiara di
+        # non sapere. Unificare i due rami in un `try` solo perderebbe il blocco.
+        _stato_all_apertura = None
         if not _migrazione_autorizzata:
             from .schema import leggi_stato as _leggi_stato
             from .schema import verifica_apribile as _verifica_apribile
-            _verifica_apribile(_leggi_stato(self.db_path))
+            _stato_all_apertura = _leggi_stato(self.db_path)
+            _verifica_apribile(_stato_all_apertura)
+        else:
+            try:
+                from .schema import leggi_stato as _leggi_stato
+                _stato_all_apertura = _leggi_stato(self.db_path)
+            except Exception:  # noqa: BLE001 — dichiarare non deve rompere l'apertura
+                _stato_all_apertura = None
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
             # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
@@ -2779,6 +2784,35 @@ class SemanticMemory:
             _replay_pending_facts(self)
         except Exception:  # noqa: BLE001 — a corrupt journal must not brick the db
             _LOG.warning("pending-facts replay failed at init", exc_info=True)
+
+        # D-0009, seconda metà: DICHIARARE l'apertura.
+        #
+        # Aprire esegue lo script dello schema, e restare fuori dalla scala è
+        # una scelta motivata poche righe sopra (due bump dimenticati ruppero
+        # le scritture in produzione). Quindi non si vieta: si dice quale file
+        # è stato aperto e in che stato lo si è trovato — che è l'informazione
+        # che mancava quando uno store è stato toccato al posto di un altro.
+        #
+        # In fondo all'init e non in cima: qui l'apertura è avvenuta davvero.
+        # Dichiararla prima significherebbe annunciare un'apertura che una
+        # riga più sotto può ancora fallire.
+        if _stato_all_apertura is not None:
+            try:
+                from .observability import emit as _emit
+                _emit(
+                    "store.opened",
+                    percorso=str(self.db_path),
+                    marcatura=_stato_all_apertura.marcatura.value,
+                    versione=_stato_all_apertura.versione,
+                    versione_applicativa=_stato_all_apertura.versione_applicativa,
+                    # `perche` è vero all'istante della lettura e dice anche
+                    # «il file non esiste», cioè il caso dello store creato da
+                    # questa apertura. Un campo calcolato QUI direbbe sempre
+                    # che esiste: a questo punto l'abbiamo creato noi.
+                    perche=_stato_all_apertura.perche,
+                )
+            except Exception:  # noqa: BLE001 — l'osservabilità non rompe l'init
+                pass
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
