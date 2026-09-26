@@ -429,19 +429,23 @@ class ContradictionStore:
             ).fetchall()
         return [self._row_to_contradiction(r) for r in rows]
 
-    def unresolved_ids_of_kinds(self, kinds: frozenset[str]) -> list[str]:
-        """Gli id delle contraddizioni APERTE di questi tipi: quelle che un
-        passaggio lascia stare devono potersi contare."""
+    def count_unresolved_by_kind(self, kinds: frozenset[str]) -> dict[str, int]:
+        """Quante contraddizioni APERTE per ciascuno di questi tipi, zero
+        compreso: quelle che un passaggio lascia stare devono potersi contare.
+        Un conteggio e non gli id: sullo store vero erano 75006, circa 1 MB
+        nel contesto di chi chiama lo strumento; gli id restano nella lista
+        delle contraddizioni."""
         tipi = sorted(kinds)
         if not tipi:
-            return []
+            return {}
         with self._connect() as conn:
             rows = conn.execute(
-                "SELECT id FROM contradictions WHERE resolved_at IS NULL "
-                f"AND kind IN ({','.join('?' * len(tipi))})",
+                "SELECT kind, COUNT(*) FROM contradictions "
+                "WHERE resolved_at IS NULL "
+                f"AND kind IN ({','.join('?' * len(tipi))}) GROUP BY kind",
                 tipi,
             ).fetchall()
-        return [r[0] for r in rows]
+        return {**dict.fromkeys(tipi, 0), **{r[0]: int(r[1]) for r in rows}}
 
     def list_all(self, *, limit: int = 100) -> list[Contradiction]:
         with self._connect() as conn:
@@ -569,8 +573,8 @@ def heal_contradictions(
 
     ``skip_kinds`` — tipi di contraddizione su cui questo passaggio NON agisce:
     restano aperti, non si leggono nemmeno (il ``limit`` vale per gli altri), e
-    i loro id escono in ``left_open_kinds``, perche' un passo spento deve
-    dirlo. Di default e' :data:`TIPI_CHE_HEAL_NON_ESEGUE` (vedi sopra).
+    il loro conteggio per tipo esce in ``left_open_kinds``, perche' un passo
+    spento deve dirlo. Di default e' :data:`TIPI_CHE_HEAL_NON_ESEGUE` (vedi sopra).
     """
     from .semantic import _rango_di_fiducia
 
@@ -581,7 +585,7 @@ def heal_contradictions(
     skipped: list[str] = []
     skipped_ignoto: list[str] = []
     missing: list[str] = []
-    left_open = store.unresolved_ids_of_kinds(skip_kinds) if skip_kinds else []
+    left_open = store.count_unresolved_by_kind(skip_kinds) if skip_kinds else {}
     for c in store.list_unresolved(limit=limit, exclude_kinds=skip_kinds):
         fa = memory.get(c.fact_a_id)
         fb = memory.get(c.fact_b_id)

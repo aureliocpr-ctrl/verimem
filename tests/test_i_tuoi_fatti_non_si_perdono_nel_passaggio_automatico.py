@@ -41,7 +41,8 @@ def test_il_passaggio_automatico_non_ritira_un_fatto_per_uno_scontro_numerico(
         "il passaggio automatico ha ritirato un fatto per uno scontro numerico: "
         f"{fatto.superseded_reason if fatto else 'il fatto non c e piu'} / {out}")
     # il passo spento lo DICE: lo scontro resta aperto ed e' contato
-    assert (out.get("healed") or {}).get("left_open_kinds", 0) >= 1, out
+    aperti = (out.get("healed") or {}).get("left_open_kinds")
+    assert aperti == {"numeric_clash": 1}, out
 
 
 def test_nessun_chiamante_di_heal_esegue_uno_scontro_numerico(tmp_path):
@@ -53,7 +54,7 @@ def test_nessun_chiamante_di_heal_esegue_uno_scontro_numerico(tmp_path):
     esito = heal_contradictions(sm, principal="test:mcp", limit=200)
     fatto = sm.get(perdente)
     assert fatto is not None and not fatto.superseded_by, esito
-    assert len(esito["left_open_kinds"]) == 1, esito
+    assert esito["left_open_kinds"] == {"numeric_clash": 1}, esito
 
 
 def test_controllo_positivo_uno_scontro_booleano_si_esegue_ancora(
