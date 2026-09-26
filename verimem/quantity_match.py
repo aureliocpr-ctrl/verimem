@@ -1478,7 +1478,10 @@ def _senza_diacritici(text: str) -> str:
 #: una cosa DIVERSA — se il testo sia privo di spazi fra le parole. Il coreano
 #: gli spazi ce li ha, quindi allargarla cambierebbe quel verdetto senza che
 #: nessuno l'abbia chiesto. Per i bigrammi c'è ``_SENZA_PAROLE_RE`` sotto.
-_CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
+#: ⚠️ Estremi scritti come escape e non come caratteri: il 25/09 in
+#: `_SENZA_PAROLE_RE` qui sotto U+F900 era diventato U+8C48 (la sua forma
+#: NFC, identica a vista) e la classe prendeva 11600 punti non dichiarati.
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]{2,}")
 
 
 #: Le scritture in cui la PAROLA non è l'unità utile del confronto — 15/08.
@@ -1494,10 +1497,15 @@ _CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
 #: criterio non diventa generoso, che è il rischio vero di un n-gramma.
 #: ⚠️ Controprova: italiano, inglese, russo, cinese e giapponese danno token
 #: IDENTICI a prima — la riga sotto non tocca chi già funzionava.
+#: ⚠️ CodeQL #1310, 25/09: qui il primo estremo dei CJK compatibili era il
+#: carattere U+8C48 invece di U+F900, e la classe prendeva anche U+A000-U+F8FF
+#: (Yi, Vai, Cherokee, Latino esteso D ed E, area d'uso privato). Gli estremi
+#: ora sono escape, e `tests/test_la_classe_senza_parole_e_quella_dichiarata.py`
+#: confronta i punti presi con questo commento.
 _SENZA_PAROLE_RE = re.compile(
-    r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿"
-    r"가-힯ᄀ-ᇿ"       # hangul: sillabe precomposte e jamo
-    r"฀-๿]{2,}")       # thai
+    r"[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"
+    r"\uac00-\ud7af\u1100-\u11ff"       # hangul: sillabe precomposte e jamo
+    r"\u0e00-\u0e7f]{2,}")       # thai
 
 
 def _bigrammi_cjk(text: str) -> set[str]:
