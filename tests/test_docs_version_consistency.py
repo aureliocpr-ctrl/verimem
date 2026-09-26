@@ -56,6 +56,9 @@ def test_security_md_is_version_agnostic():
 def test_state_md_release_row_matches_true_version():
     v = _pyproject_version()
     txt = (_ROOT / "STATE.md").read_text(encoding="utf-8")
-    m = re.search(r"\|\s*Release\s*\|\s*v?(\d+\.\d+\.\d+)", txt)
+    # The suffix is PEP 440 (0.7.7.dev0, 0.7.7rc1): without it a pre-release row
+    # reads as the final version, and the true row fails against the true version.
+    m = re.search(r"\|\s*Release\s*\|\s*v?(\d+\.\d+\.\d+(?:\.dev\d+|(?:a|b|rc)\d+|\.post\d+)?)",
+                  txt)
     assert m is None or m.group(1) == v, (
         f"STATE.md Release row says {m.group(1)}, true version is {v}")

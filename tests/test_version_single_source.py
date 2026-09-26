@@ -26,8 +26,11 @@ def _pyproject_version() -> str:
     return m.group(1)
 
 
-def _vt(s: str) -> tuple[int, ...]:
-    return tuple(int(x) for x in s.split("."))
+def _vt(s: str):
+    # PEP 440, not a tuple of ints: a pre-release such as 0.7.7.dev0 is a valid
+    # version that sorts before 0.7.7, and int('dev0') made this check crash.
+    from packaging.version import Version
+    return Version(s)
 
 
 def test_version_strings_do_not_drift():
