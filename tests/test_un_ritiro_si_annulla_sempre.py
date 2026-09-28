@@ -57,3 +57,31 @@ def test_un_ritiro_vecchio_di_otto_giorni_si_annulla_ancora(mem):
     assert esito.get("ok") is True and esito.get("action") == "restored", esito
     assert mem.semantic.get(a).superseded_by is None
     assert mem.semantic.get(b).superseded_by is None, "il vincitore resta vivo"
+
+
+def test_l_annullamento_tiene_cio_che_la_riga_ha_guadagnato_dopo(mem):
+    """Un ritiro scrive solo le tre colonne ``superseded_*``: il suo
+    annullamento rimette quelle e basta. Ricopiare l'istantanea intera —
+    vecchia di mesi, ora che l'handle non scade — cancellerebbe cio' che la
+    riga ha guadagnato nel frattempo (qui una fiducia rivista)."""
+    a, _b, op_id = _ritiro_vecchio_di_otto_giorni(mem)
+    with sqlite3.connect(mem.semantic.db_path) as c:
+        c.execute("UPDATE facts SET confidence = 0.93 WHERE id = ?", (a,))
+    esito = mem.semantic.undo_destructive_op(op_id)
+    assert esito.get("action") == "restored", esito
+    fatto = mem.semantic.get(a)
+    assert fatto.superseded_by is None
+    assert fatto.confidence == pytest.approx(0.93), (
+        "l'annullamento ha riscritto la riga con l'istantanea di prima del "
+        "ritiro")
+
+
+def test_l_annullamento_di_un_ritiro_non_resuscita_una_riga_cancellata(mem):
+    """Se la riga ritirata non c'e' piu', qualcuno l'ha cancellata: annullare
+    il ritiro non la riporta indietro, anche se l'handle e' sopravvissuto."""
+    a, _b, op_id = _ritiro_vecchio_di_otto_giorni(mem)
+    with sqlite3.connect(mem.semantic.db_path) as c:
+        c.execute("DELETE FROM facts WHERE id = ?", (a,))
+    esito = mem.semantic.undo_destructive_op(op_id)
+    assert esito.get("ok") is not True, esito
+    assert mem.semantic.get(a) is None

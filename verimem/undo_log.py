@@ -61,6 +61,11 @@ class UndoEntry:
 #: so; the 7-day TTL is for a ``forget``, where the row is gone.
 OP_CHE_NON_SCADONO: frozenset[str] = frozenset({"supersede"})
 
+#: The columns a retirement writes on the loser (``SemanticMemory.supersede``):
+#: its undo puts back these and nothing else.
+_COLONNE_DEL_RITIRO: tuple[str, ...] = (
+    "superseded_by", "superseded_at", "superseded_reason")
+
 
 def ensure_undo_table(conn: sqlite3.Connection) -> None:
     """Create the facts_undo_log table if it doesn't exist.
@@ -214,9 +219,11 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
         fact_id: str
         action: 'restored' | 'already_undone' | 'expired' | 'not_found'
 
-    Restoration uses INSERT OR REPLACE so the row is recreated even if it
-    was hard-deleted (forget) or modified (supersede). The undone_at column
-    is stamped so re-undo is a no-op.
+    A ``forget`` is restored with INSERT OR REPLACE, so the hard-deleted row
+    is recreated. A retirement (``supersede``) only puts back its three
+    ``superseded_*`` columns on the row that is still there (T88), and
+    answers ``not_found`` if the row was deleted meanwhile. The undone_at
+    column is stamped so re-undo is a no-op.
     """
     cur = conn.cursor()
     cur.execute(
@@ -241,18 +248,37 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
             "ttl_expires_at": float(ttl),
         }
     pre_row = json.loads(pre_row_json)
-    # Cycle 14 FIX 5: schema-tolerant restore. Query the live schema's
-    # column set so columns added/removed by migrations between the op
-    # and the undo don't break the restore.
-    cur.execute("PRAGMA table_info(facts)")
-    current_cols = {r[1] for r in cur.fetchall()}
-    cols, vals = _dict_to_row_args(pre_row, current_cols=current_cols)
-    placeholders = ",".join(["?"] * len(cols))
-    col_list = ",".join(cols)
-    conn.execute(
-        f"INSERT OR REPLACE INTO facts ({col_list}) VALUES ({placeholders})",
-        vals,
-    )
+    if op_type in OP_CHE_NON_SCADONO:
+        # T88: a retirement wrote only the superseded_* columns and left the
+        # row in place, so its undo puts back those columns and nothing else.
+        # Replaying the whole snapshot — months old, now that the handle never
+        # expires — would erase what the row gained since: later verdicts, its
+        # status, a column added by a migration. A row that is gone was
+        # deleted, and an undo does not bring it back.
+        cols, vals = _dict_to_row_args(
+            pre_row, current_cols=set(_COLONNE_DEL_RITIRO))
+        prima = dict(zip(cols, vals, strict=True))
+        cur_up = conn.execute(
+            "UPDATE facts SET superseded_by = ?, superseded_at = ?, "
+            "superseded_reason = ? WHERE id = ?",
+            (*(prima.get(c) for c in _COLONNE_DEL_RITIRO), fact_id),
+        )
+        if cur_up.rowcount == 0:
+            return {"ok": False, "op_id": op_id, "op_type": op_type,
+                    "fact_id": fact_id, "action": "not_found"}
+    else:
+        # Cycle 14 FIX 5: schema-tolerant restore. Query the live schema's
+        # column set so columns added/removed by migrations between the op
+        # and the undo don't break the restore.
+        cur.execute("PRAGMA table_info(facts)")
+        current_cols = {r[1] for r in cur.fetchall()}
+        cols, vals = _dict_to_row_args(pre_row, current_cols=current_cols)
+        placeholders = ",".join(["?"] * len(cols))
+        col_list = ",".join(cols)
+        conn.execute(
+            f"INSERT OR REPLACE INTO facts ({col_list}) VALUES ({placeholders})",
+            vals,
+        )
     conn.execute(
         "UPDATE facts_undo_log SET undone_at = ? WHERE op_id = ?",
         (time.time(), op_id),

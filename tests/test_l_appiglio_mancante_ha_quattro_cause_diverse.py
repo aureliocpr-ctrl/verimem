@@ -27,6 +27,10 @@ e le quattro colonne mandano a quattro azioni diverse:
   * **gia' usato** → **non e' un guasto, e' la funzione che ha funzionato**;
   * **vivo** → niente da fare.
 
+⏳ **Dal T88 (28/09) gli stati sono TRE**: lo scatto di un ritiro non scade
+piu' e non si pota, perche' la riga ritirata e' ancora li'. Uno scatto oltre il
+TTL e' VIVO, e la cura «si alza il TTL» non ha piu' un caso.
+
 🔴 **E il terzo caso e' il difetto peggiore**: oggi il check somma «usato»
 dentro «non si puo' annullare» e AVVISA. Su uno store dove qualcuno ha
 davvero annullato dei ritiri, la superficie segnalerebbe come guasto proprio
@@ -127,7 +131,8 @@ def _popola(d, *, vivi=0, usati=0, scaduti=0, mai=0):
     # cancellava la riga e il banco contava «mai esistito» al posto di
     # «scaduto» — 3 richiesti, 1 osservato. Non era un difetto del banco: e' il
     # prodotto che rende quello stato non osservabile, ed e' il risultato che
-    # questo file porta.
+    # questo file porta. (Dal T88 lo scatto di un ritiro non si pota piu':
+    # l'ordine non conta, ed e' innocuo.)
     for fid in da_scadere:
         con.execute("UPDATE facts_undo_log SET ttl_expires_at=?"
                     " WHERE fact_id=?", (ora - 10, fid))
@@ -138,20 +143,29 @@ def _popola(d, *, vivi=0, usati=0, scaduti=0, mai=0):
 
 class TestLeQuattroCauseSiLeggonoSeparate:
 
-    def test_il_messaggio_distingue_i_quattro_stati(self, store, monkeypatch):
+    def test_il_messaggio_distingue_i_tre_stati(self, store, monkeypatch):
         vera = _popola(store, vivi=1, usati=1, scaduti=1, mai=1)
         det = _check(monkeypatch, vera)["detail"]
-        for parola in ("expired", "undone", "never"):
+        for parola in ("reversible", "undone", "never"):
             assert parola in det.lower(), f"manca «{parola}»: {det}"
+        # T88: uno scatto oltre il TTL non e' «scaduto», e' vivo
+        assert "expired" not in det.lower(), det
 
-    def test_i_numeri_delle_quattro_colonne_sono_giusti(self, store,
-                                                        monkeypatch):
+    def test_i_numeri_delle_colonne_e_lo_scatto_oltre_il_ttl_e_vivo(
+            self, store, monkeypatch):
         vera = _popola(store, vivi=1, usati=2, scaduti=3, mai=4)
         det = _check(monkeypatch, vera)["detail"]
-        # 10 ritiri: 1 vivo, 2 usati, 3 scaduti, 4 mai
-        assert "10" in det, det
-        for atteso in ("2", "3", "4"):
-            assert atteso in det, f"manca il conteggio {atteso}: {det}"
+        # 10 ritiri: 1 vivo + 3 oltre il TTL = 4 annullabili, 2 usati, 4 mai
+        for atteso in ("10 retirements", "4 still reversible",
+                       "2 already undone", "4 never had a snapshot"):
+            assert atteso in det, f"manca «{atteso}»: {det}"
+
+    def test_scatti_oltre_il_ttl_non_fanno_avvisare(self, store, monkeypatch):
+        """Nove ritiri con lo scatto oltre i sette giorni: dal T88 si
+        annullano tutti, quindi non c'e' niente da riparare."""
+        vera = _popola(store, vivi=1, scaduti=9)
+        ch = _check(monkeypatch, vera)
+        assert ch["status"] == doctor.OK, ch["detail"]
 
 
 class TestIlFalsoAllarmePeggiore:
@@ -207,22 +221,23 @@ class TestLaFinestraEIlTTLSonoLoSTESSONUMERO:
     """🔑 La correttezza del check DIPENDE da un'uguaglianza che niente
     garantiva: la finestra dei 7 giorni era scritta `7 * 86400.0` in
     `doctor` e `7 * 24 * 3600` in `undo_log`. **Due copie**, e tutto
-    l'argomento del check («fuori dalla finestra "manca" e "scaduto" sono
-    indistinguibili, quindi guardo dentro») cade se divergono."""
+    l'argomento del check («fuori dalla finestra "manca" e "potato da una
+    build vecchia" sono indistinguibili, quindi guardo dentro») cade se
+    divergono."""
 
     def test_il_doctor_non_riscrive_il_ttl_ma_lo_IMPORTA(self):
         from verimem.doctor import _UNDO_TTL_S
         from verimem.undo_log import UNDO_TTL_SECONDS
         assert _UNDO_TTL_S == float(UNDO_TTL_SECONDS)
 
-    def test_uno_scatto_scaduto_viene_CANCELLATO_alla_scrittura_successiva(
+    def test_lo_scatto_di_un_ritiro_oltre_il_ttl_NON_viene_potato(
             self, store):
-        """IL RISULTATO DI PRODOTTO che questo file ha trovato, e che rende
-        `expired` una colonna strutturalmente vuota dentro la finestra:
-        `undo_log.py:187` pota le righe scadute a OGNI scrittura di un nuovo
-        scatto. Quindi «scaduto» diventa «mai esistito» — l'ambiguita' che il
-        commento del check dichiara di voler evitare, prodotta dal prodotto
-        stesso invece che dal tempo."""
+        """Questo test sorvegliava una premessa: `undo_log.py` potava le righe
+        scadute a OGNI scrittura di un nuovo scatto, e «scaduto» diventava
+        «mai esistito». Il T88 la cambia apposta: lo scatto di un RITIRO non
+        si pota piu' (la riga ritirata e' ancora li', e un ritiro sbagliato
+        deve restare annullabile), quindi dopo un'altra scrittura c'e'
+        ancora."""
         from verimem.semantic import Fact, SemanticMemory
         sm = SemanticMemory(db_path=store / "semantic" / "semantic.db")
 
@@ -243,8 +258,9 @@ class TestLaFinestraEIlTTLSonoLoSTESSONUMERO:
         assert _righe_undo(sm, primo) == 1, "lo scatto scaduto c'e' ancora"
 
         coppia(2)          # una scrittura qualunque di un altro scatto
-        assert _righe_undo(sm, primo) == 0, (
-            "lo scatto scaduto NON e' stato potato: la premessa e' cambiata")
+        assert _righe_undo(sm, primo) == 1, (
+            "lo scatto del ritiro e' stato potato: un ritiro sbagliato non si "
+            "annulla piu' dopo sette giorni")
 
 
 def _righe_undo(sm, fact_id: str) -> int:

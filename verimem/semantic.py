@@ -5691,7 +5691,8 @@ class SemanticMemory:
         return result
 
     def list_undoable_ops(self, *, limit: int = 20) -> list[dict[str, Any]]:
-        """List the N most recent undoable ops (not yet undone, not expired)."""
+        """List the N most recent undoable ops (not yet undone, not expired;
+        a retirement's handle never expires)."""
         from .undo_log import list_undoable
         with self._connect() as conn:
             entries = list_undoable(conn, limit=limit)
