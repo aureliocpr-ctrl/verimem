@@ -22,19 +22,24 @@ WARN = "warn"
 FAIL = "fail"
 
 #: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina, in
-#: memoria UNICA (USS), cioe' le pagine fisiche che solo quel processo tiene e
-#: che tornano libere se muore. Misurato il 2026-09-28: il daemon condiviso con
-#: i quattro modelli tiene 2750 MB unici sulla scheda e 1561 su CPU; un server
-#: MCP fra 147 e 277; uno scrittore in delegate-only 49. Il tetto fisso copre il
-#: daemon sulla scheda; quello per sessione, il server piu' grande misurato.
-MEMORIA_FISSA_MAX_MB = 3000
-MEMORIA_PER_SESSIONE_MAX_MB = 300
+#: memoria IMPEGNATA privata: quella che il processo tiene anche quando il
+#: sistema lo comprime o lo pagina, cioe' cio' che riempie il commit della
+#: macchina. NON la memoria unica (USS): sotto pressione Windows toglie pagine ai
+#: processi fermi e la USS scende — misurato il 2026-09-28, lo stesso daemon a
+#: 1689 MB unici alle 19:26 e a 334 alle 21:4x, con l'impegnata ferma — e un
+#: tetto massimo misurato cosi' passerebbe proprio quando la macchina e' piena.
+#: Misurato lo stesso giorno: il daemon con i quattro modelli impegna 7470 MB
+#: sulla scheda e 5868 su CPU (quello vero, con tre modelli, 6298); un server
+#: MCP fra 348 e 528; uno scrittore in delegate-only 179 dopo le cure.
+MEMORIA_FISSA_MAX_MB = 8000
+MEMORIA_PER_SESSIONE_MAX_MB = 600
 
 
 def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any]:
-    """I due numeri della riga 7, misurati sui processi VIVI: la memoria unica
-    del daemon condiviso (il pid lo dice il file di scoperta) e quella del
-    server MCP piu' grande (una sessione e' un server MCP).
+    """I due numeri della riga 7, misurati sui processi VIVI: la memoria del
+    daemon condiviso (il pid lo dice il file di scoperta) e quella del server
+    MCP piu' grande (una sessione e' un server MCP). Per ognuno l'impegnata
+    (la promessa) e la unica (il dato fisico del momento).
 
     Niente modelli e niente stime: se psutil non c'e' lo dice, invece di
     stampare un numero che non ha misurato.
@@ -45,9 +50,14 @@ def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any
     if psutil is None:
         return {"misurato": False, "perche": "psutil is not installed"}
 
-    def unica(processo: Any) -> int | None:
+    def misura(processo: Any) -> tuple[int, int] | None:
+        """(impegnata, unica) in MB, o None se il processo non si legge."""
         try:
-            return round(processo.memory_full_info().uss / 2 ** 20)
+            completa = processo.memory_full_info()
+            privata = getattr(processo.memory_info(), "private", None)
+            if privata is None:   # fuori da Windows: le pagine sue, in RAM o in swap
+                privata = completa.uss + getattr(completa, "swap", 0)
+            return round(privata / 2 ** 20), round(completa.uss / 2 ** 20)
         except Exception:  # noqa: BLE001 — processo uscito o non leggibile
             return None
 
@@ -55,20 +65,24 @@ def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any
     pid = (info or {}).get("pid")
     if pid:
         try:
-            fissa = unica(psutil.Process(int(pid)))
+            fissa = misura(psutil.Process(int(pid)))
         except Exception:  # noqa: BLE001 — il daemon annunciato non c'e' piu'
             fissa = None
     sessioni = []
     for processo in psutil.process_iter(["pid", "cmdline"]):
         try:
             if _is_engram_mcp_cmdline(" ".join(processo.info.get("cmdline") or [])):
-                valore = unica(processo)
+                valore = misura(processo)
                 if valore is not None:
                     sessioni.append(valore)
         except Exception:  # noqa: BLE001 — un processo illeggibile non ferma il conto
             continue
-    return {"misurato": True, "fissa_mb": fissa,
-            "per_sessione_mb": max(sessioni) if sessioni else None,
+    sessione = max(sessioni) if sessioni else None
+    return {"misurato": True,
+            "fissa_mb": fissa[0] if fissa else None,
+            "fissa_unica_mb": fissa[1] if fissa else None,
+            "per_sessione_mb": sessione[0] if sessione else None,
+            "per_sessione_unica_mb": sessione[1] if sessione else None,
             "processi_mcp": len(sessioni)}
 
 #: Cosa succede DAVVERO alle scritture quando non c'e' nessun giudice.
@@ -633,13 +647,15 @@ def run_doctor() -> list[dict[str, Any]]:
             sessione = misura.get("per_sessione_mb")
             dentro = ((fissa or 0) <= MEMORIA_FISSA_MAX_MB
                       and (sessione or 0) <= MEMORIA_PER_SESSIONE_MAX_MB)
-            testo_fisso = (f"fixed {fissa} MB (the shared encode daemon)"
+            testo_fisso = (f"fixed {fissa} MB (the shared encode daemon, "
+                           f"{misura.get('fissa_unica_mb')} MB of it in RAM now)"
                            if fissa is not None else "fixed 0 MB (no shared daemon running)")
             testo_sessione = (f"per session {sessione} MB (the largest of "
-                              f"{misura.get('processi_mcp')} MCP server processes)"
+                              f"{misura.get('processi_mcp')} MCP server processes, "
+                              f"{misura.get('per_sessione_unica_mb')} MB of it in RAM now)"
                               if sessione is not None else "per session: no MCP server running")
             add("memory", OK if dentro else WARN,
-                f"{testo_fisso}; {testo_sessione}; unique memory, promised at most "
+                f"{testo_fisso}; {testo_sessione}; committed memory, promised at most "
                 f"{MEMORIA_FISSA_MAX_MB} and {MEMORIA_PER_SESSIONE_MAX_MB} MB",
                 None if dentro else "see which process holds it: the daemon's models "
                 "or a session that loaded one in-process")
