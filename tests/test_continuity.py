@@ -540,10 +540,21 @@ def _legacy_v14_db(tmp_path):
 
 
 def test_stamped_v14_db_gains_missing_columns_and_stores(tmp_path):
-    """The exact live crash: a version-stamped legacy DB must come out of
-    __init__ with the full column set, and store() must work."""
+    """The exact live crash: a version-stamped legacy DB must come out with
+    the full column set, and store() must work.
+
+    D-0012: il percorso passa dal comando, non dall'apertura. Aprire uno store
+    v14 ora si rifiuta — perché lo stesso automatismo aggiornava in silenzio un
+    backup aperto per leggerlo. La riparazione non è sparita: si chiede, dopo un
+    backup verificato contando le righe. Tutto ciò che questo test difendeva
+    resta difeso, un passo più in là.
+    """
     import sqlite3
+
+    from verimem.store_migrate import migra_lo_store
+
     db = _legacy_v14_db(tmp_path)
+    migra_lo_store(db)
     sm = SemanticMemory(db_path=db)
     with sqlite3.connect(db) as c:
         cols = {r[1] for r in c.execute("PRAGMA table_info(facts)")}
@@ -562,12 +573,25 @@ def test_stamped_v14_db_gains_missing_columns_and_stores(tmp_path):
 def test_column_guard_self_heals_forgotten_ladder_bump(tmp_path):
     """Class cure: even a DB stamped AT target with a missing additive
     column self-heals at init (and the repair is logged, not silent) —
-    the next forgotten bump must never break production writes again."""
+    the next forgotten bump must never break production writes again.
+
+    ⚠️ Marcato AL TARGET vuol dire alla versione del codice, ed è ciò che il
+    titolo dice: prima qui c'era 999, cioè uno store che si dichiara PIÙ NUOVO
+    del codice. Con D-0012 quel caso ha una risposta sua — non si apre, perché
+    un codice più vecchio che scrive su uno schema più nuovo mescola i dati
+    invece di fallire — e usarlo qui avrebbe misurato quel rifiuto invece della
+    guardia delle colonne. Il caso che questa cella difende (bump dimenticato:
+    versione allineata, colonna mancante) resta intatto e il self-heal
+    all'apertura continua a coprirlo.
+    """
     import sqlite3
+
+    from verimem.schema import VERSIONE_DEL_NUCLEO
+
     db = _legacy_v14_db(tmp_path)
     with sqlite3.connect(db) as c:
-        c.execute("UPDATE _schema_version SET version = 999 "
-                  "WHERE db_id = 'semantic'")
+        c.execute("UPDATE _schema_version SET version = ? "
+                  "WHERE db_id = 'semantic'", (VERSIONE_DEL_NUCLEO,))
     SemanticMemory(db_path=db)
     with sqlite3.connect(db) as c:
         cols = {r[1] for r in c.execute("PRAGMA table_info(facts)")}

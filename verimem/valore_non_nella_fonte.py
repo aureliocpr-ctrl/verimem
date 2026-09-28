@@ -16,12 +16,22 @@ punteggio più alto del sistema.
 
 LA DIAGNOSI HA UN INDIRIZZO PRECISO::
 
-    «Nessun rilevatore L1 riceve la fonte. Il confronto claim↔fonte esiste in
-     UN SOLO posto: dentro il cross-encoder, che è esattamente quello che
-     sbaglia su questa classe.
-        L1  vede il claim, NON la fonte
+    «Il confronto claim↔fonte esiste in UN SOLO posto che DECIDE: dentro il
+     cross-encoder, che è esattamente quello che sbaglia su questa classe.
+        L1  vede il claim; della fonte non guarda i VALORI
         L4  vede claim + fonte, ma confonde PLAUSIBILE con IMPLICATO
-     ⇒ manca un controllo DETERMINISTICO claim↔fonte»
+     ⇒ manca un controllo DETERMINISTICO claim↔fonte sui numeri»
+
+⏱️ LA DIAGNOSI È DATATA, e una riga di essa è scaduta. Diceva «nessun
+rilevatore L1 riceve la fonte»: vero quando è stata scritta il 2026-08-05,
+FALSO dal 2026-09-20. Oggi `l1_completion_detector` la riceve in due punti —
+`_la_fonte_e_solo_l_eco` (riga 185, e alla 214 confronta i due testi
+normalizzati) e `_il_participio_e_nella_fonte` (riga 217). Quello che resta
+vero, ed è la ragione di questo modulo, è più stretto: quei due controlli
+guardano le PAROLE, non i valori numerici, quindi un dettaglio inventato
+passa comunque. Un'affermazione di assenza invecchia da sola: questa è stata
+corretta appena un pari ha misurato il contrario, non quando qualcuno se l'è
+ricordata.
 
 e il numero che la rende strutturale: il 91,8% dei verdetti del moat sta
 agli estremi (1324 su 1673 sopra 99) — **nessuna soglia può separare**, perché
@@ -225,7 +235,7 @@ def _dichiara_un_assenza(testo: str) -> bool:
 # viene perdonata e resta fermata — c'è un controllo positivo che lo pin-a.
 #
 # 📌 E sta QUI e non in `extract_quantities`: è la stessa scelta già dichiarata
-# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i sei moduli
+# sopra per «nessun X vale 0». Toccare l'estrattore alimenterebbe i nove moduli
 # del gate che lo leggono; qui l'equivalenza vive solo nel confronto.
 _TOKEN_CON_VERSIONE = re.compile(
     r"(?<![\w.-])[A-Za-z][\w.]*-\d+(?:\.\d+)+(?![\w-])")
@@ -348,7 +358,13 @@ def _senza_i_nomi_di_file(testo: str) -> str:
     """Il testo con i nomi di file sostituiti da un segnaposto.
 
     ⚠️ IL PERIMETRO, e la ragione per cui la cura sta QUI e non in
-    `extract_quantities`: quel parser lo usano sei moduli del gate, e insegnargli
+    `extract_quantities`: quel parser lo usano NOVE moduli, e insegnargli
+    (misurato il 2026-09-22 con gli import, due forme: nove importano
+    `extract_quantities` — anti_confab_gate, corroboration,
+    evidence_requirement, fact_priority, facts_conflict, soggetto_valore,
+    validate_claim, questo modulo, vicinato_del_valore — e undici importano
+    qualcosa da `quantity_match`. Il «sei» scritto qui prima non era piu' vero,
+    e un numero in un commento non si aggiorna da solo: si conta.)
     i nomi di file propagherebbe la conversione a tutti in silenzio — la stessa
     ragione gia' scritta sopra per la notazione scientifica. Qui si toglie una
     LETTURA al confronto claim-fonte, non una capacita' al parser, e il banco ha
@@ -369,6 +385,83 @@ def _senza_i_nomi_di_file(testo: str) -> str:
                     for t in testo.split())
 
 
+def _radici_dei_nomi_di_file(testo: str) -> frozenset[str]:
+    """Le radici dei nomi di file del testo: da `00-ESAME.md` esce `00-esame`.
+
+    Serve per la NORMALIZZAZIONE fra i due testi: chi cita un documento non
+    scrive sempre l'estensione, e `00-ESAME` e `00-ESAME.md` sono lo stesso
+    nome. Confrontate a minuscole perche' la differenza di maiuscole in un
+    titolo non e' un'affermazione su un numero.
+    """
+    fuori = set()
+    for tok in (testo or "").split():
+        pulito = tok.strip(".,;:!?)(\"'")
+        if not _e_un_nome_di_file(pulito):
+            continue
+        radice = pulito.rsplit(".", 1)[0]
+        if not radice:
+            continue
+        fuori.add(radice.lower())
+        # ⚠️ ANCHE IL SOLO NOME, senza la cartella: la fonte scrive
+        # `docs/stato-reale/00-ESAME.md` e il claim scrive `00-ESAME`. Senza
+        # questa riga la normalizzazione riconosceva solo i nomi citati senza
+        # percorso, ed erano DUE CELLE su cinque del banco di questa richiesta —
+        # la mia prima versione era piu' STRETTA del difetto, per una volta, e
+        # se ne e' accorto il presidio scritto da chi ha trovato il rovescio.
+        base = radice.replace("\\", "/").rsplit("/", 1)[-1]
+        if base:
+            fuori.add(base.lower())
+    return frozenset(fuori)
+
+
+def _senza_i_nomi_normalizzati(testo: str, radici_dell_altro: frozenset[str]) -> str:
+    """Il testo con i nomi di file tolti, CONTANDO come nome anche un token che
+    coincide con la radice di un nome di file dell'ALTRO testo.
+
+    ⚖️ PERCHE' NORMALIZZARE E NON CANCELLARE DALLA FONTE. La prima versione di
+    questa cura toglieva i nomi di file da entrambi i testi, e quella simmetria
+    ha aperto un difetto uguale e contrario: `00-ESAME` nel claim contro
+    `00-ESAME.md` nella fonte accusava `00`, perche' dalla fonte il nome era
+    stato cancellato e non poteva piu' assolvere nessuno. Misurato sulle coppie
+    vere dello store: questa normalizzazione cambia 3 letture su 8876, tutte e
+    tre accuse in meno, zero accuse nuove.
+
+    ⚠️ E IL COSTO, misurato e non teorico: la strada scartata (smettere di
+    pulire la fonte) cambiava QUATTRO letture, non tre. La quarta e' il fatto
+    `2bf35b09d120`, dove il claim dice «estrae i numeri 07 e 13» e la fonte
+    porta quei numeri solo dentro `..._2026-07-13.json`: li' l'assoluzione era
+    giusta e questa cura non la da'. Il caso gemello — claim «il capannone
+    misura 400 metri», fonte «vedi 400-piani.md» — ha la STESSA forma e il
+    giudizio opposto, e nessuna regola sui token puo' distinguerli: per farlo
+    servirebbe sapere se il claim parla del NOME o del MONDO. Si tiene l'accusa
+    perche' un'accusa sbagliata si legge nella ricevuta, un perdono sbagliato
+    no.
+    La strada scartata era togliere la pulizia dalla FONTE. Lo avrebbe curato,
+    e avrebbe aperto il suo rovescio: un valore che la fonte porta SOLO dentro
+    un nome di file (claim «il capannone misura 400 metri», fonte «vedi
+    400-piani.md») sarebbe stato perdonato. Oggi quel caso ha raggio zero sul
+    corpus, e un raggio zero non e' una ragione: e' un debito che paga chi
+    arriva dopo.
+    Quindi non si cancella niente in piu' e non si smette di cancellare: si
+    RICONOSCE che le due grafie dello stesso nome sono lo stesso nome. La fonte
+    continua a non assolvere un numero che sta solo in un titolo, e il claim che
+    nomina un documento senza estensione non viene piu' accusato del numero di
+    quel documento.
+    """
+    if not testo:
+        return testo
+    if "." not in testo and not radici_dell_altro:
+        return testo
+    fuori = []
+    for tok in testo.split():
+        pulito = tok.strip(".,;:!?)(\"'")
+        if _e_un_nome_di_file(pulito) or pulito.lower() in radici_dell_altro:
+            fuori.append("<FILE>")
+        else:
+            fuori.append(tok)
+    return " ".join(fuori)
+
+
 def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]:
     """I valori numerici del claim che nella fonte non compaiono.
 
@@ -386,8 +479,10 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     # `00-ESAME.md` NON afferma che qualcosa vale zero: il numero e' nel TITOLO.
     # Si toglie da entrambi i testi, perche' un nome di file nella FONTE non
     # deve nemmeno perdonare un valore che il claim afferma davvero.
-    proposition = _senza_i_nomi_di_file(proposition)
-    source = _senza_i_nomi_di_file(source)
+    _radici_claim = _radici_dei_nomi_di_file(proposition)
+    _radici_fonte = _radici_dei_nomi_di_file(source)
+    proposition = _senza_i_nomi_normalizzati(proposition, _radici_fonte)
+    source = _senza_i_nomi_normalizzati(source, _radici_claim)
     # `1,5 x 10^3` E `1500` SONO LO STESSO NUMERO, e il layer non lo sapeva.
     # Misurato il 02/09 sul banco T5.1: sulla notazione scientifica il gate
     # fermava 6 VERI su 6, e in TRE casi a fermarli era questo layer DA SOLO
@@ -408,7 +503,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     #
     # ⚖️ E STA QUI, NON IN `extract_quantities`, per la stessa ragione gia'
     # scritta piu' sotto per «nessun X vale 0»: insegnare la notazione al
-    # parser propagherebbe la conversione ai sei moduli del gate che lo usano,
+    # parser propagherebbe la conversione ai nove moduli che lo usano,
     # mentre qui l'equivalenza vive SOLO nel confronto claim-fonte e non entra
     # nel corpus.
     proposition = _espandi_notazione_scientifica(proposition)
@@ -448,7 +543,7 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     # misurata. Insegnare al parser che «nessun X» vale 0 creerebbe quantità
     # dove il testo non ne misura nessuna — nel corpus reale «zero costo»,
     # «zero MCP», «Zero API» sono frequentissimi — e quelle quantità fantasma
-    # finirebbero nei sei moduli del gate che leggono `extract_quantities`,
+    # finirebbero nei nove moduli che leggono `extract_quantities`,
     # alimentando i rilevatori di conflitto. Qui invece l'equivalenza vive solo
     # nel confronto fra claim e fonte: non entra nel corpus e non crea nulla.
     #

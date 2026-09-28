@@ -254,7 +254,11 @@ class TestLegacyFactsMarkedLegacyUnverified:
                 "", 1700000000.0, emb_mod.serialize(fake_emb),
             ))
 
-        # Now open with new SemanticMemory — migration should run
+        # D-0012: la migrazione non avviene piu' aprendo, si chiede. Lo
+        # stesso automatismo aggiornava in silenzio un backup aperto per
+        # leggerlo; ora passa da un comando, dopo un backup verificato.
+        from verimem.store_migrate import migra_lo_store
+        migra_lo_store(db_path)
         sm = SemanticMemory(db_path=db_path)
         got = sm.get("legacy_id")
         assert got is not None
