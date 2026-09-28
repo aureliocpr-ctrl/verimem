@@ -42,8 +42,25 @@ def _nessun_limite_ereditato(monkeypatch):
         monkeypatch.setattr(embedding, "_prossima_guarigione", {})
 
 
-def _il_daemon(monkeypatch, c_e: bool) -> None:
+def _il_daemon(monkeypatch, c_e: bool) -> list[str]:
+    """«Il daemon c'e'» per intero: il servizio acceso, un daemon che risponde e
+    le codifiche che passano da lui (lo stub del conftest al posto del modello).
+
+    Fino al 28/09 simulava solo `daemon_usable` e lasciava il servizio spento
+    (il conftest lo spegne): la guarigione passava lo stesso perche' non
+    guardava l'interruttore, ed e' il difetto che inchioda la cella del servizio
+    spento qui sotto. Torna i testi che il «daemon» ha codificato."""
+    richieste: list[str] = []
     monkeypatch.setattr(encode_service, "daemon_usable", lambda *a, **k: c_e)
+    if c_e:
+        monkeypatch.setenv("ENGRAM_ENCODE_SERVICE", "1")
+
+        def _dal_daemon(testo):
+            richieste.append(testo)
+            return embedding._encode_local(testo)
+
+        monkeypatch.setattr(embedding, "_encode_via_service", _dal_daemon)
+    return richieste
 
 
 def _delegato_assente(*a, **k):
@@ -73,13 +90,45 @@ def test_la_recall_rida_il_vettore_ai_fatti_rinviati_quando_il_daemon_c_e(
     sm.store(f, embed="defer")
     assert _byte_del_vettore(sm, f.id) == 0, (
         "il rinvio non ha lasciato la riga senza vettore: la cella non misura")
-    _il_daemon(monkeypatch, True)
+    dal_daemon = _il_daemon(monkeypatch, True)
 
     sm.recall("magazzino di Padova", k=3)
 
     assert _byte_del_vettore(sm, f.id) == embedding.expected_embedding_bytes(), (
         "il daemon c'era e la recall non ha rifatto il vettore: il fatto resta "
         "invisibile alla ricerca per significato fino al prossimo server")
+    assert any("Padova" in t for t in dal_daemon), (
+        "il vettore c'e' ma non l'ha fatto il daemon: la guarigione ha codificato "
+        f"in questo processo ({dal_daemon})")
+
+
+def test_col_servizio_spento_la_guarigione_non_parte_anche_se_un_daemon_risponde(
+        tmp_path, monkeypatch):
+    """IL DIFETTO DEL 28/09. RED sul tronco.
+
+    `ENGRAM_ENCODE_SERVICE=0` spegne il servizio condiviso, ma sulla macchina un
+    daemon puo' rispondere lo stesso. La guarigione chiedeva solo
+    `daemon_usable`, che l'interruttore non lo guarda (lo scrive la docstring di
+    `embedding._service_enabled` dal 28/08), e ricodificava NEL PROCESSO: il
+    caricamento che il rinvio esiste per evitare. Trovato perche'
+    `test_store_deferred_embedding.py` era rosso solo sulle macchine col daemon
+    acceso: 2 failed con la home vera, 6 passed con la home spostata.
+    """
+    monkeypatch.setenv("ENGRAM_ENCODE_SERVICE", "0")
+    monkeypatch.setattr(encode_service, "daemon_usable", lambda *a, **k: True)
+    sm = SemanticMemory(db_path=tmp_path / "s.db")
+    f = Fact(proposition="Il magazzino di Vicenza apre alle nove.", topic="negozio")
+    sm.store(f, embed="defer")
+    tentativi: list[int] = []
+    monkeypatch.setattr(sm, "backfill_pending_embeddings",
+                        lambda **k: tentativi.append(1) or 0)
+
+    sm.recall("magazzino di Vicenza", k=3)
+
+    assert tentativi == [], (
+        "col servizio spento la recall ha provato a rifare i vettori: la codifica "
+        "sarebbe avvenuta in questo processo, col modello caricato qui")
+    assert _byte_del_vettore(sm, f.id) == 0
 
 
 def test_senza_daemon_la_recall_non_prova_a_rifare_i_vettori(tmp_path, monkeypatch):
