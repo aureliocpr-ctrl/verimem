@@ -832,6 +832,29 @@ def _owner_is_zombie(path: Path) -> bool:
     return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
+def daemon_in_arrivo(lock_path: Path | None = None) -> bool:
+    """True se un daemon tiene il lock, e' vivo e non e' uno zombie.
+
+    E' la domanda di chi ASPETTA il daemon, e non e' «il daemon serve?»
+    (`daemon_usable`): un daemon appena nato tiene il lock PRIMA di caricare il
+    modello e di scrivere la scoperta, quindi per qualche decina di secondi
+    esiste e non risponde. Chi a quel punto smette di aspettare e carica il
+    modello in casa paga i gigabyte che il daemon esiste per non far pagare:
+    misurato il 25/09 all'avvio della macchina, un server MCP nato 7 s dopo il
+    daemon ha caricato torch e il giudice (2474 MB) mentre gli altri dieci
+    stavano a 357 MB.
+
+    Le regole sono quelle del lock, non una copia: vivo per `_pid_alive`, e non
+    piu' atteso quando `_owner_is_zombie` lo dichiara zombie (fuori dalla
+    grazia di `_ZOMBIE_GRACE_S` e senza servire).
+    """
+    path = lock_path or DAEMON_LOCK_PATH
+    owner = _read_lock_owner(path)
+    if not owner:
+        return False
+    return _pid_alive(owner) and not _owner_is_zombie(path)
+
+
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
     """Atomically claim the one-daemon-per-machine lock.
 
