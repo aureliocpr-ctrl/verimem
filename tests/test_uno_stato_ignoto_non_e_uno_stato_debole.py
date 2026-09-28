@@ -134,15 +134,18 @@ class TestLaViaAUTOMATICA:
     basterebbe — e' la classe «chi ALTRO fa la stessa cosa?»."""
 
     def _coppia(self, sm, stato_a: str, stato_b: str, topic: str):
+        # uno scontro BOOLEANO: gli scontri numerici heal li lascia aperti
+        # di default (TIPI_CHE_HEAL_NON_ESEGUE), e con quelli entrambi i test
+        # passerebbero senza eseguire la regola dei ranghi
         from verimem.contradiction import ContradictionStore
-        a = _metti(sm, f"Il sito {topic} ha 12 unita.", topic, stato_a)
-        b = _metti(sm, f"Il sito {topic} ha 15 unita.", topic, stato_b)
+        a = _metti(sm, f"Il sito {topic} e' aperto.", topic, stato_a)
+        b = _metti(sm, f"Il sito {topic} non e' aperto.", topic, stato_b)
         store = ContradictionStore(sm.db_path)
         con = sqlite3.connect(str(sm.db_path))
         con.execute(
             "INSERT INTO contradictions (id, fact_a_id, fact_b_id, kind,"
             " similarity, detected_at) VALUES (?,?,?,?,?,?)",
-            (f"c{topic}".replace("/", "")[:16], a.id, b.id, "numeric_clash",
+            (f"c{topic}".replace("/", "")[:16], a.id, b.id, "boolean_clash",
              0.9, 1786000000.0))
         con.commit()
         con.close()

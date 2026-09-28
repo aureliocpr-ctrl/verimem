@@ -9,6 +9,8 @@ registrato ``scan_corpus``, poi gira il passaggio automatico.
 """
 from __future__ import annotations
 
+import sqlite3
+
 from verimem.auto_dream_worker import run_maintenance
 from verimem.contradiction import Contradiction, ContradictionStore
 from verimem.memory import EpisodicMemory
@@ -21,9 +23,18 @@ PERDENTE = "Il servizio di ricerca ha risposto in 250 ms su 3 richieste."
 def _scenario(tmp_path, tipo: str):
     sm = SemanticMemory(db_path=tmp_path / "s.db")
     vincitore = Fact(proposition=VINCITORE, topic="", status="model_claim")
-    perdente = Fact(proposition=PERDENTE, topic="", status="provisional")
+    perdente = Fact(proposition=PERDENTE, topic="")
     sm.store(vincitore)
     sm.store(perdente)
+    # Il rango piu' basso si impone nel DB: i gate di scrittura riportano
+    # `provisional` a `model_claim` quando mancano i riferimenti, e a rango
+    # pari heal non ritira niente — il banco passerebbe senza misurare la
+    # regola (e' successo alla prima stesura: lo ha detto il controllo
+    # positivo).
+    with sqlite3.connect(str(sm.db_path)) as con:
+        con.execute("UPDATE facts SET status = 'legacy_unverified' "
+                    "WHERE id = ?", (perdente.id,))
+    assert sm.get(perdente.id).status == "legacy_unverified"
     ContradictionStore(sm.db_path).add(Contradiction(
         fact_a_id=vincitore.id, fact_b_id=perdente.id, kind=tipo,
         similarity=0.9))
