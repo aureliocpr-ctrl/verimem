@@ -54,9 +54,19 @@ e nessun test potrebbe mai accorgersi che tace anche per quella sbagliata.
 sandbox: store temporaneo, nessuna delega, e il servizio **riabilitato**
 togliendo la variabile che `conftest` impone al padre. Il figlio non tocca nulla
 di condiviso — legge il daemon, non lo avvia né lo spegne.
+
+⛔ 28/09: QUELLA FRASE NON ERA VERA. Il figlio gira nella home VERA, e la lista
+delle variabili da togliere nominava `HIPPO_` ed `ENGRAM_` ma non `VERIMEM_`: il
+figlio ha tenuto il modello stub del conftest (MiniLM, 384), ha visto il daemon
+della macchina (e5, 768) come incompatibile e `ensure_running` ne ha avviato uno
+suo, che ha rubato il lock e la scoperta. Il daemon di produzione si è fatto da
+parte e per quaranta minuti ogni sessione della macchina ha cercato per parole
+chiave. Ora la lista copre le tre famiglie, e nel figlio `ensure_running` può
+solo dire se il daemon c'è: non ne avvia, e non cancella la scoperta.
 """
 from __future__ import annotations
 
+import ast
 import json
 import os
 import subprocess
@@ -76,6 +86,9 @@ os.environ.pop("HIPPO_ENCODE_DELEGATE_ONLY", None)   # niente delega: e' il regi
 os.environ.pop("ENGRAM_ENCODE_SERVICE", None)        # conftest lo mette a 0 per isolare la
                                                      # suite: qui serve il regime di PRODUZIONE
 os.environ["HIPPO_DATA_DIR"] = tempfile.mkdtemp()    # store isolato, mai quello di casa
+from verimem import encode_service as _es
+# Il figlio USA il daemon della macchina, non ne avvia (vedi il docstring, 28/09).
+_es.ensure_running = lambda *a, **k: _es.daemon_usable()
 from verimem import Memory, embedding
 from verimem import encode_service
 
@@ -101,26 +114,35 @@ esito["loaded_dopo"] = bool(embedding.is_loaded())
 print("ESITO " + json.dumps(esito))
 """
 
+#: Cio' che fa del figlio un processo DI TEST invece che di produzione, in TUTTE
+#: e tre le famiglie di alias. Fino al 28/09 la lista nominava `HIPPO_` ed
+#: `ENGRAM_` e non `VERIMEM_`: il figlio teneva il modello stub e sfrattava il
+#: daemon della macchina (vedi il docstring).
+_FUORI = {famiglia + nome
+          for famiglia in ("HIPPO_", "ENGRAM_", "VERIMEM_")
+          for nome in ("ENCODE_DELEGATE_ONLY", "ENCODE_SERVICE", "EMBEDDING_MODEL",
+                       "EMBEDDING_DIM", "OFFLINE")} | {"HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE"}
+
+
+def _ambiente_del_figlio() -> dict:
+    """L'ambiente del padre senza la configurazione di test.
+
+    Il figlio deve vedere il regime di PRODUZIONE, non quello della suite.
+    `conftest` impone (giustamente, per isolare i test): servizio a 0, delega,
+    store temporaneo e soprattutto un MODELLO STUB diverso — 384 dimensioni
+    contro le 768 del daemon vero. Su quel mismatch `_encode_via_service`
+    rifiuta il daemon per disegno (un daemon di altra config darebbe vettori in
+    uno spazio diverso: poisoning silenzioso), quindi `daemon_usable()` sarebbe
+    False per una ragione che con questo difetto non c'entra.
+    """
+    return {k: v for k, v in os.environ.items() if k not in _FUORI}
+
 
 def _prima_scrittura_senza_delega() -> dict:
     """Esegue il figlio e restituisce la sua riga di esito."""
-    # Il figlio deve vedere il regime di PRODUZIONE, non quello della suite.
-    # `conftest` impone (giustamente, per isolare i test): servizio a 0, delega,
-    # store temporaneo e soprattutto un MODELLO STUB diverso — 384 dimensioni
-    # contro le 768 del daemon vero. Su quel mismatch `_encode_via_service`
-    # rifiuta il daemon per disegno (un daemon di altra config darebbe vettori
-    # in uno spazio diverso: poisoning silenzioso), quindi `daemon_usable()`
-    # sarebbe False per una ragione che con questo difetto non c'entra.
-    fuori = {
-        "HIPPO_ENCODE_DELEGATE_ONLY", "ENGRAM_ENCODE_DELEGATE_ONLY",
-        "HIPPO_ENCODE_SERVICE", "ENGRAM_ENCODE_SERVICE",
-        "HIPPO_EMBEDDING_MODEL", "ENGRAM_EMBEDDING_MODEL",
-        "HIPPO_EMBEDDING_DIM", "ENGRAM_EMBEDDING_DIM",
-        "HIPPO_OFFLINE", "HF_HUB_OFFLINE", "TRANSFORMERS_OFFLINE",
-    }
-    env = {k: v for k, v in os.environ.items() if k not in fuori}
     proc = subprocess.run([sys.executable, "-c", _FIGLIO], capture_output=True,
-                          text=True, env=env, errors="replace", timeout=900,
+                          text=True, env=_ambiente_del_figlio(), errors="replace",
+                          timeout=900,
                           cwd=tempfile.gettempdir())
     # ⚠️ `esito()` dichiara PRIMA com'e' finito il processo: se il figlio muore,
     # il messaggio dice «PROCESSO-MORTO exit=N» invece di «manca la stringa
@@ -194,3 +216,39 @@ def test_CONTROLLO_il_banco_vede_davvero_lo_stato_del_daemon():
     assert isinstance(valore, bool), (
         "`daemon_usable()` non restituisce un booleano: il ramo di skip del "
         f"test principale non è affidabile.\n  valore = {valore!r}")
+
+
+def test_il_figlio_non_eredita_il_modello_di_test_da_nessuna_famiglia(monkeypatch):
+    """GUARDIA del 28/09. Il modello stub del padre, messo in tutte e tre le
+    famiglie di alias, non deve arrivare al figlio in nessuna: bastava la
+    famiglia `VERIMEM_` perche' il figlio sfrattasse il daemon della macchina."""
+    for famiglia in ("HIPPO_", "ENGRAM_", "VERIMEM_"):
+        monkeypatch.setenv(famiglia + "EMBEDDING_MODEL", "modello/di-test")
+        monkeypatch.setenv(famiglia + "EMBEDDING_DIM", "384")
+        monkeypatch.setenv(famiglia + "ENCODE_SERVICE", "0")
+
+    rimasti = sorted(k for k in _ambiente_del_figlio()
+                     if k.endswith(("EMBEDDING_MODEL", "EMBEDDING_DIM", "ENCODE_SERVICE")))
+
+    assert rimasti == [], (
+        f"il figlio eredita la configurazione di test: {rimasti}. Nella home vera "
+        "vedra' il daemon della macchina come incompatibile e ne avviera' uno suo")
+
+
+def test_il_figlio_non_puo_avviare_un_daemon():
+    """GUARDIA del 28/09. Nel figlio `ensure_running` e' sostituito PRIMA che
+    il prodotto venga usato: senza, un figlio con un'altra configurazione ruba
+    il lock e la scoperta del daemon della macchina."""
+    albero = ast.parse(_FIGLIO)
+    sostituito = [n.lineno for n in ast.walk(albero) if isinstance(n, ast.Assign)
+                  and any(isinstance(b, ast.Attribute) and b.attr == "ensure_running"
+                          for b in n.targets)]
+    usi = [n.lineno for n in ast.walk(albero) if isinstance(n, ast.Call)
+           and getattr(n.func, "id", getattr(n.func, "attr", "")) == "Memory"]
+
+    # Controllo positivo: se il sensore non vede l'uso del prodotto, non vede niente.
+    assert usi, "il figlio non chiama piu' Memory(): la guardia non misura niente"
+    assert sostituito and min(sostituito) < min(usi), (
+        f"ensure_running non e' sostituito prima di Memory(): assegnato alle righe "
+        f"{sostituito}, Memory() alle righe {usi}")
+
