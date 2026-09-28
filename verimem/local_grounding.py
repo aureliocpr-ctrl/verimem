@@ -920,8 +920,54 @@ def esecutore_dell_ultimo_giudizio() -> str | None:
     return getattr(_esecutore, "chi", None)
 
 
-def _registra_esecutore(chi: str | None) -> None:
+def _registra_esecutore(chi: str | None, perche: str | None = None,
+                        delega_richiesta: bool = False) -> None:
     _esecutore.chi = chi
+    _esecutore.perche = perche
+    #: SE CHI SCRIVE AVEVA CHIESTO IL DAEMON. Serve a non dire niente a chi non
+    #: lo ha mai chiesto: la ricevuta parla solo quando una promessa e' stata
+    #: disattesa. Senza questo, l'avviso esce su OGNI scrittura giudicata in
+    #: casa — il caso normale — e diventa rumore (misurato: sei celle rosse su
+    #: tre sistemi, run 35650184556).
+    _esecutore.delega_richiesta = delega_richiesta
+
+
+def perche_ha_giudicato() -> str | None:
+    """La ragione per cui ha giudicato CHI ha giudicato, o None.
+
+    Registrata NELL'ISTANTE della decisione, che e' l'unico momento in cui e'
+    vera: `judge._scorer` si popola quando il modello finisce di caricare,
+    quindi la stessa condizione letta dopo puo' dire un'altra cosa. Serve a
+    far dire alla ricevuta PERCHE' ha giudicato il processo e non il daemon —
+    oggi dice solo CHI, che per chi usa il prodotto e' un'etichetta.
+    """
+    return getattr(_esecutore, "perche", None)
+
+
+def la_delega_era_richiesta() -> bool:
+    """Se chi ha scritto aveva chiesto il daemon, nell'istante del giudizio.
+
+    Distingue i due casi che `judged_by=in-process` confonde: chi non ha mai
+    chiesto la delega (e a cui non interessa saperlo) e chi l'ha chiesta e non
+    l'ha avuta lo stesso.
+    """
+    return bool(getattr(_esecutore, "delega_richiesta", False))
+
+
+#: PERCHE' il daemon non ha giudicato l'ultima richiesta DI QUESTO THREAD,
+#: quando l'ha detto lui (``ok: false``). `_gate_via_daemon` rende uguali due
+#: silenzi diversi — torna None in entrambi — e chi aspetta il daemon deve
+#: poterli separare: il daemon che RIFIUTA («this daemon cannot judge») non
+#: giudichera' mai, quello che non ha ancora risposto perche' sta caricando il
+#: giudice giudichera' fra poco. Thread-local per la ragione di `_esecutore`:
+#: e' la risposta a UNA richiesta.
+_rifiuto_del_giudice = threading.local()
+
+
+def rifiuto_dell_ultima_sonda() -> str | None:
+    """Il motivo con cui il daemon ha RIFIUTATO l'ultima richiesta di giudizio
+    di questo thread, o None se ha giudicato o non ha risposto affatto."""
+    return getattr(_rifiuto_del_giudice, "motivo", None)
 
 
 def _gate_via_daemon(pairs, *, info=None,
@@ -945,6 +991,7 @@ def _gate_via_daemon(pairs, *, info=None,
     esattamente cio' che faceva prima. E anche quando questo client scade, il
     daemon **continua a caricare**: il processo dopo lo trova caldo.
     """
+    _rifiuto_del_giudice.motivo = None
     if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
         "0", "false", "no", "off",
     ):
@@ -999,6 +1046,9 @@ def _gate_via_daemon(pairs, *, info=None,
                         f"scelta. Motivo dal daemon: {resp.get('window_error')}",
                         RuntimeWarning, stacklevel=2)
             return [float(s) for s in resp["scores"]]
+        if isinstance(resp, dict) and resp.get("ok") is False:
+            # Il daemon ha RISPOSTO di no: un rifiuto, non un silenzio.
+            _rifiuto_del_giudice.motivo = str(resp.get("error") or "ok: false")
     except Exception:  # noqa: BLE001 — qualunque intoppo -> si degrada come prima
         return None
     return None
@@ -1066,7 +1116,14 @@ def try_local_score(source: str, fact: str, *,
     # prodotto esiste per non fare». Il degrado resta quello di sempre:
     # daemon assente o muto -> None -> warm in background e il chiamante
     # fa esattamente cio' che faceva prima.
-    if judge._scorer is None and _delegate_only():
+    # ⛔ LE DUE CONDIZIONI SI LEGGONO QUI, UNA VOLTA SOLA: sono lo stato
+    # esatto su cui il ramo viene scelto, e rilette dopo direbbero altro —
+    # `_scorer` si popola quando il modello finisce di caricare. Il
+    # comportamento non cambia di una virgola: e' lo stesso `if` con le stesse
+    # due domande, solo chieste una volta e ricordate per poterle raccontare.
+    _scorer_gia_in_casa = judge._scorer is not None
+    _delega_richiesta = _delegate_only()
+    if not _scorer_gia_in_casa and _delega_richiesta:
         # LA FINESTRA LA APPLICA IL DAEMON, se sa farlo. Costruire la coppia
         # gia' ridotta costa al server 1292 MB e 31,7 s di tokenizzatore per
         # una domanda che poi delega (misurato alla porta il 2026-09-12).
@@ -1083,7 +1140,7 @@ def try_local_score(source: str, fact: str, *,
             info=info,
             max_length=judge.max_length if il_daemon_riduce else None)
         if punteggi:
-            _registra_esecutore("daemon")
+            _registra_esecutore("daemon", delega_richiesta=True)
             return judge.normalizza(punteggi[0]), judge.threshold
         _registra_esecutore(None)
         warm_local_judge_async()
@@ -1108,7 +1165,12 @@ def try_local_score(source: str, fact: str, *,
     # laundering it into "no judge -> admit" (opus re-review 2026-07-18, finding B:
     # this is the default out-of-the-box path, where the earlier fix did not reach).
     score = judge.score(source, fact, focus_budget=focus_budget)
-    _registra_esecutore("in-process")
+    _registra_esecutore("in-process", delega_richiesta=_delega_richiesta, perche=(
+        "lo scorer era gia' caricato in questo processo, quindi la domanda "
+        "non e' stata girata al daemon"
+        if _scorer_gia_in_casa else
+        "la delega al daemon non e' richiesta in questo processo "
+        "(HIPPO_ENCODE_DELEGATE_ONLY non attivo)"))
     return score, judge.threshold
 
 

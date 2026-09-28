@@ -284,3 +284,10 @@ def test_IL_MOAT_SI_DERIVA_dai_layer_e_non_si_reinventa():
     assert esito_del_moat(_G(2), [{"layer": "L4-grounding"}],
                           source="x") == "failed"
     assert esito_del_moat(_G(99), [], source="x") == "passed"
+    # T204: il quinto esito, per chi il giudizio non l'ha CHIESTO. Viene prima
+    # di tutto il resto, anche della fonte assente: e' la scelta di chi scrive,
+    # non una mancanza del giudice. Le due porte usano lo stesso insieme.
+    assert esito_del_moat(_G(None), [], source=None,
+                          chiesto=False) == "not_run:not_asked"
+    assert esito_del_moat(_G(99), [{"layer": "L4-skipped"}], source="x",
+                          chiesto=False) == "not_run:not_asked"

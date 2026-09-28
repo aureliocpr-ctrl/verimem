@@ -185,7 +185,19 @@ def _solo_il_testo_dichiarato(testo: str) -> str:
     🔑 L'ultima e' la peggiore delle quattro: un commento HTML **nessun umano lo
     vede**, quindi un controllo che lo leggesse giudicherebbe su un testo che
     l'autore non ha davanti — e chi guarda la pagina non capirebbe perche'.
+
+    ⚠️ T201 (23/09): I FINE RIGA SI NORMALIZZANO PER PRIMI. Un commento caricato
+    da un file scritto su Windows arriva con `\\r\\n`, e la chiusura di un
+    recinto si riconosce con `[ \\t]*$`: una riga `` ```\\r `` non chiude, il
+    recinto resta aperto fino in fondo e tutto cio' che segue sparisce. Misurato
+    su #126: 5306 caratteri, 154 dopo il filtro, e le due righe `Registro:` e
+    `Decisione:` fra quelle sparite — il cancello diceva «non porta Registro»
+    quando il Registro c'era. Lo script normalizzava gia' `\\r\\n` piu' sotto,
+    ma nella funzione che prepara il CORPO della richiesta, da cui i commenti
+    della Definition of Done non passano: qui mancava, e questa e' l'unica
+    funzione da cui passano tutti e quattro i filtri.
     """
+    testo = testo.replace("\r\n", "\n").replace("\r", "\n")
     testo = _COMMENTO_HTML.sub("\n", testo)
     testo = _senza_recinti(testo)
     testo = _senza_righe_citate(testo)

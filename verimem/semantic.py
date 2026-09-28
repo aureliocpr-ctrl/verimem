@@ -184,12 +184,9 @@ def _encode_prepared_within_budget(
             # sono due cose diverse e il perimetro della frase era piu' largo
             # del suo contenuto.
             # Best-effort come il gemello: un errore qui non deve trasformare
-            # un differimento riuscito in una scrittura persa.
-            try:
-                from . import encode_service as _es
-                _es.ensure_running()
-            except Exception:  # noqa: BLE001 — svegliare e' un di piu', mai un obbligo
-                pass
+            # un differimento riuscito in una scrittura persa. Dal 25/09 la
+            # sveglia e' UNA funzione per i quattro punti che degradano.
+            embedding.chiedi_un_daemon()
             return None
         raise box["err"]
     return box.get("vec")
@@ -2626,6 +2623,7 @@ class SemanticMemory:
         db_path: Path | None = None,
         *,
         repo_root: Path | None = None,
+        _migrazione_autorizzata: bool = False,
     ) -> None:
         """Open / create the semantic-memory SQLite DB.
 
@@ -2642,6 +2640,26 @@ class SemanticMemory:
         self.db_path = db_path or CONFIG.semantic_db
         self.repo_root = Path(repo_root).resolve() if repo_root else None
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
+        # D-0012: IL BLOCCO STA QUI, PRIMA DELLO SCRIPT, e la posizione è il
+        # punto. Tre righe più sotto lo schema viene eseguito: su uno store
+        # vecchio quello È la migrazione — misurato su copie, un file a v7
+        # diventa v17 alla prima apertura, +21 colonne su `facts` e una tabella
+        # in più, senza avviso e senza ritorno. Un backup aperto per leggerlo
+        # smetteva di essere un backup.
+        #
+        # Non blocca chi crea (`verifica_apribile` lascia passare uno store che
+        # non dichiara nessuna versione) né chi è già allineato: sul campo vero
+        # sono 6 store su 76, e chiuderli fuori sarebbe la cura peggiore del
+        # male. Blocca i 25 più vecchi del codice, che sono backup, snapshot e
+        # archivi — cioè esattamente i file per cui aprire non deve migrare.
+        #
+        # L'unica porta che passa di qui con l'autorizzazione è
+        # `store_migrate.migra_lo_store`, dove la migrazione è stata CHIESTA e
+        # arriva dopo un backup verificato contando le righe.
+        if not _migrazione_autorizzata:
+            from .schema import leggi_stato as _leggi_stato
+            from .schema import verifica_apribile as _verifica_apribile
+            _verifica_apribile(_leggi_stato(self.db_path))
         with self._connect() as conn:
             conn.executescript(_SCHEMA)
             # Universal mutation audit (0.8 step 1): additive IF NOT EXISTS,
@@ -3324,9 +3342,14 @@ class SemanticMemory:
                 # Ogni altra eccezione continua a propagare (banco:
                 # test_CONTROLLO_un_errore_DIVERSO_continua_a_propagare), perche'
                 # ingoiarle scriverebbe fatti senza vettore nascondendo guasti veri.
+                # ...E SI CHIEDE IL DAEMON. Fino al 25/09 questo ramo degradava
+                # e basta: il 24/09 otto scritture di fila sono entrate senza
+                # vettore e nessuna ha chiesto il daemon.
+                embedding.chiedi_un_daemon()
                 _LOG.warning(
                     "store: encode delegate unavailable → il fatto viene scritto "
-                    "SENZA embedding (recall keyword finche' il daemon non torna)")
+                    "SENZA embedding; chiesto un daemon: il vettore lo rifa' la "
+                    "prima recall che trova il daemon (o `verimem facts backfill`)")
                 emb = None
         verified_by_json = json.dumps(list(fact.verified_by or []))
         with self._connect() as conn:
@@ -3564,6 +3587,25 @@ class SemanticMemory:
         self._cache_version += 1
         return was_existing if return_replaced else None
 
+    def _filtro_dei_vettori_da_rifare(self) -> tuple[str, tuple]:
+        """La condizione delle righe che la recall per significato NON vede:
+        lunghezza del vettore o modello diversi da quelli attivi. Una sola, per
+        chi le rifa' (`backfill_pending_embeddings`) e per chi chiede se ce ne
+        sono (`_ci_sono_vettori_da_rifare`): due copie divergerebbero."""
+        return (
+            "WHERE length(embedding) != ? "
+            "OR COALESCE(embedding_model, ?) != ?",
+            (embedding.expected_embedding_bytes(), _LEGACY_EMBEDDING_MODEL,
+             embedding.model_signature()),
+        )
+
+    def _ci_sono_vettori_da_rifare(self) -> bool:
+        where, params = self._filtro_dei_vettori_da_rifare()
+        with self._connect() as conn:
+            return conn.execute(
+                "SELECT 1 FROM facts " + where + " LIMIT 1", params,
+            ).fetchone() is not None
+
     def backfill_pending_embeddings(self, *, limit: int | None = None) -> int:
         """Embed rows persisted with ``embed='defer'`` (NULL embedding) and
         make them recallable. Returns the number embedded.
@@ -3597,12 +3639,7 @@ class SemanticMemory:
         # re-encode from the proposition with the ACTIVE model, healing all
         # three. Idempotent: once a row is active it no longer matches.
         _active_model = embedding.model_signature()
-        _active_bytes = embedding.expected_embedding_bytes()
-        _stale_where = (
-            "WHERE length(embedding) != ? "
-            "OR COALESCE(embedding_model, ?) != ?"
-        )
-        _stale_params = (_active_bytes, _LEGACY_EMBEDDING_MODEL, _active_model)
+        _stale_where, _stale_params = self._filtro_dei_vettori_da_rifare()
         with self._connect() as conn:
             if limit is not None:
                 rows = conn.execute(
@@ -4113,6 +4150,14 @@ class SemanticMemory:
         # (parameterized SQL + plain-text embedding already make them safe).
         if not (query or "").strip():
             return []
+        # I VETTORI RIMASTI INDIETRO SI RIFANNO QUI, prima di cercare (25/09):
+        # un fatto scritto mentre il daemon mancava resta invisibile a questa
+        # ricerca finche' non ha il vettore, e prima tornava solo all'avvio del
+        # prossimo server MCP. Via daemon soltanto, al massimo ogni 30 s per
+        # store, un numero limitato di righe: `embedding.guarisci_se_il_daemon_c_e`.
+        embedding.guarisci_se_il_daemon_c_e(
+            f"fatti:{self.db_path}", self._ci_sono_vettori_da_rifare,
+            lambda n: self.backfill_pending_embeddings(limit=n))
         # Recall must NEVER block on a cold/contended encode daemon (unlike a
         # save, it can't defer — it needs the query vector). Bound the query
         # encode; on overrun fall back to INSTANT keyword recall (same

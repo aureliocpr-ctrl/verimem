@@ -99,9 +99,16 @@ PYPROJECT = RADICE / "pyproject.toml"
 # contati dentro, D valeva 31 su un albero come questo, e quel numero misurava
 # una contraddizione interna a questo file, non il pacchetto. «Raggiungibile con
 # `python -m`» non vuol dire «qualcuno lo usa»: quella e' la domanda di T126.
-TETTO_C2 = 7           # nessuna porta: né import, né entry point, né python -m
+# ✅ T125 SI E' CHIUSO, ed e' la seconda promessa che questo file si paga da
+# sola. Il commento sopra diceva: «schema — la fetta 3: entra prima del suo
+# cablaggio, che e' deciso e datato (D-0009). Ridiscesa: T125, ed e' la sola
+# promessa ancora aperta qui». Il cablaggio e' arrivato — `migrations` e
+# `semantic` importano `schema` — e il modulo e' USCITO da C2 e da D da solo:
+# C2 7 -> 6, D 8 -> 7. MISURATI su questo albero dopo il ribasamento, non
+# dedotti dai delta: il cricchetto li ha stampati e ha chiesto lui la discesa.
+TETTO_C2 = 6           # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto; T126)
-TETTO_D = 8            # 7 C2 + proactive_step_injector, raggiunto solo da C2
+TETTO_D = 7            # 6 C2 + proactive_step_injector, raggiunto solo da C2
 # ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
 # prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
 # hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
