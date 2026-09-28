@@ -21,6 +21,56 @@ OK = "ok"
 WARN = "warn"
 FAIL = "fail"
 
+#: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina, in
+#: memoria UNICA (USS), cioe' le pagine fisiche che solo quel processo tiene e
+#: che tornano libere se muore. Misurato il 2026-09-28: il daemon condiviso con
+#: i quattro modelli tiene 2750 MB unici sulla scheda e 1561 su CPU; un server
+#: MCP fra 147 e 277; uno scrittore in delegate-only 49. Il tetto fisso copre il
+#: daemon sulla scheda; quello per sessione, il server piu' grande misurato.
+MEMORIA_FISSA_MAX_MB = 3000
+MEMORIA_PER_SESSIONE_MAX_MB = 300
+
+
+def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any]:
+    """I due numeri della riga 7, misurati sui processi VIVI: la memoria unica
+    del daemon condiviso (il pid lo dice il file di scoperta) e quella del
+    server MCP piu' grande (una sessione e' un server MCP).
+
+    Niente modelli e niente stime: se psutil non c'e' lo dice, invece di
+    stampare un numero che non ha misurato.
+    """
+    from ._singleton_guard import _import_psutil, _is_engram_mcp_cmdline
+
+    psutil = psutil or _import_psutil()
+    if psutil is None:
+        return {"misurato": False, "perche": "psutil is not installed"}
+
+    def unica(processo: Any) -> int | None:
+        try:
+            return round(processo.memory_full_info().uss / 2 ** 20)
+        except Exception:  # noqa: BLE001 — processo uscito o non leggibile
+            return None
+
+    fissa = None
+    pid = (info or {}).get("pid")
+    if pid:
+        try:
+            fissa = unica(psutil.Process(int(pid)))
+        except Exception:  # noqa: BLE001 — il daemon annunciato non c'e' piu'
+            fissa = None
+    sessioni = []
+    for processo in psutil.process_iter(["pid", "cmdline"]):
+        try:
+            if _is_engram_mcp_cmdline(" ".join(processo.info.get("cmdline") or [])):
+                valore = unica(processo)
+                if valore is not None:
+                    sessioni.append(valore)
+        except Exception:  # noqa: BLE001 — un processo illeggibile non ferma il conto
+            continue
+    return {"misurato": True, "fissa_mb": fissa,
+            "per_sessione_mb": max(sessioni) if sessioni else None,
+            "processi_mcp": len(sessioni)}
+
 #: Cosa succede DAVVERO alle scritture quando non c'e' nessun giudice.
 #: La riga diceva «writes are admitted with an L4-skipped advisory (moat
 #: OFF)» — vero solo per le scritture che portano una fonte. Misurato il
@@ -570,6 +620,35 @@ def run_doctor() -> list[dict[str, Any]]:
                 "run `verimem warmup` once")
     except Exception as e:  # noqa: BLE001
         add("daemon", WARN, f"probe failed: {e}")
+
+    # -- memory: what verimem costs this machine (row 7) -----------------------
+    try:
+        from . import encode_service as _svc_mem
+        misura = quanto_costa_verimem(_svc_mem.read_discovery())
+        if not misura.get("misurato"):
+            add("memory", WARN, f"not measured: {misura.get('perche')}",
+                "pip install psutil")
+        else:
+            fissa = misura.get("fissa_mb")
+            sessione = misura.get("per_sessione_mb")
+            dentro = ((fissa or 0) <= MEMORIA_FISSA_MAX_MB
+                      and (sessione or 0) <= MEMORIA_PER_SESSIONE_MAX_MB)
+            testo_fisso = (f"fixed {fissa} MB (the shared encode daemon)"
+                           if fissa is not None else "fixed 0 MB (no shared daemon running)")
+            testo_sessione = (f"per session {sessione} MB (the largest of "
+                              f"{misura.get('processi_mcp')} MCP server processes)"
+                              if sessione is not None else "per session: no MCP server running")
+            add("memory", OK if dentro else WARN,
+                f"{testo_fisso}; {testo_sessione}; unique memory, promised at most "
+                f"{MEMORIA_FISSA_MAX_MB} and {MEMORIA_PER_SESSIONE_MAX_MB} MB",
+                None if dentro else "see which process holds it: the daemon's models "
+                "or a session that loaded one in-process")
+            checks[-1].update({
+                "fixed_mb": fissa, "per_session_mb": sessione,
+                "fixed_max_mb": MEMORIA_FISSA_MAX_MB,
+                "per_session_max_mb": MEMORIA_PER_SESSIONE_MAX_MB})
+    except Exception as e:  # noqa: BLE001
+        add("memory", WARN, f"not measured: {e}")
 
     # -- moat judge (the product's #1 claim) -----------------------------------
     # Below this share of entailment-judged facts the moat-judge check WARNS
