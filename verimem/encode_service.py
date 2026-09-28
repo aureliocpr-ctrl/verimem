@@ -1085,6 +1085,27 @@ def ensure_running() -> bool:
     return False
 
 
+def _prepara_la_finestra() -> None:
+    """Il tokenizzatore del giudice, caricato PRIMA che il daemon si annunci.
+
+    La scoperta dichiara `applies_window` solo se il tokenizzatore c'e'
+    (`il_giudice_puo_ridurre_lo_span`), e fino al 28/09 lo caricava la prima
+    richiesta `gate_pairs`. Nel frattempo ogni client in delegate-only che
+    scriveva con una fonte riduceva lo span da se', e per farlo importava
+    transformers e torch: misurato su uno scrittore con un daemon appena nato,
+    25 MB unici prima della prima scrittura e 725 dopo, per tutta la vita del
+    processo. Qui transformers c'e' gia' (lo ha importato l'embedder), quindi
+    si paga il solo tokenizzatore. Senza il modello del giudice, o con un
+    tokenizzatore che non si carica, il daemon si annuncia come prima e
+    dichiara «non riduco».
+    """
+    try:
+        from .local_grounding import get_local_judge
+        get_local_judge()._tokenizzatore()
+    except Exception:  # noqa: BLE001 — senza finestra il daemon serve lo stesso
+        pass
+
+
 def main() -> None:
     # Singleton gate FIRST — before the ~GB model load, so a spawn-race loser
     # costs ~50 MB of interpreter for a moment, not 1.9 GB for 8 idle hours.
@@ -1097,6 +1118,7 @@ def main() -> None:
         # Warm the model BEFORE advertising via the discovery file, so any
         # client that finds the file knows the daemon is ready.
         embedding._encode_local("warmup")
+        _prepara_la_finestra()
         EncodeServer(
             model_name=CONFIG.embedding_model,
             model_dim=CONFIG.embedding_dim,
