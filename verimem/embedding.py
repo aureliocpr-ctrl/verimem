@@ -239,7 +239,7 @@ def guarisci_se_il_daemon_c_e(chiave: str, ci_sono_righe_da_rifare, rifai) -> in
     daemon: ``GUARIGIONE_PER_LETTURA`` righe prima di rispondere, le altre alle
     letture seguenti.
 
-    Solo via daemon (``daemon_usable``): mai il modello caricato in questo
+    Solo via daemon (``service_would_encode``): mai il modello caricato in questo
     processo per guarire, che e' il blocco che il rinvio esiste per evitare. Mai
     un errore verso chi legge. ``chiave`` distingue gli store (e fatti da
     episodi) nello stesso processo.
@@ -253,8 +253,11 @@ def guarisci_se_il_daemon_c_e(chiave: str, ci_sono_righe_da_rifare, rifai) -> in
     try:
         if not ci_sono_righe_da_rifare():
             return 0
-        from . import encode_service as _es
-        if not _es.daemon_usable():
+        # `service_would_encode`, non `daemon_usable` da solo: quello non guarda
+        # l'interruttore, e col servizio spento la codifica qui sotto andava NEL
+        # processo (28/09: `test_store_deferred_embedding.py` rosso solo sulle
+        # macchine col daemon acceso).
+        if not service_would_encode():
             return 0
         return int(rifai(GUARIGIONE_PER_LETTURA) or 0)
     except Exception as exc:  # noqa: BLE001 — guarire e' un di piu'
