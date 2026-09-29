@@ -9,10 +9,11 @@ COSA VEDE L'UTENTE. Apre una sessione MCP come dice il README e scrive due fatti
 fonte: il giudizio passa dal daemon condiviso. `verimem doctor --json` gli dice, sulla
 riga `memory`, quanta memoria tiene il daemon (il costo fisso) e quanta il server della
 sua sessione (il costo per sessione): impegnata, unica e working set, con i picchi dove
-il sistema li tiene. DUE TETTI (lead, 28/09 23:0x), tutti e due confrontati: impegnata
-8000 MB fissi e 600 per sessione, sul picco dove c'e' (sotto pressione il sistema
-comprime i processi fermi e la unica scende, mentre la macchina resta piena); unica
-2500 MB fissi e 300 per sessione.
+il sistema li tiene. Il TETTO e' sulla impegnata (lead, 29/09 20:5x): 8000 MB fissi per
+macchina e 600 per sessione, sul picco dove c'e'. Unica e working set si stampano senza
+tetto: sotto pressione la unica scende mentre la macchina resta piena, e su un runner
+senza pressione e' quasi tutta l'impegnata (6951 su 7259 il 29/09). Il tetto della unica
+(2500 a riposo) arriva con lo scarico dei modelli dopo l'inattivita', entro il 02/10.
 
 LA PROVA. La sessione resta aperta mentre il doctor misura: è lei il processo per
 sessione. Controllo positivo: il doctor deve aver visto il daemon e almeno un server

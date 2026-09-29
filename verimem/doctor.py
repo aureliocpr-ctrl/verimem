@@ -21,17 +21,19 @@ OK = "ok"
 WARN = "warn"
 FAIL = "fail"
 
-#: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina, con DUE
-#: tetti, tutti e due stampati e confrontati (decisione del 2026-09-28 23:0x).
-#: - Memoria IMPEGNATA privata: quella che il processo tiene anche quando il
-#:   sistema lo comprime o lo pagina, cioe' cio' che riempie il commit della
-#:   macchina (il 25/09 la macchina ha rifiutato allocazioni col commit libero a
-#:   347 MB). La unica da sola non basta: sotto pressione Windows toglie pagine ai
-#:   processi fermi e la USS scende — misurato il 2026-09-28, lo stesso daemon a
-#:   1689 MB unici alle 19:26 e a 334 alle 21:4x, con l'impegnata ferma. E' un
-#:   tetto MASSIMO, quindi vale sul picco dove il sistema lo tiene (Windows).
-#: - Memoria UNICA (USS): quella che il processo occupa da solo in RAM adesso.
-#:   Nessun sistema ne tiene il picco, quindi vale sul valore del momento.
+#: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina.
+#: - Il TETTO e' sulla memoria IMPEGNATA privata: quella che il processo tiene
+#:   anche quando il sistema lo comprime o lo pagina, cioe' cio' che riempie il
+#:   commit della macchina (il 25/09 la macchina ha rifiutato allocazioni col
+#:   commit libero a 347 MB). E' un tetto MASSIMO, quindi vale sul picco dove il
+#:   sistema lo tiene (Windows).
+#: - La memoria UNICA (USS) e il working set si STAMPANO senza tetto (decisione
+#:   del 2026-09-29 20:5x). La unica da sola ingannava in tutti e due i versi:
+#:   sotto pressione Windows toglie pagine ai processi fermi e scende (lo stesso
+#:   daemon a 1689 MB unici alle 19:26 del 28/09 e a 334 alle 21:4x, con
+#:   l'impegnata ferma), mentre su un runner senza pressione e' quasi tutta
+#:   l'impegnata (6951 su 7259, job 109559539042 del 29/09). Il suo tetto (2500 a
+#:   riposo) arriva con lo scarico dei modelli dopo l'inattivita', entro il 02/10.
 #: Misurato il 2026-09-28: il daemon con i quattro modelli impegna 7470 MB sulla
 #: scheda e 5868 su CPU (quello vero, con tre modelli, 6298); un server MCP fra
 #: 348 e 528; uno scrittore in delegate-only 179 dopo le cure. Il 29/09 alle 20:2x
@@ -39,8 +41,6 @@ FAIL = "fail"
 #: massimo 357 impegnati e 155 unici.
 MEMORIA_FISSA_MAX_MB = 8000
 MEMORIA_PER_SESSIONE_MAX_MB = 600
-MEMORIA_FISSA_UNICA_MAX_MB = 2500
-MEMORIA_PER_SESSIONE_UNICA_MAX_MB = 300
 
 #: Le grandezze misurate per processo: suffisso della chiave -> nome interno.
 #: Senza suffisso e' l'impegnata, la grandezza della promessa.
@@ -670,10 +670,7 @@ def run_doctor() -> list[dict[str, Any]]:
                            misura.get(f"{prefisso}_picco_mb") or 0)
 
             dentro = (al_massimo("fissa") <= MEMORIA_FISSA_MAX_MB
-                      and al_massimo("per_sessione") <= MEMORIA_PER_SESSIONE_MAX_MB
-                      and (misura.get("fissa_unica_mb") or 0) <= MEMORIA_FISSA_UNICA_MAX_MB
-                      and (misura.get("per_sessione_unica_mb") or 0)
-                      <= MEMORIA_PER_SESSIONE_UNICA_MAX_MB)
+                      and al_massimo("per_sessione") <= MEMORIA_PER_SESSIONE_MAX_MB)
 
             def grandezze(prefisso: str) -> str:
                 def valore(suffisso: str) -> str:
@@ -698,9 +695,9 @@ def run_doctor() -> list[dict[str, Any]]:
                               else "per session: no MCP server running")
             add("memory", OK if dentro else WARN,
                 f"{testo_fisso}; {testo_sessione}; promised at most "
-                f"{MEMORIA_FISSA_MAX_MB} MB committed and {MEMORIA_FISSA_UNICA_MAX_MB} MB "
-                f"unique fixed, {MEMORIA_PER_SESSIONE_MAX_MB} MB committed and "
-                f"{MEMORIA_PER_SESSIONE_UNICA_MAX_MB} MB unique per session",
+                f"{MEMORIA_FISSA_MAX_MB} MB committed fixed and "
+                f"{MEMORIA_PER_SESSIONE_MAX_MB} MB committed per session, read on the "
+                f"peak (unique memory and working set are shown, not promised yet)",
                 None if dentro else "see which process holds it: the daemon's models "
                 "or a session that loaded one in-process")
             campi = {"fixed": "fissa", "per_session": "per_sessione"}
@@ -711,9 +708,7 @@ def run_doctor() -> list[dict[str, Any]]:
                 for inglese, prefisso in campi.items() for suffisso, nome in nomi.items()})
             checks[-1].update({
                 "fixed_max_mb": MEMORIA_FISSA_MAX_MB,
-                "per_session_max_mb": MEMORIA_PER_SESSIONE_MAX_MB,
-                "fixed_unique_max_mb": MEMORIA_FISSA_UNICA_MAX_MB,
-                "per_session_unique_max_mb": MEMORIA_PER_SESSIONE_UNICA_MAX_MB})
+                "per_session_max_mb": MEMORIA_PER_SESSIONE_MAX_MB})
     except Exception as e:  # noqa: BLE001
         add("memory", WARN, f"not measured: {e}")
 
