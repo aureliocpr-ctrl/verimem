@@ -565,6 +565,20 @@ _SOGLIA_GIUDICE_CONTRA = 50.0
 _SOGLIA_STESSO_SOGGETTO = 0.5
 
 
+#: T216 (lead, 29/09): senza giudice NLI il candidato numerico lo decide la
+#: regola, e la ricevuta lo dice. Un testo solo, letto anche dal gate.
+NOTA_DECISO_DALLA_REGOLA = (
+    "Decided by the rule, not by the judge: no NLI judge is on, so one "
+    "differing quantity with the same unit counts as an update "
+    "(`verimem warmup` installs the judge).")
+
+
+def _giudica_aggiornamenti(in_memoria: list[str], claim: str) -> Any:
+    """Il giudice NLI sui candidati numerici in un lotto, o ``None`` se non c'e'."""
+    from .local_relation import giudica_aggiornamenti
+    return giudica_aggiornamenti(in_memoria, claim)
+
+
 def _giudice_contraddice(in_memoria: str, claim: str) -> bool:
     """Vero se il giudice nega sostegno a un claim che parla dello stesso tema.
 
@@ -799,6 +813,11 @@ def validate_claim(
     numeric_contra: list[_FactLike] = []
     numeric_advice = ""
     numeric_agree = False
+    # T216: la regola trova il candidato, il giudice NLI decide. Quelli che il
+    # giudice dice due soggetti coesistono, e nessun ramo sotto li ritira.
+    numeric_coesistono: set[str] = set()
+    numeric_decided_by = ""
+    candidati: list[tuple[_FactLike, Any]] = []
     if claim_quants:
         _year_ids = {f.id for f in contradicting}
         for f in hits:
@@ -824,13 +843,25 @@ def validate_claim(
                 ra=_identificatori_di_record(claim),
                 rb=_identificatori_di_record(f.proposition))
             if f_conflict:
-                numeric_contra.append(f)
-                if not numeric_advice:
-                    cu, cv, fv = f_conflict
-                    numeric_advice = (
-                        f"in memoria: {fv:g} {cu} (fact {f.id}), "
-                        f"NON {cv:g} {cu} — controlla prima di affermare."
-                    )
+                candidati.append((f, f_conflict))
+        # tutti i candidati al giudice in UN lotto, come gli altri giudizi di L3
+        from .semantic_conflict import Relation
+        esiti = _giudica_aggiornamenti([f.proposition for f, _ in candidati], claim)
+        for (f, f_conflict), esito in zip(candidati, esiti or [None] * len(candidati),
+                                          strict=True):
+            if esito is not None and esito != Relation.CONTRADICTION:
+                numeric_coesistono.add(f.id)
+                continue
+            numeric_decided_by = "rule" if esito is None else "judge"
+            numeric_contra.append(f)
+            if not numeric_advice:
+                cu, cv, fv = f_conflict
+                numeric_advice = (
+                    f"in memoria: {fv:g} {cu} (fact {f.id}), "
+                    f"NON {cv:g} {cu} — controlla prima di affermare."
+                )
+                if esito is None:
+                    numeric_advice += " " + NOTA_DECISO_DALLA_REGOLA
 
     # SEMANTIC contradiction pass — la negazione riconosciuta dal GIUDICE
     # invece che da una lista di parole. 15/08.
@@ -876,7 +907,7 @@ def validate_claim(
     lexical_advice = ""
     if claim_versions or claim_dates or lexical_viable:
         _prior_ids = ({f.id for f in contradicting}
-                      | {f.id for f in numeric_contra})
+                      | {f.id for f in numeric_contra} | numeric_coesistono)
         for f in hits:
             if f.id in _prior_ids:
                 continue
@@ -958,6 +989,8 @@ def validate_claim(
             "evidence_facts": [f.id for f in contra],
             "evidence_episodes": episodes,
             "advice": advice,
+            **({"numeric_decided_by": numeric_decided_by}
+               if numeric_decided_by else {}),
         }
 
     # A claim that makes a SPECIFIC numeric assertion we could not confirm

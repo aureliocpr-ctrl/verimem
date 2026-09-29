@@ -122,7 +122,10 @@ SCRITTURA = [
 @pytest.mark.parametrize("nome, atteso, vecchio, nuovo", SCRITTURA,
                          ids=[c[0] for c in SCRITTURA])
 def test_in_scrittura_un_aggiornamento_e_una_sola_quantita_diversa(
-        nome, atteso, vecchio, nuovo):
+        monkeypatch, nome, atteso, vecchio, nuovo):
+    # la tabella misura la REGOLA: il giudice NLI, che decide dopo di lei
+    # quando c'e' (T216), ha le sue celle con un giudice finto
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     osservato, perche = _giudizio(vecchio, nuovo)
     assert osservato == atteso, (
         f"{nome}: il gate in scrittura dice {osservato}, la decisione condivisa "
