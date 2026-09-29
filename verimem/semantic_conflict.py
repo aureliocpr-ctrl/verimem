@@ -169,13 +169,23 @@ def detect_semantic_conflicts(
     new_id = getattr(new_fact, "id", None)
     new_prop = getattr(new_fact, "proposition", "") or ""
     new_stamped = _stamp(new_prop, new_fact)
-    for sib in siblings:
-        if getattr(sib, "id", None) == new_id:
-            continue
-        if cosine_fn(new_fact, sib) < min_cosine:
-            continue
-        rel = judge.classify(
-            new_stamped, _stamp(getattr(sib, "proposition", "") or "", sib))
+    candidates = [
+        sib for sib in siblings
+        if getattr(sib, "id", None) != new_id and cosine_fn(new_fact, sib) >= min_cosine
+    ]
+    pairs = [(new_stamped, _stamp(getattr(sib, "proposition", "") or "", sib))
+             for sib in candidates]
+    # One model pass for all the siblings when the judge can batch: each
+    # classify() is a separate pass, in sequence, up to 200 per write (cure 7,
+    # 29/09: 6 siblings were 6 calls). The batch decides every pair in both
+    # directions exactly as classify() does, so the warnings do not change; a
+    # judge without a batch, or one that answers with the wrong count, is asked
+    # pair by pair as before.
+    batch = getattr(judge, "classify_batch", None)
+    relations = batch(pairs) if callable(batch) and pairs else None
+    if relations is None or len(relations) != len(pairs):
+        relations = [judge.classify(a, b) for a, b in pairs]
+    for sib, rel in zip(candidates, relations, strict=True):
         if rel is Relation.CONTRADICTION:
             out.append(CoherenceWarning(
                 kind="semantic_conflict", other_fact_id=getattr(sib, "id", ""),
