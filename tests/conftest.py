@@ -154,21 +154,6 @@ def _stub_embedding_model(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def _il_file_di_scoperta_vecchio_sta_nella_sabbia(monkeypatch, tmp_path):
-    """Un daemon che parte in un test annuncia se stesso anche nel file di
-    scoperta VECCHIO (il passaggio al file per configurazione, 28/09): senza
-    questa riga un test lo scriverebbe nella home vera della macchina, e i
-    server MCP di prima dell'aggiornamento troverebbero un daemon di test."""
-    try:
-        from verimem import encode_service
-    except ImportError:
-        return
-    monkeypatch.setattr(encode_service, "LEGACY_DISCOVERY_PATH",
-                        tmp_path / "scoperta-vecchia" / "encode_service.json",
-                        raising=False)
-
-
-@pytest.fixture(autouse=True)
 def _reset_settings_v2_cache():
     """Invalidate the pydantic-settings singleton cache between tests.
 
@@ -467,6 +452,27 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
         if hasattr(_settings, "SETTINGS_FILE"):
             settings_original_path = _settings.SETTINGS_FILE
             _settings.SETTINGS_FILE = test_data_dir / "user_settings.json"
+    except ImportError:
+        pass
+    # 2026-09-29, la stessa classe di SETTINGS_FILE qui sopra: `encode_service`
+    # calcola all'import i percorsi della sua configurazione (scoperta, lock del
+    # daemon, lock dello spawn) da CONFIG.data_dir, e sotto pytest l'import
+    # avviene alla raccolta, quando la cartella dati e' ancora quella della
+    # shell. In una shell che esporta lo store vero, un daemon avviato da un
+    # test si pubblicava in `<store vero>/daemon/`, e le sessioni di test di due
+    # copie di lavoro si vedevano a vicenda. Si ricalcolano dalla configurazione
+    # appena fissata: un daemon avviato nella sabbia si pubblica nella sabbia, e
+    # nessun test vede quello della macchina. Il file unico di prima del 28/09
+    # (`LEGACY_DISCOVERY_PATH`, che il daemon nuovo scrive per il passaggio) sta
+    # nella stessa sabbia.
+    try:
+        from verimem import encode_service as _es
+        _scoperta, _lock_daemon, _lock_spawn = _es.percorsi_della_configurazione()
+        monkeypatch.setattr(_es, "DISCOVERY_PATH", _scoperta)
+        monkeypatch.setattr(_es, "DAEMON_LOCK_PATH", _lock_daemon)
+        monkeypatch.setattr(_es, "_SPAWN_LOCK_PATH", _lock_spawn)
+        monkeypatch.setattr(_es, "LEGACY_DISCOVERY_PATH",
+                            test_data_dir / "scoperta-di-prima" / "encode_service.json")
     except ImportError:
         pass
     try:
