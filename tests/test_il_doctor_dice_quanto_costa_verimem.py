@@ -178,31 +178,29 @@ def test_fuori_da_windows_il_picco_non_si_inventa():
     assert misura["fissa_picco_mb"] is None and misura["fissa_picco_ws_mb"] is None, misura
 
 
-def test_la_riga_stampa_le_tre_grandezze_e_i_due_tetti(monkeypatch):
-    """RED sul tronco: la riga diceva solo l'impegnata e un tetto solo."""
+def test_la_riga_stampa_le_tre_grandezze_e_il_tetto_dell_impegnata(monkeypatch):
+    """RED sul tronco: la riga diceva solo l'impegnata."""
     riga = _riga_memoria(monkeypatch)
 
     assert riga["status"] == doctor.OK, riga
     for pezzo in ("committed 5990 MB (peak 6025)", "unique 343 MB",
                   "working set 688 MB (peak 2863)", "committed 357 MB (peak 357)",
-                  "unique 155 MB", "2500", "300"):
+                  "unique 155 MB", "8000", "600"):
         assert pezzo in riga["detail"], (pezzo, riga["detail"])
     assert (riga["fixed_unique_mb"], riga["per_session_unique_mb"]) == (343, 155), riga
-    assert (riga["fixed_unique_max_mb"], riga["per_session_unique_max_mb"]) == (2500, 300), riga
 
 
-def test_la_unica_fissa_sopra_il_suo_tetto_avvisa(monkeypatch):
-    """RED sul tronco: con l'impegnata dentro, la unica non era confrontata."""
-    riga = _riga_memoria(monkeypatch, fissa_unica_mb=2501)
+def test_la_unica_si_stampa_ma_non_ha_ancora_un_tetto(monkeypatch):
+    """Decisione del 2026-09-29 20:5x: la riga confronta solo l'impegnata; il tetto
+    della unica (2500 a riposo) arriva con lo scarico dopo idle. Il numero e' quello
+    del runner windows senza pressione (job 109559539042): un daemon fresco tiene in
+    RAM quasi tutto cio' che impegna, e non deve far rossa una riga giusta."""
+    riga = _riga_memoria(monkeypatch, fissa_mb=7259, fissa_picco_mb=7259,
+                         fissa_unica_mb=6951, per_sessione_unica_mb=301)
 
-    assert riga["status"] == doctor.WARN, riga
-
-
-def test_la_unica_di_una_sessione_sopra_il_suo_tetto_avvisa(monkeypatch):
-    riga = _riga_memoria(monkeypatch,
-                         per_sessione_unica_mb=301)
-
-    assert riga["status"] == doctor.WARN, riga
+    assert riga["status"] == doctor.OK, riga
+    assert "unique 6951 MB" in riga["detail"], riga["detail"]
+    assert "2500" not in riga["detail"], riga["detail"]
 
 
 def test_il_tetto_dell_impegnata_vale_sul_picco(monkeypatch):
