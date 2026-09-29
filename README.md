@@ -389,7 +389,8 @@ verimem warmup   # optional: pre-downloads the judge (711 MB) so your first
 > 2026-09-08: `git rev-list --count v0.7.6..main` = 189). The figure is written
 > as a floor on purpose - a floor only grows truer, an exact count is stale
 > within the hour. Install from PyPI and you get 0.7.6; this page describes
-> `main`.
+> `main`, which declares **0.7.7.dev0**: a pre-release, because 0.7.7 is
+> published only when the acceptance job is green and the release is tagged.
 >
 > `docs/stato-reale/` measures the gap between this page and the published
 > artifact, document by document. **Read the SHA in each header**: several of

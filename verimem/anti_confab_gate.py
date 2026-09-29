@@ -3216,12 +3216,25 @@ def run_validation_gate(
                             "grounding_score": gscore,
                             **_campo,
                         })
-    elif source and not _have_judge:
-        _emit_l4_skipped()
+    elif source:
         # La SECONDA porta senza giudice: nessuno configurato, invece di uno
         # configurato che non ha saputo rispondere. Conseguenza identica, ramo
         # diverso — una cura scritta nell'altro non arriva qui, e per questo la
         # chiamata e' ripetuta invece che spostata.
+        #
+        # ⚠️ E LA TERZA: un giudice c'e', ma chi scrive l'ha SPENTO (SDK
+        # `ground=False`, MCP `ENGRAM_GROUNDING_WRITE=0`). Fino al 25/09 la
+        # condizione era `source and not _have_judge`, e questo caso non entrava
+        # in nessun ramo: misurato il 24/09 su 0d0e6aac, lo stesso claim con un
+        # «7» che la fonte non ha prendeva L4.1 senza giudice visibile e NIENTE
+        # col giudice visibile e spento — proprio sulla macchina che ha il
+        # modello. I controlli qui sotto leggono solo claim e fonte, quindi
+        # girano ogni volta che c'e' una fonte e il giudice non ha giudicato.
+        # L'avviso L4-skipped resta a chi il giudice non ce l'ha: i suoi tre
+        # testi (`_advisory_l4_skipped`) dicono che il giudice manca, non si e'
+        # caricato o sta caricando, e qui sarebbero falsi tutti e tre.
+        if not _have_judge:
+            _emit_l4_skipped()
         _controlli_lessicali_sui_numeri(proposition, source, warnings)
 
     # An L1 detector answers "no evidence in verified_by; add one of ...". Often

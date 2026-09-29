@@ -97,8 +97,7 @@ def _op_recall(args: dict) -> dict:
     if not query or not isinstance(query, str):
         return {"ok": False, "error": "query (str) required"}
     k = int(args.get("k", 5))
-    db_path = Path(args.get("db_path") or
-                   Path.home() / ".engram" / "semantic" / "semantic.db")
+    db_path = Path(args.get("db_path") or _db_semantico_di_default())
     try:
         from clp.agentos.vec_bus import embed_text
         qvec = embed_text(query)
@@ -111,6 +110,14 @@ def _op_recall(args: dict) -> dict:
     }
 
 
+def _db_semantico_di_default() -> Path:
+    """Lo store che il prodotto userebbe: ``semantic/semantic.db`` nella cartella
+    dati ATTUALE (T208, secondo lotto, 25/09). Era ``Path.home() / ".engram"``:
+    con la cartella dati altrove, questo lettore interrogava lo store della home."""
+    from verimem.config import cartella_dati_attuale
+    return cartella_dati_attuale() / "semantic" / "semantic.db"
+
+
 def _op_topk_embeddings(args: dict) -> dict:
     """topk_embeddings(query_vec_bytes, k, db_path) — privacy-preserving."""
     from verimem.mesh_memory import local_topk_embeddings
@@ -118,8 +125,7 @@ def _op_topk_embeddings(args: dict) -> dict:
     k = int(args.get("k", 5))
     if not isinstance(qv, (bytes, bytearray)):
         return {"ok": False, "error": "query_vec_bytes (bytes 1536) required"}
-    db = Path(args.get("db_path") or
-              Path.home() / ".engram" / "semantic" / "semantic.db")
+    db = Path(args.get("db_path") or _db_semantico_di_default())
     hits = local_topk_embeddings(db, bytes(qv), k=k)
     return {
         "ok": True,

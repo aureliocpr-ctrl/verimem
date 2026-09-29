@@ -41,7 +41,19 @@ _RUBRIC = (
     " supportato o contraddetto. Giudica il SIGNIFICATO, non la sovrapposizione di"
     " parole.")
 
-DATA_DIR = Path.home() / ".engram" / "local_gate"
+def cartella_del_giudice() -> Path:
+    """Dove il giudice interattivo scrive i lotti e legge le risposte: la cartella
+    dati ATTUALE (T208, secondo lotto, 25/09). Era ``Path.home() / ".engram"``
+    fissata all'import: con la cartella dati altrove i lotti finivano nella home."""
+    from .config import cartella_dati_attuale
+    return cartella_dati_attuale() / "local_gate"
+
+
+def __getattr__(nome: str) -> Path:
+    """``DATA_DIR`` resta per chi lo importa, calcolato a ogni accesso."""
+    if nome == "DATA_DIR":
+        return cartella_del_giudice()
+    raise AttributeError(f"module {__name__!r} has no attribute {nome!r}")
 
 
 class Transport(Protocol):
@@ -87,7 +99,7 @@ class InteractiveJudge:
         if not pairs:
             return []
         stamp = f"{int(time.time() * 1000):x}"
-        resp_path = str(DATA_DIR / f"judge_{stamp}_response.json")
+        resp_path = str(cartella_del_giudice() / f"judge_{stamp}_response.json")
         items = [{"source": s, "fact": f, "response_path": resp_path}
                  for s, f in pairs]
         try:
@@ -216,10 +228,11 @@ class GhostSisterTransport:
     # -- batch --------------------------------------------------------------
     def run_batch(self, batch_md: str, items: list[dict],
                   timeout_s: float) -> dict[str, Any] | None:
-        DATA_DIR.mkdir(parents=True, exist_ok=True)
+        cartella = cartella_del_giudice()
+        cartella.mkdir(parents=True, exist_ok=True)
         resp = Path(items[0]["response_path"])
         stamp = resp.stem.replace("_response", "")
-        batch_path = DATA_DIR / f"{stamp}.md"
+        batch_path = cartella / f"{stamp}.md"
         batch_path.write_text(batch_md, encoding="utf-8")
         marker = f"GATE-{stamp}"
         posix = str(batch_path).replace("\\", "/")
