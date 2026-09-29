@@ -7,6 +7,9 @@ under `docs/stato-reale/banchi/` (a superset of the G0 probes), and names the fi
 Digits and template slots are not words. It reads the `fonte`, `memoria` and `claim` of each row, the
 fields every D1 builder writes. Exit 1 if any n-gram is shared.
 
+One surface for every builder: a test that proves a builder disjoint calls `in_comune()`, it does not
+count n-grams its own way.
+
 The instrument is not blind. Measured 2026-09-29 on the dialogue pairs (`d1_dialoghi@3`, 2160 rows)
 against 580 bench files: n=3 finds 5 shared trigrams, all of them function phrases («due giorni fa»,
 «il corso di»), n=2 finds 58, n=4 finds none.
@@ -36,12 +39,9 @@ def ngrammi(testo: str, n: int) -> set[tuple[str, ...]]:
     return {tuple(parole[i:i + n]) for i in range(len(parole) - n + 1)}
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("righe", nargs="+", type=Path, help="D1 jsonl files")
-    ap.add_argument("--n", type=int, default=4)
-    a = ap.parse_args()
-
+def riferimento(n: int = 4) -> tuple[dict[tuple[str, ...], set[str]], int]:
+    """The n-grams of every string literal in the gate benches, each with the files it comes from, and
+    how many strings were read."""
     dove: dict[tuple[str, ...], set[str]] = defaultdict(set)
     stringhe = 0
     for f in BANCHI:
@@ -50,25 +50,42 @@ def main() -> int:
         for nodo in ast.walk(albero):
             if isinstance(nodo, ast.Constant) and isinstance(nodo.value, str):
                 stringhe += 1
-                for g in ngrammi(nodo.value, a.n):
+                for g in ngrammi(nodo.value, n):
                     dove[g].add(f.name)
+    return dove, stringhe
 
+
+def in_comune(righe: list[dict], n: int = 4,
+              dove: dict[tuple[str, ...], set[str]] | None = None) -> list[tuple[tuple[str, ...], int, list[str]]]:
+    """The n-grams the rows share with the gate benches, most frequent first: (n-gram, how many times it
+    occurs in the rows, the bench files it comes from). Empty when the rows are disjoint. `dove` is the
+    reference of `riferimento(n)`, when the caller already has it."""
+    if dove is None:
+        dove, _ = riferimento(n)
     d1: dict[tuple[str, ...], int] = defaultdict(int)
-    righe = 0
+    for r in righe:
+        for campo in ("fonte", "memoria", "claim"):
+            for g in ngrammi(r[campo], n):
+                d1[g] += 1
+    comuni = sorted(set(d1) & set(dove), key=lambda g: (-d1[g], g))
+    return [(g, d1[g], sorted(dove[g])) for g in comuni]
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("righe", nargs="+", type=Path, help="D1 jsonl files")
+    ap.add_argument("--n", type=int, default=4)
+    a = ap.parse_args()
+    righe = []
     for f in a.righe:
         with open(f, encoding="utf-8") as fh:
-            for riga in fh:
-                r = json.loads(riga)
-                righe += 1
-                for campo in ("fonte", "memoria", "claim"):
-                    for g in ngrammi(r[campo], a.n):
-                        d1[g] += 1
-
-    comuni = sorted(set(d1) & set(dove), key=lambda g: (-d1[g], g))
-    print(f"benches: {len(BANCHI)} files, {stringhe} strings · D1: {righe} rows · "
+            righe.extend(json.loads(riga) for riga in fh)
+    dove, stringhe = riferimento(a.n)
+    comuni = in_comune(righe, a.n, dove)
+    print(f"benches: {len(BANCHI)} files, {stringhe} strings · D1: {len(righe)} rows · "
           f"{a.n}-grams shared: {len(comuni)}")
-    for g in comuni[:25]:
-        print(f"  {' '.join(g)!r:45} D1 x{d1[g]:<5} {sorted(dove[g])[:3]}")
+    for g, volte, file in comuni[:25]:
+        print(f"  {' '.join(g)!r:45} D1 x{volte:<5} {file[:3]}")
     return 1 if comuni else 0
 
 
