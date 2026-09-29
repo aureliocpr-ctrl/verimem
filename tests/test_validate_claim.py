@@ -404,8 +404,14 @@ def test_numeric_contradicted_entries() -> None:
     assert "f_cache_lru" in r["evidence_facts"], r
 
 
-def test_numeric_contradicted_milliseconds() -> None:
-    """RED: '500 milliseconds' contradicts stored '200ms' (unit normalize)."""
+def test_numeric_contradicted_milliseconds(monkeypatch) -> None:
+    """RED: '500 milliseconds' contradicts stored '200ms' (unit normalize).
+
+    La cella misura la REGOLA (la normalizzazione delle unita'), quindi gira
+    senza giudice. Col giudice NLI vero (T216, 29/09) questa coppia coesiste:
+    il giudice la dice neutrale, uno dei 4 aggiornamenti su 18 che la catena
+    non ritira, prezzo dichiarato nel README."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     agent = _FakeAgent(_numeric_corpus())
     r = _vc(agent, "The retry backoff doubles starting from 500 milliseconds.")
     assert r["verdict"] == "contradicted", r
