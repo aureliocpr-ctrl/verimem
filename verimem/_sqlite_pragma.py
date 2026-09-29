@@ -139,6 +139,10 @@ def read_connection(db_path: Path | str) -> Iterator[sqlite3.Connection]:
         # file and synchronous only governs write fsync.
         with contextlib.suppress(sqlite3.Error):
             conn.execute("PRAGMA busy_timeout=60000;")
+        # Il predicato dell'ambito (Atlas): uno store legato a un utente lo usa
+        # nelle sue query, e questa connessione e' condivisa fra gli handle.
+        from .scope import registra_nella_connessione
+        registra_nella_connessione(conn)
         cache[key] = conn
     try:
         yield conn

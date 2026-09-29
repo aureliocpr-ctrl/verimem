@@ -16,6 +16,8 @@ zero-schema simplicity is the deliberate trade.
 from __future__ import annotations
 
 import re
+import sqlite3
+from dataclasses import dataclass
 
 # Canonical dimension order — prefix segments are emitted in THIS order
 # regardless of kwarg order, so the same scope always yields the same topic.
@@ -156,7 +158,103 @@ def matches_scope(
     return True
 
 
+@dataclass(frozen=True)
+class Scope:
+    """L'ambito a cui e' LEGATO un handle — lo store o il motore — invece di un
+    argomento che ogni chiamata deve ricordarsi di passare.
+
+    ATLAS (29/09): fino a qui il restringimento lo faceva chi legge — la riga di
+    comando e il server MCP, ciascuno con la sua copia — e un consumatore della
+    libreria, saltando quel codice, vedeva i fatti di tutti. Un handle legato
+    applica l'ambito a OGNI lettura e scrittura: non c'e' una chiamata in cui
+    dimenticarlo, e un argomento non lo allarga (`topic` lo riporta dentro).
+    La semantica e' quella di :func:`matches_scope`, la stessa delle porte.
+    """
+
+    user_id: str | None = None
+    agent_id: str | None = None
+    run_id: str | None = None
+    include_shared: bool = False
+
+    def __post_init__(self) -> None:
+        for dim in _DIMS:
+            val = getattr(self, dim)
+            if val is not None:
+                _validate(dim, val)
+
+    @property
+    def vuoto(self) -> bool:
+        """Nessuna dimensione: l'handle vede tutto, come prima di Atlas."""
+        return all(getattr(self, dim) is None for dim in _DIMS)
+
+    def contiene(self, topic: str | None) -> bool:
+        return matches_scope(
+            topic, user_id=self.user_id, agent_id=self.agent_id,
+            run_id=self.run_id, include_shared=self.include_shared)
+
+    def prefisso(self) -> str | None:
+        """Il prefisso che restringe in SQL, o None quando da solo non basta:
+        senza utente non c'e' un prefisso iniziale, e con `include_shared` i
+        fatti condivisi stanno fuori da qualunque prefisso."""
+        if self.include_shared:
+            return None
+        return lead_prefix(user_id=self.user_id, agent_id=self.agent_id,
+                           run_id=self.run_id)
+
+    def topic(self, topic: str | None) -> str:
+        """Un topic riportato nell'ambito: quello che si scrive ci finisce
+        dentro, e un filtro che nomina un altro utente viene riscritto nel
+        proprio — le dimensioni dell'handle vincono, come in `scoped_topic`."""
+        return scoped_topic(topic or "", user_id=self.user_id,
+                            agent_id=self.agent_id, run_id=self.run_id)
+
+    def stretto(self, altro: Scope) -> Scope:
+        """L'ambito di un handle derivato da uno gia' legato: puo' solo
+        restringere. Cambiare una dimensione gia' fissata, o aprire i fatti
+        condivisi a chi non li vedeva, sarebbe allargare, e si rifiuta."""
+        if self.vuoto:
+            return altro
+        valori: dict[str, str | None] = {}
+        for dim in _DIMS:
+            mio, chiesto = getattr(self, dim), getattr(altro, dim)
+            if mio is not None and chiesto is not None and mio != chiesto:
+                raise PermissionError(
+                    f"un handle legato a {dim}={mio!r} non si rilega a {chiesto!r}")
+            valori[dim] = mio if mio is not None else chiesto
+        if altro.include_shared and not self.include_shared:
+            raise PermissionError(
+                "un handle legato senza i fatti condivisi non li apre")
+        return Scope(**valori, include_shared=self.include_shared
+                     and altro.include_shared)
+
+    def parametri_sql(self) -> tuple[str | None, str | None, str | None, int]:
+        return (self.user_id, self.agent_id, self.run_id,
+                1 if self.include_shared else 0)
+
+
+def clausola_sql(colonna: str = "topic") -> str:
+    """Il predicato dell'ambito in SQL, con i quattro parametri di
+    :meth:`Scope.parametri_sql`. E' la STESSA `matches_scope` delle porte, non
+    una sua traduzione in LIKE: due formulazioni divergerebbero sui casi di
+    bordo (una dimensione ripetuta nel topic, il `_` che in LIKE e' un jolly)."""
+    return f"verimem_nell_ambito({colonna}, ?, ?, ?, ?)"
+
+
+def _nell_ambito_sql(topic, user_id, agent_id, run_id, include_shared) -> int:
+    return 1 if matches_scope(
+        topic, user_id=user_id, agent_id=agent_id, run_id=run_id,
+        include_shared=bool(include_shared)) else 0
+
+
+def registra_nella_connessione(conn: sqlite3.Connection) -> None:
+    """Rende il predicato disponibile a una connessione dello store. Pura e
+    senza stato: l'ambito arriva come parametro, quindi la stessa funzione
+    serve anche alle connessioni riusate fra handle diversi."""
+    conn.create_function("verimem_nell_ambito", 5, _nell_ambito_sql,
+                         deterministic=True)
+
+
 __all__ = [
     "parse_scope", "scoped_topic", "matches_scope", "lead_prefix",
-    "scoped_fetch_limit",
+    "scoped_fetch_limit", "Scope", "clausola_sql", "registra_nella_connessione",
 ]

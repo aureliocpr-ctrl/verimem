@@ -298,6 +298,16 @@ def open_memory(path: Any = None, **kwargs: Any):
     """
     import os as _os
     url = _os.environ.get("VERIMEM_SERVER_URL", "").strip()
+    _dimensioni = [k for k in ("user_id", "agent_id", "run_id")
+                   if kwargs.get(k) is not None]
+    if url and _dimensioni:
+        # ATLAS (29/09): il client remoto non sa ancora legarsi a un utente, e
+        # restituirlo IGNORANDO l'ambito darebbe a chi l'ha chiesto i fatti di
+        # tutti gli utenti del server. Si rifiuta invece di aprire tutto.
+        raise PermissionError(
+            f"open_memory({', '.join(_dimensioni)}=...) con VERIMEM_SERVER_URL: "
+            "il client remoto non applica ancora l'ambito di un utente. Usa lo "
+            "store incorporato (togli VERIMEM_SERVER_URL) o un server per utente")
     if url:
         key = _os.environ.get("VERIMEM_SERVER_KEY", "").strip()
         try:
@@ -822,6 +832,34 @@ def chiave_di_identita(fonte: str | None, riferimenti=None) -> str | None:
         _json.dumps(vivi, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
 
 
+#: I metodi del motore che un handle legato a un utente puo' usare (Atlas,
+#: 29/09): ognuno legge e scrive SOLO attraverso lo store legato, e lo prova
+#: `tests/test_un_utente_non_vede_i_fatti_di_un_altro.py`. Gli altri, su un
+#: handle legato, RIFIUTANO: diversi aprono il database per conto loro e
+#: vedrebbero i fatti di tutti. Un metodo nuovo nasce chiuso.
+_METODI_NELL_AMBITO = frozenset({"add", "search", "get", "get_all", "count"})
+
+
+def _chiudi_i_metodi_fuori_ambito(memoria: Memory) -> None:
+    """Su QUESTA istanza, ogni metodo pubblico fuori da `_METODI_NELL_AMBITO`
+    diventa un rifiuto. Per istanza e non per classe: un handle senza ambito
+    resta com'e', e non paga niente."""
+    ambito = memoria.semantic._ambito
+    # lungo tutta la gerarchia: una sottoclasse con metodi suoi non resta aperta
+    nomi = {nome for cls in type(memoria).__mro__ if cls is not object
+            for nome, attr in vars(cls).items()
+            if not nome.startswith("_") and callable(attr)}
+    for nome in nomi - _METODI_NELL_AMBITO:
+
+        def rifiuta(*args: Any, _nome: str = nome, **kwargs: Any) -> Any:
+            raise PermissionError(
+                f"`Memory.{_nome}` non sa ancora applicare l'ambito ({ambito}): "
+                "su un handle legato a un utente rifiuta invece di leggere i "
+                "fatti di tutti. Usa un handle senza ambito, o porta il metodo "
+                "in `_METODI_NELL_AMBITO` con la sua prova.")
+        setattr(memoria, nome, rifiuta)
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -834,9 +872,6 @@ class Memory:
                  user_id: str | None = None, agent_id: str | None = None,
                  run_id: str | None = None,
                  include_shared: bool = False) -> None:
-        # RED (Atlas, 29/09): l'ambito e' accettato e NON ancora applicato.
-        self._ambito_chiesto = dict(user_id=user_id, agent_id=agent_id,
-                                    run_id=run_id, include_shared=include_shared)
         if preset not in _GATE_PRESETS:
             raise ValueError(
                 f"unknown gate preset {preset!r} — one of: "
@@ -865,6 +900,17 @@ class Memory:
         self.semantic = semantic if semantic is not None else SemanticMemory(
             db_path=Path(path) if path else None,
             repo_root=Path(repo_root) if repo_root else None)
+        # ATLAS (29/09): un motore legato a un utente lavora su uno store
+        # LEGATO. Il restringimento lo applica lo store a ogni lettura e
+        # scrittura, e non questa classe chiamata per chiamata: fino a qui lo
+        # facevano la riga di comando e il server MCP, e un consumatore della
+        # libreria che saltava quel codice vedeva i fatti di tutti.
+        if (user_id, agent_id, run_id) != (None, None, None) or include_shared:
+            self.semantic = self.semantic.nell_ambito(
+                user_id=user_id, agent_id=agent_id, run_id=run_id,
+                include_shared=include_shared)
+        if getattr(self.semantic, "_ambito", None) is not None:
+            _chiudi_i_metodi_fuori_ambito(self)
         #: La radice contro cui il gate verifica che un riferimento di
         #: `verified_by` ESISTA. Una porta che passa lo store gia' aperto la
         #: dichiara qui: la riga di comando usa la radice del progetto anche
@@ -1013,6 +1059,10 @@ class Memory:
         client was built with. ``asserted_at`` (epoch seconds) stamps the
         EVENT time (bi-temporal v13: when it was said/true — drives
         reconciliation age-gaps and answer-with-history)."""
+        # ATLAS (29/09): su un handle legato il topic entra nell'ambito PRIMA di
+        # tutto il resto. L'id del fatto si calcola sul topic, e due utenti che
+        # scrivono la stessa frase devono fare due fatti, non sovrascriversi.
+        _ambito = getattr(self.semantic, "_ambito", None)
         if isinstance(content, list):
             if self.llm is None:
                 raise ValueError(
@@ -1022,10 +1072,13 @@ class Memory:
             # ground default (balanced=True) quarantines extraction confabs the
             # dialogue doesn't entail. Per-call ground= still wins.
             _ground = self._preset_defaults["ground"] if ground is None else ground
+            _topic_ingest = topic if topic != "user" else "conversational/ingested"
+            if _ambito is not None:
+                _topic_ingest = _ambito.topic(_topic_ingest)
             res = ingest_conversation(
                 self.semantic, content, llm=self.llm,
                 conversation_id=conversation_id or "sdk",
-                topic=topic if topic != "user" else "conversational/ingested",
+                topic=_topic_ingest,
                 asserted_at=asserted_at, embed="sync",
                 user_name=user_name, ground=_ground)
             # Review 2026-07-09 #1: the ingest path was INVISIBLE to the trust
@@ -1037,6 +1090,8 @@ class Memory:
         text = (content or "").strip()
         if not text:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}
+        if _ambito is not None:
+            topic = _ambito.topic(topic)
         # preset defaults fill only what the call left unspecified (None):
         # an explicit per-call parameter always wins over the preset.
         # LE MANOPOLE CHE SPENGONO IL GATE le onora solo una porta che se lo
@@ -2013,7 +2068,9 @@ class Memory:
         if out:
             from .hidden_records import SqliteRows, hidden_records_for
             nascosti = hidden_records_for(
-                SqliteRows(self.semantic.db_path), query=query, served="")
+                SqliteRows(self.semantic.db_path,
+                           ambito=getattr(self.semantic, "_ambito", None)),
+                query=query, served="")
             if nascosti:
                 for item in out:
                     item["hidden_records"] = [
@@ -2328,6 +2385,10 @@ class Memory:
     def documents(self):
         """Il tier documenti, costruito alla prima richiesta.
 
+        ⚠️ ATLAS (29/09): i documenti non hanno un ambito B-1, quindi un handle
+        legato a un utente non li apre — rifiuta invece di mostrare l'indice di
+        tutti. Una proprieta' non si chiude per istanza come i metodi.
+
         ⚠️ NESSUN ``db_path``, DI PROPOSITO — e la prima stesura ne passava uno.
         Il 2026-08-21 questa property apriva l'indice ACCANTO ai fatti::
 
@@ -2353,6 +2414,10 @@ class Memory:
         risolto, e la riga in piu' rompeva una cosa per proteggerne un'altra che
         non era in pericolo.
         """
+        if getattr(self.semantic, "_ambito", None) is not None:
+            raise PermissionError(
+                "`Memory.documents` non ha un ambito B-1: un handle legato a un "
+                "utente non apre l'indice dei documenti di tutti")
         _idx = getattr(self, "_documents", None)
         if _idx is None:
             from .document_index import DocumentIndex
@@ -3448,6 +3513,18 @@ class Memory:
                 sql = ("SELECT count(*) FROM facts "
                        "WHERE status='quarantined' AND superseded_by IS NULL")
                 par: list = []
+                # ATLAS (29/09): su un handle legato si contano i trattenuti
+                # del SUO ambito. Gli altri sono fatti di altri utenti, e anche
+                # solo il loro numero dice che cosa hanno scritto.
+                _ambito = getattr(self.semantic, "_ambito", None)
+                if _ambito is not None:
+                    from .scope import registra_nella_connessione
+                    registra_nella_connessione(_c)
+                    _amb_sql, _amb_par = self.semantic._clausola_dell_ambito()
+                    sql += f" AND {_amb_sql}"
+                    par.extend(_amb_par)
+                    if topic:
+                        topic = _ambito.topic(topic)
                 if topic:
                     sql += " AND topic = ?"
                     par.append(topic)

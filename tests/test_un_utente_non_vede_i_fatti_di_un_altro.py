@@ -29,6 +29,7 @@ from verimem.semantic import Fact, SemanticMemory
 
 ALICE = "Alice rinnova il piano annuale ogni gennaio."
 BOB = "Bob rinnova il piano mensile ogni primo del mese."
+BOB_2 = "Bob paga il piano con un bonifico bancario."
 #: un fatto CONDIVISO (topic senza scope): per B-1 si vede solo su richiesta,
 #: con `include_shared` — mai i fatti di un altro utente.
 COMUNE = "Il piano annuale si rinnova a gennaio per tutti i clienti."
@@ -42,9 +43,12 @@ def negozio(tmp_path):
     db = tmp_path / "negozio" / "semantic.db"
     sm = SemanticMemory(db_path=db)
     ids: dict[str, str] = {}
+    #: Bob ha DUE fatti e Alice uno: un conteggio che confondesse i due utenti
+    #: darebbe un numero diverso, invece dello stesso 1 per tutti e due.
     for chi, testo, topic in (
             ("alice", ALICE, scoped_topic("abbonamenti", user_id="alice")),
             ("bob", BOB, scoped_topic("abbonamenti", user_id="bob")),
+            ("bob2", BOB_2, scoped_topic("pagamenti", user_id="bob")),
             ("comune", COMUNE, "abbonamenti")):
         fatto = Fact(proposition=testo, topic=topic)
         sm.store(fatto, embed="sync")
@@ -71,7 +75,7 @@ def test_l_handle_di_alice_non_vede_i_fatti_di_bob(negozio):
     senza passare nessun prefisso — e' esattamente il passo che salta."""
     db, _ = negozio
     visti = _testi(Memory(path=str(db), user_id="alice").search(DOMANDA, k=10))
-    assert BOB not in visti, (
+    assert not {BOB, BOB_2} & visti, (
         "l'handle di Alice vede il fatto di Bob: il restringimento sta in chi "
         "legge, e un consumatore della libreria che non lo rifa' vede tutto")
     assert ALICE in visti, (
@@ -90,8 +94,13 @@ def test_un_argomento_non_allarga_l_ambito(negozio):
     elenco = _testi(alice.get_all(topic="user:bob/abbonamenti", limit=100))
     assert BOB not in elenco, (
         "passando il topic di Bob, l'handle di Alice elenca i fatti di Bob")
-    assert alice.count(topic_prefix="user:bob/") == 0, (
-        "passando il prefisso di Bob, l'handle di Alice conta i fatti di Bob")
+    # Il prefisso di Bob viene riportato in quello di Alice (`scoped_topic`: le
+    # dimensioni dell'handle vincono), quindi conta i SUOI fatti: 1, non i 2 di
+    # Bob.
+    n = alice.count(topic_prefix="user:bob/")
+    assert n == alice.count() == 1, (
+        f"passando il prefisso di Bob l'handle di Alice conta {n}: Bob ha due "
+        "fatti e Alice uno, e il prefisso va riportato nell'ambito di Alice")
 
 
 def test_un_id_non_attraversa_l_ambito(negozio):
@@ -118,7 +127,7 @@ def test_include_shared_apre_i_condivisi_e_mai_gli_altri_utenti(negozio):
     alice = Memory(path=str(db), user_id="alice", include_shared=True)
     visti = _testi(alice.search(DOMANDA, k=10))
     assert {ALICE, COMUNE} <= visti, f"con include_shared: {sorted(visti)}"
-    assert BOB not in visti, "include_shared ha aperto anche i fatti di Bob"
+    assert not {BOB, BOB_2} & visti, "include_shared ha aperto anche i fatti di Bob"
 
 
 def test_quello_che_scrive_alice_finisce_nel_suo_ambito(negozio):
@@ -150,3 +159,66 @@ def test_lo_store_stesso_applica_l_ambito(negozio):
         f"search_facts dello store legato ad Alice: {sorted(cercati)}")
     assert sm.get(ids["bob"]) is None
     assert {f.proposition for f in sm.all()} == {ALICE}
+
+
+def test_il_costruttore_unico_non_ignora_l_ambito_col_server(monkeypatch, tmp_path):
+    """`open_memory` e' il costruttore che i consumatori devono usare. Con un
+    server remoto restituiva il client remoto IGNORANDO `user_id`: un handle
+    senza ambito a chi aveva chiesto quello di Alice. Ora rifiuta, finche' il
+    client remoto non sa legarsi a un utente."""
+    import verimem.client as motore
+    costruiti: list[dict] = []
+
+    class _Remoto:
+        def __init__(self, *args, **kwargs):
+            costruiti.append(kwargs)
+
+        def health(self) -> bool:
+            return True
+
+    monkeypatch.setenv("VERIMEM_SERVER_URL", "http://127.0.0.1:9")
+    monkeypatch.setattr(motore, "_remote_cls", lambda: _Remoto)
+    with pytest.raises(PermissionError):
+        motore.open_memory(str(tmp_path / "s.db"), user_id="alice")
+    assert not costruiti, "il client remoto e' stato costruito lo stesso"
+    # CONTROLLO: senza ambito il cammino verso il server e' quello di prima.
+    assert isinstance(motore.open_memory(str(tmp_path / "s.db")), _Remoto)
+
+
+def test_CRICCHETTO_ogni_metodo_ammesso_applica_l_ambito():
+    """Un metodo fra gli ammessi che lo store legato NON sovrascrive deve
+    applicare la clausola dell'ambito nella base: altrimenti e' ammesso senza
+    essere ristretto, cioe' aperto. Un metodo nuovo che entra nell'elenco senza
+    l'una o l'altra cosa accende questo test il giorno in cui entra."""
+    import inspect
+
+    from verimem import semantic as s
+    scoperti = [
+        nome for nome in sorted(s._CONSAPEVOLI_DELL_AMBITO)
+        if nome not in vars(s._StoreNellAmbito) and nome != "nell_ambito"
+        and "_clausola_dell_ambito" not in inspect.getsource(
+            getattr(s.SemanticMemory, nome))]
+    assert not scoperti, f"ammessi e non ristretti: {scoperti}"
+
+
+def test_un_metodo_non_ammesso_rifiuta_e_non_tocca_niente(negozio):
+    """Il «nasce chiuso», misurato: `delete` non sa ancora applicare l'ambito,
+    quindi sullo store legato rifiuta — e il fatto di Bob e' ancora li'."""
+    db, ids = negozio
+    legato = SemanticMemory(db_path=db).nell_ambito(user_id="alice")
+    with pytest.raises(PermissionError):
+        legato.delete(ids["bob"])
+    assert SemanticMemory(db_path=db).get(ids["bob"]) is not None, (
+        "lo store legato ad Alice ha cancellato il fatto di Bob")
+
+
+def test_il_motore_legato_chiude_i_metodi_che_non_sanno_l_ambito(negozio):
+    db, ids = negozio
+    alice = Memory(path=str(db), user_id="alice")
+    with pytest.raises(PermissionError):
+        alice.delete(ids["bob"])
+    with pytest.raises(PermissionError):
+        _ = alice.documents
+    assert SemanticMemory(db_path=db).get(ids["bob"]) is not None
+    # CONTROLLO: il motore senza ambito non e' stato chiuso.
+    assert callable(Memory(path=str(db)).delete)
