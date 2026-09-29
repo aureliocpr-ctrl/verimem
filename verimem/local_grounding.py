@@ -517,6 +517,16 @@ class LocalGroundingJudge:
         coppia = self.coppia(source, fact, focus_budget=focus_budget)
         return self.normalizza(self._ensure_scorer()([coppia])[0])
 
+    def score_many(self, pairs: list[tuple[str, str]], *,
+                   focus_budget: int | None = None) -> list[float]:
+        """``score`` for many (source, fact) pairs in ONE scorer call: the same
+        pair construction and the same normalisation, one model pass instead of
+        one per pair (cure 7, 29/09: a write asked once per similar fact)."""
+        if not pairs:
+            return []
+        coppie = [self.coppia(s, f, focus_budget=focus_budget) for s, f in pairs]
+        return [self.normalizza(x) for x in self._ensure_scorer()(coppie)]
+
 
 _judge: LocalGroundingJudge | None = None
 _judge_lock = threading.Lock()
