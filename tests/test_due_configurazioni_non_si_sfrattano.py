@@ -26,6 +26,8 @@ import sys
 import time
 from pathlib import Path
 
+from tests._esito import esito
+
 RADICE = Path(__file__).resolve().parents[1]
 
 DAEMON = r'''
@@ -63,11 +65,12 @@ def _ambiente(sabbia: Path, modello: str) -> dict:
 
 
 def _cosa_vede(sabbia: Path, modello: str) -> dict:
-    uscita = subprocess.run([sys.executable, "-c", CLIENTE], capture_output=True, text=True,
-                            encoding="utf-8", errors="replace", cwd=str(RADICE),
-                            env=_ambiente(sabbia, modello), timeout=120)
-    righe = [r for r in uscita.stdout.splitlines() if r.startswith("VEDO ")]
-    assert righe, f"il cliente non ha risposto: {uscita.stderr[-1500:]}"
+    testo = esito(subprocess.run([sys.executable, "-c", CLIENTE], capture_output=True,
+                                 text=True, encoding="utf-8", errors="replace",
+                                 cwd=str(RADICE), env=_ambiente(sabbia, modello),
+                                 timeout=120))
+    righe = [r for r in testo.splitlines() if r.startswith("VEDO ")]
+    assert righe, f"il cliente non ha detto cosa vede: {testo[-1500:]}"
     return json.loads(righe[-1][len("VEDO "):])
 
 

@@ -883,10 +883,9 @@ def _owner_is_zombie(path: Path) -> bool:
     In dubbio NON si ruba (un lock illeggibile, o dentro la grazia, resta del
     proprietario): l'errore di rubare crea due daemon che caricano il modello
     insieme, che e' peggio del guasto che si sta curando. Limite dichiarato: un
-    daemon sano ma troppo occupato per accettare una connessione entro il
-    timeout di ``daemon_usable`` verrebbe letto come zombie; l'accept su
-    loopback resta veloce anche sotto carico, quindi il caso e' teorico ma non
-    impossibile.
+    daemon sano ma troppo occupato per rispondere alla sonda entro il timeout
+    paziente di ``ping_healthy`` verrebbe letto come zombie; ogni connessione ha
+    il suo thread, quindi il caso e' teorico ma non impossibile.
     """
     try:
         eta = time.time() - path.stat().st_mtime
@@ -900,10 +899,10 @@ def _owner_is_zombie(path: Path) -> bool:
     if abs(eta) <= _ZOMBIE_GRACE_S:
         return False        # ha ancora diritto al suo warmup
     # Probe PAZIENTE, non quello informativo da 0.4 s. Il presupposto delle due
-    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato:
-    # daemon_usable fa connect+close e il server ha listen(16), quindi su
-    # loopback il kernel completa l'handshake anche mentre l'applicazione e'
-    # occupata. Ma l'ASIMMETRIA che invocavano e' reale: se ci si sbaglia
+    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato: il
+    # server ha listen(16) e un thread per connessione, quindi risponde anche
+    # mentre un'altra richiesta lo tiene occupato. Ma l'ASIMMETRIA che
+    # invocavano e' reale: se ci si sbaglia
     # nascono due daemon col modello in RAM, mentre l'attesa in piu' la paga
     # solo chi sta per rubare, cioe' un caso raro. Dove sbagliare costa caro si
     # aspetta di piu'.

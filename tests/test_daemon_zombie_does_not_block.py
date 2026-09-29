@@ -38,6 +38,19 @@ def lock(tmp_path):
     return tmp_path / "daemon.lock"
 
 
+def _proprietario(monkeypatch, *, risponde, spia=None):
+    """Il proprietario del lock, visto dalla sonda che decide lo zombie: dal
+    28/09 e' `ping_healthy` sul file di scoperta (risponde o no), non piu'
+    `daemon_usable` (serve il MIO modello o no)."""
+    def _sonda(info=None, timeout=0.4):
+        if spia is not None:
+            spia.append(timeout)
+        return risponde
+
+    monkeypatch.setattr(svc, "read_discovery", lambda *a, **k: {"pid": 4242, "port": 1})
+    monkeypatch.setattr(svc, "ping_healthy", _sonda)
+
+
 def _scrivi_lock(path, pid: int, *, eta_s: float = 0.0) -> None:
     path.write_text(str(pid), encoding="utf-8")
     if eta_s:
@@ -58,9 +71,22 @@ def test_a_live_serving_owner_keeps_the_lock(lock, monkeypatch):
     annunciato — resta l'unico a servire. Senza questo, la cura allo zombie
     aprirebbe la porta a due daemon che caricano il modello insieme."""
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: True)
+    _proprietario(monkeypatch, risponde=True)
     _scrivi_lock(lock, 4242, eta_s=3600)          # vecchio ma SANO
     assert svc.acquire_daemon_lock(lock) is False
+
+
+def test_a_live_owner_serving_another_model_keeps_the_lock(lock, monkeypatch):
+    """L'incidente del 28/09 al livello del lock: il daemon sano di un ALTRO
+    modello risponde alla sonda, e chi ha un'altra configurazione non deve
+    contarlo come zombie. Prima la domanda era `daemon_usable`, tarata sul
+    modello di chi chiede: rubava il lock al daemon di produzione."""
+    monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
+    _proprietario(monkeypatch, risponde=True)
+    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)   # non il MIO modello
+    _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
+    assert svc.acquire_daemon_lock(lock) is False, (
+        "il daemon sano di un altro modello e' stato contato zombie e derubato")
 
 
 def test_a_warming_owner_is_given_its_grace(lock, monkeypatch):
@@ -68,7 +94,7 @@ def test_a_warming_owner_is_given_its_grace(lock, monkeypatch):
     caricando il modello: rubargli il lock creerebbe la corsa a due daemon che
     il lock esiste per impedire."""
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _proprietario(monkeypatch, risponde=False)
     _scrivi_lock(lock, 4242, eta_s=1.0)           # dentro la grazia
     assert svc.acquire_daemon_lock(lock) is False
 
@@ -78,7 +104,7 @@ def test_a_live_owner_that_never_announced_is_a_zombie(lock, monkeypatch):
     questo fix bloccava ogni daemon futuro per sempre e il recall restava
     degradato a keyword-search senza dirlo a nessuno."""
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _proprietario(monkeypatch, risponde=False)
     _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
     assert svc.acquire_daemon_lock(lock) is True, (
         "un daemon vivo che non ha mai servito trattiene il lock: nessun "
@@ -110,7 +136,7 @@ def test_a_clock_jump_backwards_does_not_grant_an_endless_grace(lock, monkeypatc
     tiene giovane riscrivendo il lock — oggi non esiste, perche' il lock viene
     scritto una sola volta all'acquisizione e mai piu'."""
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(svc, "daemon_usable", lambda *a, **k: False)
+    _proprietario(monkeypatch, risponde=False)
     _scrivi_lock(lock, 4242, eta_s=-3600)          # mtime un'ora nel FUTURO
     assert svc.acquire_daemon_lock(lock) is True, (
         "un mtime nel futuro concede una grazia infinita: lo zombie diventa "
@@ -127,12 +153,8 @@ def test_stealing_uses_a_patient_probe(lock, monkeypatch):
     modello in RAM. Dove sbagliare costa caro si aspetta di piu'."""
     visti: list[float] = []
 
-    def _spia(info=None, timeout=0.4):
-        visti.append(timeout)
-        return False
-
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
-    monkeypatch.setattr(svc, "daemon_usable", _spia)
+    _proprietario(monkeypatch, risponde=False, spia=visti)
     _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
     svc.acquire_daemon_lock(lock)
     assert visti, "il probe non e' stato nemmeno eseguito"
@@ -153,15 +175,16 @@ def test_an_unreadable_lock_is_not_a_deadlock(lock, monkeypatch):
 
 def test_an_unreadable_discovery_does_not_make_a_healthy_daemon_a_zombie(
         lock, monkeypatch, tmp_path):
-    """Il giudizio deve venire da ``daemon_usable`` (raggiungibile E modello
-    giusto), non dalla sola presenza del file: un discovery scritto a meta' o
-    di un daemon con un altro modello non e' un daemon che serve."""
+    """Il giudizio viene dalla SONDA (``ping_healthy``: risponde o no), non
+    dalla sola presenza del file: un discovery che nomina una porta dove non
+    risponde nessuno non e' un daemon che serve. Dal 28/09 il modello non
+    c'entra: un daemon sano di un altro modello non e' uno zombie (vedi
+    ``test_a_live_owner_serving_another_model_keeps_the_lock``)."""
     monkeypatch.setattr(svc, "_pid_alive", lambda pid: True)
     disc = tmp_path / "discovery.json"
-    disc.write_text(json.dumps({"port": 1, "model": "altro-modello"}),
-                    encoding="utf-8")
+    disc.write_text(json.dumps({"port": 1}), encoding="utf-8")
     monkeypatch.setattr(svc, "DISCOVERY_PATH", disc)
     _scrivi_lock(lock, 4242, eta_s=svc._ZOMBIE_GRACE_S + 30)   # noqa: SLF001
     assert svc.acquire_daemon_lock(lock) is True, (
-        "un daemon che annuncia un ALTRO modello non sta servendo questo "
-        "corpus: il client lo rifiuta, quindi non deve trattenere il lock")
+        "il discovery nomina una porta dove non risponde nessuno: il "
+        "proprietario non serve, e non deve trattenere il lock")
