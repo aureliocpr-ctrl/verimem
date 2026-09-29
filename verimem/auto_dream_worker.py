@@ -352,7 +352,8 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
     worker), and mutations are REVERSIBLE (supersede-not-delete / additive master nodes).
 
     Steps: cycle_light (promote/retire) -> auto_consolidate (cluster master nodes) ->
-    scan_corpus + heal_contradictions (supersede the weaker side of a real conflict).
+    scan_corpus + heal_contradictions (supersede the weaker side of a real conflict;
+    the kinds in ``contradiction.TIPI_CHE_HEAL_NON_ESEGUE`` are left open and counted).
     Opt-out: ENGRAM_AUTO_CONSOLIDATE=0. Cooldown: ENGRAM_CONSOLIDATE_COOLDOWN_S (default 4h)."""
     now = time.time() if now is None else now
     if not _maintenance_enabled():
@@ -391,7 +392,9 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
             out["scan"] = scan_corpus(sm, time_budget_s=20.0)
             healed = heal_contradictions(sm, principal="system:heal",
                                          limit=100)
-            out["healed"] = ({k: len(v) for k, v in healed.items()}
+            # the lists become counts; left_open_kinds is already a count
+            out["healed"] = ({k: v if isinstance(v, dict) else len(v)
+                              for k, v in healed.items()}
                              if isinstance(healed, dict) else None)
         except Exception as exc:  # noqa: BLE001
             out["heal_err"] = str(exc)[:100]

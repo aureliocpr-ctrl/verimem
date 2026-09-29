@@ -40,6 +40,30 @@ def _payload(blocks: list[str]) -> dict[str, Any]:
 async def test_mcp_heal_contradictions_supersedes_weaker(tmp_path, monkeypatch):
     sm = SemanticMemory(db_path=tmp_path / "sm.db")
     store = ContradictionStore(sm.db_path)
+    sm.store(Fact(id="weak", proposition="The NEXUS cache is not enabled",
+                  topic="project/nexus/cache", status="legacy_unverified"))
+    sm.store(Fact(id="strong", proposition="The NEXUS cache is enabled",
+                  topic="project/nexus/cache", status="model_claim"))
+    store.add(Contradiction(fact_a_id="weak", fact_b_id="strong",
+                            kind="boolean_clash", similarity=0.95))
+    agent = _FakeAgent(sm)
+    monkeypatch.setattr(mcp_server, "_ag", lambda: agent)
+
+    payload = _payload(await _invoke_tool("hippo_heal_contradictions", {}))
+
+    assert "weak" in payload["healed_superseded"]
+    assert payload["total_unresolved"] == 0
+    assert sm.get("weak").superseded_by == "strong"
+    assert sm.get("strong").superseded_by is None
+
+
+async def test_mcp_heal_lascia_aperto_uno_scontro_numerico_e_lo_conta(
+        tmp_path, monkeypatch):
+    """La promessa alla porta MCP: lo strumento non ritira un fatto per uno
+    scontro ``numeric_clash`` (T222: 41 fatti veri ritirati il 23-24/09) e
+    dice quanti ne ha lasciati aperti, con un conteggio e non con gli id."""
+    sm = SemanticMemory(db_path=tmp_path / "sm.db")
+    store = ContradictionStore(sm.db_path)
     sm.store(Fact(id="weak", proposition="NEXUS has 17280 tests",
                   topic="project/nexus/tests", status="legacy_unverified"))
     sm.store(Fact(id="strong", proposition="NEXUS has 9999 tests",
@@ -51,10 +75,10 @@ async def test_mcp_heal_contradictions_supersedes_weaker(tmp_path, monkeypatch):
 
     payload = _payload(await _invoke_tool("hippo_heal_contradictions", {}))
 
-    assert "weak" in payload["healed_superseded"]
-    assert payload["total_unresolved"] == 0
-    assert sm.get("weak").superseded_by == "strong"
-    assert sm.get("strong").superseded_by is None
+    assert payload["healed_superseded"] == [], payload
+    assert sm.get("weak").superseded_by is None
+    assert payload["left_open_kinds"] == {"numeric_clash": 1}, payload
+    assert payload["total_unresolved"] == 1
 
 
 async def test_mcp_heal_contradictions_empty_is_noop(tmp_path, monkeypatch):
