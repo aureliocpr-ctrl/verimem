@@ -970,6 +970,22 @@ def rifiuto_dell_ultima_sonda() -> str | None:
     return getattr(_rifiuto_del_giudice, "motivo", None)
 
 
+def _perche_il_daemon_non_ha_giudicato(info) -> str:
+    """Perche' una delega CHIESTA non e' stata servita, letto nell'istante in cui
+    e' fallita: un attimo dopo il daemon potrebbe esserci. In inglese perche'
+    finisce nella ragione della ricevuta, che e' in inglese."""
+    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    ):
+        return "the shared encode service is turned off by ENGRAM_ENCODE_SERVICE=0"
+    rifiuto = rifiuto_dell_ultima_sonda()
+    if rifiuto:
+        return f"the shared encode daemon refused to judge: {rifiuto}"
+    if not info or not info.get("port"):
+        return "no shared encode daemon is announced yet: it is starting, or not running"
+    return "the shared encode daemon did not answer in time"
+
+
 def _gate_via_daemon(pairs, *, info=None,
                      max_length: int | None = None) -> list[float] | None:
     """Punteggi del giudice del moat dal daemon condiviso, o None per degradare.
@@ -1142,7 +1158,12 @@ def try_local_score(source: str, fact: str, *,
         if punteggi:
             _registra_esecutore("daemon", delega_richiesta=True)
             return judge.normalizza(punteggi[0]), judge.threshold
-        _registra_esecutore(None)
+        # LA DELEGA CHIESTA E NON AVUTA SI SCRIVE, col suo perche'. Registrare
+        # solo «nessuno ha giudicato» lasciava la ricevuta senza niente da
+        # dire: la ragione del livello era quella di chi il daemon non l'ha mai
+        # chiesto (dal wheel, job di accettazione 109551779207 del 29/09).
+        _registra_esecutore(None, delega_richiesta=True,
+                            perche=_perche_il_daemon_non_ha_giudicato(info))
         warm_local_judge_async()
         return None
     # LOAD phase — a missing / unloadable model is a legitimate "no local judge":
