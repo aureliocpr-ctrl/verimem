@@ -1,4 +1,4 @@
-"""Sopra le sei cifre nessun ramo di `event_indices` vede più un indice.
+"""Sopra le sei cifre nessun ramo di `event_indices` vedeva un indice (20/08).
 
 I due rami che portano un tetto hanno lo STESSO tetto, quindi il posizionale non
 allarga il vocabolario su questo asse: cadono insieme.
@@ -34,12 +34,20 @@ per uno, non contati come vittime.
 dal corpus, non da questo file, ed è citato perché senza di lui questo banco
 sembrerebbe un esercizio.
 
-📌 PERCHÉ NON C'È ANCHE LA CURA: sembra `\\d{1,6}` -> `\\d{1,12}` in due regex,
-ma cambierebbe il verdetto sui 1315 fatti che oggi hanno un indice corto e ne
-guadagnerebbero un secondo. Quel numero non è misurato, e finché non lo è la
-cura non si consegna.
+📌 PERCHÉ NON C'ERA ANCHE LA CURA: sembrava `\\d{1,6}` -> `\\d{1,12}` in due
+regex, ma cambiava il verdetto sui 1315 fatti che avevano un indice corto e ne
+guadagnavano un secondo. Quel numero non era misurato, e finché non lo era la
+cura non si consegnava.
+
+✅ LA CURA, CON LA MISURA (T216, 29/09): il tetto sale a 20 cifre nei due rami.
+Sulla copia dello store (18385 fatti) 1490 fatti guadagnano un indice e nessuno
+ne perde; 1288 avevano già un indice corto. Sul VERDETTO, lo scanner di
+rapporto su 15907 fatti vivi: 63 coppie smettono di essere in conflitto, 0 lo
+diventano. Le celle dei numeri lunghi qui sotto non sono più `xfail`.
 """
 from __future__ import annotations
+
+import re
 
 import pytest
 
@@ -70,19 +78,13 @@ def test_un_identificatore_fino_a_sei_cifre_e_un_indice(portatrice: str, cifre: 
 
 @pytest.mark.parametrize("cifre", LUNGHI)
 @pytest.mark.parametrize("portatrice", PORTATRICI)
-@pytest.mark.xfail(strict=True, reason=(
-    "APERTO 2026-08-20. Entrambi i rami con tetto usano `\\d{1,6}`, quindi sopra "
-    "le sei cifre né il vocabolario né il posizionale vedono l'indice, e due "
-    "fatti che parlano di due identificatori diversi si leggono come lo stesso "
-    "soggetto. Misurato sul corpus vivo: 125 proposizioni restano senza alcun "
-    "indice, 9 sono già superseduta, e una coppia di run CI si è cancellata a "
-    "vicenda. strict=True: il giorno che il tetto si alza questi diventano "
-    "XPASS e la suite chiede di togliere il marcatore."))
-def test_un_identificatore_di_sette_o_piu_cifre_dovrebbe_essere_un_indice(
+def test_un_identificatore_di_sette_o_piu_cifre_e_un_indice(
         portatrice: str, cifre: str):
+    """Aperto il 2026-08-20 (xfail stretto), chiuso dal T216 il 29/09: «run
+    31816624316» e «job 94819747443» sono due soggetti."""
     assert (portatrice, int(cifre)) in _indice(portatrice, cifre), (
-        f"«{portatrice} {cifre}»: {len(cifre)} cifre superano il tetto di 6 e "
-        f"l'identificatore non viene più riconosciuto")
+        f"«{portatrice} {cifre}»: {len(cifre)} cifre e l'identificatore non "
+        f"viene riconosciuto come indice")
 
 
 def test_i_due_rami_col_tetto_hanno_LO_STESSO_tetto():
@@ -92,12 +94,14 @@ def test_i_due_rami_col_tetto_hanno_LO_STESSO_tetto():
     questo asse: sul numero di cifre i due rami sono identici, quindi cadono
     insieme e nessuno dei due copre l'altro.
     """
-    tetti = {"_EVENT_INDEX_RE": _EVENT_INDEX_RE.pattern.count(r"\d{1,6}"),
-             "_GENERIC_INDEX_RE": _GENERIC_INDEX_RE.pattern.count(r"\d{1,6}")}
-    assert all(tetti.values()), (
-        f"un ramo non ha più il tetto \\d{{1,6}}: {tetti}. Se è stato allargato, "
-        f"gli xfail di questo file vanno rimisurati — e se ne è stato allargato "
-        f"UNO SOLO, l'asse è diventato asimmetrico senza che nessuno lo dica")
+    tetti = {nome: re.findall(r"\\d\{1,(\d+)\}", rx.pattern)
+             for nome, rx in (("_EVENT_INDEX_RE", _EVENT_INDEX_RE),
+                              ("_GENERIC_INDEX_RE", _GENERIC_INDEX_RE))}
+    assert all(len(t) == 1 for t in tetti.values()), (
+        f"ogni ramo deve avere UN tetto \\d{{1,N}}: {tetti}")
+    assert tetti["_EVENT_INDEX_RE"] == tetti["_GENERIC_INDEX_RE"], (
+        f"i due rami hanno tetti diversi: {tetti}. Se ne è stato allargato UNO "
+        f"SOLO, l'asse è diventato asimmetrico senza che nessuno lo dica")
 
 
 def test_il_caso_REALE_del_corpus_e_ancora_cieco():
@@ -105,6 +109,11 @@ def test_il_caso_REALE_del_corpus_e_ancora_cieco():
 
     Non è una parafrasi: sono copiate dal corpus il 2026-08-20, ed è la ragione
     per cui questo file esiste invece di essere una nota in un messaggio.
+
+    ⚠️ Il tetto a 20 cifre (T216, 29/09) NON le raggiunge: fra «run» e il numero
+    c'è «ci», due lettere, e il ramo posizionale ne vuole tre. Oggi la coppia
+    coesiste per un'altra ragione: cambiano DUE quantità con unità (failed e
+    passed), e un aggiornamento ne cambia una sola.
     """
     perdente = ("Nel run ci 32356952191 il job test (ubuntu-latest / py3.12) "
                 "riporta 3 failed, 11685 passed.")

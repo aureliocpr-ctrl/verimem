@@ -57,6 +57,16 @@ T149 = ("Task veriagent completato — 'crea il file m1.txt con dentro il numero
         "Task veriagent completato — 'crea il file m2.txt con dentro il numero 2'")
 DUE_CAMPIONI = ("Il campione S-001 contiene piombo a 11 mg/l",
                 "Il campione S-002 contiene piombo a 15 mg/l")
+# T216: le ultime tre dei 251 ritiri del heal — soggetti nominati da un
+# identificativo lungo o da un file (dallo store, 28/09)
+DUE_JOB = ("Il log del job ubuntu py3.12 del run 31816624316 contiene la riga "
+           "Cache not found for input keys: hf-Linux-48d6fbd206fd, hf-Linux-.",
+           "Il log del job 94819747443 contiene la riga Cache not found for "
+           "input keys: hf-Linux-48d6fbd206fd, hf-Linux-.")
+DUE_FILE = ("Il file tests/test_grounding_write_mcp.py riporta 6 passed.",
+            "Il file tests/test_anti_confab_gate.py riporta 14 passed.")
+LO_STESSO_FILE = ("Il file tests/test_grounding_write_mcp.py riporta 6 passed.",
+                  "Il file tests/test_grounding_write_mcp.py riporta 9 passed.")
 
 
 # ---------------------------------------------------------------- scrittura --
@@ -147,6 +157,9 @@ BATCH = [
     ("S-001 e S-002, due campioni", "coesiste", *DUE_CAMPIONI),
     ("contatore nudo, coesistenza dichiarata", "coesiste", *CONTATORE_NUDO),
     ("controllo positivo", "RITIRA", *CONTATORE_CON_UNITA),
+    ("due job, identificativi lunghi", "coesiste", *DUE_JOB),
+    ("due file di test", "coesiste", *DUE_FILE),
+    ("lo stesso file, un valore nuovo", "RITIRA", *LO_STESSO_FILE),
 ]
 
 

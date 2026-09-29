@@ -1094,23 +1094,63 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     stretto (lettere-trattino-cifre), presente nel 15% del corpus, con una
     semantica sola: e' un codice di record.
     """
-    ia = identificatori_di_record(text_a)
-    if not ia:
-        return False
-    ib = identificatori_di_record(text_b)
-    if not ib:
-        return False
-    return not (ia & ib)
+    return _famiglie_disgiunte(identificatori_di_record(text_a),
+                               identificatori_di_record(text_b))
+
+
+#: Il prefisso che separa i percorsi dai codici nello stesso insieme.
+_FILE = "file:"
 
 
 def identificatori_di_record(text: str) -> set[str]:
-    """I codici di record del testo («s-001»), in minuscolo.
+    """I codici di record del testo («s-001») e i percorsi dei file
+    («file:tests/test_x.py»), in minuscolo.
 
     È la metà riusabile di :func:`_identificatori_disgiunti`: si calcola una
     volta per fatto e si passa a :func:`conflict_from_parts` come ``ra``/``rb``,
     così anche gli scanner che confrontano coppie precalcolate hanno la guardia.
     """
-    return {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text or "")}
+    codici = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text or "")}
+    return codici | {_FILE + p for p in _percorsi(text)}
+
+
+def _famiglie_disgiunte(ra: set[str], rb: set[str]) -> bool:
+    """Due record diversi: i codici non si toccano, oppure i percorsi non si
+    toccano. Le due famiglie si confrontano SEPARATE: nello stesso insieme
+    «mg/l», che sta in tutte e due le frasi, faceva sembrare condiviso cio' che
+    non lo e', e «S-001» contro «S-002» tornava uno scontro (misurato il 29/09
+    sulla cella dei due campioni)."""
+    for e_file in (False, True):
+        a = {x for x in ra if x.startswith(_FILE) is e_file}
+        b = {x for x in rb if x.startswith(_FILE) is e_file}
+        if a and b and not (a & b):
+            return True
+    return False
+
+
+#: La punteggiatura che sta attorno a un percorso scritto in una frase.
+_BORDI_DEL_PERCORSO = "\"'`«»()[]{},;:!?"
+
+
+def _percorsi(text: str) -> set[str]:
+    """T216 (29/09): un percorso o un file nomina il soggetto, come un codice.
+
+    «il file tests/test_grounding_write_mcp.py riporta 6 passed» e «il file
+    tests/test_anti_confab_gate.py riporta 14 passed» sono due file, e il
+    passaggio automatico ritirava l'uno per l'altro. E' un percorso un token con
+    una barra e almeno una lettera, oppure un token che finisce in «.py»:
+    «28/09» non ha lettere e resta una data; «mg/l» c'e' in tutte e due le
+    frasi che confrontano la stessa grandezza, quindi non separa niente.
+    Si legge token per token, senza regex: nessun ritorno all'indietro.
+    """
+    out: set[str] = set()
+    for tok in (text or "").split():
+        t = tok.strip(_BORDI_DEL_PERCORSO).rstrip(".")
+        low = t.lower()
+        if (("/" in t or "\\" in t) and any(c.isalpha() for c in t)) or (
+                len(low) > 3 and low.endswith(".py")):
+            out.add(low)
+    return out
 
 
 def _senza_identificatori(testo: str) -> str:
@@ -1713,8 +1753,8 @@ def conflict_from_parts(
     """
     if ia and ib and _indices_disjoint(ia, ib):
         return None  # different subject: "fatto 3" vs "fatto 5"
-    if ra and rb and not (ra & rb):
-        return None  # two record codes, two records: "S-001" vs "S-002"
+    if ra and rb and _famiglie_disgiunte(ra, rb):
+        return None  # two records: "S-001" vs "S-002", or two different files
     if not qa or not qb:
         return None
     units_a = {u for (u, _v) in qa if u}
@@ -2637,7 +2677,11 @@ _EVENT_INDEX_RE = re.compile(
     # scritti dall'utente. Qui gli spazi dopo il cancelletto esistono solo se il
     # cancelletto c'e': nessuna ambiguita', crescita lineare, stesse forme
     # riconosciute. Segnalato da CodeQL (py/polynomial-redos) su una PR.
-    r")\s*(?:#\s*)?(\d{1,6})\b",
+    # 🔢 FINO A 20 CIFRE, non 6 (T216, 29/09): «run 31816624316» e «job
+    # 94819747443» sono due soggetti, ma con `\d{1,6}\b` un numero di sette o
+    # piu' cifre non era mai un indice, e la riga di log uguale nei due job si
+    # leggeva come una misura cambiata. Una ripetizione limitata resta lineare.
+    r")\s*(?:#\s*)?(\d{1,20})\b",
     re.IGNORECASE,
 )
 
@@ -2662,9 +2706,10 @@ _ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
 #: distinct facts — "sends message 0/1/2", "stores profile 0/1/2", "computes rate
 #: 0/1/2" — SEVEN were retired, because message/profile/rate were not listed.
 #: A vocabulary cannot be enumerated; a position can be read.
-#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato.
+#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato;
+#: e come lei fino a 20 cifre (T216).
 _GENERIC_INDEX_RE = re.compile(
-    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b")
+    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,20})\b")
 
 
 def _bare_numbers(text: str) -> set[str]:
