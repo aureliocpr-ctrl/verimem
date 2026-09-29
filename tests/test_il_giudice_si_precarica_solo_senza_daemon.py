@@ -19,6 +19,8 @@ daemon serve il nostro modello di embedding.
 
 from __future__ import annotations
 
+import time
+
 import pytest
 
 from verimem import local_grounding, preload
@@ -45,6 +47,14 @@ def giudice(monkeypatch, tmp_path):
     monkeypatch.setenv("ENGRAM_ENCODE_SERVICE", "1")
     # L'attesa del daemon e' di 25 s nel prodotto: qui non si aspetta.
     monkeypatch.setattr(preload, "_DAEMON_WARM_WAIT_S", 0.0)
+    # ⛔ 28/09: e nessun daemon IN ARRIVO. Dopo l'attesa il precarico aspetta
+    # ancora finche' `encode_service.daemon_in_arrivo()` dice che un daemon tiene
+    # il lock, e quel lock e' il file VERO della home: su una macchina col daemon
+    # acceso la cella si appendeva fino alla grazia del daemon (600 s), e sul
+    # runner macOS di #162 l'ha fatto un daemon lasciato vivo da un altro test.
+    # Le celle di questo file misurano «nessun daemon in arrivo»; il caso in
+    # arrivo lo misura `test_la_sonda_aspetta_il_daemon_in_arrivo.py`.
+    monkeypatch.setattr(preload, "_un_daemon_e_in_arrivo", lambda: False)
     finto = _GiudiceFinto()
     monkeypatch.setattr(local_grounding, "get_local_judge", lambda: finto)
     return finto
@@ -81,3 +91,21 @@ def test_senza_servizio_nessuna_sonda_e_il_precarico_resta(giudice, monkeypatch)
     preload._warm_moat_judge(log=None)
     assert sonde == [], "con il servizio spento non si interroga il daemon"
     assert giudice.caricamenti == 1
+
+
+def test_la_cella_non_dipende_dal_daemon_della_macchina(giudice, monkeypatch):
+    """GUARDIA del 28/09: la macchina che esegue ha un daemon che tiene il lock
+    (qui simulato, con l'attesa accorciata a 3 s), e la cella deve rispondere
+    subito lo stesso. Senza la riga della fixture aspettava quel daemon."""
+    from verimem import encode_service
+    monkeypatch.setattr(encode_service, "daemon_in_arrivo", lambda *a, **k: True)
+    monkeypatch.setattr(preload, "_tetto_dell_arrivo_s", lambda: 3.0)
+    monkeypatch.setattr(local_grounding, "_gate_via_daemon", lambda *a, **k: None)
+
+    inizio = time.monotonic()
+    preload._warm_moat_judge(log=None)
+
+    assert time.monotonic() - inizio < 2.0, (
+        "la cella ha aspettato il daemon della macchina che la esegue")
+    assert giudice.caricamenti == 1
+
