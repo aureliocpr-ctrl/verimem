@@ -1,14 +1,12 @@
 """La suite non vede il daemon della macchina: un daemon avviato da un test si
 pubblica nella cartella dati del test.
 
-I percorsi della configurazione (scoperta, lock del daemon, lock dello spawn) si
-calcolano all'import di `encode_service`, e sotto pytest l'import avviene alla
-raccolta, quando la cartella dati e' ancora quella della shell. In una shell che
-esporta lo store vero (quella della macchina di sviluppo lo fa) i tre percorsi
-puntavano in `<store vero>/daemon/`, sotto la chiave dei test: nessuna collisione
-con il daemon di produzione, che ha un'altra chiave, ma le sessioni di test di due
-copie di lavoro si sarebbero viste a vicenda. Sul runner puntavano nella home del
-runner: stessa cosa fra due job sulla stessa macchina.
+I percorsi del daemon di un modello (scoperta, lock del daemon, lock dello spawn)
+si calcolano all'import di `encode_service`, nella home di chi lancia la suite e
+sotto la chiave del modello dei test. Un daemon avviato da un test vi si
+pubblicava: nessuna collisione con il daemon di produzione, che ha un altro
+modello e quindi un'altra chiave, ma le sessioni di test di due copie di lavoro
+sulla stessa macchina si vedevano a vicenda, e sul runner due job.
 
 NESSUN MODELLO: un server con encoder finto su una porta locale.
 """

@@ -455,19 +455,20 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     except ImportError:
         pass
     # 2026-09-29, la stessa classe di SETTINGS_FILE qui sopra: `encode_service`
-    # calcola all'import i percorsi della sua configurazione (scoperta, lock del
-    # daemon, lock dello spawn) da CONFIG.data_dir, e sotto pytest l'import
-    # avviene alla raccolta, quando la cartella dati e' ancora quella della
-    # shell. In una shell che esporta lo store vero, un daemon avviato da un
-    # test si pubblicava in `<store vero>/daemon/`, e le sessioni di test di due
-    # copie di lavoro si vedevano a vicenda. Si ricalcolano dalla configurazione
-    # appena fissata: un daemon avviato nella sabbia si pubblica nella sabbia, e
-    # nessun test vede quello della macchina. Il file unico di prima del 28/09
-    # (`LEGACY_DISCOVERY_PATH`, che il daemon nuovo scrive per il passaggio) sta
-    # nella stessa sabbia.
+    # calcola all'import i percorsi del daemon del suo modello (scoperta, lock
+    # del daemon, lock dello spawn), nella home di chi lancia la suite, sotto la
+    # chiave dei test (il modello pinnato in cima a questo file). Un daemon
+    # avviato da un test vi si pubblicava, e le sessioni di test di due copie di
+    # lavoro sulla stessa macchina si vedevano a vicenda. Qui i tre file stanno
+    # nella cartella dati del test, con gli stessi nomi: un daemon avviato nella
+    # sabbia si pubblica nella sabbia, e nessun test vede quello della macchina.
+    # Il file unico di prima del 28/09 (`LEGACY_DISCOVERY_PATH`, che il daemon
+    # nuovo scrive per il passaggio) sta nella stessa sabbia. Un test che avvia un
+    # daemon in un ALTRO processo gli sposta la home, come fanno i test dei daemon.
     try:
         from verimem import encode_service as _es
-        _scoperta, _lock_daemon, _lock_spawn = _es.percorsi_della_configurazione()
+        _scoperta, _lock_daemon, _lock_spawn = (
+            test_data_dir / "daemon" / _p.name for _p in _es.percorsi_della_configurazione())
         monkeypatch.setattr(_es, "DISCOVERY_PATH", _scoperta)
         monkeypatch.setattr(_es, "DAEMON_LOCK_PATH", _lock_daemon)
         monkeypatch.setattr(_es, "_SPAWN_LOCK_PATH", _lock_spawn)
