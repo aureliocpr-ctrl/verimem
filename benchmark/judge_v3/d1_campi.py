@@ -10,8 +10,10 @@ two builders read in two ways mixes the halves without an error. It happened on 
 and the check does not trust the builder: it runs `decomponi()` on every memory, wants the claim to BE
 unit `indice_unita` and the count to be the number of units, and wants the rows of a (source, memory)
 pair to cover all of its units. The same (source, claim) pair never carries two labels: two
-constructions that meet on one pair would teach the judge both answers. The units depend on the version of `decomponi()`, so this module
-imports the verimem of THIS checkout and refuses any other; builders take `decomponi` from here.
+constructions that meet on one pair would teach the judge both answers.
+
+The units depend on the version of `decomponi()`, so this module imports the verimem of THIS checkout
+and refuses any other; builders take `decomponi` from here.
 """
 from __future__ import annotations
 
