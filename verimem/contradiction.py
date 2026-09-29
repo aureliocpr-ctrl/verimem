@@ -241,9 +241,13 @@ def _has_negation(text: str) -> bool:
 
 
 def _group_by_topic(facts: list[Fact]) -> dict[str, list[Fact]]:
+    """I fatti per topic. Un fatto SENZA topic non entra in nessun gruppo: il
+    topic vuoto non e' un topic condiviso, e il 29/09 metterlo insieme faceva
+    ritirare 41 fatti contro quattro che non c'entravano."""
     by_topic: dict[str, list[Fact]] = {}
     for f in facts:
-        by_topic.setdefault(f.topic, []).append(f)
+        if (f.topic or "").strip():
+            by_topic.setdefault(f.topic, []).append(f)
     return by_topic
 
 
@@ -535,7 +539,13 @@ class ContradictionStore:
 #: chiamante (il passaggio automatico e lo strumento MCP): li lascia aperti e li
 #: conta. La richiesta che porta la decisione nuova toglie il tipo da qui e
 #: rilegge gli scontri gia' registrati con la decisione nuova prima di agire.
-TIPI_CHE_HEAL_NON_ESEGUE: frozenset[str] = frozenset({"numeric_clash"})
+#:
+#: ``boolean_clash`` e' qui per la stessa ragione (29/09): su una copia dello
+#: store, dopo gli undo, questo passaggio ritirava 172 fatti per scontri
+#: booleani, e fra questi di nuovo tutti e 41 quelli appena ripristinati. Esce
+#: da qui quando la catena col giudice copre anche i booleani.
+TIPI_CHE_HEAL_NON_ESEGUE: frozenset[str] = frozenset(
+    {"numeric_clash", "boolean_clash"})
 
 
 def heal_contradictions(
