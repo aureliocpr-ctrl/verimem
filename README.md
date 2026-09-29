@@ -124,9 +124,10 @@ rather than producing a number that looks like this one without it.
   with an `L4-skipped` advisory.
   **Honest scope of the CE-only judge** (measured, `benchmark/moat_multilingual_matrix.py`):
   it catches *value/numeric contradictions* across EN/IT/FR/ES and off-topic
-  confabs: in the 4-domain matrix **<!-- g4:matrix-numeric -->0 of 84<!-- /g4 --> numeric contradictions escape**
-  (<!-- g4:matrix-when -->2026-09-24/25, commit 0a649f01<!-- /g4 -->; earlier runs of the same command: 0 on
-  2026-07-18, 4 on 2026-08-25, one per language). Run it yourself before trusting any of them.
+  confabs — but **not all of them**: the 2026-07-18 run had 0 numeric escapes in
+  the 4-domain matrix, and re-running the same command on 2026-08-25 reports **4**
+  (one per language) and exits 1. Run it yourself before trusting either number, or the
+  latest one: the run of <!-- g4:matrix-when -->2026-09-24/25, commit 0a649f01<!-- /g4 --> lets **<!-- g4:matrix-numeric -->0 of 84<!-- /g4 --> numeric contradictions** escape.
   Two known gaps close only with an llm judge: a *plausible added inference the source never states* (e.g. "…which
   reduced latency") scores high and is admitted — and that gap is the one this
   README used to leave without a number while quantifying every smaller one.
@@ -173,7 +174,7 @@ rather than producing a number that looks like this one without it.
   **External certification (out-of-distribution, `docs/EVIDENCE-external-2026-07-19.md`):**
   on our own 4-language structured-contradiction matrix the CE scores
   **<!-- g4:matrix-summary -->0.0% false-block (112/112 entailed admitted) / 1.8% escape (110/112 confabs quarantined), 2026-09-24/25 on commit 0a649f01<!-- /g4 -->**
-  (earlier runs of the same command: 1.8% escape on 2026-07-18, 5.4% on 2026-08-25);
+  (1.8% was the 2026-07-18 run; the same command reported 5.4% on 2026-08-25 — run it yourself before trusting any of them);
   on **TruthfulQA heldout** — *plausible misconceptions* it never trained on — it scores **AUROC 0.829**, and at the default cut ~24% of true
   paraphrases are declined and ~18% of plausible misconceptions escape (74% of those
   scoring ≥80, the plausible-inference blind spot). Read honestly: the CE-only judge
