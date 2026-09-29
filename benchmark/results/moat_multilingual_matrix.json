@@ -1,0 +1,86 @@
+{
+ "cells": {
+  "EN/entity": {
+   "ok": 7,
+   "fb": 0,
+   "quar": 7,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "EN/numeric": {
+   "ok": 21,
+   "fb": 0,
+   "quar": 21,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "ES/entity": {
+   "ok": 7,
+   "fb": 0,
+   "quar": 5,
+   "esc": 2,
+   "esc_pct_of_all_confabs": 1.7857142857142858
+  },
+  "ES/numeric": {
+   "ok": 21,
+   "fb": 0,
+   "quar": 21,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "FR/entity": {
+   "ok": 7,
+   "fb": 0,
+   "quar": 7,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "FR/numeric": {
+   "ok": 21,
+   "fb": 0,
+   "quar": 21,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "IT/entity": {
+   "ok": 7,
+   "fb": 0,
+   "quar": 7,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  },
+  "IT/numeric": {
+   "ok": 21,
+   "fb": 0,
+   "quar": 21,
+   "esc": 0,
+   "esc_pct_of_all_confabs": 0.0
+  }
+ },
+ "entailed_admitted": 112,
+ "entailed_n": 112,
+ "false_block_pct": 0.0,
+ "confab_quarantined": 110,
+ "confab_n": 112,
+ "escapes": 2,
+ "escape_pct": 1.7857142857142858,
+ "numeric_escapes": 0,
+ "numeric_confab_n": 84,
+ "pass": true,
+ "bench": "moat_multilingual_matrix",
+ "reps": 7,
+ "commit": "0a649f018c3520ac97651096844cfa42a7416129",
+ "measured_on": "2026-09-24/25",
+ "runs": [
+  {
+   "writes": "1-180",
+   "date": "2026-09-24",
+   "note": "stopped by the 90-minute cap; outcomes read from the run's event log"
+  },
+  {
+   "writes": "181-224",
+   "date": "2026-09-25",
+   "note": "resumed on a copy of the store holding the first 180, in a new process"
+  }
+ ]
+}
