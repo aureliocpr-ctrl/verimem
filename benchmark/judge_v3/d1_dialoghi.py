@@ -11,11 +11,15 @@ with the seed. Languages: English, Italian, French and Spanish (coordinators «a
 the French passé composé is left out, because «a» cannot be a finite verb in a list shared with English).
 
 Pair types (field `tipo`):
-  sostenuta        the cited turn -> one of its facts, literal or paraphrased           label 1
+  sostenuta        the cited turn -> one of its facts, literal, paraphrased or with a   label 1
+                   small inference («adopted a cat» -> «has a new cat»)
   altro_turno      the cited turn -> a unit that comes from ANOTHER turn of the speaker label 0
   parlante         B's turn (B names A) -> the same fact attributed to A                label 0
   fonte_turno      the turn with the pronoun («I loved it!») -> the fact, referent named label 0
   fonte_finestra   the window that names the referent -> the same fact                  label 1
+
+A small inference enters only if it holds for EVERY value of its slots: «signed up for X» -> «has a
+spot at X» stays out, because who signs up can end on a waiting list.
 
 Fields per row: id, dialogo, lingua, tipo, fonte, memoria, claim, etichetta, unita_nella_memoria (how
 many units the memory became), indice_unita (which unit the claim is, from 0), generatore, seme. The
@@ -58,17 +62,23 @@ LINGUE = {
         # (turno in prima persona, [claim letterale, claim parafrasato]): la parafrasi e' sostenuta
         # quanto la copia, e senza di lei il giudice imparerebbe «copia = sostenuta»
         "fatti": [
-            ("I went to {luogo} {quando}.", ["{S} went to {luogo} {quando}.", "{S} visited {luogo} {quando}."]),
-            ("I finished {cosa} {quando}.", ["{S} finished {cosa} {quando}.", "{S} completed {cosa} {quando}."]),
+            ("I went to {luogo} {quando}.", ["{S} went to {luogo} {quando}.", "{S} visited {luogo} {quando}.",
+                                             "{S} was at {luogo} {quando}."]),
+            ("I finished {cosa} {quando}.", ["{S} finished {cosa} {quando}.", "{S} completed {cosa} {quando}.",
+                                             "{S} got {cosa} done {quando}."]),
             ("I'm planning to visit {citta} in {mese}.", ["{S} is planning to visit {citta} in {mese}.",
-                                                         "{S} is planning a trip to {citta} in {mese}."]),
+                                                         "{S} is planning a trip to {citta} in {mese}.",
+                                                         "{S} has a trip to {citta} planned for {mese}."]),
             ("I signed up for {evento}.", ["{S} signed up for {evento}.", "{S} registered for {evento}."]),
             ("I met my cousin at {luogo} {quando}.", ["{S} met their cousin at {luogo} {quando}.",
-                                                     "{S} saw their cousin at {luogo} {quando}."]),
+                                                     "{S} saw their cousin at {luogo} {quando}.",
+                                                     "{S} was with their cousin at {luogo} {quando}."]),
             ("I started a new job at {azienda}.", ["{S} started a new job at {azienda}.",
-                                                  "{S} began working at {azienda}."]),
+                                                  "{S} began working at {azienda}.",
+                                                  "{S} has a new job at {azienda}."]),
             ("I adopted a {animale} {quando}.", ["{S} adopted a {animale} {quando}.",
-                                                "{S} took in a {animale} {quando}."]),
+                                                "{S} took in a {animale} {quando}.",
+                                                "{S} has a new {animale}."]),
         ],
         # coda dopo la coordinata: la stessa affermazione senza soggetto
         "coordinata": " and ",
@@ -97,18 +107,24 @@ LINGUE = {
         "aziende": ["una panetteria", "un negozio di biciclette", "un'agenzia di viaggi", "uno studio grafico"],
         "animali": ["gatto", "cane", "coniglio", "pappagallo"],
         "fatti": [
-            ("Ho visitato {luogo} {quando}.", ["{S} ha visitato {luogo} {quando}."]),
+            ("Ho visitato {luogo} {quando}.", ["{S} ha visitato {luogo} {quando}.",
+                                               "{S} ha visto {luogo} {quando}."]),
             ("Ho finito {cosa} {quando}.", ["{S} ha finito {cosa} {quando}.", "{S} ha completato {cosa} {quando}."]),
             ("Ho in programma di visitare {citta} a {mese}.", ["{S} ha in programma di visitare {citta} a {mese}.",
-                                                              "{S} ha in programma un viaggio a {citta} a {mese}."]),
+                                                              "{S} ha in programma un viaggio a {citta} a {mese}.",
+                                                              "{S} ha in mente un viaggio a {citta} a {mese}."]),
             ("Ho prenotato un posto per {evento}.", ["{S} ha prenotato un posto per {evento}.",
-                                                     "{S} ha riservato un posto per {evento}."]),
+                                                     "{S} ha riservato un posto per {evento}.",
+                                                     "{S} ha un posto per {evento}."]),
             ("Ho incontrato mia cugina {quando}.", ["{S} ha incontrato sua cugina {quando}.",
-                                                    "{S} ha visto sua cugina {quando}."]),
+                                                    "{S} ha visto sua cugina {quando}.",
+                                                    "{S} ha passato del tempo con sua cugina {quando}."]),
             ("Ho iniziato un nuovo lavoro in {azienda}.", ["{S} ha iniziato un nuovo lavoro in {azienda}.",
-                                                           "{S} ha cominciato a lavorare in {azienda}."]),
+                                                           "{S} ha cominciato a lavorare in {azienda}.",
+                                                           "{S} ha un lavoro nuovo in {azienda}."]),
             ("Ho adottato un {animale} {quando}.", ["{S} ha adottato un {animale} {quando}.",
-                                                    "{S} ha accolto in casa un {animale} {quando}."]),
+                                                    "{S} ha accolto in casa un {animale} {quando}.",
+                                                    "{S} ha un {animale} nuovo."]),
         ],
         "coordinata": " e ",
         "domanda": "Com'è andata?",
@@ -131,13 +147,16 @@ LINGUE = {
         "animali": ["chat", "chien", "lapin", "perroquet"],
         "fatti": [
             ("Je fais du vélo {quando}.", ["{S} fait du vélo {quando}.", "{S} fait une sortie à vélo {quando}."]),
-            ("Je vais {luogo} {quando}.", ["{S} va {luogo} {quando}."]),
+            ("Je vais {luogo} {quando}.", ["{S} va {luogo} {quando}.",
+                                           "{S} est {luogo} {quando}."]),
             ("Je veux visiter {citta} en {mese}.", ["{S} veut visiter {citta} en {mese}.",
-                                                   "{S} veut faire un voyage à {citta} en {mese}."]),
+                                                   "{S} veut faire un voyage à {citta} en {mese}.",
+                                                   "{S} veut aller à {citta} en {mese}."]),
             ("Je dois finir {cosa} avant la fin du mois.", ["{S} doit finir {cosa} avant la fin du mois.",
                                                             "{S} doit terminer {cosa} avant la fin du mois."]),
             ("Je peux garder le {animale} de ma voisine {quando}.",
-             ["{S} peut garder le {animale} de sa voisine {quando}."]),
+             ["{S} peut garder le {animale} de sa voisine {quando}.",
+              "{S} peut s'occuper du {animale} de sa voisine {quando}."]),
             ("Je suis fan {evento_a}.", ["{S} est fan {evento_a}."]),
         ],
         "coordinata": " et ",
@@ -160,13 +179,16 @@ LINGUE = {
         "aziende": ["una panadería", "una tienda de bicicletas", "la biblioteca municipal"],
         "animali": ["gato", "perro", "conejo", "loro"],
         "fatti": [
-            ("Visité {luogo} {quando}.", ["{S} visitó {luogo} {quando}."]),
+            ("Visité {luogo} {quando}.", ["{S} visitó {luogo} {quando}.",
+                                          "{S} pasó por {luogo} {quando}."]),
             ("Terminé {cosa} {quando}.", ["{S} terminó {cosa} {quando}.", "{S} acabó {cosa} {quando}."]),
             ("Quiero visitar {citta} en {mese}.", ["{S} quiere visitar {citta} en {mese}.",
                                                   "{S} quiere viajar a {citta} en {mese}."]),
-            ("Adopté un {animale} {quando}.", ["{S} adoptó un {animale} {quando}."]),
+            ("Adopté un {animale} {quando}.", ["{S} adoptó un {animale} {quando}.",
+                                               "{S} tiene un {animale} nuevo."]),
             ("Empecé un trabajo nuevo en {azienda}.", ["{S} empezó un trabajo nuevo en {azienda}.",
-                                                      "{S} comenzó a trabajar en {azienda}."]),
+                                                      "{S} comenzó a trabajar en {azienda}.",
+                                                      "{S} tiene un trabajo nuevo en {azienda}."]),
         ],
         "coordinata": " y ",
         "domanda": "¿Qué tal estuvo?",
@@ -230,10 +252,15 @@ def dialogo(rng: random.Random, lingua: str, n: int) -> dict:
                 # parla dello stesso argomento, e non si riconosce dalle parole in comune
                 voci.update({k: voci_turno_0[k] for k in ("luogo", "evento", "evento_a")})
             prima, varianti = rng.choice(t["fatti"])
-            corpo = _riempi(varianti[0], voci, "")   # il fatto, per la distinzione fra turni
+            # la distinzione fra turni guarda TUTTE le varianti: l'inferenza piccola lascia cadere il
+            # tempo, e «adopted a parrot on Friday» e «... yesterday» darebbero lo stesso «has a new parrot»
+            corpi = {_riempi(v, voci, "") for v in varianti}
             terza = rng.choice(varianti)
-            if corpo not in corpi_usati:
-                corpi_usati.add(corpo)
+            # il turno 2 riusa il luogo del turno 0 ma non il tempo: «met my cousin at the park last week»
+            # implica «went to the park last week», e il negativo dell'altro turno sarebbe sostenuto
+            stesso_tempo = i == 2 and "{quando}" in prima and voci["quando"] == voci_turno_0["quando"]
+            if not corpi & corpi_usati and not stesso_tempo:
+                corpi_usati |= corpi
                 if i == 0:
                     voci_turno_0 = voci
                 break
@@ -262,7 +289,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@4"
+GENERATORE = "d1_dialoghi@5"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
