@@ -83,13 +83,27 @@ async def test_hippo_remember_absent_valid_until_is_none(tmp_path, monkeypatch):
         "valid_until assente deve diventare None"
 
 
-async def test_hippo_remember_malformed_valid_until_failsoft(tmp_path, monkeypatch):
-    """Un valid_until non numerico non rompe lo store: coercion fail-soft -> None."""
+async def test_hippo_remember_malformed_valid_until_is_refused_and_says_why(
+        tmp_path, monkeypatch):
+    """Un valid_until non numerico lo rifiuta lo schema pubblicato, PRIMA del
+    gestore: niente crash, niente riga, e l'errore nomina il valore.
+
+    ⚠️ La cella di prima («coercion fail-soft -> None») passava perche' la
+    spia sulla fabbrica non veniva MAI chiamata: lo schema rifiutava la
+    chiamata e `captured.get(...)` restava None. Verde per assenza — un
+    sensore scollegato. Si chiede ora cio' che succede davvero.
+    """
+    import sqlite3
+
     sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
     monkeypatch.setattr(mcp_server, "_ag", lambda: _Agent(sm))
 
-    await _invoke("hippo_remember", {
+    blocchi = await _invoke("hippo_remember", {
         "proposition": "x", "topic": "t", "valid_until": "not-a-number",
     })
-    assert _valid_until_scritto(sm, "x") is None, \
-        "valid_until malformato -> None (fail-soft, nessun crash)"
+    # Il rifiuto dello schema torna come testo d'errore, non come JSON.
+    testo = " ".join(blocchi)
+    assert "not-a-number" in testo, testo
+    with sqlite3.connect(f"file:{sm.db_path}?mode=ro", uri=True) as conn:
+        n = conn.execute("SELECT COUNT(*) FROM facts WHERE proposition = 'x'").fetchone()[0]
+    assert n == 0, "rifiutata e scritta lo stesso"

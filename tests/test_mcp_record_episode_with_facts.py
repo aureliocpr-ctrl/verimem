@@ -119,14 +119,15 @@ class _SemanticVero:
     def stored(self) -> list:
         import sqlite3
         from types import SimpleNamespace
+        # Gli id dalla tabella, i campi dal lettore dello store: il formato
+        # su disco di `source_episodes` e' affare dello store, non del test.
         with sqlite3.connect(f"file:{self._sm.db_path}?mode=ro", uri=True) as conn:
-            righe = conn.execute(
-                "SELECT id, proposition, topic, confidence, source_episodes "
-                "FROM facts ORDER BY rowid").fetchall()
-        return [SimpleNamespace(id=r[0], proposition=r[1], topic=r[2],
-                                confidence=r[3],
-                                source_episodes=json.loads(r[4] or "[]"))
-                for r in righe]
+            ids = [r[0] for r in conn.execute("SELECT id FROM facts ORDER BY rowid")]
+        fatti = [self._sm.get(i) for i in ids]
+        return [SimpleNamespace(id=x.id, proposition=x.proposition, topic=x.topic,
+                                confidence=x.confidence,
+                                source_episodes=list(x.source_episodes or []))
+                for x in fatti if x is not None]
 
 
 class _FakeAgent:

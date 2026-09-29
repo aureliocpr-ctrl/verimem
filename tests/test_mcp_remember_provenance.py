@@ -78,7 +78,9 @@ def test_uno_status_inventato_e_rifiutato_e_non_scrive(store) -> None:
 
     r = _ricorda(proposition="Il magazzino ha tre piani.", topic="t/prov",
                  status="totally_bogus")
-    assert "status" in json.dumps(r).lower(), f"rifiutato senza dire perche': {r}"
+    # Lo rifiuta lo schema pubblicato, prima del motore: l'errore nomina il
+    # valore che non e' fra quelli ammessi.
+    assert "totally_bogus" in str(r.get("error", "")), f"rifiutato senza dire perche': {r}"
     percorso = str(_ag().semantic.db_path)
     with sqlite3.connect(f"file:{percorso}?mode=ro", uri=True) as conn:
         n = conn.execute("SELECT COUNT(*) FROM facts WHERE proposition = ?",

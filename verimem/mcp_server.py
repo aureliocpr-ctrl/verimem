@@ -176,10 +176,15 @@ def _memoria(*, manopole_concesse: bool = False):
 
     from .client import PORTA_MCP, Memory
     a = _ag()
-    return Memory(
+    m = Memory(
         semantic=a.semantic, principal=_MCP_PRINCIPAL,
         grounding_llm=getattr(getattr(a, "wake", None), "llm", None),
         porta=_dc.replace(PORTA_MCP, manopole_permesse=manopole_concesse))
+    # Un ritiro NON riuscito si dice nel log di questo server, dove chi lo
+    # gestisce lo cerca (e dove `test_mcp_supersede_failure_is_logged` lo
+    # misura), non nel logger del modulo del client.
+    m._avvisi_dei_ritiri = log
+    return m
 
 
 # --- architecture-A MCP tier: delegate the hot memory ops to a shared server
@@ -13728,14 +13733,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         and os.environ.get("ENGRAM_DERIVATION_AUTODETECT", "").strip().lower()
                         in ("1", "true", "yes", "on")):
                     try:
+                        from .client import chiave_di_identita as _chiave
                         from .client import id_dal_contenuto as _id_dal_contenuto
                         from .derivation_detect import detect_derivations
-                        from .supersession_policy import source_signature_of as _firma_di
                         _live = a.semantic.list_facts(limit=10000, offset=0)
                         _derives_raw = detect_derivations(
                             str(_source), _live,
                             exclude_id=_id_dal_contenuto(
-                                proposition, topic, _firma_di(_source)))
+                                proposition, topic, _chiave(_source, verified_by)))
                     except Exception:
                         _derives_raw = []
                 # 🔑 1b.3 — LA PORTA NON COSTRUISCE PIU' IL FATTO. Fino al 25/09
@@ -14049,8 +14054,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             from ._compat import provenienza_data_dir as _prov_dd
             _provenienza_store_mcp = _prov_dd()
             _store_mcp = str(getattr(a.semantic, "db_path", "") or "")
-            return _ok({
-                **_r,
+            _risposta_mcp = {
                 "ok": True,
                 # Seconda chiave, e il posto e' la meta' della cura: la
                 # diagnosi c'era gia' piu' in basso e non si vedeva.
@@ -14153,7 +14157,12 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # contro quale soglia e a che distanza. Non condizionale —
                 # la promessa e' «ogni scrittura», ammesse comprese.
                 "adjudication": _adj_out,
-            })
+            }
+            # La ricevuta del motore (le chiavi del nucleo) va DOPO le chiavi di
+            # questa porta: i client leggono `judged` in seconda posizione.
+            for _k, _v in _r.items():
+                _risposta_mcp.setdefault(_k, _v)
+            return _ok(_risposta_mcp)
 
         if name == "hippo_facts_recall":
             query = str(arguments.get("query", ""))

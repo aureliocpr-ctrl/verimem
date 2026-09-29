@@ -146,16 +146,28 @@ def _eventi_di(fid: str) -> int:
                if (e.payload or {}).get("fact_id") == fid)
 
 
+def _id_atteso(fonte: str | None) -> str:
+    from verimem.client import id_dal_contenuto
+    from verimem.supersession_policy import source_signature_of
+    return id_dal_contenuto(FRASE, TOPIC, source_signature_of(fonte) if fonte else None)
+
+
 @pytest.mark.parametrize("porta", ["sdk", "mcp"])
 def test_una_scrittura_lascia_UN_evento(store, porta) -> None:
+    """Si conta la DIFFERENZA: il bus degli eventi e' del processo, e con
+    l'id derivato dal contenuto la stessa frase ha lo stesso id in ogni test
+    che la scrive — contare il totale sommerebbe i test precedenti."""
+    atteso = _id_atteso(FONTE_1)
+    prima = _eventi_di(atteso)
     fid, _ = _scrivi(porta, store, FONTE_1)
-    assert fid, f"{porta}: la scrittura non ha reso un id"
-    assert _eventi_di(fid) == 1, (
-        f"{porta}: {_eventi_di(fid)} eventi flow.write per una scrittura")
+    assert fid == atteso, f"{porta}: id {fid} invece di {atteso}"
+    assert _eventi_di(fid) - prima == 1, (
+        f"{porta}: {_eventi_di(fid) - prima} eventi flow.write per una scrittura")
 
 
 def test_un_key_fact_e_una_scrittura_come_le_altre(store) -> None:
     """`key_facts` oggi: nessun evento, nessun ritiro, nessuna ricevuta."""
+    prima = _eventi_di(_id_atteso(None))
     r = _mcp("hippo_record_episode", {
         "task_text": "Controllo degli orari del magazzino",
         "final_answer": "Orari confermati.",
@@ -165,7 +177,9 @@ def test_un_key_fact_e_una_scrittura_come_le_altre(store) -> None:
     assert len(esiti) == 1, f"risposta senza l'esito del key fact: {r}"
     fid = esiti[0].get("id")
     assert fid, f"il key fact non e' stato scritto: {esiti[0]}"
-    assert _eventi_di(fid) == 1, f"{_eventi_di(fid)} eventi flow.write per il key fact"
+    assert fid == _id_atteso(None)
+    assert _eventi_di(fid) - prima == 1, (
+        f"{_eventi_di(fid) - prima} eventi flow.write per il key fact")
     for chiave in ("esito", "livelli", "punteggio", "soglia", "scala"):
         assert chiave in esiti[0], f"l'esito del key fact non porta '{chiave}': {esiti[0]}"
     righe = _righe(_db_mcp(), FRASE)

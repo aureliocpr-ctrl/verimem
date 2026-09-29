@@ -60,7 +60,7 @@ AMMESSI = {
 #: I siti che costruiscono ancora un `Fact` fuori dalla porta, col pezzo della
 #: strada che li porta dentro `Memory.add()`. Puo' solo scendere.
 DEBITO = {
-    ("document_promote.py", "promote_chunk_to_fact"): "P2 = #119",
+    # ("document_promote.py", "promote_chunk_to_fact"): P2, arrivato con #150.
     ("transcript_promote.py", "promote_turn_to_fact"): "P3",
     ("conversation_ingest.py", "ingest_conversation"): "P4, dopo #23",
     ("sleep.py", "SleepEngine._synthesize_from_cluster"): "P5",

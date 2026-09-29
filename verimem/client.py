@@ -796,6 +796,32 @@ def id_dal_contenuto(testo: str, topic: str, firma: str | None = None) -> str:
     return hashlib.sha256(payload).hexdigest()[:12]
 
 
+
+def chiave_di_identita(fonte: str | None, riferimenti=None) -> str | None:
+    """Il terzo elemento dell'id: CHI sostiene il fatto.
+
+    Con un testo di fonte e' la sua firma (D-0013 c). Senza, ma con dei
+    riferimenti in `verified_by`, e' la firma dei riferimenti, ordinati e senza
+    doppioni: la stessa frase citata da due libri diversi e' DUE fatti, ognuno
+    con la sua provenienza, come due fonti. Senza questo la seconda scrittura
+    sostituiva la prima e la citazione del primo libro spariva in silenzio —
+    la perdita che D-0013 (c) esiste per impedire, arrivata da `verified_by`
+    invece che dalla fonte (misurato il 29/09: `consistency_trust` di entrambi
+    i libri fermo a 0.5 in `test_source_auto_confirm_wiring.py`). La stessa
+    frase con gli stessi riferimenti resta idempotente.
+    """
+    if fonte:
+        from .supersession_policy import source_signature_of
+        return source_signature_of(fonte)
+    vivi = sorted({str(r).strip() for r in (riferimenti or []) if str(r).strip()})
+    if not vivi:
+        return None
+    import hashlib
+    import json as _json
+    return "refs:" + hashlib.sha256(
+        _json.dumps(vivi, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
@@ -1041,11 +1067,18 @@ class Memory:
         # the cited evidence is independent if it is told WHO writes and WHERE
         # the documents live. The store is lazy — a write that never reaches
         # the question opens no connection.
+        # Un `False` ESPLICITO da una porta che non prende i default dal preset
+        # e' «spento» (l'operatore ha messo ENGRAM_GROUNDING_WRITE a 0): non si
+        # riduce a `None`, che per il gate vuol dire «decidi tu». Per l'SDK
+        # resta com'era.
+        _ground_write = (False if (ground is False
+                                   and not self._porta.default_dal_preset)
+                         else (ground or None))
         from .evidence_independence import LazyDocumentStore
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
-            ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
+            ground_write=_ground_write, gate_mode=gate_mode, asserted_at=asserted_at,
             # T192: al gate va DI CHI E' il testo, al fatto va CHI l'ha
             # scritto. Senza `gate_writer_role` si comportano come prima.
             writer_role=gate_writer_role or writer_role,
@@ -1138,7 +1171,8 @@ class Memory:
         # funzione unica: una porta non la accetta dal chiamante.
         from .supersession_policy import source_signature_of as _firma_di
         _firma = _firma_di(source) if source else None
-        fact = Fact(id=id_dal_contenuto(text, topic, _firma),
+        fact = Fact(id=id_dal_contenuto(text, topic,
+                                        chiave_di_identita(source, verified_by)),
                     proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
                     grounding_span=getattr(gate, "grounding_span", None),
@@ -1225,9 +1259,9 @@ class Memory:
                 _LOG.warning("coherence_hook scan failed: fact_id=%s topic=%s "
                              "error=%s", stored_fact.id, stored_fact.topic, exc)
                 return
-            from .observability import emit as _emit_evento
+            from .observability import emit
             for _w in _avvisi:
-                _emit_evento("coherence_warning", kind=_w.kind,
+                emit("coherence_warning", kind=_w.kind,
                              fact_id=stored_fact.id, topic=stored_fact.topic,
                              other_fact_id=_w.other_fact_id, details=_w.details)
 
