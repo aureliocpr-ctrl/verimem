@@ -117,8 +117,12 @@ def test_CONTROLLO_un_lancio_vecchio_e_il_lock_di_un_morto_non_sono_un_avvio(
     """La popolazione opposta: «sta partendo» non deve coprire un daemon morto
     o un lancio di ore fa. Li' il daemon non arriva, e il rimedio resta il
     warmup."""
+    # il pid di un processo che e' davvero partito ed e' uscito pulito: se non parte,
+    # il banco non ha un «morto» da mettere nel lock e la cella non misura niente
     morto = subprocess.Popen([sys.executable, "-c", "pass"])
-    morto.wait()
+    assert morto.wait(timeout=60) == 0, (
+        f"il processo che doveva lasciare un pid morto non e' uscito pulito: "
+        f"returncode={morto.returncode}")
     svc.DAEMON_LOCK_PATH.write_text(str(morto.pid), encoding="utf-8")
     svc._SPAWN_LOCK_PATH.write_text("0", encoding="utf-8")
     vecchio = time.time() - 2 * svc._SPAWN_COOLDOWN_S
