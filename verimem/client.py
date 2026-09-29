@@ -837,7 +837,10 @@ def chiave_di_identita(fonte: str | None, riferimenti=None) -> str | None:
 #: `tests/test_un_utente_non_vede_i_fatti_di_un_altro.py`. Gli altri, su un
 #: handle legato, RIFIUTANO: diversi aprono il database per conto loro e
 #: vedrebbero i fatti di tutti. Un metodo nuovo nasce chiuso.
-_METODI_NELL_AMBITO = frozenset({"add", "search", "get", "get_all", "count"})
+_METODI_NELL_AMBITO = frozenset({"add", "search", "get", "get_all", "count",
+                                 # pezzo 2: le modifiche per id
+                                 "delete", "update", "restore", "label",
+                                 "history", "forget_with_report", "undo"})
 
 
 def _chiudi_i_metodi_fuori_ambito(memoria: Memory) -> None:
@@ -4311,6 +4314,12 @@ class Memory:
         quarantine is not separately refused. The complete fix is a persisted
         quarantine_reason column; until then the injection re-screen covers the
         security-critical class and keyword/grounding FPs restore cleanly."""
+        # ATLAS (29/09): la lettura qui sotto apre il database per conto suo.
+        # Su un handle legato, un id fuori ambito si ferma prima, come un id
+        # che non esiste (lo store legato lo risolve a None anche in quarantena).
+        if (getattr(self.semantic, "_ambito", None) is not None
+                and self.semantic.get(fact_id) is None):
+            return False
         # Read the proposition + supersession straight from the store (get()
         # does not surface the text for a quarantined fact) so the injection
         # re-screen sees the real content and a superseded fact is refused.

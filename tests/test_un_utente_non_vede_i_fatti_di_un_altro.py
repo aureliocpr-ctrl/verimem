@@ -202,23 +202,24 @@ def test_CRICCHETTO_ogni_metodo_ammesso_applica_l_ambito():
 
 
 def test_un_metodo_non_ammesso_rifiuta_e_non_tocca_niente(negozio):
-    """Il «nasce chiuso», misurato: `delete` non sa ancora applicare l'ambito,
-    quindi sullo store legato rifiuta — e il fatto di Bob e' ancora li'."""
+    """Il «nasce chiuso», misurato: `quarantine_fact` non sa ancora applicare
+    l'ambito, quindi sullo store legato rifiuta — e il fatto di Bob resta com'e'.
+    (Fino al pezzo 2 l'esempio era `delete`, che ora e' aperto con la sua prova.)"""
     db, ids = negozio
     legato = SemanticMemory(db_path=db).nell_ambito(user_id="alice")
     with pytest.raises(PermissionError):
-        legato.delete(ids["bob"])
-    assert SemanticMemory(db_path=db).get(ids["bob"]) is not None, (
-        "lo store legato ad Alice ha cancellato il fatto di Bob")
+        legato.quarantine_fact(ids["bob"], reason="prova")
+    assert SemanticMemory(db_path=db).get(ids["bob"]).status != "quarantined", (
+        "lo store legato ad Alice ha messo in quarantena il fatto di Bob")
 
 
 def test_il_motore_legato_chiude_i_metodi_che_non_sanno_l_ambito(negozio):
     db, ids = negozio
     alice = Memory(path=str(db), user_id="alice")
+    # `retirement_log` legge il registro dei ritiri di tutti gli utenti
     with pytest.raises(PermissionError):
-        alice.delete(ids["bob"])
+        alice.retirement_log()
     with pytest.raises(PermissionError):
         _ = alice.documents
-    assert SemanticMemory(db_path=db).get(ids["bob"]) is not None
     # CONTROLLO: il motore senza ambito non e' stato chiuso.
-    assert callable(Memory(path=str(db)).delete)
+    assert isinstance(Memory(path=str(db)).retirement_log(), (list, dict))
