@@ -9,9 +9,9 @@ quello vero si e' fatto da parte, e per 41 minuti ogni sessione ha cercato per
 parole chiave. Una scoperta e un lock soli per tutte le configurazioni fanno di
 ogni configurazione diversa uno sfratto in attesa.
 
-La cura decisa dal lead (28/09 20:2x): zombie vuol dire SOLO morto o muto, e la
-scoperta e' per configurazione (cartella dati, modello, dimensione), cosi' un
-client trova solo il daemon della sua configurazione.
+La cura decisa dal lead (28/09 20:2x, chiave rivista il 29/09 20:5x): zombie vuol
+dire SOLO morto o muto, e la scoperta e' per modello e dimensione, cosi' un client
+trova solo il daemon del suo modello.
 
 NESSUN MODELLO: i due daemon sono processi veri con un encoder finto e senza
 tokenizzatore; la grazia e il passo indietro sono accorciati nel figlio a 2 s.
