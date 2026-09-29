@@ -830,7 +830,13 @@ class Memory:
                  repo_root: str | Path | None = None,
                  principal: str | None = None,
                  semantic: SemanticMemory | None = None,
-                 porta: ProfiloDiPorta | None = None) -> None:
+                 porta: ProfiloDiPorta | None = None,
+                 user_id: str | None = None, agent_id: str | None = None,
+                 run_id: str | None = None,
+                 include_shared: bool = False) -> None:
+        # RED (Atlas, 29/09): l'ambito e' accettato e NON ancora applicato.
+        self._ambito_chiesto = dict(user_id=user_id, agent_id=agent_id,
+                                    run_id=run_id, include_shared=include_shared)
         if preset not in _GATE_PRESETS:
             raise ValueError(
                 f"unknown gate preset {preset!r} — one of: "

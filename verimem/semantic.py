@@ -3682,6 +3682,12 @@ class SemanticMemory:
             self._cache_version += 1  # invalidate the recall hot-path cache
         return n
 
+    def nell_ambito(self, *, user_id: str | None = None,
+                    agent_id: str | None = None, run_id: str | None = None,
+                    include_shared: bool = False) -> SemanticMemory:
+        # RED (Atlas, 29/09): l'ambito e' accettato e NON ancora applicato.
+        return self
+
     def all(self) -> list[Fact]:
         with self._connect() as conn:
             rows = conn.execute("SELECT * FROM facts ORDER BY created_at DESC").fetchall()
