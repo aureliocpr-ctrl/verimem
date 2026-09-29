@@ -7,10 +7,12 @@ per sessione, e `verimem doctor` stampa i due numeri misurati.
 
 COSA VEDE L'UTENTE. Apre una sessione MCP come dice il README e scrive due fatti con la
 fonte: il giudizio passa dal daemon condiviso. `verimem doctor --json` gli dice, sulla
-riga `memory`, quanta memoria impegnata tiene il daemon (il costo fisso) e quanta il
-server della sua sessione (il costo per sessione), entro i due tetti che il prodotto
-dichiara. Memoria IMPEGNATA e non unica: sotto pressione il sistema comprime i processi
-fermi e la unica scende, mentre la macchina resta piena.
+riga `memory`, quanta memoria tiene il daemon (il costo fisso) e quanta il server della
+sua sessione (il costo per sessione): impegnata, unica e working set, con i picchi dove
+il sistema li tiene. DUE TETTI (lead, 28/09 23:0x), tutti e due confrontati: impegnata
+8000 MB fissi e 600 per sessione, sul picco dove c'e' (sotto pressione il sistema
+comprime i processi fermi e la unica scende, mentre la macchina resta piena); unica
+2500 MB fissi e 300 per sessione.
 
 LA PROVA. La sessione resta aperta mentre il doctor misura: è lei il processo per
 sessione. Controllo positivo: il doctor deve aver visto il daemon e almeno un server
@@ -47,5 +49,8 @@ def test_riga_7_il_doctor_stampa_quanto_costa_verimem(utente):
     assert riga.get("fixed_mb") and riga.get("per_session_mb"), (
         f"CONTROLLO POSITIVO SPENTO: il doctor non ha misurato il daemon o la sessione "
         f"aperta, quindi i due numeri non dicono niente: {riga}")
+    assert (riga.get("fixed_unique_mb") is not None
+            and riga.get("per_session_unique_mb") is not None), (
+        f"CONTROLLO POSITIVO SPENTO: manca la memoria unica, il secondo tetto: {riga}")
     assert riga.get("status") == "ok", (
         f"verimem costa piu' di quanto promette: {riga.get('detail')}")

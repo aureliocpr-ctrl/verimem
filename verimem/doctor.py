@@ -21,25 +21,41 @@ OK = "ok"
 WARN = "warn"
 FAIL = "fail"
 
-#: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina, in
-#: memoria IMPEGNATA privata: quella che il processo tiene anche quando il
-#: sistema lo comprime o lo pagina, cioe' cio' che riempie il commit della
-#: macchina. NON la memoria unica (USS): sotto pressione Windows toglie pagine ai
-#: processi fermi e la USS scende — misurato il 2026-09-28, lo stesso daemon a
-#: 1689 MB unici alle 19:26 e a 334 alle 21:4x, con l'impegnata ferma — e un
-#: tetto massimo misurato cosi' passerebbe proprio quando la macchina e' piena.
-#: Misurato lo stesso giorno: il daemon con i quattro modelli impegna 7470 MB
-#: sulla scheda e 5868 su CPU (quello vero, con tre modelli, 6298); un server
-#: MCP fra 348 e 528; uno scrittore in delegate-only 179 dopo le cure.
+#: LA PROMESSA DELLA RIGA 7 (T217): quanto costa verimem a una macchina, con DUE
+#: tetti, tutti e due stampati e confrontati (decisione del 2026-09-28 23:0x).
+#: - Memoria IMPEGNATA privata: quella che il processo tiene anche quando il
+#:   sistema lo comprime o lo pagina, cioe' cio' che riempie il commit della
+#:   macchina (il 25/09 la macchina ha rifiutato allocazioni col commit libero a
+#:   347 MB). La unica da sola non basta: sotto pressione Windows toglie pagine ai
+#:   processi fermi e la USS scende — misurato il 2026-09-28, lo stesso daemon a
+#:   1689 MB unici alle 19:26 e a 334 alle 21:4x, con l'impegnata ferma. E' un
+#:   tetto MASSIMO, quindi vale sul picco dove il sistema lo tiene (Windows).
+#: - Memoria UNICA (USS): quella che il processo occupa da solo in RAM adesso.
+#:   Nessun sistema ne tiene il picco, quindi vale sul valore del momento.
+#: Misurato il 2026-09-28: il daemon con i quattro modelli impegna 7470 MB sulla
+#: scheda e 5868 su CPU (quello vero, con tre modelli, 6298); un server MCP fra
+#: 348 e 528; uno scrittore in delegate-only 179 dopo le cure. Il 29/09 alle 20:2x
+#: il daemon vero: 5990 impegnati (picco 6025) e 343 unici; i server MCP al
+#: massimo 357 impegnati e 155 unici.
 MEMORIA_FISSA_MAX_MB = 8000
 MEMORIA_PER_SESSIONE_MAX_MB = 600
+MEMORIA_FISSA_UNICA_MAX_MB = 2500
+MEMORIA_PER_SESSIONE_UNICA_MAX_MB = 300
+
+#: Le grandezze misurate per processo: suffisso della chiave -> nome interno.
+#: Senza suffisso e' l'impegnata, la grandezza della promessa.
+_GRANDEZZE = {"mb": "impegnata", "picco_mb": "picco", "unica_mb": "unica",
+              "ws_mb": "ws", "picco_ws_mb": "picco_ws"}
 
 
 def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any]:
-    """I due numeri della riga 7, misurati sui processi VIVI: la memoria del
-    daemon condiviso (il pid lo dice il file di scoperta) e quella del server
-    MCP piu' grande (una sessione e' un server MCP). Per ognuno l'impegnata
-    (la promessa) e la unica (il dato fisico del momento).
+    """I numeri della riga 7, misurati sui processi VIVI: il daemon condiviso
+    (il pid lo dice il file di scoperta) e i server MCP (una sessione e' un
+    server MCP). Per ognuno tre grandezze, impegnata, unica e working set, e i
+    picchi dove il sistema li tiene (su Windows l'impegnata e il working set;
+    altrove None, non una stima). Per la sessione ogni grandezza e' la piu'
+    grande fra i server: il server con piu' impegnata non e' per forza quello
+    con piu' unica (misurato il 29/09: 357 e 53 accanto a 355 e 155).
 
     Niente modelli e niente stime: se psutil non c'e' lo dice, invece di
     stampare un numero che non ha misurato.
@@ -50,16 +66,22 @@ def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any
     if psutil is None:
         return {"misurato": False, "perche": "psutil is not installed"}
 
-    def misura(processo: Any) -> tuple[int, int] | None:
-        """(impegnata, unica) in MB, o None se il processo non si legge."""
+    def mb(byte: Any) -> int | None:
+        return None if byte is None else round(byte / 2 ** 20)
+
+    def misura(processo: Any) -> dict[str, int | None] | None:
+        """Le grandezze in MB, o None se il processo non si legge."""
         try:
             completa = processo.memory_full_info()
-            privata = getattr(processo.memory_info(), "private", None)
-            if privata is None:   # fuori da Windows: le pagine sue, in RAM o in swap
-                privata = completa.uss + getattr(completa, "swap", 0)
-            return round(privata / 2 ** 20), round(completa.uss / 2 ** 20)
+            base = processo.memory_info()
         except Exception:  # noqa: BLE001 — processo uscito o non leggibile
             return None
+        privata = getattr(base, "private", None)
+        if privata is None:   # fuori da Windows: le pagine sue, in RAM o in swap
+            privata = completa.uss + getattr(completa, "swap", 0)
+        return {"impegnata": mb(privata), "picco": mb(getattr(base, "peak_pagefile", None)),
+                "unica": mb(completa.uss), "ws": mb(base.rss),
+                "picco_ws": mb(getattr(base, "peak_wset", None))}
 
     fissa = None
     pid = (info or {}).get("pid")
@@ -77,13 +99,12 @@ def quanto_costa_verimem(info: dict | None, psutil: Any = None) -> dict[str, Any
                     sessioni.append(valore)
         except Exception:  # noqa: BLE001 — un processo illeggibile non ferma il conto
             continue
-    sessione = max(sessioni) if sessioni else None
-    return {"misurato": True,
-            "fissa_mb": fissa[0] if fissa else None,
-            "fissa_unica_mb": fissa[1] if fissa else None,
-            "per_sessione_mb": sessione[0] if sessione else None,
-            "per_sessione_unica_mb": sessione[1] if sessione else None,
-            "processi_mcp": len(sessioni)}
+    esito: dict[str, Any] = {"misurato": True, "processi_mcp": len(sessioni)}
+    for suffisso, grandezza in _GRANDEZZE.items():
+        esito[f"fissa_{suffisso}"] = fissa[grandezza] if fissa else None
+        valori = [s[grandezza] for s in sessioni if s[grandezza] is not None]
+        esito[f"per_sessione_{suffisso}"] = max(valori) if valori else None
+    return esito
 
 #: Cosa succede DAVVERO alle scritture quando non c'e' nessun giudice.
 #: La riga diceva «writes are admitted with an L4-skipped advisory (moat
@@ -643,26 +664,56 @@ def run_doctor() -> list[dict[str, Any]]:
             add("memory", WARN, f"not measured: {misura.get('perche')}",
                 "pip install psutil")
         else:
-            fissa = misura.get("fissa_mb")
-            sessione = misura.get("per_sessione_mb")
-            dentro = ((fissa or 0) <= MEMORIA_FISSA_MAX_MB
-                      and (sessione or 0) <= MEMORIA_PER_SESSIONE_MAX_MB)
-            testo_fisso = (f"fixed {fissa} MB (the shared encode daemon, "
-                           f"{misura.get('fissa_unica_mb')} MB of it in RAM now)"
-                           if fissa is not None else "fixed 0 MB (no shared daemon running)")
-            testo_sessione = (f"per session {sessione} MB (the largest of "
-                              f"{misura.get('processi_mcp')} MCP server processes, "
-                              f"{misura.get('per_sessione_unica_mb')} MB of it in RAM now)"
-                              if sessione is not None else "per session: no MCP server running")
+            def al_massimo(prefisso: str) -> int:
+                # l'impegnata ha un tetto MASSIMO: si legge sul picco, se c'e'
+                return max(misura.get(f"{prefisso}_mb") or 0,
+                           misura.get(f"{prefisso}_picco_mb") or 0)
+
+            dentro = (al_massimo("fissa") <= MEMORIA_FISSA_MAX_MB
+                      and al_massimo("per_sessione") <= MEMORIA_PER_SESSIONE_MAX_MB
+                      and (misura.get("fissa_unica_mb") or 0) <= MEMORIA_FISSA_UNICA_MAX_MB
+                      and (misura.get("per_sessione_unica_mb") or 0)
+                      <= MEMORIA_PER_SESSIONE_UNICA_MAX_MB)
+
+            def grandezze(prefisso: str) -> str:
+                def valore(suffisso: str) -> str:
+                    numero = misura.get(f"{prefisso}_{suffisso}")
+                    return "n/a" if numero is None else f"{numero} MB"
+
+                def picco(suffisso: str) -> str:
+                    numero = misura.get(f"{prefisso}_{suffisso}")
+                    return "peak n/a on this system" if numero is None else f"peak {numero}"
+
+                return (f"committed {valore('mb')} ({picco('picco_mb')}), "
+                        f"unique {valore('unica_mb')}, "
+                        f"working set {valore('ws_mb')} ({picco('picco_ws_mb')})")
+
+            testo_fisso = ("fixed, the shared encode daemon: " + grandezze("fissa")
+                           if misura.get("fissa_mb") is not None
+                           else "fixed: no shared daemon running")
+            testo_sessione = (f"per session, the largest of each among "
+                              f"{misura.get('processi_mcp')} MCP processes: "
+                              + grandezze("per_sessione")
+                              if misura.get("per_sessione_mb") is not None
+                              else "per session: no MCP server running")
             add("memory", OK if dentro else WARN,
-                f"{testo_fisso}; {testo_sessione}; committed memory, promised at most "
-                f"{MEMORIA_FISSA_MAX_MB} and {MEMORIA_PER_SESSIONE_MAX_MB} MB",
+                f"{testo_fisso}; {testo_sessione}; promised at most "
+                f"{MEMORIA_FISSA_MAX_MB} MB committed and {MEMORIA_FISSA_UNICA_MAX_MB} MB "
+                f"unique fixed, {MEMORIA_PER_SESSIONE_MAX_MB} MB committed and "
+                f"{MEMORIA_PER_SESSIONE_UNICA_MAX_MB} MB unique per session",
                 None if dentro else "see which process holds it: the daemon's models "
                 "or a session that loaded one in-process")
+            campi = {"fixed": "fissa", "per_session": "per_sessione"}
+            nomi = {"mb": "mb", "picco_mb": "peak_mb", "unica_mb": "unique_mb",
+                    "ws_mb": "ws_mb", "picco_ws_mb": "peak_ws_mb"}
             checks[-1].update({
-                "fixed_mb": fissa, "per_session_mb": sessione,
+                f"{inglese}_{nome}": misura.get(f"{prefisso}_{suffisso}")
+                for inglese, prefisso in campi.items() for suffisso, nome in nomi.items()})
+            checks[-1].update({
                 "fixed_max_mb": MEMORIA_FISSA_MAX_MB,
-                "per_session_max_mb": MEMORIA_PER_SESSIONE_MAX_MB})
+                "per_session_max_mb": MEMORIA_PER_SESSIONE_MAX_MB,
+                "fixed_unique_max_mb": MEMORIA_FISSA_UNICA_MAX_MB,
+                "per_session_unique_max_mb": MEMORIA_PER_SESSIONE_UNICA_MAX_MB})
     except Exception as e:  # noqa: BLE001
         add("memory", WARN, f"not measured: {e}")
 
