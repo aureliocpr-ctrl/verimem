@@ -79,17 +79,33 @@ def test_nessuna_porta_legge_il_campo_per_conto_suo(porta):
         "non applicava il verdetto affatto.")
 
 
-@pytest.mark.parametrize("porta", PORTE)
-def test_CONTROLLO_ogni_porta_chiama_davvero_la_superficie_unica(porta):
-    """⚠️ SENZA QUESTO il file sopra e' soddisfatto da una porta che il
+#: Dal 29/09 (1b.3) le porte non applicano il verdetto: scrivono con
+#: `Memory.add()`, che lo applica per tutte. Ogni porta deve quindi scrivere col
+#: MOTORE, e il motore deve chiamare la superficie unica.
+PROFILO_DI_PORTA = {"cli.py": "PORTA_CLI", "mcp_server.py": "PORTA_MCP"}
+
+
+def test_CONTROLLO_il_motore_chiama_davvero_la_superficie_unica():
+    """⚠️ SENZA QUESTO il file sopra e' soddisfatto da un motore che il
     verdetto non lo applica PER NIENTE — che e' esattamente lo stato da cui
     veniamo. Zero occorrenze del campo e zero chiamate alla funzione danno lo
     stesso verde, e sono la cosa buona e la cosa cattiva."""
-    testo = (RADICE / porta).read_text(encoding="utf-8", errors="replace")
+    testo = (RADICE / "client.py").read_text(encoding="utf-8", errors="replace")
     assert "applica_verdetto" in testo, (
-        f"{porta} non chiama `applica_verdetto`: il verdetto del gate non "
-        "viene applicato da questa porta, e chi scrive da qui perde la "
-        "versione vecchia senza saperlo.")
+        "client.py non chiama `applica_verdetto`: il verdetto del gate non "
+        "viene applicato dal motore, e chi scrive perde la versione vecchia "
+        "senza saperlo.")
+
+
+@pytest.mark.parametrize("porta", sorted(PROFILO_DI_PORTA))
+def test_CONTROLLO_ogni_porta_scrive_col_motore(porta):
+    """Una porta che non nomina il proprio profilo non scrive col motore: o
+    ha una copia sua, e allora il verdetto lo applica a modo suo, o non lo
+    applica affatto."""
+    testo = (RADICE / porta).read_text(encoding="utf-8", errors="replace")
+    assert PROFILO_DI_PORTA[porta] in testo, (
+        f"{porta} non scrive con il motore (`{PROFILO_DI_PORTA[porta]}`): il "
+        "verdetto del gate non passa dalla superficie unica.")
 
 
 def test_CONTROLLO_la_superficie_unica_esiste_e_nomina_il_campo():

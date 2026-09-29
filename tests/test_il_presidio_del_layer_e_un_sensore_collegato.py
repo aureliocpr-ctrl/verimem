@@ -65,12 +65,24 @@ def test_la_porta_MCP_passa_davvero_quel_parametro() -> None:
     la porta lo PASSA. Separate apposta: se qualcuno lo togliesse dalla
     chiamata, questo test dice DOVE, mentre quello della porta direbbe solo che
     l'uscita e' sbagliata."""
-    sorgente = inspect.getsource(
-        __import__("verimem.mcp_server", fromlist=["mcp_server"]))
-    assert "agito=_bl(_gate_warnings)" in sorgente, (
-        "la porta MCP non passa piu' i layer che hanno bloccato a "
+    # 📌 Dal 29/09 (1b.3) il decisore lo calcola il MOTORE, per ogni porta: la
+    # porta MCP scrive con `Memory.add()` e rende `quarantined_by` dalla sua
+    # ricevuta. Il parametro si cerca dove la chiamata sta adesso, e si
+    # controlla che la porta non l'abbia ricopiata: una copia e' il difetto.
+    from verimem.client import Memory
+    motore = inspect.getsource(Memory.add)
+    assert "chi_ha_quarantinato(" in motore and "agito=_hit_layers" in motore, (
+        "il motore non passa piu' i layer che hanno bloccato a "
         "`chi_ha_quarantinato`: `quarantined_by` tornera' 'gate' e la "
         "ricevuta smettera' di nominare il decisore.")
+    assert "_blocking_layers(warnings)" in motore, (
+        "i layer agiti non vengono piu' dal filtro unico dei bloccanti")
+    porta = inspect.getsource(
+        __import__("verimem.mcp_server", fromlist=["mcp_server"]))
+    codice = "\n".join(r.split("#", 1)[0] for r in porta.splitlines())
+    assert "chi_ha_quarantinato(" not in codice, (
+        "la porta MCP ricalcola il decisore per conto suo invece di leggerlo "
+        "dalla ricevuta del motore")
 
 
 def test_CONTROLLO_un_avviso_non_viene_nominato_come_decisore() -> None:

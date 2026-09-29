@@ -20,6 +20,10 @@ observable overwrite. Caller code that relied on accidental duplication
 will see fewer rows — but no caller actually relied on that (it was a
 bug, not a feature, per cycle #46 decision-trajectory 685d31c9d85b
 which chose "keep idempotency + add observability").
+
+Since 1b.3 (29/09) `_build_fact` is gone: the server writes through
+`Memory.add()`, and the engine derives the id for every door
+(`client.id_dal_contenuto`). The promise tested here is unchanged.
 """
 from __future__ import annotations
 
@@ -31,46 +35,26 @@ from mcp.types import CallToolRequest, CallToolRequestParams
 from verimem import mcp_server
 
 # ---------------------------------------------------------------------------
-# Stub agent: hippo_remember handler only touches `a.semantic`, mock that.
+# The agent: the handler only touches `a.semantic`, and since 1b.3 (29/09)
+# it is a REAL store. The server writes through `Memory.add()`, built on that
+# object; a double with `store` and `count` alone tested the old server-side
+# Fact, not the write every door makes.
 # ---------------------------------------------------------------------------
 
 
-class _FakeSemantic:
-    """In-memory semantic store that mimics SemanticMemory.store(return_replaced)."""
-
-    def __init__(self) -> None:
-        self._facts: dict[str, dict] = {}  # id -> {proposition, topic, ...}
-
-    def store(self, fact, *, return_replaced: bool = False,
-               coherence_hook=None, embed: str = "sync"):
-        # Cycle #125: accept coherence_hook kwarg (added by cycle 119
-        # wire in mcp_server.py) for back-compat; the fake never
-        # invokes it — pure observability extension.
-        # 2026-06-05: accept embed kwarg (non-blocking store wiring).
-        _ = (coherence_hook, embed)
-        existed = fact.id in self._facts
-        self._facts[fact.id] = {
-            "id": fact.id,
-            "proposition": fact.proposition,
-            "topic": fact.topic,
-            "confidence": fact.confidence,
-        }
-        return existed if return_replaced else None
-
-    def count(self) -> int:
-        return len(self._facts)
-
-
 class _StubAgent:
-    def __init__(self) -> None:
-        self.semantic = _FakeSemantic()
+    def __init__(self, semantic) -> None:
+        self.semantic = semantic
         self.skills = None
         self.memory = None
+        self.wake = None
 
 
 @pytest.fixture
-def agent(monkeypatch: pytest.MonkeyPatch) -> _StubAgent:
-    a = _StubAgent()
+def agent(monkeypatch: pytest.MonkeyPatch, tmp_path) -> _StubAgent:
+    from verimem.semantic import SemanticMemory
+
+    a = _StubAgent(SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db"))
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
     monkeypatch.setattr(mcp_server, "_agent", a, raising=False)
     return a

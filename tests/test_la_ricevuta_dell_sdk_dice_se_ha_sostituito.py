@@ -84,19 +84,20 @@ def test_una_scrittura_sullo_stesso_id_dichiara_la_sostituzione(memoria) -> None
         "l'id era lo stesso e il contenuto non e' cambiato: non ha sostituito")
 
 
-def test_non_promette_l_idempotenza_che_non_c_e(memoria) -> None:
-    """CONTROLLO: due `add` identiche fanno ancora DUE righe, e va dichiarato.
+def test_l_idempotenza_e_arrivata_e_la_ricevuta_la_dice(memoria) -> None:
+    """CONTROLLO: due `add` identiche fanno UNA riga, e la seconda lo dice.
 
-    Questa cella esiste per non far credere che il campo nuovo abbia cambiato
-    la semantica. Se un domani l'SDK deriverà l'id dal contenuto — la decisione
-    (a) — questa cella cadrà, ed è il posto giusto dove accorgersene: una
-    scelta di quella portata non deve passare in silenzio.
+    Questa cella esisteva per cadere il giorno in cui l'SDK avesse derivato
+    l'id dal contenuto — la decisione (a) di T24 — perche' una scelta di quella
+    portata non passasse in silenzio. E' caduta il 29/09 con 1b.3, per scelta
+    (D-0013, condizione T162: una scrittura ripetuta e' UN fatto su ogni
+    porta), e qui si scrive la promessa nuova invece di cancellare la vecchia.
     """
     a = memoria.add("Il deposito e' 5800 euro.", topic="t")
     b = memoria.add("Il deposito e' 5800 euro.", topic="t")
-    assert a["id"] != b["id"], (
-        "gli id ora coincidono: l'SDK ha adottato l'idempotenza dell'MCP. "
-        "E' la decisione (a) di T24 — se e' voluta, aggiorna questa cella e "
-        "il ticket; se non lo e', e' una regressione")
-    assert b.get("replaced") is False, (
-        "due righe distinte: la seconda non ha sostituito la prima")
+    assert a["id"] == b["id"], (
+        "gli id non coincidono piu': l'SDK ha perso l'idempotenza che la porta "
+        "unica promette (D-0013, T162)")
+    assert a.get("replaced") is False, "la prima scrittura non sostituisce niente"
+    assert b.get("replaced") is True, (
+        "la seconda ha sostituito la prima e deve dirlo")

@@ -66,7 +66,11 @@ class _GateFinto:
 def gate(monkeypatch: pytest.MonkeyPatch) -> _GateFinto:
     finto = _GateFinto()
     import verimem.anti_confab_gate as acg
+    import verimem.client as motore
     monkeypatch.setattr(acg, "run_validation_gate", finto)
+    # Dal 29/09 (1b.3) `facts add` scrive col motore, e il motore lega il
+    # nome all'import: il finto va messo anche dove viene chiamato davvero.
+    monkeypatch.setattr(motore, "run_validation_gate", finto)
     return finto
 
 
@@ -166,21 +170,32 @@ def test_OGNI_comando_che_passa_dal_gate_ha_una_porta_per_la_source():
     albero = ast.parse(sorgente)
 
     senza_porta: list[str] = []
+    trovati: list[str] = []
     for nodo in ast.walk(albero):
         if not isinstance(nodo, ast.FunctionDef | ast.AsyncFunctionDef):
             continue
+        # Dal 29/09 (1b.3) un comando che scrive non chiama il gate: costruisce
+        # il MOTORE col profilo della sua porta, e il gate lo chiama
+        # `Memory.add()`. Contare solo le chiamate al gate avrebbe reso questo
+        # cricchetto cieco proprio su `facts add`, il canale per cui e' nato.
         chiama_il_gate = any(
             isinstance(c, ast.Call)
-            and getattr(c.func, "id", getattr(c.func, "attr", None))
-            == "run_validation_gate"
+            and (getattr(c.func, "id", getattr(c.func, "attr", None))
+                 == "run_validation_gate"
+                 or (getattr(c.func, "id", None) == "Memory"
+                     and any(k.arg == "porta" for k in c.keywords)))
             for c in ast.walk(nodo)
         )
         if not chiama_il_gate:
             continue
+        trovati.append(nodo.name)
         nomi = {a.arg for a in nodo.args.args} | {a.arg for a in nodo.args.kwonlyargs}
         if "source" not in nomi:
             senza_porta.append(f"{nodo.name} (riga {nodo.lineno})")
 
+    assert "facts_add" in trovati, (
+        "il cricchetto non vede piu' `facts add`, il canale per cui e' nato: "
+        f"sorveglia {trovati}, e un comando che scrive col motore gli sfugge")
     assert not senza_porta, (
         "questi comandi consegnano una scrittura al gate ma non hanno modo di "
         "consegnargli l'EVIDENZA, quindi da lì il moat non è accendibile:\n  "

@@ -31,6 +31,13 @@ duplicate_check_skipped`).
 
 📌 Chi volesse il controllo sempre attivo ha la strada: un indice su
 `proposition` lo rende O(1) — 286 ms per costruirlo su 200k righe.
+
+🔑 DAL 29/09 (1b.3) IL CASO MISURATO QUI NON PUÒ PIÙ NASCERE. L'id di un fatto
+deriva da testo, topic e provenienza (`client.id_dal_contenuto`): tre scritture
+identiche sono UNA riga, e dalla seconda la ricevuta lo dice con
+`replaced: True`. L'avviso di duplicato resta per l'unico caso in cui due righe
+con lo stesso testo esistono ancora, e di proposito: due provenienze diverse
+(due fonti, due libri citati), ciascuna con la sua riga.
 """
 from __future__ import annotations
 
@@ -51,10 +58,28 @@ def _avvisi(ricevuta, layer):
             if str(w.get("layer", "")) == layer]
 
 
+def _righe(mem, testo):
+    import sqlite3
+    with sqlite3.connect(f"file:{mem.semantic.db_path}?mode=ro", uri=True) as c:
+        return c.execute("SELECT COUNT(*) FROM facts WHERE proposition = ?",
+                         (testo,)).fetchone()[0]
+
+
 def test_la_seconda_scrittura_identica_lo_dice(mem):
-    """IL CUORE: alla seconda, non dopo con una ricerca che rende due copie."""
+    """IL CUORE: alla seconda, non dopo con una ricerca che rende due copie.
+    Dal 29/09 la seconda non fa una copia: sostituisce, e lo dice."""
     mem.add(FATTO, topic="az/mag")
     ric = mem.add(FATTO, topic="az/mag")
+    assert ric.get("replaced") is True, f"la ripetizione non lo dice: {ric}"
+    assert _righe(mem, FATTO) == 1, "la ripetizione ha fatto una seconda riga"
+
+
+def test_lo_stesso_testo_con_due_provenienze_lo_dice(mem):
+    """Il caso in cui due righe con lo stesso testo esistono ancora: due libri
+    diversi citati. Due righe di proposito, e l'avviso le nomina."""
+    mem.add(FATTO, topic="az/mag", verified_by=["source-doc:atlas:1"])
+    ric = mem.add(FATTO, topic="az/mag", verified_by=["source-doc:almanac:1"])
+    assert _righe(mem, FATTO) == 2
     avvisi = _avvisi(ric, "duplicate")
     assert avvisi, f"nessun avviso di duplicato: {ric.get('warnings')}"
     assert "identic" in str(avvisi[0]).lower()
@@ -95,7 +120,9 @@ def test_quando_il_controllo_NON_si_fa_lo_dichiara(mem, monkeypatch):
     che non è stato fatto."""
     monkeypatch.setenv("ENGRAM_DUP_CHECK_MAX_FACTS", "1")
     mem.add(FATTO, topic="az/mag")
-    ric = mem.add(FATTO, topic="az/mag")
+    # Un fatto DIVERSO: con l'id dal contenuto la ripetizione non farebbe una
+    # seconda riga, e lo store resterebbe sotto la soglia.
+    ric = mem.add("Il magazzino K-78 di Rovigo ha 3900 metri quadrati.", topic="az/mag")
     assert not _avvisi(ric, "duplicate")
     saltato = _avvisi(ric, "duplicate_check_skipped")
     assert saltato, f"il controllo salta e non lo dice: {ric.get('warnings')}"

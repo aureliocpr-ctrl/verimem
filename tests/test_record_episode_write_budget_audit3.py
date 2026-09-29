@@ -58,10 +58,15 @@ class _FastMem:
         return getattr(ep, "id", "x")
 
 
-class _SlowSemantic:
-    """The key-fact write hits the SAME semantic.db lock: store() blocks 5s."""
+class _SlowSemantic(sem.SemanticMemory):
+    """The key-fact write hits the SAME semantic.db lock: store() blocks 5s.
 
-    def __init__(self) -> None:
+    A REAL store with only `store` slowed down: since 1b.3 (29/09) the key
+    fact is written by `Memory.add()`, built on this object, and a double
+    with `store` alone never reached the write."""
+
+    def __init__(self, db_path) -> None:
+        super().__init__(db_path=db_path)
         self.calls = 0
 
     def store(self, fact, **kw):
@@ -71,16 +76,18 @@ class _SlowSemantic:
 
 
 class _FakeAgentKF:
-    def __init__(self) -> None:
+    def __init__(self, db_path) -> None:
         self.memory = _FastMem()
-        self.semantic = _SlowSemantic()
+        self.semantic = _SlowSemantic(db_path)
+        self.wake = None
 
 
-async def test_record_episode_key_fact_store_is_write_budgeted(monkeypatch):
+async def test_record_episode_key_fact_store_is_write_budgeted(monkeypatch,
+                                                             tmp_path):
     """R20 cont.: the key_facts store in the SAME handler hits semantic.db; an
     unbudgeted write there re-introduces the up-to-60s block the episode store
     was just fixed for. It must be budgeted too."""
-    fake = _FakeAgentKF()
+    fake = _FakeAgentKF(tmp_path / "semantic" / "semantic.db")
     monkeypatch.setattr(ms, "_ag", lambda: fake)
     monkeypatch.setattr(sem, "_SAVE_WRITE_BUDGET_S", 0.4)
 

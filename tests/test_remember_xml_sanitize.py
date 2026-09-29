@@ -19,33 +19,19 @@ import pytest
 
 
 class _FakeAgent:
-    def __init__(self) -> None:
-        self.semantic = _FakeSemantic()
+    """Dal 29/09 (1b.3) il server scrive con `Memory.add()`, costruito su
+    `a.semantic`: lo store dev'essere vero, nella cartella del test."""
 
-
-class _FakeSemantic:
-    def __init__(self) -> None:
-        self.stored: list[Any] = []
-
-    def store(self, fact: Any, *, return_replaced: bool = False,
-               coherence_hook=None) -> Any:
-        # Cycle #125: accept return_replaced + coherence_hook (cycle 119)
-        # for back-compat. Original return type was fact.id; keep that
-        # only when the caller does NOT request return_replaced.
-        _ = coherence_hook
-        self.stored.append(fact)
-        if return_replaced:
-            return False
-        return fact.id
-
-    def search_facts(self, *args, **kwargs):
-        return []
+    def __init__(self, semantic) -> None:
+        self.semantic = semantic
+        self.wake = None
 
 
 @pytest.fixture
-def fake_agent(monkeypatch: pytest.MonkeyPatch):
+def fake_agent(monkeypatch: pytest.MonkeyPatch, tmp_path):
     from verimem import mcp_server
-    a = _FakeAgent()
+    from verimem.semantic import SemanticMemory
+    a = _FakeAgent(SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db"))
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
     return a
 
