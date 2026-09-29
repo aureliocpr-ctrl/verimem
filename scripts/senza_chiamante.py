@@ -106,9 +106,13 @@ PYPROJECT = RADICE / "pyproject.toml"
 # `semantic` importano `schema` — e il modulo e' USCITO da C2 e da D da solo:
 # C2 7 -> 6, D 8 -> 7. MISURATI su questo albero dopo il ribasamento, non
 # dedotti dai delta: il cricchetto li ha stampati e ha chiesto lui la discesa.
-TETTO_C2 = 6           # nessuna porta: né import, né entry point, né python -m
+# ✅ E `atomic_claims` HA LA SUA PORTA (29/09, T221): l'innesto dichiarato come
+# T111 e' cablato, perche' il cancello di scrittura giudica la memoria
+# affermazione per affermazione con `decomponi()`. USCITO da C2 e da D: C2 6 -> 5,
+# D 7 -> 6, stampati dal cricchetto su questo albero, non dedotti.
+TETTO_C2 = 5           # nessuna porta: né import, né entry point, né python -m
 TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto; T126)
-TETTO_D = 7            # 6 C2 + proactive_step_injector, raggiunto solo da C2
+TETTO_D = 6            # 5 C2 + proactive_step_injector, raggiunto solo da C2
 # ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
 # prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
 # hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
