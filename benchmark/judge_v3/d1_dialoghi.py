@@ -93,8 +93,9 @@ LINGUE = {
                      "il festival del cinema": "al festival del cinema",
                      "lo spettacolo di teatro": "allo spettacolo di teatro",
                      "il mercatino dell'usato": "al mercatino dell'usato"},
-        # verbi con «avere»: niente accordo di genere nella prima persona
-        "aziende": ["una panetteria", "un negozio di biciclette", "la biblioteca comunale", "uno studio grafico"],
+        # verbi con «avere»: niente accordo di genere nella prima persona; «in {azienda}» vuole
+        # l'articolo indeterminativo («in la biblioteca» non è italiano), e niente «libreria»: è già fra le cose
+        "aziende": ["una panetteria", "un negozio di biciclette", "un'agenzia di viaggi", "uno studio grafico"],
         "animali": ["gatto", "cane", "coniglio", "pappagallo"],
         "fatti": [
             ("Ho visitato {luogo} {quando}.", ["{S} ha visitato {luogo} {quando}."]),
@@ -108,7 +109,7 @@ LINGUE = {
             ("Ho iniziato un nuovo lavoro in {azienda}.", ["{S} ha iniziato un nuovo lavoro in {azienda}.",
                                                            "{S} ha cominciato a lavorare in {azienda}."]),
             ("Ho adottato un {animale} {quando}.", ["{S} ha adottato un {animale} {quando}.",
-                                                    "{S} ha preso con sé un {animale} {quando}."]),
+                                                    "{S} ha accolto in casa un {animale} {quando}."]),
         ],
         "coordinata": " e ",
         "domanda": "Com'è andata?",
@@ -262,7 +263,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@2"
+GENERATORE = "d1_dialoghi@3"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
