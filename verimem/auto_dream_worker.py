@@ -392,8 +392,8 @@ def run_maintenance(engram_dir: Path, *, now: float | None = None,
             out["scan"] = scan_corpus(sm, time_budget_s=20.0)
             healed = heal_contradictions(sm, principal="system:heal",
                                          limit=100)
-            # the lists become counts; left_open_kinds is already a count
-            out["healed"] = ({k: v if isinstance(v, dict) else len(v)
+            # the lists become counts; the left_open_* entries are counts already
+            out["healed"] = ({k: v if isinstance(v, (dict, int)) else len(v)
                               for k, v in healed.items()}
                              if isinstance(healed, dict) else None)
         except Exception as exc:  # noqa: BLE001

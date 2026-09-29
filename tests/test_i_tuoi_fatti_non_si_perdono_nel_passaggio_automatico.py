@@ -1,4 +1,5 @@
-"""I tuoi fatti non si perdono: il passaggio automatico non ritira per numeri.
+"""I tuoi fatti non si perdono: il passaggio automatico non ritira per numeri,
+ne' fra due fatti che non condividono un topic.
 
 Il 23 e il 24/09 ``run_maintenance`` (il consolidamento automatico all'avvio di
 una sessione, ogni 4 ore) ha ritirato 41 fatti di uno store vero: un fatto di
@@ -20,10 +21,10 @@ VINCITORE = "Il capannone 12 misura 400 mq."
 PERDENTE = "Il servizio di ricerca ha risposto in 250 ms su 3 richieste."
 
 
-def _scenario(tmp_path, tipo: str):
+def _scenario(tmp_path, tipo: str, topic: str = ""):
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    vincitore = Fact(proposition=VINCITORE, topic="", status="model_claim")
-    perdente = Fact(proposition=PERDENTE, topic="")
+    vincitore = Fact(proposition=VINCITORE, topic=topic, status="model_claim")
+    perdente = Fact(proposition=PERDENTE, topic=topic)
     sm.store(vincitore)
     sm.store(perdente)
     # Il rango piu' basso si impone nel DB: i gate di scrittura riportano
@@ -70,10 +71,42 @@ def test_nessun_chiamante_di_heal_esegue_uno_scontro_numerico(tmp_path):
 
 def test_controllo_positivo_uno_scontro_booleano_si_esegue_ancora(
         tmp_path, monkeypatch):
+    """Su un topic CONDIVISO: fra due fatti a topic vuoto lo scontro resta
+    aperto (vedi le celle del topic vuoto qui sotto)."""
     monkeypatch.delenv("ENGRAM_AUTO_CONSOLIDATE", raising=False)
-    sm, mem, perdente = _scenario(tmp_path, "boolean_clash")
+    sm, mem, perdente = _scenario(tmp_path, "boolean_clash", topic="magazzino")
     out = run_maintenance(tmp_path, now=1_000_000.0, sm=sm, mem=mem)
     fatto = sm.get(perdente)
     assert fatto is not None and fatto.superseded_by, (
         "il controllo positivo non si accende: il passaggio automatico non "
         f"esegue piu' nemmeno gli scontri booleani / {out}")
+
+
+# ------------------------------------------------------------ topic vuoto --
+# Il 29/09 lo stesso heal, rifatto su una copia dello store vero dopo gli
+# undo, ritirava di nuovo tutti e 41 i fatti ripristinati: per boolean_clash,
+# contro quattro fatti che non c'entravano, perche' il topic vuoto era trattato
+# come un topic condiviso. Un fatto senza topic non ne condivide uno con
+# nessuno: lo scontro resta aperto e si conta.
+
+
+def test_il_passaggio_automatico_non_esegue_uno_scontro_fra_due_fatti_senza_topic(
+        tmp_path, monkeypatch):
+    monkeypatch.delenv("ENGRAM_AUTO_CONSOLIDATE", raising=False)
+    sm, mem, perdente = _scenario(tmp_path, "boolean_clash")
+    out = run_maintenance(tmp_path, now=1_000_000.0, sm=sm, mem=mem)
+    fatto = sm.get(perdente)
+    assert fatto is not None and not fatto.superseded_by, (
+        "il passaggio automatico ha ritirato un fatto per uno scontro fra due "
+        f"fatti senza topic: {fatto.superseded_reason if fatto else '-'} / {out}")
+    assert (out.get("healed") or {}).get("left_open_no_topic") == 1, out
+
+
+def test_nessun_chiamante_di_heal_esegue_uno_scontro_fra_due_fatti_senza_topic(
+        tmp_path):
+    from verimem.contradiction import heal_contradictions
+    sm, _mem, perdente = _scenario(tmp_path, "boolean_clash")
+    esito = heal_contradictions(sm, principal="test:mcp", limit=200)
+    fatto = sm.get(perdente)
+    assert fatto is not None and not fatto.superseded_by, esito
+    assert esito["left_open_no_topic"] == 1, esito
