@@ -45,6 +45,11 @@ def forget_with_report(semantic, fact_id: str, *,
     Il referto non blocca MAI la cancellazione: se la scansione delle
     copie fallisce, l'elenco esce vuoto e l'atto avviene lo stesso.
     """
+    # ATLAS (29/09): su uno store legato a un utente, un id fuori dal suo
+    # ambito vale come un id che non c'e'. Niente cancellazione, e niente
+    # referto: direbbe dove un fatto di un altro utente resta leggibile.
+    if getattr(semantic, "_ambito", None) is not None and semantic.get(fact_id) is None:
+        return {"removed": False, "fact_id": fact_id, "residual_copies": []}
     try:
         copie = residual_copies_for(semantic.db_path, fact_id)
     except Exception:  # noqa: BLE001 — l'osservabilita' non blocca l'atto

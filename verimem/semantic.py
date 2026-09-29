@@ -6945,6 +6945,49 @@ class _StoreNellAmbito(SemanticMemory):
                 "non scrive sopra i fatti di un altro utente")
         return super().store(fact, **kwargs)
 
+    # ── pezzo 2: le modifiche per id. Un id fuori ambito vale come un id che
+    # non esiste: stesso ritorno della base, nessun effetto.
+    def delete(self, fact_id: str, **kwargs: Any) -> bool:
+        if self.get(fact_id) is None:
+            return False
+        return super().delete(fact_id, **kwargs)
+
+    def restore_fact(self, fact_id: str, **kwargs: Any) -> bool:
+        if self.get(fact_id) is None:
+            return False
+        return super().restore_fact(fact_id, **kwargs)
+
+    def set_epistemic(self, fact_id: str, label: dict) -> bool:
+        if self.get(fact_id) is None:
+            return False
+        return super().set_epistemic(fact_id, label)
+
+    def get_supersession_chain(self, fact_id: str) -> list[Fact]:
+        if self.get(fact_id) is None:
+            return []
+        return [f for f in super().get_supersession_chain(fact_id)
+                if self._ambito.contiene(f.topic)]
+
+    def undo_destructive_op(self, op_id: str) -> dict[str, Any]:
+        # L'ambito di un'operazione e' quello del fatto COM'ERA: dopo un oblio
+        # la riga non c'e' piu', il fotogramma salvato si'. Fuori ambito si
+        # risponde come la base risponde a un'operazione che non conosce.
+        try:
+            with self._connect() as conn:
+                riga = conn.execute(
+                    "SELECT pre_row_json FROM facts_undo_log WHERE op_id = ?",
+                    (op_id,)).fetchone()
+        except sqlite3.OperationalError:  # nessun registro: decide la base
+            riga = None
+        if riga is not None:
+            try:
+                topic = json.loads(riga[0]).get("topic")
+            except (TypeError, ValueError, AttributeError):
+                topic = None
+            if not self._ambito.contiene(topic):
+                return {"ok": False, "op_id": op_id, "action": "not_found"}
+        return super().undo_destructive_op(op_id)
+
     def supersede(self, old_id: str, new_id: str, **kwargs: Any) -> dict[str, Any]:
         # Un id fuori ambito si comporta come un id che non c'e': stesso errore,
         # stesso testo, perche' la differenza direbbe che il fatto esiste.

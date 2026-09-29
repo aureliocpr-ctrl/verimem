@@ -4314,6 +4314,12 @@ class Memory:
         quarantine is not separately refused. The complete fix is a persisted
         quarantine_reason column; until then the injection re-screen covers the
         security-critical class and keyword/grounding FPs restore cleanly."""
+        # ATLAS (29/09): la lettura qui sotto apre il database per conto suo.
+        # Su un handle legato, un id fuori ambito si ferma prima, come un id
+        # che non esiste (lo store legato lo risolve a None anche in quarantena).
+        if (getattr(self.semantic, "_ambito", None) is not None
+                and self.semantic.get(fact_id) is None):
+            return False
         # Read the proposition + supersession straight from the store (get()
         # does not surface the text for a quarantined fact) so the injection
         # re-screen sees the real content and a superseded fact is refused.
