@@ -7,8 +7,8 @@ knows, runs `decomponi()`, and gives every output unit the label of the weakest 
 the judge is trained on the same unit, and with the same rule, it is asked about.
 
 No model and no external data: names, places and sentences are templates written here. Deterministic
-with the seed. Languages: English and Italian, the two `decomponi()` can split today (coordinators
-«and», «e/ed»); French and Spanish wait for coordinators that do not break «il y a» or «et al.».
+with the seed. Languages: English, Italian, French and Spanish (coordinators «and», «e/ed», «et», «y»;
+the French passé composé is left out, because «a» cannot be a finite verb in a list shared with English).
 
 Pair types (field `tipo`):
   sostenuta        the cited turn -> one of its facts, literal or paraphrased           label 1
@@ -115,6 +115,64 @@ LINGUE = {
         "evento_andato": ("Ho appena partecipato {evento_a}.", "{S} ha partecipato {evento_a}."),
         "pronome": ("È stato bellissimo, mi è piaciuto tantissimo!", "A {S} è piaciuto tantissimo {evento}."),
     },
+    "fr": {
+        # only verbs that `decomponi()` knows as finite («fait», «va», «veut», «doit», «peut», «est»):
+        # the passé composé needs «a», which cannot enter the shared list (it is the English article)
+        "nomi": ["Claire", "Hugo", "Inès", "Léo", "Manon", "Nathan", "Chloé", "Yanis"],
+        "luoghi": ["au marché", "à la piscine", "au musée", "à la bibliothèque", "au parc"],
+        "quando": ["le samedi", "le dimanche", "tous les mardis", "le soir"],
+        "citta": ["Lisbonne", "Oslo", "Kyoto", "Vienne", "Porto", "Tallinn"],
+        "mesi": ["mai", "juin", "octobre", "décembre"],
+        "cose": ["une étagère en bois", "un petit tableau", "un nichoir", "une courtepointe"],
+        "eventi": ["le concert de jazz", "le festival de cinéma", "le cours de poterie", "le marché de Noël"],
+        "eventi_a": {"le concert de jazz": "du concert de jazz", "le festival de cinéma": "du festival de cinéma",
+                     "le cours de poterie": "du cours de poterie", "le marché de Noël": "du marché de Noël"},
+        "aziende": ["une boulangerie", "un magasin de vélos", "la bibliothèque municipale"],
+        "animali": ["chat", "chien", "lapin", "perroquet"],
+        "fatti": [
+            ("Je fais du vélo {quando}.", ["{S} fait du vélo {quando}.", "{S} fait une sortie à vélo {quando}."]),
+            ("Je vais {luogo} {quando}.", ["{S} va {luogo} {quando}."]),
+            ("Je veux visiter {citta} en {mese}.", ["{S} veut visiter {citta} en {mese}.",
+                                                   "{S} veut faire un voyage à {citta} en {mese}."]),
+            ("Je dois finir {cosa} avant la fin du mois.", ["{S} doit finir {cosa} avant la fin du mois.",
+                                                            "{S} doit terminer {cosa} avant la fin du mois."]),
+            ("Je peux garder le {animale} de ma voisine {quando}.",
+             ["{S} peut garder le {animale} de sa voisine {quando}."]),
+            ("Je suis fan {evento_a}.", ["{S} est fan {evento_a}."]),
+        ],
+        "coordinata": " et ",
+        "domanda": "C'était comment ?",
+        "evento_andato": ("Je rentre {evento_a}.", "{S} rentre {evento_a}."),
+        "pronome": ("C'était génial, j'ai adoré !", "{S} a adoré {evento}."),
+    },
+    "es": {
+        # the preterite in -ó is a finite verb for `decomponi()`; «quiere» is in its list
+        "nomi": ["Lucía", "Mateo", "Sofía", "Pablo", "Valeria", "Diego", "Carmen", "Hugo"],
+        "luoghi": ["el museo", "el mercado", "la biblioteca", "el puerto viejo", "el jardín botánico"],
+        "quando": ["la semana pasada", "el viernes", "ayer", "hace dos días", "el sábado pasado"],
+        "citta": ["Lisboa", "Oslo", "Kioto", "Viena", "Oporto", "Tallin"],
+        "mesi": ["mayo", "junio", "octubre", "diciembre"],
+        "cose": ["una estantería de madera", "un cuadro pequeño", "una casita para pájaros", "una colcha"],
+        "eventi": ["el concierto de jazz", "el festival de cine", "el curso de cerámica", "el mercadillo de Navidad"],
+        "eventi_a": {"el concierto de jazz": "del concierto de jazz", "el festival de cine": "del festival de cine",
+                     "el curso de cerámica": "del curso de cerámica",
+                     "el mercadillo de Navidad": "del mercadillo de Navidad"},
+        "aziende": ["una panadería", "una tienda de bicicletas", "la biblioteca municipal"],
+        "animali": ["gato", "perro", "conejo", "loro"],
+        "fatti": [
+            ("Visité {luogo} {quando}.", ["{S} visitó {luogo} {quando}."]),
+            ("Terminé {cosa} {quando}.", ["{S} terminó {cosa} {quando}.", "{S} acabó {cosa} {quando}."]),
+            ("Quiero visitar {citta} en {mese}.", ["{S} quiere visitar {citta} en {mese}.",
+                                                  "{S} quiere viajar a {citta} en {mese}."]),
+            ("Adopté un {animale} {quando}.", ["{S} adoptó un {animale} {quando}."]),
+            ("Empecé un trabajo nuevo en {azienda}.", ["{S} empezó un trabajo nuevo en {azienda}.",
+                                                      "{S} comenzó a trabajar en {azienda}."]),
+        ],
+        "coordinata": " y ",
+        "domanda": "¿Qué tal estuvo?",
+        "evento_andato": ("Acabo de volver {evento_a}.", "{S} volvió {evento_a}."),
+        "pronome": ("¡Fue increíble, me encantó!", "A {S} le encantó {evento}."),
+    },
 }
 
 
@@ -204,7 +262,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@1"
+GENERATORE = "d1_dialoghi@2"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
