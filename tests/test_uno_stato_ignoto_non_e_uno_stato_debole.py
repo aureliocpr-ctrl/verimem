@@ -134,9 +134,10 @@ class TestLaViaAUTOMATICA:
     basterebbe — e' la classe «chi ALTRO fa la stessa cosa?»."""
 
     def _coppia(self, sm, stato_a: str, stato_b: str, topic: str):
-        # uno scontro BOOLEANO: gli scontri numerici heal li lascia aperti
-        # di default (TIPI_CHE_HEAL_NON_ESEGUE), e con quelli entrambi i test
-        # passerebbero senza eseguire la regola dei ranghi
+        # uno scontro BOOLEANO chiesto esplicitamente (skip_kinds vuoto): di
+        # default heal lascia aperti sia i numerici sia, dal 29/09, i booleani
+        # (TIPI_CHE_HEAL_NON_ESEGUE), e cosi' entrambi i test passerebbero
+        # senza eseguire la regola dei ranghi
         from verimem.contradiction import ContradictionStore
         a = _metti(sm, f"Il sito {topic} e' aperto.", topic, stato_a)
         b = _metti(sm, f"Il sito {topic} non e' aperto.", topic, stato_b)
@@ -154,7 +155,8 @@ class TestLaViaAUTOMATICA:
     def test_l_auto_heal_non_ritira_un_lato_a_rango_ignoto(self, memoria):
         from verimem.contradiction import heal_contradictions
         a, b, store = self._coppia(memoria, "user_manual", "model_claim", "t/d")
-        esito = heal_contradictions(memoria, store, principal="system:heal")
+        esito = heal_contradictions(memoria, store, principal="system:heal",
+                                     skip_kinds=frozenset())
         assert esito["healed_superseded"] == [], esito
         assert memoria.get(a.id).superseded_by is None
 
@@ -163,5 +165,6 @@ class TestLaViaAUTOMATICA:
         from verimem.contradiction import heal_contradictions
         a, b, store = self._coppia(memoria, "quarantined", "model_claim",
                                    "t/e")
-        esito = heal_contradictions(memoria, store, principal="system:heal")
+        esito = heal_contradictions(memoria, store, principal="system:heal",
+                                     skip_kinds=frozenset())
         assert esito["healed_superseded"] == [a.id], esito

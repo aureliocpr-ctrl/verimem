@@ -4519,22 +4519,63 @@ def _reason_from_warnings(warnings: list) -> str:
     return best.get("advice") or best.get("reason") or ""
 
 
+#: sha256 dei pesi del giudice, calcolato una volta per file e per processo: 0,8 s sui
+#: 737 MB di model.safetensors (misurato il 29/09). Chiave (percorso, byte, mtime_ns),
+#: cosi' un file sostituito si rilegge; il valore e' l'hash DOPO i pesi, da copiare.
+_HASH_DEI_PESI: dict[tuple[str, int, int], Any] = {}
+
+
+def _versione_del_giudice(model_dir: Any) -> str | None:
+    """La versione del giudice locale: sha256 del CONTENUTO che carica, i pesi e poi
+    gate_config.json (la soglia fa parte del giudice), non il nome della cartella.
+    ``None`` se nella cartella non ci sono pesi: assente e dichiarato, mai inventato."""
+    import hashlib
+
+    from .local_grounding import _NOMI_DEI_PESI
+    cartella = Path(model_dir)
+    pesi = next((cartella / n for n in _NOMI_DEI_PESI if (cartella / n).is_file()), None)
+    if pesi is None:
+        return None
+    st = pesi.stat()
+    chiave = (str(pesi), st.st_size, st.st_mtime_ns)
+    h = _HASH_DEI_PESI.get(chiave)
+    if h is None:
+        h = hashlib.sha256()
+        with open(pesi, "rb") as f:
+            for blocco in iter(lambda: f.read(8 << 20), b""):
+                h.update(blocco)
+        _HASH_DEI_PESI[chiave] = h
+    h = h.copy()
+    config = cartella / "gate_config.json"
+    if config.is_file():
+        h.update(config.read_bytes())
+    return "sha256:" + h.hexdigest()[:16]
+
+
 def _judge_of_record_dict(judge: Any) -> dict[str, Any] | None:
     """Judge-of-record: backend + (for the local CE) the model identity that
     actually loaded - the CE's known 7% Spanish entity-substitution escape is
-    model-SPECIFIC, so naming the model lets a caller assess exposure. The
-    injected-llm model id is not visible at the gate layer (None, honest, not
-    invented); ``version`` is a per-file fingerprint enriched in a follow-up."""
+    model-SPECIFIC, so naming the model lets a caller assess exposure - and its
+    ``version``, a fingerprint of the weights and gate_config.json it loads. The
+    injected-llm model id and version are not visible at the gate layer (None,
+    honest, not invented)."""
     if judge is None:
         return None
     model = None
+    version = None
     if judge == "local":
         try:
             from .local_grounding import get_local_judge
-            model = get_local_judge().model_dir.name
+            model_dir = get_local_judge().model_dir
+            model = model_dir.name
         except Exception:  # noqa: BLE001 - identity is best-effort, never fatal
             model = "local_gate_ce"
-    return {"backend": judge, "model": model, "version": None}
+        else:
+            try:
+                version = _versione_del_giudice(model_dir)
+            except OSError:  # unreadable weights: the version stays declared absent
+                version = None
+    return {"backend": judge, "model": model, "version": version}
 
 
 def _confidence_tier(score: Any, judge: Any, thr: Any) -> str:

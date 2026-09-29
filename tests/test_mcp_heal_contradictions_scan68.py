@@ -37,7 +37,13 @@ def _payload(blocks: list[str]) -> dict[str, Any]:
     return json.loads(blocks[0])
 
 
-async def test_mcp_heal_contradictions_supersedes_weaker(tmp_path, monkeypatch):
+async def test_mcp_heal_lascia_aperto_uno_scontro_booleano_e_lo_conta(
+        tmp_path, monkeypatch):
+    """Dal 29/09 anche gli scontri ``boolean_clash`` restano aperti e contati:
+    su una copia dello store il heal ne ritirava 172, fra cui di nuovo i 41
+    fatti appena ripristinati. Fino al 29/09 qui si provava il ritiro del lato
+    debole; la regola dei ranghi si prova in test_heal_contradictions_scan68.py
+    chiedendo i tipi esplicitamente."""
     sm = SemanticMemory(db_path=tmp_path / "sm.db")
     store = ContradictionStore(sm.db_path)
     sm.store(Fact(id="weak", proposition="The NEXUS cache is not enabled",
@@ -51,10 +57,11 @@ async def test_mcp_heal_contradictions_supersedes_weaker(tmp_path, monkeypatch):
 
     payload = _payload(await _invoke_tool("hippo_heal_contradictions", {}))
 
-    assert "weak" in payload["healed_superseded"]
-    assert payload["total_unresolved"] == 0
-    assert sm.get("weak").superseded_by == "strong"
+    assert payload["healed_superseded"] == [], payload
+    assert sm.get("weak").superseded_by is None
     assert sm.get("strong").superseded_by is None
+    assert payload["left_open_kinds"] == {"numeric_clash": 0, "boolean_clash": 1}, payload
+    assert payload["total_unresolved"] == 1
 
 
 async def test_mcp_heal_lascia_aperto_uno_scontro_numerico_e_lo_conta(
@@ -77,7 +84,7 @@ async def test_mcp_heal_lascia_aperto_uno_scontro_numerico_e_lo_conta(
 
     assert payload["healed_superseded"] == [], payload
     assert sm.get("weak").superseded_by is None
-    assert payload["left_open_kinds"] == {"numeric_clash": 1}, payload
+    assert payload["left_open_kinds"] == {"numeric_clash": 1, "boolean_clash": 0}, payload
     assert payload["total_unresolved"] == 1
 
 
