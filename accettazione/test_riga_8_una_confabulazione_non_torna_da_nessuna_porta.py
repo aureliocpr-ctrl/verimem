@@ -13,8 +13,10 @@ da NESSUNA delle tre porte con cui un utente legge la memoria.
 
 COSA VEDE L'UTENTE. Scrive l'esempio del README con l'SDK, poi chiede «what does
 analytics run on» dall'SDK (`Memory().search`), dal comando `verimem recall` e dallo
-strumento `verimem_recall`: in nessuna delle tre risposte c'e' «Analytics runs on
-MongoDB.».
+strumento `verimem_facts_recall` (quello che il README elenca fra gli strumenti della
+memoria; `verimem_recall` legge gli EPISODI, non i fatti: la prima versione di questa riga
+lo usava, e il controllo positivo l'ha fermata sui due sistemi): in nessuna delle tre
+risposte c'e' «Analytics runs on MongoDB.».
 
 LA PROVA E I SUOI CONTROLLI. Uno store solo, perche' le tre porte leggono lo stesso store,
 come nel README. CONTROLLO POSITIVO: il fatto sostenuto («Analytics runs on Postgres.»)
@@ -74,7 +76,7 @@ def test_riga_8_la_confabulazione_fermata_non_torna_da_nessuna_porta(utente):
     risposte["cli"] = cli.stdout
     with utente.mcp() as sessione:
         risposte["mcp"] = json.dumps(
-            sessione.chiama("verimem_recall", {"query": DOMANDA, "k": 10}),
+            sessione.chiama("verimem_facts_recall", {"query": DOMANDA, "k": 10}),
             ensure_ascii=False)
 
     mute = [porta for porta, testo in risposte.items() if SOSTENUTO not in testo]
