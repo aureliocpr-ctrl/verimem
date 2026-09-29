@@ -81,7 +81,14 @@ async def test_quarantine_log_lists_the_blocked_fact(real_sm):
 
 @pytest.mark.asyncio
 async def test_restore_brings_the_fact_back(real_sm):
+    """Il fatto qui lo scrive un'ALTRA porta: dal 29/09 chi ha scritto non
+    libera (Atlas), e via MCP scrittura e richiesta sono tutte ``mcp:unbound``
+    (il rifiuto e' provato in test_chi_ha_scritto_non_libera_la_quarantena)."""
+    import sqlite3
     fid = await _quarantine_one()
+    with sqlite3.connect(str(real_sm.db_path)) as con:
+        con.execute("UPDATE facts SET writer_principal = 'sdk:local' WHERE id = ?",
+                    (fid,))
     out = await _invoke("hippo_quarantine_restore",
                         {"fact_id": fid, "reason": "reviewed: legit legal fact"})
     assert out.get("ok") is True and out.get("restored") is True
