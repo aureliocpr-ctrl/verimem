@@ -69,6 +69,10 @@ def percorsi_della_configurazione() -> tuple[Path, Path, Path]:
 
 DISCOVERY_PATH, DAEMON_LOCK_PATH, _SPAWN_LOCK_PATH = percorsi_della_configurazione()
 
+#: Il file UNICO di prima del 28/09. Resta scritto solo per il passaggio: vedi
+#: `EncodeServer._reclama_la_scoperta_vecchia`.
+LEGACY_DISCOVERY_PATH = Path.home() / ".engram" / "encode_service.json"
+
 
 def _idle_timeout_s() -> float:
     """Seconds of inactivity before the daemon self-exits.
@@ -485,13 +489,46 @@ class EncodeServer:
     def _write_discovery(self) -> None:
         self._finestra_dichiarata = (self._gate_fn is not None
                                      and _puo_ridurre_lo_span())
-        self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
+        self._scrivi_la_scoperta(self._discovery_path)
+
+    def _reclama_la_scoperta_vecchia(self) -> None:
+        """PASSAGGIO dal file unico di prima del 28/09 a un file per configurazione.
+
+        Un daemon di prima dell'aggiornamento resta nel file vecchio e nessun
+        client nuovo lo cerca piu': morirebbe solo dopo l'inattivita' (8 ore),
+        accanto al nuovo, con la memoria doppia per tutto quel tempo; e un
+        server MCP partito prima dell'aggiornamento cerca ancora quel file. Qui
+        il daemon nuovo ci scrive i propri dati, cosi' i client vecchi trovano
+        lui e il daemon vecchio vede la scoperta presa da un altro vivo e fa il
+        passo indietro che sa gia' fare. NON se il file annuncia un daemon vivo
+        di un altro modello o di un'altra dimensione: serve un'altra
+        configurazione, e non la si sfratta.
+        """
+        vecchio = LEGACY_DISCOVERY_PATH
+        if vecchio == self._discovery_path:
+            return
+        info = read_discovery(vecchio)
+        if info:
+            pid = int(info.get("pid") or 0)
+            if pid == os.getpid():
+                return
+            altra = (info.get("model") != self._model_name
+                     or int(info.get("dim") or 0) != int(self._model_dim or 0))
+            if altra and pid and _pid_alive(pid):
+                return
+        try:
+            self._scrivi_la_scoperta(vecchio)
+        except OSError:
+            pass    # il passaggio e' un di piu': un file vecchio illeggibile non ferma il daemon
+
+    def _scrivi_la_scoperta(self, percorso: Path) -> None:
+        percorso.parent.mkdir(parents=True, exist_ok=True)
         # The scratch name carries the pid: two daemons publishing at the same
         # moment would otherwise write the SAME .json.tmp, and the loser's
         # rename could promote a half-written or foreign payload. Harmless while
         # this ran once per boot; the periodic republish below makes concurrent
         # writes reachable, so the name has to be per-process.
-        tmp = self._discovery_path.with_suffix(f".{os.getpid()}.json.tmp")
+        tmp = percorso.with_suffix(f".{os.getpid()}.json.tmp")
         tmp.write_text(
             json.dumps({
                 "pid": os.getpid(),
@@ -520,7 +557,7 @@ class EncodeServer:
             os.chmod(tmp, 0o600)
         except OSError:
             pass
-        tmp.replace(self._discovery_path)
+        tmp.replace(percorso)
 
     def _republish_discovery_if_unclaimed(self) -> None:
         """Re-announce this daemon if nothing currently announces it.
@@ -652,15 +689,19 @@ class EncodeServer:
         return True
 
     def _clear_discovery(self) -> None:
-        try:
-            data = json.loads(self._discovery_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        if data.get("pid") == os.getpid():
+        # Tutti e due i file che il daemon puo' aver scritto: il suo e quello
+        # vecchio del passaggio (`_reclama_la_scoperta_vecchia`), ognuno solo se
+        # nomina ancora lui.
+        for percorso in (self._discovery_path, LEGACY_DISCOVERY_PATH):
             try:
-                self._discovery_path.unlink()
-            except OSError:
-                pass
+                data = json.loads(percorso.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if isinstance(data, dict) and data.get("pid") == os.getpid():
+                try:
+                    percorso.unlink()
+                except OSError:
+                    pass
 
     def start(self) -> None:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -669,6 +710,7 @@ class EncodeServer:
         self._sock.listen(16)
         self._sock.settimeout(1.0)
         self._write_discovery()
+        self._reclama_la_scoperta_vecchia()
 
     def serve_forever(self) -> None:
         if self._sock is None:
