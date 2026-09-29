@@ -26,16 +26,24 @@ MB = 2 ** 20
 
 
 class _Processo:
-    def __init__(self, pid, cmdline, privata_mb, unica_mb, *, windows=True, swap_mb=0):
+    def __init__(self, pid, cmdline, privata_mb, unica_mb, *, windows=True, swap_mb=0,
+                 ws_mb=None, picco_mb=None, picco_ws_mb=None):
         self.pid = pid
         self.info = {"pid": pid, "cmdline": cmdline}
         self._privata, self._unica = privata_mb, unica_mb
         self._windows, self._swap = windows, swap_mb
+        self._ws = unica_mb if ws_mb is None else ws_mb
+        self._picco, self._picco_ws = picco_mb, picco_ws_mb
 
     def memory_info(self):
         if self._windows:
-            return types.SimpleNamespace(rss=self._unica * MB, private=self._privata * MB)
-        return types.SimpleNamespace(rss=self._unica * MB)
+            campi = {"rss": self._ws * MB, "private": self._privata * MB}
+            if self._picco is not None:
+                campi["peak_pagefile"] = self._picco * MB
+            if self._picco_ws is not None:
+                campi["peak_wset"] = self._picco_ws * MB
+            return types.SimpleNamespace(**campi)
+        return types.SimpleNamespace(rss=self._ws * MB)
 
     def memory_full_info(self):
         return types.SimpleNamespace(uss=self._unica * MB, swap=self._swap * MB)
@@ -95,9 +103,9 @@ def test_la_riga_del_doctor_dice_i_due_numeri_e_il_tetto(monkeypatch):
 
     assert len(riga) == 1, "il doctor non dice quanto costa verimem"
     assert riga[0]["status"] == doctor.OK, riga
-    assert "fixed 6298 MB" in riga[0]["detail"], riga
-    assert "per session 528 MB" in riga[0]["detail"], riga
-    assert "committed memory" in riga[0]["detail"], riga
+    assert "shared encode daemon: committed 6298 MB" in riga[0]["detail"], riga
+    assert "MCP processes: committed 528 MB" in riga[0]["detail"], riga
+    assert "peak n/a on this system" in riga[0]["detail"], riga   # nessun picco inventato
     assert riga[0]["fixed_mb"] == 6298 and riga[0]["per_session_mb"] == 528, riga
 
 
@@ -108,6 +116,98 @@ def test_sopra_il_tetto_il_doctor_avvisa(monkeypatch):
         "processi_mcp": 1})
 
     riga = [c for c in doctor.run_doctor() if c["name"] == "memory"][0]
+
+    assert riga["status"] == doctor.WARN, riga
+
+
+#: La macchina misurata il 2026-09-29 alle 20:2x: il daemon vero e i due server MCP
+#: che danno i massimi (uno per l'impegnata, l'altro per la unica).
+_MACCHINA_29_09 = [
+    _Processo(10, ["pythonw.exe", "-m", "verimem.encode_service"], 5990, 343,
+              ws_mb=688, picco_mb=6025, picco_ws_mb=2863),
+    _Processo(21, ["python.exe", "-m", "verimem.mcp_server"], 357, 53,
+              ws_mb=104, picco_mb=357, picco_ws_mb=203),
+    _Processo(22, ["python.exe", "-m", "verimem.mcp_server"], 355, 155,
+              ws_mb=202, picco_mb=356, picco_ws_mb=202),
+]
+
+
+def _misura_finta(**campi):
+    """Una misura con tutti i numeri dentro i due tetti, salvo quelli passati."""
+    base = {"misurato": True, "processi_mcp": 2,
+            "fissa_mb": 5990, "fissa_picco_mb": 6025, "fissa_unica_mb": 343,
+            "fissa_ws_mb": 688, "fissa_picco_ws_mb": 2863,
+            "per_sessione_mb": 357, "per_sessione_picco_mb": 357,
+            "per_sessione_unica_mb": 155, "per_sessione_ws_mb": 202,
+            "per_sessione_picco_ws_mb": 203}
+    base.update(campi)
+    return lambda info, psutil=None: base
+
+
+def _riga_memoria(monkeypatch, **campi):
+    monkeypatch.setattr(doctor, "quanto_costa_verimem", _misura_finta(**campi))
+    return [c for c in doctor.run_doctor() if c["name"] == "memory"][0]
+
+
+def test_ogni_numero_per_sessione_e_il_massimo_della_sua_grandezza():
+    """RED sul tronco: la sessione era il processo con l'impegnata piu' grande, e
+    la sua unica (53) nascondeva quella del server accanto (155)."""
+    misura = doctor.quanto_costa_verimem({"pid": 10}, psutil=_psutil_finto(_MACCHINA_29_09))
+
+    assert misura["per_sessione_mb"] == 357, misura
+    assert misura["per_sessione_unica_mb"] == 155, misura
+    assert misura["per_sessione_ws_mb"] == 202, misura
+    assert misura["per_sessione_picco_mb"] == 357, misura
+
+
+def test_working_set_e_picchi_dove_il_sistema_li_tiene():
+    """RED sul tronco: il doctor misurava solo impegnata e unica."""
+    misura = doctor.quanto_costa_verimem({"pid": 10}, psutil=_psutil_finto(_MACCHINA_29_09))
+
+    assert (misura["fissa_ws_mb"], misura["fissa_picco_mb"], misura["fissa_picco_ws_mb"]) \
+        == (688, 6025, 2863), misura
+
+
+def test_fuori_da_windows_il_picco_non_si_inventa():
+    macchina = [_Processo(10, ["python3", "-m", "verimem.encode_service"], 0, 1500,
+                          windows=False, swap_mb=700, ws_mb=1600)]
+
+    misura = doctor.quanto_costa_verimem({"pid": 10}, psutil=_psutil_finto(macchina))
+
+    assert misura["fissa_ws_mb"] == 1600, misura
+    assert misura["fissa_picco_mb"] is None and misura["fissa_picco_ws_mb"] is None, misura
+
+
+def test_la_riga_stampa_le_tre_grandezze_e_i_due_tetti(monkeypatch):
+    """RED sul tronco: la riga diceva solo l'impegnata e un tetto solo."""
+    riga = _riga_memoria(monkeypatch)
+
+    assert riga["status"] == doctor.OK, riga
+    for pezzo in ("committed 5990 MB (peak 6025)", "unique 343 MB",
+                  "working set 688 MB (peak 2863)", "committed 357 MB (peak 357)",
+                  "unique 155 MB", "2500", "300"):
+        assert pezzo in riga["detail"], (pezzo, riga["detail"])
+    assert (riga["fixed_unique_mb"], riga["per_session_unique_mb"]) == (343, 155), riga
+    assert (riga["fixed_unique_max_mb"], riga["per_session_unique_max_mb"]) == (2500, 300), riga
+
+
+def test_la_unica_fissa_sopra_il_suo_tetto_avvisa(monkeypatch):
+    """RED sul tronco: con l'impegnata dentro, la unica non era confrontata."""
+    riga = _riga_memoria(monkeypatch, fissa_unica_mb=2501)
+
+    assert riga["status"] == doctor.WARN, riga
+
+
+def test_la_unica_di_una_sessione_sopra_il_suo_tetto_avvisa(monkeypatch):
+    riga = _riga_memoria(monkeypatch,
+                         per_sessione_unica_mb=301)
+
+    assert riga["status"] == doctor.WARN, riga
+
+
+def test_il_tetto_dell_impegnata_vale_sul_picco(monkeypatch):
+    """Un tetto massimo si legge sul massimo: adesso 5990, ma al picco oltre il tetto."""
+    riga = _riga_memoria(monkeypatch, fissa_picco_mb=8001)
 
     assert riga["status"] == doctor.WARN, riga
 
