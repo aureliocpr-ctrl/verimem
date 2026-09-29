@@ -4109,7 +4109,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "debole verso il piu forte e marca la contraddizione risolta. "
                 "Trust pari -> lasciata per giudizio umano. Reversibile: la riga "
                 "resta in DB per lineage e sparisce dal recall di default. Agisce "
-                "solo su cio che il detector ha gia trovato (non scansiona)."
+                "solo su cio che il detector ha gia trovato (non scansiona). "
+                "OGGI non esegue numeric_clash ne' boolean_clash: restano aperti "
+                "e contati in left_open_kinds finche' la decisione col giudice "
+                "non e' fusa; fra due fatti senza topic lo scontro resta aperto "
+                "(left_open_no_topic)."
             ),
             inputSchema={
                 "type": "object",
