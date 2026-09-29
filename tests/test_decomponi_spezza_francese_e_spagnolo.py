@@ -10,7 +10,7 @@ claim too, as it does in Italian and English. The verb list is shared by all lan
 Spanish verb form that is also an English word («a», «son», «es») cannot enter it: a cell guards that the
 English article «a» is still not a verb.
 
-Pure function, no model. Run from the root of the checkout:
+No model: the cells at the write port inject the judge's score. Run from the root of the checkout:
 
     python -m pytest tests/test_decomponi_spezza_francese_e_spagnolo.py -q -p no:randomly
 """
@@ -18,6 +18,8 @@ from __future__ import annotations
 
 import pytest
 
+from verimem import anti_confab_gate as g
+from verimem import grounding_gate as gg
 from verimem.atomic_claims import decomponi, ha_verbo_finito
 
 
@@ -46,3 +48,29 @@ def test_le_espressioni_fisse_restano_intere(testo: str) -> None:
 def test_l_articolo_inglese_non_diventa_un_verbo() -> None:
     # «a» is the French «has», and the English article: the shared list must not take it
     assert not ha_verbo_finito("a new bike for the trip")
+
+
+# ── at the write port: the part the source does not say stops a French or Spanish memory ──────────
+@pytest.mark.parametrize("memoria, fonte, debole", [
+    ("Claire est allée au marché et fait du vélo le dimanche.",
+     "Claire : je suis allée au marché ce matin.", "Claire fait du vélo le dimanche."),
+    ("Lucía fue al mercado y compró pan fresco.",
+     "Lucía: esta mañana fui al mercado.", "Lucía compró pan fresco."),
+])
+def test_alla_porta_la_parte_non_detta_ferma_la_memoria(monkeypatch, memoria, fonte, debole) -> None:
+    visti: list[str] = []
+
+    def giudice(_llm, _fonte, testo, **_k):
+        visti.append(testo)
+        return (12.0 if testo == debole else 96.0), "local"
+
+    monkeypatch.setenv("ENGRAM_GROUNDING_WRITE", "1")
+    monkeypatch.delenv("ENGRAM_GROUNDING_WRITE_THRESHOLD", raising=False)
+    monkeypatch.delenv("ENGRAM_GROUNDING_THRESHOLD", raising=False)
+    monkeypatch.setenv("ENGRAM_BAND_LLM", "0")
+    monkeypatch.setattr(gg, "fact_grounding_score_ex", giudice)
+    gate = g.run_validation_gate(proposition=memoria, verified_by=["source-doc:x:1"], topic="t",
+                                 agent=None, validate="fast", source=fonte)
+    assert gate.action != "persist", (gate.action, gate.grounding_score, visti)
+    claim = [w for w in gate.warnings if w.get("layer") == "L4-claim"]
+    assert claim and debole in claim[0]["reason"], (visti, [w.get("layer") for w in gate.warnings])
