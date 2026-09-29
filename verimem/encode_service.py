@@ -21,8 +21,8 @@ Protocol (length-prefixed JSON, big-endian uint32 frame length):
   REQ:  {"ping": true}               ->  RESP {"ok": true, "model": "...", "pid": N}
   on error:                              RESP {"ok": false, "error": "..."}
 
-Discovery file ``<data dir>/daemon/encode_service.<key>.json`` ({pid, port,
-model, started_at}), one per configuration (data dir, model, dim: see
+Discovery file ``~/.engram/daemon/encode_service.<key>.json`` ({pid, port,
+model, started_at}), one per model and dimension (see
 ``percorsi_della_configurazione``), lets clients find the port. The server
 idle-exits after ``IDLE_TIMEOUT_S`` so it never lingers forever.
 """
@@ -41,26 +41,30 @@ from pathlib import Path
 
 
 def percorsi_della_configurazione() -> tuple[Path, Path, Path]:
-    """(scoperta, lock del daemon, lock dello spawn) della configurazione di
-    QUESTO processo: cartella dati, modello, dimensione.
+    """(scoperta, lock del daemon, lock dello spawn) del modello e della
+    dimensione di QUESTO processo, nella home.
 
-    Fino al 28/09 erano tre file soli in ``~/.engram`` per qualunque
-    configurazione. Un processo con un altro modello (i test, un altro
-    strumento) trovava il daemon di produzione, lo contava come zombie perche'
-    non serviva il SUO modello e gli rubava lock e scoperta: quel giorno una
-    macchina di sviluppo e' rimasta 41 minuti col daemon sbagliato, e ogni
-    sessione ha cercato per parole chiave. Ora ogni configurazione ha i suoi
-    tre file nella SUA cartella dati: un daemon avviato nella sabbia si
-    pubblica nella sabbia, e un cliente trova solo il daemon della propria
-    configurazione. In produzione la configurazione e' una, e il daemon resta uno.
+    Fino al 28/09 erano tre file soli in ``~/.engram`` per qualunque modello.
+    Un processo con un altro modello (i test, un altro strumento) trovava il
+    daemon di produzione, lo contava come zombie perche' non serviva il SUO
+    modello e gli rubava lock e scoperta: quel giorno una macchina di sviluppo
+    e' rimasta 41 minuti col daemon sbagliato, e ogni sessione ha cercato per
+    parole chiave. Ora ogni modello ha i suoi tre file, e un cliente trova solo
+    il daemon del proprio modello.
+
+    La cartella dati NON e' nella chiave, ed e' una scelta misurata (29/09): il
+    daemon codifica e giudica testo, e chi lo chiama da uno store o da un altro
+    riceve gli stessi vettori. Con la cartella dati nella chiave ogni store
+    avviava il suo daemon da ~6 GB impegnati, e il job di accettazione, che da'
+    una cartella nuova a ogni prova, non trovava piu' il daemon gia' caldo. La
+    sabbia dei test la fa la home spostata, e nella suite il conftest.
     """
     import hashlib
 
     from .config import CONFIG
 
-    cartella = Path(CONFIG.data_dir) / "daemon"
-    firma = (f"{Path(CONFIG.data_dir).resolve()}|{CONFIG.embedding_model}|"
-             f"{int(CONFIG.embedding_dim)}")
+    cartella = Path.home() / ".engram" / "daemon"
+    firma = f"{CONFIG.embedding_model}|{int(CONFIG.embedding_dim)}"
     chiave = hashlib.sha256(firma.encode("utf-8")).hexdigest()[:12]
     return (cartella / f"encode_service.{chiave}.json",
             cartella / f"encode_service.{chiave}.daemon.lock",
