@@ -18,7 +18,8 @@ Pair types (field `tipo`):
   fonte_finestra   the window that names the referent -> the same fact                  label 1
 
 Fields per row: id, dialogo, lingua, tipo, fonte, memoria, claim, etichetta, unita_nella_memoria (how
-many units the memory became), n_unita (this unit's position in the memory, from 0), generatore, seme.
+many units the memory became), indice_unita (which unit the claim is, from 0), generatore, seme. The
+rows go through `d1_campi.controlla()` before they are written.
 
 Run from the root of the checkout, with the `verimem` of this checkout:
     python benchmark/judge_v3/d1_dialoghi.py --dialoghi 60 --seme 20260930 \
@@ -35,11 +36,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-# the verimem of THIS checkout: the units depend on the version of `decomponi()`, and a script run as
-# `python benchmark/...` would otherwise import whatever verimem is installed
-RADICE = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(RADICE))
-from verimem.atomic_claims import decomponi  # noqa: E402
+# the fields, their check and `decomponi()` from the verimem of THIS checkout: one module for every
+# D1 builder, so the halves cannot read a field in two ways
+from d1_campi import controlla, decomponi
 
 # ── template per lingua: (prima persona nel turno, terza persona nel claim) ──────────────────
 LINGUE = {
@@ -263,7 +262,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@3"
+GENERATORE = "d1_dialoghi@4"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
@@ -271,10 +270,10 @@ def coppie(d: dict, seme: int) -> list[dict]:
     turni, A = d["turni"], d["A"]
     out = []
 
-    def aggiungi(tipo, fonte, memoria, unita, etichetta, n_unita, indice=0):
+    def aggiungi(tipo, fonte, memoria, unita, etichetta, quante, indice=0):
         out.append({"id": f"{d['id']}-{len(out):02d}", "dialogo": d["id"], "lingua": d["lingua"],
                     "tipo": tipo, "fonte": fonte, "memoria": memoria, "claim": unita,
-                    "etichetta": etichetta, "unita_nella_memoria": n_unita, "n_unita": indice,
+                    "etichetta": etichetta, "unita_nella_memoria": quante, "indice_unita": indice,
                     "generatore": GENERATORE, "seme": seme})
 
     # 1. sostenute: ogni turno col suo fatto
@@ -307,12 +306,12 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     import verimem
     print("verimem from:", verimem.__file__)
-    assert RADICE in Path(verimem.__file__).resolve().parents, "verimem is not the one of this checkout"
     rng = random.Random(a.seme)
     righe = []
     for lingua in LINGUE:
         for n in range(a.dialoghi):
             righe.extend(coppie(dialogo(rng, lingua, n), a.seme))
+    controlla(righe)
     uscita = Path(a.uscita)
     uscita.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in righe), encoding="utf-8")
     import hashlib
