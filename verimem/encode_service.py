@@ -21,9 +21,10 @@ Protocol (length-prefixed JSON, big-endian uint32 frame length):
   REQ:  {"ping": true}               ->  RESP {"ok": true, "model": "...", "pid": N}
   on error:                              RESP {"ok": false, "error": "..."}
 
-Discovery file ``~/.engram/encode_service.json`` ({pid, port, model,
-started_at}) lets clients find the port. The server idle-exits after
-``IDLE_TIMEOUT_S`` so it never lingers forever.
+Discovery file ``<data dir>/daemon/encode_service.<key>.json`` ({pid, port,
+model, started_at}), one per configuration (data dir, model, dim: see
+``percorsi_della_configurazione``), lets clients find the port. The server
+idle-exits after ``IDLE_TIMEOUT_S`` so it never lingers forever.
 """
 from __future__ import annotations
 
@@ -38,7 +39,35 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-DISCOVERY_PATH = Path.home() / ".engram" / "encode_service.json"
+
+def percorsi_della_configurazione() -> tuple[Path, Path, Path]:
+    """(scoperta, lock del daemon, lock dello spawn) della configurazione di
+    QUESTO processo: cartella dati, modello, dimensione.
+
+    Fino al 28/09 erano tre file soli in ``~/.engram`` per qualunque
+    configurazione. Un processo con un altro modello (i test, un altro
+    strumento) trovava il daemon di produzione, lo contava come zombie perche'
+    non serviva il SUO modello e gli rubava lock e scoperta: quel giorno una
+    macchina di sviluppo e' rimasta 41 minuti col daemon sbagliato, e ogni
+    sessione ha cercato per parole chiave. Ora ogni configurazione ha i suoi
+    tre file nella SUA cartella dati: un daemon avviato nella sabbia si
+    pubblica nella sabbia, e un cliente trova solo il daemon della propria
+    configurazione. In produzione la configurazione e' una, e il daemon resta uno.
+    """
+    import hashlib
+
+    from .config import CONFIG
+
+    cartella = Path(CONFIG.data_dir) / "daemon"
+    firma = (f"{Path(CONFIG.data_dir).resolve()}|{CONFIG.embedding_model}|"
+             f"{int(CONFIG.embedding_dim)}")
+    chiave = hashlib.sha256(firma.encode("utf-8")).hexdigest()[:12]
+    return (cartella / f"encode_service.{chiave}.json",
+            cartella / f"encode_service.{chiave}.daemon.lock",
+            cartella / f"encode_service.{chiave}.spawn.lock")
+
+
+DISCOVERY_PATH, DAEMON_LOCK_PATH, _SPAWN_LOCK_PATH = percorsi_della_configurazione()
 
 
 def _idle_timeout_s() -> float:
@@ -683,7 +712,7 @@ class EncodeServer:
 
 
 # --- Auto-spawn (lazy, windowless) -----------------------------------------
-_SPAWN_LOCK_PATH = Path.home() / ".engram" / "encode_service.spawn.lock"
+# `_SPAWN_LOCK_PATH` e' per configurazione: vedi `percorsi_della_configurazione`.
 _SPAWN_COOLDOWN_S = 60.0
 
 # --- Daemon singleton lock (2026-07-10 RAM incident) -------------------------
@@ -693,7 +722,7 @@ _SPAWN_COOLDOWN_S = 60.0
 # loser then lingers idle for hours at full weight (measured: 2 × 1.9 GB).
 # The daemon itself must be the arbiter: take an atomic pid lock BEFORE the
 # model load and exit cheaply if another live daemon holds it.
-DAEMON_LOCK_PATH = Path.home() / ".engram" / "encode_service.daemon.lock"
+# `DAEMON_LOCK_PATH` e' per configurazione: vedi `percorsi_della_configurazione`.
 
 
 def _pid_alive(pid: int) -> bool:
@@ -784,7 +813,10 @@ _LOCK_VERIFY_DELAY_S = 0.10
 #: "sta scaricando" da "e' incastrato", si sposta la soglia invece di fingere di
 #: eliminare il compromesso: 10 minuti coprono un primo download reale, e uno
 #: zombie vero costa 10 minuti invece che per sempre.
-_ZOMBIE_GRACE_S = 600.0
+try:
+    _ZOMBIE_GRACE_S = float(os.environ.get("ENGRAM_ENCODE_ZOMBIE_GRACE_S", "") or 600.0)
+except ValueError:
+    _ZOMBIE_GRACE_S = 600.0
 
 #: Timeout del probe che decide un FURTO di lock, deliberatamente piu' lungo di
 #: quello informativo (0.4 s): un falso "non serve" crea due daemon col modello
@@ -829,7 +861,11 @@ def _owner_is_zombie(path: Path) -> bool:
     # nascono due daemon col modello in RAM, mentre l'attesa in piu' la paga
     # solo chi sta per rubare, cioe' un caso raro. Dove sbagliare costa caro si
     # aspetta di piu'.
-    return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
+    # ⛔ 28/09: «serve» vuol dire RISPONDE, non «serve il MIO modello». Qui
+    # c'era `daemon_usable`, tarato sul modello di chi chiede: un processo con
+    # un'altra configurazione contava come zombie il daemon sano di un altro, e
+    # glielo rubava. Zombie e' solo chi e' vivo e non risponde alla sonda.
+    return not ping_healthy(read_discovery(), timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
 def daemon_in_arrivo(lock_path: Path | None = None) -> bool:
