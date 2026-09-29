@@ -85,3 +85,19 @@ def test_riga_3_chi_ha_chiesto_il_servizio_condiviso_sa_perche_non_l_ha_avuto(ut
         "l'utente ha chiesto il servizio condiviso (HIPPO_ENCODE_DELEGATE_ONLY=1), il "
         f"giudizio non e' venuto da li' (judged_by={ammessa.get('judged_by')!r}), e la "
         f"ricevuta non dice perche': livelli = {ammessa.get('livelli')}")
+
+
+def test_riga_3_chi_ha_chiesto_il_servizio_e_lo_ha_spento_sa_perche(utente):
+    """La stessa promessa senza dipendere dall'ordine delle celle. La cella qui sopra
+    passa se un daemon caldo c'e' gia' nella home del job, lasciato dalle celle prima;
+    al primo avvio di un utente, col daemon non ancora pronto, la ragione diceva solo
+    che il giudice di casa caricava (dal wheel il 29/09, job 109551779207). Qui la
+    delega e' chiesta e il servizio e' spento: nessun daemon puo' giudicare, e la
+    ricevuta deve dire perche'."""
+    esito = _esito(utente.python(CODICE, HIPPO_ENCODE_DELEGATE_ONLY="1",
+                                 ENGRAM_ENCODE_SERVICE="0"))
+    ammessa = esito["ammessa"]
+    ragioni = " ".join(str(liv.get("ragione") or "") for liv in ammessa.get("livelli") or [])
+    assert "ENGRAM_ENCODE_SERVICE=0" in ragioni, (
+        "l'utente ha chiesto il servizio condiviso e lo ha spento, e la ricevuta non dice "
+        f"perche' il giudizio non e' venuto da li': livelli = {ammessa.get('livelli')}")
