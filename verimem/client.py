@@ -837,7 +837,10 @@ def chiave_di_identita(fonte: str | None, riferimenti=None) -> str | None:
 #: `tests/test_un_utente_non_vede_i_fatti_di_un_altro.py`. Gli altri, su un
 #: handle legato, RIFIUTANO: diversi aprono il database per conto loro e
 #: vedrebbero i fatti di tutti. Un metodo nuovo nasce chiuso.
-_METODI_NELL_AMBITO = frozenset({"add", "search", "get", "get_all", "count"})
+_METODI_NELL_AMBITO = frozenset({"add", "search", "get", "get_all", "count",
+                                 # pezzo 2: le modifiche per id
+                                 "delete", "update", "restore", "label",
+                                 "history", "forget_with_report", "undo"})
 
 
 def _chiudi_i_metodi_fuori_ambito(memoria: Memory) -> None:

@@ -6853,6 +6853,9 @@ _CONSAPEVOLI_DELL_AMBITO = frozenset({
     "recall", "recall_hybrid", "live_topic_siblings", "direct_predecessors",
     # scritture: dentro l'ambito, e mai sopra un id di un altro
     "store", "supersede",
+    # pezzo 2: le modifiche per id
+    "delete", "restore_fact", "set_epistemic", "get_supersession_chain",
+    "undo_destructive_op",
     # un handle derivato puo' solo restringere
     "nell_ambito",
 })
