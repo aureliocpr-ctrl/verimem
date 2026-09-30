@@ -59,6 +59,8 @@ from decimal import Decimal
 
 from .quantity_match import (
     _QUANT_RE,
+    _spans_degli_orari,
+    _spans_delle_date,
     claim_span,
     extract_quantities,
     orari,
@@ -85,7 +87,14 @@ def _numeri_come_scritti(testo: str) -> dict[float, str]:
     distinguere: sono lo stesso numero.
     """
     fuori: dict[float, str] = {}
-    for m in _QUANT_RE.finditer(claim_span(testo)):
+    parte = claim_span(testo)
+    # ...e salta gli STESSI span che salta l'estrattore, o il legame non e' piu'
+    # esatto: in «Alle 22:40 ha ammesso 22.0 fatti» il 22 dell'orario, che non e'
+    # una quantita', arrivava prima e dava alla ricevuta «22» invece di «22.0».
+    salta = _spans_delle_date(parte) + _spans_degli_orari(parte)
+    for m in _QUANT_RE.finditer(parte):
+        if any(a <= m.start(1) < b for a, b in salta):
+            continue
         try:
             v = float(m.group(1))
         except ValueError:      # pragma: no cover — la regex cattura cifre

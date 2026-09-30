@@ -72,7 +72,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-from .quantity_match import extract_quantities
+from .quantity_match import _spans_degli_orari, extract_quantities
 
 __all__ = ["ValoreRiusato", "valori_riusati_da_altro_contesto"]
 
@@ -141,7 +141,16 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
     # Il trattino esclude solo se PRECEDUTO DA UNA CIFRA («2026-09-06», «166-237»):
     # un numero NEGATIVO («-3 °C», «−12 dB») resta un numero (domanda del lead,
     # b10984ebf24c24c6; il meno tipografico U+2212 non e' nella classe).
+    # L'ORA DI UN ORARIO NON SI CERCA NEMMENO LEI (T223). Il lookbehind sotto
+    # toglie cio' che segue i due punti, non cio' che li precede: in «10:30»
+    # il 10 si trovava, e da quando L4.1 non lo conta piu' fra i valori della
+    # fonte i due layer davano due avvisi sullo stesso numero, uno dei quali
+    # attaccava il 10 alle parole dell'orario. Lo span e' quello del parser:
+    # una definizione sola di che cosa e' un orario.
+    orari = _spans_degli_orari(testo)
     for m in re.finditer(rf"(?<![\d.,:/])(?<!\d-){forma}(?![\d,]|\.(?=\d))", testo):
+        if any(a <= m.start() < b for a, b in orari):
+            continue
         inizio = max(0, m.start() - _RAGGIO)
         fine = min(len(testo), m.end() + _RAGGIO)
         for sep in ("\n", "|"):
