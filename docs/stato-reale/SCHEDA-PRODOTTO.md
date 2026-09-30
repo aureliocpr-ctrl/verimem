@@ -133,7 +133,7 @@ frase non tornasse: sarebbe passato anche se non fosse tornato nulla. Adesso
 guarda lo stato.)*
 
 ```bash
-pip install verimem        # ~5 min, ~1.0 GB su disco (75 pacchetti, torch è più di metà)
+pip install verimem        # ~5 min, ~1.0 GB su disco (76 pacchetti, torch è più di metà)
 verimem warmup             # 746 MB, il giudice. NON è obbligatorio: sposta solo QUANDO paghi
 verimem doctor             # verifica l'installazione — e ti dice QUALE store sta guardando
 python -c "..."            # il Quickstart: scrive una falsità, e l'assert non la ritrova
