@@ -33,6 +33,25 @@ CAMPI = ("id", "lingua", "tipo", "fonte", "memoria", "claim", "etichetta",
          "unita_nella_memoria", "indice_unita", "generatore", "seme")
 
 
+def coda(claim: str, soggetto: str) -> str:
+    """The claim without its subject and final stop, to coordinate it: «Mara went to X.» -> «went to X»."""
+    corpo = claim[len(soggetto):].strip() if claim.startswith(soggetto) else claim
+    return corpo.rstrip(".")
+
+
+def unita_con_etichetta(memoria: str, atomici: list[tuple[str, int]], soggetto: str) -> list[tuple[str, int]]:
+    """`decomponi()` on the memory; every unit takes the lowest label among the atomic claims it contains
+    (their body without the subject is inside the unit). A unit that contains no atomic claim is an
+    error of the builder, and it stops."""
+    out = []
+    for unita in decomponi(memoria):
+        dentro = [e for a, e in atomici if coda(a, soggetto).lower() in unita.lower()]
+        if not dentro:
+            raise ValueError(f"unit with no known atomic claim: {unita!r} from {memoria!r}")
+        out.append((unita, min(dentro)))
+    return out
+
+
 def controlla(righe: list[dict]) -> None:
     """Raise ValueError at the first row that breaks a field rule; return None if all rows keep them."""
     indici: dict[tuple[str, str], set[int]] = defaultdict(set)

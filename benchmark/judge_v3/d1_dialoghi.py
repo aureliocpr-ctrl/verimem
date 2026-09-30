@@ -40,9 +40,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-# the fields, their check and `decomponi()` from the verimem of THIS checkout: one module for every
-# D1 builder, so the halves cannot read a field in two ways
-from d1_campi import controlla, decomponi
+# the check of the fields and the labelled units of `decomponi()` (from the verimem of THIS checkout):
+# one module for every D1 builder, so the halves cannot read a field or label a unit in two ways
+from d1_campi import coda, controlla, unita_con_etichetta
 
 # ── template per lingua: (prima persona nel turno, terza persona nel claim) ──────────────────
 LINGUE = {
@@ -216,24 +216,6 @@ def _voci(rng: random.Random, t: dict) -> dict:
             "azienda": rng.choice(t["aziende"]), "animale": rng.choice(t["animali"])}
 
 
-def _coda(claim: str, soggetto: str) -> str:
-    """Il claim senza soggetto e senza punto finale, per la coordinata: «Mara went to X.» -> «went to X»."""
-    corpo = claim[len(soggetto):].strip() if claim.startswith(soggetto) else claim
-    return corpo.rstrip(".")
-
-
-def _unita_con_etichetta(memoria: str, atomici: list[tuple[str, int]], soggetto: str) -> list[tuple[str, int]]:
-    """`decomponi()` sulla memoria; ogni unità prende l'etichetta più bassa fra gli atomici che contiene
-    (il loro corpo senza soggetto è dentro l'unità). Un'unità che non contiene nessun atomico è un
-    errore del generatore, e si ferma."""
-    out = []
-    for unita in decomponi(memoria):
-        dentro = [e for a, e in atomici if _coda(a, soggetto).lower() in unita.lower()]
-        assert dentro, f"unità senza atomico noto: {unita!r} da {memoria!r}"
-        out.append((unita, min(dentro)))
-    return out
-
-
 def dialogo(rng: random.Random, lingua: str, n: int) -> dict:
     """Un dialogo sintetico fra A e B, con i fatti di ciascun turno e la terna del pronome."""
     t = LINGUE[lingua]
@@ -308,8 +290,8 @@ def coppie(d: dict, seme: int) -> list[dict]:
         aggiungi("sostenuta", _riga(parlante, testo), claim, claim, 1, 1)
     # 2. altro turno: la memoria unisce il fatto del turno 0 (A) e quello del turno 2 (A); la fonte è il turno 0
     (pa, ta, ca), (_, _, cb) = turni[0], turni[2]
-    memoria = f"{ca.rstrip('.')}{t['coordinata']}{_coda(cb, A)}."
-    unita = _unita_con_etichetta(memoria, [(ca, 1), (cb, 0)], A)
+    memoria = f"{ca.rstrip('.')}{t['coordinata']}{coda(cb, A)}."
+    unita = unita_con_etichetta(memoria, [(ca, 1), (cb, 0)], A)
     for k, (u, e) in enumerate(unita):
         aggiungi("altro_turno" if e == 0 else "sostenuta", _riga(pa, ta), memoria, u, e, len(unita), k)
     # 3. parlante scambiato: il fatto del turno 1 (detto da B) attribuito ad A
