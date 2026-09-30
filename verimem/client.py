@@ -21,6 +21,7 @@ local distilled CE, ENGRAM_GROUNDING_BACKEND=local).
 """
 from __future__ import annotations
 
+import dataclasses
 import functools
 import logging
 import re
@@ -630,6 +631,58 @@ def persisti_chi_ha_quarantinato(db_path, fact_id: str, causa: str) -> bool:
         return False
 
 
+def _completa_dopo_il_salvataggio(semantic, fact, gate, *, ritira: bool,
+                                  chi_ha_quarantinato: str | None,
+                                  principal: str,
+                                  attesa_s: float = 120.0) -> None:
+    """I due effetti di una scrittura che vogliono la riga GIA' nel database —
+    i ritiri e la causa della quarantena — quando il salvataggio e' stato
+    rinviato perche' un'altra scrittura teneva il lucchetto.
+
+    Le DECISIONI le ha gia' prese `add()`, una volta sola: qui si aspetta la
+    riga e si applicano. La presenza si legge dalla tabella e non da `get()`,
+    che puo' non rendere un fatto in quarantena: proprio quello a cui la causa
+    va attaccata. Fino al 25/09 la porta MCP, in questo caso, saltava i due
+    passi senza dirlo.
+    """
+    import sqlite3 as _sq
+    import threading
+    import time
+
+    def _lavoro() -> None:
+        fine = time.monotonic() + attesa_s
+        stato = None
+        while time.monotonic() < fine:
+            try:
+                with _sq.connect(f"file:{semantic.db_path}?mode=ro", uri=True) as _c:
+                    _r = _c.execute("SELECT status FROM facts WHERE id=?",
+                                    (fact.id,)).fetchone()
+                stato = None if _r is None else str(_r[0])
+            except Exception:  # noqa: BLE001 — si riprova fino alla scadenza
+                stato = None
+            if stato is not None:
+                break
+            time.sleep(0.5)
+        if stato is None:
+            _LOG.warning("scrittura rinviata non arrivata entro %.0fs: fact_id=%s "
+                         "— ritiri e causa della quarantena NON applicati",
+                         attesa_s, fact.id)
+            return
+        try:
+            if chi_ha_quarantinato:
+                persisti_chi_ha_quarantinato(semantic.db_path, fact.id,
+                                             chi_ha_quarantinato)
+            elif ritira and stato != "quarantined":
+                _applica_verdetto(gate, fact, semantic, principal=principal,
+                                  ammesso=True, log=_LOG)
+        except Exception as exc:  # noqa: BLE001 — la scrittura c'e' gia'
+            _LOG.warning("completamento della scrittura rinviata fallito: "
+                         "fact_id=%s error=%s", fact.id, exc)
+
+    threading.Thread(target=_lavoro, name="verimem-dopo-il-salvataggio",
+                     daemon=True).start()
+
+
 def _con_la_ricevuta(funzione):
     """Applica la `Ricevuta` del nucleo a QUALUNQUE uscita della scrittura.
 
@@ -657,13 +710,127 @@ def _con_la_ricevuta(funzione):
     return guscio
 
 
+@dataclasses.dataclass(frozen=True)
+class ProfiloDiPorta:
+    """Che cosa distingue una porta dall'altra — e SOLO questo.
+
+    Fino al 25/09/2026 ogni porta aveva la sua copia del motore: gate,
+    costruzione del fatto, ritiri, evento, ricevuta. E ogni copia era
+    incompleta in un punto diverso: `key_facts` non emetteva l'evento, l'SDK
+    faceva un fatto nuovo a ogni ripetizione, MCP rendeva 3 chiavi del nucleo
+    su 14 (la tabella e' in `tests/test_la_stessa_scrittura_da_ogni_porta.py`).
+    Qui restano le differenze che una porta ha DAVVERO, di fiducia o di
+    trasporto; tutto il resto lo fa `Memory.add()` per tutte.
+
+    ⚠️ Le semantiche di fiducia sono quelle che ogni porta aveva gia', lette
+    dalle chiamate al gate del 25/09, e NON sono ridecise qui: la riga di
+    comando tratta `verified_by` come non fidato, esattamente come faceva
+    `facts add`. Che sia giusto e' una domanda aperta — ma adesso si legge in
+    un posto solo, invece che in tre chiamate al gate sparse in tre file.
+    """
+
+    nome: str
+    #: `verified_by` viene da codice fidato (l'applicazione che usa l'SDK) o da
+    #: un chiamante che non lo e' (un client MCP lo scrive negli argomenti).
+    provenienza_fidata: bool
+    #: `meta_narrative=True` salta la famiglia L1 (l'operatore in processo) o
+    #: la salta solo col token del server, che il gate verifica.
+    narrativa_salta_l1: bool
+    #: `validate="off"` e `force_persist` onorati, oppure negati e dichiarati
+    #: nella ricevuta in `gate_knobs_denied`.
+    manopole_permesse: bool
+    #: `sync` aspetta l'embedding; `auto` lo rinvia se il daemon e' freddo.
+    embed: str
+    #: Una richiesta interattiva non aspetta un lucchetto di SQLite occupato:
+    #: il salvataggio ha un tempo massimo e, se lo supera, si completa in
+    #: background — con TUTTI i passi che vengono dopo, non solo l'INSERT.
+    salvataggio_a_budget: bool
+    #: Chi scrive, quando la porta non lo dice: timbrato dal server, MAI un
+    #: argomento del chiamante.
+    principal: str
+    #: Da dove vengono `validate`, `gate_mode` e `ground` quando il chiamante
+    #: non li passa. `True`: dal preset della `Memory` (l'SDK: `balanced` e'
+    #: `validate="full"`). `False`: dal gate stesso, che risolve `None` col suo
+    #: default e con la variabile d'ambiente dell'operatore — cio' che MCP ha
+    #: sempre fatto. Non e' un dettaglio: `full` aggiunge `validate_claim` su
+    #: tutto il corpus, e portarlo su MCP senza misurarne il costo per
+    #: scrittura (T214) cambierebbe verdetti e latenza in silenzio.
+    default_dal_preset: bool = True
+
+
+PORTA_SDK = ProfiloDiPorta(
+    nome="sdk", provenienza_fidata=True, narrativa_salta_l1=True,
+    manopole_permesse=True, embed="sync", salvataggio_a_budget=False,
+    principal="sdk:local")
+PORTA_CLI = ProfiloDiPorta(
+    nome="cli", provenienza_fidata=False, narrativa_salta_l1=False,
+    manopole_permesse=True, embed="auto", salvataggio_a_budget=False,
+    principal="cli:local", default_dal_preset=False)
+PORTA_MCP = ProfiloDiPorta(
+    nome="mcp", provenienza_fidata=False, narrativa_salta_l1=False,
+    manopole_permesse=False, embed="auto", salvataggio_a_budget=True,
+    principal="mcp:unbound", default_dal_preset=False)
+
+
+def id_dal_contenuto(testo: str, topic: str, firma: str | None = None) -> str:
+    """L'id di un fatto, derivato da cio' che il fatto E' (D-0013 c, 20/09).
+
+    La stessa frase, nello stesso topic, sostenuta dalla stessa fonte, e' UN
+    fatto da qualunque porta entri: una ripetizione sostituisce la riga invece
+    di duplicarla (T162: fino al 25/09 era vero solo su MCP). Due fonti diverse
+    che sostengono la stessa frase sono DUE fatti, ciascuno con la sua
+    provenienza: senza la firma nell'id la seconda sovrascriveva la prima in
+    silenzio (misurato il 20/09: 99.92 sovrascritto da 98.56).
+
+    📌 Senza fonte il payload e' la lista a DUE `[testo, topic]` di prima, byte
+    per byte: gli id che la porta MCP ha gia' scritto restano quelli, e la
+    ripetizione di una frase senza fonte li sostituisce invece di affiancarli.
+    Con la fonte e' la lista a TRE. `json.dumps` di una lista e' iniettivo
+    perche' delimita e fa l'escape (la collisione di `f"{a}\\x00{b}"` fu
+    trovata il 14/05), e una lista a due non e' mai uguale a una lista a tre.
+    """
+    import hashlib
+    import json as _json
+    parti = [testo, topic] if firma is None else [testo, topic, firma]
+    payload = _json.dumps(parti, ensure_ascii=False).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()[:12]
+
+
+
+def chiave_di_identita(fonte: str | None, riferimenti=None) -> str | None:
+    """Il terzo elemento dell'id: CHI sostiene il fatto.
+
+    Con un testo di fonte e' la sua firma (D-0013 c). Senza, ma con dei
+    riferimenti in `verified_by`, e' la firma dei riferimenti, ordinati e senza
+    doppioni: la stessa frase citata da due libri diversi e' DUE fatti, ognuno
+    con la sua provenienza, come due fonti. Senza questo la seconda scrittura
+    sostituiva la prima e la citazione del primo libro spariva in silenzio —
+    la perdita che D-0013 (c) esiste per impedire, arrivata da `verified_by`
+    invece che dalla fonte (misurato il 29/09: `consistency_trust` di entrambi
+    i libri fermo a 0.5 in `test_source_auto_confirm_wiring.py`). La stessa
+    frase con gli stessi riferimenti resta idempotente.
+    """
+    if fonte:
+        from .supersession_policy import source_signature_of
+        return source_signature_of(fonte)
+    vivi = sorted({str(r).strip() for r in (riferimenti or []) if str(r).strip()})
+    if not vivi:
+        return None
+    import hashlib
+    import json as _json
+    return "refs:" + hashlib.sha256(
+        _json.dumps(vivi, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+
+
 class Memory:
     """Turnkey persistent-memory client. Wraps SemanticMemory + the anti-confab gate."""
 
     def __init__(self, path: str | Path | None = None, *, grounding_llm: Any = None,
                  llm: Any = None, preset: str = "balanced",
                  repo_root: str | Path | None = None,
-                 principal: str | None = None) -> None:
+                 principal: str | None = None,
+                 semantic: SemanticMemory | None = None,
+                 porta: ProfiloDiPorta | None = None) -> None:
         if preset not in _GATE_PRESETS:
             raise ValueError(
                 f"unknown gate preset {preset!r} — one of: "
@@ -674,7 +841,8 @@ class Memory:
         #: the trust boundary, so a declared identity is honoured; the REAL
         #: security value is at the MCP/gateway entrypoints, which stamp their
         #: own principal server-side and never accept one from the client.
-        self._principal = principal or "sdk:local"
+        self._porta = porta or PORTA_SDK
+        self._principal = principal or self._porta.principal
         #: ``repo_root`` scopes the verified_by hard-gate's I/O checks: a
         #: ``file:<path>:<line>`` provenance ref is verified ONLY when it resolves
         #: INSIDE this root (containment against traversal). Left ``None`` (the
@@ -683,9 +851,24 @@ class Memory:
         #: files nor forge status="verified". A TRUSTED SDK caller passes its own
         #: project root to let genuine in-root file refs verify. (Security fix
         #: 2026-07-18: absolute refs used to bypass containment when root=None.)
-        self.semantic = SemanticMemory(
+        # 🔑 UNO STORE, UN OGGETTO. Una porta che ha gia' lo store aperto (il
+        # server MCP, la riga di comando) passa L'OGGETTO, non il percorso: col
+        # percorso si apre una seconda connessione allo stesso file, e con un
+        # percorso sbagliato un secondo store VUOTO che non fallisce (misurato
+        # il 20/09: `facts list --db` su un file che non c'e' esce 0 e lo crea).
+        self.semantic = semantic if semantic is not None else SemanticMemory(
             db_path=Path(path) if path else None,
             repo_root=Path(repo_root) if repo_root else None)
+        #: La radice contro cui il gate verifica che un riferimento di
+        #: `verified_by` ESISTA. Una porta che passa lo store gia' aperto la
+        #: dichiara qui: la riga di comando usa la radice del progetto anche
+        #: quando lo store non ne ha una («buco #2 LIVE», 2026-06-03), e
+        #: perderla passando dal motore spegnerebbe quel controllo in silenzio.
+        self._radice_del_gate = (Path(repo_root) if repo_root
+                                 else getattr(self.semantic, "repo_root", None))
+        #: Dove va l'avviso di un ritiro NON riuscito. Chi scrive da un
+        #: terminale lo deve vedere, non trovarlo in un file di log.
+        self._avvisi_dei_ritiri: Any = _LOG
         # L'IMPRONTA SEGUE LO STORE APERTO, non la variabile d'ambiente.
         # `_store_fingerprint` deriva da `data_dir()`, e chi apre con
         # `Memory(path)` — circa nove chiamanti su dieci — scriveva altrove
@@ -787,6 +970,13 @@ class Memory:
         #: da `add()`» si pagherebbe **perdendo la citazione del documento** —
         #: cioe' curando una copia e creando un danno nuovo.
         source_episodes: list[str] | None = None,
+        # 1b.3 (25-26/09): cio' che le altre porte passavano costruendo il
+        # Fact a mano. Lo `status` chiesto non e' un privilegio: la guardia
+        # vera sta nello store (`verified` senza riferimenti verificati torna
+        # `model_claim`, `provisional` vuole un URL) e vale per ogni porta.
+        status: str | None = None,
+        force_persist: bool = False,
+        hook_token: str | None = None,
     ) -> dict[str, Any]:
         """Store ``text`` AFTER the anti-confab gate. Returns
         ``{stored, id?, status, grounding_score, warnings, advice}``.
@@ -843,9 +1033,20 @@ class Memory:
             return {"stored": False, "status": "empty", "warnings": [], "advice": "empty text"}
         # preset defaults fill only what the call left unspecified (None):
         # an explicit per-call parameter always wins over the preset.
-        if validate is None:
+        # LE MANOPOLE CHE SPENGONO IL GATE le onora solo una porta che se lo
+        # puo' permettere (ProfiloDiPorta). Negate, si DICONO nella ricevuta:
+        # una richiesta ignorata in silenzio e' una promessa non mantenuta.
+        _manopole_negate: list[str] = []
+        if not self._porta.manopole_permesse:
+            if str(validate or "").strip().lower() == "off":
+                _manopole_negate.append("validate=off")
+                validate = None
+            if force_persist:
+                _manopole_negate.append("force_persist")
+                force_persist = False
+        if validate is None and self._porta.default_dal_preset:
             validate = self._preset_defaults["validate"]
-        if gate_mode is None:
+        if gate_mode is None and self._porta.default_dal_preset:
             gate_mode = self._preset_defaults["gate_mode"]
         # Captured BEFORE the preset fills it in: only here does the difference
         # between "the caller asked for entailment verification" and "the preset
@@ -853,7 +1054,7 @@ class Memory:
         # same True and the gate cannot tell them apart — which is why the
         # advisory below is emitted here and not in the gate.
         _ground_explicitly_requested = ground is True
-        if ground is None:
+        if ground is None and self._porta.default_dal_preset:
             ground = self._preset_defaults["ground"]
         # Continuity narrative lane (2026-07-23): meta_narrative declares a
         # retrospective session checkpoint. It relaxes ONLY the L1.x
@@ -866,22 +1067,38 @@ class Memory:
         # the cited evidence is independent if it is told WHO writes and WHERE
         # the documents live. The store is lazy — a write that never reaches
         # the question opens no connection.
+        # Un `False` ESPLICITO da una porta che non prende i default dal preset
+        # e' «spento» (l'operatore ha messo ENGRAM_GROUNDING_WRITE a 0): non si
+        # riduce a `None`, che per il gate vuol dire «decidi tu». Per l'SDK
+        # resta com'era.
+        _ground_write = (False if (ground is False
+                                   and not self._porta.default_dal_preset)
+                         else (ground or None))
         from .evidence_independence import LazyDocumentStore
         gate = run_validation_gate(
             proposition=text, verified_by=verified_by, topic=topic, agent=self,
             validate=validate, source=source, grounding_llm=self.grounding_llm,
-            ground_write=ground or None, gate_mode=gate_mode, asserted_at=asserted_at,
-            narrative_l1_skip=meta_narrative,
+            ground_write=_ground_write, gate_mode=gate_mode, asserted_at=asserted_at,
             # T192: al gate va DI CHI E' il testo, al fatto va CHI l'ha
             # scritto. Senza `gate_writer_role` si comportano come prima.
             writer_role=gate_writer_role or writer_role,
-            # Superficie in-process (SDK/CLI): chi arriva qui puo' comunque
-            # passare validate="off", una leva strettamente piu' forte. Il
-            # canale MCP NON deve inoltrarlo — presidio in
-            # test_anti_confab_gate_mcp_provenance.py.
-            provenance_trusted=True,
+            # LA FIDUCIA LA DICHIARA LA PORTA, non la chiamata: e' il
+            # ProfiloDiPorta con cui questa Memory e' stata aperta. L'SDK e'
+            # codice dell'applicazione e il suo `verified_by` e' fidato; un
+            # client MCP lo scrive negli argomenti e non lo e' — presidio in
+            # test_anti_confab_gate_mcp_provenance.py. La riga di comando
+            # resta non fidata com'era `facts add`.
+            provenance_trusted=self._porta.provenienza_fidata,
             claimant=principal or self._principal,
+            force_persist=force_persist,
+            hook_token=hook_token,
+            repo_root=self._radice_del_gate,
             documents=LazyDocumentStore(),
+            # La narrativa salta L1 da sola solo in processo; da una porta non
+            # fidata il gate la onora solo col token del server.
+            **({"narrative_l1_skip": meta_narrative}
+               if self._porta.narrativa_salta_l1
+               else {"meta_narrative": meta_narrative}),
         )
         warnings = list(gate.warnings)
 
@@ -945,8 +1162,18 @@ class Memory:
                                verified_by=verified_by)
             return {"stored": False, "status": "rejected", "warnings": warnings,
                     "advice": gate.advice, "grounding_score": gate.grounding_score,
-                    "adjudication": _adj}
-        fact = Fact(proposition=text, topic=topic, verified_by=verified_by or [],
+                    "adjudication": _adj,
+                    "contradicting_fact_ids": list(
+                        getattr(gate, "contradicting_fact_ids", None) or []),
+                    **({"gate_knobs_denied": _manopole_negate}
+                       if _manopole_negate else {})}
+        # La firma della fonte la calcola SOLO il motore, dalla fonte, con la
+        # funzione unica: una porta non la accetta dal chiamante.
+        from .supersession_policy import source_signature_of as _firma_di
+        _firma = _firma_di(source) if source else None
+        fact = Fact(id=id_dal_contenuto(text, topic,
+                                        chiave_di_identita(source, verified_by)),
+                    proposition=text, topic=topic, verified_by=verified_by or [],
                     grounding_score=gate.grounding_score, asserted_at=asserted_at,
                     grounding_span=getattr(gate, "grounding_span", None),
                     writer_principal=principal or self._principal,
@@ -964,11 +1191,19 @@ class Memory:
         # canonicalizzano su "user".
         # L'impronta e' un hash: la source puo' essere un log di migliaia di
         # righe, e qui serve solo distinguere due origini, non rileggerle.
-        if source and not getattr(fact, "source_signature", None):
-            import hashlib
-            fact.source_signature = "sha256:" + hashlib.sha256(
-                " ".join(str(source).split()).encode("utf-8")).hexdigest()[:16]
+        if _firma:
+            fact.source_signature = _firma
+        if status:
+            fact.status = str(status)
         if confidence is not None:
+            # Il tetto per il claim SPECIFICO e SENZA fonte viveva solo sulla
+            # porta MCP. Toglie fiducia e non ne da', quindi vale per tutte;
+            # il default del Fact (0.5) sta gia' sotto il tetto (0.6), e chi
+            # non passa una confidenza non vede niente cambiare.
+            if gate.action != "downgrade" and not meta_narrative:
+                from .evidence_requirement import resolve_write_confidence
+                confidence = resolve_write_confidence(
+                    text, verified_by, requested_confidence=float(confidence))
             fact.confidence = float(confidence)
         if valid_until is not None:
             fact.valid_until = float(valid_until)
@@ -985,7 +1220,11 @@ class Memory:
             fact.writer_role = str(writer_role).strip()
         if meta_narrative:
             fact.meta_narrative = True
-            fact.writer_role = "user"  # in-process operator surface
+            # Solo in processo la narrativa e' dell'operatore: da una porta non
+            # fidata il ruolo resta quello dichiarato, e la provenienza fidata
+            # la decide lo store col token del server (1b.3).
+            if self._porta.narrativa_salta_l1:
+                fact.writer_role = "user"  # in-process operator surface
         if action == "downgrade":
             fact.status = "quarantined"
         elif chronicle:
@@ -1010,8 +1249,40 @@ class Memory:
         #: per chiunque. E' il difetto che ha prodotto il ticket «replaced e'
         #: sempre False»: sintomo giusto, causa sbagliata, perche' la porta
         #: MCP il campo ce l'ha e questa taceva.
-        _sostituito = self.semantic.store(fact, embed="sync", purpose=purpose,
-                                          return_replaced=True)
+        def _gancio_di_coerenza(stored_fact, sm_) -> None:
+            """I quasi-duplicati nel topic (T109): fino al 25/09 li guardava
+            solo la porta MCP. Un gancio non rompe mai il salvataggio."""
+            try:
+                from .coherence_check import scan_topic_for_warnings as _scan
+                _avvisi = _scan(stored_fact, sm_)
+            except Exception as exc:  # noqa: BLE001 — il gancio non rompe lo store
+                _LOG.warning("coherence_hook scan failed: fact_id=%s topic=%s "
+                             "error=%s", stored_fact.id, stored_fact.topic, exc)
+                return
+            from .observability import emit
+            for _w in _avvisi:
+                emit("coherence_warning", kind=_w.kind,
+                             fact_id=stored_fact.id, topic=stored_fact.topic,
+                             other_fact_id=_w.other_fact_id, details=_w.details)
+
+        _kw_store: dict[str, Any] = {
+            "embed": self._porta.embed, "purpose": purpose,
+            "return_replaced": True, "hook_token": hook_token,
+            "coherence_hook": _gancio_di_coerenza}
+        # Una porta interattiva non aspetta un lucchetto di SQLite occupato:
+        # oltre il budget il salvataggio si completa in background (durevole,
+        # nel journal). Fino al 25/09, sulla porta MCP, una scrittura rinviata
+        # SALTAVA i ritiri e l'attribuzione della quarantena senza dirlo: qui
+        # le decisioni si prendono comunque, e i due effetti che vogliono la
+        # riga scritta la aspettano (`_completa_dopo_il_salvataggio`).
+        _rinviata = False
+        if self._porta.salvataggio_a_budget:
+            from .semantic import store_within_budget
+            _esito_store = store_within_budget(self.semantic, fact, **_kw_store)
+            _rinviata = bool(_esito_store.get("deferred"))
+            _sostituito = None if _rinviata else _esito_store.get("result")
+        else:
+            _sostituito = self.semantic.store(fact, **_kw_store)
         # UNO SCREEN DENTRO `store()` HA PARLATO: lo si porta nella ricevuta.
         # `store()` scrive il verdetto sul fatto (stesso veicolo di
         # `routed_to`, letto tre righe piu' sotto) e qui diventa un warning
@@ -1118,8 +1389,9 @@ class Memory:
         # visto li' perche' quel doppio non ha `get`; qui non si sarebbe
         # visto, ed e' esattamente il motivo per cui la stessa correzione va
         # fatta su tutte e due invece che dove il rosso e' uscito.
-        if (_disposition == "admitted" and not _graded_admit
-                and not chronicle):  # una cronaca nascosta non ritira un fatto curato
+        _da_ritirare = (_disposition == "admitted" and not _graded_admit
+                        and not chronicle)  # una cronaca nascosta non ritira un fatto curato
+        if _da_ritirare and not _rinviata:
             # …e lo FA la superficie unica, non questo blocco: il ciclo era
             # scritto qui e, quasi uguale, nel server di strumenti, mentre la
             # riga di comando non lo aveva affatto. Estratto il 2026-09-12
@@ -1129,7 +1401,7 @@ class Memory:
             _ritirati, _maniglie = _applica_verdetto(
                 gate, fact, self.semantic,
                 principal=principal or self._principal,
-                ammesso=True, log=_LOG)
+                ammesso=True, log=self._avvisi_dei_ritiri)
             _superseded.extend(_ritirati)
             _superseded_undo.update(_maniglie)
         # Review-queue backpressure (P0 ciclo 2, punto 4): a write that JOINS
@@ -1314,10 +1586,25 @@ class Memory:
             # solo i quarantinati, e se fallisce si perde la CAUSA, non il
             # FATTO — un fatto scritto senza causa e' il comportamento di
             # sempre, un fatto non scritto sarebbe un danno nuovo.
-            persisti_chi_ha_quarantinato(
-                self.semantic.db_path, fact.id, _out_qb)
+            if not _rinviata:
+                persisti_chi_ha_quarantinato(
+                    self.semantic.db_path, fact.id, _out_qb)
         else:
             _out_qb = None
+        if _rinviata:
+            _completa_dopo_il_salvataggio(
+                self.semantic, fact, gate,
+                ritira=_da_ritirare, chi_ha_quarantinato=_out_qb,
+                principal=principal or self._principal)
+            warnings = [*warnings, {
+                "layer": "salvataggio-rinviato",
+                "reason": ("il database era occupato da un'altra scrittura: "
+                           "questo fatto si scrive in background, e i ritiri "
+                           "e la causa della quarantena si applicano appena "
+                           "la riga c'e'"),
+                "advice": ("rileggilo fra qualche secondo con facts get "
+                           f"{fact.id}"),
+            }]
         from .local_grounding import esecutore_dell_ultimo_giudizio
         _chi_ha_giudicato = esecutore_dell_ultimo_giudizio()
         #: E PERCHE' ha giudicato lui. `judged_by` da solo e' un'etichetta:
@@ -1358,6 +1645,14 @@ class Memory:
             #: MCP si', ed e' la divergenza aperta del ticket). Un campo che
             #: c'e' e vale `False` si legge diverso da un campo che manca.
             "replaced": bool(_sostituito),
+            **({"deferred": True} if _rinviata else {}),
+            **({"gate_knobs_denied": _manopole_negate}
+               if _manopole_negate else {}),
+            #: I fatti che il gate ha trovato CONTRADDETTI da questa scrittura:
+            #: un dato del verdetto, reso a ogni porta (la porta MCP ci
+            #: appoggia il suo ritiro, decisione aperta di 1b.3).
+            **({"contradicting_fact_ids": list(gate.contradicting_fact_ids)}
+               if getattr(gate, "contradicting_fact_ids", None) else {}),
             "grounding_score": gate.grounding_score,
             #: CHI ha giudicato QUESTA scrittura: "daemon" (il servizio
             #: condiviso) o "in-process" (il modello caricato qui); assente se

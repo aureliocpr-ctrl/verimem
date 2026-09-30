@@ -117,15 +117,22 @@ _README = pathlib.Path(__file__).resolve().parents[1] / "README.md"
 #:
 #: CHE COSA MISURA ALLORA, e perche' vale: un utente che legge quella riga e poi
 #: guarda una ricevuta qualunque — la stragrande maggioranza, col demone su —
-#: cerca tre nomi e ne trova UNO SOLO, e non dove lo cerca. La riga non dice
-#: «solo senza demone vedrai questi nomi», dice «Read that field».
+#: cercava tre nomi e ne trovava UNO SOLO, e non dove lo cercava (13/09); dal
+#: 29/09 ne trova due, `stored` in cima e `admitted` solo come valore annidato.
+#: La riga non dice «solo senza demone vedrai questi nomi», dice «Read that
+#: field».
 #:
 #: Misurato il 13/09/2026 invocando la porta, con la sonda dei percorsi che il
 #: messaggio qui sotto rifa' a ogni esecuzione:
 #:     stored    -> DA NESSUNA PARTE
 #:     layers    -> DA NESSUNA PARTE
 #:     admitted  -> presente come VALORE in `adjudication.disposition`
-ASSENTI_COL_GIUDICE_ACCESO_IL_13_09 = frozenset({"stored", "layers"})
+#:
+#: 🟢 29/09 (1b.3): `stored` ARRIVA. La porta MCP scrive con `Memory.add()` e
+#: rende la ricevuta intera del motore, dove `stored` e' una chiave di primo
+#: livello — misurato dal banco: `stored -> [('chiave', 'stored')]`. Tolto da
+#: qui nello stesso commit, come chiede il test; `layers` resta assente.
+ASSENTI_COL_GIUDICE_ACCESO_IL_13_09 = frozenset({"layers"})
 
 #: Presenti, ma non come chiave di primo livello: chi segue la riga non li trova
 #: dove la riga gli fa credere che siano. Rilievo del pari, 13/09: «assente» e
@@ -178,9 +185,10 @@ async def test_quali_nomi_della_riga_la_ricevuta_non_rende(tmp_data_dir):
     🔴 Se un nome SPARISCE, o si sposta sotto un altro percorso, la ricevuta ha
        perso un campo che la pagina nomina e nessuno se ne accorgerebbe.
 
-    PER L'UTENTE: chi segue README:355 cerca tre nomi nella ricevuta e ne trova
-    uno solo, e non dove lo cerca — quindi non ha modo di sapere se la scrittura
-    e' stata giudicata, che e' cio' che quella riga dice di NON fare.
+    PER L'UTENTE: chi segue README:355 cerca tre nomi nella ricevuta. Dal 29/09
+    trova `stored` in cima, `admitted` solo annidato e `layers` da nessuna
+    parte — quindi non ha ancora modo di sapere dalla riga se la scrittura e'
+    stata giudicata, che e' cio' che quella riga dice di NON fare.
 
     LA CURA E' SUL README, non sul prodotto: `judged` e' il campo giusto e c'e'
     gia' (lo presidia il test qui sotto). Ma la riga non si riscrive a occhio:

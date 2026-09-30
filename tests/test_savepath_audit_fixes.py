@@ -80,8 +80,29 @@ async def _invoke(name: str, arguments: dict[str, Any]):
     return [c.text for c in payload.content if hasattr(c, "text")]
 
 
+def _stati_scritti(tmp_path, testo: str) -> list[str]:
+    """Gli status delle righe con quel testo, letti dal database."""
+    import sqlite3
+    db = tmp_path / "semantic" / "semantic.db"
+    with sqlite3.connect(f"file:{db}?mode=ro", uri=True) as conn:
+        return [r[0] for r in conn.execute(
+            "SELECT status FROM facts WHERE proposition = ?", (testo,))]
+
+
+def _gate_del_motore(monkeypatch, sostituto) -> None:
+    """Il gate che il motore chiama DAVVERO.
+
+    ⚠️ Dal 26/09 (1b.3) un key fact passa da `Memory.add()`, e `client.py`
+    lega `run_validation_gate` al proprio import: sostituire solo
+    `anti_confab_gate.run_validation_gate` lascerebbe il motore sul gate vero,
+    e la spia qui sotto muta — verde per assenza. Si sostituiscono tutti e due.
+    """
+    from verimem import anti_confab_gate, client
+    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", sostituto)
+    monkeypatch.setattr(client, "run_validation_gate", sostituto)
+
+
 async def test_key_fact_passes_through_anti_confab_gate(tmp_path, monkeypatch):
-    """Il key_fact deve essere valutato da run_validation_gate (era bypassato)."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
     from verimem import anti_confab_gate
     real = anti_confab_gate.run_validation_gate
@@ -91,7 +112,7 @@ async def test_key_fact_passes_through_anti_confab_gate(tmp_path, monkeypatch):
         seen.append(kw.get("proposition"))
         return real(**kw)
 
-    monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _spy)
+    _gate_del_motore(monkeypatch, _spy)
     await _invoke("hippo_record_episode", {
         "task_id": "t1", "task_text": "deploy the service", "final_answer": "ok",
         "key_facts": [{"proposition": "the deploy used config X", "topic": "project/x"}],
@@ -101,44 +122,29 @@ async def test_key_fact_passes_through_anti_confab_gate(tmp_path, monkeypatch):
 
 
 async def test_key_fact_downgrade_becomes_quarantined(tmp_path, monkeypatch):
-    """gate.action='downgrade' -> il Fact key_fact nasce status='quarantined'."""
+    """gate.action='downgrade' -> il key_fact nasce status='quarantined'."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
-    from verimem import anti_confab_gate
     from verimem.anti_confab_gate import GateResult
-    monkeypatch.setattr(anti_confab_gate, "run_validation_gate",
-                        lambda **kw: GateResult(action="downgrade"))
-    statuses: list[str] = []
-    real_build = mcp_server._build_fact
-    monkeypatch.setattr(
-        mcp_server, "_build_fact",
-        lambda *a, **k: (statuses.append(k.get("status")), real_build(*a, **k))[1],
-    )
+    _gate_del_motore(monkeypatch, lambda **kw: GateResult(action="downgrade"))
     await _invoke("hippo_record_episode", {
         "task_id": "t2", "task_text": "x", "final_answer": "y",
         "key_facts": [{"proposition": "claim Z", "topic": "project/z"}],
     })
-    assert statuses == ["quarantined"], \
+    assert _stati_scritti(tmp_path, "claim Z") == ["quarantined"], \
         "un key_fact downgradato dal gate deve nascere quarantined, non model_claim"
 
 
 async def test_key_fact_reject_is_skipped(tmp_path, monkeypatch):
-    """gate.action='reject' -> il key_fact e' skippato (nessun _build_fact)."""
+    """gate.action='reject' -> il key_fact non e' scritto."""
     monkeypatch.setattr(mcp_server, "_ag", lambda: _make_agent(tmp_path))
-    from verimem import anti_confab_gate
     from verimem.anti_confab_gate import GateResult
-    monkeypatch.setattr(anti_confab_gate, "run_validation_gate",
-                        lambda **kw: GateResult(action="reject"))
-    built: list[Any] = []
-    real_build = mcp_server._build_fact
-    monkeypatch.setattr(
-        mcp_server, "_build_fact",
-        lambda *a, **k: (built.append(k.get("status")), real_build(*a, **k))[1],
-    )
+    _gate_del_motore(monkeypatch, lambda **kw: GateResult(action="reject"))
     await _invoke("hippo_record_episode", {
         "task_id": "t3", "task_text": "x", "final_answer": "y",
         "key_facts": [{"proposition": "rejected claim", "topic": "project/r"}],
     })
-    assert built == [], "un key_fact rifiutato dal gate non deve essere costruito/scritto"
+    assert _stati_scritti(tmp_path, "rejected claim") == [], \
+        "un key_fact rifiutato dal gate non deve essere scritto"
 
 
 # ---------- #3 topic injection screen (store-level) ----------------------

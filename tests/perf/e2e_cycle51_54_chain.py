@@ -46,8 +46,9 @@ def main() -> int:
               "HIPPO_ALLOW_REAL_E2E=1 per acconsentire alla mutazione del corpus.")
         return 0
     from verimem.briefing import get_briefing
+    from verimem.client import Memory
     from verimem.lineage_trace import trace
-    from verimem.mcp_server import _build_episode, _build_fact
+    from verimem.mcp_server import _build_episode
     from verimem.memory import EpisodicMemory
     from verimem.semantic import SemanticMemory
     from verimem.skill import SkillLibrary
@@ -102,16 +103,15 @@ def main() -> int:
         f"E2E key fact 2 for {test_marker}: cycle 52 walker reads "
         f"the graph end-to-end."
     )
-    f1 = _build_fact(
-        proposition=fact1_prop, topic="test/e2e-cycle51-55",
-        confidence=0.9, source_episodes=[e1.id],
-    )
-    f2 = _build_fact(
-        proposition=fact2_prop, topic="test/e2e-cycle51-55",
-        confidence=0.9, source_episodes=[e1.id],
-    )
-    semantic.store(f1)
-    semantic.store(f2)
+    # 1b.3 (26/09): un fatto nuovo nasce dalla porta unica, anche qui.
+    from types import SimpleNamespace
+    _motore = Memory(semantic=semantic)
+    f1 = SimpleNamespace(id=_motore.add(
+        fact1_prop, topic="test/e2e-cycle51-55",
+        confidence=0.9, source_episodes=[e1.id])["id"])
+    f2 = SimpleNamespace(id=_motore.add(
+        fact2_prop, topic="test/e2e-cycle51-55",
+        confidence=0.9, source_episodes=[e1.id])["id"])
     memory.add_causal_edge(
         src_id=e1.id, dst_id=related_id,
         via_skill_id="narrative_link", weight=1.0,

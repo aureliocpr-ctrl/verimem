@@ -133,31 +133,30 @@ async def _invoke_tool(name: str, arguments: dict[str, Any] | None = None):
 def fake_agent(monkeypatch: pytest.MonkeyPatch) -> _FakeAgent:
     a = _FakeAgent()
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
-    # Patch _build_fact factory used by the handler so it returns a fake.
-    def _factory(proposition: str, topic: str = "",
-                  confidence: float = 0.9,
-                  source_episodes: list[str] | None = None,
-                  *,
-                  verified_by: list[str] | None = None,
-                  status: str = "model_claim",
-                  source_signature: str | None = None,
-                  writer_role: str = "agent_inference",
-                  meta_narrative: bool = False,
-                  **_kw) -> _FakeFact:  # tollera kw futuri (valid_until, ...)
-        # Cycle #109 S2/S4-A: accept the new kw-only provenance fields.
-        # Cycle 2026-05-27 round 12 F-fix: also accept writer_role +
-        # meta_narrative (schema v6). The fake doesn't persist them
-        # (not exercised by this suite), but it must not error when the
-        # dispatch passes them.
-        import uuid
-        return _FakeFact(
-            uuid.uuid4().hex[:12],
-            proposition=proposition, topic=topic,
-            confidence=confidence,
-            source_episodes=source_episodes or [],
-        )
-    monkeypatch.setattr(mcp_server, "_build_fact", _factory, raising=False)
     return a
+
+
+class _AgenteVero:
+    """1b.3 (26/09): una scrittura MCP passa da `Memory.add()`, che vuole uno
+    store vero. Le celle che SCRIVONO usano questo; quelle che leggono
+    restano sul finto."""
+
+    def __init__(self, tmp_path) -> None:
+        from verimem.semantic import SemanticMemory
+        self.semantic = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
+
+
+@pytest.fixture
+def agente_vero(tmp_path, monkeypatch: pytest.MonkeyPatch) -> _AgenteVero:
+    a = _AgenteVero(tmp_path)
+    monkeypatch.setattr(mcp_server, "_ag", lambda: a)
+    return a
+
+
+def _quanti_fatti(a: _AgenteVero) -> int:
+    import sqlite3
+    with sqlite3.connect(f"file:{a.semantic.db_path}?mode=ro", uri=True) as conn:
+        return int(conn.execute("SELECT COUNT(*) FROM facts").fetchone()[0])
 
 
 # ---------- listing -----------------------------------------------------
@@ -180,7 +179,7 @@ async def test_wave7_tools_listed(fake_agent: _FakeAgent) -> None:
 
 
 @pytest.mark.asyncio
-async def test_remember_stores_fact(fake_agent: _FakeAgent) -> None:
+async def test_remember_stores_fact(agente_vero: _AgenteVero) -> None:
     blocks = await _invoke_tool(
         "hippo_remember",
         {"proposition": "User email is user@example.com",
@@ -193,11 +192,11 @@ async def test_remember_stores_fact(fake_agent: _FakeAgent) -> None:
     assert payload["proposition"] == "User email is user@example.com"
     assert payload["topic"] == "user_facts"
     assert payload["confidence"] == 0.95
-    assert len(fake_agent.semantic._stored) == 1
+    assert _quanti_fatti(agente_vero) == 1
 
 
 @pytest.mark.asyncio
-async def test_remember_minimal_inputs(fake_agent: _FakeAgent) -> None:
+async def test_remember_minimal_inputs(agente_vero: _AgenteVero) -> None:
     """Topic and confidence are optional; defaults apply."""
     blocks = await _invoke_tool(
         "hippo_remember",
@@ -313,25 +312,14 @@ _SELF_CLAIM = "I have completed the migration and everything works perfectly now
 
 
 @pytest.fixture
-def spy_agent(monkeypatch: pytest.MonkeyPatch) -> dict:
-    """fake_agent variant whose _build_fact records the status the handler
-    computed — the direct signal of whether the gate actually ran."""
-    a = _FakeAgent()
-    seen: dict[str, Any] = {"agent": a}
+def spy_agent(tmp_path, monkeypatch: pytest.MonkeyPatch) -> dict:
+    """Un agente con uno store vero: lo status che conta e' quello che la
+    porta RENDE, cioe' quello scritto (1b.3: prima era spiato sulla fabbrica
+    `_build_fact`, che non esiste piu')."""
+    a = _AgenteVero(tmp_path)
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
-
-    def _factory(proposition: str, topic: str = "", confidence: float = 0.9,
-                 source_episodes: list[str] | None = None, *,
-                 status: str = "model_claim", **_kw) -> _FakeFact:
-        import uuid
-        seen["status"] = status
-        return _FakeFact(uuid.uuid4().hex[:12], proposition=proposition,
-                         topic=topic, confidence=confidence,
-                         source_episodes=source_episodes or [])
-
-    monkeypatch.setattr(mcp_server, "_build_fact", _factory, raising=False)
     monkeypatch.delenv("VERIMEM_MCP_TRUST_GATE_KNOBS", raising=False)
-    return seen
+    return {"agent": a}
 
 
 @pytest.mark.asyncio
@@ -341,7 +329,7 @@ async def test_validate_off_denied_by_default(spy_agent: dict) -> None:
     payload = json.loads(blocks[0])
     assert payload.get("gate_knobs_denied") == ["validate=off"]
     # the gate really ran: the self-claim was downgraded, not admitted
-    assert spy_agent.get("status") == "quarantined"
+    assert payload.get("status") == "quarantined"
 
 
 @pytest.mark.asyncio
@@ -350,7 +338,7 @@ async def test_force_persist_denied_by_default(spy_agent: dict) -> None:
         "hippo_remember", {"proposition": _SELF_CLAIM, "force_persist": True})
     payload = json.loads(blocks[0])
     assert payload.get("gate_knobs_denied") == ["force_persist"]
-    assert spy_agent.get("status") == "quarantined"
+    assert payload.get("status") == "quarantined"
 
 
 @pytest.mark.asyncio
@@ -361,7 +349,7 @@ async def test_operator_opt_in_restores_legacy_knobs(
         "hippo_remember", {"proposition": _SELF_CLAIM, "validate": "off"})
     payload = json.loads(blocks[0])
     assert not payload.get("gate_knobs_denied")
-    assert spy_agent.get("status") == "model_claim"  # gate skipped, as asked
+    assert payload.get("status") == "model_claim"  # gate skipped, as asked
 
 
 @pytest.mark.asyncio
@@ -380,9 +368,11 @@ async def test_denied_validate_off_defers_to_operator_default(
         seen_kw.update(kw)
         return real_gate(**kw)
 
-    # the handler does `from .anti_confab_gate import run_validation_gate`
-    # inside the function body, so patch the SOURCE module attribute
+    # dal 26/09 (1b.3) la porta scrive con `Memory.add()`, e `client` lega il
+    # gate al proprio import: la spia va su tutti e due, o resterebbe muta
+    import verimem.client as _client
     monkeypatch.setattr(acg, "run_validation_gate", spy_gate)
+    monkeypatch.setattr(_client, "run_validation_gate", spy_gate)
     blocks = await _invoke_tool(
         "hippo_remember", {"proposition": _SELF_CLAIM, "validate": "off"})
     payload = json.loads(blocks[0])

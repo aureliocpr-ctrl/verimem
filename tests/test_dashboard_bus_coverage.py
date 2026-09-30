@@ -64,10 +64,13 @@ class TestHippoRememberEmitsFactStored:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
         from verimem import mcp_server
 
-        fake_sm = MagicMock()
-        fake_sm.store = MagicMock(return_value=False)  # was_replaced=False
+        # 1b.3 (26/09): la porta scrive con `Memory.add()`, che vuole uno store
+        # vero; il finto `MagicMock` non ha file ne' righe.
+        from verimem.semantic import SemanticMemory
+        fake_sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
         fake_agent = MagicMock()
         fake_agent.semantic = fake_sm
+        fake_agent.wake = None
         monkeypatch.setattr(mcp_server, "_ag", lambda: fake_agent)
 
         # Capture BUS events from this point forward.
@@ -159,10 +162,13 @@ class TestAntiConfabL1EmitsWarning:
         monkeypatch.setenv("HIPPO_MCP_AUDIT_LOG", str(tmp_path / "audit.log"))
         from verimem import mcp_server
 
-        fake_sm = MagicMock()
-        fake_sm.store = MagicMock(return_value=False)
+        # 1b.3 (26/09): la porta scrive con `Memory.add()`, che vuole uno store
+        # vero; il finto `MagicMock` non ha file ne' righe.
+        from verimem.semantic import SemanticMemory
+        fake_sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
         fake_agent = MagicMock()
         fake_agent.semantic = fake_sm
+        fake_agent.wake = None
         monkeypatch.setattr(mcp_server, "_ag", lambda: fake_agent)
 
         captured: list[tuple[str, dict[str, Any]]] = []

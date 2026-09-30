@@ -75,10 +75,17 @@ def test_l_avviso_sul_fatto_lungo_arriva_al_cliente(cliente):
 
 
 def test_l_avviso_sul_duplicato_arriva_al_cliente(cliente):
+    """Dal 29/09 (1b.3) due scritture IDENTICHE sono una riga sola: l'id
+    deriva da testo, topic e provenienza, e la seconda sostituisce. L'avviso
+    di duplicato resta per lo stesso testo con due provenienze diverse — le
+    due righe che esistono di proposito — ed e' quello che deve arrivare al
+    cliente HTTP come agli altri."""
     c, H = cliente
     corpo = {"content": "Il piano annuale costa 1200 euro.", "topic": "az/l"}
-    c.post("/v1/memories", headers=H, json=corpo)
-    r = c.post("/v1/memories", headers=H, json=corpo)
+    c.post("/v1/memories", headers=H,
+           json={**corpo, "verified_by": ["source-doc:listino:1"]})
+    r = c.post("/v1/memories", headers=H,
+               json={**corpo, "verified_by": ["source-doc:contratto:1"]})
     assert "duplicate" in _layers(r), r.json().get("warnings")
 
 

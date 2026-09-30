@@ -32,9 +32,12 @@ def _check(nome: str) -> dict | None:
     return next((c for c in run_doctor() if c["name"] == nome), None)
 
 
-def _ritira(m: Memory, *, con_appiglio: bool) -> str:
-    a = m.add("the head office is in Milan", topic="hq/a")["id"]
-    b = m.add("the depot is in Turin", topic="hq/b")["id"]
+def _ritira(m: Memory, *, con_appiglio: bool, giro: int = 0) -> str:
+    # Frasi DIVERSE a ogni giro: dal 26/09 (1b.3) l'id deriva dal contenuto, e
+    # la stessa frase riscritta sostituisce la riga invece di farne una nuova
+    # — tre giri identici sarebbero UN ritiro, non tre.
+    a = m.add(f"the head office {giro} is in Milan", topic="hq/a")["id"]
+    b = m.add(f"the depot {giro} is in Turin", topic="hq/b")["id"]
     m.semantic.supersede(a, b, principal="test", reason="banco")
     if not con_appiglio:
         with sqlite3.connect(m.semantic.db_path) as con:
@@ -46,8 +49,8 @@ def test_ritiri_senza_appiglio_nella_finestra_fanno_scattare_l_avviso(
         tmp_path, monkeypatch):
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
     m = Memory(tmp_path / "semantic" / "semantic.db")
-    for _ in range(3):
-        _ritira(m, con_appiglio=False)
+    for giro in range(3):
+        _ritira(m, con_appiglio=False, giro=giro)
 
     c = _check("undo-window")
     assert c is not None, "il check non esiste"
@@ -61,8 +64,8 @@ def test_uno_store_i_cui_ritiri_lasciano_l_appiglio_non_allarma(
     """La guardia contro il referto che suona sempre."""
     monkeypatch.setenv("HIPPO_DATA_DIR", str(tmp_path))
     m = Memory(tmp_path / "semantic" / "semantic.db")
-    for _ in range(3):
-        _ritira(m, con_appiglio=True)
+    for giro in range(3):
+        _ritira(m, con_appiglio=True, giro=giro)
 
     c = _check("undo-window")
     assert c["status"] == "ok", c

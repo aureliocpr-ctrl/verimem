@@ -205,6 +205,9 @@ async def test_mcp_paths_hand_the_gate_its_inputs(tool, args, signed_docs,
         return real(**kw)
 
     monkeypatch.setattr(anti_confab_gate, "run_validation_gate", _spy)
+    # 1b.3: il motore (`client`) lega il gate al proprio import
+    import verimem.client as _client_motore
+    monkeypatch.setattr(_client_motore, "run_validation_gate", _spy)
     monkeypatch.setattr(mcp_server, "run_validation_gate", _spy, raising=False)
     await _invoke_tool(tool, args)
     assert seen, f"{tool} did not call the gate at all"

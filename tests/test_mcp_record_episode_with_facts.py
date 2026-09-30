@@ -99,11 +99,42 @@ class _FakeSkillsStore:
         return None
 
 
+class _SemanticVero:
+    """Uno store VERO, con `stored` letto dal database per le asserzioni.
+
+    1b.3 (26/09): un key fact passa da `Memory.add()`, che vuole uno store
+    vero — gate, id dal contenuto, evento, ritiri. Il registro finto di prima
+    contava cio' che la fabbrica `_build_fact` gli consegnava, e la fabbrica
+    non esiste piu'. Qui si conta cio' che e' SCRITTO.
+    """
+
+    def __init__(self, tmp_path) -> None:
+        from verimem.semantic import SemanticMemory
+        self._sm = SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db")
+
+    def __getattr__(self, nome: str):
+        return getattr(self._sm, nome)
+
+    @property
+    def stored(self) -> list:
+        import sqlite3
+        from types import SimpleNamespace
+        # Gli id dalla tabella, i campi dal lettore dello store: il formato
+        # su disco di `source_episodes` e' affare dello store, non del test.
+        with sqlite3.connect(f"file:{self._sm.db_path}?mode=ro", uri=True) as conn:
+            ids = [r[0] for r in conn.execute("SELECT id FROM facts ORDER BY rowid")]
+        fatti = [self._sm.get(i) for i in ids]
+        return [SimpleNamespace(id=x.id, proposition=x.proposition, topic=x.topic,
+                                confidence=x.confidence,
+                                source_episodes=list(x.source_episodes or []))
+                for x in fatti if x is not None]
+
+
 class _FakeAgent:
-    def __init__(self) -> None:
+    def __init__(self, tmp_path) -> None:
         self.skills = _FakeSkillsStore()
         self.memory = _FakeMemory()
-        self.semantic = _FakeSemantic()
+        self.semantic = _SemanticVero(tmp_path)
 
 
 # ---------- Helper -------------------------------------------------------
@@ -122,8 +153,8 @@ async def _invoke_tool(name: str, arguments: dict[str, Any] | None = None):
 
 
 @pytest.fixture
-def fake_agent(monkeypatch: pytest.MonkeyPatch) -> _FakeAgent:
-    a = _FakeAgent()
+def fake_agent(tmp_path, monkeypatch: pytest.MonkeyPatch) -> _FakeAgent:
+    a = _FakeAgent(tmp_path)
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
 
     def _ep_factory(task_id: str, task_text: str, final_answer: str,
@@ -140,22 +171,6 @@ def fake_agent(monkeypatch: pytest.MonkeyPatch) -> _FakeAgent:
     monkeypatch.setattr(mcp_server, "_build_episode", _ep_factory,
                         raising=False)
 
-    # Stub _build_fact: real one uses embedding.encode (heavy). Fake just
-    # builds a _FakeFact with content-hash-style id (deterministic).
-    def _fact_factory(proposition: str, topic: str = "",
-                      confidence: float = 0.9,
-                      source_episodes: list[str] | None = None,
-                      **_kw):  # tollera kw futuri (status, valid_until, ...)
-        import hashlib
-        h = hashlib.sha256(
-            f"{proposition}|{topic}".encode()
-        ).hexdigest()[:12]
-        return _FakeFact(
-            h, proposition=proposition, topic=topic,
-            confidence=confidence, source_episodes=source_episodes or [],
-        )
-    monkeypatch.setattr(mcp_server, "_build_fact", _fact_factory,
-                        raising=False)
     return a
 
 

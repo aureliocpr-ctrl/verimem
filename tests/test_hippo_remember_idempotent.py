@@ -20,6 +20,10 @@ observable overwrite. Caller code that relied on accidental duplication
 will see fewer rows — but no caller actually relied on that (it was a
 bug, not a feature, per cycle #46 decision-trajectory 685d31c9d85b
 which chose "keep idempotency + add observability").
+
+Since 1b.3 (29/09) `_build_fact` is gone: the server writes through
+`Memory.add()`, and the engine derives the id for every door
+(`client.id_dal_contenuto`). The promise tested here is unchanged.
 """
 from __future__ import annotations
 
@@ -31,46 +35,26 @@ from mcp.types import CallToolRequest, CallToolRequestParams
 from verimem import mcp_server
 
 # ---------------------------------------------------------------------------
-# Stub agent: hippo_remember handler only touches `a.semantic`, mock that.
+# The agent: the handler only touches `a.semantic`, and since 1b.3 (29/09)
+# it is a REAL store. The server writes through `Memory.add()`, built on that
+# object; a double with `store` and `count` alone tested the old server-side
+# Fact, not the write every door makes.
 # ---------------------------------------------------------------------------
 
 
-class _FakeSemantic:
-    """In-memory semantic store that mimics SemanticMemory.store(return_replaced)."""
-
-    def __init__(self) -> None:
-        self._facts: dict[str, dict] = {}  # id -> {proposition, topic, ...}
-
-    def store(self, fact, *, return_replaced: bool = False,
-               coherence_hook=None, embed: str = "sync"):
-        # Cycle #125: accept coherence_hook kwarg (added by cycle 119
-        # wire in mcp_server.py) for back-compat; the fake never
-        # invokes it — pure observability extension.
-        # 2026-06-05: accept embed kwarg (non-blocking store wiring).
-        _ = (coherence_hook, embed)
-        existed = fact.id in self._facts
-        self._facts[fact.id] = {
-            "id": fact.id,
-            "proposition": fact.proposition,
-            "topic": fact.topic,
-            "confidence": fact.confidence,
-        }
-        return existed if return_replaced else None
-
-    def count(self) -> int:
-        return len(self._facts)
-
-
 class _StubAgent:
-    def __init__(self) -> None:
-        self.semantic = _FakeSemantic()
+    def __init__(self, semantic) -> None:
+        self.semantic = semantic
         self.skills = None
         self.memory = None
+        self.wake = None
 
 
 @pytest.fixture
-def agent(monkeypatch: pytest.MonkeyPatch) -> _StubAgent:
-    a = _StubAgent()
+def agent(monkeypatch: pytest.MonkeyPatch, tmp_path) -> _StubAgent:
+    from verimem.semantic import SemanticMemory
+
+    a = _StubAgent(SemanticMemory(db_path=tmp_path / "semantic" / "semantic.db"))
     monkeypatch.setattr(mcp_server, "_ag", lambda: a)
     monkeypatch.setattr(mcp_server, "_agent", a, raising=False)
     return a
@@ -158,14 +142,19 @@ async def test_different_topic_different_id(agent: _StubAgent) -> None:
 @pytest.mark.asyncio
 async def test_id_deterministic_across_processes(agent: _StubAgent) -> None:
     """The id derivation must be a pure function — same input, same output,
-    regardless of process state. We can test this by calling the internal
-    _build_fact factory directly."""
-    f1 = mcp_server._build_fact("the cat is on the mat", topic="lit/example")
-    f2 = mcp_server._build_fact("the cat is on the mat", topic="lit/example")
-    assert f1.id == f2.id
+    regardless of process state.
+
+    Since 1b.3 (26/09) the server no longer builds the Fact: the engine
+    derives the id for every door (`client.id_dal_contenuto`), and the server's
+    `_content_hash_id` delegates to it. Both are checked, and against each
+    other: two formulas would be two ids for the same write."""
+    from verimem.client import id_dal_contenuto
+
+    a = id_dal_contenuto("the cat is on the mat", "lit/example")
+    assert a == id_dal_contenuto("the cat is on the mat", "lit/example")
+    assert a == mcp_server._content_hash_id("the cat is on the mat", "lit/example")
     # And different from a different content
-    f3 = mcp_server._build_fact("the dog is on the mat", topic="lit/example")
-    assert f1.id != f3.id
+    assert a != id_dal_contenuto("the dog is on the mat", "lit/example")
 
 
 @pytest.mark.asyncio
