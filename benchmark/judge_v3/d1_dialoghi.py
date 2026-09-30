@@ -42,7 +42,7 @@ from pathlib import Path
 
 # the check of the fields and the labelled units of `decomponi()` (from the verimem of THIS checkout):
 # one module for every D1 builder, so the halves cannot read a field or label a unit in two ways
-from d1_campi import coda, controlla, unita_con_etichetta
+from d1_campi import coda, controlla, senza_coppie_ripetute, unita_con_etichetta
 
 # ── template per lingua: (prima persona nel turno, terza persona nel claim) ──────────────────
 LINGUE = {
@@ -82,9 +82,10 @@ LINGUE = {
         ],
         # coda dopo la coordinata: la stessa affermazione senza soggetto
         "coordinata": " and ",
-        "domanda": "How was it?",
+        "domande": ["How was it?", "So, how did it go?", "Did you like it?", "How was it, then?"],
         "evento_andato": ("I just got back from {evento}.", "{S} went to {evento}."),
-        "pronome": ("It was amazing, I loved it!", "{S} loved {evento}."),
+        "pronome": (["It was amazing, I loved it!", "Honestly, I loved every minute of it!",
+                     "What a day, I loved it!", "It was great, I loved it!"], "{S} loved {evento}."),
     },
     "it": {
         "nomi": ["Giulia", "Marco", "Sara", "Paolo", "Elena", "Davide", "Chiara", "Luca", "Irene", "Nico"],
@@ -127,9 +128,11 @@ LINGUE = {
                                                     "{S} ha un {animale} nuovo."]),
         ],
         "coordinata": " e ",
-        "domanda": "Com'è andata?",
+        "domande": ["Com'è andata?", "Allora, com'è andata?", "Ti è piaciuto?", "Com'è stato?"],
         "evento_andato": ("Ho appena partecipato {evento_a}.", "{S} ha partecipato {evento_a}."),
-        "pronome": ("È stato bellissimo, mi è piaciuto tantissimo!", "A {S} è piaciuto tantissimo {evento}."),
+        "pronome": (["È stato bellissimo, mi è piaciuto tantissimo!", "Mi è piaciuto tantissimo, davvero!",
+                     "Che giornata, mi è piaciuto tantissimo!", "Bellissimo, mi è piaciuto tantissimo!"],
+                    "A {S} è piaciuto tantissimo {evento}."),
     },
     "fr": {
         # only verbs that `decomponi()` knows as finite («fait», «va», «veut», «doit», «peut», «est»):
@@ -160,9 +163,11 @@ LINGUE = {
             ("Je suis fan {evento_a}.", ["{S} est fan {evento_a}."]),
         ],
         "coordinata": " et ",
-        "domanda": "C'était comment ?",
+        "domande": ["C'était comment ?", "Alors, c'était comment ?", "Ça t'a plu ?",
+                    "Comment ça s'est passé ?"],
         "evento_andato": ("Je rentre {evento_a}.", "{S} rentre {evento_a}."),
-        "pronome": ("C'était génial, j'ai adoré !", "{S} a adoré {evento}."),
+        "pronome": (["C'était génial, j'ai adoré !", "J'ai adoré, vraiment !", "Quelle journée, j'ai adoré !",
+                     "C'était super, j'ai adoré !"], "{S} a adoré {evento}."),
     },
     "es": {
         # the preterite in -ó is a finite verb for `decomponi()`; «quiere» is in its list
@@ -191,9 +196,10 @@ LINGUE = {
                                                       "{S} tiene un trabajo nuevo en {azienda}."]),
         ],
         "coordinata": " y ",
-        "domanda": "¿Qué tal estuvo?",
+        "domande": ["¿Qué tal estuvo?", "¿Y qué tal fue?", "¿Te gustó?", "¿Cómo te fue?"],
         "evento_andato": ("Acabo de volver {evento_a}.", "{S} volvió {evento_a}."),
-        "pronome": ("¡Fue increíble, me encantó!", "A {S} le encantó {evento}."),
+        "pronome": (["¡Fue increíble, me encantó!", "¡Me encantó, de verdad!", "¡Qué día, me encantó!",
+                     "¡Fue genial, me encantó!"], "A {S} le encantó {evento}."),
     },
 }
 
@@ -255,8 +261,9 @@ def dialogo(rng: random.Random, lingua: str, n: int) -> dict:
     # la terna del pronome: A nomina l'evento, B chiede, A risponde col pronome
     voci = _con_forma_a(_voci(rng, t), t)
     turni.append((A, _riempi(t["evento_andato"][0], voci), _riempi(t["evento_andato"][1], voci, A)))
-    turni.append((B, t["domanda"], None))
-    turni.append((A, t["pronome"][0], _riempi(t["pronome"][1], voci, A)))
+    turni.append((B, rng.choice(t["domande"]), None))
+    frasi, claim_del_pronome = t["pronome"]
+    turni.append((A, rng.choice(frasi), _riempi(claim_del_pronome, voci, A)))
     return {"id": f"{lingua}-{n:04d}", "lingua": lingua, "A": A, "B": B, "turni": turni}
 
 
@@ -271,7 +278,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@5"
+GENERATORE = "d1_dialoghi@6"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
@@ -314,6 +321,9 @@ def genera(dialoghi: int, seme: int) -> list[dict]:
     for lingua in LINGUE:
         for n in range(dialoghi):
             righe.extend(coppie(dialogo(rng, lingua, n), seme))
+    # the judge reads only the source and the claim: a pair repeated by two constructions (the first unit
+    # of a split memory is the claim of its turn) or by two dialogues is one example, kept once
+    righe = senza_coppie_ripetute(righe)
     controlla(righe)
     return righe
 
