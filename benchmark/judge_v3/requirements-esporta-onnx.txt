@@ -1,0 +1,9 @@
+# The venv of benchmark/judge_v3/esporta_onnx.py, created with --system-site-packages.
+# torch, transformers, sentence-transformers, tokenizers and onnxruntime come from the product's
+# environment: the export traces the code that made the corpus vectors, and the int8 comes out of the
+# onnxruntime that runs it. This file adds only what torch's ONNX exporter needs, at fixed versions.
+# The versions actually imported are written by the script in manifesto.json.
+onnx==1.23.1
+onnxscript==0.7.2
+onnx-ir==1.0.0
+ml_dtypes==0.6.0

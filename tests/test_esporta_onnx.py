@@ -50,7 +50,9 @@ def _lotto():
 
 
 def _riferimento(modello, ids, maschera):
-    from sentence_transformers.models import Normalize, Pooling
+    import esporta_onnx
+
+    Pooling, Normalize = esporta_onnx.pooling_e_normalize()
 
     with torch.no_grad():
         token = modello(input_ids=ids, attention_mask=maschera).last_hidden_state
@@ -96,7 +98,8 @@ class _Trasformatore(torch.nn.Module):
 
 def test_the_export_accepts_transformer_then_mean_pooling_then_normalize() -> None:
     import esporta_onnx
-    from sentence_transformers.models import Normalize, Pooling
+
+    Pooling, Normalize = esporta_onnx.pooling_e_normalize()
 
     esporta_onnx.controlla_moduli([_Trasformatore(), Pooling(LARGHEZZA, pooling_mode="mean"), Normalize()])
 
@@ -104,7 +107,8 @@ def test_the_export_accepts_transformer_then_mean_pooling_then_normalize() -> No
 @pytest.mark.parametrize("caso", ["cls pooling", "mean and max", "no normalize", "no transformer"])
 def test_the_export_refuses_any_other_pipeline(caso: str) -> None:
     import esporta_onnx
-    from sentence_transformers.models import Normalize, Pooling
+
+    Pooling, Normalize = esporta_onnx.pooling_e_normalize()
 
     moduli = {
         "cls pooling": [_Trasformatore(), Pooling(LARGHEZZA, pooling_mode="cls"), Normalize()],
