@@ -306,6 +306,18 @@ def coppie(d: dict, seme: int) -> list[dict]:
     return out
 
 
+def genera(dialoghi: int, seme: int) -> list[dict]:
+    """The rows of `dialoghi` dialogues per language, deterministic with the seed and checked by
+    `controlla()`: what the command writes, and what a test reads without writing a file."""
+    rng = random.Random(seme)
+    righe = []
+    for lingua in LINGUE:
+        for n in range(dialoghi):
+            righe.extend(coppie(dialogo(rng, lingua, n), seme))
+    controlla(righe)
+    return righe
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--dialoghi", type=int, default=60, help="dialoghi per lingua")
@@ -315,12 +327,7 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     import verimem
     print("verimem from:", verimem.__file__)
-    rng = random.Random(a.seme)
-    righe = []
-    for lingua in LINGUE:
-        for n in range(a.dialoghi):
-            righe.extend(coppie(dialogo(rng, lingua, n), a.seme))
-    controlla(righe)
+    righe = genera(a.dialoghi, a.seme)
     uscita = Path(a.uscita)
     uscita.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in righe), encoding="utf-8")
     import hashlib
