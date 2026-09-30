@@ -66,6 +66,15 @@ COPPIE = [
         "A 1.000 alone cannot distinguish",
         id="astensione-1000",
     ),
+    # 29/09: la 176 (era la 165) ha ricevuto il suo avviso — il suo «today» non era
+    # piu' vero dopo la corsa del 24-25/09 — e passa fra le coppie, come chiedeva il
+    # conteggio qui sotto.
+    pytest.param(
+        "README:176 — il riassunto della matrice e le misure discordanti dello stesso comando",
+        ["1.8% was the 2026-07-18 run", "the same command reported 5.4% on 2026-08-25"],
+        "run it yourself before trusting any of them",
+        id="riassunto-matrice",
+    ),
 ]
 
 
@@ -111,7 +120,7 @@ def test_ogni_ambiguita_dichiarata_porta_ancora_il_suo_avviso(dove, ambiguita, a
 # ⚙️ REGISTRATO, non preteso (regola del 12/09: un test misura e resta). La cura e'
 # sei parole sulla riga 165 — e quando arrivano, questo test cade e va GIRATO.
 
-_AMBIGUITA_SENZA_AVVISO = 1  # misurato il 12/09: la 165, e solo lei
+_AMBIGUITA_SENZA_AVVISO = 0  # 12/09: 1, la 165; 29/09: 0, la 176 ha il suo avviso
 
 
 def test_quante_ambiguita_dichiarate_restano_senza_il_loro_avviso():
@@ -119,7 +128,7 @@ def test_quante_ambiguita_dichiarate_restano_senza_il_loro_avviso():
 
     la_165_dichiara = (
         "1.8% was the 2026-07-18 run" in testo
-        and "the same command today reports 5.4%" in testo
+        and "the same command reported 5.4% on 2026-08-25" in testo
     )
     assert la_165_dichiara, (
         "README:165 non dichiara piu' che lo stesso comando ha dato 1.8% e 5.4%: "

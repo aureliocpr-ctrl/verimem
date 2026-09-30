@@ -241,9 +241,13 @@ def _has_negation(text: str) -> bool:
 
 
 def _group_by_topic(facts: list[Fact]) -> dict[str, list[Fact]]:
+    """I fatti per topic. Un fatto SENZA topic non entra in nessun gruppo: il
+    topic vuoto non e' un topic condiviso, e il 29/09 metterlo insieme faceva
+    ritirare 41 fatti contro quattro che non c'entravano."""
     by_topic: dict[str, list[Fact]] = {}
     for f in facts:
-        by_topic.setdefault(f.topic, []).append(f)
+        if (f.topic or "").strip():
+            by_topic.setdefault(f.topic, []).append(f)
     return by_topic
 
 
@@ -535,7 +539,13 @@ class ContradictionStore:
 #: chiamante (il passaggio automatico e lo strumento MCP): li lascia aperti e li
 #: conta. La richiesta che porta la decisione nuova toglie il tipo da qui e
 #: rilegge gli scontri gia' registrati con la decisione nuova prima di agire.
-TIPI_CHE_HEAL_NON_ESEGUE: frozenset[str] = frozenset({"numeric_clash"})
+#:
+#: ``boolean_clash`` e' qui per la stessa ragione (29/09): su una copia dello
+#: store, dopo gli undo, questo passaggio ritirava 172 fatti per scontri
+#: booleani, e fra questi di nuovo tutti e 41 quelli appena ripristinati. Esce
+#: da qui quando la catena col giudice copre anche i booleani.
+TIPI_CHE_HEAL_NON_ESEGUE: frozenset[str] = frozenset(
+    {"numeric_clash", "boolean_clash"})
 
 
 def heal_contradictions(
@@ -575,6 +585,13 @@ def heal_contradictions(
     restano aperti, non si leggono nemmeno (il ``limit`` vale per gli altri), e
     il loro conteggio per tipo esce in ``left_open_kinds``, perche' un passo
     spento deve dirlo. Di default e' :data:`TIPI_CHE_HEAL_NON_ESEGUE` (vedi sopra).
+
+    Uno scontro fra due fatti che non condividono un topic vero (tutti e due
+    senza topic) non si esegue: resta aperto e si conta in
+    ``left_open_no_topic``. Il 29/09, su una copia dello store vero, questo
+    passaggio ritirava di nuovo i 41 fatti appena ripristinati, per
+    ``boolean_clash`` contro quattro fatti che non c'entravano: il topic vuoto
+    raggruppava tutto cio' che non ne ha uno.
     """
     from .semantic import _rango_di_fiducia
 
@@ -585,6 +602,7 @@ def heal_contradictions(
     skipped: list[str] = []
     skipped_ignoto: list[str] = []
     missing: list[str] = []
+    senza_topic = 0
     left_open = store.count_unresolved_by_kind(skip_kinds) if skip_kinds else {}
     for c in store.list_unresolved(limit=limit, exclude_kinds=skip_kinds):
         fa = memory.get(c.fact_a_id)
@@ -594,6 +612,10 @@ def heal_contradictions(
             store.resolve(c.id, note="heal: a fact in the pair no longer exists")
             missing.append(c.id)
             resolved.append(c.id)
+            continue
+        if not (fa.topic or "").strip() and not (fb.topic or "").strip():
+            # Il topic vuoto non e' un topic condiviso: lo scontro resta aperto.
+            senza_topic += 1
             continue
         ra = _rango_di_fiducia(fa.status)
         rb = _rango_di_fiducia(fb.status)
@@ -655,6 +677,7 @@ def heal_contradictions(
         "skipped_unknown_trust": skipped_ignoto,
         "missing": missing,
         "left_open_kinds": left_open,
+        "left_open_no_topic": senza_topic,
     }
 
 

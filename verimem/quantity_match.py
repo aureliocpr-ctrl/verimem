@@ -2632,6 +2632,30 @@ def _bare_numbers(text: str) -> set[str]:
     return {f"{v:g}" for (u, v) in extract_quantities(text) if not u}
 
 
+#: 25/09 — IL PREZZO NON E' UN INDICE. «The plan costs 150 € per month» e «…100 €…»
+#: diventavano gli indici («costs», 150) e («costs», 100): `extract_quantities` non
+#: conosce il simbolo della valuta come unita', il numero restava NUDO e la regola
+#: posizionale lo leggeva come «message 0». La coppia era «due record diversi», il router
+#: la faceva coesistere, e l'esempio del README (100 € → 150 €, stessa fonte) non
+#: ritirava piu' il vecchio valore, mentre con «euros» in lettere lo ritirava (job di
+#: accettazione dal wheel, riga 1; rifatto su main a3658f99). Un numero accanto a un
+#: simbolo o a un codice di valuta misura un prezzo, come «45 ms»: non indicizza niente.
+#: La cura sta qui e non in `extract_quantities`, che legge anche il resto del cancello.
+_CODICI_VALUTA = frozenset({"eur", "usd", "gbp", "jpy", "chf", "cny", "inr", "cad",
+                            "aud"})
+#: dopo il numero: i decimali, uno spazio al piu', poi il simbolo o il codice
+_VALUTA_DOPO_IL_NUMERO_RE = re.compile(
+    r"(?:[.,]\d{1,6})?\s?(?:[€$£¥₹]|(?:eur|usd|gbp|jpy|chf|cny|inr|cad|aud)\b)",
+    re.IGNORECASE)
+
+
+def _e_un_prezzo(span: str, m: re.Match) -> bool:
+    """Il numero di un match di indice e' un PREZZO: il tipo e' un codice di valuta
+    («EUR 150», «USD150»), o subito dopo il numero viene la valuta («150 €», «99,90 €»)."""
+    return (m.group(1).lower() in _CODICI_VALUTA
+            or _VALUTA_DOPO_IL_NUMERO_RE.match(span, m.end(2)) is not None)
+
+
 def event_indices(text: str) -> set[tuple[str, int]]:
     """``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" ->
     ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)), alphanumeric
@@ -2645,16 +2669,17 @@ def event_indices(text: str) -> set[tuple[str, int]]:
     subjects, so a real conflict on the claim went undetected.
     """
     span = claim_span(text)
+    # un prezzo non indicizza, in nessuna delle tre regole (vedi `_e_un_prezzo`)
     out = {(m.group(1).lower(), int(m.group(2)))
-           for m in _EVENT_INDEX_RE.finditer(span)}
+           for m in _EVENT_INDEX_RE.finditer(span) if not _e_un_prezzo(span, m)}
     out |= {(m.group(1).lower(), int(m.group(2)))
-            for m in _ALNUM_CODE_RE.finditer(span)}
+            for m in _ALNUM_CODE_RE.finditer(span) if not _e_un_prezzo(span, m)}
     # positional rule, gated on the number being BARE: "message 0" indexes,
     # "conta 7883 test" measures and must stay a measure
     bare = _bare_numbers(text)
     out |= {(m.group(1).lower(), int(m.group(2)))
             for m in _GENERIC_INDEX_RE.finditer(span)
-            if f"{float(m.group(2)):g}" in bare}
+            if f"{float(m.group(2)):g}" in bare and not _e_un_prezzo(span, m)}
     return out
 
 

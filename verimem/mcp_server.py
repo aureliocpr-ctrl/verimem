@@ -3637,8 +3637,12 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "SUPERSEDED fact is refused (never resurrects a retired "
                 "value) and the proposition is RE-SCREENED for prompt "
                 "injection — an exfiltration/instruction-override payload "
-                "stays quarantined even when its id is passed. Returns "
-                "{ok, restored, fact_id, refused_reason?}."
+                "stays quarantined even when its id is passed. The principal "
+                "that wrote a fact cannot release it: every MCP write and "
+                "request is mcp:unbound, so a fact written through MCP is "
+                "released by a person (`verimem facts release <id>`), not "
+                "here. Returns {ok, restored, fact_id, released_by, "
+                "written_by, refused_reason?}."
             ),
             inputSchema={
                 "type": "object",
@@ -4156,7 +4160,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "debole verso il piu forte e marca la contraddizione risolta. "
                 "Trust pari -> lasciata per giudizio umano. Reversibile: la riga "
                 "resta in DB per lineage e sparisce dal recall di default. Agisce "
-                "solo su cio che il detector ha gia trovato (non scansiona)."
+                "solo su cio che il detector ha gia trovato (non scansiona). "
+                "OGGI non esegue numeric_clash ne' boolean_clash: restano aperti "
+                "e contati in left_open_kinds finche' la decisione col giudice "
+                "non e' fusa; fra due fatti senza topic lo scontro resta aperto "
+                "(left_open_no_topic)."
             ),
             inputSchema={
                 "type": "object",
@@ -15210,49 +15218,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                                  "sistema che tiene")})
 
         if name == "hippo_quarantine_restore":
-            import sqlite3 as _sq
             fid = str(arguments.get("fact_id", "")).strip()
             if not fid:
                 return _err("empty fact_id")
             _reason = str(arguments.get("reason", ""))
-            # Same guards as Memory.restore (client.py): read text+supersession
-            # straight from the store (get() hides quarantined text), refuse a
-            # superseded fact, re-screen the proposition for injection.
-            _text, _topic, _superseded = "", "", False
-            try:
-                with _sq.connect(str(a.semantic.db_path)) as _con:
-                    _row = _con.execute(
-                        "SELECT proposition, topic, superseded_by FROM facts "
-                        "WHERE id = ?", (fid,)).fetchone()
-                    _text = (_row[0] if _row else "") or ""
-                    _topic = (_row[1] if _row else "") or ""
-                    _superseded = bool(_row[2]) if _row else False
-            except Exception:  # noqa: BLE001 — unreadable → restore_fact False
-                pass
-            if _superseded:
-                return _ok({"ok": True, "restored": False, "fact_id": fid,
-                            "refused_reason": "superseded: restore only "
-                            "un-quarantines, never un-supersedes"})
-            # Re-screen the proposition AND the topic (critic 791a151a): the
-            # write gate quarantines on injection in EITHER (topic is
-            # caller-controlled and echoed verbatim on every recall hit), so a
-            # topic-only payload must stay quarantined — same policy as the
-            # requalify sibling (admission_cleanup.py, fixed 2026-06-20).
-            if _text or _topic:
-                try:
-                    from .prompt_injection import detect_injection
-                    if (detect_injection(_text).is_injection
-                            or detect_injection(_topic).is_injection):
-                        return _ok({"ok": True, "restored": False,
-                                    "fact_id": fid,
-                                    "refused_reason": "injection_screen: the "
-                                    "proposition or topic still trips the "
-                                    "injection detector"})
-                except Exception:  # noqa: BLE001 — screen failure ≠ crash
-                    pass
-            _restored = bool(a.semantic.restore_fact(fid, reason=_reason))
-            return _ok({"ok": True, "restored": _restored, "fact_id": fid,
-                        "reason": _reason})
+            # Le guardie (superseduto, iniezione, chi ha scritto non libera)
+            # stanno UNA volta nello store: questa porta chiede come se stessa,
+            # quindi un fatto scritto via MCP non si libera via MCP (Atlas).
+            _ricevuta = a.semantic.libera_dalla_quarantena(
+                fid, requested_by=_MCP_PRINCIPAL, reason=_reason)
+            return _ok({"ok": True, **_ricevuta, "reason": _reason})
 
         if name == "hippo_fact_forget":
             fid = str(arguments.get("fact_id", "")).strip()
