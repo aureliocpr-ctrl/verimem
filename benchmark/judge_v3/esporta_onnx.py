@@ -65,6 +65,8 @@ VARIANTI_INT8 = {
     "model_int8_rr.onnx": {"per_channel": False, "reduce_range": True},
     "model_int8_pc.onnx": {"per_channel": True, "reduce_range": False},
     "model_int8_solo_matmul.onnx": {"per_channel": False, "reduce_range": False, "op_types_to_quantize": ["MatMul"]},
+    "model_int8_tabella_per_riga.onnx": {"per_channel": False, "reduce_range": False,
+                                         "op_types_to_quantize": ["MatMul"], "tabella_per_riga": True},
 }
 VARIANTI_DELL_EXPORT = ("model_int8.onnx", "model_int8_rr.onnx")
 
@@ -241,13 +243,75 @@ def esporta_grafo(grafo: torch.nn.Module, ids: torch.Tensor, maschera: torch.Ten
     )
 
 
-def quantizza(file_fp32: Path, file_int8: Path, opzioni: dict) -> None:
+def quantizza_per_riga(tabella: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+    """Symmetric int8 with one scale per row: every row keeps its own range, so a row with large values
+    does not flatten the others, as it does with the one scale onnxruntime's Gather gives the whole table."""
+    tabella = np.asarray(tabella, dtype=np.float32)
+    massimi = np.abs(tabella).max(axis=1, keepdims=True)
+    scale = np.where(massimi > 0, massimi / 127.0, 1.0).astype(np.float32)
+    interi = np.clip(np.rint(tabella / scale), -127, 127).astype(np.int8)
+    return interi, scale
+
+
+def tabella_per_riga(file_in: Path, file_out: Path) -> dict:
+    """Replace the largest table a Gather reads (the word embeddings) with int8 and one scale per row:
+    Gather(table, ids) becomes Mul(Cast(Gather(table_int8, ids)), Gather(scale, ids))."""
+    import onnx
+    from onnx import TensorProto, helper, numpy_helper
+
+    modello = onnx.load(str(file_in))
+    grafo = modello.graph
+    iniziali = {t.name: t for t in grafo.initializer}
+    candidati = [(i, n) for i, n in enumerate(grafo.node) if n.op_type == "Gather" and n.input[0] in iniziali]
+    if not candidati:
+        raise ValueError("no Gather reads its table from the initializers")
+    indice, nodo = max(candidati, key=lambda c: int(np.prod(iniziali[c[1].input[0]].dims)))
+    iniziale = iniziali[nodo.input[0]]
+    tabella = numpy_helper.to_array(iniziale)
+    if tabella.dtype != np.float32 or tabella.ndim != 2:
+        raise ValueError(f"the table {iniziale.name} is {tabella.dtype} {tabella.shape}, not a float32 matrix")
+    interi, scale = quantizza_per_riga(tabella)
+    nome_interi, nome_scale = f"{iniziale.name}_int8_per_riga", f"{iniziale.name}_scala_per_riga"
+    grafo.initializer.remove(iniziale)
+    grafo.initializer.extend([numpy_helper.from_array(interi, nome_interi), numpy_helper.from_array(scale, nome_scale)])
+    uscita, ids = nodo.output[0], nodo.input[1]
+    nuovi = [
+        helper.make_node("Gather", [nome_interi, ids], [f"{uscita}_righe_int8"], name=f"{nodo.name}_int8"),
+        helper.make_node("Cast", [f"{uscita}_righe_int8"], [f"{uscita}_righe"], name=f"{nodo.name}_cast",
+                         to=TensorProto.FLOAT),
+        helper.make_node("Gather", [nome_scale, ids], [f"{uscita}_scale"], name=f"{nodo.name}_scale"),
+        helper.make_node("Mul", [f"{uscita}_righe", f"{uscita}_scale"], [uscita], name=f"{nodo.name}_mul"),
+    ]
+    for nuovo in (nuovi[0], nuovi[2]):
+        nuovo.attribute.extend(nodo.attribute)  # the same axis as the Gather it replaces
+    nodi = list(grafo.node)
+    nodi[indice:indice + 1] = nuovi
+    del grafo.node[:]
+    grafo.node.extend(nodi)
+    onnx.checker.check_model(modello)
+    onnx.save(modello, str(file_out))
+    return {"tabella": iniziale.name, "forma": list(tabella.shape),
+            "mb_fp32": round(tabella.nbytes / 2**20, 1), "mb_int8_e_scale": round((interi.nbytes + scale.nbytes) / 2**20, 1)}
+
+
+def quantizza(file_fp32: Path, file_int8: Path, opzioni: dict) -> dict:
     """onnxruntime's dynamic quantization, 8-bit signed weights; the operators are its default ones
-    (MatMul and Gather among them, so the table of the word embeddings is quantized too)."""
+    (MatMul and Gather among them, so the table of the word embeddings is quantized too, with one scale).
+    With tabella_per_riga the MatMuls are quantized by onnxruntime and the table row by row, here."""
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
-    quantize_dynamic(model_input=str(file_fp32), model_output=str(file_int8), weight_type=QuantType.QInt8,
+    opzioni = dict(opzioni)
+    if not opzioni.pop("tabella_per_riga", False):
+        quantize_dynamic(model_input=str(file_fp32), model_output=str(file_int8), weight_type=QuantType.QInt8,
+                         **opzioni)
+        return {}
+    intermedio = file_int8.with_name(file_int8.stem + "_intermedio.onnx")
+    quantize_dynamic(model_input=str(file_fp32), model_output=str(intermedio), weight_type=QuantType.QInt8,
                      **opzioni)
+    try:
+        return tabella_per_riga(intermedio, file_int8)
+    finally:
+        intermedio.unlink()
 
 
 def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
@@ -348,11 +412,12 @@ def varianti(uscita: Path, nomi: list[str]) -> dict:
     for nome in nomi:
         opzioni = VARIANTI_INT8[nome]
         file_int8 = uscita / nome
-        quantizza(file_fp32, file_int8, opzioni)
+        tabella = quantizza(file_fp32, file_int8, opzioni)
         int8, ms_int8 = _vettori_onnx(file_int8, TESTI, tok)
         manifesto["int8"][nome] = {
             "opzioni": {"weight_type": "QInt8", **opzioni}, "contro_fp32": _confronto(fp32, int8),
             "ms_per_testo": ms_int8, "operatori": _operatori(file_int8), "versioni": versioni(),
+            **({"tabella_per_riga": tabella} if tabella else {}),
         }
     manifesto["uscite"] = _uscite(uscita)
     (uscita / "manifesto.json").write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding="utf-8")
