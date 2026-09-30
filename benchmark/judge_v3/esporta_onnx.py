@@ -2,9 +2,11 @@
 
 The embedder is the one the product loads (verimem/config.py: intfloat/multilingual-e5-base, 768
 dimensions): sentence-transformers' Transformer -> mean Pooling -> Normalize, encoded with
-normalize_embeddings=True and no prefix (verimem/embedding.py). The graph written here holds the
-pooling and the normalization too, so its output IS the product's vector, and whoever runs it needs
-onnxruntime and a tokenizer, not torch.
+normalize_embeddings=True. For an e5 model the product prefixes the text: «passage: » for what it
+stores and «query: » for what it searches (verimem/embedding.py, as_passage and as_query). The prefix
+is text, so it stays with whoever calls the graph, and the texts of the steps carry it as the product
+does. The graph written here holds the pooling and the normalization too, so its output IS the
+product's vector, and whoever runs it needs onnxruntime and a tokenizer, not torch.
 
 It runs in its own venv, never in the shared environment:
 
@@ -63,9 +65,13 @@ VARIANTI_INT8 = {
 }
 
 #: the texts of the steps: four languages and two more scripts, the shapes the product encodes
-#: (a fact, a negation, a question, a number, a timestamp, a command), an empty string, and one text
-#: longer than 512 tokens so that the truncation is exercised
+#: (a fact, a negation, a question, a number, a timestamp, a command), the product's own prefixes,
+#: an empty string, and one text longer than 512 tokens so that the truncation is exercised
 TESTI = [
+    "passage: Il contratto LC-0417 prevede un affitto di 850 euro al mese.",
+    "query: quanto costa l'affitto del contratto LC-0417?",
+    "passage: The daemon keeps the model in memory and exits after ten minutes of idle time.",
+    "query: when does the daemon exit?",
     "Il contratto LC-0417 prevede un affitto di 850 euro al mese.",
     "Non è vero che il deposito sia di tre mensilità.",
     "Quante pompe sono ferme nell'impianto PL-0203?",
@@ -264,7 +270,7 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     ids_runtime = [c.ids[: sum(c.attention_mask)] for c in tok.encode_batch(TESTI)]
     diversi = [i for i, (a, b) in enumerate(zip(ids_hf, ids_runtime, strict=True)) if list(a) != list(b)]
     fp32, ms_fp32 = _vettori_onnx(file_fp32, TESTI, tok)
-    # a short text that its batch pads (it shares the batch with the long one), now alone: a batch of 1
+    # a short text that its batch of 8 pads (the longest text in it has 49 characters), now alone: a batch of 1
     corto = TESTI.index("OK")
     da_solo, _ = _vettori_onnx(file_fp32, [TESTI[corto]], tok, lotto=1)
     manifesto["passi"]["1_token_ids_diversi"] = diversi
