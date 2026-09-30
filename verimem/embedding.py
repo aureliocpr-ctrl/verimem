@@ -14,6 +14,7 @@ import os
 import threading
 from collections.abc import Iterable
 from functools import lru_cache
+from typing import NamedTuple
 
 import numpy as np
 
@@ -307,44 +308,40 @@ def _encode_local(text: str) -> np.ndarray:
     return np.asarray(vec, dtype=np.float32)
 
 
-#: L'ultimo motivo che il DAEMON ha dato per un rifiuto, o ``None`` se nessuno
-#: ha detto niente. Non è telemetria: è l'unico posto in cui quella frase
-#: sopravvive, e da qui la rilegge il messaggio che l'utente vede.
-_ULTIMO_RIFIUTO: str | None = None
+class RispostaDelServizio(NamedTuple):
+    """Ciò che UNA chiamata al daemon ha ottenuto: il vettore, o il perché no.
 
-
-def ultimo_rifiuto_del_servizio() -> str | None:
-    """Perché il daemon ha rifiutato l'ultima richiesta, se l'ha detto.
-
-    ``None`` quando il daemon non ha parlato — irraggiungibile, spento, o
-    scoperta assente. La distinzione è tutta: «non ha risposto» e «ha risposto
-    che non può» sono due guasti diversi, e finora il prodotto li diceva con la
-    stessa frase.
+    ⚠️ IL MOTIVO VIAGGIA CON LA RISPOSTA, NON IN UNA GLOBALE. Fino al 30/09 stava
+    in due globali del modulo (`_ULTIMO_RIFIUTO`, `_ULTIMO_RIFIUTO_MIO`), azzerate
+    all'inizio di ogni chiamata e rilette dal chiamante subito dopo: fra quelle due
+    righe il motivo era di TUTTI. Fra due test, la cella del rifiuto lo lasciava
+    pieno per quella dopo (il rosso d'ordine del 29/09, seme 3608823368); fra due
+    richieste dello stesso processo, la seconda azzerava il motivo della prima prima
+    che lei lo leggesse, e l'utente riceveva «unavailable» su un daemon che gli aveva
+    detto perché. `test_il_motivo_del_rifiuto_e_della_chiamata_non_del_processo.py`.
     """
-    return _ULTIMO_RIFIUTO
 
-
-#: Il CLIENT ha rifiutato la RISPOSTA del daemon — che è l'opposto del caso
-#: sopra, e vanno tenuti separati: là il daemon dice di non poter servire, qui
-#: il daemon serve benissimo e siamo noi a non poterci fidare di ciò che serve.
-#: Confonderli produrrebbe «the daemon REFUSED» su un daemon che ha risposto,
-#: cioè una diagnosi falsa su una cosa verificabile — la stessa classe di
-#: errore già pagata il 06/09 con «unavailable» su un daemon vivo.
-_ULTIMO_RIFIUTO_MIO: str | None = None
-
-
-def ultimo_rifiuto_del_client() -> str | None:
-    """Perché QUESTO processo ha scartato l'ultima risposta del daemon, o None.
-
-    Si azzera a ogni chiamata al servizio, come il gemello: un motivo vecchio
-    riletto come nuovo è peggio dell'assenza.
-    """
-    return _ULTIMO_RIFIUTO_MIO
+    vec: np.ndarray | None = None
+    #: il DAEMON ha risposto e ha detto perché non può servire. ``None`` quando non
+    #: ha parlato — irraggiungibile, spento, o scoperta assente: «non ha risposto»
+    #: e «ha risposto che non può» sono due guasti diversi.
+    rifiuto_del_servizio: str | None = None
+    #: il daemon ha servito, e QUESTO processo non si è potuto fidare di ciò che ha
+    #: servito — l'opposto del caso sopra, e vanno tenuti separati: confonderli
+    #: produrrebbe «the daemon REFUSED» su un daemon che ha risposto (T86).
+    rifiuto_del_client: str | None = None
 
 
 def _encode_via_service(text: str) -> np.ndarray | None:
-    """Encode via the shared service. Returns None if unavailable so the
-    caller falls back to in-process encoding.
+    """Il solo vettore di una chiamata al servizio, o ``None`` (fallback locale)."""
+    return _chiedi_al_servizio(text).vec
+
+
+def _chiedi_al_servizio(text: str) -> RispostaDelServizio:
+    """Encode via the shared service: the vector, or why there is none.
+
+    An empty answer (no vector, no reason) means the service is unavailable,
+    and the caller falls back to in-process encoding.
 
     ⚠️ SE IL DAEMON SPIEGA IL RIFIUTO, LA SPIEGAZIONE SI CONSERVA. Misurato il
     06/09: daemon vivo (porta provata, ACCETTA) che rispondeva
@@ -355,13 +352,8 @@ def _encode_via_service(text: str) -> np.ndarray | None:
     l'opposto del vero. L'``error`` è nel CONTRATTO (`test_encode_service.py:73`
     lo pretende dal daemon); mancava chi lo raccogliesse di qua.
     """
-    global _ULTIMO_RIFIUTO, _ULTIMO_RIFIUTO_MIO
-    #: si azzera a OGNI giro: un motivo vecchio riletto come nuovo sarebbe
-    #: peggio dell'assenza, perché chi legge crederebbe di avere una diagnosi.
-    _ULTIMO_RIFIUTO = None
-    _ULTIMO_RIFIUTO_MIO = None
     if not _service_enabled():
-        return None
+        return RispostaDelServizio()
     try:
         import socket as _socket
 
@@ -369,14 +361,14 @@ def _encode_via_service(text: str) -> np.ndarray | None:
 
         info = _svc.read_discovery()
         if not info or not info.get("port"):
-            return None
+            return RispostaDelServizio()
         # rescan2 fix 2026-06-02 (NONNA): usa il daemon SOLO se serve lo STESSO
         # modello di CONFIG. Un daemon stale/di altra config produce vettori in
         # uno spazio embedding diverso (stessa dim -> passa il filtro byte ma
         # cosine non comparabile = poisoning silenzioso del corpus). Mismatch o
         # 'model' assente -> None -> fallback al local encode (modello corretto).
         if info.get("model") != CONFIG.embedding_model:
-            return None
+            return RispostaDelServizio()
         conn = _socket.create_connection(
             (info.get("host", "127.0.0.1"), info["port"]),
             timeout=_SERVICE_CONNECT_TIMEOUT_S,
@@ -417,22 +409,21 @@ def _encode_via_service(text: str) -> np.ndarray | None:
             if (not getattr(CONFIG, "embedding_dim_assumed", False)
                     and not vettore_compatibile(_grezzo)):
                 _quanti = len(_grezzo) if hasattr(_grezzo, "__len__") else 0
-                _ULTIMO_RIFIUTO_MIO = (
+                return RispostaDelServizio(rifiuto_del_client=(
                     f"the daemon answered with {_quanti} values "
                     f"({_quanti * 4} bytes) where the active model asks for "
                     f"{CONFIG.embedding_dim} ({expected_embedding_bytes()} "
                     f"bytes): it announces {info.get('model')!r} and serves "
                     "another size, so the vector was REFUSED — storing it "
-                    "would write a fact that recall can never return")
-                return None
-            return np.asarray(_grezzo, dtype=np.float32)
+                    "would write a fact that recall can never return"))
+            return RispostaDelServizio(vec=np.asarray(_grezzo, dtype=np.float32))
         #: HA RISPOSTO E HA DETTO PERCHE': si conserva, invece di uscire come
         #: se non avesse risposto affatto.
         if isinstance(resp, dict) and resp.get("error"):
-            _ULTIMO_RIFIUTO = str(resp["error"])
+            return RispostaDelServizio(rifiuto_del_servizio=str(resp["error"]))
     except Exception:  # noqa: BLE001 — any failure → fall back to local encode
-        return None
-    return None
+        return RispostaDelServizio()
+    return RispostaDelServizio()
 
 
 def _encode_one(text: str) -> np.ndarray:
@@ -442,7 +433,8 @@ def _encode_one(text: str) -> np.ndarray:
     EncodeDelegateUnavailable) so the caller degrades instead of blocking ~33s
     under _MODEL_LOCK — but still use an already-warm in-process model if one
     happens to be loaded (no cold-load = no lock contention)."""
-    vec = _encode_via_service(text)
+    risposta = _chiedi_al_servizio(text)
+    vec = risposta.vec
     if vec is not None:
         # first observed daemon vector corrects an ASSUMED dim in THIS process
         # (the model itself may only ever load in the daemon process).
@@ -453,7 +445,10 @@ def _encode_one(text: str) -> np.ndarray:
         #: siamo noi a non poterci fidare della sua risposta (T86). Va davanti
         #: alle altre due perché è l'unica in cui riavviare il daemon non serve
         #: a niente: quello che va cambiato è il daemon che i client trovano.
-        _mio = ultimo_rifiuto_del_client()
+        #: I motivi si leggono dalla risposta di QUESTA chiamata: fra la
+        #: chiamata e questa riga un'altra richiesta dello stesso processo può
+        #: aver parlato col daemon, e il suo esito non è il nostro.
+        _mio = risposta.rifiuto_del_client
         if _mio:
             raise EncodeDelegateUnavailable(
                 f"this client REFUSED the daemon's answer: {_mio}; "
@@ -463,7 +458,7 @@ def _encode_one(text: str) -> np.ndarray:
         #: DUE FRASI PER DUE GUASTI. Se il daemon ha spiegato il rifiuto, la
         #: sua spiegazione va davanti: «unavailable» su un daemon vivo che
         #: risponde e' una diagnosi FALSA, e manda a cercare un processo morto.
-        _motivo = ultimo_rifiuto_del_servizio()
+        _motivo = risposta.rifiuto_del_servizio
         if _motivo:
             raise EncodeDelegateUnavailable(
                 f"the encode daemon REFUSED this request: {_motivo} — the "
