@@ -96,10 +96,25 @@ def test_l_errore_NOMINA_i_campi_che_mancano(store):
 
 
 def test_IL_CONTROLLO_POSITIVO_la_chiamata_corretta_scrive_come_prima(store):
-    """Senza questo, il rosso si spegne rompendo la porta invece di curarla."""
+    """Senza questo, il rosso si spegne rompendo la porta invece di curarla.
+
+    ⚠️ Da #126 una chiamata VALIDA promuove un chunk che QUESTO store ha
+    indicizzato: la porta rilegge il testo dall'indice e rifiuta coordinate
+    scritte a mano («no indexed chunk at doc-collaudo:0-72»). Il controllo
+    quindi indicizza il documento e promuove il chunk che l'indice rende, come
+    fa un utente — lo stesso modo di `test_la_promozione_di_un_chunk_passa_dal
+    _motore_unico.py`.
+    """
+    from verimem.document_index import DocumentIndex
+
+    indice = DocumentIndex()
+    indice.index_document("doc-collaudo", TESTO, uri="file://doc-collaudo")
+    colpi = indice.search("collaudo della linea 3", k=1)
+    assert colpi, "il banco non ha prodotto nessun hit: non sta misurando niente"
+    colpo = colpi[0]
     prima = _fatti_nel_database()
-    r = _chiama({"text": TESTO, "source_id": "doc-collaudo", "start": 0,
-                 "end": len(TESTO), "topic": TOPIC})
+    r = _chiama({"text": colpo["text"], "source_id": colpo["source_id"],
+                 "start": colpo["start"], "end": colpo["end"], "topic": TOPIC})
 
     assert not r.get("error"), f"la chiamata VALIDA e' stata rifiutata: {r}"
     assert r.get("stored") is True, f"la chiamata valida non ha scritto: {r}"
