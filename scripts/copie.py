@@ -55,7 +55,13 @@ TETTI = {
     # 26 delle 179 aperture e `vicinato_del_valore._GRAMMATICA` 33, e tutte e
     # due contengono is/are/was/were/be, che come complemento del gerundio
     # farebbero cadere «Reading is…» e «Beijing is…» dai nomi.
-    "liste_di_parole_vuote": 18,
+    # 18 -> 19 il 29/09: `atomic_claims._MODIFICATORI`, preposizioni e articoli
+    # davanti a un participio inglese («for underserved communities»). Nessuna
+    # delle 18 va bene, misurato: le quattro senza pronomi soggetto coprono al
+    # massimo 17 delle 31 voci (`entity_extract_lite.py:27`), e quelle che ne
+    # coprono di piu' hanno i pronomi (`quantity_match.py:1878` 27/31 con 6,
+    # `bm25_rank.py:57` 22/31 con 5): «he walked» smetterebbe di essere un verbo.
+    "liste_di_parole_vuote": 19,
     "elenchi_di_status": 22,
 }
 # ⛔ QUI C'ERA UN «DEBITO» DI 13 ELENCHI CON `quarantined` E SENZA `user_belief`,

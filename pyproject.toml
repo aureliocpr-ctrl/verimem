@@ -81,6 +81,7 @@ dependencies = [
   # how we found out, not the damage. Lift this deliberately, with the
   # migration, not by widening the range.
   "mcp>=1.0.0,<2",
+  "psutil>=5.9.0",   # verimem doctor measures the memory it promises (row 7)
 ]
 
 [project.optional-dependencies]

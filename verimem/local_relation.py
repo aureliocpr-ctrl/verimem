@@ -126,6 +126,48 @@ def make_nli_classifier(model_name: str, *, max_length: int = 256,
     return classifier
 
 
+def _nli_via_daemon(coppie: list[tuple[str, str]], *,
+                    info: dict | None = None) -> list[LabelProbs] | None:
+    """Le probabilita' NLI dal daemon condiviso, o None per degradare.
+
+    Gemello di `local_grounding._gate_via_daemon`, per la stessa ragione: il
+    modello si carica una volta nel daemon invece che in ogni processo che
+    scrive. Daemon spento, daemon vecchio che non conosce ``nli_pairs``, socket
+    caduto, risposta di lunghezza sbagliata -> None, e il chiamante decide.
+    """
+    if os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() in (
+        "0", "false", "no", "off",
+    ):
+        return None
+    try:
+        import socket as _socket
+
+        from . import embedding as _emb
+        from . import encode_service as _svc
+        info = info if info is not None else _svc.read_discovery()
+        if not info or not info.get("port"):
+            return None
+        conn = _socket.create_connection(
+            (info.get("host", "127.0.0.1"), info["port"]),
+            timeout=_emb._SERVICE_CONNECT_TIMEOUT_S,
+        )
+        try:
+            conn.settimeout(_emb._SERVICE_READ_TIMEOUT_S)
+            req = {"nli_pairs": [[a, b] for a, b in coppie]}
+            if info.get("token"):
+                req["token"] = info["token"]
+            _svc.send_msg(conn, req)
+            resp = _svc.recv_msg(conn)
+        finally:
+            conn.close()
+        if (resp and resp.get("ok") and isinstance(resp.get("probs"), list)
+                and len(resp["probs"]) == len(coppie)):
+            return [dict(p) for p in resp["probs"]]
+    except Exception:  # noqa: BLE001 — qualunque intoppo -> si degrada
+        return None
+    return None
+
+
 class LocalRelationJudge:
     """A ``RelationJudge`` backed by a local NLI cross-encoder (no claude -p)."""
 
@@ -142,6 +184,9 @@ class LocalRelationJudge:
         self.max_length = max_length
         self._lock = threading.Lock()
         self._load_failed = False
+        #: Giudizi chiesti e non dati perche' in delegate-only il daemon non ha
+        #: risposto: un'assenza che si conta invece di tacere.
+        self.giudizi_mancati = 0
 
     def _ensure_classifier(self) -> Classifier:
         if self._classifier is None:
@@ -166,13 +211,44 @@ class LocalRelationJudge:
             return Relation.ENTAILMENT
         return Relation.NEUTRAL
 
+    def _probabilita(self, coppie: list[tuple[str, str]]) -> list[LabelProbs] | None:
+        """Le probabilita' per ogni coppia, o None se il giudizio non c'e'.
+
+        PRIMA IL DAEMON, come il giudice del moat (`gate_pairs`) e il reranker
+        (`rerank_pairs`): il modello NLI vive una volta sola sulla macchina. Fino
+        al 26/09 ogni processo che scriveva un fatto con un fratello simile
+        costruiva il suo modello, sulla scheda se c'era: torch e il modello in
+        ogni sessione MCP (circa 1071 MB solo per torch, misurato il 12/09).
+
+        In DELEGATE-ONLY (il server MCP) il modello in casa non si costruisce
+        mai, come l'embedder: senza daemon il giudizio manca, e chi lo chiede lo
+        riceve come None e lo conta in `giudizi_mancati`. Fuori (CLI, SDK) il
+        ripiego in casa resta quello di prima.
+
+        Un classificatore GIA' in questo processo (iniettato, o caricato prima)
+        si usa senza chiedere al daemon, come fa il reranker: c'e' gia'.
+        """
+        if self._classifier is not None:
+            return self._classifier(coppie)
+        probs = _nli_via_daemon(coppie)
+        if probs is not None:
+            return probs
+        from .embedding import _delegate_only
+        if _delegate_only():
+            self.giudizi_mancati += 1
+            return None
+        return self._ensure_classifier()(coppie)
+
     def classify(self, a: str, b: str) -> Relation:
         if not (a or "").strip() or not (b or "").strip():
             return Relation.NEUTRAL
         try:
-            ab, ba = self._ensure_classifier()([(a, b), (b, a)])
+            probs = self._probabilita([(a, b), (b, a)])
         except Exception:  # noqa: BLE001 — never fabricate a contradiction on error
             return Relation.NEUTRAL
+        if probs is None:
+            return Relation.NEUTRAL
+        ab, ba = probs
         return self._decide(ab, ba)
 
     def classify_batch(self, pairs: list[tuple[str, str]]) -> list[Relation]:
@@ -190,7 +266,7 @@ class LocalRelationJudge:
                 flat.append((b, a))
         if flat:
             try:
-                scored = self._ensure_classifier()(flat)
+                scored = self._probabilita(flat)
             except Exception:  # noqa: BLE001
                 scored = None
             for k, i in enumerate(index):

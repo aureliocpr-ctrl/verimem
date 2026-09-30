@@ -36,6 +36,14 @@ dire toccare il giudice, e questo file non lo fa. Quando qualcuno lo cura, gli
 xfail diventano XPASS e la suite chiede di togliere il marcatore: il difetto fa
 rumore quando SMETTE di esistere.
 
+✅ E HA FATTO RUMORE IL 29/09, con il giudizio per affermazione (T221): la
+sostituzione di entità e la ricombinazione dei token ora sono BLOCCATE, perché
+`decomponi()` le spezza e la parte falsa si giudica da sola (XPASS su ubuntu e
+macOS). I loro due marcatori sono tolti. Il terzo resta xfail, e il perché è
+misurato: lì «e» sta per «è», e `decomponi()` spezza nel posto sbagliato
+(«Il test_alpha e PASSED e il test_beta.» + «Il test_alpha e pASSED.»), quindi
+la falsità non arriva mai da sola al giudice.
+
 📌 Una differenza NON spiegata, e la dichiaro invece di tacerla: nel dominio dei
 test la falsità passa anche con un valore che nella fonte non c'è affatto
 («novemila righe», 99.9), nei magazzini no (4200 mq, 0.2). La regola della
@@ -81,9 +89,6 @@ def test_una_verita_dalla_fonte_non_deve_far_passare_la_falsita():
     assert _bloccato("Il test_alpha e PASSED e il test_beta e PASSED.", SRC_TEST)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "sostituzione di entita' ammessa a 92.3: la metratura di Ancona attribuita "
-    "a Bologna, accompagnata da una verita' presa dalla fonte"))
 def test_una_sostituzione_di_entita_non_deve_passare_in_compagnia():
     assert _bloccato(
         "Il responsabile e' Mancini e il magazzino di Bologna misura 2600 mq.",
@@ -98,11 +103,6 @@ def test_presidio_un_token_NUOVO_nei_magazzini_e_bloccato():
         "Il responsabile e' Mancini e il magazzino e' a Bologna.", SRC_MAG)
 
 
-@pytest.mark.xfail(strict=True, reason=(
-    "ricombinare i token della fonte da' 100.0: «il responsabile e' Ancona e il "
-    "magazzino di Mancini misura 2600 mq» — citta' e persona SCAMBIATE, due "
-    "falsita', nessuna verita', punteggio pieno. Piu' puro del 92.3: li' una "
-    "verita' presa dalla fonte faceva da traino, qui bastano i TOKEN"))
 def test_ricombinare_i_token_della_fonte_non_deve_dare_il_punteggio_pieno():
     assert _bloccato(
         "Il responsabile e' Ancona e il magazzino di Mancini misura 2600 mq.",
