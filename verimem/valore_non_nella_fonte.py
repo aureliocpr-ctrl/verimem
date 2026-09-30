@@ -61,6 +61,7 @@ from .quantity_match import (
     _QUANT_RE,
     claim_span,
     extract_quantities,
+    orari,
     valori_scritti_a_parole,
 )
 
@@ -122,6 +123,9 @@ class ValoreAssente:
     #: vuoto solo per i costruttori che non lo passano: nessuno, oggi, fuori da
     #: questo modulo (verificato: `grep ValoreAssente(` non da' altri esiti).
     testo: str = ""
+    #: un ORARIO assente: ``valore`` sono i suoi secondi dalla mezzanotte, che
+    #: non vanno confrontati con i numeri (vedi `quantity_match.orari`).
+    orario: bool = False
 
     def come_scritto(self) -> str:
         """Il numero da mostrare a chi legge: il suo, se ce l'abbiamo.
@@ -509,7 +513,8 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
     proposition = _espandi_notazione_scientifica(proposition)
     source = _espandi_notazione_scientifica(source)
     nel_claim = extract_quantities(proposition)
-    if not nel_claim:
+    orari_nel_claim = orari(proposition)
+    if not nel_claim and not orari_nel_claim:
         return []
     # `come_fonte=True`: la fonte si legge INTERA. Le due potature di
     # `extract_quantities` sono giuste su un claim e sbagliate qui — misurato
@@ -570,6 +575,23 @@ def valori_non_nella_fonte(proposition: str, source: str) -> list[ValoreAssente]
             continue
         fuori.append(ValoreAssente(valore=v, unita=u,
                                    testo=come_scritti.get(v, "")))
+    # UN ORARIO SI CONFRONTA CON GLI ORARI, INTERO, alla precisione che il claim
+    # scrive (T223). I suoi pezzi non sono piu' quantita', quindi «22 fatti» non
+    # trova piu' il 22 dentro «22:40»; qui si tiene cio' che la lettura a pezzi
+    # faceva bene — «22:45» contro «22:40» resta fermato, e la ricevuta nomina
+    # l'orario com'e' scritto invece del suo 45 — e si cura cio' che faceva
+    # male: «17:35» contro «2026-09-24T17:35:21Z» era accusato del 17 che il
+    # parser non leggeva attaccato alla «T».
+    orari_nella_fonte = orari(source, come_fonte=True)
+    visti: set[tuple[int, int]] = set()
+    for o in orari_nel_claim:
+        if (o.micro, o.precisione) in visti:
+            continue
+        visti.add((o.micro, o.precisione))
+        if any(o.resa_come(s) for s in orari_nella_fonte):
+            continue
+        fuori.append(ValoreAssente(valore=o.secondi, unita="", testo=o.testo,
+                                   orario=True))
     return fuori
 
 
@@ -595,4 +617,6 @@ def assenti_che_la_fonte_scrive_a_parole(
     a_parole = valori_scritti_a_parole(source)
     if not a_parole:
         return []
-    return [a for a in assenti if a.valore in a_parole]
+    # un orario non si scrive a parole in questo senso: «00:05» vale 300
+    # secondi, e «trecento» nella fonte non lo dice
+    return [a for a in assenti if not a.orario and a.valore in a_parole]

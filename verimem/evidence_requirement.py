@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import os
 
-from .quantity_match import YEAR_RE, extract_quantities, numeri_ambigui
+from .quantity_match import YEAR_RE, extract_quantities, numeri_ambigui, orari
 
 _TRUTHY = {"1", "true", "yes", "on"}
 
@@ -60,6 +60,11 @@ def is_specific_claim(proposition: str) -> bool:
     if numeri_ambigui(text):
         return True
     if YEAR_RE.search(text):
+        return True
+    # «Il save e' finito alle 22:40» ha una cosa precisa su cui sbagliare.
+    # Era specifico perche' l'orario si spezzava in due numeri; da quando i
+    # pezzi non sono quantita' (T223) lo resta per la strada dell'orario.
+    if orari(text):
         return True
     return False
 

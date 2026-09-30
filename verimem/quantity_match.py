@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from dataclasses import dataclass
 
 # 4-digit years (1500–2099). Bare years are NOT quantities — they belong
 # to the year-disjoint rule in validate_claim, so the two detectors never
@@ -1171,6 +1172,121 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
 
 
+#: UN ORARIO E' UN VALORE SOLO, e i suoi pezzi non sono quantita'.
+#:
+#: IL DIFETTO (T223, misurato il 30/09 sulle funzioni del prodotto). Il testo si
+#: leggeva come un sacco di numeri e l'orario si scomponeva: «Alle 22:40 il save
+#: e' finito: 5 fatti ammessi» dava ('', 22) e ('', 40) accanto a ('fatto', 5).
+#: Tre effetti, uno per consumatore:
+#:
+#:   L4.1       «ha ammesso 22 fatti» trovava il 22 dentro l'orario e taceva: un
+#:              numero FALSO uguale a un'ora, a un minuto o a un secondo passava
+#:   L4.3       «17:35:21Z» diventava ('z', 21), e su un claim VERO con i
+#:              timestamp nasceva un'accusa «0 z contro 21 z» (fatto `20004c21`)
+#:   conflitti  la «z» era un'unita' per chi confronta: due orari diversi con gli
+#:              stessi secondi risultavano d'accordo, e altri due in conflitto
+#:              perche' differivano nei SOLI secondi
+#:
+#: E nell'ISO attaccato alla «T» il giorno non era una data per `_DATA_RE` (dopo
+#: «24T» non c'e' confine di parola) e l'ora non si leggeva: «partito alle 17:35»
+#: contro «2026-09-24T17:35:21Z» veniva accusato del suo 17.
+#:
+#: ⚖️ LA CURA E' QUELLA DELL'ANNO, non una lista: i pezzi escono dalle quantita'
+#: e l'orario intero si legge su una strada sua, `orari()`, come le date hanno
+#: `extract_dates`. Chi confronta orari lo chiede. ⛔ L'altra strada, l'orario
+#: come unita' `orario` dentro `extract_quantities`, e' scartata: arriverebbe
+#: IN SILENZIO a nove moduli come secondi dalla mezzanotte, e ognuno lo
+#: mescolerebbe coi suoi numeri a modo suo (un confronto a soli valori
+#: assolverebbe «300 fatti» con «00:05»).
+#:
+#: ⚠️ LIMITI DICHIARATI, con la ragione:
+#:   * «22.40» all'italiana NON e' un orario qui: col punto e' anche un decimale,
+#:     e un falso positivo toglierebbe un numero vero. Resta come oggi.
+#:   * il fuso (`Z`, `+02:00`) fa parte dell'orario scritto ma non del valore:
+#:     si confronta l'ora dell'orologio, che e' quella che un claim cita.
+#:   * «3:16» e «1:25» sono un versetto e una scala, non orari, ma hanno la
+#:     stessa forma: leggerli come un valore intero e' giusto lo stesso, perche'
+#:     il 16 di «3:16» non e' una quantita' di niente. Con i minuti a una cifra
+#:     («16:9») non e' un orario e resta com'era, due numeri.
+#:   * il fuso dopo i soli minuti vale solo nell'ISO con la data: altrimenti
+#:     «dalle 10:00-12:30» perdeva la seconda ora, letta come fuso «-12:30».
+#:
+#: 📌 Quantificatori TUTTI limitati: questo modulo ha gia' pagato due ReDoS.
+_FUSO = r"(?:Z|[+-](?:[01]\d|2[0-3]):?[0-5]\d)"
+_ORARIO_RE = re.compile(
+    r"(?<![\d:.,])"
+    r"(?P<d>\d{4}-\d{1,2}-\d{1,2}T)?"
+    r"(?P<h>2[0-3]|[01]?\d):(?P<m>[0-5]\d)"
+    r"(?::(?P<s>[0-5]\d)(?:[.,](?P<f>\d{1,9}))?" + _FUSO + r"?"
+    r"|(?(d)" + _FUSO + r"|Z))?"
+    r"(?:[ \t]?(?P<ap>[AaPp]\.?[Mm]\.?)(?![^\W\d_]))?"
+    r"(?![\d:])")
+
+
+@dataclass(frozen=True)
+class Orario:
+    """Un orario come l'ha scritto il testo.
+
+    ``micro`` sono i microsecondi dall'inizio del giorno; ``precisione`` e'
+    l'ultima cifra SCRITTA, negli stessi microsecondi (un minuto per «22:40»,
+    un secondo per «22:40:15», un decimo per «22:40:15.3»): chi scrive «17:35»
+    non dice i secondi, e un confronto che li pretendesse accuserebbe l'ora di
+    un timestamp citata al minuto. Interi e non float, perche' `63321.3 // 0.1`
+    non da' 633213. ``testo`` e' l'orario com'e' scritto, senza la data
+    dell'ISO: e' cio' che la ricevuta nomina.
+    """
+    micro: int
+    precisione: int
+    testo: str
+
+    @property
+    def secondi(self) -> float:
+        return self.micro / 1_000_000
+
+    def resa_come(self, altro: Orario) -> bool:
+        """``altro`` scritto alla precisione di questo, troncato o arrotondato.
+
+        Un orologio tronca, chi riassume arrotonda, e tutti e due scrivono la
+        stessa ora. Contro 17:35:21 «17:35» si', «17:36» no; contro 17:35:40
+        tutti e due. Un claim PIU' preciso della fonte («17:35:21» contro
+        «17:35») non e' reso da nessuna delle due letture: i secondi li
+        aggiunge il claim, la fonte non li dice.
+        """
+        p = self.precisione
+        return self.micro in (altro.micro // p * p, (altro.micro + p // 2) // p * p)
+
+
+def _leggi_orario(m: re.Match[str]) -> Orario:
+    h, mi = int(m.group("h")), int(m.group("m"))
+    if m.group("ap") and 1 <= h <= 12:
+        h = h % 12 + (12 if m.group("ap")[0] in "Pp" else 0)
+    s = int(m.group("s") or 0)
+    f = (m.group("f") or "")[:6]
+    if f:
+        precisione = 10 ** (6 - len(f))
+    else:
+        precisione = 1_000_000 if m.group("s") else 60_000_000
+    micro = (h * 3600 + mi * 60 + s) * 1_000_000 + (int(f.ljust(6, "0")) if f else 0)
+    return Orario(micro=micro, precisione=precisione,
+                  testo=m.group(0)[m.start("h") - m.start():].strip())
+
+
+def orari(text: str, *, come_fonte: bool = False) -> list[Orario]:
+    """Gli orari del testo, nell'ordine in cui compaiono.
+
+    Legge la STESSA parte di testo di `extract_quantities` con lo stesso
+    ``come_fonte``: un orario e i numeri accanto a lui non possono uscire da
+    due letture diverse della stessa frase.
+    """
+    t = text if come_fonte else _senza_identificatori(claim_span(text or ""))
+    return [_leggi_orario(m) for m in _ORARIO_RE.finditer(t or "")]
+
+
+def _spans_degli_orari(testo: str) -> list[tuple[int, int]]:
+    """Gli intervalli di un orario, da saltare IN BLOCCO come le date."""
+    return [(m.start(), m.end()) for m in _ORARIO_RE.finditer(testo)]
+
+
 #: UNITA' COMPOSTE: due parole che nominano UNA grandezza sola.
 #:
 #: PERCHE' (19/09). L'unita' era «UNA parola dopo il numero» e il qualificatore
@@ -1245,7 +1361,8 @@ def _unita_composta(claim: str, unit_s: str, fine: int) -> str | None:
 def extract_quantities(text: str, *,
                        come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
-    (provenance after an evidence marker is not measured); bare YEARS excluded.
+    (provenance after an evidence marker is not measured); bare YEARS excluded,
+    and so are the pieces of a time of day, which is read whole by ``orari``.
 
     ``come_fonte=True`` legge il testo INTERO, saltando le TRE potature. Sono
     giuste su un claim e sbagliate su una fonte, e il difetto misurato il 16/08
@@ -1285,10 +1402,13 @@ def extract_quantities(text: str, *,
     # testo invece che sul prodotto testo x numeri.
     _date = _spans_delle_date(claim)
     _riferimenti = _spans_dei_riferimenti(claim)
+    _orari = _spans_degli_orari(claim)
     for m in _QUANT_RE.finditer(claim):
         num_s, unit_s = m.group(1), (m.group(2) or "")
         if any(a <= m.start(1) < b for a, b in _date):
             continue  # il numero fa parte di una DATA — vedi `_DATA_RE`
+        if any(a <= m.start(1) < b for a, b in _orari):
+            continue  # un pezzo di un ORARIO — vedi `_ORARIO_RE` e `orari()`
         if unit_s and _e_una_forma_elisa(claim, m.end(2)):
             unit_s = ""   # «120 l'anno» non contiene litri
         # ⚠️ SI CONFRONTA LA FORMA NORMALIZZATA, NON QUELLA SCRITTA — la cura e'
@@ -2821,6 +2941,8 @@ __all__ = [
     "CONTRAST_QUALIFIERS",
     "norm_unit",
     "extract_quantities",
+    "Orario",
+    "orari",
     "valori_scritti_a_parole",
     "numeri_ambigui",
     "content_tokens",
