@@ -100,6 +100,11 @@ def richiamo_senza_se_stesso(sim_rif, sim_alt, se_stessi, k: int) -> float:
     return esporta_onnx.richiamo_a_k(sim_rif, sim_alt, k)
 
 
+def _passo(messaggio: str) -> None:
+    """Where the run is, with the time: a run cut by its cap must say where it was (30/09: it did not)."""
+    print(f"[{time.strftime('%H:%M:%S')}] {messaggio}", flush=True)
+
+
 def vettori_onnx(file_onnx: Path, testi: list[str], tok, thread: int, lotto: int = 32) -> np.ndarray:
     """The vectors of an ONNX file, in the order of the texts (encoded by length, to pad little)."""
     import onnxruntime as ort
@@ -110,6 +115,8 @@ def vettori_onnx(file_onnx: Path, testi: list[str], tok, thread: int, lotto: int
     ordine = np.argsort([len(t) for t in testi], kind="stable")
     uscita: np.ndarray | None = None
     for i in range(0, len(testi), lotto):
+        if i and i % 2048 == 0:
+            _passo(f"  {file_onnx.name}: {i} testi su {len(testi)}")
         scelti = ordine[i:i + lotto]
         codifiche = tok.encode_batch([testi[j] for j in scelti])
         ingresso = {"input_ids": np.array([c.ids for c in codifiche], dtype=np.int64),
@@ -161,9 +168,13 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
     manifesto = json.loads((cartella / "manifesto.json").read_text(encoding="utf-8"))
     modello = manifesto["modello"]
     st = SentenceTransformer(modello, local_files_only=True, device="cpu")
-    dimensione = int(st.get_sentence_embedding_dimension())
+    # sentence-transformers 5.4 renamed it; the product accepts older versions too
+    dimensione = int((getattr(st, "get_embedding_dimension", None) or st.get_sentence_embedding_dimension)())
     ids, testi, memorizzati = leggi_corpus(store, modello, dimensione)
     n = len(ids)
+    lunghezze = np.array([len(t) for t in testi])
+    _passo(f"corpus: {n} righe, caratteri mediani {int(np.median(lunghezze))}, oltre 1000 caratteri "
+           f"{int((lunghezze > 1000).sum())}; {thread} thread")
     rng = np.random.default_rng(seme)
     domande_idx = np.sort(rng.choice(n, size=min(campione, n), replace=False))
     passaggi = [f"passage: {t}" for t in testi]
@@ -174,7 +185,9 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
     fp32_controllo = st.encode([passaggi[i] for i in scelti], normalize_embeddings=True,
                                convert_to_numpy=True, show_progress_bar=False)
     c_controllo = esporta_onnx.coseni(fp32_controllo, memorizzati[scelti])
+    _passo(f"controllo: {len(scelti)} fatti, coseno minimo {c_controllo.min():.6f}")
     q_fp32 = st.encode(domande, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
+    _passo(f"domande fp32: {len(domande)}")
     tok = esporta_onnx._tokenizzatore(cartella / "tokenizer.json", manifesto["lunghezza_massima"],
                                       manifesto["pad_id"], manifesto["pad_token"])
     numeri: dict = {
@@ -187,15 +200,18 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
         "riferimento_s": round(time.perf_counter() - inizio, 1),
         "per_file": {},
     }
+    uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")  # the control, at least
     for file in file_onnx:
         partenza = time.perf_counter()
         # 1. the ONNX passage vector of every fact against the stored one
         onnx_passaggi = vettori_onnx(file, passaggi, tok, thread)
         c_passaggi = esporta_onnx.coseni(onnx_passaggi, memorizzati)
+        _passo(f"{file.name}: {n} passaggi in {time.perf_counter() - partenza:.0f} s")
         # 2. and 3. the same queries, fp32 by the product and by the ONNX
         q_onnx = vettori_onnx(file, domande, tok, thread)
         senza, spostamenti = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, memorizzati, domande_idx, ks)
         con, _ = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, onnx_passaggi, domande_idx, ks)
+        _passo(f"{file.name}: finito in {time.perf_counter() - partenza:.0f} s")
         assoluti = np.abs(spostamenti)
         numeri["per_file"][file.name] = {
             "sha256": esporta_onnx.sha256(file),
