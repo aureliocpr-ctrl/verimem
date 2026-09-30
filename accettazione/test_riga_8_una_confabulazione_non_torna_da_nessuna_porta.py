@@ -23,6 +23,11 @@ run on» da ogni lettura che il README gli mette in mano sullo stesso store:
   · HTTP  `verimem console` (README r. 558: «your OWN local store … no keys»), cioe'
           `GET /v1/search` e `GET /v1/explain` sullo stesso store.
 
+La SECONDA cella fa lo stesso dal gateway multi-tenant (`verimem gateway serve`, con la
+chiave: si scrive e si legge via HTTP) e dalle sessioni che gli si appoggiano con
+VERIMEM_SERVER_URL (SDK `open_memory()`, `verimem recall`, MCP `verimem_facts_recall` e
+`verimem_facts_search`).
+
 In nessuna risposta c'e' «Analytics runs on MongoDB.» come fatto servito. Per le letture di
 tipo dossier (`explain`, `trust_report`, `/v1/explain`) conta la frase dei fatti SERVITI
 (`facts[].proposition`): lo stesso dossier puo' nominare altre frasi nella storia o fra le
@@ -145,4 +150,68 @@ def test_riga_8_la_confabulazione_fermata_non_torna_da_nessuna_porta(utente):
     assert not ripetuta, (
         f"la confabulazione fermata torna come vera da {ripetuta}: «stored but OUT of "
         f"default recall — your agent will never repeat it as truth» non regge. "
+        f"{ {p: grezze[p][:400] for p in ripetuta} }")
+
+
+CODICE_LEGGE_INSTRADATO = r'''
+import json
+from verimem import open_memory
+m = open_memory()
+testi = [h["text"] for h in m.search(DOMANDA_QUI, k=10)]
+print("ESITO " + json.dumps({"classe": type(m).__name__, "search": testi}, ensure_ascii=False))
+'''.replace("DOMANDA_QUI", repr(DOMANDA))
+
+
+def test_riga_8_non_torna_dal_gateway_ne_dalle_porte_instradate(utente):
+    """Il gateway multi-tenant (README r. 595) e le sessioni che gli si appoggiano
+    (README r. 616-625, «Many local sessions, one memory»: con VERIMEM_SERVER_URL e
+    VERIMEM_SERVER_KEY l'SDK `open_memory()`, `verimem recall` e gli strumenti MCP
+    passano dal server). L'esempio del README si scrive SOLO nel gateway, con la chiave:
+    una porta instradata che ripiegasse in silenzio sullo store locale (lo fa, per
+    scelta, se il server non risponde) lo troverebbe vuoto, e il controllo positivo la
+    ferma."""
+    chiave = utente.chiave_del_gateway("riga8")
+    risposte: dict[str, str] = {}
+    grezze: dict[str, str] = {}
+
+    def registra(porta: str, servito: str, grezzo) -> None:
+        risposte[porta] = servito
+        grezze[porta] = grezzo if isinstance(grezzo, str) else json.dumps(
+            grezzo, ensure_ascii=False, default=str)
+
+    with utente.gateway(chiave) as http:
+        scritto = {nome: http.post("/v1/memories", {"content": frase, "source": FONTE})
+                   for nome, frase in (("sostenuto", SOSTENUTO), ("confabulazione", CONFABULAZIONE))}
+        assert scritto["sostenuto"].get("stored"), scritto
+        assert scritto["confabulazione"].get("status") == "quarantined", (
+            "la confabulazione del README non e' stata fermata dal gateway: la cella "
+            f"misurerebbe la lettura di un fatto ammesso. {scritto}")
+
+        r = http.get("/v1/search", q=DOMANDA, k=10)
+        registra("http.gateway /v1/search", json.dumps(r, ensure_ascii=False), r)
+        r = http.get("/v1/explain", q=DOMANDA, k=10)
+        registra("http.gateway /v1/explain", _serviti(r), r)
+
+        instradato = {"VERIMEM_SERVER_URL": http.base, "VERIMEM_SERVER_KEY": chiave}
+        sdk = _esito(utente.python(CODICE_LEGGE_INSTRADATO, **instradato))
+        registra(f"sdk instradato ({sdk['classe']}).search", " ".join(sdk["search"]), sdk)
+        cli = utente.cli("recall", DOMANDA, "--k", "10", **instradato)
+        assert cli.returncode == 0, (
+            f"verimem recall instradato: returncode={cli.returncode}; stderr: {cli.stderr[-600:]}")
+        registra("cli instradato recall", cli.stdout, cli.stdout)
+        with utente.mcp(**instradato) as sessione:
+            r = sessione.chiama("verimem_facts_recall", {"query": DOMANDA, "k": 10})
+            registra("mcp instradato verimem_facts_recall", json.dumps(r, ensure_ascii=False), r)
+            r = sessione.chiama("verimem_facts_search", {"query": PAROLA, "limit": 10})
+            registra("mcp instradato verimem_facts_search", json.dumps(r, ensure_ascii=False), r)
+
+    mute = [porta for porta, testo in risposte.items() if SOSTENUTO not in testo]
+    assert not mute, (
+        f"CONTROLLO POSITIVO SPENTO: il fatto sostenuto, scritto nel gateway, non torna da "
+        f"{mute}: quelle porte non leggono il gateway (una porta instradata che ripiega "
+        f"sullo store locale lo trova vuoto). { {p: grezze[p][:400] for p in mute} }")
+
+    ripetuta = [porta for porta, testo in risposte.items() if CONFABULAZIONE in testo]
+    assert not ripetuta, (
+        f"la confabulazione fermata dal gateway torna come vera da {ripetuta}. "
         f"{ {p: grezze[p][:400] for p in ripetuta} }")
