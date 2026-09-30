@@ -45,19 +45,22 @@ from pathlib import Path
 # come from the one module every D1 builder shares, so the two halves cannot drift apart
 from d1_campi import coda, controlla, decomponi
 
-GENERATORE = "d1_fonti@1"
+GENERATORE = "d1_fonti@2"
 
 # ── the lease: subject, source and one sentence per pair type ─────────────────────────────────────────
 LOCAZIONE = {
     "it": {
         "soggetto": "Il contratto {id}",
-        "fonte": ("Contratto di locazione {id}, intestato a {nome}: affitto pattuito in {v} euro per ciascun mese, "
-                  "deposito di {d} mensilità, valido dal {g} {mese}."),
+        "fonte": ("Contratto di locazione {id}, intestato {a_nome}: affitto pattuito in {v} euro per ciascun mese, "
+                  "deposito di {dep}, valido dal {g} {mese}."),
         "sostenuta": "Il contratto {id} ha un affitto pattuito in {v} euro per ciascun mese.",
         "parafrasi": "Il contratto {id} costa {v} euro per ciascun mese.",
         "tempo_vero": "Il contratto {id} è valido dal {g} {mese}.",
         "negazione": "Il contratto {id} non ha un affitto pattuito in {v} euro per ciascun mese.",
         "omissione": "Il contratto {id} ha un affitto pattuito in {v} euro per ciascun mese, spese incluse.",
+        "deposito": "Il contratto {id} ha un deposito di {dep}.",
+        "intestatario": "Il contratto {id} è intestato {a_nome}.",
+        "dep_uno": "{d} mensilità", "dep_piu": "{d} mensilità",
         "coordinata": " ed ",
         "segno_negazione": " non ", "segno_omissione": "spese incluse",
         "data": "{g} {mese}",
@@ -66,13 +69,16 @@ LOCAZIONE = {
     },
     "en": {
         "soggetto": "The lease {id}",
-        "fonte": ("Lease {id}, in the name of {nome}: rent of {v} euros per month, deposit of {d} months, "
+        "fonte": ("Lease {id}, in the name of {nome}: rent of {v} euros per month, deposit of {dep}, "
                   "valid from {g} {mese}."),
         "sostenuta": "The lease {id} has a rent of {v} euros per month.",
         "parafrasi": "The lease {id} costs {v} euros per month.",
         "tempo_vero": "The lease {id} is valid from {g} {mese}.",
         "negazione": "The lease {id} does not have a rent of {v} euros per month.",
         "omissione": "The lease {id} has a rent of {v} euros per month, utilities included.",
+        "deposito": "The lease {id} has a deposit of {dep}.",
+        "intestatario": "The lease {id} is in the name of {nome}.",
+        "dep_uno": "{d} month", "dep_piu": "{d} months",
         "coordinata": " and ",
         "segno_negazione": " not ", "segno_omissione": "utilities included",
         "data": "{g} {mese}",
@@ -81,13 +87,16 @@ LOCAZIONE = {
     },
     "fr": {
         "soggetto": "Le bail {id}",
-        "fonte": ("Bail {id}, au nom de {nome} : loyer de {v} euros par mois, dépôt de {d} mois, "
+        "fonte": ("Bail {id}, au nom de {nome} : loyer de {v} euros par mois, dépôt de {dep}, "
                   "valable à partir du {g} {mese}."),
         "sostenuta": "Le bail {id} est de {v} euros par mois.",
         "parafrasi": "Le bail {id} coûte {v} euros par mois.",
         "tempo_vero": "Le bail {id} est valable à partir du {g} {mese}.",
         "negazione": "Le bail {id} n'est pas de {v} euros par mois.",
         "omissione": "Le bail {id} est de {v} euros par mois, charges comprises.",
+        "deposito": "Le bail {id} est assorti d'un dépôt de {dep}.",
+        "intestatario": "Le bail {id} est au nom de {nome}.",
+        "dep_uno": "{d} mois", "dep_piu": "{d} mois",
         "coordinata": " et ",
         "segno_negazione": " pas ", "segno_omissione": "charges comprises",
         "data": "{g} {mese}",
@@ -96,13 +105,16 @@ LOCAZIONE = {
     },
     "es": {
         "soggetto": "El contrato {id}",
-        "fonte": ("Contrato de alquiler {id}, a nombre de {nome}: renta de {v} euros al mes, fianza de {d} "
-                  "meses, vigente desde el {g} de {mese}."),
+        "fonte": ("Contrato de alquiler {id}, a nombre de {nome}: renta de {v} euros al mes, fianza de {dep}, "
+                  "vigente desde el {g} de {mese}."),
         "sostenuta": "El contrato {id} tiene una renta de {v} euros al mes.",
         "parafrasi": "El contrato {id} cuesta {v} euros al mes.",
         "tempo_vero": "El contrato {id} está vigente desde el {g} de {mese}.",
         "negazione": "El contrato {id} no tiene una renta de {v} euros al mes.",
         "omissione": "El contrato {id} tiene una renta de {v} euros al mes, gastos incluidos.",
+        "deposito": "El contrato {id} tiene una fianza de {dep}.",
+        "intestatario": "El contrato {id} está a nombre de {nome}.",
+        "dep_uno": "{d} mes", "dep_piu": "{d} meses",
         "coordinata": " y ",
         "segno_negazione": " no ", "segno_omissione": "gastos incluidos",
         "data": "{g} de {mese}",
@@ -198,11 +210,19 @@ def locazione(rng: random.Random, lingua: str, n: int, seme: int) -> list[dict]:
     t = LOCAZIONE[lingua]
     voci = {"id": _codice(rng, "LC"), "nome": rng.choice(t["nomi"]), "v": rng.choice(CANONI),
             "d": rng.choice(DEPOSITI), "g": rng.choice(GIORNI), "mese": rng.choice(t["mesi"])}
+    # the language's own forms, not the cases avoided: «1 month» / «1 mes», and the Italian «ad»
+    # before a word that starts with «a» («intestato ad Anna Neri»), found by Nadia on 2026-09-30
+    deposito = lambda d: t["dep_uno" if d == 1 else "dep_piu"].format(d=d)  # noqa: E731
+    voci["dep"] = deposito(voci["d"])
+    voci["a_nome"] = ("ad " if voci["nome"][:1].lower() == "a" else "a ") + voci["nome"]
     fonte = t["fonte"].format(**voci)
     v2 = _altro(rng, CANONI, fonte, evita=voci["v"])
-    g2 = _altro(rng, GIORNI, fonte, formato=lambda g: t["data"].format(g=g, mese=voci["mese"]), evita=voci["g"])
+    data_di = lambda g: t["data"].format(g=g, mese=voci["mese"])  # noqa: E731
+    g2 = _altro(rng, GIORNI, fonte, formato=data_di, evita=voci["g"])
+    g3 = _altro(rng, GIORNI, fonte, formato=data_di, evita=g2)     # the split memory's own wrong date
+    d2 = _altro(rng, DEPOSITI, fonte, formato=deposito, evita=voci["d"])
     id2 = _altro(rng, [_codice(rng, "LC") for _ in range(20)], fonte, evita=voci["id"])
-    data, data2 = t["data"].format(g=voci["g"], mese=voci["mese"]), t["data"].format(g=g2, mese=voci["mese"])
+    data, data2, data3 = data_di(voci["g"]), data_di(g2), data_di(g3)
     f = lambda chiave, **cambi: t[chiave].format(**{**voci, **cambi})  # noqa: E731
     atomici = {
         "sostenuta": (f("sostenuta"), 1, "sostenuta", str(voci["v"])),
@@ -214,6 +234,14 @@ def locazione(rng: random.Random, lingua: str, n: int, seme: int) -> list[dict]:
         "tempo": (f("tempo_vero", g=g2), 0, "tempo", data2),
         "omissione": (f("omissione"), 0, "omissione", t["segno_omissione"]),
     }
+    # the split memories get facts of their OWN: the judge reads (source, claim), and a unit that repeats a
+    # whole memory is the same example written twice (960 of 4320 rows in d1_fonti@1, found by Nadia)
+    proprie = {
+        "deposito": (f("deposito"), 1, "sostenuta", voci["dep"]),
+        "deposito_falso": (f("deposito", dep=deposito(d2)), 0, "valore", deposito(d2)),
+        "intestatario": (f("intestatario"), 1, "sostenuta", voci["nome"]),
+        "tempo_proprio": (f("tempo_vero", g=g3), 0, "tempo", data3),
+    }
     soggetto = t["soggetto"].format(**voci)
     righe = []
     for nome, a in atomici.items():                               # whole memories: one atomic claim each
@@ -221,9 +249,9 @@ def locazione(rng: random.Random, lingua: str, n: int, seme: int) -> list[dict]:
         s = soggetto if nome != "entita" else t["soggetto"].format(id=id2)
         righe += _righe_di(f"{lingua}-loc{n:03d}-{nome}", lingua, "locazione", fonte, a[0], [a], s, seme)
     # split memories: two atomic claims, the second one joined by the coordinator with its verb first
-    for nome, (primo, secondo) in {"vero+tempo": ("sostenuta", "tempo"),
-                                   "valore+vero": ("valore", "tempo_vero")}.items():
-        a1, a2 = atomici[primo], atomici[secondo]
+    for nome, (primo, secondo) in {"deposito+tempo": ("deposito", "tempo_proprio"),
+                                   "deposito_falso+intestatario": ("deposito_falso", "intestatario")}.items():
+        a1, a2 = proprie[primo], proprie[secondo]
         memoria = f"{a1[0].rstrip('.')}{t['coordinata']}{coda(a2[0], soggetto)}."
         righe += _righe_di(f"{lingua}-loc{n:03d}-{nome}", lingua, "locazione", fonte, memoria, [a1, a2],
                            soggetto, seme)

@@ -15,6 +15,7 @@ No model: `decomponi()` is pure.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from collections import Counter
 from pathlib import Path
@@ -72,3 +73,19 @@ def test_the_same_seed_gives_the_same_rows_and_another_seed_does_not() -> None:
     a, b, c = _righe(seme=7), _righe(seme=7), _righe(seme=8)
     assert json.dumps(a, ensure_ascii=False) == json.dumps(b, ensure_ascii=False)
     assert json.dumps(a, ensure_ascii=False) != json.dumps(c, ensure_ascii=False)
+
+
+def test_every_source_claim_pair_is_written_once() -> None:
+    # the judge reads (source, claim): a pair written twice weighs twice and bends the proportions
+    # we declare. Found by Nadia on 2026-09-30 (960 repeated pairs out of 4320 rows in d1_fonti@1)
+    righe = _righe(per_lingua=60)
+    conta = Counter((r["fonte"], r["claim"]) for r in righe)
+    ripetute = {k: v for k, v in conta.items() if v > 1}
+    assert not ripetute, (len(ripetute), sum(v - 1 for v in ripetute.values()), next(iter(ripetute)))
+
+
+def test_the_sources_read_as_their_language() -> None:
+    # found by reading the sample (Nadia, 2026-09-30): «1 months», «1 meses», «a Anna»
+    fonti = {r["fonte"] for r in _righe(per_lingua=60)}
+    sbagliate = [f for f in fonti if re.search(r"\b1 months\b|\b1 meses\b|\ba A", f)]
+    assert not sbagliate, (len(sbagliate), sbagliate[:3])
