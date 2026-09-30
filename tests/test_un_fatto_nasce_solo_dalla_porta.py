@@ -61,10 +61,10 @@ AMMESSI = {
 #: strada che li porta dentro `Memory.add()`. Puo' solo scendere.
 DEBITO = {
     # ("document_promote.py", "promote_chunk_to_fact"): P2, arrivato con #150.
-    ("transcript_promote.py", "promote_turn_to_fact"): "P3",
+    # ("transcript_promote.py", "promote_turn_to_fact"): P3, arrivato il 30/09.
     ("conversation_ingest.py", "ingest_conversation"): "P4, dopo #23",
     ("sleep.py", "SleepEngine._synthesize_from_cluster"): "P5",
-    ("consolidation.py", "_persist_master"): "P5",
+    # ("consolidation.py", "_persist_master"): P5, arrivato il 30/09.
 }
 
 

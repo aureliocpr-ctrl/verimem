@@ -57,7 +57,6 @@ import time
 from typing import TYPE_CHECKING
 
 from .episode import Episode
-from .semantic import Fact
 
 if TYPE_CHECKING:
     from .memory import EpisodicMemory
@@ -416,6 +415,9 @@ def auto_consolidate(
             except sqlite3.IntegrityError:
                 consolidated_prefixes.add(cluster["topic_prefix"])
                 continue
+            if _fact_id is None:
+                # il cancello non ha ammesso il master: niente da contare
+                continue
             masters_persisted += 1
             edges_created += edges_n
             # Update the in-process pre-loaded set so the *next* cluster
@@ -450,7 +452,7 @@ def _persist_master(
     mem: EpisodicMemory,
     cluster: dict,
     master: dict,
-) -> tuple[str, str, int]:
+) -> tuple[str, str | None, int]:
     """Persist one cluster's master node (guarded Fact first, then Episode).
 
     Steps:
@@ -533,19 +535,33 @@ def _persist_master(
         _confidenze = [float(r["confidence"]) for r in _righe if r["confidence"] is not None]
     except (AttributeError, sqlite3.Error, TypeError, KeyError, IndexError):
         _confidenze = []  # -> Fact.confidence, il default di classe
-    f = Fact(
-        proposition=master["proposition"],
-        topic=master["topic"],
-        confidence=min(_confidenze) if _confidenze else Fact.confidence,
+    # 30/09 (1b.3, P5): il master lo scrive il MOTORE, come ogni altra
+    # scrittura — cancello, evento di scrittura, registro della fiducia e
+    # audit. Fino a qui era un `Fact` costruito qui e salvato con `store()`:
+    # entrava nel corpus senza che niente lo guardasse.
+    # 🔑 `episode:<id>` fra i riferimenti rende l'identita' del master UNICA
+    # per tentativo. L'id del motore nasce dal contenuto: senza, due processi
+    # in corsa calcolerebbero lo stesso id, il secondo SOSTITUIREBBE la riga
+    # del primo invece di urtare l'indice unico, e l'episodio del primo
+    # resterebbe orfano — il difetto che l'ordine «prima il fatto» ha curato.
+    # Lo status resta `model_claim` per scelta: un nodo d'indice non e' una
+    # verita' verificata, anche se i suoi riferimenti sono fatti del corpus.
+    from .client import Memory
+    ricevuta = Memory(semantic=sm, principal="internal:consolidation").add(
+        master["proposition"], topic=master["topic"],
+        confidence=min(_confidenze) if _confidenze else None,
         source_episodes=[ep.id],
-        verified_by=[f"fact:{fid}" for fid in cluster["fact_ids"]],
-        status="model_claim",
-    )
-    sm.store(f)  # FIRST: lost unique-index race raises here -> no orphan episode
+        verified_by=[f"fact:{fid}" for fid in cluster["fact_ids"]]
+        + [f"episode:{ep.id}"],
+        status="model_claim")
+    # PRIMA il fatto: una corsa persa sull'indice unico alza dentro `add()`,
+    # quindi qui non si arriva e non nasce nessun episodio orfano.
+    if ricevuta.get("stored") is not True:
+        return ep.id, None, 0
     mem.store(ep)
 
     edges_n = _wire_edges(sm, mem, ep.id, cluster["fact_ids"])
-    return ep.id, f.id, edges_n
+    return ep.id, str(ricevuta["id"]), edges_n
 
 
 def _wire_edges(

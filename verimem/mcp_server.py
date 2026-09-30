@@ -8509,19 +8509,20 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             topic = arguments.get("topic", "conversational/promoted")
             proposition = arguments.get("proposition")
             try:
-                fact = promote_turn_to_fact(
+                ricevuta = promote_turn_to_fact(
                     TranscriptIndex(), turn_id, a.semantic,
                     topic=topic, proposition=proposition,
+                    memoria=_memoria(),
                 )
             except ValueError as exc:
                 _audit(name, arguments, outcome="unknown_turn")
                 return _err(str(exc))
             _audit(name, arguments, outcome="ok")
             return _ok({
-                "fact_id": fact.id,
-                "status": fact.status,
-                "topic": fact.topic,
-                "provenance": fact.source_episodes,
+                "fact_id": ricevuta.get("id"),
+                "status": ricevuta.get("status"),
+                "topic": topic,
+                "provenance": ricevuta.get("provenance"),
                 "note": ("promoted as low-trust model_claim; raw chat is NOT "
                           "auto-verified — supply evidence to elevate status"),
             })
