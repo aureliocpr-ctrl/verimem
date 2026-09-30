@@ -15,10 +15,17 @@ from verimem import mcp_server as m
 # ---------- _derive_lenient_schema (unit) -------------------------------
 
 
-def test_derive_drops_required_keeps_type_and_enum() -> None:
+def test_derive_keeps_required_type_and_enum() -> None:
+    """Dal T184 lo schema derivato TIENE `required`: il client legge da
+    `list_tools()` i campi obbligatori, e la porta li deve far rispettare.
+    Prima li lasciava cadere «per non rifiutare mai una chiamata che il
+    gestore avrebbe accettato» — e il gestore accettava perche' leggeva quei
+    campi con un ripiego vuoto, fino a scrivere un fatto la cui proposizione
+    era la stringa 'None'. Un `required` che nomina un campo non dichiarato e'
+    un refuso dello schema: si scarta invece di rifiutare ogni chiamata."""
     src = {
         "type": "object",
-        "required": ["x"],
+        "required": ["x", "fantasma"],
         "properties": {
             "x": {"type": "string", "minLength": 3, "description": "d"},
             "mode": {"type": "string", "enum": ["a", "b"]},
@@ -27,7 +34,7 @@ def test_derive_drops_required_keeps_type_and_enum() -> None:
     }
     d = m._derive_lenient_schema(src)
     assert d is not None
-    assert "required" not in d
+    assert d["required"] == ["x"]
     assert d["additionalProperties"] is True
     # type widened with null so an explicit-null optional never false-rejects
     assert d["properties"]["x"]["type"] == ["string", "null"]
@@ -71,6 +78,10 @@ async def test_autoderived_rejects_bad_type() -> None:
     await m._ensure_derived_schemas()
     target = None
     for tname, sch in m._DERIVED_SCHEMAS.items():
+        # un tool con campi obbligatori rifiuterebbe `{pk: 7}` per quelli:
+        # qui si misura il TIPO, quindi si sceglie un tool senza `required`
+        if sch.get("required"):
+            continue
         for pk, pv in sch["properties"].items():
             ty = pv.get("type")
             if isinstance(ty, list) and "integer" in ty:
@@ -95,6 +106,8 @@ async def test_autoderived_rejects_bad_enum() -> None:
     await m._ensure_derived_schemas()
     target = None
     for tname, sch in m._DERIVED_SCHEMAS.items():
+        if sch.get("required"):  # come sopra: qui si misura l'enum
+            continue
         for pk, pv in sch["properties"].items():
             if isinstance(pv.get("enum"), list) and pv["enum"]:
                 target = (tname, pk, pv["enum"])
