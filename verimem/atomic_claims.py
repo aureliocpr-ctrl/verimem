@@ -33,6 +33,19 @@ Ogni regola porta il numero che l'ha decisa (banchi in docs/stato-reale/banchi/)
     (o col successivo, se e' il primo). E' la regola che protegge i veri di
     ieri: «Indietro 16 con tracciato 0.» usciva da solo e L1.17 lo fermava
     (banco muro1-il-falso-allarme-su-un-campione-non-scelto).
+  · INGLESE, misurato il 2026-09-24 su 100 memorie estratte da conversazioni
+    vere (LoCoMo, tre etichettatrici): 15 spezzature, 5 col senso SBAGLIATO, due
+    su memorie VERE. Con un giudice per claim il pezzo sbagliato di una memoria
+    vera diventa una quarantena falsa. Quattro cause, quattro regole:
+      - la fusione ricuce il SEPARATORE ORIGINALE, non una «e» fissa («energy e
+        support» in un testo inglese);
+      - gli irregolari inglesi (felt, got, found, built...) sono verbi finiti:
+        senza, «Andrew's dog got» diventava un soggetto;
+      - un pezzo il cui UNICO verbo sta dopo una relativa o una subordinata
+        («rest where she goes...», «a source when she started...») e' un pezzo
+        del precedente, non un claim;
+      - due verbi con lo STESSO complemento («inspired and motivated them») sono
+        un claim solo: il pezzo di sinistra finisce sul suo verbo.
   · VIRGOLETTE. Mai spezzare dentro « », " " e '…': la citazione spezzata
     trasforma una MENZIONE in un'ASSERZIONE («Il fatto 'La migrazione e'
     completata' da' None.» cadeva su L1.13). Con gli apici singoli la scansione
@@ -81,13 +94,58 @@ _VERBI_FINITI = (
     "might|must|runs|ran|fails|failed|passes|passed|returns|returned|shows|showed|"
     "works|worked|holds|held|remains|remained|contains|contained|takes|took|"
     "gives|gave|reports|reported|reads|read|writes|wrote|says|said|goes|went|"
-    "becomes|became|means|meant|costs|cost|weighs|weighed"
+    "becomes|became|means|meant|costs|cost|weighs|weighed|"
+    # inglese — passati irregolari (non finiscono in -ed) e presenti frequenti nelle
+    # memorie estratte da conversazioni. Solo forme che raramente sono un nome:
+    # «plans», «values», «needs» restano fuori, perche' un pezzo che comincia con un
+    # nome letto come verbo erediterebbe un soggetto che non ha.
+    "felt|got|found|made|built|met|kept|told|bought|brought|began|came|knew|won|"
+    "ate|drove|flew|sat|stood|taught|chose|heard|sold|caught|fought|spoke|wore|"
+    "woke|hid|thought|saw|feels|loves|enjoys|likes|wants|thinks|believes|seems|"
+    "knows|tries|helps|prefers|admires|appreciates|considers|expresses|mentions|"
+    "finds|keeps|makes|gets"
 )
 # in inglese passato semplice e participio coincidono («tested», «signed») e fanno
 # entrambi da predicato: le forme in -ed contano come verbo finito. In italiano no.
 _RE_VERBO = re.compile(
     rf"(?<![\w'])(?:{_VERBI_FINITI}|[a-z]{{3,}}ed)(?=\s|$|[.,;:!?])", re.IGNORECASE)
 _RE_VERBO_INIZIALE = re.compile(rf"^(?:{_VERBI_FINITI}|[a-z]{{3,}}ed)(?=\s|$)", re.IGNORECASE)
+
+# ── parole che aprono una relativa o una subordinata, nelle due lingue: il verbo
+# che viene dopo non fa del pezzo un claim («rest where she goes to relax»).
+_RE_SUBORDINANTE = re.compile(
+    r"(?<![\w'])(?:where|who|whom|whose|which|that|when|while|because|since|"
+    r"although|though|if|unless|until|after|before|che|cui|dove|quando|mentre|"
+    r"perché|perche'|poiché|poiche'|se|benché|benche'|sebbene|finché|finche')(?=\s|$|[.,;:!?])",
+    re.IGNORECASE)
+
+# ── «to» come ultima PAROLA prima del verbo: l'infinito inglese («to read»).
+# Parola intera: «photo», «Toronto», «onto» non contano.
+_RE_TO_FINALE = re.compile(r"(?:^|\s)to\s*$", re.IGNORECASE)
+
+# ── davanti a un -ed inglese queste parole ne fanno un PREDICATO, non un verbo
+# finito: «got excited», «felt inspired», «was tested», «staying motivated».
+_COPULE_AUSILIARI = frozenset((
+    "is", "are", "was", "were", "be", "been", "being", "am", "get", "gets", "got",
+    "getting", "feel", "feels", "felt", "stay", "stays", "stayed", "become",
+    "becomes", "became", "seem", "seems", "seemed", "look", "looks", "looked",
+    "remain", "remains", "remained", "keep", "keeps", "kept"))
+
+# ── davanti a un -ed queste parole ne fanno un MODIFICATORE: «for underserved
+# communities», «a finished product», «the pickled onions».
+_MODIFICATORI = frozenset((
+    "for", "of", "in", "on", "at", "with", "by", "from", "into", "onto", "about", "the",
+    "a", "an", "his", "her", "their", "its", "our", "my", "your", "this", "these",
+    "those", "some", "many", "more", "most", "very", "well", "newly"))
+
+# ── la copula subito dopo un -ed: «focused is key» e' un pezzo di «resilient and
+# focused», non un claim che comincia col verbo «focused».
+_COPULE = frozenset(("is", "are", "was", "were", "è", "e'", "sono", "era", "erano"))
+
+# ── pronomi oggetto: «reassured HIM» dice che il verbo di destra prende lo stesso
+# complemento di quello di sinistra («encouraged and reassured him»).
+_RE_PRONOME_OGGETTO = re.compile(
+    r"^(?:him|her|them|it|me|us|you|lo|la|li|le|gli|ci|vi)(?=\s|$|[.,;:!?])", re.IGNORECASE)
 
 # ── participio con l'AUSILIARE SOTTINTESO: «L'implementazione e' finita e collaudata»
 # -> «collaudata» non ha un verbo finito, ma non e' un frammento: e' «[e'] collaudata».
@@ -167,37 +225,62 @@ def _dentro(pos: int, zone: list[tuple[int, int]]) -> bool:
     return any(a <= pos < b for a, b in zone)
 
 
+def _verbi_finiti(pezzo: str) -> list[re.Match[str]]:
+    """I verbi finiti del pezzo, nell'ordine. Non contano: il verbo dopo «to» (un
+    infinito, «to read»), e il -ed inglese dopo una copula, un ausiliare o un
+    gerundio (un predicato: «got excited», «staying motivated»)."""
+    out = []
+    for m in _RE_VERBO.finditer(pezzo):
+        prima = pezzo[:m.start()]
+        if _RE_TO_FINALE.search(prima):
+            continue
+        if m.group(0).lower().endswith("ed"):
+            precedenti = prima.rstrip().split()
+            if precedenti:
+                p = precedenti[-1].lower().strip(",;:")
+                if p in _COPULE_AUSILIARI or p in _MODIFICATORI or p.endswith("ing"):
+                    continue
+        out.append(m)
+    return out
+
+
 def ha_verbo_finito(pezzo: str) -> bool:
     """Un pezzo e' un claim solo se ha un verbo finito (lista aperta sopra)."""
-    return _RE_VERBO.search(pezzo) is not None
+    return bool(_verbi_finiti(pezzo))
 
 
 def soggetto_di(pezzo: str) -> str:
     """Il testo del pezzo fino al suo primo verbo finito; '' se non c'e' un verbo
     o se il pezzo COMINCIA col verbo (nessun soggetto davanti)."""
-    m = _RE_VERBO.search(pezzo)
-    if not m or m.start() == 0:
+    verbi = _verbi_finiti(pezzo)
+    if not verbi or verbi[0].start() == 0:
         return ""
-    return pezzo[:m.start()].strip().rstrip(",;:")
+    return pezzo[:verbi[0].start()].strip().rstrip(",;:")
 
 
-def _spezza(testo: str) -> list[str]:
+def _spezza(testo: str) -> list[tuple[str, str]]:
     """Split sulle coordinate, saltando i punti che cadono dentro le virgolette.
-    Soglia: 1 parola (nessun pezzo viene scartato per lunghezza)."""
+    Soglia: 1 parola (nessun pezzo viene scartato per lunghezza).
+
+    Ogni pezzo porta il SEPARATORE che lo precedeva nel testo (« and », «, e »,
+    «; »...): chi fonde due pezzi li ricuce con quello, cosi' la fusione restituisce
+    il testo com'era scritto e non inventa una «e» italiana in una frase inglese."""
     zone = _zone_protette(testo)
-    pezzi: list[str] = []
+    pezzi: list[tuple[str, str]] = []
     ultimo = 0
+    separatore = ""
     for m in _RE_COORD.finditer(testo):
         if _dentro(m.start(), zone) or _dentro(max(m.start(), m.end() - 1), zone):
             continue
         pezzo = testo[ultimo:m.start()].strip(" .")
         if pezzo:
-            pezzi.append(pezzo)
+            pezzi.append((separatore, pezzo))
+        separatore = m.group(0)
         ultimo = m.end()
     coda = testo[ultimo:].strip(" .")
     if coda:
-        pezzi.append(coda)
-    return pezzi or [testo.strip(" .")]
+        pezzi.append((separatore, coda))
+    return pezzi or [("", testo.strip(" ."))]
 
 
 def _ausiliare_di(pezzo: str) -> str:
@@ -216,17 +299,75 @@ def _fondi_i_nudi(pezzi: list[str]) -> list[str]:
     E' la coda «e collaudata» / «ed e' verificata»: 1 pezzo su 200 con la soglia
     di tre parole, 135 con la soglia a una."""
     out: list[str] = []
-    for p in pezzi:
-        if ha_verbo_finito(p) or not out:
+    separatori: list[str] = []   # separatori[i] precedeva out[i] nel testo
+    for separatore, p in pezzi:
+        if not out:
             out.append(p)
+            separatori.append("")
+        elif (ha_verbo_finito(p) and not _solo_verbo_subordinato(p)
+              and not _stesso_complemento(out[-1], p)
+              and not _frammento_aggettivale(p)
+              and not _subordinata_aperta(out[-1])):
+            out.append(p)
+            separatori.append(separatore)
         elif _RE_PARTICIPIO_INIZIALE.match(p) and _ausiliare_di(out[-1]):
             out.append(f"{_ausiliare_di(out[-1])} {p}")
+            separatori.append(separatore)
         else:
-            out[-1] = f"{out[-1]} e {p}"
+            out[-1] = f"{out[-1]}{separatore}{p}"
     if len(out) >= 2 and not ha_verbo_finito(out[0]):
-        out[1] = f"{out[0]} e {out[1]}"
+        out[1] = f"{out[0]}{separatori[1]}{out[1]}"
         out = out[1:]
     return out
+
+
+def _solo_verbo_subordinato(pezzo: str) -> bool:
+    """Il pezzo ha UN solo verbo finito e davanti a lui c'e' una parola che apre una
+    relativa o una subordinata: «rest where she goes to relax», «a steady presence
+    when he started running». Non e' un claim, e' un pezzo del precedente.
+    Con due verbi («il test che gira passa») il secondo e' il verbo principale e il
+    pezzo resta un claim."""
+    verbi = _verbi_finiti(pezzo)
+    if len(verbi) != 1:
+        return False
+    sub = _RE_SUBORDINANTE.search(pezzo)
+    return sub is not None and sub.start() < verbi[0].start()
+
+
+def _frammento_aggettivale(pezzo: str) -> bool:
+    """«focused is key for entrepreneurs»: un -ed minuscolo seguito subito da una
+    copula non e' un verbo (un verbo non regge una copula), e' un aggettivo
+    coordinato con l'ultima parola del pezzo precedente («resilient and focused»)."""
+    parole = pezzo.split()
+    return (len(parole) >= 2 and re.fullmatch(r"[a-z]{3,}ed", parole[0]) is not None
+            and parole[1].lower() in _COPULE)
+
+
+def _subordinata_aperta(sinistra: str) -> bool:
+    """Il pezzo di sinistra apre una subordinata e non le ha ancora dato un verbo:
+    «believes that regular grooming, daily brushing, baths, nail trims | and lots of
+    love are essential». La coordinata sta DENTRO il soggetto della subordinata, e il
+    verbo che la chiude e' nel pezzo di destra: si ricuce."""
+    ultima = None
+    for m in _RE_SUBORDINANTE.finditer(sinistra):
+        ultima = m
+    if ultima is None:
+        return False
+    return not _verbi_finiti(sinistra[ultima.end():])
+
+
+def _stesso_complemento(sinistra: str, destra: str) -> bool:
+    """«encouraged | reassured him»: il pezzo di sinistra FINISCE sul suo verbo (che
+    non e' preceduto da un altro verbo: «got scared» e' un predicato, non un verbo
+    rimasto senza complemento) e quello di destra comincia con un verbo seguito da un
+    pronome oggetto. I due verbi reggono lo stesso complemento: un claim solo."""
+    parole = sinistra.rstrip(" .,;").split()
+    if not parole or not _RE_VERBO_INIZIALE.match(parole[-1]):
+        return False
+    if len(parole) >= 2 and _RE_VERBO_INIZIALE.match(parole[-2]):
+        return False
+    m = _RE_VERBO_INIZIALE.match(destra)
+    return m is not None and bool(_RE_PRONOME_OGGETTO.match(destra[m.end():].lstrip()))
 
 
 def _eredita_il_soggetto(pezzi: list[str]) -> list[str]:

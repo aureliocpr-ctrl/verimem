@@ -4044,6 +4044,32 @@ def facts_quarantine_log(
                       f"{safe_cut(str(r.get('proposition') or ''), 60)}")
 
 
+@facts_app.command("release", help="Release ONE quarantined fact; the principal that wrote it cannot.")
+def facts_release(
+    fact_id: str = typer.Argument(..., help="The id of the quarantined fact"),
+    reason: str = typer.Option("", "--reason", help="Why: kept in the audit event"),
+    db: str = typer.Option(None, "--db", help="Store file (default: the configured corpus)"),
+) -> None:
+    """Toglie UN fatto dalla quarantena: la via di una persona (Atlas, 29/09).
+
+    Le guardie sono quelle dello store (superseduto, iniezione, chi ha scritto
+    non libera) e la ricevuta dice chi ha liberato cosa. Chi chiede e'
+    :func:`_principale`, ``cli:local`` piu' l'etichetta ``VERIMEM_ACTOR``: un
+    fatto scritto con la stessa etichetta non si libera da qui. Esce con 1
+    quando non libera, cosi' uno script non scambia un rifiuto per un fatto.
+    """
+    r = _facts_sm(db, "verimem facts release").libera_dalla_quarantena(
+        fact_id, requested_by=_principale(), reason=reason)
+    chi = (f"released_by {r['released_by']} · "
+           f"written_by {r['written_by'] or '-'}")
+    if r["restored"]:
+        console.print(f"[green]released[/green] {fact_id} · {chi}")
+        return
+    perche = r.get("refused_reason") or "not a live quarantined fact"
+    console.print(f"[yellow]not released[/yellow] {fact_id} · {chi} · {perche}")
+    raise typer.Exit(1)
+
+
 @facts_app.command("retirement-log", help="The retirements, newest first, as (loser, winner) pairs.")
 def facts_retirement_log(
     limit: int = typer.Option(50, "--limit", "-n", help="Max rows"),

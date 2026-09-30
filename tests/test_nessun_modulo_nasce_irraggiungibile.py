@@ -63,7 +63,8 @@ PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 #: qualcosa e' nato staccato. Li importa `hooks/hippo_session_start.py` (via
 #: lo shim `engram.`), e un gancio e' una superficie d'uso che nessuna delle
 #: tre porte raggiunge: senza di loro il banner perde la sezione dei demoni
-#: IN SILENZIO, dentro un `except`. `atomic_claims` sta in INNESTO_IN_ARRIVO.
+#: IN SILENZIO, dentro un `except`. `atomic_claims` stava in INNESTO_IN_ARRIVO
+#: fino al 29/09, quando il cancello di scrittura ha cominciato a chiamarlo.
 #:
 #: IL QUARTO, aggiunto il 19/09 con la stessa ragione dei due demoni:
 #: `proactive_step_injector`. Lo raggiunge `.claude/hooks/hippo_pre_tool_use.py`,
@@ -154,19 +155,11 @@ def _irraggiungibili() -> list[str]:
 #: innesto e' un pezzo separato, gia' scritto su un ramo. Non sono «39esimi
 #: moduli muti»: sono in transito, e `test_l_eccezione_scade_quando_il_modulo_
 #: si_collega` li toglie da qui il giorno che una porta li raggiunge.
-INNESTO_IN_ARRIVO = {
-    "atomic_claims": "06/09: decomponi() e' entrato inerte con 3fd1ed31; l'innesto "
-                     "(muro 1, pezzi 3a/3b/3b-bis) sta su origin/lead/innesto-"
-                     "decomposizione, revertato da main alle 08:42 (460f230e) "
-                     "finche' P-A e P-B non sono misurate a RAM ok. "
-                     "RIDATATA il 18/09: la misura di P-A e P-B a RAM ok NON "
-                     "risulta fatta, ne' sul canale ne' nei registri, e oltre "
-                     "questo e' NON VERIFICATO. Il 18/09 il taglio del contorno "
-                     "stava per archiviare questo modulo: si e' fermato perche' "
-                     "questa riga esiste — un grafo di importazioni non vede "
-                     "un'intenzione dichiarata. T111 decide: innestare o "
-                     "archiviare, dopo il metro del 19/09",
-}
+#: ✅ VUOTA DAL 29/09: `atomic_claims` e' entrato inerte il 06/09 (3fd1ed31) e
+#: T111 doveva decidere se innestarlo o archiviarlo. Lo ha innestato T221: il
+#: cancello di scrittura giudica la memoria affermazione per affermazione con
+#: `decomponi()`, e il test qui sotto ha chiesto da solo di togliere la riga.
+INNESTO_IN_ARRIVO: dict[str, str] = {}
 
 
 def test_il_codice_scollegato_non_cresce():
