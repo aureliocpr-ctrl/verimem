@@ -30,7 +30,10 @@ def test_promote_creates_model_claim_with_provenance(tmp_path):
         session_id="S9", role="assistant", id="trn1",
     ))
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    fact = promote_turn_to_fact(idx, "trn1", sm, topic="conversational/promoted")
+    # Dal 30/09 la promozione rende la RICEVUTA del motore, come ogni
+    # scrittura: il fatto si rilegge dallo store, dove la promessa vale.
+    fact = sm.get(promote_turn_to_fact(
+        idx, "trn1", sm, topic="conversational/promoted")["id"])
 
     assert fact.status == "model_claim", "default: claim, NON verita verificata"
     assert any("trn1" in s and "S9" in s for s in fact.source_episodes), \
@@ -49,9 +52,16 @@ def test_promote_cannot_launder_to_verified_without_evidence(tmp_path):
     idx.store(Turn(text="frase grezza spacciata per verificata senza prove",
                    session_id="S", id="trn2"))
     sm = SemanticMemory(db_path=tmp_path / "s.db")  # repo_root=None -> verified demoted
-    fact = promote_turn_to_fact(idx, "trn2", sm, status="verified")
-    assert fact.status == "model_claim", \
+    fact = sm.get(promote_turn_to_fact(idx, "trn2", sm, status="verified")["id"])
+    # La promessa e' che il grezzo NON diventi `verified`. Dal 30/09 decide il
+    # motore, come su ogni porta, e questo testo esce in QUARANTENA: il
+    # cancello risponde `downgrade` e il motore lo applica. Il testo dice di se'
+    # «verificata» (`verificat[oaie]` sta nel lessico di L1). La copia privata
+    # del cancello guardava solo `reject` e la soglia del moat, ignorava il
+    # `downgrade`, e lo lasciava `model_claim`.
+    assert fact.status != "verified", \
         "il grezzo NON puo diventare 'verified' senza evidenza (anti-laundering)"
+    assert fact.status == "quarantined", fact.status
 
 
 def test_promote_keeps_turn_in_tier_c(tmp_path):
@@ -79,6 +89,6 @@ def test_promote_redacts_secret_in_proposition(tmp_path):
         session_id="S", id="sek1",
     ))
     sm = SemanticMemory(db_path=tmp_path / "s.db")
-    fact = promote_turn_to_fact(idx, "sek1", sm)
+    fact = sm.get(promote_turn_to_fact(idx, "sek1", sm)["id"])
     assert "" + _P2 + "ABCDEFGHIJ1234567890abcdefXY" not in fact.proposition
     assert "REDACTED" in fact.proposition

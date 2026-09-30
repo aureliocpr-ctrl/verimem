@@ -8,12 +8,12 @@ store the guarded Fact FIRST so a lost race aborts before any Episode is written
 """
 from __future__ import annotations
 
-import contextlib
 import sqlite3
 
 import pytest
 
 from verimem import consolidation
+from verimem.semantic import Fact, SemanticMemory
 
 
 class _FakeMem:
@@ -24,7 +24,7 @@ class _FakeMem:
         self.stored.append(ep)
 
 
-class _FakeSmConflict:
+class _FakeSmConflict(SemanticMemory):
     """Simulates losing the unique-index race on the master fact.
 
     ⚠️ ESPONE ANCHE ``_connect``, e non per completezza: dal 2026-09-02
@@ -40,30 +40,30 @@ class _FakeSmConflict:
     quello che un RED→GREEN sulla propria cura NON vede sono i test-double
     ALTRUI che la nuova dipendenza rompe. Un doppio non e' tipizzato e tace
     finche' non lo si esegue.
+    📌 30/09 (1b.3): la stessa lezione, un passo dopo. Il master ora lo scrive
+    `Memory.add()`, che costruisce il motore sull'oggetto store e ne legge
+    `db_path`: un doppio senza `db_path` moriva di `AttributeError`. Il doppio
+    e' diventato uno STORE VERO con il solo `store` che perde la corsa: esercita
+    il cammino del prodotto fino allo `store` che deve abortire, e non resta
+    indietro alla prossima dipendenza nuova.
     """
 
-    def __init__(self):
+    def __init__(self, db_path):
+        super().__init__(db_path=db_path)
         #: le scritture tentate: servono al controllo positivo sotto.
         self.tentativi = []
-        self._db = sqlite3.connect(":memory:")
-        self._db.row_factory = sqlite3.Row
-        self._db.execute("CREATE TABLE facts (id TEXT PRIMARY KEY, confidence REAL)")
-        self._db.executemany("INSERT INTO facts VALUES (?, ?)",
-                             [("a", 0.5), ("b", 0.4)])
-        self._db.commit()
+        for fid, conf in (("a", 0.5), ("b", 0.4)):
+            SemanticMemory.store(self, Fact(id=fid, proposition=f"sub fact {fid}",
+                                            topic=f"proj/x/{fid}", confidence=conf))
 
-    @contextlib.contextmanager
-    def _connect(self):
-        yield self._db
-
-    def store(self, f):
+    def store(self, f, **kw):
         self.tentativi.append(f)
         raise sqlite3.IntegrityError("UNIQUE constraint failed: idx_facts_auto_master_unique")
 
 
-def test_persist_master_no_orphan_episode_on_fact_conflict():
+def test_persist_master_no_orphan_episode_on_fact_conflict(tmp_path):
     mem = _FakeMem()
-    sm = _FakeSmConflict()
+    sm = _FakeSmConflict(tmp_path / "sem.db")
     cluster = {"topic": "proj/x", "topic_prefix": "proj/x",
                "fact_count": 2, "fact_ids": ["a", "b"]}
     master = {"topic": "proj/x", "proposition": "the consolidated master claim"}
