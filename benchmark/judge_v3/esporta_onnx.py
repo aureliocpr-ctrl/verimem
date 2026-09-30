@@ -58,11 +58,15 @@ PACCHETTI = ("torch", "transformers", "sentence_transformers", "tokenizers",
 #: the threshold of the steps judged here (0 and 1): the lowest cosine over the texts
 SOGLIA_COSENO_MINIMO = 0.99999
 
-#: the int8 variants, by file name: quantize_dynamic's options
+#: the int8 variants, by file name: quantize_dynamic's options. Every export writes the first two; the
+#: others are an ablation (where the loss comes from), run with --varianti on an export already on disk
 VARIANTI_INT8 = {
     "model_int8.onnx": {"per_channel": False, "reduce_range": False},
     "model_int8_rr.onnx": {"per_channel": False, "reduce_range": True},
+    "model_int8_pc.onnx": {"per_channel": True, "reduce_range": False},
+    "model_int8_solo_matmul.onnx": {"per_channel": False, "reduce_range": False, "op_types_to_quantize": ["MatMul"]},
 }
+VARIANTI_DELL_EXPORT = ("model_int8.onnx", "model_int8_rr.onnx")
 
 #: the texts of the steps: four languages and two more scripts, the shapes the product encodes
 #: (a fact, a negation, a question, a number, a timestamp, a command), the product's own prefixes,
@@ -295,7 +299,8 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
 
     # step 2: the int8 variants, measured and not judged here
     manifesto["int8"] = {}
-    for nome, opzioni in VARIANTI_INT8.items():
+    for nome in VARIANTI_DELL_EXPORT:
+        opzioni = VARIANTI_INT8[nome]
         file_int8 = uscita / nome
         quantizza(file_fp32, file_int8, opzioni)
         int8, ms_int8 = _vettori_onnx(file_int8, TESTI, tok)
@@ -310,8 +315,7 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     modello_fp32 = onnx.load(str(file_fp32), load_external_data=False)
     manifesto["opset"] = {o.domain or "ai.onnx": o.version for o in modello_fp32.opset_import}
     manifesto["operatori_fp32"] = _operatori(file_fp32)
-    manifesto["uscite"] = {f.name: {"sha256": sha256(f), "mb": round(f.stat().st_size / 2**20, 1)}
-                           for f in sorted(uscita.iterdir()) if f.suffix in (".onnx", ".json") and f.name != "manifesto.json"}
+    manifesto["uscite"] = _uscite(uscita)
     passi = manifesto["passi"]
     manifesto["verdetto_export"] = bool(
         not diversi
@@ -324,15 +328,53 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     return manifesto
 
 
+def _uscite(uscita: Path) -> dict:
+    return {f.name: {"sha256": sha256(f), "mb": round(f.stat().st_size / 2**20, 1)}
+            for f in sorted(uscita.iterdir()) if f.suffix in (".onnx", ".json") and f.name != "manifesto.json"}
+
+
+def varianti(uscita: Path, nomi: list[str]) -> dict:
+    """Quantize the model.onnx already in `uscita` with more variants, and measure them against it on the same
+    texts. onnxruntime and onnx only, no torch model: step 1 of the export showed the fp32 ONNX equal to the
+    product's encode, so the fp32 ONNX is the reference here."""
+    manifesto = json.loads((uscita / "manifesto.json").read_text(encoding="utf-8"))
+    impronta = hashlib.sha256("\n".join(TESTI).encode("utf-8")).hexdigest()
+    if manifesto["testi"]["sha256"] != impronta:
+        raise ValueError("the texts changed since the export: the variants would not be comparable")
+    tok = _tokenizzatore(uscita / "tokenizer.json", manifesto["lunghezza_massima"], manifesto["pad_id"],
+                         manifesto["pad_token"])
+    file_fp32 = uscita / "model.onnx"
+    fp32, _ = _vettori_onnx(file_fp32, TESTI, tok)
+    for nome in nomi:
+        opzioni = VARIANTI_INT8[nome]
+        file_int8 = uscita / nome
+        quantizza(file_fp32, file_int8, opzioni)
+        int8, ms_int8 = _vettori_onnx(file_int8, TESTI, tok)
+        manifesto["int8"][nome] = {
+            "opzioni": {"weight_type": "QInt8", **opzioni}, "contro_fp32": _confronto(fp32, int8),
+            "ms_per_testo": ms_int8, "operatori": _operatori(file_int8), "versioni": versioni(),
+        }
+    manifesto["uscite"] = _uscite(uscita)
+    (uscita / "manifesto.json").write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding="utf-8")
+    return manifesto
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--modello", default=MODELLO_DEL_PRODOTTO)
     parser.add_argument("--uscita", type=Path, required=True)
     parser.add_argument("--opset", type=int, default=None, help="default: torch's exporter's")
+    parser.add_argument("--varianti", nargs="+", choices=sorted(VARIANTI_INT8),
+                        help="no export: quantize the model.onnx already in --uscita with these variants")
     args = parser.parse_args(argv)
     if sys.prefix == sys.base_prefix:
         print("run it in its own venv (see the docstring), not in the shared environment", file=sys.stderr)
         return 2
+    if args.varianti:
+        manifesto = varianti(args.uscita, args.varianti)
+        print(json.dumps({n: {k: v[k] for k in ("opzioni", "contro_fp32", "ms_per_testo")}
+                          for n, v in manifesto["int8"].items()}, ensure_ascii=False, indent=2))
+        return 0
     manifesto = esegui(args.modello, args.uscita, args.opset)
     print(json.dumps({k: manifesto[k] for k in ("passi", "int8", "uscite", "verdetto_export", "durata_s")},
                      ensure_ascii=False, indent=2))
