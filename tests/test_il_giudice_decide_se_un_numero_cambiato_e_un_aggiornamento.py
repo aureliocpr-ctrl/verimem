@@ -110,3 +110,18 @@ def test_la_ricevuta_di_scrittura_dice_chi_ha_deciso(tmp_path, monkeypatch, chi)
     assert avvisi[0].get("decided_by") == chi, avvisi
     nota = vc.NOTA_DECISO_DALLA_REGOLA in str(avvisi[0].get("advice"))
     assert nota is (chi == "rule"), avvisi
+
+
+def test_un_giudizio_mancato_non_e_un_giudizio_neutrale(monkeypatch):
+    """In delegate-only (il server MCP) senza daemon il giudice NLI non giudica:
+    da #162 lo conta in ``giudizi_mancati`` e restituisce NEUTRAL. Letto come
+    «neutrale» i due fatti coesisterebbero senza che nessuno abbia deciso; la
+    strada del lead (ii) dice che senza giudice decide la regola, e lo dice."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "enforce")
+    monkeypatch.setenv("HIPPO_ENCODE_DELEGATE_ONLY", "1")
+    monkeypatch.setattr(lr, "_nli_via_daemon", lambda coppie, **kw: None)
+    monkeypatch.setattr(lr, "_judge", lr.LocalRelationJudge())
+    r = _verdetto()
+    assert lr._judge.giudizi_mancati >= 1, "il giudizio non risulta mancato"
+    assert _ritira(r), r
+    assert r.get("numeric_decided_by") == "rule", r

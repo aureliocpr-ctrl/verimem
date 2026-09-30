@@ -345,8 +345,14 @@ def giudica_aggiornamenti(vecchi: list[str], nuovo: str) -> list[Relation] | Non
     if _semantic_conflict_mode() != "enforce":
         return None
     giudice = get_local_relation_judge()
+    mancati_prima = giudice.giudizi_mancati
     esiti = giudice.classify_batch([(v, nuovo) for v in vecchi])
-    return None if giudice._load_failed else esiti
+    # Un giudizio MANCATO non e' un giudizio neutrale: in delegate-only senza
+    # daemon (#162) il lotto torna NEUTRAL e lo conta; qui vale come giudice
+    # assente, e decide la regola.
+    if giudice._load_failed or giudice.giudizi_mancati > mancati_prima:
+        return None
+    return esiti
 
 
 __all__ = [
