@@ -5762,7 +5762,7 @@ class SemanticMemory:
         return True
 
     def restore_fact(self, fact_id: str, *, to_status: str = "model_claim",
-                     reason: str = "") -> bool:
+                     reason: str = "", released_by: str = "") -> bool:
         """Un-quarantine: flip a ``quarantined`` fact back to ``to_status`` (the reverse of
         :meth:`quarantine_fact`) — makes the Tier-2 triage genuinely REVERSIBLE (a wrongly-
         declassed fact, or one corroborated by later evidence, returns to the live view).
@@ -5781,7 +5781,7 @@ class SemanticMemory:
         try:
             from .observability import emit as _emit
             _emit("fact_restored", fact_id=fact_id, to_status=to_status,
-                  reason=(reason or "")[:200])
+                  reason=(reason or "")[:200], released_by=released_by)
         except Exception:  # noqa: BLE001
             pass
         # The EXIT from quarantine on the flow channel (2026-08-05): the
@@ -5790,8 +5790,62 @@ class SemanticMemory:
         # A governance action must be as visible as the decision it reverses.
         from .flow_events import emit_flow as _emit_flow
         _emit_flow("flow.restore", fact_id=fact_id, to_status=to_status,
-                   reason=(reason or "")[:200])
+                   reason=(reason or "")[:200], released_by=released_by)
         return True
+
+    def libera_dalla_quarantena(self, fact_id: str, *, requested_by: str = "",
+                                reason: str = "",
+                                to_status: str = "model_claim") -> dict[str, Any]:
+        """Toglie UN fatto dalla quarantena su richiesta, con la ricevuta di chi
+        ha liberato cosa: ``{restored, fact_id, released_by, written_by}`` piu'
+        ``refused_reason`` quando rifiuta. Le porte che liberano a richiesta
+        passano tutte da qui, con le stesse guardie:
+
+          · un fatto SUPERSEDUTO non si libera (si toglie la quarantena, mai il
+            ritiro);
+          · proposizione e topic si ricontrollano per iniezione;
+          · chi ha scritto il fatto non lo libera da solo (Atlas, 29/09): se
+            ``requested_by`` e' lo stesso ``writer_principal`` si rifiuta.
+            Via MCP ogni scrittura e ogni richiesta e' ``mcp:unbound``, quindi
+            nessun fatto scritto via MCP si libera via MCP.
+
+        ⚠️ Sono ETICHETTE, non identita' autenticate: la regola separa le porte
+        e gli attori dichiarati, non ferma chi mente sulla propria etichetta.
+        """
+        chi = (requested_by or "").strip()
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT proposition, topic, superseded_by, writer_principal "
+                "FROM facts WHERE id = ?", (fact_id,)).fetchone()
+        autore = ((row["writer_principal"] if row else "") or "").strip()
+        ricevuta: dict[str, Any] = {"fact_id": fact_id, "released_by": chi or None,
+                                    "written_by": autore or None, "restored": False}
+        rifiuto = ""
+        if row is not None and row["superseded_by"]:
+            rifiuto = "superseded: restore only un-quarantines, never un-supersedes"
+        elif chi and autore and chi == autore:
+            rifiuto = ("self_release: the principal that wrote this fact cannot "
+                       "release it; another principal must (a person, from the CLI)")
+        elif row is not None:
+            try:
+                from .prompt_injection import detect_injection
+                if (detect_injection(row["proposition"] or "").is_injection
+                        or detect_injection(row["topic"] or "").is_injection):
+                    rifiuto = ("injection_screen: the proposition or topic still "
+                               "trips the injection detector")
+            except Exception:  # noqa: BLE001 — un controllo che rompe non libera
+                pass            # e non blocca: resta il comportamento di prima
+        if rifiuto:
+            try:
+                from .observability import emit as _emit
+                _emit("fact_restore_refused", fact_id=fact_id,
+                      reason=rifiuto.split(":")[0], released_by=chi)
+            except Exception:  # noqa: BLE001
+                pass
+            return {**ricevuta, "refused_reason": rifiuto}
+        ricevuta["restored"] = self.restore_fact(
+            fact_id, to_status=to_status, reason=reason, released_by=chi)
+        return ricevuta
 
     def mark_orphaned(self, fact_id: str, *, reason: str = "") -> bool:
         """Cycle #137 — L2 mutation: flip a fact to ``status='orphaned'``.

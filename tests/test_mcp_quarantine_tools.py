@@ -81,7 +81,14 @@ async def test_quarantine_log_lists_the_blocked_fact(real_sm):
 
 @pytest.mark.asyncio
 async def test_restore_brings_the_fact_back(real_sm):
+    """Il fatto qui lo scrive un'ALTRA porta: dal 29/09 chi ha scritto non
+    libera (Atlas), e via MCP scrittura e richiesta sono tutte ``mcp:unbound``
+    (il rifiuto e' provato in test_chi_ha_scritto_non_libera_la_quarantena)."""
+    import sqlite3
     fid = await _quarantine_one()
+    with sqlite3.connect(str(real_sm.db_path)) as con:
+        con.execute("UPDATE facts SET writer_principal = 'sdk:local' WHERE id = ?",
+                    (fid,))
     out = await _invoke("hippo_quarantine_restore",
                         {"fact_id": fid, "reason": "reviewed: legit legal fact"})
     assert out.get("ok") is True and out.get("restored") is True
@@ -184,6 +191,11 @@ async def test_restore_still_works_on_a_fact_that_was_not_superseded(real_sm):
     """⚠️ IL CONTROLLO CHE DEVE POTER FALLIRE, accanto alla cella che presidia
     il rifiuto: se il restore rifiutasse tutto, il test qui sopra sarebbe verde
     senza provare nulla della guardia."""
+    import sqlite3
     fid = await _quarantine_one(topic="legal/deal3")
+    # scritto da un'altra porta: via MCP chi ha scritto non libera (Atlas, 29/09)
+    with sqlite3.connect(str(real_sm.db_path)) as con:
+        con.execute("UPDATE facts SET writer_principal = 'sdk:local' WHERE id = ?",
+                    (fid,))
     out = await _invoke("hippo_quarantine_restore", {"fact_id": fid})
     assert out.get("restored") is True, out
