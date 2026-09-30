@@ -42,7 +42,7 @@ from pathlib import Path
 
 # the check of the fields and the labelled units of `decomponi()` (from the verimem of THIS checkout):
 # one module for every D1 builder, so the halves cannot read a field or label a unit in two ways
-from d1_campi import coda, controlla, senza_coppie_ripetute, unita_con_etichetta
+from d1_campi import coda, controlla, unita_con_etichetta
 
 # ── template per lingua: (prima persona nel turno, terza persona nel claim) ──────────────────
 LINGUE = {
@@ -278,7 +278,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@6"
+GENERATORE = "d1_dialoghi@7"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
@@ -292,13 +292,18 @@ def coppie(d: dict, seme: int) -> list[dict]:
                     "etichetta": etichetta, "unita_nella_memoria": quante, "indice_unita": indice,
                     "generatore": GENERATORE, "seme": seme})
 
-    # 1. sostenute: ogni turno col suo fatto
-    for parlante, testo, claim in turni[:4]:
-        aggiungi("sostenuta", _riga(parlante, testo), claim, claim, 1, 1)
-    # 2. altro turno: la memoria unisce il fatto del turno 0 (A) e quello del turno 2 (A); la fonte è il turno 0
+    # la memoria dell'altro turno unisce il fatto del turno 0 (A) e quello del turno 2 (A), con la fonte del
+    # turno 0: si costruisce PRIMA, perche' quando si spezza la sua unita' 0 e' il claim del turno 0, e la
+    # stessa coppia (fonte, claim) non si scrive due volte
     (pa, ta, ca), (_, _, cb) = turni[0], turni[2]
     memoria = f"{ca.rstrip('.')}{t['coordinata']}{coda(cb, A)}."
     unita = unita_con_etichetta(memoria, [(ca, 1), (cb, 0)], A)
+    gia_unita = {(_riga(pa, ta), u) for u, _ in unita} if len(unita) > 1 else set()
+    # 1. sostenute: ogni turno col suo fatto
+    for parlante, testo, claim in turni[:4]:
+        if (_riga(parlante, testo), claim) not in gia_unita:
+            aggiungi("sostenuta", _riga(parlante, testo), claim, claim, 1, 1)
+    # 2. altro turno
     for k, (u, e) in enumerate(unita):
         aggiungi("altro_turno" if e == 0 else "sostenuta", _riga(pa, ta), memoria, u, e, len(unita), k)
     # 3. parlante scambiato: il fatto del turno 1 (detto da B) attribuito ad A
@@ -313,19 +318,48 @@ def coppie(d: dict, seme: int) -> list[dict]:
     return out
 
 
-def genera(dialoghi: int, seme: int) -> list[dict]:
+def _senza_coincidenze(righe: list[dict]) -> tuple[list[dict], Counter]:
+    """Two dialogues can draw the same speaker, event and sentence: names and events are a finite set,
+    so the same (source, claim) pair comes back by chance, and the judge would read one example twice.
+    The row that comes back is not written, and the count by type is returned to be DECLARED. A memory
+    split in several units is kept whole or skipped whole (the check wants all of its units), and it
+    wins over a one-unit row that repeats one of its pairs."""
+    gruppi: dict[tuple[str, str], dict[int, int]] = {}
+    for k, r in enumerate(righe):
+        gruppi.setdefault((r["fonte"], r["memoria"]), {}).setdefault(r["indice_unita"], k)
+    scritte: set[tuple[str, str]] = set()
+    tieni: set[int] = set()
+    for per_unita in gruppi.values():                     # first the memories split in several units
+        indici = list(per_unita.values())
+        coppie_del_gruppo = {(righe[k]["fonte"], righe[k]["claim"]) for k in indici}
+        if righe[indici[0]]["unita_nella_memoria"] > 1 and not coppie_del_gruppo & scritte:
+            scritte |= coppie_del_gruppo
+            tieni.update(indici)
+    for k, r in enumerate(righe):                          # then the one-unit rows, in order
+        coppia = (r["fonte"], r["claim"])
+        if r["unita_nella_memoria"] == 1 and coppia not in scritte:
+            scritte.add(coppia)
+            tieni.add(k)
+    saltate = Counter(r["tipo"] for k, r in enumerate(righe) if k not in tieni)
+    return [r for k, r in enumerate(righe) if k in tieni], saltate
+
+
+def genera_con_le_saltate(dialoghi: int, seme: int) -> tuple[list[dict], Counter]:
     """The rows of `dialoghi` dialogues per language, deterministic with the seed and checked by
-    `controlla()`: what the command writes, and what a test reads without writing a file."""
+    `controlla()`, with the rows not written because their pair came back by chance."""
     rng = random.Random(seme)
     righe = []
     for lingua in LINGUE:
         for n in range(dialoghi):
             righe.extend(coppie(dialogo(rng, lingua, n), seme))
-    # the judge reads only the source and the claim: a pair repeated by two constructions (the first unit
-    # of a split memory is the claim of its turn) or by two dialogues is one example, kept once
-    righe = senza_coppie_ripetute(righe)
+    righe, saltate = _senza_coincidenze(righe)
     controlla(righe)
-    return righe
+    return righe, saltate
+
+
+def genera(dialoghi: int, seme: int) -> list[dict]:
+    """What the command writes, and what a test reads without writing a file."""
+    return genera_con_le_saltate(dialoghi, seme)[0]
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -337,13 +371,15 @@ def main(argv: list[str] | None = None) -> int:
     a = ap.parse_args(argv)
     import verimem
     print("verimem from:", verimem.__file__)
-    righe = genera(a.dialoghi, a.seme)
+    righe, saltate = genera_con_le_saltate(a.dialoghi, a.seme)
     uscita = Path(a.uscita)
     uscita.write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in righe), encoding="utf-8")
     import hashlib
     print(f"righe: {len(righe)} -> {uscita} · sha256 {hashlib.sha256(uscita.read_bytes()).hexdigest()}")
     print("per tipo e lingua:", dict(sorted(Counter((r['lingua'], r['tipo']) for r in righe).items())))
     print("etichette:", dict(Counter(r["etichetta"] for r in righe)))
+    print("non scritte perche' la coppia (fonte, claim) era gia' uscita da un altro dialogo:",
+          sum(saltate.values()), dict(saltate))
     memorie = {(r["dialogo"], r["memoria"]): r["unita_nella_memoria"] for r in righe}
     print("memorie: intere", sum(v == 1 for v in memorie.values()), "· spezzate", sum(v > 1 for v in memorie.values()))
     if a.campione:
