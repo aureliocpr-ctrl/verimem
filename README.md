@@ -407,7 +407,7 @@ typical library and it is worth knowing before you start:
 
 | step | on disk |
 |---|---|
-| `pip install verimem` — 74 packages, `torch` is more than half of it | **~1.0 GB** |
+| `pip install verimem` — 76 packages, `torch` is more than half of it | **~1.0 GB** |
 | first `verimem warmup` — embedding + reranker + gate models | **~2.3 GB** |
 | **total, first run on a clean machine** | **~3.3 GB** |
 

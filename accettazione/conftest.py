@@ -113,6 +113,112 @@ class Utente:
             proc.kill()
             proc.wait(timeout=30)
 
+    def console(self, **extra_env: str):
+        """`verimem console` come lo scrive il README (r. 558): la porta HTTP sul
+        PROPRIO store, in modalita' personale (loopback, nessuna chiave)."""
+        return self._server(["console", "--no-browser"], None, **extra_env)
+
+    def gateway(self, chiave: str, **extra_env: str):
+        """`verimem gateway serve` come lo scrive il README (r. 595): il gateway
+        multi-tenant; il tenant lo decide la chiave, che viaggia in ogni richiesta."""
+        return self._server(["gateway", "serve"], chiave, **extra_env)
+
+    def chiave_del_gateway(self, tenant: str) -> str:
+        """`verimem gateway keys create --tenant <t>`: la chiave si mostra UNA volta."""
+        import re
+        uscita = self.cli("gateway", "keys", "create", "--tenant", tenant)
+        trovate = re.findall(r"\bvm_[A-Za-z0-9_\-]+", uscita.stdout)
+        assert uscita.returncode == 0 and trovate, (
+            f"`verimem gateway keys create` non ha dato una chiave (returncode "
+            f"{uscita.returncode}): {uscita.stdout[-400:]} {uscita.stderr[-400:]}")
+        return trovate[-1]
+
+    @contextlib.contextmanager
+    def _server(self, comando: list[str], chiave: str | None, **extra_env: str):
+        """Un server HTTP del README su una porta libera; la prova aspetta che
+        `/v1/stats` risponda. Se il processo esce prima, o non risponde entro il tetto,
+        l'errore riporta la sua uscita: un comando del README che non parte e' il dato,
+        non un dettaglio."""
+        import socket
+        import time
+        import urllib.error
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            porta = s.getsockname()[1]
+        nome = " ".join(["verimem", *comando])
+        registro = self.radice / f"{comando[0]}-{porta}.txt"
+        with open(registro, "w", encoding="utf-8") as uscita:
+            proc = subprocess.Popen(
+                [_eseguibile("verimem"), *comando, "--port", str(porta)],
+                stdout=uscita, stderr=subprocess.STDOUT, cwd=self.radice,
+                env={**self.env, **extra_env})
+        http = PortaHTTP(f"http://127.0.0.1:{porta}", chiave)
+        try:
+            scadenza = time.monotonic() + TETTO_S
+            while True:
+                if proc.poll() is not None:
+                    raise AssertionError(
+                        f"`{nome}` e' uscito (returncode {proc.returncode}) prima di "
+                        f"rispondere: {registro.read_text(encoding='utf-8', errors='replace')[-800:]}")
+                try:
+                    http.get("/v1/stats")
+                    break
+                except urllib.error.HTTPError as exc:
+                    raise AssertionError(
+                        f"`{nome}` risponde {exc.code} su /v1/stats: "
+                        f"{exc.read()[:300]!r}") from exc
+                except OSError:  # connessione rifiutata: il server non ascolta ancora
+                    if time.monotonic() > scadenza:
+                        raise AssertionError(
+                            f"`{nome}` non risponde in {TETTO_S} s: "
+                            f"{registro.read_text(encoding='utf-8', errors='replace')[-800:]}"
+                        ) from None
+                    time.sleep(0.5)
+            yield http
+        finally:
+            _termina(proc)
+
+
+class PortaHTTP:
+    """Un client HTTP minimo (stdlib): GET con parametri e POST JSON, risposta JSON.
+    Con una chiave, ogni richiesta porta ``Authorization: Bearer <chiave>`` come dice il
+    README del gateway."""
+
+    def __init__(self, base: str, chiave: str | None = None) -> None:
+        self.base = base
+        self.intestazioni = {"Authorization": f"Bearer {chiave}"} if chiave else {}
+
+    def _manda(self, richiesta) -> dict:
+        import urllib.request
+        with urllib.request.urlopen(richiesta, timeout=TETTO_S) as risposta:
+            return json.loads(risposta.read().decode("utf-8"))
+
+    def get(self, percorso: str, **parametri) -> dict:
+        import urllib.parse
+        import urllib.request
+        url = self.base + percorso
+        if parametri:
+            url += "?" + urllib.parse.urlencode(parametri)
+        return self._manda(urllib.request.Request(url, headers=self.intestazioni))
+
+    def post(self, percorso: str, dati: dict) -> dict:
+        import urllib.request
+        return self._manda(urllib.request.Request(
+            self.base + percorso, data=json.dumps(dati).encode("utf-8"), method="POST",
+            headers={**self.intestazioni, "Content-Type": "application/json"}))
+
+
+def _termina(proc: subprocess.Popen) -> None:
+    """Chiude il processo E i suoi figli: su Windows il comando `verimem.exe` e'
+    un lanciatore, e il server che ascolta sulla porta e' il processo figlio."""
+    if proc.poll() is None:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=60)
+        else:
+            proc.kill()
+    proc.wait(timeout=30)
+
 
 class SessioneMCP:
     """Il minimo del protocollo MCP su stdio: initialize, tools/list, tools/call.
