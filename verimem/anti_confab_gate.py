@@ -2462,20 +2462,26 @@ def run_validation_gate(
                                                proposition=proposition,
                                                cand_ha_source=bool(
                                                    source and str(source).strip()))
+            # T216: chi ha deciso che il numero cambiato e' un aggiornamento,
+            # il giudice NLI o la regola quando il giudice non c'e'
+            _chi = ({"decided_by": r["numeric_decided_by"]}
+                    if r.get("numeric_decided_by") else {})
             if _conflicts:
                 warnings.append({
                     "layer": "L3",
                     "reason": "validate_claim verdict=contradicted",
                     "advice": advice,
+                    **_chi,
                 })
                 contradicting_ids = _conflicts
             elif ev and len(supersede_ids) > _sup_prima:
                 # ogni contraddizione era un'evoluzione della stessa fonte →
                 # si ammette il nuovo e si ritira il vecchio
-                warnings.append({
-                    "layer": "L3-supersession",
-                    **_TESTI_VERDETTO_L3["L3-supersession"],
-                })
+                _testi = dict(_TESTI_VERDETTO_L3["L3-supersession"])
+                if _chi.get("decided_by") == "rule":
+                    from .validate_claim import NOTA_DECISO_DALLA_REGOLA
+                    _testi["advice"] += " " + NOTA_DECISO_DALLA_REGOLA
+                warnings.append({"layer": "L3-supersession", **_testi, **_chi})
             elif ev:
                 # ⚠️ IL MESSAGGIO DICHIARAVA UN'AZIONE CHE NON ERA AVVENUTA.
                 # Trovato dal critic avversariale (job 2635e23b, worker

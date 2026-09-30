@@ -1094,13 +1094,63 @@ def _identificatori_disgiunti(text_a: str, text_b: str) -> bool:
     stretto (lettere-trattino-cifre), presente nel 15% del corpus, con una
     semantica sola: e' un codice di record.
     """
-    ia = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_a or "")}
-    if not ia:
-        return False
-    ib = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text_b or "")}
-    if not ib:
-        return False
-    return not (ia & ib)
+    return _famiglie_disgiunte(identificatori_di_record(text_a),
+                               identificatori_di_record(text_b))
+
+
+#: Il prefisso che separa i percorsi dai codici nello stesso insieme.
+_FILE = "file:"
+
+
+def identificatori_di_record(text: str) -> set[str]:
+    """I codici di record del testo («s-001») e i percorsi dei file
+    («file:tests/test_x.py»), in minuscolo.
+
+    È la metà riusabile di :func:`_identificatori_disgiunti`: si calcola una
+    volta per fatto e si passa a :func:`conflict_from_parts` come ``ra``/``rb``,
+    così anche gli scanner che confrontano coppie precalcolate hanno la guardia.
+    """
+    codici = {m.group(0).lower() for m in _IDENTIFICATORE_RE.finditer(text or "")}
+    return codici | {_FILE + p for p in _percorsi(text)}
+
+
+def _famiglie_disgiunte(ra: set[str], rb: set[str]) -> bool:
+    """Due record diversi: i codici non si toccano, oppure i percorsi non si
+    toccano. Le due famiglie si confrontano SEPARATE: nello stesso insieme
+    «mg/l», che sta in tutte e due le frasi, faceva sembrare condiviso cio' che
+    non lo e', e «S-001» contro «S-002» tornava uno scontro (misurato il 29/09
+    sulla cella dei due campioni)."""
+    for e_file in (False, True):
+        a = {x for x in ra if x.startswith(_FILE) is e_file}
+        b = {x for x in rb if x.startswith(_FILE) is e_file}
+        if a and b and not (a & b):
+            return True
+    return False
+
+
+#: La punteggiatura che sta attorno a un percorso scritto in una frase.
+_BORDI_DEL_PERCORSO = "\"'`«»()[]{},;:!?"
+
+
+def _percorsi(text: str) -> set[str]:
+    """T216 (29/09): un percorso o un file nomina il soggetto, come un codice.
+
+    «il file tests/test_grounding_write_mcp.py riporta 6 passed» e «il file
+    tests/test_anti_confab_gate.py riporta 14 passed» sono due file, e il
+    passaggio automatico ritirava l'uno per l'altro. E' un percorso un token con
+    una barra e almeno una lettera, oppure un token che finisce in «.py»:
+    «28/09» non ha lettere e resta una data; «mg/l» c'e' in tutte e due le
+    frasi che confrontano la stessa grandezza, quindi non separa niente.
+    Si legge token per token, senza regex: nessun ritorno all'indietro.
+    """
+    out: set[str] = set()
+    for tok in (text or "").split():
+        t = tok.strip(_BORDI_DEL_PERCORSO).rstrip(".")
+        low = t.lower()
+        if (("/" in t or "\\" in t) and any(c.isalpha() for c in t)) or (
+                len(low) > 3 and low.endswith(".py")):
+            out.add(low)
+    return out
 
 
 def _senza_identificatori(testo: str) -> str:
@@ -1680,21 +1730,31 @@ def conflict_from_parts(
     qb: set[tuple[str, float]], cb: set[str],
     *, ia: set[tuple[str, int]] | None = None,
     ib: set[tuple[str, int]] | None = None,
+    ra: set[str] | None = None,
+    rb: set[str] | None = None,
 ) -> tuple[str, float, float] | None:
     """Core numeric-conflict check on PRE-COMPUTED quantities/content tokens.
 
     Lets a batch scan precompute ``(quantities, content_tokens)`` once per
     fact and reuse them across the O(n²) pair loop without re-parsing.
-    Guards identical to :func:`numeric_conflict`.
+    Guards identical to :func:`numeric_conflict` WHEN the caller passes the
+    indices and the record codes below: until 24/09 only that function applied
+    the record-code guard, while the write path and the report scanner called
+    this one directly, and «S-001» against «S-002» came out as a conflict.
 
     ``ia``/``ib`` are the pre-computed :func:`event_indices`. When both sides
     index the same KIND with different numbers they are different subjects, and
     no shared unit makes them comparable — pass them and the pair is refused
-    before any value is compared. Optional so existing batch callers keep
-    working; :func:`numeric_conflict` always supplies them.
+    before any value is compared.
+
+    ``ra``/``rb`` are the pre-computed :func:`identificatori_di_record`. Two
+    record codes that share nothing name two records, not one record with two
+    values. Both pairs of arguments are optional so older callers keep working.
     """
     if ia and ib and _indices_disjoint(ia, ib):
         return None  # different subject: "fatto 3" vs "fatto 5"
+    if ra and rb and _famiglie_disgiunte(ra, rb):
+        return None  # two records: "S-001" vs "S-002", or two different files
     if not qa or not qb:
         return None
     units_a = {u for (u, _v) in qa if u}
@@ -1707,12 +1767,34 @@ def conflict_from_parts(
         return None  # una parola su decine: prose diverse, non stesso soggetto
     if contrasting_attrs(ca, cb):
         return None  # different attribute (kept: catches pairs that share words)
+    #: T175 — UN AGGIORNAMENTO CAMBIA UNA QUANTITA'.
+    #: Fino al 24/09 bastava UNA unita' condivisa con due valori: il ciclo usciva
+    #: alla prima discordanza. Cosi' «la suite aveva 7 failed e 8585 passed» e
+    #: «la suite ha 8623 passed e EXIT=0» — due momenti diversi — erano un
+    #: conflitto su `passed`, e il fatto vecchio veniva ritirato.
+    #: Ora, fra le quantita' CON UNITA', il conflitto c'e' solo se ne differisce
+    #: UNA per lato, della stessa unita'; un'unita' presente in una sola frase e'
+    #: gia' una seconda differenza. Se ne differiscono due o piu', sono due
+    #: momenti o due oggetti e i fatti COESISTONO: e' il lato sicuro, perche' un
+    #: falso conflitto declassa un fatto vero.
+    #: ⛔ Due cose provate il 24/09 e ritirate dal raggio, da NON rimettere:
+    #:   · un criterio sulle PAROLE diverse («nessuna parola distintiva cambia»):
+    #:     e' il criterio strutturale falsificato il 25/07, perde «Sessions are
+    #:     stored with a TTL of 30 minutes» contro «Sessions expire after 45
+    #:     minutes» (tests/test_exclusive_words_mean_other_subject.py);
+    #:   · i numeri NUDI contati come quantita': riaprono i casi di identita'
+    #:     («la release 2.1» contro «la release 3.0»,
+    #:     tests/test_un_numero_nudo_non_si_confronta.py).
+    solo_a = {(u, v) for (u, v) in qa if u} - qb
+    solo_b = {(u, v) for (u, v) in qb if u} - qa
+    if len(solo_a) == 1 and len(solo_b) == 1:
+        ((ua, va),), ((ub, vb),) = solo_a, solo_b
+        if ua == ub and va != vb:
+            return (ua, va, vb)
     for (ua, va) in qa:
         if not ua:
-            continue  # bare unitless number → too ambiguous
+            continue  # bare unitless number: nessuna grandezza da confrontare
         for (ub, vb) in qb:
-            if ua == ub and va != vb:
-                return (ua, va, vb)
             #: STESSA cifra, GRANDEZZA diversa — «400 metri cubi» contro una
             #: fonte che dice «400 mq». Il contratto storico («valore diverso,
             #: stessa unita'») non lo vedeva, e fino al 19/09 nemmeno poteva:
@@ -2595,7 +2677,11 @@ _EVENT_INDEX_RE = re.compile(
     # scritti dall'utente. Qui gli spazi dopo il cancelletto esistono solo se il
     # cancelletto c'e': nessuna ambiguita', crescita lineare, stesse forme
     # riconosciute. Segnalato da CodeQL (py/polynomial-redos) su una PR.
-    r")\s*(?:#\s*)?(\d{1,6})\b",
+    # 🔢 FINO A 20 CIFRE, non 6 (T216, 29/09): «run 31816624316» e «job
+    # 94819747443» sono due soggetti, ma con `\d{1,6}\b` un numero di sette o
+    # piu' cifre non era mai un indice, e la riga di log uguale nei due job si
+    # leggeva come una misura cambiata. Una ripetizione limitata resta lineare.
+    r")\s*(?:#\s*)?(\d{1,20})\b",
     re.IGNORECASE,
 )
 
@@ -2620,9 +2706,10 @@ _ALNUM_CODE_RE = re.compile(r"\b([A-Za-z]{1,6})(\d{2,})\b")
 #: distinct facts — "sends message 0/1/2", "stores profile 0/1/2", "computes rate
 #: 0/1/2" — SEVEN were retired, because message/profile/rate were not listed.
 #: A vocabulary cannot be enumerated; a position can be read.
-#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato.
+#: Stessa cura anti-ReDoS di _EVENT_INDEX_RE, e per lo stesso motivo misurato;
+#: e come lei fino a 20 cifre (T216).
 _GENERIC_INDEX_RE = re.compile(
-    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,6})\b")
+    r"\b([A-Za-z][A-Za-z_-]{2,})\s*(?:#\s*)?(\d{1,20})\b")
 
 
 def _bare_numbers(text: str) -> set[str]:
@@ -2828,6 +2915,7 @@ __all__ = [
     "distinctive_tokens",
     "conflict_from_parts",
     "numeric_conflict",
+    "identificatori_di_record",
     "extract_versions",
     "version_conflict",
     "extract_dates",

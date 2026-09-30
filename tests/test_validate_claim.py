@@ -404,10 +404,19 @@ def test_numeric_contradicted_entries() -> None:
     assert "f_cache_lru" in r["evidence_facts"], r
 
 
-def test_numeric_contradicted_milliseconds() -> None:
-    """RED: '500 milliseconds' contradicts stored '200ms' (unit normalize)."""
+def test_numeric_contradicted_milliseconds(monkeypatch) -> None:
+    """RED: '500 milliseconds' contradicts stored '200ms' (unit normalize).
+
+    La cella misura la normalizzazione delle unita' nella REGOLA, quindi gira
+    senza giudice, e il claim tiene i «3 times» del fatto in memoria. Con la
+    decisione di T175 una quantita' che il nuovo fatto lascia cadere conta come
+    una seconda differenza, come nella «suite in due momenti»: il claim di
+    prima («The retry backoff doubles starting from 500 milliseconds.»)
+    coesiste, ed e' un prezzo dichiarato, non il caso che questa cella misura."""
+    monkeypatch.setenv("ENGRAM_SEMANTIC_CONFLICT", "0")
     agent = _FakeAgent(_numeric_corpus())
-    r = _vc(agent, "The retry backoff doubles starting from 500 milliseconds.")
+    r = _vc(agent, "Network calls retry up to 3 times with exponential backoff "
+                   "starting at 500 milliseconds.")
     assert r["verdict"] == "contradicted", r
     assert "f_retry_backoff" in r["evidence_facts"], r
 

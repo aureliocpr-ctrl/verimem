@@ -214,7 +214,14 @@ rather than producing a number that looks like this one without it.
   warnings`), build-matrix cells (`ubuntu-latest` vs `macos-latest`, `py3.12` vs
   `py3.13`), record numbers, dates, disjoint proper nouns — which covers **70 of the
   171**. The remaining 101 have no syntactic shape: what separates them is meaning, and
-  a lexical rule cannot see it. **One topic per measurement** is the practical
+  a lexical rule cannot see it. The local NLI judge can: the rule now only finds the
+  *candidate* (exactly one quantity of the same unit differs, and no disjoint record
+  number, code or file path tells the two facts apart), and the judge decides —
+  contradiction, the newer supersedes; neutral, both stay. On 281 real pairs (the 251
+  retirements our batch pass had made, 12 known different-subject pairs, 18 known
+  updates) the chain retires **0, 0 and 14**; with no NLI model on disk the rule decides
+  alone and retires **0, 2 and 15**, and the receipt says so (`decided_by: rule`).
+  **One topic per measurement** is the practical
   mitigation and it is not hygiene advice — on facts written in the last 7 days,
   survival was **2348/2444 on topics used once** against **230/338 on topics reused**.
 - **Every write returns an adjudication receipt** — `add()` hands back a visible

@@ -327,9 +327,37 @@ def set_local_relation_judge(judge: LocalRelationJudge | None) -> None:
     _judge = judge
 
 
+def giudica_aggiornamenti(vecchi: list[str], nuovo: str) -> list[Relation] | None:
+    """T216: il giudice sui candidati che la regola numerica ha trovato, fatti
+    con UNA quantita' diversa della stessa unita' rispetto a ``nuovo``, in UN
+    lotto. CONTRADICTION: lo stesso soggetto col valore cambiato, il nuovo
+    supera; altrimenti due soggetti, e coesistono. ``None`` quando il giudice
+    non c'e' (spento, in osservazione, non installato o non caricato): decide
+    la regola, e chi chiama lo scrive nella ricevuta (lead, 29/09).
+
+    Misurato il 28-29/09 su 281 coppie vere: la catena ritira 0 dei 251 ritiri
+    sbagliati del heal, 0 di 12 negativi e 14 di 18 positivi; la regola da
+    sola 0, 2 e 15.
+    """
+    if not vecchi:
+        return []
+    from .anti_confab_gate import _semantic_conflict_mode
+    if _semantic_conflict_mode() != "enforce":
+        return None
+    giudice = get_local_relation_judge()
+    mancati_prima = giudice.giudizi_mancati
+    esiti = giudice.classify_batch([(v, nuovo) for v in vecchi])
+    # Un giudizio MANCATO non e' un giudizio neutrale: in delegate-only senza
+    # daemon (#162) il lotto torna NEUTRAL e lo conta; qui vale come giudice
+    # assente, e decide la regola.
+    if giudice._load_failed or giudice.giudizi_mancati > mancati_prima:
+        return None
+    return esiti
+
+
 __all__ = [
     "LocalRelationJudge", "make_nli_classifier", "get_local_relation_judge",
-    "set_local_relation_judge", "DEFAULT_NLI_MODEL",
+    "set_local_relation_judge", "giudica_aggiornamenti", "DEFAULT_NLI_MODEL",
 ]
 
 

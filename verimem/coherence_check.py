@@ -18,17 +18,19 @@ Design choices (V1):
 * Topic-scoped: only fact with the same ``fact.topic`` are compared.
   Cross-topic scans are out of scope (cycle #110.B already does them
   via the daemon path).
-* Reuses ``verimem.contradiction`` primitives (_extract_numbers,
-  _values_clash, _has_negation, _cosine) so the semantics are
-  consistent with the daemon-side detector.
+* Reuses ``verimem.contradiction`` primitives (_has_negation, _cosine),
+  and since 24/09 (T175) decides numeric clashes with the SHARED detector
+  ``quantity_match.numeric_conflict`` — the same decision as the write path
+  and the batch, not a second compare on bare numbers.
 * Adds `near_duplicate` (token-Jaccard >= 0.7) which the daemon
   detector does NOT cover — this is the specific gap that the
   write-time hook addresses.
 
 Three warning kinds:
 * ``near_duplicate``: token-Jaccard above threshold (default 0.7).
-* ``numeric_clash``: same topic, similarity >= 0.75, numeric values
-  diverge beyond ``value_tolerance`` (default 0.05).
+* ``numeric_clash``: same topic, similarity >= 0.75, and the shared
+  detector sees ONE quantity with a unit changed, by more than
+  ``value_tolerance`` (relative, 5% by default).
 * ``boolean_clash``: same topic, similarity >= 0.75, exactly one
   side carries a negation marker.
 """
@@ -40,10 +42,10 @@ from typing import TYPE_CHECKING
 
 from .contradiction import (
     _cosine,
-    _extract_numbers,
+    _entro_la_tolleranza,
     _has_negation,
-    _values_clash,
 )
+from .quantity_match import numeric_conflict
 
 if TYPE_CHECKING:
     from .semantic import Fact, SemanticMemory
@@ -106,7 +108,6 @@ def check_against_siblings(
     """
     out: list[CoherenceWarning] = []
     new_negation = _has_negation(fact.proposition or "")
-    new_numbers = _extract_numbers(fact.proposition or "")
 
     for sib in siblings:
         if sib.id == fact.id:
@@ -120,24 +121,20 @@ def check_against_siblings(
                 details=f"jaccard={jac:.2f}",
             ))
 
-        # 2. numeric clash — only worth the cosine call if there ARE
-        # numbers on BOTH sides and they actually clash.
-        sib_numbers = _extract_numbers(sib.proposition or "")
-        if (
-            new_numbers and sib_numbers
-            and _values_clash(
-                new_numbers, sib_numbers, tolerance=value_tolerance,
-            )
-        ):
+        # 2. numeric clash — only worth the cosine call if the SHARED numeric
+        # detector sees one (T175, 24/09: the same decision as the write path
+        # and the batch, instead of a second compare on bare numbers);
+        # `value_tolerance` still applies to the two values it returns.
+        clash = numeric_conflict(fact.proposition or "", sib.proposition or "")
+        if clash is not None and not _entro_la_tolleranza(
+                clash[1], clash[2], value_tolerance):
             sim = _cosine(fact, sib)
             if sim >= numeric_sim_threshold:
+                unit, va, vb = clash
                 out.append(CoherenceWarning(
                     kind="numeric_clash",
                     other_fact_id=sib.id,
-                    details=(
-                        f"numbers={new_numbers[:3]} vs {sib_numbers[:3]} "
-                        f"sim={sim:.2f}"
-                    ),
+                    details=f"{unit}: {va:g} vs {vb:g} sim={sim:.2f}",
                 ))
 
         # 3. boolean clash — exactly one side carries a negation marker.

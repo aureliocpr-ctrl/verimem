@@ -52,6 +52,9 @@ from .quantity_match import (
     extract_versions as _extract_versions,
 )
 from .quantity_match import (
+    identificatori_di_record as _identificatori_di_record,
+)
+from .quantity_match import (
     negation_conflict as _negation_conflict,
 )
 from .quantity_match import (
@@ -129,6 +132,32 @@ def _unita_non_allineabili(fatto: str, claim: str) -> bool:
     if "" in u_fatto or "" in u_claim:
         return False
     return not (u_fatto & u_claim)
+
+
+def _misure_diverse(fatto: str, claim: str) -> bool:
+    """Vero quando le due frasi portano quantita' CON UNITA' e ne differisce
+    piu' d'una: due momenti o due oggetti misurati, non lo stesso valore in
+    disaccordo.
+
+    E' la decisione numerica di T175 portata fino al giudice di entailment,
+    gemella di :func:`_unita_non_allineabili`. Misurato il 24/09: dopo la cura
+    numerica il giudice ritirava ancora «costa 0.08 ms sul corpus reale di 7950
+    righe» davanti a «costa 21.36 ms su un corpus sintetico di 200000 righe»
+    (punteggio 0.39 sotto il taglio di 50), e un aggiornamento vero prendeva un
+    punteggio dello stesso ordine (10 contro 20 impulsi: 0.60). Il punteggio non
+    separa le due popolazioni; la forma si': in un aggiornamento cambia UNA
+    quantita'.
+
+    ⚠️ I numeri NUDI restano fuori, come nel ramo numerico: il contatore che
+    «vale 7» e poi «vale 12» resta al giudice (T210).
+    """
+    q_fatto = {(u, v) for u, v in _extract_quantities(fatto) if u}
+    q_claim = {(u, v) for u, v in _extract_quantities(claim) if u}
+    if not q_fatto or not q_claim:
+        return False
+    if not ({u for u, _ in q_fatto} & {u for u, _ in q_claim}):
+        return False  # grandezze diverse: e' il caso di _unita_non_allineabili
+    return len(q_fatto - q_claim) > 1 or len(q_claim - q_fatto) > 1
 
 
 def _extract_salients(text: str) -> tuple[set[str], set[str]]:
@@ -536,6 +565,20 @@ _SOGLIA_GIUDICE_CONTRA = 50.0
 _SOGLIA_STESSO_SOGGETTO = 0.5
 
 
+#: T216 (lead, 29/09): senza giudice NLI il candidato numerico lo decide la
+#: regola, e la ricevuta lo dice. Un testo solo, letto anche dal gate.
+NOTA_DECISO_DALLA_REGOLA = (
+    "Decided by the rule, not by the judge: no NLI judge is on, so one "
+    "differing quantity with the same unit counts as an update "
+    "(`verimem warmup` installs the judge).")
+
+
+def _giudica_aggiornamenti(in_memoria: list[str], claim: str) -> Any:
+    """Il giudice NLI sui candidati numerici in un lotto, o ``None`` se non c'e'."""
+    from .local_relation import giudica_aggiornamenti
+    return giudica_aggiornamenti(in_memoria, claim)
+
+
 def _stesso_tema(in_memoria: str, claim: str) -> bool:
     """Le due frasi parlano dello stesso tema: la condizione per chiedere al giudice."""
     from .quantity_match import content_tokens
@@ -805,6 +848,11 @@ def validate_claim(
     numeric_contra: list[_FactLike] = []
     numeric_advice = ""
     numeric_agree = False
+    # T216: la regola trova il candidato, il giudice NLI decide. Quelli che il
+    # giudice dice due soggetti coesistono, e nessun ramo sotto li ritira.
+    numeric_coesistono: set[str] = set()
+    numeric_decided_by = ""
+    candidati: list[tuple[_FactLike, Any]] = []
     if claim_quants:
         _year_ids = {f.id for f in contradicting}
         for f in hits:
@@ -826,15 +874,29 @@ def validate_claim(
                 numeric_agree = True  # same unit & value → confirmed
             f_conflict = _conflict_from_parts(
                 claim_quants, claim_content, f_quants, f_content,
-                ia=_event_indices(claim), ib=_event_indices(f.proposition))
+                ia=_event_indices(claim), ib=_event_indices(f.proposition),
+                ra=_identificatori_di_record(claim),
+                rb=_identificatori_di_record(f.proposition))
             if f_conflict:
-                numeric_contra.append(f)
-                if not numeric_advice:
-                    cu, cv, fv = f_conflict
-                    numeric_advice = (
-                        f"in memoria: {fv:g} {cu} (fact {f.id}), "
-                        f"NON {cv:g} {cu} — controlla prima di affermare."
-                    )
+                candidati.append((f, f_conflict))
+        # tutti i candidati al giudice in UN lotto, come gli altri giudizi di L3
+        from .semantic_conflict import Relation
+        esiti = _giudica_aggiornamenti([f.proposition for f, _ in candidati], claim)
+        for (f, f_conflict), esito in zip(candidati, esiti or [None] * len(candidati),
+                                          strict=True):
+            if esito is not None and esito != Relation.CONTRADICTION:
+                numeric_coesistono.add(f.id)
+                continue
+            numeric_decided_by = "rule" if esito is None else "judge"
+            numeric_contra.append(f)
+            if not numeric_advice:
+                cu, cv, fv = f_conflict
+                numeric_advice = (
+                    f"in memoria: {fv:g} {cu} (fact {f.id}), "
+                    f"NON {cv:g} {cu} — controlla prima di affermare."
+                )
+                if esito is None:
+                    numeric_advice += " " + NOTA_DECISO_DALLA_REGOLA
 
     # SEMANTIC contradiction pass — la negazione riconosciuta dal GIUDICE
     # invece che da una lista di parole. 15/08.
@@ -880,7 +942,7 @@ def validate_claim(
     lexical_advice = ""
     if claim_versions or claim_dates or lexical_viable:
         _prior_ids = ({f.id for f in contradicting}
-                      | {f.id for f in numeric_contra})
+                      | {f.id for f in numeric_contra} | numeric_coesistono)
         _punteggi = _punteggi_in_un_lotto(
             [f for f in hits if f.id not in _prior_ids], claim)
         for f in hits:
@@ -916,6 +978,7 @@ def validate_claim(
                     and not _contrasting_attrs(
                         _content_tokens(f.proposition), _content_tokens(claim))
                     and not _unita_non_allineabili(f.proposition, claim)
+                    and not _misure_diverse(f.proposition, claim)
                     and _giudice_contraddice(f.proposition, claim, _punteggi)):
                 kind_detail = (
                     "entailment",
@@ -963,6 +1026,8 @@ def validate_claim(
             "evidence_facts": [f.id for f in contra],
             "evidence_episodes": episodes,
             "advice": advice,
+            **({"numeric_decided_by": numeric_decided_by}
+               if numeric_decided_by else {}),
         }
 
     # A claim that makes a SPECIFIC numeric assertion we could not confirm

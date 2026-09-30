@@ -52,7 +52,13 @@ from .quantity_match import (
     content_tokens as _qm_content_tokens,
 )
 from .quantity_match import (
+    event_indices as _qm_event_indices,
+)
+from .quantity_match import (
     extract_quantities as _qm_extract_quantities,
+)
+from .quantity_match import (
+    identificatori_di_record as _qm_identificatori_di_record,
 )
 from .semantic import Fact
 
@@ -366,8 +372,10 @@ def find_numeric_conflicts(
     # Pre-compute per fact: quantities, the numeric-core content tokens, and
     # the BROAD content tokens (this module's `_content_tokens`, #-preserving)
     # used for the topical near-duplicate prefilter. Keep only facts with a
-    # standalone number.
-    items: list[tuple[Fact, set, set, set]] = []
+    # standalone number. The event indices and the record codes go with them:
+    # without, this scanner judged «S-001» against «S-002» as one record with
+    # two values, while the write path did not (T175, 24/09).
+    items: list[tuple[Fact, set, set, set, set, set]] = []
     for f in pool:
         q = _qm_extract_quantities(f.proposition)
         if not q:
@@ -376,6 +384,8 @@ def find_numeric_conflicts(
             f, q,
             _qm_content_tokens(f.proposition),   # numeric-core distinct guard
             _content_tokens(f.proposition),      # broad topical-overlap guard
+            _qm_event_indices(f.proposition),    # «fatto 3» vs «fatto 5»
+            _qm_identificatori_di_record(f.proposition),  # «S-001» vs «S-002»
         ))
 
     # Candidate enumeration via unit→value buckets: a conflict needs two facts
@@ -390,7 +400,7 @@ def find_numeric_conflicts(
     unit_vals: dict[str, dict[float, list[int]]] = defaultdict(
         lambda: defaultdict(list)
     )
-    for idx, (_f, q, _c, _fc) in enumerate(items):
+    for idx, (_f, q, *_resto) in enumerate(items):
         for (u, v) in q:
             if u:
                 unit_vals[u][v].append(idx)
@@ -406,8 +416,8 @@ def find_numeric_conflicts(
 
     out: list[NumericConflictPair] = []
     for ia, ib in candidates:
-        fa, qa, ca, fca = items[ia]
-        fb, qb, cb, fcb = items[ib]
+        fa, qa, ca, fca, ea, ra = items[ia]
+        fb, qb, cb, fcb, eb, rb = items[ib]
         # Topical near-duplicate prefilter (same precision mechanism as the
         # polarity scanner): the two facts must really be about the same thing
         # before a numeric mismatch counts as an inconsistency.
@@ -416,7 +426,8 @@ def find_numeric_conflicts(
             continue
         if _overlap_coefficient(fca, fcb) < float(min_overlap):
             continue
-        conf = _qm_conflict_from_parts(qa, ca, qb, cb)
+        conf = _qm_conflict_from_parts(qa, ca, qb, cb,
+                                       ia=ea, ib=eb, ra=ra, rb=rb)
         if conf is None:
             continue
         unit, va, vb = conf
