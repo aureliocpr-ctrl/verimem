@@ -104,18 +104,16 @@ def test_controllo_positivo_un_daemon_che_risponde_bene_serve_il_vettore(
 def test_il_motivo_del_rifiuto_non_si_perde(daemon_che_rifiuta) -> None:
     """⚠️ RED: oggi la spiegazione del daemon finisce nel nulla.
 
-    Non si chiede che `_encode_via_service` renda un vettore — non ce l'ha. Si
-    chiede che il motivo NON venga buttato: chi non torna con un vettore deve
-    lasciare detto perché, o chi legge non ha modo di saperlo.
+    Non si chiede che la chiamata renda un vettore — non ce l'ha. Si chiede che
+    il motivo NON venga buttato: chi non torna con un vettore deve lasciare
+    detto perché, o chi legge non ha modo di saperlo. Il motivo sta nella
+    RISPOSTA di questa chiamata (dal 30/09 non c'è più una memoria del processo
+    da trovare sporca: era lo stato che rendeva questa cella figlia dell'ordine).
     """
-    motivo = E.ultimo_rifiuto_del_servizio()
-    assert motivo is None, (
-        "il banco parte con la memoria del rifiuto già sporca: azzerala")
+    risposta = E._chiedi_al_servizio("prova")
+    assert risposta.vec is None, "con `ok: False` non c'è vettore, e va bene così"
 
-    vec = E._encode_via_service("prova")
-    assert vec is None, "con `ok: False` non c'è vettore, e va bene così"
-
-    motivo = E.ultimo_rifiuto_del_servizio()
+    motivo = risposta.rifiuto_del_servizio
     assert motivo is not None, (
         "il daemon ha detto PERCHÉ e il prodotto l'ha buttato: chi legge "
         "riceve «unavailable» e va a cercare un processo morto che è vivo")
@@ -159,6 +157,7 @@ def test_un_daemon_zitto_non_inventa_un_motivo(monkeypatch) -> None:
 
     monkeypatch.setattr(svc, "read_discovery", lambda: None)
     monkeypatch.setattr(E, "_service_enabled", lambda: True)
-    assert E._encode_via_service("prova") is None
-    assert E.ultimo_rifiuto_del_servizio() is None, (
+    risposta = E._chiedi_al_servizio("prova")
+    assert risposta.vec is None
+    assert risposta.rifiuto_del_servizio is None, (
         "nessuno ha detto niente: non si inventa un motivo")

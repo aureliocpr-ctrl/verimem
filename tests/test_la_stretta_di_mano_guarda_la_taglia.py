@@ -134,8 +134,7 @@ def test_chi_rifiuta_lo_DICE_e_dice_le_due_taglie(dimensione_conosciuta, daemon)
     diagnosi falsa gia' pagata il 06/09."""
     daemon(384)
 
-    embedding._encode_via_service(FRASE)
-    motivo = embedding.ultimo_rifiuto_del_client()
+    motivo = embedding._chiedi_al_servizio(FRASE).rifiuto_del_client
 
     assert motivo, ("il vettore e' stato rifiutato senza dire perche': chi legge "
                     "l'errore non puo' sapere che il daemon serve un'altra taglia")
@@ -165,10 +164,10 @@ def test_il_vettore_della_taglia_GIUSTA_passa(dimensione_conosciuta, daemon):
     celle di sopra."""
     daemon(768)
 
-    vec = embedding._encode_via_service(FRASE)
+    risposta = embedding._chiedi_al_servizio(FRASE)
 
-    assert vec is not None and len(vec) == 768
-    assert embedding.ultimo_rifiuto_del_client() is None
+    assert risposta.vec is not None and len(risposta.vec) == 768
+    assert risposta.rifiuto_del_client is None
 
 
 def test_il_daemon_che_DICHIARA_un_altro_modello_e_gia_rifiutato(
