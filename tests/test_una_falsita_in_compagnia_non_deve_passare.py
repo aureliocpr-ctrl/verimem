@@ -41,8 +41,10 @@ sostituzione di entità e la ricombinazione dei token ora sono BLOCCATE, perché
 `decomponi()` le spezza e la parte falsa si giudica da sola (XPASS su ubuntu e
 macOS). I loro due marcatori sono tolti. Il terzo resta xfail, e il perché è
 misurato: lì «e» sta per «è», e `decomponi()` spezza nel posto sbagliato
-(«Il test_alpha e PASSED e il test_beta.» + «Il test_alpha e pASSED.»), quindi
-la falsità non arriva mai da sola al giudice.
+(«Il test_alpha e PASSED e il test_beta.» + «Il test_alpha e PASSED.»), quindi
+la falsità non arriva mai da sola al giudice. Fino al 30/09 il secondo pezzo usciva
+«pASSED»: quella era la maiuscola cambiata, curata a parte, e il posto del taglio è
+rimasto lo stesso.
 
 📌 Una differenza NON spiegata, e la dichiaro invece di tacerla: nel dominio dei
 test la falsità passa anche con un valore che nella fonte non c'è affatto

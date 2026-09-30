@@ -377,7 +377,7 @@ def _eredita_il_soggetto(pezzi: list[str]) -> list[str]:
     soggetto = ""
     for p in pezzi:
         if _RE_VERBO_INIZIALE.match(p) and soggetto:
-            p = f"{soggetto} {p[0].lower() + p[1:]}"
+            p = f"{soggetto} {_minuscola_in_testa(p)}"
         else:
             s = soggetto_di(p)
             if s:
@@ -386,11 +386,26 @@ def _eredita_il_soggetto(pezzi: list[str]) -> list[str]:
     return out
 
 
+def _minuscola_in_testa(pezzo: str) -> str:
+    """Il verbo dopo un soggetto ereditato: «Visited her aunt» -> «visited her aunt». Una parola
+    in maiuscolo («STOPPED», «PASSED») o con una maiuscola dentro («iPhone») resta com'e' scritta:
+    abbassarne la prima lettera dava «sTOPPED», una parola che nessuno ha scritto."""
+    primo = pezzo.split(maxsplit=1)[0]
+    if primo[1:] != primo[1:].lower():
+        return pezzo
+    return pezzo[0].lower() + pezzo[1:]
+
+
 def _chiudi(pezzo: str) -> str:
+    """Il claim chiuso: punto finale, e la maiuscola solo su una parola comune minuscola («il»,
+    «mara», «l'impianto»). Un identificatore resta com'e' («test_alpha», non «Test_alpha»): la
+    ricevuta cita il claim come l'utente l'ha scritto."""
     p = pezzo.strip()
     if not p:
         return p
-    p = p[0].upper() + p[1:]
+    parola = p.split(maxsplit=1)[0].strip(".,;:!?«»\"()").replace("'", "").replace("’", "")
+    if parola.isalpha() and parola.islower():
+        p = p[0].upper() + p[1:]
     return p if p.endswith((".", "!", "?")) else p + "."
 
 
