@@ -59,6 +59,9 @@ LINGUE = {
         # (turno in prima persona, claim in terza persona)
         "aziende": ["a bakery", "a bike shop", "the city library", "a design studio"],
         "animali": ["cat", "dog", "rabbit", "parrot"],
+        "oggetti": ["bike", "laptop", "camera", "guitar"],
+        "piatti": ["lasagna", "a curry", "pancakes", "a vegetable soup"],
+        "club": ["a book club", "a climbing gym", "a choir", "a running club"],
         # (turno in prima persona, [claim letterale, claim parafrasato]): la parafrasi e' sostenuta
         # quanto la copia, e senza di lei il giudice imparerebbe «copia = sostenuta»
         "fatti": [
@@ -79,6 +82,12 @@ LINGUE = {
             ("I adopted a {animale} {quando}.", ["{S} adopted a {animale} {quando}.",
                                                 "{S} took in a {animale} {quando}.",
                                                 "{S} has a new {animale}."]),
+            ("I bought a new {oggetto} {quando}.", ["{S} bought a new {oggetto} {quando}.",
+                                                  "{S} got a new {oggetto} {quando}.", "{S} has a new {oggetto}."]),
+            ("I cooked {piatto} for my family {quando}.", ["{S} cooked {piatto} for their family {quando}.",
+                                                         "{S} made {piatto} for their family {quando}."]),
+            ("I joined {club} {quando}.", ["{S} joined {club} {quando}.", "{S} became a member of {club} {quando}.",
+                                          "{S} is a member of {club}."]),
         ],
         # coda dopo la coordinata: la stessa affermazione senza soggetto
         "coordinata": " and ",
@@ -107,6 +116,10 @@ LINGUE = {
         # l'articolo indeterminativo («in la biblioteca» non è italiano), e niente «libreria»: è già fra le cose
         "aziende": ["una panetteria", "un negozio di biciclette", "un'agenzia di viaggi", "uno studio grafico"],
         "animali": ["gatto", "cane", "coniglio", "pappagallo"],
+        # «{oggetto} nuovo»: tutti maschili, e l'aggettivo concorda
+        "oggetti": ["un portatile", "un telefono", "uno zaino", "un tablet"],
+        "piatti": ["le lasagne", "un risotto", "gli gnocchi", "la parmigiana"],
+        "corsi": ["chitarra", "fotografia", "tedesco", "yoga"],
         "fatti": [
             ("Ho visitato {luogo} {quando}.", ["{S} ha visitato {luogo} {quando}.",
                                                "{S} ha visto {luogo} {quando}."]),
@@ -126,6 +139,14 @@ LINGUE = {
             ("Ho adottato un {animale} {quando}.", ["{S} ha adottato un {animale} {quando}.",
                                                     "{S} ha accolto in casa un {animale} {quando}.",
                                                     "{S} ha un {animale} nuovo."]),
+            ("Ho comprato {oggetto} nuovo {quando}.", ["{S} ha comprato {oggetto} nuovo {quando}.",
+                                                      "{S} ha acquistato {oggetto} nuovo {quando}.",
+                                                      "{S} ha {oggetto} nuovo."]),
+            ("Ho cucinato {piatto} per la mia famiglia {quando}.",
+             ["{S} ha cucinato {piatto} per la sua famiglia {quando}.",
+              "{S} ha preparato {piatto} per la sua famiglia {quando}."]),
+            ("Ho cominciato un corso di {corso} {quando}.", ["{S} ha cominciato un corso di {corso} {quando}.",
+                                                            "{S} ha iniziato un corso di {corso} {quando}."]),
         ],
         "coordinata": " e ",
         "domande": ["Com'è andata?", "Allora, com'è andata?", "Ti è piaciuto?", "Com'è stato?"],
@@ -148,6 +169,9 @@ LINGUE = {
                      "le cours de poterie": "du cours de poterie", "le marché de Noël": "du marché de Noël"},
         "aziende": ["une boulangerie", "un magasin de vélos", "la bibliothèque municipale"],
         "animali": ["chat", "chien", "lapin", "perroquet"],
+        "oggetti": ["vélo", "ordinateur", "appareil photo", "piano"],
+        "piatti": ["une tarte aux pommes", "un couscous", "une ratatouille", "des crêpes"],
+        "futuro": ["le mois prochain", "cet été", "à Noël", "en janvier"],
         "fatti": [
             ("Je fais du vélo {quando}.", ["{S} fait du vélo {quando}.", "{S} fait une sortie à vélo {quando}."]),
             ("Je vais {luogo} {quando}.", ["{S} va {luogo} {quando}.",
@@ -161,6 +185,10 @@ LINGUE = {
              ["{S} peut garder le {animale} de sa voisine {quando}.",
               "{S} peut s'occuper du {animale} de sa voisine {quando}."]),
             ("Je suis fan {evento_a}.", ["{S} est fan {evento_a}."]),
+            ("Je veux acheter un {oggetto} {futuro}.", ["{S} veut acheter un {oggetto} {futuro}.",
+                                                       "{S} veut faire l'achat d'un {oggetto} {futuro}."]),
+            ("Je peux cuisiner {piatto} pour mes amis.", ["{S} peut cuisiner {piatto} pour ses amis.",
+                                                         "{S} peut préparer {piatto} pour ses amis."]),
         ],
         "coordinata": " et ",
         "domande": ["C'était comment ?", "Alors, c'était comment ?", "Ça t'a plu ?",
@@ -183,6 +211,8 @@ LINGUE = {
                      "el mercadillo de Navidad": "del mercadillo de Navidad"},
         "aziende": ["una panadería", "una tienda de bicicletas", "la biblioteca municipal"],
         "animali": ["gato", "perro", "conejo", "loro"],
+        "oggetti": ["portátil", "móvil", "coche", "reloj"],
+        "piatti": ["una paella", "unas lentejas", "una tortilla", "un gazpacho"],
         "fatti": [
             ("Visité {luogo} {quando}.", ["{S} visitó {luogo} {quando}.",
                                           "{S} pasó por {luogo} {quando}."]),
@@ -194,6 +224,10 @@ LINGUE = {
             ("Empecé un trabajo nuevo en {azienda}.", ["{S} empezó un trabajo nuevo en {azienda}.",
                                                       "{S} comenzó a trabajar en {azienda}.",
                                                       "{S} tiene un trabajo nuevo en {azienda}."]),
+            ("Compré un {oggetto} nuevo {quando}.", ["{S} compró un {oggetto} nuevo {quando}.",
+                                                    "{S} tiene un {oggetto} nuevo."]),
+            ("Cociné {piatto} para mi familia {quando}.", ["{S} cocinó {piatto} para su familia {quando}.",
+                                                          "{S} preparó {piatto} para su familia {quando}."]),
         ],
         "coordinata": " y ",
         "domande": ["¿Qué tal estuvo?", "¿Y qué tal fue?", "¿Te gustó?", "¿Cómo te fue?"],
@@ -215,11 +249,17 @@ def _con_forma_a(voci: dict, t: dict) -> dict:
     return voci
 
 
+_FACOLTATIVI = (("oggetto", "oggetti"), ("piatto", "piatti"), ("club", "club"), ("corso", "corsi"),
+                ("futuro", "futuro"))
+
+
 def _voci(rng: random.Random, t: dict) -> dict:
     return {"luogo": rng.choice(t["luoghi"]), "quando": rng.choice(t["quando"]),
             "citta": rng.choice(t["citta"]), "mese": rng.choice(t["mesi"]),
             "cosa": rng.choice(t["cose"]), "evento": rng.choice(t["eventi"]),
-            "azienda": rng.choice(t["aziende"]), "animale": rng.choice(t["animali"])}
+            "azienda": rng.choice(t["aziende"]), "animale": rng.choice(t["animali"]),
+            # gli slot dei fatti che non tutte le lingue hanno
+            **{voce: rng.choice(t[lista]) for voce, lista in _FACOLTATIVI if lista in t}}
 
 
 def dialogo(rng: random.Random, lingua: str, n: int) -> dict:
@@ -278,7 +318,7 @@ def _riga(parlante: str, testo: str) -> str:
     return f"{parlante}: {testo}"
 
 
-GENERATORE = "d1_dialoghi@7"
+GENERATORE = "d1_dialoghi@8"
 
 
 def coppie(d: dict, seme: int) -> list[dict]:
