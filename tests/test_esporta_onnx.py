@@ -139,6 +139,26 @@ def test_recall_at_k_is_the_share_of_top_k_neighbours_both_encoders_agree_on() -
     assert esporta_onnx.richiamo_a_k(rif, rif, k=3) == pytest.approx(1.0)
 
 
+def test_a_table_quantized_row_by_row_keeps_every_row_within_half_a_step() -> None:
+    import esporta_onnx
+
+    rng = np.random.default_rng(0)
+    tabella = rng.normal(0.0, 0.05, size=(50, 16)).astype(np.float32)
+    tabella[7] *= 40.0  # an outlier row: with ONE scale for the table it would flatten all the others
+    tabella[9] = 0.0  # a row of zeros must not divide by zero
+    interi, scale = esporta_onnx.quantizza_per_riga(tabella)
+    assert interi.dtype == np.int8 and interi.shape == tabella.shape
+    assert scale.dtype == np.float32 and scale.shape == (50, 1)
+    assert int(np.abs(interi.astype(np.int16)).max()) <= 127
+    ricostruita = interi.astype(np.float32) * scale
+    assert np.all(np.abs(ricostruita - tabella) <= scale / 2 + 1e-7)
+    assert np.all(ricostruita[9] == 0.0)
+    # POSITIVE CONTROL: one scale for the whole table, as onnxruntime's Gather does, loses the ordinary rows
+    unica = np.abs(tabella).max() / 127
+    a_scala_unica = np.round(tabella / unica) * unica
+    assert np.abs(a_scala_unica[0] - tabella[0]).max() > 10 * np.abs(ricostruita[0] - tabella[0]).max()
+
+
 def test_the_manifest_reads_the_versions_from_the_modules_it_imported() -> None:
     import esporta_onnx
     import sentence_transformers
