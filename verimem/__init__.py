@@ -1,7 +1,10 @@
 """Verimem — verified persistent memory for LLM agents.
 
 Writes pass an admission gate; a fact its source does not support is
-QUARANTINED — stored, but kept out of default recall.
+QUARANTINED — stored, but kept out of default recall. That is the contract; today
+it has a measured gap — a claim the source simply does not mention is admitted
+8/10 IT, 9/10 EN (README figure, published 2026-08-26 in c62da996) — tracked as
+G0 in RELEASE_GATE.md until it is closed.
 
 Architecture: hippocampal-cortical inspired learning loop.
 - Wake: ReAct execution, episodic recording.
@@ -35,7 +38,7 @@ from __future__ import annotations
 
 # Keep in lockstep with pyproject [project].version and .claude-plugin/
 # plugin.json — enforced by tests/test_version_single_source.py (audit#2 C-4).
-__version__ = "0.7.7"
+__version__ = "0.7.7.dev0"
 
 # Initialize backward-compat env mirror (HIPPO_* ↔ ENGRAM_*) at import time
 # so the rest of the package — and anyone importing ``engram`` — sees a

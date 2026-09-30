@@ -1,0 +1,116 @@
+name: accettazione
+
+# T217 — IL JOB DI ACCETTAZIONE DAL WHEEL: il criterio di uscita della 0.7.7.
+#
+# Uno sconosciuto installa il wheel in un venv vergine, segue il README, e il prodotto
+# mantiene le promesse della lista chiusa (sei righe, `accettazione/test_riga_*.py`).
+# Verde = si puo' rilasciare; il tag lo da' Aurelio. Rosso = una promessa non e' ancora
+# mantenuta, e il test dice quale e cosa vede l'utente.
+#
+# ⚠️ Perche' non basta `wheel install-from-scratch` in ci.yml: quel job installa il
+# wheel e fa uno smoke, e il suo stesso commento dice che «NON prova che le PROMESSE del
+# README valgano sull'installato»; e senza warmup il giudice non c'e', quindi le prove
+# che lo chiedono salterebbero in silenzio. Qui il warmup e' INTERO, come nel README.
+#
+# ⚠️ NESSUNO SKIP, NESSUN XFAIL, niente continue-on-error: una riga rossa resta rossa
+# finche' il ticket che la chiude e' fuso. Finche' la 0.7.7 non e' pronta questo job
+# NON e' un check richiesto della protezione di main: e' l'informazione, non un blocco
+# della fila.
+
+on:
+  pull_request:
+    paths:
+      - "verimem/**"
+      - "pyproject.toml"
+      - "README.md"
+      - "accettazione/**"
+      - ".github/workflows/accettazione.yml"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: accettazione-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: wheel per l'accettazione
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: sdist e wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+          ls -la dist/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-accettazione
+          path: dist/*
+          retention-days: 7
+
+  accettazione:
+    name: accettazione dal wheel (${{ matrix.os }})
+    needs: build
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      # Il checkout serve SOLO per la cartella accettazione/ (le prove) e per le chiavi
+      # della cache: il prodotto che si prova e' il wheel, non l'albero.
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: dist-accettazione
+          path: dist
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # I modelli (~2,3 GB secondo il README) si scaricano al primo giro; poi dalla cache.
+      - name: cache dei modelli
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/verimem
+          key: modelli-${{ runner.os }}-${{ hashFiles('verimem/local_grounding.py', 'verimem/embedding.py') }}
+      - name: il wheel in un venv vergine, come dice il README (pip install)
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/utente"
+          if [ "$RUNNER_OS" = "Windows" ]; then BIN="$RUNNER_TEMP/utente/Scripts"; else BIN="$RUNNER_TEMP/utente/bin"; fi
+          echo "BIN=$BIN" >> "$GITHUB_ENV"
+          "$BIN/python" -m pip install --upgrade pip
+          "$BIN/python" -m pip install dist/*.whl
+      - name: verimem warmup (il giudice compreso) e verimem doctor
+        shell: bash
+        run: |
+          "$BIN/verimem" warmup
+          # Il contratto del doctor (cli.py): 0 tutto ok, 1 avvisi, 2 guasti.
+          # Su un'installazione nuova gli avvisi ci sono subito dopo il warmup
+          # (demone ancora in avvio, store vuoto): il job si ferma sui guasti,
+          # e l'uscita del doctor resta intera nel log.
+          rc=0
+          "$BIN/verimem" doctor || rc=$?
+          echo "verimem doctor: exit $rc"
+          test "$rc" -le 1
+      - name: la lista chiusa, dal wheel e fuori dal repo
+        shell: bash
+        run: |
+          # pytest e' l'arnese che esegue le prove, non una dipendenza del prodotto
+          "$BIN/python" -m pip install pytest
+          cp -r accettazione "$RUNNER_TEMP/accettazione"
+          cd "$RUNNER_TEMP/accettazione"
+          "$BIN/python" -m pytest -c pytest.ini .

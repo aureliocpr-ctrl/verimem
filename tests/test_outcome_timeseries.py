@@ -25,6 +25,26 @@ def test_empty_returns_empty_buckets():
     assert out["bucket_kind"] in ("day", "week")
 
 
+def _base_dello_stesso_giorno(ora_di_lancio: float) -> float:
+    """La base che una cella usa quando i suoi eventi devono cadere TUTTI nello
+    stesso giorno UTC.
+
+    Ancorata a MEZZOGIORNO UTC del giorno in cui la suite gira: resta dentro
+    `window_days=30` (non serve alzarlo) e mette 12 ore di margine da entrambi
+    i confini, cosi' una cella puo' aggiungere minuti o ore senza cambiare
+    giorno.
+
+    ⚠️ PRIMA RESTITUIVA L'OROLOGIO, e negli ultimi 120 s del giorno UTC gli
+    eventi cadevano su due giorni: `assert 2 == 1`, ~1 run su 720.
+
+    ⛔ NON e' un pattern nuovo: il file curava gia' lo stesso difetto in
+    `test_one_bucket_per_day` (timestamp fisso + `window_days` alto) e in
+    `test_week_bucketing` (ancoraggio al lunedi'). Qui si usa l'ancoraggio,
+    che lascia i parametri del prodotto ai loro valori veri.
+    """
+    return ora_di_lancio - (ora_di_lancio % 86400.0) + 43200.0
+
+
 def test_one_bucket_per_day():
     from verimem.outcome_timeseries import outcome_timeseries
 
@@ -48,7 +68,7 @@ def test_one_bucket_per_day():
 def test_success_failure_counts_per_bucket():
     from verimem.outcome_timeseries import outcome_timeseries
 
-    base = time.time()
+    base = _base_dello_stesso_giorno(time.time())
     eps = [
         _FakeEp("success", created_at=base),
         _FakeEp("success", created_at=base + 60),
@@ -136,3 +156,35 @@ def test_payload_shape_complete():
     out = outcome_timeseries([])
     for k in ("buckets", "bucket_kind", "window_days"):
         assert k in out
+
+
+def test_PRESIDIO_la_base_del_banco_non_dipende_dall_ora_di_lancio():
+    """I tre eventi che le celle costruiscono devono cadere nello STESSO giorno
+    UTC, a qualunque ora giri la suite.
+
+    ⚠️ QUESTA CELLA ESISTE PERCHE' IL DIFETTO E' NEL BANCO, NON NEL PRODOTTO.
+    Con eventi a cavallo di mezzanotte due bucket sono la risposta GIUSTA: e'
+    la cella che assume «tutti nello stesso giorno» senza garantirlo. Misurato
+    il 2026-09-20: `assert 2 == 1` su ubuntu py3.10 nella conferma di main su
+    `4ce8c2f9`, verde nella conferma successiva — 120 s su 86400, ~1 run su 720.
+
+    Il file curava gia' questo difetto in DUE celle (`test_one_bucket_per_day`
+    con un timestamp fisso, `test_week_bucketing` ancorando al lunedi'), con la
+    spiegazione scritta accanto. Questa era rimasta indietro: la cura non e'
+    nuova, e' quella di casa applicata dove mancava.
+    """
+    from verimem.outcome_timeseries import _bucket_floor
+
+    rotti = []
+    una_mezzanotte = 1_789_948_800.0  # 2026-09-20 00:00:00 UTC
+    for passo in range(0, 86400, 30):          # un'ora di lancio ogni 30 s
+        ora_di_lancio = una_mezzanotte - passo
+        base = _base_dello_stesso_giorno(ora_di_lancio)
+        giorni = {_bucket_floor(base + d, "day") for d in (0.0, 60.0, 120.0)}
+        if len(giorni) != 1:
+            rotti.append(ora_di_lancio)
+    assert not rotti, (
+        f"la base dipende dall'ora di lancio: {len(rotti)} istanti su 2880 "
+        f"producono eventi su piu' di un giorno (il primo: {rotti[0]}). "
+        "Una cella che asserisce «un solo bucket» li' fallisce con 2 == 1"
+    )

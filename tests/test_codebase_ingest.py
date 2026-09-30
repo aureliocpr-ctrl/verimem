@@ -37,7 +37,7 @@ from pathlib import Path
 import pytest
 
 # RED MARKER: this import is the failure pin.
-from verimem.codebase_ingest import (
+from attic.codebase_ingest import (
     extract_patterns_from_file,
     ingest_codebase,
 )

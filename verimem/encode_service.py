@@ -181,6 +181,17 @@ def _default_rerank_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
+def _puo_ridurre_lo_span(giudice: object | None = None) -> bool:
+    """Ponte verso la superficie unica, con import LOCALE.
+
+    A livello di modulo sarebbe un ciclo: `local_grounding` importa gia'
+    questo modulo (`from . import encode_service as _svc`) per leggere il file
+    di scoperta. L'import locale e' lo stesso verso che quel modulo usa qui.
+    """
+    from .local_grounding import il_giudice_puo_ridurre_lo_span
+    return il_giudice_puo_ridurre_lo_span(giudice)
+
+
 def _default_gate_fn(pairs):
     """Punteggi del GIUDICE DEL MOAT, calcolati qui — nel daemon, una volta sola.
 
@@ -206,11 +217,30 @@ def _default_gate_fn(pairs):
     """
     from .local_grounding import get_local_judge
 
-    scorer = get_local_judge()._ensure_scorer()
+    giudice = get_local_judge()
+    scorer = giudice._ensure_scorer()
+    # ⛔ T157 — E QUI SI PRENDE ANCHE IL TOKENIZZATORE, altrimenti non arriva
+    # MAI. Lo carica solo chi riduce uno span, e ridurre lo chiede solo un
+    # client a cui questo daemon ha promesso la finestra: se la promessa e'
+    # onesta, la promessa resta `False` per sempre e la delega non si sveglia.
+    # IL COSTO E' MISURATO, e si paga QUI perche' qui `transformers` e' gia'
+    # dentro per via dello scorer:
+    #     scorer (che si paga comunque)     31287 ms   +1213 MB
+    #     tokenizzatore DOPO lo scorer       1272 ms    +132 MB   (+4%, +11%)
+    #     tokenizzatore SENZA lo scorer     28880 ms    +905 MB   <- l'avvio
+    # All'avvio costerebbe l'import di `transformers`, che e' quasi tutto il
+    # conto; dopo lo scorer e' un'aggiunta del quattro per cento.
+    giudice._tokenizzatore()
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
 class EncodeServer:
+    #: ⛔ DI CLASSE, non di istanza: il banco di T73 costruisce con
+    #: `object.__new__(EncodeServer)` e SALTA il costruttore. Un default
+    #: qui esiste per chiunque, ed e' il valore onesto: finche' nessuno
+    #: ha scritto la scoperta, questo daemon non ha dichiarato nulla.
+    _finestra_dichiarata: bool = False
+
     """Threaded localhost encode server. ``encode_fn`` is injectable for tests."""
 
     def __init__(
@@ -347,7 +377,7 @@ class EncodeServer:
                     # chiamante vedrebbe un daemon muto. Nel daemon vero il
                     # tokenizzatore c'e' gia', perche' e' lo stesso processo
                     # che tiene il modello del giudice.
-                    if getattr(_giudice, "_tok", None) is None:
+                    if not _puo_ridurre_lo_span(_giudice):
                         raise RuntimeError(
                             "tokenizzatore non ancora caricato in questo "
                             "daemon: lo span non viene ridotto")
@@ -375,6 +405,20 @@ class EncodeServer:
             coppie = [(str(p[0]), str(p[1])) for p in req["gate_pairs"]]
             risposta = {"ok": True,
                         "scores": [float(s) for s in self._gate_fn(coppie)]}
+            # ⛔ T157 — la scoperta si scrive all'AVVIO, ma il tokenizzatore
+            # arriva dopo: senza questa riga il file direbbe «non riduco» per
+            # tutta la vita del processo, anche con il giudice ormai pronto.
+            # ⚠️ SOLO se questo server ha un file di scoperta. Un server
+            # costruito senza (il banco di T73 usa `object.__new__`) non ha
+            # nulla da riscrivere, e la prima stesura di questa riga lo faceva
+            # esplodere in `_write_discovery` con
+            # «no attribute '_discovery_path'». In locale il ramo non si
+            # attivava e la falsificazione era CIECA proprio qui: l'ha visto
+            # la CI, 11 volte su tre sistemi.
+            if (getattr(self, "_discovery_path", None) is not None
+                    and _puo_ridurre_lo_span()
+                    and not self._finestra_dichiarata):
+                self._write_discovery()
             if _finestra_non_applicata is not None:
                 # Chi ha chiesto la riduzione deve sapere che non c'e' stata:
                 # il punteggio e' valido ma calcolato su uno span troncato
@@ -410,6 +454,8 @@ class EncodeServer:
                     return
 
     def _write_discovery(self) -> None:
+        self._finestra_dichiarata = (self._gate_fn is not None
+                                     and _puo_ridurre_lo_span())
         self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
         # The scratch name carries the pid: two daemons publishing at the same
         # moment would otherwise write the SAME .json.tmp, and the loser's
@@ -432,7 +478,9 @@ class EncodeServer:
                 # scrive questa chiave, e il client allora riduce di qua come
                 # ha sempre fatto: il costo resta suo, ma nessuno perde
                 # qualita' senza accorgersene.
-                "applies_window": self._gate_fn is not None,
+                # Si promette cio' che si sa di poter fare: la stessa
+                # domanda che la riduzione usa per decidere (T157).
+                "applies_window": self._finestra_dichiarata,
             }),
             encoding="utf-8",
         )
@@ -784,6 +832,29 @@ def _owner_is_zombie(path: Path) -> bool:
     return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
+def daemon_in_arrivo(lock_path: Path | None = None) -> bool:
+    """True se un daemon tiene il lock, e' vivo e non e' uno zombie.
+
+    E' la domanda di chi ASPETTA il daemon, e non e' «il daemon serve?»
+    (`daemon_usable`): un daemon appena nato tiene il lock PRIMA di caricare il
+    modello e di scrivere la scoperta, quindi per qualche decina di secondi
+    esiste e non risponde. Chi a quel punto smette di aspettare e carica il
+    modello in casa paga i gigabyte che il daemon esiste per non far pagare:
+    misurato il 25/09 all'avvio della macchina, un server MCP nato 7 s dopo il
+    daemon ha caricato torch e il giudice (2474 MB) mentre gli altri dieci
+    stavano a 357 MB.
+
+    Le regole sono quelle del lock, non una copia: vivo per `_pid_alive`, e non
+    piu' atteso quando `_owner_is_zombie` lo dichiara zombie (fuori dalla
+    grazia di `_ZOMBIE_GRACE_S` e senza servire).
+    """
+    path = lock_path or DAEMON_LOCK_PATH
+    owner = _read_lock_owner(path)
+    if not owner:
+        return False
+    return _pid_alive(owner) and not _owner_is_zombie(path)
+
+
 def acquire_daemon_lock(lock_path: Path | None = None) -> bool:
     """Atomically claim the one-daemon-per-machine lock.
 
@@ -1014,6 +1085,27 @@ def ensure_running() -> bool:
     return False
 
 
+def _prepara_la_finestra() -> None:
+    """Il tokenizzatore del giudice, caricato PRIMA che il daemon si annunci.
+
+    La scoperta dichiara `applies_window` solo se il tokenizzatore c'e'
+    (`il_giudice_puo_ridurre_lo_span`), e fino al 28/09 lo caricava la prima
+    richiesta `gate_pairs`. Nel frattempo ogni client in delegate-only che
+    scriveva con una fonte riduceva lo span da se', e per farlo importava
+    transformers e torch: misurato su uno scrittore con un daemon appena nato,
+    25 MB unici prima della prima scrittura e 725 dopo, per tutta la vita del
+    processo. Qui transformers c'e' gia' (lo ha importato l'embedder), quindi
+    si paga il solo tokenizzatore. Senza il modello del giudice, o con un
+    tokenizzatore che non si carica, il daemon si annuncia come prima e
+    dichiara «non riduco».
+    """
+    try:
+        from .local_grounding import get_local_judge
+        get_local_judge()._tokenizzatore()
+    except Exception:  # noqa: BLE001 — senza finestra il daemon serve lo stesso
+        pass
+
+
 def main() -> None:
     # Singleton gate FIRST — before the ~GB model load, so a spawn-race loser
     # costs ~50 MB of interpreter for a moment, not 1.9 GB for 8 idle hours.
@@ -1026,6 +1118,7 @@ def main() -> None:
         # Warm the model BEFORE advertising via the discovery file, so any
         # client that finds the file knows the daemon is ready.
         embedding._encode_local("warmup")
+        _prepara_la_finestra()
         EncodeServer(
             model_name=CONFIG.embedding_model,
             model_dim=CONFIG.embedding_dim,

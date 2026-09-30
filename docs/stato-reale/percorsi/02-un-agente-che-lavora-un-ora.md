@@ -39,13 +39,31 @@ quei minuti fuori dal cronometro. `00-COME-SI-LEGGE.md` lo mette al passo 2 di
 
 ### 1 · Registra un fatto **con la sua fonte**
 
+🔴 **ANCHE QUESTA RIGA NON FUNZIONA AL PRIMO FATTO**, e cade proprio per chi
+installa oggi — eseguita dal wheel `0.7.6` in un ambiente pulito il 17/09:
+
+```
+verimem save "…" --topic prova/percorso1 --lineage-to auto --source "…"
+  EXIT=1
+  lineage 'auto': no prior fact under topic segment 'prova'
+  (omit --lineage-to for a root checkpoint)
+```
+
+⇒ `--lineage-to auto` cerca un fatto **precedente** sotto quell'argomento. Su uno
+store vuoto — cioè quello di chiunque abbia appena installato — non ce n'è, e il
+primo comando del percorso esce **1**. Il messaggio del prodotto è ottimo e dice
+già la cura; è la pagina che prescriveva l'opzione sbagliata per il primo fatto.
+
 ```bash
 verimem save "<il fatto che l'agente ha appena stabilito>" \
-  --topic <un/tuo/argomento> --lineage-to auto \
+  --topic <un/tuo/argomento> \
   --source "<l'output, il documento, la pagina che lo sostiene>"
 ```
 
-✅ **Ammesso**, e la ricevuta porta il punteggio del giudice.
+✅ **Ammesso**, e la ricevuta porta il punteggio del giudice. Misurato dal wheel
+il 17/09: **26 s**, `grounding_score=98.87`, `judged=True`, `status=model_claim`,
+e in fondo `root checkpoint (no prior session fact under 'prova')` — il prodotto
+dichiara da sé che questo è il primo.
 🔑 **Senza `--source` il giudice non gira e il fatto entra come claim non
 verificato.** È la differenza fra un agente che ricorda e uno che si fida di sé.
 
@@ -114,10 +132,31 @@ di accorgersene.
 un albero che non esiste più, e il «7 passi su 8» della pagina dei percorsi è il
 conteggio di prima.**
 
-❓ **Chi esegue chiude questo punto rifacendo il passo**, non correggendo la
-riga: chiedi lo stato *prima* della correzione del passo 3 e guarda se ti
-risponde il vecchio valore o quello nuovo. **È l'unico passo del runbook che
-vale un post da solo.**
+✅ **RIFATTO IL 17/09 DAL WHEEL `0.7.6`, E IL PASSO È VERDE.** Chiesto lo stato a
+un istante *precedente* alla correzione del passo 3, sulla riga di comando:
+
+```
+verimem recall "capannone 12" --as-of 1789673040
+  EXIT=0
+  - Il capannone 12 misura 400 metri quadri. [0.88] moat 98.9
+```
+
+⇒ Torna **il valore di allora** (400), non quello corrente (450). Il difetto del
+04/09 **non si riproduce dalla riga di comando**. Resta da rifare sulle altre due
+porte: è lì che era stato misurato.
+
+🔴 **MA IL FORMATO NON È QUELLO CHE VIENE IN MENTE**, e la pagina non lo diceva:
+
+```
+verimem recall "capannone 12" --as-of 2026-09-17T21:24:00
+  EXIT=2
+  --as-of non e' un epoch: '2026-09-17T21:24:00' — atteso un numero di secondi
+  (es. 1785518205)
+```
+
+⇒ `--as-of` vuole un **epoch in secondi**, non una data leggibile. Chi scrive la
+data si ferma con un errore che sembra suo. Per ottenerlo:
+`python -c "import datetime;print(int(datetime.datetime(2026,9,17,21,24).timestamp()))"`
 
 ### 7 · Prova a scrivere una **falsità**
 

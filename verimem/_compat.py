@@ -71,6 +71,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import NamedTuple
 
 _PREFIX_OLD = "HIPPO_"
 _PREFIX_NEW = "ENGRAM_"
@@ -170,8 +171,111 @@ _ALIAS_DATA_DIR = ("HIPPO_DATA_DIR", "ENGRAM_DATA_DIR", "VERIMEM_DATA_DIR")
 _avvisato_alias_discordi = False
 
 
-def _env_data_dir() -> str:
-    """L'override della data dir dall'ambiente, o "" se nessun alias e' posto.
+def _forma_confrontabile(percorso: str | Path) -> str:
+    """Un percorso in forma confrontabile, SENZA toccare il disco.
+
+    `expanduser` legge solo l'ambiente, `normpath` e `normcase` sono
+    manipolazioni di stringa: nessuna lettura, nessun symlink seguito. Serve a
+    dire se due percorsi sono lo stesso posto per chi li ha scritti, non per il
+    filesystem.
+    """
+    # ⚠️ Il vuoto esce vuoto: `os.path.normpath("")` restituisce «.», cioe' la
+    # directory corrente, e un alias NON POSTO diventerebbe un percorso valido.
+    # Misurato: con le tre variabili a None la ricevuta dichiarava `unknown`
+    # («ce n'erano, nessuna combacia») invece di `default` («non ce n'erano»).
+    if not percorso or not str(percorso).strip():
+        return ""
+    try:
+        return os.path.normcase(os.path.normpath(os.path.expanduser(str(percorso))))
+    except (OSError, ValueError, TypeError):
+        return ""
+
+
+class ProvenienzaDataDir(NamedTuple):
+    """Chi ha deciso la data dir, non solo quale sia.
+
+    ``alias`` e' "" quando nessuna variabile e' posta (vince il disco);
+    ``ignorati`` elenca gli alias posti su un percorso DIVERSO da quello scelto.
+    """
+
+    percorso: str
+    alias: str
+    ignorati: dict[str, str]
+
+    #: Il valore che le ricevute emettono quando nessuna variabile e' posta.
+    #: ⚠️ NON si omette il campo: un'assenza non e' una dichiarazione — chi
+    #: legge non distingue «l'ha deciso il disco» da «questa porta non lo dice»
+    #: e nemmeno da «sto leggendo una versione vecchia». (I7)
+    DISCO = "default"
+
+    #: Quando il percorso dello store non e' noto. Distinto da ``default``:
+    #: quello dice «l'ha deciso il disco», questo dice «non lo so».
+    IGNOTO = "unknown"
+
+    def deciso_da(self) -> str:
+        """Il nome dell'alias che ha vinto, oppure ``default``. Mai vuoto."""
+        return self.alias or self.DISCO
+
+    def deciso_da_per(self, percorso: str | Path) -> str:
+        """Chi ha deciso QUEL percorso — non chi deciderebbe adesso.
+
+        ⚠️ Un processo longevo (il server MCP) apre lo store all'avvio e se lo
+        tiene: l'ambiente puo' cambiare dopo. Dichiarare l'alias corrente
+        accanto a un percorso deciso prima produce una ricevuta le cui due
+        meta' parlano di due store diversi — misurato: `store` in una data dir
+        e `store_decided_by: HIPPO_DATA_DIR` che ne indicava un'altra.
+        Qui si guarda il percorso VERO: l'alias vale solo se punta li'.
+
+        ⚠️ Il confronto e' puramente TESTUALE: nessun `resolve()`, nessun
+        accesso al disco. Una ricevuta descrive una scrittura gia' avvenuta e
+        non deve fare I/O per dirlo — e `resolve()` su un valore che viene
+        dall'ambiente e' anche cio' che CodeQL segnala come `py/path-injection`
+        (high), giustamente: l'unico modo di non usare un percorso non
+        controllato come percorso e' non usarlo affatto.
+        LIMITE DICHIARATO: due percorsi che differiscono solo per un symlink
+        non vengono riconosciuti come lo stesso, e la risposta e' `default`.
+        """
+        if not percorso:
+            # Il percorso non e' noto (un doppio di test che non espone
+            # `db_path`, o uno store non ancora aperto): non si dichiara
+            # `default`, che sarebbe una risposta alla domanda sbagliata.
+            return self.IGNOTO
+        atteso = _forma_confrontabile(percorso)
+        if not atteso:
+            return self.IGNOTO
+        posta = False
+        for nome in _ALIAS_DATA_DIR:
+            radice = _forma_confrontabile(os.environ.get(nome, "").strip())
+            if not radice:
+                continue
+            posta = True
+            if atteso == radice or atteso.startswith(radice + os.sep):
+                return nome
+        # ⚠️ Variabili poste ma nessuna che combaci (il caso symlink qui sopra):
+        # `default` significa UNA cosa sola, «nessuna variabile era posta, ha
+        # deciso il disco». Dirlo qui sarebbe una dichiarazione falsa — cioe' il
+        # difetto che questo campo cura, rifatto un livello piu' in basso.
+        return self.DISCO if not posta else self.IGNOTO
+
+    def dichiarazione(self) -> str:
+        """Una riga per una porta: chi ha deciso, e che cosa e' stato ignorato.
+
+        T91 (14/09): tre variabili puntate a uno store di prova e la scrittura
+        finita nello store vero. La precedenza esisteva gia' — mancava il modo
+        di VEDERLA: l'unico segnale era un RuntimeWarning, che di default si
+        stampa una volta per posizione e che nessuno legge.
+        """
+        if not self.alias:
+            return "data dir: nessuna variabile posta (default sul disco)"
+        riga = f"data dir decisa da {self.alias}"
+        if self.ignorati:
+            riga += " — ignorati: " + ", ".join(
+                f"{n}={v}" for n, v in self.ignorati.items())
+        return riga
+
+
+def provenienza_data_dir() -> ProvenienzaDataDir:
+    """L'override della data dir dall'ambiente, CON la sua provenienza.
 
     Quando piu' alias sono posti su percorsi DIVERSI lo dice — una volta per
     processo. Sceglierne uno in silenzio e' esattamente cio' che ha prodotto la
@@ -184,19 +288,43 @@ def _env_data_dir() -> str:
     posti = {n: v.strip() for n in _ALIAS_DATA_DIR
              if (v := os.environ.get(n, "")) and v.strip()}
     if not posti:
-        return ""
-    scelto = next(posti[n] for n in _ALIAS_DATA_DIR if n in posti)
-    distinti = {str(Path(v).expanduser().resolve()) for v in posti.values()}
-    if len(distinti) > 1 and not _avvisato_alias_discordi:
+        return ProvenienzaDataDir("", "", {})
+    vincente = next(n for n in _ALIAS_DATA_DIR if n in posti)
+    scelto = posti[vincente]
+    # Stesso confronto di `deciso_da_per`, e per le stesse due ragioni: niente
+    # I/O per rispondere a una domanda sull'ambiente, e niente percorso non
+    # controllato usato come percorso (`py/path-injection`). Due modi di
+    # confrontare percorsi nello stesso modulo divergerebbero, come le due
+    # precedenze che hanno prodotto l'incidente del 30/07.
+    atteso = _forma_confrontabile(scelto)
+    ignorati = {n: v for n, v in posti.items()
+                if n != vincente and _forma_confrontabile(v) != atteso}
+    if ignorati and not _avvisato_alias_discordi:
         _avvisato_alias_discordi = True
         import warnings
+        # ⚠️ Il nome del vincitore era scritto A MANO («HIPPO_DATA_DIR wins»)
+        # mentre il vincitore e' CALCOLATO: con HIPPO_DATA_DIR non posta vince
+        # ENGRAM_DATA_DIR e il messaggio dichiarava l'alias sbagliato. Un numero
+        # (o un nome) dichiarato che non e' quello applicato e' peggio del
+        # silenzio: chi lo legge va a togliere la variabile che non c'entra.
         warnings.warn(
             "DATA_DIR aliases disagree: "
             + ", ".join(f"{n}={posti[n]}" for n in _ALIAS_DATA_DIR if n in posti)
-            + f" — using {scelto} (HIPPO_DATA_DIR wins, it is the explicit "
-              "isolation handle). Unset the ones you did not mean.",
+            + f" — using {scelto} ({vincente} wins: first of "
+            + ", ".join(_ALIAS_DATA_DIR)
+            + " that is set). Unset the ones you did not mean.",
             RuntimeWarning, stacklevel=3)
-    return scelto
+    return ProvenienzaDataDir(scelto, vincente, ignorati)
+
+
+def _env_data_dir() -> str:
+    """Il percorso soltanto — la provenienza sta in :func:`provenienza_data_dir`.
+
+    Resta una funzione sola perche' due copie della precedenza divergerebbero:
+    e' la stessa ragione per cui esiste un solo resolver invece di un
+    ``os.environ.get`` per modulo.
+    """
+    return provenienza_data_dir().percorso
 
 
 def data_dir() -> Path:

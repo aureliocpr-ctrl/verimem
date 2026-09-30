@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import pytest
 
+from attic.sla import answer_threshold, error_cost, should_answer
 from benchmark.veribench.scoring import Outcome, net_score
-from verimem.sla import answer_threshold, error_cost, should_answer
 
 
 def test_threshold_closed_form():

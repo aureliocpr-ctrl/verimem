@@ -198,9 +198,31 @@ def history_line(fact, history: list, *, disputes: list[str] | None = None) -> s
     # da «mai giudicato» costa zero — qui ogni token e' contesto tolto a chi
     # legge, e sul corpus vivo i fatti giudicati sono una minoranza, quindi
     # marcare l'assenza su quasi ogni riga sommergerebbe il segnale.
+    # 2026-09-18 (T115) — LA RIGA DICEVA «la fonte lo implica» E NON ERA VERO.
+    # L'intenzione qui sopra («SOLO quando il verdetto c'e'») non era quello che
+    # la condizione faceva: guardava il TIPO del campo, quindi bastava un numero.
+    # Misurato alla porta MCP su un fatto appena ammesso::
+    #     status 'model_claim' · grounding_score 98.86815643310547
+    #     scrittura  «…the source SCORES as supporting this fact: that is the
+    #                 judge's score, not a check that the fact follows from it»
+    #     lettura    «[verificato: la fonte lo implica, 98.9]»
+    # Il significato ora viene dalla stessa funzione delle altre due uscite —
+    # `significato_del_punteggio` — invece di essere riscritto a mano qui.
+    #
+    # ⚠️ PERCHE' L'ESITO SI DERIVA CON `warnings=[]` E `source=True`, e cosa
+    # NON si puo' dire da qui: il fatto SERVITO porta il punteggio e lo status,
+    # non i layer del gate ne' il testo della fonte. Un punteggio che esiste
+    # dice che il giudice ha girato, quindi che una fonte c'era — ed e'
+    # esattamente cio' che la funzione prova (`if not source`). Restano quindi
+    # raggiungibili `passed` e `not_run:unknown`: dire `failed` da qui sarebbe
+    # l'attribuzione falsa gia' misurata il 28/08 (L1 quarantina fatti che il
+    # giudice ha valutato 100.0), e comunque un quarantinato non viene servito.
     _gs = getattr(fact, "grounding_score", None)
     if isinstance(_gs, (int, float)) and not isinstance(_gs, bool):
-        line += f" [verificato: la fonte lo implica, {float(_gs):.1f}]"
+        from verimem.client import esito_del_moat as _esito_fn
+        from verimem.client import significato_del_punteggio as _significato
+        _esito = _esito_fn(fact, [], source=True)
+        line += f" [judged {float(_gs):.1f} — {_significato(_esito)}]"
     for p in history:
         p_prop = (getattr(p, "proposition", "") or "").strip()
         asserted = _iso(_event_ts(p))

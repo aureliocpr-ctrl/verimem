@@ -233,7 +233,7 @@ dieci minuti.
 🟢 **Il passo 4 passa DAVVERO, e ho dovuto verificarlo perché il mio assert era debole.**
 Stampava *«la falsità non torna, risultati serviti: 0»* — e **zero risultati soddisfano un
 assert che cerca l'assenza di una stringa**, qualunque ne sia la ragione. Verificato lo
-**stato**: `status=quarantined · quarantined_by=moat · grounding=0.69`. **Il prodotto fa la
+**stato**: `status=quarantined · quarantined_by=L4-grounding · grounding=0.62`. **Il prodotto fa la
 cosa giusta; era il mio assert a non misurarla.**
 
 🔁 **Aperto come `T8-bis` alle 01:36** — *e il 06/09 alle 07:30 è salito a **P1**: non era

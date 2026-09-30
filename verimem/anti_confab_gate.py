@@ -216,6 +216,20 @@ def _is_domain_professional_fact(proposition: str) -> bool:
         return False
 
 
+#: I LAYER NUMERICI DETERMINISTICI CHE VALGONO IL GIUDICE — superficie unica.
+#: `has_grounding_fail` (qui sotto) e la promozione dei documenti leggevano
+#: questo insieme da DUE elenchi scritti a mano, e il commento del secondo
+#: diceva «stesso insieme del primo»: due copie che si dichiarano gemelle sono
+#: la prima classe di difetto di questo progetto, e bastava che un layer nuovo
+#: entrasse in uno solo perche' la stessa scrittura fosse trattenuta a una
+#: porta e ammessa all'altra. Adesso la lista e' una.
+#: ⛔ CHI ENTRA QUI TRATTIENE, quindi ci entra solo un verdetto DETERMINISTICO:
+#: `L4.1` (il valore non c'e' nella fonte) e `L4.2-grandezza` (le unita' dei
+#: due lati nominano grandezze diverse). `L4.2` senza suffisso NO: quello e'
+#: l'euristica delle parole vicine, misurata sbagliare 1 riformulato su 5.
+LAYER_NUMERICI_COME_IL_GIUDICE = ("L4-grounding", "L4.1", "L4.2-grandezza")
+
+
 # Spostata qui da client.py il 2026-09-03 (lead): `advisory_eligible` (sotto) deve
 # scartare i marcatori di osservazione con la STESSA regola di `_blocking_layers`
 # e `chi_ha_quarantinato`, e il gate non puo' importare client.py (circolare).
@@ -251,8 +265,31 @@ def _is_advisory_layer(layer: str) -> bool:
     #: ⚠️ VALE PER LA COESISTENZA, NON PER TUTTA LA FAMIGLIA `L3`:
     #: `L3-supersession` («the older value is superseded») una decisione la
     #: prende, e resta un layer che agisce.
+    #: T93 (18/09): `-withdrawn` e' un avviso PRODOTTO e poi tolto da una
+    #: guardia (discorso riportato con disclaimer, smentita). Si vede nella
+    #: ricevuta e NON decide: senza questa riga il ritiro tornerebbe a
+    #: quarantinare cio' che oggi passa, che e' il contrario della cura.
+    #: T133 (19/09): `L1-skipped` e' un livello che NON HA GUARDATO. Non puo'
+    #: decidere per definizione, e senza questa riga il marcatore del salto
+    #: entrerebbe nel contatore dell'escalation (che guarda i layer `L1*`) e
+    #: farebbe trattenere proprio le note che la corsia cronaca esiste per far
+    #: passare — lo stesso difetto che #80 ha appena chiuso, rifatto da me.
+    #: ⚠️⚠️ NOME ESATTO, NON IL SUFFISSO, E IL PERCHE' E' UN REPERTO: la prima
+    #: versione scriveva `s.endswith("-skipped")` e ha fatto cadere le tre
+    #: gambe della CI su `test_blocking_layers_keeps_l4_skipped_advisory`
+    #: (`assert [] == ['L4-skipped']`). Il suffisso era GIA' IN USO con la
+    #: regola OPPOSTA: `L4-skipped` («nessun giudice disponibile») e' un avviso
+    #: che PUO' essere la ragione quando e' l'unica nota, ed e' per questo
+    #: l'ultima voce di `_BLOCK_LAYER_PRIORITY`. Convivono due nozioni di
+    #: «avviso» che non sono la stessa — questa convenzione dice «non puo' MAI
+    #: essere la ragione», `L4-skipped` dice «se non c'e' altro, sono io» — e
+    #: il suffisso le fondeva in una. Cercando chi legge quel nome avevo
+    #: trovato due confronti esatti (`client.py:456` e `:4307`) e mi ero
+    #: fermata: il terzo lettore non lo NOMINA in un confronto, lo TIENE in una
+    #: tabella che `_blocking_layers` filtra con questa funzione.
     return (s.endswith("-observe") or s.endswith("-graded")
-            or s == "L3-coexistence")
+            or s.endswith("-withdrawn")
+            or s in ("L3-coexistence", "L1-skipped"))
 
 
 def advisory_eligible(warnings: Iterable[dict] | None) -> bool:
@@ -1699,7 +1736,10 @@ def _l1_warnings(
         _STATE_FAMILY = {"L1", "L1.8", "L1.10", "L1.11", "L1.12", "L1.13",
                          "L1.14", "L1.15", "L1.16", "L1.17", "L1.18",
                          "L1.20", "L1.21"}
-        out = [w for w in out if w.get("layer") not in _STATE_FAMILY]
+        out = [w if w.get("layer") not in _STATE_FAMILY else
+               {**w, "layer": f"{w.get('layer')}-withdrawn",
+                "ritirato_da": "reported-speech-with-disclaimer"}
+               for w in out]
     # LA SMENTITA NON E' IL CLAIM (2026-08-04). Nove detector su dodici
     # leggevano «Il modulo NON funziona in produzione» come la dichiarazione
     # che funziona: la parola c'era, il «non» davanti non veniva guardato da
@@ -1715,7 +1755,10 @@ def _l1_warnings(
     # Emerso misurando la cura precedente su L1.15: era
     # giusta e riguardava un detector solo.
     if out:
-        out = [w for w in out if not _e_una_smentita(proposition, w)]
+        out = [w if not _e_una_smentita(proposition, w) else
+               {**w, "layer": f"{w.get('layer')}-withdrawn",
+                "ritirato_da": "denial-not-claim"}
+               for w in out]
     return out
 
 
@@ -2130,10 +2173,36 @@ def _controlli_lessicali_sui_numeri(proposition, source, warnings) -> None:
     # costruzione i valori assenti, che sono il perimetro di L4.1.
     from .vicinato_del_valore import valori_riusati_da_altro_contesto
     _riusati = valori_riusati_da_altro_contesto(proposition, source)
-    if _riusati:
-        _rr = "; ".join(
+
+    def _elenco(gruppo):
+        return "; ".join(
             f"{r.valore:g} qui e' «{r.nel_claim}», nella fonte "
-            f"«{r.nella_fonte}»" for r in _riusati[:3])
+            f"«{r.nella_fonte}»" for r in gruppo[:3])
+
+    # ⚠️ DUE LIVELLI PERCHE' SONO DUE GRADI DI CERTEZZA (T105, 19/09).
+    # Il campo `certo` separa il verdetto delle UNITA' — i due lati attaccano
+    # lo stesso numero a grandezze NOTE e DIVERSE, volume contro area, e
+    # nessuna parola condivisa puo' renderle la stessa misura — da quello
+    # delle PAROLE attorno al numero, che e' l'euristica di sempre e sui
+    # riformulati veri sbaglia 1 volta su 5. Solo il primo esce con un layer
+    # suo, `L4.2-grandezza`, che vale il giudice; il secondo resta `L4.2` e
+    # NON trattiene, esattamente come prima di questa cura.
+    _certi = [r for r in _riusati if r.certo]
+    _euristici = [r for r in _riusati if not r.certo]
+    if _certi:
+        _rc = _elenco(_certi)
+        warnings.append({
+            "layer": "L4.2-grandezza",
+            "reason": (f"il claim e la fonte attaccano lo stesso numero a "
+                       f"grandezze diverse (le unita' lo dicono): {_rc}"),
+            "advice": ("il numero c'e' nella fonte ma misura un'altra "
+                       "grandezza — un volume non sostiene un'area: "
+                       "correggi l'unita', oppure passa la fonte che "
+                       "sostiene questo valore"),
+            "matched_text": _rc,
+        })
+    if _euristici:
+        _rr = _elenco(_euristici)
         warnings.append({
             "layer": "L4.2",
             "reason": (f"il claim riusa un numero della fonte "
@@ -2282,9 +2351,29 @@ def run_validation_gate(
     # detector da solo non puo' saperlo — vede la `source`, non chi l'ha
     # scritta — e la giuntura sta qui, al punto in cui la provenienza esiste.
     _provenienza = _gr_classify_provenance(writer_role, _vb_list)
-    warnings = ([] if narrative_l1_skip or not _l1_ha_giurisdizione
-                else _l1_warnings(proposition, _vb_list,
-                                 source=source, provenance=_provenienza))
+    #: T133 (19/09): UNO SCREEN SALTATO LO DICE. Misurato con due scritture e
+    #: una variabile sola: la stessa frase perde TRE livelli (`L1.10`, `L1.15`,
+    #: `L1.20`) quando e' una nota, e la ricevuta non porta un solo campo che lo
+    #: dica — per chi legge, uno screen saltato e uno che ha guardato senza
+    #: trovare niente sono identici.
+    #: ⚠️ DUE STRADE, DUE PERIMETRI, e non vanno confusi: qui si salta SOLO la
+    #: famiglia L1 (injection, L3 e L4 guardano davvero), mentre il corto
+    #: circuito dello scrittore fidato piu' su non fa girare niente. Dire «non
+    #: ho guardato L1» quando non hai guardato NIENTE e' una ricevuta che
+    #: rassicura, e sarebbe peggio del silenzio.
+    if narrative_l1_skip and _l1_ha_giurisdizione:
+        warnings = [{
+            "layer": "L1-skipped",
+            "stato": "saltato",
+            "ragione": "meta-narrative",
+            "perimetro": "famiglia L1",
+            "reason": "la corsia cronaca non fa girare la famiglia L1; "
+                      "injection, L3 e L4 hanno guardato",
+        }]
+    else:
+        warnings = ([] if narrative_l1_skip or not _l1_ha_giurisdizione
+                    else _l1_warnings(proposition, _vb_list,
+                                      source=source, provenance=_provenienza))
     verified_by = _vb_list
     contradicting_ids: list[str] = []
     supersede_ids: list[str] = []
@@ -3048,6 +3137,17 @@ def run_validation_gate(
                     # else: llm adjudicated entailed -> admitted clean,
                     # judge-of-record 'claude-band' on the receipt.
                 else:
+                    # W7-52: when the escalation was asked and did not decide,
+                    # say why — an expired OAuth session looked exactly like
+                    # no escalation at all. One derivation for the three
+                    # warnings below; None when no escalation was asked.
+                    _perche = None
+                    if grounding_llm is None:
+                        from . import band_escalation as _be
+                        _perche = _be.perche_non_ha_deciso()
+                    _nota = (f"; the band escalation did not decide: {_perche}"
+                             if _perche else "")
+                    _campo = {"escalation": _perche} if _perche else {}
                     if _graded_admission():
                         # no adjudicator available: under graded admission the
                         # borderline write persists as low-confidence instead
@@ -3057,11 +3157,12 @@ def run_validation_gate(
                             "layer": "L4-review-graded",
                             "reason": f"graded admission: borderline grounding "
                                       f"({gscore:.0f}) in the CE review band — "
-                                      "admitted as low-confidence, NOT verified",
+                                      "admitted as low-confidence, NOT verified" + _nota,
                             "advice": "the local CE is not confident the source "
                                       "entails this claim; stored as an unproven "
                                       "low-confidence memory.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
                     elif gscore >= _ce_band_tau_hi():
                         # Il ramo scatta per DUE motivi diversi (la condizione
@@ -3095,29 +3196,45 @@ def run_validation_gate(
                             "reason": f"the claim announces a {_rel or 'relation'} "
                                       f"the source never states, but the CE scored "
                                       f"{gscore:.0f} — admitted WITH this notice, "
-                                      f"not verified as a stated fact",
+                                      f"not verified as a stated fact" + _nota,
                             "advice": "check that the source really states this "
                                       "link and not only its parts; pass "
                                       "Memory(llm=...) to have it adjudicated.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
                     else:
                         warnings.append({
                             "layer": "L4-review",
                             "reason": f"borderline grounding ({gscore:.0f}) in the CE review "
                                       f"band [{_threshold_of_record:.0f}, "
-                                      f"{_ce_band_tau_hi():.0f}) - held for review, not admitted",
+                                      f"{_ce_band_tau_hi():.0f}) - held for review, not admitted"
+                                      + _nota,
                             "advice": "the local CE is not confident the source entails this "
                                       "claim; pass Memory(llm=...) to adjudicate the borderline "
                                       "zone, or review the held fact.",
                             "grounding_score": gscore,
+                            **_campo,
                         })
-    elif source and not _have_judge:
-        _emit_l4_skipped()
+    elif source:
         # La SECONDA porta senza giudice: nessuno configurato, invece di uno
         # configurato che non ha saputo rispondere. Conseguenza identica, ramo
         # diverso — una cura scritta nell'altro non arriva qui, e per questo la
         # chiamata e' ripetuta invece che spostata.
+        #
+        # ⚠️ E LA TERZA: un giudice c'e', ma chi scrive l'ha SPENTO (SDK
+        # `ground=False`, MCP `ENGRAM_GROUNDING_WRITE=0`). Fino al 25/09 la
+        # condizione era `source and not _have_judge`, e questo caso non entrava
+        # in nessun ramo: misurato il 24/09 su 0d0e6aac, lo stesso claim con un
+        # «7» che la fonte non ha prendeva L4.1 senza giudice visibile e NIENTE
+        # col giudice visibile e spento — proprio sulla macchina che ha il
+        # modello. I controlli qui sotto leggono solo claim e fonte, quindi
+        # girano ogni volta che c'e' una fonte e il giudice non ha giudicato.
+        # L'avviso L4-skipped resta a chi il giudice non ce l'ha: i suoi tre
+        # testi (`_advisory_l4_skipped`) dicono che il giudice manca, non si e'
+        # caricato o sta caricando, e qui sarebbero falsi tutti e tre.
+        if not _have_judge:
+            _emit_l4_skipped()
         _controlli_lessicali_sui_numeri(proposition, source, warnings)
 
     # An L1 detector answers "no evidence in verified_by; add one of ...". Often
@@ -3151,7 +3268,13 @@ def run_validation_gate(
     # non si consegna. Resta come AVVISO: dichiara che il numero e' riusato da
     # un altro contesto e lascia decidere — la forma di hidden_records,
     # quarantined_by, floor_applied_by, ranking.
-    has_grounding_fail = any(w.get("layer") in ("L4-grounding", "L4.1")
+    # ⚠️ T105 (19/09): `L4.2-grandezza` invece SI', e non contraddice il
+    # capoverso qui sopra — lo restringe. Quel 20% viene dalle PAROLE vicine al
+    # numero; il caso nuovo lo decidono le UNITA' (volume contro area), dove il
+    # riformulato non esiste per costruzione. Raggio misurato prima di
+    # scriverlo, in sola lettura sullo store vero: 8757 fatti con uno span, 8
+    # con unita' note da entrambe le parti, ZERO con grandezze diverse.
+    has_grounding_fail = any(w.get("layer") in LAYER_NUMERICI_COME_IL_GIUDICE
                              for w in warnings)
     has_l4_review = any(w.get("layer") == "L4-review" for w in warnings)
     # WF3 2026-06-19 PRECISION FIX: the L1 lexical dev-claim detectors fire on ordinary
@@ -3236,9 +3359,16 @@ def run_validation_gate(
     # ⚠️ Cio' che questo NON chiude: i verbali veri fermati da `L1.13`/`L1.15`/
     # `L1.16` cadono esattamente come prima. Quello e' un difetto della
     # specifica dei lessicali, non di questo layer.
+    # ⚠️ IL FILTRO `_is_advisory_layer` NON E' UN ORNAMENTO. Questo contatore
+    # guardava i layer per PREFISSO, e un avviso che «si vede e non decide»
+    # entrava lo stesso nella decisione di trattenere: finche' i ritirati
+    # venivano CANCELLATI la cosa non si vedeva, perche' non c'era niente da
+    # contare. Marcandoli, una scrittura ammessa diventava quarantenata — un
+    # marcatore non marca chi non lo conosce.
     _l1_oltre_l120 = any(
         str(w.get("layer", "")).startswith("L1")
-        and str(w.get("layer", "")) != "L1.20" for w in warnings)
+        and str(w.get("layer", "")) != "L1.20"
+        and not _is_advisory_layer(str(w.get("layer", ""))) for w in warnings)
     l1_escalates = (_l1_oltre_l120 and not _personal_fp and not _world_fp
                     and not _domain_advisory and not _domain_precision_fp)
     if _domain_precision_fp and not _personal_fp and not _world_fp \

@@ -72,6 +72,7 @@ def _run_claude(args: list[str]) -> tuple[bool, str, str]:
     try:
         proc = subprocess.run(
             args, capture_output=True, text=True, timeout=30.0, check=False,
+            encoding="utf-8", errors="replace",
             **quiet_popen_kwargs(),
         )
     except subprocess.TimeoutExpired:

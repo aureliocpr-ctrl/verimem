@@ -60,9 +60,60 @@ RADICE = pathlib.Path(__file__).resolve().parent.parent
 PACCHETTO = RADICE / "verimem"
 PYPROJECT = RADICE / "pyproject.toml"
 
-TETTO_C2 = 35          # nessuna porta: né import, né entry point, né python -m
-TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto)
-TETTO_D = 62           # irraggiungibili da ogni porta, chiusura transitiva (35 C2 + 5 C1 + 22 solo-per-catena)
+# I TRE TETTI, MISURATI IL 19/09 SU QUESTO ALBERO (395 moduli). Questo ramo ha
+# detto 2/2, 4/4, 5/6, 7/10, 7/30, 7/9, 8/10 e ora 7/8: ogni volta su un albero
+# diverso, e un tetto ereditato da un albero diverso non e' un tetto, e' un
+# ricordo.
+#
+# ✅ T104 SI E' CHIUSO, e questo cricchetto lo ha registrato da solo. Il commento
+# che stava qui prometteva: «la ridiscesa e' obbligatoria quando la terza porta
+# rende la ricevuta (1b.3), ed e' un ticket con un nome: T104». La porta CLI ora
+# rende la ricevuta del nucleo, e `core/__init__` e `core/ricevuta` sono USCITI
+# da C2 e da D senza che nessuno abbia toccato questo file: C2 8 -> 7, D 10 -> 8.
+# Una promessa scritta accanto a un numero si e' pagata da se', ed e' il motivo
+# per cui va scritta accanto al numero e non in un documento.
+#
+# CIO' CHE RESTA, e perche'. I SETTE DI C2 (nessuna porta: ne' import, ne' entry
+# point, ne' `python -m`), per nome, perche' un numero senza nomi non si
+# controlla:
+#   atomic_claims                 innesto dichiarato, con data e ramo (T111)
+#   schema                        la fetta 3: entra prima del suo cablaggio, che
+#                                 e' deciso e datato (D-0009). Ridiscesa: T125,
+#                                 ed e' la sola promessa ancora aperta qui
+#   daemon_runner, daemon_spawn   li importa hooks/hippo_session_start.py via lo
+#                                 shim engram.
+#   hooks/__init__, hooks/pre_tool_use
+#                                 lo importa .claude/hooks/hippo_pre_tool_use.py
+#                                 via lo shim, dentro `except ImportError:
+#                                 return 0` — spegnimento MUTO: archiviarlo non
+#                                 rompeva niente, lo spegneva
+#   test_isolation                guardia del conftest (T94)
+# L'ottavo di D e' `proactive_step_injector`, raggiunto solo da
+# `hooks.pre_tool_use`, che una porta non ce l'ha.
+# CINQUE DEI SETTE li raggiunge un GANCIO: una superficie d'uso che non e' ne'
+# la CLI ne' l'MCP ne' l'SDK. Un gancio e' una superficie, non un import morto.
+#
+# C1 = 5, sorvegliata e FUORI dal tetto, perche' `python -m` E' una porta — lo
+# dice la riga di C2 qui sopra, che esclude anche quella. I C1 sono percio' punti
+# di partenza del cammino e la loro catena esce da D per costruzione: con i C1
+# contati dentro, D valeva 31 su un albero come questo, e quel numero misurava
+# una contraddizione interna a questo file, non il pacchetto. «Raggiungibile con
+# `python -m`» non vuol dire «qualcuno lo usa»: quella e' la domanda di T126.
+# ✅ T125 SI E' CHIUSO, ed e' la seconda promessa che questo file si paga da
+# sola. Il commento sopra diceva: «schema — la fetta 3: entra prima del suo
+# cablaggio, che e' deciso e datato (D-0009). Ridiscesa: T125, ed e' la sola
+# promessa ancora aperta qui». Il cablaggio e' arrivato — `migrations` e
+# `semantic` importano `schema` — e il modulo e' USCITO da C2 e da D da solo:
+# C2 7 -> 6, D 8 -> 7. MISURATI su questo albero dopo il ribasamento, non
+# dedotti dai delta: il cricchetto li ha stampati e ha chiesto lui la discesa.
+TETTO_C2 = 6           # nessuna porta: né import, né entry point, né python -m
+TETTO_C1 = 5           # raggiungibili solo con `python -m` (sorvegliati, non nel tetto; T126)
+TETTO_D = 7            # 6 C2 + proactive_step_injector, raggiunto solo da C2
+# ⚠️ E SCENDE DI NUOVO IL 19/09, NELLO STESSO GIORNO IN CUI E' SALITO: la
+# prima porta ha importato `verimem.core` (1b.1) e i due moduli del nucleo
+# hanno smesso di essere irraggiungibili. Le due cose non si annullano e non
+# si sommano a mente: il numero qui sotto e' MISURATO su questa base dopo il
+# ribasamento, non calcolato dai due delta.
 
 # `__init__` è l'ingresso del pacchetto e `__main__` è ciò che `python -m verimem` lancia:
 # non sono moduli senza porta, sono la porta.
@@ -199,7 +250,20 @@ def analizza(pacchetto: pathlib.Path, pyproject: pathlib.Path = PYPROJECT,
         for chi in chi_lo_importa:
             avanti[chi].add(bersaglio)
     veri = set(moduli)
-    porte = ({"", "__main__"} | entry) & veri
+    # I C1 SONO PORTE DI PARTENZA, deciso il 19/09. Questo script si
+    # contraddiceva da solo: la riga di C2 dice «nessuna porta: ne' import, ne'
+    # entry point, **ne' python -m**» — cioe' ammette che `python -m` E' una
+    # porta — e poi D contava i C1 fra gli «irraggiungibili da OGNI porta».
+    # Lo stesso albero risultava percio' VERDE per `_eseguibile()` in
+    # tests/test_nessun_modulo_nasce_irraggiungibile.py («`python -m verimem.X`
+    # E' UNA PORTA») e ROSSO per questo script.
+    # Mettendo i C1 fra le porte, la loro catena esce da D per costruzione e non
+    # per sottrazione: D diventa C2 + cio' che solo C2 raggiunge. C1 resta
+    # sorvegliata a parte, fuori dal tetto, perche' «raggiungibile con
+    # `python -m`» non vuol dire «qualcuno lo usa»: la regola che decide se un
+    # C1 merita di stare nel pacchetto e' il ticket T126 — ci sta solo se una
+    # pagina (README o docs) documenta quel comando.
+    porte = ({"", "__main__"} | entry | set(c1)) & veri
     visti: set[str] = set()
     coda = list(porte)
     while coda:
@@ -297,11 +361,38 @@ def autotest() -> int:
     b = analizza(PACCHETTO, modulo_finto="modulo_finto_senza_porta")
     uscita_b = stampa(b, dettaglio=False)
     print()
-    if uscita_a == 0 and uscita_b == 1:
-        print("AUTOTEST VERDE: (a) esce 0 e (b) esce 1 — il cricchetto morde.")
+    # T99 — LA PROPRIETA' E' RELATIVA, NON ASSOLUTA. Fino al 2026-09-18 qui
+    # c'era `if uscita_a == 0 and uscita_b == 1`, che pretendeva il pacchetto
+    # com'e' VERDE: con l'albero legittimamente rosso (qualcuno ha appena
+    # staccato un modulo) stampava «AUTOTEST ROSSO: (a) esce 1 (atteso 0)» e
+    # mandava a cercare il difetto NELLO STRUMENTO proprio mentre il cricchetto
+    # stava mordendo. Misurato abbassando un tetto: C2 35/28 con l'albero rosso,
+    # 36/28 col finto — il rilevatore lo vedeva benissimo.
+    # Le proprieta' sono DUE, con DUE cure diverse, e si dichiarano separate:
+    #   · il RILEVATORE vede il finto  -> C2 sale di esattamente 1 (se no: codice)
+    #   · il TETTO morde -> se l'albero e' verde, il finto lo fa diventare rosso
+    #     (se no: il tetto e' sopra il valore misurato, si abbassa)
+    # Con l'albero gia' rosso la seconda non e' osservabile: si SCRIVE, invece di
+    # trasformarla in un rosso dello strumento.
+    c2_a = len(a["C2_nessuna_porta"])
+    c2_b = len(b["C2_nessuna_porta"])
+    if c2_b != c2_a + 1:
+        print(f"AUTOTEST ROSSO: il RILEVATORE non vede il modulo finto — C2 passa "
+              f"da {c2_a} a {c2_b}, atteso {c2_a + 1}. Non e' un tetto: e' il codice.")
+        return 1
+    print(f"il rilevatore vede il finto: C2 {c2_a} -> {c2_b}.")
+    if uscita_a != 0:
+        print(f"L'ALBERO E' ROSSO PER CONTO SUO (a esce {uscita_a}): il verdetto sta "
+              "nelle righe sopra e non e' un difetto di questo strumento. Il "
+              "rilevatore funziona, quindi l'autotest passa.")
         return 0
-    print(f"AUTOTEST ROSSO: (a) esce {uscita_a} (atteso 0), (b) esce {uscita_b} (atteso 1).")
-    return 1
+    if uscita_b != 1:
+        print(f"AUTOTEST ROSSO: l'albero e' verde ma il finto non lo fa diventare "
+              f"rosso (b esce {uscita_b}, atteso 1) — un TETTO e' sopra il valore "
+              "misurato: abbassalo nello stesso commit che lo ha fatto scendere.")
+        return 1
+    print("AUTOTEST VERDE: il rilevatore vede il finto e il cricchetto morde.")
+    return 0
 
 
 def main(argv: list[str] | None = None) -> int:

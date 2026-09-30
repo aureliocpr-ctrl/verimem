@@ -51,10 +51,39 @@ PKG = Path(__file__).resolve().parent.parent / "verimem"
 #: con cui si corregge il prodotto.
 PORTE = ("__init__", "cli", "mcp_server", "client", "gateway")
 
-#: Misurato il 2026-07-31. Il numero puo' SCENDERE quando si collega o si
-#: cancella qualcosa; se sale, un modulo e' nato staccato e il test lo dice
-#: subito. Non e' un obiettivo di qualita': e' un cricchetto.
-IRRAGGIUNGIBILI_NOTI = 38
+#: Misurato il 2026-07-31 (38), riabbassato il 2026-09-18 a 32 quando 20 moduli
+#: che nessuna porta raggiungeva sono usciti dal pacchetto verso `attic/`. Il
+#: numero puo' SCENDERE quando si collega, si cancella o si ARCHIVIA qualcosa; se
+#: sale, un modulo e' nato staccato e il test lo dice subito. Non e' un obiettivo
+#: di qualita': e' un cricchetto.
+#: Poi a 1 quando sono usciti i 41 dell'archivio, e RIALZATO a 3 lo stesso
+#: giorno: `daemon_runner` e `daemon_spawn` erano stati archiviati per errore
+#: e sono tornati. Un cricchetto che SALE va motivato o non e' un cricchetto:
+#: qui sale perche' due moduli VIVI rientrano nel pacchetto, non perche'
+#: qualcosa e' nato staccato. Li importa `hooks/hippo_session_start.py` (via
+#: lo shim `engram.`), e un gancio e' una superficie d'uso che nessuna delle
+#: tre porte raggiunge: senza di loro il banner perde la sezione dei demoni
+#: IN SILENZIO, dentro un `except`. `atomic_claims` sta in INNESTO_IN_ARRIVO.
+#:
+#: IL QUARTO, aggiunto il 19/09 con la stessa ragione dei due demoni:
+#: `proactive_step_injector`. Lo raggiunge `.claude/hooks/hippo_pre_tool_use.py`,
+#: che importa `engram.hooks.pre_tool_use` e da li' l'injector — dentro un
+#: `except ImportError: return 0`, quindi archiviarlo non rompeva niente:
+#: il gancio avrebbe smesso di funzionare restituendo 0.
+#: E questo conteggio NON lo avrebbe visto comunque, perche' `_irraggiungibili()`
+#: guarda `PKG.glob("*.py")` — solo il primo livello — e chi importa l'injector
+#: sta in `verimem/hooks/`, un sottopacchetto che questa misura non apre.
+#: I quattro che restano: test_isolation (T94), daemon_runner, daemon_spawn,
+#: proactive_step_injector.
+#: IL QUINTO, il 19/09 col lotto C: `schema` — i tre stati di uno store e il
+#: rifiuto di migrarlo aprendolo. Entra nel pacchetto prima del suo cablaggio,
+#: che e' deciso e datato (D-0009: il cambio si ferma in
+#: `migrations.ensure_schema_version`, l'apertura si dichiara in
+#: `SemanticMemory.__init__`), e finche' quel cablaggio non c'e' questo criterio
+#: lo vede irraggiungibile, con ragione. La ridiscesa e' il ticket T125, la
+#: stessa scadenza che `scripts/senza_chiamante.py` porta scritta accanto al
+#: proprio tetto: due presidi, una sola ragione, due posti in cui va tolta.
+IRRAGGIUNGIBILI_NOTI = 5
 
 
 def _import_locali(percorso: Path, noti: set[str]) -> set[str]:
@@ -129,7 +158,14 @@ INNESTO_IN_ARRIVO = {
     "atomic_claims": "06/09: decomponi() e' entrato inerte con 3fd1ed31; l'innesto "
                      "(muro 1, pezzi 3a/3b/3b-bis) sta su origin/lead/innesto-"
                      "decomposizione, revertato da main alle 08:42 (460f230e) "
-                     "finche' P-A e P-B non sono misurate a RAM ok",
+                     "finche' P-A e P-B non sono misurate a RAM ok. "
+                     "RIDATATA il 18/09: la misura di P-A e P-B a RAM ok NON "
+                     "risulta fatta, ne' sul canale ne' nei registri, e oltre "
+                     "questo e' NON VERIFICATO. Il 18/09 il taglio del contorno "
+                     "stava per archiviare questo modulo: si e' fermato perche' "
+                     "questa riga esiste — un grafo di importazioni non vede "
+                     "un'intenzione dichiarata. T111 decide: innestare o "
+                     "archiviare, dopo il metro del 19/09",
 }
 
 

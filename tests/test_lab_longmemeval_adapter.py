@@ -40,7 +40,7 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 # RED MARKER
-from verimem.lab_longmemeval_adapter import LongMemEvalAdapter
+from attic.lab_longmemeval_adapter import LongMemEvalAdapter
 
 # ---------------------------------------------------------------------------
 # Fixtures

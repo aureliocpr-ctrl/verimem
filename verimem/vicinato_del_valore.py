@@ -85,6 +85,16 @@ class ValoreRiusato:
     valore: float
     nel_claim: str
     nella_fonte: str
+    #: ⚠️ LA DIFFERENZA FRA UN AVVISO E UN VETO, e sta in questo campo.
+    #: `False` (il caso storico): il verdetto viene dalle PAROLE attorno al
+    #: numero — nessuna in comune — ed è un'euristica che sui riformulati veri
+    #: sbaglia nel 20% dei casi (banco lingue 1/5: «300 pallet» contro «300
+    #: bancali»). Per questo `L4.2` non trattiene e non deve iniziare a farlo.
+    #: `True`: i due lati portano UNITÀ note che nominano grandezze DIVERSE
+    #: (volume contro area). Lì non c'è riformulazione possibile — nessuna
+    #: parola condivisa rende «400 metri cubi» e «400 mq» la stessa misura — e
+    #: solo questo caso esce con un layer suo, che vale il giudice.
+    certo: bool = False
 
 
 #: Quante parole di contenuto si guardano per lato del numero (T17, 06/09).
@@ -168,7 +178,22 @@ def _intorno(testo: str, valore: float) -> tuple[set[str], set[str]]:
 
 #: Un numero dentro un composto — «03:27», «2026-09-06», «3/40», «2.14.0» — non
 #: e' un numero a se'. Non i decimali semplici («97.05»), che restano numeri.
-_COMPOSTO = re.compile(r"\d+(?:[:/-]\d+)+|\d+(?:\.\d+){2,}")
+#: ⏱️⏱️ TETTI, E QUESTA E' L'UNICA DELLE QUATTRO CHE IL PRODOTTO RAGGIUNGE
+#: DAVVERO con testo dell'utente: `_COMPOSTO.findall(proposition)` due funzioni
+#: piu' sotto, senza finestra. Misurato dalla PORTA, non dalla regex isolata:
+#: `valori_riusati_da_altro_contesto` su una proposizione di 8000 caratteri
+#: costava **1659,2 ms**, con crescita x4,5 (CodeQL alert 1460).
+#: I tetti: dodici cifre per componente e **trentadue componenti**, e i due
+#: numeri vengono dal CORPUS, non dal mio giudizio.
+#: ⚠️ Con sei componenti cambiavano lettura sette proposizioni su 18 313, tutte
+#: OID — «1.3.6.1.5.5.7.1.24» troncato a «1.3.6.1.5.5.7». Con sedici ne
+#: restava una: un elenco di diciotto numeri di richiesta separati da barra.
+#: Con trentadue: **zero**. Le celle del banco non avrebbero visto nessuno dei
+#: due casi — quei testi non li ho scelti io.
+#: Il tetto protegge comunque: il lavoro per posizione resta limitato, ed e'
+#: questo che toglie il quadratico, non quanto e' stretto il numero.
+_COMPOSTO = re.compile(
+    r"\d{1,12}(?:[:/-]\d{1,12}){1,32}|\d{1,12}(?:\.\d{1,12}){2,32}")
 
 
 def _prefissi(parole: set[str]) -> set[str]:
@@ -272,6 +297,26 @@ def _da_mostrare(dopo: set[str], prima: set[str]) -> str:
     return "(nessuna parola accanto)"
 
 
+def _grandezze_in_conflitto(claim: str, source: str, valore: float) -> bool:
+    """True se claim e fonte attaccano a QUEL valore grandezze note e diverse.
+
+    ⚠️ SI CHIEDE ALL'ESTRATTORE, NON ALLE PAROLE SCIOLTE, e la prima versione
+    sbagliava proprio qui: `metri` e `cubi` presi uno per uno non sono una
+    grandezza — lo diventano solo COMPOSTI. Guardare l'intorno parola per parola
+    rendeva sempre False, e la cura non scattava mai.
+
+    Conservativa per costruzione: se una delle due grandezze non è nota, o il
+    valore non porta unità da una delle due parti, rende False e la fuga di
+    sopra resta quella di prima. Qui non si converte niente: si distingue.
+    """
+    from .quantity_match import _GRANDEZZA, extract_quantities
+    ga = {_GRANDEZZA[u] for u, v in extract_quantities(claim)
+          if v == valore and u in _GRANDEZZA}
+    gb = {_GRANDEZZA[u] for u, v in extract_quantities(source, come_fonte=True)
+          if v == valore and u in _GRANDEZZA}
+    return bool(ga and gb and not (ga & gb))
+
+
 def valori_riusati_da_altro_contesto(
     proposition: str, source: str,
 ) -> list[ValoreRiusato]:
@@ -299,6 +344,38 @@ def valori_riusati_da_altro_contesto(
         fonte_dopo, fonte_prima = _intorno(source, valore)
         if not fonte_dopo and not fonte_prima:
             continue  # valore assente: non è questo il criterio che lo copre
+        # ⚠️ T105 (19/09): LE GRANDEZZE DECIDONO PRIMA DELLE PAROLE.
+        # Le uscite qui sotto presumono tutte la stessa cosa — che parole
+        # condivise attorno al numero vogliano dire «stessa grandezza» — e su
+        # «il capannone 12 misura 400 metri cubi» contro una fonte che dice
+        # «400 mq» quella presunzione è falsa tre volte: il lato sinistro
+        # coincide, e «misura» basta anche all'unione. Ho provato a metterci
+        # una guardia dentro UNA delle uscite e il caso usciva dalla
+        # successiva: se le due unità nominano grandezze NOTE e DIVERSE non
+        # c'è parola condivisa che renda le due frasi la stessa misura, e la
+        # domanda di questo layer è già risposta.
+        if _grandezze_in_conflitto(proposition, source, valore):
+            fuori.append(ValoreRiusato(
+                valore=valore,
+                nel_claim=_da_mostrare(claim_dopo, claim_prima),
+                nella_fonte=_da_mostrare(fonte_dopo, fonte_prima),
+                certo=True,
+            ))
+            continue
+        # ⚠️ LA STESSA DOMANDA, DALL'ALTRO LATO — e la risposta mancava (T153).
+        # Il criterio di questo layer è «le parole di contenuto attorno al
+        # numero non si sovrappongono». Se il CLAIM non ne porta nessuna — il
+        # numero chiude la frase, o sta in un elenco — non c'è niente da
+        # sovrapporre, e senza questa riga il vuoto veniva letto come una
+        # differenza. Misurato sullo store prima della cura: su 1386 accuse di
+        # `L4.2`, 354 (il 25,5%) hanno un lato senza parole accanto.
+        # ⛔ E NON VALE DOVE IL VERDETTO NON PASSA DALLE PAROLE: se le due
+        # UNITÀ nominano grandezze note e diverse (volume contro area) la
+        # differenza c'è anche senza parole accanto, e quella guardia va
+        # PRIMA di questa. Chi ribasa la richiesta di T105 sopra questa lo
+        # tenga: l'ordine è la cura, non un dettaglio di stile.
+        if not claim_dopo and not claim_prima:
+            continue  # il claim non offre parole: il criterio non ha dati
         if _prefissi(claim_dopo) & _prefissi(fonte_dopo):
             continue  # stessa grandezza: è una riformulazione, il caso normale
         if _prefissi(claim_prima) & _prefissi(fonte_prima):

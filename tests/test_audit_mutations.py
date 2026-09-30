@@ -405,7 +405,7 @@ def test_client_purge_history_audits_as_purge(tmp_path) -> None:
 
 @pytest.mark.parametrize("module_name, expected", [
     ("verimem.truth_reconciliation", 'principal="system:reconcile"'),
-    ("verimem.legacy_cleanup", 'principal="system:cleanup"'),
+    ("attic.legacy_cleanup", 'principal="system:cleanup"'),
 ])
 def test_background_jobs_declare_system_principal(module_name, expected) -> None:
     """Source-level contract: background jobs must call the destructive core

@@ -112,6 +112,132 @@ FORBICI = re.compile(r"^[#;!$%^&|:]?\s*-+\s*>8\s*-+\s*$", re.MULTILINE)
 
 CANDIDATO_PERCORSO = re.compile(r"[A-Za-z0-9_.\-/]*/[A-Za-z0-9_.\-]*")
 
+#: L'apertura di un blocco recintato: tre o piu' backtick, oppure tre o piu'
+#: tilde, con o senza il nome del linguaggio. Si chiude col MEDESIMO marcatore,
+#: lungo almeno quanto quello che ha aperto — cosi' come lo intende Markdown, e
+#: come serve qui: un recinto di quattro backtick puo' contenerne tre.
+_RECINTO = re.compile(r"^[ \t]{0,3}(`{3,}|~{3,})[^\n`]*$", re.MULTILINE)
+
+
+#: Una riga CITATA: il `>` di Markdown, cioe' quello che il pulsante «Quote
+#: reply» di GitHub mette davanti a ogni riga del commento citato.
+_CITAZIONE = re.compile(r"^[ \t]{0,3}>", re.MULTILINE)
+
+#: Un commento HTML, anche su piu' righe: chi legge la pagina non lo vede, e un
+#: controllo che lo legge giudica su un testo che nessun umano ha davanti.
+_COMMENTO_HTML = re.compile(r"<!--.*?-->", re.DOTALL)
+
+
+def _senza_righe_citate(testo: str) -> str:
+    """Il testo senza le righe che iniziano con `>`.
+
+    ⚠️ IL PULSANTE «QUOTE REPLY» E' UNA PORTA. Chi risponde citando un commento
+    che porta la Definition of Done se la ritrova nel proprio, riga per riga,
+    con un `>` davanti — e senza questo taglio avrebbe **ri-dichiarato** al posto
+    dell'autore, senza volerlo e senza accorgersene. E' lo stesso incidente del
+    modello incollato, da un'altra porta: rilievo di un pari, non mio.
+    """
+    return "\n".join(r for r in testo.splitlines() if not _CITAZIONE.match(r))
+
+
+def _senza_blocchi_rientrati(testo: str) -> str:
+    """Il testo senza i blocchi di codice RIENTRATI di quattro spazi.
+
+    ⚠️ IL CRITERIO E' QUELLO DI MARKDOWN, NON «quattro spazi». Un blocco
+    indentato comincia dopo una riga VUOTA: le righe rientrate che continuano un
+    elenco non lo sono, e toglierle boccerebbe chi scrive una checklist annidata
+    — cioe' proprio chi dichiara sul serio. Una cura piu' larga del difetto
+    colpisce chi ha fatto la cosa giusta, e costa piu' del difetto.
+    """
+    fuori: list[str] = []
+    dentro = False
+    vuota_prima = True
+    for riga in testo.splitlines():
+        rientrata = riga.startswith("    ") or riga.startswith("\t")
+        if not riga.strip():
+            fuori.append(riga)
+            vuota_prima = True
+            continue
+        if rientrata and (dentro or vuota_prima):
+            dentro = True
+        else:
+            dentro = False
+            fuori.append(riga)
+        vuota_prima = False
+    return "\n".join(fuori)
+
+
+def _solo_il_testo_dichiarato(testo: str) -> str:
+    """Il testo senza cio' che e' MOSTRATO invece che dichiarato.
+
+    ⚠️ IL NOME DICE IL CRITERIO, non la tecnica: si chiamava
+    `_senza_blocchi_recintati` finche' toglieva i soli recinti, e quando @Marie
+    ha misurato che ne restavano fuori tre forme il nome sarebbe diventato
+    falso. Un nome che descrive meno di quel che fa e' la prima cosa che inganna
+    chi lo legge dopo.
+
+    Le QUATTRO forme, e ognuna e' una porta vera:
+      ``` ``` / ~~~     un modello incollato per spiegare        (19/09, sette richieste verdi)
+      rientro di 4      la stessa cosa nell'altra sintassi       (rilievo di Marie)
+      `>` in testa      il pulsante «Quote reply» di GitHub      (rilievo di Marie)
+      <!-- -->          invisibile a chi legge la pagina         (rilievo di Marie)
+
+    🔑 L'ultima e' la peggiore delle quattro: un commento HTML **nessun umano lo
+    vede**, quindi un controllo che lo leggesse giudicherebbe su un testo che
+    l'autore non ha davanti — e chi guarda la pagina non capirebbe perche'.
+
+    ⚠️ T201 (23/09): I FINE RIGA SI NORMALIZZANO PER PRIMI. Un commento caricato
+    da un file scritto su Windows arriva con `\\r\\n`, e la chiusura di un
+    recinto si riconosce con `[ \\t]*$`: una riga `` ```\\r `` non chiude, il
+    recinto resta aperto fino in fondo e tutto cio' che segue sparisce. Misurato
+    su #126: 5306 caratteri, 154 dopo il filtro, e le due righe `Registro:` e
+    `Decisione:` fra quelle sparite — il cancello diceva «non porta Registro»
+    quando il Registro c'era. Lo script normalizzava gia' `\\r\\n` piu' sotto,
+    ma nella funzione che prepara il CORPO della richiesta, da cui i commenti
+    della Definition of Done non passano: qui mancava, e questa e' l'unica
+    funzione da cui passano tutti e quattro i filtri.
+    """
+    testo = testo.replace("\r\n", "\n").replace("\r", "\n")
+    testo = _COMMENTO_HTML.sub("\n", testo)
+    testo = _senza_recinti(testo)
+    testo = _senza_righe_citate(testo)
+    return _senza_blocchi_rientrati(testo)
+
+
+def _senza_recinti(testo: str) -> str:
+    """Il testo senza cio' che sta dentro ``` ``` o ~~~ ~~~.
+
+    ⚠️ IL CRITERIO E' «DICHIARATO», NON «PRESENTE». Un modello incollato dentro
+    un recinto e' una CITAZIONE: serve a mostrare a qualcuno che cosa scrivere,
+    e leggerlo come una dichiarazione fa passare esattamente le richieste in cui
+    nessuno ha dichiarato niente (misurato il 19/09 su sette).
+
+    ⚠️ E il difetto si propaga ATTRAVERSO L'AIUTO: piu' uno e' utile — una
+    guida, una risposta, un esempio in un commento — piu' richieste rende verdi.
+    Per questo il taglio si fa qui, in una funzione sola, e non in ognuno dei
+    punti che cercano qualcosa dentro un commento.
+
+    🔑 Un recinto APERTO e mai chiuso mangia tutto fino alla fine: e' come lo
+    rende Markdown, ed e' anche il verso giusto dell'errore — chi lascia un
+    recinto aperto ottiene un rosso, non un verde.
+    """
+    pezzi: list[str] = []
+    resto = testo
+    while True:
+        apre = _RECINTO.search(resto)
+        if not apre:
+            pezzi.append(resto)
+            break
+        pezzi.append(resto[:apre.start()])
+        marcatore = apre.group(1)[0] * len(apre.group(1))
+        dopo = resto[apre.end():]
+        chiude = re.search(rf"^[ \t]{{0,3}}{re.escape(marcatore[0])}{{{len(marcatore)},}}[ \t]*$",
+                           dopo, re.MULTILINE)
+        if not chiude:
+            break          # recinto aperto: il resto e' tutto dentro
+        resto = dopo[chiude.end():]
+    return "\n".join(p.strip("\n") for p in pezzi if p.strip())
+
 
 def _percorsi_del_repo(radice: str | None = None) -> frozenset[str]:
     """Ogni percorso tracciato, nell'indice E in HEAD.
@@ -350,12 +476,39 @@ def controlla_corpo(testo: str, percorsi: frozenset[str] | None = None,
                         f"{RIGHE_DI_PROSA_MASSIME}): il resto va in un commento "
                         f"della richiesta, non nel corpo che diventa il messaggio")
 
+    # ⚠️⚠️ SI LEGGE CIO' CHE E' DICHIARATO, NON CIO' CHE E' MOSTRATO. Un modello
+    # incollato dentro ``` ``` per aiutare qualcuno NON e' una dichiarazione, e
+    # il 19/09 questo controllo lo leggeva come tale: sette richieste sono
+    # diventate verdi con «commenti dopo il mio: 0» su tutte e sette, perche' un
+    # pari aveva incollato il modello in un commento — nello stesso messaggio in
+    # cui spiegava che NON voleva far passare richieste senza dichiarazioni.
+    # ⇒ Cercavo una STRINGA, e una stringa la trova anche dentro un recinto.
+    if commenti is not None:
+        commenti = [_solo_il_testo_dichiarato(c) for c in commenti]
+
     if commenti is None:
         problemi.append("NON MISURATO: la Definition of Done in un commento "
                         "(nessun commento passato al controllo)")
     elif not any(INTESTAZIONE_DOD in c for c in commenti):
-        problemi.append(f"nessun commento porta «{INTESTAZIONE_DOD}»: la "
-                        f"richiesta non dichiara cosa considera finito")
+        # ⚠️⚠️ QUESTA DIAGNOSI HA MENTITO, e per venti minuti ha bocciato le
+        # richieste che facevano la cosa giusta. Diceva «nessun commento porta
+        # la DoD» mentre il commento c'era: il controllo leggeva i commenti
+        # ~25 s dopo l'apertura, e il commento nasce dopo — nessuno puo' aprire
+        # una richiesta e commentarla nello stesso istante. Misurato il 18/09
+        # su cinque richieste: #68, #69, #71 rosse con la DoD presente; #65 e
+        # #66 verdi solo perche' il loro run era di UN GIORNO dopo il commento.
+        #
+        # ⇒ La cura vera e' l'attesa, e sta nel workflow. Questa e' l'altra
+        # meta': un'assenza si dichiara CON L'ISTANTE IN CUI SI E' GUARDATO,
+        # altrimenti chi legge conclude di aver sbagliato e riscrive una cosa
+        # giusta. Un messaggio che mente su cio' che vede costa piu' di un
+        # rosso muto.
+        problemi.append(f"al momento di questo controllo nessun commento "
+                        f"portava «{INTESTAZIONE_DOD}»: la richiesta non "
+                        f"dichiara cosa considera finito. ⚠️ Se l'hai aggiunto "
+                        f"DOPO l'apertura, il contenuto e' gia' giusto e non va "
+                        f"riscritto: rilancia il controllo "
+                        f"(`gh run rerun <id> --failed`)")
     else:
         # Il commento che porta la DoD deve dire anche DA DOVE viene la
         # richiesta: quale riga del registro previene, e quale decisione segue.
@@ -426,6 +579,10 @@ CASI_CORPO: list[tuple[str, str, list[str] | None, bool]] = [
      "Una.\n\nDue.\n\nTre.\n\nQuattro.\n", DOD_IN_COMMENTO, False),
     # La terza pretesa: la DoD non sparisce, si sposta.
     ("nessun commento porta la DoD", "Una.\n", ["un commento qualunque"], False),
+    # 🔴 19/09: il MODELLO incollato per aiutare non e' una dichiarazione. Sette
+    # richieste verdi con «commenti dopo il mio: 0» su tutte e sette.
+    ("la DoD dentro un recinto e' un ESEMPIO, non una dichiarazione", "Una.\n",
+     ["Ti mancano due righe:\n\n```\n" + DOD_IN_COMMENTO[0] + "\n```\n"], False),
     ("nessun commento affatto", "Una.\n", [], False),
     # ⚠️ Il controllo che NON GIRA lo dice: se `commenti` non arriva, il
     # verdetto non e' verde, e' «NON MISURATO».

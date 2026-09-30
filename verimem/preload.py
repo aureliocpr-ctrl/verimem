@@ -116,11 +116,111 @@ def _deve_scaldare_il_giudice() -> bool:
             in {"1", "true", "yes", "on"})
 
 
-def _warm_moat_judge(*, log=None) -> None:
+def _il_daemon_sa_giudicare() -> bool:
+    """Una sonda di GIUDIZIO al daemon condiviso, come quella del reranker
+    (`_segnala_rerank_delegato`, qui sopra).
+
+    ⚠️ NON `encode_service.daemon_usable()`: quella dice se il daemon serve il
+    nostro modello di EMBEDDING (`info.get("model") == CONFIG.embedding_model`),
+    non se sa giudicare. Un daemon che serve l'embedder e non il giudizio
+    farebbe saltare il precarico, e la prima scrittura resterebbe non giudicata
+    — esattamente il buco che il precarico esiste per chiudere.
+    `_gate_via_daemon` torna i punteggi se il daemon giudica, e None in ogni
+    altro caso (niente scoperta, niente `gate_pairs`, socket caduto).
+    """
+    try:
+        from .local_grounding import _gate_via_daemon
+        return _gate_via_daemon([("probe", "probe")]) is not None
+    except Exception:  # noqa: BLE001 — una sonda non fa morire il boot
+        return False
+
+
+def _un_daemon_e_in_arrivo() -> bool:
+    """C'e' un daemon che sta partendo (o che serve gia')? Vedi
+    `encode_service.daemon_in_arrivo`: il lock tenuto da un processo vivo che
+    non e' uno zombie."""
+    try:
+        from . import encode_service
+        return encode_service.daemon_in_arrivo()
+    except Exception:  # noqa: BLE001 — una sonda non fa morire il boot
+        return False
+
+
+def _tetto_dell_arrivo_s() -> float:
+    """Quanto si aspetta un daemon IN ARRIVO: la grazia che il daemon stesso si
+    da' per caricare (`encode_service._ZOMBIE_GRACE_S`), non un secondo numero
+    scritto qui che poi diverge."""
+    try:
+        from . import encode_service
+        return float(encode_service._ZOMBIE_GRACE_S)
+    except Exception:  # noqa: BLE001
+        return _DAEMON_WARM_WAIT_S
+
+
+def _warm_moat_judge(*, log=None, attesa_estesa: bool = True) -> None:
     """Carica il giudice del moat fuori dal thread di richiesta. Best-effort:
     il fallimento e' gia' memorizzato sul giudice e l'advisory continua a
-    funzionare — un warm non fa mai morire il boot."""
+    funzionare — un warm non fa mai morire il boot.
+
+    T203: SOLO SE IL DAEMON NON SA GIUDICARE. Caricarlo comunque metteva torch
+    e il cross-encoder in OGNI server MCP — dieci agenti, dieci giudici — e,
+    una volta pieno `judge._scorer`, `try_local_score` smetteva di chiedere al
+    daemon per tutta la vita del server anche con la delega richiesta. Se il
+    daemon giudica, il modello resta suo; se non giudica, il precarico resta
+    quello di prima, dove serve.
+
+    T203-b, 25/09: «NON GIUDICA ANCORA» NON E' «NON GIUDICA». All'avvio della
+    macchina undici server partono insieme al daemon, che tiene il lock e
+    carica per decine di secondi prima di rispondere; 25 s (l'attesa
+    dell'embedder) non bastavano, e un server su undici ha caricato torch e il
+    giudice in casa: 2474 MB contro 357, per tutta la sua vita. Dopo i 25 s si
+    continua quindi ad aspettare finche' un daemon e' IN ARRIVO (lock tenuto da
+    un processo vivo, non zombie), fino alla grazia che il daemon stesso si da'.
+    Si smette subito, invece, se il daemon ha RISPOSTO di no («this daemon
+    cannot judge»): quello non giudichera' mai, e aspettarlo lascerebbe le
+    prime scritture senza giudizio per niente. Nessun daemon in arrivo: il
+    ripiego di prima, dopo 25 s.
+
+    ``attesa_estesa=False`` e' per l'avvio SINCRONO (`HIPPO_PRELOAD_BACKGROUND=0`):
+    li' l'avvio aspetta questa funzione, e il client MCP chiude la connessione
+    dopo 30 s. L'attesa resta quella dell'embedder, come prima.
+    """
     try:
+        if _service_enabled():
+            # Il daemon lo avvia gia' il thread dell'embedder (sotto il lock di
+            # spawn): qui si SONDA e si aspetta, senza avviarne un secondo.
+            t0 = time.time()
+            fine_attesa = t0 + _DAEMON_WARM_WAIT_S
+            tetto = t0 + (_tetto_dell_arrivo_s() if attesa_estesa
+                          else _DAEMON_WARM_WAIT_S)
+            perche = "tetto dell'attesa"
+            detto = False
+            while True:
+                if _il_daemon_sa_giudicare():
+                    if log is not None:
+                        log.info("mcp_preload_moat_judge_delegato_al_daemon",
+                                 dopo_s=round(time.time() - t0, 1))
+                    return
+                adesso = time.time()
+                if adesso >= tetto:
+                    break
+                if adesso >= fine_attesa:
+                    from .local_grounding import rifiuto_dell_ultima_sonda
+                    rifiuto = rifiuto_dell_ultima_sonda()
+                    if rifiuto is not None:
+                        perche = f"il daemon rifiuta: {rifiuto}"
+                        break
+                    if not _un_daemon_e_in_arrivo():
+                        perche = "nessun daemon in arrivo"
+                        break
+                    if not detto and log is not None:
+                        log.info("mcp_preload_moat_judge_aspetta_il_daemon_in_arrivo",
+                                 tetto_s=round(tetto - t0))
+                    detto = True
+                time.sleep(1.0)
+            if log is not None:
+                log.info("mcp_preload_moat_judge_daemon_non_giudica_carico_in_casa",
+                         perche=perche, dopo_s=round(time.time() - t0, 1))
         from .local_grounding import get_local_judge
         get_local_judge()._ensure_scorer()
         if log is not None:
@@ -132,6 +232,32 @@ def _warm_moat_judge(*, log=None) -> None:
 
 def _service_enabled() -> bool:
     return os.environ.get("ENGRAM_ENCODE_SERVICE", "1").strip().lower() not in _FALSY
+
+
+#: ⚠️ QUELLO CHE `scipy.linalg` NON TRASCINA, e che percio' resta da importare
+#: quando la richiesta e' gia' in corso. La catena della prima scrittura e'
+#: `transformers` -> `sklearn` -> `scipy`, e `sklearn` non entra con
+#: `scipy.linalg`: con il daemon SPENTO il warm di sopra basta (3 giri su 3),
+#: con il daemon ACCESO — il caso dell'applicazione — no. Misurato alla porta
+#: MCP vera il 2026-09-17, stesso comando, una variabile sola::
+#:
+#:     senza questi:  chiamata 1  180.35 s  SCADUTO, store di prova 0
+#:     con questi  :  chiamata 1   33.90 s, chiamata 2 0.41 s, scritture 2 su 2
+#:
+#: ⚠️ `transformers` NON E' IN QUESTA LISTA ED E' UNA SCELTA, non una svista:
+#: da solo porta la memoria da 20,6 a 769,4 MB, mentre questi cinque la portano
+#: da 20,7 a 141,5. Sono 626 MB per ogni processo che apre il server, anche per
+#: chi legge soltanto, in cambio di 24 s sulla PRIMA scrittura e una volta
+#: sola. Presidiato da
+#: tests/test_il_preload_scalda_anche_sklearn_e_scipy.py, terza cella: se
+#: qualcuno ce lo rimette per far passare un rosso, il banco cade.
+_LIBRERIE_CHE_SCIPY_LINALG_NON_TRASCINA = (
+    "scipy.special",
+    "scipy.interpolate",
+    "scipy.optimize",
+    "scipy.stats",
+    "sklearn.utils.validation",
+)
 
 
 def _scalda_le_librerie_del_giudice(*, log=None) -> None:
@@ -196,12 +322,34 @@ def _scalda_le_librerie_del_giudice(*, log=None) -> None:
     try:
         from ._import_lock import lock_import
         with lock_import():
+            import scipy.interpolate  # noqa: F401
             import scipy.linalg  # noqa: F401 — e' il caricamento, non l'uso
+            import scipy.optimize  # noqa: F401
+            import scipy.special  # noqa: F401
+            import scipy.stats  # noqa: F401
         if log is not None:
             log.info("mcp_preload_librerie_del_giudice_pronte")
     except Exception as exc:  # noqa: BLE001 — il warm non deve mai uccidere il boot
         if log is not None:
             log.warning("mcp_preload_librerie_del_giudice_fallito", error=str(exc))
+    # SKLEARN STA IN UN BLOCCO SUO, e non e' pignoleria: non e' una dipendenza
+    # dichiarata (pyproject.toml porta scipy, non scikit-learn). Dove manca, i
+    # quattro di sopra devono restare caricati lo stesso — tenerlo nello stesso
+    # `try` farebbe dichiarare fallito un warm che invece ha funzionato, e
+    # nasconderebbe il warm buono dietro una libreria facoltativa.
+    #
+    # E dentro il lock ci vanno SOLO import: niente ciclo, niente __import__.
+    # Misurato il 18/09: il ciclo faceva cadere il presidio del lock
+    # («preload.py: dentro un with lock_import() c'e' qualcosa che non e' un
+    # import: For») e __import__ quello dei sink, che lo elenca con eval ed
+    # exec. Due presidi di casa, tutti e due nel giusto.
+    try:
+        from ._import_lock import lock_import
+        with lock_import():
+            import sklearn.utils.validation  # noqa: F401
+    except Exception as exc:  # noqa: BLE001 — facoltativa per disegno
+        if log is not None:
+            log.info("mcp_preload_sklearn_assente", error=str(exc))
 
 
 #: Quanto costa il modello del giudice, misurato il 2026-09-06 nel venv del
@@ -355,7 +503,8 @@ def preload_embedding(*, log=None) -> threading.Thread | None:
         if warm_ce:
             _run_reranker()
         if _deve_scaldare_il_giudice():
-            _warm_moat_judge(log=log)
+            # Sincrono: l'avvio aspetta, e il client MCP chiude dopo 30 s.
+            _warm_moat_judge(log=log, attesa_estesa=False)
         return None
 
     if warm_ce:

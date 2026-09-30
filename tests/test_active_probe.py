@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.active_probe import probe_fact
+from attic.active_probe import probe_fact
 
 
 @pytest.fixture()

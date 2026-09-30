@@ -851,8 +851,10 @@ def _sandbox_replay_audit(
     """Task #48 — append one replayable JSONL record for a sandbox_exec
     tool call. The stdout/stderr sha256 hashes let a replay of the same
     cmd+cwd be verified byte-deterministic. Distinct from SandboxedShell's
-    library-level audit (~/.engram/audit/, no hashes): this is the TOOL-CALL
-    layer. Dir override via ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern).
+    library-level audit (<data dir>/audit/, no hashes): this is the TOOL-CALL
+    layer, in <data dir>/sandbox-audit/. Dir override via
+    ENGRAM_SANDBOX_AUDIT_DIR (env-var pattern). T208 (24/09): the default was
+    ``Path.home() / ".engram"``, which ignored the data dir the user chose.
 
     Called on EVERY decision path — allow/deny/dry_run/timeout/error from
     execute() AND the cwd fail-CLOSED deny (critic O3 #3 counterexample fix:
@@ -862,9 +864,11 @@ def _sandbox_replay_audit(
     try:
         import hashlib
         from pathlib import Path
+
+        from verimem.config import cartella_dati_attuale
         adir = Path(
             os.environ.get("ENGRAM_SANDBOX_AUDIT_DIR")
-            or (Path.home() / ".engram" / "sandbox-audit")
+            or (cartella_dati_attuale() / "sandbox-audit")
         )
         adir.mkdir(parents=True, exist_ok=True)
         so = stdout or ""
@@ -1918,7 +1922,8 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "unsandboxed host shell. Deny-by-default: a command matching "
                 "no allowlist regex (and no denylist) is REJECTED. Destructive "
                 "ops (rm -rf, format, dd, curl|sh, etc) are always denied. "
-                "Every call is audited to ~/.engram/audit/sandbox-*.jsonl. "
+                "Every call is audited to <data dir>/audit/sandbox-*.jsonl "
+                "(the data dir the user chose; ~/.engram by default). "
                 "Set dry_run=true to validate without executing. Returns the "
                 "ExecResult: action (allow|deny|dry_run|timeout|error), "
                 "returncode, stdout, stderr, matched_rule, reason."
@@ -1996,7 +2001,8 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "Semantic recall over past episodes. Returns the top-k "
                 "episodes most similar to the query, with their outcomes "
-                "and final answers — useful for grounding new tasks."
+                "and final answers — useful for grounding new tasks. "
+                "Episodes only: for FACTS use hippo_facts_recall."
             ),
             inputSchema={
                 "type": "object",
@@ -2970,10 +2976,16 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                     },
                     "writer_role": {
                         "type": "string",
-                        "enum": [
-                            "agent_inference", "user",
-                            "system_hook", "trusted_hook",
-                        ],
+                        # ⛔ GENERATO, non scritto a mano. Fino al 2026-09-20
+                        # questa lista viveva qui e le liste canoniche stavano
+                        # in `gate_router`: la ricevuta consigliava
+                        # «set writer_role='external_content'» e questa stessa
+                        # porta rispondeva «schema violation», perche'
+                        # `external_content` non era fra i quattro valori. Il
+                        # prodotto dava un'istruzione che lui stesso rifiuta.
+                        # Ora i valori vengono da dove sono DEFINITI: se
+                        # domani quelle liste cambiano, la porta segue.
+                        "enum": _RUOLI_AMMESSI_DALLA_PORTA(),
                         "default": "agent_inference",
                         "description": (
                             "Cycle 2026-05-27 round 12 F-fix provenance. "
@@ -2981,7 +2993,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                             "'agent_inference' (default) = LLM-generated; "
                             "'user' = direct user input; 'system_hook' = "
                             "pre-compact/session hooks; 'trusted_hook' = "
-                            "explicitly elevated. Used together with "
+                            "explicitly elevated; 'external_content', "
+                            "'document' and 'document_ingest' = the text was "
+                            "INGESTED from a document rather than asserted, "
+                            "which is what the receipt tells you to declare "
+                            "when a record is somebody else's. Used together with "
                             "meta_narrative=true to bypass L1.x detectors "
                             "for retrospective continuity facts (master "
                             "pre-compact snapshots whose narrative "
@@ -4140,7 +4156,11 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
                 "debole verso il piu forte e marca la contraddizione risolta. "
                 "Trust pari -> lasciata per giudizio umano. Reversibile: la riga "
                 "resta in DB per lineage e sparisce dal recall di default. Agisce "
-                "solo su cio che il detector ha gia trovato (non scansiona)."
+                "solo su cio che il detector ha gia trovato (non scansiona). "
+                "OGGI non esegue numeric_clash ne' boolean_clash: restano aperti "
+                "e contati in left_open_kinds finche' la decisione col giudice "
+                "non e' fusa; fra due fatti senza topic lo scontro resta aperto "
+                "(left_open_no_topic)."
             ),
             inputSchema={
                 "type": "object",
@@ -6775,7 +6795,7 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
             description=(
                 "CYCLE #54 (2026-05-14) — observability for the "
                 "proactive briefing hook. Reads "
-                "~/.engram/audit/briefing.jsonl (written by the "
+                "<data dir>/audit/briefing.jsonl (written by the "
                 "UserPromptSubmit hook on every firing) and returns "
                 "aggregate stats: hit_rate, P50/P95 latency, "
                 "top_matched histogram, and a suggested "
@@ -7953,6 +7973,20 @@ async def _list_tools_unfiltered() -> list[t.Tool]:
     ]
 
 
+def _RUOLI_AMMESSI_DALLA_PORTA() -> list[str]:
+    """I `writer_role` che questa porta accetta, dalle liste canoniche.
+
+    Una superficie sola: `gate_router` sa quali ruoli esistono e cosa
+    significano, e qui si legge di la'. Serve perche' il consiglio che la
+    ricevuta stampa nomina un valore preso da quelle liste, e una porta che
+    lo rifiuta manda l'utente contro un errore facendogli fare esattamente
+    cio' che il prodotto gli ha detto.
+    """
+    from .gate_router import _EXTERNAL_ROLES, _TRUSTED_ROLES
+    return sorted({"agent_inference", "user"}
+                  | set(_EXTERNAL_ROLES) | set(_TRUSTED_ROLES))
+
+
 @server.list_tools()
 async def list_tools() -> list[t.Tool]:
     """Public MCP handler: full registry filtered by ENGRAM_MCP_TOOLS_PREFIX.
@@ -8614,6 +8648,24 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                               f"state — quarantined by the moat, kept out of "
                               f"default recall (not deleted: see "
                               f"hippo_quarantine_log / _restore)")
+                # T204: e ciò che il giudice NON ha giudicato va detto allo
+                # stesso modo. «stored» col giudice assente si leggeva identico
+                # a «stored» col giudice che ammetteva tutto; le parole sono
+                # quelle del campo `moat`, lo stesso insieme della scrittura.
+                _esiti = res.get("moat") or {}
+                _non_giudicati = {e: n for e, n in _esiti.items()
+                                  if e in ("not_run:no_judge", "not_run:unknown")}
+                if _non_giudicati:
+                    _quali = ", ".join(f"{e}: {n}" for e, n in sorted(_non_giudicati.items()))
+                    _nota += (f"; {sum(_non_giudicati.values())} of them were NOT "
+                              f"judged — the grounding judge was asked but did "
+                              f"not run ({_quali}), so they are stored as "
+                              f"unverified model_claim; `verimem doctor` says why")
+                _non_chiesti = int(_esiti.get("not_run:not_asked") or 0)
+                if _non_chiesti:
+                    _nota += (f"; the grounding judge was not asked for "
+                              f"{_non_chiesti} of them (ground=false: "
+                              f"not_run:not_asked)")
             return _ok({**res, "note": _nota})
 
         if name == "hippo_import_conversations":
@@ -8880,8 +8932,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             oc = arguments.get("outcome", "any")
             outcome_filter = oc if oc in ("success", "failure") else None
             hits = a.memory.recall(query, k=k, outcome_filter=outcome_filter)
-            _audit(name, arguments, outcome="ok")
-            return _ok([
+            _episodi = [
                 {
                     "id": ep.id, "task": ep.task_text, "outcome": ep.outcome,
                     "answer_preview": ep.final_answer[:200],
@@ -8891,16 +8942,120 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     "when": _iso_day(getattr(ep, "created_at", 0.0)),
                 }
                 for ep, score in hits
-            ])
+            ]
+            _blocchi = _ok(_episodi)
+            # IL CARTELLO (T107). Questa porta non e' rotta: rende EPISODI per
+            # contratto, e `[]` e' la risposta giusta quando episodi non ce ne
+            # sono. Cio' che mancava e' il cartello per chi ha bussato qui
+            # cercando un FATTO. Misurato il 2026-09-19, stesso store e stessa
+            # domanda:
+            #     hippo_recall        -> lista di 0
+            #     hippo_facts_recall  -> items: 1   (il fatto)
+            #
+            # VA IN UN SECONDO BLOCCO, non dentro la lista: un oggetto che non
+            # e' un episodio in mezzo agli episodi lo iterrebbe chi itera. Cosi'
+            # `content[0]` resta la lista nuda e chi la parsa non si accorge di
+            # niente (presidiato da una cella del banco).
+            #
+            # E SOLO A LISTA VUOTA CON FATTI NELLO STORE: se ci sono episodi e'
+            # rumore, e il rumore si impara a saltare.
+            if not _episodi:
+                try:
+                    _quanti_fatti = a.semantic.count()
+                except Exception:  # noqa: BLE001 — un cartello non rompe una lettura
+                    _quanti_fatti = 0
+                if _quanti_fatti:
+                    _blocchi.append(t.TextContent(type="text", text=(
+                        f"No episode matches this query, but the store holds "
+                        f"{_quanti_fatti} facts. This port returns EPISODES "
+                        f"only — for FACTS use hippo_facts_recall (semantic) "
+                        f"or hippo_facts_search (lexical)."
+                    )))
+            _audit(name, arguments, outcome="ok")
+            return _blocchi
 
         if name == "hippo_document_promote_chunk":
             # Roadmap #1 last brick: chunk -> gated Fact with exact citation.
+            #
+            # T191 — IL TESTO LO METTE L'INDICE, NON CHI CHIAMA. Qui c'era
+            # `hit = {k: arguments.get(k) for k in ("text", …)}`: le coordinate
+            # e il testo arrivavano insieme dal client e nessuno li confrontava
+            # con niente. Misurato su `42a09da9` chiamando il tool come lo
+            # chiama un client, senza indicizzare nulla:
+            #     stored = True | status = model_claim
+            #     citation = file:documento-che-non-esiste.md:0-60
+            # cioe' un'auto-attestazione entrava SERVIBILE con una provenienza
+            # che la faceva sembrare verificata da un file. La stessa frase da
+            # `hippo_remember`, stesso store e stessa esecuzione: `quarantined`.
+            #
+            # ⚠️ E IL SECONDO EFFETTO ERA PEGGIORE. Il tier documenti ha uno
+            # screen anti-injection che gira all'INDICIZZAZIONE (`flagged`,
+            # audit E3 del 2026-07-11) perche' un chunk con un payload,
+            # «restituito verbatim dal search nel contesto dell'agente, lo
+            # dirotta». Chi promuoveva senza passare dall'indice saltava anche
+            # quello e metteva il payload direttamente NEI FATTI:
+            #     detect_injection lo riconosce? True
+            #     promosso dalla porta -> stored= True status= model_claim
+            #
+            # La cura non e' un controllo nuovo: e' usare l'invariante che
+            # `document_index` dichiara gia' («indexed_text[start:end] ==
+            # text») e rileggere il chunk. Il `text` del chiamante non serve:
+            # o coincide con l'indice, e allora basta l'indice, o non coincide,
+            # ed e' proprio quello che non va usato. Risponde alla domanda
+            # lasciata aperta il 03/09 in
+            # `test_la_porta_mcp_non_sa_dire_che_la_fonte_e_di_terzi.py`: chi
+            # attesta che una fonte e' di terzi non puo' essere chi scrive —
+            # lo attesta l'indice, l'unico che ha visto il documento.
+            from verimem.document_index import DocumentIndex
             from verimem.document_promote import promote_chunk_to_fact
-            hit = {k: arguments.get(k) for k in
-                   ("text", "source_id", "start", "end", "version")}
+
+            _coord = (arguments.get("source_id"), arguments.get("start"),
+                      arguments.get("end"))
+            try:
+                hit = DocumentIndex().chunk_at(
+                    str(_coord[0]), int(_coord[1]), int(_coord[2]),
+                    version=arguments.get("version"))
+            except (TypeError, ValueError):
+                # Coordinate non numeriche: e' un errore del chiamante, e si
+                # dice com'e' invece di promuovere qualcosa a caso.
+                hit = None
+            # ⚠️ IL RIFIUTO E' UNA RICEVUTA, NON UN ERRORE NUDO. `_err()` rende
+            # `{"error": …}` e basta: chi legge deve DEDURRE che non e' stato
+            # scritto niente dall'assenza di `stored`, e un campo che manca si
+            # legge diverso da un campo che vale `False`. Qui si dice tutte e
+            # due le cose — non ho scritto, ed ecco perche' — con le stesse
+            # chiavi della risposta buona, cosi' chi chiama non cambia codice
+            # per leggere un no.
+            def _rifiuto(motivo: str) -> list[t.TextContent]:
+                _audit(name, arguments, outcome="rejected")
+                return _ok({"stored": False, "fact_id": None, "error": motivo,
+                            "citation": (f"file:{_coord[0]}:{_coord[1]}-"
+                                         f"{_coord[2]}"),
+                            "status": None, "grounding_score": None})
+
+            if hit is None:
+                return _rifiuto(
+                    f"no indexed chunk at {_coord[0]}:{_coord[1]}-{_coord[2]}. "
+                    "This tool promotes a chunk that THIS store has indexed: "
+                    "the text is read from the index, never from the call. "
+                    "Index the document first (hippo_document_index_file), "
+                    "then pass the source_id/start/end that "
+                    "hippo_document_semantic_search returned.")
+            if hit.get("flagged"):
+                # Un chunk marcato e' gia' nascosto dal recall dei documenti:
+                # promuoverlo in un fatto lo rimetterebbe in circolo da una
+                # porta che quella protezione non ce l'ha.
+                return _rifiuto(
+                    f"chunk {_coord[0]}:{_coord[1]}-{_coord[2]} is flagged by "
+                    "the injection screen and is hidden from document recall; "
+                    "promoting it would put it back in circulation as a fact.")
             res = promote_chunk_to_fact(
                 a.semantic, hit, claim=arguments.get("claim"),
-                topic=arguments.get("topic", "documents/promoted"))
+                topic=arguments.get("topic", "documents/promoted"),
+                # 1b.3: il timbro di questa porta, come gia' fanno le altre
+                # due vie di scrittura. NON si legge dagli argomenti: un
+                # principal fornito dal client sarebbe un tentativo di spoof.
+                principal=_MCP_PRINCIPAL)
             _audit(name, arguments,
                    outcome="ok" if res.get("stored") else "rejected")
             return _ok(res)
@@ -11741,14 +11896,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
 
         if name == "hippo_briefing_stats":
             # Resolve audit log path from canonical data dir.
-            from verimem._compat import _env_data_dir
             from verimem.briefing_stats import compute_stats
+            from verimem.config import cartella_dati_attuale
 
             # L'ordine degli alias e' dichiarato in `_compat._ALIAS_DATA_DIR`
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             jsonl_path = Path(data_dir) / "audit" / "briefing.jsonl"
             payload = compute_stats(
                 jsonl_path,
@@ -11759,7 +11914,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_refresh":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import SelfModelStore
             from verimem.self_model_refresh import (
                 compute_diff,
@@ -11770,7 +11925,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )
@@ -11829,14 +11984,14 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_get":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import SelfModelStore
 
             # L'ordine degli alias e' dichiarato in `_compat._ALIAS_DATA_DIR`
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )
@@ -11845,7 +12000,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             return _ok(payload)
 
         if name == "hippo_self_model_update":
-            from verimem._compat import _env_data_dir
+            from verimem.config import cartella_dati_attuale
             from verimem.self_model import (
                 SelfModelStore,
                 SelfModelTooLarge,
@@ -11855,7 +12010,7 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             # (HIPPO_DATA_DIR per primo: e' l'appiglio esplicito di isolamento).
             # Queste quattro copie avevano la precedenza OPPOSTA, quindi la
             # variabile del manutentore vinceva sull'isolamento di un test.
-            data_dir = _env_data_dir() or str(Path.home() / ".engram")
+            data_dir = str(cartella_dati_attuale())  # T208, secondo lotto: il risolutore unico
             store = SelfModelStore(
                 db_path=Path(data_dir) / "self_model.db",
             )
@@ -14220,10 +14375,16 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                     _SN(grounding_score=_gs_out),
                     [w for w in (_gate_warnings or []) if isinstance(w, dict)],
                     source=_source)
+                # 2026-09-18 (T115): il TESTO non e' piu' scritto qui. Le tre
+                # uscite (questa, `cli.py` e la riga di lettura di
+                # `temporal_context`) lo prendono da
+                # `significato_del_punteggio`, perche' scritte a mano avevano
+                # gia' divergito: la lettura prometteva «la fonte lo implica»
+                # mentre queste due dicevano l'opposto. Qui il rendering resta
+                # identico byte per byte; cambia solo DA DOVE viene la frase.
+                from verimem.client import significato_del_punteggio as _sig
                 if _esito_moat == "failed":
-                    _moat = (
-                        f"judged {float(_gs_out):.1f} — the source does NOT "
-                        "entail this fact: that is why it is quarantined")
+                    _moat = f"judged {float(_gs_out):.1f} — {_sig(_esito_moat)}"
                 elif _esito_moat == "passed":
                     # CHI ha trattenuto, se non e' stato il moat. Senza questo
                     # la riga direbbe il vero e lascerebbe comunque il lettore
@@ -14234,19 +14395,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                         and str(w.get("layer", "")).startswith("L1")})
                     _trattenuto = getattr(fact, "status", "") == "quarantined"
                     _moat = (
-                        f"judged {float(_gs_out):.1f} — the source SCORES as "
-                        "supporting this fact: that is the judge's score, not "
-                        "a check that the fact follows from it"
+                        f"judged {float(_gs_out):.1f} — {_sig(_esito_moat)}"
                         + (f"; the moat PASSED — this fact is quarantined by "
                            f"{', '.join(_altri)}, not by the moat"
                            if _trattenuto and _altri else
                            "; the moat passed, and the fact is quarantined by "
                            "another screen" if _trattenuto else ""))
                 else:
-                    _moat = (
-                        f"{_esito_moat} — the entailment moat did not run on "
-                        f"this write; the {float(_gs_out):.1f} next to it is "
-                        "not a verdict on the source")
+                    # ⚠️ UNA COSA CAMBIA QUI, e la dichiaro invece di lasciarla
+                    # scoprire: il numero non e' piu' DENTRO la frase («the
+                    # 98.9 next to it» -> «the score next to it»). Su questo
+                    # ramo `_gs_out` puo' essere None (`not_run:unknown`), e il
+                    # punteggio esce comunque nel suo campo della ricevuta.
+                    _moat = f"{_esito_moat} — {_sig(_esito_moat)}"
             elif not _source:
                 _moat = ("not run — no source, so the entailment moat had "
                          "nothing to check; pass source=\"<the evidence "
@@ -14331,6 +14492,9 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             _judged_out = _judged_at_all(_gs_out)
             from .local_grounding import esecutore_dell_ultimo_giudizio
             _chi_ha_giudicato_qui = esecutore_dell_ultimo_giudizio()
+            from ._compat import provenienza_data_dir as _prov_dd
+            _provenienza_store_mcp = _prov_dd()
+            _store_mcp = str(getattr(a.semantic, "db_path", "") or "")
             return _ok({
                 "ok": True,
                 # Seconda chiave, e il posto e' la meta' della cura: la
@@ -14378,6 +14542,22 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 "status": getattr(fact, "status", "model_claim"),
                 "verified_by": list(getattr(fact, "verified_by", [])),
                 "source_signature": getattr(fact, "source_signature", None),
+                # DOVE ha scritto e CHI l'ha deciso (T91) — e su QUESTA porta
+                # conta piu' che altrove: e' l'unica senza una console da
+                # leggere, quindi se la ricevuta tace il chiamante non ha
+                # nessun altro posto dove guardare. Il campo e' ripetuto qui e
+                # non ereditato da `client.py` per la ragione scritta dodici
+                # righe piu' sotto: questa lista e' esplicita, e un campo
+                # aggiunto alla libreria non arriverebbe mai fin qui.
+                # ⚠️ `getattr`: un doppio di test puo' non esporre `db_path`, e
+                # una RICEVUTA non deve mai far cadere una scrittura che e'
+                # gia' andata a buon fine. Misurato in CI: `AttributeError:
+                # '_FakeSemantic' object has no attribute 'db_path'` su 15
+                # celle, riprodotto in locale 10 failed / 9 passed. E' la
+                # seconda volta con lo stesso doppio (il 13/09 non aveva
+                # `get`): la porta MCP si prova con i SUOI file di test.
+                "store": _store_mcp,
+                "store_decided_by": _provenienza_store_mcp.deciso_da_per(_store_mcp),
                 # Cycle 138: surface anti-confab warnings so the caller
                 # (LLM or operator) sees what fired and can adjust the
                 # proposition / verified_by before retry.
@@ -14401,10 +14581,19 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
                 # `quarantined_by` qui sopra. DESCRITTIVO: `True` dice che un
                 # layer ha trattenuto mentre il giudice era a favore, NON che
                 # il gate abbia sbagliato.
+                # ⚠️ IL BACKEND DECIDE LA SOGLIA: 40 col CE locale, 70 con
+                # claude. Senza, questa colonna confrontava 90 — un margine
+                # prudente, non una cut di ammissione — e taceva sulla fascia
+                # [cut, 90). `_gate` e' lo stesso oggetto da cui nasce
+                # `_adj_out` qui sotto, quindi il giudice e' quello di QUESTA
+                # scrittura e non un valore di ambiente. Stessa espressione
+                # nelle altre tre porte: un criterio, una scrittura.
                 **({"withheld_despite_judge": True}
                    if (str(getattr(fact, "status", "")) in ("quarantined",
                                                             "rejected")
-                       and _judged_true_mcp(_gs_out)) else {}),
+                       and _judged_true_mcp(
+                           _gs_out,
+                           backend=getattr(_gate, "judge", None))) else {}),
                 # Il verdetto per esteso: chi ha deciso, con che punteggio,
                 # contro quale soglia e a che distanza. Non condizionale —
                 # la promessa e' «ogni scrittura», ammesse comprese.

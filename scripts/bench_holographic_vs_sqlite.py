@@ -60,7 +60,7 @@ def bench_holographic(
     d: int = 8192,
 ) -> dict:
     """Bench HolographicMemory at given cleanup_pool_cap."""
-    from verimem.holographic_memory import HolographicMemory
+    from attic.holographic_memory import HolographicMemory
 
     mem = HolographicMemory(d=d, cleanup_pool_cap=cleanup_pool_cap)
     # Write phase

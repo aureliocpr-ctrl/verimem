@@ -103,7 +103,7 @@ def test_skill_with_relevant_episode_neighbours_outranks_isolated_one(
             skills_used=["sk_busy"],
         ))
 
-    from verimem.hippo_pagerank import retrieve_pagerank
+    from attic.hippo_pagerank import retrieve_pagerank
 
     ranked = retrieve_pagerank(
         query="fix calc.py arithmetic bug",
@@ -149,7 +149,7 @@ def test_episode_using_high_fitness_skill_ranks_above_same_cosine_low_fitness(
         skills_used=["sk_weak"],
     ))
 
-    from verimem.hippo_pagerank import retrieve_pagerank
+    from attic.hippo_pagerank import retrieve_pagerank
 
     ranked = retrieve_pagerank(
         query="fix calc.py arithmetic", skills=skills, memory=mem, top_k=4,
@@ -185,7 +185,7 @@ def test_pagerank_retrieval_is_deterministic(tmp_path):
             skills_used=[f"sk{i % 4}"],
         ))
 
-    from verimem.hippo_pagerank import retrieve_pagerank
+    from attic.hippo_pagerank import retrieve_pagerank
 
     a = retrieve_pagerank(
         query="topic 1", skills=skills, memory=mem, top_k=5,
@@ -208,7 +208,7 @@ def test_empty_skills_or_memory_returns_empty(tmp_path):
         dir_path=tmp_path / "skills_dir", db_path=tmp_path / "sk.db",
     )
     mem = EpisodicMemory(db_path=tmp_path / "ep.db")
-    from verimem.hippo_pagerank import retrieve_pagerank
+    from attic.hippo_pagerank import retrieve_pagerank
     assert retrieve_pagerank(
         query="anything", skills=skills, memory=mem, top_k=3,
     ) == []
@@ -231,7 +231,7 @@ def test_pagerank_handles_isolated_nodes(tmp_path):
     mem.store(_ep(
         id_="orphan_ep", task_text="y", skills_used=[],
     ))
-    from verimem.hippo_pagerank import retrieve_pagerank
+    from attic.hippo_pagerank import retrieve_pagerank
     result = retrieve_pagerank(
         query="anything", skills=skills, memory=mem, top_k=2,
     )

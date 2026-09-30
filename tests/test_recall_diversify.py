@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import numpy as np
 
-from verimem.diversify import mmr_select
+from attic.diversify import mmr_select
 
 
 def _v(*xs) -> np.ndarray:

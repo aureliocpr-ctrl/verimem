@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import pytest
 
-from verimem.active_probe import probe_fact
+from attic.active_probe import probe_fact
 from verimem.epistemic import make_proven
 from verimem.guardian import correct_read
 

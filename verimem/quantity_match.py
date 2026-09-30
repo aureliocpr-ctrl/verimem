@@ -110,7 +110,30 @@ _QUANT_RE = re.compile(
     # (`1,234`), quindi non entra qui e resta all'ambiguita' dichiarata —
     # esattamente come `_PUNTO_AMBIGUO` fa con `45.000`. Allargare a `[.,]\d+`
     # avrebbe letto «1,234 facts» come milleduecentotrentaquattro virgola.
-    r"(?<![A-Za-z0-9_])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)(?:\s{0,3}-?\s{0,3}([^\W\d_]+))?"
+    # ⚠️ L'UNITA' PUO' FINIRE CON UNA CIFRA, MA SOLO SE E' UNA DI QUESTE OTTO
+    # FORME. «400 m3» e' un volume e «400 m2» un'area; il gruppo qui sotto
+    # esclude le cifre, quindi quella grafia usciva SENZA unita' e
+    # volume-contro-area non veniva colto (ammesso a 91,95 alla porta).
+    # ⛔ LA GENERALIZZAZIONE E' FALSIFICATA, e il numero sta qui perche' non
+    # torni: ammettere UNA CIFRA QUALUNQUE (`[^\W\d_]+\d?`) cambia la lettura
+    # di 1311 proposizioni su 18 310 e legge come grandezze gli spezzoni di
+    # SHA — `e2` 103 volte, `bdb6` 82, `a7` 63, `ad7` 61, `aefa1` 61. La lista
+    # chiusa ha invece raggio ZERO sul corpus, e il presidio sta nel banco.
+    # L'alternativa va PRIMA del gruppo generico: la regex prova da sinistra,
+    # e su «m3x» ricade sul generico come faceva prima.
+    # ⚠️ IL CANCELLETTO: `#96` NOMINA una richiesta, non afferma una grandezza.
+    # T149, misurato su tre fermate vissute da un pari che salvava le misure
+    # di una sera col prodotto: `L4.1` accusava il claim di «un valore che la
+    # fonte non contiene: 96», con il giudice a 99,93 e
+    # `withheld_despite_judge=True`. Raggio sullo store: 1339 proposizioni
+    # contengono `#<numero>`, 2 sono quarantenate con L4.1 fra i colpevoli —
+    # ed entrambe hanno il giudice sopra 90, cioe' sono per intero la classe
+    # «il moat era d'accordo e un dettaglio ha fermato».
+    # ⛔ SOLO IL CANCELLETTO, e il perche' del NO all'ovvia estensione sta nel
+    # banco: «i numeri dopo `=` non contano» spegnerebbe `EXIT=0` contro
+    # `EXIT=1`, cioe' meta' dell'evidenza che questo prodotto confronta.
+    r"(?<![A-Za-z0-9_#])(?<!\d\.)(?<!\d,)(\d+(?:\.\d+|,\d{1,2})?)"
+    r"(?:\s{0,3}-?\s{0,3}((?:mm|cm|km|ft|in|m)[23]|[^\W\d_]+))?"
     r"(?![A-Za-z0-9_])(?!\.\d)(?!,\d)",
     re.UNICODE,
 )
@@ -362,7 +385,17 @@ CONTRAST_QUALIFIERS: tuple[frozenset[str], ...] = (
 #: La coda in HIRAGANA di un'unita' giapponese. Non e' una lista di verbi: e'
 #: la struttura ortografica della lingua (okurigana), che scrive le desinenze
 #: in hiragana e lascia sostantivi e unita' in katakana o kanji.
-_CODA_HIRAGANA_RE = re.compile(r"[ぁ-ゟ]+$")
+#: ⏱️ NON E' UNA REGEX, ED E' IL PUNTO. `re.compile(r"[ぁ-ゟ]+$").sub("", w)`
+#: faceva la stessa cosa in tempo QUADRATICO: su una parola di molti hiragana
+#: che non finisce in hiragana il `+$` fa ripartire il motore da ogni
+#: posizione, e sono **12 432,8 ms** su 40 000 caratteri (misurato; CodeQL
+#: `py/polynomial-redos`, alert 1491). `str.rstrip` toglie dalla coda i
+#: caratteri dell'insieme in una passata sola, senza backtracking.
+#: ⚠️ L'insieme e' LO STESSO intervallo di prima — U+3041..U+309F — e
+#: l'equivalenza sui nove casi del presidio (code verbali tolte, contatori
+#: `つ`/`まい`/`ぴき` conservati) e' una cella del banco: una cura che va piu'
+#: veloce cambiando un risultato sarebbe un difetto nuovo con un cronometro.
+_CODA_HIRAGANA = "".join(chr(c) for c in range(0x3041, 0x30A0))
 
 
 def _senza_coda_verbale_giapponese(w: str) -> str:
@@ -407,7 +440,7 @@ def _senza_coda_verbale_giapponese(w: str) -> str:
     «ミリグラム含», dove 含 è la radice di 含まれる. Il taglio migliora e non
     chiude, ed è dichiarato invece che taciuto.
     """
-    tagliata = _CODA_HIRAGANA_RE.sub("", w)
+    tagliata = w.rstrip(_CODA_HIRAGANA)
     return tagliata if tagliata else w
 
 
@@ -525,7 +558,14 @@ _OPENERS, _CLOSERS = "([{", ")]}"
 #: footnote from a phrase.
 _SECTION_DELIMS = "|\n\r.;—-•"
 #: An upper-case label may sit between the delimiter and the marker.
-_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]*\s*$")
+#: ⏱️ TETTI (CodeQL alert 1236). Sulla corsa PURA di maiuscole questa regex e'
+#: lineare — ed e' il motivo per cui una verifica del 25/07 l'aveva giudicata
+#: falso positivo, provando sei famiglie di corse pure. Sulla corsa che NON
+#: chiude il match («AAAA…!») riparte da ogni posizione: **702,2 ms** su 8000
+#: caratteri. Una popolazione mancante, non una lettura sbagliata.
+#: Sessantaquattro caratteri di etichetta e otto spazi coprono
+#: «EMPIRICAL EVIDENCE:» e i suoi parenti; l'equivalenza e' nel banco.
+_LABEL_RE = re.compile(r"[A-Z][A-Z0-9_-]{0,64}\s{0,8}$")
 
 
 def _inside_brackets(text: str, pos: int) -> bool:
@@ -1131,6 +1171,77 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
     return [(m.start(), m.end()) for m in _DATA_RE.finditer(testo)]
 
 
+#: UNITA' COMPOSTE: due parole che nominano UNA grandezza sola.
+#:
+#: PERCHE' (19/09). L'unita' era «UNA parola dopo il numero» e il qualificatore
+#: cadeva fuori: «metri cubi» e «metri quadri» arrivavano al confronto come lo
+#: STESSO `metro`, quindi il modulo vedeva stessa unita' e stesso valore e
+#: concludeva — correttamente per il suo contratto — che non c'era conflitto.
+#: Il censimento sul corpus: 12 unita' composte su 16 troncate. E in inglese la
+#: stessa forma sbaglia di piu': fra «cubic meters» e «cubic inches» ci sono
+#: 61 024 volte (1 m3 = 61 023,7 in3), e senza il qualificatore quell'errore
+#: passa per un fatto coerente.
+#:
+#: ⚠️ LE DUE LINGUE LE SCRIVONO NELL'ORDINE OPPOSTO, e una cura che ne regge uno
+#: solo lascia meta' del difetto: l'italiano perde l'AGGETTIVO che segue
+#: («metri **cubi**»), l'inglese perde il SOSTANTIVO che segue («**cubic**
+#: meters»). Qui si guardano entrambe le direzioni.
+#:
+#: ⚠️ E NON SI ALLARGA LA CATTURA DEL REGEX, di proposito. Il modulo porta gia'
+#: la cicatrice: allargare `[A-Za-z]` a «una lettera di qualunque alfabeto» rese
+#: incomplete le liste a valle (`_NON_UNIT_WORDS`) che nessuno aveva sbagliato.
+#: Qui la seconda parola si LEGGE dal testo e non entra in nessuna lista: a
+#: valle arriva una chiave normalizzata come prima, o esattamente cio' che
+#: arrivava prima.
+_QUALIFICATORE_UNITA = {
+    "cubo": "3", "cubi": "3", "cubico": "3", "cubici": "3",
+    "cubic": "3", "cubica": "3", "cubiche": "3",
+    "quadro": "2", "quadri": "2", "quadrato": "2", "quadrati": "2",
+    "square": "2", "quadrata": "2", "quadrate": "2",
+}
+#: ⚠️ LE CHIAVI SONO LE FORME **NORMALIZZATE**, non quelle scritte: `norm_unit`
+#: gira prima. Le ho lette dal prodotto invece di dedurle, e tre non erano quelle
+#: che avrei scritto a memoria — «inches» -> `inche`, «piedi» -> `piedo`,
+#: «feet» -> `feet` (il plurale irregolare non si tocca).
+_TESTA_UNITA = {
+    "metro": "m", "meter": "m", "metre": "m",
+    "piede": "ft", "piedo": "ft", "foot": "ft", "feet": "ft",
+    "pollice": "in", "pollici": "in", "inch": "in", "inche": "in",
+}
+_PAROLA_DOPO_RE = re.compile(r"\s{0,3}([^\W\d_]+)")
+
+#: La GRANDEZZA di un'unita', per le sole unita' che questo modulo compone o
+#: riconosce come abbreviazioni correnti. Serve a una domanda sola: «queste due
+#: unita' misurano cose diverse?». Non e' una tavola di conversione e non deve
+#: diventarlo: qui non si converte niente, si distingue soltanto.
+_GRANDEZZA = {
+    "m2": "area", "mq": "area", "ft2": "area", "in2": "area",
+    "m3": "volume", "mc": "volume", "ft3": "volume", "in3": "volume",
+}
+
+
+def _unita_composta(claim: str, unit_s: str, fine: int) -> str | None:
+    """La chiave dell'unita' COMPOSTA, se le due parole ne nominano una.
+
+    Rende ``None`` quando non c'e' nulla da comporre — e allora il chiamante usa
+    `norm_unit` come sempre. Non tocca il caso normale.
+    """
+    if not unit_s or fine < 0:
+        return None
+    prima = norm_unit(unit_s)
+    dopo_m = _PAROLA_DOPO_RE.match(claim, fine)
+    if not dopo_m:
+        return None
+    dopo = norm_unit(dopo_m.group(1))
+    #: italiano: testa + qualificatore   («metri cubi»)
+    if prima in _TESTA_UNITA and dopo in _QUALIFICATORE_UNITA:
+        return _TESTA_UNITA[prima] + _QUALIFICATORE_UNITA[dopo]
+    #: inglese: qualificatore + testa    («cubic meters»)
+    if prima in _QUALIFICATORE_UNITA and dopo in _TESTA_UNITA:
+        return _TESTA_UNITA[dopo] + _QUALIFICATORE_UNITA[prima]
+    return None
+
+
 def extract_quantities(text: str, *,
                        come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
@@ -1223,7 +1334,8 @@ def extract_quantities(text: str, *,
             val = float(num_s.replace(",", "."))
         except ValueError:  # pragma: no cover — regex guarantees numeric
             continue
-        out.add((norm_unit(unit_s), val))
+        out.add((_unita_composta(claim, unit_s, m.end(2) if m.group(2) else -1)
+                 or norm_unit(unit_s), val))
     return out
 
 
@@ -1366,7 +1478,10 @@ def _senza_diacritici(text: str) -> str:
 #: una cosa DIVERSA — se il testo sia privo di spazi fra le parole. Il coreano
 #: gli spazi ce li ha, quindi allargarla cambierebbe quel verdetto senza che
 #: nessuno l'abbia chiesto. Per i bigrammi c'è ``_SENZA_PAROLE_RE`` sotto.
-_CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
+#: ⚠️ Estremi scritti come escape e non come caratteri: il 25/09 in
+#: `_SENZA_PAROLE_RE` qui sotto U+F900 era diventato U+8C48 (la sua forma
+#: NFC, identica a vista) e la classe prendeva 11600 punti non dichiarati.
+_CJK_RE = re.compile(r"[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]{2,}")
 
 
 #: Le scritture in cui la PAROLA non è l'unità utile del confronto — 15/08.
@@ -1382,10 +1497,15 @@ _CJK_RE = re.compile(r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿]{2,}")
 #: criterio non diventa generoso, che è il rischio vero di un n-gramma.
 #: ⚠️ Controprova: italiano, inglese, russo, cinese e giapponese danno token
 #: IDENTICI a prima — la riga sotto non tocca chi già funzionava.
+#: ⚠️ CodeQL #1310, 25/09: qui il primo estremo dei CJK compatibili era il
+#: carattere U+8C48 invece di U+F900, e la classe prendeva anche U+A000-U+F8FF
+#: (Yi, Vai, Cherokee, Latino esteso D ed E, area d'uso privato). Gli estremi
+#: ora sono escape, e `tests/test_la_classe_senza_parole_e_quella_dichiarata.py`
+#: confronta i punti presi con questo commento.
 _SENZA_PAROLE_RE = re.compile(
-    r"[぀-ヿㇰ-ㇿ㐀-䶿一-鿿豈-﫿"
-    r"가-힯ᄀ-ᇿ"       # hangul: sillabe precomposte e jamo
-    r"฀-๿]{2,}")       # thai
+    r"[\u3040-\u30ff\u31f0-\u31ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff"
+    r"\uac00-\ud7af\u1100-\u11ff"       # hangul: sillabe precomposte e jamo
+    r"\u0e00-\u0e7f]{2,}")       # thai
 
 
 def _bigrammi_cjk(text: str) -> set[str]:
@@ -1593,6 +1713,19 @@ def conflict_from_parts(
         for (ub, vb) in qb:
             if ua == ub and va != vb:
                 return (ua, va, vb)
+            #: STESSA cifra, GRANDEZZA diversa — «400 metri cubi» contro una
+            #: fonte che dice «400 mq». Il contratto storico («valore diverso,
+            #: stessa unita'») non lo vedeva, e fino al 19/09 nemmeno poteva:
+            #: l'estrattore rendeva `metro` per entrambi.
+            #: ⚠️ SI ACCUSA SOLO QUANDO ENTRAMBE LE UNITA' SONO NOTE e nominano
+            #: grandezze diverse. Due unita' sconosciute, o una sola nota, o un
+            #: numero NUDO nella fonte non sono un conflitto: sarebbe inventare.
+            #: Il perimetro e' ristretto **e dichiarato** (`_GRANDEZZA`), perche'
+            #: un normalizzatore di unita' senza confini diventa un dizionario
+            #: infinito che tace sul primo caso che non conosce.
+            if (ua != ub and _GRANDEZZA.get(ua) and _GRANDEZZA.get(ub)
+                    and _GRANDEZZA[ua] != _GRANDEZZA[ub]):
+                return (f"{ua}/{ub}", va, vb)
     return None
 
 
@@ -1721,7 +1854,102 @@ _VERSION_CARRIER_TOKENS = frozenset({"version", "release", "build"})
 _CAPS_NAME_RE = re.compile(r"\b[A-Z][a-zA-Z]{2,}\b")
 
 #: L'inizio di una frase, dove la maiuscola e' punteggiatura e non un nome.
-_APRE_LA_FRASE_RE = re.compile(r"(?:^|[.;:!?\n]\s*|^\s*[-•*]\s*)([A-Z][a-zA-Z]{2,})")
+#: ⏱️ TETTI (CodeQL alert 1275): `\n` sta sia nella classe dei delimitatori sia
+#: in `\s*`, e quell'ambiguita' fa riprovare il motore a ogni capo riga —
+#: **486,8 ms** su 8000 newline. Otto spazi dopo un delimitatore e trentadue
+#: lettere per una parola sono generosi, e l'equivalenza e' nel banco.
+_APRE_LA_FRASE_RE = re.compile(
+    r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})([A-Z][a-zA-Z]{2,32})")
+
+#: LE APERTURE CHE NON SONO NOMI, NELLE DUE LINGUE. La lista qui sotto la
+#: legge SOLO `_nomi_propri`, ed e' separata da `_NON_UNIT_WORDS` apposta:
+#: quella la legge anche il riconoscimento delle unita', e allungarla per i
+#: nomi cambierebbe quali parole dopo un numero contano come unita'.
+#: Misurato il 25/09 sulle memorie estratte da conversazioni inglesi vere:
+#: «Both», «Being» e «Working» a inizio frase erano contati come nomi propri,
+#: e due memorie VERE su 62 venivano segnalate per un «nome» che la fonte non
+#: aveva. E il 26/09 sullo store vero, in sola lettura, dal lato italiano: fra
+#: i fatti ammessi con una parola maiuscola assente dalla loro fonte, «Nell»
+#: 63 volte, «Sull» 13, «Due» 11, «Senza» 11, «Dentro» 7, «Sotto» 6,
+#: «Secondo» 6, «Tre» 5 — l'elisione, le preposizioni e i numeri in apertura.
+#: Dentro stanno solo parole che non possono essere un nome in nessuna
+#: lettura: «Will», «May», «Otto», «Ora», «Mai», «Sei», «Mille» e «Cento»
+#: restano fuori, perche' possono essere un nome di persona o di luogo.
+_APERTURE_NON_NOMI = frozenset({
+    # articoli, determinanti, quantificatori
+    "a", "an", "the", "this", "that", "these", "those", "both", "each", "every",
+    "all", "some", "any", "no", "many", "most", "several", "such", "another",
+    "either", "neither", "few", "much", "other",
+    # pronomi e possessivi
+    "he", "she", "it", "we", "they", "you", "his", "her", "its", "our", "their",
+    "my", "your", "him", "them", "who", "whom", "whose", "which", "what",
+    "someone", "everyone", "everybody", "nobody", "something", "everything",
+    "nothing", "anyone", "anything",
+    # ausiliari e modali
+    "is", "are", "was", "were", "be", "been", "being", "am", "do", "does", "did",
+    "doing", "have", "has", "had", "having", "can", "could", "should", "would",
+    "must", "might", "shall",
+    # congiunzioni e subordinanti
+    "and", "but", "or", "nor", "so", "yet", "because", "although", "though",
+    "while", "if", "when", "whenever", "where", "since", "unless", "until",
+    "after", "before", "once", "whether",
+    # preposizioni
+    "about", "above", "across", "against", "along", "among", "around", "at",
+    "behind", "below", "beside", "between", "beyond", "by", "despite", "down",
+    "during", "except", "for", "from", "in", "inside", "into", "like", "near",
+    "of", "off", "on", "onto", "out", "outside", "over", "through", "throughout",
+    "to", "toward", "towards", "under", "upon", "with", "within", "without",
+    # avverbi che aprono una frase
+    "also", "however", "therefore", "thus", "still", "just", "only", "even",
+    "recently", "currently", "today", "yesterday", "tomorrow", "always", "never",
+    "often", "sometimes", "usually", "finally", "meanwhile", "moreover",
+    "furthermore", "additionally", "actually", "here", "there", "now", "later",
+    "soon", "already", "again", "overall", "instead", "otherwise", "perhaps",
+    "maybe", "then", "first", "next", "last",
+    # numeri in lettere
+    "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten",
+    "hundred", "thousand",
+    # italiano: le forme elise, che la regex dei nomi taglia all'apostrofo
+    "nell", "sull", "dall", "dell", "coll", "quell", "nessun",
+    # italiano: preposizioni e avverbi che aprono una frase
+    "senza", "dentro", "sotto", "sopra", "secondo", "verso", "oltre", "durante",
+    "mediante", "presso", "circa", "invece", "inoltre", "infatti", "tuttavia",
+    "pertanto", "ecco", "oggi", "ieri", "domani", "qui", "qua", "sempre",
+    "spesso",
+    # italiano: dimostrativi e quantificatori
+    "questo", "questa", "questi", "queste", "quello", "quella", "quelli",
+    "quelle", "ogni", "ciascun", "ciascuno", "alcuni", "alcune", "molti",
+    "molte", "tutti", "tutte", "nessuno",
+    # italiano: numeri in lettere
+    "due", "tre", "quattro", "cinque", "sette", "nove", "dieci",
+})
+
+#: UN GERUNDIO CHE APRE LA FRASE COL SUO COMPLEMENTO E' UN'AZIONE, NON UN NOME,
+#: in tutte e due le lingue: «Working on cars…», «Being in an environment…»,
+#: «Scrivendo il test…». Serve il complemento subito dopo: «Beijing hosts» e
+#: «Orlando e'» restano nomi. Misurato il 25/09 sullo store vero, in sola
+#: lettura: 184 fatti su 18388 aprono cosi', con 61 parole distinte, e nessuna
+#: e' un nome — quasi tutte gerundi italiani («Scrivendo», «Interrogando»,
+#: «Cercando») che fino a qui contavano come nomi propri. Il caso che la regola
+#: sbaglierebbe, un nome in -ando seguito da una preposizione in apertura
+#: («Armando con la moglie…»), sullo stesso store e' zero.
+#: ⏱️ Tetti come in `_APRE_LA_FRASE_RE`: nessun quantificatore aperto.
+_GERUNDIO_IN_APERTURA_RE = re.compile(
+    r"(?:^|[.;:!?\n]\s{0,8}|^\s{0,8}[-•*]\s{0,8})"
+    r"([A-Z][a-z]{2,32}(?:ing|ando|endo))\s{1,8}([a-zA-Z]{1,32})")
+_COMPLEMENTO_DEL_GERUNDIO = frozenset({
+    # inglese: preposizioni, articoli, possessivi, pronomi
+    "on", "in", "at", "with", "for", "to", "the", "a", "an", "his", "her",
+    "their", "my", "our", "your", "its", "it", "this", "that", "these", "those",
+    "as", "like", "about", "from", "out", "up", "down", "over", "into",
+    "through", "without", "by", "around",
+    # italiano: preposizioni e articoli
+    "il", "lo", "la", "i", "gli", "le", "un", "una", "uno", "di", "da", "con",
+    "su", "per", "tra", "fra", "al", "allo", "alla", "ai", "agli", "alle", "del",
+    "dello", "della", "dei", "degli", "delle", "nel", "nello", "nella", "nei",
+    "negli", "nelle", "sul", "sullo", "sulla", "sui", "sugli", "sulle", "col",
+    "coi",
+})
 
 def _nomi_propri(testo: str) -> set[str]:
     """Le parole maiuscole di *testo* che sono davvero NOMI PROPRI.
@@ -1776,8 +2004,12 @@ def _nomi_propri(testo: str) -> set[str]:
     """
     testo = testo or ""
     apre = {m.group(1) for m in _APRE_LA_FRASE_RE.finditer(testo)}
+    azioni = {m.group(1) for m in _GERUNDIO_IN_APERTURA_RE.finditer(testo)
+              if m.group(2).lower() in _COMPLEMENTO_DEL_GERUNDIO}
     return {w for w in _CAPS_NAME_RE.findall(testo)
-            if not (w in apre and w.lower() in _NON_UNIT_WORDS)}
+            if not (w in apre and (w.lower() in _NON_UNIT_WORDS
+                                   or w.lower() in _APERTURE_NON_NOMI))
+            and w not in azioni}
 
 
 def _named_subjects_disjoint(text_a: str, text_b: str) -> bool:
@@ -2400,6 +2632,30 @@ def _bare_numbers(text: str) -> set[str]:
     return {f"{v:g}" for (u, v) in extract_quantities(text) if not u}
 
 
+#: 25/09 — IL PREZZO NON E' UN INDICE. «The plan costs 150 € per month» e «…100 €…»
+#: diventavano gli indici («costs», 150) e («costs», 100): `extract_quantities` non
+#: conosce il simbolo della valuta come unita', il numero restava NUDO e la regola
+#: posizionale lo leggeva come «message 0». La coppia era «due record diversi», il router
+#: la faceva coesistere, e l'esempio del README (100 € → 150 €, stessa fonte) non
+#: ritirava piu' il vecchio valore, mentre con «euros» in lettere lo ritirava (job di
+#: accettazione dal wheel, riga 1; rifatto su main a3658f99). Un numero accanto a un
+#: simbolo o a un codice di valuta misura un prezzo, come «45 ms»: non indicizza niente.
+#: La cura sta qui e non in `extract_quantities`, che legge anche il resto del cancello.
+_CODICI_VALUTA = frozenset({"eur", "usd", "gbp", "jpy", "chf", "cny", "inr", "cad",
+                            "aud"})
+#: dopo il numero: i decimali, uno spazio al piu', poi il simbolo o il codice
+_VALUTA_DOPO_IL_NUMERO_RE = re.compile(
+    r"(?:[.,]\d{1,6})?\s?(?:[€$£¥₹]|(?:eur|usd|gbp|jpy|chf|cny|inr|cad|aud)\b)",
+    re.IGNORECASE)
+
+
+def _e_un_prezzo(span: str, m: re.Match) -> bool:
+    """Il numero di un match di indice e' un PREZZO: il tipo e' un codice di valuta
+    («EUR 150», «USD150»), o subito dopo il numero viene la valuta («150 €», «99,90 €»)."""
+    return (m.group(1).lower() in _CODICI_VALUTA
+            or _VALUTA_DOPO_IL_NUMERO_RE.match(span, m.end(2)) is not None)
+
+
 def event_indices(text: str) -> set[tuple[str, int]]:
     """``(kind, n)`` indices in the CLAIM part of *text*: ordinals ("day 4" ->
     ("day", 4)), entity identifiers ("issue #42" -> ("issue", 42)), alphanumeric
@@ -2413,16 +2669,17 @@ def event_indices(text: str) -> set[tuple[str, int]]:
     subjects, so a real conflict on the claim went undetected.
     """
     span = claim_span(text)
+    # un prezzo non indicizza, in nessuna delle tre regole (vedi `_e_un_prezzo`)
     out = {(m.group(1).lower(), int(m.group(2)))
-           for m in _EVENT_INDEX_RE.finditer(span)}
+           for m in _EVENT_INDEX_RE.finditer(span) if not _e_un_prezzo(span, m)}
     out |= {(m.group(1).lower(), int(m.group(2)))
-            for m in _ALNUM_CODE_RE.finditer(span)}
+            for m in _ALNUM_CODE_RE.finditer(span) if not _e_un_prezzo(span, m)}
     # positional rule, gated on the number being BARE: "message 0" indexes,
     # "conta 7883 test" measures and must stay a measure
     bare = _bare_numbers(text)
     out |= {(m.group(1).lower(), int(m.group(2)))
             for m in _GENERIC_INDEX_RE.finditer(span)
-            if f"{float(m.group(2)):g}" in bare}
+            if f"{float(m.group(2)):g}" in bare and not _e_un_prezzo(span, m)}
     return out
 
 

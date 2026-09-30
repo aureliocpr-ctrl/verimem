@@ -551,6 +551,53 @@ class DocumentIndex:
             "ENGRAM_DOC_RERANK", "1").strip().lower() not in (
                 "0", "false", "no", "off")
 
+    # --- rilettura per coordinate ----------------------------------------
+    def chunk_at(self, source_id: str, start: int, end: int,
+                 version: int | None = None) -> dict | None:
+        """Il chunk indicizzato a QUELLE coordinate, o ``None`` se non c'e'.
+
+        Serve a chi riceve `(source_id, start, end)` da FUORI e deve sapere
+        cosa dice davvero il documento, invece di credere al testo che gli
+        arriva insieme alle coordinate. La domanda a cui risponde e' quella
+        lasciata aperta il 2026-09-03 in
+        `test_la_porta_mcp_non_sa_dire_che_la_fonte_e_di_terzi.py` — «chi puo'
+        attestare che una fonte e' di terzi, e la risposta non puo' essere
+        *chi scrive lo dice*»: puo' attestarlo **l'indice**, che e' l'unico ad
+        aver visto il documento.
+
+        Rende la stessa forma di un hit di `search()` meno lo `score`, cosi'
+        chi l'ha in mano puo' usarlo dove usava un hit. `flagged` viene reso
+        **senza filtrare**: qui non si nasconde niente: si dice com'e', e chi
+        chiama decide — nascondere un chunk a chi lo chiede per coordinate
+        esatte sarebbe la stessa assenza-senza-canale che questo modulo conta
+        con `nascosti`.
+
+        Senza `version` si prende la PIU' RECENTE. Un documento reindicizzato
+        tiene le versioni vecchie nella stessa tabella, e le coordinate di due
+        versioni possono coincidere senza che il testo coincida: e' l'unico
+        punto in cui `(source_id, start, end)` non identifica una riga sola.
+        """
+        conn = self._connect()
+        try:
+            sql = ("SELECT doc_id, source_id, version, idx, start, end, text, "
+                   "uri, flagged, indexed_by FROM chunks "
+                   "WHERE source_id = ? AND start = ? AND end = ?")
+            parametri: list[object] = [str(source_id), int(start), int(end)]
+            if version is not None:
+                sql += " AND version = ?"
+                parametri.append(int(version))
+            sql += " ORDER BY version DESC LIMIT 1"
+            row = conn.execute(sql, parametri).fetchone()
+        finally:
+            conn.close()
+        if row is None:
+            return None
+        return {"text": row["text"], "source_id": row["source_id"],
+                "version": row["version"], "start": row["start"],
+                "end": row["end"], "uri": row["uri"] or "",
+                "doc_id": row["doc_id"], "flagged": bool(row["flagged"]),
+                "indexed_by": _row_get(row, "indexed_by")}
+
     # --- discovery ------------------------------------------------------
     def stats(self) -> dict:
         conn = self._connect()

@@ -282,6 +282,15 @@ store the caller chose. It used to be `~/.engram` hardcoded, so isolating a
 bench with `HIPPO_DATA_DIR` still wrote telemetry into the home corpus.
 `ENGRAM_EVENT_LOG` remains the explicit override.
 
+**The sampling debug trace is off unless you turn it on.** Every answer of the
+MCP sampling client used to append 200 characters of the system prompt, 300 of
+the first message and 600 of the answer to `mcp_sampling_debug.log`, and a
+failure the same 300 characters of the message: content on disk that nobody
+asked for. Since 2026-09-24 the trace is written only with
+`ENGRAM_SAMPLING_DEBUG_LOG=1` (or `true`, `yes`, `on`), read at each call, and
+when it is on it lives in `<data dir>/mcp_sampling_debug.log`, next to the
+store, like the audit files of the sandbox.
+
 **Unknown is not a number.** Counts a tier cannot answer read `unavailable`,
 not `-1`, and a success/failure split is not printed at all when the tier did
 not respond: "0 success, 0 failure" on a corpus holding 405 successes is as

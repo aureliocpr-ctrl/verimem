@@ -500,10 +500,17 @@ def run_doctor() -> list[dict[str, Any]]:
         # e' quella che conta per chi ha perso lo store.
         # FAIL e non WARN: qui il prodotto non puo' funzionare, e un WARN
         # accanto a `writable=True` si legge come «va quasi bene».
+        # T91: un percorso da solo non distingue «isolato» da «sembrava
+        # isolato». Chi pone ENGRAM_DATA_DIR con HIPPO_DATA_DIR gia' viva
+        # nell'ambiente legge qui il percorso che NON ha chiesto, e senza il
+        # nome della variabile che ha vinto non ha modo di capire perche'.
+        from ._compat import provenienza_data_dir as _prov
+        _chi_decide = " — " + _prov().dichiarazione()
         _illeggibili = _stores_illeggibili(d)
         add("data-dir",
             FAIL if (not writable or _illeggibili) else OK,
             f"{d} (writable={writable}; stores: {_stores_dichiarati(d)})"
+            + _chi_decide
             + _divergenza,
             # ⚠️ QUI C'ERA UN COMANDO CHE NON ESISTE: «controlla `verimem backup
             # list`». Chi seguiva il consiglio riceveva `No such command`, e
@@ -786,6 +793,66 @@ def run_doctor() -> list[dict[str, Any]]:
     except Exception as e:  # noqa: BLE001
         add("moat-judge", WARN, f"probe failed: {e}")
 
+    # -- il rifiuto del cancello -----------------------------------------------
+    # IL REFERTO NON NOMINAVA MAI IL RIFIUTO, misurato il 2026-09-18:
+    #
+    #     verimem doctor | grep -ic "reject"   ->   0
+    #
+    # e i due esiti non sono la stessa cosa. Un fatto quarantinato ESISTE nello
+    # store e si conta; un fatto rifiutato NON ENTRA, quindi di lui non resta
+    # niente da contare: l'unica traccia e' il libro mastro.
+    #
+    # E LO ZERO VA SPIEGATO, o si legge al rovescio. Il rifiuto scatta solo con
+    # gate_mode="reject" e il preset di partenza (balanced) lascia la manopola a
+    # None: «0 rifiuti» non vuol dire «il cancello non rifiuta mai», vuol dire
+    # che non gli e' mai stato CHIESTO. Misurato sul registro vero lo stesso
+    # giorno: admitted 10449, quarantined 1303, abstained 32, rejected assente.
+    #
+    # E DICE DI CHI PARLA, che e' la meta' della riga. Misurato: una scrittura
+    # dalla porta MCP entra nello store e il registro NON si muove — il libro
+    # mastro e' agganciato a `Memory.add()` e la porta MCP scrive un livello
+    # sotto. Senza la popolazione, la frase sarebbe vera su CLI e libreria e
+    # verrebbe letta come vera su tutto: il modo peggiore di sbagliare.
+    try:
+        from ._compat import data_dir as _dd_rif
+        _db_rif = _dd_rif() / "semantic" / "semantic.db"
+        _conteggi: dict[str, int] = {}
+        if _db_rif.exists():
+            import sqlite3 as _sq_rif
+            _cn_rif = _sq_rif.connect(f"file:{_db_rif}?mode=ro", uri=True)
+            try:
+                _conteggi = {str(a): int(n) for a, n in _cn_rif.execute(
+                    "SELECT action, COUNT(*) FROM trust_ledger GROUP BY action")}
+            except _sq_rif.Error:
+                _conteggi = {}
+            finally:
+                _cn_rif.close()
+        _porte_rif = (
+            "il libro mastro copre CLI e libreria, NON la porta MCP: una "
+            "scrittura da li' entra nello store e il registro non si muove "
+            "(misurato 2026-09-18)")
+        _n_rif = _conteggi.get("rejected", 0)
+        _tot_rif = sum(_conteggi.values())
+        if not _conteggi:
+            add("rifiuto", WARN,
+                f"nessun libro mastro leggibile in {_db_rif}: di rifiuti "
+                f"questo referto non sa dire NIENTE, che non e' «zero». "
+                f"{_porte_rif}")
+        elif _n_rif == 0:
+            add("rifiuto", OK,
+                f"mai richiesto (preset balanced, gate_mode None): 0 su "
+                f"{_tot_rif} decisioni registrate. Il cancello rifiuta solo "
+                f"con gate_mode=\"reject\", e il preset di partenza lascia la "
+                f"manopola a None: lo zero dice che non e' stato CHIESTO, non "
+                f"che non sia mai successo. {_porte_rif}",
+                "per chiederlo: preset strict, oppure gate_mode=\"reject\" "
+                "sulla singola scrittura")
+        else:
+            add("rifiuto", OK,
+                f"{_n_rif} rifiuti su {_tot_rif} decisioni registrate. "
+                f"{_porte_rif}")
+    except Exception as _e_rif:  # noqa: BLE001 — un referto non deve mai morire
+        _non_ho_potuto_guardare(add, "rifiuto", _e_rif)
     # -- vettori di un altro modello --------------------------------------------
     # Misurato il 2026-08-07: un backup del corpus non e' piu' interrogabile dopo un
     # cambio di modello — gli snapshot di maggio hanno vettori a 384
@@ -1170,16 +1237,43 @@ def run_doctor() -> list[dict[str, Any]]:
 
         # QUALE giudice, perche' senza il numero non si interpreta: la stessa
         # installazione ammette a 40 col giudice locale e a 70 con gli altri.
-        _giudice = "local"
+        #
+        # ⛔ IL PROVIDER VISIBILE NON E' IL GIUDICE CHE SCRIVE. Fino al
+        # 2026-09-19 questa riga prendeva `_autodetect_provider()`, che guarda
+        # l'AMBIENTE — basta una chiave in una variabile — e dichiarava la sua
+        # soglia come «in force». Ma il write path usa il giudice
+        # EFFETTIVAMENTE adoperato (`fact_grounding_score_ex(grounding_llm,
+        # ...)`), e senza un LLM INIETTATO ripiega sul cross-encoder locale.
+        # Misurato in due processi puliti, stessa build:
+        #     nessun provider       doctor 40   write path 40
+        #     OPENAI_API_KEY finta  doctor 70   write path 40
+        # Una chiave mai usata da nessuno spostava di trenta punti il numero
+        # che questa superficie esiste apposta per dire.
+        _visibile = None
         try:
             from .llm import _autodetect_provider
             _p = _autodetect_provider()
             if _p and _p != "mock":
-                _giudice = _p
+                _visibile = _p
         except Exception:  # noqa: BLE001
             pass
+        # Il ripiego del write path, che e' il caso di ogni chiamante che non
+        # inietta un LLM — cioe' il default di tutte le porte.
+        _giudice = "local"
         _soglia = resolve_write_threshold_for(_giudice)
         _dichiarata = get_local_threshold() if _giudice == "local" else None
+        # 🔑 E si dice a QUALE CONDIZIONE quel provider conterebbe. Tacerlo
+        # sarebbe l'errore speculare: chi un LLM lo inietta davvero leggerebbe
+        # 40 e concluderebbe che la sua chiave non serve a niente.
+        _se_iniettato = ""
+        if _visibile:
+            _se_iniettato = (
+                f"; the `{_visibile}` provider is visible in your environment "
+                f"and would raise the bar to "
+                f"{resolve_write_threshold_for(_visibile):.0f} — but only for "
+                f"a caller that INJECTS it into the write path, which no "
+                f"entry point does by default"
+            )
         _nota = ""
         if _dichiarata is not None and _dichiarata > 90.0:
             # DUE decimali e non zero: il valore vero e' 99.64 e `:.0f` lo
@@ -1237,7 +1331,7 @@ def run_doctor() -> list[dict[str, Any]]:
             # proprio per sapere che regole sono in vigore ADESSO.
             f"admission threshold in force: {_soglia:.0f}/100, decided by the "
             f"`{_giudice}` judge{_nota} — a write scoring below it is "
-            f"quarantined{_banda}. Env set by you: "
+            f"quarantined{_banda}{_se_iniettato}. Env set by you: "
             + (f"{len(_suoi)} ({_elenco})" if _suoi
                else "none (every parameter is at its built-in default)")
             + f"; {len(_creati)} more were created by the "

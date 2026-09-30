@@ -59,7 +59,12 @@ def test_una_quarantena_decisa_dal_MOAT_lo_dichiara(mem):
                 source="Verbale: il modulo ha 12 utenti attivi.")
     assert r.get("status") == "quarantined"
     assert r.get("moat") == "failed"
-    assert r.get("quarantined_by") == "moat", r.get("quarantined_by")
+    # T150 (19/09): l'etichetta nomina il LAYER che ha agito, non la famiglia.
+    # Il valore è MISURATO su questo stesso caso (`AssertionError: L4-grounding`
+    # dal run in CI), non scelto. La famiglia NON si perde ed è la riga qui
+    # sopra a provarlo: `moat == "failed"` continua a valere, ed è lì che il
+    # fatto sta come fatto invece che come etichetta.
+    assert r.get("quarantined_by") == "L4-grounding", r.get("quarantined_by")
 
 
 def test_un_fatto_AMMESSO_non_dichiara_nessun_decisore(mem):

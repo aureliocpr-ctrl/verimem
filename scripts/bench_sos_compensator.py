@@ -123,7 +123,7 @@ def _louvain(db: Path, seed: int = 42) -> list[set[str]]:
 
 def run_one_arm(src: Path, k: int, mode: str, n_seed: int = 0) -> dict:
     """One arm: copy DB, inject k facts in mode, measure ΔJ."""
-    from verimem.sos_compensator import (
+    from attic.sos_compensator import (
         select_compensated_anchor,
         select_vanilla_anchor,
     )

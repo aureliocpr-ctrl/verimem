@@ -177,6 +177,43 @@ def _has_completion_evidence(verified_by: Iterable[str] | None) -> bool:
     return False
 
 
+def _normalizza_per_confronto(testo: str) -> str:
+    """Spazi collassati, punteggiatura di coda via, minuscole."""
+    return " ".join(testo.split()).strip().strip(".!?;:").lower()
+
+
+def _la_fonte_e_solo_l_eco(proposition: str, source: str | None) -> bool:
+    """La fonte non dice NULLA PIU' del claim?
+
+    Misurato il 2026-09-19, alla funzione e poi dal dispatcher MCP: la guardia
+    del 30/08 chiede che la provenienza non sia `agent_claim`, e quel criterio
+    DA SOLO si aggira dichiarando un ruolo. Stessa frase passata come fonte di
+    se' stessa, stesso punteggio del giudice (99.78126525878906):
+
+        writer_role assente   ->  quarantined
+        writer_role='user'    ->  model_claim, cioe' SERVIBILE
+
+    `user` sta nell'enum pubblico dello schema MCP, e sulla porta MCP chi
+    scrive e' sempre un agente: «user» li' significa «l'agente dice che l'ha
+    scritto l'utente».
+
+    ⚖️ IL CRITERIO E' TESTUALE E VOLUTAMENTE STRETTO — e' eco solo se la
+    fonte, normalizzata, COINCIDE col claim. Una fonte che contiene il claim e
+    aggiunge altro resta una testimonianza: un verbale che cita la frase alla
+    lettera e' il caso MIGLIORE, non il peggiore, e un criterio di
+    contenimento lo fermerebbe.
+    ⚠️ LIMITE DICHIARATO E MISURATO, non lasciato come debito: si aggira
+    aggiungendo una parola alla fonte, e la cella `test_il_limite_del_criterio`
+    lo fissa. Nessun criterio testuale regge a un avversario — il commit della
+    guardia lo dice gia' («aggirabile per riformulazione, 3 su 3»). Questo
+    chiude l'ECO LETTERALE, che e' il caso misurato 5 su 5 dal banco
+    indipendente del 30/08.
+    """
+    if not source:
+        return False
+    return _normalizza_per_confronto(proposition) == _normalizza_per_confronto(source)
+
+
 def _il_participio_e_nella_fonte(matched_text: str, source: str | None) -> bool:
     """La fonte contiene lo STESSO participio che ha fatto scattare il match?
 
@@ -247,8 +284,22 @@ def detect_unsupported_completion_claim(
     # il claim**: ripassando la stessa frase come `source` il match e' verbatim
     # PER COSTRUZIONE, e un banco indipendente l'ha misurato **5 su 5**.
     # Quando parla l'agente, la sua `source` non e' una testimonianza: e' un'eco.
-    if provenance != AGENT_CLAIM and _il_participio_e_nella_fonte(
-            matched_text, source):
+    # ⛔ SECONDA CONDIZIONE (19/09): la provenienza non basta. Una fonte che
+    # ripete il claim e basta non e' una testimonianza, e' un'eco — e la
+    # guardia del 30/08 la lasciava passare a chiunque DICHIARASSE un ruolo.
+    _fonte_e_eco = _la_fonte_e_solo_l_eco(proposition, source)
+    _la_fonte_sostiene = _il_participio_e_nella_fonte(matched_text, source)
+    # ⚖️ La condizione nuova vale solo per chi DICHIARA la provenienza, e non
+    # e' un'eccezione mia: e' la compatibilita' all'indietro gia' scelta il
+    # 30/08 e fissata da `test_senza_provenienza_dichiarata_il_perdono_resta
+    # _come_prima` — «un chiamante che non la passa non viene silenziosamente
+    # irrigidito». Il prodotto resta coperto perche' il gate la provenienza la
+    # calcola sempre (`anti_confab_gate.py`, `_provenienza = _gr_classify_
+    # provenance(...)`) e la passa a ogni chiamata: `None` qui significa
+    # «qualcuno chiama il detector da solo», non una porta.
+    _eco_toglie_il_perdono = provenance is not None and _fonte_e_eco
+    if (provenance != AGENT_CLAIM and not _eco_toglie_il_perdono
+            and _la_fonte_sostiene):
         return None
     # Quante affermazioni contiene la frase. Misurato sui 513 quarantinati vivi
     # del corpus (2026-07-30): 1 affermazione 9%, 2-3 16%, 4-9 30%, 10+ 45% —
@@ -273,6 +324,17 @@ def detect_unsupported_completion_claim(
                   f"screens judge them together, so one unproven piece holds "
                   f"back the rest — split it and give each part its own "
                   f"evidence.")
+    # 🔑 L'ASSENZA HA UN CANALE. Chi ha un verbale di TERZI sostenuto dalla
+    # fonte viene fermato qui solo perche' non ha dichiarato da dove viene il
+    # testo, e finora niente glielo diceva. Il suggerimento si da' SOLO quando
+    # la leva funzionerebbe davvero — fonte che sostiene il participio, e non
+    # un'eco: darlo a chiunque venga fermato insegnerebbe l'aggiramento a chi
+    # non ha nessuna fonte.
+    _leva = ""
+    if provenance == AGENT_CLAIM and _la_fonte_sostiene and not _fonte_e_eco:
+        _leva = (" La fonte contiene gia' questa parola: se il testo non e'"
+                 " tuo ma di un terzo, dichiaralo con writer_role e il"
+                 " declassamento non si applica.")
     return CompletionClaimWarning(
         matched_text=matched_text,
         advice=(
@@ -280,7 +342,8 @@ def detect_unsupported_completion_claim(
             f"no closing criteria evidence in verified_by. Add at least "
             f"one of: task:<id>_closed, acceptance_test:<id>_PASS, "
             f"definition_of_done:<id>_met, review:<id>_approved, "
-            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0." + _split
+            f"pr:<n>_merged, pytest:<t>_PASS, bash:<cmd>:exit0."
+            + _leva + _split
         ),
     )
 

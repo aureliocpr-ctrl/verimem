@@ -143,19 +143,55 @@ def test_senza_max_length_il_daemon_non_tocca_lo_span() -> None:
     assert visti[0][0] == "gia' ridotto dal client"
 
 
-def test_il_daemon_dichiara_se_sa_ridurre() -> None:
+def test_il_daemon_dichiara_se_sa_ridurre(tmp_path, monkeypatch) -> None:
     """La chiave che il client legge per decidere: dichiarata, non indovinata.
 
     Senza, il client dovrebbe SUPPORRE che il daemon sappia ridurre — e con un
     daemon vecchio lo span arriverebbe intero, cioe' una perdita di qualita'
-    silenziosa. Il valore segue la capacita' vera (`_gate_fn`), non una costante.
-    """
-    import inspect
+    silenziosa. Il valore segue la capacita' VERA, non una costante.
 
-    sorgente = inspect.getsource(encode_service.EncodeServer._write_discovery)
-    assert '"applies_window": self._gate_fn is not None' in sorgente, (
-        "il daemon non dichiara piu' se sa ridurre, o lo dichiara con una "
-        "costante invece che dalla capacita' vera: il client tornerebbe a "
+    ⚠️ QUESTA CELLA GUARDAVA IL SORGENTE, e la forma non e' la proprieta'.
+    Asseriva che `_write_discovery` contenesse la stringa
+    `"applies_window": self._gate_fn is not None`, e il 2026-09-20 una cura
+    legittima (T157: si dichiara la finestra solo se c'e' anche il
+    tokenizzatore, perche' la promessa guardava `_gate_fn` e il lavoro
+    guardava `_tok`) l'ha fatta cadere pur RAFFORZANDO cio' che difendeva.
+    Ora si misura la proprieta': il valore CAMBIA col variare della capacita'.
+    Una costante — qualunque costante — fallisce, che e' esattamente cio' che
+    questa cella e' nata per impedire.
+    """
+    class _Giudice:
+        def __init__(self, con_tok: bool) -> None:
+            if con_tok:
+                self._tok = object()
+
+    def _dichiarato(tmp, *, gate_fn, con_tok: bool) -> bool:
+        monkeypatch.setattr(local_grounding, "_judge", _Giudice(con_tok),
+                            raising=False)
+        s = object.__new__(encode_service.EncodeServer)
+        s._discovery_path = tmp / "scoperta.json"
+        s._port, s._sock = 59999, None
+        s._host, s._model_name, s._model_dim, s._token = "h", "m", 768, "t"
+        s._gate_fn = gate_fn
+        s._write_discovery()
+        import json
+        return json.loads((tmp / "scoperta.json").read_text(encoding="utf-8"))[
+            "applies_window"]
+
+    def gate(coppie):
+        return [1.0] * len(coppie)
+
+    capace = _dichiarato(tmp_path, gate_fn=gate, con_tok=True)
+    incapace = _dichiarato(tmp_path, gate_fn=gate, con_tok=False)
+    senza_gate = _dichiarato(tmp_path, gate_fn=None, con_tok=True)
+
+    assert capace is True, "un daemon che sa ridurre non lo dichiara"
+    assert incapace is False, (
+        "il daemon promette la finestra senza il tokenizzatore: il client si "
+        "farebbe da parte e nessuno dei due ridurrebbe")
+    assert senza_gate is False, "senza funzione di gate non si promette nulla"
+    assert len({capace, incapace, senza_gate}) > 1, (
+        "il valore non cambia MAI: e' una costante, e il client tornerebbe a "
         "indovinare")
 
 

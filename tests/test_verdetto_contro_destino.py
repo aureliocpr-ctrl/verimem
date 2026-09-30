@@ -74,9 +74,21 @@ def test_un_corpus_coerente_non_produce_righe(store):
 
 def test_le_soglie_sono_dichiarate(store):
     """Un numero senza la sua definizione è il difetto che questo ramo cura:
-    «vero» e «falso» qui sono due tagli, e chi legge deve vederli."""
+    «vero» e «falso» qui sono due tagli, e chi legge deve vederli.
+
+    ⚠️ AGGIORNATA IL 20/09: la cut di `judged_true_but_withheld` era **90**, un
+    margine prudente e non una cut di ammissione — il cancello ammette a 40 col
+    CE locale e a 70 con claude. Ora questa colonna usa **70**, la più alta
+    delle due applicate: sopra 70 il giudice ha detto sì con qualunque cut,
+    quindi ogni riga elencata è certa e il conteggio resta un limite inferiore.
+    La cella non cambia mestiere — pretende ancora che i tagli siano DETTI — e
+    pretende in più che sia detto **perché** quel taglio, accanto al numero.
+    """
     out = verdict_mismatches(store.semantic)
-    assert "90" in out["thresholds"] and "40" in out["thresholds"], out
+    assert "70" in out["thresholds"] and "40" in out["thresholds"], out
+    #: La ragione viaggia col numero, o chi legge un minimo lo prende per totale.
+    assert "LOWER BOUND" in out["judged_true_but_withheld_meaning"], out
+    assert "judge_backend" in out["judged_true_but_withheld_meaning"], out
 
 
 def test_la_banda_contesa_e_una_categoria_a_parte(store):

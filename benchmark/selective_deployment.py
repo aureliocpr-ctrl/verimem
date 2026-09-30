@@ -32,13 +32,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from benchmark.external_readpath import build_store, load_split
-from verimem.selective_metrics import (
+from attic.selective_metrics import (
     aurc,
     e_aurc,
     isotonic_fit,
     tce_at_lambda,
 )
+from benchmark.external_readpath import build_store, load_split
 
 RESULTS_DIR = Path(__file__).parent / "results"
 LAMBDAS = (0.5, 1.0, 3.0, 9.0)
@@ -52,7 +52,10 @@ def collect_records(items: list[dict], unans_questions: list[str],
     misses (score 0.0, wrong) — same accounting as the readpath harness."""
     mem, fact_ids, ingest = build_store(items, db_path)
     records: list[tuple[float, bool]] = []
-    for item, fid in zip(items, fact_ids):
+    # `strict=False` e' il comportamento che `zip()` ha sempre avuto qui: lo
+    # scriviamo perche' il gancio locale lint-a anche `benchmark/`, che la CI
+    # non guarda (`ruff check verimem tests scripts`). Nessun cambio a runtime.
+    for item, fid in zip(items, fact_ids, strict=False):
         if fid is None:
             records.append((0.0, False))
             continue

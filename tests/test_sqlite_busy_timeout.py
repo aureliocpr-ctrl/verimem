@@ -67,7 +67,7 @@ class TestRecallUsageBusyTimeout:
     def test_recall_usage_uses_60s_busy_timeout(
         self, tmp_path: Path,
     ) -> None:
-        from verimem.recall_usage import RecallUsageStore
+        from attic.recall_usage import RecallUsageStore
         store = RecallUsageStore(tmp_path / "ru.db")
         with store._connect() as conn:  # noqa: SLF001
             row = conn.execute("PRAGMA busy_timeout").fetchone()
@@ -97,7 +97,7 @@ class TestContradictionStoreBusyTimeout:
     ("verimem.contradiction", "PRAGMA busy_timeout=60000"),
     ("verimem.decay_job", "PRAGMA busy_timeout=60000"),
     ("verimem.entity_kg", "PRAGMA busy_timeout=60000"),
-    ("verimem.recall_usage", "PRAGMA busy_timeout=60000"),
+    ("attic.recall_usage", "PRAGMA busy_timeout=60000"),
 ])
 class TestStaticSourceMarker:
     """Defensive: source-level grep to catch regressions where a future

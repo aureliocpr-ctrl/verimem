@@ -37,7 +37,9 @@ def test_admitted_write_carries_judge_of_record_receipt(tmp_path, monkeypatch):
     assert adj["judge"]["backend"] == "claude"          # judge-of-record
     assert adj["score"] == 96.0
     assert adj["threshold"] is not None
-    assert adj["margin"] == round(96.0 - adj["threshold"], 4)
+    # il margine È la differenza, senza arrotondamenti: chi legge la
+    # ricevuta rifà il conto con i due numeri che la ricevuta porta
+    assert adj["margin"] == 96.0 - adj["threshold"]
     assert adj["margin"] > 0
 
 

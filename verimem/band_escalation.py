@@ -31,6 +31,7 @@ import os
 import re
 import shutil
 import subprocess
+import threading
 import urllib.request
 from functools import lru_cache
 
@@ -140,27 +141,81 @@ def _score_via_ollama(source: str, fact: str) -> float | None:
         return None
 
 
+#: Why the band did not decide, for the write in progress on THIS thread
+#: (W7-52). Every branch of `escalate_band` that returns None writes it, and
+#: the write gate reads it into the held-for-review warning: before, a CLI
+#: that failed (an expired OAuth session, exit 1) looked exactly like no
+#: escalation at all, and its message was thrown away. Thread-local, like
+#: `local_grounding._esecutore`: a server answers one connection per thread.
+_motivo = threading.local()
+
+
+def perche_non_ha_deciso() -> str | None:
+    """Why the last `escalate_band` on this thread returned None, or None."""
+    return getattr(_motivo, "testo", None)
+
+
+def _annota(testo: str | None) -> None:
+    _motivo.testo = testo
+
+
+#: The ONLY place that reads the CLI's words, and it reads them to pick a
+#: label from this closed list — never to copy them: stdout carries the
+#: judge's answer about the fact, and a receipt carries no fact content.
+_ETICHETTE_DEL_FALLIMENTO = (
+    ("auth", ("authenticate", "oauth", "login", "not logged in")),
+    ("unknown-flag", ("unknown option", "unrecognized", "unknown argument")),
+)
+
+
+def _etichetta(stdout: str | None, stderr: str | None) -> str | None:
+    """The label of a failed CLI call, from the closed list, or None. It looks
+    at stdout AND stderr because the CLI does not pick one: an expired OAuth
+    session was reported on stdout, with stderr empty, on 29/08."""
+    testo = f"{stdout or ''}\n{stderr or ''}".lower()
+    for nome, parole in _ETICHETTE_DEL_FALLIMENTO:
+        if any(p in testo for p in parole):
+            return nome
+    return None
+
+
 def _score_via_claude(source: str, fact: str) -> float | None:
     """Score with an auto-discovered claude CLI (online, flat subscription, no
     key). Channel separation: the rubric rides as a SYSTEM prompt; only the
     tenant-controlled DATA goes in the user prompt. Fail-soft -> None."""
     cli = _resolve_cli()
     if not cli:
+        _annota("no-cli")
         return None
     from .grounding_gate import _FACT_SYSTEM
     user = f"Source: {source}\n\nCandidate fact: {fact}\n\nScore:"
     try:
+        # --safe-mode: without it the CLI starts with the writer's whole profile
+        # — their MCP servers, their hooks, and their CLAUDE.md, which lands in
+        # the judge's prompt — so the verdict depended on who writes, and every
+        # band write booted one more MCP server. It keeps subscription auth;
+        # --bare would not (API key only). A CLI that does not know the flag
+        # exits non-zero, which below falls back to held-for-review.
         r = subprocess.run(
-            [cli, "-p", "--output-format", "text",
+            [cli, "-p", "--safe-mode", "--output-format", "text",
              "--append-system-prompt", _FACT_SYSTEM],
             input=user, capture_output=True, text=True,
             timeout=_timeout_s(), encoding="utf-8", errors="replace",
         )
-    except Exception:  # noqa: BLE001 -- ANY escalation failure degrades to review
+    except subprocess.TimeoutExpired:
+        _annota("timeout")
+        return None
+    except Exception as e:  # noqa: BLE001 -- ANY escalation failure degrades to review
+        _annota(f"exception:{type(e).__name__}")
         return None
     if r.returncode != 0:
+        et = _etichetta(r.stdout, r.stderr)
+        _annota(f"exit {r.returncode}" + (f" ({et})" if et else ""))
         return None
-    return _parse_score(r.stdout)
+    s = _parse_score(r.stdout)
+    if s is None:
+        _annota("unreadable")
+    return s
 
 
 def escalate_band(source: str, fact: str) -> tuple[float, str] | None:
@@ -168,8 +223,11 @@ def escalate_band(source: str, fact: str) -> tuple[float, str] | None:
     ``(score, judge)`` with ``judge`` in {"local-band", "claude-band"}, or
     ``None`` when escalation is off / no judge is reachable / every judge
     failed — the caller then holds the write for review, exactly as before.
-    An unreadable verdict never admits."""
+    An unreadable verdict never admits. Why it returned None is left on
+    this thread for `perche_non_ha_deciso()` (W7-52)."""
+    _annota(None)
     if _mode() == "off":
+        _annota("off")
         return None
     if _local_ollama_available():
         s = _score_via_ollama(source, fact)

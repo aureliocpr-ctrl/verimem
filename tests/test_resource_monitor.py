@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from verimem.resource_monitor import (
+from attic.resource_monitor import (
     DEFAULTS,
     ResourceAlert,
     ResourceMonitor,
