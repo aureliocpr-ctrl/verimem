@@ -44,6 +44,31 @@ import esporta_onnx  # noqa: E402  (the same folder: the metrics and the tokeniz
 #: queries per block of the similarity rows: 250 x ~18k floats64 stays near 36 MB
 BLOCCO = 250
 
+#: the thresholds, fixed with the lead BEFORE the run (30/09 22:02)
+SOGLIA_CONTROLLO = 0.9999  # C: lowest cosine, the product's fp32 encode against the stored vector
+SOGLIA_COSENO_P01 = 0.98  # 1: the ONNX passage vector against the stored one
+SOGLIA_COSENO_MEDIANO = 0.99
+SOGLIA_RICHIAMO_10 = 0.95  # 2 and 3
+SOGLIA_RICHIAMO_1 = 0.90  # 2
+SOGLIA_SPOSTAMENTO_P99 = 0.02  # 2: the shift of the reference's top-1 score
+
+
+def verdetto(numeri: dict) -> dict[str, str]:
+    """The verdict of every file, with the thresholds above: it holds without re-encoding if (1) and (2)
+    hold, it holds with the corpus re-encoded if (3) holds, otherwise it does not hold. A control under its
+    threshold stops everything: the stored vectors would not be what the rest assumes."""
+    if numeri["C_controllo_fp32_contro_memorizzati"]["minimo"] < SOGLIA_CONTROLLO:
+        return {"controllo": "non regge: ci si ferma"}
+    esiti = {}
+    for nome, f in numeri["per_file"].items():
+        coseno, senza = f["1_coseno_onnx_contro_memorizzati"], f["2_richiamo_senza_ricodifica"]
+        uno = coseno["p01"] >= SOGLIA_COSENO_P01 and coseno["mediano"] >= SOGLIA_COSENO_MEDIANO
+        due = (senza["10"] >= SOGLIA_RICHIAMO_10 and senza["1"] >= SOGLIA_RICHIAMO_1
+               and f["2_spostamento_del_punteggio_top1"]["p99"] <= SOGLIA_SPOSTAMENTO_P99)
+        tre = f["3_richiamo_con_ricodifica"]["10"] >= SOGLIA_RICHIAMO_10
+        esiti[nome] = "regge senza ricodifica" if uno and due else "regge con la ricodifica" if tre else "non regge"
+    return esiti
+
 
 def apri_in_sola_lettura(percorso: Path) -> sqlite3.Connection:
     """The store as SQLite opens it read-only: any write through this connection fails."""
@@ -184,6 +209,9 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
             "durata_s": round(time.perf_counter() - partenza, 1),
         }
         numeri["durata_s"] = round(time.perf_counter() - inizio, 1)
+        # the numbers first: a defect of the verdict must not cost the measurement
+        uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")
+        numeri["verdetto"] = verdetto(numeri)
         uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")
     return numeri
 

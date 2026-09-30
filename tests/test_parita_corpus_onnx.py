@@ -71,6 +71,31 @@ def test_the_store_is_opened_read_only(tmp_path: Path) -> None:
     assert sqlite3.connect(percorso).execute("SELECT count(*) FROM facts").fetchone()[0] == 6
 
 
+def _numeri(coseno_mediano=0.995, p01=0.985, r10=0.97, r1=0.93, spostamento=0.01, r10_ricodifica=0.97, controllo=1.0):
+    return {
+        "C_controllo_fp32_contro_memorizzati": {"minimo": controllo},
+        "per_file": {"model_int8.onnx": {
+            "1_coseno_onnx_contro_memorizzati": {"mediano": coseno_mediano, "p01": p01},
+            "2_richiamo_senza_ricodifica": {"1": r1, "10": r10},
+            "2_spostamento_del_punteggio_top1": {"p99": spostamento},
+            "3_richiamo_con_ricodifica": {"10": r10_ricodifica},
+        }},
+    }
+
+
+def test_the_verdict_applies_the_thresholds_fixed_before_the_run() -> None:
+    import parita_corpus_onnx
+
+    assert parita_corpus_onnx.verdetto(_numeri())["model_int8.onnx"] == "regge senza ricodifica"
+    # the cosine or the recall under its threshold: the price is re-encoding, if the re-encoded recall holds
+    assert parita_corpus_onnx.verdetto(_numeri(coseno_mediano=0.98))["model_int8.onnx"] == "regge con la ricodifica"
+    assert parita_corpus_onnx.verdetto(_numeri(r1=0.85))["model_int8.onnx"] == "regge con la ricodifica"
+    assert parita_corpus_onnx.verdetto(_numeri(spostamento=0.03))["model_int8.onnx"] == "regge con la ricodifica"
+    assert parita_corpus_onnx.verdetto(_numeri(r10=0.9, r10_ricodifica=0.9))["model_int8.onnx"] == "non regge"
+    # the control first: stored vectors that are not the product's encode make the rest unreadable
+    assert parita_corpus_onnx.verdetto(_numeri(controllo=0.99)) == {"controllo": "non regge: ci si ferma"}
+
+
 def test_recall_over_the_corpus_leaves_the_query_fact_out() -> None:
     import parita_corpus_onnx
 
