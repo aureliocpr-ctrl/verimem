@@ -81,6 +81,7 @@ from .provenance_validator import (
     validate_provisional_refs,
     validate_verified_refs,
 )
+from .scope import Scope, clausola_sql, scoped_fetch_limit
 
 _LOG = logging.getLogger(__name__)
 
@@ -2618,6 +2619,11 @@ def ranking_stages() -> dict[str, str] | None:
 
 
 class SemanticMemory:
+    #: L'ambito a cui e' legato questo handle (Atlas, 29/09). ``None``: nessuno,
+    #: l'handle vede tutto come prima. Lo fissa solo :meth:`nell_ambito`, su
+    #: un'istanza nuova — mai su questa.
+    _ambito: Scope | None = None
+
     def __init__(
         self,
         db_path: Path | None = None,
@@ -2730,6 +2736,20 @@ class SemanticMemory:
             # exactly where the speed was needed. Idempotent (IF NOT EXISTS)
             # and only for columns the ladder has certainly added by now.
             _ensure_fact_indexes(conn)
+        self._inizializza_stato_volatile()
+        # Incident 2026-06-10: replay deferred writes orphaned by a kill
+        # (see _replay_pending_facts). Best-effort — must never break init.
+        try:
+            _replay_pending_facts(self)
+        except Exception:  # noqa: BLE001 — a corrupt journal must not brick the db
+            _LOG.warning("pending-facts replay failed at init", exc_info=True)
+
+    def _inizializza_stato_volatile(self) -> None:
+        """Lo stato di UNA istanza: cache, lucchetti, sonda. Separato
+        dall'apertura perche' anche un handle legato a un ambito
+        (`nell_ambito`) deve averne uno suo e nuovo: condividerlo con
+        l'originale mescolerebbe una cache ristretta con una intera, e un
+        contatore di versione copiato non vedrebbe le invalidazioni."""
         # Cycle #135 (2026-05-17): hot-path recall cache. The default
         # recall(topic=None) used to do np.stack([deserialize(r)]) on
         # every row on every call — O(N) Python per query. We now hold
@@ -2773,12 +2793,6 @@ class SemanticMemory:
         self._cache_lock = threading.Lock()
         # Lazy entity store for the opt-in PPR-fusion recall path (step 2b).
         self._recall_es: Any = None
-        # Incident 2026-06-10: replay deferred writes orphaned by a kill
-        # (see _replay_pending_facts). Best-effort — must never break init.
-        try:
-            _replay_pending_facts(self)
-        except Exception:  # noqa: BLE001 — a corrupt journal must not brick the db
-            _LOG.warning("pending-facts replay failed at init", exc_info=True)
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -2786,6 +2800,9 @@ class SemanticMemory:
         _t0 = time.monotonic()
         conn = sqlite3.connect(self.db_path, timeout=10.0)
         conn.row_factory = sqlite3.Row
+        # Il predicato dell'ambito (Atlas) usato da `_clausola_dell_ambito`.
+        from .scope import registra_nella_connessione
+        registra_nella_connessione(conn)
         try:
             conn.execute("PRAGMA journal_mode=WAL;")
             conn.execute("PRAGMA busy_timeout=60000;")
@@ -3682,9 +3699,56 @@ class SemanticMemory:
             self._cache_version += 1  # invalidate the recall hot-path cache
         return n
 
+    def nell_ambito(self, *, user_id: str | None = None,
+                    agent_id: str | None = None, run_id: str | None = None,
+                    include_shared: bool = False) -> SemanticMemory:
+        """Lo stesso store, LEGATO a un ambito (Atlas, 29/09).
+
+        Ogni lettura e scrittura dell'handle restituito resta nell'ambito
+        senza che il chiamante passi un prefisso — il passo che un
+        consumatore della libreria saltava, vedendo i fatti di tutti. I
+        metodi pubblici che non sanno ancora applicarlo RIFIUTANO invece di
+        leggere tutto (:class:`_StoreNellAmbito`): un metodo nuovo nasce
+        chiuso. Da uno store gia' legato si puo' solo restringere.
+
+        Stesso file e stessa configurazione; cache e lucchetti suoi.
+        """
+        chiesto = Scope(user_id=user_id, agent_id=agent_id, run_id=run_id,
+                        include_shared=include_shared)
+        ambito = (self._ambito or Scope()).stretto(chiesto)
+        if ambito.vuoto:
+            return self
+        nuovo = object.__new__(_StoreNellAmbito)
+        nuovo.db_path = self.db_path
+        nuovo.repo_root = self.repo_root
+        nuovo._inizializza_stato_volatile()
+        nuovo._ambito = ambito
+        # la cache del corpus resta UNA, quella dello store non legato: un
+        # handle per utente non ne costruisce una copia intera ciascuno
+        nuovo._genitore = getattr(self, "_genitore", None) or self
+        return nuovo
+
+    def _clausola_dell_ambito(self, colonna: str = "topic") -> tuple[str, list[Any]]:
+        """Il pezzo di WHERE che tiene una query nell'ambito dell'handle, con
+        i suoi parametri; vuoto per uno store non legato. Il prefisso, quando
+        c'e', serve all'indice su `topic`; a decidere e' il predicato."""
+        amb = self._ambito
+        if amb is None or amb.vuoto:
+            return "", []
+        sql = clausola_sql(colonna)
+        par: list[Any] = list(amb.parametri_sql())
+        pref = amb.prefisso()
+        if pref:
+            sql = f"{colonna} >= ? AND {colonna} < ? AND {sql}"
+            par = [pref, _topic_prefix_upper(pref), *par]
+        return sql, par
+
     def all(self) -> list[Fact]:
+        amb_sql, amb_par = self._clausola_dell_ambito()
         with self._connect() as conn:
-            rows = conn.execute("SELECT * FROM facts ORDER BY created_at DESC").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM facts" + (f" WHERE {amb_sql}" if amb_sql else "")
+                + " ORDER BY created_at DESC", amb_par).fetchall()
         return [self._row(r) for r in rows]
 
     def live_topic_siblings(self, topic: str, *, limit: int = 200) -> list[Fact]:
@@ -3847,6 +3911,10 @@ class SemanticMemory:
                 clauses.append(
                     "COALESCE(status,'model_claim') "
                     "NOT IN ('orphaned','quarantined','user_belief')")
+            amb_sql, amb_par = self._clausola_dell_ambito()
+            if amb_sql:
+                clauses.append(amb_sql)
+                params.extend(amb_par)
             sql = "SELECT * FROM facts"
             if clauses:
                 sql += " WHERE " + " AND ".join(clauses)
@@ -5921,6 +5989,10 @@ class SemanticMemory:
         if topic is not None:
             dove.append("topic = ?")
             args.append(topic)
+        amb_sql, amb_par = self._clausola_dell_ambito()
+        if amb_sql:
+            dove.append(amb_sql)
+            args.extend(amb_par)
         sql = "SELECT COUNT(*) FROM facts"
         if dove:
             sql += " WHERE " + " AND ".join(dove)
@@ -5929,9 +6001,11 @@ class SemanticMemory:
 
     def count_superseded(self) -> int:
         """Cycle #78: count facts marked as superseded."""
+        amb_sql, amb_par = self._clausola_dell_ambito()
         with self._connect() as conn:
             return conn.execute(
                 "SELECT COUNT(*) FROM facts WHERE superseded_by IS NOT NULL"
+                + (f" AND {amb_sql}" if amb_sql else ""), amb_par,
             ).fetchone()[0]
 
     def supersede(self, old_id: str, new_id: str, *, principal: str,
@@ -6232,12 +6306,14 @@ class SemanticMemory:
         :meth:`get_supersession_chain` (which walks forward to the live
         successor); uses ``idx_facts_superseded_by``. Raw material for
         answer-with-history: "changed from X to Y on <date>"."""
+        amb_sql, amb_par = self._clausola_dell_ambito()
         with self._connect() as conn:
             rows = conn.execute(
                 "SELECT id FROM facts WHERE superseded_by = ? "
-                "ORDER BY COALESCE(superseded_at, 0) DESC, created_at DESC "
+                + (f"AND {amb_sql} " if amb_sql else "")
+                + "ORDER BY COALESCE(superseded_at, 0) DESC, created_at DESC "
                 "LIMIT ?",
-                (fact_id, int(limit))).fetchall()
+                (fact_id, *amb_par, int(limit))).fetchall()
         out: list[Fact] = []
         for r in rows:
             f = self.get(r["id"])
@@ -6818,3 +6894,130 @@ class SemanticMemory:
             # «non c'era una fonte da citare» e non «non e' arrivato».
             grounding_span=_opt("grounding_span"),
         )
+
+
+#: I metodi pubblici che uno store legato a un ambito SA applicare (Atlas,
+#: 29/09). E' l'elenco di cio' che e' stato reso sicuro, non di cio' che esiste:
+#: ogni altro metodo pubblico, su uno store legato, RIFIUTA — e un metodo nuovo
+#: dello store nasce chiuso per chi e' legato a un utente, finche' qualcuno non
+#: lo porta qui con la sua prova.
+_CONSAPEVOLI_DELL_AMBITO = frozenset({
+    # letture: il prefisso restringe in SQL quando c'e', il predicato decide
+    "all", "get", "list_facts", "count", "count_superseded", "search_facts",
+    "recall", "recall_hybrid", "live_topic_siblings", "direct_predecessors",
+    # scritture: dentro l'ambito, e mai sopra un id di un altro
+    "store", "supersede",
+    # un handle derivato puo' solo restringere
+    "nell_ambito",
+})
+
+
+class _StoreNellAmbito(SemanticMemory):
+    """Uno store LEGATO a un ambito; lo crea solo :meth:`SemanticMemory.nell_ambito`.
+
+    Ogni lettura resta nell'ambito e ogni scrittura ci finisce dentro. Un id di
+    un altro ambito non si legge, non si sovrascrive e non si ritira, e per chi
+    chiede e' indistinguibile da un id che non esiste. Ogni altro metodo
+    pubblico rifiuta con ``PermissionError``: meglio una funzione che manca, e
+    lo dice, di una che legge i fatti di tutti.
+    """
+
+    _ambito: Scope
+    #: lo store NON legato da cui e' nato: `recall` passa da lui, che tiene la
+    #: cache del corpus; la coerenza la da' la sonda `data_version`, che vede
+    #: anche le scritture fatte da questo handle su un'altra connessione
+    _genitore: SemanticMemory
+
+    def _pesca(self, n: int, prefisso: str | None) -> int:
+        """Quanti candidati chiedere alla ricerca di base perche', tolti quelli
+        fuori ambito, ne restino `n`: se il prefisso copre tutte le dimensioni
+        il filtro non toglie niente, altrimenti si pesca di piu'."""
+        a = self._ambito
+        return scoped_fetch_limit(n, scoped=True, has_prefix=prefisso is not None,
+                                  agent_id=a.agent_id, run_id=a.run_id,
+                                  cap=max(200, n))
+
+    def _restringi(self, topic: str | None,
+                   topic_prefix: str | None) -> tuple[str | None, str | None]:
+        a = self._ambito
+        return ((a.topic(topic) if topic else None),
+                (a.topic(topic_prefix) if topic_prefix else a.prefisso()))
+
+    def get(self, fact_id: str, *, live_only: bool = False) -> Fact | None:
+        f = super().get(fact_id, live_only=live_only)
+        return f if f is not None and self._ambito.contiene(f.topic) else None
+
+    def list_facts(self, *, topic: str | None = None, **kwargs: Any) -> list[Fact]:
+        return super().list_facts(
+            topic=self._ambito.topic(topic) if topic else None, **kwargs)
+
+    def count(self, *, topic: str | None = None, **kwargs: Any) -> int:
+        return super().count(
+            topic=self._ambito.topic(topic) if topic is not None else None,
+            **kwargs)
+
+    def search_facts(self, query: str, *, limit: int = 20,
+                     topic: str | None = None, topic_prefix: str | None = None,
+                     **kwargs: Any) -> list[Fact]:
+        topic, topic_prefix = self._restringi(topic, topic_prefix)
+        fatti = super().search_facts(
+            query, limit=self._pesca(limit, topic_prefix), topic=topic,
+            topic_prefix=topic_prefix, **kwargs)
+        return [f for f in fatti if self._ambito.contiene(f.topic)][:limit]
+
+    def recall(self, query: str, k: int = 5, topic: str | None = None, *,
+               topic_prefix: str | None = None, **kwargs: Any) -> list[tuple]:
+        topic, topic_prefix = self._restringi(topic, topic_prefix)
+        colpi = self._genitore.recall(query, self._pesca(k, topic_prefix), topic,
+                                      topic_prefix=topic_prefix, **kwargs)
+        return [c for c in colpi if self._ambito.contiene(c[0].topic)][:k]
+
+    def recall_hybrid(self, query: str, k: int = 5, **kwargs: Any) -> list[tuple]:
+        # pesca da `self.recall`, gia' ristretto: il filtro qui e' la cintura
+        return [c for c in super().recall_hybrid(query, k, **kwargs)
+                if self._ambito.contiene(c[0].topic)]
+
+    def direct_predecessors(self, fact_id: str, *, limit: int = 10) -> list[Fact]:
+        if self.get(fact_id) is None:   # un id fuori ambito non ha storia qui
+            return []
+        return super().direct_predecessors(fact_id, limit=limit)
+
+    def live_topic_siblings(self, topic: str, *, limit: int = 200) -> list[Fact]:
+        return [f for f in super().live_topic_siblings(
+                    self._ambito.topic(topic), limit=limit)
+                if self._ambito.contiene(f.topic)]
+
+    def store(self, fact: Fact, **kwargs: Any) -> bool | None:
+        fact.topic = self._ambito.topic(fact.topic)
+        esistente = SemanticMemory.get(self, fact.id)
+        if esistente is not None and not self._ambito.contiene(esistente.topic):
+            raise PermissionError(
+                f"l'id {fact.id!r} appartiene a un altro ambito: uno store legato "
+                "non scrive sopra i fatti di un altro utente")
+        return super().store(fact, **kwargs)
+
+    def supersede(self, old_id: str, new_id: str, **kwargs: Any) -> dict[str, Any]:
+        # Un id fuori ambito si comporta come un id che non c'e': stesso errore,
+        # stesso testo, perche' la differenza direbbe che il fatto esiste.
+        for nome, fid in (("old_id", old_id), ("new_id", new_id)):
+            f = SemanticMemory.get(self, fid)
+            if f is not None and not self._ambito.contiene(f.topic):
+                raise SupersedeError(f"{nome} {fid!r} not found in facts table")
+        return super().supersede(old_id, new_id, **kwargs)
+
+
+def _rifiuto_fuori_ambito(nome: str) -> Callable[..., Any]:
+    def rifiuta(self: _StoreNellAmbito, *args: Any, **kwargs: Any) -> Any:
+        raise PermissionError(
+            f"`{nome}` non sa ancora applicare l'ambito ({self._ambito}): su uno "
+            "store legato a un utente rifiuta invece di leggere o toccare i "
+            "fatti di tutti. Chiamalo da uno store non legato, o portalo fra "
+            "`_CONSAPEVOLI_DELL_AMBITO` con la sua prova.")
+    rifiuta.__name__ = nome
+    return rifiuta
+
+
+for _nome, _attr in list(vars(SemanticMemory).items()):
+    if (not _nome.startswith("_") and _nome not in _CONSAPEVOLI_DELL_AMBITO
+            and callable(_attr)):
+        setattr(_StoreNellAmbito, _nome, _rifiuto_fuori_ambito(_nome))

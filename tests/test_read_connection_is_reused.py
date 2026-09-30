@@ -313,11 +313,24 @@ def test_every_hot_read_of_the_read_path_is_wired(db):
                                  "get_attrs", "get_attr", "edges_from",
                                  "snapshot_full", "list_anchors"},
     }
+    controllate = 0
     for modulo, funzioni in attesi.items():
         albero = ast.parse(_pl.Path(modulo).read_text(encoding="utf-8"))
         for nodo in ast.walk(albero):
             if not isinstance(nodo, ast.FunctionDef) or nodo.name not in funzioni:
                 continue
+            # Un override che DELEGA a `super().<stesso nome>(...)` legge con la
+            # connessione della base, quindi eredita il cablaggio: e' lo store
+            # legato a un ambito (Atlas, 29/09), che filtra DOPO la lettura
+            # riusata. La base resta controllata qui sotto.
+            if any(isinstance(sub, ast.Call)
+                   and isinstance(sub.func, ast.Attribute)
+                   and sub.func.attr == nodo.name
+                   and isinstance(sub.func.value, ast.Call)
+                   and getattr(sub.func.value.func, "id", None) == "super"
+                   for sub in ast.walk(nodo)):
+                continue
+            controllate += 1
             usa = False
             for sub in ast.walk(nodo):
                 if (isinstance(sub, ast.Call)
@@ -327,6 +340,11 @@ def test_every_hot_read_of_the_read_path_is_wired(db):
             assert usa, (
                 f"{modulo}:{nodo.name} apre ancora una connessione per ogni "
                 "lettura: l'helper esiste ma quella chiamata non lo usa")
+    # ⚠️ Saltare le deleghe non deve svuotare il controllo: misurate il 29/09,
+    # le letture vere sono una in semantic.py e dodici in entity_kg.py.
+    assert controllate >= 13, (
+        f"il presidio ha controllato {controllate} letture: ne salta troppe e "
+        "sorveglia il nulla")
 
 
 def test_a_broken_connection_is_replaced_not_kept(db):

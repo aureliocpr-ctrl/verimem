@@ -162,19 +162,35 @@ class SqliteRows:
         "WHERE UPPER(proposition) LIKE ? LIMIT 50"
     )
 
-    def __init__(self, db_path: Any) -> None:
+    def __init__(self, db_path: Any, *, ambito: Any = None) -> None:
         self.db_path = str(db_path)
+        #: ATLAS (29/09): con un ambito (`scope.Scope`) le righe candidate sono
+        #: solo quelle dell'utente che legge. Il testo dei fatti nascosti finisce
+        #: nella risposta: senza, un handle legato leggerebbe quelli di tutti.
+        self.ambito = ambito if ambito is not None and not ambito.vuoto else None
+
+    def _nell_ambito(self, sql: str, colonna: str) -> tuple[str, tuple]:
+        if self.ambito is None:
+            return sql, ()
+        from .scope import clausola_sql
+        return (sql.replace(" LIMIT 50", f" AND {clausola_sql(colonna)} LIMIT 50"),
+                self.ambito.parametri_sql())
 
     def rows_for_code(self, code: str) -> list[tuple]:
         con = sqlite3.connect(f"file:{self.db_path}?mode=ro", uri=True)
         try:
+            if self.ambito is not None:
+                from .scope import registra_nella_connessione
+                registra_nella_connessione(con)
             try:
                 # La phrase query e' fra virgolette: senza, i token del codice
                 # verrebbero cercati separati e «S-007» diventerebbe «s OR 007».
-                return list(con.execute(self._SQL_FTS, (f'"{code}"',)))
+                sql, amb = self._nell_ambito(self._SQL_FTS, "f.topic")
+                return list(con.execute(sql, (f'"{code}"', *amb)))
             except sqlite3.OperationalError:
                 # niente facts_fts (o sintassi FTS rifiutata): si ripiega.
-                return list(con.execute(self._SQL_LIKE, (f"%{code.upper()}%",)))
+                sql, amb = self._nell_ambito(self._SQL_LIKE, "topic")
+                return list(con.execute(sql, (f"%{code.upper()}%", *amb)))
         finally:
             con.close()
 
