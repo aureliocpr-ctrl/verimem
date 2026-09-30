@@ -209,7 +209,7 @@ def snapshot_pre_op(
     return op_id
 
 
-def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
+def undo_op(conn: sqlite3.Connection, op_id: str, *, principal: str) -> dict:
     """Restore the pre-op snapshot for op_id. Returns result dict.
 
     Result keys:
@@ -225,6 +225,10 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
     answers ``not_found`` if the row was deleted meanwhile. The undone_at
     column is stamped so re-undo is a no-op.
     """
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    # chi annulla si dichiara PRIMA di toccare qualcosa: un annullamento e'
+    # una mutazione dei fatti come quella che rovescia
+    require_principal(principal)
     cur = conn.cursor()
     cur.execute(
         "SELECT op_type, fact_id, pre_row_json, undone_at, ttl_expires_at "
@@ -279,6 +283,12 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
             f"INSERT OR REPLACE INTO facts ({col_list}) VALUES ({placeholders})",
             vals,
         )
+    # nella STESSA transazione: se la riga di audit non si scrive, il chiamante
+    # non arriva al commit e l'annullamento non avviene (fail-closed)
+    conn.execute(TABLE_SQL)
+    record_mutation(conn, principal=principal, action="restore",
+                    resource_id=fact_id,
+                    detail={"op_id": op_id, "undo_of": op_type})
     conn.execute(
         "UPDATE facts_undo_log SET undone_at = ? WHERE op_id = ?",
         (time.time(), op_id),

@@ -1429,7 +1429,8 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         mem = tenants.get(tenant_id)
         _ftok = _flow_ctx(tenant_id)   # stesso motivo della restore, sopra
         try:
-            result = mem.semantic.undo_destructive_op(op_id)
+            result = mem.semantic.undo_destructive_op(
+                op_id, principal=f"gw:{tenant_id}")
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, writes=1)

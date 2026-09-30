@@ -15389,7 +15389,8 @@ async def _call_tool_impl(name: str, arguments: dict[str, Any]) -> list[t.TextCo
             if not op_id:
                 _audit(name, arguments, outcome="rejected_empty")
                 return _err("empty op_id")
-            result = a.semantic.undo_destructive_op(op_id)
+            result = a.semantic.undo_destructive_op(
+                op_id, principal=_MCP_PRINCIPAL)
             _audit(name, arguments, outcome=result.get("action", "unknown"))
             return _ok(result)
 

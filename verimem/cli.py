@@ -3942,7 +3942,7 @@ def facts_undo(
         raise typer.Exit(2) from None
     if len(_matches) == 1:
         op_id = _matches[0]
-    result = sm.undo_destructive_op(op_id)
+    result = sm.undo_destructive_op(op_id, principal=_principale())
     action = result.get("action", "unknown")
     if action == "restored":
         console.print(
