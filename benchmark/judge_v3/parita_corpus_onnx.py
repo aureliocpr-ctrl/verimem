@@ -90,6 +90,18 @@ def leggi_corpus(percorso: Path, modello: str, dimensione: int) -> tuple[list[st
     return [r[0] for r in righe], [r[1] for r in righe], vettori.copy()
 
 
+def allinea_al_riferimento(ids: list[str], testi: list[str], vettori: np.ndarray,
+                           ids_riferimento: list[str]) -> tuple[list[str], list[str], np.ndarray]:
+    """The rows of a frozen reference, in its order: a run that resumes measures the SAME corpus as the run
+    that froze it, even if facts were written in between. A fact of the reference that is gone stops the run."""
+    posizione = {fatto: k for k, fatto in enumerate(ids)}
+    mancanti = [fatto for fatto in ids_riferimento if fatto not in posizione]
+    if mancanti:
+        raise RuntimeError(f"{len(mancanti)} fatti del riferimento non sono più nel corpus: il riferimento va rifatto")
+    scelti = [posizione[fatto] for fatto in ids_riferimento]
+    return list(ids_riferimento), [testi[k] for k in scelti], vettori[scelti]
+
+
 def richiamo_senza_se_stesso(sim_rif, sim_alt, se_stessi, k: int) -> float:
     """recall@k when every query is a fact of the corpus: its own column is left out of both rows."""
     sim_rif = np.array(sim_rif, dtype=np.float64, copy=True)
@@ -171,10 +183,17 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
     # sentence-transformers 5.4 renamed it; the product accepts older versions too
     dimensione = int((getattr(st, "get_embedding_dimension", None) or st.get_sentence_embedding_dimension)())
     ids, testi, memorizzati = leggi_corpus(store, modello, dimensione)
+    # a run cut by its cap resumes from here: the frozen ids (the same corpus) and the fp32 reference
+    riferimento = uscita.with_name(uscita.stem + ".riferimento.npz")
+    salvato = np.load(riferimento, allow_pickle=False) if riferimento.exists() else None
+    if salvato is not None:
+        if (int(salvato["seme"]), int(salvato["campione"]), int(salvato["controllo"])) != (seme, campione, controllo):
+            raise RuntimeError(f"{riferimento.name} ha altri seme, campione o controllo: cancellalo o usa gli stessi")
+        ids, testi, memorizzati = allinea_al_riferimento(ids, testi, memorizzati, [str(x) for x in salvato["ids"]])
     n = len(ids)
     lunghezze = np.array([len(t) for t in testi])
-    _passo(f"corpus: {n} righe, caratteri mediani {int(np.median(lunghezze))}, oltre 1000 caratteri "
-           f"{int((lunghezze > 1000).sum())}; {thread} thread")
+    _passo(f"corpus: {n} righe{' (riferimento ripreso)' if salvato is not None else ''}, caratteri mediani "
+           f"{int(np.median(lunghezze))}, oltre 1000 caratteri {int((lunghezze > 1000).sum())}; {thread} thread")
     rng = np.random.default_rng(seme)
     domande_idx = np.sort(rng.choice(n, size=min(campione, n), replace=False))
     passaggi = [f"passage: {t}" for t in testi]
@@ -182,12 +201,16 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
 
     # C. the control: the product's fp32 encode against what the product stored
     scelti = domande_idx[:controllo]
-    fp32_controllo = st.encode([passaggi[i] for i in scelti], normalize_embeddings=True,
-                               convert_to_numpy=True, show_progress_bar=False)
+    if salvato is not None:
+        fp32_controllo, q_fp32 = salvato["fp32_controllo"], salvato["q_fp32"]
+    else:
+        fp32_controllo = st.encode([passaggi[i] for i in scelti], normalize_embeddings=True,
+                                   convert_to_numpy=True, show_progress_bar=False)
+        q_fp32 = st.encode(domande, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
+        np.savez(riferimento, ids=np.array(ids), seme=seme, campione=campione, controllo=controllo,
+                 fp32_controllo=fp32_controllo, q_fp32=q_fp32)
     c_controllo = esporta_onnx.coseni(fp32_controllo, memorizzati[scelti])
-    _passo(f"controllo: {len(scelti)} fatti, coseno minimo {c_controllo.min():.6f}")
-    q_fp32 = st.encode(domande, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
-    _passo(f"domande fp32: {len(domande)}")
+    _passo(f"controllo: {len(scelti)} fatti, coseno minimo {c_controllo.min():.6f}; domande fp32: {len(domande)}")
     tok = esporta_onnx._tokenizzatore(cartella / "tokenizer.json", manifesto["lunghezza_massima"],
                                       manifesto["pad_id"], manifesto["pad_token"])
     numeri: dict = {
@@ -197,24 +220,35 @@ def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks
         "seme": seme, "domande": len(domande), "k": ks, "thread": thread, "versioni": esporta_onnx.versioni(),
         "C_controllo_fp32_contro_memorizzati": {**_quantili(c_controllo),
                                                 "sotto_0_9999": int((c_controllo < 0.9999).sum())},
-        "riferimento_s": round(time.perf_counter() - inizio, 1),
+        "riferimento_s": round(time.perf_counter() - inizio, 1), "riferimento_ripreso": salvato is not None,
         "per_file": {},
     }
     uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")  # the control, at least
     for file in file_onnx:
         partenza = time.perf_counter()
-        # 1. the ONNX passage vector of every fact against the stored one
-        onnx_passaggi = vettori_onnx(file, passaggi, tok, thread)
+        impronta = esporta_onnx.sha256(file)
+        vettori_salvati = uscita.with_name(f"{uscita.stem}.{file.stem}.npz")
+        dal_disco = None
+        if vettori_salvati.exists():
+            dal_disco = np.load(vettori_salvati, allow_pickle=False)
+            if str(dal_disco["sha256"]) != impronta or len(dal_disco["onnx_passaggi"]) != n:
+                dal_disco = None  # another file or another corpus: encode again
+        if dal_disco is not None:
+            onnx_passaggi, q_onnx = dal_disco["onnx_passaggi"], dal_disco["q_onnx"]
+            _passo(f"{file.name}: vettori ripresi da {vettori_salvati.name}")
+        else:
+            # 1. the ONNX passage vector of every fact; 2. and 3. the same queries, by the ONNX
+            onnx_passaggi = vettori_onnx(file, passaggi, tok, thread)
+            _passo(f"{file.name}: {n} passaggi in {time.perf_counter() - partenza:.0f} s")
+            q_onnx = vettori_onnx(file, domande, tok, thread)
+            np.savez(vettori_salvati, sha256=impronta, onnx_passaggi=onnx_passaggi, q_onnx=q_onnx)
         c_passaggi = esporta_onnx.coseni(onnx_passaggi, memorizzati)
-        _passo(f"{file.name}: {n} passaggi in {time.perf_counter() - partenza:.0f} s")
-        # 2. and 3. the same queries, fp32 by the product and by the ONNX
-        q_onnx = vettori_onnx(file, domande, tok, thread)
         senza, spostamenti = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, memorizzati, domande_idx, ks)
         con, _ = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, onnx_passaggi, domande_idx, ks)
         _passo(f"{file.name}: finito in {time.perf_counter() - partenza:.0f} s")
         assoluti = np.abs(spostamenti)
         numeri["per_file"][file.name] = {
-            "sha256": esporta_onnx.sha256(file),
+            "sha256": impronta, "vettori_ripresi": dal_disco is not None,
             "1_coseno_onnx_contro_memorizzati": _quantili(c_passaggi),
             "2_richiamo_senza_ricodifica": {str(k): v for k, v in senza.items()},
             "2_spostamento_del_punteggio_top1": {"mediano": float(np.median(assoluti)),

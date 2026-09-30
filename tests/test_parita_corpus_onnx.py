@@ -96,6 +96,21 @@ def test_the_verdict_applies_the_thresholds_fixed_before_the_run() -> None:
     assert parita_corpus_onnx.verdetto(_numeri(controllo=0.99)) == {"controllo": "non regge: ci si ferma"}
 
 
+def test_a_resumed_run_measures_the_frozen_corpus_in_its_order() -> None:
+    import parita_corpus_onnx
+
+    # the store now has a fact written after the reference was frozen, and its own order
+    ids = ["c", "a", "nuovo", "b"]
+    testi = ["C", "A", "N", "B"]
+    vettori = np.arange(8, dtype=np.float32).reshape(4, 2)
+    ids2, testi2, vettori2 = parita_corpus_onnx.allinea_al_riferimento(ids, testi, vettori, ["a", "b", "c"])
+    assert ids2 == ["a", "b", "c"] and testi2 == ["A", "B", "C"]
+    assert vettori2.tolist() == [[2.0, 3.0], [6.0, 7.0], [0.0, 1.0]]
+    # a fact of the reference that is gone: the resumed run would measure another corpus, so it stops
+    with pytest.raises(RuntimeError):
+        parita_corpus_onnx.allinea_al_riferimento(ids, testi, vettori, ["a", "sparito"])
+
+
 def test_recall_over_the_corpus_leaves_the_query_fact_out() -> None:
     import parita_corpus_onnx
 
