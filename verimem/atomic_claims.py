@@ -103,13 +103,23 @@ _VERBI_FINITI = (
     "ate|drove|flew|sat|stood|taught|chose|heard|sold|caught|fought|spoke|wore|"
     "woke|hid|thought|saw|feels|loves|enjoys|likes|wants|thinks|believes|seems|"
     "knows|tries|helps|prefers|admires|appreciates|considers|expresses|mentions|"
-    "finds|keeps|makes|gets"
+    "finds|keeps|makes|gets|"
+    # francese e spagnolo — forme finite che NON sono anche parole inglesi o italiane: il francese «a»
+    # (ha) e' l'articolo inglese, lo spagnolo «son» ed «es» sono nomi inglesi, e la lista vale per
+    # tutte le lingue. Senza «a», il passato prossimo francese («et a acheté») non si spezza: resta intero.
+    "est|sont|ont|était|étaient|fut|furent|sera|seront|vont|fait|font|peut|peuvent|doit|doivent|"
+    "veut|veulent|avait|avaient|está|están|eran|fue|fueron|será|serán|tiene|tienen|tenía|tenían|"
+    "hace|hacen|hizo|hicieron|van|puede|pueden|debe|deben|quiere|quieren"
 )
 # in inglese passato semplice e participio coincidono («tested», «signed») e fanno
 # entrambi da predicato: le forme in -ed contano come verbo finito. In italiano no.
+# lo spagnolo marca il passato remoto con -ó, -aron, -ieron («compró», «visitaron»): nessuna parola
+# inglese o italiana finisce con la «ó» acuta, e le tre lettere davanti tengono fuori «Aaron».
+_PASSATO_SPAGNOLO = r"[a-záéíóúñ]{3,}(?:ó|aron|ieron)"
 _RE_VERBO = re.compile(
-    rf"(?<![\w'])(?:{_VERBI_FINITI}|[a-z]{{3,}}ed)(?=\s|$|[.,;:!?])", re.IGNORECASE)
-_RE_VERBO_INIZIALE = re.compile(rf"^(?:{_VERBI_FINITI}|[a-z]{{3,}}ed)(?=\s|$)", re.IGNORECASE)
+    rf"(?<![\w'])(?:{_VERBI_FINITI}|[a-z]{{3,}}ed|{_PASSATO_SPAGNOLO})(?=\s|$|[.,;:!?])", re.IGNORECASE)
+_RE_VERBO_INIZIALE = re.compile(
+    rf"^(?:{_VERBI_FINITI}|[a-z]{{3,}}ed|{_PASSATO_SPAGNOLO})(?=\s|$)", re.IGNORECASE)
 
 # ── parole che aprono una relativa o una subordinata, nelle due lingue: il verbo
 # che viene dopo non fa del pezzo un claim («rest where she goes to relax»).
@@ -161,7 +171,13 @@ _RE_AUSILIARE = re.compile(
     re.IGNORECASE)
 
 # ── coordinate su cui si spezza (italiano e inglese); « ed » davanti a vocale
-_RE_COORD = re.compile(r"\s*(?:,\s*ed?\s+|\s+ed?\s+|,\s*and\s+|\s+and\s+|;\s+)", re.IGNORECASE)
+_RE_COORD = re.compile(r"\s*(?:,\s*ed?\s+|\s+ed?\s+|,\s*and\s+|\s+and\s+|,\s*et\s+|\s+et\s+|"
+                       r",\s*y\s+|\s+y\s+|;\s+)", re.IGNORECASE)
+
+# ── espressioni fisse che contengono la coordinata e non sono coordinate: il francese «il y a»
+# («c'e'»), e «et al.» in fondo a un elenco di autori.
+_RE_IL_Y_A = re.compile(r"(?:^|\s)il\s+y\s+(?:a|avait|aura|aurait|eut)\b", re.IGNORECASE)
+_RE_ET_AL = re.compile(r"\bet\s+al\.", re.IGNORECASE)
 
 # ── parole che davanti a un apostrofo sono elisioni/accenti, non virgolette
 _ELISIONI = {"e", "l", "d", "s", "c", "n", "un", "un'", "dall", "dell", "nell", "sull",
@@ -269,9 +285,13 @@ def _spezza(testo: str) -> list[tuple[str, str]]:
     pezzi: list[tuple[str, str]] = []
     ultimo = 0
     separatore = ""
+    fisse = [(x.start(), x.end()) for x in _RE_IL_Y_A.finditer(testo)] + \
+            [(x.start(), x.end()) for x in _RE_ET_AL.finditer(testo)]
     for m in _RE_COORD.finditer(testo):
         if _dentro(m.start(), zone) or _dentro(max(m.start(), m.end() - 1), zone):
             continue
+        if any(a <= m.start() + 1 < b or a < m.end() - 1 <= b for a, b in fisse):
+            continue   # «il y a», «et al.»: la coordinata sta dentro un'espressione fissa
         pezzo = testo[ultimo:m.start()].strip(" .")
         if pezzo:
             pezzi.append((separatore, pezzo))
