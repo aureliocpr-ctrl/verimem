@@ -579,8 +579,45 @@ def _giudica_aggiornamenti(in_memoria: list[str], claim: str) -> Any:
     return giudica_aggiornamenti(in_memoria, claim)
 
 
-def _giudice_contraddice(in_memoria: str, claim: str) -> bool:
+def _stesso_tema(in_memoria: str, claim: str) -> bool:
+    """Le due frasi parlano dello stesso tema: la condizione per chiedere al giudice."""
+    from .quantity_match import content_tokens
+    ta, tb = content_tokens(in_memoria), content_tokens(claim)
+    if not ta or not tb:
+        return False
+    return len(ta & tb) / min(len(ta), len(tb)) >= _SOGLIA_STESSO_SOGGETTO
+
+
+def _punteggi_in_un_lotto(candidati: list[_FactLike], claim: str) -> dict[str, float]:
+    """I punteggi del giudice per TUTTI i candidati dello stesso tema, in una chiamata.
+
+    Cura 7 (29/09): il ciclo qui sotto chiedeva al giudice una volta per
+    candidato, in fila, fino a 30 per scrittura. Il lotto usa la stessa coppia e
+    la stessa normalizzazione di ``score`` (``score_many``), quindi il verdetto di
+    ogni candidato non cambia; si calcola prima del ciclo perche' l'ordine degli
+    avvisi resti quello di prima. Senza modello, o se il lotto rompe, torna vuoto
+    e ogni candidato ricade sul giudizio singolo, che si comporta come sempre.
+    """
+    try:
+        from .local_grounding import get_local_judge, local_ce_available
+        if not local_ce_available():
+            return {}
+        testi = list(dict.fromkeys(
+            f.proposition for f in candidati if _stesso_tema(f.proposition, claim)))
+        if not testi:
+            return {}
+        punteggi = get_local_judge().score_many([(t, claim) for t in testi])
+        return dict(zip(testi, (float(p) for p in punteggi), strict=True))
+    except Exception:  # noqa: BLE001 — il lotto e' un risparmio, mai un verdetto
+        return {}
+
+
+def _giudice_contraddice(in_memoria: str, claim: str,
+                         punteggi: dict[str, float] | None = None) -> bool:
     """Vero se il giudice nega sostegno a un claim che parla dello stesso tema.
+
+    ``punteggi`` sono quelli gia' calcolati in lotto da
+    :func:`_punteggi_in_un_lotto`; un testo che non c'e' si giudica da solo.
 
     ⚠️ Non solleva mai e non carica nulla quando il modello non c'è: senza
     modello restituisce ``False`` e il percorso lessicale resta il
@@ -590,12 +627,10 @@ def _giudice_contraddice(in_memoria: str, claim: str) -> bool:
         from .local_grounding import get_local_judge, local_ce_available
         if not local_ce_available():
             return False
-        from .quantity_match import content_tokens
-        ta, tb = content_tokens(in_memoria), content_tokens(claim)
-        if not ta or not tb:
+        if not _stesso_tema(in_memoria, claim):
             return False
-        if len(ta & tb) / min(len(ta), len(tb)) < _SOGLIA_STESSO_SOGGETTO:
-            return False
+        if punteggi is not None and in_memoria in punteggi:
+            return punteggi[in_memoria] < _SOGLIA_GIUDICE_CONTRA
         return float(get_local_judge().score(in_memoria, claim)) < \
             _SOGLIA_GIUDICE_CONTRA
     except Exception:  # noqa: BLE001 — un giudice che rompe non deve
@@ -908,6 +943,8 @@ def validate_claim(
     if claim_versions or claim_dates or lexical_viable:
         _prior_ids = ({f.id for f in contradicting}
                       | {f.id for f in numeric_contra} | numeric_coesistono)
+        _punteggi = _punteggi_in_un_lotto(
+            [f for f in hits if f.id not in _prior_ids], claim)
         for f in hits:
             if f.id in _prior_ids:
                 continue
@@ -942,7 +979,7 @@ def validate_claim(
                         _content_tokens(f.proposition), _content_tokens(claim))
                     and not _unita_non_allineabili(f.proposition, claim)
                     and not _misure_diverse(f.proposition, claim)
-                    and _giudice_contraddice(f.proposition, claim)):
+                    and _giudice_contraddice(f.proposition, claim, _punteggi)):
                 kind_detail = (
                     "entailment",
                     "il giudice non trova sostegno per questo claim nel fatto "
