@@ -30,16 +30,25 @@ from verimem.atomic_claims import decomponi, ha_verbo_finito
      ["Lucía fue al mercado.", "Lucía compró pan fresco."]),
     ("Pablo terminó el informe y visitó a su abuela.",
      ["Pablo terminó el informe.", "Pablo visitó a su abuela."]),
+    # the real «et» splits, the «y» of «il y avait» does not: without the guard the second claim was
+    # «Claire avait du monde»
+    ("Claire est arrivée hier et il y avait du monde.",
+     ["Claire est arrivée hier.", "Il y avait du monde."]),
 ])
 def test_la_coordinata_francese_e_spagnola_si_spezza(testo: str, atteso: list[str]) -> None:
     assert decomponi(testo) == atteso
 
 
 @pytest.mark.parametrize("testo", [
+    # these four stay whole also because a first piece with no finite verb is joined back
     "Il y a trois chats dans le jardin.",
     "Hier il y avait du vent sur la côte.",
     "Smith et al. ont publié l'article en mars.",
     "Pan y mantequilla son baratos en ese mercado.",
+    # these two need the guard: both sides have a finite verb, and without it they gave
+    # «Marc avait du soleil» and «Al. qui sont à Paris»
+    "Marc est content quand il y avait du soleil.",
+    "Le livre est de Smith et al. qui sont à Paris.",
 ])
 def test_le_espressioni_fisse_restano_intere(testo: str) -> None:
     assert decomponi(testo) == [testo]
