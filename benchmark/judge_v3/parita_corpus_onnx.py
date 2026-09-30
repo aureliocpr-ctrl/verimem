@@ -11,10 +11,11 @@ which the product's environment has, and the folder esporta_onnx.py wrote (the O
 tokenizer and manifesto.json):
 
     python benchmark/judge_v3/parita_corpus_onnx.py --store <semantic.db> \
-        --onnx <folder>/model_int8.onnx --uscita <folder>/parita_model_int8.json
+        --onnx <folder>/model_int8.onnx <folder>/model_int8_rr.onnx --uscita <folder>/parita_corpus.json
 
-What it measures for one ONNX file, with the texts prefixed as the product does (verimem/embedding.py:
-«passage: » for what it stores, «query: » for what it searches):
+What it measures, with the texts prefixed as the product does (verimem/embedding.py: «passage: » for
+what it stores, «query: » for what it searches). The control and the fp32 queries are computed once, and
+every ONNX file is measured on the same sample:
   C. the CONTROL: for a sample of facts, the product's own fp32 encode (SentenceTransformer on CPU)
      against the stored vector. It must be ~1, or the stored vectors are not what the rest assumes
      (another device, another text, another model under the same name);
@@ -120,14 +121,18 @@ def _confronto_per_blocchi(q_rif, c_rif, q_alt, c_alt, se_stessi, ks) -> tuple[d
     return {k: somme[k] / len(q_rif) for k in ks}, np.concatenate(spostamenti)
 
 
-def esegui(store: Path, file_onnx: Path, campione: int, controllo: int, ks: list[int], seme: int,
-           thread: int) -> dict:
+def esegui(store: Path, file_onnx: list[Path], campione: int, controllo: int, ks: list[int], seme: int,
+           thread: int, uscita: Path) -> dict:
+    """The reference (the control and the fp32 queries) is computed once; then every ONNX file is measured
+    on the same sample, and the numbers are written after each file, so a cut turn keeps what it measured."""
     import torch
     from sentence_transformers import SentenceTransformer
 
     inizio = time.perf_counter()
     torch.set_num_threads(thread)
-    cartella = file_onnx.parent
+    cartella = file_onnx[0].parent
+    if any(f.parent != cartella for f in file_onnx):
+        raise ValueError("the ONNX files must come from one export folder (one manifest, one tokenizer)")
     manifesto = json.loads((cartella / "manifesto.json").read_text(encoding="utf-8"))
     modello = manifesto["modello"]
     st = SentenceTransformer(modello, local_files_only=True, device="cpu")
@@ -144,42 +149,50 @@ def esegui(store: Path, file_onnx: Path, campione: int, controllo: int, ks: list
     fp32_controllo = st.encode([passaggi[i] for i in scelti], normalize_embeddings=True,
                                convert_to_numpy=True, show_progress_bar=False)
     c_controllo = esporta_onnx.coseni(fp32_controllo, memorizzati[scelti])
-
-    # 1. the ONNX passage vector of every fact against the stored one
+    q_fp32 = st.encode(domande, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
     tok = esporta_onnx._tokenizzatore(cartella / "tokenizer.json", manifesto["lunghezza_massima"],
                                       manifesto["pad_id"], manifesto["pad_token"])
-    onnx_passaggi = vettori_onnx(file_onnx, passaggi, tok, thread)
-    c_passaggi = esporta_onnx.coseni(onnx_passaggi, memorizzati)
-
-    # 2. and 3. the same queries, fp32 by the product and by the ONNX
-    q_fp32 = st.encode(domande, normalize_embeddings=True, convert_to_numpy=True, show_progress_bar=False)
-    q_onnx = vettori_onnx(file_onnx, domande, tok, thread)
-    senza, spostamenti = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, memorizzati, domande_idx, ks)
-    con, _ = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, onnx_passaggi, domande_idx, ks)
-    assoluti = np.abs(spostamenti)
-    return {
-        "modello": modello, "onnx": {"file": file_onnx.name, "sha256": esporta_onnx.sha256(file_onnx)},
+    numeri: dict = {
+        "modello": modello,
         "store": {"righe_lette": n, "dimensione": dimensione, "filtro": "embedding_model = modello, "
                   "length(embedding) = 4 x dimensione, superseded_by IS NULL"},
-        "seme": seme, "domande": len(domande), "k": ks,
+        "seme": seme, "domande": len(domande), "k": ks, "thread": thread, "versioni": esporta_onnx.versioni(),
         "C_controllo_fp32_contro_memorizzati": {**_quantili(c_controllo),
                                                 "sotto_0_9999": int((c_controllo < 0.9999).sum())},
-        "1_coseno_onnx_contro_memorizzati": _quantili(c_passaggi),
-        "2_richiamo_senza_ricodifica": {str(k): v for k, v in senza.items()},
-        "2_spostamento_del_punteggio_top1": {"mediano": float(np.median(assoluti)),
-                                             "p99": float(np.quantile(assoluti, 0.99)),
-                                             "massimo": float(assoluti.max()),
-                                             "medio_con_segno": float(spostamenti.mean())},
-        "3_richiamo_con_ricodifica": {str(k): v for k, v in con.items()},
-        "versioni": esporta_onnx.versioni(), "thread": thread,
-        "durata_s": round(time.perf_counter() - inizio, 1),
+        "riferimento_s": round(time.perf_counter() - inizio, 1),
+        "per_file": {},
     }
+    for file in file_onnx:
+        partenza = time.perf_counter()
+        # 1. the ONNX passage vector of every fact against the stored one
+        onnx_passaggi = vettori_onnx(file, passaggi, tok, thread)
+        c_passaggi = esporta_onnx.coseni(onnx_passaggi, memorizzati)
+        # 2. and 3. the same queries, fp32 by the product and by the ONNX
+        q_onnx = vettori_onnx(file, domande, tok, thread)
+        senza, spostamenti = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, memorizzati, domande_idx, ks)
+        con, _ = _confronto_per_blocchi(q_fp32, memorizzati, q_onnx, onnx_passaggi, domande_idx, ks)
+        assoluti = np.abs(spostamenti)
+        numeri["per_file"][file.name] = {
+            "sha256": esporta_onnx.sha256(file),
+            "1_coseno_onnx_contro_memorizzati": _quantili(c_passaggi),
+            "2_richiamo_senza_ricodifica": {str(k): v for k, v in senza.items()},
+            "2_spostamento_del_punteggio_top1": {"mediano": float(np.median(assoluti)),
+                                                 "p99": float(np.quantile(assoluti, 0.99)),
+                                                 "massimo": float(assoluti.max()),
+                                                 "medio_con_segno": float(spostamenti.mean())},
+            "3_richiamo_con_ricodifica": {str(k): v for k, v in con.items()},
+            "durata_s": round(time.perf_counter() - partenza, 1),
+        }
+        numeri["durata_s"] = round(time.perf_counter() - inizio, 1)
+        uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")
+    return numeri
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--store", type=Path, required=True, help="the product's semantic.db, opened read-only")
-    parser.add_argument("--onnx", type=Path, required=True, help="an ONNX file written by esporta_onnx.py")
+    parser.add_argument("--onnx", type=Path, required=True, nargs="+",
+                        help="ONNX files of one esporta_onnx.py folder, measured in this order")
     parser.add_argument("--uscita", type=Path, required=True, help="where the numbers go (JSON)")
     parser.add_argument("--campione", type=int, default=2000, help="facts used as queries")
     parser.add_argument("--controllo", type=int, default=200, help="facts re-encoded fp32 for the control")
@@ -188,8 +201,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--thread", type=int, default=4, help="the product's thread budget")
     args = parser.parse_args(argv)
     numeri = esegui(args.store, args.onnx, args.campione, args.controllo,
-                    [int(k) for k in args.k.split(",")], args.seme, args.thread)
-    args.uscita.write_text(json.dumps(numeri, ensure_ascii=False, indent=2), encoding="utf-8")
+                    [int(k) for k in args.k.split(",")], args.seme, args.thread, args.uscita)
     print(json.dumps(numeri, ensure_ascii=False, indent=2))
     return 0
 
