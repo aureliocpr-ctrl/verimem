@@ -17,20 +17,52 @@ declared per entry (local = free/deterministic; claude-p = paced serial LLM).
 from __future__ import annotations
 
 import argparse
+import collections
 import importlib.util
 import json
+import re
 from pathlib import Path
 
 _R = Path(__file__).resolve().parent / "results"
+_ROOT = Path(__file__).resolve().parent.parent
+
+#: A published number inside a document, on one line: <!-- g4:<id> -->0.971<!-- /g4 -->.
+#: The text between the two comments is RENDERED from the registry (`--render`) and
+#: CHECKED against it (`--check-docs`): it is never written by hand.
+_MARKER = re.compile(r"<!-- g4:(?P<id>[a-z0-9][a-z0-9-]*) -->(?P<text>.*?)<!-- /g4 -->")
 
 #: key -> {claim, artifact, jsonpath (dot keys), command, cost}
 REGISTRY: dict[str, dict] = {
     "gate-auroc": {
         "claim": "write-path source⊢fact grounding AUROC 0.971 (SNLI)",
+        "docs": [{"file": "README.md", "id": "gate-auroc", "text": "{auroc:.3f}",
+                  "fields": {"auroc": ["auroc_faithful_vs_confab"]}}],
         "artifact": "fact_grounding.json",
         "value_at": ["auroc_faithful_vs_confab"],
         "command": "python -m benchmark.fact_grounding_bench --out benchmark/results/fact_grounding.json",
         "cost": "claude-p",
+    },
+    "moat-multilingual": {
+        "claim": "multilingual contradiction matrix (EN/IT/FR/ES, 224 writes): numeric escapes, "
+                 "confabs quarantined, entailed admitted",
+        "docs": [
+            {"file": "README.md", "id": "matrix-numeric", "text": "{e} of {n}",
+             "fields": {"e": ["numeric_escapes"], "n": ["numeric_confab_n"]}},
+            {"file": "README.md", "id": "matrix-when", "text": "{when}, commit {c:.8}",
+             "fields": {"when": ["measured_on"], "c": ["commit"]}},
+            {"file": "README.md", "id": "matrix-es-entity-band", "text": "{v:.1f}% of all {n} confabs",
+             "fields": {"v": ["cells", "ES/entity", "esc_pct_of_all_confabs"], "n": ["confab_n"]}},
+            {"file": "README.md", "id": "matrix-summary",
+             "text": "{fb:.1f}% false-block ({ok}/{nok} entailed admitted) / {esc:.1f}% escape "
+                     "({q}/{nb} confabs quarantined), {when} on commit {c:.8}",
+             "fields": {"fb": ["false_block_pct"], "ok": ["entailed_admitted"], "nok": ["entailed_n"],
+                        "esc": ["escape_pct"], "q": ["confab_quarantined"], "nb": ["confab_n"],
+                        "when": ["measured_on"], "c": ["commit"]}},
+        ],
+        "artifact": "moat_multilingual_matrix.json",
+        "value_at": ["escape_pct"],
+        "command": "python -m benchmark.moat_multilingual_matrix --out benchmark/results/moat_multilingual_matrix.json",
+        "cost": "local",
     },
     "moat-downstream": {
         "claim": "downstream hallucination 95.9% -> 12.2% with gate ON (seed 7)",
@@ -196,6 +228,78 @@ def cmd_verify() -> int:
     return 1 if (missing or unrunnable) else 0
 
 
+def check_docs(registry: dict | None = None, results_dir: Path | None = None,
+               root: Path | None = None, write: bool = False) -> list[str]:
+    """The TEXT a reader sees against the registry (T218): every marker renders its artifact.
+
+    A registry entry publishes through ``docs``: ``[{"file", "id", "text", "fields"}]`` —
+    ``text`` is a format string over ``fields``, each a key path into the artifact. The
+    document holds ``<!-- g4:<id> -->text<!-- /g4 -->`` on one line. Four things are failures:
+    the text differs from the rendering (a hand, or an artifact that moved on); a marker the
+    registry does not know; a registered marker missing from its file; the same marker twice.
+
+    With ``write=True`` the differing texts are rewritten from the artifacts (bytes in, bytes
+    out: the file keeps its line endings) and only the other three failures are returned.
+    """
+    registry = REGISTRY if registry is None else registry
+    results_dir = _R if results_dir is None else Path(results_dir)
+    root = _ROOT if root is None else Path(root)
+    problems: list[str] = []
+    expected: dict[tuple[str, str], tuple[str, str]] = {}
+    files = {"README.md"}
+    for key, e in registry.items():
+        for spec in e.get("docs", []):
+            files.add(spec["file"])
+            try:
+                data = json.loads((results_dir / e["artifact"]).read_text(encoding="utf-8"))
+                text = spec["text"].format(**{n: _dig(data, p) for n, p in spec["fields"].items()})
+            except Exception as exc:  # noqa: BLE001 — an unrenderable number is a failure, not a crash
+                problems.append(f"{key}: cannot render g4:{spec['id']} from {e['artifact']}: {exc}")
+                continue
+            expected[(spec["file"], spec["id"])] = (key, text)
+    for name in sorted(files):
+        path = root / name
+        if not path.exists():
+            problems += [f"{k}: g4:{i} is registered in {name}, which does not exist"
+                         for (f, i), (k, _) in expected.items() if f == name]
+            continue
+        raw = path.read_bytes().decode("utf-8")
+        seen = collections.Counter(m.group("id") for m in _MARKER.finditer(raw))
+        for mid, n in sorted(seen.items()):
+            if (name, mid) not in expected:
+                problems.append(f"{name}: marker g4:{mid} is not in the registry")
+            elif n > 1:
+                problems.append(f"{name}: marker g4:{mid} appears {n} times")
+        problems += [f"{k}: marker g4:{i} not found in {name}"
+                     for (f, i), (k, _) in expected.items() if f == name and not seen[i]]
+
+        def _one(m: re.Match) -> str:
+            mid, got = m.group("id"), m.group("text")
+            want = expected.get((name, mid))
+            if want is None or seen[mid] > 1 or got == want[1]:
+                return m.group(0)
+            if not write:
+                problems.append(f"{name}: g4:{mid} says {got!r}, the registry renders "
+                                f"{want[1]!r} ({want[0]})")
+            return f"<!-- g4:{mid} -->{want[1]}<!-- /g4 -->"
+
+        new = _MARKER.sub(_one, raw)
+        if write and new != raw:
+            path.write_bytes(new.encode("utf-8"))
+    return problems
+
+
+def cmd_check_docs(write: bool = False) -> int:
+    problems = check_docs(write=write)
+    n = sum(len(e.get("docs", [])) for e in REGISTRY.values())
+    for p in problems:
+        print(f"FAIL {p}")
+    if not problems:
+        verb = "rendered from" if write else "agree with"
+        print(f"ok   {n} published number(s) {verb} the registry")
+    return 1 if problems else 0
+
+
 def cmd_show(key: str) -> int:
     e = REGISTRY[key]
     print(json.dumps(e, indent=2))
@@ -212,11 +316,17 @@ def main(argv=None) -> int:
     g.add_argument("--verify", action="store_true")
     g.add_argument("--show", metavar="KEY")
     g.add_argument("--run", metavar="KEY")
+    g.add_argument("--check-docs", action="store_true",
+                   help="the published texts between g4 markers agree with the registry")
+    g.add_argument("--render", action="store_true",
+                   help="rewrite the texts between g4 markers from the artifacts")
     a = ap.parse_args(argv)
     if a.list:
         return cmd_list()
     if a.verify:
         return cmd_verify()
+    if a.check_docs or a.render:
+        return cmd_check_docs(write=a.render)
     if a.show:
         return cmd_show(a.show)
     if a.run:
