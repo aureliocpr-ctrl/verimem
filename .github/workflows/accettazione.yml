@@ -16,6 +16,16 @@ name: accettazione
 # finche' il ticket che la chiude e' fuso. Finche' la 0.7.7 non e' pronta questo job
 # NON e' un check richiesto della protezione di main: e' l'informazione, non un blocco
 # della fila.
+#
+# 🧼 MACCHINA PULITA PER COSTRUZIONE (30/09): chi installa non ha modelli in casa ne'
+# una cache di pip. Fino al 30/09 qui c'era un passo `actions/cache` per i modelli, che
+# salva solo a job verde: con le righe ancora rosse non si e' mai salvato, e le due celle
+# scaricavano gia' tutto da zero, ma per caso. Il giorno in cui il tabellone fosse
+# diventato verde la cache si sarebbe salvata, e la prova avrebbe smesso di essere quella
+# di chi installa senza dirlo. Ora il passo non c'e', pip gira senza cache, e un
+# controllo positivo ferma il job se le cartelle dei modelli ci sono gia' prima
+# dell'installazione. Il prezzo: ~2,3 GB scaricati dall'Hub a ogni cella, e un rosso
+# quando l'Hub non risponde, che e' quello che vede chi installa in quel momento.
 
 on:
   pull_request:
@@ -27,6 +37,10 @@ on:
       - ".github/workflows/accettazione.yml"
   push:
     branches: [main]
+  # Una volta al giorno anche senza richieste: le dipendenze che pip risolve per chi
+  # installa cambiano su PyPI senza che nessuno tocchi questo repository.
+  schedule:
+    - cron: "41 4 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -67,9 +81,12 @@ jobs:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 60
+    env:
+      # pip non legge e non scrive una cache: ogni pacchetto arriva da PyPI, oggi.
+      PIP_NO_CACHE_DIR: "1"
     steps:
-      # Il checkout serve SOLO per la cartella accettazione/ (le prove) e per le chiavi
-      # della cache: il prodotto che si prova e' il wheel, non l'albero.
+      # Il checkout serve SOLO per la cartella accettazione/ (le prove): il prodotto che
+      # si prova e' il wheel, non l'albero.
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
@@ -78,22 +95,38 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # I modelli (~2,3 GB secondo il README) si scaricano al primo giro; poi dalla cache.
-      - name: cache dei modelli
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/huggingface
-            ~/.cache/verimem
-          key: modelli-${{ runner.os }}-${{ hashFiles('verimem/local_grounding.py', 'verimem/embedding.py') }}
+      # I modelli (~2,3 GB secondo il README) si scaricano dall'Hub a ogni cella, come
+      # per chi installa. Le quattro cartelle sono quelle che ci.yml mette in cache.
+      - name: la macchina e' pulita (nessun modello in casa, nessuna variabile che li sposta)
+        shell: bash
+        run: |
+          sporca=0
+          for d in "$HOME/.cache/huggingface" "$HOME/.cache/torch/sentence_transformers" \
+                   "$HOME/.engram/models" "$HOME/.cache/verimem" \
+                   "${HF_HOME:-}" "${HF_HUB_CACHE:-}" "${SENTENCE_TRANSFORMERS_HOME:-}" "${TRANSFORMERS_CACHE:-}"; do
+            [ -n "$d" ] || continue
+            n=$(find "$d" -type f 2>/dev/null | wc -l)
+            echo "file in $d prima dell'installazione: $n"
+            [ "$n" -eq 0 ] || sporca=1
+          done
+          for v in HF_HUB_OFFLINE TRANSFORMERS_OFFLINE; do
+            if [ -n "${!v:-}" ]; then echo "$v=${!v}: chi installa scarica, non lavora offline"; sporca=1; fi
+          done
+          test "$sporca" -eq 0
       - name: il wheel in un venv vergine, come dice il README (pip install)
         shell: bash
         run: |
           python -m venv "$RUNNER_TEMP/utente"
           if [ "$RUNNER_OS" = "Windows" ]; then BIN="$RUNNER_TEMP/utente/Scripts"; else BIN="$RUNNER_TEMP/utente/bin"; fi
           echo "BIN=$BIN" >> "$GITHUB_ENV"
+          # Controllo positivo: con la cache spenta `pip cache dir` si rifiuta.
+          if "$BIN/python" -m pip cache dir >/dev/null 2>&1; then
+            echo "la cache di pip e' accesa: questa non e' la macchina di chi installa"; exit 1
+          fi
           "$BIN/python" -m pip install --upgrade pip
           "$BIN/python" -m pip install dist/*.whl
+          echo "--- le dipendenze che pip ha risolto per chi installa, $(date -u +%F) ---"
+          "$BIN/python" -m pip list --format=freeze
       - name: verimem warmup (il giudice compreso) e verimem doctor
         shell: bash
         run: |
