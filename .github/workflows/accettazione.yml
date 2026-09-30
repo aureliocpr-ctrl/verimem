@@ -104,12 +104,16 @@ jobs:
       - name: la macchina e' pulita (nessun modello in casa, nessuna variabile che li sposta)
         shell: bash
         run: |
+          # `shell: bash` qui e' `bash -eo pipefail`: `find` su una cartella che non c'e'
+          # esce 1 e fermerebbe il passo proprio sulla macchina pulita. Si guarda prima
+          # se la cartella esiste (30/09: il primo giro di questo passo e' caduto cosi').
           sporca=0
           for d in "$HOME/.cache/huggingface" "$HOME/.cache/torch/sentence_transformers" \
                    "$HOME/.engram/models" "$HOME/.cache/verimem" \
                    "${HF_HOME:-}" "${HF_HUB_CACHE:-}" "${SENTENCE_TRANSFORMERS_HOME:-}" "${TRANSFORMERS_CACHE:-}"; do
             [ -n "$d" ] || continue
-            n=$(find "$d" -type f 2>/dev/null | wc -l)
+            n=0
+            if [ -d "$d" ]; then n=$(find "$d" -type f | wc -l); fi
             echo "file in $d prima dell'installazione: $n"
             [ "$n" -eq 0 ] || sporca=1
           done
