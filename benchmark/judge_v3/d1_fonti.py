@@ -41,12 +41,9 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-# the fields, their check and `decomponi()` from the verimem of THIS checkout
-from d1_campi import controlla, decomponi
-
-# PROVISIONAL (asked on 2026-09-30 19:55 to move it into d1_campi): the rule that finds an atomic claim
-# inside a unit is the dialogue builder's, imported and not copied, so the two halves cannot drift apart
-from d1_dialoghi import _coda
+# the fields, their check, `decomponi()` and the rule that finds an atomic claim inside a unit (`coda`)
+# come from the one module every D1 builder shares, so the two halves cannot drift apart
+from d1_campi import coda, controlla, decomponi
 
 GENERATORE = "d1_fonti@1"
 
@@ -187,7 +184,7 @@ def _righe_di(memoria_id: str, lingua: str, famiglia: str, fonte: str, memoria: 
     unita = decomponi(memoria)
     out = []
     for k, u in enumerate(unita):
-        dentro = [a for a in atomici if _coda(a[0], soggetto).lower() in u.lower()]
+        dentro = [a for a in atomici if coda(a[0], soggetto).lower() in u.lower()]
         assert dentro, f"unit with no known atomic claim: {u!r} from {memoria!r}"
         _, etichetta, tipo, segno = min(dentro, key=lambda a: a[1])
         out.append({"id": f"{memoria_id}-{k}", "lingua": lingua, "famiglia": famiglia, "tipo": tipo,
@@ -227,7 +224,7 @@ def locazione(rng: random.Random, lingua: str, n: int, seme: int) -> list[dict]:
     for nome, (primo, secondo) in {"vero+tempo": ("sostenuta", "tempo"),
                                    "valore+vero": ("valore", "tempo_vero")}.items():
         a1, a2 = atomici[primo], atomici[secondo]
-        memoria = f"{a1[0].rstrip('.')}{t['coordinata']}{_coda(a2[0], soggetto)}."
+        memoria = f"{a1[0].rstrip('.')}{t['coordinata']}{coda(a2[0], soggetto)}."
         righe += _righe_di(f"{lingua}-loc{n:03d}-{nome}", lingua, "locazione", fonte, memoria, [a1, a2],
                            soggetto, seme)
     return righe

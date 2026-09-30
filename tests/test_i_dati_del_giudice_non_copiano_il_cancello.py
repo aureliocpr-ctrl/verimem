@@ -29,10 +29,12 @@ JUDGE_V3 = Path(__file__).resolve().parents[1] / "benchmark" / "judge_v3"
 sys.path.insert(0, str(JUDGE_V3))
 import d1_dialoghi  # noqa: E402
 import d1_disgiunti  # noqa: E402
+import d1_fonti  # noqa: E402
 
 SEME = 20260930
 BUILDERS = {
     "dialoghi": lambda: d1_dialoghi.genera(600, SEME),
+    "fonti": lambda: d1_fonti.genera(seme=SEME, per_lingua=60),
 }
 
 

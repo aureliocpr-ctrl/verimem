@@ -5,9 +5,10 @@ The cells:
 2. every language has every pair type, and both whole and split memories;
 3. the labels hold by construction on single-unit rows: the changed value, the swapped entity and the
    added detail are NOT in the source, the supported value IS;
-4. no word 4-gram in common with the 112 matrix and the gate benches (`d1_disgiunti.in_comune`, the one
-   surface every builder uses);
-5. deterministic with the seed.
+4. deterministic with the seed.
+
+That the rows do not copy the gate benches is checked for every builder in ONE place,
+`tests/test_i_dati_del_giudice_non_copiano_il_cancello.py`, where this builder is a line of BUILDERS.
 
 No model: `decomponi()` is pure.
 """
@@ -65,13 +66,6 @@ def test_the_labels_hold_by_construction_on_single_unit_rows() -> None:
             assert segno in fonte, (r["id"], "a supported value missing from the source")
         else:
             assert segno not in fonte, (r["id"], r["tipo"], "the negative's mark is in the source")
-
-
-def test_no_word_4gram_in_common_with_the_gate_benches() -> None:
-    import d1_disgiunti
-
-    comuni = d1_disgiunti.in_comune(_righe(), n=4)
-    assert not comuni, comuni[:10]
 
 
 def test_the_same_seed_gives_the_same_rows_and_another_seed_does_not() -> None:
