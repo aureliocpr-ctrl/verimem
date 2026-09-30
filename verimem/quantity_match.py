@@ -1226,7 +1226,12 @@ _ORARIO_RE = re.compile(
     r"(?::(?P<s>[0-5]\d)(?:[.,](?P<f>\d{1,9}))?" + _FUSO + r"?"
     r"|(?(d)" + _FUSO + r"|Z))?"
     r"(?:[ \t]?(?P<ap>[AaPp]\.?[Mm]\.?)(?![^\W\d_]))?"
-    r"(?![\d:])")
+    # ⚠️ I DUE PUNTI DOPO SONO PUNTEGGIATURA, se non segue una cifra: «Ore
+    # 16:06: il save e' finito». La prima versione rifiutava ogni «:» dopo, e
+    # sul corpus 7 accuse nuove su 9 erano orari cosi' che la fonte aveva e il
+    # parser non leggeva. Si rifiuta solo «:» seguito da una cifra, cioe' un
+    # composto piu' lungo («10:00:00:00» di un timecode non e' un orario).
+    r"(?!\d|:\d)")
 
 
 @dataclass(frozen=True)

@@ -62,6 +62,7 @@ def test_un_numero_che_la_fonte_ha_solo_dentro_un_orario_e_assente(claim: str, f
     ("Il save ha ammesso 5 fatti.", SALVA, []),            # vero
     ("Il save e' finito alle 22:40.", SALVA, []),          # l'orario citato intero c'e'
     ("La riunione finisce alle 12:30.", "La riunione va dalle 10:00-12:30.", []),   # un intervallo ha due capi
+    ("Il save e' finito alle 16:06.", "Ore 16:06: il save e' finito.", []),         # i due punti dopo sono punteggiatura
 ])
 def test_i_controlli_restano_come_sono(claim: str, fonte: str, atteso: list[str]) -> None:
     assert _assenti(claim, fonte) == atteso
