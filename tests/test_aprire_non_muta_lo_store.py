@@ -277,7 +277,11 @@ def test_aprire_dichiara_quale_store_e_come_l_ha_trovato(tmp_path: Path,
     monkeypatch.setattr(obs, "emit",
                         lambda nome, **p: visti.append((nome, p)))
 
-    p = _store_a_versione(tmp_path, versione=16)
+    # uno store alla versione del codice: e' quello che si APRE davvero. Uno
+    # piu' vecchio dal 26/09 non si apre affatto (#79, StoreDaMigrare), e il
+    # rifiuto nomina gia' lui file, versioni e comando.
+    from verimem.schema import VERSIONE_DEL_NUCLEO
+    p = _store_a_versione(tmp_path, versione=VERSIONE_DEL_NUCLEO)
     SemanticMemory(db_path=p)
 
     aperture = [(n, c) for n, c in visti if n == "store.opened"]
@@ -288,7 +292,7 @@ def test_aprire_dichiara_quale_store_e_come_l_ha_trovato(tmp_path: Path,
     _, campi = aperture[0]
     assert campi.get("percorso") == str(p), (
         f"la dichiarazione non dice QUALE store: {campi}")
-    assert campi.get("versione_applicativa") == 16, (
+    assert campi.get("versione_applicativa") == VERSIONE_DEL_NUCLEO, (
         f"la dichiarazione non dice come l'ha trovato PRIMA del tocco: {campi}")
 
 
