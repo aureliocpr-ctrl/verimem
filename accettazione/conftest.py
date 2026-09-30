@@ -113,6 +113,81 @@ class Utente:
             proc.kill()
             proc.wait(timeout=30)
 
+    @contextlib.contextmanager
+    def console(self, **extra_env: str):
+        """`verimem console` come lo scrive il README (r. 558): la porta HTTP sul
+        PROPRIO store, in modalita' personale (loopback, nessuna chiave).
+
+        Parte su una porta libera; la prova aspetta che `/v1/stats` risponda. Se il
+        processo esce prima, o non risponde entro il tetto, l'errore riporta la sua
+        uscita: un comando del README che non parte e' il dato, non un dettaglio.
+        """
+        import socket
+        import time
+        import urllib.error
+        with socket.socket() as s:
+            s.bind(("127.0.0.1", 0))
+            porta = s.getsockname()[1]
+        registro = self.radice / f"console-{porta}.txt"
+        with open(registro, "w", encoding="utf-8") as uscita:
+            proc = subprocess.Popen(
+                [_eseguibile("verimem"), "console", "--no-browser", "--port", str(porta)],
+                stdout=uscita, stderr=subprocess.STDOUT, cwd=self.radice,
+                env={**self.env, **extra_env})
+        http = PortaHTTP(f"http://127.0.0.1:{porta}")
+        try:
+            scadenza = time.monotonic() + TETTO_S
+            while True:
+                if proc.poll() is not None:
+                    raise AssertionError(
+                        f"`verimem console` e' uscito (returncode {proc.returncode}) prima "
+                        f"di rispondere: {registro.read_text(encoding='utf-8', errors='replace')[-800:]}")
+                try:
+                    http.get("/v1/stats")
+                    break
+                except urllib.error.HTTPError as exc:
+                    raise AssertionError(
+                        f"`verimem console` risponde {exc.code} su /v1/stats in modalita' "
+                        f"personale: {exc.read()[:300]!r}") from exc
+                except OSError:  # connessione rifiutata: il server non ascolta ancora
+                    if time.monotonic() > scadenza:
+                        raise AssertionError(
+                            f"`verimem console` non risponde in {TETTO_S} s: "
+                            f"{registro.read_text(encoding='utf-8', errors='replace')[-800:]}"
+                        ) from None
+                    time.sleep(0.5)
+            yield http
+        finally:
+            _termina(proc)
+
+
+class PortaHTTP:
+    """Un client HTTP minimo (stdlib): GET con parametri, risposta JSON."""
+
+    def __init__(self, base: str) -> None:
+        self.base = base
+
+    def get(self, percorso: str, **parametri) -> dict:
+        import urllib.parse
+        import urllib.request
+        url = self.base + percorso
+        if parametri:
+            url += "?" + urllib.parse.urlencode(parametri)
+        with urllib.request.urlopen(url, timeout=TETTO_S) as risposta:
+            return json.loads(risposta.read().decode("utf-8"))
+
+
+def _termina(proc: subprocess.Popen) -> None:
+    """Chiude il processo E i suoi figli: su Windows il comando `verimem.exe` e'
+    un lanciatore, e il server che ascolta sulla porta e' il processo figlio."""
+    if proc.poll() is None:
+        if os.name == "nt":
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(proc.pid)],
+                           capture_output=True, timeout=60)
+        else:
+            proc.kill()
+    proc.wait(timeout=30)
+
 
 class SessioneMCP:
     """Il minimo del protocollo MCP su stdio: initialize, tools/list, tools/call.
