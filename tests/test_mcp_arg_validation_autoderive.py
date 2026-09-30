@@ -2,9 +2,10 @@
 
 Pre-§305 only the ~15 hand-tuned schemas in `_SCHEMAS_BY_TOOL` validated their
 arguments; the other ~210 tools accepted anything. This wires a LENIENT
-(type/enum only, no `required`, null-tolerant) schema auto-derived from every
-tool's own `inputSchema`, so gross type/enum mistakes are caught without ever
-rejecting a call the handler would have accepted.
+(type/enum, null-tolerant) schema auto-derived from every tool's own
+`inputSchema`, so gross type/enum mistakes are caught. Since #146 it also keeps
+the `required` fields the tool publishes: the schema a client reads from
+`list_tools()` is the schema the door enforces.
 """
 from __future__ import annotations
 
@@ -44,6 +45,34 @@ def test_derive_keeps_required_type_and_enum() -> None:
     assert "minimum" not in d["properties"]["n"]
     # enum kept
     assert d["properties"]["mode"]["enum"] == ["a", "b"]
+
+
+def test_derive_keeps_a_required_field_that_has_no_type_or_enum() -> None:
+    """Un campo obbligatorio senza `type` ne' `enum` resta obbligatorio.
+
+    Lo schema derivato teneva `required` solo fra le proprieta' con un tipo o
+    un enum: un campo obbligatorio dichiarato senza tipo usciva dallo schema
+    della porta, e una chiamata che non lo porta passava. La sonda del 30/09
+    ne conta 0 su 123 tool, ma il primo tool che ne pubblica uno nascerebbe
+    col difetto che #146 cura. Qui si misura la funzione che costruisce lo
+    schema, anche nel caso in cui l'unico campo dichiarato non ha tipo."""
+    d = m._derive_lenient_schema({
+        "type": "object",
+        "required": ["x", "y"],
+        "properties": {
+            "x": {"type": "string"},
+            "y": {"description": "qualunque valore"},
+        },
+    })
+    assert d is not None
+    assert d["required"] == ["x", "y"]
+    solo = m._derive_lenient_schema({
+        "type": "object",
+        "required": ["y"],
+        "properties": {"y": {"description": "qualunque valore"}},
+    })
+    assert solo is not None, "l'unico campo e' obbligatorio: lo schema serve"
+    assert solo["required"] == ["y"]
 
 
 def test_derive_returns_none_when_nothing_to_validate() -> None:

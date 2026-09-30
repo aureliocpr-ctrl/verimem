@@ -152,3 +152,40 @@ def test_ogni_tool_che_dichiara_required_lo_FA_RISPETTARE(store):
     assert not non_applicano, (
         f"{len(non_applicano)} tool dichiarano campi obbligatori e accettano "
         f"lo stesso una chiamata vuota: {non_applicano[:6]}…")
+
+
+def test_ogni_campo_obbligatorio_pubblicato_sta_nello_schema_della_porta(store):
+    """Il contratto campo per campo, non solo per la chiamata vuota.
+
+    La cella sopra chiama con `{}`: basta UN campo applicato perche' il
+    rifiuto arrivi, e un secondo campo obbligatorio non applicato resterebbe
+    invisibile. Qui si confronta, tool per tool, il `required` che il client
+    legge da `list_tools()` con lo schema con cui la porta valida davvero
+    (`_SCHEMAS_BY_TOOL` o `_DERIVED_SCHEMAS`, lo stesso oggetto che usa
+    `_validate_input`).
+
+    Misurato il 30/09 su main d36952c9, nella sabbia: 123 tool pubblicano
+    `required` e 114 accettano `{}`; chiamati cosi', 54 rifiutano da soli e 55
+    rispondono come a una domanda vera (`hippo_search` -> `[]`,
+    `hippo_validate_claim` -> `verdict: unknown`), senza che chi legge possa
+    distinguere «nessun risultato» da «manca la domanda».
+    """
+    from verimem.mcp_server import (
+        _DERIVED_SCHEMAS,
+        _SCHEMAS_BY_TOOL,
+        _ensure_derived_schemas,
+        list_tools,
+    )
+
+    asyncio.run(_ensure_derived_schemas())
+    fuori = []
+    for s in asyncio.run(list_tools()):
+        pubblicati = (getattr(s, "inputSchema", {}) or {}).get("required") or []
+        porta = _SCHEMAS_BY_TOOL.get(s.name) or _DERIVED_SCHEMAS.get(s.name) or {}
+        mancano = [c for c in pubblicati if c not in (porta.get("required") or [])]
+        if mancano:
+            fuori.append(f"{s.name}{mancano}")
+
+    assert not fuori, (
+        f"{len(fuori)} tool pubblicano campi obbligatori che la porta non "
+        f"applica: {fuori[:6]}…")
