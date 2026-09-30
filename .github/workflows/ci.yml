@@ -758,9 +758,16 @@ jobs:
       # 📌 CHIAVE `hf2-`: il prefisso e' cambiato apposta, per ABBANDONARE la
       # cache avvelenata del 14/08. Cambiare la chiave e' l'unico modo di
       # buttarne una gia' scritta senza toccare le impostazioni del repository.
+      # 🏠 SOLO DA MAIN (30/09): salvata anche dalle richieste, ogni richiesta
+      # teneva ~2 GB di modelli per sistema nel proprio ambito; il limite di 10 GB
+      # del repository buttava fuori quella di main, e ogni run riscaricava i
+      # modelli dall'Hub. La sera del 29/09, fra le 21:49 e le 22:33Z, tre gambe
+      # sono cadute per download mancati (#151 #159 #162). Una richiesta legge
+      # le cache del suo ramo base: salvata da main, la ripristinano tutte.
       - name: Save HuggingFace models cache
         if: >-
-          always() && steps.hf_cache.outputs.cache-hit != 'true'
+          always() && github.ref == 'refs/heads/main'
+          && steps.hf_cache.outputs.cache-hit != 'true'
           && steps.hf_completa.outputs.completa == 'true'
         uses: actions/cache/save@v4
         with:
