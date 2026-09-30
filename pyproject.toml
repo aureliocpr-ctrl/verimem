@@ -81,6 +81,7 @@ dependencies = [
   # how we found out, not the damage. Lift this deliberately, with the
   # migration, not by widening the range.
   "mcp>=1.0.0,<2",
+  "psutil>=5.9.0",   # verimem doctor measures the memory it promises (row 7)
   # The HTTP doors the README names as ordinary commands: `verimem console` and
   # `verimem gateway serve`. Core since 2026-09-30: with fastapi only in the
   # `server` extra, `pip install verimem` answered both commands with "needs
