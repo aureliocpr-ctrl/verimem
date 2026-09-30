@@ -84,3 +84,17 @@ def test_the_registry_does_publish_through_markers():
     """A guard that checks zero markers passes trivially: at least one registered number
     must actually be rendered into a document."""
     assert any(e.get("docs") for e in REGISTRY.values())
+
+
+def test_the_longmemeval_recall_on_the_page_is_rendered_from_its_artifact():
+    """README:65 publishes «recall@5 = 0.87». The registry has its artifact (`lme-recall`,
+    0.8745 over 500 questions, with the command that regenerates it), but until 30/09 the
+    page printed the number by hand: a stale or edited 0.87 could not fail anything. The
+    census of the PyPI page (30/09) found it as the one number with a registry entry and no
+    marker."""
+    from pathlib import Path
+
+    ids = [d["id"] for d in REGISTRY["lme-recall"].get("docs", [])]
+    readme = (Path(__file__).resolve().parents[1] / "README.md").read_text(encoding="utf-8")
+    assert ids, "the lme-recall entry publishes nothing: README:65 is typed by hand"
+    assert all(f"<!-- g4:{i} -->" in readme for i in ids), ids
