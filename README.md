@@ -62,7 +62,7 @@ honest *"I don't know."*
 Our own internal runs (our harness, our embedding model, our judge — **not**
 third-party reproduced, and **not** the GPT-4 judge the public leaderboards use,
 so these are *not* a like-for-like ranking against them): LongMemEval_s
-session-level **recall@5 = 0.87** (judge-free, full 500 questions) and LoCoMo
+session-level **recall@5 = <!-- g4:lme-recall -->0.87<!-- /g4 -->** (judge-free, full 500 questions) and LoCoMo
 **QA-accuracy = 0.81** (n=150, Claude judge). That's good retrieval — but the
 reason to choose Verimem is the layer *above* it: whether you can trust what comes
 back. Method and raw numbers: [`docs/BENCHMARKS.md`](https://github.com/aureliocpr-ctrl/verimem/blob/main/docs/BENCHMARKS.md).

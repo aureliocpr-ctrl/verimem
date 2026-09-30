@@ -77,6 +77,8 @@ REGISTRY: dict[str, dict] = {
         "claim": "LongMemEval-S recall@5 0.8745 fusion ON (full 500)",
         "artifact": "lme_s_fusionON_n500_clean.json",
         "value_at": ["overall", "recall_at_k"],
+        "docs": [{"file": "README.md", "id": "lme-recall", "text": "{r:.2f}",
+                  "fields": {"r": ["overall", "recall_at_k"]}}],
         "command": (
             # Il modulo `benchmark.lme_retrieval_bench` NON esiste e non e' mai
             # esistito: il banco si chiama `longmemeval_runner`. Il comando qui
