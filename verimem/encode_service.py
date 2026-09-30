@@ -21,9 +21,10 @@ Protocol (length-prefixed JSON, big-endian uint32 frame length):
   REQ:  {"ping": true}               ->  RESP {"ok": true, "model": "...", "pid": N}
   on error:                              RESP {"ok": false, "error": "..."}
 
-Discovery file ``~/.engram/encode_service.json`` ({pid, port, model,
-started_at}) lets clients find the port. The server idle-exits after
-``IDLE_TIMEOUT_S`` so it never lingers forever.
+Discovery file ``~/.engram/daemon/encode_service.<key>.json`` ({pid, port,
+model, started_at}), one per model and dimension (see
+``percorsi_della_configurazione``), lets clients find the port. The server
+idle-exits after ``IDLE_TIMEOUT_S`` so it never lingers forever.
 """
 from __future__ import annotations
 
@@ -38,7 +39,43 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 
-DISCOVERY_PATH = Path.home() / ".engram" / "encode_service.json"
+
+def percorsi_della_configurazione() -> tuple[Path, Path, Path]:
+    """(scoperta, lock del daemon, lock dello spawn) del modello e della
+    dimensione di QUESTO processo, nella home.
+
+    Fino al 28/09 erano tre file soli in ``~/.engram`` per qualunque modello.
+    Un processo con un altro modello (i test, un altro strumento) trovava il
+    daemon di produzione, lo contava come zombie perche' non serviva il SUO
+    modello e gli rubava lock e scoperta: quel giorno una macchina di sviluppo
+    e' rimasta 41 minuti col daemon sbagliato, e ogni sessione ha cercato per
+    parole chiave. Ora ogni modello ha i suoi tre file, e un cliente trova solo
+    il daemon del proprio modello.
+
+    La cartella dati NON e' nella chiave, ed e' una scelta misurata (29/09): il
+    daemon codifica e giudica testo, e chi lo chiama da uno store o da un altro
+    riceve gli stessi vettori. Con la cartella dati nella chiave ogni store
+    avviava il suo daemon da ~6 GB impegnati, e il job di accettazione, che da'
+    una cartella nuova a ogni prova, non trovava piu' il daemon gia' caldo. La
+    sabbia dei test la fa la home spostata, e nella suite il conftest.
+    """
+    import hashlib
+
+    from .config import CONFIG
+
+    cartella = Path.home() / ".engram" / "daemon"
+    firma = f"{CONFIG.embedding_model}|{int(CONFIG.embedding_dim)}"
+    chiave = hashlib.sha256(firma.encode("utf-8")).hexdigest()[:12]
+    return (cartella / f"encode_service.{chiave}.json",
+            cartella / f"encode_service.{chiave}.daemon.lock",
+            cartella / f"encode_service.{chiave}.spawn.lock")
+
+
+DISCOVERY_PATH, DAEMON_LOCK_PATH, _SPAWN_LOCK_PATH = percorsi_della_configurazione()
+
+#: Il file UNICO di prima del 28/09. Resta scritto solo per il passaggio: vedi
+#: `EncodeServer._reclama_la_scoperta_vecchia`.
+LEGACY_DISCOVERY_PATH = Path.home() / ".engram" / "encode_service.json"
 
 
 def _idle_timeout_s() -> float:
@@ -488,13 +525,46 @@ class EncodeServer:
     def _write_discovery(self) -> None:
         self._finestra_dichiarata = (self._gate_fn is not None
                                      and _puo_ridurre_lo_span())
-        self._discovery_path.parent.mkdir(parents=True, exist_ok=True)
+        self._scrivi_la_scoperta(self._discovery_path)
+
+    def _reclama_la_scoperta_vecchia(self) -> None:
+        """PASSAGGIO dal file unico di prima del 28/09 a un file per configurazione.
+
+        Un daemon di prima dell'aggiornamento resta nel file vecchio e nessun
+        client nuovo lo cerca piu': morirebbe solo dopo l'inattivita' (8 ore),
+        accanto al nuovo, con la memoria doppia per tutto quel tempo; e un
+        server MCP partito prima dell'aggiornamento cerca ancora quel file. Qui
+        il daemon nuovo ci scrive i propri dati, cosi' i client vecchi trovano
+        lui e il daemon vecchio vede la scoperta presa da un altro vivo e fa il
+        passo indietro che sa gia' fare. NON se il file annuncia un daemon vivo
+        di un altro modello o di un'altra dimensione: serve un'altra
+        configurazione, e non la si sfratta.
+        """
+        vecchio = LEGACY_DISCOVERY_PATH
+        if vecchio == self._discovery_path:
+            return
+        info = read_discovery(vecchio)
+        if info:
+            pid = int(info.get("pid") or 0)
+            if pid == os.getpid():
+                return
+            altra = (info.get("model") != self._model_name
+                     or int(info.get("dim") or 0) != int(self._model_dim or 0))
+            if altra and pid and _pid_alive(pid):
+                return
+        try:
+            self._scrivi_la_scoperta(vecchio)
+        except OSError:
+            pass    # il passaggio e' un di piu': un file vecchio illeggibile non ferma il daemon
+
+    def _scrivi_la_scoperta(self, percorso: Path) -> None:
+        percorso.parent.mkdir(parents=True, exist_ok=True)
         # The scratch name carries the pid: two daemons publishing at the same
         # moment would otherwise write the SAME .json.tmp, and the loser's
         # rename could promote a half-written or foreign payload. Harmless while
         # this ran once per boot; the periodic republish below makes concurrent
         # writes reachable, so the name has to be per-process.
-        tmp = self._discovery_path.with_suffix(f".{os.getpid()}.json.tmp")
+        tmp = percorso.with_suffix(f".{os.getpid()}.json.tmp")
         tmp.write_text(
             json.dumps({
                 "pid": os.getpid(),
@@ -523,7 +593,7 @@ class EncodeServer:
             os.chmod(tmp, 0o600)
         except OSError:
             pass
-        tmp.replace(self._discovery_path)
+        tmp.replace(percorso)
 
     def _republish_discovery_if_unclaimed(self) -> None:
         """Re-announce this daemon if nothing currently announces it.
@@ -655,15 +725,19 @@ class EncodeServer:
         return True
 
     def _clear_discovery(self) -> None:
-        try:
-            data = json.loads(self._discovery_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            return
-        if data.get("pid") == os.getpid():
+        # Tutti e due i file che il daemon puo' aver scritto: il suo e quello
+        # vecchio del passaggio (`_reclama_la_scoperta_vecchia`), ognuno solo se
+        # nomina ancora lui.
+        for percorso in (self._discovery_path, LEGACY_DISCOVERY_PATH):
             try:
-                self._discovery_path.unlink()
-            except OSError:
-                pass
+                data = json.loads(percorso.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                continue
+            if isinstance(data, dict) and data.get("pid") == os.getpid():
+                try:
+                    percorso.unlink()
+                except OSError:
+                    pass
 
     def start(self) -> None:
         self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -672,6 +746,7 @@ class EncodeServer:
         self._sock.listen(16)
         self._sock.settimeout(1.0)
         self._write_discovery()
+        self._reclama_la_scoperta_vecchia()
 
     def serve_forever(self) -> None:
         if self._sock is None:
@@ -715,7 +790,7 @@ class EncodeServer:
 
 
 # --- Auto-spawn (lazy, windowless) -----------------------------------------
-_SPAWN_LOCK_PATH = Path.home() / ".engram" / "encode_service.spawn.lock"
+# `_SPAWN_LOCK_PATH` e' per configurazione: vedi `percorsi_della_configurazione`.
 _SPAWN_COOLDOWN_S = 60.0
 
 # --- Daemon singleton lock (2026-07-10 RAM incident) -------------------------
@@ -725,7 +800,7 @@ _SPAWN_COOLDOWN_S = 60.0
 # loser then lingers idle for hours at full weight (measured: 2 × 1.9 GB).
 # The daemon itself must be the arbiter: take an atomic pid lock BEFORE the
 # model load and exit cheaply if another live daemon holds it.
-DAEMON_LOCK_PATH = Path.home() / ".engram" / "encode_service.daemon.lock"
+# `DAEMON_LOCK_PATH` e' per configurazione: vedi `percorsi_della_configurazione`.
 
 
 def _pid_alive(pid: int) -> bool:
@@ -816,7 +891,10 @@ _LOCK_VERIFY_DELAY_S = 0.10
 #: "sta scaricando" da "e' incastrato", si sposta la soglia invece di fingere di
 #: eliminare il compromesso: 10 minuti coprono un primo download reale, e uno
 #: zombie vero costa 10 minuti invece che per sempre.
-_ZOMBIE_GRACE_S = 600.0
+try:
+    _ZOMBIE_GRACE_S = float(os.environ.get("ENGRAM_ENCODE_ZOMBIE_GRACE_S", "") or 600.0)
+except ValueError:
+    _ZOMBIE_GRACE_S = 600.0
 
 #: Timeout del probe che decide un FURTO di lock, deliberatamente piu' lungo di
 #: quello informativo (0.4 s): un falso "non serve" crea due daemon col modello
@@ -837,10 +915,9 @@ def _owner_is_zombie(path: Path) -> bool:
     In dubbio NON si ruba (un lock illeggibile, o dentro la grazia, resta del
     proprietario): l'errore di rubare crea due daemon che caricano il modello
     insieme, che e' peggio del guasto che si sta curando. Limite dichiarato: un
-    daemon sano ma troppo occupato per accettare una connessione entro il
-    timeout di ``daemon_usable`` verrebbe letto come zombie; l'accept su
-    loopback resta veloce anche sotto carico, quindi il caso e' teorico ma non
-    impossibile.
+    daemon sano ma troppo occupato per rispondere alla sonda entro il timeout
+    paziente di ``ping_healthy`` verrebbe letto come zombie; ogni connessione ha
+    il suo thread, quindi il caso e' teorico ma non impossibile.
     """
     try:
         eta = time.time() - path.stat().st_mtime
@@ -854,14 +931,18 @@ def _owner_is_zombie(path: Path) -> bool:
     if abs(eta) <= _ZOMBIE_GRACE_S:
         return False        # ha ancora diritto al suo warmup
     # Probe PAZIENTE, non quello informativo da 0.4 s. Il presupposto delle due
-    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato:
-    # daemon_usable fa connect+close e il server ha listen(16), quindi su
-    # loopback il kernel completa l'handshake anche mentre l'applicazione e'
-    # occupata. Ma l'ASIMMETRIA che invocavano e' reale: se ci si sbaglia
+    # revisioni — "un daemon occupato fallisce il probe" — e' sbagliato: il
+    # server ha listen(16) e un thread per connessione, quindi risponde anche
+    # mentre un'altra richiesta lo tiene occupato. Ma l'ASIMMETRIA che
+    # invocavano e' reale: se ci si sbaglia
     # nascono due daemon col modello in RAM, mentre l'attesa in piu' la paga
     # solo chi sta per rubare, cioe' un caso raro. Dove sbagliare costa caro si
     # aspetta di piu'.
-    return not daemon_usable(timeout=_ZOMBIE_PROBE_TIMEOUT_S)
+    # ⛔ 28/09: «serve» vuol dire RISPONDE, non «serve il MIO modello». Qui
+    # c'era `daemon_usable`, tarato sul modello di chi chiede: un processo con
+    # un'altra configurazione contava come zombie il daemon sano di un altro, e
+    # glielo rubava. Zombie e' solo chi e' vivo e non risponde alla sonda.
+    return not ping_healthy(read_discovery(), timeout=_ZOMBIE_PROBE_TIMEOUT_S)
 
 
 def daemon_in_arrivo(lock_path: Path | None = None) -> bool:

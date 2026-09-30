@@ -154,6 +154,21 @@ def _stub_embedding_model(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
+def _il_file_di_scoperta_vecchio_sta_nella_sabbia(monkeypatch, tmp_path):
+    """Un daemon che parte in un test annuncia se stesso anche nel file di
+    scoperta VECCHIO (il passaggio al file per configurazione, 28/09): senza
+    questa riga un test lo scriverebbe nella home vera della macchina, e i
+    server MCP di prima dell'aggiornamento troverebbero un daemon di test."""
+    try:
+        from verimem import encode_service
+    except ImportError:
+        return
+    monkeypatch.setattr(encode_service, "LEGACY_DISCOVERY_PATH",
+                        tmp_path / "scoperta-vecchia" / "encode_service.json",
+                        raising=False)
+
+
+@pytest.fixture(autouse=True)
 def _reset_settings_v2_cache():
     """Invalidate the pydantic-settings singleton cache between tests.
 
