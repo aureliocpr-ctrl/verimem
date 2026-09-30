@@ -1180,15 +1180,36 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         _idem_put(tenant_id, idempotency_key, res)
         return res
 
+    def _as_of_come_l_sdk(as_of: str | None) -> float | str:
+        """`as_of` col contratto della firma pubblica, `Memory.search(as_of="auto")`.
+
+        Manca o vale «auto» -> «auto»: la data si deduce dalla domanda, come nell'SDK.
+        Un numero -> quell'istante. Altro -> 422. Fino al 30/09 questa porta dichiarava
+        `float | None = None`: rifiutava con 422 l'«auto» che `verimem recall` instradato
+        manda apposta, e senza `as_of` passava None, che SPEGNE la deduzione — dal server
+        condiviso una domanda sul passato riceveva il presente (riga 8, accettazione di
+        #182; `test_il_gateway_legge_as_of_come_l_sdk.py`).
+        """
+        if as_of is None or as_of.strip().lower() == "auto":
+            return "auto"
+        try:
+            return float(as_of)
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail="as_of: a unix timestamp, or 'auto' to read the date from the "
+                       "question (the default)") from None
+
     @app.get("/v1/search")
     def search(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
-               deep: bool = False, as_of: float | None = None,
+               deep: bool = False, as_of: str | None = None,
                with_history: bool = False,
                tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        quando = _as_of_come_l_sdk(as_of)
         _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
         try:
             hits = tenants.get(tenant_id).search(
-                q, k=k, deep=deep, as_of=as_of, with_history=with_history)
+                q, k=k, deep=deep, as_of=quando, with_history=with_history)
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
@@ -1197,8 +1218,9 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
 
     @app.get("/v1/explain")
     def explain(q: str = Query(...), k: int = Query(default=5, ge=1, le=100),
-                as_of: float | None = None,
+                as_of: str | None = None,
                 tenant_id: str = Depends(_tenant)) -> dict[str, Any]:
+        quando = _as_of_come_l_sdk(as_of)
         # The enterprise surface abstains by DEFAULT (the selling point works out of
         # the box): a self-calibrating relevance floor so an unsupported query returns
         # an explicit abstention, not a spurious nearest hit. Env-tunable
@@ -1208,7 +1230,7 @@ def create_app(*, data_dir: str | Path, keys: GatewayKeys | None = None,
         _ftok = _flow_ctx(tenant_id)   # il CORE emette flow.recall col tenant
         try:
             report = tenants.get(tenant_id).explain(
-                q, k=k, as_of=as_of, min_relevance=_gateway_min_relevance())
+                q, k=k, as_of=quando, min_relevance=_gateway_min_relevance())
         finally:
             _flow_ctx_reset(_ftok)
         meter.bump(tenant_id, reads=1)
