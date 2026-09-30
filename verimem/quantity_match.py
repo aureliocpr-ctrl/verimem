@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from decimal import Decimal, InvalidOperation
 
 # 4-digit years (1500–2099). Bare years are NOT quantities — they belong
 # to the year-disjoint rule in validate_claim, so the two detectors never
@@ -1242,6 +1243,53 @@ def _unita_composta(claim: str, unit_s: str, fine: int) -> str | None:
     return None
 
 
+#: T188 — la notazione con la e, nelle SOLE forme che non si confondono: il
+#: decimale nella mantissa (`2.5e-3`, `2,5e-3`) o il segno nell'esponente (`1e-5`,
+#: `3E+2`). Senza questa riga `_QUANT_RE` spezza `2.5e-3` in `2.5` e `3`, e quel `3`
+#: prende per unita' la parola che segue: un claim vero con la fonte che lo conferma
+#: («0.0025 metri») veniva accusato di due valori che nella frase non ci sono.
+#: ⛔ LE FORME NUDE (`1e3`, `4518e290`) RESTANO FUORI, ed e' una scelta misurata il
+#: 30/09 sullo store: 386 fatti con una forma nuda contro 24 con una forma non
+#: ambigua. Una forma nuda puo' essere un pezzo di identificativo, e leggere i
+#: frammenti di SHA come grandezze e' la strada gia' falsificata raccontata sopra
+#: `_QUANT_RE`. Oggi il parser le ignora, e cosi' restano.
+_NOTAZIONE_E_RE = re.compile(
+    r"(?<![\w.,])(\d{1,40})(?:[.,](\d{1,40}))?[eE]([+-])?(\d{1,4})(?![\w.])")
+
+#: Quante cifre puo' avere il numero espanso: la stessa soglia del layer che espande
+#: `x 10^n` (`valore_non_nella_fonte._CIFRE_MASSIME`). Oltre, il testo resta com'e'.
+_CIFRE_MASSIME_ESPANSE = 40
+
+
+def _espandi_notazione_e(testo: str) -> str:
+    """Riscrive `2.5e-3` come `0.0025`, solo nelle forme non ambigue; il resto intatto.
+
+    Aritmetica esatta (`Decimal.scaleb`), come per `x 10^n`: un `float` inventerebbe
+    cifre oltre la quindicesima, e il confronto claim-fonte avverrebbe contro un
+    numero che non sta in nessuno dei due testi.
+    """
+    if "e" not in testo and "E" not in testo:
+        return testo
+
+    def _sost(m: re.Match) -> str:
+        intera, decimali, segno, esponente = m.groups()
+        if decimali is None and segno is None:
+            return m.group(0)  # forma nuda: fuori perimetro, vedi sopra
+        try:
+            valore = Decimal(intera + ("." + decimali if decimali else "")).scaleb(
+                int((segno or "") + esponente))
+        except (InvalidOperation, ValueError):  # pragma: no cover — regex ristretta
+            return m.group(0)
+        scritto = format(valore, "f")
+        if len(scritto.replace(".", "")) > _CIFRE_MASSIME_ESPANSE:
+            return m.group(0)
+        if "." in scritto:
+            scritto = scritto.rstrip("0").rstrip(".")
+        return scritto or "0"
+
+    return _NOTAZIONE_E_RE.sub(_sost, testo)
+
+
 def extract_quantities(text: str, *,
                        come_fonte: bool = False) -> set[tuple[str, float]]:
     """Extract ``(unit_norm, value)`` pairs from the CLAIM part of *text*
@@ -1273,11 +1321,18 @@ def extract_quantities(text: str, *,
     numero in questa frase e' l'unica cosa che dice al prossimo quante sono, e
     una potatura dimenticata non rende rossa nessuna riga.
 
+    Prima delle potature c'e' una NORMALIZZAZIONE, che non toglie niente:
+    `_espandi_notazione_e` riscrive `2.5e-3` come `0.0025` (T188), sul claim e
+    sulla fonte, cosi' che tutto cio' che segue legga un numero solo.
+
     ⚠️ Il default NON cambia: le sei superfici che leggono questa funzione
     continuano a vedere la parte-claim, ed e' cio' che vogliono. Solo chi SA di
     avere una fonte fra le mani chiede l'altra lettura.
     """
     out: set[tuple[str, float]] = set()
+    # La notazione con la e si espande PRIMA di tutto: gli offset che seguono
+    # (date, riferimenti, unita') si calcolano sul testo gia' espanso.
+    text = _espandi_notazione_e(text)
     # I codici di record spariscono PRIMA di cercare i numeri, e spariscono
     # sostituiti da spazi: gli offset restano validi per `_spans_delle_date`.
     claim = text if come_fonte else _senza_identificatori(claim_span(text))
