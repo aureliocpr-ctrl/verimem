@@ -1,17 +1,26 @@
 """A number inside a time of day is part of the time, not a quantity the source states.
 
-The numeric layers read the source as a bag of numbers, and a time came apart into its pieces. Two effects,
-both measured on the product's own functions on 2026-09-30:
+The numeric layers read the source as a bag of numbers, and a time came apart into its pieces. Measured on
+the product's own functions on 2026-09-30:
 
 - L4.1 asks whether each value of the claim is in the source. «Il save ha ammesso 22 fatti» against «Alle
   22:40 il save e' finito: 5 fatti ammessi» found «22» inside «22:40» and said nothing: a false number equal
   to an hour, a minute or a second of the source passed, and L4.1 is one of the layers worth the judge.
+- L4.1 also accused a TRUE claim: «partito alle 17:35» against «2026-09-24T17:35:21Z» gave ['17'], because
+  the hour glued to the «T» was not read at all.
 - L4.3 asks whether a value is predicated of the same subject. On a true claim with timestamps it read
   «17:35:21Z» as «21 z» and «17:39:00Z» as «0 z», and accused the claim of a swap: it happened on a real
   fact of the store (a CI note, «0 z contro 21 z»), and the minimal case below reproduces it.
+- The conflict detector took the same «z» for a unit: two timestamps of one job that differ only in the
+  seconds came out as a conflict on the seconds alone.
+
+The cure reads a time whole, on a path of its own (`quantity_match.orari`), the way a date is. What the
+piecewise reading did well stays: a wrong time is still stopped, now named as written («22:45», not
+«45»), compared at the precision the claim writes (a claim that says «17:35» does not state seconds).
 
 The controls keep the cure honest: a number absent everywhere is still stopped, a true quantity is not
-flagged, and a claim that cites the time itself finds it whole in the source.
+flagged, a claim that cites the time itself finds it whole in the source, a time range keeps both ends,
+and a claim with a time still counts as specific for the evidence requirement.
 
 No model: the cells at the write port inject the judge's score. Run from the root of the checkout:
 
@@ -23,12 +32,15 @@ import pytest
 
 from verimem import anti_confab_gate as g
 from verimem import grounding_gate as gg
+from verimem.evidence_requirement import is_specific_claim
+from verimem.quantity_match import extract_quantities, numeric_conflict
 from verimem.soggetto_valore import avviso_soggetto_valore
 from verimem.valore_non_nella_fonte import valori_non_nella_fonte
 
 SALVA = "Alle 22:40 il save e' finito: 5 fatti ammessi."
 JOB = ("test (macos-latest)\t2026-09-24T17:35:21Z\t2026-09-24T18:10:59Z\tsuccess\n"
        "Dal log del job 1077, step Tests: completed success 17:39:00Z -> 18:10:52Z.")
+PARTITO = "Il job e' partito il 2026-09-24T17:35:21Z."
 
 
 def _assenti(claim: str, fonte: str) -> list[str]:
@@ -48,9 +60,47 @@ def test_un_numero_che_la_fonte_ha_solo_dentro_un_orario_e_assente(claim: str, f
     ("Il save ha ammesso 23 fatti.", SALVA, ["23"]),       # assente ovunque: resta fermato
     ("Il save ha ammesso 5 fatti.", SALVA, []),            # vero
     ("Il save e' finito alle 22:40.", SALVA, []),          # l'orario citato intero c'e'
+    ("La riunione finisce alle 12:30.", "La riunione va dalle 10:00-12:30.", []),   # un intervallo ha due capi
 ])
 def test_i_controlli_restano_come_sono(claim: str, fonte: str, atteso: list[str]) -> None:
     assert _assenti(claim, fonte) == atteso
+
+
+@pytest.mark.parametrize("claim, fonte", [
+    ("Il save e' finito alle 22:45.", SALVA),              # un altro minuto
+    ("Il job e' partito alle 17:36.", PARTITO),            # 17:35:21 non si scrive 17:36, ne' troncato ne' arrotondato
+])
+def test_un_orario_sbagliato_resta_fermato(claim: str, fonte: str) -> None:
+    assert _assenti(claim, fonte)
+
+
+@pytest.mark.parametrize("claim, fonte, atteso", [
+    ("Il save e' finito alle 22:45.", SALVA, ["22:45"]),               # la ricevuta nomina l'orario, non il 45
+    ("Il job e' partito alle 17:35.", PARTITO, []),                    # l'ora di un timestamp citata al minuto
+    ("Il job e' partito alle 17:36.", PARTITO, ["17:36"]),
+    ("Il save e' finito alle 22:40:15.", SALVA, ["22:40:15"]),         # i secondi li aggiunge il claim
+    ("The meeting ends at 5:00 PM.", "The meeting ends at 17:00.", []),
+])
+def test_un_orario_si_confronta_intero_alla_precisione_che_il_claim_scrive(
+        claim: str, fonte: str, atteso: list[str]) -> None:
+    assert _assenti(claim, fonte) == atteso
+
+
+@pytest.mark.parametrize("testo, atteso", [
+    (SALVA, {("fatto", 5.0)}),
+    (JOB, {("", 1077.0)}),
+])
+def test_i_pezzi_di_un_orario_non_sono_quantita(testo: str, atteso: set) -> None:
+    assert extract_quantities(testo, come_fonte=True) == atteso
+
+
+def test_due_timestamp_non_litigano_sui_soli_secondi() -> None:
+    assert numeric_conflict("Il job 1077 e' finito alle 18:10:52Z.",
+                            "Il job 1077 e' finito alle 18:10:59Z.") is None
+
+
+def test_un_claim_con_un_orario_resta_specifico() -> None:
+    assert is_specific_claim("Il save e' finito alle 22:40.")
 
 
 @pytest.mark.parametrize("claim", [
@@ -78,7 +128,19 @@ def test_alla_porta_il_numero_falso_uguale_a_un_ora_si_ferma(monkeypatch) -> Non
     assert gate.action != "persist", gate.action
 
 
+def test_alla_porta_l_orario_sbagliato_si_ferma_e_si_nomina(monkeypatch) -> None:
+    gate = _alla_porta(monkeypatch, "Il save e' finito alle 22:45.", SALVA)
+    l41 = [w for w in gate.warnings if w.get("layer") == "L4.1"]
+    assert l41 and "22:45" in l41[0]["reason"], [(w.get("layer"), w.get("reason")) for w in gate.warnings]
+    assert gate.action != "persist", gate.action
+
+
 def test_alla_porta_il_claim_vero_coi_timestamp_non_e_accusato(monkeypatch) -> None:
     gate = _alla_porta(monkeypatch, "Il job 1077 e' andato in success (2026-09-24T17:35:21Z → 2026-09-24T18:10:59Z).",
                        JOB)
     assert not [w for w in gate.warnings if w.get("layer") == "L4.3"], gate.warnings
+
+
+def test_alla_porta_l_ora_di_un_timestamp_citata_al_minuto_passa(monkeypatch) -> None:
+    gate = _alla_porta(monkeypatch, "Il job e' partito alle 17:35.", PARTITO)
+    assert not [w for w in gate.warnings if w.get("layer") == "L4.1"], gate.warnings
