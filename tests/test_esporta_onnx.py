@@ -159,6 +159,22 @@ def test_a_table_quantized_row_by_row_keeps_every_row_within_half_a_step() -> No
     assert np.abs(a_scala_unica[0] - tabella[0]).max() > 10 * np.abs(ricostruita[0] - tabella[0]).max()
 
 
+def test_the_candidate_is_the_closest_int8_that_fits_under_the_size_cap() -> None:
+    import esporta_onnx
+
+    manifesto = {
+        "uscite": {"a.onnx": {"mb": 266.3}, "b.onnx": {"mb": 266.7}, "c.onnx": {"mb": 816.7}},
+        "int8": {"a.onnx": {"contro_fp32": {"coseno_mediano": 0.978}},
+                 "b.onnx": {"contro_fp32": {"coseno_mediano": 0.989}},
+                 "c.onnx": {"contro_fp32": {"coseno_mediano": 0.999}}},
+    }
+    scelta = esporta_onnx.candidata(manifesto)
+    # c is closer to fp32 but does not fit the daemon: the size cap comes first
+    assert scelta["file"] == "b.onnx" and scelta["coseno_mediano_contro_fp32"] == 0.989
+    with pytest.raises(ValueError):
+        esporta_onnx.candidata({"uscite": {"c.onnx": {"mb": 816.7}}, "int8": {"c.onnx": manifesto["int8"]["c.onnx"]}})
+
+
 def test_the_manifest_reads_the_versions_from_the_modules_it_imported() -> None:
     import esporta_onnx
     import sentence_transformers

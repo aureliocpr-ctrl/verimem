@@ -380,6 +380,7 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     manifesto["opset"] = {o.domain or "ai.onnx": o.version for o in modello_fp32.opset_import}
     manifesto["operatori_fp32"] = _operatori(file_fp32)
     manifesto["uscite"] = _uscite(uscita)
+    manifesto["candidata"] = candidata(manifesto)
     passi = manifesto["passi"]
     manifesto["verdetto_export"] = bool(
         not diversi
@@ -390,6 +391,24 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     manifesto["durata_s"] = round(time.perf_counter() - inizio, 1)
     (uscita / "manifesto.json").write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding="utf-8")
     return manifesto
+
+
+#: the package constraint of the plan: the int8 the daemon loads stays under this size
+TETTO_MB_INT8 = 300
+
+
+def candidata(manifesto: dict) -> dict:
+    """The candidate int8 for the corpus: among the variants under TETTO_MB_INT8, the highest median cosine
+    against the fp32 ONNX on the texts of the steps. The verdict is the corpus parity's, not this choice's."""
+    dimensioni = {nome: v["mb"] for nome, v in manifesto["uscite"].items()}
+    ammesse = {nome: v["contro_fp32"]["coseno_mediano"] for nome, v in manifesto["int8"].items()
+               if dimensioni.get(nome, float("inf")) <= TETTO_MB_INT8}
+    if not ammesse:
+        raise ValueError(f"no int8 variant under {TETTO_MB_INT8} MB")
+    nome = max(ammesse, key=ammesse.get)
+    return {"file": nome, "coseno_mediano_contro_fp32": ammesse[nome],
+            "regola": f"fra le varianti sotto {TETTO_MB_INT8} MB, il coseno mediano più alto contro fp32 sui testi "
+                      "dei passi; il verdetto è della parità sul corpus"}
 
 
 def _uscite(uscita: Path) -> dict:
@@ -420,6 +439,7 @@ def varianti(uscita: Path, nomi: list[str]) -> dict:
             **({"tabella_per_riga": tabella} if tabella else {}),
         }
     manifesto["uscite"] = _uscite(uscita)
+    manifesto["candidata"] = candidata(manifesto)
     (uscita / "manifesto.json").write_text(json.dumps(manifesto, ensure_ascii=False, indent=2), encoding="utf-8")
     return manifesto
 
@@ -431,10 +451,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--opset", type=int, default=None, help="default: torch's exporter's")
     parser.add_argument("--varianti", nargs="+", choices=sorted(VARIANTI_INT8),
                         help="no export: quantize the model.onnx already in --uscita with these variants")
+    parser.add_argument("--candidata", action="store_true",
+                        help="no export: name the candidate int8 in the manifest already in --uscita")
     args = parser.parse_args(argv)
     if sys.prefix == sys.base_prefix:
         print("run it in its own venv (see the docstring), not in the shared environment", file=sys.stderr)
         return 2
+    if args.candidata:
+        manifesto = json.loads((args.uscita / "manifesto.json").read_text(encoding="utf-8"))
+        manifesto["candidata"] = candidata(manifesto)
+        (args.uscita / "manifesto.json").write_text(json.dumps(manifesto, ensure_ascii=False, indent=2),
+                                                    encoding="utf-8")
+        print(json.dumps(manifesto["candidata"], ensure_ascii=False, indent=2))
+        return 0
     if args.varianti:
         manifesto = varianti(args.uscita, args.varianti)
         print(json.dumps({n: {k: v[k] for k in ("opzioni", "contro_fp32", "ms_per_testo")}
