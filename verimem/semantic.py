@@ -5667,16 +5667,17 @@ class SemanticMemory:
             "removed": removed, "op_id": op_id,
         }
 
-    def undo_destructive_op(self, op_id: str) -> dict[str, Any]:
+    def undo_destructive_op(self, op_id: str, *, principal: str) -> dict[str, Any]:
         """Undo a previous delete_with_undo / supersede_with_undo.
 
         Returns the dict from undo_log.undo_op. On successful restore,
         invalidates the recall cache so the restored fact reappears in
-        the next recall call.
+        the next recall call. ``principal`` is who asks: the undo is a
+        mutation and lands in the audit chain like the one it reverses.
         """
         from .undo_log import undo_op
         with self._connect() as conn:
-            result = undo_op(conn, op_id)
+            result = undo_op(conn, op_id, principal=principal)
         if result.get("ok"):
             self._cache_version += 1
             # flow.undo: a governance action must be as
@@ -5691,7 +5692,8 @@ class SemanticMemory:
         return result
 
     def list_undoable_ops(self, *, limit: int = 20) -> list[dict[str, Any]]:
-        """List the N most recent undoable ops (not yet undone, not expired)."""
+        """List the N most recent undoable ops (not yet undone, not expired;
+        a retirement's handle never expires)."""
         from .undo_log import list_undoable
         with self._connect() as conn:
             entries = list_undoable(conn, limit=limit)

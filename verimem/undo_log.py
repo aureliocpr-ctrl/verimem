@@ -20,7 +20,8 @@ Schema v7 (added 2026-05-27 cycle 13):
     );
 
 TTL 7 giorni: after that the undo entry can be pruned (separate cleanup task).
-The fact row itself is unaffected by undo log TTL.
+The fact row itself is unaffected by undo log TTL. A retirement's entry
+(``supersede``) never expires and is never pruned: see ``OP_CHE_NON_SCADONO``.
 
 API:
     snapshot_pre_op(conn, op_type, fact_id) -> op_id
@@ -53,6 +54,17 @@ class UndoEntry:
     created_at: float
     undone_at: float | None
     ttl_expires_at: float
+
+
+#: T88 — the ops whose undo never expires. A retirement leaves the row in
+#: place (it only marks it), so undoing it is always possible and must stay
+#: so; the 7-day TTL is for a ``forget``, where the row is gone.
+OP_CHE_NON_SCADONO: frozenset[str] = frozenset({"supersede"})
+
+#: The columns a retirement writes on the loser (``SemanticMemory.supersede``):
+#: its undo puts back these and nothing else.
+_COLONNE_DEL_RITIRO: tuple[str, ...] = (
+    "superseded_by", "superseded_at", "superseded_reason")
 
 
 def ensure_undo_table(conn: sqlite3.Connection) -> None:
@@ -197,7 +209,7 @@ def snapshot_pre_op(
     return op_id
 
 
-def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
+def undo_op(conn: sqlite3.Connection, op_id: str, *, principal: str) -> dict:
     """Restore the pre-op snapshot for op_id. Returns result dict.
 
     Result keys:
@@ -207,10 +219,16 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
         fact_id: str
         action: 'restored' | 'already_undone' | 'expired' | 'not_found'
 
-    Restoration uses INSERT OR REPLACE so the row is recreated even if it
-    was hard-deleted (forget) or modified (supersede). The undone_at column
-    is stamped so re-undo is a no-op.
+    A ``forget`` is restored with INSERT OR REPLACE, so the hard-deleted row
+    is recreated. A retirement (``supersede``) only puts back its three
+    ``superseded_*`` columns on the row that is still there (T88), and
+    answers ``not_found`` if the row was deleted meanwhile. The undone_at
+    column is stamped so re-undo is a no-op.
     """
+    from .mutation_audit import TABLE_SQL, record_mutation, require_principal
+    # chi annulla si dichiara PRIMA di toccare qualcosa: un annullamento e'
+    # una mutazione dei fatti come quella che rovescia
+    require_principal(principal)
     cur = conn.cursor()
     cur.execute(
         "SELECT op_type, fact_id, pre_row_json, undone_at, ttl_expires_at "
@@ -227,25 +245,50 @@ def undo_op(conn: sqlite3.Connection, op_id: str) -> dict:
             "fact_id": fact_id, "action": "already_undone",
             "undone_at": undone_at,
         }
-    if time.time() > float(ttl):
+    if op_type not in OP_CHE_NON_SCADONO and time.time() > float(ttl):
         return {
             "ok": False, "op_id": op_id, "op_type": op_type,
             "fact_id": fact_id, "action": "expired",
             "ttl_expires_at": float(ttl),
         }
     pre_row = json.loads(pre_row_json)
-    # Cycle 14 FIX 5: schema-tolerant restore. Query the live schema's
-    # column set so columns added/removed by migrations between the op
-    # and the undo don't break the restore.
-    cur.execute("PRAGMA table_info(facts)")
-    current_cols = {r[1] for r in cur.fetchall()}
-    cols, vals = _dict_to_row_args(pre_row, current_cols=current_cols)
-    placeholders = ",".join(["?"] * len(cols))
-    col_list = ",".join(cols)
-    conn.execute(
-        f"INSERT OR REPLACE INTO facts ({col_list}) VALUES ({placeholders})",
-        vals,
-    )
+    if op_type in OP_CHE_NON_SCADONO:
+        # T88: a retirement wrote only the superseded_* columns and left the
+        # row in place, so its undo puts back those columns and nothing else.
+        # Replaying the whole snapshot — months old, now that the handle never
+        # expires — would erase what the row gained since: later verdicts, its
+        # status, a column added by a migration. A row that is gone was
+        # deleted, and an undo does not bring it back.
+        cols, vals = _dict_to_row_args(
+            pre_row, current_cols=set(_COLONNE_DEL_RITIRO))
+        prima = dict(zip(cols, vals, strict=True))
+        cur_up = conn.execute(
+            "UPDATE facts SET superseded_by = ?, superseded_at = ?, "
+            "superseded_reason = ? WHERE id = ?",
+            (*(prima.get(c) for c in _COLONNE_DEL_RITIRO), fact_id),
+        )
+        if cur_up.rowcount == 0:
+            return {"ok": False, "op_id": op_id, "op_type": op_type,
+                    "fact_id": fact_id, "action": "not_found"}
+    else:
+        # Cycle 14 FIX 5: schema-tolerant restore. Query the live schema's
+        # column set so columns added/removed by migrations between the op
+        # and the undo don't break the restore.
+        cur.execute("PRAGMA table_info(facts)")
+        current_cols = {r[1] for r in cur.fetchall()}
+        cols, vals = _dict_to_row_args(pre_row, current_cols=current_cols)
+        placeholders = ",".join(["?"] * len(cols))
+        col_list = ",".join(cols)
+        conn.execute(
+            f"INSERT OR REPLACE INTO facts ({col_list}) VALUES ({placeholders})",
+            vals,
+        )
+    # nella STESSA transazione: se la riga di audit non si scrive, il chiamante
+    # non arriva al commit e l'annullamento non avviene (fail-closed)
+    conn.execute(TABLE_SQL)
+    record_mutation(conn, principal=principal, action="restore",
+                    resource_id=fact_id,
+                    detail={"op_id": op_id, "undo_of": op_type})
     conn.execute(
         "UPDATE facts_undo_log SET undone_at = ? WHERE op_id = ?",
         (time.time(), op_id),
@@ -260,15 +303,17 @@ def list_undoable(
     conn: sqlite3.Connection, *, limit: int = 20,
 ) -> list[UndoEntry]:
     """Return the N most recent undoable ops (newest first, not yet undone,
-    not yet expired)."""
+    not yet expired — an op in ``OP_CHE_NON_SCADONO`` never expires)."""
+    mai = sorted(OP_CHE_NON_SCADONO)
     cur = conn.cursor()
     cur.execute(
         "SELECT op_id, op_type, fact_id, pre_row_json, "
         "created_at, undone_at, ttl_expires_at "
         "FROM facts_undo_log "
-        "WHERE undone_at IS NULL AND ttl_expires_at > ? "
+        "WHERE undone_at IS NULL AND (ttl_expires_at > ? "
+        f"OR op_type IN ({','.join('?' * len(mai))})) "
         "ORDER BY created_at DESC LIMIT ?",
-        (time.time(), int(limit)),
+        (time.time(), *mai, int(limit)),
     )
     out: list[UndoEntry] = []
     for r in cur.fetchall():
@@ -314,15 +359,22 @@ def invalidate_handles_for(
 
 
 def prune_expired_undo_log(conn: sqlite3.Connection) -> int:
-    """Delete undo entries past their TTL. Returns count deleted."""
+    """Delete undo entries past their TTL. Returns count deleted.
+
+    T88: the handles of a RETIREMENT (``supersede``) are never pruned — a
+    retired row is still there, so undoing it is always possible, and a wrong
+    retirement must stay reversible after the 7 days of a ``forget``."""
+    mai = sorted(OP_CHE_NON_SCADONO)
     cur = conn.execute(
-        "DELETE FROM facts_undo_log WHERE ttl_expires_at < ?",
-        (time.time(),),
+        "DELETE FROM facts_undo_log WHERE ttl_expires_at < ? "
+        f"AND op_type NOT IN ({','.join('?' * len(mai))})",
+        (time.time(), *mai),
     )
     return int(cur.rowcount)
 
 
 __all__ = [
+    "OP_CHE_NON_SCADONO",
     "UNDO_TTL_SECONDS",
     "OpType",
     "UndoEntry",

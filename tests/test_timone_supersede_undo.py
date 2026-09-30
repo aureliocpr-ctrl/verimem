@@ -101,7 +101,7 @@ def test_undo_riporta_il_fatto_servibile_e_il_winner_resta(mem):
     m.semantic.supersede(a, b, principal="test:timone", reason="manual-test")
     op_id = _undo_ops_supersede(m, a)[0]["op_id"]
 
-    res = m.semantic.undo_destructive_op(op_id)
+    res = m.semantic.undo_destructive_op(op_id, principal="test:undo")
     assert res["ok"] is True and res["action"] == "restored"
 
     fa = m.semantic.get(a)
@@ -176,7 +176,7 @@ def test_undo_emette_flow_undo(mem):
     a, b = _due_fatti(m)
     res = m.semantic.supersede(a, b, principal="test:timone",
                                reason="manual-test")
-    m.semantic.undo_destructive_op(res["undo_op_id"])
+    m.semantic.undo_destructive_op(res["undo_op_id"], principal="test:undo")
     evts = _flow(tmp, "flow.undo")
     assert len(evts) == 1
     p = evts[0]["payload"]
@@ -195,6 +195,6 @@ def test_update_propaga_undo_op_id_nella_ricevuta(mem):
     assert res["updated"] is True and res["supersedes"] == a
     assert res.get("undo_op_id"), (
         "la ricevuta dell'update deve portare l'handle di undo")
-    undo = m.semantic.undo_destructive_op(res["undo_op_id"])
+    undo = m.semantic.undo_destructive_op(res["undo_op_id"], principal="test:undo")
     assert undo["ok"] is True and undo["action"] == "restored"
     assert m.semantic.get(a).superseded_by is None

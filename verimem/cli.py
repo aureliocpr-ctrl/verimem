@@ -3942,7 +3942,7 @@ def facts_undo(
         raise typer.Exit(2) from None
     if len(_matches) == 1:
         op_id = _matches[0]
-    result = sm.undo_destructive_op(op_id)
+    result = sm.undo_destructive_op(op_id, principal=_principale())
     action = result.get("action", "unknown")
     if action == "restored":
         console.print(
@@ -3977,6 +3977,8 @@ def facts_undo_list(
         console.print("[dim]no undoable ops[/dim]")
         return
     from datetime import datetime as _dt
+
+    from .undo_log import OP_CHE_NON_SCADONO
     table = Table(title=f"Undoable ops (newest first, max {limit})")
     table.add_column("op_id")
     table.add_column("type")
@@ -3989,6 +3991,7 @@ def facts_undo_list(
             op["op_type"],
             op["fact_id"],
             _dt.fromtimestamp(op["created_at"]).strftime("%Y-%m-%d %H:%M"),
+            "never" if op["op_type"] in OP_CHE_NON_SCADONO else
             _dt.fromtimestamp(op["ttl_expires_at"]).strftime("%Y-%m-%d %H:%M"),
         )
     console.print(table)
@@ -4334,12 +4337,16 @@ def facts_safety() -> None:
         ver = schema_version(conn, "semantic")
     except Exception:
         ver = "?"
-    # Undoable ops count.
+    # Undoable ops count — a retirement's handle does not expire (T88).
     try:
+        from .undo_log import OP_CHE_NON_SCADONO
+        _mai = sorted(OP_CHE_NON_SCADONO)
         cur = conn.cursor()
         cur.execute(
             "SELECT COUNT(*) FROM facts_undo_log "
-            "WHERE undone_at IS NULL AND ttl_expires_at > strftime('%s','now')"
+            "WHERE undone_at IS NULL AND (ttl_expires_at > strftime('%s','now') "
+            f"OR op_type IN ({','.join('?' * len(_mai))}))",
+            _mai,
         )
         undoable_n = int(cur.fetchone()[0])
     except sqlite3.OperationalError:

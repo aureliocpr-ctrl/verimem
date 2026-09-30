@@ -91,7 +91,7 @@ class TestSnapshotAndUndo:
                      ("fact00deadbeef",))
         assert cur.fetchone()[0] == 0
         # 3. Undo.
-        result = undo_op(conn, op_id)
+        result = undo_op(conn, op_id, principal="test:undo")
         conn.commit()
         assert result["ok"] is True
         assert result["action"] == "restored"
@@ -110,11 +110,11 @@ class TestSnapshotAndUndo:
         conn.execute("DELETE FROM facts WHERE id = ?", ("fact01deadbeef",))
         conn.commit()
         # First undo: ok.
-        r1 = undo_op(conn, op_id)
+        r1 = undo_op(conn, op_id, principal="test:undo")
         conn.commit()
         assert r1["action"] == "restored"
         # Second undo: already_undone.
-        r2 = undo_op(conn, op_id)
+        r2 = undo_op(conn, op_id, principal="test:undo")
         assert r2["ok"] is False
         assert r2["action"] == "already_undone"
         conn.close()
@@ -123,7 +123,7 @@ class TestSnapshotAndUndo:
         self, seeded_sm: SemanticMemory,
     ):
         conn = sqlite3.connect(str(seeded_sm.db_path), timeout=5)
-        r = undo_op(conn, "ghost1234567890a")
+        r = undo_op(conn, "ghost1234567890a", principal="test:undo")
         conn.close()
         assert r["ok"] is False
         assert r["action"] == "not_found"
@@ -137,7 +137,7 @@ class TestSnapshotAndUndo:
             (time.time() - 10, op_id),
         )
         conn.commit()
-        r = undo_op(conn, op_id)
+        r = undo_op(conn, op_id, principal="test:undo")
         conn.close()
         assert r["ok"] is False
         assert r["action"] == "expired"
@@ -164,7 +164,7 @@ class TestSemanticMemoryWrappers:
         del_result = seeded_sm.delete_with_undo("fact04deadbeef", principal="test:suite")
         op_id = del_result["op_id"]
         # Undo.
-        undo_result = seeded_sm.undo_destructive_op(op_id)
+        undo_result = seeded_sm.undo_destructive_op(op_id, principal="test:undo")
         assert undo_result["ok"] is True
         assert undo_result["action"] == "restored"
         # Verify fact is back.
@@ -248,7 +248,7 @@ class TestSchemaTolerantRestore:
         conn.commit()
         # 4. Undo — should succeed despite the new column.
         from verimem.undo_log import undo_op
-        result = undo_op(conn, op_id)
+        result = undo_op(conn, op_id, principal="test:undo")
         conn.commit()
         assert result["ok"] is True
         assert result["action"] == "restored"
@@ -288,7 +288,7 @@ class TestSchemaTolerantRestore:
         conn.commit()
         # Undo — should succeed (tmp_col silently skipped).
         from verimem.undo_log import undo_op
-        result = undo_op(conn, op_id)
+        result = undo_op(conn, op_id, principal="test:undo")
         conn.commit()
         assert result["ok"] is True
         assert result["action"] == "restored"
@@ -317,7 +317,7 @@ class TestEnvelopeCollisionSafety:
         # Forget with undo and restore.
         result = seeded_sm.delete_with_undo("trickyenvelope", principal="test:suite")
         op_id = result["op_id"]
-        undo = seeded_sm.undo_destructive_op(op_id)
+        undo = seeded_sm.undo_destructive_op(op_id, principal="test:undo")
         assert undo["ok"] is True
         # Verify the proposition string survived round-trip unchanged.
         import sqlite3 as _s

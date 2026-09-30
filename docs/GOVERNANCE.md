@@ -123,13 +123,16 @@ HTTP `GET /v1/retirements`. Fields per row: `loser_id/topic/status`,
 opt-in (`with_text`) for local judging.
 
 `reversible: false` is honest but was mute, and `irreversible_because` now
-splits the three cases an operator handles differently:
+splits the cases an operator handles differently:
 
 | value | what it means | what to do |
 |---|---|---|
-| `no snapshot` | the build that performed the retirement leaves no handle | look at *which code* is writing (`verimem doctor` reports branch + revision) |
-| `undo window expired` | the snapshot existed; the 7-day TTL passed | nothing today — the product worked, the calendar did not |
+| `no snapshot` | the build that performed the retirement leaves no handle — or a build older than this one pruned it after 7 days | look at *which code* is writing (`verimem doctor` reports branch + revision) |
 | `already undone` | the handle was used and the fact was retired again | it is a ping-pong; hunting for an undo is hunting the wrong thing |
+
+A retirement's handle does not expire: the retired row is still there, so the
+retirement stays reversible for as long as the fact stays retired. The 7-day
+window belongs to `forget`, where the row is gone.
 
 On the real corpus 2026-08-05: **1805 retired, 2 still reversible** — every
 other row reads `no snapshot`, including the five the unattended maintenance
@@ -177,8 +180,8 @@ branch, `reversible`, `undo_op_id` — never text). Every undo emits
 ## 3. Reversing: the helm
 
 Every supersession snapshots the loser's row **in the same transaction** as
-the retirement (`facts_undo_log`, op_type `supersede`, TTL 7 days). The
-handle travels with every receipt:
+the retirement (`facts_undo_log`, op_type `supersede`; the handle does not
+expire). The handle travels with every receipt:
 
 - `add()` that retired something → `superseded_undo_ops: {loser_id: op_id}`
 - `update()` → `undo_op_id`

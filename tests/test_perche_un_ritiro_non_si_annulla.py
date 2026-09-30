@@ -10,8 +10,9 @@ l'operatore che legge fa cose diverse:
   dall'albero condiviso). Non c'è niente da recuperare, e il segnale utile
   è che il codice in esecuzione non lascia appigli;
 - **la finestra è scaduta** — lo scatto c'era, il TTL di 7 giorni è
-  passato. Niente da fare oggi, ma il prodotto FUNZIONAVA: è un problema
-  di tempi, non di build;
+  passato. Dal T88 questo stato non esiste più: lo scatto di un ritiro non
+  scade, perché la riga ritirata è ancora lì, e un ritiro sbagliato deve
+  restare annullabile anche dopo una settimana;
 - **è già stato annullato** — qualcuno ha usato il timone e il fatto è
   stato ri-ritirato dopo. Qui la storia è un ping-pong, e cercare l'undo
   è cercare la cosa sbagliata.
@@ -67,9 +68,11 @@ def test_senza_scatto_dice_che_scatto_non_ce_n_e(mem):
     assert r["irreversible_because"] == "no snapshot", r
 
 
-def test_una_finestra_scaduta_lo_dice_invece_di_tacere(mem):
-    """Lo scatto c'era: il prodotto ha funzionato, sono passati i sette
-    giorni. È un'informazione diversa da «non c'è mai stato»."""
+def test_oltre_i_sette_giorni_un_ritiro_resta_reversibile(mem):
+    """T88: lo scatto di un ritiro non scade. Prima il registro diceva
+    «undo window expired» e la potatura a ogni scrittura lo cancellava:
+    dopo una settimana un ritiro sbagliato non si annullava più, anche con
+    la riga ancora lì. Il registro deve dire quello che `facts undo` fa."""
     a, b = _coppia(mem)
     mem.semantic.supersede(a, b, principal="test", reason="banco")
     with sqlite3.connect(mem.semantic.db_path) as con:
@@ -77,8 +80,8 @@ def test_una_finestra_scaduta_lo_dice_invece_di_tacere(mem):
                     "WHERE fact_id = ?", (time.time() - 60, a))
 
     r = retirement_log(mem.semantic)[0]
-    assert r["reversible"] is False
-    assert r["irreversible_because"] == "undo window expired", r
+    assert r["reversible"] is True, r
+    assert r.get("irreversible_because") is None, r
 
 
 def test_un_appiglio_gia_usato_lo_dice(mem):

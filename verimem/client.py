@@ -4295,7 +4295,7 @@ class Memory:
         ``update()['undo_op_id']`` or ``retirement_log()`` rows. Restores
         the pre-op row; the winner of a supersession stays alive (the
         ping-pong ends with BOTH facts, not another retirement)."""
-        return self.semantic.undo_destructive_op(op_id)
+        return self.semantic.undo_destructive_op(op_id, principal=self._principal)
 
     def history(self, fact_id: str) -> list[dict[str, Any]]:
         """The FULL supersession trail of the lineage containing ``fact_id`` —

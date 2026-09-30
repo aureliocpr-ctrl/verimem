@@ -1112,10 +1112,12 @@ def run_doctor() -> list[dict[str, Any]]:
     # questo store il timone non ce l'ha, e nessuna superficie lo diceva:
     # serviva una query fatta apposta da chi gia' sospettava.
     #
-    # SETTE GIORNI e' il TTL dello scatto, e non una scelta di comodo: fuori
-    # da quella finestra «manca» e «e' scaduto» sono indistinguibili, quindi
-    # contare tutto il corpus direbbe sempre che qualcosa non va — e un
-    # allarme che suona sempre si impara a ignorare.
+    # SETTE GIORNI e' la finestra in cui le build precedenti al T88 tenevano lo
+    # scatto di un ritiro, poi lo potavano: piu' indietro, «manca» puo' voler
+    # dire «potato da una build vecchia», quindi contare tutto il corpus
+    # direbbe sempre che qualcosa non va — e un allarme che suona sempre si
+    # impara a ignorare. Dal T88 lo scatto di un ritiro NON scade: la colonna
+    # «scaduto» non esiste piu', e uno scatto oltre il TTL e' vivo.
     try:
         import sqlite3 as _sq3
 
@@ -1132,10 +1134,10 @@ def run_doctor() -> list[dict[str, Any]]:
                     "SELECT COUNT(*) FROM facts f WHERE f.superseded_by IS NOT "
                     "NULL AND f.superseded_at >= ? AND EXISTS (SELECT 1 FROM "
                     "facts_undo_log u WHERE u.fact_id = f.id AND u.op_type = "
-                    "'supersede' AND u.undone_at IS NULL AND "
-                    "u.ttl_expires_at > ?)", (_da, _ora)).fetchone()[0])
-                # LE ALTRE TRE COLONNE. «non si puo' annullare» aveva
-                # QUATTRO cause e il messaggio ne mostrava una, mentre il
+                    "'supersede' AND u.undone_at IS NULL)",
+                    (_da,)).fetchone()[0])
+                # LE ALTRE COLONNE. «non si puo' annullare» aveva piu'
+                # cause e il messaggio ne mostrava una, mentre il
                 # dato le distingue tutte — e portano ad azioni diverse.
                 # 🔴 La piu' grave e' `undone`: uno snapshot GIA' USATO non
                 # e' un guasto, e' la funzione che ha funzionato. Sommandolo
@@ -1151,10 +1153,6 @@ def run_doctor() -> list[dict[str, Any]]:
                     "EXISTS (SELECT 1 FROM facts_undo_log u WHERE "
                     "u.fact_id = f.id AND u.op_type = 'supersede' AND "
                     "u.undone_at IS NOT NULL)")
-                _scaduti = _conta_ritiri(
-                    "EXISTS (SELECT 1 FROM facts_undo_log u WHERE "
-                    "u.fact_id = f.id AND u.op_type = 'supersede' AND "
-                    "u.undone_at IS NULL AND u.ttl_expires_at <= ?)", _ora)
                 _mai = _conta_ritiri(
                     "NOT EXISTS (SELECT 1 FROM facts_undo_log u WHERE "
                     "u.fact_id = f.id AND u.op_type = 'supersede')")
@@ -1196,39 +1194,31 @@ def run_doctor() -> list[dict[str, Any]]:
                     "no retirements in the last 7 days — nothing to repair "
                     "and no ratio to report")
             else:
-                # LE QUATTRO COLONNE, e la riga le mostra tutte. `undone`
+                # LE TRE COLONNE, e la riga le mostra tutte. `undone`
                 # NON e' un guasto: e' un ritiro che qualcuno ha annullato
                 # davvero, cioe' il timone che ha funzionato. Sommarlo agli
                 # altri faceva avvisare la superficie proprio dove l'uso era
                 # corretto — quindi non entra nel rapporto.
                 _dettaglio = (
                     f"{_rit} retirements in the last 7 days: {_con_app} still "
-                    f"reversible · {_usati} already undone · {_scaduti} "
-                    f"expired · {_mai} never had a snapshot. The window is "
-                    f"the snapshot TTL (7 days) because outside it a missing "
-                    f"handle is indistinguishable from an expired one")
+                    f"reversible · {_usati} already undone · {_mai} never had "
+                    f"a snapshot. A retirement's handle does not expire; the "
+                    f"window is 7 days because older builds pruned the handle "
+                    f"after 7 days, so further back a missing handle may be a "
+                    f"pruned one")
                 _giudicabili = _rit - _usati
                 if not _giudicabili or _con_app / _giudicabili >= _UNDO_HANDLE_WARN:
                     add("undo-window", OK, _dettaglio)
                 else:
-                    # UNA cura per la causa che DOMINA, non l'elenco di tutte:
-                    # un `fix` che le elenca sempre non aiuta piu' di uno che
-                    # ne asserisce una a caso.
-                    if _mai >= _scaduti:
-                        _cura = (
-                            "a retirement with NO snapshot means the code "
-                            "that performed it did not take one. Who did: "
-                            + (", ".join(_chi) or "unknown")
-                            + " — `(not recorded)` means the retirement left "
-                            "no audit row either, so the actor is unknown "
-                            "rather than anonymous. A caller that sets "
-                            "VERIMEM_ACTOR is recorded as `<port>/<actor>`")
-                    else:
-                        _cura = (
-                            "these snapshots EXPIRED: the 7-day TTL is "
-                            "shorter than the cadence at which retirements "
-                            "get reviewed here — either review sooner or "
-                            "raise the TTL")
+                    # Una causa sola resta: lo scatto non e' mai stato preso.
+                    _cura = (
+                        "a retirement with NO snapshot means the code "
+                        "that performed it did not take one. Who did: "
+                        + (", ".join(_chi) or "unknown")
+                        + " — `(not recorded)` means the retirement left "
+                        "no audit row either, so the actor is unknown "
+                        "rather than anonymous. A caller that sets "
+                        "VERIMEM_ACTOR is recorded as `<port>/<actor>`")
                     add("undo-window", WARN, _dettaglio, _cura)
     except Exception as _e:  # noqa: BLE001 — un check non rompe il doctor
         _non_ho_potuto_guardare(add, "undo-window", _e)
