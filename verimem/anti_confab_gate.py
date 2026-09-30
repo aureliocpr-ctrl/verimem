@@ -1943,13 +1943,24 @@ def _advisory_l4_skipped() -> dict[str, str]:
     fonte), etichettato onestamente «entailment NOT verified»: mai spacciato per
     verificato, mai saltato in silenzio.
     """
-    from .local_grounding import judge_state
+    from .local_grounding import judge_state, la_delega_era_richiesta, perche_ha_giudicato
     stato = judge_state()
     if stato == "warming":
+        # CHI HA CHIESTO IL DAEMON LEGGE PERCHE' NON L'HA AVUTO (riga 3 del
+        # tabellone). La ragione diceva solo che il giudice di casa caricava,
+        # uguale per chi il daemon non l'aveva mai chiesto: dal wheel il 29/09,
+        # `judged_by=None` e il daemon nominato solo nel consiglio. Il perche'
+        # e' quello scritto dalla delega fallita nell'istante in cui e' fallita.
+        motivo_del_daemon = perche_ha_giudicato() if la_delega_era_richiesta() else None
         return {
             "layer": "L4-skipped",
-            "reason": "source provided but the grounding judge was still "
-                      "loading - entailment NOT verified for THIS write",
+            "reason": (f"source provided but the shared encode daemon did not "
+                       f"judge it ({motivo_del_daemon}) and the local grounding "
+                       f"judge was still loading - entailment NOT verified for "
+                       f"THIS write"
+                       if motivo_del_daemon else
+                       "source provided but the grounding judge was still "
+                       "loading - entailment NOT verified for THIS write"),
             # ⚠️ IL RIMEDIO NOMINA LA CONDIZIONE CHE LO RENDE VERO, e prima
             # non lo faceva. Diceva «writing through the CLI gets the moat
             # verdict»: misurato alla porta il 2026-08-30 alle 20:40, la CLI
