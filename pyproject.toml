@@ -81,6 +81,14 @@ dependencies = [
   # how we found out, not the damage. Lift this deliberately, with the
   # migration, not by widening the range.
   "mcp>=1.0.0,<2",
+  # The HTTP doors the README names as ordinary commands: `verimem console` and
+  # `verimem gateway serve`. Core since 2026-09-30: with fastapi only in the
+  # `server` extra, `pip install verimem` answered both commands with "needs
+  # fastapi+uvicorn" (the acceptance venv had mcp, starlette and uvicorn, and no
+  # fastapi). uvicorn is declared too: today it arrives only through mcp, and a
+  # README command should not hang on another package's dependency.
+  "fastapi>=0.110.0",
+  "uvicorn>=0.27.0",
 ]
 
 [project.optional-dependencies]
@@ -104,8 +112,11 @@ mcp-only = [
 
 # Web dashboard / IDE surfaces (server-only modules). NOT needed by the SDK,
 # the CLI core or the MCP server; `verimem dashboard` errors clearly without it.
+# fastapi moved to the core on 2026-09-30 (the console and the gateway are README
+# commands). What stays here is what only the dashboard needs: jinja2 for its
+# templates (dashboard.py, dashboard_routes/*), and uvicorn's `standard` extras.
+# Emptying the extra would have taken jinja2 away from whoever installs it today.
 server = [
-  "fastapi>=0.110.0",
   "uvicorn[standard]>=0.27.0",
   "jinja2>=3.1.0",
 ]
