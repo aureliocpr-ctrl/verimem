@@ -142,11 +142,78 @@ def _adopt_observed_dim(dim: int, source: str) -> None:
         pass
 
 
+def _dimensione_dichiarata(model) -> int:
+    """The dimension the model declares, asked by TODAY's name, 0 if it has none.
+
+    sentence-transformers 6 renamed ``get_sentence_embedding_dimension`` to
+    ``get_embedding_dimension``: the old name still answers, with a FutureWarning on
+    every call; 5 has only the old name. Asking the new one first and the old one
+    only when the new is missing keeps both working — and when the old name goes,
+    the call below does not turn into an exception swallowed by the adoption guard
+    (the true dimension would silently stop being adopted: the empty-recall trap).
+    """
+    for nome in ("get_embedding_dimension", "get_sentence_embedding_dimension"):
+        chiedi = getattr(model, nome, None)
+        if callable(chiedi):
+            return int(chiedi() or 0)
+    return 0
+
+
+#: The sentence-transformers modules that cannot be built without their own
+#: ``config.json`` (Normalize, for one, has no file at all, and must not be
+#: reported missing).
+_MODULI_CON_CONFIG = ("Pooling", "Dense")
+
+
+def _cartella_cache_hf() -> str | None:
+    """The Hub cache folder, read NOW from the environment (``HF_HUB_CACHE``, then
+    ``HF_HOME``/hub); ``None`` lets huggingface_hub use its own default."""
+    esplicita = os.environ.get("HF_HUB_CACHE", "").strip()
+    if esplicita:
+        return esplicita
+    casa = os.environ.get("HF_HOME", "").strip()
+    return os.path.join(casa, "hub") if casa else None
+
+
+def file_del_modello_mancanti(nome: str) -> list[str]:
+    """The module files the model declares (``modules.json``) that the cache does not have.
+
+    Read-only, no network. ``[]`` when there is nothing to say: the model is not
+    in the cache at all, it is not a sentence-transformers model, or every file is
+    there. It exists so that a half-finished download is NAMED instead of guessed:
+    measured on 2026-09-29, ``1_Pooling/config.json`` did not arrive from the Hub,
+    sentence-transformers 6.1.0 answered ``TypeError: Pooling.__init__() missing 1
+    required positional argument``, and warmup told an online machine that it was
+    "running offline".
+    """
+    try:
+        import json
+
+        from huggingface_hub import try_to_load_from_cache
+        cache = _cartella_cache_hf()
+        moduli = try_to_load_from_cache(nome, "modules.json", cache_dir=cache)
+        if not isinstance(moduli, str):
+            return []
+        with open(moduli, encoding="utf-8") as f:
+            dichiarati = json.load(f)
+        mancanti = []
+        for modulo in dichiarati:
+            percorso = str(modulo.get("path") or "").strip("/")
+            tipo = str(modulo.get("type") or "")
+            if not percorso or not tipo.endswith(_MODULI_CON_CONFIG):
+                continue
+            nome_file = f"{percorso}/config.json"
+            if not isinstance(try_to_load_from_cache(nome, nome_file, cache_dir=cache), str):
+                mancanti.append(nome_file)
+        return mancanti
+    except Exception:  # noqa: BLE001 — a diagnosis must never be a new failure
+        return []
+
+
 def _adopt_true_dim(model) -> None:
     """Load-time adoption: ask the loaded model for its true dimension."""
     try:
-        _adopt_observed_dim(int(model.get_sentence_embedding_dimension() or 0),
-                            "loaded model")
+        _adopt_observed_dim(_dimensione_dichiarata(model), "loaded model")
     except Exception:  # noqa: BLE001 — adoption must never break model load
         pass
 
@@ -644,10 +711,8 @@ def verify_model_dim() -> tuple[bool, int]:
     closed on a dim mismatch instead of writing wrong-length vectors.
     """
     model = _model()
-    getter = getattr(model, "get_sentence_embedding_dimension", None)
-    if callable(getter):
-        actual = int(getter())
-    else:  # defensive: derive from a probe encode
+    actual = _dimensione_dichiarata(model)
+    if not actual:  # defensive: derive from a probe encode
         actual = int(np.asarray(_encode_local("dim probe")).shape[-1])
     return (actual == CONFIG.embedding_dim, actual)
 

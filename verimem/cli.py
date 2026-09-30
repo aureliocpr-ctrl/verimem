@@ -505,6 +505,62 @@ def _quanto_scarica(nome: str) -> str:
             else f"first run downloads the weights (size not measured for {nome})")
 
 
+def _warm_di_nuovo_o_esci(model_name: str):
+    """After a failed model warm: say the TRUE cause, retry once, or exit 1.
+
+    Until 2026-09-30 every failure got the same diagnosis, «running offline with
+    the model not cached», also on an online machine whose download had simply
+    lost one file (measured on 2026-09-29: ``1_Pooling/config.json`` did not
+    arrive from the Hub). Now:
+
+    * an offline switch is ON (the canonical list, ``airgap._OFFLINE_FLAGS``) →
+      that is the cause, and it is named; no retry, it would fail the same way;
+    * otherwise the missing module files are NAMED, the load is retried ONCE
+      (the loader keeps no memory of a failed load), and if it fails again the
+      files still missing are named with what to do.
+
+    The quick alternative — re-running the job — works for CI and leaves the
+    person who installs Verimem with a wrong diagnosis.
+    """
+    from . import embedding
+    from .airgap import _OFFLINE_FLAGS
+
+    accesi = [v for v in _OFFLINE_FLAGS
+              if os.environ.get(v, "").strip().lower() in {"1", "true", "yes", "on"}]
+    if accesi:
+        console.print(
+            f"  Offline switch ON ({', '.join(accesi)}) and the model is not fully "
+            "cached. Unset it and retry online so the weights can download once."
+        )
+        raise typer.Exit(code=1)
+    mancanti = embedding.file_del_modello_mancanti(model_name)
+    if mancanti:
+        console.print(
+            f"  Not offline: the download of {model_name} is INCOMPLETE — "
+            f"{', '.join(mancanti)} did not arrive from the Hub. Retrying once…"
+        )
+    else:
+        console.print("  Not offline. Retrying once…")
+    try:
+        embedding._model()
+        return embedding.encode("warmup probe")
+    except Exception as exc:  # noqa: BLE001 — report cleanly, no traceback
+        console.print(f"[red]✗ retry failed:[/] {type(exc).__name__}: {exc}")
+        ancora = embedding.file_del_modello_mancanti(model_name)
+        if ancora:
+            console.print(
+                f"  Still missing from the model cache: {', '.join(ancora)}. The Hub "
+                "did not serve it; run `verimem warmup` again when huggingface.co "
+                "answers — your install is fine."
+            )
+        else:
+            console.print(
+                "  No model file is missing from the cache, so this is not a download "
+                "problem: the error above is the cause."
+            )
+        raise typer.Exit(code=1) from None
+
+
 @app.command()
 def warmup(
     daemon: bool = typer.Option(
@@ -556,12 +612,7 @@ def warmup(
         vec = embedding.encode("warmup probe")  # prove it actually encodes
     except Exception as exc:  # noqa: BLE001 — report cleanly, no traceback
         console.print(f"[red]✗ model warm failed:[/] {type(exc).__name__}: {exc}")
-        console.print(
-            "  Most common cause: running offline with the model not cached. "
-            "Unset VERIMEM_OFFLINE / HIPPO_OFFLINE / HF_HUB_OFFLINE / TRANSFORMERS_OFFLINE and retry "
-            "online so the weights can download once."
-        )
-        raise typer.Exit(code=1) from None
+        vec = _warm_di_nuovo_o_esci(model_name)
     dt = time.time() - t0
     console.print(f"[green]✓ model ready[/] in {dt:.1f}s (vector dim {len(vec)})")
 
