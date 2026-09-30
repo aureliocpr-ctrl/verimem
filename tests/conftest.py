@@ -410,8 +410,15 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
     # seconda e la terza occorrenza. Questa e' la quarta: si pinnano TUTTI.
     monkeypatch.setenv("VERIMEM_DATA_DIR", str(test_data_dir))
     original = {}
+    #: L'`except ImportError` copre SOLO questo import, e per la ragione per cui
+    #: era nato: senza il pacchetto la fixture si degrada invece di far esplodere
+    #: la raccolta. Copriva anche la guardia dell'isolamento, dieci righe piu'
+    #: sotto, e quello era un altro difetto — vedi il commento accanto.
     try:
         from verimem.config import CONFIG
+    except ImportError:
+        CONFIG = None
+    if CONFIG is not None:
         (test_data_dir / "episodes").mkdir(exist_ok=True)
         (test_data_dir / "skills").mkdir(exist_ok=True)
         (test_data_dir / "semantic").mkdir(exist_ok=True)
@@ -435,11 +442,18 @@ def _isolate_test_env(monkeypatch, tmp_path_factory):
         # Qui non si chiede quali nomi siano pinnati: si chiede DOVE e'
         # finito il file. Se l'isolamento non ha retto, il test si ferma
         # ADESSO invece di scrivere nel corpus servito.
+        #
+        # ⚠️ QUESTO IMPORT NON HA UNA RETE, E NON DEVE AVERLA. Fino al
+        # 2026-09-18 stava dentro lo stesso `try` dell'import di `CONFIG`, con
+        # un `except ImportError: pass` in fondo: spostando
+        # `verimem/test_isolation.py` la suite restava VERDE — misurato,
+        # `tests/test_undo_log.py` 15 passed EXIT=0 senza la guardia. La rete
+        # sotto il pinning era a sua volta appesa a un filo che nessuno vedeva.
+        # Se la guardia non si importa la suite si FERMA: meglio una raccolta
+        # rossa di un corpus servito che qualcuno riscrive per sbaglio.
         from verimem.test_isolation import assert_store_isolato
         for _campo in ("semantic_db", "episodes_db", "skills_db"):
             assert_store_isolato(getattr(CONFIG, _campo), tmp_root=test_data_dir)
-    except ImportError:
-        pass
     # CYCLE #28 (critic counterexample on #25): verimem.settings:20
     # has `SETTINGS_FILE = CONFIG.data_dir / "user_settings.json"`
     # materialized at MODULE-IMPORT time. Overriding CONFIG.data_dir
