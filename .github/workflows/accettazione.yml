@@ -29,6 +29,10 @@ name: accettazione
 
 on:
   pull_request:
+    # Solo le richieste verso main, come ci e presidi-pr: un'impilata prova il wheel di
+    # un ramo che non e' main, e scarica ~2,3 GB per cella per una prova che si rifa'
+    # quando passa su main.
+    branches: [main]
     paths:
       - "verimem/**"
       - "pyproject.toml"
