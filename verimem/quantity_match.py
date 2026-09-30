@@ -1208,6 +1208,12 @@ def _spans_delle_date(testo: str) -> list[tuple[int, int]]:
 #:     stessa forma: leggerli come un valore intero e' giusto lo stesso, perche'
 #:     il 16 di «3:16» non e' una quantita' di niente. Con i minuti a una cifra
 #:     («16:9») non e' un orario e resta com'era, due numeri.
+#:   * un PUNTEGGIO con la seconda cifra doppia («21:15») si legge come un
+#:     valore solo, e li' i due pezzi SONO quantita' (i punti): un claim che lo
+#:     riscrive «21 a 15» viene accusato dal confronto con la fonte. Si tiene
+#:     l'accusa per la regola gia' scritta in `valore_non_nella_fonte`: un'accusa
+#:     sbagliata si legge nella ricevuta, un perdono sbagliato no. Perdonare chi
+#:     cita tutti e due i pezzi riaprirebbe il buco a «22 fatti e 40 errori».
 #:   * il fuso dopo i soli minuti vale solo nell'ISO con la data: altrimenti
 #:     «dalle 10:00-12:30» perdeva la seconda ora, letta come fuso «-12:30».
 #:

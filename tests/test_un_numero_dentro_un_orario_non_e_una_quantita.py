@@ -98,6 +98,14 @@ def test_un_numero_che_la_fonte_ha_solo_come_ora_lo_accusa_un_layer_solo(claim: 
     assert valori_riusati_da_altro_contesto(claim, fonte) == []
 
 
+def test_un_punteggio_riscritto_in_due_numeri_resta_accusato() -> None:
+    # IL PREZZO DICHIARATO, qui e non solo nella richiesta: «21:15» ha la forma di un orario e si legge come un
+    # valore solo, ma in un punteggio i pezzi sono punti. Chi lo riscrive «21 a 15» viene accusato: un'accusa
+    # sbagliata si legge nella ricevuta, un perdono sbagliato no, e perdonare chi cita tutti e due i pezzi
+    # riaprirebbe il buco a «22 fatti e 40 errori». Se un giorno si cura, questa cella dice che cosa cambia.
+    assert _assenti("La partita e' finita 21 a 15.", "Set finito 21:15.") == ["15", "21"]
+
+
 def test_la_ricevuta_scrive_il_numero_come_lo_scrive_il_claim() -> None:
     assert _assenti("Alle 22:40 il save ha ammesso 22.0 fatti.", "Il save ha ammesso 5 fatti.") == ["22.0", "22:40"]
 
