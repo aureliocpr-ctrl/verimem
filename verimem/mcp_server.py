@@ -1797,13 +1797,15 @@ def _derive_lenient_schema(
 ) -> dict[str, Any] | None:
     """Project a tool's inputSchema down to a LENIENT validator.
 
-    Keeps only per-property ``type`` and ``enum`` (the two cheap, high-signal
-    constraints) and deliberately DROPS ``required`` / ``additionalProperties``
-    / formats / minimums / nested rules. Each kept type is widened with
-    ``"null"`` so an explicitly-null optional argument never false-rejects.
-    Returns ``None`` when there is nothing useful to validate (so we don't
-    register empty schemas). Net effect: catch gross type/enum mistakes
-    without ever rejecting a call the handler would have accepted.
+    Keeps per-property ``type`` and ``enum`` (the two cheap, high-signal
+    constraints) and the ``required`` fields the schema declares among its
+    properties, typed or not; drops ``additionalProperties`` / formats /
+    minimums / nested rules. Each kept type is widened with ``"null"`` so an
+    explicitly-null optional argument never false-rejects (a null REQUIRED
+    field is removed before validation, so it fails as missing). Returns
+    ``None`` when there is nothing to validate. Net effect: the fields a
+    client reads as required from ``list_tools()`` are the fields the door
+    enforces, and gross type/enum mistakes are caught.
     """
     if not isinstance(input_schema, dict) or input_schema.get("type") != "object":
         return None
@@ -1823,6 +1825,16 @@ def _derive_lenient_schema(
             lp["enum"] = list(enum)
         if lp:
             lean[key] = lp
+    richiesti = input_schema.get("required")
+    #: solo i campi che esistono davvero fra le proprieta': un `required` che
+    #: nomina un campo non dichiarato e' un errore dello schema, e rifiutare
+    #: ogni chiamata per quello sarebbe curare un refuso con un blocco totale.
+    veri = ([c for c in richiesti if isinstance(c, str) and c in props]
+            if isinstance(richiesti, list) else [])
+    for campo in veri:
+        # Obbligatorio anche senza tipo ne' enum: deve esserci, con qualunque
+        # valore. Prima un campo cosi' usciva dallo schema della porta.
+        lean.setdefault(campo, {})
     if not lean:
         return None
     derivato: dict[str, Any] = {
@@ -1841,16 +1853,12 @@ def _derive_lenient_schema(
     # Prima: 123 tool pubblicavano `required`, 9 lo facevano rispettare (i soli
     # con schema scritto a mano), 114 no. Lo schema che il client legge da
     # `list_tools()` non era quello con cui la porta validava: uno prometteva
-    # `required`, l'altro non lo applicava.
-    richiesti = input_schema.get("required")
-    if isinstance(richiesti, list):
-        #: solo i campi che esistono davvero fra le proprieta': un `required`
-        #: che nomina un campo non dichiarato e' un errore dello schema, e
-        #: rifiutare ogni chiamata per quello sarebbe curare un refuso con un
-        #: blocco totale.
-        veri = [c for c in richiesti if isinstance(c, str) and c in lean]
-        if veri:
-            derivato["required"] = veri
+    # `required`, l'altro non lo applicava. Il 30/09, chiamati con `{}`, 54 di
+    # quei 114 rifiutavano da soli e 55 rispondevano come a una domanda vera
+    # (`hippo_search` -> `[]`): chi legge non distingue «nessun risultato» da
+    # «manca la domanda».
+    if veri:
+        derivato["required"] = veri
     return derivato
 
 
