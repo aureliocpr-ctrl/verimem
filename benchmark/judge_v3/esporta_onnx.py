@@ -150,7 +150,7 @@ def richiamo_a_k(sim_rif, sim_alt, k: int) -> float:
     corpus; whoever calls it removes the query itself when the query is in the corpus."""
     primi_rif = np.argsort(-np.asarray(sim_rif), axis=1, kind="stable")[:, :k]
     primi_alt = np.argsort(-np.asarray(sim_alt), axis=1, kind="stable")[:, :k]
-    return float(np.mean([len(set(r) & set(a)) / k for r, a in zip(primi_rif.tolist(), primi_alt.tolist())]))
+    return float(np.mean([len(set(r) & set(a)) / k for r, a in zip(primi_rif.tolist(), primi_alt.tolist(), strict=True)]))
 
 
 def versioni() -> dict[str, str | None]:
@@ -262,7 +262,7 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     tok = _tokenizzatore(uscita / "tokenizer.json", lunghezza, pad_id, pad_token)
     ids_hf = st.tokenizer(TESTI, truncation=True, max_length=lunghezza)["input_ids"]
     ids_runtime = [c.ids[: sum(c.attention_mask)] for c in tok.encode_batch(TESTI)]
-    diversi = [i for i, (a, b) in enumerate(zip(ids_hf, ids_runtime)) if list(a) != list(b)]
+    diversi = [i for i, (a, b) in enumerate(zip(ids_hf, ids_runtime, strict=True)) if list(a) != list(b)]
     fp32, ms_fp32 = _vettori_onnx(file_fp32, TESTI, tok)
     # a short text that its batch pads (it shares the batch with the long one), now alone: a batch of 1
     corto = TESTI.index("OK")
