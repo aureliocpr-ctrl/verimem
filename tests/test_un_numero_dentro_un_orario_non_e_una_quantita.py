@@ -36,6 +36,7 @@ from verimem.evidence_requirement import is_specific_claim
 from verimem.quantity_match import extract_quantities, numeric_conflict
 from verimem.soggetto_valore import avviso_soggetto_valore
 from verimem.valore_non_nella_fonte import valori_non_nella_fonte
+from verimem.vicinato_del_valore import valori_riusati_da_altro_contesto
 
 SALVA = "Alle 22:40 il save e' finito: 5 fatti ammessi."
 JOB = ("test (macos-latest)\t2026-09-24T17:35:21Z\t2026-09-24T18:10:59Z\tsuccess\n"
@@ -84,6 +85,21 @@ def test_un_orario_sbagliato_resta_fermato(claim: str, fonte: str) -> None:
 def test_un_orario_si_confronta_intero_alla_precisione_che_il_claim_scrive(
         claim: str, fonte: str, atteso: list[str]) -> None:
     assert _assenti(claim, fonte) == atteso
+
+
+@pytest.mark.parametrize("claim, fonte", [
+    ("Il deploy ha rilasciato 10 pacchetti.", "Alle 10:30 il job del backup e' ripartito."),
+    ("The deploy shipped 10 packages.", "At 10:30 the backup job restarted."),
+])
+def test_un_numero_che_la_fonte_ha_solo_come_ora_lo_accusa_un_layer_solo(claim: str, fonte: str) -> None:
+    # L4.1 lo dice assente; L4.2, che cercava il numero nel testo, trovava l'ora di «10:30» e lo attaccava
+    # alle parole dell'orario: due avvisi sullo stesso numero, e il secondo sbagliato.
+    assert _assenti(claim, fonte) == ["10"]
+    assert valori_riusati_da_altro_contesto(claim, fonte) == []
+
+
+def test_la_ricevuta_scrive_il_numero_come_lo_scrive_il_claim() -> None:
+    assert _assenti("Alle 22:40 il save ha ammesso 22.0 fatti.", "Il save ha ammesso 5 fatti.") == ["22.0", "22:40"]
 
 
 @pytest.mark.parametrize("testo, atteso", [
