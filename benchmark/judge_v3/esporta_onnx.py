@@ -224,6 +224,28 @@ def _operatori(file_onnx: Path) -> dict[str, int]:
     return dict(sorted(conta.items()))
 
 
+def esporta_grafo(grafo: torch.nn.Module, ids: torch.Tensor, maschera: torch.Tensor, file_onnx: Path,
+                  lunghezza_massima: int, opset: int | None) -> None:
+    """torch's exporter on torch.export (the default since torch 2.9), with the batch and the length dynamic,
+    in one file: the model stays under protobuf's 2 GB."""
+    lotto, lunghezza = torch.export.Dim("lotto"), torch.export.Dim("lunghezza", max=lunghezza_massima)
+    torch.onnx.export(
+        grafo, (ids, maschera), str(file_onnx),
+        input_names=["input_ids", "attention_mask"], output_names=["sentence_embedding"],
+        dynamic_shapes={"input_ids": {0: lotto, 1: lunghezza}, "attention_mask": {0: lotto, 1: lunghezza}},
+        dynamo=True, external_data=False, opset_version=opset,
+    )
+
+
+def quantizza(file_fp32: Path, file_int8: Path, opzioni: dict) -> None:
+    """onnxruntime's dynamic quantization, 8-bit signed weights; the operators are its default ones
+    (MatMul and Gather among them, so the table of the word embeddings is quantized too)."""
+    from onnxruntime.quantization import QuantType, quantize_dynamic
+
+    quantize_dynamic(model_input=str(file_fp32), model_output=str(file_int8), weight_type=QuantType.QInt8,
+                     **opzioni)
+
+
 def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     from huggingface_hub import snapshot_download
     from sentence_transformers import SentenceTransformer
@@ -257,13 +279,7 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     uscita.mkdir(parents=True, exist_ok=True)
     file_fp32 = uscita / "model.onnx"
     esempio = st.tokenize(TESTI[:2])
-    lotto, lunghezza_dim = torch.export.Dim("lotto"), torch.export.Dim("lunghezza", max=lunghezza)
-    torch.onnx.export(
-        grafo, (esempio["input_ids"], esempio["attention_mask"]), str(file_fp32),
-        input_names=["input_ids", "attention_mask"], output_names=["sentence_embedding"],
-        dynamic_shapes={"input_ids": {0: lotto, 1: lunghezza_dim}, "attention_mask": {0: lotto, 1: lunghezza_dim}},
-        dynamo=True, external_data=False, opset_version=opset,
-    )
+    esporta_grafo(grafo, esempio["input_ids"], esempio["attention_mask"], file_fp32, lunghezza, opset)
     shutil.copyfile(cartella / "tokenizer.json", uscita / "tokenizer.json")
     tok = _tokenizzatore(uscita / "tokenizer.json", lunghezza, pad_id, pad_token)
     ids_hf = st.tokenizer(TESTI, truncation=True, max_length=lunghezza)["input_ids"]
@@ -278,13 +294,10 @@ def esegui(modello: str, uscita: Path, opset: int | None) -> dict:
     manifesto["passi"]["1_fp32_da_solo_contro_nel_lotto"] = _confronto(fp32[corto:corto + 1], da_solo)
 
     # step 2: the int8 variants, measured and not judged here
-    from onnxruntime.quantization import QuantType, quantize_dynamic
-
     manifesto["int8"] = {}
     for nome, opzioni in VARIANTI_INT8.items():
         file_int8 = uscita / nome
-        quantize_dynamic(model_input=str(file_fp32), model_output=str(file_int8),
-                         weight_type=QuantType.QInt8, **opzioni)
+        quantizza(file_fp32, file_int8, opzioni)
         int8, ms_int8 = _vettori_onnx(file_int8, TESTI, tok)
         manifesto["int8"][nome] = {
             "opzioni": {"weight_type": "QInt8", **opzioni},
