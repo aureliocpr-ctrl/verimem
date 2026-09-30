@@ -2241,6 +2241,43 @@ def _controlli_lessicali_sui_numeri(proposition, source, warnings) -> None:
         warnings.append(_l43)
 
 
+def _il_claim_piu_debole(grounding_llm, source, proposition, gscore_intero,
+                         giudice_intero, punteggio):
+    """Il voto di una memoria che fa piu' affermazioni e' quello della piu' debole.
+
+    ``decomponi()`` la spezza in claim auto-contenuti (col soggetto ereditato); ogni
+    claim va allo STESSO giudice. Restituisce ``(punteggio, claim)``: il punteggio piu'
+    basso e il claim che l'ha dato, oppure quello dell'intera memoria e ``None`` se
+    nessun claim sta sotto di lei.
+
+    Si torna al voto dell'intera memoria, dichiarandolo con ``None``, quando la
+    memoria e' un claim solo (identita': un giudizio, come prima), quando un claim
+    non riceve punteggio, o quando lo riceve da un ALTRO giudice: due scale diverse
+    non si confrontano.
+
+    ⚠️ Il rischio e' scritto in ``unsupported_span.py``: il 29/07 un punteggio per
+    clausola indicava la clausola SBAGLIATA (2 su 2), perche' una clausola isolata
+    perde il contesto e il CE legge le parole in comune. La differenza qui e' il
+    soggetto ereditato; se basti lo dice la misura sulle memorie VERE del pilota
+    (tetto: 6 su 62 in quarantena), non questa funzione.
+    """
+    from .atomic_claims import decomponi
+
+    claims = decomponi(proposition)
+    if len(claims) < 2:
+        return gscore_intero, None
+    peggiore: tuple[float, str] | None = None
+    for claim in claims:
+        s, giudice = punteggio(grounding_llm, source, claim)
+        if s is None or giudice != giudice_intero:
+            return gscore_intero, None
+        if peggiore is None or float(s) < peggiore[0]:
+            peggiore = (float(s), claim)
+    if peggiore is not None and peggiore[0] < gscore_intero:
+        return peggiore
+    return gscore_intero, None
+
+
 def run_validation_gate(
     *,
     proposition: str,
@@ -2891,8 +2928,18 @@ def run_validation_gate(
             fact_grounding_score_ex,
             resolve_write_threshold_for,
         )
+        _claim_caduto = None     # T221: il claim piu' debole, se decide il voto
         try:
             gscore, _judge_used = fact_grounding_score_ex(grounding_llm, source, proposition)
+            # T221 — IL GIUDIZIO PER AFFERMAZIONE. Misurato il 23/09 su 100 memorie
+            # estratte da conversazioni vere: 29 delle 37 che dicono piu' del turno
+            # citato entravano, mediana 99,43, perche' la parte che la fonte sostiene
+            # trascinava quella che non sostiene. Il voto e' quello dell'affermazione
+            # piu' debole; una frase semplice (un claim) si giudica una volta sola.
+            if gscore is not None:
+                gscore, _claim_caduto = _il_claim_piu_debole(
+                    grounding_llm, source, proposition, float(gscore), _judge_used,
+                    fact_grounding_score_ex)
             # v17: la PROVA accanto al voto. `select_relevant_span` e' pura e
             # deterministica (nessun modello, 0,046 ms su 500 chiamate contro i
             # 32.800 del giudice) e NON tocca `gscore`: i verdetti di ammissione
@@ -2928,6 +2975,22 @@ def run_validation_gate(
             grounding_val = float(gscore)  # persist the score even when it PASSES
             _judge_of_record = _judge_used
             _threshold_of_record = resolve_write_threshold_for(_judge_used)
+            _in_fascia = (_judge_used == "local" and _ce_band_enforced()
+                          and gscore < _ce_band_tau_hi())
+            if _claim_caduto is not None and (gscore < _threshold_of_record or _in_fascia):
+                _come = ("the source does not support this one"
+                         if gscore < _threshold_of_record
+                         else "the judge is not sure the source supports this one")
+                warnings.append({
+                    "layer": "L4-claim",
+                    "reason": (f"the memory makes more than one claim and {_come}: "
+                               f"«{_claim_caduto}» (grounding {gscore:.1f}); the verdict "
+                               f"is the weakest claim"),
+                    "advice": ("save the claims this source supports, and give this one "
+                               "the source that says it"),
+                    "matched_text": _claim_caduto,
+                    "grounding_score": gscore,
+                })
             _controlli_lessicali_sui_numeri(proposition, source, warnings)
             # L4-negazione — NON un verdetto, una DICHIARAZIONE, e solo quando
             # il moat ha gia' deciso di bocciare. Il giudice e' un
@@ -3092,7 +3155,10 @@ def run_validation_gate(
                 _esc = None
                 if grounding_llm is None:
                     from . import band_escalation as _be
-                    _esc = _be.escalate_band(source, proposition)
+                    # T221: se in fascia c'e' un claim, il secondo giudice riceve
+                    # QUEL claim: la memoria intera e' quella che il primo ha gia'
+                    # sopravvalutato.
+                    _esc = _be.escalate_band(source, _claim_caduto or proposition)
                 if _esc is not None:
                     _esc_score, _esc_judge = _esc
                     grounding_val = float(_esc_score)

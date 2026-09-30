@@ -234,6 +234,23 @@ def _default_gate_fn(pairs):
     return [float(s) for s in scorer([tuple(p) for p in pairs])]
 
 
+def _default_nli_fn(pairs):
+    """Probabilita' del GIUDICE NLI di L3, calcolate qui — nel daemon, una volta.
+
+    Terzo modello dopo il reranker e il giudice del moat, stessa ragione: fino
+    al 26/09 lo costruiva ogni processo che scriveva un fatto con un fratello
+    simile, e un server MCP si portava dietro torch e il modello (circa 1071 MB
+    solo per torch, misurato il 12/09).
+
+    La guardia anti-ricorsione e' la stessa di `_default_gate_fn`: qui si
+    chiama `_ensure_classifier`, che non passa da `_nli_via_daemon`.
+    """
+    from .local_relation import get_local_relation_judge
+
+    classificatore = get_local_relation_judge()._ensure_classifier()
+    return [dict(p) for p in classificatore([tuple(p) for p in pairs])]
+
+
 class EncodeServer:
     #: ⛔ DI CLASSE, non di istanza: il banco di T73 costruisce con
     #: `object.__new__(EncodeServer)` e SALTA il costruttore. Un default
@@ -249,6 +266,7 @@ class EncodeServer:
         *,
         rerank_fn: Callable[[list], list] | None = _ASSENTE,
         gate_fn: Callable[[list], list] | None = _ASSENTE,
+        nli_fn: Callable[[list], list] | None = _ASSENTE,
         host: str = "127.0.0.1",
         port: int = 0,
         idle_timeout_s: float = IDLE_TIMEOUT_S,
@@ -269,6 +287,9 @@ class EncodeServer:
         # poter COSTRUIRE in un test il caso «daemon vecchio che non sa
         # giudicare» (gate_fn=None) per verificare che il client degradi.
         self._gate_fn = _default_gate_fn if gate_fn is _ASSENTE else gate_fn
+        # Il giudice NLI di L3, con la stessa sentinella: nli_fn=None e' il
+        # daemon vecchio che non conosce `nli_pairs`.
+        self._nli_fn = _default_nli_fn if nli_fn is _ASSENTE else nli_fn
         self._host = host
         self._port = port
         self._idle_timeout_s = idle_timeout_s
@@ -426,9 +447,20 @@ class EncodeServer:
                 risposta["window_applied"] = False
                 risposta["window_error"] = _finestra_non_applicata
             return risposta
+        if "nli_pairs" in req:
+            # Il giudice NLI di L3 vive qui come gli altri due: un processo che
+            # scrive non carica piu' torch per sapere se due fatti si
+            # contraddicono. Un daemon che non sa giudicare lo dice, e il
+            # client degrada.
+            if self._nli_fn is None:
+                return {"ok": False, "error": "this daemon cannot classify"}
+            coppie = [(str(p[0]), str(p[1])) for p in req["nli_pairs"]]
+            return {"ok": True,
+                    "probs": [{str(k): float(v) for k, v in p.items()}
+                              for p in self._nli_fn(coppie)]}
         return {"ok": False,
                 "error": "request must contain 'text', 'texts', "
-                         "'rerank_pairs', 'gate_pairs', or 'ping'"}
+                         "'rerank_pairs', 'gate_pairs', 'nli_pairs', or 'ping'"}
 
     def _serve_conn(self, conn: socket.socket) -> None:
         with conn:

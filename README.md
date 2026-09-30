@@ -246,7 +246,12 @@ rather than producing a number that looks like this one without it.
   a *guarded* human override, not a back door: restore refuses a **superseded** fact
   (never resurrects a retired value) and re-screens the proposition **and the topic**
   for prompt-injection — an exfiltration payload the gate quarantined stays
-  quarantined even if a caller passes its id.
+  quarantined even if a caller passes its id. On the MCP tool the principal that
+  wrote a fact cannot release it: every MCP write and request is `mcp:unbound`, so
+  what an agent wrote through MCP is released by a person
+  (`verimem facts release <fact_id> --reason …`, same guards), and the receipt names
+  who released what (`released_by`, `written_by`). These are labels, not
+  authenticated identities.
 - **Provenance on every read** — answers cite where each fact came from
   (conversation, document offset, tool call). A `TrustReport` explains *how the
   system knows*: chain of custody, declared conflicts, or an explicit abstention.
